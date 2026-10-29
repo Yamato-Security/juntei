@@ -3760,7 +3760,7 @@ fn registry_deleted_keys_and_values() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stdout);
     for line in [
-        "Deleted keys: 290, values: 695 (value lists, values or data lost to cells in use again: 43)",
+        "Deleted keys: 290, values: 695 (incomplete deleted value lists, values or data: 43)",
         "Records: 81,794 (replayed from the transaction logs: 262, deleted: 788)",
         // what deleted records lost is not damage
         "Damaged keys and values: 0",

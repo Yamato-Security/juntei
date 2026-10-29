@@ -139,7 +139,7 @@ pub fn open(path: &Path, logs: Logs) -> Result<Opened, String> {
 fn text(hive: &Hive, key: &str, name: &str) -> Option<String> {
     let value = hive.key(key)?.value(name)?;
     match decode(value.data_type(), &value.data().ok()?) {
-        Data::Text(s) if !s.is_empty() => Some(s),
+        Data::Text { value, .. } if !value.is_empty() => Some(value),
         _ => None,
     }
 }

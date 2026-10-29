@@ -210,7 +210,7 @@ Records:
 
 Output:
   -o, --output <FILE>       Save every record to a file
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, records are written to stdout
   -C, --clobber             Overwrite files when saving
 
 Display Settings:
@@ -784,7 +784,8 @@ juntei parse-registry read -f NTUSER.DAT --timeline-start 2025-10-19 --timeline-
 - `allocation_status`: `allocated` (in use) or `deleted` (`--recover-deleted`: a key or value
   left in a free cell; a deleted key's path is rebuilt from its parents, in use or deleted too,
   `[unknown]` where one is lost; a deleted value no deleted key lists has no key). What a deleted
-  record lost to cells in use again is in `problems`, not taken from those cells.
+  record lost to a truncated list or cells in use again is in `problems`, not taken from reused
+  cells.
 - `transaction_log_status`: `clean` (the hive was not dirty), `replayed` (the logs wrote the
   record's cells), `unchanged` (logs replayed, the record as in the hive file), or `not_applied`
   (a dirty hive without logs that apply: the record may be out of date; also in the summary).

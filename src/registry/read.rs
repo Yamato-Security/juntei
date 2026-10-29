@@ -388,10 +388,10 @@ impl ValueRecord {
     /// Its data as JSON, and as text (for CSV and `--data-regex`).
     fn data(&self) -> Option<(Value, String)> {
         Some(match self.data.as_ref()? {
-            Data::Text(s) => (json!(s), s.clone()),
-            Data::MultiText(items) => (
-                json!(items),
-                serde_json::to_string(items).unwrap_or_default(),
+            Data::Text { value, .. } => (json!(value), value.clone()),
+            Data::MultiText { values, .. } => (
+                json!(values),
+                serde_json::to_string(values).unwrap_or_default(),
             ),
             Data::Number(n) => (json!(n), n.to_string()),
             Data::Bytes => (json!(hex(&self.bytes)), hex(&self.bytes)),
@@ -414,13 +414,11 @@ impl ValueRecord {
             .flatten()
     }
 
-    /// Whether its text was decoded with a byte left over or characters replaced: UTF-16 that
-    /// isn't.
+    /// Whether its text was decoded with a byte left over or an invalid UTF-16 code unit
+    /// replaced.
     fn lossy(&self) -> bool {
-        let odd = self.bytes.len() % 2 == 1;
         match &self.data {
-            Some(Data::Text(s)) => odd || s.contains('\u{fffd}'),
-            Some(Data::MultiText(items)) => odd || items.iter().any(|s| s.contains('\u{fffd}')),
+            Some(Data::Text { lossy, .. } | Data::MultiText { lossy, .. }) => *lossy,
             _ => false,
         }
     }
@@ -910,7 +908,7 @@ impl Stats {
             );
             if self.lost > 0 {
                 found.push_str(&format!(
-                    " (value lists, values or data lost to cells in use again: {})",
+                    " (incomplete deleted value lists, values or data: {})",
                     fmt_num(self.lost)
                 ));
             }
@@ -1024,5 +1022,11 @@ mod tests {
         assert_eq!(odd.raw(off).as_deref(), Some("410042"));
         let unpaired = record(1, &[0x00, 0xd8]);
         assert_eq!(unpaired.raw(off).as_deref(), Some("00d8"));
+        let replacement = record(1, &utf16("\u{fffd}"));
+        assert_eq!(
+            replacement.data(),
+            Some((json!("\u{fffd}"), "\u{fffd}".into()))
+        );
+        assert_eq!(replacement.raw(off), None);
     }
 }
