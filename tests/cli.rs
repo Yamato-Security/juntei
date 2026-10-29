@@ -3478,6 +3478,7 @@ fn registry_subcommands() {
     assert!(help.contains("read "), "{help}");
     assert!(help.contains("services "), "{help}");
     assert!(help.contains("recentdocs "), "{help}");
+    assert!(help.contains("taskcache "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -5064,6 +5065,387 @@ fn registry_recentdocs_damage_and_errors() {
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("No NTUSER.DAT hives were found"),
+        "{}",
+        r.stdout
+    );
+}
+
+// --- parse-registry taskcache -------------------------------------------------------------------
+
+/// `parse-registry taskcache`'s CSV columns.
+const TASKCACHE_COLUMNS: [&str; 31] = [
+    "Host",
+    "SourcePath",
+    "TaskName",
+    "TaskGuid",
+    "TaskIndex",
+    "TaskLists",
+    "Hidden",
+    "InTree",
+    "InTasks",
+    "HasSecurityDescriptor",
+    "TreeKeyLastWrittenUTC",
+    "TaskKeyLastWrittenUTC",
+    "ActionIndex",
+    "ActionType",
+    "Executable",
+    "Arguments",
+    "WorkingDirectory",
+    "ComClassId",
+    "ActionData",
+    "Context",
+    "Author",
+    "Uri",
+    "Description",
+    "LastRegisteredUTC",
+    "LastRunUTC",
+    "LastSuccessfulRunUTC",
+    "LastResult",
+    "ActionsRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+fn unhex(hex: &str) -> Vec<u8> {
+    (0..hex.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).unwrap())
+        .collect()
+}
+
+/// `Actions` and `DynamicInfo` of tasks of the DFIR Artifact Museum's SOFTWARE hives (MIT): a
+/// Windows 11 system task, and two tasks an attack simulator left on Windows 10 and Server 2022.
+const SYNC_ACTIONS: &str = "0300180000004c006f00630061006c005300650072007600690063006500666600000000300000002500770069006e0064006900720025005c00730079007300740065006d00330032005c00730063002e0065007800650034000000730074006100720074002000770033003200740069006d00650020007400610073006b005f007300740061007200740065006400000000000000";
+const SYNC_DYNAMIC: &str =
+    "0300000042bed253da1ad801d6e9726c8d20d8010000000020040000573f4d6f8d20d801";
+const GAMEOVER_ACTIONS: &str = "03000c00000041007500740068006f0072006666000000001c00000043003a005c0054004d0050005c006d0069006d002e006500780065004e000000730065006b00750072006c00730061003a003a004c006f0067006f006e00500061007300730077006f0072006400730020003e00200043003a005c0054004d0050005c006f002e00740078007400000000000000";
+const GAMEOVER_DYNAMIC: &str =
+    "03000000493c8facc134d80197874d41c734d80100000000020007800000000000000000";
+const FALSH_ACTIONS: &str = "03000c00000041007500740068006f0072006666000000001c00000070006f007700650072007300680065006c006c002e006500780065003c0000002d00570069006e0064006f0077005300740079006c0065002000480069006400640065006e0020002d006e006f00700020002d006300200022002200000000000000";
+const FALSH_DYNAMIC: &str =
+    "030000004d0bf2cb6f01da018b9d78137001da010000000000000000d7f3f6137001da01";
+
+/// A SOFTWARE hive's Task Scheduler cache: a system task, a task outside `\Microsoft\`, one
+/// whose Tree entry has lost its SD (hidden), an Index 0 entry without its Tasks key, and a
+/// Tasks key no Tree entry names, its Actions cut short.
+fn taskcache_hive() -> Vec<u8> {
+    const SYNC: &str = "{CC75EC31-F3E4-4F10-8279-0ECC1C1C37CD}";
+    const GAMEOVER: &str = "{13ABE1C7-3F21-4017-9BF6-899BE8C1BA89}";
+    const FALSH: &str = "{A50EF102-2914-473C-95B9-315F908F707E}";
+    const DEFRAG: &str = "{8C1BA5F6-61DE-43AE-A3F2-37AA03E817CD}";
+    const ORPHAN: &str = "{11111111-2222-3333-4444-555555555555}";
+    let entry = |name: &str, guid: &str, index: u32, sd: bool| {
+        let mut values = vec![
+            ("Id", REG_SZ, utf16z(guid)),
+            ("Index", REG_DWORD, index.to_le_bytes().to_vec()),
+        ];
+        if sd {
+            values.push(("SD", REG_BINARY, vec![1, 0, 4, 0x80, 0, 0, 0, 0]));
+        }
+        reg_key(name, values, Vec::new()).written(LINKED)
+    };
+    let task = |guid: &str, path: &str, actions: &[u8], dynamic: Option<&str>| {
+        let mut values = vec![
+            ("Path", REG_SZ, utf16z(path)),
+            ("URI", REG_SZ, utf16z(path)),
+            ("Author", REG_SZ, utf16z("Example")),
+            ("Actions", REG_BINARY, actions.to_vec()),
+        ];
+        if let Some(d) = dynamic {
+            values.push(("DynamicInfo", REG_BINARY, unhex(d)));
+        }
+        reg_key(guid, values, Vec::new()).written(LINKED + DAY)
+    };
+    let list = |name: &str, guids: &[&str]| {
+        reg_key(
+            name,
+            Vec::new(),
+            guids
+                .iter()
+                .map(|g| reg_key(g, Vec::new(), Vec::new()))
+                .collect(),
+        )
+    };
+    let windows = reg_key(
+        "Windows",
+        Vec::new(),
+        vec![
+            reg_key(
+                "Defrag",
+                Vec::new(),
+                vec![entry("ScheduledDefrag", DEFRAG, 0, true)],
+            ),
+            reg_key(
+                "Time Synchronization",
+                Vec::new(),
+                vec![entry("SynchronizeTime", SYNC, 3, true)],
+            ),
+        ],
+    );
+    let tree = reg_key(
+        "Tree",
+        Vec::new(),
+        vec![
+            entry("falshupdate22", FALSH, 2, false),
+            entry("GameOver", GAMEOVER, 3, true),
+            reg_key("Microsoft", Vec::new(), vec![windows]),
+        ],
+    );
+    let tasks = reg_key(
+        "Tasks",
+        Vec::new(),
+        vec![
+            task(ORPHAN, r"\Orphan", &unhex(SYNC_ACTIONS)[..60], None),
+            task(
+                GAMEOVER,
+                r"\GameOver",
+                &unhex(GAMEOVER_ACTIONS),
+                Some(GAMEOVER_DYNAMIC),
+            ),
+            task(
+                FALSH,
+                r"\falshupdate22",
+                &unhex(FALSH_ACTIONS),
+                Some(FALSH_DYNAMIC),
+            ),
+            task(
+                SYNC,
+                r"\Microsoft\Windows\Time Synchronization\SynchronizeTime",
+                &unhex(SYNC_ACTIONS),
+                Some(SYNC_DYNAMIC),
+            ),
+        ],
+    );
+    let cache = reg_key(
+        "TaskCache",
+        Vec::new(),
+        vec![
+            list("Logon", &[FALSH]),
+            list("Maintenance", &[SYNC]),
+            list("Plain", &[GAMEOVER, SYNC]),
+            tasks,
+            tree,
+        ],
+    );
+    let mut key = cache;
+    for name in ["Schedule", "CurrentVersion", "Windows NT", "Microsoft"] {
+        key = reg_key(name, Vec::new(), vec![key]);
+    }
+    regf(&reg_key("ROOT", Vec::new(), vec![key]))
+}
+
+/// `parse-registry taskcache` with `args`, as JSON Lines.
+fn taskcache_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "taskcache"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_taskcache_of_a_software_hive() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("SOFTWARE");
+    std::fs::write(&hive, taskcache_hive()).unwrap();
+    let hive = hive.to_str().unwrap();
+    let out = dir.path().join("tasks.csv");
+    let r = run(&[
+        "parse-registry",
+        "taskcache",
+        "-f",
+        hive,
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    for line in [
+        "SOFTWARE hives parsed: 1",
+        "Tasks: 5",
+        "Actions: 3 (exec 3, COM handler 0)",
+        "Tasks hidden from the Task Scheduler: 2",
+        r"\falshupdate22 (its Tree entry has no SD)",
+        r"\Orphan (no Tree entry names it)",
+        r"Programs of tasks outside \Microsoft\: 2",
+        r"\GameOver: C:\TMP\mim.exe sekurlsa::LogonPasswords > C:\TMP\o.txt",
+        r#"\falshupdate22: powershell.exe -WindowStyle Hidden -nop -c """#,
+        "Values that could not be read or don't match: 1",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header, TASKCACHE_COLUMNS);
+    let names: Vec<&str> = rows.iter().map(|r| r["TaskName"].as_str()).collect();
+    assert_eq!(
+        names,
+        [
+            r"\falshupdate22",
+            r"\GameOver",
+            r"\Microsoft\Windows\Defrag\ScheduledDefrag",
+            r"\Microsoft\Windows\Time Synchronization\SynchronizeTime",
+            r"\Orphan",
+        ]
+    );
+    let game_over = &rows[1];
+    for (column, expected) in [
+        ("TaskGuid", "{13ABE1C7-3F21-4017-9BF6-899BE8C1BA89}"),
+        ("TaskIndex", "3"),
+        ("TaskLists", "Plain"),
+        ("Hidden", "False"),
+        ("InTree", "True"),
+        ("InTasks", "True"),
+        ("HasSecurityDescriptor", "True"),
+        ("TreeKeyLastWrittenUTC", "2022-02-08T21:03:52Z"),
+        ("TaskKeyLastWrittenUTC", "2022-02-09T21:03:52Z"),
+        ("ActionIndex", "0"),
+        ("ActionType", "exec"),
+        ("Executable", r"C:\TMP\mim.exe"),
+        ("Arguments", r"sekurlsa::LogonPasswords > C:\TMP\o.txt"),
+        ("WorkingDirectory", ""),
+        ("Context", "Author"),
+        ("Author", "Example"),
+        ("Uri", r"\GameOver"),
+        ("LastRegisteredUTC", "2022-03-10T20:59:03.583034500Z"),
+        ("LastRunUTC", "2022-03-10T21:39:00.616591100Z"),
+        ("LastSuccessfulRunUTC", ""),
+        ("LastResult", "0x80070002"),
+        ("ActionsRaw", ""),
+        ("TransactionLogStatus", "clean"),
+        ("Problems", ""),
+    ] {
+        assert_eq!(game_over[column], expected, "{column}");
+    }
+
+    let records = taskcache_read(&["-f", hive]);
+    let find = |name: &str| {
+        records
+            .iter()
+            .find(|r| r["task_name"] == name)
+            .unwrap()
+            .clone()
+    };
+    // the system task: its lists, its last successful run
+    let sync = find(r"\Microsoft\Windows\Time Synchronization\SynchronizeTime");
+    assert_eq!(sync["task_lists"], json!(["Plain", "Maintenance"]));
+    assert_eq!(sync["context"], "LocalService");
+    assert_eq!(sync["executable"], r"%windir%\system32\sc.exe");
+    assert_eq!(sync["arguments"], "start w32time task_started");
+    assert_eq!(
+        sync["last_successful_run"],
+        "2022-02-13T03:54:43.724066300Z"
+    );
+    assert_eq!(sync["last_result"], "0x00000420");
+    // hidden: no SD
+    let falsh = find(r"\falshupdate22");
+    assert_eq!(falsh["hidden"], true);
+    assert_eq!(falsh["has_security_descriptor"], false);
+    assert_eq!(falsh["task_lists"], json!(["Logon"]));
+    // an Index 0 entry without a Tasks key: one record, no action
+    let defrag = find(r"\Microsoft\Windows\Defrag\ScheduledDefrag");
+    assert_eq!(
+        (
+            &defrag["task_index"],
+            &defrag["in_tasks"],
+            &defrag["hidden"]
+        ),
+        (&json!(0), &json!(false), &json!(false))
+    );
+    assert_eq!(defrag["action_type"], Value::Null);
+    // no Tree entry: hidden, its cut Actions kept
+    let orphan = find(r"\Orphan");
+    assert_eq!(
+        (&orphan["in_tree"], &orphan["hidden"]),
+        (&json!(false), &json!(true))
+    );
+    assert_eq!(orphan["has_security_descriptor"], Value::Null);
+    assert_eq!(
+        orphan["problems"],
+        json!(["Actions: a string of 48 bytes at 36 is cut short (20 bytes left)"])
+    );
+    assert_eq!(orphan["actions_raw"].as_str().unwrap().len(), 120);
+
+    // one task, by its last name or its whole name
+    let one = taskcache_read(&["-f", hive, "--task", "gameover"]);
+    assert_eq!(one.len(), 1);
+    let one = taskcache_read(&[
+        "-f",
+        hive,
+        "--task",
+        r"\Microsoft\Windows\Time Synchronization\SynchronizeTime",
+    ]);
+    assert_eq!(one.len(), 1);
+    let r = run(&[
+        "parse-registry",
+        "taskcache",
+        "-f",
+        hive,
+        "--task",
+        "nosuch",
+        "-K",
+    ]);
+    assert!(
+        r.stdout.contains("Hives without the task of --task: 1"),
+        "{}",
+        r.stdout
+    );
+}
+
+#[test]
+fn registry_taskcache_discovery_and_errors() {
+    // under -d: the SOFTWARE hive, not the user's hive next to it
+    let dir = tempfile::tempdir().unwrap();
+    let config = dir.path().join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), taskcache_hive()).unwrap();
+    unpack_registry(
+        "regipy",
+        &["NTUSER.DAT"],
+        &dir.path().join("C/Users/vibranium"),
+    );
+    let r = run(&[
+        "parse-registry",
+        "taskcache",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(r.stdout.contains("SOFTWARE hives: 1"), "{}", r.stdout);
+    // a user's hive is not a SOFTWARE hive
+    let ntuser = dir.path().join("C/Users/vibranium/NTUSER.DAT");
+    let r = run(&[
+        "parse-registry",
+        "taskcache",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("not a SOFTWARE hive"), "{}", r.stdout);
+    let r = run(&["parse-registry", "taskcache", "-d", "test_files/lnk", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("No SOFTWARE hives were found"),
+        "{}",
+        r.stdout
+    );
+    // a SOFTWARE hive without a task cache
+    let empty = tempfile::tempdir().unwrap();
+    let hive = empty.path().join("SOFTWARE");
+    std::fs::write(&hive, regf(&reg_key("ROOT", Vec::new(), Vec::new()))).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "taskcache",
+        "-f",
+        hive.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(
+        r.stdout.contains("Hives without TaskCache: 1"),
         "{}",
         r.stdout
     );

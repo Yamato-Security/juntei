@@ -20,6 +20,7 @@ not event logs.
 | Registry hives (`SYSTEM`, `SOFTWARE`, `NTUSER.DAT`, …), with their transaction logs and deleted keys | `parse-registry read` | Supported |
 | Services (`SYSTEM` hive), with their failure actions | `parse-registry services` | Supported |
 | Recent documents (`NTUSER.DAT` `RecentDocs`), in their MRU order | `parse-registry recentdocs` | Supported |
+| Scheduled tasks (`SOFTWARE` `TaskCache`), with their actions and hidden tasks | `parse-registry taskcache` | Supported |
 | More Windows artifacts | | Planned |
 
 ## Build
@@ -692,6 +693,7 @@ Commands:
   read        Read keys and values as they are: types, data (strings, multi-strings, numbers, binary), key last-write times, DWORD/QWORD numbers and FILETIMEs, allocated, replayed or deleted
   services    Services of SYSTEM hives: image path, service DLL, start and type, account, and failure actions decoded, for the control set in use (or all)
   recentdocs  Explorer's recent documents in NTUSER.DAT hives (RecentDocs): every item in its MRU order, per extension, with its shortcut's name and the time the most recent was opened
+  taskcache   The Task Scheduler's cache in SOFTWARE hives (TaskCache): every task with its actions decoded (program, arguments, COM handler), times, and tasks hidden from the Task Scheduler
 ```
 
 #### `parse-registry read`
@@ -940,6 +942,79 @@ juntei parse-registry recentdocs -f NTUSER.DAT -t jsonl | jq -r 'select(.extensi
 - `-d` reads every hive whose base block or file name says it is an `NTUSER.DAT`; `-f` on another
   type of hive is an error.
 
+#### `parse-registry taskcache`
+
+The Task Scheduler's cache in `SOFTWARE` hives
+(`Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache`): every scheduled task, what it runs,
+when it was registered and last ran, and the tasks the Task Scheduler doesn't show, a way to hide
+persistence.
+
+```
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SOFTWARE hives
+  -f, --file <FILE>      File path to one SOFTWARE hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Filtering:
+      --task <NAME>  Only the task of this name, in any case: its whole name (\Microsoft\Windows\Defrag\ScheduledDefrag) or its last part (ScheduledDefrag)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```
+# Every task and action, with hidden tasks and the programs of tasks outside \Microsoft\ in the summary
+juntei parse-registry taskcache -f C/Windows/System32/config/SOFTWARE -o tasks.csv
+
+# The SOFTWARE hives of a triage collection, each record with its host
+juntei parse-registry taskcache -d triage/ -t jsonl -o tasks.jsonl
+
+# One task
+juntei parse-registry taskcache -f SOFTWARE --task ScheduledDefrag -t jsonl | jq .
+
+# Hidden tasks
+juntei parse-registry taskcache -f SOFTWARE -t jsonl | jq -c 'select(.hidden) | {task_name, executable, arguments}'
+
+# Programs run by tasks outside \Microsoft\, newest registration first
+juntei parse-registry taskcache -f SOFTWARE -t jsonl | jq -s -c 'map(select(.action_type == "exec" and (.task_name | startswith("\\Microsoft\\") | not))) | sort_by(.last_registered) | reverse | .[] | {task_name, executable, arguments, last_registered}'
+```
+
+- One record per action of each task, and one for a task without actions. JSON / JSONL fields,
+  in this order (CSV columns in the same order, `Host`, `SourcePath`, …): `host`, `source_path`,
+  `task_name` (its folders and name: `\Microsoft\Windows\Defrag\ScheduledDefrag`), `task_guid`,
+  `task_index` and `task_lists` (`Boot`, `Logon`, `Plain`, `Maintenance`: what starts it),
+  `hidden`, `in_tree`, `in_tasks`, `has_security_descriptor`, `tree_key_last_written`,
+  `task_key_last_written`, `action_index`, `action_type` (`exec`, `com_handler`, `send_email`,
+  `show_message`), `executable`, `arguments`, `working_directory`, `com_class_id`, `action_data`
+  (a COM handler's data; an e-mail's or message's text), `context` (the principal the actions
+  run as: `LocalSystem`, `Author`, …), `author`, `uri`, `description`, `last_registered`,
+  `last_run`, `last_successful_run`, `last_result` (`0x…`), `actions_raw`,
+  `transaction_log_status`, `logs_applied` and `problems`.
+- `Actions` is decoded by its structure (its version, context, and each action's fields), not
+  searched for strings: version 1 (Windows 8, Server 2012) and 3 (Windows 10 and later). Windows
+  7 keeps its tasks' actions only in their XML files. `Actions` that don't all decode keep what
+  was read, the problem, and their bytes in `actions_raw`. The times come from `DynamicInfo`.
+- `hidden`: a task the Task Scheduler doesn't show: a `Tasks` key no `Tree` entry names, or a
+  `Tree` entry without its security descriptor (`SD`) where the hive's other tasks have one (older
+  Windows keeps none). An `Index` 0 entry without a `Tasks` key is ordinary (a task Windows
+  registered without its cache), not hidden.
+- A `Tasks` key's `Path` that is not its `Tree` name is a problem; so is a value of the wrong
+  type.
+- `-d` reads every hive whose base block or file name says it is a `SOFTWARE` hive; `-f` on another
+  type of hive is an error; `host`, transaction logs and `transaction_log_status` are as for
+  `read`.
+
 Hives are read by Yamato Security's
 [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) (Apache-2.0), whose
 keys, values and transaction log replay equal [yarp](https://github.com/msuhanov/yarp)'s on the
@@ -947,7 +1022,8 @@ public test hives (dirty ones with their logs), and whose deleted keys in free c
 yarp's scanner finds. Its services, values and failure actions equal those of a reader built on
 yarp on a Windows 7 and a dirty Windows 11 `SYSTEM` hive; its recent documents equal those of a
 reader built on yarp and [libfwsi](https://github.com/libyal/libfwsi) on 9 public `NTUSER.DAT`
-hives.
+hives; its scheduled tasks those of a separate decoder built on yarp on 7 public `SOFTWARE` hives
+(Windows 7 to 11, Server 2012 R2 and 2022).
 
 ## License
 

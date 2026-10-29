@@ -6,6 +6,7 @@
 pub mod read;
 pub mod recentdocs;
 pub mod services;
+pub mod taskcache;
 
 use crate::cli::RegistryOutputType;
 use crate::util::{self, check_output};
