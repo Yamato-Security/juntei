@@ -1002,7 +1002,8 @@ juntei parse-registry taskcache -f SOFTWARE -t jsonl | jq -s -c 'map(select(.act
   `last_run`, `last_successful_run`, `last_result` (`0x…`), `actions_raw`,
   `transaction_log_status`, `logs_applied` and `problems`.
 - `Actions` is decoded by its structure (its version, context, and each action's fields), not
-  searched for strings: version 1 (Windows 8, Server 2012) and 3 (Windows 10 and later). Windows
+  searched for strings: versions 1, 2 and 3, including Windows Server 2016-era and current
+  Windows 10+ layouts. Windows
   7 keeps its tasks' actions only in their XML files. `Actions` that don't all decode keep what
   was read, the problem, and their bytes in `actions_raw`. The times come from `DynamicInfo`.
 - `hidden`: a task the Task Scheduler doesn't show: a `Tasks` key no `Tree` entry names, or a
