@@ -556,7 +556,7 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
     if !unselected.is_empty() {
         p_label(
             no_color,
-            "SYSTEM\\Select missing or malformed (current control set unknown): ",
+            "SYSTEM\\Select missing or malformed: ",
             &fmt_num(unselected.len()),
         );
         for f in unselected.iter().take(MAX_PRINTED_FINDINGS) {
