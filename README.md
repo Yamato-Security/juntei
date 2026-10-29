@@ -720,7 +720,7 @@ Filtering:
       --data-regex <REGEX>     Only values whose data, as written, matches REGEX (ignoring case, so a GUID matches in any case; binary data in hex)
       --timeline-start <DATE>  Only keys last written on or after DATE, in UTC unless an offset is given (ex: 2025-10-19, 2025-10-19T13:45:30Z)
       --timeline-end <DATE>    Only keys last written on or before DATE
-      --recover-deleted        Also the deleted keys and values left in the hive's free cells
+      --recover-deleted        Also deleted keys and values: in free cells, the slack of cells in use and the data past the hive bins, and what only the transaction logs kept (allocation_status says how complete; recovered_from where found)
 
 Output:
   -o, --output <FILE>       Save every record to a file
@@ -777,6 +777,7 @@ juntei parse-registry read -f NTUSER.DAT --timeline-start 2025-10-19 --timeline-
   root), `key_last_written`, `value_name`, `value_type` (`REG_SZ`, `REG_EXPAND_SZ`,
   `REG_MULTI_SZ`, `REG_DWORD`, `REG_QWORD`, `REG_BINARY`, …; other types in hex), `value_data`,
   `data_size`, `value_data_raw`, `value_u64`, `value_filetime_utc`, `allocation_status`,
+  `recovered_from`,
   `transaction_log_status`, `logs_applied` and `problems`. Times are UTC to the 100 ns.
 - Data: strings are UTF-16 up to their NUL, a `REG_MULTI_SZ` a list (a JSON array, in its CSV cell
   too), numbers whole (past 2^53 too) and also in `value_u64` (`REG_DWORD`,
@@ -789,11 +790,20 @@ juntei parse-registry read -f NTUSER.DAT --timeline-start 2025-10-19 --timeline-
   keeps them (`Windows\System32\config`, `Users\<name>\NTUSER.DAT`, `…\UsrClass.dat`,
   `Windows\AppCompat\Programs\Amcache.hve`, …), as a collection keeps them, or from a `SYSTEM`
   hive next to them; otherwise it is empty, never a guess.
-- `allocation_status`: `allocated` (in use) or `deleted` (`--recover-deleted`: a key or value
-  left in a free cell; a deleted key's path is rebuilt from its parents, in use or deleted too,
-  `[unknown]` where one is lost; a deleted value no deleted key lists has no key). What a deleted
-  record lost to a truncated list or cells in use again is in `problems`, not taken from reused
-  cells.
+- `allocation_status`: `allocated` (in use), or with `--recover-deleted`, how complete a
+  recovered key or value is: `deleted_complete` (a deleted key with its whole path and every
+  value and data, or such a key's value), `deleted_partial` (a path with `[unknown]` parts, or a
+  value list, values or data lost to a truncated list or to cells in use again, which are not
+  taken for the deleted record's; what was lost is in `problems`), `residual_value_only` (a
+  deleted value no deleted key lists: no `key_path`), or `transaction_log_recovered` (what only
+  the transaction logs kept: a key the replay removed, a value it removed or changed, a key or
+  value of a log entry the hive no longer has; an earlier value of a key in use is given with
+  the key's path).
+- `recovered_from`: where a recovered record was found, each place once: `free_cell`,
+  `cell_slack` (past the record in a cell in use), `remnant_data` (past the hive bins),
+  `before_replay` (the hive file before its logs' replay), or a log entry (`SYSTEM.LOG1#1234`:
+  the log and the entry's sequence number; entries older than the hive too). A log entry's data
+  is given only where the entry wrote its cells; otherwise `problems` says it is unknown.
 - `transaction_log_status`: `clean` (the hive was not dirty), `replayed` (the logs wrote the
   record's cells), `unchanged` (logs replayed, the record as in the hive file), or `not_applied`
   (a dirty hive without logs that apply: the record may be out of date; also in the summary).
@@ -1093,8 +1103,9 @@ juntei parse-registry sam -f SAM -t jsonl | jq -c 'select(.account_flags_value !
 Hives are read by Yamato Security's
 [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) (Apache-2.0), whose
 keys, values and transaction log replay equal [yarp](https://github.com/msuhanov/yarp)'s on the
-public test hives (dirty ones with their logs), and whose deleted keys in free cells are those
-yarp's scanner finds. Its services, values and failure actions equal those of a reader built on
+public test hives (dirty ones with their logs), whose deleted keys in free cells, cell slack and
+the data past the hive bins are those yarp's scanner finds, and which recovers every key and value
+yarp's log replay removes or changes. Its services, values and failure actions equal those of a reader built on
 yarp on a Windows 7 and a dirty Windows 11 `SYSTEM` hive; its recent documents equal those of a
 reader built on yarp and [libfwsi](https://github.com/libyal/libfwsi) on 9 public `NTUSER.DAT`
 hives; its scheduled tasks those of a separate decoder built on yarp on 7 public `SOFTWARE` hives

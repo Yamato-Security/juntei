@@ -3,8 +3,10 @@
 //! values or with damage: the key's last-write time, the value's type, its data decoded (strings,
 //! multi-strings, numbers, binary data in hex) and, when it doesn't decode or `--raw-data` asks,
 //! its bytes; numbers also as `value_u64`, and with `--qword-as-filetime` a `REG_QWORD` also as a
-//! FILETIME. Each record says where it came from: allocated or deleted (`--recover-deleted`: left
-//! in a free cell), and whether the transaction logs' replay wrote it. Filters on the key path,
+//! FILETIME. Each record says where it came from: allocated, or recovered (`--recover-deleted`:
+//! from free cells, cell slack, the data past the hive bins, or what only the transaction logs
+//! kept; complete, partial, a value without its key, or only in the logs, and the places it was
+//! found), and whether the transaction logs' replay wrote it. Filters on the key path,
 //! value names and data (regular expressions ignoring case, so that a GUID matches in any case)
 //! and last-write times keep a targeted query from writing the whole hive; `--value` with a key
 //! filter also says which keys lack the value.
@@ -19,7 +21,10 @@ use crate::util::{self, error_msg, fmt_num, p, p_label};
 use indicatif::ProgressBar;
 use regex::{Regex, RegexBuilder};
 use registry::system::{ControlSets, control_set_name};
-use registry::{Data, DeletedValue, Key, Status, Value as RegValue, ValueType, decode};
+use registry::{
+    Data, Key, RecoveredStatus, RecoveredValue, Source, Status, Value as RegValue, ValueType,
+    decode,
+};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
@@ -121,7 +126,7 @@ pub fn run(opts: &RegistryReadOptions) -> i32 {
                 };
                 let mut written = out.hive(&opened, &filters);
                 if opts.recover_deleted && written.is_ok() {
-                    written = out.deleted(&opened, &filters);
+                    written = out.recovered(&opened, &filters);
                 }
                 if let Err(e) = written {
                     report_error(
@@ -408,13 +413,31 @@ struct Record<'a> {
     key_path: Option<&'a str>,
     key_written: Option<u64>,
     body: Body,
-    deleted: bool,
+    /// For a recovered record: how complete it is, and where it was found.
+    recovered: Option<Recovered>,
     /// Whether the logs' replay wrote its cells.
     replayed: bool,
     problems: Vec<String>,
 }
 
-const CSV_HEADER: [&str; 17] = [
+/// A recovered record's status and the places it was found (`free_cell`, `SYSTEM.LOG1#1234`,
+/// …).
+#[derive(Clone)]
+struct Recovered {
+    status: RecoveredStatus,
+    from: Vec<String>,
+}
+
+impl Recovered {
+    fn of(status: RecoveredStatus, sources: &[Source]) -> Self {
+        Recovered {
+            status,
+            from: sources.iter().map(Source::name).collect(),
+        }
+    }
+}
+
+const CSV_HEADER: [&str; 18] = [
     "Host",
     "HiveType",
     "SourcePath",
@@ -429,6 +452,7 @@ const CSV_HEADER: [&str; 17] = [
     "ValueU64",
     "ValueFiletimeUTC",
     "AllocationStatus",
+    "RecoveredFrom",
     "TransactionLogStatus",
     "LogsApplied",
     "Problems",
@@ -459,8 +483,15 @@ impl Record<'_> {
         }
     }
 
+    /// `allocated`, or how complete a recovered record is.
     fn allocation(&self) -> &'static str {
-        if self.deleted { "deleted" } else { "allocated" }
+        self.recovered
+            .as_ref()
+            .map_or("allocated", |r| r.status.name())
+    }
+
+    fn recovered_from(&self) -> &[String] {
+        self.recovered.as_ref().map_or(&[], |r| &r.from)
     }
 
     fn csv(&self, output: Output) -> Vec<String> {
@@ -482,6 +513,7 @@ impl Record<'_> {
             text(v.and_then(ValueRecord::number).map(|n| n.to_string())),
             text(v.and_then(|v| v.filetime(output))),
             self.allocation().to_string(),
+            self.recovered_from().join("|"),
             o.log_status(self.replayed).to_string(),
             o.recovery.logs_applied.join("|"),
             self.problems.join("; "),
@@ -506,6 +538,7 @@ impl Record<'_> {
             value_u64: v.and_then(ValueRecord::number),
             value_filetime_utc: v.and_then(|v| v.filetime(output)),
             allocation_status: self.allocation(),
+            recovered_from: self.recovered_from(),
             transaction_log_status: o.log_status(self.replayed),
             logs_applied: &o.recovery.logs_applied,
             problems: &self.problems,
@@ -530,6 +563,7 @@ struct JsonRecord<'a> {
     value_u64: Option<u64>,
     value_filetime_utc: Option<String>,
     allocation_status: &'static str,
+    recovered_from: &'a [String],
     transaction_log_status: &'static str,
     logs_applied: &'a [String],
     problems: &'a [String],
@@ -547,7 +581,7 @@ impl Out<'_, '_> {
         let s = &mut *self.stats;
         s.records += 1;
         s.replayed += usize::from(r.replayed && r.opened.recovery.recovered);
-        s.deleted_records += usize::from(r.deleted);
+        s.recovered_records += usize::from(r.recovered.is_some());
         s.absent += usize::from(matches!(r.body, Body::Absent(_)));
         if let Some(w) = r.key_written {
             s.first = Some(s.first.map_or(w, |f| f.min(w)));
@@ -604,7 +638,7 @@ impl Out<'_, '_> {
                 key_path: Some(path),
                 key_written: Some(written),
                 body: Body::Key,
-                deleted: false,
+                recovered: None,
                 replayed: key_replayed,
                 problems,
             })?;
@@ -620,7 +654,7 @@ impl Out<'_, '_> {
                 Some(written),
                 record,
                 problem,
-                false,
+                None,
                 value.status() == Status::Replayed,
             )?;
         }
@@ -630,7 +664,7 @@ impl Out<'_, '_> {
                 key_path: Some(path),
                 key_written: Some(written),
                 body: Body::Absent(filters.value.clone().unwrap_or_default()),
-                deleted: false,
+                recovered: None,
                 replayed: key_replayed,
                 problems: Vec::new(),
             })?;
@@ -648,10 +682,10 @@ impl Out<'_, '_> {
         key_written: Option<u64>,
         record: ValueRecord,
         problem: Option<String>,
-        deleted: bool,
+        recovered: Option<Recovered>,
         replayed: bool,
     ) -> io::Result<()> {
-        if problem.is_some() && deleted {
+        if problem.is_some() && recovered.is_some() {
             self.stats.lost += 1;
         } else if let Some(problem) = &problem {
             let name = if record.name.is_empty() {
@@ -676,37 +710,44 @@ impl Out<'_, '_> {
             key_path,
             key_written,
             body: Body::Value(record),
-            deleted,
+            recovered,
             replayed,
             problems: problem.into_iter().collect(),
         })
     }
 
-    /// The deleted keys and values of `opened` that pass `filters`.
-    fn deleted(&mut self, opened: &Opened, filters: &Filters) -> io::Result<()> {
-        let deleted = opened.hive.deleted();
+    /// The keys and values recovered from `opened` (its free cells, the slack of its cells,
+    /// the data past its hive bins, and what only its transaction logs kept) that pass
+    /// `filters`.
+    fn recovered(&mut self, opened: &Opened, filters: &Filters) -> io::Result<()> {
+        let found = opened.hive.recover();
         let key = filters.key_path(opened).map(|k| k.to_uppercase());
-        for k in &deleted.keys {
-            self.stats.deleted_keys += 1;
-            self.stats.deleted_values += k.values.len();
-            self.stats.lost += k.problems.len();
+        for k in &found.keys {
+            if !k.in_use {
+                self.stats.recovered_key(k.status, k.problems.len());
+            }
+            for v in &k.values {
+                self.stats.recovered_value(v.status);
+            }
             let path_matches = key.as_ref().is_none_or(|p| k.path.to_uppercase() == *p);
             if !path_matches || !filters.key_matches(&k.path, k.last_written) {
                 continue;
             }
-            if (k.values.is_empty() || !k.problems.is_empty()) && !filters.on_values() {
+            // an earlier version of a key in use: only the values it held otherwise
+            let lone = k.values.is_empty() || !k.problems.is_empty();
+            if !k.in_use && lone && !filters.on_values() {
                 self.write(&Record {
                     opened,
                     key_path: Some(&k.path),
                     key_written: Some(k.last_written),
                     body: Body::Key,
-                    deleted: true,
+                    recovered: Some(Recovered::of(k.status, &k.sources)),
                     replayed: k.replayed,
                     problems: k.problems.clone(),
                 })?;
             }
             for v in &k.values {
-                let (record, problem) = deleted_record(v);
+                let (record, problem) = recovered_record(v);
                 self.value(
                     opened,
                     filters,
@@ -714,20 +755,29 @@ impl Out<'_, '_> {
                     Some(k.last_written),
                     record,
                     problem,
-                    true,
+                    Some(Recovered::of(v.status, &v.sources)),
                     v.replayed,
                 )?;
             }
         }
-        self.stats.deleted_values += deleted.values.len();
-        // values no deleted key lists: their key is unknown, so no key filter takes them
+        for v in &found.values {
+            self.stats.recovered_value(v.status);
+        }
+        // values without their key: no key filter takes them
         if filters.on_keys() {
             return Ok(());
         }
-        for v in &deleted.values {
-            let (record, problem) = deleted_record(v);
+        for v in &found.values {
+            let (record, problem) = recovered_record(v);
             self.value(
-                opened, filters, None, None, record, problem, true, v.replayed,
+                opened,
+                filters,
+                None,
+                None,
+                record,
+                problem,
+                Some(Recovered::of(v.status, &v.sources)),
+                v.replayed,
             )?;
         }
         Ok(())
@@ -743,7 +793,7 @@ fn value_record(value: &RegValue) -> (ValueRecord, Option<String>) {
     )
 }
 
-fn deleted_record(value: &DeletedValue) -> (ValueRecord, Option<String>) {
+fn recovered_record(value: &RecoveredValue) -> (ValueRecord, Option<String>) {
     ValueRecord::new(
         value.name.clone(),
         value.data_type,
@@ -766,13 +816,14 @@ struct Stats {
     without_key: usize,
     keys: usize,
     values: usize,
-    deleted_keys: usize,
-    deleted_values: usize,
-    /// Parts of deleted keys and values whose cells are in use again.
+    /// Recovered keys (not earlier versions of keys in use) and values, by status.
+    recovered_keys: BTreeMap<RecoveredStatus, usize>,
+    recovered_values: BTreeMap<RecoveredStatus, usize>,
+    /// Parts of recovered keys and values that were lost.
     lost: usize,
     records: usize,
     replayed: usize,
-    deleted_records: usize,
+    recovered_records: usize,
     absent: usize,
     first: Option<u64>,
     last: Option<u64>,
@@ -797,6 +848,15 @@ impl Stats {
         } else if opened.recovery.dirty {
             self.dirty.push(opened.source.clone());
         }
+    }
+
+    fn recovered_key(&mut self, status: RecoveredStatus, lost: usize) {
+        *self.recovered_keys.entry(status).or_default() += 1;
+        self.lost += lost;
+    }
+
+    fn recovered_value(&mut self, status: RecoveredStatus) {
+        *self.recovered_values.entry(status).or_default() += 1;
     }
 
     fn problem(&mut self, source: &str, path: Option<&str>, problem: &str) {
@@ -858,18 +918,31 @@ impl Stats {
             &format!("{}, values: {}", fmt_num(self.keys), fmt_num(self.values)),
         );
         if deleted {
-            let mut found = format!(
-                "{}, values: {}",
-                fmt_num(self.deleted_keys),
-                fmt_num(self.deleted_values)
+            let count = |map: &BTreeMap<RecoveredStatus, usize>| {
+                let total: usize = map.values().sum();
+                let each: Vec<String> = map
+                    .iter()
+                    .map(|(status, n)| format!("{} {}", status.name(), fmt_num(*n)))
+                    .collect();
+                if each.is_empty() {
+                    fmt_num(total)
+                } else {
+                    format!("{} ({})", fmt_num(total), each.join(", "))
+                }
+            };
+            p_label(no_color, "Recovered keys: ", &count(&self.recovered_keys));
+            p_label(
+                no_color,
+                "Recovered values: ",
+                &count(&self.recovered_values),
             );
             if self.lost > 0 {
-                found.push_str(&format!(
-                    " (incomplete deleted value lists, values or data: {})",
-                    fmt_num(self.lost)
-                ));
+                p_label(
+                    no_color,
+                    "Value lists, values or data of recovered records lost: ",
+                    &fmt_num(self.lost),
+                );
             }
-            p_label(no_color, "Deleted keys: ", &found);
         }
         let label = if filters.on_keys() || filters.on_values() {
             "Records matching the filters: "
@@ -884,8 +957,8 @@ impl Stats {
                 fmt_num(self.replayed)
             ));
         }
-        if self.deleted_records > 0 {
-            parts.push(format!("deleted: {}", fmt_num(self.deleted_records)));
+        if self.recovered_records > 0 {
+            parts.push(format!("recovered: {}", fmt_num(self.recovered_records)));
         }
         if self.absent > 0 {
             parts.push(format!(
