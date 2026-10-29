@@ -3476,6 +3476,17 @@ fn registry_subcommands() {
     let help = format!("{}{}", r.stdout, r.stderr);
     assert!(help.contains("juntei parse-registry <COMMAND>"), "{help}");
     assert!(help.contains("read "), "{help}");
+    assert!(help.contains("services "), "{help}");
+    let r = run(&["parse-registry", "services", "-h"]);
+    assert_eq!(r.code, 0);
+    for option in [
+        "--service <NAME>",
+        "--all-control-sets",
+        "--log1 <FILE>",
+        "--no-logs",
+    ] {
+        assert!(r.stdout.contains(option), "{option}\n{}", r.stdout);
+    }
     let r = run(&["parse-registry", "read", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -4304,4 +4315,437 @@ fn registry_input_and_output_errors() {
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("already exists"), "{}", r.stdout);
     assert_eq!(std::fs::read(&file).unwrap(), b"keep");
+}
+
+// --- parse-registry services --------------------------------------------------------------------
+
+/// `parse-registry services`'s CSV columns.
+const SERVICES_COLUMNS: [&str; 27] = [
+    "Host",
+    "SourcePath",
+    "ControlSet",
+    "IsCurrentControlSet",
+    "ServiceName",
+    "DisplayName",
+    "Description",
+    "ImagePath",
+    "ServiceDll",
+    "StartType",
+    "StartValue",
+    "DelayedAutostart",
+    "ServiceType",
+    "TypeValue",
+    "ErrorControl",
+    "ObjectName",
+    "Group",
+    "FailureResetPeriod",
+    "FailureCommand",
+    "FailureActions",
+    "FailureActionType",
+    "FailureActionDelayMs",
+    "FailureActionsRaw",
+    "KeyLastWrittenUTC",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// regipy's 32-bit Windows 7 SYSTEM hive (two control sets), where a collection has it.
+fn regipy_system() -> tempfile::TempDir {
+    use std::io::Read as _;
+    let dir = tempfile::tempdir().unwrap();
+    let config = dir.path().join("W7/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    let gz = std::fs::File::open(repo("test_files/shimcache/regipy/SYSTEM.gz")).unwrap();
+    let mut bytes = Vec::new();
+    flate2::read::GzDecoder::new(gz)
+        .read_to_end(&mut bytes)
+        .unwrap();
+    std::fs::write(config.join("SYSTEM"), bytes).unwrap();
+    dir
+}
+
+/// `parse-registry services` with `args`, as JSON Lines.
+fn services_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "services"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_services_of_a_system_hive() {
+    let hive = regipy_system();
+    let system = hive.path().join("W7/C/Windows/System32/config/SYSTEM");
+    let system = system.to_str().unwrap();
+    let out = hive.path().join("services.csv");
+    let r = run(&[
+        "parse-registry",
+        "services",
+        "-f",
+        system,
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    for line in [
+        "SYSTEM hives parsed: 1",
+        "Hosts: WKS-WIN732BITA",
+        "Control sets read: 1 (the one in use; --all-control-sets for every one)",
+        "Services: 467 (boot 36, system 28, automatic 61, manual 283, disabled 9, no Start value 50)",
+        "With failure actions: 133",
+        "Failure actions that run a command: 0",
+        "Values that could not be read: 0",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header, SERVICES_COLUMNS);
+    assert_eq!(rows.len(), 467);
+    let event_log = rows
+        .iter()
+        .find(|r| r["ServiceName"] == "eventlog")
+        .unwrap();
+    for (column, expected) in [
+        ("Host", "WKS-WIN732BITA"),
+        ("ControlSet", "ControlSet001"),
+        ("IsCurrentControlSet", "True"),
+        ("DisplayName", r"@%SystemRoot%\system32\wevtsvc.dll,-200"),
+        (
+            "ImagePath",
+            r"%SystemRoot%\System32\svchost.exe -k LocalServiceNetworkRestricted",
+        ),
+        ("ServiceDll", r"%SystemRoot%\System32\wevtsvc.dll"),
+        ("StartType", "automatic"),
+        ("StartValue", "2"),
+        ("DelayedAutostart", ""),
+        ("ServiceType", "win32_share_process"),
+        ("TypeValue", "32"),
+        ("ErrorControl", "normal"),
+        ("ObjectName", r"NT AUTHORITY\LocalService"),
+        ("Group", "Event Log"),
+        ("FailureResetPeriod", "86400"),
+        ("FailureCommand", ""),
+        (
+            "FailureActions",
+            r#"[{"type":"restart","delay_ms":60000},{"type":"restart","delay_ms":120000},{"type":"none","delay_ms":0}]"#,
+        ),
+        ("FailureActionType", "restart"),
+        ("FailureActionDelayMs", "60000"),
+        ("FailureActionsRaw", ""),
+        ("TransactionLogStatus", "clean"),
+        ("Problems", ""),
+    ] {
+        assert_eq!(event_log[column], expected, "{column}");
+    }
+
+    // one service, in any case; started after the other automatic ones
+    let wu = services_read(&["-f", system, "--service", "WUAUSERV"]);
+    assert_eq!(wu.len(), 1);
+    assert_eq!(wu[0]["service_name"], "wuauserv");
+    assert_eq!(wu[0]["delayed_autostart"], true);
+    assert_eq!(
+        wu[0]["failure_actions"][0],
+        json!({"type": "restart", "delay_ms": 60000})
+    );
+    // a driver: no failure actions
+    let tcpip = services_read(&["-f", system, "--service", "tcpip"]);
+    assert_eq!(tcpip[0]["start_type"], "boot");
+    assert_eq!(tcpip[0]["service_type"], "kernel_driver");
+    assert_eq!(tcpip[0]["failure_actions"], Value::Null);
+    assert_eq!(tcpip[0]["failure_action_type"], Value::Null);
+
+    // every control set: the one not in use said so
+    let all = services_read(&["-f", system, "--all-control-sets"]);
+    assert_eq!(all.len(), 933);
+    let second: Vec<&Value> = all
+        .iter()
+        .filter(|r| r["control_set"] == "ControlSet002")
+        .collect();
+    assert_eq!(second.len(), 466);
+    assert!(second.iter().all(|r| r["is_current_control_set"] == false));
+    // a service the hive hasn't
+    let r = run(&[
+        "parse-registry",
+        "services",
+        "-f",
+        system,
+        "--service",
+        "nosuch",
+        "-K",
+    ]);
+    assert!(
+        r.stdout
+            .contains("Hives without the service of --service: 1"),
+        "{}",
+        r.stdout
+    );
+}
+
+#[test]
+fn registry_services_with_logs() {
+    let hive = system_hive();
+    let system = hive.path().join("HOST/C/Windows/System32/config/SYSTEM");
+    let system = system.to_str().unwrap();
+    let r = run(&["parse-registry", "services", "-f", system, "-K"]);
+    for line in [
+        "Hosts: GOLDPAPERW11",
+        "Dirty hives recovered with their transaction logs: 1",
+        "Services: 718 (boot 97, system 31, automatic 78, manual 448, disabled 16, no Start value 48)",
+        "With failure actions: 234",
+        "Failure actions that run a command: 1",
+        r#"ControlSet001\spectrum: "C:\Windows\System32\Spectrum.exe" -safemode"#,
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let spectrum = services_read(&["-f", system, "--service", "Spectrum"]);
+    let s = &spectrum[0];
+    assert_eq!(s["failure_reset_period"], 60);
+    assert_eq!(
+        s["failure_command"],
+        r#""C:\Windows\System32\Spectrum.exe" -safemode"#
+    );
+    let actions: Vec<&str> = s["failure_actions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|a| a["type"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        actions,
+        ["restart", "restart", "restart", "restart", "run_command"]
+    );
+    assert_eq!(s["transaction_log_status"], "unchanged");
+    assert_eq!(s["logs_applied"], json!(["SYSTEM.LOG1", "SYSTEM.LOG2"]));
+    // user services: their type's flags
+    let all = services_read(&["-f", system]);
+    assert!(
+        all.iter()
+            .any(|r| r["service_type"] == "win32_share_process|user_service|user_service_instance")
+    );
+    // the logs wrote some services
+    assert!(
+        all.iter()
+            .any(|r| r["transaction_log_status"] == "replayed")
+    );
+    let without = services_read(&["-f", system, "--no-logs", "--service", "spectrum"]);
+    assert_eq!(without[0]["transaction_log_status"], "not_applied");
+}
+
+/// A SYSTEM hive whose services have a FailureActions value that is cut short, a Start value
+/// that is a string, and a DLL under Parameters.
+fn services_hive(current: u32) -> Vec<u8> {
+    let actions = |count: u32, list: &[(u32, u32)]| {
+        let mut b = Vec::new();
+        for v in [3600u32, 0, 0, count, 0x700f_0000] {
+            b.extend_from_slice(&v.to_le_bytes());
+        }
+        for (kind, delay) in list {
+            b.extend_from_slice(&kind.to_le_bytes());
+            b.extend_from_slice(&delay.to_le_bytes());
+        }
+        b
+    };
+    let dword = |n: u32| n.to_le_bytes().to_vec();
+    let good = reg_key(
+        "ExampleSvc",
+        vec![
+            (
+                "ImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\ProgramData\example\svc.exe"),
+            ),
+            ("Start", REG_DWORD, dword(2)),
+            ("Type", REG_DWORD, dword(0x10)),
+            ("ObjectName", REG_SZ, utf16z("LocalSystem")),
+            (
+                "FailureCommand",
+                REG_SZ,
+                utf16z(r"C:\ProgramData\example\again.exe"),
+            ),
+            (
+                "FailureActions",
+                REG_BINARY,
+                actions(2, &[(1, 60_000), (3, 0)]),
+            ),
+        ],
+        vec![reg_key(
+            "Parameters",
+            vec![(
+                "ServiceDll",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\ProgramData\example\svc.dll"),
+            )],
+            Vec::new(),
+        )],
+    )
+    .written(LINKED);
+    let short = reg_key(
+        "Short",
+        vec![
+            ("Start", REG_SZ, utf16z("2")),
+            ("FailureActions", REG_BINARY, actions(3, &[(1, 1)])),
+        ],
+        Vec::new(),
+    );
+    let wrong_types = reg_key(
+        "WrongTypes",
+        vec![
+            ("Start", REG_QWORD, 2u64.to_le_bytes().to_vec()),
+            ("FailureActions", REG_SZ, actions(1, &[(1, 1)])),
+        ],
+        Vec::new(),
+    );
+    let services = reg_key("Services", Vec::new(), vec![good, short, wrong_types]);
+    let name = reg_key(
+        "ComputerName",
+        Vec::new(),
+        vec![reg_key(
+            "ComputerName",
+            vec![("ComputerName", REG_SZ, utf16z("EXAMPLE-PC"))],
+            Vec::new(),
+        )],
+    );
+    let control = reg_key("Control", Vec::new(), vec![name]);
+    let set = reg_key("ControlSet001", Vec::new(), vec![control, services]);
+    let select = reg_key(
+        "Select",
+        vec![("Current", REG_DWORD, dword(current))],
+        Vec::new(),
+    );
+    regf(&reg_key("ROOT", Vec::new(), vec![set, select]))
+}
+
+#[test]
+fn registry_services_damage_and_discovery() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = dir.path().join("H/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SYSTEM"), services_hive(1)).unwrap();
+    let programs = dir.path().join("H/C/Windows/AppCompat/Programs");
+    std::fs::create_dir_all(&programs).unwrap();
+    std::fs::copy(repo(AMCACHE_HIVE), programs.join("Amcache.hve")).unwrap();
+    // under -d: the SYSTEM hive, not the Amcache hive next to it
+    let r = run(&[
+        "parse-registry",
+        "services",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    for line in [
+        "SYSTEM hives: 1",
+        "Hosts: EXAMPLE-PC",
+        "Services: 3 (automatic 1, no Start value 2)",
+        "Failure actions that run a command: 1",
+        r"ControlSet001\ExampleSvc: C:\ProgramData\example\again.exe",
+        "Values that could not be read: 4",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let records = services_read(&["-d", dir.path().to_str().unwrap()]);
+    let good = records
+        .iter()
+        .find(|record| record["service_name"] == "ExampleSvc")
+        .unwrap();
+    assert_eq!(good["service_name"], "ExampleSvc");
+    assert_eq!(good["service_dll"], r"C:\ProgramData\example\svc.dll");
+    assert_eq!(good["failure_action_type"], "restart");
+    assert_eq!(good["failure_action_delay_ms"], 60000);
+    assert_eq!(good["failure_actions"][1]["type"], "run_command");
+    assert_eq!(good["key_last_written"], "2022-02-08T21:03:52Z");
+    // what can't be read is a problem, its bytes kept; the rest is still read
+    let short = records
+        .iter()
+        .find(|record| record["service_name"] == "Short")
+        .unwrap();
+    assert_eq!(short["start_type"], Value::Null);
+    assert_eq!(short["failure_actions"], Value::Null);
+    assert_eq!(
+        short["problems"],
+        json!([
+            "Start: is REG_SZ, not REG_DWORD",
+            "FailureActions counts 3 actions, its 28 bytes hold 1"
+        ])
+    );
+    assert!(
+        short["failure_actions_raw"]
+            .as_str()
+            .unwrap()
+            .starts_with("100e0000")
+    );
+    let wrong = records
+        .iter()
+        .find(|record| record["service_name"] == "WrongTypes")
+        .unwrap();
+    assert_eq!(wrong["start_type"], Value::Null);
+    assert_eq!(wrong["failure_actions"], Value::Null);
+    assert_eq!(
+        wrong["problems"],
+        json!([
+            "Start: is REG_QWORD, not REG_DWORD",
+            "FailureActions: is REG_SZ, not REG_BINARY"
+        ])
+    );
+    assert!(
+        wrong["failure_actions_raw"]
+            .as_str()
+            .unwrap()
+            .starts_with("100e0000")
+    );
+
+    // a hive that is not a SYSTEM hive
+    let r = run(&["parse-registry", "services", "-f", AMCACHE_HIVE, "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("not a SYSTEM hive"), "{}", r.stdout);
+    let r = run(&["parse-registry", "services", "-d", "test_files/lnk", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("No SYSTEM hives were found"),
+        "{}",
+        r.stdout
+    );
+    let r = run(&[
+        "parse-registry",
+        "services",
+        "-d",
+        "test_files",
+        "--log1",
+        AMCACHE_HIVE,
+    ]);
+    assert_ne!(r.code, 0, "--log1 needs -f");
+}
+
+#[test]
+fn registry_services_falls_back_when_select_current_is_unusable() {
+    let dir = tempfile::tempdir().unwrap();
+    let system = dir.path().join("SYSTEM");
+    std::fs::write(&system, services_hive(99)).unwrap();
+    let system = system.to_str().unwrap();
+
+    let records = services_read(&["-f", system]);
+    assert_eq!(records.len(), 3);
+    assert!(
+        records
+            .iter()
+            .all(|record| record["control_set"] == "ControlSet001")
+    );
+    assert!(
+        records
+            .iter()
+            .all(|record| record["is_current_control_set"] == false)
+    );
+
+    let r = run(&["parse-registry", "services", "-f", system, "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(
+        r.stdout
+            .contains("Hives without usable Select\\Current (the first control set was read): 1"),
+        "{}",
+        r.stdout
+    );
 }

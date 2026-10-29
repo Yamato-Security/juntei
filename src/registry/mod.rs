@@ -4,14 +4,16 @@
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
 pub mod read;
+pub mod services;
 
 use crate::cli::RegistryOutputType;
-use crate::util;
-use registry::{Data, Hive, LogFile, Recovery, decode, find_logs};
+use crate::util::{self, check_output};
+use registry::system::computer_name;
+use registry::{Hive, LogFile, Recovery, find_logs};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{self, Write};
+use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 /// The hives Windows keeps, as their base blocks name them (in upper case).
@@ -60,6 +62,64 @@ pub fn find_hives(dir: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
+/// The type of the hive file at `path` from its base block alone: the name it records (else the
+/// file's), when Windows keeps a hive of that name.
+fn hive_type_of_file(path: &Path) -> Option<String> {
+    let mut base = [0u8; 0x70];
+    File::open(path)
+        .and_then(|mut f| io::Read::read_exact(&mut f, &mut base))
+        .ok()?;
+    let units: Vec<u16> = base[0x30..0x70]
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|u| u16::from_le_bytes(*u))
+        .take_while(|&u| u != 0)
+        .collect();
+    let recorded = String::from_utf16_lossy(&units);
+    let last = recorded.rsplit(['\\', '/']).next().unwrap_or_default();
+    hive_type(last).or_else(|| hive_type(&path.file_name()?.to_string_lossy()))
+}
+
+/// `name` in upper case, when Windows keeps a hive of that name.
+fn hive_type(name: &str) -> Option<String> {
+    let upper = name.to_uppercase();
+    HIVE_TYPES.contains(&upper.as_str()).then_some(upper)
+}
+
+/// The primary hive files of type `kind` (`SYSTEM`, …) under `dir`, recursively, in path order.
+pub fn find_hives_of_type(dir: &Path, kind: &str) -> Vec<PathBuf> {
+    find_hives(dir)
+        .into_iter()
+        .filter(|p| hive_type_of_file(p).as_deref() == Some(kind))
+        .collect()
+}
+
+/// The files to read: `-f`'s, or those `find` finds under `-d` (`what` names them in errors).
+pub fn input_files(
+    file: Option<&PathBuf>,
+    dir: Option<&PathBuf>,
+    what: &str,
+    find: impl Fn(&Path) -> Vec<PathBuf>,
+) -> Result<Vec<PathBuf>, String> {
+    match (file, dir) {
+        (Some(f), _) if f.is_file() => Ok(vec![f.clone()]),
+        (Some(f), _) => Err(format!("The file does not exist: {}", f.display())),
+        (None, Some(d)) if !d.is_dir() => {
+            Err(format!("The directory does not exist: {}", d.display()))
+        }
+        (None, Some(d)) => {
+            let found = find(d);
+            if found.is_empty() {
+                Err(format!("No {what} were found in {}", d.display()))
+            } else {
+                Ok(found)
+            }
+        }
+        (None, None) => unreachable!("clap requires -f or -d"),
+    }
+}
+
 /// The transaction logs to replay over a dirty hive.
 #[derive(Clone, Copy)]
 pub enum Logs<'a> {
@@ -98,6 +158,20 @@ impl Opened {
     }
 }
 
+/// The logs `--no-logs`, `--log1` and `--log2` choose; an error when a log given doesn't exist.
+pub fn choose_logs(no_logs: bool, given: &[PathBuf]) -> Result<Logs<'_>, String> {
+    if let Some(missing) = given.iter().find(|l| !l.is_file()) {
+        return Err(format!("The file does not exist: {}", missing.display()));
+    }
+    Ok(if no_logs {
+        Logs::Without
+    } else if given.is_empty() {
+        Logs::NextToIt
+    } else {
+        Logs::Given(given)
+    })
+}
+
 /// Open the hive at `path`, with `logs` replayed when it is dirty.
 pub fn open(path: &Path, logs: Logs) -> Result<Opened, String> {
     let logs = match logs {
@@ -117,12 +191,8 @@ pub fn open(path: &Path, logs: Logs) -> Result<Opened, String> {
             .collect::<Result<Vec<_>, String>>()?,
     };
     let (hive, recovery) = registry::open_with(path, &logs).map_err(|e| e.0)?;
-    let named = |name: &str| {
-        let upper = name.to_uppercase();
-        HIVE_TYPES.contains(&upper.as_str()).then_some(upper)
-    };
-    let hive_type = named(hive.header().name())
-        .or_else(|| named(&path.file_name()?.to_string_lossy()))
+    let hive_type = hive_type(hive.header().name())
+        .or_else(|| hive_type(&path.file_name()?.to_string_lossy()))
         .unwrap_or_default();
     Ok(Opened {
         source: path.to_string_lossy().to_string(),
@@ -133,43 +203,7 @@ pub fn open(path: &Path, logs: Logs) -> Result<Opened, String> {
     })
 }
 
-// --- SYSTEM -----------------------------------------------------------------------------------
-
-/// The text of a string value, when it is one.
-fn text(hive: &Hive, key: &str, name: &str) -> Option<String> {
-    let value = hive.key(key)?.value(name)?;
-    match decode(value.data_type(), &value.data().ok()?) {
-        Data::Text { value, .. } if !value.is_empty() => Some(value),
-        _ => None,
-    }
-}
-
-/// The number of the control set Windows used last (`Select\Current`) in a SYSTEM hive.
-pub fn current_control_set(hive: &Hive) -> Option<u32> {
-    let value = hive.key("Select")?.value("Current")?;
-    match decode(value.data_type(), &value.data().ok()?) {
-        Data::Number(n) => u32::try_from(n).ok().filter(|&n| n > 0),
-        _ => None,
-    }
-}
-
-/// A SYSTEM hive's computer name: `ComputerName` in the control set Windows used last (else the
-/// first), or the TCP/IP host name.
-fn computer_name(hive: &Hive) -> Option<String> {
-    let set = format!("ControlSet{:03}", current_control_set(hive).unwrap_or(1));
-    text(
-        hive,
-        &format!(r"{set}\Control\ComputerName\ComputerName"),
-        "ComputerName",
-    )
-    .or_else(|| {
-        text(
-            hive,
-            &format!(r"{set}\Services\Tcpip\Parameters"),
-            "Hostname",
-        )
-    })
-}
+// --- hosts ------------------------------------------------------------------------------------
 
 /// The hosts hives come from. A SYSTEM hive names its own; another hive takes the name of the
 /// SYSTEM hive of its system: `Windows\System32\config\SYSTEM` of the system whose files it is
@@ -292,6 +326,26 @@ fn find_in(dir: &Path, names: &[&str]) -> Option<PathBuf> {
 }
 
 // --- output -----------------------------------------------------------------------------------
+
+/// Where the records go: the file of `-o` (created, with its directory), stdout (`-t` without
+/// `-o`), or nowhere (the summary only).
+pub fn sink(
+    output: Option<&PathBuf>,
+    clobber: bool,
+    data_on_stdout: bool,
+) -> Result<Option<Box<dyn Write>>, String> {
+    let Some(path) = output else {
+        return Ok(data_on_stdout.then(|| Box::new(BufWriter::new(io::stdout())) as Box<dyn Write>));
+    };
+    check_output(path, false, clobber)?;
+    if let Some(parent) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("Could not create {}: {e}", parent.display()))?;
+    }
+    let file =
+        File::create(path).map_err(|e| format!("Could not create {}: {e}", path.display()))?;
+    Ok(Some(Box::new(BufWriter::new(file))))
+}
 
 /// The CSV, JSON or JSONL writer of a subcommand's records.
 pub enum RecordWriter {

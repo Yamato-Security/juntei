@@ -786,6 +786,16 @@ pub enum RegistryCommands {
         disable_version_flag = true
     )]
     Read(RegistryReadOptions),
+
+    /// Services of SYSTEM hives: image path, service DLL, start and type, account, and failure actions decoded, for the control set in use (or all)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry services <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Services(RegistryServicesOptions),
 }
 
 /// What `parse-registry read` writes.
@@ -858,7 +868,7 @@ pub struct RegistryReadOptions {
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
     pub output: Option<PathBuf>,
 
-    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
     pub output_type: Option<RegistryOutputType>,
 
@@ -879,6 +889,64 @@ pub struct RegistryReadOptions {
 }
 
 impl RegistryReadOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryServicesOptions {
+    /// Directory to search recursively for SYSTEM hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one SYSTEM hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Only the service of this name (its key's name, in any case)
+    #[arg(help_heading = Some("Filtering"), long, value_name = "NAME", display_order = 200)]
+    pub service: Option<String>,
+
+    /// Every control set (ControlSet001, ControlSet002, ...), not only the one Windows used last
+    #[arg(help_heading = Some("Filtering"), long, display_order = 201)]
+    pub all_control_sets: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryServicesOptions {
     pub fn output_type(&self) -> RegistryOutputType {
         self.output_type.unwrap_or(RegistryOutputType::Csv)
     }
