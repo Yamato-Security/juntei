@@ -21,6 +21,7 @@ not event logs.
 | Services (`SYSTEM` hive), with their failure actions | `parse-registry services` | Supported |
 | Recent documents (`NTUSER.DAT` `RecentDocs`), in their MRU order | `parse-registry recentdocs` | Supported |
 | Scheduled tasks (`SOFTWARE` `TaskCache`), with their actions and hidden tasks | `parse-registry taskcache` | Supported |
+| Local accounts (`SAM`) | `parse-registry sam` | Supported |
 | More Windows artifacts | | Planned |
 
 ## Build
@@ -694,6 +695,7 @@ Commands:
   services    Services of SYSTEM hives: image path, service DLL, start and type, account, and failure actions decoded, for the control set in use (or all)
   recentdocs  Explorer's recent documents in NTUSER.DAT hives (RecentDocs): every item in its MRU order, per extension, with its shortcut's name and the time the most recent was opened
   taskcache   The Task Scheduler's cache in SOFTWARE hives (TaskCache): every task with its actions decoded (program, arguments, COM handler), times, and tasks hidden from the Task Scheduler
+  sam         Local accounts in SAM hives: RID, user name, account flags, last logon, password last set, expiry, failed and total logons, password hint, accounts hidden from the sign-in screen
 ```
 
 #### `parse-registry read`
@@ -1016,6 +1018,75 @@ juntei parse-registry taskcache -f SOFTWARE -t jsonl | jq -s -c 'map(select(.act
   type of hive is an error; `host`, transaction logs and `transaction_log_status` are as for
   `read`.
 
+#### `parse-registry sam`
+
+The local accounts in `SAM` hives (`SAM\Domains\Account\Users`): who they are, whether they are
+enabled, when they last logged on and changed their password, how often they logged on and
+failed to, and the accounts the sign-in screen hides. Password hashes are not read.
+
+```
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SAM hives
+  -f, --file <FILE>      File path to one SAM hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Filtering:
+      --rid <RID>  Only the account with this RID (ex: 500, the built-in Administrator)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```
+# Every account, listed in the summary with its state, last logon and logons
+juntei parse-registry sam -f C/Windows/System32/config/SAM -o accounts.csv
+
+# The SAM hives of a triage collection, each record with its host
+juntei parse-registry sam -d triage/ -t jsonl -o accounts.jsonl
+
+# The built-in Administrator
+juntei parse-registry sam -f SAM --rid 500 -t jsonl | jq .
+
+# Enabled accounts and when they last logged on, to the second as event logs give it
+juntei parse-registry sam -f SAM -t jsonl | jq -c 'select(.account_flags | index("disabled") | not) | {rid, username, last_logon_whole_seconds, logon_count}'
+```
+
+- One record per account, from its key under `Users` (named by its RID in hex) and its `Names`
+  entry. JSON / JSONL fields, in this order (CSV columns in the same order, `Host`, `SourcePath`,
+  …): `host`, `source_path`, `rid`, `username`, `full_name`, `comment`, `user_comment`,
+  `account_flags` (`disabled`, `password_not_required`, `normal_account`,
+  `dont_expire_password`, `locked_out`, …) and `account_flags_value`, `last_logon`,
+  `last_logon_whole_seconds`, `password_last_set`, `account_expiration`, `last_failed_logon`,
+  `failed_logon_count`, `logon_count`, `password_hint`, `internet_user_name` (the Microsoft
+  account it is linked to), `hidden_from_logon_ui`, `home_directory`, `profile_path`,
+  `logon_script`, `key_last_written`, `names_key_last_written` (about when the account was made),
+  `last_logon_filetime`, `password_last_set_filetime`, `account_expiration_filetime`,
+  `last_failed_logon_filetime`, `transaction_log_status`, `logs_applied` and `problems`.
+- Times are to the 100 ns; `last_logon_whole_seconds` is the last logon truncated to the second,
+  to match tools and logs that print seconds. A time that is 0 (never) or "never"
+  (`0x7FFFFFFFFFFFFFFF`, an account that doesn't expire) is empty; the `*_filetime` fields keep
+  the numbers.
+- `hidden_from_logon_ui`: `UserDontShowInLogonUI`, set by Windows on its built-in
+  `DefaultAccount` and `WDAGUtilityAccount`, and a way to hide an account added to the system: the
+  summary lists the accounts with RIDs of 1000 and up that have it.
+- What disagrees is reported: `F`'s RID not the key's, a `Names` entry with another name, an
+  account without a `Names` entry or a `Names` entry without an account (kept as a record), a
+  `V` entry past its end.
+- `-d` reads every hive whose base block or file name says it is a `SAM` hive; `-f` on another
+  type of hive is an error; `host`, transaction logs and `transaction_log_status` are as for
+  `read`.
+
 Hives are read by Yamato Security's
 [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) (Apache-2.0), whose
 keys, values and transaction log replay equal [yarp](https://github.com/msuhanov/yarp)'s on the
@@ -1024,7 +1095,8 @@ yarp's scanner finds. Its services, values and failure actions equal those of a 
 yarp on a Windows 7 and a dirty Windows 11 `SYSTEM` hive; its recent documents equal those of a
 reader built on yarp and [libfwsi](https://github.com/libyal/libfwsi) on 9 public `NTUSER.DAT`
 hives; its scheduled tasks those of a separate decoder built on yarp on 7 public `SOFTWARE` hives
-(Windows 7 to 11, Server 2012 R2 and 2022).
+(Windows 7 to 11, Server 2012 R2 and 2022); its accounts those of
+[dissect](https://github.com/fox-it/dissect.target)'s `SAM` structures on 7 public `SAM` hives.
 
 ## License
 
