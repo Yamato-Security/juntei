@@ -3479,6 +3479,7 @@ fn registry_subcommands() {
     assert!(help.contains("services "), "{help}");
     assert!(help.contains("recentdocs "), "{help}");
     assert!(help.contains("taskcache "), "{help}");
+    assert!(help.contains("sam "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -5449,4 +5450,322 @@ fn registry_taskcache_discovery_and_errors() {
         "{}",
         r.stdout
     );
+}
+
+// --- parse-registry sam -------------------------------------------------------------------------
+
+/// `parse-registry sam`'s CSV columns.
+const SAM_COLUMNS: [&str; 34] = [
+    "Host",
+    "SourcePath",
+    "Rid",
+    "Username",
+    "FullName",
+    "Comment",
+    "UserComment",
+    "AccountFlags",
+    "AccountFlagsValue",
+    "CountryCode",
+    "CodePage",
+    "LastLogonUTC",
+    "LastLogonWholeSecondsUTC",
+    "PasswordLastSetUTC",
+    "AccountExpirationUTC",
+    "LastFailedLogonUTC",
+    "FailedLogonCount",
+    "LogonCount",
+    "PasswordHint",
+    "InternetUserName",
+    "HiddenFromLogonUI",
+    "HomeDirectory",
+    "HomeDrive",
+    "ProfilePath",
+    "LogonScript",
+    "KeyLastWrittenUTC",
+    "NamesKeyLastWrittenUTC",
+    "LastLogonFiletime",
+    "PasswordLastSetFiletime",
+    "AccountExpirationFiletime",
+    "LastFailedLogonFiletime",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// `parse-registry sam` with `args`, as JSON Lines.
+fn sam_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "sam"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_sam_in_a_collection() {
+    // a Windows 11 system's SYSTEM and SAM hives, where they were
+    let collection = system_hive();
+    let config = collection.path().join("HOST/C/Windows/System32/config");
+    unpack_registry("rathbun_w11", &["SAM"], &config);
+    let dir = collection.path().to_str().unwrap();
+    let r = run(&["parse-registry", "sam", "-d", dir, "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    for line in [
+        "SAM hives: 1",
+        "Hosts: GOLDPAPERW11",
+        "Accounts: 5 (enabled 1, disabled 4)",
+        "SAM: 1001 AndrewRathbun (enabled, last logon 2022-02-08T20:43:51.966977200Z, 4 logons)",
+        "SAM: 500 Administrator (disabled, last logon never, 0 logons)",
+        // the built-in accounts it hides are not counted
+        "Accounts people made that the sign-in screen hides: 0",
+        "Values that could not be read or don't match: 0",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let user = sam_read(&["-d", dir, "--rid", "1001"]);
+    assert_eq!(user.len(), 1);
+    for (field, expected) in [
+        ("host", json!("GOLDPAPERW11")),
+        ("rid", json!(1001)),
+        ("username", json!("AndrewRathbun")),
+        (
+            "account_flags",
+            json!([
+                "password_not_required",
+                "normal_account",
+                "dont_expire_password"
+            ]),
+        ),
+        ("account_flags_value", json!(532)),
+        ("country_code", json!(0)),
+        ("code_page", json!(0)),
+        ("last_logon", json!("2022-02-08T20:43:51.966977200Z")),
+        ("last_logon_whole_seconds", json!("2022-02-08T20:43:51Z")),
+        // never set, never expires: null, the numbers kept
+        ("password_last_set", Value::Null),
+        ("password_last_set_filetime", json!(0)),
+        ("account_expiration", Value::Null),
+        (
+            "account_expiration_filetime",
+            json!(0x7FFF_FFFF_FFFF_FFFF_u64),
+        ),
+        ("logon_count", json!(4)),
+        ("failed_logon_count", json!(0)),
+        (
+            "names_key_last_written",
+            json!("2022-02-05T18:59:49.448358500Z"),
+        ),
+        ("hidden_from_logon_ui", Value::Null),
+        ("transaction_log_status", json!("clean")),
+        ("problems", json!([])),
+    ] {
+        assert_eq!(user[0][field], expected, "{field}");
+    }
+    // the built-in accounts the sign-in screen hides
+    let all = sam_read(&["-d", dir]);
+    let hidden: Vec<&Value> = all
+        .iter()
+        .filter(|r| r["hidden_from_logon_ui"] == true)
+        .map(|r| &r["rid"])
+        .collect();
+    assert_eq!(hidden, [&json!(503), &json!(504)]);
+}
+
+#[test]
+fn registry_sam_of_an_exported_hive() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let hive = dir.path().join("SAM");
+    let hive = hive.to_str().unwrap();
+    let out = dir.path().join("sam.csv");
+    let r = run(&[
+        "parse-registry",
+        "sam",
+        "-f",
+        hive,
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(
+        r.stdout.contains("Accounts: 3 (enabled 1, disabled 2)"),
+        "{}",
+        r.stdout
+    );
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header, SAM_COLUMNS);
+    let admin = &rows[0];
+    for (column, expected) in [
+        ("Host", ""),
+        ("Rid", "500"),
+        ("Username", "Administrator"),
+        (
+            "Comment",
+            "Built-in account for administering the computer/domain",
+        ),
+        (
+            "AccountFlags",
+            "disabled|normal_account|dont_expire_password",
+        ),
+        ("AccountFlagsValue", "529"),
+        ("CountryCode", "0"),
+        ("CodePage", "0"),
+        ("LastLogonUTC", "2010-11-20T21:48:12.569244Z"),
+        ("LastLogonWholeSecondsUTC", "2010-11-20T21:48:12Z"),
+        ("PasswordLastSetUTC", "2010-11-20T21:56:34.743687Z"),
+        ("AccountExpirationUTC", ""),
+        ("AccountExpirationFiletime", "0"),
+        ("LastFailedLogonUTC", ""),
+        ("FailedLogonCount", "0"),
+        ("LogonCount", "6"),
+        ("HiddenFromLogonUI", ""),
+        ("HomeDrive", ""),
+        ("KeyLastWrittenUTC", "2014-09-24T06:32:50.378042400Z"),
+        ("NamesKeyLastWrittenUTC", "2014-09-24T03:36:06.358837400Z"),
+        ("TransactionLogStatus", "clean"),
+        ("Problems", ""),
+    ] {
+        assert_eq!(admin[column], expected, "{column}");
+    }
+    let guest = sam_read(&["-f", hive, "--rid", "501"]);
+    assert_eq!(guest[0]["username"], "Guest");
+    assert_eq!(
+        guest[0]["account_expiration_filetime"],
+        json!(0x7FFF_FFFF_FFFF_FFFF_u64)
+    );
+    let r = run(&["parse-registry", "sam", "-f", hive, "--rid", "9999", "-K"]);
+    assert!(
+        r.stdout.contains("Hives without the account of --rid: 1"),
+        "{}",
+        r.stdout
+    );
+}
+
+/// A SAM hive with an account hidden from the sign-in screen, with a password hint and a
+/// Microsoft account, and an account whose Names entry has another name.
+fn sam_hive() -> Vec<u8> {
+    let f = |last_logon: u64, rid: u32, flags: u16, logons: u16| {
+        let mut f = vec![0u8; 80];
+        f[0x08..0x10].copy_from_slice(&last_logon.to_le_bytes());
+        f[0x20..0x28].copy_from_slice(&0x7FFF_FFFF_FFFF_FFFF_u64.to_le_bytes());
+        f[0x30..0x34].copy_from_slice(&rid.to_le_bytes());
+        f[0x38..0x3A].copy_from_slice(&flags.to_le_bytes());
+        f[0x42..0x44].copy_from_slice(&logons.to_le_bytes());
+        f
+    };
+    let v = |name: &str, home_drive: Option<&str>| {
+        let name: Vec<u8> = name.encode_utf16().flat_map(u16::to_le_bytes).collect();
+        let mut v = vec![0u8; 0xCC];
+        v[16..20].copy_from_slice(&(name.len() as u32).to_le_bytes());
+        v.extend(&name);
+        if let Some(home_drive) = home_drive {
+            let home_drive: Vec<u8> = home_drive
+                .encode_utf16()
+                .flat_map(u16::to_le_bytes)
+                .collect();
+            v[7 * 12..7 * 12 + 4].copy_from_slice(&(name.len() as u32).to_le_bytes());
+            v[7 * 12 + 4..7 * 12 + 8].copy_from_slice(&(home_drive.len() as u32).to_le_bytes());
+            v.extend(home_drive);
+        }
+        v
+    };
+    let wide = |s: &str| -> Vec<u8> { s.encode_utf16().flat_map(u16::to_le_bytes).collect() };
+    let support = reg_key(
+        "000003E9",
+        vec![
+            ("F", REG_BINARY, f(LINKED, 1001, 0x0210, 3)),
+            ("V", REG_BINARY, v("support", Some("H:"))),
+            ("UserPasswordHint", REG_BINARY, wide("the usual")),
+            ("InternetUserName", REG_BINARY, wide("support@example.com")),
+            (
+                "UserDontShowInLogonUI",
+                REG_BINARY,
+                1u32.to_le_bytes().to_vec(),
+            ),
+        ],
+        Vec::new(),
+    );
+    let bob = reg_key(
+        "000003EA",
+        vec![
+            ("F", REG_BINARY, f(0, 1002, 0x0011, 0)),
+            ("V", REG_BINARY, v("bob", None)),
+        ],
+        Vec::new(),
+    );
+    // A partial account whose F value is missing: its state must not be called enabled.
+    let partial = reg_key(
+        "000003EB",
+        vec![("V", REG_BINARY, v("partial", None))],
+        Vec::new(),
+    );
+    let names = reg_key(
+        "Names",
+        Vec::new(),
+        vec![
+            reg_key("robert", vec![("", 1002, Vec::new())], Vec::new()),
+            reg_key("support", vec![("", 1001, Vec::new())], Vec::new()),
+            reg_key("partial", vec![("", 1003, Vec::new())], Vec::new()),
+        ],
+    );
+    let mut key = reg_key("Users", Vec::new(), vec![support, bob, partial, names]);
+    for name in ["Account", "Domains", "SAM"] {
+        key = reg_key(name, Vec::new(), vec![key]);
+    }
+    regf(&reg_key("ROOT", Vec::new(), vec![key]))
+}
+
+#[test]
+fn registry_sam_hidden_accounts_and_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = dir.path().join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SAM"), sam_hive()).unwrap();
+    unpack_registry("regipy", &["NTUSER.DAT"], &dir.path().join("C/Users/bob"));
+    let dir = dir.path().to_str().unwrap();
+    // under -d: the SAM hive, not the user's hive
+    let r = run(&["parse-registry", "sam", "-d", dir, "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    for line in [
+        "SAM hives: 1",
+        "Accounts: 3 (enabled 1, disabled 1, unknown 1)",
+        "Accounts people made that the sign-in screen hides: 1",
+        "SAM: 1001 support",
+        "its Names entry is robert, not its user name",
+        "Values that could not be read or don't match: 2",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let records = sam_read(&["-d", dir]);
+    let support = &records[0];
+    assert_eq!(support["hidden_from_logon_ui"], true);
+    assert_eq!(support["password_hint"], "the usual");
+    assert_eq!(support["internet_user_name"], "support@example.com");
+    assert_eq!(support["home_drive"], "H:");
+    assert_eq!(support["last_logon"], "2022-02-08T21:03:52Z");
+    assert_eq!(
+        support["account_flags"],
+        json!(["normal_account", "dont_expire_password"])
+    );
+    let partial = &records[2];
+    assert_eq!(partial["rid"], 1003);
+    assert_eq!(partial["account_flags"], Value::Null);
+    assert_eq!(partial["account_flags_value"], Value::Null);
+    assert_eq!(partial["problems"], json!(["F is not there"]));
+
+    let ntuser = std::path::Path::new(dir).join("C/Users/bob/NTUSER.DAT");
+    let r = run(&[
+        "parse-registry",
+        "sam",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("not a SAM hive"), "{}", r.stdout);
+    let r = run(&["parse-registry", "sam", "-d", "test_files/lnk", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("No SAM hives were found"), "{}", r.stdout);
 }
