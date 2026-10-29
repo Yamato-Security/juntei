@@ -113,15 +113,16 @@ pub enum Commands {
     )]
     ParseDefenderQuarantine(DefenderQuarantineOptions),
 
-    /// Parse registry hives: every key and value, with last-write times, types and data; dirty hives replayed with their transaction logs
+    /// Parse registry hives (SYSTEM, SOFTWARE, SAM, NTUSER.DAT, UsrClass.dat, ...): one subcommand per artifact; dirty hives replayed with their transaction logs
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry <COMMAND> [OPTIONS]\n\n{all-args}",
+        subcommand_required = true,
+        arg_required_else_help = true,
         disable_version_flag = true
     )]
-    ParseRegistry(RegistryOptions),
+    ParseRegistry(RegistryCommand),
 }
 
 #[derive(Args, Clone, Debug, Default)]
@@ -386,7 +387,7 @@ pub struct PrefetchOptions {
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
     pub output: Option<PathBuf>,
 
-    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    /// Output type: csv (default), json, jsonl. With -t and without -o, records are written to stdout
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
     pub output_type: Option<PrefetchOutputType>,
 
@@ -767,7 +768,27 @@ impl DefenderQuarantineOptions {
     }
 }
 
-/// What `parse-registry` writes.
+/// `parse-registry`'s subcommands.
+#[derive(Args, Clone, Debug)]
+pub struct RegistryCommand {
+    #[command(subcommand)]
+    pub cmd: RegistryCommands,
+}
+
+#[derive(Subcommand, Clone, Debug)]
+pub enum RegistryCommands {
+    /// Read keys and values as they are: types, data (strings, multi-strings, numbers, binary), key last-write times, DWORD/QWORD numbers and FILETIMEs, allocated, replayed or deleted
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry read <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Read(RegistryReadOptions),
+}
+
+/// What `parse-registry read` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RegistryOutputType {
     /// One row per value, and per key without values or with damage
@@ -780,7 +801,7 @@ pub enum RegistryOutputType {
 
 #[derive(Args, Clone, Debug, Default)]
 #[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
-pub struct RegistryOptions {
+pub struct RegistryReadOptions {
     /// Directory to search recursively for registry hives (every file that is one, logs aside)
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
     pub directory: Option<PathBuf>,
@@ -789,15 +810,19 @@ pub struct RegistryOptions {
     #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
     pub filepath: Option<PathBuf>,
 
-    /// A transaction log of the hive given with -f, once per log (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
-    #[arg(help_heading = Some("Input"), long = "log", value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
-    pub logs: Vec<PathBuf>,
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
 
     /// Read a dirty hive as it is, without its transaction logs
-    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 103)]
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
     pub no_logs: bool,
 
-    /// Only this key (its path under the hive's root key, ex: Microsoft\Windows\CurrentVersion\Group Policy\State) and the keys under it
+    /// Only the key at this path (in any case; ex: Microsoft\Windows\CurrentVersion\Run). It may start with HKLM\ and the hive's name, and CurrentControlSet is the control set Windows used last
     #[arg(help_heading = Some("Filtering"), short = 'k', long, value_name = "PATH", display_order = 200)]
     pub key: Option<String>,
 
@@ -805,21 +830,29 @@ pub struct RegistryOptions {
     #[arg(help_heading = Some("Filtering"), long, value_name = "REGEX", display_order = 201)]
     pub key_regex: Option<String>,
 
-    /// Only values whose name matches REGEX (ignoring case; the default value's name is empty)
-    #[arg(help_heading = Some("Filtering"), long, value_name = "REGEX", display_order = 202)]
-    pub value_name: Option<String>,
+    /// Only the value named NAME (in any case; "" is the key's default value). With --key or --key-regex, a key without it gives an absent_value record
+    #[arg(help_heading = Some("Filtering"), long, value_name = "NAME", display_order = 202)]
+    pub value: Option<String>,
 
-    /// Only values whose data, as written, matches REGEX (ignoring case, so a GUID matches in any case)
+    /// Only values whose name matches REGEX (ignoring case; the default value's name is empty)
     #[arg(help_heading = Some("Filtering"), long, value_name = "REGEX", display_order = 203)]
-    pub value_data: Option<String>,
+    pub value_regex: Option<String>,
+
+    /// Only values whose data, as written, matches REGEX (ignoring case, so a GUID matches in any case; binary data in hex)
+    #[arg(help_heading = Some("Filtering"), long, value_name = "REGEX", display_order = 204)]
+    pub data_regex: Option<String>,
 
     /// Only keys last written on or after DATE, in UTC unless an offset is given (ex: 2025-10-19, 2025-10-19T13:45:30Z)
-    #[arg(help_heading = Some("Filtering"), long, value_name = "DATE", value_parser = crate::mft_csv::parse_cutoff, display_order = 204)]
+    #[arg(help_heading = Some("Filtering"), long, value_name = "DATE", value_parser = crate::mft_csv::parse_cutoff, display_order = 205)]
     pub timeline_start: Option<i64>,
 
     /// Only keys last written on or before DATE
-    #[arg(help_heading = Some("Filtering"), long, value_name = "DATE", value_parser = crate::mft_csv::parse_cutoff, display_order = 205)]
+    #[arg(help_heading = Some("Filtering"), long, value_name = "DATE", value_parser = crate::mft_csv::parse_cutoff, display_order = 206)]
     pub timeline_end: Option<i64>,
+
+    /// Also the deleted keys and values left in the hive's free cells
+    #[arg(help_heading = Some("Filtering"), long, display_order = 207)]
+    pub recover_deleted: bool,
 
     /// Save every record to a file
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
@@ -829,19 +862,23 @@ pub struct RegistryOptions {
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
     pub output_type: Option<RegistryOutputType>,
 
-    /// Write every value's bytes in hex (ValueDataRaw), not only those that don't decode as their type
+    /// Write every value's bytes in hex (value_data_raw), not only those that don't decode as their type
     #[arg(help_heading = Some("Output"), long, display_order = 302)]
     pub raw_data: bool,
 
+    /// Also write REG_QWORD values as FILETIMEs (value_filetime_utc), keeping the number (value_data, value_u64)
+    #[arg(help_heading = Some("Output"), long, display_order = 303)]
+    pub qword_as_filetime: bool,
+
     /// Overwrite files when saving
-    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 303)]
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 304)]
     pub clobber: bool,
 
     #[clap(flatten)]
     pub common: CommonOptions,
 }
 
-impl RegistryOptions {
+impl RegistryReadOptions {
     pub fn output_type(&self) -> RegistryOutputType {
         self.output_type.unwrap_or(RegistryOutputType::Csv)
     }

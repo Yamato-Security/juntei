@@ -603,6 +603,7 @@ dependencies = [
  "ys-lnk-parser",
  "ys-mft-parser",
  "ys-prefetch-parser",
+ "ys-registry-parser",
  "ys-shimcache-parser",
  "ys-srum-parser",
  "ys-usn-journal-parser",
@@ -1305,6 +1306,11 @@ dependencies = [
  "crc32fast",
  "forensic-rs",
 ]
+
+[[package]]
+name = "ys-registry-parser"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-registry-parser#949a852ff0001d1fe5802a11076d92cc65d1d94a"
 
 [[package]]
 name = "ys-shimcache-parser"

@@ -19,7 +19,7 @@ mod util;
 
 use chrono::Local;
 use clap::{CommandFactory, Parser};
-use cli::{Cli, Commands, VERSION};
+use cli::{Cli, Commands, RegistryCommands, VERSION};
 use color::JunteiColor::Green;
 use std::env;
 use std::time::Instant;
@@ -138,17 +138,19 @@ fn main() {
             }
             code
         }
-        Commands::ParseRegistry(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
+        Commands::ParseRegistry(registry) => match &registry.cmd {
+            RegistryCommands::Read(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::read::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            let code = registry::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
-            }
-            code
-        }
+        },
     };
     std::process::exit(code);
 }
