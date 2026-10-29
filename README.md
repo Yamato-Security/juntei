@@ -19,6 +19,7 @@ not event logs.
 | Microsoft Defender quarantine (`Quarantine\Entries`, `ResourceData`, `Resources`) | `parse-defender-quarantine` | Supported |
 | Registry hives (`SYSTEM`, `SOFTWARE`, `NTUSER.DAT`, …), with their transaction logs and deleted keys | `parse-registry read` | Supported |
 | Services (`SYSTEM` hive), with their failure actions | `parse-registry services` | Supported |
+| Recent documents (`NTUSER.DAT` `RecentDocs`), in their MRU order | `parse-registry recentdocs` | Supported |
 | More Windows artifacts | | Planned |
 
 ## Build
@@ -688,8 +689,9 @@ writing) is read with its transaction logs replayed, and each record says whethe
 juntei parse-registry <COMMAND> [OPTIONS]
 
 Commands:
-  read      Read keys and values as they are: types, data (strings, multi-strings, numbers, binary), key last-write times, DWORD/QWORD numbers and FILETIMEs, allocated, replayed or deleted
-  services  Services of SYSTEM hives: image path, service DLL, start and type, account, and failure actions decoded, for the control set in use (or all)
+  read        Read keys and values as they are: types, data (strings, multi-strings, numbers, binary), key last-write times, DWORD/QWORD numbers and FILETIMEs, allocated, replayed or deleted
+  services    Services of SYSTEM hives: image path, service DLL, start and type, account, and failure actions decoded, for the control set in use (or all)
+  recentdocs  Explorer's recent documents in NTUSER.DAT hives (RecentDocs): every item in its MRU order, per extension, with its shortcut's name and the time the most recent was opened
 ```
 
 #### `parse-registry read`
@@ -876,12 +878,76 @@ juntei parse-registry services -f SYSTEM -t jsonl | jq -c 'select(.start_type ==
 - `-d` reads every hive whose base block or file name says it is a `SYSTEM` hive; `host`,
   transaction logs and `transaction_log_status` are as for `read`.
 
+#### `parse-registry recentdocs`
+
+Explorer's recent documents in `NTUSER.DAT` hives: what the user opened, most recent first, from
+`Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs` and its subkeys (one per
+extension, and `Folder`), with the name of the shortcut Windows made for each in the user's
+`Recent` folder (what `parse-lnk` reads there).
+
+```
+Input:
+  -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
+  -f, --file <FILE>      File path to one NTUSER.DAT hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```
+# Every recent item of a user, and each hive's most recent item in the summary
+juntei parse-registry recentdocs -f C/Users/alice/NTUSER.DAT -o recentdocs.csv
+
+# Every user of a triage collection, each record with its host and user
+juntei parse-registry recentdocs -d triage/ -t jsonl -o recentdocs.jsonl
+
+# The most recently opened item of all, and when
+juntei parse-registry recentdocs -f NTUSER.DAT -t jsonl | jq -c 'select(.extension == null and .mru_position == 0) | {filename, last_opened}'
+
+# The documents of one type, most recent first
+juntei parse-registry recentdocs -f NTUSER.DAT -t jsonl | jq -r 'select(.extension == ".docx") | .filename'
+```
+
+- One record per item, in the order of its key's `MRUListEx`: `RecentDocs` itself (every type,
+  `extension` null) first, then each subkey. JSON / JSONL fields, in this order (CSV columns in
+  the same order, `Host`, `Username`, …): `host`, `username`, `source_path`, `extension`,
+  `mru_position` (0: the most recent), `value_index` (the value's number), `filename` (the item's
+  name: a file's or a folder's), `link_name` (its shortcut in `Recent`: from the shell item
+  after the name; older Windows names it without the document's extension), `key_last_written`,
+  `last_opened`, `value_data_raw`, `transaction_log_status`, `logs_applied` and `problems`.
+- Times: Windows writes the key when an item is opened, so its last-write time is when its most
+  recent item was opened: `last_opened` is that time on the item at `mru_position` 0, and empty on
+  the others, whose times the key doesn't keep. `key_last_written` is on every record.
+- `username`: the profile folder the hive is in (`Users\<name>\NTUSER.DAT`, also
+  `Documents and Settings` and `Windows\ServiceProfiles`), else the profile folder in the paths
+  of the hive's shell folders (a hive exported on its own); `host` is as for `read`.
+- What doesn't add up is reported, not hidden: an item `MRUListEx` names but the key hasn't (a
+  record without a name), a value it doesn't name (`mru_position` empty), a key without
+  `MRUListEx`, a value of the wrong type; an item that doesn't decode keeps its bytes in
+  `value_data_raw`.
+- `-d` reads every hive whose base block or file name says it is an `NTUSER.DAT`; `-f` on another
+  type of hive is an error.
+
 Hives are read by Yamato Security's
 [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) (Apache-2.0), whose
 keys, values and transaction log replay equal [yarp](https://github.com/msuhanov/yarp)'s on the
 public test hives (dirty ones with their logs), and whose deleted keys in free cells are those
 yarp's scanner finds. Its services, values and failure actions equal those of a reader built on
-yarp on a Windows 7 and a dirty Windows 11 `SYSTEM` hive.
+yarp on a Windows 7 and a dirty Windows 11 `SYSTEM` hive; its recent documents equal those of a
+reader built on yarp and [libfwsi](https://github.com/libyal/libfwsi) on 9 public `NTUSER.DAT`
+hives.
 
 ## License
 

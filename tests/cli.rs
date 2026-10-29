@@ -3477,6 +3477,7 @@ fn registry_subcommands() {
     assert!(help.contains("juntei parse-registry <COMMAND>"), "{help}");
     assert!(help.contains("read "), "{help}");
     assert!(help.contains("services "), "{help}");
+    assert!(help.contains("recentdocs "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -4745,6 +4746,324 @@ fn registry_services_falls_back_when_select_current_is_unusable() {
     assert!(
         r.stdout
             .contains("Hives without usable Select\\Current (the first control set was read): 1"),
+        "{}",
+        r.stdout
+    );
+}
+
+// --- parse-registry recentdocs ------------------------------------------------------------------
+
+/// `parse-registry recentdocs`'s CSV columns.
+const RECENTDOCS_COLUMNS: [&str; 14] = [
+    "Host",
+    "Username",
+    "SourcePath",
+    "Extension",
+    "MruPosition",
+    "ValueIndex",
+    "Filename",
+    "LinkName",
+    "KeyLastWrittenUTC",
+    "LastOpenedUTC",
+    "ValueDataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// The gzipped files `names` of `test_files/registry/<dir>`, unpacked into `to`.
+fn unpack_registry(dir: &str, names: &[&str], to: &Path) {
+    use std::io::Read as _;
+    std::fs::create_dir_all(to).unwrap();
+    for name in names {
+        let gz =
+            std::fs::File::open(repo(&format!("test_files/registry/{dir}/{name}.gz"))).unwrap();
+        let mut bytes = Vec::new();
+        flate2::read::GzDecoder::new(gz)
+            .read_to_end(&mut bytes)
+            .unwrap();
+        std::fs::write(to.join(name), bytes).unwrap();
+    }
+}
+
+/// `parse-registry recentdocs` with `args`, as JSON Lines.
+fn recentdocs_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "recentdocs"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_recentdocs_in_a_collection() {
+    // a Windows 11 system's SYSTEM hive and a user's dirty NTUSER.DAT, where they were
+    let collection = system_hive();
+    let profile = collection.path().join("HOST/C/Users/AndrewRathbun");
+    unpack_registry(
+        "rathbun_w11",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        &profile,
+    );
+    let dir = collection.path().to_str().unwrap();
+    let r = run(&["parse-registry", "recentdocs", "-d", dir, "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    for line in [
+        "NTUSER.DAT hives: 1",
+        "Hosts: GOLDPAPERW11",
+        "Users: AndrewRathbun",
+        "Dirty hives recovered with their transaction logs: 1",
+        "Recent items: 22 (in 5 lists: RecentDocs and its extensions)",
+        "NTUSER.DAT: The Internet (2022-02-13T03:54:53.963087500Z)",
+        "Items or lists that could not be read: 0",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let records = recentdocs_read(&["-d", dir]);
+    assert_eq!(records.len(), 22);
+    let first = &records[0];
+    for (field, expected) in [
+        ("host", json!("GOLDPAPERW11")),
+        ("username", json!("AndrewRathbun")),
+        ("extension", Value::Null),
+        ("mru_position", json!(0)),
+        ("value_index", json!(10)),
+        ("filename", json!("The Internet")),
+        ("link_name", json!("The Internet.lnk")),
+        ("key_last_written", json!("2022-02-13T03:54:53.963087500Z")),
+        ("last_opened", json!("2022-02-13T03:54:53.963087500Z")),
+        ("value_data_raw", Value::Null),
+        ("transaction_log_status", json!("unchanged")),
+        ("problems", json!([])),
+    ] {
+        assert_eq!(first[field], expected, "{field}");
+    }
+    // the most recent item of all, as the issue's jq query finds it
+    let latest: Vec<&Value> = records
+        .iter()
+        .filter(|r| r["extension"].is_null() && r["mru_position"] == 0)
+        .collect();
+    assert_eq!(latest.len(), 1);
+    // one extension's list: only its most recent item has the time it was opened
+    let txt: Vec<(&str, &str, &Value)> = records
+        .iter()
+        .filter(|r| r["extension"] == ".txt")
+        .map(|r| {
+            (
+                r["filename"].as_str().unwrap(),
+                r["link_name"].as_str().unwrap(),
+                &r["last_opened"],
+            )
+        })
+        .collect();
+    assert_eq!(
+        txt,
+        [
+            (
+                "New Text Document.txt",
+                "New Text Document.lnk",
+                &json!("2022-02-06T20:15:40.621827400Z")
+            ),
+            ("deletedfile.txt", "deletedfile.lnk", &Value::Null),
+        ]
+    );
+    let folders: Vec<&str> = records
+        .iter()
+        .filter(|r| r["extension"] == "Folder")
+        .map(|r| r["filename"].as_str().unwrap())
+        .collect();
+    assert_eq!(folders, ["The Internet", "UsageLogs", "OneDrive", "logs"]);
+    // without the logs: the same items, said to be possibly out of date
+    let without = recentdocs_read(&["-d", dir, "--no-logs"]);
+    assert_eq!(without.len(), 22);
+    assert!(
+        without
+            .iter()
+            .all(|r| r["transaction_log_status"] == "not_applied")
+    );
+}
+
+#[test]
+fn registry_recentdocs_of_an_exported_hive() {
+    // a hive on its own: its user from the paths of its shell folders
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
+    let hive = dir.path().join("NTUSER.DAT");
+    let out = dir.path().join("recentdocs.csv");
+    let r = run(&[
+        "parse-registry",
+        "recentdocs",
+        "-f",
+        hive.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    for line in [
+        "Users: vibranium",
+        "Recent items: 22 (in 5 lists: RecentDocs and its extensions)",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header, RECENTDOCS_COLUMNS);
+    assert_eq!(rows.len(), 22);
+    let row = |ext: &str, position: &str| {
+        rows.iter()
+            .find(|r| r["Extension"] == ext && r["MruPosition"] == position)
+            .unwrap()
+    };
+    for (column, expected) in [
+        ("Host", ""),
+        ("Username", "vibranium"),
+        ("ValueIndex", "10"),
+        ("Filename", "Undercover-Agents-List-For-United-Kingdom.xls"),
+        // the shortcut was named without the document's extension
+        ("LinkName", "Undercover-Agents-List-For-United-Kingdom.lnk"),
+        ("KeyLastWrittenUTC", "2012-04-04T15:43:17.160714700Z"),
+        ("LastOpenedUTC", ""),
+        ("TransactionLogStatus", "clean"),
+        ("Problems", ""),
+    ] {
+        assert_eq!(row("", "1")[column], expected, "{column}");
+    }
+    assert_eq!(
+        row(".xls", "0")["LastOpenedUTC"],
+        "2012-04-04T15:43:17.160714700Z"
+    );
+    let jpg: Vec<&str> = ["0", "1", "2"]
+        .iter()
+        .map(|p| row(".JPG", p)["Filename"].as_str())
+        .collect();
+    assert_eq!(jpg, ["hq-1.JPG", "clp-2 - Fuel Hookup.JPG", "clp-1.JPG"]);
+}
+
+/// An NTUSER.DAT whose RecentDocs list names a value that isn't there and leaves one out, with
+/// an item of the wrong type.
+fn recentdocs_hive() -> Vec<u8> {
+    let mru = |list: &[u32]| -> Vec<u8> {
+        list.iter()
+            .chain(&[u32::MAX])
+            .flat_map(|n| n.to_le_bytes())
+            .collect()
+    };
+    let recent = reg_key(
+        "RecentDocs",
+        vec![
+            ("MRUListEx", REG_BINARY, mru(&[1, 4, 0])),
+            ("0", REG_BINARY, utf16z("notes.txt")),
+            ("1", REG_BINARY, utf16z("plan.docx")),
+            ("2", REG_SZ, utf16z("left out.pdf")),
+        ],
+        Vec::new(),
+    )
+    .written(LINKED);
+    let mut key = recent;
+    for name in [
+        "Explorer",
+        "CurrentVersion",
+        "Windows",
+        "Microsoft",
+        "Software",
+    ] {
+        key = reg_key(name, Vec::new(), vec![key]);
+    }
+    regf(&reg_key("ROOT", Vec::new(), vec![key]))
+}
+
+#[test]
+fn registry_recentdocs_damage_and_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    let profile = dir.path().join("C/Users/bob");
+    std::fs::create_dir_all(&profile).unwrap();
+    std::fs::write(profile.join("NTUSER.DAT"), recentdocs_hive()).unwrap();
+    let records = recentdocs_read(&["-d", dir.path().to_str().unwrap()]);
+    let items: Vec<(&Value, &Value, &Value, &Value)> = records
+        .iter()
+        .map(|r| {
+            (
+                &r["mru_position"],
+                &r["value_index"],
+                &r["filename"],
+                &r["problems"],
+            )
+        })
+        .collect();
+    assert_eq!(
+        items,
+        [
+            (&json!(0), &json!(1), &json!("plan.docx"), &json!([])),
+            (
+                &json!(1),
+                &json!(4),
+                &Value::Null,
+                &json!(["MRUListEx lists value 4, which is not there"])
+            ),
+            (&json!(2), &json!(0), &json!("notes.txt"), &json!([])),
+            (
+                &Value::Null,
+                &json!(2),
+                &json!("left out.pdf"),
+                &json!(["MRUListEx doesn't list it", "is REG_SZ, not REG_BINARY"])
+            ),
+        ]
+    );
+    assert_eq!(records[0]["username"], "bob");
+    assert_eq!(records[0]["last_opened"], "2022-02-08T21:03:52Z");
+    assert!(records[3]["value_data_raw"].is_string());
+    let r = run(&[
+        "parse-registry",
+        "recentdocs",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert!(
+        r.stdout
+            .contains("Items or lists that could not be read: 3"),
+        "{}",
+        r.stdout
+    );
+
+    // a SYSTEM hive is not an NTUSER.DAT; a hive without RecentDocs is said so
+    let hive = system_hive();
+    let system = hive.path().join("HOST/C/Windows/System32/config/SYSTEM");
+    let r = run(&[
+        "parse-registry",
+        "recentdocs",
+        "-f",
+        system.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("not an NTUSER.DAT hive"), "{}", r.stdout);
+    let empty = tempfile::tempdir().unwrap();
+    let users = empty.path().join("C/Users/carol");
+    std::fs::create_dir_all(&users).unwrap();
+    std::fs::write(
+        users.join("NTUSER.DAT"),
+        regf(&reg_key("ROOT", Vec::new(), Vec::new())),
+    )
+    .unwrap();
+    let r = run(&[
+        "parse-registry",
+        "recentdocs",
+        "-d",
+        empty.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(
+        r.stdout.contains("Hives without RecentDocs: 1"),
+        "{}",
+        r.stdout
+    );
+    let r = run(&["parse-registry", "recentdocs", "-d", "test_files/lnk", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("No NTUSER.DAT hives were found"),
         "{}",
         r.stdout
     );

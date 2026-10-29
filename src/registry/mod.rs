@@ -4,6 +4,7 @@
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
 pub mod read;
+pub mod recentdocs;
 pub mod services;
 
 use crate::cli::RegistryOutputType;
@@ -309,6 +310,20 @@ fn system_root(path: &Path) -> Option<PathBuf> {
     })
 }
 
+/// The name of the profile folder a user hive is in: `alice` for `…\Users\alice\NTUSER.DAT`
+/// (also `Documents and Settings`, and `Windows\ServiceProfiles\<service>`).
+pub fn profile_of_path(path: &Path) -> Option<String> {
+    let parts: Vec<String> = path
+        .components()
+        .map(|c| c.as_os_str().to_string_lossy().to_string())
+        .collect();
+    let n = parts.len();
+    (n >= 3
+        && ["users", "documents and settings", "serviceprofiles"]
+            .contains(&parts[n - 3].to_lowercase().as_str()))
+    .then(|| parts[n - 2].clone())
+}
+
 /// The file at `dir` + `names`, each name in any case.
 fn find_in(dir: &Path, names: &[&str]) -> Option<PathBuf> {
     let mut at = dir.to_path_buf();
@@ -426,6 +441,25 @@ mod tests {
         std::fs::write(dir.path().join("notes.txt"), b"not a hive").unwrap();
         let found = find_hives(dir.path());
         assert_eq!(found, [dir.path().join("NTUSER.DAT")]);
+    }
+
+    #[test]
+    fn profiles_of_user_hives() {
+        let profile = |p: &str| profile_of_path(Path::new(p));
+        assert_eq!(
+            profile("/case/C/Users/alice/NTUSER.DAT").as_deref(),
+            Some("alice")
+        );
+        assert_eq!(
+            profile("/case/C/Documents and Settings/bob/NTUSER.DAT").as_deref(),
+            Some("bob")
+        );
+        assert_eq!(
+            profile("/case/C/Windows/ServiceProfiles/LocalService/NTUSER.DAT").as_deref(),
+            Some("LocalService")
+        );
+        assert_eq!(profile("/case/hives/NTUSER.DAT"), None);
+        assert_eq!(profile("NTUSER.DAT"), None);
     }
 
     #[test]
