@@ -777,9 +777,10 @@ juntei parse-registry read -f NTUSER.DAT --timeline-start 2025-10-19 --timeline-
   decode as its type (a `REG_DWORD` of 3 bytes), a type with no decoding, or a string that isn't
   whole UTF-16 keeps its bytes in `value_data_raw`; `--raw-data` writes every value's bytes.
 - `host`: a `SYSTEM` hive's computer name (`ComputerName` of the control set in use). The other
-  hives of a system take it from its `Windows\System32\config\SYSTEM` (the directory holding their
-  `Windows` or `Users` directory, as a collection keeps them), or from a `SYSTEM` hive next to them;
-  otherwise it is empty, never a guess.
+  hives of a system take it from its `Windows\System32\config\SYSTEM` when they are where Windows
+  keeps them (`Windows\System32\config`, `Users\<name>\NTUSER.DAT`, `…\UsrClass.dat`,
+  `Windows\AppCompat\Programs\Amcache.hve`, …), as a collection keeps them, or from a `SYSTEM`
+  hive next to them; otherwise it is empty, never a guess.
 - `allocation_status`: `allocated` (in use) or `deleted` (`--recover-deleted`: a key or value
   left in a free cell; a deleted key's path is rebuilt from its parents, in use or deleted too,
   `[unknown]` where one is lost; a deleted value no deleted key lists has no key). What a deleted

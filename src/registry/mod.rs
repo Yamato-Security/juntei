@@ -172,10 +172,10 @@ fn computer_name(hive: &Hive) -> Option<String> {
 }
 
 /// The hosts hives come from. A SYSTEM hive names its own; another hive takes the name of the
-/// SYSTEM hive of its system: `Windows\System32\config\SYSTEM` under the directory that holds
-/// its `Windows` or `Users` directory (a collection keeps a system's files as they were), else
-/// a `SYSTEM` hive next to it (hives exported to one directory). Without one, the host is
-/// unknown: a hive is never given the name of a system it may not come from.
+/// SYSTEM hive of its system: `Windows\System32\config\SYSTEM` of the system whose files it is
+/// among, when it is where Windows keeps hives (a collection keeps a system's files as they
+/// were), else a `SYSTEM` hive next to it (hives exported to one directory). Without one, the
+/// host is unknown: a hive is never given the name of a system it may not come from.
 pub struct Hosts {
     logs: bool,
     names: HashMap<PathBuf, Option<String>>,
@@ -218,23 +218,60 @@ impl Hosts {
     }
 }
 
-/// The directory of the system a file at `path` comes from: the one holding the `Windows`
-/// directory (`Windows\System32\…`, `Windows\AppCompat\…`, `Windows\ServiceProfiles\…`) or the
-/// `Users` directory (`Users\<name>\…`, also `Documents and Settings`) nearest the file.
+/// Where Windows keeps hives, under the directory that holds its `Windows` and `Users`
+/// directories (`*`: any name).
+const HIVE_PLACES: [&[&str]; 9] = [
+    &["Windows", "System32", "config", "*"],
+    &["Windows", "System32", "config", "RegBack", "*"],
+    &[
+        "Windows",
+        "System32",
+        "config",
+        "systemprofile",
+        "NTUSER.DAT",
+    ],
+    &["Windows", "ServiceProfiles", "*", "NTUSER.DAT"],
+    &["Windows", "AppCompat", "Programs", "Amcache.hve"],
+    &["Users", "*", "NTUSER.DAT"],
+    &[
+        "Users",
+        "*",
+        "AppData",
+        "Local",
+        "Microsoft",
+        "Windows",
+        "UsrClass.dat",
+    ],
+    &["Documents and Settings", "*", "NTUSER.DAT"],
+    &[
+        "Documents and Settings",
+        "*",
+        "Local Settings",
+        "Application Data",
+        "Microsoft",
+        "Windows",
+        "UsrClass.dat",
+    ],
+];
+
+/// The directory of the system the hive at `path` comes from, when it is where Windows keeps
+/// hives ([`HIVE_PLACES`]). Only those places: a hive copied somewhere under the analyst's own
+/// `Users` directory must not take the name of the analyst's system.
 fn system_root(path: &Path) -> Option<PathBuf> {
     let parts: Vec<_> = path.components().collect();
-    let name = |i: usize| {
-        parts
-            .get(i)
-            .map(|c| c.as_os_str().to_string_lossy().to_lowercase())
-            .unwrap_or_default()
-    };
-    (0..parts.len()).rev().find_map(|i| {
-        let windows = name(i) == "windows"
-            && ["system32", "appcompat", "serviceprofiles"].contains(&name(i + 1).as_str());
-        let users =
-            ["users", "documents and settings"].contains(&name(i).as_str()) && i + 2 < parts.len();
-        (windows || users).then(|| parts[..i].iter().collect())
+    HIVE_PLACES.iter().find_map(|place| {
+        let start = parts.len().checked_sub(place.len())?;
+        let matches = place.iter().zip(&parts[start..]).all(|(want, part)| {
+            *want == "*"
+                || part
+                    .as_os_str()
+                    .to_string_lossy()
+                    .eq_ignore_ascii_case(want)
+        });
+        matches.then(|| match start {
+            0 => PathBuf::from("."),
+            _ => parts[..start].iter().collect(),
+        })
     })
 }
 
@@ -356,7 +393,11 @@ mod tests {
                 "/case/H1/C",
             ),
             (
-                "/case/H1/C/Documents and Settings/bob/NTUSER.DAT",
+                "/case/H1/C/Documents and Settings/bob/ntuser.dat",
+                "/case/H1/C",
+            ),
+            (
+                "/case/H1/C/Windows/ServiceProfiles/LocalService/NTUSER.DAT",
                 "/case/H1/C",
             ),
             (
@@ -367,9 +408,19 @@ mod tests {
                 "/Users/analyst/case/C/Windows/System32/config/SYSTEM",
                 "/Users/analyst/case/C",
             ),
+            ("Windows/System32/config/SOFTWARE", "."),
         ] {
             assert_eq!(root(path), Some(PathBuf::from(expected)), "{path}");
         }
-        assert_eq!(root("hives/NTUSER.DAT"), None);
+        // hives elsewhere, the analyst's own Users directory among them
+        for path in [
+            "hives/NTUSER.DAT",
+            "/Users/analyst/case/SOFTWARE",
+            "/Users/analyst/AppData/Local/Temp/t/Amcache.hve",
+            "/case/H1/C/Users/alice/Documents/NTUSER.DAT",
+            "/case/H1/C/Windows/Temp/SYSTEM",
+        ] {
+            assert_eq!(root(path), None, "{path}");
+        }
     }
 }
