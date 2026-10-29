@@ -1788,12 +1788,12 @@ fn srum_value_states_and_bytes() {
         .iter()
         .find(|e| e["Provider"] == "AppTimelineProvider" && e["AudioInS"].is_null())
         .unwrap();
-    assert_eq!(timeline["_value_state"]["AudioInS"], "database_null");
+    assert_eq!(timeline["_value_state"]["AudioInS"], "null");
     assert!(timeline["_raw"].get("AudioInS").is_none());
     let nulls = entries
         .iter()
         .flat_map(|e| e["_value_state"].as_object().unwrap().values())
-        .filter(|s| *s == "database_null")
+        .filter(|s| *s == "null")
         .count();
     assert_eq!(nulls, 4333);
 

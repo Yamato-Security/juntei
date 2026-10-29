@@ -514,7 +514,7 @@ pub struct SrumOptions {
     #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 302)]
     pub clobber: bool,
 
-    /// With -t json or jsonl: how each database value was read (_value_state: parsed, database_null, column_absent, unsupported_type, decode_error, not_a_time) and its bytes in hex (_raw)
+    /// With -t json or jsonl: how each database value was read (_value_state: parsed, null, absent, unsupported, damaged) and its bytes in hex (_raw)
     #[arg(help_heading = Some("Output"), long, display_order = 303)]
     pub include_value_state: bool,
 

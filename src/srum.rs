@@ -565,28 +565,26 @@ fn provider_columns(srum: &Srum) -> HashMap<String, Vec<String>> {
 fn state_name(state: ValueState) -> &'static str {
     match state {
         ValueState::Parsed => "parsed",
-        ValueState::Null => "database_null",
-        ValueState::Absent => "column_absent",
-        ValueState::Unsupported => "unsupported_type",
-        ValueState::Damaged => "decode_error",
+        ValueState::Null => "null",
+        ValueState::Absent => "absent",
+        ValueState::Unsupported => "unsupported",
+        ValueState::Damaged => "damaged",
     }
 }
 
 /// `_value_state` and `_raw` for entry `e`, whose output columns are `columns`: the provider's
 /// columns its table hasn't are added, as null. Only values read from the database have a state
 /// (`Id`, `Timestamp`, `UserId`, `AppId` and the table's own columns, not what is made from
-/// them); a time column holding a number that is no time (0, negative, past 9999), written as
-/// null, is `not_a_time`. `_raw` has the bytes of the values that have any, in hex.
+/// them). `_raw` has the bytes of the values that have any, in hex.
 fn add_value_states(e: &Entry, provider_columns: &[String], columns: &mut Vec<(String, Json)>) {
     for name in provider_columns {
         if e.value(name).is_none() {
             columns.push((name.clone(), Json::Null));
         }
     }
-    let time_columns = e.kind.map_or(&[][..], Kind::time_columns);
     let mut states = serde_json::Map::new();
     let mut raw = serde_json::Map::new();
-    for (output, value) in columns.iter() {
+    for (output, _) in columns.iter() {
         let database = match DATABASE_NAMES.iter().find(|(o, _)| o == output) {
             Some((_, database)) => *database,
             None if matches!(output.as_str(), "UserId" | "AppId") => output.as_str(),
@@ -594,12 +592,7 @@ fn add_value_states(e: &Entry, provider_columns: &[String], columns: &mut Vec<(S
             None => continue,
         };
         let state = e.state(database).unwrap_or(ValueState::Absent);
-        let is_time = database == "TimeStamp" || time_columns.contains(&database);
-        let name = if state == ValueState::Parsed && is_time && value.is_null() {
-            "not_a_time"
-        } else {
-            state_name(state)
-        };
+        let name = state_name(state);
         states.insert(output.clone(), json!(name));
         if let Some(bytes) = e.raw(database) {
             raw.insert(output.clone(), json!(hex(bytes)));
@@ -1054,21 +1047,21 @@ mod tests {
         let short = states(&short);
         let state = &short["_value_state"];
         assert_eq!(state["Id"], "parsed");
-        assert_eq!(state["AppId"], "database_null");
+        assert_eq!(state["AppId"], "null");
         assert_eq!(state["ChargeLevel"], "parsed");
-        assert_eq!(state["Blob"], "unsupported_type");
-        assert_eq!(state["Broken"], "decode_error");
+        assert_eq!(state["Blob"], "unsupported");
+        assert_eq!(state["Broken"], "damaged");
         // a column of the long-term table only
         assert_eq!(short["EventTimestamp"], Json::Null);
-        assert_eq!(state["EventTimestamp"], "column_absent");
+        assert_eq!(state["EventTimestamp"], "absent");
         assert!(state.get("IsLt").is_none());
         assert_eq!(short["_raw"]["ChargeLevel"], "FFFFFFFF");
         assert_eq!(short["_raw"]["Broken"], "0102");
         assert!(short["_raw"].get("AppId").is_none());
         let long = states(&long);
         assert_eq!(long["EventTimestamp"], Json::Null);
-        assert_eq!(long["_value_state"]["EventTimestamp"], "not_a_time");
-        assert_eq!(long["_value_state"]["ChargeLevel"], "column_absent");
+        assert_eq!(long["_value_state"]["EventTimestamp"], "parsed");
+        assert_eq!(long["_value_state"]["ChargeLevel"], "absent");
         assert_eq!(long["_raw"]["EventTimestamp"], "0000000000000000");
     }
 

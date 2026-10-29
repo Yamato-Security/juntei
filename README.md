@@ -379,11 +379,10 @@ juntei parse-srum -f SRUDB.dat -t jsonl --include-value-state | jq '._value_stat
   next to `sru/`, or a `SOFTWARE` next to the database). A hive that can't be read is reported and
   the entries are written without names.
 - With `--include-value-state` (`-t json` or `jsonl`), each entry also says how each value read from
-  the database was read, in `_value_state`: `parsed`, `database_null` (NULL in the database),
-  `column_absent` (the table has no such column, as the other energy usage table may),
-  `unsupported_type` (a column type with no decoding: its bytes), `decode_error` (stored but not
-  read: damage, also in the summary's problems) or `not_a_time` (a FILETIME column holding 0, a
-  negative number or one past 9999, written as null). `_raw` has the bytes each value was read from,
+  the database was read, in `_value_state`: `parsed`, `null` (NULL in the database),
+  `absent` (the table has no such column, as the other energy usage table may),
+  `unsupported` (a column type with no decoding: its bytes), or `damaged` (stored but not
+  read: damage, also in the summary's problems). `_raw` has the bytes each value was read from,
   in hex: none for a NULL. `Id`, `Timestamp`, `UserId`, `AppId` and the table's own columns have a
   state; what is made from them (`ExeInfo`, `Sid`, `InterfaceType`, …) has none. Without the option
   the output is as before.
