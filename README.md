@@ -1059,20 +1059,23 @@ juntei parse-registry sam -d triage/ -t jsonl -o accounts.jsonl
 juntei parse-registry sam -f SAM --rid 500 -t jsonl | jq .
 
 # Enabled accounts and when they last logged on, to the second as event logs give it
-juntei parse-registry sam -f SAM -t jsonl | jq -c 'select(.account_flags | index("disabled") | not) | {rid, username, last_logon_whole_seconds, logon_count}'
+juntei parse-registry sam -f SAM -t jsonl | jq -c 'select(.account_flags_value != null and (.account_flags | index("disabled") | not)) | {rid, username, last_logon_whole_seconds, logon_count}'
 ```
 
 - One record per account, from its key under `Users` (named by its RID in hex) and its `Names`
   entry. JSON / JSONL fields, in this order (CSV columns in the same order, `Host`, `SourcePath`,
   …): `host`, `source_path`, `rid`, `username`, `full_name`, `comment`, `user_comment`,
   `account_flags` (`disabled`, `password_not_required`, `normal_account`,
-  `dont_expire_password`, `locked_out`, …) and `account_flags_value`, `last_logon`,
-  `last_logon_whole_seconds`, `password_last_set`, `account_expiration`, `last_failed_logon`,
-  `failed_logon_count`, `logon_count`, `password_hint`, `internet_user_name` (the Microsoft
-  account it is linked to), `hidden_from_logon_ui`, `home_directory`, `profile_path`,
-  `logon_script`, `key_last_written`, `names_key_last_written` (about when the account was made),
-  `last_logon_filetime`, `password_last_set_filetime`, `account_expiration_filetime`,
-  `last_failed_logon_filetime`, `transaction_log_status`, `logs_applied` and `problems`.
+  `dont_expire_password`, `locked_out`, …), `account_flags_value`, `country_code`, `code_page`,
+  `last_logon`, `last_logon_whole_seconds`, `password_last_set`, `account_expiration`,
+  `last_failed_logon`, `failed_logon_count`, `logon_count`, `password_hint`,
+  `internet_user_name` (the Microsoft account it is linked to), `hidden_from_logon_ui`,
+  `home_directory`, `home_drive`, `profile_path`, `logon_script`, `key_last_written`,
+  `names_key_last_written` (about when the account was made), `last_logon_filetime`,
+  `password_last_set_filetime`, `account_expiration_filetime`, `last_failed_logon_filetime`,
+  `transaction_log_status`, `logs_applied` and `problems`.
+  Fields from an unreadable or missing `F` value, including `account_flags`, are null rather than
+  describing an account as enabled.
 - Times are to the 100 ns; `last_logon_whole_seconds` is the last logon truncated to the second,
   to match tools and logs that print seconds. A time that is 0 (never) or "never"
   (`0x7FFFFFFFFFFFFFFF`, an account that doesn't expire) is empty; the `*_filetime` fields keep

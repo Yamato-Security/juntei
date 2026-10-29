@@ -181,8 +181,10 @@ struct Record<'a> {
     full_name: Option<&'a str>,
     comment: Option<&'a str>,
     user_comment: Option<&'a str>,
-    account_flags: Vec<String>,
+    account_flags: Option<Vec<String>>,
     account_flags_value: Option<u16>,
+    country_code: Option<u16>,
+    code_page: Option<u16>,
     last_logon: Option<String>,
     last_logon_whole_seconds: Option<String>,
     password_last_set: Option<String>,
@@ -194,6 +196,7 @@ struct Record<'a> {
     internet_user_name: Option<&'a str>,
     hidden_from_logon_ui: Option<bool>,
     home_directory: Option<&'a str>,
+    home_drive: Option<&'a str>,
     profile_path: Option<&'a str>,
     logon_script: Option<&'a str>,
     key_last_written: Option<String>,
@@ -207,7 +210,7 @@ struct Record<'a> {
     problems: &'a [String],
 }
 
-const CSV_HEADER: [&str; 31] = [
+const CSV_HEADER: [&str; 34] = [
     "Host",
     "SourcePath",
     "Rid",
@@ -217,6 +220,8 @@ const CSV_HEADER: [&str; 31] = [
     "UserComment",
     "AccountFlags",
     "AccountFlagsValue",
+    "CountryCode",
+    "CodePage",
     "LastLogonUTC",
     "LastLogonWholeSecondsUTC",
     "PasswordLastSetUTC",
@@ -228,6 +233,7 @@ const CSV_HEADER: [&str; 31] = [
     "InternetUserName",
     "HiddenFromLogonUI",
     "HomeDirectory",
+    "HomeDrive",
     "ProfilePath",
     "LogonScript",
     "KeyLastWrittenUTC",
@@ -252,8 +258,10 @@ impl<'a> Record<'a> {
             full_name: a.v.full_name.as_deref(),
             comment: a.v.comment.as_deref(),
             user_comment: a.v.user_comment.as_deref(),
-            account_flags: f.map(|f| account_flag_names(f.flags)).unwrap_or_default(),
+            account_flags: f.map(|f| account_flag_names(f.flags)),
             account_flags_value: f.map(|f| f.flags),
+            country_code: f.map(|f| f.country_code),
+            code_page: f.map(|f| f.code_page),
             // 0 is never; an account that doesn't expire has 0 or 0x7FFFFFFFFFFFFFFF, past 9999
             last_logon: f.and_then(|f| filetime(f.last_logon)),
             last_logon_whole_seconds: f
@@ -267,6 +275,7 @@ impl<'a> Record<'a> {
             internet_user_name: a.internet_user_name.as_deref(),
             hidden_from_logon_ui: a.hidden_from_logon_ui,
             home_directory: a.v.home_directory.as_deref(),
+            home_drive: a.v.home_drive.as_deref(),
             profile_path: a.v.profile_path.as_deref(),
             logon_script: a.v.logon_script.as_deref(),
             key_last_written: a.last_written.and_then(filetime),
@@ -293,8 +302,13 @@ impl<'a> Record<'a> {
             text(self.full_name),
             text(self.comment),
             text(self.user_comment),
-            self.account_flags.join("|"),
+            self.account_flags
+                .as_ref()
+                .map(|flags| flags.join("|"))
+                .unwrap_or_default(),
             num(self.account_flags_value.map(u64::from)),
+            num(self.country_code.map(u64::from)),
+            num(self.code_page.map(u64::from)),
             text(self.last_logon.as_deref()),
             text(self.last_logon_whole_seconds.as_deref()),
             text(self.password_last_set.as_deref()),
@@ -306,6 +320,7 @@ impl<'a> Record<'a> {
             text(self.internet_user_name),
             self.hidden_from_logon_ui.map(flag).unwrap_or_default(),
             text(self.home_directory),
+            text(self.home_drive),
             text(self.profile_path),
             text(self.logon_script),
             text(self.key_last_written.as_deref()),
@@ -335,6 +350,7 @@ struct Stats {
     without_rid: usize,
     accounts: usize,
     disabled: usize,
+    unknown_state: usize,
     /// Each account: RID, name, state, last logon, logons.
     listed: Vec<String>,
     /// The accounts people made that the sign-in screen hides.
@@ -394,10 +410,18 @@ impl Stats {
         for problem in &a.problems {
             self.problem(&opened.source, &format!("{rid} {name}"), problem);
         }
-        let disabled = a.f.is_some_and(|f| f.flags & DISABLED != 0);
-        self.disabled += usize::from(disabled);
+        let state = match a.f {
+            Some(f) if f.flags & DISABLED != 0 => {
+                self.disabled += 1;
+                "disabled"
+            }
+            Some(_) => "enabled",
+            None => {
+                self.unknown_state += 1;
+                "unknown"
+            }
+        };
         if self.listed.len() < MAX_PRINTED {
-            let state = if disabled { "disabled" } else { "enabled" };
             let logon =
                 a.f.and_then(|f| filetime(f.last_logon))
                     .unwrap_or_else(|| "never".to_string());
@@ -459,16 +483,17 @@ impl Stats {
                 &fmt_num(self.without_rid),
             );
         }
-        p_label(
-            no_color,
-            "Accounts: ",
-            &format!(
-                "{} (enabled {}, disabled {})",
-                fmt_num(self.accounts),
-                fmt_num(self.accounts - self.disabled),
-                fmt_num(self.disabled)
-            ),
+        let mut counts = format!(
+            "{} (enabled {}, disabled {}",
+            fmt_num(self.accounts),
+            fmt_num(self.accounts - self.disabled - self.unknown_state),
+            fmt_num(self.disabled)
         );
+        if self.unknown_state > 0 {
+            counts.push_str(&format!(", unknown {}", fmt_num(self.unknown_state)));
+        }
+        counts.push(')');
+        p_label(no_color, "Accounts: ", &counts);
         for account in &self.listed {
             p(None, &format!("  {account}"), true);
         }

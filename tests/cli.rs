@@ -5455,7 +5455,7 @@ fn registry_taskcache_discovery_and_errors() {
 // --- parse-registry sam -------------------------------------------------------------------------
 
 /// `parse-registry sam`'s CSV columns.
-const SAM_COLUMNS: [&str; 31] = [
+const SAM_COLUMNS: [&str; 34] = [
     "Host",
     "SourcePath",
     "Rid",
@@ -5465,6 +5465,8 @@ const SAM_COLUMNS: [&str; 31] = [
     "UserComment",
     "AccountFlags",
     "AccountFlagsValue",
+    "CountryCode",
+    "CodePage",
     "LastLogonUTC",
     "LastLogonWholeSecondsUTC",
     "PasswordLastSetUTC",
@@ -5476,6 +5478,7 @@ const SAM_COLUMNS: [&str; 31] = [
     "InternetUserName",
     "HiddenFromLogonUI",
     "HomeDirectory",
+    "HomeDrive",
     "ProfilePath",
     "LogonScript",
     "KeyLastWrittenUTC",
@@ -5535,6 +5538,8 @@ fn registry_sam_in_a_collection() {
             ]),
         ),
         ("account_flags_value", json!(532)),
+        ("country_code", json!(0)),
+        ("code_page", json!(0)),
         ("last_logon", json!("2022-02-08T20:43:51.966977200Z")),
         ("last_logon_whole_seconds", json!("2022-02-08T20:43:51Z")),
         // never set, never expires: null, the numbers kept
@@ -5605,6 +5610,8 @@ fn registry_sam_of_an_exported_hive() {
             "disabled|normal_account|dont_expire_password",
         ),
         ("AccountFlagsValue", "529"),
+        ("CountryCode", "0"),
+        ("CodePage", "0"),
         ("LastLogonUTC", "2010-11-20T21:48:12.569244Z"),
         ("LastLogonWholeSecondsUTC", "2010-11-20T21:48:12Z"),
         ("PasswordLastSetUTC", "2010-11-20T21:56:34.743687Z"),
@@ -5614,6 +5621,7 @@ fn registry_sam_of_an_exported_hive() {
         ("FailedLogonCount", "0"),
         ("LogonCount", "6"),
         ("HiddenFromLogonUI", ""),
+        ("HomeDrive", ""),
         ("KeyLastWrittenUTC", "2014-09-24T06:32:50.378042400Z"),
         ("NamesKeyLastWrittenUTC", "2014-09-24T03:36:06.358837400Z"),
         ("TransactionLogStatus", "clean"),
@@ -5647,11 +5655,20 @@ fn sam_hive() -> Vec<u8> {
         f[0x42..0x44].copy_from_slice(&logons.to_le_bytes());
         f
     };
-    let v = |name: &str| {
+    let v = |name: &str, home_drive: Option<&str>| {
         let name: Vec<u8> = name.encode_utf16().flat_map(u16::to_le_bytes).collect();
         let mut v = vec![0u8; 0xCC];
         v[16..20].copy_from_slice(&(name.len() as u32).to_le_bytes());
-        v.extend(name);
+        v.extend(&name);
+        if let Some(home_drive) = home_drive {
+            let home_drive: Vec<u8> = home_drive
+                .encode_utf16()
+                .flat_map(u16::to_le_bytes)
+                .collect();
+            v[7 * 12..7 * 12 + 4].copy_from_slice(&(name.len() as u32).to_le_bytes());
+            v[7 * 12 + 4..7 * 12 + 8].copy_from_slice(&(home_drive.len() as u32).to_le_bytes());
+            v.extend(home_drive);
+        }
         v
     };
     let wide = |s: &str| -> Vec<u8> { s.encode_utf16().flat_map(u16::to_le_bytes).collect() };
@@ -5659,7 +5676,7 @@ fn sam_hive() -> Vec<u8> {
         "000003E9",
         vec![
             ("F", REG_BINARY, f(LINKED, 1001, 0x0210, 3)),
-            ("V", REG_BINARY, v("support")),
+            ("V", REG_BINARY, v("support", Some("H:"))),
             ("UserPasswordHint", REG_BINARY, wide("the usual")),
             ("InternetUserName", REG_BINARY, wide("support@example.com")),
             (
@@ -5674,8 +5691,14 @@ fn sam_hive() -> Vec<u8> {
         "000003EA",
         vec![
             ("F", REG_BINARY, f(0, 1002, 0x0011, 0)),
-            ("V", REG_BINARY, v("bob")),
+            ("V", REG_BINARY, v("bob", None)),
         ],
+        Vec::new(),
+    );
+    // A partial account whose F value is missing: its state must not be called enabled.
+    let partial = reg_key(
+        "000003EB",
+        vec![("V", REG_BINARY, v("partial", None))],
         Vec::new(),
     );
     let names = reg_key(
@@ -5684,9 +5707,10 @@ fn sam_hive() -> Vec<u8> {
         vec![
             reg_key("robert", vec![("", 1002, Vec::new())], Vec::new()),
             reg_key("support", vec![("", 1001, Vec::new())], Vec::new()),
+            reg_key("partial", vec![("", 1003, Vec::new())], Vec::new()),
         ],
     );
-    let mut key = reg_key("Users", Vec::new(), vec![support, bob, names]);
+    let mut key = reg_key("Users", Vec::new(), vec![support, bob, partial, names]);
     for name in ["Account", "Domains", "SAM"] {
         key = reg_key(name, Vec::new(), vec![key]);
     }
@@ -5706,11 +5730,11 @@ fn registry_sam_hidden_accounts_and_errors() {
     assert_eq!(r.code, 0, "{}", r.stdout);
     for line in [
         "SAM hives: 1",
-        "Accounts: 2 (enabled 1, disabled 1)",
+        "Accounts: 3 (enabled 1, disabled 1, unknown 1)",
         "Accounts people made that the sign-in screen hides: 1",
         "SAM: 1001 support",
         "its Names entry is robert, not its user name",
-        "Values that could not be read or don't match: 1",
+        "Values that could not be read or don't match: 2",
     ] {
         assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
     }
@@ -5719,11 +5743,17 @@ fn registry_sam_hidden_accounts_and_errors() {
     assert_eq!(support["hidden_from_logon_ui"], true);
     assert_eq!(support["password_hint"], "the usual");
     assert_eq!(support["internet_user_name"], "support@example.com");
+    assert_eq!(support["home_drive"], "H:");
     assert_eq!(support["last_logon"], "2022-02-08T21:03:52Z");
     assert_eq!(
         support["account_flags"],
         json!(["normal_account", "dont_expire_password"])
     );
+    let partial = &records[2];
+    assert_eq!(partial["rid"], 1003);
+    assert_eq!(partial["account_flags"], Value::Null);
+    assert_eq!(partial["account_flags_value"], Value::Null);
+    assert_eq!(partial["problems"], json!(["F is not there"]));
 
     let ntuser = std::path::Path::new(dir).join("C/Users/bob/NTUSER.DAT");
     let r = run(&[
