@@ -4537,7 +4537,7 @@ fn registry_services_with_logs() {
 
 /// A SYSTEM hive whose services have a FailureActions value that is cut short, a Start value
 /// that is a string, and a DLL under Parameters.
-fn services_hive() -> Vec<u8> {
+fn services_hive(current: u32) -> Vec<u8> {
     let actions = |count: u32, list: &[(u32, u32)]| {
         let mut b = Vec::new();
         for v in [3600u32, 0, 0, count, 0x700f_0000] {
@@ -4591,7 +4591,15 @@ fn services_hive() -> Vec<u8> {
         ],
         Vec::new(),
     );
-    let services = reg_key("Services", Vec::new(), vec![good, short]);
+    let wrong_types = reg_key(
+        "WrongTypes",
+        vec![
+            ("Start", REG_QWORD, 2u64.to_le_bytes().to_vec()),
+            ("FailureActions", REG_SZ, actions(1, &[(1, 1)])),
+        ],
+        Vec::new(),
+    );
+    let services = reg_key("Services", Vec::new(), vec![good, short, wrong_types]);
     let name = reg_key(
         "ComputerName",
         Vec::new(),
@@ -4603,7 +4611,11 @@ fn services_hive() -> Vec<u8> {
     );
     let control = reg_key("Control", Vec::new(), vec![name]);
     let set = reg_key("ControlSet001", Vec::new(), vec![control, services]);
-    let select = reg_key("Select", vec![("Current", REG_DWORD, dword(1))], Vec::new());
+    let select = reg_key(
+        "Select",
+        vec![("Current", REG_DWORD, dword(current))],
+        Vec::new(),
+    );
     regf(&reg_key("ROOT", Vec::new(), vec![set, select]))
 }
 
@@ -4612,7 +4624,7 @@ fn registry_services_damage_and_discovery() {
     let dir = tempfile::tempdir().unwrap();
     let config = dir.path().join("H/C/Windows/System32/config");
     std::fs::create_dir_all(&config).unwrap();
-    std::fs::write(config.join("SYSTEM"), services_hive()).unwrap();
+    std::fs::write(config.join("SYSTEM"), services_hive(1)).unwrap();
     let programs = dir.path().join("H/C/Windows/AppCompat/Programs");
     std::fs::create_dir_all(&programs).unwrap();
     std::fs::copy(repo(AMCACHE_HIVE), programs.join("Amcache.hve")).unwrap();
@@ -4628,15 +4640,18 @@ fn registry_services_damage_and_discovery() {
     for line in [
         "SYSTEM hives: 1",
         "Hosts: EXAMPLE-PC",
-        "Services: 2 (automatic 1, no Start value 1)",
+        "Services: 3 (automatic 1, no Start value 2)",
         "Failure actions that run a command: 1",
         r"ControlSet001\ExampleSvc: C:\ProgramData\example\again.exe",
-        "Values that could not be read: 2",
+        "Values that could not be read: 4",
     ] {
         assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
     }
     let records = services_read(&["-d", dir.path().to_str().unwrap()]);
-    let good = &records[0];
+    let good = records
+        .iter()
+        .find(|record| record["service_name"] == "ExampleSvc")
+        .unwrap();
     assert_eq!(good["service_name"], "ExampleSvc");
     assert_eq!(good["service_dll"], r"C:\ProgramData\example\svc.dll");
     assert_eq!(good["failure_action_type"], "restart");
@@ -4644,18 +4659,40 @@ fn registry_services_damage_and_discovery() {
     assert_eq!(good["failure_actions"][1]["type"], "run_command");
     assert_eq!(good["key_last_written"], "2022-02-08T21:03:52Z");
     // what can't be read is a problem, its bytes kept; the rest is still read
-    let short = &records[1];
+    let short = records
+        .iter()
+        .find(|record| record["service_name"] == "Short")
+        .unwrap();
     assert_eq!(short["start_type"], Value::Null);
     assert_eq!(short["failure_actions"], Value::Null);
     assert_eq!(
         short["problems"],
         json!([
-            "Start: is REG_SZ, not a number",
+            "Start: is REG_SZ, not REG_DWORD",
             "FailureActions counts 3 actions, its 28 bytes hold 1"
         ])
     );
     assert!(
         short["failure_actions_raw"]
+            .as_str()
+            .unwrap()
+            .starts_with("100e0000")
+    );
+    let wrong = records
+        .iter()
+        .find(|record| record["service_name"] == "WrongTypes")
+        .unwrap();
+    assert_eq!(wrong["start_type"], Value::Null);
+    assert_eq!(wrong["failure_actions"], Value::Null);
+    assert_eq!(
+        wrong["problems"],
+        json!([
+            "Start: is REG_QWORD, not REG_DWORD",
+            "FailureActions: is REG_SZ, not REG_BINARY"
+        ])
+    );
+    assert!(
+        wrong["failure_actions_raw"]
             .as_str()
             .unwrap()
             .starts_with("100e0000")
@@ -4681,4 +4718,34 @@ fn registry_services_damage_and_discovery() {
         AMCACHE_HIVE,
     ]);
     assert_ne!(r.code, 0, "--log1 needs -f");
+}
+
+#[test]
+fn registry_services_falls_back_when_select_current_is_unusable() {
+    let dir = tempfile::tempdir().unwrap();
+    let system = dir.path().join("SYSTEM");
+    std::fs::write(&system, services_hive(99)).unwrap();
+    let system = system.to_str().unwrap();
+
+    let records = services_read(&["-f", system]);
+    assert_eq!(records.len(), 3);
+    assert!(
+        records
+            .iter()
+            .all(|record| record["control_set"] == "ControlSet001")
+    );
+    assert!(
+        records
+            .iter()
+            .all(|record| record["is_current_control_set"] == false)
+    );
+
+    let r = run(&["parse-registry", "services", "-f", system, "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(
+        r.stdout
+            .contains("Hives without usable Select\\Current (the first control set was read): 1"),
+        "{}",
+        r.stdout
+    );
 }

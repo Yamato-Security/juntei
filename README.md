@@ -718,7 +718,7 @@ Filtering:
 
 Output:
   -o, --output <FILE>       Save every record to a file
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
       --raw-data            Write every value's bytes in hex (value_data_raw), not only those that don't decode as their type
       --qword-as-filetime   Also write REG_QWORD values as FILETIMEs (value_filetime_utc), keeping the number (value_data, value_u64)
   -C, --clobber             Overwrite files when saving
@@ -825,7 +825,7 @@ Filtering:
 
 Output:
   -o, --output <FILE>       Save every record to a file
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
   -C, --clobber             Overwrite files when saving
 
 General Options:

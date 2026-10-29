@@ -868,7 +868,7 @@ pub struct RegistryReadOptions {
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
     pub output: Option<PathBuf>,
 
-    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
     pub output_type: Option<RegistryOutputType>,
 
@@ -934,7 +934,7 @@ pub struct RegistryServicesOptions {
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
     pub output: Option<PathBuf>,
 
-    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
     pub output_type: Option<RegistryOutputType>,
 

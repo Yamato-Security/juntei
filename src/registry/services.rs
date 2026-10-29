@@ -369,17 +369,17 @@ impl Stats {
         } else if opened.recovery.dirty {
             self.dirty.push(opened.source.clone());
         }
-        // without Select, the first control set stands for the one in use
-        if sets.current.is_none() {
+        // without a usable Select\Current, the first control set is the best available fallback
+        if sets
+            .current
+            .is_none_or(|current| !sets.present.contains(&current))
+        {
             self.without_select.push(opened.source.clone());
         }
         let read: Vec<u32> = if opts.all_control_sets {
             sets.present.clone()
         } else {
-            sets.current
-                .or(sets.present.first().copied())
-                .into_iter()
-                .collect()
+            sets.current_or_first().into_iter().collect()
         };
         let mut found = false;
         for set in read {
@@ -483,7 +483,7 @@ impl Stats {
         if !self.without_select.is_empty() {
             p_label(
                 no_color,
-                "Hives without Select\\Current (the first control set was read): ",
+                "Hives without usable Select\\Current (the first control set was read): ",
                 &fmt_num(self.without_select.len()),
             );
         }
