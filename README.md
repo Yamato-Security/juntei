@@ -18,6 +18,7 @@ not event logs.
 | ShimCache / AppCompatCache (`SYSTEM` hive) | `parse-shimcache` | Supported |
 | Microsoft Defender quarantine (`Quarantine\Entries`, `ResourceData`, `Resources`) | `parse-defender-quarantine` | Supported |
 | Registry hives (`SYSTEM`, `SOFTWARE`, `NTUSER.DAT`, …), with their transaction logs and deleted keys | `parse-registry read` | Supported |
+| Services (`SYSTEM` hive), with their failure actions | `parse-registry services` | Supported |
 | More Windows artifacts | | Planned |
 
 ## Build
@@ -687,7 +688,8 @@ writing) is read with its transaction logs replayed, and each record says whethe
 juntei parse-registry <COMMAND> [OPTIONS]
 
 Commands:
-  read  Read keys and values as they are: types, data (strings, multi-strings, numbers, binary), key last-write times, DWORD/QWORD numbers and FILETIMEs, allocated, replayed or deleted
+  read      Read keys and values as they are: types, data (strings, multi-strings, numbers, binary), key last-write times, DWORD/QWORD numbers and FILETIMEs, allocated, replayed or deleted
+  services  Services of SYSTEM hives: image path, service DLL, start and type, account, and failure actions decoded, for the control set in use (or all)
 ```
 
 #### `parse-registry read`
@@ -802,11 +804,84 @@ juntei parse-registry read -f NTUSER.DAT --timeline-start 2025-10-19 --timeline-
   (`problems`, and in the summary) and its siblings are still read; a list that leads back to a key
   already read is a problem, not a loop.
 
+#### `parse-registry services`
+
+The services of `SYSTEM` hives, from the control set Windows used last (`Select\Current`) or every
+control set: what each runs (image path, service DLL), when it starts, as whom, and what Windows
+does when it fails. A failure action that runs a command is a way to run a program as the
+service's account, so the summary lists every one.
+
+```
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SYSTEM hives
+  -f, --file <FILE>      File path to one SYSTEM hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Filtering:
+      --service <NAME>    Only the service of this name (its key's name, in any case)
+      --all-control-sets  Every control set (ControlSet001, ControlSet002, ...), not only the one Windows used last
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```
+# Every service of a hive, and the failure actions that run a command in the summary
+juntei parse-registry services -f C/Windows/System32/config/SYSTEM -o services.csv
+
+# The SYSTEM hives of a triage collection, every control set, each record with its host
+juntei parse-registry services -d triage/ --all-control-sets -t jsonl -o services.jsonl
+
+# One service
+juntei parse-registry services -f SYSTEM --service ExampleSvc -t jsonl | jq .
+
+# Services restarted on failure, and how soon
+juntei parse-registry services -f SYSTEM -t jsonl | jq -c 'select(.failure_action_type == "restart") | {service_name, failure_action_delay_ms}'
+
+# Automatic services running from outside System32
+juntei parse-registry services -f SYSTEM -t jsonl | jq -c 'select(.start_type == "automatic" and (.image_path // "" | test("system32"; "i") | not)) | {service_name, image_path}'
+```
+
+- One record per service: a subkey of `ControlSetNNN\Services`. JSON / JSONL fields, in this
+  order (CSV columns in the same order, `Host`, `SourcePath`, …): `host`, `source_path`,
+  `control_set`, `is_current_control_set`, `service_name`, `display_name`, `description`,
+  `image_path`, `service_dll` (`Parameters\ServiceDll`, else `ServiceDll` in the key),
+  `start_type` (`boot`, `system`, `automatic`, `manual`, `disabled`) and `start_value`,
+  `delayed_autostart`, `service_type` (its flags: `kernel_driver`, `win32_own_process`,
+  `win32_share_process`, `user_service`, …, joined with `|`) and `type_value`, `error_control`,
+  `object_name` (the account), `group`, `failure_reset_period` (seconds; 4294967295: never),
+  `failure_command`, `failure_actions` (every action: `{"type": "restart", "delay_ms": 60000}`;
+  types `none`, `restart`, `reboot`, `run_command`), `failure_action_type` and
+  `failure_action_delay_ms` (the first action's), `failure_actions_raw`, `key_last_written`,
+  `transaction_log_status`, `logs_applied` and `problems`. Values are as written: `%SystemRoot%`,
+  quotes and arguments are kept, display names that are resource references (`@…dll,-100`) too.
+- `FailureActions` is decoded by its structure (`SERVICE_FAILURE_ACTIONS`: the reset period, the
+  number of actions, then each action's type and delay), not searched for strings. One that is
+  shorter than its header or than the actions it counts is a problem, its bytes kept in
+  `failure_actions_raw`; a value of the wrong type (a `Start` that is a string) is empty and a
+  problem. The rest of the service is still read.
+- Without `--all-control-sets`, the control set `Select\Current` names (else the first, said in
+  the summary); with it, every `ControlSetNNN`, `is_current_control_set` telling the one in use.
+- `-d` reads every hive whose base block or file name says it is a `SYSTEM` hive; `host`,
+  transaction logs and `transaction_log_status` are as for `read`.
+
 Hives are read by Yamato Security's
 [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) (Apache-2.0), whose
 keys, values and transaction log replay equal [yarp](https://github.com/msuhanov/yarp)'s on the
 public test hives (dirty ones with their logs), and whose deleted keys in free cells are those
-yarp's scanner finds.
+yarp's scanner finds. Its services, values and failure actions equal those of a reader built on
+yarp on a Windows 7 and a dirty Windows 11 `SYSTEM` hive.
 
 ## License
 

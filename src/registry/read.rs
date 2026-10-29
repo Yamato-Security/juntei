@@ -9,19 +9,21 @@
 //! and last-write times keep a targeted query from writing the whole hive; `--value` with a key
 //! filter also says which keys lack the value.
 
-use super::{Hosts, Logs, Opened, RecordWriter, current_control_set, filetime, find_hives, open};
+use super::{
+    Hosts, Opened, RecordWriter, choose_logs, filetime, find_hives, input_files, open, sink,
+};
 use crate::cli::RegistryReadOptions;
 use crate::color::JunteiColor;
 use crate::progress;
-use crate::util::{self, check_output, error_msg, fmt_num, p, p_label};
+use crate::util::{self, error_msg, fmt_num, p, p_label};
 use indicatif::ProgressBar;
 use regex::{Regex, RegexBuilder};
+use registry::system::{ControlSets, control_set_name};
 use registry::{Data, DeletedValue, Key, Status, Value as RegValue, ValueType, decode};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::File;
-use std::io::{self, BufWriter, Write};
+use std::io;
 use std::path::PathBuf;
 
 /// Parse errors printed; the rest are only counted.
@@ -49,72 +51,27 @@ pub fn run(opts: &RegistryReadOptions) -> i32 {
     };
 
     // --- inputs ---------------------------------------------------------------------------
-    let files = match (&opts.filepath, &opts.directory) {
-        (Some(f), _) => {
-            if !f.is_file() {
-                report_error(None, &format!("The file does not exist: {}", f.display()));
-                return 1;
-            }
-            vec![f.clone()]
-        }
-        (None, Some(d)) => {
-            if !d.is_dir() {
-                report_error(
-                    None,
-                    &format!("The directory does not exist: {}", d.display()),
-                );
-                return 1;
-            }
-            let found = find_hives(d);
-            if found.is_empty() {
-                report_error(
-                    None,
-                    &format!("No registry hives were found in {}", d.display()),
-                );
-                return 1;
-            }
-            found
-        }
-        (None, None) => unreachable!("clap requires -f or -d"),
-    };
     let given_logs: Vec<PathBuf> = opts.log1.iter().chain(&opts.log2).cloned().collect();
-    for log in &given_logs {
-        if !log.is_file() {
-            report_error(None, &format!("The file does not exist: {}", log.display()));
+    let inputs = input_files(
+        opts.filepath.as_ref(),
+        opts.directory.as_ref(),
+        "registry hives",
+        find_hives,
+    )
+    .and_then(|files| Ok((files, choose_logs(opts.no_logs, &given_logs)?)))
+    .and_then(|(files, logs)| {
+        Ok((
+            files,
+            logs,
+            sink(opts.output.as_ref(), opts.clobber, data_on_stdout)?,
+        ))
+    });
+    let (files, logs, sink) = match inputs {
+        Ok(inputs) => inputs,
+        Err(msg) => {
+            report_error(None, &msg);
             return 1;
         }
-    }
-    let logs = if opts.no_logs {
-        Logs::Without
-    } else if given_logs.is_empty() {
-        Logs::NextToIt
-    } else {
-        Logs::Given(&given_logs)
-    };
-    if let Some(out) = &opts.output
-        && let Err(msg) = check_output(out, false, opts.clobber)
-    {
-        report_error(None, &msg);
-        return 1;
-    }
-    let sink: Option<Box<dyn Write>> = match (&opts.output, data_on_stdout) {
-        (Some(path), _) => {
-            if let Some(parent) = path.parent().filter(|d| !d.as_os_str().is_empty())
-                && let Err(e) = std::fs::create_dir_all(parent)
-            {
-                report_error(None, &format!("Could not create {}: {e}", parent.display()));
-                return 1;
-            }
-            match File::create(path) {
-                Ok(f) => Some(Box::new(BufWriter::new(f))),
-                Err(e) => {
-                    report_error(None, &format!("Could not create {}: {e}", path.display()));
-                    return 1;
-                }
-            }
-        }
-        (None, true) => Some(Box::new(BufWriter::new(io::stdout()))),
-        (None, false) => None,
     };
     let mut writer = match sink.map(|w| RecordWriter::new(w, opts.output_type(), &CSV_HEADER)) {
         Some(Ok(w)) => Some(w),
@@ -326,9 +283,9 @@ impl Filters {
             parts.remove(0);
         }
         if first(&parts, &["CurrentControlSet"])
-            && let Some(n) = current_control_set(&opened.hive)
+            && let Some(n) = ControlSets::read(&opened.hive).current
         {
-            parts[0] = format!("ControlSet{n:03}");
+            parts[0] = control_set_name(n);
         }
         Some(parts.join("\\"))
     }
