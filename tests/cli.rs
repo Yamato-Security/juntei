@@ -3650,6 +3650,8 @@ fn types_hive() -> Vec<u8> {
             ("Dword", REG_DWORD, 7u32.to_le_bytes().to_vec()),
             ("Qword", REG_QWORD, u64::MAX.to_le_bytes().to_vec()),
             ("Binary", REG_BINARY, vec![0xde, 0xad]),
+            ("EmptyExternal", REG_BINARY, Vec::new()),
+            ("OddSz", REG_SZ, vec![b'A']),
             ("ShortDword", REG_DWORD, vec![1, 2, 3]),
             ("Unknown", 0x0020_0000, vec![1, 2, 3, 4, 5]),
             ("BadValue", REG_DWORD, 9u32.to_le_bytes().to_vec()),
@@ -3667,6 +3669,11 @@ fn types_hive() -> Vec<u8> {
         ],
     );
     let mut hive = regf(&root);
+    // A zero-length value can be stored without the resident-data flag. Its data offset is
+    // irrelevant and may be zero; it is still a valid empty value.
+    let empty = b"EmptyExternal";
+    let empty_at = hive.windows(empty.len()).position(|w| w == empty).unwrap();
+    hive[empty_at - 16..empty_at - 12].copy_from_slice(&0u32.to_le_bytes());
     // a value cell starts 20 bytes before its name, a key cell 76
     for (name, before) in [(&b"BadValue"[..], 20), (b"BadKey", 76)] {
         let at = hive.windows(name.len()).position(|w| w == name).unwrap();
@@ -3691,7 +3698,7 @@ fn registry_value_types_and_damage() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stdout);
     assert!(
-        r.stdout.contains("Damaged keys and values: 3"),
+        r.stdout.contains("Damaged keys and values: 4"),
         "{}",
         r.stdout
     );
@@ -3709,6 +3716,7 @@ fn registry_value_types_and_damage() {
         ("Dword", "REG_DWORD", "7"),
         ("Qword", "REG_QWORD", "18446744073709551615"),
         ("Binary", "REG_BINARY", "dead"),
+        ("EmptyExternal", "REG_BINARY", ""),
     ] {
         let r = row("Values", name, "value");
         assert_eq!(
@@ -3723,6 +3731,10 @@ fn registry_value_types_and_damage() {
     assert_eq!(short["ValueData"], "");
     assert_eq!(short["ValueDataRaw"], "010203");
     assert_eq!(short["Problems"], "REG_DWORD of 3 bytes");
+    let odd = row("Values", "OddSz", "value");
+    assert_eq!(odd["ValueData"], "");
+    assert_eq!(odd["ValueDataRaw"], "41");
+    assert_eq!(odd["Problems"], "REG_SZ of 1 bytes is not valid UTF-16");
     let unknown = row("Values", "Unknown", "value");
     assert_eq!(unknown["ValueType"], "0x200000");
     assert_eq!(unknown["ValueDataRaw"], "0102030405");

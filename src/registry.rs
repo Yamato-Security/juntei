@@ -450,17 +450,36 @@ fn decode(kind: u32, data: &[u8]) -> Data {
     };
     match kind {
         1 | 2 | 6 => {
+            if !data.len().is_multiple_of(2) {
+                return Data::Malformed(format!(
+                    "{} of {} bytes is not valid UTF-16",
+                    type_name(kind),
+                    data.len()
+                ));
+            }
             let units = utf16_units(data);
             let end = units.iter().position(|&u| u == 0).unwrap_or(units.len());
-            let s = String::from_utf16_lossy(&units[..end]);
+            let Ok(s) = String::from_utf16(&units[..end]) else {
+                return Data::Malformed(format!("{} is not valid UTF-16", type_name(kind)));
+            };
             Data::Decoded(json!(s), s)
         }
         7 => {
+            if !data.len().is_multiple_of(2) {
+                return Data::Malformed(format!(
+                    "{} of {} bytes is not valid UTF-16",
+                    type_name(kind),
+                    data.len()
+                ));
+            }
             let units = utf16_units(data);
-            let mut items: Vec<String> = units
-                .split(|&u| u == 0)
-                .map(String::from_utf16_lossy)
-                .collect();
+            let mut items = Vec::new();
+            for item in units.split(|&u| u == 0) {
+                let Ok(item) = String::from_utf16(item) else {
+                    return Data::Malformed(format!("{} is not valid UTF-16", type_name(kind)));
+                };
+                items.push(item);
+            }
             // the terminating NULs leave empty strings at the end
             while items.last().is_some_and(String::is_empty) {
                 items.pop();
@@ -972,6 +991,12 @@ mod tests {
         assert_eq!(
             decoded(1, &utf16("abc\0junk")),
             (json!("abc"), "abc".into())
+        );
+        assert!(
+            matches!(decode(1, b"a"), Data::Malformed(m) if m == "REG_SZ of 1 bytes is not valid UTF-16")
+        );
+        assert!(
+            matches!(decode(1, &[0x00, 0xd8]), Data::Malformed(m) if m == "REG_SZ is not valid UTF-16")
         );
         assert_eq!(
             decoded(7, &utf16("a\0b c\0\0")),

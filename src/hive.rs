@@ -327,10 +327,18 @@ impl<'h> Value<'h> {
     pub fn data(&self) -> Result<Vec<u8>> {
         let size = u32_at(self.cell, 4).unwrap_or(0);
         if size & 0x8000_0000 != 0 {
-            let length = (size & 0x7fff_ffff).min(4) as usize;
+            let length = (size & 0x7fff_ffff) as usize;
+            if length > 4 {
+                return Err(format!(
+                    "resident value data declares {length} bytes (the maximum is 4)"
+                ));
+            }
             return Ok(self.cell[8..8 + length].to_vec());
         }
         let size = size as usize;
+        if size == 0 {
+            return Ok(Vec::new());
+        }
         let offset = u32_at(self.cell, 8).unwrap_or(u32::MAX);
         let cell = self.hive.cell(offset)?;
         if size > BIG_DATA_SEGMENT && cell.get(..2) == Some(b"db") {
