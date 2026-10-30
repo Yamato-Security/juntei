@@ -4,6 +4,7 @@
 
 use crate::cli::{AutoOutputType, AutoParseOptions};
 use crate::color::JunteiColor;
+use crate::progress;
 use crate::registry::{Hosts, Logs, open};
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use chrono::Utc;
@@ -281,7 +282,9 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         true,
     );
 
-    let mut results = run_tasks(&tasks, &executable, threads);
+    let bar = progress::progress_bar(tasks.len(), no_color);
+    let mut results = run_tasks(&tasks, &executable, threads, &bar);
+    bar.finish_with_message(progress::finished_message(no_color));
     let mut data_files = Vec::new();
     if opts.output_type.is_json() {
         for (task, result) in tasks.iter().zip(&mut results) {
@@ -826,7 +829,12 @@ fn remove_generated_file(path: &Path) -> io::Result<()> {
     }
 }
 
-fn run_tasks(tasks: &[Task], executable: &Path, threads: usize) -> Vec<TaskResult> {
+fn run_tasks(
+    tasks: &[Task],
+    executable: &Path,
+    threads: usize,
+    bar: &indicatif::ProgressBar,
+) -> Vec<TaskResult> {
     let next = AtomicUsize::new(0);
     let results = Mutex::new(Vec::with_capacity(tasks.len()));
     std::thread::scope(|scope| {
@@ -837,8 +845,10 @@ fn run_tasks(tasks: &[Task], executable: &Path, threads: usize) -> Vec<TaskResul
                     let Some(task) = tasks.get(index) else {
                         break;
                     };
+                    bar.set_message(task_progress_message(task));
                     let result = run_task(task, executable);
                     results.lock().unwrap().push((index, result));
+                    bar.inc(1);
                 }
             });
         }
@@ -846,6 +856,10 @@ fn run_tasks(tasks: &[Task], executable: &Path, threads: usize) -> Vec<TaskResul
     let mut results = results.into_inner().unwrap();
     results.sort_by_key(|(index, _)| *index);
     results.into_iter().map(|(_, result)| result).collect()
+}
+
+fn task_progress_message(task: &Task) -> String {
+    format!("{} / {}", task.computer, task.artifact)
 }
 
 fn run_task(task: &Task, executable: &Path) -> TaskResult {
@@ -1411,6 +1425,18 @@ mod tests {
         let clap = "error: a value is required\n\nFor more information, try '--help'.\n";
         assert_eq!(useful_error_line(clap), Some("error: a value is required"));
         assert_eq!(useful_error_line("first\nlast\n"), Some("last"));
+    }
+
+    #[test]
+    fn progress_identifies_the_computer_and_artifact() {
+        let task = Task {
+            computer: "HOST1".into(),
+            artifact: "prefetch",
+            args: Vec::new(),
+            output: PathBuf::new(),
+            log: PathBuf::new(),
+        };
+        assert_eq!(task_progress_message(&task), "HOST1 / prefetch");
     }
 
     #[test]
