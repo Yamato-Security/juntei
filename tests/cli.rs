@@ -183,6 +183,8 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .as_str()
             .is_some_and(|path| path.replace('\\', "/").contains("/HOST1/logs/"))
     }));
+    assert_eq!(manifest["tasks"][0]["artifact"], "mft");
+    assert_eq!(manifest["tasks"][1]["artifact"], "usn-journal");
 
     // A previously generated target must not survive when the corresponding artifact is absent.
     let stale = csv.join("HOST1/i30.csv");
@@ -332,6 +334,7 @@ fn auto_parse_can_extract_defender_quarantined_files() {
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
             .unwrap();
+    assert_eq!(manifest["extract_defender_quarantined"], true);
     let defender = manifest["tasks"]
         .as_array()
         .unwrap()
@@ -345,6 +348,64 @@ fn auto_parse_can_extract_defender_quarantined_files() {
             .iter()
             .any(|argument| argument == "--extract")
     );
+
+    // A later clobber run without extraction must not leave stale malware from this run.
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-C",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(!output.join("HOST1/defender-quarantined").exists());
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(manifest["extract_defender_quarantined"], false);
+}
+
+#[test]
+fn auto_parse_accepts_targeted_prefetch_without_system32() {
+    let evidence = tempfile::tempdir().unwrap();
+    let host = evidence.path().join("HOST2");
+    let prefetch = host.join("C/Windows/Prefetch");
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::write(
+        host.join("client_info.json"),
+        r#"{"hostname":"HOST2","fqdn":"host2.example.test"}"#,
+    )
+    .unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
+        prefetch.join("CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+    let output_root = tempfile::tempdir().unwrap();
+    let output = output_root.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(output.join("HOST2/prefetch.csv").is_file());
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(manifest["hosts"].as_array().unwrap().len(), 1);
+    assert_eq!(manifest["hosts"][0]["Computer"], "HOST2");
 }
 
 #[test]

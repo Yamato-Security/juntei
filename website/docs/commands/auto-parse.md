@@ -23,8 +23,9 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -t jsonl --single-file
 
 ## What it discovers
 
-Juntei searches recursively for directories named `Windows` that contain a `System32` directory,
-case-insensitively. This excludes user-profile directories such as
+Juntei searches recursively for directories named `Windows` that contain a `System32`, `Prefetch`,
+or `AppCompat` directory, case-insensitively. Recognizing the latter two also supports targeted
+collections that contain only Prefetch or Amcache. This excludes user-profile directories such as
 `AppData\Roaming\Microsoft\Windows`. Nested legacy installations such as
 `C:\Windows.old\Windows` are assigned to the outer collected volume instead of becoming duplicate
 computers. The default maximum depth is 10. This covers common Velociraptor paths such as:
@@ -96,8 +97,8 @@ CSV keeps separate tables because each artifact has different columns:
 
 Some parsers naturally create several tables, so their output is a directory. `logs` contains the
 exact command and messages from every parser. `manifest.json` records hostname provenance,
-evidence paths, command lines, duration, exit code, result path, and whether each task succeeded,
-was skipped, or failed.
+evidence paths, command lines, duration, exit code, result path, whether Defender extraction was
+requested, and whether each task succeeded, was skipped, or failed.
 
 When a host has one Amcache hive or SRUM database, its CSV tables are written directly under
 `amcache/` or `srum/`. If a collection contains several databases of either kind, each source
@@ -171,7 +172,9 @@ Parsing:
 
 Use a new output directory when practical. `-C` removes or overwrites only the exact generated
 targets for this run, so a now-missing artifact cannot leave a stale result. It does not delete
-unrelated files or the complete output tree.
+unrelated files or the complete output tree. It also removes every per-host
+`defender-quarantined/` directory from an earlier run before parsing, whether or not the new run
+uses `-x`, so extracted malware cannot remain as an unrecorded stale result.
 
 !!! danger "Treat extracted Defender content as malware"
     `-x, --extract-defender-quarantined` writes quarantined content to disk under each computer's

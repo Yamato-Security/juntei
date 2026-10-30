@@ -90,6 +90,7 @@ struct Manifest<'a> {
     output_directory: String,
     output_type: &'static str,
     single_file: bool,
+    extract_defender_quarantined: bool,
     threads: usize,
     max_depth: usize,
     hosts: Vec<ManifestHost>,
@@ -229,6 +230,15 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         error_msg(
             no_color,
             &format!("Could not clear an earlier generated output: {e}"),
+        );
+        return 1;
+    }
+    if opts.clobber
+        && let Err(e) = clear_defender_extractions(&hosts, &opts.output)
+    {
+        error_msg(
+            no_color,
+            &format!("Could not clear earlier Defender extraction output: {e}"),
         );
         return 1;
     }
@@ -379,6 +389,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         output_directory: opts.output.to_string_lossy().to_string(),
         output_type: opts.output_type.as_str(),
         single_file: opts.single_file,
+        extract_defender_quarantined: opts.extract_defender_quarantined,
         threads,
         max_depth: opts.max_depth,
         hosts: hosts.iter().map(manifest_host).collect(),
@@ -554,7 +565,9 @@ fn windows_directories(root: &Path, max_depth: usize) -> io::Result<Vec<PathBuf>
 fn is_windows_system_directory(path: &Path) -> bool {
     path.file_name()
         .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("Windows"))
-        && child_ci(path, "System32").is_some()
+        && ["System32", "Prefetch", "AppCompat"]
+            .iter()
+            .any(|child| child_ci(path, child).is_some_and(|candidate| candidate.is_dir()))
 }
 
 fn collection_root(input: &Path, windows: &Path) -> Option<PathBuf> {
@@ -802,7 +815,18 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &[],
         );
     }
+    prioritize_long_tasks(&mut tasks);
     Ok(tasks)
+}
+
+/// Start the usually longest parsers across every host before filling worker slots with short
+/// tasks. Stable sorting preserves host and per-volume order inside each priority class.
+fn prioritize_long_tasks(tasks: &mut [Task]) {
+    tasks.sort_by_key(|task| match task.artifact {
+        "mft" => 0,
+        "usn-journal" => 1,
+        _ => 2,
+    });
 }
 
 /// File-shaped artifacts are written directly under the computer directory. A normal collected
@@ -872,22 +896,43 @@ fn task_output(
 /// Otherwise a skipped parser could leave a stale artifact from an earlier run.
 fn clear_generated_outputs(tasks: &[Task], work: &Path) -> io::Result<()> {
     for task in tasks {
-        if !task.output.starts_with(work) {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                format!("generated output is outside {}", work.display()),
-            ));
-        }
-        let Ok(metadata) = fs::symlink_metadata(&task.output) else {
-            continue;
-        };
-        if metadata.is_dir() && !metadata.file_type().is_symlink() {
-            fs::remove_dir_all(&task.output)?;
-        } else {
-            fs::remove_file(&task.output)?;
-        }
+        remove_generated_path(&task.output, work)?;
     }
     Ok(())
+}
+
+/// Defender extraction is an opt-in side output rather than a parser task target. Clear it on
+/// every clobber run—even when `-x` is absent—so malware from an earlier run cannot survive as an
+/// unrecorded stale result.
+fn clear_defender_extractions(hosts: &[Host], output: &Path) -> io::Result<()> {
+    for host in hosts {
+        remove_generated_path(
+            &output.join(&host.folder).join("defender-quarantined"),
+            output,
+        )?;
+    }
+    Ok(())
+}
+
+fn remove_generated_path(path: &Path, root: &Path) -> io::Result<()> {
+    if !path.starts_with(root) || path == root {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!(
+                "generated output {} is outside {}",
+                path.display(),
+                root.display()
+            ),
+        ));
+    }
+    let Ok(metadata) = fs::symlink_metadata(path) else {
+        return Ok(());
+    };
+    if metadata.is_dir() && !metadata.file_type().is_symlink() {
+        fs::remove_dir_all(path)
+    } else {
+        fs::remove_file(path)
+    }
 }
 
 fn remove_generated_file(path: &Path) -> io::Result<()> {
@@ -1372,6 +1417,23 @@ mod tests {
     }
 
     #[test]
+    fn discovers_targeted_windows_artifact_directories() {
+        let dir = tempfile::tempdir().unwrap();
+        let prefetch = dir.path().join("PREFETCH_ONLY/C/Windows");
+        let amcache = dir.path().join("AMCACHE_ONLY/C/Windows");
+        let profile = dir
+            .path()
+            .join("PROFILE/Users/alice/AppData/Roaming/Microsoft/Windows");
+        fs::create_dir_all(prefetch.join("Prefetch")).unwrap();
+        fs::create_dir_all(amcache.join("AppCompat/Programs")).unwrap();
+        fs::create_dir_all(profile.join("Recent")).unwrap();
+
+        let found = windows_directories(dir.path(), 10).unwrap();
+        assert_eq!(found, vec![amcache, prefetch]);
+        assert!(!found.contains(&profile));
+    }
+
+    #[test]
     fn output_names_follow_format_and_shape() {
         let root = Path::new("out/HOST");
         assert_eq!(
@@ -1512,6 +1574,39 @@ mod tests {
             log: PathBuf::new(),
         };
         assert_eq!(task_progress_message(&task), "HOST1 / prefetch");
+    }
+
+    #[test]
+    fn long_tasks_are_queued_across_hosts_before_short_tasks() {
+        let task = |computer: &str, artifact| Task {
+            computer: computer.into(),
+            artifact,
+            args: Vec::new(),
+            output: PathBuf::new(),
+            log: PathBuf::new(),
+        };
+        let mut tasks = vec![
+            task("HOST1", "prefetch"),
+            task("HOST1", "mft"),
+            task("HOST2", "registry"),
+            task("HOST2", "usn-journal"),
+            task("HOST2", "mft"),
+        ];
+        prioritize_long_tasks(&mut tasks);
+        let order: Vec<_> = tasks
+            .iter()
+            .map(|task| (task.computer.as_str(), task.artifact))
+            .collect();
+        assert_eq!(
+            order,
+            vec![
+                ("HOST1", "mft"),
+                ("HOST2", "mft"),
+                ("HOST2", "usn-journal"),
+                ("HOST1", "prefetch"),
+                ("HOST2", "registry"),
+            ]
+        );
     }
 
     #[test]
