@@ -691,47 +691,56 @@ impl Extractor {
 
     /// Write a content's file (`<SHA-1>.bin.quarantined`, or `<SHA-1>.hive.quarantined`) and its
     /// other streams beside it (`<SHA-1>.security.quarantined`,
-    /// `<SHA-1>.Zone.Identifier.quarantined`, …); the first's path, and problems.
+    /// `<SHA-1>.Zone.Identifier.quarantined`, …); the primary file's path, and problems.
     fn extract(&mut self, data: &ResourceData) -> (Option<String>, Vec<String>) {
         let mut problems = Vec::new();
         let mut first = None;
-        let mut files: Vec<(String, &[u8])> = Vec::new();
+        let mut primary = None;
+        let mut files: Vec<(String, &[u8], bool)> = Vec::new();
         if data.hive {
-            files.push((format!("{}.hive.quarantined", data.id), &data.content));
+            files.push((format!("{}.hive.quarantined", data.id), &data.content, true));
         } else {
             let mut primary_added = false;
             for stream in &data.streams {
-                let suffix = match stream.kind {
+                let (suffix, is_primary) = match stream.kind {
                     1 if !primary_added => {
                         primary_added = true;
-                        "bin".to_owned()
+                        ("bin".to_owned(), true)
                     }
-                    3 => "security".to_owned(),
-                    4 => stream_name(&stream.name),
-                    _ => stream.kind_name().unwrap_or("stream").to_ascii_lowercase(),
+                    3 => ("security".to_owned(), false),
+                    4 => (stream_name(&stream.name), false),
+                    _ => (
+                        stream.kind_name().unwrap_or("stream").to_ascii_lowercase(),
+                        false,
+                    ),
                 };
                 let base = format!("{}.{suffix}", data.id);
                 let mut name = format!("{base}.quarantined");
                 let mut n = 1;
-                while files.iter().any(|(f, _)| *f == name) {
+                while files.iter().any(|(f, _, _)| *f == name) {
                     n += 1;
                     name = format!("{base}.{n}.quarantined");
                 }
-                files.push((name, data.stream_data(stream)));
+                files.push((name, data.stream_data(stream), is_primary));
             }
         }
-        for (name, bytes) in files {
+        let has_primary = files.iter().any(|(_, _, is_primary)| *is_primary);
+        for (name, bytes, is_primary) in files {
             let path = self.dir.join(&name);
             match self.write(&path, bytes) {
                 Ok(()) => {
                     if first.is_none() {
-                        first = Some(path.display().to_string());
+                        first = Some(path.clone());
+                    }
+                    if is_primary {
+                        primary = Some(path);
                     }
                 }
                 Err(e) => problems.push(e),
             }
         }
-        (first, problems)
+        let extracted = if has_primary { primary } else { first };
+        (extracted.map(|path| path.display().to_string()), problems)
     }
 
     fn write(&mut self, path: &Path, bytes: &[u8]) -> Result<(), String> {

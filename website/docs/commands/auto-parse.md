@@ -44,10 +44,11 @@ For each discovered system, the computer name is chosen in this order:
 
 1. `hostname` in the nearest ancestor `client_info.json` (with `fqdn` retained in the manifest).
 2. `ComputerName` in a collected `SYSTEM` registry hive.
-3. The collection-directory name, with a suffix such as `_F.…` removed.
+3. The nearest useful collection-directory name, with drive and Velociraptor `uploads/auto`
+   scaffolding skipped and a suffix such as `_F.…` removed.
 
-Names are made safe for use as directory names. Duplicate names receive a numeric suffix, but the
-original `Computer` value is retained in JSON and in `manifest.json`.
+Names are made safe for use as directory names. Duplicate names receive a numeric suffix in both
+their output directory and `Computer` value so separate systems remain distinguishable in JSON.
 
 ## Parsers it runs
 

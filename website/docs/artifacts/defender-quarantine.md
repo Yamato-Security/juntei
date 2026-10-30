@@ -89,7 +89,7 @@ permissions reduce accidental execution, but the recovered bytes must still be t
 | `ScanId` | Defender scan identifier for grouping resources/actions. |
 | `QuarantineFolder` | Root source folder/host distinction. |
 | `EntryFile`, `ContentFile`, `ResourceRecordFile` | Exact source files used to build the row. Essential for validation. |
-| `ExtractedFile` | Output path written by `--extract`; empty when no extraction occurred. |
+| `ExtractedFile` | Primary quarantined file written by `--extract` (`.bin.quarantined` or `.hive.quarantined`); empty when no primary extraction occurred. Auxiliary streams are written beside it but are not reported as the primary file. |
 | `Problems` | Integrity mismatch, missing content, ID disagreement, damage, or orphan context. Do not suppress. |
 
 JSON/JSONL preserves the structured resource, stream list, record entries, and all relationship

@@ -631,12 +631,30 @@ fn child_ci(dir: &Path, name: &str) -> Option<PathBuf> {
 
 fn fallback_computer(root: &Path) -> String {
     let name = root
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .filter(|s| !s.is_empty())
+        .ancestors()
+        .filter_map(Path::file_name)
+        .map(|name| name.to_string_lossy().to_string())
+        .find(|name| !name.is_empty() && !collection_scaffolding(name))
         .unwrap_or_else(|| "UNKNOWN".to_string());
     name.split_once("_F.")
         .map_or(name.clone(), |(computer, _)| computer.to_string())
+}
+
+/// Directory names used to lay out a collected volume are not useful computer names. Walk above
+/// them so `HOST2/C/Windows` becomes `HOST2`, and a Velociraptor path such as
+/// `HOST2/uploads/auto/C%3A/Windows` does too.
+fn collection_scaffolding(name: &str) -> bool {
+    if name.eq_ignore_ascii_case("auto") || name.eq_ignore_ascii_case("uploads") {
+        return true;
+    }
+    let bytes = name.as_bytes();
+    (bytes.len() == 1 && bytes[0].is_ascii_alphabetic())
+        || (bytes.len() == 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':')
+        || (bytes.len() == 4
+            && bytes[0].is_ascii_alphabetic()
+            && bytes[1] == b'%'
+            && bytes[2] == b'3'
+            && bytes[3].eq_ignore_ascii_case(&b'a'))
 }
 
 fn safe_component(name: &str) -> String {
@@ -676,6 +694,12 @@ fn assign_output_folders(hosts: &mut [Host]) {
         while !used.insert(candidate.to_ascii_lowercase()) {
             candidate = format!("{base}_{number}");
             number += 1;
+        }
+        if candidate != base {
+            // Keep SIEM records from separate collections distinguishable as well as their output
+            // directories. Otherwise duplicate fallback names would remain identical in the JSON
+            // `Computer` field even though their folders were suffixed.
+            host.computer.clone_from(&candidate);
         }
         host.folder = candidate;
     }
@@ -1420,7 +1444,7 @@ mod tests {
     fn discovers_targeted_windows_artifact_directories() {
         let dir = tempfile::tempdir().unwrap();
         let prefetch = dir.path().join("PREFETCH_ONLY/C/Windows");
-        let amcache = dir.path().join("AMCACHE_ONLY/C/Windows");
+        let amcache = dir.path().join("AMCACHE_ONLY/uploads/auto/C%3A/Windows");
         let profile = dir
             .path()
             .join("PROFILE/Users/alice/AppData/Roaming/Microsoft/Windows");
@@ -1429,8 +1453,14 @@ mod tests {
         fs::create_dir_all(profile.join("Recent")).unwrap();
 
         let found = windows_directories(dir.path(), 10).unwrap();
-        assert_eq!(found, vec![amcache, prefetch]);
+        assert_eq!(found, vec![amcache.clone(), prefetch.clone()]);
         assert!(!found.contains(&profile));
+        let hosts = discover_hosts(dir.path(), 10).unwrap();
+        assert_eq!(hosts.len(), 2);
+        assert_eq!(hosts[0].computer, "AMCACHE_ONLY");
+        assert_eq!(hosts[0].root, amcache.parent().unwrap());
+        assert_eq!(hosts[1].computer, "PREFETCH_ONLY");
+        assert_eq!(hosts[1].root, prefetch.parent().unwrap());
     }
 
     #[test]
@@ -1630,5 +1660,11 @@ mod tests {
             .map(|host| host.folder.to_ascii_lowercase())
             .collect();
         assert_eq!(folders.len(), 3);
+        let computers: HashSet<_> = hosts
+            .iter()
+            .map(|host| host.computer.to_ascii_lowercase())
+            .collect();
+        assert_eq!(computers.len(), 3);
+        assert_eq!(hosts[1].computer, "host_2");
     }
 }

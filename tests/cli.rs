@@ -373,19 +373,18 @@ fn auto_parse_can_extract_defender_quarantined_files() {
 #[test]
 fn auto_parse_accepts_targeted_prefetch_without_system32() {
     let evidence = tempfile::tempdir().unwrap();
-    let host = evidence.path().join("HOST2");
-    let prefetch = host.join("C/Windows/Prefetch");
+    let prefetch = evidence.path().join("HOST2/C/Windows/Prefetch");
+    let amcache = evidence
+        .path()
+        .join("HOST3/uploads/auto/C%3A/Windows/AppCompat/Programs");
     std::fs::create_dir_all(&prefetch).unwrap();
-    std::fs::write(
-        host.join("client_info.json"),
-        r#"{"hostname":"HOST2","fqdn":"host2.example.test"}"#,
-    )
-    .unwrap();
+    std::fs::create_dir_all(&amcache).unwrap();
     std::fs::copy(
         repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
         prefetch.join("CMD.EXE-6D6290C5.pf"),
     )
     .unwrap();
+    std::fs::copy(repo(WIN10), amcache.join("Amcache.hve")).unwrap();
     let output_root = tempfile::tempdir().unwrap();
     let output = output_root.path().join("parsed");
     let r = run(&[
@@ -394,18 +393,43 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
         evidence.path().to_str().unwrap(),
         "-o",
         output.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "--single-file",
         "-T",
         "2",
         "-K",
         "-q",
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
-    assert!(output.join("HOST2/prefetch.csv").is_file());
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
             .unwrap();
-    assert_eq!(manifest["hosts"].as_array().unwrap().len(), 1);
+    assert_eq!(manifest["hosts"].as_array().unwrap().len(), 2);
     assert_eq!(manifest["hosts"][0]["Computer"], "HOST2");
+    assert_eq!(manifest["hosts"][1]["Computer"], "HOST3");
+    assert!(
+        manifest["hosts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|host| host["hostname_source"] == "directory name")
+    );
+    let records: Vec<Value> = std::fs::read_to_string(output.join("all-artifacts.jsonl"))
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert!(
+        records
+            .iter()
+            .any(|record| record["Computer"] == "HOST2" && record["Artifact"] == "prefetch")
+    );
+    assert!(
+        records
+            .iter()
+            .any(|record| record["Computer"] == "HOST3" && record["Artifact"] == "amcache")
+    );
 }
 
 #[test]
@@ -3640,6 +3664,7 @@ fn defender_quarantine_hosts_damage_and_missing_contents() {
 fn defender_quarantine_extracts_only_when_asked() {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("extracted");
+    let report = dir.path().join("quarantine.csv");
     let r = run(&[
         "parse-defender-quarantine",
         "-K",
@@ -3647,6 +3672,8 @@ fn defender_quarantine_extracts_only_when_asked() {
         QUARANTINE_DIR,
         "--extract",
         out.to_str().unwrap(),
+        "-o",
+        report.to_str().unwrap(),
     ]);
     assert_eq!(r.code, 0, "{}{}", r.stdout, r.stderr);
     assert!(r.stdout.contains("WARNING: --extract"), "{}", r.stdout);
@@ -3677,6 +3704,12 @@ fn defender_quarantine_extracts_only_when_asked() {
         assert_eq!(mode & 0o111, 0, "executable: {mode:o}");
     }
     assert!(r.stdout.contains("Files extracted: 5"), "{}", r.stdout);
+    let (_, rows) = csv_rows(&report);
+    let extracted = rows
+        .iter()
+        .find(|row| row["ResourceId"] == QUARANTINED_FILE)
+        .unwrap();
+    assert_eq!(extracted["ExtractedFile"], file.to_string_lossy());
 
     // Again: the same files are there, nothing written.
     let r = run(&[
