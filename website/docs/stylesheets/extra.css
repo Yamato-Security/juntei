@@ -33,7 +33,7 @@
 .md-content__inner:has(> .jt-hero) > h1:first-child { display: none; }
 .jt-hero img.jt-hero-art {
   display: block;
-  width: 100%;
+  width: 80%;
   height: auto;
   margin: 0 auto 1.5rem;
   border-radius: .65rem;
