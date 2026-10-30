@@ -49,7 +49,7 @@ Input:
 Output:
   -o, --output <FILE>       Save records
   -t, --output-type <TYPE>  csv, json, or jsonl
-      --extract <DIR>       Extract dangerous content, named by SHA-1
+      --extract <DIR>       Extract dangerous content with a .quarantined extension
   -C, --clobber             Overwrite confirmed output targets
 ```
 
@@ -61,6 +61,11 @@ juntei parse-defender-quarantine -d evidence/ -t jsonl \
 # Only in an isolated malware-analysis environment
 juntei parse-defender-quarantine -d evidence/ -o quarantine.csv --extract extracted/
 ```
+
+For example, `tool.exe` becomes `tool.exe.quarantined`. Auxiliary streams include their type in
+the name, such as `tool.exe.Zone.Identifier.quarantined`. Juntei also removes execute permission.
+The extension and permissions reduce accidental execution, but the recovered bytes must still be
+treated as malware.
 
 ## Output fields
 
@@ -84,7 +89,7 @@ juntei parse-defender-quarantine -d evidence/ -o quarantine.csv --extract extrac
 | `ScanId` | Defender scan identifier for grouping resources/actions. |
 | `QuarantineFolder` | Root source folder/host distinction. |
 | `EntryFile`, `ContentFile`, `ResourceRecordFile` | Exact source files used to build the row. Essential for validation. |
-| `ExtractedFile` | Output path written by `--extract`; empty when no extraction occurred. |
+| `ExtractedFile` | Primary quarantined file written by `--extract`; empty when no primary extraction occurred. Auxiliary streams are written beside it. |
 | `Problems` | Integrity mismatch, missing content, ID disagreement, damage, or orphan context. Do not suppress. |
 
 JSON/JSONL preserves the structured resource, stream list, record entries, and all relationship
@@ -92,9 +97,12 @@ details rather than the CSV's joined text.
 
 ## Extraction behavior
 
-Juntei names extracted data `<SHA-1>.bin` (or `.hive`) and writes security/alternate streams beside
-it without execute permission. Existing different content is not overwritten without `-C`. These
-controls reduce accidents but do not make the bytes safe.
+Juntei uses the original filename with a final `.quarantined` extension when the quarantine entry
+records one. It uses the content identifier for orphaned or non-file resources, and adds the
+identifier to resolve filename collisions. Windows-invalid filename characters are replaced. Security
+and alternate streams are written beside the primary file. Juntei removes execute permission;
+existing different content is not overwritten without `-C`. These controls reduce accidents but do
+not make the bytes safe.
 
 ## Investigation strategy
 

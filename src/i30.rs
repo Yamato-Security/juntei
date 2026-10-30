@@ -210,7 +210,7 @@ pub fn run(opts: &I30Options) -> i32 {
 
 /// Whether a file is a `$I30` file: named so (`$I30`, `Users_$I30`, …), or starting with an
 /// INDX record.
-fn is_i30_file(path: &Path) -> bool {
+pub(crate) fn is_i30_file(path: &Path) -> bool {
     let named = path
         .file_name()
         .is_some_and(|n| n.to_string_lossy().to_uppercase().contains("$I30"));

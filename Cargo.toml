@@ -30,7 +30,8 @@ mft = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-
 # Prefetch parsing: Yamato Security's ys-prefetch-parser, a fork of Samuel Garcés Marín's
 # frnsc-prefetch crate (MIT).
 frnsc-prefetch = { package = "ys-prefetch-parser", git = "https://github.com/Yamato-Security/ys-prefetch-parser" }
-serde_json = "1"
+# Preserve parser field order when auto-parse adds Computer and Artifact to JSON records.
+serde_json = { version = "1", features = ["preserve_order"] }
 # Refuse to overwrite an input through the same path, a symlink or a hard link.
 same-file = "1"
 # parse-registry's filters on key paths, value names and data.

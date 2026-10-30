@@ -23,9 +23,6 @@ embedded in Juntei; consult each project for its license.
 
 ## Reference tools and independent validation
 
-- Eric Zimmerman's **AmcacheParser**, **MFTECmd**, **PECmd**, **LECmd**, **JLECmd**,
-  **AppCompatCacheParser**, **SrumECmd**, **Registry Explorer**, and **RECmd** established many of
-  the field names and examiner expectations used for comparisons.
 - Maxim Suhanov's **regf specification** and **yarp** informed registry structures, transaction-log
   replay, and deleted-record recovery; his **dfir_ntfs** was the reference for INDX records and
   index-slack carving.
@@ -34,6 +31,7 @@ embedded in Juntei; consult each project for its license.
   **libesedb** provide detailed format research and independent parsing references.
 - Fox-IT's **dissect.esedb** and **dissect.target** provided independent SRUM, SAM, and Defender
   interpretations used during validation.
+- Some of Eric Zimmerman's tools established field names and examiner expectations used for comparisons.
 - **regipy**, **python-registry**, **Notatin**, and **artemis** provided registry implementations,
   tests, or sample interpretations.
 - **LnkParse3**, AbdulRhmanAlfaifi's **lnk_parser** and **jumplist_parser**, and JLECmd provided

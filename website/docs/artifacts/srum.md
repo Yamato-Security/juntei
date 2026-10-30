@@ -68,7 +68,7 @@ juntei parse-srum -f SRUDB.dat -t jsonl --include-value-state \
 
 ## Output tables
 
-CSV creates `SruDbIdMapTable.csv` and one table per provider. Known output names include:
+CSV creates `IdentityMap.csv` for `SruDbIdMapTable` and one table per provider. Known output names include:
 
 | Provider/table | Investigative purpose |
 |---|---|
@@ -78,7 +78,8 @@ CSV creates `SruDbIdMapTable.csv` and one table per provider. Known output names
 | `AppTimelineProvider` | Application timeline activity with end-time and usage-state fields. |
 | `EnergyUsage` | Short- and long-term energy/provider measurements; `IsLt` distinguishes them. |
 | `PushNotifications` | Push-notification activity. |
-| `vfuprov`, `EnergyEstimation`, `TaggedEnergy` | Version-specific energy and usage providers. |
+| `VfuProvider` | The `vfuprov` provider; its detailed purpose is not well documented, so interpret its fields cautiously. |
+| `EnergyEstimation`, `TaggedEnergy` | Version-specific energy and usage providers. |
 | `ProcessorTime`, `SizeInBytes`, `TotalUsed`, `NetworkBytes` | Windows Server provider tables. |
 | Unknown table name | Juntei preserves unknown providers under their GUID/table name and emits every catalog column. |
 
@@ -117,7 +118,7 @@ its original name**. The following fields are the stable/common output contract.
 | `_value_state` | Map of database field to `parsed`, `null`, `absent`, `unsupported`, or `damaged`. This separates evidence absence from parser failure. |
 | `_raw` | Original bytes in hexadecimal for values that have bytes. Use for validation and future decoding. |
 
-`SruDbIdMapTable.csv` contains `IdIndex`, `IdType`, and `IdBlob`: the raw index, identity category,
+`IdentityMap.csv` (from `SruDbIdMapTable`) contains `IdIndex`, `IdType`, and `IdBlob`: the raw index, identity category,
 and decoded program/SID/object text used by provider rows.
 
 ## Investigation strategy

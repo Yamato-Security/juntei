@@ -17,8 +17,12 @@ struct Run {
 }
 
 fn run(args: &[&str]) -> Run {
+    run_at(Path::new(env!("CARGO_MANIFEST_DIR")), args)
+}
+
+fn run_at(current_dir: &Path, args: &[&str]) -> Run {
     let out = Command::new(env!("CARGO_BIN_EXE_juntei"))
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .current_dir(current_dir)
         .args(args)
         .output()
         .expect("juntei runs");
@@ -46,6 +50,45 @@ fn triage() -> tempfile::TempDir {
     dir
 }
 
+/// A minimal Velociraptor-like collection used to exercise `auto-parse` end to end.
+fn auto_triage() -> tempfile::TempDir {
+    let dir = tempfile::tempdir().unwrap();
+    let host = dir.path().join("HOST1_F.TEST");
+    let windows = host.join("uploads/auto/C%3A/Windows");
+    let programs = windows.join("AppCompat/Programs");
+    let prefetch = windows.join("Prefetch");
+    let srum = windows.join("System32/sru");
+    let ntfs = host.join("uploads/ntfs/C");
+    std::fs::create_dir_all(&programs).unwrap();
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::create_dir_all(windows.join("System32")).unwrap();
+    std::fs::create_dir_all(&srum).unwrap();
+    std::fs::create_dir_all(ntfs.join("$Extend")).unwrap();
+    std::fs::write(
+        host.join("client_info.json"),
+        r#"{"hostname":"HOST1","fqdn":"host1.example.test"}"#,
+    )
+    .unwrap();
+    std::fs::copy(repo(WIN10), programs.join("Amcache.hve")).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
+        prefetch.join("CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+    std::fs::copy(repo("test_files/mft/MFT"), ntfs.join("$MFT")).unwrap();
+    std::fs::copy(
+        repo("test_files/usn/win11_rathbunvm_$J"),
+        ntfs.join("$Extend/$J"),
+    )
+    .unwrap();
+    std::fs::copy(
+        repo("test_files/srum/win10_rathbunvm_SRUDB.dat"),
+        srum.join("SRUDB.dat"),
+    )
+    .unwrap();
+    dir
+}
+
 /// Every JSON document in a stream of newline-separated (pretty) documents.
 fn json_documents(text: &str) -> Vec<Value> {
     serde_json::Deserializer::from_str(text)
@@ -59,7 +102,7 @@ fn banner_and_help() {
     let r = run(&[]);
     assert_eq!(r.code, 0);
     assert!(
-        r.stdout.contains("┗━━┻━━━┻┛  ┗┛ ┗┛ ┗━━━┻━━┛"),
+        r.stdout.contains("┗━━┻━━━┻┛ ┗━┛ ┗┛ ┗━━━┻━━┛"),
         "{}",
         r.stdout
     );
@@ -72,6 +115,421 @@ fn banner_and_help() {
         "{}",
         r.stdout
     );
+}
+
+#[test]
+fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
+    let evidence = auto_triage();
+    let output_root = tempfile::tempdir().unwrap();
+    let csv = output_root.path().join("csv");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        csv.to_str().unwrap(),
+        "-t",
+        "csv",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout.contains(
+            "Parsing in progress. Per-parser output is saved under each computer's logs directory.\n\n"
+        ),
+        "{}",
+        r.stdout
+    );
+    assert!(csv.join("HOST1/amcache").is_dir());
+    assert!(csv.join("HOST1/amcache/Amcache_summary.csv").is_file());
+    assert!(csv.join("HOST1/amcache/Amcache_files.csv").is_file());
+    assert!(
+        std::fs::read_dir(csv.join("HOST1/amcache"))
+            .unwrap()
+            .flatten()
+            .all(|entry| entry.path().is_file())
+    );
+    assert!(csv.join("HOST1/srum").is_dir());
+    assert!(csv.join("HOST1/srum/IdentityMap.csv").is_file());
+    assert!(csv.join("HOST1/srum/VfuProvider.csv").is_file());
+    assert!(
+        std::fs::read_dir(csv.join("HOST1/srum"))
+            .unwrap()
+            .flatten()
+            .all(|entry| entry.path().is_file())
+    );
+    assert!(csv.join("HOST1/mft.csv").is_file());
+    assert!(csv.join("HOST1/usn-journal.csv").is_file());
+    assert!(!csv.join("HOST1/mft").exists());
+    assert!(!csv.join("HOST1/usn-journal").exists());
+    assert!(csv.join("HOST1/prefetch.csv").is_file());
+    assert!(csv.join("HOST1/prefetch-timeline.csv").is_file());
+    assert!(csv.join("HOST1/logs").is_dir());
+    assert!(csv.join("HOST1/logs/prefetch.txt").is_file());
+    assert!(csv.join("HOST1/logs/mft.txt").is_file());
+    assert!(!csv.join("HOST1/logs/prefetch.log").exists());
+    assert!(!csv.join("HOST1/_logs").exists());
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(csv.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(manifest["hosts"][0]["Computer"], "HOST1");
+    assert_eq!(manifest["hosts"][0]["hostname"], "HOST1");
+    assert_eq!(manifest["hosts"][0]["hostname_source"], "client_info.json");
+    assert!(
+        manifest["tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|task| task["status"] != "failed")
+    );
+    assert!(manifest["tasks"].as_array().unwrap().iter().all(|task| {
+        task["log"].as_str().is_some_and(|path| {
+            path.replace('\\', "/").contains("/HOST1/logs/") && path.ends_with(".txt")
+        })
+    }));
+    assert_eq!(manifest["tasks"][0]["artifact"], "mft");
+    assert_eq!(manifest["tasks"][1]["artifact"], "usn-journal");
+    let (_, csv_tasks) = csv_rows(&csv.join("manifest.csv"));
+    assert_eq!(csv_tasks.len(), manifest["tasks"].as_array().unwrap().len());
+    for (row, task) in csv_tasks.iter().zip(manifest["tasks"].as_array().unwrap()) {
+        assert_eq!(row["Computer"], task["Computer"].as_str().unwrap());
+        assert_eq!(row["Hostname"], "HOST1");
+        assert_eq!(row["Status"], task["status"].as_str().unwrap());
+        assert_eq!(row["Log"], task["log"].as_str().unwrap());
+        assert_eq!(
+            serde_json::from_str::<Value>(&row["Command"]).unwrap(),
+            task["command"]
+        );
+    }
+    assert!(!r.stdout.contains("Manifest: "), "{}", r.stdout);
+    let summary = r
+        .stdout
+        .lines()
+        .find(|line| line.starts_with("Results saved: "))
+        .unwrap();
+    assert!(
+        summary.starts_with(&format!("Results saved: {}/ ( ", csv.display())),
+        "{summary}"
+    );
+    assert!(
+        summary.contains(" files / ") && summary.ends_with(" MB )"),
+        "{summary}"
+    );
+
+    // A previously generated target must not survive when the corresponding artifact is absent.
+    let stale = csv.join("HOST1/i30.csv");
+    std::fs::write(&stale, b"stale result\n").unwrap();
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        csv.to_str().unwrap(),
+        "-t",
+        "csv",
+        "-T",
+        "2",
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(!stale.exists());
+
+    // A Windows directory is a valid scope on its own; parsers must not receive its parent.
+    let windows = evidence
+        .path()
+        .join("HOST1_F.TEST/uploads/auto/C%3A/Windows");
+    let direct = output_root.path().join("direct-windows");
+    let r = run_at(
+        windows.parent().unwrap(),
+        &[
+            "auto-parse",
+            "-d",
+            "Windows",
+            "-o",
+            direct.to_str().unwrap(),
+            "-t",
+            "csv",
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ],
+    );
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let direct_manifest: Value =
+        serde_json::from_reader(std::fs::File::open(direct.join("manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(
+        direct_manifest["hosts"][0]["evidence_root"],
+        std::fs::canonicalize(&windows)
+            .unwrap()
+            .to_string_lossy()
+            .as_ref()
+    );
+    assert!(direct.join("Windows/prefetch.csv").is_file());
+
+    let jsonl = output_root.path().join("jsonl");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        jsonl.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-s",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let combined = jsonl.join("all-artifacts.jsonl");
+    assert!(jsonl.join("manifest.csv").is_file());
+    let values: Vec<Value> = std::fs::read_to_string(&combined)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert!(!values.is_empty());
+    assert!(values.iter().all(|value| value["Computer"] == "HOST1"));
+    assert!(values.iter().all(|value| value.get("Artifact").is_some()));
+    assert!(values.iter().any(|value| value["Artifact"] == "amcache"));
+    assert!(values.iter().any(|value| value["Artifact"] == "prefetch"));
+    assert!(std::fs::read_dir(&jsonl).unwrap().flatten().all(|entry| {
+        !entry
+            .file_name()
+            .to_string_lossy()
+            .starts_with(".juntei-work-")
+    }));
+}
+
+#[test]
+fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
+    let evidence = tempfile::tempdir().unwrap();
+    let prefetch = evidence.path().join("HOST1/C/Windows/Prefetch");
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::write(
+        prefetch.join("BROKEN.EXE-12345678.pf"),
+        b"not a prefetch file",
+    )
+    .unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let output = root.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let (_, tasks) = csv_rows(&output.join("manifest.csv"));
+    assert_eq!(tasks.len(), 16);
+    assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
+    let failed = tasks
+        .iter()
+        .find(|task| task["Artifact"] == "prefetch")
+        .unwrap();
+    assert_eq!(failed["Status"], "failed");
+    assert_eq!(failed["ExitCode"], "1");
+    assert!(!failed["Error"].is_empty());
+    assert!(Path::new(&failed["Log"]).is_file());
+}
+
+#[test]
+fn auto_parse_refuses_an_output_parent_of_the_evidence() {
+    let container = tempfile::tempdir().unwrap();
+    let evidence = container.path().join("evidence");
+    std::fs::create_dir_all(evidence.join("HOST1/C/Windows/System32")).unwrap();
+    let marker = container.path().join("keep.txt");
+    std::fs::write(&marker, b"must remain\n").unwrap();
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        container.path().to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout.contains("must not contain one another"),
+        "{}",
+        r.stdout
+    );
+    assert_eq!(std::fs::read(&marker).unwrap(), b"must remain\n");
+    assert!(!container.path().join("manifest.json").exists());
+}
+
+#[test]
+fn auto_parse_can_extract_defender_quarantined_files() {
+    let evidence = auto_triage();
+    quarantine_host(evidence.path(), "HOST1_F.TEST");
+    let output_root = tempfile::tempdir().unwrap();
+    let output = output_root.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-x",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let extracted = output
+        .join("HOST1/defender-quarantined")
+        .join("tool.exe.quarantined");
+    assert!(extracted.is_file(), "{}", extracted.display());
+    assert!(
+        std::fs::read(extracted)
+            .unwrap()
+            .starts_with(b"A harmless line of text")
+    );
+
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(manifest["extract_defender_quarantined"], true);
+    let defender = manifest["tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|task| task["artifact"] == "defender-quarantine")
+        .unwrap();
+    assert!(
+        defender["command"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|argument| argument == "--extract")
+    );
+
+    // A later clobber run without extraction must not leave stale malware from this run.
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-C",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(!output.join("HOST1/defender-quarantined").exists());
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(manifest["extract_defender_quarantined"], false);
+}
+
+#[test]
+fn auto_parse_accepts_targeted_prefetch_without_system32() {
+    let evidence = tempfile::tempdir().unwrap();
+    let prefetch = evidence.path().join("HOST2/C/Windows/Prefetch");
+    let amcache = evidence
+        .path()
+        .join("HOST3/uploads/auto/C%3A/Windows/AppCompat/Programs");
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::create_dir_all(&amcache).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
+        prefetch.join("CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+    std::fs::copy(repo(WIN10), amcache.join("Amcache.hve")).unwrap();
+    let output_root = tempfile::tempdir().unwrap();
+    let output = output_root.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "--single-file",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(manifest["hosts"].as_array().unwrap().len(), 2);
+    assert_eq!(manifest["hosts"][0]["Computer"], "HOST2");
+    assert_eq!(manifest["hosts"][0]["hostname"], "HOST2");
+    assert_eq!(manifest["hosts"][1]["Computer"], "HOST3");
+    assert_eq!(manifest["hosts"][1]["hostname"], "HOST3");
+    assert!(
+        manifest["hosts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|host| host["hostname_source"] == "directory name")
+    );
+    let records: Vec<Value> = std::fs::read_to_string(output.join("all-artifacts.jsonl"))
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert!(
+        records
+            .iter()
+            .any(|record| record["Computer"] == "HOST2" && record["Artifact"] == "prefetch")
+    );
+    assert!(
+        records
+            .iter()
+            .any(|record| record["Computer"] == "HOST3" && record["Artifact"] == "amcache")
+    );
+}
+
+#[test]
+fn auto_parse_accepts_a_new_relative_output_directory() {
+    let container = tempfile::tempdir().unwrap();
+    let evidence = container.path().join("evidence");
+    let windows = evidence.join("HOST1/C/Windows");
+    std::fs::create_dir_all(windows.join("System32")).unwrap();
+    std::fs::create_dir_all(windows.join("Prefetch")).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
+        windows.join("Prefetch/CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+    let r = run_at(
+        container.path(),
+        &[
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            "test",
+            "-K",
+            "-q",
+        ],
+    );
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(container.path().join("test/manifest.json").is_file());
 }
 
 #[test]
@@ -1637,10 +2095,10 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
         [
             "AppResourceUseInfo.csv",
             "AppTimelineProvider.csv",
+            "IdentityMap.csv",
             "NetworkConnections.csv",
             "NetworkUsages.csv",
-            "SruDbIdMapTable.csv",
-            "vfuprov.csv"
+            "VfuProvider.csv"
         ]
     );
 
@@ -1701,9 +2159,11 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
             .iter()
             .all(|r| r["EndTime"].starts_with("2022-02-"))
     );
-    let (_, ids) = csv_rows(&out.join("SruDbIdMapTable.csv"));
+    let (_, ids) = csv_rows(&out.join("IdentityMap.csv"));
     assert_eq!(ids.len(), 288);
     assert_eq!(ids[3]["IdBlob"], "S-1-5-19");
+    let (_, vfu) = csv_rows(&out.join("VfuProvider.csv"));
+    assert_eq!(vfu.len(), 4);
 
     // existing results are kept without -C
     let again = run(&["parse-srum", "-f", SRUM_WIN10, "-o", out.to_str().unwrap()]);
@@ -1881,11 +2341,11 @@ fn srum_triage_directory_with_server_tables() {
         files,
         [
             "AppResourceUseInfo.csv",
+            "IdentityMap.csv",
             "NetworkBytes.csv",
             "NetworkConnections.csv",
             "ProcessorTime.csv",
             "SizeInBytes.csv",
-            "SruDbIdMapTable.csv",
             "TotalUsed.csv"
         ]
     );
@@ -3278,6 +3738,7 @@ fn defender_quarantine_hosts_damage_and_missing_contents() {
 fn defender_quarantine_extracts_only_when_asked() {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("extracted");
+    let report = dir.path().join("quarantine.csv");
     let r = run(&[
         "parse-defender-quarantine",
         "-K",
@@ -3285,6 +3746,8 @@ fn defender_quarantine_extracts_only_when_asked() {
         QUARANTINE_DIR,
         "--extract",
         out.to_str().unwrap(),
+        "-o",
+        report.to_str().unwrap(),
     ]);
     assert_eq!(r.code, 0, "{}{}", r.stdout, r.stderr);
     assert!(r.stdout.contains("WARNING: --extract"), "{}", r.stdout);
@@ -3296,14 +3759,15 @@ fn defender_quarantine_extracts_only_when_asked() {
     assert_eq!(
         names,
         [
-            format!("{ORPHAN_CONTENT}.bin"),
-            format!("{QUARANTINED_FILE}.Zone.Identifier"),
-            format!("{QUARANTINED_FILE}.bin"),
-            format!("{QUARANTINED_FILE}.security"),
-            format!("{QUARANTINED_HIVE}.hive"),
+            format!("{ORPHAN_CONTENT}.quarantined"),
+            format!("{QUARANTINED_HIVE}.hive.quarantined"),
+            "tool.exe.Zone.Identifier.quarantined".to_string(),
+            "tool.exe.quarantined".to_string(),
+            "tool.exe.security.quarantined".to_string(),
         ]
     );
-    let file = out.join(format!("{QUARANTINED_FILE}.bin"));
+    assert!(names.iter().all(|name| name.ends_with(".quarantined")));
+    let file = out.join("tool.exe.quarantined");
     let data = std::fs::read(&file).unwrap();
     assert!(data.starts_with(b"A harmless line of text"));
     assert_eq!(data.len(), 61);
@@ -3314,6 +3778,12 @@ fn defender_quarantine_extracts_only_when_asked() {
         assert_eq!(mode & 0o111, 0, "executable: {mode:o}");
     }
     assert!(r.stdout.contains("Files extracted: 5"), "{}", r.stdout);
+    let (_, rows) = csv_rows(&report);
+    let extracted = rows
+        .iter()
+        .find(|row| row["ResourceId"] == QUARANTINED_FILE)
+        .unwrap();
+    assert_eq!(extracted["ExtractedFile"], file.to_string_lossy());
 
     // Again: the same files are there, nothing written.
     let r = run(&[

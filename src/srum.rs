@@ -191,24 +191,26 @@ pub fn run(opts: &SrumOptions) -> i32 {
         stats.add(&srum, context.as_ref());
 
         let written = match (&opts.output, &mut stdout_writer) {
-            (Some(out), _) => {
-                let name = root.map(|r| util::unique_name(r, database, &mut used_names));
-                match output_type {
-                    SrumOutputType::Csv => {
-                        let dir = name.map_or_else(|| out.clone(), |n| out.join(n));
-                        write_csv_tables(&dir, &srum).map(|files| saved += files)
-                    }
-                    SrumOutputType::Json | SrumOutputType::Jsonl => {
-                        let path = name.map_or_else(
-                            || out.clone(),
-                            |n| out.join(format!("{n}.{}", output_type.extension())),
-                        );
-                        let value_states = opts.include_value_state;
-                        write_entries_to(&path, &srum, &source, output_type, value_states)
-                            .map(|()| saved += 1)
-                    }
+            (Some(out), _) => match output_type {
+                SrumOutputType::Csv => {
+                    let dir = if let Some(root) = root.filter(|_| databases.len() > 1) {
+                        out.join(util::unique_name(root, database, &mut used_names))
+                    } else {
+                        out.clone()
+                    };
+                    write_csv_tables(&dir, &srum).map(|files| saved += files)
                 }
-            }
+                SrumOutputType::Json | SrumOutputType::Jsonl => {
+                    let name = root.map(|r| util::unique_name(r, database, &mut used_names));
+                    let path = name.map_or_else(
+                        || out.clone(),
+                        |n| out.join(format!("{n}.{}", output_type.extension())),
+                    );
+                    let value_states = opts.include_value_state;
+                    write_entries_to(&path, &srum, &source, output_type, value_states)
+                        .map(|()| saved += 1)
+                }
+            },
             (None, Some(w)) => w.database(&srum, &source),
             (None, None) => Ok(()),
         };
@@ -611,19 +613,26 @@ fn hex(bytes: &[u8]) -> String {
 
 /// One CSV file per provider in `dir` (`NetworkUsages.csv`,
 /// `AppResourceUseInfo.csv`, …), with the columns of every entry it holds, and
-/// `SruDbIdMapTable.csv`; returns the number of files written.
+/// `IdentityMap.csv`; returns the number of files written.
 fn write_csv_tables(dir: &Path, srum: &Srum) -> io::Result<usize> {
     std::fs::create_dir_all(dir)?;
     let mut tables: BTreeMap<String, CsvTable> = BTreeMap::new();
     for e in &srum.entries {
         tables.entry(output_name(e)).or_default().push(row(e));
     }
-    let mut used = HashSet::new();
+    // Reserve the fixed identity-map name and the friendly VFU name before writing provider
+    // tables, so even a crafted/unknown provider cannot overwrite either output.
+    let mut used = HashSet::from(["identitymap".to_string(), "vfuprovider".to_string()]);
     for (name, table) in &tables {
-        let path = dir.join(format!("{}.csv", safe_file_name(name, &mut used)));
+        let filename = if name == "vfuprov" {
+            "VfuProvider".to_string()
+        } else {
+            safe_file_name(name, &mut used)
+        };
+        let path = dir.join(format!("{filename}.csv"));
         table.write(&path)?;
     }
-    let mut ids = csv::Writer::from_path(dir.join("SruDbIdMapTable.csv"))?;
+    let mut ids = csv::Writer::from_path(dir.join("IdentityMap.csv"))?;
     ids.write_record(["IdIndex", "IdType", "IdBlob"])?;
     for id in &srum.ids {
         ids.write_record([
@@ -1142,5 +1151,14 @@ mod tests {
             "_SruDbIdMapTable"
         );
         assert_eq!(safe_file_name("", &mut used), "_");
+        let mut reserved = HashSet::from(["identitymap".to_string(), "vfuprovider".to_string()]);
+        assert_eq!(
+            safe_file_name("IdentityMap", &mut reserved),
+            "IdentityMap_2"
+        );
+        assert_eq!(
+            safe_file_name("vfuprovider", &mut reserved),
+            "vfuprovider_2"
+        );
     }
 }

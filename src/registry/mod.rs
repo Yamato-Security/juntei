@@ -41,7 +41,7 @@ const HIVE_TYPES: [&str; 14] = [
 
 /// Whether a file is a primary hive file: the `regf` signature and file type 0 (transaction logs
 /// start with a base block too), and not named as a log.
-fn is_hive_file(path: &Path) -> bool {
+pub(crate) fn is_hive_file(path: &Path) -> bool {
     let name = path
         .file_name()
         .map(|n| n.to_string_lossy().to_uppercase())
@@ -67,7 +67,7 @@ pub fn find_hives(dir: &Path) -> Vec<PathBuf> {
 
 /// The type of the hive file at `path` from its base block alone: the name it records (else the
 /// file's), when Windows keeps a hive of that name.
-fn hive_type_of_file(path: &Path) -> Option<String> {
+pub(crate) fn hive_type_of_file(path: &Path) -> Option<String> {
     let mut base = [0u8; 0x70];
     File::open(path)
         .and_then(|mut f| io::Read::read_exact(&mut f, &mut base))
