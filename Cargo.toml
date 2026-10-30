@@ -27,6 +27,8 @@ indicatif = "0.18"
 # $MFT parsing: Yamato Security's ys-mft-parser, a fork of Omer Ben-Amram's mft crate
 # (MIT / Apache-2.0), without its ys-mft-parser command.
 mft = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-mft-parser", default-features = false }
+# NTFS redo/undo transaction records (MIT OR Apache-2.0).
+ntfslog = { package = "ys-logfile-parser", git = "https://github.com/Yamato-Security/ys-logfile-parser" }
 # Prefetch parsing: Yamato Security's ys-prefetch-parser, a fork of Samuel Garcés Marín's
 # frnsc-prefetch crate (MIT).
 frnsc-prefetch = { package = "ys-prefetch-parser", git = "https://github.com/Yamato-Security/ys-prefetch-parser" }

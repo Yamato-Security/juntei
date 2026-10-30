@@ -618,6 +618,7 @@ dependencies = [
  "ys-defender-history-parser",
  "ys-jump-lists-parser",
  "ys-lnk-parser",
+ "ys-logfile-parser",
  "ys-mft-parser",
  "ys-prefetch-parser",
  "ys-registry-parser",
@@ -1295,6 +1296,11 @@ dependencies = [
  "codepage",
  "encoding_rs",
 ]
+
+[[package]]
+name = "ys-logfile-parser"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-logfile-parser#d825dd28af9c3b3f2f6580fdfb29a634196bc18d"
 
 [[package]]
 name = "ys-mft-parser"

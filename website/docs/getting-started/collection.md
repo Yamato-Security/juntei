@@ -9,6 +9,7 @@ original metadata where possible.
 |---|---|
 | Amcache | `C:\Windows\AppCompat\Programs\Amcache.hve` |
 | `$MFT` | NTFS volume metadata file `C:\$MFT` |
+| `$LogFile` | NTFS volume metadata file `C:\$LogFile` |
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
@@ -27,6 +28,8 @@ original metadata where possible.
   not replay `SRU*.log`; records existing only in those logs are unavailable.
 - Collect `$MFT` beside `$Extend/$J` when possible. The USN record stores parent file references,
   not a complete path; the MFT improves path resolution.
+- Collect `$LogFile` with the same volume's `$MFT` as close in time as possible. `$LogFile` wraps
+  rapidly; later collection can lose the earlier redo/undo records entirely.
 - Collect SRUM with the matching `SOFTWARE` hive to resolve account and Wi-Fi profile names.
 - Collect the whole Defender `Quarantine` tree so Entries, ResourceData, and Resources can be matched.
 
