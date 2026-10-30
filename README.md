@@ -15,6 +15,10 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
+Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
+and parse every supported artifact in parallel. It creates per-computer output directories and can
+produce one computer-labelled JSONL file for SIEM ingestion.
+
 | Artifact | Command | Status |
 | --- | --- | --- |
 | Amcache (`Amcache.hve`) | `parse-amcache` | Supported |

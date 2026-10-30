@@ -1,6 +1,7 @@
 //! Juntei: Windows forensics artifact parser.
 
 mod amcache;
+mod auto_parse;
 mod cli;
 mod color;
 mod defender_quarantine;
@@ -39,6 +40,12 @@ fn main() {
     let start = Instant::now();
     let cli = Cli::parse();
     let code = match &cli.cmd {
+        Commands::AutoParse(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = auto_parse::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
         Commands::ParseAmcache(opts) => {
             // JSON / JSONL on stdout: nothing but the data is printed there
             let data_only = opts.data_on_stdout();

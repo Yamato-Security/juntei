@@ -23,6 +23,16 @@ pub struct Cli {
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum Commands {
+    /// Discover Windows collections and parse every supported artifact in parallel
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei auto-parse -d <EVIDENCE> -o <OUTPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    AutoParse(AutoParseOptions),
+
     /// Parse Amcache.hve: inventoried executables (with SHA-1), PnP devices and findings
     #[command(
         author = AUTHOR,
@@ -133,6 +143,89 @@ pub enum Commands {
         disable_version_flag = true
     )]
     ParseRegistry(RegistryCommand),
+}
+
+/// What `auto-parse` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum AutoOutputType {
+    /// Separate CSV files and tables under each computer directory
+    #[default]
+    Csv,
+    /// Pretty JSON records with Computer and Artifact fields
+    Json,
+    /// One JSON object per line, with Computer and Artifact fields
+    Jsonl,
+}
+
+impl AutoOutputType {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            AutoOutputType::Csv => "csv",
+            AutoOutputType::Json => "json",
+            AutoOutputType::Jsonl => "jsonl",
+        }
+    }
+
+    pub fn is_json(self) -> bool {
+        matches!(self, AutoOutputType::Json | AutoOutputType::Jsonl)
+    }
+}
+
+fn parse_auto_depth(value: &str) -> Result<usize, String> {
+    let depth = value
+        .parse::<usize>()
+        .map_err(|_| "depth must be a whole number from 1 to 100".to_string())?;
+    (1..=100)
+        .contains(&depth)
+        .then_some(depth)
+        .ok_or_else(|| "depth must be from 1 to 100".to_string())
+}
+
+fn parse_auto_threads(value: &str) -> Result<usize, String> {
+    let threads = value
+        .parse::<usize>()
+        .map_err(|_| "threads must be a positive whole number".to_string())?;
+    (threads > 0)
+        .then_some(threads)
+        .ok_or_else(|| "threads must be at least 1".to_string())
+}
+
+#[derive(Args, Clone, Debug)]
+pub struct AutoParseOptions {
+    /// Evidence directory containing one or more collected Windows systems
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "EVIDENCE", display_order = 100)]
+    pub directory: PathBuf,
+
+    /// Maximum directory depth at which to discover a Windows directory
+    #[arg(help_heading = Some("Input"), long, value_name = "DEPTH", default_value_t = 10, value_parser = parse_auto_depth, display_order = 101)]
+    pub max_depth: usize,
+
+    /// New directory in which to create per-computer results
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "DIR", display_order = 200)]
+    pub output: PathBuf,
+
+    /// Output type: csv (default), json, or jsonl
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, default_value_t = AutoOutputType::Csv, hide_possible_values = true, display_order = 201)]
+    pub output_type: AutoOutputType,
+
+    /// For JSON/JSONL, create one all-artifacts file instead of per-artifact data files
+    #[arg(help_heading = Some("Output"), long, display_order = 202)]
+    pub single_file: bool,
+
+    /// Overwrite outputs in an existing directory (never deletes unrelated files)
+    #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 203)]
+    pub clobber: bool,
+
+    /// Parser processes to run at once (default: logical CPU count)
+    #[arg(help_heading = Some("Performance"), short = 'j', long, value_name = "N", value_parser = parse_auto_threads, display_order = 300)]
+    pub threads: Option<usize>,
+
+    /// Windows code page for ANSI strings in LNK and Jump List files
+    #[arg(help_heading = Some("Parsing"), long, value_name = "NUMBER", default_value_t = 1252, display_order = 400)]
+    pub code_page: u16,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
 }
 
 #[derive(Args, Clone, Debug, Default)]
@@ -1229,6 +1322,47 @@ mod tests {
     #[test]
     fn cli_definition_is_valid() {
         Cli::command().debug_assert();
+    }
+
+    #[test]
+    fn auto_parse_options_and_validation() {
+        let parse = |args: &[&str]| {
+            let mut argv = vec!["juntei", "auto-parse"];
+            argv.extend_from_slice(args);
+            Cli::try_parse_from(argv).map(|cli| match cli.cmd {
+                Commands::AutoParse(options) => options,
+                _ => panic!("not auto-parse"),
+            })
+        };
+        let options = parse(&["-d", "evidence", "-o", "results"]).unwrap();
+        assert_eq!(options.max_depth, 10);
+        assert_eq!(options.output_type, AutoOutputType::Csv);
+        assert_eq!(options.threads, None);
+        assert!(!options.single_file);
+
+        let options = parse(&[
+            "-d",
+            "evidence",
+            "-o",
+            "results",
+            "-t",
+            "jsonl",
+            "--single-file",
+            "-j",
+            "4",
+            "--max-depth",
+            "20",
+        ])
+        .unwrap();
+        assert_eq!(options.output_type, AutoOutputType::Jsonl);
+        assert_eq!(options.threads, Some(4));
+        assert_eq!(options.max_depth, 20);
+        assert!(options.single_file);
+
+        assert!(parse(&["-d", "evidence"]).is_err());
+        assert!(parse(&["-o", "results"]).is_err());
+        assert!(parse(&["-d", "evidence", "-o", "results", "-j", "0"]).is_err());
+        assert!(parse(&["-d", "evidence", "-o", "results", "--max-depth", "101"]).is_err());
     }
 
     #[test]

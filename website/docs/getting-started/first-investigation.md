@@ -25,6 +25,15 @@ juntei parse-defender-quarantine -d evidence/
 
 Read damage, dirty-database, and unapplied-log warnings before trusting records.
 
+To parse every supported artifact in a multi-computer collection in one operation, use:
+
+```bash
+juntei auto-parse -d evidence/ -o analysis/
+```
+
+See [Automatic Collection Parsing](../commands/auto-parse.md) for host discovery, parallelism,
+output layout, and consolidated JSONL for SIEM ingestion.
+
 ## 4. Save structured output
 
 ```bash

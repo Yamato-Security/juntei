@@ -1,0 +1,1323 @@
+//! `auto-parse`: discover collected Windows systems, run every Juntei parser in parallel, and
+//! organize the results by computer. Parser commands run as child processes so one damaged
+//! artifact cannot take down the whole collection and CPU-heavy parsers can run concurrently.
+
+use crate::cli::{AutoOutputType, AutoParseOptions};
+use crate::color::JunteiColor;
+use crate::registry::{Hosts, Logs, open};
+use crate::util::{self, error_msg, fmt_num, p, p_label};
+use chrono::Utc;
+use serde::Serialize;
+use serde::de::IgnoredAny;
+use serde_json::{Map, Value};
+use std::collections::{BTreeMap, HashSet};
+use std::ffi::OsString;
+use std::fs::{self, File, OpenOptions};
+use std::io::{self, BufRead, BufReader, BufWriter, Write};
+use std::path::{Component, Path, PathBuf};
+use std::process::Command;
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Instant;
+
+const WORK_DIR_PREFIX: &str = ".juntei-work-";
+
+#[derive(Clone)]
+struct Host {
+    computer: String,
+    fqdn: Option<String>,
+    source: &'static str,
+    root: PathBuf,
+    windows: Vec<PathBuf>,
+    folder: String,
+}
+
+#[derive(Clone, Copy)]
+enum OutputShape {
+    File,
+    Directory,
+    CsvDirectory,
+}
+
+#[derive(Clone)]
+struct Task {
+    computer: String,
+    artifact: &'static str,
+    args: Vec<OsString>,
+    output: PathBuf,
+    log: PathBuf,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+enum TaskStatus {
+    Succeeded,
+    Skipped,
+    Failed,
+}
+
+#[derive(Serialize)]
+struct TaskResult {
+    #[serde(rename = "Computer")]
+    computer: String,
+    artifact: String,
+    status: TaskStatus,
+    duration_ms: u128,
+    exit_code: Option<i32>,
+    command: Vec<String>,
+    output: Option<String>,
+    log: String,
+    error: Option<String>,
+}
+
+#[derive(Serialize)]
+struct ManifestHost {
+    #[serde(rename = "Computer")]
+    computer: String,
+    fqdn: Option<String>,
+    hostname_source: &'static str,
+    evidence_root: String,
+    windows_directories: Vec<String>,
+    output_directory: String,
+}
+
+#[derive(Serialize)]
+struct Manifest<'a> {
+    generated_utc: String,
+    juntei_version: &'static str,
+    evidence_directory: String,
+    output_directory: String,
+    output_type: &'static str,
+    single_file: bool,
+    threads: usize,
+    max_depth: usize,
+    hosts: Vec<ManifestHost>,
+    tasks: &'a [TaskResult],
+}
+
+struct DataFile {
+    path: PathBuf,
+}
+
+/// Run the command; returns the exit status.
+pub fn run(opts: &AutoParseOptions) -> i32 {
+    let no_color = opts.common.no_color;
+    if !opts.directory.is_dir() {
+        error_msg(
+            no_color,
+            &format!(
+                "The evidence directory does not exist: {}",
+                opts.directory.display()
+            ),
+        );
+        return 1;
+    }
+    if opts.single_file && !opts.output_type.is_json() {
+        error_msg(
+            no_color,
+            "--single-file can only be used with -t json or -t jsonl.",
+        );
+        return 1;
+    }
+    if let Err(msg) = output_outside_input(&opts.directory, &opts.output) {
+        error_msg(no_color, &msg);
+        return 1;
+    }
+    if let Err(msg) = util::check_output(&opts.output, true, opts.clobber) {
+        error_msg(no_color, &msg);
+        return 1;
+    }
+
+    let mut hosts = match discover_hosts(&opts.directory, opts.max_depth) {
+        Ok(hosts) if !hosts.is_empty() => hosts,
+        Ok(_) => {
+            error_msg(
+                no_color,
+                &format!(
+                    "No Windows directories were found within depth {} of {}.",
+                    opts.max_depth,
+                    opts.directory.display()
+                ),
+            );
+            return 1;
+        }
+        Err(e) => {
+            error_msg(
+                no_color,
+                &format!("Could not search {}: {e}", opts.directory.display()),
+            );
+            return 1;
+        }
+    };
+    assign_output_folders(&mut hosts);
+
+    if let Err(e) = fs::create_dir_all(&opts.output) {
+        error_msg(
+            no_color,
+            &format!("Could not create {}: {e}", opts.output.display()),
+        );
+        return 1;
+    }
+    let work = if opts.single_file {
+        match unused_child(
+            &opts.output,
+            &format!("{WORK_DIR_PREFIX}{}", std::process::id()),
+        ) {
+            Ok(path) => path,
+            Err(e) => {
+                error_msg(
+                    no_color,
+                    &format!("Could not choose a temporary output directory: {e}"),
+                );
+                return 1;
+            }
+        }
+    } else {
+        opts.output.clone()
+    };
+    if let Err(e) = fs::create_dir_all(&work) {
+        error_msg(
+            no_color,
+            &format!("Could not create {}: {e}", work.display()),
+        );
+        return 1;
+    }
+
+    let executable = match std::env::current_exe() {
+        Ok(path) => path,
+        Err(e) => {
+            error_msg(
+                no_color,
+                &format!("Could not locate the Juntei executable: {e}"),
+            );
+            return 1;
+        }
+    };
+    let tasks = match build_tasks(&hosts, opts, &work) {
+        Ok(tasks) => tasks,
+        Err(e) => {
+            error_msg(
+                no_color,
+                &format!("Could not prepare the parser tasks: {e}"),
+            );
+            return 1;
+        }
+    };
+    if opts.clobber
+        && let Err(e) = clear_generated_outputs(&tasks, &work)
+    {
+        error_msg(
+            no_color,
+            &format!("Could not clear an earlier generated output: {e}"),
+        );
+        return 1;
+    }
+    if opts.clobber {
+        let mut root_files = vec![opts.output.join("manifest.json")];
+        if opts.single_file {
+            root_files.push(
+                opts.output
+                    .join(format!("all-artifacts.{}", opts.output_type.as_str())),
+            );
+        }
+        for path in root_files {
+            if let Err(e) = remove_generated_file(&path) {
+                error_msg(
+                    no_color,
+                    &format!(
+                        "Could not clear earlier generated file {}: {e}",
+                        path.display()
+                    ),
+                );
+                return 1;
+            }
+        }
+    }
+    let available = std::thread::available_parallelism().map_or(1, usize::from);
+    let threads = opts
+        .threads
+        .unwrap_or(available)
+        .max(1)
+        .min(tasks.len().max(1));
+
+    p_label(no_color, "Windows systems: ", &fmt_num(hosts.len()));
+    for host in &hosts {
+        let fqdn = host
+            .fqdn
+            .as_deref()
+            .filter(|fqdn| *fqdn != host.computer)
+            .map_or_else(String::new, |fqdn| format!(" ({fqdn})"));
+        p(
+            None,
+            &format!("  {}{}: {}", host.computer, fqdn, host.root.display()),
+            true,
+        );
+    }
+    p_label(no_color, "Parser tasks: ", &fmt_num(tasks.len()));
+    p_label(no_color, "Parallel processes: ", &fmt_num(threads));
+    p(None, "", true);
+    p(
+        JunteiColor::Orange.rdg(no_color),
+        "Parsing in progress. Per-parser output is saved under each computer's _logs directory.",
+        true,
+    );
+
+    let mut results = run_tasks(&tasks, &executable, threads);
+    let mut data_files = Vec::new();
+    if opts.output_type.is_json() {
+        for (task, result) in tasks.iter().zip(&mut results) {
+            if result.status != TaskStatus::Succeeded {
+                continue;
+            }
+            let files = json_files(&task.output, opts.output_type);
+            if files.is_empty() {
+                result.status = TaskStatus::Failed;
+                result.error = Some("the parser succeeded but produced no JSON data file".into());
+                continue;
+            }
+            let mut annotated = Vec::new();
+            for path in files {
+                if let Err(e) =
+                    annotate_json_file(&path, &task.computer, task.artifact, opts.output_type)
+                {
+                    result.status = TaskStatus::Failed;
+                    result.output = None;
+                    result.error = Some(format!(
+                        "could not add Computer and Artifact to {}: {e}",
+                        path.display()
+                    ));
+                    break;
+                }
+                annotated.push(DataFile { path });
+            }
+            if result.status == TaskStatus::Succeeded {
+                data_files.extend(annotated);
+            }
+        }
+    }
+
+    let mut combined = None;
+    if opts.single_file {
+        let name = format!("all-artifacts.{}", opts.output_type.as_str());
+        let path = opts.output.join(name);
+        match consolidate(&data_files, &path, opts.output_type) {
+            Ok(()) => {
+                combined = Some(path.clone());
+                let parser_failed = results
+                    .iter()
+                    .any(|result| result.status == TaskStatus::Failed);
+                if !parser_failed
+                    && temporary_work_directory(&opts.output, &work)
+                    && let Err(e) = fs::remove_dir_all(&work)
+                {
+                    error_msg(
+                        no_color,
+                        &format!(
+                            "Could not remove temporary parser outputs {}: {e}",
+                            work.display()
+                        ),
+                    );
+                    return 1;
+                }
+                if parser_failed {
+                    p(
+                        JunteiColor::Orange.rdg(no_color),
+                        &format!(
+                            "Temporary parser outputs were kept in {} because at least one parser failed.",
+                            work.display()
+                        ),
+                        true,
+                    );
+                }
+                for result in &mut results {
+                    if result.status == TaskStatus::Succeeded {
+                        result.output = Some(path.to_string_lossy().to_string());
+                    }
+                }
+            }
+            Err(e) => {
+                error_msg(
+                    no_color,
+                    &format!("Could not create {}: {e}", path.display()),
+                );
+                error_msg(
+                    no_color,
+                    &format!("Temporary parser outputs were kept in {}.", work.display()),
+                );
+                return 1;
+            }
+        }
+    }
+
+    let manifest = Manifest {
+        generated_utc: Utc::now().to_rfc3339(),
+        juntei_version: env!("CARGO_PKG_VERSION"),
+        evidence_directory: opts.directory.to_string_lossy().to_string(),
+        output_directory: opts.output.to_string_lossy().to_string(),
+        output_type: opts.output_type.as_str(),
+        single_file: opts.single_file,
+        threads,
+        max_depth: opts.max_depth,
+        hosts: hosts.iter().map(manifest_host).collect(),
+        tasks: &results,
+    };
+    let manifest_path = opts.output.join("manifest.json");
+    if let Err(e) = write_pretty_json(&manifest_path, &manifest) {
+        error_msg(
+            no_color,
+            &format!("Could not write {}: {e}", manifest_path.display()),
+        );
+        return 1;
+    }
+
+    let succeeded = results
+        .iter()
+        .filter(|r| r.status == TaskStatus::Succeeded)
+        .count();
+    let skipped = results
+        .iter()
+        .filter(|r| r.status == TaskStatus::Skipped)
+        .count();
+    let failed = results
+        .iter()
+        .filter(|r| r.status == TaskStatus::Failed)
+        .count();
+    p(None, "", true);
+    p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
+    p(None, "", true);
+    p_label(no_color, "Succeeded: ", &fmt_num(succeeded));
+    p_label(no_color, "Not collected / skipped: ", &fmt_num(skipped));
+    p_label(no_color, "Failed: ", &fmt_num(failed));
+    p_label(no_color, "Results saved: ", &opts.output.to_string_lossy());
+    if let Some(path) = combined {
+        p_label(no_color, "Combined data: ", &path.to_string_lossy());
+    }
+    p_label(no_color, "Manifest: ", &manifest_path.to_string_lossy());
+    if failed > 0 {
+        for result in results.iter().filter(|r| r.status == TaskStatus::Failed) {
+            p(
+                JunteiColor::Red.rdg(no_color),
+                &format!(
+                    "  {} / {}: {} (log: {})",
+                    result.computer,
+                    result.artifact,
+                    result.error.as_deref().unwrap_or("parser failed"),
+                    result.log
+                ),
+                true,
+            );
+        }
+    }
+    p(None, "", true);
+
+    i32::from(failed > 0 || succeeded == 0)
+}
+
+fn discover_hosts(input: &Path, max_depth: usize) -> io::Result<Vec<Host>> {
+    let windows = windows_directories(input, max_depth)?;
+    let mut roots: BTreeMap<PathBuf, Vec<PathBuf>> = BTreeMap::new();
+    for windows_dir in windows {
+        let root = collection_root(input, &windows_dir)
+            .or_else(|| windows_dir.parent().map(Path::to_path_buf))
+            .unwrap_or_else(|| input.to_path_buf());
+        roots.entry(root).or_default().push(windows_dir);
+    }
+    let mut hosts = Vec::new();
+    for (root, mut windows) in roots {
+        windows.sort();
+        windows.dedup();
+        let client = client_info(&root);
+        let (computer, fqdn, source) = if let Some((hostname, fqdn)) = client {
+            (hostname, fqdn, "client_info.json")
+        } else if let Some(name) = system_computer_name(&windows) {
+            (name, None, "SYSTEM hive")
+        } else {
+            (fallback_computer(&root), None, "directory name")
+        };
+        hosts.push(Host {
+            folder: safe_component(&computer),
+            computer,
+            fqdn,
+            source,
+            root,
+            windows,
+        });
+    }
+    hosts.sort_by(|a, b| {
+        a.computer
+            .to_ascii_lowercase()
+            .cmp(&b.computer.to_ascii_lowercase())
+            .then_with(|| a.root.cmp(&b.root))
+    });
+    Ok(hosts)
+}
+
+fn windows_directories(root: &Path, max_depth: usize) -> io::Result<Vec<PathBuf>> {
+    if root
+        .file_name()
+        .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("Windows"))
+    {
+        return Ok(vec![root.to_path_buf()]);
+    }
+    let mut found = Vec::new();
+    let mut pending = vec![(root.to_path_buf(), 0usize)];
+    while let Some((dir, depth)) = pending.pop() {
+        let entries = match fs::read_dir(&dir) {
+            Ok(entries) => entries,
+            Err(e) if depth == 0 => return Err(e),
+            Err(_) => continue,
+        };
+        let mut children = Vec::new();
+        for entry in entries.flatten() {
+            let Ok(kind) = entry.file_type() else {
+                continue;
+            };
+            if !kind.is_dir() {
+                continue;
+            }
+            let path = entry.path();
+            let child_depth = depth + 1;
+            if entry
+                .file_name()
+                .to_string_lossy()
+                .eq_ignore_ascii_case("Windows")
+            {
+                if child_depth <= max_depth {
+                    found.push(path);
+                }
+                continue;
+            }
+            if child_depth < max_depth {
+                children.push(path);
+            }
+        }
+        children.sort();
+        pending.extend(children.into_iter().rev().map(|p| (p, depth + 1)));
+    }
+    found.sort();
+    found.dedup();
+    Ok(found)
+}
+
+fn collection_root(input: &Path, windows: &Path) -> Option<PathBuf> {
+    let mut at = Some(windows);
+    while let Some(dir) = at {
+        if dir.join("client_info.json").is_file() {
+            return Some(dir.to_path_buf());
+        }
+        if dir == input {
+            break;
+        }
+        at = dir.parent().filter(|parent| parent.starts_with(input));
+    }
+    None
+}
+
+fn client_info(root: &Path) -> Option<(String, Option<String>)> {
+    let file = File::open(root.join("client_info.json")).ok()?;
+    let value: Value = serde_json::from_reader(BufReader::new(file)).ok()?;
+    let hostname = value.get("hostname")?.as_str()?.trim();
+    if hostname.is_empty() {
+        return None;
+    }
+    let fqdn = value
+        .get("fqdn")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string);
+    Some((hostname.to_string(), fqdn))
+}
+
+fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
+    for windows in windows {
+        let config = child_ci(windows, "System32").and_then(|p| child_ci(&p, "config"));
+        let system = config.and_then(|p| child_ci(&p, "SYSTEM"));
+        let Some(system) = system else {
+            continue;
+        };
+        let Ok(opened) = open(&system, Logs::NextToIt) else {
+            continue;
+        };
+        let mut hosts = Hosts::new(true);
+        if let Some(name) = hosts.of(&system, &opened) {
+            return Some(name);
+        }
+    }
+    None
+}
+
+fn child_ci(dir: &Path, name: &str) -> Option<PathBuf> {
+    fs::read_dir(dir)
+        .ok()?
+        .flatten()
+        .map(|e| e.path())
+        .find(|p| {
+            p.file_name()
+                .is_some_and(|n| n.to_string_lossy().eq_ignore_ascii_case(name))
+        })
+}
+
+fn fallback_computer(root: &Path) -> String {
+    let name = root
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "UNKNOWN".to_string());
+    name.split_once("_F.")
+        .map_or(name.clone(), |(computer, _)| computer.to_string())
+}
+
+fn safe_component(name: &str) -> String {
+    let safe: String = name
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.') {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    let safe = safe.trim_matches('.');
+    let safe = if safe.is_empty() { "UNKNOWN" } else { safe };
+    let upper = safe.to_ascii_uppercase();
+    let reserved = matches!(upper.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        || upper
+            .strip_prefix("COM")
+            .or_else(|| upper.strip_prefix("LPT"))
+            .is_some_and(|number| {
+                matches!(number, "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9")
+            });
+    if reserved {
+        format!("_{safe}")
+    } else {
+        safe.to_string()
+    }
+}
+
+fn assign_output_folders(hosts: &mut [Host]) {
+    let mut used = HashSet::new();
+    for host in hosts {
+        let base = host.folder.clone();
+        let mut candidate = base.clone();
+        let mut number = 2usize;
+        while !used.insert(candidate.to_ascii_lowercase()) {
+            candidate = format!("{base}_{number}");
+            number += 1;
+        }
+        host.folder = candidate;
+    }
+}
+
+fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Result<Vec<Task>> {
+    let mut tasks = Vec::new();
+    for host in hosts {
+        let data_dir = work.join(&host.folder);
+        let log_dir = opts.output.join(&host.folder).join("_logs");
+        fs::create_dir_all(&data_dir)?;
+        fs::create_dir_all(&log_dir)?;
+        let mut add =
+            |artifact: &'static str, command: &[&str], shape: OutputShape, extra: &[&str]| {
+                let output = task_output(&data_dir, artifact, opts.output_type, shape);
+                let mut args: Vec<OsString> = command.iter().map(OsString::from).collect();
+                args.push("-d".into());
+                args.push(host.root.as_os_str().to_owned());
+                args.push("-o".into());
+                args.push(output.as_os_str().to_owned());
+                args.push("-t".into());
+                args.push(opts.output_type.as_str().into());
+                args.extend(extra.iter().map(OsString::from));
+                args.push("-C".into());
+                args.push("-K".into());
+                args.push("-q".into());
+                tasks.push(Task {
+                    computer: host.computer.clone(),
+                    artifact,
+                    args,
+                    output,
+                    log: log_dir.join(format!("{artifact}.log")),
+                });
+            };
+
+        add(
+            "amcache",
+            &["parse-amcache"],
+            OutputShape::CsvDirectory,
+            &["-a"],
+        );
+        let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
+            &["--all-times", "--short-names"]
+        } else {
+            &[]
+        };
+        add("mft", &["parse-mft"], OutputShape::Directory, mft_extra);
+        add("prefetch", &["parse-prefetch"], OutputShape::File, &[]);
+        add(
+            "prefetch-timeline",
+            &["parse-prefetch"],
+            OutputShape::File,
+            &["--timeline"],
+        );
+        add(
+            "usn-journal",
+            &["parse-usn-journal"],
+            OutputShape::Directory,
+            &[],
+        );
+        add("i30", &["parse-i30"], OutputShape::File, &[]);
+        let srum_extra: &[&str] = if opts.output_type.is_json() {
+            &["--include-value-state"]
+        } else {
+            &[]
+        };
+        add("srum", &["parse-srum"], OutputShape::Directory, srum_extra);
+        let code_page = opts.code_page.to_string();
+        add(
+            "lnk",
+            &["parse-lnk"],
+            OutputShape::File,
+            &["--code-page", &code_page],
+        );
+        add(
+            "jump-lists",
+            &["parse-jump-lists"],
+            OutputShape::CsvDirectory,
+            &["--code-page", &code_page],
+        );
+        add("shimcache", &["parse-shimcache"], OutputShape::File, &[]);
+        add(
+            "defender-quarantine",
+            &["parse-defender-quarantine"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "registry",
+            &["parse-registry", "read"],
+            OutputShape::File,
+            &["--recover-deleted", "--raw-data", "--qword-as-filetime"],
+        );
+        add(
+            "services",
+            &["parse-registry", "services"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
+        add(
+            "recentdocs",
+            &["parse-registry", "recentdocs"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "taskcache",
+            &["parse-registry", "taskcache"],
+            OutputShape::File,
+            &[],
+        );
+        add("sam", &["parse-registry", "sam"], OutputShape::File, &[]);
+    }
+    Ok(tasks)
+}
+
+fn task_output(
+    host_dir: &Path,
+    artifact: &str,
+    output_type: AutoOutputType,
+    shape: OutputShape,
+) -> PathBuf {
+    let directory = matches!(shape, OutputShape::Directory)
+        || (matches!(shape, OutputShape::CsvDirectory) && output_type == AutoOutputType::Csv);
+    if directory {
+        host_dir.join(artifact)
+    } else {
+        host_dir.join(format!("{artifact}.{}", output_type.as_str()))
+    }
+}
+
+/// With explicit `--clobber`, remove only the exact task targets under this run's work directory.
+/// Otherwise a skipped parser could leave a stale artifact from an earlier run.
+fn clear_generated_outputs(tasks: &[Task], work: &Path) -> io::Result<()> {
+    for task in tasks {
+        if !task.output.starts_with(work) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("generated output is outside {}", work.display()),
+            ));
+        }
+        let Ok(metadata) = fs::symlink_metadata(&task.output) else {
+            continue;
+        };
+        if metadata.is_dir() && !metadata.file_type().is_symlink() {
+            fs::remove_dir_all(&task.output)?;
+        } else {
+            fs::remove_file(&task.output)?;
+        }
+    }
+    Ok(())
+}
+
+fn remove_generated_file(path: &Path) -> io::Result<()> {
+    let Ok(metadata) = fs::symlink_metadata(path) else {
+        return Ok(());
+    };
+    if metadata.is_file() || metadata.file_type().is_symlink() {
+        fs::remove_file(path)
+    } else {
+        Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "expected a generated file but found a directory",
+        ))
+    }
+}
+
+fn run_tasks(tasks: &[Task], executable: &Path, threads: usize) -> Vec<TaskResult> {
+    let next = AtomicUsize::new(0);
+    let results = Mutex::new(Vec::with_capacity(tasks.len()));
+    std::thread::scope(|scope| {
+        for _ in 0..threads {
+            scope.spawn(|| {
+                loop {
+                    let index = next.fetch_add(1, Ordering::Relaxed);
+                    let Some(task) = tasks.get(index) else {
+                        break;
+                    };
+                    let result = run_task(task, executable);
+                    results.lock().unwrap().push((index, result));
+                }
+            });
+        }
+    });
+    let mut results = results.into_inner().unwrap();
+    results.sort_by_key(|(index, _)| *index);
+    results.into_iter().map(|(_, result)| result).collect()
+}
+
+fn run_task(task: &Task, executable: &Path) -> TaskResult {
+    let start = Instant::now();
+    let command: Vec<String> =
+        std::iter::once(executable.as_os_str().to_string_lossy().to_string())
+            .chain(task.args.iter().map(|a| a.to_string_lossy().to_string()))
+            .collect();
+    let output = Command::new(executable).args(&task.args).output();
+    let mut error = None;
+    let (status, exit_code, stdout, stderr) = match output {
+        Ok(output) => {
+            let mut combined = String::from_utf8_lossy(&output.stdout).to_string();
+            combined.push_str(&String::from_utf8_lossy(&output.stderr));
+            let skipped = !output.status.success() && no_artifact_message(&combined);
+            let status = if output.status.success() {
+                TaskStatus::Succeeded
+            } else if skipped {
+                TaskStatus::Skipped
+            } else {
+                error = Some(
+                    last_nonempty_line(&combined)
+                        .unwrap_or("parser failed")
+                        .to_string(),
+                );
+                TaskStatus::Failed
+            };
+            (status, output.status.code(), output.stdout, output.stderr)
+        }
+        Err(e) => {
+            error = Some(format!("could not start parser: {e}"));
+            (TaskStatus::Failed, None, Vec::new(), Vec::new())
+        }
+    };
+    let mut log = Vec::new();
+    let _ = writeln!(log, "Command: {}", command.join(" "));
+    log.extend_from_slice(&stdout);
+    if !stdout.is_empty() && !stdout.ends_with(b"\n") {
+        log.push(b'\n');
+    }
+    log.extend_from_slice(&stderr);
+    if let Some(parent) = task.log.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Err(e) = fs::write(&task.log, log) {
+        error = Some(format!("could not write {}: {e}", task.log.display()));
+    }
+    TaskResult {
+        computer: task.computer.clone(),
+        artifact: task.artifact.to_string(),
+        status: if error.is_some() && status != TaskStatus::Skipped {
+            TaskStatus::Failed
+        } else {
+            status
+        },
+        duration_ms: start.elapsed().as_millis(),
+        exit_code,
+        command,
+        output: (status == TaskStatus::Succeeded)
+            .then(|| task.output.to_string_lossy().to_string()),
+        log: task.log.to_string_lossy().to_string(),
+        error,
+    }
+}
+
+fn no_artifact_message(output: &str) -> bool {
+    output.lines().any(|line| {
+        let line = line.trim();
+        line.starts_with("No ") && line.contains(" were found")
+    })
+}
+
+fn last_nonempty_line(output: &str) -> Option<&str> {
+    output
+        .lines()
+        .rev()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+}
+
+fn json_files(output: &Path, output_type: AutoOutputType) -> Vec<PathBuf> {
+    let extension = output_type.as_str();
+    if output.is_file() {
+        return (output
+            .extension()
+            .is_some_and(|e| e.to_string_lossy().eq_ignore_ascii_case(extension)))
+        .then(|| output.to_path_buf())
+        .into_iter()
+        .collect();
+    }
+    let mut files = Vec::new();
+    let mut pending = vec![output.to_path_buf()];
+    while let Some(dir) = pending.pop() {
+        let Ok(entries) = fs::read_dir(dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                pending.push(path);
+            } else if path
+                .extension()
+                .is_some_and(|e| e.to_string_lossy().eq_ignore_ascii_case(extension))
+            {
+                files.push(path);
+            }
+        }
+    }
+    files.sort();
+    files
+}
+
+fn annotate_json_file(
+    path: &Path,
+    computer: &str,
+    artifact: &str,
+    output_type: AutoOutputType,
+) -> io::Result<()> {
+    let input = BufReader::new(File::open(path)?);
+    let temporary = unused_sibling(path, "annotated")?;
+    let output = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temporary)?;
+    let mut writer = BufWriter::new(output);
+    let write_result = (|| -> io::Result<()> {
+        if output_type == AutoOutputType::Jsonl {
+            return annotate_jsonl(input, &mut writer, computer, artifact);
+        }
+        for value in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
+            let mut value = value.map_err(io::Error::other)?;
+            annotate_value(&mut value, computer, artifact);
+            serde_json::to_writer_pretty(&mut writer, &value).map_err(io::Error::other)?;
+            writer.write_all(b"\n")?;
+        }
+        writer.flush()
+    })();
+    if let Err(e) = write_result {
+        let _ = fs::remove_file(&temporary);
+        return Err(e);
+    }
+    replace_generated_file(path, &temporary)
+}
+
+/// Validate and label JSONL without building and serializing every object again. Juntei's JSONL
+/// writers emit one object per line, so the existing object can safely become the tail of a new
+/// object after the two provenance fields. A non-object is rare, but is still wrapped as `Data`.
+fn annotate_jsonl(
+    mut input: impl BufRead,
+    writer: &mut impl Write,
+    computer: &str,
+    artifact: &str,
+) -> io::Result<()> {
+    let mut prefix = b"{\"Computer\":".to_vec();
+    serde_json::to_writer(&mut prefix, computer).map_err(io::Error::other)?;
+    prefix.extend_from_slice(b",\"Artifact\":");
+    serde_json::to_writer(&mut prefix, artifact).map_err(io::Error::other)?;
+
+    let mut line = Vec::new();
+    loop {
+        line.clear();
+        if input.read_until(b'\n', &mut line)? == 0 {
+            break;
+        }
+        let start = line
+            .iter()
+            .position(|byte| !byte.is_ascii_whitespace())
+            .unwrap_or(line.len());
+        let end = line
+            .iter()
+            .rposition(|byte| !byte.is_ascii_whitespace())
+            .map_or(start, |at| at + 1);
+        let value = &line[start..end];
+        if value.is_empty() {
+            continue;
+        }
+        serde_json::from_slice::<IgnoredAny>(value).map_err(io::Error::other)?;
+        if value.first() == Some(&b'{') && value.last() == Some(&b'}') {
+            writer.write_all(&prefix)?;
+            let inner = &value[1..value.len() - 1];
+            if inner.iter().any(|byte| !byte.is_ascii_whitespace()) {
+                writer.write_all(b",")?;
+                writer.write_all(inner)?;
+            }
+            writer.write_all(b"}\n")?;
+        } else {
+            let mut parsed: Value = serde_json::from_slice(value).map_err(io::Error::other)?;
+            annotate_value(&mut parsed, computer, artifact);
+            serde_json::to_writer(&mut *writer, &parsed).map_err(io::Error::other)?;
+            writer.write_all(b"\n")?;
+        }
+    }
+    writer.flush()
+}
+
+fn annotate_value(value: &mut Value, computer: &str, artifact: &str) {
+    if let Value::Object(object) = value {
+        object.insert("Computer".to_string(), Value::String(computer.to_string()));
+        object.insert("Artifact".to_string(), Value::String(artifact.to_string()));
+    } else {
+        let data = std::mem::take(value);
+        let mut object = Map::new();
+        object.insert("Computer".to_string(), Value::String(computer.to_string()));
+        object.insert("Artifact".to_string(), Value::String(artifact.to_string()));
+        object.insert("Data".to_string(), data);
+        *value = Value::Object(object);
+    }
+}
+
+fn consolidate(files: &[DataFile], output: &Path, output_type: AutoOutputType) -> io::Result<()> {
+    let out = File::create(output)?;
+    let mut writer = BufWriter::new(out);
+    let mut first = true;
+    if output_type == AutoOutputType::Json {
+        writer.write_all(b"[\n")?;
+    }
+    let mut ordered: Vec<&Path> = files.iter().map(|f| f.path.as_path()).collect();
+    ordered.sort();
+    for path in ordered {
+        let mut input = BufReader::new(File::open(path)?);
+        if output_type == AutoOutputType::Jsonl {
+            io::copy(&mut input, &mut writer)?;
+            continue;
+        }
+        for value in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
+            let value = value.map_err(io::Error::other)?;
+            if !first {
+                writer.write_all(b",\n")?;
+            }
+            serde_json::to_writer_pretty(&mut writer, &value).map_err(io::Error::other)?;
+            first = false;
+        }
+    }
+    if output_type == AutoOutputType::Json {
+        writer.write_all(b"\n]\n")?;
+    }
+    writer.flush()
+}
+
+fn unused_sibling(path: &Path, label: &str) -> io::Result<PathBuf> {
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let name = path
+        .file_name()
+        .map_or_else(|| "output".to_string(), |n| n.to_string_lossy().to_string());
+    for number in 0..1000 {
+        let candidate = parent.join(format!(".{name}.juntei-{label}-{number}"));
+        if !candidate.exists() {
+            return Ok(candidate);
+        }
+    }
+    Err(io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        format!("no unused temporary name next to {}", path.display()),
+    ))
+}
+
+fn unused_child(parent: &Path, name: &str) -> io::Result<PathBuf> {
+    for number in 0..1000 {
+        let candidate = if number == 0 {
+            parent.join(name)
+        } else {
+            parent.join(format!("{name}-{number}"))
+        };
+        if !candidate.exists() {
+            return Ok(candidate);
+        }
+    }
+    Err(io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        format!(
+            "no unused temporary directory name under {}",
+            parent.display()
+        ),
+    ))
+}
+
+fn temporary_work_directory(output: &Path, work: &Path) -> bool {
+    work.parent() == Some(output)
+        && work
+            .file_name()
+            .is_some_and(|name| name.to_string_lossy().starts_with(WORK_DIR_PREFIX))
+}
+
+fn replace_generated_file(path: &Path, replacement: &Path) -> io::Result<()> {
+    let backup = unused_sibling(path, "original")?;
+    fs::rename(path, &backup)?;
+    if let Err(e) = fs::rename(replacement, path) {
+        let _ = fs::rename(&backup, path);
+        return Err(e);
+    }
+    fs::remove_file(backup)
+}
+
+fn manifest_host(host: &Host) -> ManifestHost {
+    ManifestHost {
+        computer: host.computer.clone(),
+        fqdn: host.fqdn.clone(),
+        hostname_source: host.source,
+        evidence_root: host.root.to_string_lossy().to_string(),
+        windows_directories: host
+            .windows
+            .iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect(),
+        output_directory: host.folder.clone(),
+    }
+}
+
+fn write_pretty_json(path: &Path, value: &impl Serialize) -> io::Result<()> {
+    let mut writer = BufWriter::new(File::create(path)?);
+    serde_json::to_writer_pretty(&mut writer, value).map_err(io::Error::other)?;
+    writer.write_all(b"\n")?;
+    writer.flush()
+}
+
+fn output_outside_input(input: &Path, output: &Path) -> Result<(), String> {
+    let input = fs::canonicalize(input)
+        .map_err(|e| format!("Could not resolve {}: {e}", input.display()))?;
+    let output = absolute_candidate(output)
+        .map_err(|e| format!("Could not resolve {}: {e}", output.display()))?;
+    if output.starts_with(&input) {
+        return Err(format!(
+            "The output directory must be outside the evidence directory: {}",
+            output.display()
+        ));
+    }
+    Ok(())
+}
+
+fn absolute_candidate(path: &Path) -> io::Result<PathBuf> {
+    if path.exists() {
+        return fs::canonicalize(path);
+    }
+    let mut suffix = Vec::new();
+    let mut at = path;
+    while !at.exists() {
+        suffix.push(at.file_name().ok_or_else(|| {
+            io::Error::new(io::ErrorKind::InvalidInput, "path has no existing ancestor")
+        })?);
+        at = at.parent().ok_or_else(|| {
+            io::Error::new(io::ErrorKind::InvalidInput, "path has no existing ancestor")
+        })?;
+    }
+    let mut absolute = fs::canonicalize(at)?;
+    for part in suffix.into_iter().rev() {
+        absolute.push(part);
+    }
+    Ok(normalize_absolute(&absolute))
+}
+
+fn normalize_absolute(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                normalized.pop();
+            }
+            Component::Prefix(_) | Component::RootDir | Component::Normal(_) => {
+                normalized.push(component.as_os_str());
+            }
+        }
+    }
+    normalized
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn discovers_client_collections_and_respects_depth() {
+        let dir = tempfile::tempdir().unwrap();
+        let collection = dir.path().join("case");
+        let windows = collection.join("uploads/auto/C/Windows");
+        fs::create_dir_all(&windows).unwrap();
+        fs::write(
+            collection.join("client_info.json"),
+            r#"{"hostname":"HOST-1","fqdn":"host-1.example.test"}"#,
+        )
+        .unwrap();
+        let hosts = discover_hosts(dir.path(), 6).unwrap();
+        assert_eq!(hosts.len(), 1);
+        assert_eq!(hosts[0].computer, "HOST-1");
+        assert_eq!(hosts[0].fqdn.as_deref(), Some("host-1.example.test"));
+        assert_eq!(hosts[0].root, collection);
+        assert!(discover_hosts(dir.path(), 3).unwrap().is_empty());
+
+        let direct = windows_directories(&windows, 1).unwrap();
+        assert_eq!(direct, vec![windows]);
+    }
+
+    #[test]
+    fn output_names_follow_format_and_shape() {
+        let root = Path::new("out/HOST");
+        assert_eq!(
+            task_output(
+                root,
+                "amcache",
+                AutoOutputType::Csv,
+                OutputShape::CsvDirectory
+            ),
+            root.join("amcache")
+        );
+        assert_eq!(
+            task_output(
+                root,
+                "amcache",
+                AutoOutputType::Jsonl,
+                OutputShape::CsvDirectory
+            ),
+            root.join("amcache.jsonl")
+        );
+        assert_eq!(
+            task_output(root, "mft", AutoOutputType::Json, OutputShape::Directory),
+            root.join("mft")
+        );
+    }
+
+    #[test]
+    fn annotates_and_consolidates_jsonl() {
+        let dir = tempfile::tempdir().unwrap();
+        let one = dir.path().join("one.jsonl");
+        let two = dir.path().join("two.jsonl");
+        fs::write(&one, "{\"value\":1}\n").unwrap();
+        fs::write(&two, "[1,2]\n").unwrap();
+        annotate_json_file(&one, "HOST1", "mft", AutoOutputType::Jsonl).unwrap();
+        annotate_json_file(&two, "HOST2", "usn-journal", AutoOutputType::Jsonl).unwrap();
+        let first: Value = serde_json::from_str(&fs::read_to_string(&one).unwrap()).unwrap();
+        assert_eq!(first["Computer"], "HOST1");
+        assert_eq!(first["Artifact"], "mft");
+        let wrapped: Value = serde_json::from_str(&fs::read_to_string(&two).unwrap()).unwrap();
+        assert_eq!(wrapped["Computer"], "HOST2");
+        assert_eq!(wrapped["Data"], serde_json::json!([1, 2]));
+
+        let combined = dir.path().join("all.jsonl");
+        consolidate(
+            &[DataFile { path: one }, DataFile { path: two }],
+            &combined,
+            AutoOutputType::Jsonl,
+        )
+        .unwrap();
+        let lines: Vec<Value> = fs::read_to_string(combined)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert_eq!(lines.len(), 2);
+        assert_eq!(lines[0]["Computer"], "HOST1");
+        assert_eq!(lines[1]["Computer"], "HOST2");
+    }
+
+    #[test]
+    fn annotates_and_consolidates_json_array() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source.json");
+        fs::write(&source, "{\n  \"value\": 7\n}\n").unwrap();
+        annotate_json_file(&source, "HOST1", "registry", AutoOutputType::Json).unwrap();
+        let combined = dir.path().join("all.json");
+        consolidate(
+            &[DataFile { path: source }],
+            &combined,
+            AutoOutputType::Json,
+        )
+        .unwrap();
+        let values: Vec<Value> = serde_json::from_reader(File::open(combined).unwrap()).unwrap();
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0]["Computer"], "HOST1");
+        assert_eq!(values[0]["Artifact"], "registry");
+        assert_eq!(values[0]["value"], 7);
+    }
+
+    #[test]
+    fn malformed_jsonl_is_rejected_without_changing_the_parser_output() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source.jsonl");
+        let original = "{\"valid\":true}\nnot-json\n";
+        fs::write(&source, original).unwrap();
+        assert!(annotate_json_file(&source, "HOST1", "mft", AutoOutputType::Jsonl).is_err());
+        assert_eq!(fs::read_to_string(source).unwrap(), original);
+    }
+
+    #[test]
+    fn refuses_output_inside_evidence() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("case")).unwrap();
+        assert!(output_outside_input(dir.path(), &dir.path().join("results")).is_err());
+        assert!(
+            output_outside_input(
+                dir.path(),
+                &dir.path()
+                    .parent()
+                    .unwrap()
+                    .join("missing")
+                    .join("..")
+                    .join(dir.path().file_name().unwrap())
+                    .join("results")
+            )
+            .is_err()
+        );
+        assert!(
+            output_outside_input(dir.path(), &dir.path().parent().unwrap().join("elsewhere"))
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn output_folder_names_are_portable_and_unique() {
+        assert_eq!(safe_component("host/name"), "host_name");
+        assert_eq!(safe_component("CON"), "_CON");
+        assert_eq!(safe_component("lpt9"), "_lpt9");
+
+        let host = |computer: &str| Host {
+            computer: computer.to_string(),
+            fqdn: None,
+            source: "test",
+            root: PathBuf::new(),
+            windows: Vec::new(),
+            folder: safe_component(computer),
+        };
+        let mut hosts = vec![host("HOST"), host("host"), host("HOST_2")];
+        assign_output_folders(&mut hosts);
+        let folders: HashSet<_> = hosts
+            .iter()
+            .map(|host| host.folder.to_ascii_lowercase())
+            .collect();
+        assert_eq!(folders.len(), 3);
+    }
+}

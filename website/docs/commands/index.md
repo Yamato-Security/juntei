@@ -4,6 +4,7 @@ Run `juntei --help` for the current list and `juntei <COMMAND> --help` for one c
 
 | Command | Input artifact | Detailed guide |
 |---|---|---|
+| `auto-parse` | Multi-computer Windows evidence collection | [Automatic Collection Parsing](auto-parse.md) |
 | `parse-amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
 | `parse-mft` | NTFS `$MFT` | [Master File Table](../artifacts/mft.md) |
 | `parse-prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |

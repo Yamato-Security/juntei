@@ -108,6 +108,7 @@ nav:
       - Collecting Evidence: getting-started/collection.md
   - Commands:
       - Command List: commands/index.md
+      - Automatic Collection Parsing: commands/auto-parse.md
       - Execution and Inventory: commands/execution.md
       - File System: commands/filesystem.md
       - User Activity: commands/user-activity.md

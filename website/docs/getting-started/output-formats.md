@@ -37,6 +37,10 @@ juntei parse-registry services -d evidence/ -t jsonl \
 When structured output goes to standard output, Juntei sends progress and messages to standard
 error so a pipe receives data only.
 
+`auto-parse -t jsonl --single-file` combines a complete multi-host collection into
+`all-artifacts.jsonl`. Each record has `Computer` and `Artifact` fields so its source remains clear
+after SIEM ingestion.
+
 ## UTC and precision
 
 Juntei formats parsed times in UTC using RFC 3339 where the format permits it. Some artifacts have

@@ -46,6 +46,29 @@ fn triage() -> tempfile::TempDir {
     dir
 }
 
+/// A minimal Velociraptor-like collection used to exercise `auto-parse` end to end.
+fn auto_triage() -> tempfile::TempDir {
+    let dir = tempfile::tempdir().unwrap();
+    let host = dir.path().join("HOST1_F.TEST");
+    let windows = host.join("uploads/auto/C%3A/Windows");
+    let programs = windows.join("AppCompat/Programs");
+    let prefetch = windows.join("Prefetch");
+    std::fs::create_dir_all(&programs).unwrap();
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::write(
+        host.join("client_info.json"),
+        r#"{"hostname":"HOST1","fqdn":"host1.example.test"}"#,
+    )
+    .unwrap();
+    std::fs::copy(repo(WIN10), programs.join("Amcache.hve")).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
+        prefetch.join("CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+    dir
+}
+
 /// Every JSON document in a stream of newline-separated (pretty) documents.
 fn json_documents(text: &str) -> Vec<Value> {
     serde_json::Deserializer::from_str(text)
@@ -72,6 +95,95 @@ fn banner_and_help() {
         "{}",
         r.stdout
     );
+}
+
+#[test]
+fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
+    let evidence = auto_triage();
+    let output_root = tempfile::tempdir().unwrap();
+    let csv = output_root.path().join("csv");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        csv.to_str().unwrap(),
+        "-t",
+        "csv",
+        "-j",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(csv.join("HOST1/amcache").is_dir());
+    assert!(csv.join("HOST1/prefetch.csv").is_file());
+    assert!(csv.join("HOST1/prefetch-timeline.csv").is_file());
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(csv.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(manifest["hosts"][0]["Computer"], "HOST1");
+    assert_eq!(manifest["hosts"][0]["hostname_source"], "client_info.json");
+    assert!(
+        manifest["tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|task| task["status"] != "failed")
+    );
+
+    // A previously generated target must not survive when the corresponding artifact is absent.
+    let stale = csv.join("HOST1/i30.csv");
+    std::fs::write(&stale, b"stale result\n").unwrap();
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        csv.to_str().unwrap(),
+        "-t",
+        "csv",
+        "-j",
+        "2",
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(!stale.exists());
+
+    let jsonl = output_root.path().join("jsonl");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        jsonl.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "--single-file",
+        "-j",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let combined = jsonl.join("all-artifacts.jsonl");
+    let values: Vec<Value> = std::fs::read_to_string(&combined)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert!(!values.is_empty());
+    assert!(values.iter().all(|value| value["Computer"] == "HOST1"));
+    assert!(values.iter().all(|value| value.get("Artifact").is_some()));
+    assert!(values.iter().any(|value| value["Artifact"] == "amcache"));
+    assert!(values.iter().any(|value| value["Artifact"] == "prefetch"));
+    assert!(std::fs::read_dir(&jsonl).unwrap().flatten().all(|entry| {
+        !entry
+            .file_name()
+            .to_string_lossy()
+            .starts_with(".juntei-work-")
+    }));
 }
 
 #[test]
