@@ -6,7 +6,7 @@
 //! the content's SHA-1), with the quarantined file's hashes, owner and download origin; contents
 //! and records no entry holds are reported too. One record per resource, as CSV, JSON or JSONL,
 //! with Hayabusa's input options, progress bar and results summary. With `--extract`, the
-//! quarantined files are written out, named by their SHA-1 with a final `.quarantined` extension,
+//! quarantined files are written out with their original filename and a `.quarantined` extension,
 //! and without execute permission. Nothing is ever run.
 
 use crate::cli::{DefenderQuarantineOptions, DefenderQuarantineOutputType};
@@ -447,7 +447,11 @@ impl<'a> Reader<'a> {
         entry_id: Option<&str>,
         record: &mut Record,
     ) {
-        match self.content(id) {
+        let original = resource
+            .kind
+            .eq_ignore_ascii_case("file")
+            .then_some(resource.path.as_str());
+        match self.content(id, original) {
             Some(content) => {
                 record
                     .problems
@@ -498,14 +502,31 @@ impl<'a> Reader<'a> {
         }
     }
 
-    /// A content by its identifier, read (and extracted) once.
-    fn content(&mut self, id: &str) -> Option<Content> {
-        if let Some(found) = self.contents.get(id) {
-            return Some(found.clone());
-        }
+    /// Cache content metadata, but extract separately for each original resource name.
+    fn content(&mut self, id: &str, original: Option<&str>) -> Option<Content> {
         let path = self.folder.contents.get(id)?.clone();
-        let content = read_content(&path, id, self.extractor.as_deref_mut());
-        self.contents.insert(id.to_owned(), content.clone());
+        let mut content = if let Some(found) = self.contents.get(id) {
+            found.clone()
+        } else {
+            let content = read_content(&path, id);
+            self.contents.insert(id.to_owned(), content.clone());
+            content
+        };
+        if let Some(extractor) = self.extractor.as_deref_mut()
+            && content.file_size <= MAX_CONTENT_SIZE
+        {
+            match std::fs::read(&path) {
+                Ok(bytes) => {
+                    let read = read_resource_data(&bytes);
+                    let (written, problems) = extractor.extract(&read, original);
+                    content.extracted = written;
+                    content.problems.extend(problems);
+                }
+                Err(e) => content
+                    .problems
+                    .push(format!("could not read for extraction: {e}")),
+            }
+        }
         Some(content)
     }
 
@@ -537,7 +558,7 @@ impl<'a> Reader<'a> {
                 problems: vec!["no entry holds this content".to_owned()],
                 ..Record::default()
             };
-            if let Some(content) = self.content(id) {
+            if let Some(content) = self.content(id, None) {
                 record
                     .problems
                     .extend(content.problems.iter().map(|p| format!("content: {p}")));
@@ -605,8 +626,8 @@ fn join<T: AsRef<str>>(items: impl IntoIterator<Item = T>) -> String {
 }
 
 /// Read a content (decrypted in memory, never run): its streams, hashes, owner and download
-/// origin, its SHA-1 checked against its name; extracted when asked.
-fn read_content(path: &Path, name: &str, extractor: Option<&mut Extractor>) -> Content {
+/// origin, with its SHA-1 checked against its name.
+fn read_content(path: &Path, name: &str) -> Content {
     let mut content = Content {
         file: path.display().to_string(),
         ..Content::default()
@@ -660,15 +681,10 @@ fn read_content(path: &Path, name: &str, extractor: Option<&mut Extractor>) -> C
     }
     content.owner = read.owner();
     content.zone = read.zone_identifier();
-    if let Some(extractor) = extractor {
-        let (written, problems) = extractor.extract(&read);
-        content.extracted = written;
-        content.problems.extend(problems);
-    }
     content
 }
 
-/// Writes quarantined content: named by its SHA-1, without execute permission, never over a file
+/// Writes quarantined content without execute permission, never over a file
 /// holding something else unless asked.
 struct Extractor {
     dir: PathBuf,
@@ -676,6 +692,8 @@ struct Extractor {
     written: usize,
     already: usize,
     refused: usize,
+    names: HashMap<String, String>,
+    paths: HashMap<String, String>,
 }
 
 impl Extractor {
@@ -686,19 +704,42 @@ impl Extractor {
             written: 0,
             already: 0,
             refused: 0,
+            names: HashMap::new(),
+            paths: HashMap::new(),
         }
     }
 
-    /// Write a content's file (`<SHA-1>.bin.quarantined`, or `<SHA-1>.hive.quarantined`) and its
-    /// other streams beside it (`<SHA-1>.security.quarantined`,
-    /// `<SHA-1>.Zone.Identifier.quarantined`, …); the primary file's path, and problems.
-    fn extract(&mut self, data: &ResourceData) -> (Option<String>, Vec<String>) {
+    /// Write a content's file using its original name where available, and its other streams
+    /// beside it. Return the primary file's path and any problems.
+    fn extract(
+        &mut self,
+        data: &ResourceData,
+        original: Option<&str>,
+    ) -> (Option<String>, Vec<String>) {
         let mut problems = Vec::new();
         let mut first = None;
         let mut primary = None;
         let mut files: Vec<(String, &[u8], bool)> = Vec::new();
+        let base = original
+            .and_then(original_filename)
+            .unwrap_or_else(|| data.id.clone());
+        let mut base_name = base.clone();
+        let mut counter = 1usize;
+        while self
+            .names
+            .get(&base_name.to_lowercase())
+            .is_some_and(|id| id != &data.id)
+        {
+            base_name = if counter == 1 {
+                format!("{base}.{}", data.id)
+            } else {
+                format!("{base}.{}.{counter}", data.id)
+            };
+            counter += 1;
+        }
+        self.names.insert(base_name.to_lowercase(), data.id.clone());
         if data.hive {
-            files.push((format!("{}.hive.quarantined", data.id), &data.content, true));
+            files.push((format!("{base_name}.hive.quarantined"), &data.content, true));
         } else {
             let mut primary_added = false;
             for stream in &data.streams {
@@ -714,19 +755,40 @@ impl Extractor {
                         false,
                     ),
                 };
-                let base = format!("{}.{suffix}", data.id);
-                let mut name = format!("{base}.quarantined");
+                let stream_base = if is_primary {
+                    base_name.clone()
+                } else {
+                    format!("{base_name}.{suffix}")
+                };
+                let mut name = format!("{stream_base}.quarantined");
                 let mut n = 1;
                 while files.iter().any(|(f, _, _)| *f == name) {
                     n += 1;
-                    name = format!("{base}.{n}.quarantined");
+                    name = format!("{stream_base}.{n}.quarantined");
                 }
                 files.push((name, data.stream_data(stream), is_primary));
             }
         }
         let has_primary = files.iter().any(|(_, _, is_primary)| *is_primary);
         for (name, bytes, is_primary) in files {
-            let path = self.dir.join(&name);
+            let identity = format!("{}:{is_primary}", data.id);
+            let mut target = name.clone();
+            let mut number = 1;
+            while self
+                .paths
+                .get(&target.to_lowercase())
+                .is_some_and(|id| id != &identity)
+            {
+                let stem = name.strip_suffix(".quarantined").unwrap_or(&name);
+                target = if number == 1 {
+                    format!("{stem}.{}.quarantined", data.id)
+                } else {
+                    format!("{stem}.{}.{number}.quarantined", data.id)
+                };
+                number += 1;
+            }
+            self.paths.insert(target.to_lowercase(), identity);
+            let path = self.dir.join(&target);
             match self.write(&path, bytes) {
                 Ok(()) => {
                     if first.is_none() {
@@ -762,6 +824,34 @@ impl Extractor {
         self.written += 1;
         Ok(())
     }
+}
+
+/// Extract a portable filename from an untrusted Windows path without allowing traversal.
+fn original_filename(path: &str) -> Option<String> {
+    let name = path
+        .rsplit(['\\', '/'])
+        .next()?
+        .trim_end_matches([' ', '.']);
+    if name.is_empty() || name == "." || name == ".." {
+        return None;
+    }
+    let safe: String = name
+        .chars()
+        .map(|c| {
+            if c.is_control() || matches!(c, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') {
+                '_'
+            } else {
+                c
+            }
+        })
+        .collect();
+    let stem = safe.split('.').next().unwrap_or("").to_ascii_uppercase();
+    let reserved = matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        || stem
+            .strip_prefix("COM")
+            .or_else(|| stem.strip_prefix("LPT"))
+            .is_some_and(|n| matches!(n, "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"));
+    Some(if reserved { format!("_{safe}") } else { safe })
 }
 
 /// Write a file readable and writable by its owner alone, never executable.
@@ -1117,5 +1207,44 @@ mod tests {
         assert_eq!(stream_name(":../../evil:$DATA"), "_.._evil");
         assert_eq!(stream_name("::$DATA"), "stream");
         assert_eq!(stream_name(":a b/c\\d:$DATA"), "a_b_c_d");
+    }
+
+    #[test]
+    fn original_names_and_collisions_preserve_each_content() {
+        let dir = tempfile::tempdir().unwrap();
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("test_files/defender_quarantine/Quarantine/ResourceData");
+        let file =
+            std::fs::read(fixture.join("AA/AAB535B2BF6E319A41A914FDF71F7509D42E847F")).unwrap();
+        let orphan =
+            std::fs::read(fixture.join("5C/5CA5633C0E2AE818B85C5695677170EA42D55131")).unwrap();
+        let first = read_resource_data(&file);
+        let second = read_resource_data(&orphan);
+        let mut extractor = Extractor::new(dir.path(), true);
+        let (a, errors) = extractor.extract(&first, Some(r"C:\Users\alice\tool.exe"));
+        assert!(errors.is_empty());
+        assert!(a.unwrap().ends_with("tool.exe.quarantined"));
+        let (b, errors) = extractor.extract(&first, Some(r"D:\other\another.exe"));
+        assert!(errors.is_empty());
+        assert!(b.unwrap().ends_with("another.exe.quarantined"));
+        let (c, errors) = extractor.extract(&second, Some(r"C:\other\tool.exe"));
+        assert!(errors.is_empty());
+        assert!(
+            c.unwrap()
+                .ends_with(&format!("tool.exe.{}.quarantined", second.id))
+        );
+        assert_eq!(
+            std::fs::read(dir.path().join("tool.exe.quarantined")).unwrap(),
+            first.file_data().unwrap()
+        );
+        assert_eq!(
+            original_filename(r"C:\x\CON.exe").as_deref(),
+            Some("_CON.exe")
+        );
+        assert_eq!(original_filename(r"C:\x\"), None);
+        assert_eq!(
+            original_filename(r"..\evil.exe").as_deref(),
+            Some("evil.exe")
+        );
     }
 }

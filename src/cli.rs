@@ -908,7 +908,7 @@ pub struct DefenderQuarantineOptions {
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
     pub output_type: Option<DefenderQuarantineOutputType>,
 
-    /// Write quarantined files (likely malware, never run), named by SHA-1 and ending in .quarantined
+    /// Write quarantined files (likely malware, never run) with a .quarantined extension
     #[arg(help_heading = Some("Output"), long, value_name = "DIR", display_order = 302)]
     pub extract: Option<PathBuf>,
 
