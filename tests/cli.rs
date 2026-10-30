@@ -250,7 +250,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         jsonl.to_str().unwrap(),
         "-t",
         "jsonl",
-        "--single-file",
+        "-s",
         "-T",
         "2",
         "-K",

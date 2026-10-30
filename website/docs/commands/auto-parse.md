@@ -13,7 +13,7 @@ The default output is CSV. Use JSONL when the result will be queried with `jq` o
 SIEM:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -t jsonl --single-file
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -t jsonl -s
 ```
 
 !!! warning "Keep the output and evidence trees separate"
@@ -161,10 +161,10 @@ Input:
 Output:
   -o, --output <DIR>        New directory in which to create per-computer results
   -t, --output-type <TYPE>  Output type: csv (default), json, or jsonl [default: csv]
-      --single-file         For JSON/JSONL, create one all-artifacts file instead of per-artifact data files
+  -s, --single-file         For JSON/JSONL, create one all-artifacts file instead of per-artifact data files
   -C, --clobber             Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined
-                            Extract Defender-quarantined files into each computer's defender-quarantined directory
+                            Extract Defender-quarantined files
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

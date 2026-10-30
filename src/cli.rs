@@ -209,14 +209,14 @@ pub struct AutoParseOptions {
     pub output_type: AutoOutputType,
 
     /// For JSON/JSONL, create one all-artifacts file instead of per-artifact data files
-    #[arg(help_heading = Some("Output"), long, display_order = 202)]
+    #[arg(help_heading = Some("Output"), short = 's', long, display_order = 202)]
     pub single_file: bool,
 
     /// Overwrite outputs in an existing directory (never deletes unrelated files)
     #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 203)]
     pub clobber: bool,
 
-    /// Extract Defender-quarantined files into each computer's defender-quarantined directory
+    /// Extract Defender-quarantined files
     #[arg(help_heading = Some("Output"), short = 'x', long, display_order = 204)]
     pub extract_defender_quarantined: bool,
 
@@ -1352,7 +1352,7 @@ mod tests {
             "results",
             "-t",
             "jsonl",
-            "--single-file",
+            "-s",
             "-T",
             "4",
             "-x",

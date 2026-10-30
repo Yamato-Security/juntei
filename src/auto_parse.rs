@@ -132,7 +132,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     if opts.single_file && !opts.output_type.is_json() {
         error_msg(
             no_color,
-            "--single-file can only be used with -t json or -t jsonl.",
+            "-s, --single-file can only be used with -t json or -t jsonl.",
         );
         return 1;
     }
