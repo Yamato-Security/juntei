@@ -102,7 +102,7 @@ fn banner_and_help() {
     let r = run(&[]);
     assert_eq!(r.code, 0);
     assert!(
-        r.stdout.contains("┗━━┻━━━┻┛  ┗┛ ┗┛ ┗━━━┻━━┛"),
+        r.stdout.contains("┗━━┻━━━┻┛ ┗━┛ ┗┛ ┗━━━┻━━┛"),
         "{}",
         r.stdout
     );
