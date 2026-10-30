@@ -90,6 +90,7 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
     // --- parse and write -------------------------------------------------------------------
     let (files, devices) = opts.records();
     let options = OutputOptions { files, devices };
+    let separate_csv_directories = root.is_some() && hives.len() > 1;
     let bar = opts.output.is_some().then(|| {
         p(
             JunteiColor::Orange.rdg(no_color),
@@ -137,9 +138,14 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
         let written = match (output_type, &mut writer) {
             (OutputType::Csv, _) => {
                 let out = opts.output.as_deref().unwrap_or(Path::new("."));
-                let dir = match root {
-                    Some(root) => out.join(util::unique_name(root, hive, &mut used_dirs)),
-                    None => out.to_path_buf(),
+                let dir = if separate_csv_directories {
+                    out.join(util::unique_name(
+                        root.expect("directory input has a root"),
+                        hive,
+                        &mut used_dirs,
+                    ))
+                } else {
+                    out.to_path_buf()
                 };
                 write_csv_directory(&dir, &source, &report, options).map(|mut paths| {
                     saved.append(&mut paths);

@@ -122,8 +122,18 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     assert!(csv.join("HOST1/amcache").is_dir());
+    assert!(csv.join("HOST1/amcache/Amcache_summary.csv").is_file());
+    assert!(csv.join("HOST1/amcache/Amcache_files.csv").is_file());
+    assert!(
+        std::fs::read_dir(csv.join("HOST1/amcache"))
+            .unwrap()
+            .flatten()
+            .all(|entry| entry.path().is_file())
+    );
     assert!(csv.join("HOST1/prefetch.csv").is_file());
     assert!(csv.join("HOST1/prefetch-timeline.csv").is_file());
+    assert!(csv.join("HOST1/logs").is_dir());
+    assert!(!csv.join("HOST1/_logs").exists());
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(csv.join("manifest.json")).unwrap()).unwrap();
     assert_eq!(manifest["hosts"][0]["Computer"], "HOST1");
@@ -135,6 +145,11 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .iter()
             .all(|task| task["status"] != "failed")
     );
+    assert!(manifest["tasks"].as_array().unwrap().iter().all(|task| {
+        task["log"]
+            .as_str()
+            .is_some_and(|path| path.replace('\\', "/").contains("/HOST1/logs/"))
+    }));
 
     // A previously generated target must not survive when the corresponding artifact is absent.
     let stale = csv.join("HOST1/i30.csv");

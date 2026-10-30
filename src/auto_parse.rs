@@ -278,7 +278,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p(None, "", true);
     p(
         JunteiColor::Orange.rdg(no_color),
-        "Parsing in progress. Per-parser output is saved under each computer's _logs directory.",
+        "Parsing in progress. Per-parser output is saved under each computer's logs directory.",
         true,
     );
 
@@ -671,7 +671,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
     let mut tasks = Vec::new();
     for host in hosts {
         let data_dir = work.join(&host.folder);
-        let log_dir = opts.output.join(&host.folder).join("_logs");
+        let log_dir = opts.output.join(&host.folder).join("logs");
         fs::create_dir_all(&data_dir)?;
         fs::create_dir_all(&log_dir)?;
         let mut add =

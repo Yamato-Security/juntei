@@ -80,7 +80,7 @@ CSV keeps separate tables because each artifact has different columns:
 <OUTPUT>/
 ├── manifest.json
 ├── HOST1/
-│   ├── _logs/
+│   ├── logs/
 │   ├── amcache/
 │   ├── mft/
 │   ├── prefetch.csv
@@ -92,10 +92,14 @@ CSV keeps separate tables because each artifact has different columns:
     └── …
 ```
 
-Some parsers naturally create several tables, so their output is a directory. `_logs` contains the
+Some parsers naturally create several tables, so their output is a directory. `logs` contains the
 exact command and messages from every parser. `manifest.json` records hostname provenance,
 evidence paths, command lines, duration, exit code, result path, and whether each task succeeded,
 was skipped, or failed.
+
+When a host has one Amcache hive, its CSV tables are written directly under `amcache/`. If a
+collection contains multiple Amcache hives, each hive receives a collision-safe subdirectory so
+that tables with the same names cannot overwrite one another.
 
 ## JSON and SIEM ingestion
 
