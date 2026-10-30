@@ -104,6 +104,11 @@ Some parsers naturally create several tables, so their output is a directory. `l
 command lines, duration, exit code, result path, whether Defender extraction was requested, and
 whether each task succeeded, was skipped, or failed.
 
+The progress message shows the active computer and artifact followed by an approximate input
+size, for example `HOST1 / prefetch (~2.0 MiB)`. A group of files uses their combined size; each
+MFT or USN Journal task shows its individual input size. Estimates exclude auxiliary transaction
+logs and enrichment files and do not predict the size of the parsed output.
+
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
 parser task. It includes `Computer`, original `Hostname`, `Fqdn`, `HostnameSource`, `EvidenceRoot`,
 `Artifact`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`, `Error`, and `Command`.

@@ -45,6 +45,7 @@ enum OutputShape {
 struct Task {
     computer: String,
     artifact: &'static str,
+    input_bytes: u64,
     args: Vec<OsString>,
     output: PathBuf,
     log: PathBuf,
@@ -747,6 +748,7 @@ fn assign_output_folders(hosts: &mut [Host]) {
 fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Result<Vec<Task>> {
     let mut tasks = Vec::new();
     for host in hosts {
+        let inputs = InputInventory::scan(&host.root);
         let data_dir = work.join(&host.folder);
         let log_dir = opts.output.join(&host.folder).join("logs");
         fs::create_dir_all(&data_dir)?;
@@ -777,6 +779,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                 tasks.push(Task {
                     computer: host.computer.clone(),
                     artifact,
+                    input_bytes: inputs.sizes.get(artifact).copied().unwrap_or(0),
                     args,
                     output,
                     log: log_dir.join(format!("{artifact}.txt")),
@@ -863,7 +866,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &log_dir,
             "mft",
             &["parse-mft"],
-            crate::mft::find_mfts(&host.root),
+            inputs.mfts,
             mft_extra,
         );
         add_file_artifact_tasks(
@@ -874,12 +877,81 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &log_dir,
             "usn-journal",
             &["parse-usn-journal"],
-            crate::usn_journal::find_journals(&host.root),
+            inputs.journals,
             &[],
         );
     }
     prioritize_long_tasks(&mut tasks);
     Ok(tasks)
+}
+
+/// Inventory each host once. Sizes describe primary inputs, excluding transaction logs and
+/// enrichment hives, and are only estimates of the work a parser will perform.
+#[derive(Default)]
+struct InputInventory {
+    sizes: BTreeMap<&'static str, u64>,
+    mfts: Vec<PathBuf>,
+    journals: Vec<PathBuf>,
+}
+
+impl InputInventory {
+    fn scan(root: &Path) -> Self {
+        let mut found = Self::default();
+        for path in util::find_files(root, |_| true) {
+            let name = path.file_name().unwrap_or_default().to_string_lossy();
+            let size = path.metadata().map_or(0, |meta| meta.len());
+            for (artifact, matches) in [
+                ("amcache", crate::amcache::is_amcache_name(&name)),
+                ("prefetch", crate::prefetch::is_prefetch_name(&name)),
+                (
+                    "prefetch-timeline",
+                    crate::prefetch::is_prefetch_name(&name),
+                ),
+                ("srum", crate::srum::is_database_name(&name)),
+                ("lnk", crate::lnk::is_lnk_name(&name)),
+                ("jump-lists", crate::jump_lists::is_jump_list_name(&name)),
+                ("shimcache", crate::shimcache::is_system_name(&name)),
+                ("i30", crate::i30::is_i30_file(&path)),
+            ] {
+                if matches {
+                    found.add_size(artifact, size);
+                }
+            }
+            if crate::registry::is_hive_file(&path) {
+                found.add_size("registry", size);
+                let artifact = match crate::registry::hive_type_of_file(&path).as_deref() {
+                    Some("SYSTEM") => Some("services"),
+                    Some("NTUSER.DAT") => Some("recentdocs"),
+                    Some("SOFTWARE") => Some("taskcache"),
+                    Some("SAM") => Some("sam"),
+                    _ => None,
+                };
+                if let Some(artifact) = artifact {
+                    found.add_size(artifact, size);
+                }
+            }
+            // Defender reads entry metadata, resource records, and encrypted content.
+            if path.ancestors().any(|ancestor| {
+                ancestor
+                    .file_name()
+                    .is_some_and(|name| name.eq_ignore_ascii_case("Quarantine"))
+            }) {
+                found.add_size("defender-quarantine", size);
+            }
+            if crate::mft::is_mft_name(&name) {
+                found.mfts.push(path.clone());
+            }
+            if crate::usn_journal::is_journal_name(&name) {
+                found.journals.push(path);
+            }
+        }
+        found
+    }
+
+    fn add_size(&mut self, artifact: &'static str, bytes: u64) {
+        let size = self.sizes.entry(artifact).or_default();
+        *size = size.saturating_add(bytes);
+    }
 }
 
 /// Start the usually longest parsers across every host before filling worker slots with short
@@ -913,6 +985,11 @@ fn add_file_artifact_tasks(
         inputs.into_iter().map(|path| ("-f".into(), path)).collect()
     };
     for (index, (input_flag, input)) in inputs.into_iter().enumerate() {
+        let input_bytes = if input_flag == "-f" {
+            input.metadata().map_or(0, |meta| meta.len())
+        } else {
+            0
+        };
         let stem = if index == 0 {
             artifact.to_string()
         } else {
@@ -933,6 +1010,7 @@ fn add_file_artifact_tasks(
         tasks.push(Task {
             computer: host.computer.clone(),
             artifact,
+            input_bytes,
             args,
             output,
             log: log_dir.join(format!("{stem}.txt")),
@@ -1042,7 +1120,12 @@ fn run_tasks(
 }
 
 fn task_progress_message(task: &Task) -> String {
-    format!("{} / {}", task.computer, task.artifact)
+    format!(
+        "{} / {} (~{})",
+        task.computer,
+        task.artifact,
+        util::size_display(task.input_bytes)
+    )
 }
 
 fn run_task(task: &Task, executable: &Path) -> TaskResult {
@@ -1723,11 +1806,46 @@ mod tests {
         let task = Task {
             computer: "HOST1".into(),
             artifact: "prefetch",
+            input_bytes: 2048,
             args: Vec::new(),
             output: PathBuf::new(),
             log: PathBuf::new(),
         };
-        assert_eq!(task_progress_message(&task), "HOST1 / prefetch");
+        assert_eq!(task_progress_message(&task), "HOST1 / prefetch (~2.0 KiB)");
+    }
+
+    #[test]
+    fn progress_sizes_group_inputs_and_keep_file_tasks_separate() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("Windows/Prefetch")).unwrap();
+        fs::create_dir_all(dir.path().join("Windows/System32/config")).unwrap();
+        fs::create_dir_all(dir.path().join("Quarantine/ResourceData/AA")).unwrap();
+        fs::write(dir.path().join("Windows/Prefetch/A.pf"), vec![0u8; 1024]).unwrap();
+        fs::write(dir.path().join("Windows/Prefetch/B.pf"), vec![0u8; 2048]).unwrap();
+        fs::write(dir.path().join("unrelated.bin"), vec![0u8; 4096]).unwrap();
+        fs::write(
+            dir.path().join("Quarantine/ResourceData/AA/content"),
+            vec![0u8; 256],
+        )
+        .unwrap();
+        let mut hive = [0u8; 0x70];
+        hive[..4].copy_from_slice(b"regf");
+        fs::write(dir.path().join("Windows/System32/config/SOFTWARE"), hive).unwrap();
+        fs::write(
+            dir.path().join("Windows/System32/config/SOFTWARE.LOG1"),
+            vec![0u8; 512],
+        )
+        .unwrap();
+        fs::write(dir.path().join("$MFT"), vec![0u8; 64]).unwrap();
+        fs::write(dir.path().join("$J"), vec![0u8; 128]).unwrap();
+        let inputs = InputInventory::scan(dir.path());
+        assert_eq!(inputs.sizes["prefetch"], 3072);
+        assert_eq!(inputs.sizes["prefetch-timeline"], 3072);
+        assert_eq!(inputs.sizes["registry"], 0x70);
+        assert_eq!(inputs.sizes["taskcache"], 0x70);
+        assert_eq!(inputs.sizes["defender-quarantine"], 256);
+        assert_eq!(inputs.mfts, vec![dir.path().join("$MFT")]);
+        assert_eq!(inputs.journals, vec![dir.path().join("$J")]);
     }
 
     #[test]
@@ -1735,6 +1853,7 @@ mod tests {
         let task = |computer: &str, artifact| Task {
             computer: computer.into(),
             artifact,
+            input_bytes: 0,
             args: Vec::new(),
             output: PathBuf::new(),
             log: PathBuf::new(),
