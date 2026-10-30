@@ -6,8 +6,8 @@
 //! the content's SHA-1), with the quarantined file's hashes, owner and download origin; contents
 //! and records no entry holds are reported too. One record per resource, as CSV, JSON or JSONL,
 //! with Hayabusa's input options, progress bar and results summary. With `--extract`, the
-//! quarantined files are written out, named by their SHA-1, without execute permission. Nothing
-//! is ever run.
+//! quarantined files are written out, named by their SHA-1 with a final `.quarantined` extension,
+//! and without execute permission. Nothing is ever run.
 
 use crate::cli::{DefenderQuarantineOptions, DefenderQuarantineOutputType};
 use crate::color::JunteiColor;
@@ -37,8 +37,8 @@ const MAX_METADATA_SIZE: u64 = 64 * 1024 * 1024;
 /// What `--extract` warns before it writes anything.
 const EXTRACT_WARNING: &str = "WARNING: --extract writes the files Defender quarantined to disk. \
 They are likely malware: never run them, keep them on an isolated analysis system, and expect \
-antivirus software to remove them. They are named by their SHA-1 and created without execute \
-permission.";
+antivirus software to remove them. Their names end in .quarantined and they are created without \
+execute permission.";
 
 /// Run the command; returns the exit status.
 pub fn run(opts: &DefenderQuarantineOptions) -> i32 {
@@ -689,27 +689,33 @@ impl Extractor {
         }
     }
 
-    /// Write a content's file (`<SHA-1>.bin`, or `<SHA-1>.hive`) and its other streams beside
-    /// it (`<SHA-1>.security`, `<SHA-1>.Zone.Identifier`, …); the first's path, and problems.
+    /// Write a content's file (`<SHA-1>.bin.quarantined`, or `<SHA-1>.hive.quarantined`) and its
+    /// other streams beside it (`<SHA-1>.security.quarantined`,
+    /// `<SHA-1>.Zone.Identifier.quarantined`, …); the first's path, and problems.
     fn extract(&mut self, data: &ResourceData) -> (Option<String>, Vec<String>) {
         let mut problems = Vec::new();
         let mut first = None;
         let mut files: Vec<(String, &[u8])> = Vec::new();
         if data.hive {
-            files.push((format!("{}.hive", data.id), &data.content));
+            files.push((format!("{}.hive.quarantined", data.id), &data.content));
         } else {
+            let mut primary_added = false;
             for stream in &data.streams {
                 let suffix = match stream.kind {
-                    1 if !files.iter().any(|(n, _)| n.ends_with(".bin")) => "bin".to_owned(),
+                    1 if !primary_added => {
+                        primary_added = true;
+                        "bin".to_owned()
+                    }
                     3 => "security".to_owned(),
                     4 => stream_name(&stream.name),
                     _ => stream.kind_name().unwrap_or("stream").to_ascii_lowercase(),
                 };
-                let mut name = format!("{}.{suffix}", data.id);
+                let base = format!("{}.{suffix}", data.id);
+                let mut name = format!("{base}.quarantined");
                 let mut n = 1;
                 while files.iter().any(|(f, _)| *f == name) {
                     n += 1;
-                    name = format!("{}.{suffix}.{n}", data.id);
+                    name = format!("{base}.{n}.quarantined");
                 }
                 files.push((name, data.stream_data(stream)));
             }

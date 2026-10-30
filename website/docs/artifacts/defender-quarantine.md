@@ -49,7 +49,7 @@ Input:
 Output:
   -o, --output <FILE>       Save records
   -t, --output-type <TYPE>  csv, json, or jsonl
-      --extract <DIR>       Extract dangerous content, named by SHA-1
+      --extract <DIR>       Extract dangerous content, named by SHA-1 and ending in .quarantined
   -C, --clobber             Overwrite confirmed output targets
 ```
 
@@ -61,6 +61,11 @@ juntei parse-defender-quarantine -d evidence/ -t jsonl \
 # Only in an isolated malware-analysis environment
 juntei parse-defender-quarantine -d evidence/ -o quarantine.csv --extract extracted/
 ```
+
+Extracted names preserve the stream type before a final safety extension, for example
+`<SHA-1>.bin.quarantined`, `<SHA-1>.hive.quarantined`, or
+`<SHA-1>.Zone.Identifier.quarantined`. Juntei also removes execute permission. The extension and
+permissions reduce accidental execution, but the recovered bytes must still be treated as malware.
 
 ## Output fields
 
@@ -92,9 +97,10 @@ details rather than the CSV's joined text.
 
 ## Extraction behavior
 
-Juntei names extracted data `<SHA-1>.bin` (or `.hive`) and writes security/alternate streams beside
-it without execute permission. Existing different content is not overwritten without `-C`. These
-controls reduce accidents but do not make the bytes safe.
+Juntei names extracted data `<SHA-1>.bin.quarantined` (or `<SHA-1>.hive.quarantined`) and writes
+security/alternate streams beside it with the same final `.quarantined` extension. It also removes
+execute permission. Existing different content is not overwritten without `-C`. These controls
+reduce accidents but do not make the bytes safe.
 
 ## Investigation strategy
 

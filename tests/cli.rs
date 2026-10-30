@@ -323,7 +323,7 @@ fn auto_parse_can_extract_defender_quarantined_files() {
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let extracted = output
         .join("HOST1/defender-quarantined")
-        .join(format!("{QUARANTINED_FILE}.bin"));
+        .join(format!("{QUARANTINED_FILE}.bin.quarantined"));
     assert!(extracted.is_file(), "{}", extracted.display());
     assert!(
         std::fs::read(extracted)
@@ -3658,14 +3658,15 @@ fn defender_quarantine_extracts_only_when_asked() {
     assert_eq!(
         names,
         [
-            format!("{ORPHAN_CONTENT}.bin"),
-            format!("{QUARANTINED_FILE}.Zone.Identifier"),
-            format!("{QUARANTINED_FILE}.bin"),
-            format!("{QUARANTINED_FILE}.security"),
-            format!("{QUARANTINED_HIVE}.hive"),
+            format!("{ORPHAN_CONTENT}.bin.quarantined"),
+            format!("{QUARANTINED_FILE}.Zone.Identifier.quarantined"),
+            format!("{QUARANTINED_FILE}.bin.quarantined"),
+            format!("{QUARANTINED_FILE}.security.quarantined"),
+            format!("{QUARANTINED_HIVE}.hive.quarantined"),
         ]
     );
-    let file = out.join(format!("{QUARANTINED_FILE}.bin"));
+    assert!(names.iter().all(|name| name.ends_with(".quarantined")));
+    let file = out.join(format!("{QUARANTINED_FILE}.bin.quarantined"));
     let data = std::fs::read(&file).unwrap();
     assert!(data.starts_with(b"A harmless line of text"));
     assert_eq!(data.len(), 61);

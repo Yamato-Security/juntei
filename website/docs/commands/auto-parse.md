@@ -178,5 +178,6 @@ uses `-x`, so extracted malware cannot remain as an unrecorded stale result.
 
 !!! danger "Treat extracted Defender content as malware"
     `-x, --extract-defender-quarantined` writes quarantined content to disk under each computer's
-    `defender-quarantined/` directory. Never execute it. Use an isolated analysis system and
-    expect antivirus or EDR software to alert on or remove the recovered files.
+    `defender-quarantined/` directory. Every extracted filename ends in `.quarantined`, and Juntei
+    removes execute permission. Never execute the files. Use an isolated analysis system and expect
+    antivirus or EDR software to alert on or remove the recovered content.

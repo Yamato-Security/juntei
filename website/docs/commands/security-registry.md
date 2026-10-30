@@ -13,7 +13,7 @@ Input:
 Output:
   -o, --output <FILE>       Save every record to a file
   -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
-      --extract <DIR>       Write the quarantined files (likely malware, never run) to this directory, named by their SHA-1
+      --extract <DIR>       Write quarantined files (likely malware, never run), named by SHA-1 and ending in .quarantined
   -C, --clobber             Overwrite files when saving or extracting
 
 General Options:
