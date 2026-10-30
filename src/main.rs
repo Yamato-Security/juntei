@@ -11,6 +11,7 @@ mod jump_lists;
 mod lnk;
 mod mft;
 mod mft_csv;
+mod mft_inspect;
 mod prefetch;
 mod progress;
 mod registry;

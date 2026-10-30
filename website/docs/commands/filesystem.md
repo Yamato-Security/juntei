@@ -24,6 +24,18 @@ CSV Output:
   -s, --short-names    Write rows for DOS (8.3) names too
       --cutoff <DATE>  Only records whose $STANDARD_INFORMATION created or modified time is on or after DATE, in UTC unless an offset is given
 
+Records:
+  -x, --recover-slack  Recover the file names left in the slack of FILE records (past their attributes): rows marked FromSlack, or slack_file_names in JSON
+
+Resident Data:
+  -i, --include-resident-data      Include resident $DATA (the content of small files and of alternate data streams such as Zone.Identifier) in the CSV
+  -E, --resident-extensions <EXT>  With -i: only files with these extensions (ex: ps1,bat,vbs,js)
+  -M, --resident-max-size <BYTES>  With -i: only resident data of at most this many bytes
+
+Inspection:
+  -D, --dump-entry <ENTRY>           Show one entry in full detail: header, every attribute, data runs, slack and the record's bytes (ex: 624, 0x270, 624-5)
+  -L, --list-directory <ENTRY|PATH>  List the contents of a directory, in use and deleted (ex: 5, 624-5, \Windows\System32)
+
 General Options:
   -h, --help  Show the help menu
 
@@ -36,6 +48,9 @@ Display Settings:
 juntei parse-mft -f '$MFT' -o mft.csv
 juntei parse-mft -f '$MFT' --cutoff 2026-10-20 -a -o recent.csv
 juntei parse-mft -f '$MFT' -t jsonl -r 0-15,30
+juntei parse-mft -f '$MFT' -x -i -E ps1,bat,vbs,js -o mft.csv
+juntei parse-mft -f '$MFT' -D 0x270-5
+juntei parse-mft -f '$MFT' -L '\Windows\System32'
 ```
 
 See [Master File Table](../artifacts/mft.md).

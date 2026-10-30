@@ -1045,6 +1045,278 @@ fn mft_csv_options() {
 }
 
 #[test]
+fn mft_recover_slack() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("mft.csv");
+    let csv = |extra: &[&str]| {
+        let mut args = vec![
+            "parse-mft",
+            "-f",
+            MFT,
+            "-o",
+            out.to_str().unwrap(),
+            "-C",
+            "-K",
+        ];
+        args.extend_from_slice(extra);
+        let r = run(&args);
+        assert_eq!(r.code, 0, "{}", r.stdout);
+        (r.stdout, csv_rows(&out))
+    };
+    let (stdout, (header, rows)) = csv(&["-x"]);
+    assert!(
+        stdout.contains("File names in FILE record slack: 117 (84 that no file in use has)"),
+        "{stdout}"
+    );
+    assert_eq!(
+        header[header.len() - 5..],
+        [
+            "ParseErrors",
+            "FromSlack",
+            "SlackRecord",
+            "SlackOffset",
+            "CopyOfEntryInUse"
+        ]
+    );
+    let slack: Vec<_> = rows.iter().filter(|r| r["FromSlack"] == "True").collect();
+    assert_eq!(slack.len(), 117);
+    assert_eq!(
+        slack
+            .iter()
+            .filter(|r| r["CopyOfEntryInUse"] == "True")
+            .count(),
+        33
+    );
+    // An entry of the index root of WINDOWS (entry 28), left in its record's slack: the file it
+    // pointed to, the directory, the name and its $FILE_NAME times.
+    let found = slack
+        .iter()
+        .find(|r| r["FileName"] == "setuperr.log")
+        .unwrap();
+    for (column, value) in [
+        ("EntryNumber", "3522"),
+        ("SequenceNumber", "1"),
+        ("InUse", "False"),
+        ("ParentEntryNumber", "28"),
+        ("ParentPath", r".\WINDOWS"),
+        ("Created0x10", ""),
+        ("Created0x30", "2007-06-30T12:59:00.7391024Z"),
+        ("SlackRecord", "28"),
+        ("SlackOffset", "29208"),
+        ("CopyOfEntryInUse", "False"),
+    ] {
+        assert_eq!(found[column], value, "{column}");
+    }
+    let normal = rows.iter().find(|r| r["FileName"] == "$MFT").unwrap();
+    assert_eq!(
+        (normal["FromSlack"].as_str(), normal["SlackRecord"].as_str()),
+        ("False", "")
+    );
+    // Only the records in -r.
+    let (_, (_, rows)) = csv(&["-x", "-r", "28"]);
+    assert_eq!(rows.iter().filter(|r| r["FromSlack"] == "True").count(), 2);
+    // Without -x, no slack rows and no slack columns.
+    let (_, (header, rows)) = csv(&[]);
+    assert_eq!(header.last().unwrap(), "ParseErrors");
+    assert_eq!(rows.len(), 1014);
+
+    // JSON: each entry's slack_file_names, with their offsets in the $MFT.
+    let r = run(&["parse-mft", "-f", MFT, "-t", "jsonl", "-x"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let entries: Vec<serde_json::Value> = r
+        .stdout
+        .lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+    let names: Vec<&serde_json::Value> = entries
+        .iter()
+        .flat_map(|e| e["slack_file_names"].as_array().unwrap())
+        .collect();
+    assert_eq!(names.len(), 117);
+    let windows = entries
+        .iter()
+        .find(|e| e["header"]["record_number"] == 28)
+        .unwrap();
+    assert_eq!(windows["slack_file_names"][0]["name"], "setuperr.log");
+    assert_eq!(windows["slack_file_names"][0]["offset"], 29208);
+    assert_eq!(
+        names
+            .iter()
+            .filter(|n| n["copy_of_entry_in_use"] == true)
+            .count(),
+        33
+    );
+    let r = run(&["parse-mft", "-f", MFT, "-t", "jsonl"]);
+    assert!(!r.stdout.contains("slack_file_names"));
+
+    let r = run(&["parse-mft", "-f", MFT, "-t", "ys-mft-parser-csv", "-x"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stderr.contains("--recover-slack adds rows"),
+        "{}",
+        r.stderr
+    );
+}
+
+#[test]
+fn mft_resident_data() {
+    let help = run(&["parse-mft", "-h", "-K"]);
+    for option in [
+        "-x, --recover-slack",
+        "-i, --include-resident-data",
+        "-E, --resident-extensions <EXT>",
+        "-M, --resident-max-size <BYTES>",
+        "-D, --dump-entry <ENTRY>",
+        "-L, --list-directory <ENTRY|PATH>",
+    ] {
+        assert!(help.stdout.contains(option), "{option}: {}", help.stdout);
+    }
+
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("mft.csv");
+    let csv = |extra: &[&str]| {
+        let mut args = vec![
+            "parse-mft",
+            "-f",
+            MFT,
+            "-o",
+            out.to_str().unwrap(),
+            "-C",
+            "-K",
+        ];
+        args.extend_from_slice(extra);
+        let r = run(&args);
+        assert_eq!(r.code, 0, "{}", r.stdout);
+        csv_rows(&out)
+    };
+    let (header, rows) = csv(&["-i"]);
+    assert_eq!(
+        header[header.len() - 5..],
+        [
+            "SourceFile",
+            "ResidentDataBase64",
+            "ResidentDataHex",
+            "ResidentDataASCII",
+            "ParseErrors"
+        ]
+    );
+    let with_data: Vec<_> = rows
+        .iter()
+        .filter(|r| !r["ResidentDataBase64"].is_empty())
+        .collect();
+    assert_eq!(with_data.len(), 22);
+    let ini = with_data
+        .iter()
+        .find(|r| r["FileName"] == "system.ini")
+        .unwrap();
+    assert!(ini["ResidentDataASCII"].starts_with("; for 16-bit app support\r\n"));
+    assert!(ini["ResidentDataHex"].starts_with("3B-20-66-6F-72-20"));
+    assert!(ini["ResidentDataBase64"].starts_with("OyBmb3Ig"));
+    // Binary content: no text.
+    let pif = with_data
+        .iter()
+        .find(|r| r["FileName"] == "_default.pif")
+        .unwrap();
+    assert_eq!(pif["ResidentDataASCII"], "");
+    assert!(pif["ResidentDataHex"].starts_with("00-C9"));
+    // By extension and size: win.ini (477 bytes) is larger than 300.
+    let (_, rows) = csv(&["-i", "-E", ".INI", "-M", "300"]);
+    let names: Vec<&str> = rows
+        .iter()
+        .filter(|r| !r["ResidentDataBase64"].is_empty())
+        .map(|r| r["FileName"].as_str())
+        .collect();
+    assert_eq!(names, ["system.ini", "desktop.ini"]);
+
+    let r = run(&["parse-mft", "-f", MFT, "-E", "ini", "-K"]);
+    assert_ne!(r.code, 0, "-E needs -i");
+    let r = run(&["parse-mft", "-f", MFT, "-t", "jsonl", "-i"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stderr.contains("always has the resident data"),
+        "{}",
+        r.stderr
+    );
+}
+
+#[test]
+fn mft_dump_entry_and_list_directory() {
+    let r = run(&["parse-mft", "-f", MFT, "-D", "28", "-K", "-q"]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    for line in [
+        "Entry 28-1 at offset 0x7000 of the $MFT (1024 bytes)",
+        "  Flags:              0x0003 (in use, directory)",
+        "  Size in use:        472 of 1024 bytes",
+        "  Names in slack:     2 (2 that no file in use has)",
+        "\"slack_file_names\": [",
+        "\"name\": \"setuperr.log\"",
+        "0000  46 49 4C 45",
+    ] {
+        assert!(r.stdout.contains(line), "{line}: {}", r.stdout);
+    }
+    let shown = |stdout: &str| {
+        stdout
+            .lines()
+            .filter(|l| !l.starts_with("Start time") && !l.starts_with("Elapsed time"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    let hex = run(&["parse-mft", "-f", MFT, "-D", "0x1C-0x1", "-K", "-q"]);
+    assert_eq!(shown(&hex.stdout), shown(&r.stdout));
+    for (args, message) in [
+        (
+            &["-D", "28-9"][..],
+            "Entry 28 has sequence number 1, not 9.",
+        ),
+        (
+            &["-D", "99999"],
+            "The $MFT has 1,024 entries: there is no entry 99999.",
+        ),
+        (&["-L", "209"], "Entry 209 is a file, not a directory."),
+        (
+            &["-L", "windows/nope"],
+            r".\WINDOWS has no directory named nope.",
+        ),
+        (&["-D", "5", "-o", "x.csv"], "they don't take -o"),
+    ] {
+        let mut all = vec!["parse-mft", "-f", MFT, "-K", "-q"];
+        all.extend_from_slice(args);
+        let r = run(&all);
+        assert_eq!(r.code, 1, "{args:?}");
+        assert!(r.stdout.contains(message), "{args:?}: {}", r.stdout);
+    }
+    let r = run(&["parse-mft", "-d", "test_files/mft", "-D", "5", "-K", "-q"]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("give it with -f"), "{}", r.stdout);
+    let r = run(&["parse-mft", "-f", MFT, "-D", "5", "-L", "5", "-K", "-q"]);
+    assert_ne!(r.code, 0, "one inspection at a time");
+
+    // A directory by path (case-insensitive, either separator) or by entry.
+    for target in [r"\WINDOWS", "windows", "28", "28-1"] {
+        let r = run(&["parse-mft", "-f", MFT, "-L", target, "-K", "-q"]);
+        assert_eq!(r.code, 0, "{target}: {}", r.stdout);
+        assert!(
+            r.stdout
+                .contains(r"Directory .\WINDOWS (entry 28-1, in use)"),
+            "{target}: {}",
+            r.stdout
+        );
+        assert!(
+            r.stdout
+                .contains("33 names: directories 29, files 4, deleted 0")
+        );
+    }
+    let r = run(&["parse-mft", "-f", MFT, "-L", "windows", "-K", "-q"]);
+    let line = r
+        .stdout
+        .lines()
+        .find(|l| l.ends_with("_default.pif"))
+        .unwrap();
+    assert!(line.starts_with("285-1"), "{line}");
+    assert!(line.contains("File") && line.contains("707"), "{line}");
+}
+
+#[test]
 fn mft_csv_reports_damaged_attributes() {
     let dir = tempfile::tempdir().unwrap();
     let mut data = std::fs::read(repo(MFT)).unwrap();
