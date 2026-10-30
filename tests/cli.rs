@@ -153,6 +153,8 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .all(|entry| entry.path().is_file())
     );
     assert!(csv.join("HOST1/srum").is_dir());
+    assert!(csv.join("HOST1/srum/IdentityMap.csv").is_file());
+    assert!(csv.join("HOST1/srum/VfuProvider.csv").is_file());
     assert!(
         std::fs::read_dir(csv.join("HOST1/srum"))
             .unwrap()
@@ -166,6 +168,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert!(csv.join("HOST1/prefetch.csv").is_file());
     assert!(csv.join("HOST1/prefetch-timeline.csv").is_file());
     assert!(csv.join("HOST1/logs").is_dir());
+    assert!(csv.join("HOST1/logs/prefetch.txt").is_file());
+    assert!(csv.join("HOST1/logs/mft.txt").is_file());
+    assert!(!csv.join("HOST1/logs/prefetch.log").exists());
     assert!(!csv.join("HOST1/_logs").exists());
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(csv.join("manifest.json")).unwrap()).unwrap();
@@ -180,9 +185,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .all(|task| task["status"] != "failed")
     );
     assert!(manifest["tasks"].as_array().unwrap().iter().all(|task| {
-        task["log"]
-            .as_str()
-            .is_some_and(|path| path.replace('\\', "/").contains("/HOST1/logs/"))
+        task["log"].as_str().is_some_and(|path| {
+            path.replace('\\', "/").contains("/HOST1/logs/") && path.ends_with(".txt")
+        })
     }));
     assert_eq!(manifest["tasks"][0]["artifact"], "mft");
     assert_eq!(manifest["tasks"][1]["artifact"], "usn-journal");
@@ -2026,10 +2031,10 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
         [
             "AppResourceUseInfo.csv",
             "AppTimelineProvider.csv",
+            "IdentityMap.csv",
             "NetworkConnections.csv",
             "NetworkUsages.csv",
-            "SruDbIdMapTable.csv",
-            "vfuprov.csv"
+            "VfuProvider.csv"
         ]
     );
 
@@ -2090,9 +2095,11 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
             .iter()
             .all(|r| r["EndTime"].starts_with("2022-02-"))
     );
-    let (_, ids) = csv_rows(&out.join("SruDbIdMapTable.csv"));
+    let (_, ids) = csv_rows(&out.join("IdentityMap.csv"));
     assert_eq!(ids.len(), 288);
     assert_eq!(ids[3]["IdBlob"], "S-1-5-19");
+    let (_, vfu) = csv_rows(&out.join("VfuProvider.csv"));
+    assert_eq!(vfu.len(), 4);
 
     // existing results are kept without -C
     let again = run(&["parse-srum", "-f", SRUM_WIN10, "-o", out.to_str().unwrap()]);
@@ -2270,11 +2277,11 @@ fn srum_triage_directory_with_server_tables() {
         files,
         [
             "AppResourceUseInfo.csv",
+            "IdentityMap.csv",
             "NetworkBytes.csv",
             "NetworkConnections.csv",
             "ProcessorTime.csv",
             "SizeInBytes.csv",
-            "SruDbIdMapTable.csv",
             "TotalUsed.csv"
         ]
     );

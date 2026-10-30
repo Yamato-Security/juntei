@@ -743,7 +743,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                     artifact,
                     args,
                     output,
-                    log: log_dir.join(format!("{artifact}.log")),
+                    log: log_dir.join(format!("{artifact}.txt")),
                 });
             };
 
@@ -899,7 +899,7 @@ fn add_file_artifact_tasks(
             artifact,
             args,
             output,
-            log: log_dir.join(format!("{stem}.log")),
+            log: log_dir.join(format!("{stem}.txt")),
         });
     }
 }

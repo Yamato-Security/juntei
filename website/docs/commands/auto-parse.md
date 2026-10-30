@@ -97,8 +97,8 @@ CSV keeps separate tables because each artifact has different columns:
     └── …
 ```
 
-Some parsers naturally create several tables, so their output is a directory. `logs` contains the
-exact command and messages from every parser. `manifest.json` records the original discovered
+Some parsers naturally create several tables, so their output is a directory. `logs` contains a
+`.txt` file with the exact command and messages from every parser. `manifest.json` records the original discovered
 `hostname`, the unique output/record `Computer` identity, hostname provenance, evidence paths,
 command lines, duration, exit code, result path, whether Defender extraction was requested, and
 whether each task succeeded, was skipped, or failed.
