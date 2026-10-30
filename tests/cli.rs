@@ -130,7 +130,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         csv.to_str().unwrap(),
         "-t",
         "csv",
-        "-j",
+        "-T",
         "2",
         "-K",
         "-q",
@@ -195,7 +195,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         csv.to_str().unwrap(),
         "-t",
         "csv",
-        "-j",
+        "-T",
         "2",
         "-C",
         "-K",
@@ -219,7 +219,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             direct.to_str().unwrap(),
             "-t",
             "csv",
-            "-j",
+            "-T",
             "2",
             "-K",
             "-q",
@@ -248,7 +248,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "-t",
         "jsonl",
         "--single-file",
-        "-j",
+        "-T",
         "2",
         "-K",
         "-q",
@@ -298,6 +298,53 @@ fn auto_parse_refuses_an_output_parent_of_the_evidence() {
     );
     assert_eq!(std::fs::read(&marker).unwrap(), b"must remain\n");
     assert!(!container.path().join("manifest.json").exists());
+}
+
+#[test]
+fn auto_parse_can_extract_defender_quarantined_files() {
+    let evidence = auto_triage();
+    quarantine_host(evidence.path(), "HOST1_F.TEST");
+    let output_root = tempfile::tempdir().unwrap();
+    let output = output_root.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-x",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let extracted = output
+        .join("HOST1/defender-quarantined")
+        .join(format!("{QUARANTINED_FILE}.bin"));
+    assert!(extracted.is_file(), "{}", extracted.display());
+    assert!(
+        std::fs::read(extracted)
+            .unwrap()
+            .starts_with(b"A harmless line of text")
+    );
+
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+            .unwrap();
+    let defender = manifest["tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|task| task["artifact"] == "defender-quarantine")
+        .unwrap();
+    assert!(
+        defender["command"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|argument| argument == "--extract")
+    );
 }
 
 #[test]

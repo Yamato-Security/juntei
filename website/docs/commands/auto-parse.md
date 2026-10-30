@@ -82,6 +82,7 @@ CSV keeps separate tables because each artifact has different columns:
 ├── HOST1/
 │   ├── logs/
 │   ├── amcache/
+│   ├── defender-quarantined/  # only with -x
 │   ├── srum/
 │   ├── mft.csv
 │   ├── usn-journal.csv
@@ -140,7 +141,7 @@ one parser cannot terminate the complete run. By default, Juntei uses the logica
 concurrency when evidence is on a slow disk or the system has little memory:
 
 ```bash
-juntei auto-parse -d evidence -o parsed -j 4
+juntei auto-parse -d evidence -o parsed -T 4
 ```
 
 ## Usage
@@ -158,9 +159,11 @@ Output:
   -t, --output-type <TYPE>  Output type: csv (default), json, or jsonl [default: csv]
       --single-file         For JSON/JSONL, create one all-artifacts file instead of per-artifact data files
   -C, --clobber             Overwrite outputs in an existing directory (never deletes unrelated files)
+  -x, --extract-defender-quarantined
+                            Extract Defender-quarantined files into each computer's defender-quarantined directory
 
 Performance:
-  -j, --threads <N>  Parser processes to run at once (default: logical CPU count)
+  -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
@@ -169,3 +172,8 @@ Parsing:
 Use a new output directory when practical. `-C` removes or overwrites only the exact generated
 targets for this run, so a now-missing artifact cannot leave a stale result. It does not delete
 unrelated files or the complete output tree.
+
+!!! danger "Treat extracted Defender content as malware"
+    `-x, --extract-defender-quarantined` writes quarantined content to disk under each computer's
+    `defender-quarantined/` directory. Never execute it. Use an isolated analysis system and
+    expect antivirus or EDR software to alert on or remove the recovered files.

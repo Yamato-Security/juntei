@@ -216,8 +216,12 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 203)]
     pub clobber: bool,
 
+    /// Extract Defender-quarantined files into each computer's defender-quarantined directory
+    #[arg(help_heading = Some("Output"), short = 'x', long, display_order = 204)]
+    pub extract_defender_quarantined: bool,
+
     /// Parser processes to run at once (default: logical CPU count)
-    #[arg(help_heading = Some("Performance"), short = 'j', long, value_name = "N", value_parser = parse_auto_threads, display_order = 300)]
+    #[arg(help_heading = Some("Performance"), short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 300)]
     pub threads: Option<usize>,
 
     /// Windows code page for ANSI strings in LNK and Jump List files
@@ -1339,6 +1343,7 @@ mod tests {
         assert_eq!(options.output_type, AutoOutputType::Csv);
         assert_eq!(options.threads, None);
         assert!(!options.single_file);
+        assert!(!options.extract_defender_quarantined);
 
         let options = parse(&[
             "-d",
@@ -1348,8 +1353,9 @@ mod tests {
             "-t",
             "jsonl",
             "--single-file",
-            "-j",
+            "-T",
             "4",
+            "-x",
             "--max-depth",
             "20",
         ])
@@ -1358,10 +1364,12 @@ mod tests {
         assert_eq!(options.threads, Some(4));
         assert_eq!(options.max_depth, 20);
         assert!(options.single_file);
+        assert!(options.extract_defender_quarantined);
 
         assert!(parse(&["-d", "evidence"]).is_err());
         assert!(parse(&["-o", "results"]).is_err());
-        assert!(parse(&["-d", "evidence", "-o", "results", "-j", "0"]).is_err());
+        assert!(parse(&["-d", "evidence", "-o", "results", "-T", "0"]).is_err());
+        assert!(parse(&["-d", "evidence", "-o", "results", "-j", "4"]).is_err());
         assert!(parse(&["-d", "evidence", "-o", "results", "--max-depth", "101"]).is_err());
     }
 

@@ -686,6 +686,15 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                 args.push("-t".into());
                 args.push(opts.output_type.as_str().into());
                 args.extend(extra.iter().map(OsString::from));
+                if artifact == "defender-quarantine" && opts.extract_defender_quarantined {
+                    args.push("--extract".into());
+                    args.push(
+                        opts.output
+                            .join(&host.folder)
+                            .join("defender-quarantined")
+                            .into_os_string(),
+                    );
+                }
                 args.push("-C".into());
                 args.push("-K".into());
                 args.push("-q".into());
