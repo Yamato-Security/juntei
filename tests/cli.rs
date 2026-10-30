@@ -136,6 +136,13 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "-q",
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout.contains(
+            "Parsing in progress. Per-parser output is saved under each computer's logs directory.\n\n"
+        ),
+        "{}",
+        r.stdout
+    );
     assert!(csv.join("HOST1/amcache").is_dir());
     assert!(csv.join("HOST1/amcache/Amcache_summary.csv").is_file());
     assert!(csv.join("HOST1/amcache/Amcache_files.csv").is_file());

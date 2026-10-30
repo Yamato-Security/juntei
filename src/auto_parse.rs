@@ -281,6 +281,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         "Parsing in progress. Per-parser output is saved under each computer's logs directory.",
         true,
     );
+    p(None, "", true);
 
     let bar = progress::progress_bar(tasks.len(), no_color);
     let mut results = run_tasks(&tasks, &executable, threads, &bar);
