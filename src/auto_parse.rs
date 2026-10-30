@@ -112,6 +112,19 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         );
         return 1;
     }
+    let evidence = match fs::canonicalize(&opts.directory) {
+        Ok(path) => path,
+        Err(e) => {
+            error_msg(
+                no_color,
+                &format!(
+                    "Could not resolve the evidence directory {}: {e}",
+                    opts.directory.display()
+                ),
+            );
+            return 1;
+        }
+    };
     if opts.single_file && !opts.output_type.is_json() {
         error_msg(
             no_color,
@@ -119,7 +132,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         );
         return 1;
     }
-    if let Err(msg) = output_outside_input(&opts.directory, &opts.output) {
+    if let Err(msg) = output_separate_from_evidence(&evidence, &opts.output) {
         error_msg(no_color, &msg);
         return 1;
     }
@@ -128,7 +141,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         return 1;
     }
 
-    let mut hosts = match discover_hosts(&opts.directory, opts.max_depth) {
+    let mut hosts = match discover_hosts(&evidence, opts.max_depth) {
         Ok(hosts) if !hosts.is_empty() => hosts,
         Ok(_) => {
             error_msg(
@@ -136,7 +149,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                 &format!(
                     "No Windows directories were found within depth {} of {}.",
                     opts.max_depth,
-                    opts.directory.display()
+                    evidence.display()
                 ),
             );
             return 1;
@@ -144,11 +157,17 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         Err(e) => {
             error_msg(
                 no_color,
-                &format!("Could not search {}: {e}", opts.directory.display()),
+                &format!("Could not search {}: {e}", evidence.display()),
             );
             return 1;
         }
     };
+    for host in &hosts {
+        if let Err(msg) = output_separate_from_evidence(&host.root, &opts.output) {
+            error_msg(no_color, &msg);
+            return 1;
+        }
+    }
     assign_output_folders(&mut hosts);
 
     if let Err(e) = fs::create_dir_all(&opts.output) {
@@ -352,7 +371,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     let manifest = Manifest {
         generated_utc: Utc::now().to_rfc3339(),
         juntei_version: env!("CARGO_PKG_VERSION"),
-        evidence_directory: opts.directory.to_string_lossy().to_string(),
+        evidence_directory: evidence.to_string_lossy().to_string(),
         output_directory: opts.output.to_string_lossy().to_string(),
         output_type: opts.output_type.as_str(),
         single_file: opts.single_file,
@@ -417,11 +436,16 @@ fn discover_hosts(input: &Path, max_depth: usize) -> io::Result<Vec<Host>> {
     let windows = windows_directories(input, max_depth)?;
     let mut roots: BTreeMap<PathBuf, Vec<PathBuf>> = BTreeMap::new();
     for windows_dir in windows {
-        let root = collection_root(input, &windows_dir)
-            .or_else(|| windows_dir.parent().map(Path::to_path_buf))
-            .unwrap_or_else(|| input.to_path_buf());
+        let root = if windows_dir == input {
+            input.to_path_buf()
+        } else {
+            collection_root(input, &windows_dir)
+                .or_else(|| windows_dir.parent().map(Path::to_path_buf))
+                .unwrap_or_else(|| input.to_path_buf())
+        };
         roots.entry(root).or_default().push(windows_dir);
     }
+    let roots = merge_nested_roots(roots);
     let mut hosts = Vec::new();
     for (root, mut windows) in roots {
         windows.sort();
@@ -452,11 +476,39 @@ fn discover_hosts(input: &Path, max_depth: usize) -> io::Result<Vec<Host>> {
     Ok(hosts)
 }
 
+/// A legacy installation such as `C\Windows.old\Windows` belongs to the same collected volume as
+/// `C\Windows`. Merge its candidate root into the outer root instead of parsing it a second time.
+/// A nested collection with its own `client_info.json` remains a distinct system.
+fn merge_nested_roots(roots: BTreeMap<PathBuf, Vec<PathBuf>>) -> BTreeMap<PathBuf, Vec<PathBuf>> {
+    let mut entries: Vec<_> = roots.into_iter().collect();
+    entries.sort_by(|(a, _), (b, _)| {
+        a.components()
+            .count()
+            .cmp(&b.components().count())
+            .then_with(|| a.cmp(b))
+    });
+    let mut merged: BTreeMap<PathBuf, Vec<PathBuf>> = BTreeMap::new();
+    for (root, windows) in entries {
+        let ancestor = (!root.join("client_info.json").is_file())
+            .then(|| {
+                merged
+                    .keys()
+                    .filter(|candidate| root != **candidate && root.starts_with(candidate))
+                    .max_by_key(|candidate| candidate.components().count())
+                    .cloned()
+            })
+            .flatten();
+        if let Some(ancestor) = ancestor {
+            merged.get_mut(&ancestor).unwrap().extend(windows);
+        } else {
+            merged.insert(root, windows);
+        }
+    }
+    merged
+}
+
 fn windows_directories(root: &Path, max_depth: usize) -> io::Result<Vec<PathBuf>> {
-    if root
-        .file_name()
-        .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("Windows"))
-    {
+    if is_windows_system_directory(root) {
         return Ok(vec![root.to_path_buf()]);
     }
     let mut found = Vec::new();
@@ -477,11 +529,7 @@ fn windows_directories(root: &Path, max_depth: usize) -> io::Result<Vec<PathBuf>
             }
             let path = entry.path();
             let child_depth = depth + 1;
-            if entry
-                .file_name()
-                .to_string_lossy()
-                .eq_ignore_ascii_case("Windows")
-            {
+            if is_windows_system_directory(&path) {
                 if child_depth <= max_depth {
                     found.push(path);
                 }
@@ -497,6 +545,12 @@ fn windows_directories(root: &Path, max_depth: usize) -> io::Result<Vec<PathBuf>
     found.sort();
     found.dedup();
     Ok(found)
+}
+
+fn is_windows_system_directory(path: &Path) -> bool {
+    path.file_name()
+        .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("Windows"))
+        && child_ci(path, "System32").is_some()
 }
 
 fn collection_root(input: &Path, windows: &Path) -> Option<PathBuf> {
@@ -813,7 +867,7 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
                 TaskStatus::Skipped
             } else {
                 error = Some(
-                    last_nonempty_line(&combined)
+                    useful_error_line(&combined)
                         .unwrap_or("parser failed")
                         .to_string(),
                 );
@@ -864,7 +918,14 @@ fn no_artifact_message(output: &str) -> bool {
     })
 }
 
-fn last_nonempty_line(output: &str) -> Option<&str> {
+fn useful_error_line(output: &str) -> Option<&str> {
+    if let Some(error) = output
+        .lines()
+        .map(str::trim)
+        .find(|line| line.to_ascii_lowercase().starts_with("error:"))
+    {
+        return Some(error);
+    }
     output
         .lines()
         .rev()
@@ -989,8 +1050,18 @@ fn annotate_jsonl(
 
 fn annotate_value(value: &mut Value, computer: &str, artifact: &str) {
     if let Value::Object(object) = value {
-        object.insert("Computer".to_string(), Value::String(computer.to_string()));
-        object.insert("Artifact".to_string(), Value::String(artifact.to_string()));
+        object.remove("Computer");
+        object.remove("Artifact");
+        object.shift_insert(
+            0,
+            "Artifact".to_string(),
+            Value::String(artifact.to_string()),
+        );
+        object.shift_insert(
+            0,
+            "Computer".to_string(),
+            Value::String(computer.to_string()),
+        );
     } else {
         let data = std::mem::take(value);
         let mut object = Map::new();
@@ -1107,15 +1178,16 @@ fn write_pretty_json(path: &Path, value: &impl Serialize) -> io::Result<()> {
     writer.flush()
 }
 
-fn output_outside_input(input: &Path, output: &Path) -> Result<(), String> {
-    let input = fs::canonicalize(input)
-        .map_err(|e| format!("Could not resolve {}: {e}", input.display()))?;
+fn output_separate_from_evidence(evidence: &Path, output: &Path) -> Result<(), String> {
+    let evidence = fs::canonicalize(evidence)
+        .map_err(|e| format!("Could not resolve {}: {e}", evidence.display()))?;
     let output = absolute_candidate(output)
         .map_err(|e| format!("Could not resolve {}: {e}", output.display()))?;
-    if output.starts_with(&input) {
+    if output.starts_with(&evidence) || evidence.starts_with(&output) {
         return Err(format!(
-            "The output directory must be outside the evidence directory: {}",
-            output.display()
+            "The output and evidence directories must not contain one another: {} and {}",
+            output.display(),
+            evidence.display()
         ));
     }
     Ok(())
@@ -1167,7 +1239,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let collection = dir.path().join("case");
         let windows = collection.join("uploads/auto/C/Windows");
-        fs::create_dir_all(&windows).unwrap();
+        fs::create_dir_all(windows.join("System32")).unwrap();
         fs::write(
             collection.join("client_info.json"),
             r#"{"hostname":"HOST-1","fqdn":"host-1.example.test"}"#,
@@ -1181,7 +1253,28 @@ mod tests {
         assert!(discover_hosts(dir.path(), 3).unwrap().is_empty());
 
         let direct = windows_directories(&windows, 1).unwrap();
-        assert_eq!(direct, vec![windows]);
+        assert_eq!(direct, vec![windows.clone()]);
+        let direct_hosts = discover_hosts(&windows, 1).unwrap();
+        assert_eq!(direct_hosts.len(), 1);
+        assert_eq!(direct_hosts[0].root, windows);
+    }
+
+    #[test]
+    fn ignores_profile_windows_and_merges_windows_old() {
+        let dir = tempfile::tempdir().unwrap();
+        let volume = dir.path().join("HOST1/C");
+        let current = volume.join("Windows");
+        let old = volume.join("Windows.old/Windows");
+        let profile = volume.join("Users/alice/AppData/Roaming/Microsoft/Windows");
+        fs::create_dir_all(current.join("System32")).unwrap();
+        fs::create_dir_all(old.join("System32")).unwrap();
+        fs::create_dir_all(profile.join("Recent")).unwrap();
+
+        let hosts = discover_hosts(dir.path(), 10).unwrap();
+        assert_eq!(hosts.len(), 1);
+        assert_eq!(hosts[0].root, volume);
+        assert_eq!(hosts[0].windows, vec![current, old]);
+        assert!(!hosts[0].windows.contains(&profile));
     }
 
     #[test]
@@ -1248,8 +1341,13 @@ mod tests {
     fn annotates_and_consolidates_json_array() {
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("source.json");
-        fs::write(&source, "{\n  \"value\": 7\n}\n").unwrap();
+        fs::write(&source, "{\n  \"z_field\": 7,\n  \"a_field\": 8\n}\n").unwrap();
         annotate_json_file(&source, "HOST1", "registry", AutoOutputType::Json).unwrap();
+        let annotated = fs::read_to_string(&source).unwrap();
+        let positions: Vec<_> = ["Computer", "Artifact", "z_field", "a_field"]
+            .map(|field| annotated.find(field).unwrap())
+            .into();
+        assert!(positions.windows(2).all(|pair| pair[0] < pair[1]));
         let combined = dir.path().join("all.json");
         consolidate(
             &[DataFile { path: source }],
@@ -1261,7 +1359,8 @@ mod tests {
         assert_eq!(values.len(), 1);
         assert_eq!(values[0]["Computer"], "HOST1");
         assert_eq!(values[0]["Artifact"], "registry");
-        assert_eq!(values[0]["value"], 7);
+        assert_eq!(values[0]["z_field"], 7);
+        assert_eq!(values[0]["a_field"], 8);
     }
 
     #[test]
@@ -1275,12 +1374,13 @@ mod tests {
     }
 
     #[test]
-    fn refuses_output_inside_evidence() {
+    fn refuses_output_that_contains_or_is_inside_evidence() {
         let dir = tempfile::tempdir().unwrap();
         fs::create_dir_all(dir.path().join("case")).unwrap();
-        assert!(output_outside_input(dir.path(), &dir.path().join("results")).is_err());
+        assert!(output_separate_from_evidence(dir.path(), &dir.path().join("results")).is_err());
+        assert!(output_separate_from_evidence(dir.path(), dir.path().parent().unwrap()).is_err());
         assert!(
-            output_outside_input(
+            output_separate_from_evidence(
                 dir.path(),
                 &dir.path()
                     .parent()
@@ -1293,9 +1393,19 @@ mod tests {
             .is_err()
         );
         assert!(
-            output_outside_input(dir.path(), &dir.path().parent().unwrap().join("elsewhere"))
-                .is_ok()
+            output_separate_from_evidence(
+                dir.path(),
+                &dir.path().parent().unwrap().join("elsewhere")
+            )
+            .is_ok()
         );
+    }
+
+    #[test]
+    fn reports_the_useful_child_error() {
+        let clap = "error: a value is required\n\nFor more information, try '--help'.\n";
+        assert_eq!(useful_error_line(clap), Some("error: a value is required"));
+        assert_eq!(useful_error_line("first\nlast\n"), Some("last"));
     }
 
     #[test]

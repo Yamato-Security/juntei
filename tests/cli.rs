@@ -17,8 +17,12 @@ struct Run {
 }
 
 fn run(args: &[&str]) -> Run {
+    run_at(Path::new(env!("CARGO_MANIFEST_DIR")), args)
+}
+
+fn run_at(current_dir: &Path, args: &[&str]) -> Run {
     let out = Command::new(env!("CARGO_BIN_EXE_juntei"))
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .current_dir(current_dir)
         .args(args)
         .output()
         .expect("juntei runs");
@@ -55,6 +59,7 @@ fn auto_triage() -> tempfile::TempDir {
     let prefetch = windows.join("Prefetch");
     std::fs::create_dir_all(&programs).unwrap();
     std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::create_dir_all(windows.join("System32")).unwrap();
     std::fs::write(
         host.join("client_info.json"),
         r#"{"hostname":"HOST1","fqdn":"host1.example.test"}"#,
@@ -151,6 +156,40 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     assert!(!stale.exists());
 
+    // A Windows directory is a valid scope on its own; parsers must not receive its parent.
+    let windows = evidence
+        .path()
+        .join("HOST1_F.TEST/uploads/auto/C%3A/Windows");
+    let direct = output_root.path().join("direct-windows");
+    let r = run_at(
+        windows.parent().unwrap(),
+        &[
+            "auto-parse",
+            "-d",
+            "Windows",
+            "-o",
+            direct.to_str().unwrap(),
+            "-t",
+            "csv",
+            "-j",
+            "2",
+            "-K",
+            "-q",
+        ],
+    );
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let direct_manifest: Value =
+        serde_json::from_reader(std::fs::File::open(direct.join("manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(
+        direct_manifest["hosts"][0]["evidence_root"],
+        std::fs::canonicalize(&windows)
+            .unwrap()
+            .to_string_lossy()
+            .as_ref()
+    );
+    assert!(direct.join("Windows/prefetch.csv").is_file());
+
     let jsonl = output_root.path().join("jsonl");
     let r = run(&[
         "auto-parse",
@@ -184,6 +223,33 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .to_string_lossy()
             .starts_with(".juntei-work-")
     }));
+}
+
+#[test]
+fn auto_parse_refuses_an_output_parent_of_the_evidence() {
+    let container = tempfile::tempdir().unwrap();
+    let evidence = container.path().join("evidence");
+    std::fs::create_dir_all(evidence.join("HOST1/C/Windows/System32")).unwrap();
+    let marker = container.path().join("keep.txt");
+    std::fs::write(&marker, b"must remain\n").unwrap();
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        container.path().to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout.contains("must not contain one another"),
+        "{}",
+        r.stdout
+    );
+    assert_eq!(std::fs::read(&marker).unwrap(), b"must remain\n");
+    assert!(!container.path().join("manifest.json").exists());
 }
 
 #[test]

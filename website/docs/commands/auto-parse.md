@@ -16,14 +16,18 @@ SIEM:
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -t jsonl --single-file
 ```
 
-!!! warning "Keep output outside the evidence tree"
-    Juntei refuses an output directory inside `<EVIDENCE>`. This prevents generated data from
-    being rediscovered as evidence and keeps the source collection separate from analysis output.
+!!! warning "Keep the output and evidence trees separate"
+    Juntei refuses an output directory that is inside `<EVIDENCE>` or contains `<EVIDENCE>`. This
+    prevents generated data from being rediscovered as evidence and prevents `--clobber` from
+    touching files in the source collection.
 
 ## What it discovers
 
-Juntei searches recursively for directories named `Windows`, case-insensitively. The default
-maximum depth is 10. This covers common Velociraptor paths such as:
+Juntei searches recursively for directories named `Windows` that contain a `System32` directory,
+case-insensitively. This excludes user-profile directories such as
+`AppData\Roaming\Microsoft\Windows`. Nested legacy installations such as
+`C:\Windows.old\Windows` are assigned to the outer collected volume instead of becoming duplicate
+computers. The default maximum depth is 10. This covers common Velociraptor paths such as:
 
 ```text
 <EVIDENCE>/<collection>/uploads/auto/C%3A/Windows
@@ -75,7 +79,7 @@ CSV keeps separate tables because each artifact has different columns:
 ```text
 <OUTPUT>/
 ├── manifest.json
-├── AZUCHI/
+├── HOST1/
 │   ├── _logs/
 │   ├── amcache/
 │   ├── mft/
@@ -84,7 +88,7 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── registry.csv
 │   ├── srum/
 │   └── usn-journal/
-└── OSAKA/
+└── HOST2/
     └── …
 ```
 
@@ -108,7 +112,7 @@ retained.
 JSONL is recommended for a large collection because each line can be processed independently:
 
 ```bash
-jq -c 'select(.Computer == "AZUCHI" and .Artifact == "prefetch")' \
+jq -c 'select(.Computer == "HOST1" and .Artifact == "prefetch")' \
   parsed/all-artifacts.jsonl
 ```
 
