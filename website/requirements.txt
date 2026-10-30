@@ -1,0 +1,2 @@
+# Used by GitHub Pages and local previews.
+mkdocs-material==9.7.6
