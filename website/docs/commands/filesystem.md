@@ -71,3 +71,39 @@ juntei parse-usn-journal -f unallocated.bin --carve -o carved.csv
 ```
 
 See [USN Journal](../artifacts/usn-journal.md).
+
+## `parse-i30`
+
+```text
+Usage:
+  juntei parse-i30 <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for $I30 files (with $I30 in their name, or starting with an INDX record)
+  -f, --file <FILE>      File path to one $I30 file (a directory's $INDEX_ALLOCATION:$I30 stream), or any file holding INDX records (a disk image, unallocated space)
+
+Filtering:
+      --slack-only  Only the entries found in slack (possible deleted or renamed file names, and copies of entries in use)
+      --no-copies   Leave out the slack entries that copy an entry in use (same name, file, directory and times)
+
+Output:
+  -o, --output <FILE>       Save every entry to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the entries are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-i30 -f 'Users_$I30'
+juntei parse-i30 -d evidence/ -o i30.csv
+juntei parse-i30 -f 'Users_$I30' --slack-only --no-copies -t jsonl
+juntei parse-i30 -f disk.raw -o carved-i30.csv
+```
+
+See [Directory Indexes ($I30)](../artifacts/i30.md).

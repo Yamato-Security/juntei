@@ -63,6 +63,16 @@ pub enum Commands {
     )]
     ParseUsnJournal(UsnJournalOptions),
 
+    /// Parse directory indexes ($I30): the files in a directory, and possible deleted or renamed file names left in slack
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-i30 <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    ParseI30(I30Options),
+
     /// Parse SRUM (SRUDB.dat): about 30 days of network and resource usage per program and user
     #[command(
         author = AUTHOR,
@@ -472,6 +482,63 @@ impl UsnJournalOptions {
     }
 
     /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-i30` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum I30OutputType {
+    /// One row per index entry
+    Csv,
+    /// One pretty-printed JSON object per index entry
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct I30Options {
+    /// Directory to search recursively for $I30 files (with $I30 in their name, or starting with an INDX record)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one $I30 file (a directory's $INDEX_ALLOCATION:$I30 stream), or any file holding INDX records (a disk image, unallocated space)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Only the entries found in slack (possible deleted or renamed file names, and copies of entries in use)
+    #[arg(help_heading = Some("Filtering"), long, display_order = 200)]
+    pub slack_only: bool,
+
+    /// Leave out the slack entries that copy an entry in use (same name, file, directory and times)
+    #[arg(help_heading = Some("Filtering"), long, display_order = 201)]
+    pub no_copies: bool,
+
+    /// Save every entry to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the entries are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<I30OutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl I30Options {
+    pub fn output_type(&self) -> I30OutputType {
+        self.output_type.unwrap_or(I30OutputType::Csv)
+    }
+
+    /// Entries on stdout (`-t` without `-o`): nothing but the data may be printed there.
     pub fn data_on_stdout(&self) -> bool {
         self.output.is_none() && self.output_type.is_some()
     }

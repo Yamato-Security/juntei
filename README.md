@@ -21,6 +21,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 | `$MFT` | `parse-mft` | Supported |
 | Prefetch (`*.pf`) | `parse-prefetch` | Supported |
 | USN journal (`$UsnJrnl:$J`) | `parse-usn-journal` | Supported |
+| Directory indexes (`$I30`), with possible deleted or renamed file names left in their slack | `parse-i30` | Supported |
 | SRUM (`SRUDB.dat`) | `parse-srum` | Supported |
 | Shortcuts (`*.lnk`) | `parse-lnk` | Supported |
 | Jump lists (`*.automaticDestinations-ms`, `*.customDestinations-ms`) | `parse-jump-lists` | Supported |

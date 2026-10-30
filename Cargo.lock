@@ -593,6 +593,7 @@ dependencies = [
  "forensicnomicon",
  "indicatif",
  "regex",
+ "same-file",
  "serde",
  "serde_json",
  "tempfile",
@@ -1280,7 +1281,7 @@ dependencies = [
 [[package]]
 name = "ys-mft-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-mft-parser#c4796f95256eccc29a6c76c3bda071c2a8f560a7"
+source = "git+https://github.com/Yamato-Security/ys-mft-parser#508ab9803d06f6668be1bce505e20f00f95ad531"
 dependencies = [
  "bitflags 2.13.2",
  "byteorder",

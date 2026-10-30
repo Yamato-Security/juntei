@@ -5,6 +5,7 @@ mod cli;
 mod color;
 mod defender_quarantine;
 mod hive;
+mod i30;
 mod jump_lists;
 mod lnk;
 mod mft;
@@ -67,6 +68,17 @@ fn main() {
                 display_logo(opts.common.quiet, opts.common.no_color, true, false);
             }
             let code = prefetch::run(opts);
+            if !data_only {
+                print_elapsed(start, opts.common.no_color);
+            }
+            code
+        }
+        Commands::ParseI30(opts) => {
+            let data_only = opts.data_on_stdout();
+            if !data_only {
+                display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            }
+            let code = i30::run(opts);
             if !data_only {
                 print_elapsed(start, opts.common.no_color);
             }

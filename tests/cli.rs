@@ -5802,3 +5802,387 @@ fn registry_sam_hidden_accounts_and_errors() {
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("No SAM hives were found"), "{}", r.stdout);
 }
+
+// --- parse-i30 --------------------------------------------------------------------------------
+
+const LOGS_I30: &str = "test_files/i30/Logs_I30";
+const PHOTOS_I30: &str = "test_files/i30/Photos_I30";
+
+/// A triage-like tree: the two indexes, named as they are exported, and a file that is not one.
+fn i30_triage() -> tempfile::TempDir {
+    let dir = tempfile::tempdir().unwrap();
+    let host = dir.path().join("HOST/C");
+    std::fs::create_dir_all(&host).unwrap();
+    std::fs::copy(repo(LOGS_I30), host.join("Logs_$I30")).unwrap();
+    std::fs::copy(repo(PHOTOS_I30), host.join("写真_$I30")).unwrap();
+    std::fs::write(host.join("notes.txt"), b"not an index").unwrap();
+    dir
+}
+
+#[test]
+fn i30_summary_on_the_terminal() {
+    let r = run(&["parse-i30", "-f", LOGS_I30, "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for line in [
+        "$I30 files: 1",
+        "$I30 files parsed: 1",
+        "INDX records: 7\n",
+        "Entries in use: 60",
+        "Entries in slack: 157 (copies of entries in use: 96, without their header: 67, without their parent: 11)",
+        "Non-copy names in slack (possible deleted or renamed files): 51",
+        "  app-020.log\n",
+        "  app-058.log\n  … 31 more\n",
+        "To save every entry, add -o <FILE>",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    assert!(!r.stdout.contains("Problems in records"), "{}", r.stdout);
+
+    // several files: each name with its file
+    let dir = i30_triage();
+    let r = run(&["parse-i30", "-d", dir.path().to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    // as the directory is read: with the platform's separators
+    let logs = dir.path().join("HOST").join("C").join("Logs_$I30");
+    for line in [
+        "$I30 files: 2".to_string(),
+        "$I30 files parsed: 2".to_string(),
+        "INDX records: 8\n".to_string(),
+        "Entries in use: 64".to_string(),
+        "Entries in slack: 159 (copies of entries in use: 97, without their header: 69, without their parent: 12)".to_string(),
+        "Non-copy names in slack (possible deleted or renamed files): 52".to_string(),
+        format!("  {}: app-020.log\n", logs.display()),
+        "  … 32 more\n".to_string(),
+    ] {
+        assert!(r.stdout.contains(&line), "{line}\n{}", r.stdout);
+    }
+}
+
+#[test]
+fn i30_csv_json_and_jsonl() {
+    let dir = i30_triage();
+    let out = tempfile::tempdir().unwrap();
+    let csv = out.path().join("i30.csv");
+    let r = run(&[
+        "parse-i30",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        csv.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    assert!(
+        r.stdout
+            .contains(&format!("Results saved: {} (223 entries, ", csv.display())),
+        "{}",
+        r.stdout
+    );
+    let text = std::fs::read_to_string(&csv).unwrap();
+    let mut rows = csv::Reader::from_reader(text.as_bytes());
+    assert_eq!(
+        rows.headers().unwrap().iter().collect::<Vec<_>>(),
+        [
+            "SourcePath",
+            "RecordOffset",
+            "RecordVcn",
+            "RecordLsn",
+            "EntryOffset",
+            "FromSlack",
+            "CopyOfEntryInUse",
+            "FileName",
+            "Namespace",
+            "FileEntry",
+            "FileSequence",
+            "ParentEntry",
+            "ParentSequence",
+            "CreatedUTC",
+            "ModifiedUTC",
+            "MftModifiedUTC",
+            "AccessedUTC",
+            "AllocatedSize",
+            "RealSize",
+            "FileAttributes",
+            "ReparseValue",
+            "Problems",
+        ]
+    );
+    let rows: Vec<csv::StringRecord> = rows.records().map(|r| r.unwrap()).collect();
+    assert_eq!(rows.len(), 223);
+    // the renamed photo's old name: its entry header written over, its parent kept
+    let sakura = rows.iter().find(|r| &r[7] == "桜.jpg").unwrap();
+    assert!(sakura[0].ends_with("写真_$I30"));
+    assert_eq!(
+        sakura.iter().skip(4).take(9).collect::<Vec<_>>(),
+        ["576", "True", "False", "桜.jpg", "posix", "", "", "65", "1"]
+    );
+    assert_eq!(
+        (&sakura[17], &sakura[18], &sakura[19]),
+        ("8", "4", "archive")
+    );
+
+    // JSON: one pretty document per entry
+    let json = out.path().join("i30.json");
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        LOGS_I30,
+        "-t",
+        "json",
+        "-o",
+        json.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let records = json_documents(&std::fs::read_to_string(&json).unwrap());
+    assert_eq!(records.len(), 217);
+    let deleted = records
+        .iter()
+        .find(|r| r["file_name"] == "app-022.log")
+        .unwrap();
+    // the fields in their order
+    let text = std::fs::read_to_string(&json).unwrap();
+    let first = &text[..text.find("\n}").unwrap()];
+    let at = |key: &str| first.find(&format!("\"{key}\":")).unwrap();
+    let order = [
+        "source_path",
+        "record_offset",
+        "record_vcn",
+        "record_lsn",
+        "entry_offset",
+        "from_slack",
+        "copy_of_entry_in_use",
+        "file_name",
+        "namespace",
+        "file_entry",
+        "file_sequence",
+        "parent_entry",
+        "parent_sequence",
+        "created",
+        "modified",
+        "mft_modified",
+        "accessed",
+        "allocated_size",
+        "real_size",
+        "file_attributes",
+        "reparse_value",
+        "problems",
+    ];
+    assert!(order.windows(2).all(|w| at(w[0]) < at(w[1])), "{first}");
+    assert_eq!(deleted["from_slack"], true);
+    assert_eq!(deleted["copy_of_entry_in_use"], false);
+    assert_eq!(deleted["file_entry"], 87);
+    assert_eq!(deleted["parent_entry"], 64);
+    assert_eq!(
+        (&deleted["real_size"], &deleted["allocated_size"]),
+        (&json!(8), &json!(8))
+    );
+    assert_eq!(deleted["namespace"], "posix");
+    assert_eq!(deleted["file_attributes"], "archive");
+    assert_eq!(deleted["problems"], json!([]));
+    for time in ["created", "modified", "mft_modified", "accessed"] {
+        assert!(
+            deleted[time].as_str().unwrap().ends_with('Z'),
+            "{time}: {}",
+            deleted[time]
+        );
+    }
+    // the password list's copies, their parent written over
+    let passwords: Vec<&Value> = records
+        .iter()
+        .filter(|r| r["file_name"] == "passwords.txt")
+        .collect();
+    assert_eq!(passwords.len(), 11);
+    assert!(
+        passwords
+            .iter()
+            .all(|r| r["parent_entry"].is_null() && r["file_entry"].is_null())
+    );
+
+    // JSONL on stdout: nothing but the entries
+    let r = run(&["parse-i30", "-f", PHOTOS_I30, "-t", "jsonl", "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let lines: Vec<Value> = r
+        .stdout
+        .lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+    let names: Vec<(&str, bool, bool)> = lines
+        .iter()
+        .map(|r| {
+            (
+                r["file_name"].as_str().unwrap(),
+                r["from_slack"].as_bool().unwrap(),
+                r["copy_of_entry_in_use"].as_bool().unwrap(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        names,
+        [
+            ("さくら.jpg", false, false),
+            ("京都の秋.jpg", false, false),
+            ("大阪城.jpg", false, false),
+            ("東京タワー.jpg", false, false),
+            ("東京タワー.jpg", true, true),
+            ("桜.jpg", true, false),
+        ]
+    );
+}
+
+#[test]
+fn i30_slack_only_and_no_copies() {
+    let count = |extra: &[&str]| {
+        let mut args = vec!["parse-i30", "-f", LOGS_I30, "-t", "jsonl", "-K"];
+        args.extend_from_slice(extra);
+        let r = run(&args);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        r.stdout.lines().count()
+    };
+    assert_eq!(count(&[]), 217);
+    assert_eq!(count(&["--slack-only"]), 157);
+    assert_eq!(count(&["--no-copies"]), 121);
+    assert_eq!(count(&["--slack-only", "--no-copies"]), 61);
+
+    // the summary is the index's, whatever is written
+    let out = tempfile::tempdir().unwrap();
+    let csv = out.path().join("slack.csv");
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        LOGS_I30,
+        "--slack-only",
+        "-o",
+        csv.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    assert!(r.stdout.contains("Entries in use: 60"), "{}", r.stdout);
+    assert!(r.stdout.contains("(157 entries, "), "{}", r.stdout);
+}
+
+#[test]
+fn i30_records_in_other_data_and_records_written_in_part() {
+    // the photos' record 0x30200 bytes into other data, as in a disk image
+    let dir = tempfile::tempdir().unwrap();
+    let image = dir.path().join("disk.img");
+    let mut data = vec![0x5Au8; 0x30200];
+    data.extend(std::fs::read(repo(PHOTOS_I30)).unwrap());
+    data.extend(vec![0u8; 0x1000]);
+    std::fs::write(&image, &data).unwrap();
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        image.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let lines: Vec<Value> = r
+        .stdout
+        .lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+    assert_eq!(lines.len(), 6);
+    assert!(lines.iter().all(|r| r["record_offset"] == 0x30200));
+    assert_eq!(lines[5]["entry_offset"], 0x30200 + 576);
+
+    // the end of the second record's first sector not written
+    let torn = dir.path().join("Logs_$I30");
+    let mut logs = std::fs::read(repo(LOGS_I30)).unwrap();
+    logs[4096 + 510] ^= 0xFF;
+    std::fs::write(&torn, &logs).unwrap();
+    let r = run(&["parse-i30", "-f", torn.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for line in [
+        "INDX records: 7 (written in part: 1)".to_string(),
+        "Problems in records: 1".to_string(),
+        format!(
+            "  {}: the record at 0x1000: sectors 0 don't end with the update sequence value: the record was written in part",
+            torn.display()
+        ),
+    ] {
+        assert!(r.stdout.contains(&line), "{line}\n{}", r.stdout);
+    }
+}
+
+#[test]
+fn i30_input_and_output_errors() {
+    let r = run(&["parse-i30", "-f", "test_files/i30/missing", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("The file does not exist"), "{}", r.stdout);
+
+    let r = run(&["parse-i30", "-f", "test_files/lnk/README.md", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("Could not parse") && r.stdout.contains("no INDX records"),
+        "{}",
+        r.stdout
+    );
+
+    let r = run(&["parse-i30", "-d", "test_files/lnk", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("No $I30 files were found"),
+        "{}",
+        r.stdout
+    );
+
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("evidence_$I30");
+    std::fs::copy(repo(LOGS_I30), &input).unwrap();
+    let original = std::fs::read(&input).unwrap();
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        input.to_str().unwrap(),
+        "-o",
+        input.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("also an input file"), "{}", r.stdout);
+    assert_eq!(std::fs::read(&input).unwrap(), original);
+
+    // A different path to the same file is just as destructive.
+    let linked_output = dir.path().join("linked.csv");
+    std::fs::hard_link(&input, &linked_output).unwrap();
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        input.to_str().unwrap(),
+        "-o",
+        linked_output.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("also an input file"), "{}", r.stdout);
+    assert_eq!(std::fs::read(&input).unwrap(), original);
+
+    let file = dir.path().join("keep.csv");
+    std::fs::write(&file, b"keep").unwrap();
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        LOGS_I30,
+        "-o",
+        file.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("already exists"), "{}", r.stdout);
+    assert_eq!(std::fs::read(&file).unwrap(), b"keep");
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        LOGS_I30,
+        "-o",
+        file.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+}

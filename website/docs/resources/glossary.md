@@ -14,6 +14,7 @@
 | FILETIME | Count of 100-nanosecond intervals since 1601-01-01 UTC; a number is meaningful as time only when its schema says so. |
 | File reference | NTFS entry number plus sequence number identifying a generation of an MFT record. |
 | Hive | Binary file containing a Windows Registry tree. |
+| INDX record | Block (usually 4 KiB) of an NTFS directory index (`$I30`) listing the directory's files; its slack can keep possible evidence of deleted or renamed file names. |
 | LNK | Windows Shell Link/shortcut containing a target and extensive metadata. |
 | MRU | Most Recently Used ordering; usually relative order rather than a time for every item. |
 | MFT | NTFS Master File Table containing file/directory records and attributes. |
