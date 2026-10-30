@@ -116,21 +116,27 @@ nav:
       - Common Output Patterns: commands/output.md
   - Artifacts:
       - Artifact Guide: artifacts/index.md
-      - Amcache: artifacts/amcache.md
-      - Master File Table ($MFT): artifacts/mft.md
-      - Prefetch: artifacts/prefetch.md
-      - USN Journal: artifacts/usn-journal.md
-      - Directory Indexes ($I30): artifacts/i30.md
-      - SRUM: artifacts/srum.md
-      - LNK Shortcuts: artifacts/lnk.md
-      - Jump Lists: artifacts/jump-lists.md
-      - ShimCache: artifacts/shimcache.md
-      - Defender Quarantine: artifacts/defender-quarantine.md
-      - Registry Hives: artifacts/registry.md
-      - Windows Services: artifacts/services.md
-      - RecentDocs: artifacts/recentdocs.md
-      - Task Scheduler Cache: artifacts/taskcache.md
-      - SAM Local Accounts: artifacts/sam.md
+      - Process Execution:
+          - Prefetch: artifacts/prefetch.md
+          - Amcache: artifacts/amcache.md
+          - ShimCache: artifacts/shimcache.md
+          - SRUM: artifacts/srum.md
+      - File System and File Existence:
+          - Master File Table ($MFT): artifacts/mft.md
+          - USN Journal: artifacts/usn-journal.md
+          - Directory Indexes ($I30): artifacts/i30.md
+      - File and Folder Opening:
+          - LNK Shortcuts: artifacts/lnk.md
+          - Jump Lists: artifacts/jump-lists.md
+          - RecentDocs: artifacts/recentdocs.md
+      - Security Products:
+          - Defender Quarantine: artifacts/defender-quarantine.md
+      - Registry and Persistence:
+          - Registry Hives: artifacts/registry.md
+          - Windows Services: artifacts/services.md
+          - Task Scheduler Cache: artifacts/taskcache.md
+      - Accounts:
+          - SAM Local Accounts: artifacts/sam.md
   - Resources:
       - Articles and References: resources/index.md
       - Cross-Artifact Workflows: resources/workflows.md

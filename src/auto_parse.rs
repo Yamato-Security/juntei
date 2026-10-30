@@ -703,24 +703,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::CsvDirectory,
             &["-a"],
         );
-        let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
-            &["--all-times", "--short-names"]
-        } else {
-            &[]
-        };
-        add("mft", &["parse-mft"], OutputShape::Directory, mft_extra);
         add("prefetch", &["parse-prefetch"], OutputShape::File, &[]);
         add(
             "prefetch-timeline",
             &["parse-prefetch"],
             OutputShape::File,
             &["--timeline"],
-        );
-        add(
-            "usn-journal",
-            &["parse-usn-journal"],
-            OutputShape::Directory,
-            &[],
         );
         add("i30", &["parse-i30"], OutputShape::File, &[]);
         let srum_extra: &[&str] = if opts.output_type.is_json() {
@@ -774,8 +762,85 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &[],
         );
         add("sam", &["parse-registry", "sam"], OutputShape::File, &[]);
+        drop(add);
+
+        let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
+            &["--all-times", "--short-names"]
+        } else {
+            &[]
+        };
+        add_file_artifact_tasks(
+            &mut tasks,
+            host,
+            opts,
+            &data_dir,
+            &log_dir,
+            "mft",
+            &["parse-mft"],
+            crate::mft::find_mfts(&host.root),
+            mft_extra,
+        );
+        add_file_artifact_tasks(
+            &mut tasks,
+            host,
+            opts,
+            &data_dir,
+            &log_dir,
+            "usn-journal",
+            &["parse-usn-journal"],
+            crate::usn_journal::find_journals(&host.root),
+            &[],
+        );
     }
     Ok(tasks)
+}
+
+/// File-shaped artifacts are written directly under the computer directory. A normal collected
+/// volume has one of each (`mft.csv`, `usn-journal.csv`). If several volumes were collected for
+/// one computer, keep every artifact as a numbered sibling instead of creating another directory.
+#[allow(clippy::too_many_arguments)]
+fn add_file_artifact_tasks(
+    tasks: &mut Vec<Task>,
+    host: &Host,
+    opts: &AutoParseOptions,
+    data_dir: &Path,
+    log_dir: &Path,
+    artifact: &'static str,
+    command: &[&str],
+    inputs: Vec<PathBuf>,
+    extra: &[&str],
+) {
+    let inputs: Vec<(OsString, PathBuf)> = if inputs.is_empty() {
+        vec![("-d".into(), host.root.clone())]
+    } else {
+        inputs.into_iter().map(|path| ("-f".into(), path)).collect()
+    };
+    for (index, (input_flag, input)) in inputs.into_iter().enumerate() {
+        let stem = if index == 0 {
+            artifact.to_string()
+        } else {
+            format!("{artifact}-{}", index + 1)
+        };
+        let output = data_dir.join(format!("{stem}.{}", opts.output_type.as_str()));
+        let mut args: Vec<OsString> = command.iter().map(OsString::from).collect();
+        args.push(input_flag);
+        args.push(input.into_os_string());
+        args.push("-o".into());
+        args.push(output.as_os_str().to_owned());
+        args.push("-t".into());
+        args.push(opts.output_type.as_str().into());
+        args.extend(extra.iter().map(OsString::from));
+        args.push("-C".into());
+        args.push("-K".into());
+        args.push("-q".into());
+        tasks.push(Task {
+            computer: host.computer.clone(),
+            artifact,
+            args,
+            output,
+            log: log_dir.join(format!("{stem}.log")),
+        });
+    }
 }
 
 fn task_output(
@@ -1318,8 +1383,8 @@ mod tests {
             root.join("amcache.jsonl")
         );
         assert_eq!(
-            task_output(root, "mft", AutoOutputType::Json, OutputShape::Directory),
-            root.join("mft")
+            task_output(root, "srum", AutoOutputType::Json, OutputShape::Directory),
+            root.join("srum")
         );
     }
 

@@ -57,9 +57,13 @@ fn auto_triage() -> tempfile::TempDir {
     let windows = host.join("uploads/auto/C%3A/Windows");
     let programs = windows.join("AppCompat/Programs");
     let prefetch = windows.join("Prefetch");
+    let srum = windows.join("System32/sru");
+    let ntfs = host.join("uploads/ntfs/C");
     std::fs::create_dir_all(&programs).unwrap();
     std::fs::create_dir_all(&prefetch).unwrap();
     std::fs::create_dir_all(windows.join("System32")).unwrap();
+    std::fs::create_dir_all(&srum).unwrap();
+    std::fs::create_dir_all(ntfs.join("$Extend")).unwrap();
     std::fs::write(
         host.join("client_info.json"),
         r#"{"hostname":"HOST1","fqdn":"host1.example.test"}"#,
@@ -69,6 +73,17 @@ fn auto_triage() -> tempfile::TempDir {
     std::fs::copy(
         repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
         prefetch.join("CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+    std::fs::copy(repo("test_files/mft/MFT"), ntfs.join("$MFT")).unwrap();
+    std::fs::copy(
+        repo("test_files/usn/win11_rathbunvm_$J"),
+        ntfs.join("$Extend/$J"),
+    )
+    .unwrap();
+    std::fs::copy(
+        repo("test_files/srum/win10_rathbunvm_SRUDB.dat"),
+        srum.join("SRUDB.dat"),
     )
     .unwrap();
     dir
@@ -130,6 +145,17 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .flatten()
             .all(|entry| entry.path().is_file())
     );
+    assert!(csv.join("HOST1/srum").is_dir());
+    assert!(
+        std::fs::read_dir(csv.join("HOST1/srum"))
+            .unwrap()
+            .flatten()
+            .all(|entry| entry.path().is_file())
+    );
+    assert!(csv.join("HOST1/mft.csv").is_file());
+    assert!(csv.join("HOST1/usn-journal.csv").is_file());
+    assert!(!csv.join("HOST1/mft").exists());
+    assert!(!csv.join("HOST1/usn-journal").exists());
     assert!(csv.join("HOST1/prefetch.csv").is_file());
     assert!(csv.join("HOST1/prefetch-timeline.csv").is_file());
     assert!(csv.join("HOST1/logs").is_dir());

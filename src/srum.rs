@@ -191,24 +191,26 @@ pub fn run(opts: &SrumOptions) -> i32 {
         stats.add(&srum, context.as_ref());
 
         let written = match (&opts.output, &mut stdout_writer) {
-            (Some(out), _) => {
-                let name = root.map(|r| util::unique_name(r, database, &mut used_names));
-                match output_type {
-                    SrumOutputType::Csv => {
-                        let dir = name.map_or_else(|| out.clone(), |n| out.join(n));
-                        write_csv_tables(&dir, &srum).map(|files| saved += files)
-                    }
-                    SrumOutputType::Json | SrumOutputType::Jsonl => {
-                        let path = name.map_or_else(
-                            || out.clone(),
-                            |n| out.join(format!("{n}.{}", output_type.extension())),
-                        );
-                        let value_states = opts.include_value_state;
-                        write_entries_to(&path, &srum, &source, output_type, value_states)
-                            .map(|()| saved += 1)
-                    }
+            (Some(out), _) => match output_type {
+                SrumOutputType::Csv => {
+                    let dir = if let Some(root) = root.filter(|_| databases.len() > 1) {
+                        out.join(util::unique_name(root, database, &mut used_names))
+                    } else {
+                        out.clone()
+                    };
+                    write_csv_tables(&dir, &srum).map(|files| saved += files)
                 }
-            }
+                SrumOutputType::Json | SrumOutputType::Jsonl => {
+                    let name = root.map(|r| util::unique_name(r, database, &mut used_names));
+                    let path = name.map_or_else(
+                        || out.clone(),
+                        |n| out.join(format!("{n}.{}", output_type.extension())),
+                    );
+                    let value_states = opts.include_value_state;
+                    write_entries_to(&path, &srum, &source, output_type, value_states)
+                        .map(|()| saved += 1)
+                }
+            },
             (None, Some(w)) => w.database(&srum, &source),
             (None, None) => Ok(()),
         };

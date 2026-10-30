@@ -12,10 +12,15 @@ of a separate program for every artifact.
 ## Design goals
 
 - **Defensible parsing:** preserve raw values and report damage instead of silently inventing data.
-- **Beginner-friendly output:** descriptive column names, UTC timestamps, summaries, and findings.
+- **Useful for all:** default usage should be easy to use for beginners but customizable and full
+  featured for veterans as well.
+- **Standalone binary:** Does not require any runtime libraries to execute. It just works out of
+  the box.
+- **Blazing fast:** Aims to be the fastest parser while also not requiring a large amount of
+  memory.
 - **Cross-platform use:** analyze Windows evidence without requiring a Windows workstation.
 - **Automation:** CSV for spreadsheets and timeline tools; JSON/JSONL for `jq`, scripts, and data lakes.
-- **Safe failure:** malformed records are reported and skipped where possible; siblings remain readable.
+- **Safe failure:** malformed records are reported and skipped where possible.
 - **Transparent lineage:** Juntei identifies the open-source parsers and reference tools behind each implementation.
 
 ## What Juntei does not do

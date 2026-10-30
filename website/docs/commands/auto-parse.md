@@ -82,12 +82,13 @@ CSV keeps separate tables because each artifact has different columns:
 ├── HOST1/
 │   ├── logs/
 │   ├── amcache/
-│   ├── mft/
+│   ├── srum/
+│   ├── mft.csv
+│   ├── usn-journal.csv
 │   ├── prefetch.csv
 │   ├── prefetch-timeline.csv
 │   ├── registry.csv
-│   ├── srum/
-│   └── usn-journal/
+│   └── shimcache.csv
 └── HOST2/
     └── …
 ```
@@ -97,9 +98,12 @@ exact command and messages from every parser. `manifest.json` records hostname p
 evidence paths, command lines, duration, exit code, result path, and whether each task succeeded,
 was skipped, or failed.
 
-When a host has one Amcache hive, its CSV tables are written directly under `amcache/`. If a
-collection contains multiple Amcache hives, each hive receives a collision-safe subdirectory so
-that tables with the same names cannot overwrite one another.
+When a host has one Amcache hive or SRUM database, its CSV tables are written directly under
+`amcache/` or `srum/`. If a collection contains several databases of either kind, each source
+receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
+another. A normal single-volume collection writes `$MFT` and USN Journal records directly to
+`mft.csv` and `usn-journal.csv`. Additional collected volumes use numbered sibling files such as
+`mft-2.csv` rather than another directory level.
 
 ## JSON and SIEM ingestion
 
