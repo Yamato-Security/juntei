@@ -6,7 +6,9 @@ hide:
 
 <div class="jt-hero" markdown>
 
-![Juntei](assets/logo.svg)
+<img class="jt-hero-art" src="assets/juntei-goddess.png"
+     alt="Juntei, Goddess of Digital Forensics, surrounded by Windows forensic artifacts"
+     width="1448" height="1086">
 
 <p class="tagline">
 <strong>Juntei</strong> is Yamato Security's cross-platform parser for Windows forensic artifacts

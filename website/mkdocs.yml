@@ -17,8 +17,8 @@ docs_dir: docs
 theme:
   name: material
   language: en
-  logo: assets/logo.svg
-  favicon: assets/logo.svg
+  logo: assets/juntei-goddess.png
+  favicon: assets/juntei-goddess.png
   icon:
     repo: fontawesome/brands/github
   font:
@@ -132,5 +132,6 @@ nav:
   - Resources:
       - Articles and References: resources/index.md
       - Cross-Artifact Workflows: resources/workflows.md
+      - Parser Validation: resources/validation.md
       - DFIR Glossary: resources/glossary.md
   - Acknowledgements: acknowledgements.md
