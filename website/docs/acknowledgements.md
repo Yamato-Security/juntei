@@ -62,3 +62,8 @@ test files.
 Thank you to every Juntei and Yamato Security parser contributor, reviewer, issue reporter, and
 user who supplied edge cases. Current contributors are listed by GitHub on the
 [Juntei contributors page](https://github.com/Yamato-Security/juntei/graphs/contributors).
+
+## License
+
+Juntei is released under the
+[GNU Affero General Public License v3.0](https://github.com/Yamato-Security/juntei/blob/main/LICENSE).
