@@ -23,9 +23,17 @@
 .md-tabs__link--active { opacity: 1; }
 .md-grid { max-width: 76rem; }
 
-.jt-hero { text-align: center; padding: 2.2rem 0 1rem; }
+.jt-hero { text-align: center; padding: 1rem 0; }
 .md-content__inner:has(> .jt-hero) > h1:first-child { display: none; }
-.jt-hero img { width: 180px; margin: 0 auto 1rem; box-shadow: none !important; }
+.jt-hero img.jt-hero-art {
+  display: block;
+  width: 100%;
+  max-width: 55rem;
+  height: auto;
+  margin: 0 auto 1.5rem;
+  border-radius: .65rem;
+  box-shadow: 0 8px 28px #0005;
+}
 .jt-hero .tagline {
   max-width: 50rem; margin: 0 auto 1.3rem; font-size: 1.15rem;
   line-height: 1.65; color: var(--md-default-fg-color--light);
