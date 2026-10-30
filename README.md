@@ -4,6 +4,9 @@ Juntei is a Windows forensics artifact parser by [Yamato Security](https://githu
 a sibling of [Hayabusa](https://github.com/Yamato-Security/hayabusa) for the artifacts that are
 not event logs.
 
+The beginner-friendly [Juntei documentation](https://yamato-security.github.io/juntei/) explains
+how to collect, parse, interpret, and correlate every supported artifact.
+
 ## Supported artifacts
 
 | Artifact | Command | Status |

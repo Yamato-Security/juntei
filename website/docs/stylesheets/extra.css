@@ -1,0 +1,57 @@
+[data-md-color-primary="custom"] {
+  --md-primary-fg-color: #12364a;
+  --md-primary-fg-color--light: #1d5265;
+  --md-primary-fg-color--dark: #0b2434;
+  --md-primary-bg-color: #fff;
+}
+
+[data-md-color-accent="custom"] {
+  --md-accent-fg-color: #159a70;
+  --md-accent-fg-color--transparent: #159a7018;
+}
+
+[data-md-color-scheme="default"] { --md-typeset-a-color: #087c62; }
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #102a3a;
+  --md-typeset-a-color: #48d6a7;
+  --md-accent-fg-color: #48d6a7;
+}
+
+.md-header { background: linear-gradient(90deg, #0b2434, #17485a); }
+.md-tabs { background: #12364a; }
+.md-tabs__link { font-weight: 650; opacity: .92; }
+.md-tabs__link--active { opacity: 1; }
+.md-grid { max-width: 76rem; }
+
+.jt-hero { text-align: center; padding: 2.2rem 0 1rem; }
+.md-content__inner:has(> .jt-hero) > h1:first-child { display: none; }
+.jt-hero img { width: 180px; margin: 0 auto 1rem; box-shadow: none !important; }
+.jt-hero .tagline {
+  max-width: 50rem; margin: 0 auto 1.3rem; font-size: 1.15rem;
+  line-height: 1.65; color: var(--md-default-fg-color--light);
+}
+.jt-cta { display: flex; justify-content: center; flex-wrap: wrap; gap: .6rem; }
+.jt-cta .md-button { margin: .15rem; }
+[data-md-color-scheme="slate"] .jt-cta .md-button {
+  color: #48d6a7;
+  border-color: #48d6a7;
+}
+[data-md-color-scheme="slate"] .jt-cta .md-button--primary {
+  color: #fff;
+  background-color: #12364a;
+  border-color: #12364a;
+}
+
+.md-typeset .grid.cards > ul > li {
+  border-radius: .55rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--md-accent-fg-color);
+  box-shadow: 0 4px 16px #0002;
+  transform: translateY(-2px);
+}
+.md-typeset .grid.cards .lg.middle { color: var(--md-accent-fg-color); }
+.md-typeset table:not([class]) { display: table; width: 100%; }
+.md-typeset code { border-radius: 4px; }
+.evidence-strength { font-weight: 700; color: var(--md-accent-fg-color); }

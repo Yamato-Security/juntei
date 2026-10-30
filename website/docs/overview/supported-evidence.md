@@ -1,0 +1,27 @@
+# Supported Evidence
+
+| Evidence source | Juntei command | Most useful for | Important limitation |
+|---|---|---|---|
+| Amcache | `parse-amcache` | File inventory, paths, SHA-1, PE metadata, devices | Presence is not execution; publisher is not signature validation |
+| NTFS `$MFT` | `parse-mft` | Files, deleted records, paths, timestamps, ADS | Reused records and timestomping can mislead |
+| Prefetch | `parse-prefetch` | Program execution, run count, recent run times, loaded files | Only a limited run-time history is retained |
+| USN Journal `$J` | `parse-usn-journal` | Creates, deletes, renames, writes, historical paths | Circular journal; records changes, not file contents |
+| SRUM | `parse-srum` | Per-app/user network and resource use | Usually aggregated; not packet or destination-level proof |
+| LNK shortcuts | `parse-lnk` | Opened targets, arguments, volumes, shares, source machine | A shortcut can be created without the target running |
+| Jump Lists | `parse-jump-lists` | Application-opened items, pinning, usage and embedded LNK data | Application-specific behavior and retention |
+| ShimCache | `parse-shimcache` | Historical executable paths and compatibility checks | Cache may not be flushed until shutdown; entry alone is not execution |
+| Defender quarantine | `parse-defender-quarantine` | Detection, original path, hashes, download origin, recovered bytes | Detection name is a product verdict; extraction is hazardous |
+| Registry hives | `parse-registry read` | Configuration, persistence, deleted/replayed values | Key time is not a value time; live hives need transaction logs |
+| Services | `parse-registry services` | Service/driver persistence and failure actions | Configuration does not prove the service started |
+| RecentDocs | `parse-registry recentdocs` | Recently opened files and folders per user | Only the most recent item in each list gets a defensible open time |
+| TaskCache | `parse-registry taskcache` | Scheduled-task actions, metadata, hidden tasks | Correlate with task XML and event logs for runtime proof |
+| SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | Local accounts only; last-logon values are not a complete logon history |
+
+## Collection types
+
+Juntei accepts a single artifact with `-f` or searches a collection recursively with `-d`.
+Directory mode is designed for common triage layouts where each host contains paths such as
+`C/Windows/System32/config/SYSTEM` or `C/Users/alice/NTUSER.DAT`.
+
+See [Collecting Evidence](../getting-started/collection.md) before analyzing copied registry or ESE
+databases: related transaction logs can be essential to reconstructing the state Windows saw.

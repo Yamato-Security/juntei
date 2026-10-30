@@ -1,0 +1,136 @@
+site_name: Juntei
+site_description: >-
+  Beginner-friendly documentation for Juntei, Yamato Security's cross-platform
+  Windows forensic artifact parser.
+site_author: Yamato Security
+site_url: https://yamato-security.github.io/juntei/
+
+repo_url: https://github.com/Yamato-Security/juntei
+repo_name: Yamato-Security/juntei
+edit_uri: edit/main/website/docs/
+
+copyright: >-
+  Copyright &copy; 2026 Yamato Security — Documentation built with Material for MkDocs
+
+docs_dir: docs
+
+theme:
+  name: material
+  language: en
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Inter
+    code: JetBrains Mono
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.tracking
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.tooltips
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.keys
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Yamato-Security/juntei
+      name: Juntei on GitHub
+    - icon: fontawesome/brands/x-twitter
+      link: https://twitter.com/SecurityYamato
+      name: Yamato Security on X
+
+nav:
+  - Home: index.md
+  - Overview:
+      - About Juntei: overview/index.md
+      - Supported Evidence: overview/supported-evidence.md
+      - Evidence and Interpretation: overview/evidence-model.md
+  - Getting Started:
+      - Install Juntei: getting-started/index.md
+      - First Investigation: getting-started/first-investigation.md
+      - Output Formats: getting-started/output-formats.md
+      - Collecting Evidence: getting-started/collection.md
+  - Commands:
+      - Command List: commands/index.md
+      - Execution and Inventory: commands/execution.md
+      - File System: commands/filesystem.md
+      - User Activity: commands/user-activity.md
+      - Security and Registry: commands/security-registry.md
+      - Common Output Patterns: commands/output.md
+  - Artifacts:
+      - Artifact Guide: artifacts/index.md
+      - Amcache: artifacts/amcache.md
+      - Master File Table ($MFT): artifacts/mft.md
+      - Prefetch: artifacts/prefetch.md
+      - USN Journal: artifacts/usn-journal.md
+      - SRUM: artifacts/srum.md
+      - LNK Shortcuts: artifacts/lnk.md
+      - Jump Lists: artifacts/jump-lists.md
+      - ShimCache: artifacts/shimcache.md
+      - Defender Quarantine: artifacts/defender-quarantine.md
+      - Registry Hives: artifacts/registry.md
+      - Windows Services: artifacts/services.md
+      - RecentDocs: artifacts/recentdocs.md
+      - Task Scheduler Cache: artifacts/taskcache.md
+      - SAM Local Accounts: artifacts/sam.md
+  - Resources:
+      - Articles and References: resources/index.md
+      - Cross-Artifact Workflows: resources/workflows.md
+      - DFIR Glossary: resources/glossary.md
+  - Acknowledgements: acknowledgements.md
