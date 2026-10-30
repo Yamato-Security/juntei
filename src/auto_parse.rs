@@ -1194,11 +1194,16 @@ fn output_separate_from_evidence(evidence: &Path, output: &Path) -> Result<(), S
 }
 
 fn absolute_candidate(path: &Path) -> io::Result<PathBuf> {
+    let path = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()?.join(path)
+    };
     if path.exists() {
-        return fs::canonicalize(path);
+        return fs::canonicalize(&path);
     }
     let mut suffix = Vec::new();
-    let mut at = path;
+    let mut at = path.as_path();
     while !at.exists() {
         suffix.push(at.file_name().ok_or_else(|| {
             io::Error::new(io::ErrorKind::InvalidInput, "path has no existing ancestor")

@@ -253,6 +253,34 @@ fn auto_parse_refuses_an_output_parent_of_the_evidence() {
 }
 
 #[test]
+fn auto_parse_accepts_a_new_relative_output_directory() {
+    let container = tempfile::tempdir().unwrap();
+    let evidence = container.path().join("evidence");
+    let windows = evidence.join("HOST1/C/Windows");
+    std::fs::create_dir_all(windows.join("System32")).unwrap();
+    std::fs::create_dir_all(windows.join("Prefetch")).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
+        windows.join("Prefetch/CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+    let r = run_at(
+        container.path(),
+        &[
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            "test",
+            "-K",
+            "-q",
+        ],
+    );
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert!(container.path().join("test/manifest.json").is_file());
+}
+
+#[test]
 fn terminal_report_has_the_summary_and_findings() {
     let r = run(&["parse-amcache", "-f", WIN10, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
