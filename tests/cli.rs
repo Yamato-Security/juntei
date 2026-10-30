@@ -170,6 +170,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(csv.join("manifest.json")).unwrap()).unwrap();
     assert_eq!(manifest["hosts"][0]["Computer"], "HOST1");
+    assert_eq!(manifest["hosts"][0]["hostname"], "HOST1");
     assert_eq!(manifest["hosts"][0]["hostname_source"], "client_info.json");
     assert!(
         manifest["tasks"]
@@ -407,7 +408,9 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
             .unwrap();
     assert_eq!(manifest["hosts"].as_array().unwrap().len(), 2);
     assert_eq!(manifest["hosts"][0]["Computer"], "HOST2");
+    assert_eq!(manifest["hosts"][0]["hostname"], "HOST2");
     assert_eq!(manifest["hosts"][1]["Computer"], "HOST3");
+    assert_eq!(manifest["hosts"][1]["hostname"], "HOST3");
     assert!(
         manifest["hosts"]
             .as_array()

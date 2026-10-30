@@ -25,6 +25,7 @@ const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
 #[derive(Clone)]
 struct Host {
+    hostname: String,
     computer: String,
     fqdn: Option<String>,
     source: &'static str,
@@ -75,6 +76,7 @@ struct TaskResult {
 struct ManifestHost {
     #[serde(rename = "Computer")]
     computer: String,
+    hostname: String,
     fqdn: Option<String>,
     hostname_source: &'static str,
     evidence_root: String,
@@ -475,6 +477,7 @@ fn discover_hosts(input: &Path, max_depth: usize) -> io::Result<Vec<Host>> {
         };
         hosts.push(Host {
             folder: safe_component(&computer),
+            hostname: computer.clone(),
             computer,
             fqdn,
             source,
@@ -1317,6 +1320,7 @@ fn replace_generated_file(path: &Path, replacement: &Path) -> io::Result<()> {
 fn manifest_host(host: &Host) -> ManifestHost {
     ManifestHost {
         computer: host.computer.clone(),
+        hostname: host.hostname.clone(),
         fqdn: host.fqdn.clone(),
         hostname_source: host.source,
         evidence_root: host.root.to_string_lossy().to_string(),
@@ -1646,6 +1650,7 @@ mod tests {
         assert_eq!(safe_component("lpt9"), "_lpt9");
 
         let host = |computer: &str| Host {
+            hostname: computer.to_string(),
             computer: computer.to_string(),
             fqdn: None,
             source: "test",
@@ -1666,5 +1671,9 @@ mod tests {
             .collect();
         assert_eq!(computers.len(), 3);
         assert_eq!(hosts[1].computer, "host_2");
+        assert_eq!(hosts[1].hostname, "host");
+        let manifest = manifest_host(&hosts[1]);
+        assert_eq!(manifest.computer, "host_2");
+        assert_eq!(manifest.hostname, "host");
     }
 }

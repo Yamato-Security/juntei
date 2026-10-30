@@ -49,6 +49,7 @@ For each discovered system, the computer name is chosen in this order:
 
 Names are made safe for use as directory names. Duplicate names receive a numeric suffix in both
 their output directory and `Computer` value so separate systems remain distinguishable in JSON.
+The manifest keeps the hostname exactly as discovered in a separate `hostname` field.
 
 ## Parsers it runs
 
@@ -97,9 +98,10 @@ CSV keeps separate tables because each artifact has different columns:
 ```
 
 Some parsers naturally create several tables, so their output is a directory. `logs` contains the
-exact command and messages from every parser. `manifest.json` records hostname provenance,
-evidence paths, command lines, duration, exit code, result path, whether Defender extraction was
-requested, and whether each task succeeded, was skipped, or failed.
+exact command and messages from every parser. `manifest.json` records the original discovered
+`hostname`, the unique output/record `Computer` identity, hostname provenance, evidence paths,
+command lines, duration, exit code, result path, whether Defender extraction was requested, and
+whether each task succeeded, was skipped, or failed.
 
 When a host has one Amcache hive or SRUM database, its CSV tables are written directly under
 `amcache/` or `srum/`. If a collection contains several databases of either kind, each source
