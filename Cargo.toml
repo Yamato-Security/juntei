@@ -27,13 +27,12 @@ indicatif = "0.18"
 # $MFT parsing: Yamato Security's ys-mft-parser, a fork of Omer Ben-Amram's mft crate
 # (MIT / Apache-2.0), without its ys-mft-parser command.
 mft = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-mft-parser", default-features = false }
-# parse-i30's $I30 reader, until Yamato-Security/ys-mft-parser#11 is merged into the parser's main
-# (then `mft::i30`): a second name, so that ys-usn-journal-parser keeps sharing `mft`'s types.
-mft-i30 = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-mft-parser", branch = "ys/i30", default-features = false }
 # Prefetch parsing: Yamato Security's ys-prefetch-parser, a fork of Samuel Garcés Marín's
 # frnsc-prefetch crate (MIT).
 frnsc-prefetch = { package = "ys-prefetch-parser", git = "https://github.com/Yamato-Security/ys-prefetch-parser" }
 serde_json = "1"
+# Refuse to overwrite an input through the same path, a symlink or a hard link.
+same-file = "1"
 # parse-registry's filters on key paths, value names and data.
 regex = "1"
 # USN journal parsing: Yamato Security's ys-usn-journal-parser, a fork of sootmark-usn

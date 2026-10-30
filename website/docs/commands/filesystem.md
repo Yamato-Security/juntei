@@ -83,7 +83,7 @@ Input:
   -f, --file <FILE>      File path to one $I30 file (a directory's $INDEX_ALLOCATION:$I30 stream), or any file holding INDX records (a disk image, unallocated space)
 
 Filtering:
-      --slack-only  Only the entries found in slack (the names of deleted or renamed files, and copies of entries in use)
+      --slack-only  Only the entries found in slack (possible deleted or renamed file names, and copies of entries in use)
       --no-copies   Leave out the slack entries that copy an entry in use (same name, file, directory and times)
 
 Output:

@@ -63,7 +63,7 @@ pub enum Commands {
     )]
     ParseUsnJournal(UsnJournalOptions),
 
-    /// Parse directory indexes ($I30): the files in a directory, and deleted or renamed files' names left in slack
+    /// Parse directory indexes ($I30): the files in a directory, and possible deleted or renamed file names left in slack
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -509,7 +509,7 @@ pub struct I30Options {
     #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
     pub filepath: Option<PathBuf>,
 
-    /// Only the entries found in slack (the names of deleted or renamed files, and copies of entries in use)
+    /// Only the entries found in slack (possible deleted or renamed file names, and copies of entries in use)
     #[arg(help_heading = Some("Filtering"), long, display_order = 200)]
     pub slack_only: bool,
 

@@ -14,9 +14,9 @@ use crate::progress;
 use crate::registry::{RecordWriter, sink};
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use indicatif::ProgressBar;
-use mft_i30::attribute::FileAttributeFlags;
-use mft_i30::attribute::x30::FileNamespace;
-use mft_i30::i30::{IndexEntry, IndexRecord, index_records};
+use mft::attribute::FileAttributeFlags;
+use mft::attribute::x30::FileNamespace;
+use mft::i30::{IndexEntry, IndexRecord, index_records};
 use serde::Serialize;
 use std::collections::BTreeSet;
 use std::fs::File;
@@ -72,6 +72,21 @@ pub fn run(opts: &I30Options) -> i32 {
         }
         (None, None) => unreachable!("clap requires -f or -d"),
     };
+    if let Some(output) = &opts.output
+        && output.exists()
+        && files
+            .iter()
+            .any(|input| same_file::is_same_file(input, output).unwrap_or(false))
+    {
+        report_error(
+            None,
+            &format!(
+                "The output file is also an input file and cannot be overwritten: {}",
+                output.display()
+            ),
+        );
+        return 1;
+    }
     let sink = match sink(opts.output.as_ref(), opts.clobber, data_on_stdout) {
         Ok(sink) => sink,
         Err(msg) => {
@@ -204,7 +219,7 @@ fn is_i30_file(path: &Path) -> bool {
         File::open(path)
             .and_then(|mut f| f.read_exact(&mut head))
             .is_ok()
-            && &head == mft_i30::i30::INDX_SIGNATURE
+            && &head == mft::i30::INDX_SIGNATURE
     }
 }
 
@@ -297,11 +312,15 @@ fn namespace(n: FileNamespace) -> &'static str {
 
 /// File attribute flags' names (`archive`, `hidden`, `is_directory`, …), joined with `|`.
 fn attributes(flags: &FileAttributeFlags) -> String {
-    flags
+    let mut names = flags
         .iter_names()
         .map(|(name, _)| name.trim_start_matches("FILE_ATTRIBUTE_").to_lowercase())
-        .collect::<Vec<_>>()
-        .join("|")
+        .collect::<Vec<_>>();
+    let unknown = flags.bits() & !FileAttributeFlags::all().bits();
+    if unknown != 0 {
+        names.push(format!("0x{unknown:08x}"));
+    }
+    names.join("|")
 }
 
 /// A FILETIME in UTC (to the 100 ns), or `None`.
@@ -435,7 +454,8 @@ struct Stats {
     headerless: usize,
     without_parent: usize,
     written: usize,
-    /// The names in slack that are not copies of entries in use: deleted or renamed files.
+    /// The names in slack that are not exact copies of entries in use: possible deleted or
+    /// renamed files.
     gone: BTreeSet<(String, String)>,
     problems: Vec<String>,
     problem_count: usize,
@@ -499,7 +519,7 @@ impl Stats {
         );
         p_label(
             no_color,
-            "Names in slack no longer in use (deleted or renamed files): ",
+            "Non-copy names in slack (possible deleted or renamed files): ",
             &fmt_num(self.gone.len()),
         );
         // the file each name is in, when there are several
@@ -540,8 +560,8 @@ mod tests {
     #[test]
     fn names_of_namespaces_and_attributes() {
         assert_eq!(namespace(FileNamespace::Win32AndDos), "win32_and_dos");
-        let flags = FileAttributeFlags::from_bits_truncate(0x1000_0022);
-        assert_eq!(attributes(&flags), "hidden|archive|is_directory");
+        let flags = FileAttributeFlags::from_bits_retain(0x1080_0022);
+        assert_eq!(attributes(&flags), "hidden|archive|is_directory|0x00800000");
         assert_eq!(time(0), None);
     }
 

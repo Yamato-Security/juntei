@@ -5829,7 +5829,7 @@ fn i30_summary_on_the_terminal() {
         "INDX records: 7\n",
         "Entries in use: 60",
         "Entries in slack: 157 (copies of entries in use: 96, without their header: 67, without their parent: 11)",
-        "Names in slack no longer in use (deleted or renamed files): 51",
+        "Non-copy names in slack (possible deleted or renamed files): 51",
         "  app-020.log\n",
         "  app-058.log\n  … 31 more\n",
         "To save every entry, add -o <FILE>",
@@ -5850,7 +5850,7 @@ fn i30_summary_on_the_terminal() {
         "INDX records: 8\n".to_string(),
         "Entries in use: 64".to_string(),
         "Entries in slack: 159 (copies of entries in use: 97, without their header: 69, without their parent: 12)".to_string(),
-        "Names in slack no longer in use (deleted or renamed files): 52".to_string(),
+        "Non-copy names in slack (possible deleted or renamed files): 52".to_string(),
         format!("  {}: app-020.log\n", logs.display()),
         "  … 32 more\n".to_string(),
     ] {
@@ -6130,6 +6130,38 @@ fn i30_input_and_output_errors() {
     );
 
     let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("evidence_$I30");
+    std::fs::copy(repo(LOGS_I30), &input).unwrap();
+    let original = std::fs::read(&input).unwrap();
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        input.to_str().unwrap(),
+        "-o",
+        input.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("also an input file"), "{}", r.stdout);
+    assert_eq!(std::fs::read(&input).unwrap(), original);
+
+    // A different path to the same file is just as destructive.
+    let linked_output = dir.path().join("linked.csv");
+    std::fs::hard_link(&input, &linked_output).unwrap();
+    let r = run(&[
+        "parse-i30",
+        "-f",
+        input.to_str().unwrap(),
+        "-o",
+        linked_output.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("also an input file"), "{}", r.stdout);
+    assert_eq!(std::fs::read(&input).unwrap(), original);
+
     let file = dir.path().join("keep.csv");
     std::fs::write(&file, b"keep").unwrap();
     let r = run(&[
