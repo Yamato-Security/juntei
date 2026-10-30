@@ -19,6 +19,8 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 - [Microsoft: USN_RECORD_V2](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-usn_record_v2)
 - [libfsntfs format documentation](https://github.com/libyal/libfsntfs/tree/main/documentation)
 - [Omer Ben-Amram's mft parser](https://github.com/omerbenamram/mft)
+- [dfir_ntfs](https://github.com/msuhanov/dfir_ntfs) — NTFS parser with INDX record and index-slack carving.
+- [INDXRipper](https://github.com/harelsegev/INDXRipper) — carves `$I30` slack for file names.
 
 ## Execution and inventory artifacts
 

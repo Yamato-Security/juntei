@@ -601,7 +601,8 @@ dependencies = [
  "ys-defender-history-parser",
  "ys-jump-lists-parser",
  "ys-lnk-parser",
- "ys-mft-parser",
+ "ys-mft-parser 1.0.0 (git+https://github.com/Yamato-Security/ys-mft-parser?branch=ys%2Fi30)",
+ "ys-mft-parser 1.0.0 (git+https://github.com/Yamato-Security/ys-mft-parser)",
  "ys-prefetch-parser",
  "ys-registry-parser",
  "ys-shimcache-parser",
@@ -1280,6 +1281,27 @@ dependencies = [
 [[package]]
 name = "ys-mft-parser"
 version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-mft-parser?branch=ys%2Fi30#16f2244b296687505421fd52c133718eec7191d9"
+dependencies = [
+ "bitflags 2.13.2",
+ "byteorder",
+ "csv",
+ "itertools",
+ "jiff",
+ "log",
+ "lru",
+ "num-derive 0.5.1",
+ "num-traits",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "utf16-simd",
+ "winstructs",
+]
+
+[[package]]
+name = "ys-mft-parser"
+version = "1.0.0"
 source = "git+https://github.com/Yamato-Security/ys-mft-parser#c4796f95256eccc29a6c76c3bda071c2a8f560a7"
 dependencies = [
  "bitflags 2.13.2",
@@ -1344,7 +1366,7 @@ name = "ys-usn-journal-parser"
 version = "1.0.0"
 source = "git+https://github.com/Yamato-Security/ys-usn-journal-parser#bf2f91d41eab0682e2b981f3308bb4c8f458043c"
 dependencies = [
- "ys-mft-parser",
+ "ys-mft-parser 1.0.0 (git+https://github.com/Yamato-Security/ys-mft-parser)",
 ]
 
 [[package]]

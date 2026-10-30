@@ -119,6 +119,7 @@ nav:
       - Master File Table ($MFT): artifacts/mft.md
       - Prefetch: artifacts/prefetch.md
       - USN Journal: artifacts/usn-journal.md
+      - Directory Indexes ($I30): artifacts/i30.md
       - SRUM: artifacts/srum.md
       - LNK Shortcuts: artifacts/lnk.md
       - Jump Lists: artifacts/jump-lists.md

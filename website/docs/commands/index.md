@@ -8,6 +8,7 @@ Run `juntei --help` for the current list and `juntei <COMMAND> --help` for one c
 | `parse-mft` | NTFS `$MFT` | [Master File Table](../artifacts/mft.md) |
 | `parse-prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 | `parse-usn-journal` | `$UsnJrnl:$J` | [USN Journal](../artifacts/usn-journal.md) |
+| `parse-i30` | `$I30` (`$INDEX_ALLOCATION`), or a disk image | [Directory Indexes ($I30)](../artifacts/i30.md) |
 | `parse-srum` | `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |
 | `parse-jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |

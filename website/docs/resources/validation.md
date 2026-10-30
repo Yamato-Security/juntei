@@ -39,6 +39,15 @@ time-aware parent paths matched an independent parser wherever that parser resol
 also resolved 4,321 records that the comparison left unresolved. Its carver produced no false
 records while tested against 880 MB of `$MFT` data.
 
+## Directory indexes ($I30)
+
+The `i30` module of [ys-mft-parser](https://github.com/Yamato-Security/ys-mft-parser) reads INDX
+records and their slack. On two `$I30` streams of a volume built with ntfs-3g (Juntei's
+`test_files/i30/`) and on three public Windows-written `$I30` samples, its entries in use and in
+slack matched those of Maxim Suhanov's [dfir_ntfs](https://github.com/msuhanov/dfir_ntfs), with the
+same names and times. Where dfir_ntfs reports a parent reference past 32 bits (bytes written over
+the parent), Juntei leaves the parent empty.
+
 ## SRUM
 
 [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) is based on Sootmark's

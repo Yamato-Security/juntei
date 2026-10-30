@@ -6,6 +6,7 @@
 | NTFS `$MFT` | `parse-mft` | Files, deleted records, paths, timestamps, ADS | Reused records and timestomping can mislead |
 | Prefetch | `parse-prefetch` | Program execution, run count, recent run times, loaded files | Only a limited run-time history is retained |
 | USN Journal `$J` | `parse-usn-journal` | Creates, deletes, renames, writes, historical paths | Circular journal; records changes, not file contents |
+| Directory indexes `$I30` | `parse-i30` | Files in a directory; names, times, and sizes of deleted or renamed files left in index slack | Slack is partial and says nothing about when an entry was removed |
 | SRUM | `parse-srum` | Per-app/user network and resource use | Usually aggregated; not packet or destination-level proof |
 | LNK shortcuts | `parse-lnk` | Opened targets, arguments, volumes, shares, source machine | A shortcut can be created without the target running |
 | Jump Lists | `parse-jump-lists` | Application-opened items, pinning, usage and embedded LNK data | Application-specific behavior and retention |

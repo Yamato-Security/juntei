@@ -9,8 +9,8 @@ but the investigator must still interpret what each source means.
 | Investigation question | Start here | Corroborate with |
 |---|---|---|
 | Did this executable run? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event logs |
-| Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), ShimCache |
-| When was a file created, renamed, or deleted? | [USN Journal](usn-journal.md) | [$MFT](mft.md), Defender quarantine |
+| Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
+| When was a file created, renamed, or deleted? | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender quarantine |
 | What did a user open? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Did a program transfer a large amount of data? | [SRUM](srum.md) | Firewall, proxy, DNS, packet or EDR telemetry |
 | Was persistence configured? | [Services](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Event logs, Prefetch, `$MFT` |

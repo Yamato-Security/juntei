@@ -13,6 +13,7 @@ embedded in Juntei; consult each project for its license.
 | `$MFT` | [ys-mft-parser](https://github.com/Yamato-Security/ys-mft-parser) | [Omer Ben-Amram mft](https://github.com/omerbenamram/mft) |
 | Prefetch | [ys-prefetch-parser](https://github.com/Yamato-Security/ys-prefetch-parser) | [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch) |
 | USN Journal | [ys-usn-journal-parser](https://github.com/Yamato-Security/ys-usn-journal-parser) | [Sootmark usn](https://github.com/Sootmark/usn) |
+| Directory indexes (`$I30`) | [ys-mft-parser](https://github.com/Yamato-Security/ys-mft-parser) (`i30` module) | Index-slack research credited below |
 | SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) and [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell compound-file and Jump List work |
@@ -26,7 +27,9 @@ embedded in Juntei; consult each project for its license.
   **AppCompatCacheParser**, **SrumECmd**, **Registry Explorer**, and **RECmd** established many of
   the field names and examiner expectations used for comparisons.
 - Maxim Suhanov's **regf specification** and **yarp** informed registry structures, transaction-log
-  replay, and deleted-record recovery.
+  replay, and deleted-record recovery; his **dfir_ntfs** was the reference for INDX records and
+  index-slack carving.
+- Harel Segev's **INDXRipper** is a further reference for carving file names from index slack.
 - Joachim Metz / libyal projects **libregf**, **libfsntfs**, **libscca**, **libfwsi**, and
   **libesedb** provide detailed format research and independent parsing references.
 - Fox-IT's **dissect.esedb** and **dissect.target** provided independent SRUM, SAM, and Defender
