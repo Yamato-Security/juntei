@@ -3412,7 +3412,7 @@ fn defender_quarantine_input_and_output_errors() {
 
 const AMCACHE_HIVE: &str = "test_files/amcache/amcache_win10.hve";
 /// `parse-registry read`'s CSV columns.
-const REGISTRY_COLUMNS: [&str; 17] = [
+const REGISTRY_COLUMNS: [&str; 18] = [
     "Host",
     "HiveType",
     "SourcePath",
@@ -3427,12 +3427,13 @@ const REGISTRY_COLUMNS: [&str; 17] = [
     "ValueU64",
     "ValueFiletimeUTC",
     "AllocationStatus",
+    "RecoveredFrom",
     "TransactionLogStatus",
     "LogsApplied",
     "Problems",
 ];
 /// `parse-registry read`'s JSON fields, in their order.
-const REGISTRY_FIELDS: [&str; 17] = [
+const REGISTRY_FIELDS: [&str; 18] = [
     "host",
     "hive_type",
     "source_path",
@@ -3447,6 +3448,7 @@ const REGISTRY_FIELDS: [&str; 17] = [
     "value_u64",
     "value_filetime_utc",
     "allocation_status",
+    "recovered_from",
     "transaction_log_status",
     "logs_applied",
     "problems",
@@ -3774,14 +3776,17 @@ fn registry_deleted_keys_and_values() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stdout);
     for line in [
-        "Deleted keys: 290, values: 695 (incomplete deleted value lists, values or data: 43)",
-        "Records: 81,794 (replayed from the transaction logs: 262, deleted: 788)",
+        "Recovered keys: 429 (deleted_complete 36, deleted_partial 241, transaction_log_recovered 152)",
+        "Recovered values: 1,379 (deleted_complete 48, deleted_partial 577, residual_value_only 53, transaction_log_recovered 701)",
+        "Value lists, values or data of recovered records lost: 65",
+        "Records: 82,514 (replayed from the transaction logs: 262, recovered: 1,508)",
         // what deleted records lost is not damage
         "Damaged keys and values: 0",
     ] {
         assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
     }
-    // a deleted service's values, under parents that are deleted too or lost
+    // a deleted service's values, under parents that are deleted too or lost: partial, in the
+    // free cells of the hive and of the file before the replay
     let records = registry_read(&[
         "-f",
         system,
@@ -3789,26 +3794,46 @@ fn registry_deleted_keys_and_values() {
         "--key-regex",
         r"\\Services\\stornvme\\Parameters$",
     ]);
-    let deleted: Vec<&Value> = records
+    let bus = records
         .iter()
-        .filter(|r| r["allocation_status"] == "deleted")
-        .collect();
-    let bus = deleted
-        .iter()
-        .find(|r| r["value_name"] == "BusType")
+        .find(|r| r["value_name"] == "BusType" && r["allocation_status"] != "allocated")
         .unwrap();
     assert_eq!(
         bus["key_path"],
         r"[unknown]\Configurations\Stornvme_Inst\Services\stornvme\Parameters"
     );
+    assert_eq!(bus["allocation_status"], "deleted_partial");
+    assert_eq!(bus["recovered_from"], json!(["free_cell", "before_replay"]));
     assert_eq!(bus["key_last_written"], "2022-02-07T07:38:03.052139100Z");
     assert_eq!(bus["value_type"], "REG_DWORD");
     assert_eq!(bus["value_u64"], 17);
     assert_eq!(bus["transaction_log_status"], "unchanged");
-    assert!(
-        records
-            .iter()
-            .all(|r| r["allocation_status"] == "deleted" || r["allocation_status"] == "allocated")
+    let allocated = records
+        .iter()
+        .filter(|r| r["allocation_status"] == "allocated")
+        .collect::<Vec<_>>();
+    assert!(allocated.iter().all(|r| r["recovered_from"] == json!([])));
+    // a key only an older log entry holds: an earlier Edge's event provider
+    let edge = registry_read(&[
+        "-f",
+        system,
+        "--recover-deleted",
+        "--key-regex",
+        "Microsoft Edge Etw$",
+    ]);
+    let message = edge
+        .iter()
+        .find(|r| r["value_name"] == "EventMessageFile")
+        .unwrap();
+    assert_eq!(
+        message["key_path"],
+        r"ControlSet001\Services\EventLog\System\Microsoft Edge Etw"
+    );
+    assert_eq!(message["allocation_status"], "transaction_log_recovered");
+    assert_eq!(message["recovered_from"], json!(["SYSTEM.LOG2#344"]));
+    assert_eq!(
+        message["value_data"],
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\90.0.818.66\msedge.dll"
     );
     // without --recover-deleted: only what is in use
     let records = registry_read(&[
@@ -3822,15 +3847,23 @@ fn registry_deleted_keys_and_values() {
             .iter()
             .all(|r| r["allocation_status"] == "allocated")
     );
-    // values no deleted key lists: no key, so a key filter leaves them out
+    // values without their key: no key filter takes them
     let all = registry_read(&["-f", system, "--recover-deleted", "--value-regex", "^"]);
-    let residual = all.iter().filter(|r| r["key_path"].is_null()).count();
-    assert_eq!(residual, 56);
-    assert!(
-        all.iter()
-            .filter(|r| r["key_path"].is_null())
-            .all(|r| r["allocation_status"] == "deleted" && r["key_last_written"].is_null())
+    let residual: Vec<&Value> = all.iter().filter(|r| r["key_path"].is_null()).collect();
+    let count = |status: &str| {
+        residual
+            .iter()
+            .filter(|r| r["allocation_status"] == status)
+            .count()
+    };
+    assert_eq!(
+        (
+            count("residual_value_only"),
+            count("transaction_log_recovered")
+        ),
+        (53, 47)
     );
+    assert!(residual.iter().all(|r| r["key_last_written"].is_null()));
 }
 
 /// A hive with a value of every common type, the default value, values that don't decode, a key

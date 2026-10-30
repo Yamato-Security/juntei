@@ -890,7 +890,7 @@ pub struct RegistryReadOptions {
     #[arg(help_heading = Some("Filtering"), long, value_name = "DATE", value_parser = crate::mft_csv::parse_cutoff, display_order = 206)]
     pub timeline_end: Option<i64>,
 
-    /// Also the deleted keys and values left in the hive's free cells
+    /// Also deleted keys and values: in free cells, the slack of cells in use and the data past the hive bins, and what only the transaction logs kept (allocation_status says how complete; recovered_from where found)
     #[arg(help_heading = Some("Filtering"), long, display_order = 207)]
     pub recover_deleted: bool,
 
