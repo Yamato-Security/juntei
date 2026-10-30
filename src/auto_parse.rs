@@ -58,6 +58,16 @@ enum TaskStatus {
     Failed,
 }
 
+impl TaskStatus {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Succeeded => "succeeded",
+            Self::Skipped => "skipped",
+            Self::Failed => "failed",
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct TaskResult {
     #[serde(rename = "Computer")]
@@ -245,7 +255,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         return 1;
     }
     if opts.clobber {
-        let mut root_files = vec![opts.output.join("manifest.json")];
+        let mut root_files = vec![
+            opts.output.join("manifest.json"),
+            opts.output.join("manifest.csv"),
+        ];
         if opts.single_file {
             root_files.push(
                 opts.output
@@ -405,6 +418,21 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         );
         return 1;
     }
+    let manifest_csv_path = opts.output.join("manifest.csv");
+    if let Err(e) = write_manifest_csv(&manifest_csv_path, &manifest) {
+        error_msg(
+            no_color,
+            &format!("Could not write {}: {e}", manifest_csv_path.display()),
+        );
+        return 1;
+    }
+    let (file_count, total_bytes) = match output_totals(&opts.output) {
+        Ok(totals) => totals,
+        Err(e) => {
+            error_msg(no_color, &format!("Could not summarize output files: {e}"));
+            return 1;
+        }
+    };
 
     let succeeded = results
         .iter()
@@ -424,11 +452,19 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p_label(no_color, "Succeeded: ", &fmt_num(succeeded));
     p_label(no_color, "Not collected / skipped: ", &fmt_num(skipped));
     p_label(no_color, "Failed: ", &fmt_num(failed));
-    p_label(no_color, "Results saved: ", &opts.output.to_string_lossy());
+    p_label(
+        no_color,
+        "Results saved: ",
+        &format!(
+            "{}/ ( {} files / {:.2} MB )",
+            opts.output.to_string_lossy().trim_end_matches(['/', '\\']),
+            fmt_num(file_count),
+            total_bytes as f64 / 1_000_000.0,
+        ),
+    );
     if let Some(path) = combined {
         p_label(no_color, "Combined data: ", &path.to_string_lossy());
     }
-    p_label(no_color, "Manifest: ", &manifest_path.to_string_lossy());
     if failed > 0 {
         for result in results.iter().filter(|r| r.status == TaskStatus::Failed) {
             p(
@@ -1340,6 +1376,71 @@ fn write_pretty_json(path: &Path, value: &impl Serialize) -> io::Result<()> {
     writer.flush()
 }
 
+/// A spreadsheet-friendly task index; the full run metadata remains in manifest.json.
+fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
+    let mut writer = csv::Writer::from_path(path)?;
+    writer.write_record([
+        "Computer",
+        "Hostname",
+        "Fqdn",
+        "HostnameSource",
+        "EvidenceRoot",
+        "Artifact",
+        "Status",
+        "DurationMs",
+        "ExitCode",
+        "Output",
+        "Log",
+        "Error",
+        "Command",
+    ])?;
+    for task in manifest.tasks {
+        let host = manifest
+            .hosts
+            .iter()
+            .find(|host| host.computer == task.computer);
+        writer.write_record([
+            task.computer.clone(),
+            host.map_or_else(String::new, |host| host.hostname.clone()),
+            host.and_then(|host| host.fqdn.clone()).unwrap_or_default(),
+            host.map_or_else(String::new, |host| host.hostname_source.to_string()),
+            host.map_or_else(String::new, |host| host.evidence_root.clone()),
+            task.artifact.clone(),
+            task.status.as_str().to_string(),
+            task.duration_ms.to_string(),
+            task.exit_code
+                .map_or_else(String::new, |code| code.to_string()),
+            task.output.clone().unwrap_or_default(),
+            task.log.clone(),
+            task.error.clone().unwrap_or_default(),
+            serde_json::to_string(&task.command).map_err(io::Error::other)?,
+        ])?;
+    }
+    writer.flush()
+}
+
+/// Count the regular files currently under the results directory without following symlinks.
+fn output_totals(root: &Path) -> io::Result<(usize, u64)> {
+    let mut files = 0usize;
+    let mut bytes = 0u64;
+    let mut pending = vec![root.to_path_buf()];
+    while let Some(dir) = pending.pop() {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let kind = entry.file_type()?;
+            if kind.is_dir() {
+                pending.push(entry.path());
+            } else if kind.is_file() {
+                files += 1;
+                bytes = bytes.checked_add(entry.metadata()?.len()).ok_or_else(|| {
+                    io::Error::other("output size exceeds the supported byte count")
+                })?;
+            }
+        }
+    }
+    Ok((files, bytes))
+}
+
 fn output_separate_from_evidence(evidence: &Path, output: &Path) -> Result<(), String> {
     let evidence = fs::canonicalize(evidence)
         .map_err(|e| format!("Could not resolve {}: {e}", evidence.display()))?;
@@ -1400,6 +1501,25 @@ fn normalize_absolute(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn totals_include_nested_results_and_logs_without_following_symlinks() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("HOST/logs")).unwrap();
+        fs::write(dir.path().join("manifest.csv"), b"a,b\n").unwrap();
+        fs::write(dir.path().join("HOST/result.csv"), b"x\n1\n").unwrap();
+        fs::write(dir.path().join("HOST/logs/parser.txt"), b"log\n").unwrap();
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(dir.path(), dir.path().join("HOST/loop")).unwrap();
+            std::os::unix::fs::symlink(
+                dir.path().join("manifest.csv"),
+                dir.path().join("link.csv"),
+            )
+            .unwrap();
+        }
+        assert_eq!(output_totals(dir.path()).unwrap(), (3, 12));
+    }
 
     #[test]
     fn discovers_client_collections_and_respects_depth() {

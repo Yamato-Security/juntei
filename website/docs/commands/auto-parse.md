@@ -82,6 +82,7 @@ CSV keeps separate tables because each artifact has different columns:
 ```text
 <OUTPUT>/
 ├── manifest.json
+├── manifest.csv
 ├── HOST1/
 │   ├── logs/
 │   ├── amcache/
@@ -102,6 +103,21 @@ Some parsers naturally create several tables, so their output is a directory. `l
 `hostname`, the unique output/record `Computer` identity, hostname provenance, evidence paths,
 command lines, duration, exit code, result path, whether Defender extraction was requested, and
 whether each task succeeded, was skipped, or failed.
+
+`manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
+parser task. It includes `Computer`, original `Hostname`, `Fqdn`, `HostnameSource`, `EvidenceRoot`,
+`Artifact`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`, `Error`, and `Command`.
+`Command` is a JSON array of the executable and its arguments, preserving spaces and quoting.
+Filter `Status` to `skipped` or `failed` to find tasks requiring review; a skipped task's `Error`
+may be empty, with the explanation in its `Log` file.
+
+The terminal summary includes the total number and size of regular files currently beneath the
+output directory, including both manifests, parser logs, and extracted files. Symbolic links are
+not followed. Sizes use decimal MB (1 MB = 1,000,000 bytes):
+
+```text
+Results saved: output/ ( 125 files / 42.50 MB )
+```
 
 When a host has one Amcache hive or SRUM database, its CSV tables are written directly under
 `amcache/` or `srum/`. If a collection contains several databases of either kind, each source

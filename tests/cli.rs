@@ -191,6 +191,32 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     }));
     assert_eq!(manifest["tasks"][0]["artifact"], "mft");
     assert_eq!(manifest["tasks"][1]["artifact"], "usn-journal");
+    let (_, csv_tasks) = csv_rows(&csv.join("manifest.csv"));
+    assert_eq!(csv_tasks.len(), manifest["tasks"].as_array().unwrap().len());
+    for (row, task) in csv_tasks.iter().zip(manifest["tasks"].as_array().unwrap()) {
+        assert_eq!(row["Computer"], task["Computer"].as_str().unwrap());
+        assert_eq!(row["Hostname"], "HOST1");
+        assert_eq!(row["Status"], task["status"].as_str().unwrap());
+        assert_eq!(row["Log"], task["log"].as_str().unwrap());
+        assert_eq!(
+            serde_json::from_str::<Value>(&row["Command"]).unwrap(),
+            task["command"]
+        );
+    }
+    assert!(!r.stdout.contains("Manifest: "), "{}", r.stdout);
+    let summary = r
+        .stdout
+        .lines()
+        .find(|line| line.starts_with("Results saved: "))
+        .unwrap();
+    assert!(
+        summary.starts_with(&format!("Results saved: {}/ ( ", csv.display())),
+        "{summary}"
+    );
+    assert!(
+        summary.contains(" files / ") && summary.ends_with(" MB )"),
+        "{summary}"
+    );
 
     // A previously generated target must not survive when the corresponding artifact is absent.
     let stale = csv.join("HOST1/i30.csv");
@@ -263,6 +289,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let combined = jsonl.join("all-artifacts.jsonl");
+    assert!(jsonl.join("manifest.csv").is_file());
     let values: Vec<Value> = std::fs::read_to_string(&combined)
         .unwrap()
         .lines()
@@ -279,6 +306,43 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .to_string_lossy()
             .starts_with(".juntei-work-")
     }));
+}
+
+#[test]
+fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
+    let evidence = tempfile::tempdir().unwrap();
+    let prefetch = evidence.path().join("HOST1/C/Windows/Prefetch");
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::write(
+        prefetch.join("BROKEN.EXE-12345678.pf"),
+        b"not a prefetch file",
+    )
+    .unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let output = root.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let (_, tasks) = csv_rows(&output.join("manifest.csv"));
+    assert_eq!(tasks.len(), 16);
+    assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
+    let failed = tasks
+        .iter()
+        .find(|task| task["Artifact"] == "prefetch")
+        .unwrap();
+    assert_eq!(failed["Status"], "failed");
+    assert_eq!(failed["ExitCode"], "1");
+    assert!(!failed["Error"].is_empty());
+    assert!(Path::new(&failed["Log"]).is_file());
 }
 
 #[test]
