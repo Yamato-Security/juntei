@@ -58,6 +58,7 @@ computer:
 
 - Amcache
 - `$MFT`
+- `$LogFile` NTFS redo/undo records
 - Prefetch records and a separate Prefetch execution timeline
 - USN Journal
 - `$I30` directory indexes
@@ -89,6 +90,7 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── defender-quarantined/  # only with -x
 │   ├── srum/
 │   ├── mft.csv
+│   ├── logfile.csv
 │   ├── usn-journal.csv
 │   ├── prefetch.csv
 │   ├── prefetch-timeline.csv
@@ -106,7 +108,7 @@ whether each task succeeded, was skipped, or failed.
 
 The progress message shows the active computer and artifact followed by an approximate input
 size, for example `HOST1 / prefetch (~2.0 MiB)`. A group of files uses their combined size; each
-MFT or USN Journal task shows its individual input size. Estimates exclude auxiliary transaction
+MFT, LogFile or USN Journal task shows its individual input size. Estimates exclude auxiliary transaction
 logs and enrichment files and do not predict the size of the parsed output.
 
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per

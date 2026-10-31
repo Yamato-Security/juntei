@@ -73,6 +73,16 @@ pub enum Commands {
     )]
     ParseUsnJournal(UsnJournalOptions),
 
+    /// Parse $LogFile: NTFS redo/undo records, earlier filenames and timestamps, and journal writes
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-logfile <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    ParseLogfile(LogfileOptions),
+
     /// Parse directory indexes ($I30): the files in a directory, and possible deleted or renamed file names left in slack
     #[command(
         author = AUTHOR,
@@ -660,6 +670,66 @@ impl UsnJournalOptions {
     }
 
     /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+fn parse_ntfs_size(value: &str) -> Result<u32, String> {
+    let size = value
+        .parse::<u32>()
+        .map_err(|_| "size must be a power of two from 512 to 2097152 bytes".to_string())?;
+    if (512..=2_097_152).contains(&size) && size.is_power_of_two() {
+        Ok(size)
+    } else {
+        Err("size must be a power of two from 512 to 2097152 bytes".to_string())
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct LogfileOptions {
+    /// Directory to search recursively for $LogFile files (also LogFile, $LogFile.bin and $LogFile exports prefixed with a volume name)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one NTFS $LogFile
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The same volume's $MFT for current paths (default: matching adjacent export, respecting its volume prefix); requires -f
+    #[arg(help_heading = Some("Input"), short = 'm', long, value_name = "FILE", requires = "filepath", display_order = 102)]
+    pub mft: Option<PathBuf>,
+
+    /// Volume cluster size in bytes; otherwise read from checkpoints or inferred
+    #[arg(help_heading = Some("Parsing"), long, value_name = "BYTES", value_parser = parse_ntfs_size, display_order = 200)]
+    pub cluster_size: Option<u32>,
+
+    /// MFT record size in bytes (default: 1024); supply the volume's actual size if different
+    #[arg(help_heading = Some("Parsing"), long, value_name = "BYTES", value_parser = parse_ntfs_size, display_order = 201)]
+    pub record_size: Option<u32>,
+
+    /// Include redo, undo and unknown client data as hex (can substantially increase output size)
+    #[arg(help_heading = Some("Output"), long, display_order = 300)]
+    pub raw_data: bool,
+
+    /// Save every record to a file; directory inputs are combined with SourceFile on every row
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 301)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 302)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 303)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl LogfileOptions {
     pub fn data_on_stdout(&self) -> bool {
         self.output.is_none() && self.output_type.is_some()
     }

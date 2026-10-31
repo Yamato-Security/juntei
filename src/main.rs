@@ -9,6 +9,7 @@ mod hive;
 mod i30;
 mod jump_lists;
 mod lnk;
+mod logfile;
 mod mft;
 mod mft_csv;
 mod mft_inspect;
@@ -76,6 +77,17 @@ fn main() {
                 display_logo(opts.common.quiet, opts.common.no_color, true, false);
             }
             let code = prefetch::run(opts);
+            if !data_only {
+                print_elapsed(start, opts.common.no_color);
+            }
+            code
+        }
+        Commands::ParseLogfile(opts) => {
+            let data_only = opts.data_on_stdout();
+            if !data_only {
+                display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            }
+            let code = logfile::run(opts);
             if !data_only {
                 print_elapsed(start, opts.common.no_color);
             }

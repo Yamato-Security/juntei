@@ -24,6 +24,26 @@ sample, the NIST hacking case, and six DFIR Artifact Museum files—1,048,733 CS
 matched a reference parser in order. Comparisons covered default output, `--all-times`,
 `--short-names`, and `--cutoff`; timestamp presentation was the intentional difference.
 
+## NTFS transaction log ($LogFile)
+
+[ys-logfile-parser](https://github.com/Yamato-Security/ys-logfile-parser) is maintained from
+[Sootmark ntfslog](https://github.com/Sootmark/ntfslog). Its validation covers six complete DFIR
+Artifact Museum logs, public version 1.1 and 2.0 fixtures, decoded redo/undo metadata, and journal
+writes compared against independently parsed NTFS data. See the parser repository for detailed
+coverage and known differences.
+
+Juntei adds CLI tests that compare every CSV field with JSON and JSONL on the public go-ntfs test
+volume (2,129 records), verify separate redo/undo data and raw payload lengths, test damaged logs,
+refuse evidence overwrites, and keep current MFT paths from following reused record numbers.
+Regression cases distinguish affected MFT records from the open attribute they write through,
+check flat directory-entry/data-attribute metadata, and prevent cross-volume MFT pairing.
+Multi-volume `auto-parse` tests cover separate CSV files and a single JSONL file with provenance.
+
+The command was also checked on six privately collected Windows logs: all 708,465 exported CSV
+records matched JSONL field for field, and per-host `auto-parse` exports retained the same record
+counts. The source evidence is not distributed with the repository. These checks verify output
+consistency, not that every logged transaction represents a completed user action.
+
 ## Prefetch
 
 [ys-prefetch-parser](https://github.com/Yamato-Security/ys-prefetch-parser) is a maintained fork of

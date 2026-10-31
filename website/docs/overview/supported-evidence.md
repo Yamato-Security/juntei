@@ -4,6 +4,7 @@
 |---|---|---|---|
 | Amcache | `parse-amcache` | File inventory, paths, SHA-1, PE metadata, devices | Presence is not execution; publisher is not signature validation |
 | NTFS `$MFT` | `parse-mft` | Files, deleted records, paths, timestamps, ADS | Reused records and timestomping can mislead |
+| NTFS `$LogFile` | `parse-logfile` | Redo/undo metadata, old names and timestamps, writes to the USN Journal | Short circular retention; metadata times are not transaction times; no replay |
 | Prefetch | `parse-prefetch` | Program execution, run count, recent run times, loaded files | Only a limited run-time history is retained |
 | USN Journal `$J` | `parse-usn-journal` | Creates, deletes, renames, writes, historical paths | Circular journal; records changes, not file contents |
 | Directory indexes `$I30` | `parse-i30` | Files in a directory; names, times, and sizes of possible deleted or renamed files left in index slack | Slack is partial and says nothing about when an entry was removed |

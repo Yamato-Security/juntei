@@ -30,6 +30,8 @@ mft = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-
 # parse-mft -x: the file names in FILE record slack (i30::slack_entries_in), from ys-mft-parser's
 # ys/file-record-slack branch until it is merged; then from `mft` above.
 mft-slack = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-mft-parser", branch = "ys/file-record-slack", default-features = false }
+# NTFS redo/undo transaction records (MIT OR Apache-2.0).
+ntfslog = { package = "ys-logfile-parser", git = "https://github.com/Yamato-Security/ys-logfile-parser" }
 # Prefetch parsing: Yamato Security's ys-prefetch-parser, a fork of Samuel Garcés Marín's
 # frnsc-prefetch crate (MIT).
 frnsc-prefetch = { package = "ys-prefetch-parser", git = "https://github.com/Yamato-Security/ys-prefetch-parser" }

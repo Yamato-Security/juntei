@@ -880,6 +880,17 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             inputs.journals,
             &[],
         );
+        add_file_artifact_tasks(
+            &mut tasks,
+            host,
+            opts,
+            &data_dir,
+            &log_dir,
+            "logfile",
+            &["parse-logfile"],
+            inputs.logfiles,
+            &[],
+        );
     }
     prioritize_long_tasks(&mut tasks);
     Ok(tasks)
@@ -892,6 +903,7 @@ struct InputInventory {
     sizes: BTreeMap<&'static str, u64>,
     mfts: Vec<PathBuf>,
     journals: Vec<PathBuf>,
+    logfiles: Vec<PathBuf>,
 }
 
 impl InputInventory {
@@ -942,7 +954,10 @@ impl InputInventory {
                 found.mfts.push(path.clone());
             }
             if crate::usn_journal::is_journal_name(&name) {
-                found.journals.push(path);
+                found.journals.push(path.clone());
+            }
+            if crate::logfile::is_logfile_name(&name) {
+                found.logfiles.push(path);
             }
         }
         found
@@ -960,7 +975,8 @@ fn prioritize_long_tasks(tasks: &mut [Task]) {
     tasks.sort_by_key(|task| match task.artifact {
         "mft" => 0,
         "usn-journal" => 1,
-        _ => 2,
+        "logfile" => 2,
+        _ => 3,
     });
 }
 
@@ -1838,6 +1854,7 @@ mod tests {
         .unwrap();
         fs::write(dir.path().join("$MFT"), vec![0u8; 64]).unwrap();
         fs::write(dir.path().join("$J"), vec![0u8; 128]).unwrap();
+        fs::write(dir.path().join("$LogFile"), vec![0u8; 256]).unwrap();
         let inputs = InputInventory::scan(dir.path());
         assert_eq!(inputs.sizes["prefetch"], 3072);
         assert_eq!(inputs.sizes["prefetch-timeline"], 3072);
@@ -1846,6 +1863,7 @@ mod tests {
         assert_eq!(inputs.sizes["defender-quarantine"], 256);
         assert_eq!(inputs.mfts, vec![dir.path().join("$MFT")]);
         assert_eq!(inputs.journals, vec![dir.path().join("$J")]);
+        assert_eq!(inputs.logfiles, vec![dir.path().join("$LogFile")]);
     }
 
     #[test]
@@ -1860,6 +1878,7 @@ mod tests {
         };
         let mut tasks = vec![
             task("HOST1", "prefetch"),
+            task("HOST1", "logfile"),
             task("HOST1", "mft"),
             task("HOST2", "registry"),
             task("HOST2", "usn-journal"),
@@ -1876,6 +1895,7 @@ mod tests {
                 ("HOST1", "mft"),
                 ("HOST2", "mft"),
                 ("HOST2", "usn-journal"),
+                ("HOST1", "logfile"),
                 ("HOST1", "prefetch"),
                 ("HOST2", "registry"),
             ]
