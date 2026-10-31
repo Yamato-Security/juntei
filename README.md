@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./art/Juntei_Goddess%20of%20Digital%20Forensics.png" alt="Juntei, Goddess of Digital Forensics" width="100%">
+  <img src="./art/Juntei_Goddess%20of%20Digital%20Forensics_small.png" alt="Juntei, Goddess of Digital Forensics" width="100%">
 </p>
 
 # Juntei
