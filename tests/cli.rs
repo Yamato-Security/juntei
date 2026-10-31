@@ -120,6 +120,19 @@ fn banner_and_help() {
 
 #[test]
 fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
+    let assert_alphabetical = |help: &str| {
+        let commands: Vec<_> = help
+            .lines()
+            .skip_while(|line| *line != "Commands:")
+            .skip(1)
+            .take_while(|line| !line.is_empty())
+            .map(|line| line.split_whitespace().next().unwrap())
+            .collect();
+        assert!(!commands.is_empty(), "{help}");
+        let mut sorted = commands.clone();
+        sorted.sort_unstable();
+        assert_eq!(commands, sorted, "{help}");
+    };
     for (source, description, artifacts) in [
         (
             "parse-ntfs",
@@ -151,11 +164,13 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
         let top = run(&["--help"]);
         assert_eq!(top.code, 0);
         assert!(top.stdout.contains(source) && top.stdout.contains(description));
+        assert_alphabetical(&top.stdout);
 
         for help in ["-h", "--help"] {
             let group = run(&[source, help]);
             assert_eq!(group.code, 0, "{}", group.stderr);
             assert!(group.stdout.contains(&format!("juntei {source} <COMMAND>")));
+            assert_alphabetical(&group.stdout);
             for artifact in artifacts {
                 assert!(group.stdout.contains(artifact), "{}", group.stdout);
                 let leaf = run(&[source, artifact, help]);

@@ -10,7 +10,7 @@ const AUTHOR: &str =
     "Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)";
 
 #[derive(Parser)]
-#[command(name = "juntei")]
+#[command(name = "juntei", next_display_order = None)]
 #[command(version = VERSION)]
 #[command(author = AUTHOR)]
 #[command(about = "Windows forensics artifact parser")]
@@ -33,28 +33,6 @@ pub enum Commands {
     )]
     AutoParse(AutoParseOptions),
 
-    /// Parse NTFS artifacts
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs <COMMAND> [OPTIONS]\n\n{all-args}",
-        subcommand_required = true,
-        arg_required_else_help = true,
-        disable_version_flag = true
-    )]
-    ParseNtfs(NtfsCommand),
-
-    /// Parse registry hives
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry <COMMAND> [OPTIONS]\n\n{all-args}",
-        subcommand_required = true,
-        arg_required_else_help = true,
-        disable_version_flag = true
-    )]
-    ParseRegistry(RegistryCommand),
-
     /// Parse ESE databases
     #[command(
         author = AUTHOR,
@@ -76,9 +54,32 @@ pub enum Commands {
         disable_version_flag = true
     )]
     ParseFile(FileCommand),
+
+    /// Parse NTFS artifacts
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs <COMMAND> [OPTIONS]\n\n{all-args}",
+        subcommand_required = true,
+        arg_required_else_help = true,
+        disable_version_flag = true
+    )]
+    ParseNtfs(NtfsCommand),
+
+    /// Parse registry hives
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry <COMMAND> [OPTIONS]\n\n{all-args}",
+        subcommand_required = true,
+        arg_required_else_help = true,
+        disable_version_flag = true
+    )]
+    ParseRegistry(RegistryCommand),
 }
 
 #[derive(Args)]
+#[command(next_display_order = None)]
 pub struct NtfsCommand {
     #[command(subcommand)]
     pub cmd: NtfsCommands,
@@ -86,6 +87,26 @@ pub struct NtfsCommand {
 
 #[derive(Subcommand)]
 pub enum NtfsCommands {
+    /// Parse directory indexes
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs i30 <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    I30(I30Options),
+
+    /// Parse the NTFS transaction log
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs logfile <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Logfile(LogfileOptions),
+
     /// Parse the Master File Table
     #[command(
         author = AUTHOR,
@@ -105,29 +126,10 @@ pub enum NtfsCommands {
         disable_version_flag = true
     )]
     UsnJournal(UsnJournalOptions),
-
-    /// Parse the NTFS transaction log
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs logfile <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    Logfile(LogfileOptions),
-
-    /// Parse directory indexes
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs i30 <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    I30(I30Options),
 }
 
 #[derive(Args)]
+#[command(next_display_order = None)]
 pub struct EseCommand {
     #[command(subcommand)]
     pub cmd: EseCommands,
@@ -147,6 +149,7 @@ pub enum EseCommands {
 }
 
 #[derive(Args)]
+#[command(next_display_order = None)]
 pub struct FileCommand {
     #[command(subcommand)]
     pub cmd: FileCommands,
@@ -154,25 +157,15 @@ pub struct FileCommand {
 
 #[derive(Subcommand)]
 pub enum FileCommands {
-    /// Parse Prefetch files
+    /// Parse Defender quarantine
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file prefetch <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file defender-quarantine <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Prefetch(PrefetchOptions),
-
-    /// Parse shortcuts
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file lnk <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    Lnk(LnkOptions),
+    DefenderQuarantine(DefenderQuarantineOptions),
 
     /// Parse Jump Lists
     #[command(
@@ -184,15 +177,25 @@ pub enum FileCommands {
     )]
     JumpLists(JumpListOptions),
 
-    /// Parse Defender quarantine
+    /// Parse shortcuts
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file defender-quarantine <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file lnk <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    DefenderQuarantine(DefenderQuarantineOptions),
+    Lnk(LnkOptions),
+
+    /// Parse Prefetch files
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file prefetch <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Prefetch(PrefetchOptions),
 }
 
 /// What `auto-parse` writes.
@@ -1125,6 +1128,7 @@ impl DefenderQuarantineOptions {
 
 /// `parse-registry`'s subcommands.
 #[derive(Args, Clone, Debug)]
+#[command(next_display_order = None)]
 pub struct RegistryCommand {
     #[command(subcommand)]
     pub cmd: RegistryCommands,
@@ -1142,15 +1146,15 @@ pub enum RegistryCommands {
     )]
     Amcache(AmcacheOptions),
 
-    /// Parse ShimCache entries
+    /// Parse autostart locations
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry shimcache <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry persistence <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Shimcache(ShimcacheOptions),
+    Persistence(RegistryPersistenceOptions),
 
     /// Read keys and values
     #[command(
@@ -1162,16 +1166,6 @@ pub enum RegistryCommands {
     )]
     Read(RegistryReadOptions),
 
-    /// Parse services
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry services <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    Services(RegistryServicesOptions),
-
     /// Parse recent documents
     #[command(
         author = AUTHOR,
@@ -1181,16 +1175,6 @@ pub enum RegistryCommands {
         disable_version_flag = true
     )]
     Recentdocs(RegistryRecentDocsOptions),
-
-    /// Parse scheduled tasks
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry taskcache <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    Taskcache(RegistryTaskCacheOptions),
 
     /// Parse local accounts
     #[command(
@@ -1202,15 +1186,35 @@ pub enum RegistryCommands {
     )]
     Sam(RegistrySamOptions),
 
-    /// Parse autostart locations
+    /// Parse services
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry persistence <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry services <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Persistence(RegistryPersistenceOptions),
+    Services(RegistryServicesOptions),
+
+    /// Parse ShimCache entries
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry shimcache <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Shimcache(ShimcacheOptions),
+
+    /// Parse scheduled tasks
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry taskcache <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Taskcache(RegistryTaskCacheOptions),
 
     /// Parse UserAssist entries
     #[command(

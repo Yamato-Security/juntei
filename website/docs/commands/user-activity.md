@@ -11,8 +11,8 @@ Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  srum  Parse SRUM databases
   help  Print this message or the help of the given subcommand(s)
+  srum  Parse SRUM databases
 
 Options:
   -h, --help  Print help

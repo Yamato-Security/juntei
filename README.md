@@ -23,7 +23,7 @@ Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected
 and parse every supported artifact in parallel. It creates per-computer output directories and can
 produce one computer-labelled JSONL file for SIEM ingestion.
 
-For individual artifacts, choose `parse-ntfs`, `parse-registry`, `parse-ese`, or `parse-file`.
+For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, or `parse-registry`.
 For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
 
 ### Process Execution

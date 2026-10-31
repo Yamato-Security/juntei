@@ -13,29 +13,6 @@ For a multi-computer Windows evidence collection, use
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). It invokes the same grouped commands
 and keeps per-computer output filenames and artifact names unchanged.
 
-## [NTFS commands](filesystem.md)
-
-| Command | Input artifact | Detailed guide |
-|---|---|---|
-| `parse-ntfs mft` | NTFS `$MFT` | [Master File Table](../artifacts/mft.md) |
-| `parse-ntfs logfile` | NTFS `$LogFile` | [NTFS Transaction Log](../artifacts/logfile.md) |
-| `parse-ntfs usn-journal` | `$UsnJrnl:$J` | [USN Journal](../artifacts/usn-journal.md) |
-| `parse-ntfs i30` | `$I30` (`$INDEX_ALLOCATION`), or a disk image | [Directory Indexes ($I30)](../artifacts/i30.md) |
-
-## [Registry commands](security-registry.md)
-
-| Command | Input artifact | Detailed guide |
-|---|---|---|
-| `parse-registry amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
-| `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |
-| `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
-| `parse-registry services` | `SYSTEM` | [Windows Services](../artifacts/services.md) |
-| `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
-| `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
-| `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
-| `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
-| `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
-
 ## [ESE commands](user-activity.md)
 
 | Command | Input artifact | Detailed guide |
@@ -46,10 +23,33 @@ and keeps per-computer output filenames and artifact names unchanged.
 
 | Command | Input artifact | Detailed guide |
 |---|---|---|
-| `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
-| `parse-file lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |
-| `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file defender-quarantine` | Defender quarantine tree or entry | [Defender Quarantine](../artifacts/defender-quarantine.md) |
+| `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
+| `parse-file lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |
+| `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+
+## [NTFS commands](filesystem.md)
+
+| Command | Input artifact | Detailed guide |
+|---|---|---|
+| `parse-ntfs i30` | `$I30` (`$INDEX_ALLOCATION`), or a disk image | [Directory Indexes ($I30)](../artifacts/i30.md) |
+| `parse-ntfs logfile` | NTFS `$LogFile` | [NTFS Transaction Log](../artifacts/logfile.md) |
+| `parse-ntfs mft` | NTFS `$MFT` | [Master File Table](../artifacts/mft.md) |
+| `parse-ntfs usn-journal` | `$UsnJrnl:$J` | [USN Journal](../artifacts/usn-journal.md) |
+
+## [Registry commands](security-registry.md)
+
+| Command | Input artifact | Detailed guide |
+|---|---|---|
+| `parse-registry amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
+| `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
+| `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
+| `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
+| `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
+| `parse-registry services` | `SYSTEM` | [Windows Services](../artifacts/services.md) |
+| `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |
+| `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
+| `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 
 ## Source types and format changes
 
@@ -68,11 +68,11 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse      Discover and parse Windows evidence
-  parse-ntfs      Parse NTFS artifacts
-  parse-registry  Parse registry hives
+  help            Print this message or the help of the given subcommand(s)
   parse-ese       Parse ESE databases
   parse-file      Parse file artifacts
-  help            Print this message or the help of the given subcommand(s)
+  parse-ntfs      Parse NTFS artifacts
+  parse-registry  Parse registry hives
 
 Options:
   -h, --help     Print help

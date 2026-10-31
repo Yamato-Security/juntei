@@ -109,10 +109,10 @@ nav:
   - Commands:
       - Command List: commands/index.md
       - Automatic Collection Parsing: commands/auto-parse.md
-      - NTFS: commands/filesystem.md
-      - Registry: commands/security-registry.md
       - ESE: commands/user-activity.md
       - Files: commands/execution.md
+      - NTFS: commands/filesystem.md
+      - Registry: commands/security-registry.md
       - Common Output Patterns: commands/output.md
   - Artifacts:
       - Artifact Guide: artifacts/index.md

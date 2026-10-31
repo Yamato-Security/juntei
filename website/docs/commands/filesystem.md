@@ -11,15 +11,99 @@ Usage:
   juntei parse-ntfs <COMMAND> [OPTIONS]
 
 Commands:
+  help         Print this message or the help of the given subcommand(s)
+  i30          Parse directory indexes
+  logfile      Parse the NTFS transaction log
   mft          Parse the Master File Table
   usn-journal  Parse the USN journal
-  logfile      Parse the NTFS transaction log
-  i30          Parse directory indexes
-  help         Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help  Print help
 ```
+
+## `parse-ntfs i30`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ntfs i30 <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for $I30 files (with $I30 in their name, or starting with an INDX record)
+  -f, --file <FILE>      File path to one $I30 file (a directory's $INDEX_ALLOCATION:$I30 stream), or any file holding INDX records (a disk image, unallocated space)
+
+Filtering:
+      --slack-only  Only the entries found in slack (possible deleted or renamed file names, and copies of entries in use)
+      --no-copies   Leave out the slack entries that copy an entry in use (same name, file, directory and times)
+
+Output:
+  -o, --output <FILE>       Save every entry to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the entries are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ntfs i30 -f 'Users_$I30'
+juntei parse-ntfs i30 -d evidence/ -o i30.csv
+juntei parse-ntfs i30 -f 'Users_$I30' --slack-only --no-copies -t jsonl
+juntei parse-ntfs i30 -f disk.raw -o carved-i30.csv
+```
+
+See [Directory Indexes ($I30)](../artifacts/i30.md).
+
+## `parse-ntfs logfile`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ntfs logfile <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for $LogFile files (also LogFile, $LogFile.bin and $LogFile exports prefixed with a volume name)
+  -f, --file <FILE>      File path to one NTFS $LogFile
+  -m, --mft <FILE>       The same volume's $MFT for current paths (default: matching adjacent export, respecting its volume prefix); requires -f
+
+Parsing:
+      --cluster-size <BYTES>  Volume cluster size in bytes; otherwise read from checkpoints or inferred
+      --record-size <BYTES>   MFT record size in bytes (default: 1024); supply the volume's actual size if different
+
+Output:
+      --raw-data            Include redo, undo and unknown client data as hex (can substantially increase output size)
+  -o, --output <FILE>       Save every record to a file; directory inputs are combined with SourceFile on every row
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ntfs logfile -f '$LogFile' -o logfile.csv
+juntei parse-ntfs logfile -f '$LogFile' -m '$MFT' -o logfile.jsonl -t jsonl
+juntei parse-ntfs logfile -d evidence -o all-logs.csv
+juntei parse-ntfs logfile -f '$LogFile' --raw-data -t jsonl
+```
+
+Directory mode combines inputs with `SourceFile` on every record. LSN order is per input, not
+across volumes. The command reads one whole log into memory at a time. `auto-parse` instead writes
+`<COMPUTER>/logfile.csv` (or JSON/JSONL), with numbered files when a computer has multiple volumes.
+
+See [NTFS Transaction Log](../artifacts/logfile.md) for field meanings and forensic limitations.
 
 ## `parse-ntfs mft`
 
@@ -113,87 +197,3 @@ juntei parse-ntfs usn-journal -f unallocated.bin --carve -o carved.csv
 ```
 
 See [USN Journal](../artifacts/usn-journal.md).
-
-## `parse-ntfs logfile`
-
-```text
-Version: 1.0.0
-Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
-
-Usage:
-  juntei parse-ntfs logfile <INPUT> [OPTIONS]
-
-Input:
-  -d, --directory <DIR>  Directory to search recursively for $LogFile files (also LogFile, $LogFile.bin and $LogFile exports prefixed with a volume name)
-  -f, --file <FILE>      File path to one NTFS $LogFile
-  -m, --mft <FILE>       The same volume's $MFT for current paths (default: matching adjacent export, respecting its volume prefix); requires -f
-
-Parsing:
-      --cluster-size <BYTES>  Volume cluster size in bytes; otherwise read from checkpoints or inferred
-      --record-size <BYTES>   MFT record size in bytes (default: 1024); supply the volume's actual size if different
-
-Output:
-      --raw-data            Include redo, undo and unknown client data as hex (can substantially increase output size)
-  -o, --output <FILE>       Save every record to a file; directory inputs are combined with SourceFile on every row
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, records are written to stdout
-  -C, --clobber             Overwrite files when saving
-
-General Options:
-  -h, --help  Show the help menu
-
-Display Settings:
-  -K, --no-color  Disable color output
-  -q, --quiet     Quiet mode: do not display the launch banner
-```
-
-```bash
-juntei parse-ntfs logfile -f '$LogFile' -o logfile.csv
-juntei parse-ntfs logfile -f '$LogFile' -m '$MFT' -o logfile.jsonl -t jsonl
-juntei parse-ntfs logfile -d evidence -o all-logs.csv
-juntei parse-ntfs logfile -f '$LogFile' --raw-data -t jsonl
-```
-
-Directory mode combines inputs with `SourceFile` on every record. LSN order is per input, not
-across volumes. The command reads one whole log into memory at a time. `auto-parse` instead writes
-`<COMPUTER>/logfile.csv` (or JSON/JSONL), with numbered files when a computer has multiple volumes.
-
-See [NTFS Transaction Log](../artifacts/logfile.md) for field meanings and forensic limitations.
-
-## `parse-ntfs i30`
-
-```text
-Version: 1.0.0
-Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
-
-Usage:
-  juntei parse-ntfs i30 <INPUT> [OPTIONS]
-
-Input:
-  -d, --directory <DIR>  Directory to search recursively for $I30 files (with $I30 in their name, or starting with an INDX record)
-  -f, --file <FILE>      File path to one $I30 file (a directory's $INDEX_ALLOCATION:$I30 stream), or any file holding INDX records (a disk image, unallocated space)
-
-Filtering:
-      --slack-only  Only the entries found in slack (possible deleted or renamed file names, and copies of entries in use)
-      --no-copies   Leave out the slack entries that copy an entry in use (same name, file, directory and times)
-
-Output:
-  -o, --output <FILE>       Save every entry to a file
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the entries are written to stdout
-  -C, --clobber             Overwrite files when saving
-
-General Options:
-  -h, --help  Show the help menu
-
-Display Settings:
-  -K, --no-color  Disable color output
-  -q, --quiet     Quiet mode: do not display the launch banner
-```
-
-```bash
-juntei parse-ntfs i30 -f 'Users_$I30'
-juntei parse-ntfs i30 -d evidence/ -o i30.csv
-juntei parse-ntfs i30 -f 'Users_$I30' --slack-only --no-copies -t jsonl
-juntei parse-ntfs i30 -f disk.raw -o carved-i30.csv
-```
-
-See [Directory Indexes ($I30)](../artifacts/i30.md).

@@ -9,15 +9,15 @@ Usage:
 
 Commands:
   amcache      Parse Amcache inventories
-  shimcache    Parse ShimCache entries
-  read         Read keys and values
-  services     Parse services
-  recentdocs   Parse recent documents
-  taskcache    Parse scheduled tasks
-  sam          Parse local accounts
-  persistence  Parse autostart locations
-  userassist   Parse UserAssist entries
   help         Print this message or the help of the given subcommand(s)
+  persistence  Parse autostart locations
+  read         Read keys and values
+  recentdocs   Parse recent documents
+  sam          Parse local accounts
+  services     Parse services
+  shimcache    Parse ShimCache entries
+  taskcache    Parse scheduled tasks
+  userassist   Parse UserAssist entries
 
 Options:
   -h, --help  Print help
@@ -68,23 +68,28 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl | jq 'select(.record_type 
 
 See [Amcache](../artifacts/amcache.md).
 
-## `parse-registry shimcache`
+## `parse-registry persistence`
 
 ```text
 Version: 1.0.0
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei parse-registry shimcache <INPUT> [OPTIONS]
+  juntei parse-registry persistence <INPUT> [OPTIONS]
 
 Input:
-  -d, --directory <DIR>  Directory to search recursively for SYSTEM hives
-  -f, --file <FILE>      File path to one SYSTEM hive, or an AppCompatCache value saved to a file
-      --no-logs          Read a dirty hive as it is, without its transaction logs (SYSTEM.LOG1, SYSTEM.LOG2)
+  -d, --directory <DIR>  Directory to search recursively for SOFTWARE, SYSTEM, NTUSER.DAT and UsrClass.dat hives
+  -f, --file <FILE>      File path to one SOFTWARE, SYSTEM, NTUSER.DAT or UsrClass.dat hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Filtering:
+      --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
 
 Output:
-  -o, --output <FILE>       Save every entry to a file
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the entries are written to stdout
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
   -C, --clobber             Overwrite files when saving
 
 General Options:
@@ -94,13 +99,6 @@ Display Settings:
   -K, --no-color  Disable color output
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
-
-```bash
-juntei parse-registry shimcache -f SYSTEM
-juntei parse-registry shimcache -d evidence/ -o shimcache.csv
-```
-
-See [ShimCache](../artifacts/shimcache.md).
 
 ## `parse-registry read`
 
@@ -148,39 +146,6 @@ juntei parse-registry read -f SYSTEM --key 'CurrentControlSet\Services' -o servi
 juntei parse-registry read -f NTUSER.DAT --recover-deleted -t jsonl | jq .
 ```
 
-## `parse-registry services`
-
-```text
-Version: 1.0.0
-Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
-
-Usage:
-  juntei parse-registry services <INPUT> [OPTIONS]
-
-Input:
-  -d, --directory <DIR>  Directory to search recursively for SYSTEM hives
-  -f, --file <FILE>      File path to one SYSTEM hive
-      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
-      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
-      --no-logs          Read a dirty hive as it is, without its transaction logs
-
-Filtering:
-      --service <NAME>    Only the service of this name (its key's name, in any case)
-      --all-control-sets  Every control set (ControlSet001, ControlSet002, ...), not only the one Windows used last
-
-Output:
-  -o, --output <FILE>       Save every record to a file
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
-  -C, --clobber             Overwrite files when saving
-
-General Options:
-  -h, --help  Show the help menu
-
-Display Settings:
-  -K, --no-color  Disable color output
-  -q, --quiet     Quiet mode: do not display the launch banner
-```
-
 ## `parse-registry recentdocs`
 
 ```text
@@ -196,38 +161,6 @@ Input:
       --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
       --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
       --no-logs          Read a dirty hive as it is, without its transaction logs
-
-Output:
-  -o, --output <FILE>       Save every record to a file
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
-  -C, --clobber             Overwrite files when saving
-
-General Options:
-  -h, --help  Show the help menu
-
-Display Settings:
-  -K, --no-color  Disable color output
-  -q, --quiet     Quiet mode: do not display the launch banner
-```
-
-## `parse-registry taskcache`
-
-```text
-Version: 1.0.0
-Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
-
-Usage:
-  juntei parse-registry taskcache <INPUT> [OPTIONS]
-
-Input:
-  -d, --directory <DIR>  Directory to search recursively for SOFTWARE hives
-  -f, --file <FILE>      File path to one SOFTWARE hive
-      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
-      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
-      --no-logs          Read a dirty hive as it is, without its transaction logs
-
-Filtering:
-      --task <NAME>  Only the task of this name, in any case: its whole name (\Microsoft\Windows\Defrag\ScheduledDefrag) or its last part (ScheduledDefrag)
 
 Output:
   -o, --output <FILE>       Save every record to a file
@@ -274,24 +207,91 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## `parse-registry persistence`
+## `parse-registry services`
 
 ```text
 Version: 1.0.0
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei parse-registry persistence <INPUT> [OPTIONS]
+  juntei parse-registry services <INPUT> [OPTIONS]
 
 Input:
-  -d, --directory <DIR>  Directory to search recursively for SOFTWARE, SYSTEM, NTUSER.DAT and UsrClass.dat hives
-  -f, --file <FILE>      File path to one SOFTWARE, SYSTEM, NTUSER.DAT or UsrClass.dat hive
+  -d, --directory <DIR>  Directory to search recursively for SYSTEM hives
+  -f, --file <FILE>      File path to one SYSTEM hive
       --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
       --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
       --no-logs          Read a dirty hive as it is, without its transaction logs
 
 Filtering:
-      --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
+      --service <NAME>    Only the service of this name (its key's name, in any case)
+      --all-control-sets  Every control set (ControlSet001, ControlSet002, ...), not only the one Windows used last
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+## `parse-registry shimcache`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry shimcache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SYSTEM hives
+  -f, --file <FILE>      File path to one SYSTEM hive, or an AppCompatCache value saved to a file
+      --no-logs          Read a dirty hive as it is, without its transaction logs (SYSTEM.LOG1, SYSTEM.LOG2)
+
+Output:
+  -o, --output <FILE>       Save every entry to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the entries are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-registry shimcache -f SYSTEM
+juntei parse-registry shimcache -d evidence/ -o shimcache.csv
+```
+
+See [ShimCache](../artifacts/shimcache.md).
+
+## `parse-registry taskcache`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry taskcache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SOFTWARE hives
+  -f, --file <FILE>      File path to one SOFTWARE hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Filtering:
+      --task <NAME>  Only the task of this name, in any case: its whole name (\Microsoft\Windows\Defrag\ScheduledDefrag) or its last part (ScheduledDefrag)
 
 Output:
   -o, --output <FILE>       Save every record to a file
