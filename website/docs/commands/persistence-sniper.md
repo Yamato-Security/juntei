@@ -100,7 +100,8 @@ parser commands but are not silently mixed into the active persistence hunt.
 
 `auto-parse` also runs the hunter and saves `persistence/PersistenceSniper.csv` (or `.json`/`.jsonl`)
 inside each computer directory, with `PersistenceSniper-logs.txt` beside it. Its findings also enter
-the optional `-j <FILE>` SIEM timeline.
+the optional `-j <FILE>` SIEM timeline. Automatic parsing uses `--min-severity info` to retain the
+complete configuration inventory, including entries matched by allow rules.
 
 ## Classification and profiles
 
@@ -110,6 +111,13 @@ entries matched by the bundled allowlist:
 ```bash
 juntei persistence-sniper -d evidence/ --min-severity info -o all-persistence.csv
 ```
+
+!!! warning "Use all severities when reviewing incomplete collections"
+    A broad allow rule can partially match an attacker's command even when its signer is missing
+    or different. Upstream classifies partial matches as `LOW`, which the manual command's default
+    `medium` threshold hides. This can affect malicious scheduled tasks under Windows directories.
+    Use `--min-severity info` for a complete investigation and review `PolicyReason`, `SignerStatus`,
+    the command, and source evidence together. `auto-parse` already retains these entries.
 
 | Classification | Meaning |
 |---|---|

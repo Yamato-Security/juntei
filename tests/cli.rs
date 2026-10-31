@@ -319,6 +319,12 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "persistence-sniper" => {
                 assert_eq!(task["command"][1], "persistence-sniper", "{task}");
                 assert_eq!(task["command"][2], "-d", "{task}");
+                let args = task["command"].as_array().unwrap();
+                assert!(
+                    args.windows(2)
+                        .any(|pair| pair[0] == "--min-severity" && pair[1] == "info"),
+                    "{task}"
+                );
                 continue;
             }
             "mft" | "usn-journal" | "logfile" | "i30" => ("parse-ntfs", artifact),

@@ -72,6 +72,11 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - all registry keys and values, including recoverable deleted data
 - services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, and UserAssist
 
+Persistence Sniper retains every severity (`--min-severity info`), including partial allow matches.
+`LOW` is a classification to investigate; missing signature metadata can produce it for malicious
+commands too. The automatic inventory does not discard these entries using the manual command's
+default medium threshold.
+
 CSV `$MFT` output includes all timestamps and short names. Registry output includes raw data and a
 FILETIME interpretation of `REG_QWORD` values. JSON and JSONL SRUM output includes value-state
 metadata. Defender files and resident `$MFT` streams are **not extracted** automatically.

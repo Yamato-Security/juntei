@@ -1026,7 +1026,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             "persistence-sniper",
             &["persistence-sniper"],
             OutputShape::File,
-            &[],
+            &["--min-severity", "info"],
         );
         add(
             "userassist",
