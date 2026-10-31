@@ -28,8 +28,6 @@ produce one computer-labelled JSONL file for SIEM ingestion.
 | Artifact | Type |
 | --- | --- |
 | **Prefetch** (`*.pf`) — Program run counts, recent execution times, and referenced files. | File |
-| **Amcache** (`Amcache.hve`) — Inventory of executable paths, hashes, publisher metadata, and devices. | Registry |
-| **ShimCache / AppCompatCache** (`SYSTEM` hive) — Cached application paths, timestamps, and compatibility flags. | Registry |
 | **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | File |
 
 ### File System and File Existence
@@ -40,6 +38,8 @@ produce one computer-labelled JSONL file for SIEM ingestion.
 | **Transaction log** (`$LogFile`) — Redo and undo metadata that can preserve earlier filenames, timestamps, and directory entries. | NTFS |
 | **USN journal** (`$UsnJrnl:$J`) — Records of file creation, modification, renaming, and deletion. | NTFS |
 | **Directory indexes** (`$I30`) — Directory entries and possible deleted or renamed filenames left in index slack. | NTFS |
+| **Amcache** (`Amcache.hve`) — Inventory of executable paths, hashes, publisher metadata, and devices; an entry alone does not prove execution. | Registry |
+| **ShimCache / AppCompatCache** (`SYSTEM` hive) — Cached application paths, timestamps, and compatibility flags; an entry alone does not prove execution. | Registry |
 
 ### File and Folder Opening
 
