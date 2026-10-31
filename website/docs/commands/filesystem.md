@@ -82,7 +82,7 @@ Input:
   -d, --directory <DIR>  Recursively find $LogFile, LogFile, $LogFile.bin or volume_$LogFile exports
   -f, --file <FILE>      One NTFS $LogFile (any filename)
   -m, --mft <FILE>       Same volume's $MFT for current paths; requires -f
-                        Default: $MFT next to each input
+                        Default: adjacent MFT with the same volume prefix
 
 Parsing:
       --cluster-size <BYTES>  Volume cluster size; otherwise from checkpoints or inferred

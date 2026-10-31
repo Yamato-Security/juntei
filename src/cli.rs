@@ -616,7 +616,7 @@ pub struct LogfileOptions {
     #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
     pub filepath: Option<PathBuf>,
 
-    /// The same volume's $MFT for current paths (default: $MFT next to each $LogFile); requires -f
+    /// The same volume's $MFT for current paths (default: matching adjacent export, respecting its volume prefix); requires -f
     #[arg(help_heading = Some("Input"), short = 'm', long, value_name = "FILE", requires = "filepath", display_order = 102)]
     pub mft: Option<PathBuf>,
 

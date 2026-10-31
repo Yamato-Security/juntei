@@ -160,15 +160,41 @@ pub(crate) fn is_logfile_name(name: &str) -> bool {
 
 fn adjacent_mft(log: &Path) -> Option<PathBuf> {
     let parent = log.parent()?;
-    std::fs::read_dir(parent)
+    let name = log.file_name()?.to_string_lossy();
+    let bin = name.to_ascii_uppercase().ends_with(".BIN");
+    let base = if bin { &name[..name.len() - 4] } else { &name };
+    let upper = base.to_ascii_uppercase();
+    let stems = if upper == "$LOGFILE" || upper.ends_with("_$LOGFILE") {
+        // A prefixed export must never fall back to a different volume's plain $MFT.
+        vec![format!("{}$MFT", &base[..base.len() - 8])]
+    } else if upper == "LOGFILE" {
+        vec!["MFT".to_string(), "$MFT".to_string()]
+    } else {
+        // -f also permits arbitrary filenames, in a volume's original directory layout.
+        vec!["$MFT".to_string()]
+    };
+    let mut candidates = Vec::new();
+    if bin {
+        candidates.extend(stems.iter().map(|s| format!("{s}.bin")));
+    }
+    candidates.extend(stems);
+    let files: Vec<_> = std::fs::read_dir(parent)
         .ok()?
         .flatten()
         .map(|e| e.path())
-        .find(|p| {
-            p.is_file()
-                && p.file_name()
-                    .is_some_and(|n| n.eq_ignore_ascii_case("$MFT"))
-        })
+        .filter(|p| p.is_file())
+        .collect();
+    for candidate in candidates {
+        let mut matches = files.iter().filter(|p| {
+            p.file_name()
+                .is_some_and(|n| n.eq_ignore_ascii_case(&candidate))
+        });
+        if let Some(path) = matches.next() {
+            // Case-sensitive evidence storage can contain names Windows would treat as equal.
+            return matches.next().is_none().then(|| path.clone());
+        }
+    }
+    None
 }
 
 #[derive(Default)]
@@ -184,6 +210,7 @@ struct Stats {
     problems: usize,
     inferred: usize,
     mft_failures: usize,
+    without_mft: usize,
     operations: BTreeMap<String, usize>,
 }
 
@@ -202,6 +229,7 @@ impl Stats {
             ("Inferred targets: ", self.inferred),
             ("Parse problems: ", self.problems),
             ("MFT path failures: ", self.mft_failures),
+            ("Logs without a matching MFT: ", self.without_mft),
         ] {
             p_label(no_color, label, &fmt_num(count));
         }
@@ -252,6 +280,13 @@ fn read_one(
             "{}: {} further parse problems",
             path.display(),
             log.problems.len() - MAX_ERRORS
+        ));
+    }
+    if mft.is_none() {
+        stats.without_mft += 1;
+        report(&format!(
+            "No unambiguous matching $MFT for {}; exporting without current paths (use -m with -f to select one explicitly)",
+            path.display()
         ));
     }
     let paths = match mft.map(load_paths).transpose() {
@@ -443,6 +478,9 @@ const CSV_HEADER: &[&str] = &[
     "RedoData",
     "UndoData",
     "OtherData",
+    "OpenAttributeEntryNumber",
+    "OpenAttributeSequenceNumber",
+    "OpenAttributePath",
 ];
 
 fn csv_cell(value: &Value) -> String {
@@ -480,16 +518,25 @@ fn record_value(
     match &r.body {
         Body::Update(u) => {
             v["RecordType"] = json!("ClientRecord");
+            let targets_record = u.redo.targets_file_record() || u.undo.targets_file_record();
             for (key, value) in [
                 ("RedoOperation", json!(u.redo.to_string())),
                 ("UndoOperation", json!(u.undo.to_string())),
                 (
                     "TargetEntryNumber",
-                    json!(u.target.as_ref().map(|t| t.file.entry())),
+                    json!(if targets_record {
+                        u.mft_record
+                    } else {
+                        u.target.as_ref().map(|t| t.file.entry())
+                    }),
                 ),
                 (
                     "TargetSequenceNumber",
-                    json!(u.target.as_ref().map(|t| t.file.sequence())),
+                    json!(if targets_record {
+                        None
+                    } else {
+                        u.target.as_ref().map(|t| t.file.sequence())
+                    }),
                 ),
                 (
                     "TargetAttributeType",
@@ -501,6 +548,23 @@ fn record_value(
                 ),
                 (
                     "TargetPath",
+                    // A record number alone cannot identify the historical generation.
+                    json!(if targets_record {
+                        None
+                    } else {
+                        path_of(paths, u.target.as_ref().map(|t| t.file))
+                    }),
+                ),
+                (
+                    "OpenAttributeEntryNumber",
+                    json!(u.target.as_ref().map(|t| t.file.entry())),
+                ),
+                (
+                    "OpenAttributeSequenceNumber",
+                    json!(u.target.as_ref().map(|t| t.file.sequence())),
+                ),
+                (
+                    "OpenAttributePath",
                     json!(path_of(paths, u.target.as_ref().map(|t| t.file))),
                 ),
                 ("TargetAttribute", json!(u.target_attribute)),
@@ -593,7 +657,6 @@ fn record_value(
             let name = preferred(&u.redo_names)
                 .map(|n| ("Redo", n))
                 .or_else(|| preferred(&u.undo_names).map(|n| ("Undo", n)));
-            v["EntryNumber"] = json!(u.mft_record);
             if let Some((side, n)) = name {
                 v["MetadataSide"] = json!(side);
                 v["EntryNumber"] = json!(n.file.map(|f| f.entry()).or(u.mft_record));
@@ -619,22 +682,67 @@ fn record_value(
                 .or(u.undo_times.map(|t| ("Undo", t)))
             {
                 v["MetadataSide"] = json!(side);
+                // The partial $STANDARD_INFORMATION value identifies its owner, even
+                // though UpdateResidentValue does not carry a whole attribute record.
+                v["EntryNumber"] = json!(u.mft_record);
+                v["AttributeType"] = json!(0x10);
                 set_times(
                     &mut v,
                     [times.created, times.modified, times.changed, times.accessed],
                 );
             }
-            let decoded = u.redo_decoded.as_ref().or(u.undo_decoded.as_ref());
-            if let Some(Decoded::Attribute(a)) = decoded {
-                v["AttributeType"] = json!(a.attribute_type);
-            }
-            if let Some(Decoded::FileRecord(f)) = decoded {
-                if v["EntryNumber"].is_null() {
-                    v["EntryNumber"] = json!(f.number);
+            let decoded = u
+                .redo_decoded
+                .as_ref()
+                .map(|d| ("Redo", d))
+                .or_else(|| u.undo_decoded.as_ref().map(|d| ("Undo", d)));
+            match decoded {
+                Some((side, Decoded::DirectoryEntryInfo(i))) => {
+                    v["MetadataSide"] = json!(side);
+                    set_times(
+                        &mut v,
+                        [
+                            Some(i.created),
+                            Some(i.modified),
+                            Some(i.changed),
+                            Some(i.accessed),
+                        ],
+                    );
+                    v["FileSize"] = json!(i.size);
+                    v["FileAttributes"] = json!(i.attributes);
+                    v["AttributeType"] = json!(0x30);
                 }
-                if v["SequenceNumber"].is_null() {
-                    v["SequenceNumber"] = json!(f.sequence);
+                Some((side, Decoded::Attribute(a))) => {
+                    v["AttributeType"] = json!(a.attribute_type);
+                    v["EntryNumber"] = json!(u.mft_record);
+                    if let Some(info) = &a.standard_information {
+                        v["FileAttributes"] = json!(info.attributes);
+                    }
+                    if a.attribute_type == 0x80 {
+                        v["MetadataSide"] = json!(side);
+                        v["FileSize"] = json!(a.size);
+                    }
                 }
+                Some((side, Decoded::FileRecord(f))) => {
+                    if v["MetadataSide"].is_null() {
+                        v["MetadataSide"] = json!(side);
+                    }
+                    if v["EntryNumber"].is_null() {
+                        v["EntryNumber"] = json!(f.number.or(u.mft_record));
+                    }
+                    if v["SequenceNumber"].is_null() {
+                        v["SequenceNumber"] = json!(f.sequence);
+                    }
+                    if let Some(size) = f.data_size() {
+                        v["FileSize"] = json!(size);
+                    }
+                    if v["FileAttributes"].is_null()
+                        && let Some(info) = f.standard_information()
+                    {
+                        v["FileAttributes"] = json!(info.attributes);
+                    }
+                }
+                _ => {}
             }
         }
         Body::Checkpoint(c) => {
@@ -725,6 +833,94 @@ fn hex(data: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn non_utf8_provenance_serializes_without_touching_the_filesystem() {
+        use std::os::unix::ffi::OsStringExt;
+        let path = PathBuf::from(std::ffi::OsString::from_vec(b"evidence-\xff".to_vec()));
+        let record = LogRecord {
+            lsn: 1,
+            previous_lsn: 0,
+            undo_next_lsn: 0,
+            offset: 0,
+            client: ntfslog::ClientId {
+                sequence: 0,
+                index: 0,
+            },
+            transaction_id: 0,
+            transaction_first_lsn: 1,
+            flags: 0,
+            body: Body::Other {
+                record_type: 0,
+                data: vec![],
+            },
+        };
+        let log = ntfslog::parse(&[0xff; 4096]);
+        let value = record_value(&record, &path, Some(&path), None, &log, false, false);
+        assert_eq!(value["SourceFile"], "evidence-\u{fffd}");
+        assert_eq!(value["MftSource"], "evidence-\u{fffd}");
+    }
+
+    #[test]
+    fn flat_metadata_uses_undo_when_redo_has_no_decoded_body() {
+        use std::io::Read;
+        let mut data = Vec::new();
+        flate2::read::GzDecoder::new(
+            &include_bytes!("../test_files/logfile/go-ntfs/LogFile.gz")[..],
+        )
+        .read_to_end(&mut data)
+        .unwrap();
+        let mut log = ntfslog::parse(&data);
+        for (lsn, size, attribute_type) in [(1058043, 12, 0x30), (1052517, 8, 0x80)] {
+            let record = log.records.iter_mut().find(|r| r.lsn == lsn).unwrap();
+            let Body::Update(update) = &mut record.body else {
+                panic!("an update");
+            };
+            update.undo_decoded = update.redo_decoded.take();
+            update.redo = ntfslog::Operation::Noop;
+            let record = record.clone();
+            let value = record_value(
+                &record,
+                Path::new("$LogFile"),
+                None,
+                None,
+                &log,
+                false,
+                false,
+            );
+            assert_eq!(value["MetadataSide"], "Undo");
+            assert_eq!(value["FileSize"], size);
+            assert_eq!(value["AttributeType"], attribute_type);
+        }
+        // NTFS can initialize a FILE record with SI and DATA before adding its filename.
+        let record = log.records.iter_mut().find(|r| r.update().is_some_and(|u| {
+            u.redo == ntfslog::Operation::InitializeFileRecordSegment
+                && u.undo_names.is_empty()
+                && matches!(&u.redo_decoded, Some(Decoded::FileRecord(f)) if f.standard_information().is_some())
+        })).unwrap();
+        let Body::Update(update) = &mut record.body else {
+            unreachable!()
+        };
+        update.redo_names.clear();
+        let Some(Decoded::FileRecord(file)) = &mut update.redo_decoded else {
+            unreachable!()
+        };
+        file.attributes.retain(|a| a.attribute_type != 0x30);
+        let attributes = file.standard_information().unwrap().attributes;
+        let record = record.clone();
+        let value = record_value(
+            &record,
+            Path::new("$LogFile"),
+            None,
+            None,
+            &log,
+            false,
+            false,
+        );
+        assert!(value["FileName"].is_null());
+        assert_eq!(value["FileAttributes"], attributes);
+    }
 
     #[test]
     fn exported_names_are_specific() {

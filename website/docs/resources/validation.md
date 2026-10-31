@@ -35,6 +35,8 @@ coverage and known differences.
 Juntei adds CLI tests that compare every CSV field with JSON and JSONL on the public go-ntfs test
 volume (2,129 records), verify separate redo/undo data and raw payload lengths, test damaged logs,
 refuse evidence overwrites, and keep current MFT paths from following reused record numbers.
+Regression cases distinguish affected MFT records from the open attribute they write through,
+check flat directory-entry/data-attribute metadata, and prevent cross-volume MFT pairing.
 Multi-volume `auto-parse` tests cover separate CSV files and a single JSONL file with provenance.
 
 The command was also checked on six privately collected Windows logs: all 708,465 exported CSV

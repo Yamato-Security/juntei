@@ -79,6 +79,35 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
     assert_eq!(quota["ParentPath"], ".");
     assert_eq!(quota["CreatedOn"], "2018-09-24T07:53:17.2748380Z");
     assert_eq!(quota["UndoFileNames"][0]["Name"], "$Quota");
+    // The directory whose inline index changes is not the child described by its metadata.
+    let directory = values.iter().find(|v| v["Lsn"] == 1058043_u64).unwrap();
+    assert_eq!(directory["TargetEntryNumber"], 34);
+    assert!(directory["TargetSequenceNumber"].is_null());
+    assert!(directory["TargetPath"].is_null());
+    assert!(directory["EntryNumber"].is_null());
+    assert_eq!(directory["OpenAttributeEntryNumber"], 0);
+    assert_eq!(directory["OpenAttributePath"], r".\$MFT");
+    assert_eq!(directory["MetadataSide"], "Redo");
+    assert_eq!(directory["FileSize"], 12);
+    assert_eq!(directory["FileAttributes"], 2080);
+    assert_eq!(directory["CreatedOn"], "2018-09-24T07:53:20.0721062Z");
+    assert_eq!(
+        directory["ContentModifiedOn"],
+        "2018-09-24T07:53:20.0877325Z"
+    );
+    let data = values.iter().find(|v| v["Lsn"] == 1052517_u64).unwrap();
+    assert_eq!(data["FileSize"], 8);
+    assert_eq!(data["AttributeType"], 128);
+    for lsn in [1051174_u64, 1051191] {
+        let update = values.iter().find(|v| v["Lsn"] == lsn).unwrap();
+        assert!(
+            update["EntryNumber"].is_null(),
+            "LSN {lsn}: target is not a decoded file identity"
+        );
+    }
+    let partial_times = values.iter().find(|v| v["Lsn"] == 1053039_u64).unwrap();
+    assert_eq!(partial_times["EntryNumber"], 0);
+    assert_eq!(partial_times["AttributeType"], 16);
     assert!(
         quota["UndoFileNames"][0]["Created"]["Filetime"]
             .as_u64()
@@ -203,7 +232,9 @@ fn current_paths_do_not_follow_a_reused_mft_record_number() {
     assert_eq!(quota["ParentPath"], r".\[Unknown 11-11]");
 }
 
-#[cfg(unix)]
+// APFS rejects illegal UTF-8 before Juntei can read it. The abstract serialization is
+// separately tested on every Unix target in logfile::tests.
+#[cfg(target_os = "linux")]
 #[test]
 fn non_utf8_source_paths_do_not_panic() {
     use std::ffi::OsString;
@@ -296,6 +327,78 @@ fn discovery_combines_sources_and_distinguishes_unused_from_invalid() {
     ]);
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("No $LogFile files were found"));
+}
+
+#[test]
+fn prefixed_logs_pair_only_with_their_own_mft() {
+    let dir = tempfile::tempdir().unwrap();
+    let c_log = dir.path().join("C_$LogFile");
+    let c_mft = dir.path().join("C_$MFT");
+    let d_log = dir.path().join("D_$LogFile.bin");
+    unpack("go-ntfs/LogFile.gz", &c_log);
+    unpack("go-ntfs/MFT.gz", &c_mft);
+    unpack("go-ntfs/LogFile.gz", &d_log);
+    // A plain MFT must not be used for a differently prefixed volume.
+    unpack("go-ntfs/MFT.gz", &dir.path().join("$MFT"));
+    let output = run(&[
+        "parse-logfile",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    let values = rows(&output);
+    assert_eq!(values.len(), 4258);
+    let quota = |source: &Path| {
+        values
+            .iter()
+            .find(|v| {
+                v["Lsn"] == 1051364_u64 && v["SourceFile"] == source.to_string_lossy().as_ref()
+            })
+            .unwrap()
+    };
+    assert_eq!(quota(&c_log)["MftSource"], c_mft.to_string_lossy().as_ref());
+    assert_eq!(quota(&c_log)["ParentPath"], r".\$Extend");
+    assert!(quota(&d_log)["MftSource"].is_null());
+    assert!(quota(&d_log)["ParentPath"].is_null());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("No unambiguous matching $MFT for"));
+    let d_mft = dir.path().join("d_$mft.BIN");
+    unpack("go-ntfs/MFT.gz", &d_mft);
+    let mut bytes = std::fs::read(&d_mft).unwrap();
+    bytes[11 * 1024 + 0x10..11 * 1024 + 0x12].copy_from_slice(&12_u16.to_le_bytes());
+    std::fs::write(&d_mft, bytes).unwrap();
+    let values = rows(&run(&[
+        "parse-logfile",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]));
+    let quota = |source: &Path| {
+        values
+            .iter()
+            .find(|v| {
+                v["Lsn"] == 1051364_u64 && v["SourceFile"] == source.to_string_lossy().as_ref()
+            })
+            .unwrap()
+    };
+    assert_eq!(quota(&c_log)["ParentPath"], r".\$Extend");
+    assert_eq!(quota(&d_log)["MftSource"], d_mft.to_string_lossy().as_ref());
+    assert_eq!(quota(&d_log)["ParentPath"], r".\[Unknown 11-11]");
+    let before = std::fs::read(&c_mft).unwrap();
+    assert!(
+        !run(&[
+            "parse-logfile",
+            "-f",
+            c_log.to_str().unwrap(),
+            "-o",
+            c_mft.to_str().unwrap(),
+            "-C"
+        ])
+        .status
+        .success()
+    );
+    assert_eq!(std::fs::read(&c_mft).unwrap(), before);
 }
 
 #[test]

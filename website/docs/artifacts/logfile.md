@@ -86,6 +86,11 @@ See the [command reference](../commands/filesystem.md#parse-logfile) for all opt
 discovery accepts `$LogFile`, `LogFile`, their `.bin` forms, and names such as `C_$LogFile` or
 `C_$LogFile.bin`, ignoring case. A single file passed with `-f` can have any name.
 
+Automatic MFT pairing respects an export's volume prefix: `C_$LogFile` uses `C_$MFT`, and
+`D_$LogFile.bin` first tries `D_$MFT.bin`, then `D_$MFT`. Prefixed logs never use a plain `$MFT`
+as a fallback. Unprefixed `LogFile` also accepts `MFT` or `$MFT`. Use `-m` with `-f` to select a
+matching MFT explicitly when your export has another naming scheme.
+
 Output is one record per LSN, including update, checkpoint and unknown client records. JSON is a
 stream of pretty-printed objects; JSONL has one object per line. CSV has the same field names;
 arrays and structured fields are compact JSON inside a CSV cell. Unknown scalars are empty in
@@ -97,6 +102,8 @@ limit concurrent parser processes on a memory-constrained machine.
 
 If an adjacent MFT cannot be read, Juntei warns and exports the log without paths; `MftSource`
 then remains null. This enrichment failure does not discard readable primary evidence.
+Missing or ambiguous MFT matches also produce a warning and a `Logs without a matching MFT`
+count in the summary; they do not count as parse failures.
 
 ## Output fields
 
@@ -125,9 +132,10 @@ Salvageable damage can produce a successful task with a nonzero `Parse problems`
 | Field | Meaning and interpretation |
 |---|---|
 | `RedoOperation`, `UndoOperation` | NTFS operation names, or hexadecimal for an unknown code. Redo describes the intended update; undo describes its inverse. |
-| `TargetEntryNumber`, `TargetSequenceNumber` | File owning the resolved open attribute. For an update to a file record this can be `$MFT` itself, not the user file whose record changed. |
-| `TargetAttributeType`, `TargetAttributeName` | Numeric NTFS attribute type and stream/index name. Common types: 16 (`$STANDARD_INFORMATION`), 48 (`$FILE_NAME`), 128 (`$DATA`), 144 (`$INDEX_ROOT`), 160 (`$INDEX_ALLOCATION`), 176 (`$BITMAP`). |
-| `TargetPath` | Current MFT path of the resolved target, or unknown components. No path is invented from an entry number without its sequence. |
+| `TargetEntryNumber`, `TargetSequenceNumber` | For an operation on a file record: the affected MFT record number, with no sequence number inferred. Otherwise: the file reference owning the resolved open attribute. An inline directory-index update targets the directory, not the child described by its entry. |
+| `TargetAttributeType`, `TargetAttributeName` | Numeric type and name of the open attribute used by the operation. For file-record operations this is normally `$MFT`'s `$DATA`. Common types: 16 (`$STANDARD_INFORMATION`), 48 (`$FILE_NAME`), 128 (`$DATA`), 144 (`$INDEX_ROOT`), 160 (`$INDEX_ALLOCATION`), 176 (`$BITMAP`). |
+| `TargetPath` | Current MFT path when the target's full reference is known, or unknown components. Empty for file-record operations whose historical generation is unknown; a record number alone must not resolve to its current occupant. |
+| `OpenAttributeEntryNumber`, `OpenAttributeSequenceNumber`, `OpenAttributePath` | File owning the open attribute through which the operation writes, with its current MFT path. For file-record operations these preserve the `$MFT` context separately from the affected record. |
 | `TargetAttribute` | Offset in the log's open-attribute table; this is different from the attribute's type or MFT identifier. |
 | `TargetInferred` | True if the target mapping comes from another stretch of the log. A null target remains unresolved even if this flag is false. |
 | `TargetVcn`, `Lcns` | Virtual cluster in the target and physical cluster numbers; useful for low-level validation rather than timing. |
@@ -141,17 +149,20 @@ Salvageable damage can produce a successful task with a nonzero `Parse problems`
 
 These columns show one preferred non-DOS filename from the redo side, falling back to undo.
 If neither side carries a filename, timestamp-update fields prefer redo timestamps, then undo.
+Directory-entry updates also expose their times, size and flags directly, preferring redo over
+undo. Decoded `$DATA` attributes expose their size even when no filename is present. A decoded
+file record's unnamed `$DATA` size takes priority over its possibly stale filename size.
 They are a browsing aid; use the separate side fields for a complete before/after comparison.
 
 | Field | Meaning and interpretation |
 |---|---|
 | `MetadataSide` | `Redo` or `Undo`, identifying the side supplying the convenient filename/timestamp columns. |
-| `EntryNumber`, `SequenceNumber` | File reference from decoded data when present; `EntryNumber` can also be computed for an MFT-record update. Sequence can be unknown. |
+| `EntryNumber`, `SequenceNumber` | File described by decoded filename/file-record/attribute metadata or a partial `$STANDARD_INFORMATION` timestamp update, with the sequence when known. Empty for a directory-entry update that does not identify the child, and raw size/run-list updates. Use `TargetEntryNumber` for the affected record. |
 | `FileName` | Preferred decoded name; all names remain in the side arrays, including DOS aliases and hard links. |
 | `ParentEntryNumber`, `ParentSequenceNumber`, `ParentPath` | Parent reference and current MFT path; not a historical-path reconstruction. |
 | `CreatedOn`, `ContentModifiedOn`, `RecordModifiedOn`, `LastAccessedOn` | UTC metadata times, to 100 ns. These are not transaction timestamps. Missing/invalid times remain empty/null. |
-| `FileSize`, `FileAttributes` | Size and numeric Windows attribute flags from the selected filename metadata. They can be stale relative to actual file contents. |
-| `AttributeType` | Numeric type of a decoded attribute record when present; separate from the open attribute targeted by the update. |
+| `FileSize`, `FileAttributes` | Size and numeric Windows flags from the selected metadata; directory-entry values can be stale. `$DATA` attributes and decoded file records can supply a more direct size. |
+| `AttributeType` | Numeric type of a decoded attribute record; 48 for a decoded directory-entry metadata update. Separate from the open attribute targeted by the operation. |
 
 ### Complete redo/undo metadata and payloads
 
