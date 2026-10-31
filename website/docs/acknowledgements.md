@@ -24,6 +24,11 @@ embedded in Juntei; consult each project for its license.
 
 ## Reference tools and independent validation
 
+- [**PyrsistenceSniper**](https://github.com/hexastrike/PyrsistenceSniper), by Hexastrike,
+  supplied the persistence check catalogue, default allowlist, LOLBAS snapshot, and reference
+  behavior for the native Rust `persistence-sniper` command. Its MIT license and copyright notice
+  are retained in `THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt`.
+
 - Maxim Suhanov's **regf specification** and **yarp** informed registry structures, transaction-log
   replay, and deleted-record recovery; his **dfir_ntfs** was the reference for INDX records and
   index-slack carving.

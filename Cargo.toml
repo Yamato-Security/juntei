@@ -7,7 +7,7 @@ description = "Windows forensics artifact parser"
 license = "AGPL-3.0-only"
 edition = "2024"
 rust-version = "1.99"
-include = ["src/**/*", "art/**/*", "LICENSE", "README.md", "CHANGELOG.md"]
+include = ["src/**/*", "art/**/*", "LICENSE", "THIRD_PARTY_NOTICES/**/*", "README.md", "CHANGELOG.md"]
 
 # Every crates.io dependency has an explicit floor rather than "*": a wildcard accepts any future
 # release, including a breaking one, on the next `cargo update`. The parsers are Yamato Security's
@@ -41,6 +41,17 @@ serde_json = { version = "1", features = ["preserve_order"] }
 same-file = "1"
 # parse-registry's filters on key paths, value names and data.
 regex = "1"
+# Native persistence hunting: stream file hashes, parse bounded task XML and
+# YAML profiles, and inspect embedded PE certificate metadata without a runtime.
+sha2 = "0.10"
+quick-xml = "0.38"
+serde_yaml_ng = "0.10"
+cms = "0.2"
+x509-cert = "0.2"
+der = { version = "0.7", features = ["alloc", "std"] }
+evtx = { version = "0.12.3", default-features = false }
+goblin = "0.10"
+sha1 = "0.10"
 # USN journal parsing: Yamato Security's ys-usn-journal-parser, a fork of sootmark-usn
 # (MIT OR Apache-2.0); its `mft` feature seeds paths from the $MFT with the same ys-mft-parser as
 # above.

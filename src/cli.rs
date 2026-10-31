@@ -76,6 +76,147 @@ pub enum Commands {
         disable_version_flag = true
     )]
     ParseRegistry(RegistryCommand),
+
+    /// Hunt offline Windows persistence
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei persistence-sniper -d <EVIDENCE> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    PersistenceSniper(PersistenceSniperOptions),
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug, Default)]
+pub enum SniperSeverity {
+    Info,
+    Low,
+    #[default]
+    Medium,
+    High,
+}
+
+impl SniperSeverity {
+    pub fn rank(self) -> u8 {
+        match self {
+            Self::Info => 0,
+            Self::Low => 1,
+            Self::Medium => 2,
+            Self::High => 3,
+        }
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+pub struct PersistenceSniperOptions {
+    /// Evidence directory (a mounted Windows volume or a collection of hosts)
+    #[arg(help_heading = "Input", short = 'd', long, value_name = "DIR", required_unless_present_any = ["filepath", "list_checks"], conflicts_with = "filepath", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// One registry hive (filesystem checks need a directory)
+    #[arg(
+        help_heading = "Input",
+        short = 'f',
+        long = "file",
+        value_name = "FILE",
+        display_order = 101
+    )]
+    pub filepath: Option<PathBuf>,
+
+    /// Read dirty hives without replaying transaction logs
+    #[arg(help_heading = "Input", long, display_order = 102)]
+    pub no_logs: bool,
+
+    /// Replace the bundled allow/block profile with a YAML profile
+    #[arg(
+        help_heading = "Filtering",
+        long,
+        value_name = "FILE",
+        display_order = 200
+    )]
+    pub profile: Option<PathBuf>,
+
+    /// Minimum classification to include: info, low, medium, high
+    #[arg(
+        help_heading = "Filtering",
+        long,
+        value_enum,
+        default_value = "medium",
+        display_order = 201
+    )]
+    pub min_severity: SniperSeverity,
+
+    /// Run only these check or ATT&CK IDs (comma separated; repeatable)
+    #[arg(
+        help_heading = "Filtering",
+        long = "check",
+        visible_alias = "technique",
+        value_delimiter = ',',
+        value_name = "ID",
+        display_order = 202
+    )]
+    pub checks: Vec<String>,
+
+    /// Show every available check and its ATT&CK technique
+    #[arg(help_heading = "General Options", long, display_order = 11)]
+    pub list_checks: bool,
+
+    /// Skip MFT and event-log timestamp correlation
+    #[arg(help_heading = "Analysis", long, display_order = 250)]
+    pub no_timeline: bool,
+
+    /// MFT to use for timestamp correlation (one host only)
+    #[arg(
+        help_heading = "Analysis",
+        long,
+        value_name = "FILE",
+        conflicts_with = "no_timeline",
+        display_order = 251
+    )]
+    pub mft: Option<PathBuf>,
+
+    /// Save findings to a file
+    #[arg(
+        help_heading = "Output",
+        short = 'o',
+        long,
+        value_name = "FILE",
+        display_order = 300
+    )]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl; without -o, write data to stdout
+    #[arg(
+        help_heading = "Output",
+        short = 't',
+        long = "output-type",
+        value_enum,
+        display_order = 301
+    )]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Save per-check coverage and errors to CSV
+    #[arg(
+        help_heading = "Output",
+        long,
+        value_name = "FILE",
+        display_order = 302
+    )]
+    pub coverage: Option<PathBuf>,
+
+    /// Overwrite output files
+    #[arg(help_heading = "Output", short = 'C', long, display_order = 303)]
+    pub clobber: bool,
+
+    #[command(flatten)]
+    pub common: CommonOptions,
+}
+
+impl PersistenceSniperOptions {
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
 }
 
 #[derive(Args)]
