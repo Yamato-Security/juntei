@@ -47,7 +47,7 @@ and volume metadata when possible.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-mft <INPUT> [OPTIONS]
+Usage: juntei parse-ntfs mft <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find $MFT files
@@ -80,13 +80,13 @@ Inspection:
 ```
 
 ```bash
-juntei parse-mft -f '$MFT' -o mft.csv
-juntei parse-mft -f '$MFT' --cutoff '2026-10-20T00:00:00Z' -a -o recent.csv
-juntei parse-mft -f '$MFT' -t jsonl -r 32000-32100 | jq .
-juntei parse-mft -f '$MFT' -x -o mft-with-slack.csv
-juntei parse-mft -f '$MFT' -i -E ps1,bat,vbs,js -o scripts.csv
-juntei parse-mft -f '$MFT' -D 0x270-5
-juntei parse-mft -f '$MFT' -L '\Users\alice\Downloads'
+juntei parse-ntfs mft -f '$MFT' -o mft.csv
+juntei parse-ntfs mft -f '$MFT' --cutoff '2026-10-20T00:00:00Z' -a -o recent.csv
+juntei parse-ntfs mft -f '$MFT' -t jsonl -r 32000-32100 | jq .
+juntei parse-ntfs mft -f '$MFT' -x -o mft-with-slack.csv
+juntei parse-ntfs mft -f '$MFT' -i -E ps1,bat,vbs,js -o scripts.csv
+juntei parse-ntfs mft -f '$MFT' -D 0x270-5
+juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 ```
 
 Never execute resident streams extracted with `-e`; Juntei gives them `.dontrun` names for a reason.

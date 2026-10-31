@@ -18,9 +18,9 @@ assume a collection contains transaction logs just because it contains a registr
 Many commands print a concise summary when no output file is requested:
 
 ```bash
-juntei parse-prefetch -d evidence/
-juntei parse-shimcache -d evidence/
-juntei parse-defender-quarantine -d evidence/
+juntei parse-file prefetch -d evidence/
+juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-quarantine -d evidence/
 ```
 
 Read damage, dirty-database, and unapplied-log warnings before trusting records.
@@ -38,9 +38,9 @@ output layout, and consolidated JSONL for SIEM ingestion.
 
 ```bash
 mkdir -p analysis
-juntei parse-prefetch -d evidence/ -T -o analysis/prefetch.csv
-juntei parse-mft -d evidence/ -o analysis/mft
-juntei parse-usn-journal -d evidence/ -o analysis/usn
+juntei parse-file prefetch -d evidence/ -T -o analysis/prefetch.csv
+juntei parse-ntfs mft -d evidence/ -o analysis/mft
+juntei parse-ntfs usn-journal -d evidence/ -o analysis/usn
 juntei parse-registry services -d evidence/ -o analysis/services.jsonl -t jsonl
 ```
 
@@ -52,7 +52,7 @@ Start with a file name, complete path, SHA-1/SHA-256, user SID, MFT entry/sequen
 service name, or timestamp window. Normalize case only for fields Windows treats case-insensitively.
 
 ```bash
-juntei parse-prefetch -d evidence/ -t jsonl \
+juntei parse-file prefetch -d evidence/ -t jsonl \
   | jq 'select(.executable_name? | ascii_downcase == "suspicious.exe")'
 ```
 

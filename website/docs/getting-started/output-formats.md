@@ -22,7 +22,7 @@ JSON stores the complete result as one document. It preserves arrays, nested str
 large integers, and distinctions that a flat CSV cannot always represent.
 
 ```bash
-juntei parse-lnk -f sample.lnk -o lnk.json -t json
+juntei parse-file lnk -f sample.lnk -o lnk.json -t json
 ```
 
 ## JSON Lines
@@ -37,8 +37,9 @@ juntei parse-registry services -d evidence/ -t jsonl \
 When structured output goes to standard output, Juntei sends progress and messages to standard
 error so a pipe receives data only.
 
-`auto-parse -t jsonl -s` (`--single-file`) combines a complete multi-host collection into
-`all-artifacts.jsonl`. Each record has `Computer` and `Artifact` fields so its source remains clear
+`auto-parse -j timeline.jsonl` creates an additional JSONL dataset for a complete multi-host
+collection while retaining the categorized CSV results. Add `-t json` or `-t jsonl` to change the
+individual result format. Each record has `Computer` and `Artifact` fields so its source remains clear
 after SIEM ingestion.
 
 ## UTC and precision

@@ -24,7 +24,7 @@ the key/value state. A key last-write time shows the key changed, not which valu
 | `DEFAULT` | `C:\Windows\System32\config\DEFAULT` | Default system profile configuration |
 | `NTUSER.DAT` | `C:\Users\<user>\NTUSER.DAT` | User preferences, Run keys, RecentDocs, application activity |
 | `UsrClass.dat` | `%LOCALAPPDATA%\Microsoft\Windows\UsrClass.dat` | Shell classes, COM/user shell activity |
-| `Amcache.hve` | `C:\Windows\AppCompat\Programs\Amcache.hve` | Application inventory (use `parse-amcache` for semantic output) |
+| `Amcache.hve` | `C:\Windows\AppCompat\Programs\Amcache.hve` | Application inventory (use `parse-registry amcache` for semantic output) |
 
 Collect adjacent `.LOG`, `.LOG1`, and `.LOG2` files. A hive copied while Windows is running may be
 dirty; transaction logs contain committed state that the primary file alone does not yet reflect.

@@ -1,4 +1,4 @@
-//! `parse-i30`: directory indexes (`$I30`), read by ys-mft-parser's `i30` module, with Hayabusa's
+//! `parse-ntfs i30`: directory indexes (`$I30`), read by ys-mft-parser's `i30` module, with Hayabusa's
 //! input options, progress bar and results summary. One record per index entry: the file's name
 //! in the directory, its MFT reference, its parent, the four times and two sizes its `$FILE_NAME`
 //! keeps, and whether it was found in the slack of an INDX record, where entries of files deleted

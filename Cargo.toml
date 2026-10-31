@@ -27,7 +27,7 @@ indicatif = "0.18"
 # $MFT parsing: Yamato Security's ys-mft-parser, a fork of Omer Ben-Amram's mft crate
 # (MIT / Apache-2.0), without its ys-mft-parser command.
 mft = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-mft-parser", default-features = false }
-# parse-mft -x: the file names in FILE record slack (i30::slack_entries_in), from ys-mft-parser's
+# parse-ntfs mft -x: the file names in FILE record slack (i30::slack_entries_in), from ys-mft-parser's
 # ys/file-record-slack branch until it is merged; then from `mft` above.
 mft-slack = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-mft-parser", branch = "ys/file-record-slack", default-features = false }
 # NTFS redo/undo transaction records (MIT OR Apache-2.0).
@@ -58,7 +58,7 @@ shimcache-forensic = { package = "ys-shimcache-parser", git = "https://github.co
 # Registry hives for parse-registry: Yamato Security's ys-registry-parser (Apache-2.0): keys and
 # values, transaction log replay, deleted keys and values, registry autostart locations and UserAssist.
 registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Security/ys-registry-parser" }
-# The order of parse-srum's JSON columns, and parse-mft's JSON entries (as ys-mft-parser writes them).
+# The order of parse-ese srum's JSON columns, and parse-ntfs mft's JSON entries (as ys-mft-parser writes them).
 serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
 # (MIT OR Apache-2.0).

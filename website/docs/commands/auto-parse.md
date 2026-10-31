@@ -9,11 +9,11 @@ parallel.
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT>
 ```
 
-The default output is CSV. Use JSONL when the result will be queried with `jq` or ingested into a
-SIEM:
+The default output is CSV. Add a JSONL timeline for `jq` or SIEM import while keeping those CSV
+results:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -t jsonl -s
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 ```
 
 !!! warning "Keep the output and evidence trees separate"
@@ -54,7 +54,8 @@ The manifest keeps the hostname exactly as discovered in a separate `hostname` f
 ## Parsers it runs
 
 One parser failing does not stop the others. `auto-parse` runs these jobs for every discovered
-computer:
+computer. Jobs use the same source-grouped commands as manual parsing, such as
+`parse-ntfs mft`, `parse-registry amcache`, `parse-ese srum`, and `parse-file prefetch`:
 
 - Amcache
 - `$MFT`
@@ -78,6 +79,8 @@ An artifact that was not collected is a normal `skipped` task, not a failure.
 
 ## Output layout
 
+Results are organized by computer, investigative category, and artifact. Each parser writes an
+`<artifact>-logs.txt` file beside its results, including when the artifact was not collected.
 CSV keeps separate tables because each artifact has different columns:
 
 ```text
@@ -85,26 +88,98 @@ CSV keeps separate tables because each artifact has different columns:
 ├── manifest.json
 ├── manifest.csv
 ├── HOST1/
-│   ├── logs/
-│   ├── amcache/
-│   ├── defender-quarantined/  # only with -x
-│   ├── srum/
-│   ├── mft.csv
-│   ├── logfile.csv
-│   ├── usn-journal.csv
-│   ├── prefetch.csv
-│   ├── prefetch-timeline.csv
-│   ├── registry.csv
-│   └── shimcache.csv
+│   ├── accounts/
+│   │   ├── SAM.csv
+│   │   └── SAM-logs.txt
+│   ├── file_and_folder_opening/
+│   │   ├── jump-lists/
+│   │   ├── JumpLists-logs.txt
+│   │   ├── LNK.csv
+│   │   ├── LNK-logs.txt
+│   │   ├── RecentDocs.csv
+│   │   └── RecentDocs-logs.txt
+│   ├── file_existence/
+│   │   ├── amcache/
+│   │   ├── Amcache-logs.txt
+│   │   ├── ShimCache.csv
+│   │   └── ShimCache-logs.txt
+│   ├── file_system/
+│   │   ├── I30.csv
+│   │   ├── I30-logs.txt
+│   │   ├── LogFile.csv
+│   │   ├── LogFile-logs.txt
+│   │   ├── MFT.csv
+│   │   ├── MFT-logs.txt
+│   │   ├── UsnJournal.csv
+│   │   └── UsnJournal-logs.txt
+│   ├── persistence/
+│   │   ├── Persistence.csv
+│   │   ├── Persistence-logs.txt
+│   │   ├── Services.csv
+│   │   ├── Services-logs.txt
+│   │   ├── TaskCache.csv
+│   │   └── TaskCache-logs.txt
+│   ├── process_execution/
+│   │   ├── Prefetch.csv
+│   │   ├── Prefetch-logs.txt
+│   │   ├── PrefetchTimeline.csv
+│   │   ├── PrefetchTimeline-logs.txt
+│   │   ├── srum/
+│   │   ├── SRUM-logs.txt
+│   │   ├── UserAssist.csv
+│   │   └── UserAssist-logs.txt
+│   ├── registry/
+│   │   ├── Registry.csv
+│   │   └── Registry-logs.txt
+│   └── security_products/
+│       ├── DefenderQuarantine.csv
+│       ├── DefenderQuarantine-logs.txt
+│       └── defender-quarantined/  # only with -x
 └── HOST2/
     └── …
 ```
 
-Some parsers naturally create several tables, so their output is a directory. `logs` contains a
-`.txt` file with the exact command and messages from every parser. `manifest.json` records the original discovered
-`hostname`, the unique output/record `Computer` identity, hostname provenance, evidence paths,
-command lines, duration, exit code, result path, whether Defender extraction was requested, and
-whether each task succeeded, was skipped, or failed.
+| Category | Artifacts |
+|---|---|
+| `accounts` | SAM local accounts |
+| `file_and_folder_opening` | Jump Lists, LNK shortcuts, RecentDocs |
+| `file_existence` | Amcache, ShimCache |
+| `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
+| `persistence` | Registry autostarts, services, TaskCache |
+| `process_execution` | Prefetch, Prefetch timeline, SRUM, UserAssist |
+| `registry` | General hive keys and values, including recovered records |
+| `security_products` | Defender quarantine metadata and optional extracted content |
+
+Categories help organize investigations; they are not proof of a particular activity. For example,
+Amcache and ShimCache entries alone do not establish execution. SRUM records resource usage;
+consult the artifact guide before drawing conclusions about a program running.
+
+CSV, JSON, and JSONL use the same categories. Parsers that produce several tables retain their
+artifact subdirectory where needed. One `<artifact>-logs.txt` file per parser job contains its
+exact command and messages; for example, `HOST1/file_system/MFT-logs.txt` and
+`HOST1/process_execution/Prefetch-logs.txt`. JSON and JSONL use the same log filenames.
+Multi-table outputs such as `amcache/` and `srum/` have one log beside the artifact directory,
+covering all its tables. No `logs/` subdirectories are created.
+
+Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
+`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `Registry.csv`, and
+`DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
+`Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
+separate source subdirectories, each with the same four table names. SRUM retains separate provider
+tables in `srum/`, with its parser messages in `SRUM-logs.txt`.
+
+Logs match the capitalized artifact name, such as `SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
+and `UserAssist-logs.txt`. JSON/JSONL files use the same stems, for example `MFT.jsonl`; the
+record's `Artifact` identifier is `mft` for queries. Multi-table outputs have `Amcache-logs.txt`,
+`JumpLists-logs.txt`, or `SRUM-logs.txt` beside their directory.
+
+
+`manifest.json` records the original discovered `hostname`, the unique output/record `Computer`
+identity, hostname provenance, evidence paths, artifact `category`, command lines, duration, exit
+code, result path, log path, the requested JSONL timeline and any export error, whether Defender extraction was requested,
+and whether each task
+succeeded, was skipped, or failed.
 
 The progress message shows the active computer and artifact followed by an approximate input
 size, for example `HOST1 / prefetch (~2.0 MiB)`. A group of files uses their combined size; each
@@ -113,7 +188,9 @@ logs and enrichment files and do not predict the size of the parsed output.
 
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
 parser task. It includes `Computer`, original `Hostname`, `Fqdn`, `HostnameSource`, `EvidenceRoot`,
-`Artifact`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`, `Error`, and `Command`.
+`Artifact`, `Category`, `OutputType`, `Purpose`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`,
+`Error`, and `Command`. `Purpose` is `artifact` for the categorized results or `json_timeline` for
+the additional native JSONL pass used with CSV. `OutputType` is the actual parser output format.
 `Command` is a JSON array of the executable and its arguments, preserving spaces and quoting.
 Filter `Status` to `skipped` or `failed` to find tasks requiring review; a skipped task's `Error`
 may be empty, with the explanation in its `Log` file.
@@ -127,11 +204,11 @@ Results saved: output/ ( 125 files / 42.50 MB )
 ```
 
 When a host has one Amcache hive or SRUM database, its CSV tables are written directly under
-`amcache/` or `srum/`. If a collection contains several databases of either kind, each source
-receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
+`file_existence/amcache/` or `process_execution/srum/`. If a collection contains several databases
+of either kind, each source receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
 another. A normal single-volume collection writes `$MFT` and USN Journal records directly to
-`mft.csv` and `usn-journal.csv`. Additional collected volumes use numbered sibling files such as
-`mft-2.csv` rather than another directory level.
+`file_system/MFT.csv` and `file_system/UsnJournal.csv`. Additional collected volumes use numbered
+sibling files such as `file_system/MFT-2.csv` and `file_system/MFT-2-logs.txt`.
 
 ## JSON and SIEM ingestion
 
@@ -140,26 +217,49 @@ Every JSON or JSONL record receives two top-level fields:
 - `Computer`: the source system.
 - `Artifact`: the Juntei parser that produced the record, such as `mft` or `prefetch-timeline`.
 
-Without `--single-file`, data remains organized by computer and artifact. With `--single-file`,
-Juntei streams all successful records into either `all-artifacts.json` or
-`all-artifacts.jsonl`. The per-parser data files are temporary; per-host logs and the manifest are
-retained.
-
-JSONL is recommended for a large collection because each line can be processed independently:
+`-j, --json-timeline <FILE>` creates one additional JSONL file, regardless of the individual
+result format. All categorized outputs and their logs are retained:
 
 ```bash
-jq -c 'select(.Computer == "HOST1" and .Artifact == "prefetch")' \
-  parsed/all-artifacts.jsonl
+# Default CSV tables plus a SIEM timeline
+juntei auto-parse -d evidence -o parsed -j parsed/timeline.jsonl
+
+# Pretty JSON results plus a SIEM timeline
+juntei auto-parse -d evidence -o parsed-json -t json -j parsed-json/timeline.jsonl
+
+# Individual JSONL results plus a consolidated JSONL timeline
+juntei auto-parse -d evidence -o parsed-jsonl -t jsonl -j parsed-jsonl/timeline.jsonl
 ```
+
+The filename is used as supplied; relative paths are relative to the current working directory.
+It may be in the output root, another non-reserved output subdirectory, or outside the output
+directory. Evidence, manifests, per-computer results/logs, and temporary parser directories cannot
+be used as the destination. An existing file requires `-C`; a failed export leaves it intact.
+
+In **CSV mode**, Juntei performs an additional native JSONL pass so the SIEM file preserves
+numeric and boolean types, nested data, raw fields, and metadata that CSV tables can omit. The
+extra jobs share the same `-T` concurrency limit, do not extract quarantine contents again, and
+have separate `*-json-timeline-logs.txt` sidecar logs. Both manifests distinguish their purpose and
+output format. Temporary JSONL files are removed after a successful run; they are retained if a
+parser or export fails. Plan for the extra processing time and temporary disk space.
+
+In **JSON mode**, Juntei streams the existing results into compact JSONL without reparsing the
+evidence. Amcache reports are expanded into the same individual summary, finding, file, and device
+records as native JSONL. In **JSONL mode**, the existing annotated records are combined directly.
+All modes use the same SIEM record structure. The dataset keeps native timestamps and artifact
+fields; it does not invent a common event timestamp or globally sort heterogeneous artifacts.
 
 ```bash
-jq -r 'select(.Artifact == "mft") | .full_path? // empty' \
-  parsed/all-artifacts.jsonl
+jq -c 'select(.Computer == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
+jq -r 'select(.Artifact == "mft") | .full_path? // empty' parsed/timeline.jsonl
 ```
 
-Large `$MFT`, registry, and USN Journal collections can produce many gigabytes of output. Ensure
-there is enough free space for the final consolidated file and temporary per-parser files. If any
-parser fails, Juntei preserves the temporary directory for diagnosis instead of deleting it.
+`manifest.json` records the requested `json_timeline` path and any `json_timeline_error`. Its task
+records, and `manifest.csv`, still point to retained artifact outputs. Successful CSV timeline-only
+jobs reference the final JSONL file instead of deleted temporary files. If any parser fails, the
+run exits unsuccessfully and the timeline contains only successful results; inspect the manifests
+and category logs before treating it as complete. The file-count/size summary covers files inside
+the output directory; an external timeline is reported separately as `JSONL timeline: <FILE>`.
 
 ## Performance
 
@@ -174,6 +274,9 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Usage
 
 ```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
 Usage:
   juntei auto-parse -d <EVIDENCE> -o <OUTPUT> [OPTIONS]
 
@@ -182,29 +285,38 @@ Input:
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
 
 Output:
-  -o, --output <DIR>        New directory in which to create per-computer results
-  -t, --output-type <TYPE>  Output type: csv (default), json, or jsonl [default: csv]
-  -s, --single-file         For JSON/JSONL, create one all-artifacts file instead of per-artifact data files
-  -C, --clobber             Overwrite outputs in an existing directory (never deletes unrelated files)
-  -x, --extract-defender-quarantined
-                            Extract Defender-quarantined files
+  -o, --output <DIR>                  New directory in which to create per-computer results
+  -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
+  -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
+  -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
 Use a new output directory when practical. `-C` removes or overwrites only the exact generated
 targets for this run, so a now-missing artifact cannot leave a stale result. It does not delete
-unrelated files or the complete output tree. It also removes every per-host
-`defender-quarantined/` directory from an earlier run before parsing, whether or not the new run
-uses `-x`, so extracted malware cannot remain as an unrecorded stale result.
+unrelated files or the complete output tree. It also removes each computer's
+`security_products/defender-quarantined/` directory, and the reserved `defender-quarantined/`
+directory from the previous flat layout, before parsing, whether or not the new run uses `-x`.
+
+Use a fresh output directory when switching from an older flat layout. Earlier CSV/JSON files
+are not relocated or deleted automatically.
 
 !!! danger "Treat extracted Defender content as malware"
     `-x, --extract-defender-quarantined` writes quarantined content to disk under each computer's
-    `defender-quarantined/` directory. Recovered binary streams end in `.quarantined`, and Juntei
+    `security_products/defender-quarantined/` directory. Recovered binary streams end in `.quarantined`, and Juntei
     removes execute permission. Each binary security descriptor also gets a readable `.security_descriptor.txt`
     report with ownership, permissions and SDDL. Never execute recovered payloads. Use an isolated
     analysis system and expect antivirus or EDR software to alert on or remove the recovered content.

@@ -35,7 +35,7 @@ same volume's `$MFT`, because USN records store parent file references rather th
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-usn-journal <INPUT> [OPTIONS]
+Usage: juntei parse-ntfs usn-journal <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find $J files
@@ -49,9 +49,9 @@ Output:
 ```
 
 ```bash
-juntei parse-usn-journal -f 'C/$Extend/$J' -m 'C/$MFT' -o usn.csv
-juntei parse-usn-journal -d evidence/ -o usn-jsonl -t jsonl
-juntei parse-usn-journal -f unallocated.bin --carve -o carved-usn.csv
+juntei parse-ntfs usn-journal -f 'C/$Extend/$J' -m 'C/$MFT' -o usn.csv
+juntei parse-ntfs usn-journal -d evidence/ -o usn-jsonl -t jsonl
+juntei parse-ntfs usn-journal -f unallocated.bin --carve -o carved-usn.csv
 ```
 
 ## CSV output fields

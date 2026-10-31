@@ -20,15 +20,19 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 ## Supported artifacts
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
-and parse every supported artifact in parallel. It creates per-computer output directories and can
-produce one computer-labelled JSONL file for SIEM ingestion.
+and parse every supported artifact in parallel. It groups results by computer and artifact category,
+with `<artifact>-logs.txt` files beside the results. Add a computer-labelled SIEM JSONL file with `-j <FILE>`
+while keeping the CSV or JSON results.
+
+For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, or `parse-registry`.
+For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
 
 ### Process Execution
 
 | Artifact | Type |
 | --- | --- |
 | **Prefetch** (`*.pf`) — Program run counts, recent execution times, and referenced files. | File |
-| **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | File |
+| **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | ESE |
 | **UserAssist** (`NTUSER.DAT`) — Programs and shortcuts a user started from Explorer, with run counts, focus time, and last run times. | Registry |
 
 ### File System and File Existence

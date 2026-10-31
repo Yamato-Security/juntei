@@ -1,4 +1,4 @@
-//! `parse-mft`'s CSV, computed from the FILE records that ys-mft-parser reads: one row per file
+//! `parse-ntfs mft`'s CSV, computed from the FILE records that ys-mft-parser reads: one row per file
 //! name of every base record (in-use records first, then free ones), and one more per alternate
 //! data stream, with the parent paths of a directory map, both sets of timestamps and the
 //! timestomping indicators `SI<FN`, `uSecZeros` and `Copied`.
@@ -981,7 +981,7 @@ fn name_type(namespace: u8) -> String {
     }
 }
 
-/// A FILETIME as an RFC 3339 UTC time with its 100 ns (7 decimals), like `parse-mft`'s JSON.
+/// A FILETIME as an RFC 3339 UTC time with its 100 ns (7 decimals), like `parse-ntfs mft`'s JSON.
 pub(crate) fn time(t: Option<i64>) -> String {
     t.and_then(|ft| {
         let unix = ft - 116_444_736_000_000_000;
