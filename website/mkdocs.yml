@@ -141,6 +141,9 @@ nav:
           - Registry Autostarts: artifacts/persistence.md
       - Accounts:
           - SAM Local Accounts: artifacts/sam.md
+  - Persistence Check:
+      - Persistence Mechanisms: persistence-check/index.md
+      - Acknowledgements: persistence-check/acknowledgements.md
   - Resources:
       - Articles and References: resources/index.md
       - Cross-Artifact Workflows: resources/workflows.md

@@ -10,6 +10,11 @@ use exactly the same mechanisms, so finding a persistence entry is a starting po
 It reads evidence offline. It does not start services, register tasks, load DLLs, or execute
 the programs it finds. It needs no Python interpreter or Windows runtime.
 
+For an explanation of every mechanism, its evidence locations, and how to investigate a finding,
+see the [130-check persistence guide](../persistence-check/index.md). The
+[persistence acknowledgements](../persistence-check/acknowledgements.md) describe the Python and
+PowerShell projects behind the catalogue.
+
 ## Usage
 
 ```text
@@ -115,8 +120,10 @@ one worker. Its own `-T` option controls the number of concurrent parser process
 
 Registry transaction logs are replayed when available. `--no-logs` reads the hives as collected;
 an unreplayed dirty hive may omit recent changes and is reported in coverage. The current control
-set is used for active-system checks. Old control sets are available through the individual registry
-parser commands but are not silently mixed into the active persistence hunt.
+set is used for active-system checks. The DSRM backdoor check additionally examines
+`ControlSet001`, `ControlSet002`, and `CurrentControlSet` when present; check its reported path
+against `SYSTEM\\Select` before describing that setting as active. Other historical control sets
+can be examined with the individual registry parser commands.
 
 `auto-parse` also runs the hunter and saves `persistence/PersistenceSniper.csv` (or `.json`/`.jsonl`)
 inside each computer directory, with `PersistenceSniper-logs.txt` beside it. Its findings also enter
