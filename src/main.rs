@@ -12,6 +12,7 @@ mod lnk;
 mod logfile;
 mod mft;
 mod mft_csv;
+mod mft_inspect;
 mod prefetch;
 mod progress;
 mod registry;

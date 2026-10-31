@@ -402,6 +402,50 @@ fn parse_ranges(s: &str) -> Result<EntryRanges, String> {
     Ok(EntryRanges(ranges))
 }
 
+/// An MFT entry: its number and, optionally, the sequence number references to it carry
+/// (`624`, `0x270`, `624-5`, `0x270-0x5`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EntrySpec {
+    pub entry: u64,
+    pub sequence: Option<u16>,
+}
+
+impl std::fmt::Display for EntrySpec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.sequence {
+            Some(sequence) => write!(f, "{}-{sequence}", self.entry),
+            None => write!(f, "{}", self.entry),
+        }
+    }
+}
+
+/// A decimal or `0x` hexadecimal number.
+fn parse_number<T: TryFrom<u64>>(s: &str) -> Option<T> {
+    let s = s.trim();
+    let value = match s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
+        Some(hex) => u64::from_str_radix(hex, 16).ok()?,
+        None => s.parse::<u64>().ok()?,
+    };
+    T::try_from(value).ok()
+}
+
+pub fn parse_entry_spec(s: &str) -> Result<EntrySpec, String> {
+    let invalid = || {
+        format!("'{s}' is not an entry: give its number, or entry-sequence (ex: 624, 0x270, 624-5)")
+    };
+    let (entry, sequence) = match s.split_once('-') {
+        Some((entry, sequence)) => (
+            entry,
+            Some(parse_number::<u16>(sequence).ok_or_else(invalid)?),
+        ),
+        None => (s, None),
+    };
+    Ok(EntrySpec {
+        entry: parse_number(entry).ok_or_else(invalid)?,
+        sequence,
+    })
+}
+
 #[derive(Args, Clone, Debug, Default)]
 #[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
 pub struct MftOptions {
@@ -445,6 +489,30 @@ pub struct MftOptions {
     #[arg(help_heading = Some("CSV Output"), long, value_name = "DATE", value_parser = crate::mft_csv::parse_cutoff, display_order = 402)]
     pub cutoff: Option<i64>,
 
+    /// Recover the file names left in the slack of FILE records (past their attributes): rows marked FromSlack, or slack_file_names in JSON
+    #[arg(help_heading = Some("Records"), short = 'x', long, display_order = 450)]
+    pub recover_slack: bool,
+
+    /// Include resident $DATA (the content of small files and of alternate data streams such as Zone.Identifier) in the CSV
+    #[arg(help_heading = Some("Resident Data"), short = 'i', long, display_order = 500)]
+    pub include_resident_data: bool,
+
+    /// With -i: only files with these extensions (ex: ps1,bat,vbs,js)
+    #[arg(help_heading = Some("Resident Data"), short = 'E', long, value_name = "EXT", value_delimiter = ',', requires = "include_resident_data", display_order = 501)]
+    pub resident_extensions: Vec<String>,
+
+    /// With -i: only resident data of at most this many bytes
+    #[arg(help_heading = Some("Resident Data"), short = 'M', long, value_name = "BYTES", requires = "include_resident_data", display_order = 502)]
+    pub resident_max_size: Option<u64>,
+
+    /// Show one entry in full detail: header, every attribute, data runs, slack and the record's bytes (ex: 624, 0x270, 624-5)
+    #[arg(help_heading = Some("Inspection"), short = 'D', long, value_name = "ENTRY", value_parser = parse_entry_spec, conflicts_with = "list_directory", display_order = 600)]
+    pub dump_entry: Option<EntrySpec>,
+
+    /// List the contents of a directory, in use and deleted (ex: 5, 624-5, \Windows\System32)
+    #[arg(help_heading = Some("Inspection"), short = 'L', long, value_name = "ENTRY|PATH", display_order = 601)]
+    pub list_directory: Option<String>,
+
     #[clap(flatten)]
     pub common: CommonOptions,
 }
@@ -456,12 +524,25 @@ impl MftOptions {
             all_times: self.all_times,
             short_names: self.short_names,
             cutoff: self.cutoff,
+            recover_slack: self.recover_slack,
+            resident: self.include_resident_data.then(|| {
+                crate::mft_csv::ResidentFilter::new(
+                    &self.resident_extensions,
+                    self.resident_max_size,
+                )
+            }),
         }
     }
 
     /// Whether an option of the CSV is given.
     pub fn has_csv_options(&self) -> bool {
-        self.all_times || self.short_names || self.cutoff.is_some()
+        self.all_times || self.short_names || self.cutoff.is_some() || self.include_resident_data
+    }
+
+    /// Whether an inspection option (`-D`, `-L`) is given: one entry or directory shown, nothing
+    /// saved.
+    pub fn inspects(&self) -> bool {
+        self.dump_entry.is_some() || self.list_directory.is_some()
     }
 
     pub fn output_type(&self) -> MftOutputType {
@@ -1441,6 +1522,19 @@ mod tests {
         assert!(parse(&["-d", "evidence", "-o", "results", "-T", "0"]).is_err());
         assert!(parse(&["-d", "evidence", "-o", "results", "-j", "4"]).is_err());
         assert!(parse(&["-d", "evidence", "-o", "results", "--max-depth", "101"]).is_err());
+    }
+
+    #[test]
+    fn entry_specs() {
+        let spec = |entry, sequence| Ok(EntrySpec { entry, sequence });
+        assert_eq!(parse_entry_spec("624"), spec(624, None));
+        assert_eq!(parse_entry_spec("0x270"), spec(624, None));
+        assert_eq!(parse_entry_spec("624-5"), spec(624, Some(5)));
+        assert_eq!(parse_entry_spec("0x270-0x5"), spec(624, Some(5)));
+        for bad in ["", "abc", "5-", "-5", "5-70000", "\\Windows", "1-2-3"] {
+            assert!(parse_entry_spec(bad).is_err(), "{bad}");
+        }
+        assert_eq!(parse_entry_spec("624-5").unwrap().to_string(), "624-5");
     }
 
     #[test]

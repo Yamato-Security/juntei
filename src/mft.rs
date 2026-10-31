@@ -23,6 +23,9 @@ const MAX_PRINTED_ERRORS: usize = 10;
 
 /// Run the command; returns the exit status.
 pub fn run(opts: &MftOptions) -> i32 {
+    if opts.inspects() {
+        return crate::mft_inspect::run(opts);
+    }
     let no_color = opts.common.no_color;
     let data_on_stdout = opts.data_on_stdout();
     let report_error = |bar: Option<&ProgressBar>, msg: &str| {
@@ -72,7 +75,14 @@ pub fn run(opts: &MftOptions) -> i32 {
     if opts.has_csv_options() && opts.output_type() != MftOutputType::Csv {
         report_error(
             None,
-            "--all-times, --short-names and --cutoff are options of the CSV output (-t csv).",
+            "--all-times, --short-names, --cutoff and --include-resident-data are options of the CSV output (-t csv). The JSON and JSONL output always has the resident data (in hexadecimal).",
+        );
+        return 1;
+    }
+    if opts.recover_slack && opts.output_type() == MftOutputType::YsMftParserCsv {
+        report_error(
+            None,
+            "--recover-slack adds rows to the CSV (-t csv) and slack_file_names to JSON and JSONL; ys-mft-parser-csv has one row per entry.",
         );
         return 1;
     }
@@ -180,7 +190,10 @@ pub fn run(opts: &MftOptions) -> i32 {
             (None, true) => Some(Box::new(BufWriter::new(io::stdout()))),
             (None, false) => None,
         };
-        let mut writer = match sink.map(|w| EntryWriter::new(w, output_type)).transpose() {
+        let mut writer = match sink
+            .map(|w| EntryWriter::new(w, output_type, &opts.csv_options()))
+            .transpose()
+        {
             Ok(w) => w,
             Err(e) => {
                 report_error(bar.as_ref(), &format!("Could not write the header: {e}"));
@@ -219,7 +232,7 @@ pub fn run(opts: &MftOptions) -> i32 {
 
     // --- summary ---------------------------------------------------------------------------
     if !data_on_stdout {
-        print_summary(&stats, no_color);
+        print_summary(&stats, no_color, opts.recover_slack);
         if let Some(dir) = &opts.extract {
             p_label(
                 no_color,
@@ -268,6 +281,10 @@ fn parse_one(
         std::fs::create_dir_all(dir)?;
     }
     let count = parser.get_entry_count();
+    // The CSV finds the names in slack when it writes its rows; JSON (and the summary without an
+    // output) here, with whether a file in use has the same name.
+    let names_in_use = (opts.recover_slack && !matches!(writer, Some(EntryWriter::Csv(_))))
+        .then(|| crate::mft_csv::NamesInUse::of(&mut parser));
     let ids: Box<dyn Iterator<Item = u64>> = match &opts.ranges {
         Some(r) => Box::new(r.0.clone().into_iter().flatten()),
         None => Box::new(0..count),
@@ -311,19 +328,35 @@ fn parse_one(
             stats.streams +=
                 extract_resident_streams(&entry, &extensions, &path.to_string_lossy(), dir)?;
         }
+        let slack = names_in_use.as_ref().map(|names| {
+            let found = crate::mft_csv::slack_names(&entry, id);
+            let mut names_found = found.clone().unwrap_or_default();
+            for name in &mut names_found {
+                name.copy_of_entry_in_use = names.has(name);
+            }
+            stats.slack += names_found.len() as u64;
+            stats.slack_copies += names_found
+                .iter()
+                .filter(|n| n.copy_of_entry_in_use)
+                .count() as u64;
+            (names_found, found.err())
+        });
         if let Some(w) = writer.as_deref_mut() {
-            w.write(&entry, full_path, &row)?;
+            w.write(&entry, full_path, &row, slack)?;
         }
     }
     if let Some(EntryWriter::Csv(w)) = writer {
-        stats.csv_rows += crate::mft_csv::write(
+        let written = crate::mft_csv::write(
             &mut parser,
             &path.to_string_lossy(),
-            opts.csv_options(),
+            &opts.csv_options(),
             opts.ranges.as_ref(),
             w,
             bar,
         )?;
+        stats.csv_rows += written.rows;
+        stats.slack += written.slack;
+        stats.slack_copies += written.slack_copies;
     }
     if printed < stats.unreadable && stats.unreadable > MAX_PRINTED_ERRORS {
         report_error(
@@ -347,11 +380,15 @@ enum EntryWriter {
 }
 
 impl EntryWriter {
-    fn new(w: Box<dyn Write>, output_type: MftOutputType) -> io::Result<Self> {
+    fn new(
+        w: Box<dyn Write>,
+        output_type: MftOutputType,
+        options: &crate::mft_csv::Options,
+    ) -> io::Result<Self> {
         Ok(match output_type {
             MftOutputType::Csv => {
                 let mut csv = csv::Writer::from_writer(w);
-                csv.write_record(crate::mft_csv::CSV_HEADER)
+                csv.write_record(crate::mft_csv::header(options))
                     .map_err(io::Error::other)?;
                 EntryWriter::Csv(Box::new(csv))
             }
@@ -363,23 +400,35 @@ impl EntryWriter {
         })
     }
 
-    /// ys-mft-parser's formats: a CSV row per entry, or the entry and its full path as JSON (pretty,
-    /// newline-separated) or as one JSON line.
+    /// ys-mft-parser's formats: a CSV row per entry, or the entry and its full path (and with
+    /// `--recover-slack`, the names in its slack) as JSON (pretty, newline-separated) or as one
+    /// JSON line.
     fn write(
         &mut self,
         entry: &MftEntry,
         full_path: Option<PathBuf>,
         row: &FlatMftEntryWithName,
+        slack: Option<(Vec<crate::mft_csv::SlackName>, Option<String>)>,
     ) -> io::Result<()> {
+        let (slack_file_names, slack_problem) = match slack {
+            Some((names, problem)) => (Some(names), problem),
+            None => (None, None),
+        };
+        let json = JsonEntry {
+            full_path,
+            entry,
+            slack_file_names,
+            slack_problem,
+        };
         match self {
             EntryWriter::Csv(_) => Ok(()),
             EntryWriter::YsMftParserCsv(w) => w.serialize(row).map_err(io::Error::other),
             EntryWriter::Json(w) => {
-                serde_json::to_writer_pretty(&mut *w, &JsonEntry { full_path, entry })?;
+                serde_json::to_writer_pretty(&mut *w, &json)?;
                 w.write_all(b"\n")
             }
             EntryWriter::Jsonl(w) => {
-                serde_json::to_writer(&mut *w, &JsonEntry { full_path, entry })?;
+                serde_json::to_writer(&mut *w, &json)?;
                 w.write_all(b"\n")
             }
         }
@@ -393,13 +442,20 @@ impl EntryWriter {
     }
 }
 
-/// One JSON entry as `ys-mft-parser` writes it: the entry with its full path (`\` separators).
+/// One JSON entry as `ys-mft-parser` writes it: the entry with its full path (`\` separators);
+/// with `--recover-slack`, the file names in its slack (their offsets in the $MFT), or why its
+/// slack was not read.
 #[derive(Serialize)]
-struct JsonEntry<'a> {
+pub(crate) struct JsonEntry<'a> {
     #[serde(serialize_with = "mft::serialize_option_windows_path")]
-    full_path: Option<PathBuf>,
+    pub(crate) full_path: Option<PathBuf>,
     #[serde(flatten)]
-    entry: &'a MftEntry,
+    pub(crate) entry: &'a MftEntry,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) slack_file_names: Option<Vec<crate::mft_csv::SlackName>>,
+    /// Why the record's slack was not read: its sizes and attributes don't say where it starts.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) slack_problem: Option<String>,
 }
 
 /// Whether `entry` is one of the extension records that its base entry's `$ATTRIBUTE_LIST` leads
@@ -488,6 +544,10 @@ struct Stats {
     empty: usize,
     unreadable: usize,
     streams: usize,
+    /// `--recover-slack`: names found in the slack of FILE records, and how many of those a file
+    /// in use has.
+    slack: u64,
+    slack_copies: u64,
 }
 
 impl Stats {
@@ -513,7 +573,7 @@ impl Stats {
     }
 }
 
-fn print_summary(s: &Stats, no_color: bool) {
+fn print_summary(s: &Stats, no_color: bool, recover_slack: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
     p(None, "", true);
     let mut parsed = fmt_num(s.files_parsed);
@@ -556,6 +616,19 @@ fn print_summary(s: &Stats, no_color: bool) {
         ),
     );
     p_label(no_color, "Empty entries (skipped): ", &fmt_num(s.empty));
+    if recover_slack {
+        let total = usize::try_from(s.slack).unwrap_or(usize::MAX);
+        let copies = usize::try_from(s.slack_copies).unwrap_or(usize::MAX);
+        p_label(
+            no_color,
+            "File names in FILE record slack: ",
+            &format!(
+                "{} ({} that no file in use has)",
+                fmt_num(total),
+                fmt_num(total - copies)
+            ),
+        );
+    }
     if s.csv_rows > 0 {
         p_label(
             no_color,
