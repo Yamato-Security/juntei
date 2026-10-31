@@ -1208,6 +1208,21 @@ fn mft_slack_provenance_and_damage() {
         );
     }
 
+    // The source is the record's place in the $MFT, where SlackOffset points, whatever its own
+    // record number field says.
+    let renumbered = changed_mft(dir.path(), "renumbered.MFT", |d| {
+        d[28 * 1024 + 0x2C..28 * 1024 + 0x30].copy_from_slice(&999u32.to_le_bytes());
+    });
+    let rows = export(&renumbered, &["-r", "28"]);
+    for (name, offset) in [("setuperr.log", "29208"), ("twunk_32.exe", "29328")] {
+        let row = slack(&rows, name);
+        assert_eq!(
+            (row["SlackRecord"].as_str(), row["SlackOffset"].as_str()),
+            ("28", offset),
+            "{name}"
+        );
+    }
+
     // A record written in part: its slack rows say so too.
     let torn = changed_mft(dir.path(), "torn.MFT", |d| d[28 * 1024 + 510] ^= 0xFF);
     let rows = export(&torn, &["-r", "28"]);

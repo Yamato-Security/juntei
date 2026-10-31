@@ -268,7 +268,8 @@ pub type SlackName = mft_slack::i30::IndexEntry;
 /// A file name found in slack, with where it was found.
 #[derive(Clone, Debug)]
 struct Slack {
-    /// The FILE record whose slack held it (an extension record's own number, after merging).
+    /// The FILE record whose slack held it, by its place in the $MFT (an extension record's own,
+    /// after merging).
     record: u64,
     /// The name, its offset in the $MFT.
     name: SlackName,
@@ -407,10 +408,12 @@ impl Record {
                 Ok(names) => {
                     // The record's problems so far concern the bytes the names come from.
                     let problems = record.errors.join("; ");
+                    // The record's place in the $MFT, where the names' offsets are: its own
+                    // number field (0x2C) can be damaged or altered.
                     record.slack = names
                         .into_iter()
                         .map(|name| Slack {
-                            record: number,
+                            record: position,
                             name,
                             problems: problems.clone(),
                         })
