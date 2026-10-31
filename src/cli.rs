@@ -261,9 +261,9 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, default_value_t = AutoOutputType::Csv, hide_possible_values = true, display_order = 201)]
     pub output_type: AutoOutputType,
 
-    /// For JSON/JSONL, create one all-artifacts file instead of per-artifact data files
-    #[arg(help_heading = Some("Output"), short = 's', long, display_order = 202)]
-    pub single_file: bool,
+    /// Create a single JSONL timeline to import into a SIEM
+    #[arg(help_heading = Some("Output"), short = 'j', long, value_name = "FILE", display_order = 202)]
+    pub json_timeline: Option<PathBuf>,
 
     /// Overwrite outputs in an existing directory (never deletes unrelated files)
     #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 203)]
@@ -1709,7 +1709,7 @@ mod tests {
         assert_eq!(options.max_depth, 10);
         assert_eq!(options.output_type, AutoOutputType::Csv);
         assert_eq!(options.threads, None);
-        assert!(!options.single_file);
+        assert_eq!(options.json_timeline, None);
         assert!(!options.extract_defender_quarantined);
 
         let options = parse(&[
@@ -1719,7 +1719,8 @@ mod tests {
             "results",
             "-t",
             "jsonl",
-            "-s",
+            "-j",
+            "timeline.jsonl",
             "-T",
             "4",
             "-x",
@@ -1730,13 +1731,30 @@ mod tests {
         assert_eq!(options.output_type, AutoOutputType::Jsonl);
         assert_eq!(options.threads, Some(4));
         assert_eq!(options.max_depth, 20);
-        assert!(options.single_file);
+        assert_eq!(options.json_timeline, Some(PathBuf::from("timeline.jsonl")));
         assert!(options.extract_defender_quarantined);
 
         assert!(parse(&["-d", "evidence"]).is_err());
         assert!(parse(&["-o", "results"]).is_err());
         assert!(parse(&["-d", "evidence", "-o", "results", "-T", "0"]).is_err());
-        assert!(parse(&["-d", "evidence", "-o", "results", "-j", "4"]).is_err());
+        assert!(parse(&["-d", "evidence", "-o", "results", "-j"]).is_err());
+        assert!(parse(&["-d", "evidence", "-o", "results", "-s"]).is_err());
+        assert!(parse(&["-d", "evidence", "-o", "results", "--single-file"]).is_err());
+        for mode in ["csv", "json", "jsonl"] {
+            assert!(
+                parse(&[
+                    "-d",
+                    "evidence",
+                    "-o",
+                    "results",
+                    "-t",
+                    mode,
+                    "--json-timeline",
+                    "siem.jsonl"
+                ])
+                .is_ok()
+            );
+        }
         assert!(parse(&["-d", "evidence", "-o", "results", "--max-depth", "101"]).is_err());
     }
 

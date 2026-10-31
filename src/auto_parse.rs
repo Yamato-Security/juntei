@@ -21,6 +21,8 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
+mod timeline;
+
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
 const CATEGORIES: &[&str] = &[
@@ -78,6 +80,8 @@ enum OutputShape {
 struct Task {
     computer: String,
     artifact: &'static str,
+    output_type: AutoOutputType,
+    timeline_only: bool,
     input_bytes: u64,
     args: Vec<OsString>,
     output: PathBuf,
@@ -108,6 +112,8 @@ struct TaskResult {
     computer: String,
     artifact: String,
     category: &'static str,
+    output_type: &'static str,
+    purpose: &'static str,
     status: TaskStatus,
     duration_ms: u128,
     exit_code: Option<i32>,
@@ -136,7 +142,8 @@ struct Manifest<'a> {
     evidence_directory: String,
     output_directory: String,
     output_type: &'static str,
-    single_file: bool,
+    json_timeline: Option<String>,
+    json_timeline_error: Option<String>,
     extract_defender_quarantined: bool,
     threads: usize,
     max_depth: usize,
@@ -146,6 +153,8 @@ struct Manifest<'a> {
 
 struct DataFile {
     path: PathBuf,
+    output_type: AutoOutputType,
+    artifact: &'static str,
 }
 
 /// Run the command; returns the exit status.
@@ -174,13 +183,6 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             return 1;
         }
     };
-    if opts.single_file && !opts.output_type.is_json() {
-        error_msg(
-            no_color,
-            "-s, --single-file can only be used with -t json or -t jsonl.",
-        );
-        return 1;
-    }
     if let Err(msg) = output_separate_from_evidence(&evidence, &opts.output) {
         error_msg(no_color, &msg);
         return 1;
@@ -218,6 +220,18 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         }
     }
     assign_output_folders(&mut hosts);
+    let json_timeline = match opts
+        .json_timeline
+        .as_deref()
+        .map(|path| timeline::validate(path, &evidence, &opts.output, &hosts, opts.clobber))
+        .transpose()
+    {
+        Ok(path) => path,
+        Err(msg) => {
+            error_msg(no_color, &msg);
+            return 1;
+        }
+    };
 
     if let Err(e) = fs::create_dir_all(&opts.output) {
         error_msg(
@@ -226,30 +240,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         );
         return 1;
     }
-    let work = if opts.single_file {
-        match unused_child(
-            &opts.output,
-            &format!("{WORK_DIR_PREFIX}{}", std::process::id()),
-        ) {
-            Ok(path) => path,
-            Err(e) => {
-                error_msg(
-                    no_color,
-                    &format!("Could not choose a temporary output directory: {e}"),
-                );
-                return 1;
-            }
-        }
-    } else {
-        opts.output.clone()
-    };
-    if let Err(e) = fs::create_dir_all(&work) {
-        error_msg(
-            no_color,
-            &format!("Could not create {}: {e}", work.display()),
-        );
-        return 1;
-    }
+    let work = opts.output.clone();
 
     let executable = match std::env::current_exe() {
         Ok(path) => path,
@@ -261,7 +252,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             return 1;
         }
     };
-    let tasks = match build_tasks(&hosts, opts, &work) {
+    let mut tasks = match build_tasks(&hosts, opts, &work) {
         Ok(tasks) => tasks,
         Err(e) => {
             error_msg(
@@ -270,6 +261,41 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             );
             return 1;
         }
+    };
+    // CSV columns can omit nested forensic data. Use native JSONL for the SIEM export instead
+    // of coercing CSV cells back into JSON. JSON/JSONL outputs can be reused directly.
+    let timeline_work = if json_timeline.is_some() && opts.output_type == AutoOutputType::Csv {
+        let prepared = (|| -> io::Result<PathBuf> {
+            let path = unused_child(
+                &opts.output,
+                &format!("{WORK_DIR_PREFIX}{}", std::process::id()),
+            )?;
+            fs::create_dir_all(&path)?;
+            let mut json_opts = opts.clone();
+            json_opts.output_type = AutoOutputType::Jsonl;
+            json_opts.extract_defender_quarantined = false;
+            let mut extra = build_tasks(&hosts, &json_opts, &path)?;
+            for task in &mut extra {
+                task.timeline_only = true;
+                let name = task.log.file_stem().unwrap_or_default().to_string_lossy();
+                task.log.set_file_name(format!("{name}-json-timeline.txt"));
+            }
+            tasks.extend(extra);
+            prioritize_long_tasks(&mut tasks);
+            Ok(path)
+        })();
+        match prepared {
+            Ok(path) => Some(path),
+            Err(e) => {
+                error_msg(
+                    no_color,
+                    &format!("Could not prepare JSONL timeline tasks: {e}"),
+                );
+                return 1;
+            }
+        }
+    } else {
+        None
     };
     if opts.clobber
         && let Err(e) = clear_generated_outputs(&tasks, &work)
@@ -290,16 +316,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         return 1;
     }
     if opts.clobber {
-        let mut root_files = vec![
+        let root_files = [
             opts.output.join("manifest.json"),
             opts.output.join("manifest.csv"),
         ];
-        if opts.single_file {
-            root_files.push(
-                opts.output
-                    .join(format!("all-artifacts.{}", opts.output_type.as_str())),
-            );
-        }
         for path in root_files {
             if let Err(e) = remove_generated_file(&path) {
                 error_msg(
@@ -347,12 +367,12 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     let mut results = run_tasks(&tasks, &executable, threads, &bar);
     bar.finish_with_message(progress::finished_message(no_color));
     let mut data_files = Vec::new();
-    if opts.output_type.is_json() {
+    {
         for (task, result) in tasks.iter().zip(&mut results) {
-            if result.status != TaskStatus::Succeeded {
+            if !task.output_type.is_json() || result.status != TaskStatus::Succeeded {
                 continue;
             }
-            let files = json_files(&task.output, opts.output_type);
+            let files = json_files(&task.output, task.output_type);
             if files.is_empty() {
                 result.status = TaskStatus::Failed;
                 result.error = Some("the parser succeeded but produced no JSON data file".into());
@@ -361,7 +381,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             let mut annotated = Vec::new();
             for path in files {
                 if let Err(e) =
-                    annotate_json_file(&path, &task.computer, task.artifact, opts.output_type)
+                    annotate_json_file(&path, &task.computer, task.artifact, task.output_type)
                 {
                     result.status = TaskStatus::Failed;
                     result.output = None;
@@ -371,7 +391,11 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                     ));
                     break;
                 }
-                annotated.push(DataFile { path });
+                annotated.push(DataFile {
+                    path,
+                    output_type: task.output_type,
+                    artifact: task.artifact,
+                });
             }
             if result.status == TaskStatus::Succeeded {
                 data_files.extend(annotated);
@@ -380,57 +404,50 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     }
 
     let mut combined = None;
-    if opts.single_file {
-        let name = format!("all-artifacts.{}", opts.output_type.as_str());
-        let path = opts.output.join(name);
-        match consolidate(&data_files, &path, opts.output_type) {
+    let mut json_timeline_error = None;
+    if let Some(path) = &json_timeline {
+        match timeline::write(&data_files, path, opts.clobber) {
             Ok(()) => {
                 combined = Some(path.clone());
-                let parser_failed = results
-                    .iter()
-                    .any(|result| result.status == TaskStatus::Failed);
-                if !parser_failed
-                    && temporary_work_directory(&opts.output, &work)
-                    && let Err(e) = fs::remove_dir_all(&work)
-                {
-                    error_msg(
-                        no_color,
-                        &format!(
-                            "Could not remove temporary parser outputs {}: {e}",
-                            work.display()
-                        ),
-                    );
-                    return 1;
-                }
-                if parser_failed {
-                    p(
-                        JunteiColor::Orange.rdg(no_color),
-                        &format!(
-                            "Temporary parser outputs were kept in {} because at least one parser failed.",
-                            work.display()
-                        ),
-                        true,
-                    );
-                }
-                for result in &mut results {
-                    if result.status == TaskStatus::Succeeded {
+                // Keep the primary result paths: the timeline is an additional output.
+                for (task, result) in tasks.iter().zip(&mut results) {
+                    if task.timeline_only && result.status == TaskStatus::Succeeded {
                         result.output = Some(path.to_string_lossy().to_string());
                     }
                 }
             }
             Err(e) => {
-                error_msg(
-                    no_color,
-                    &format!("Could not create {}: {e}", path.display()),
-                );
-                error_msg(
-                    no_color,
-                    &format!("Temporary parser outputs were kept in {}.", work.display()),
-                );
-                return 1;
+                let msg = format!("Could not create JSONL timeline {}: {e}", path.display());
+                error_msg(no_color, &msg);
+                json_timeline_error = Some(msg);
             }
         }
     }
+    if let Some(path) = &timeline_work {
+        if json_timeline_error.is_none() && !results.iter().any(|r| r.status == TaskStatus::Failed)
+        {
+            if temporary_work_directory(&opts.output, path)
+                && let Err(e) = fs::remove_dir_all(path)
+            {
+                let msg = format!(
+                    "Could not remove temporary JSONL outputs {}: {e}",
+                    path.display()
+                );
+                error_msg(no_color, &msg);
+                json_timeline_error = Some(msg);
+            }
+        } else {
+            p(
+                JunteiColor::Orange.rdg(no_color),
+                &format!(
+                    "Temporary JSONL outputs were kept in {} because a parser or timeline export failed.",
+                    path.display()
+                ),
+                true,
+            );
+        }
+    }
+    let timeline_failed = json_timeline_error.is_some();
 
     let manifest = Manifest {
         generated_utc: Utc::now().to_rfc3339(),
@@ -438,7 +455,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         evidence_directory: evidence.to_string_lossy().to_string(),
         output_directory: opts.output.to_string_lossy().to_string(),
         output_type: opts.output_type.as_str(),
-        single_file: opts.single_file,
+        json_timeline: json_timeline
+            .as_ref()
+            .map(|p| p.to_string_lossy().to_string()),
+        json_timeline_error,
         extract_defender_quarantined: opts.extract_defender_quarantined,
         threads,
         max_depth: opts.max_depth,
@@ -498,7 +518,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         ),
     );
     if let Some(path) = combined {
-        p_label(no_color, "Combined data: ", &path.to_string_lossy());
+        p_label(no_color, "JSONL timeline: ", &path.to_string_lossy());
     }
     if failed > 0 {
         for result in results.iter().filter(|r| r.status == TaskStatus::Failed) {
@@ -517,7 +537,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     }
     p(None, "", true);
 
-    i32::from(failed > 0 || succeeded == 0)
+    i32::from(failed > 0 || succeeded == 0 || timeline_failed)
 }
 
 fn discover_hosts(input: &Path, max_depth: usize) -> io::Result<Vec<Host>> {
@@ -812,6 +832,8 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                 tasks.push(Task {
                     computer: host.computer.clone(),
                     artifact,
+                    output_type: opts.output_type,
+                    timeline_only: false,
                     input_bytes: inputs.sizes.get(artifact).copied().unwrap_or(0),
                     args,
                     output,
@@ -1101,6 +1123,8 @@ fn add_file_artifact_tasks(
         tasks.push(Task {
             computer: host.computer.clone(),
             artifact,
+            output_type: opts.output_type,
+            timeline_only: false,
             input_bytes,
             args,
             output,
@@ -1275,6 +1299,12 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
         computer: task.computer.clone(),
         artifact: task.artifact.to_string(),
         category: artifact_category(task.artifact),
+        output_type: task.output_type.as_str(),
+        purpose: if task.timeline_only {
+            "json_timeline"
+        } else {
+            "artifact"
+        },
         status: if error.is_some() && status != TaskStatus::Skipped {
             TaskStatus::Failed
         } else {
@@ -1409,7 +1439,10 @@ fn annotate_jsonl(
             continue;
         }
         serde_json::from_slice::<IgnoredAny>(value).map_err(io::Error::other)?;
-        if value.first() == Some(&b'{') && value.last() == Some(&b'}') {
+        let contains_provenance = [b"\"Computer\"".as_slice(), b"\"Artifact\"".as_slice()]
+            .iter()
+            .any(|key| value.windows(key.len()).any(|window| window == *key));
+        if value.first() == Some(&b'{') && value.last() == Some(&b'}') && !contains_provenance {
             writer.write_all(&prefix)?;
             let inner = &value[1..value.len() - 1];
             if inner.iter().any(|byte| !byte.is_ascii_whitespace()) {
@@ -1449,36 +1482,6 @@ fn annotate_value(value: &mut Value, computer: &str, artifact: &str) {
         object.insert("Data".to_string(), data);
         *value = Value::Object(object);
     }
-}
-
-fn consolidate(files: &[DataFile], output: &Path, output_type: AutoOutputType) -> io::Result<()> {
-    let out = File::create(output)?;
-    let mut writer = BufWriter::new(out);
-    let mut first = true;
-    if output_type == AutoOutputType::Json {
-        writer.write_all(b"[\n")?;
-    }
-    let mut ordered: Vec<&Path> = files.iter().map(|f| f.path.as_path()).collect();
-    ordered.sort();
-    for path in ordered {
-        let mut input = BufReader::new(File::open(path)?);
-        if output_type == AutoOutputType::Jsonl {
-            io::copy(&mut input, &mut writer)?;
-            continue;
-        }
-        for value in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
-            let value = value.map_err(io::Error::other)?;
-            if !first {
-                writer.write_all(b",\n")?;
-            }
-            serde_json::to_writer_pretty(&mut writer, &value).map_err(io::Error::other)?;
-            first = false;
-        }
-    }
-    if output_type == AutoOutputType::Json {
-        writer.write_all(b"\n]\n")?;
-    }
-    writer.flush()
 }
 
 fn unused_sibling(path: &Path, label: &str) -> io::Result<PathBuf> {
@@ -1569,6 +1572,8 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "EvidenceRoot",
         "Artifact",
         "Category",
+        "OutputType",
+        "Purpose",
         "Status",
         "DurationMs",
         "ExitCode",
@@ -1590,6 +1595,8 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             host.map_or_else(String::new, |host| host.evidence_root.clone()),
             task.artifact.clone(),
             task.category.to_string(),
+            task.output_type.to_string(),
+            task.purpose.to_string(),
             task.status.as_str().to_string(),
             task.duration_ms.to_string(),
             task.exit_code
@@ -1803,22 +1810,40 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let one = dir.path().join("one.jsonl");
         let two = dir.path().join("two.jsonl");
-        fs::write(&one, "{\"value\":1}\n").unwrap();
+        fs::write(
+            &one,
+            "{\"Computer\":\"WRONG\",\"Artifact\":\"wrong\",\"value\":1}\n",
+        )
+        .unwrap();
         fs::write(&two, "[1,2]\n").unwrap();
         annotate_json_file(&one, "HOST1", "mft", AutoOutputType::Jsonl).unwrap();
         annotate_json_file(&two, "HOST2", "usn-journal", AutoOutputType::Jsonl).unwrap();
         let first: Value = serde_json::from_str(&fs::read_to_string(&one).unwrap()).unwrap();
         assert_eq!(first["Computer"], "HOST1");
         assert_eq!(first["Artifact"], "mft");
+        let text = fs::read_to_string(&one).unwrap();
+        assert_eq!(text.matches("\"Computer\"").count(), 1);
+        assert_eq!(text.matches("\"Artifact\"").count(), 1);
         let wrapped: Value = serde_json::from_str(&fs::read_to_string(&two).unwrap()).unwrap();
         assert_eq!(wrapped["Computer"], "HOST2");
         assert_eq!(wrapped["Data"], serde_json::json!([1, 2]));
 
         let combined = dir.path().join("all.jsonl");
-        consolidate(
-            &[DataFile { path: one }, DataFile { path: two }],
+        timeline::write(
+            &[
+                DataFile {
+                    path: one,
+                    output_type: AutoOutputType::Jsonl,
+                    artifact: "mft",
+                },
+                DataFile {
+                    path: two,
+                    output_type: AutoOutputType::Jsonl,
+                    artifact: "usn-journal",
+                },
+            ],
             &combined,
-            AutoOutputType::Jsonl,
+            false,
         )
         .unwrap();
         let lines: Vec<Value> = fs::read_to_string(combined)
@@ -1832,7 +1857,7 @@ mod tests {
     }
 
     #[test]
-    fn annotates_and_consolidates_json_array() {
+    fn annotates_and_exports_pretty_json_as_jsonl() {
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("source.json");
         fs::write(&source, "{\n  \"z_field\": 7,\n  \"a_field\": 8\n}\n").unwrap();
@@ -1842,14 +1867,22 @@ mod tests {
             .map(|field| annotated.find(field).unwrap())
             .into();
         assert!(positions.windows(2).all(|pair| pair[0] < pair[1]));
-        let combined = dir.path().join("all.json");
-        consolidate(
-            &[DataFile { path: source }],
+        let combined = dir.path().join("all.jsonl");
+        timeline::write(
+            &[DataFile {
+                path: source,
+                output_type: AutoOutputType::Json,
+                artifact: "registry",
+            }],
             &combined,
-            AutoOutputType::Json,
+            false,
         )
         .unwrap();
-        let values: Vec<Value> = serde_json::from_reader(File::open(combined).unwrap()).unwrap();
+        let values: Vec<Value> = fs::read_to_string(combined)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
         assert_eq!(values.len(), 1);
         assert_eq!(values[0]["Computer"], "HOST1");
         assert_eq!(values[0]["Artifact"], "registry");
@@ -1907,6 +1940,8 @@ mod tests {
         let task = Task {
             computer: "HOST1".into(),
             artifact: "prefetch",
+            output_type: AutoOutputType::Csv,
+            timeline_only: false,
             input_bytes: 2048,
             args: Vec::new(),
             output: PathBuf::new(),
@@ -1957,6 +1992,8 @@ mod tests {
         let task = |computer: &str, artifact| Task {
             computer: computer.into(),
             artifact,
+            output_type: AutoOutputType::Csv,
+            timeline_only: false,
             input_bytes: 0,
             args: Vec::new(),
             output: PathBuf::new(),

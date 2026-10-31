@@ -419,6 +419,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     );
 
     let jsonl = output_root.path().join("jsonl");
+    let combined = jsonl.join("siem.jsonl");
     let r = run(&[
         "auto-parse",
         "-d",
@@ -427,14 +428,14 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         jsonl.to_str().unwrap(),
         "-t",
         "jsonl",
-        "-s",
+        "-j",
+        combined.to_str().unwrap(),
         "-T",
         "2",
         "-K",
         "-q",
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
-    let combined = jsonl.join("all-artifacts.jsonl");
     assert!(jsonl.join("manifest.csv").is_file());
     let values: Vec<Value> = std::fs::read_to_string(&combined)
         .unwrap()
@@ -457,9 +458,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .is_file()
     );
     assert!(
-        !jsonl
+        jsonl
             .join("HOST1/process_execution/prefetch.jsonl")
-            .exists()
+            .is_file()
     );
     assert!(std::fs::read_dir(&jsonl).unwrap().flatten().all(|entry| {
         !entry
@@ -527,6 +528,155 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
 }
 
 #[test]
+fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
+    let evidence = auto_triage();
+    let root = tempfile::tempdir().unwrap();
+    let mut previous = None;
+    for format in ["csv", "json", "jsonl"] {
+        let output = root.path().join(format);
+        // Include a space and a non-default destination outside the results directory.
+        let timeline = root.path().join(format!("SIEM export {format}.jsonl"));
+        let result = run(&[
+            "auto-parse",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            format,
+            "-j",
+            timeline.to_str().unwrap(),
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+        let records: Vec<Value> = std::fs::read_to_string(&timeline)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert!(!records.is_empty());
+        assert!(records.iter().all(|record| record["Computer"] == "HOST1"));
+        assert!(
+            records
+                .iter()
+                .any(|record| record["Artifact"] == "amcache" && record["record_type"] == "file")
+        );
+        assert!(records.iter().any(|record| record["Artifact"] == "srum"));
+        // Value equality ignores object key order but checks native types and nested fields.
+        if let Some(expected) = &previous {
+            assert_eq!(&records, expected, "{format} SIEM records changed");
+        }
+        previous = Some(records);
+        let manifest: Value =
+            serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+                .unwrap();
+        assert_eq!(
+            manifest["json_timeline"],
+            timeline.to_string_lossy().as_ref()
+        );
+        assert!(manifest["json_timeline_error"].is_null());
+        assert!(
+            output
+                .join("HOST1/process_execution/logs/prefetch.txt")
+                .is_file()
+        );
+        let extension = format!("HOST1/process_execution/prefetch.{format}");
+        assert!(output.join(extension).is_file());
+        let tasks = manifest["tasks"].as_array().unwrap();
+        if format == "csv" {
+            assert_eq!(
+                tasks
+                    .iter()
+                    .filter(|task| task["purpose"] == "json_timeline")
+                    .count(),
+                19
+            );
+            assert!(
+                output
+                    .join("HOST1/process_execution/logs/prefetch-json-timeline.txt")
+                    .is_file()
+            );
+            assert!(
+                output
+                    .join("HOST1/file_existence/amcache/Amcache_files.csv")
+                    .is_file()
+            );
+        } else {
+            assert!(tasks.iter().all(|task| task["purpose"] == "artifact"));
+        }
+        for task in tasks.iter().filter(|task| task["status"] == "succeeded") {
+            let path = Path::new(task["output"].as_str().unwrap());
+            assert!(path.exists(), "{task}");
+            if task["purpose"] == "json_timeline" {
+                assert_eq!(path, timeline);
+            }
+        }
+        assert!(std::fs::read_dir(&output).unwrap().flatten().all(|entry| {
+            !entry
+                .file_name()
+                .to_string_lossy()
+                .starts_with(".juntei-work-")
+        }));
+    }
+}
+
+#[test]
+fn auto_parse_timeline_rejects_collisions_before_changing_any_files() {
+    let evidence = auto_triage();
+    let root = tempfile::tempdir().unwrap();
+    let output = root.path().join("parsed");
+    let source = evidence
+        .path()
+        .join("HOST1_F.TEST/uploads/auto/C%3A/Windows/AppCompat/Programs/Amcache.hve");
+    let original = std::fs::read(&source).unwrap();
+    for target in [
+        source.clone(),
+        evidence.path().join("timeline.jsonl"),
+        output.clone(),
+        output.join("manifest.json"),
+        output.join("manifest.csv"),
+        output.join("HOST1/process_execution/prefetch.jsonl"),
+        output.join("HOST1/process_execution/logs/prefetch.txt"),
+        output.join(".juntei-work-custom/extra.jsonl"),
+    ] {
+        let result = run(&[
+            "auto-parse",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-j",
+            target.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+        assert_eq!(std::fs::read(&source).unwrap(), original);
+        assert!(!output.exists(), "{target:?} changed the output directory");
+    }
+    let existing = root.path().join("existing.jsonl");
+    std::fs::write(&existing, b"previous results\n").unwrap();
+    let result = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-j",
+        existing.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(result.code, 1);
+    assert_eq!(std::fs::read(existing).unwrap(), b"previous results\n");
+    assert!(!output.exists());
+}
+
+#[test]
 fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     let evidence = tempfile::tempdir().unwrap();
     let prefetch = evidence.path().join("HOST1/C/Windows/Prefetch");
@@ -536,14 +686,20 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
         b"not a prefetch file",
     )
     .unwrap();
+    let programs = evidence.path().join("HOST1/C/Windows/AppCompat/Programs");
+    std::fs::create_dir_all(&programs).unwrap();
+    std::fs::copy(repo(WIN10), programs.join("Amcache.hve")).unwrap();
     let root = tempfile::tempdir().unwrap();
     let output = root.path().join("parsed");
+    let timeline = output.join("partial.jsonl");
     let r = run(&[
         "auto-parse",
         "-d",
         evidence.path().to_str().unwrap(),
         "-o",
         output.to_str().unwrap(),
+        "-j",
+        timeline.to_str().unwrap(),
         "-T",
         "2",
         "-K",
@@ -551,17 +707,25 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 19);
+    assert_eq!(tasks.len(), 38);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
-        .find(|task| task["Artifact"] == "prefetch")
+        .find(|task| task["Artifact"] == "prefetch" && task["Purpose"] == "artifact")
         .unwrap();
     assert_eq!(failed["Status"], "failed");
     assert_eq!(failed["Category"], "process_execution");
     assert_eq!(failed["ExitCode"], "1");
     assert!(!failed["Error"].is_empty());
     assert!(Path::new(&failed["Log"]).is_file());
+    let records = json_documents(&std::fs::read_to_string(timeline).unwrap());
+    assert!(records.iter().any(|record| record["Artifact"] == "amcache"));
+    assert!(std::fs::read_dir(&output).unwrap().flatten().any(|entry| {
+        entry
+            .file_name()
+            .to_string_lossy()
+            .starts_with(".juntei-work-")
+    }));
 }
 
 #[test]
@@ -597,12 +761,15 @@ fn auto_parse_can_extract_defender_quarantined_files() {
     quarantine_host(evidence.path(), "HOST1_F.TEST");
     let output_root = tempfile::tempdir().unwrap();
     let output = output_root.path().join("parsed");
+    let timeline = output.join("siem.jsonl");
     let r = run(&[
         "auto-parse",
         "-d",
         evidence.path().to_str().unwrap(),
         "-o",
         output.to_str().unwrap(),
+        "-j",
+        timeline.to_str().unwrap(),
         "-x",
         "-T",
         "2",
@@ -644,6 +811,27 @@ fn auto_parse_can_extract_defender_quarantined_files() {
             .unwrap()
             .iter()
             .any(|argument| argument == "--extract")
+    );
+
+    let timeline_defender = manifest["tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|task| {
+            task["artifact"] == "defender-quarantine" && task["purpose"] == "json_timeline"
+        })
+        .unwrap();
+    assert!(
+        !timeline_defender["command"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|arg| arg == "--extract")
+    );
+    assert!(
+        json_documents(&std::fs::read_to_string(timeline).unwrap())
+            .iter()
+            .any(|record| record["Artifact"] == "defender-quarantine")
     );
 
     // A later clobber run also clears the reserved extraction directory of older versions.
@@ -696,6 +884,7 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
     std::fs::copy(repo(WIN10), amcache.join("Amcache.hve")).unwrap();
     let output_root = tempfile::tempdir().unwrap();
     let output = output_root.path().join("parsed");
+    let combined = output.join("timeline.jsonl");
     let r = run(&[
         "auto-parse",
         "-d",
@@ -704,7 +893,8 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
         output.to_str().unwrap(),
         "-t",
         "jsonl",
-        "--single-file",
+        "--json-timeline",
+        combined.to_str().unwrap(),
         "-T",
         "2",
         "-K",
@@ -726,7 +916,7 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
             .iter()
             .all(|host| host["hostname_source"] == "directory name")
     );
-    let records: Vec<Value> = std::fs::read_to_string(output.join("all-artifacts.jsonl"))
+    let records: Vec<Value> = std::fs::read_to_string(combined)
         .unwrap()
         .lines()
         .map(|line| serde_json::from_str(line).unwrap())

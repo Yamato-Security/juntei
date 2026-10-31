@@ -528,7 +528,7 @@ fn protects_input_mft_and_existing_outputs() {
 }
 
 #[test]
-fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
+fn auto_parse_outputs_and_jsonl_timeline_include_logfile_and_provenance() {
     let evidence = tempfile::tempdir().unwrap();
     let host = evidence.path().join("HOST1");
     std::fs::create_dir_all(host.join("C/Windows/System32")).unwrap();
@@ -538,9 +538,10 @@ fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
     // Both collected volumes must survive as separate outputs.
     unpack("go-ntfs/LogFile.gz", &host.join("D/$LogFile"));
     let root = tempfile::tempdir().unwrap();
-    for (format, folder, extra) in [("csv", "csv", vec![]), ("jsonl", "jsonl", vec!["-s"])] {
-        let out = root.path().join(folder);
-        let mut args = vec![
+    for format in ["csv", "json", "jsonl"] {
+        let out = root.path().join(format);
+        let combined = out.join("timeline.jsonl");
+        let args = vec![
             "auto-parse",
             "-d",
             evidence.path().to_str().unwrap(),
@@ -548,12 +549,13 @@ fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
             out.to_str().unwrap(),
             "-t",
             format,
+            "-j",
+            combined.to_str().unwrap(),
             "-T",
             "2",
             "-K",
             "-q",
         ];
-        args.extend(extra);
         let output = run(&args);
         assert!(
             output.status.success(),
@@ -567,7 +569,7 @@ fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
             .as_array()
             .unwrap()
             .iter()
-            .filter(|t| t["artifact"] == "logfile")
+            .filter(|t| t["artifact"] == "logfile" && t["purpose"] == "artifact")
             .collect();
         assert_eq!(tasks.len(), 2);
         assert!(tasks.iter().all(|t| t["status"] == "succeeded"));
@@ -584,8 +586,9 @@ fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
                     2129
                 );
             }
-        } else {
-            let data = std::fs::read_to_string(out.join("all-artifacts.jsonl")).unwrap();
+        }
+        {
+            let data = std::fs::read_to_string(combined).unwrap();
             let values: Vec<Value> = data
                 .lines()
                 .map(|l| serde_json::from_str(l).unwrap())

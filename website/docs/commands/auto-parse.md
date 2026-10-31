@@ -9,11 +9,11 @@ parallel.
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT>
 ```
 
-The default output is CSV. Use JSONL when the result will be queried with `jq` or ingested into a
-SIEM:
+The default output is CSV. Add a JSONL timeline for `jq` or SIEM import while keeping those CSV
+results:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -t jsonl -s
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 ```
 
 !!! warning "Keep the output and evidence trees separate"
@@ -150,7 +150,8 @@ job with its exact command and messages; for example,
 
 `manifest.json` records the original discovered `hostname`, the unique output/record `Computer`
 identity, hostname provenance, evidence paths, artifact `category`, command lines, duration, exit
-code, result path, log path, whether Defender extraction was requested, and whether each task
+code, result path, log path, the requested JSONL timeline and any export error, whether Defender extraction was requested,
+and whether each task
 succeeded, was skipped, or failed.
 
 The progress message shows the active computer and artifact followed by an approximate input
@@ -160,7 +161,9 @@ logs and enrichment files and do not predict the size of the parsed output.
 
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
 parser task. It includes `Computer`, original `Hostname`, `Fqdn`, `HostnameSource`, `EvidenceRoot`,
-`Artifact`, `Category`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`, `Error`, and `Command`.
+`Artifact`, `Category`, `OutputType`, `Purpose`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`,
+`Error`, and `Command`. `Purpose` is `artifact` for the categorized results or `json_timeline` for
+the additional native JSONL pass used with CSV. `OutputType` is the actual parser output format.
 `Command` is a JSON array of the executable and its arguments, preserving spaces and quoting.
 Filter `Status` to `skipped` or `failed` to find tasks requiring review; a skipped task's `Error`
 may be empty, with the explanation in its `Log` file.
@@ -187,27 +190,49 @@ Every JSON or JSONL record receives two top-level fields:
 - `Computer`: the source system.
 - `Artifact`: the Juntei parser that produced the record, such as `mft` or `prefetch-timeline`.
 
-Without `--single-file`, data remains organized by computer, category, and artifact. For example,
-`HOST1/process_execution/prefetch.jsonl` contains Prefetch records. With `--single-file`,
-Juntei streams all successful records into either `all-artifacts.json` or
-`all-artifacts.jsonl`. The per-parser data files are temporary; each computer's category directories
-and their `logs/` remain, along with both manifests. The combined dataset stays at the output root.
-
-JSONL is recommended for a large collection because each line can be processed independently:
+`-j, --json-timeline <FILE>` creates one additional JSONL file, regardless of the individual
+result format. All categorized outputs and their logs are retained:
 
 ```bash
-jq -c 'select(.Computer == "HOST1" and .Artifact == "prefetch")' \
-  parsed/all-artifacts.jsonl
+# Default CSV tables plus a SIEM timeline
+juntei auto-parse -d evidence -o parsed -j parsed/timeline.jsonl
+
+# Pretty JSON results plus a SIEM timeline
+juntei auto-parse -d evidence -o parsed-json -t json -j parsed-json/timeline.jsonl
+
+# Individual JSONL results plus a consolidated JSONL timeline
+juntei auto-parse -d evidence -o parsed-jsonl -t jsonl -j parsed-jsonl/timeline.jsonl
 ```
+
+The filename is used as supplied; relative paths are relative to the current working directory.
+It may be in the output root, another non-reserved output subdirectory, or outside the output
+directory. Evidence, manifests, per-computer results/logs, and temporary parser directories cannot
+be used as the destination. An existing file requires `-C`; a failed export leaves it intact.
+
+In **CSV mode**, Juntei performs an additional native JSONL pass so the SIEM file preserves
+numeric and boolean types, nested data, raw fields, and metadata that CSV tables can omit. The
+extra jobs share the same `-T` concurrency limit, do not extract quarantine contents again, and
+have separate `*-json-timeline.txt` category logs. Both manifests distinguish their purpose and
+output format. Temporary JSONL files are removed after a successful run; they are retained if a
+parser or export fails. Plan for the extra processing time and temporary disk space.
+
+In **JSON mode**, Juntei streams the existing results into compact JSONL without reparsing the
+evidence. Amcache reports are expanded into the same individual summary, finding, file, and device
+records as native JSONL. In **JSONL mode**, the existing annotated records are combined directly.
+All modes use the same SIEM record structure. The dataset keeps native timestamps and artifact
+fields; it does not invent a common event timestamp or globally sort heterogeneous artifacts.
 
 ```bash
-jq -r 'select(.Artifact == "mft") | .full_path? // empty' \
-  parsed/all-artifacts.jsonl
+jq -c 'select(.Computer == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
+jq -r 'select(.Artifact == "mft") | .full_path? // empty' parsed/timeline.jsonl
 ```
 
-Large `$MFT`, registry, and USN Journal collections can produce many gigabytes of output. Ensure
-there is enough free space for the final consolidated file and temporary per-parser files. If any
-parser fails, Juntei preserves the temporary directory for diagnosis instead of deleting it.
+`manifest.json` records the requested `json_timeline` path and any `json_timeline_error`. Its task
+records, and `manifest.csv`, still point to retained artifact outputs. Successful CSV timeline-only
+jobs reference the final JSONL file instead of deleted temporary files. If any parser fails, the
+run exits unsuccessfully and the timeline contains only successful results; inspect the manifests
+and category logs before treating it as complete. The file-count/size summary covers files inside
+the output directory; an external timeline is reported separately as `JSONL timeline: <FILE>`.
 
 ## Performance
 
@@ -222,6 +247,9 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Usage
 
 ```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
 Usage:
   juntei auto-parse -d <EVIDENCE> -o <OUTPUT> [OPTIONS]
 
@@ -230,18 +258,24 @@ Input:
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
 
 Output:
-  -o, --output <DIR>        New directory in which to create per-computer results
-  -t, --output-type <TYPE>  Output type: csv (default), json, or jsonl [default: csv]
-  -s, --single-file         For JSON/JSONL, create one all-artifacts file instead of per-artifact data files
-  -C, --clobber             Overwrite outputs in an existing directory (never deletes unrelated files)
-  -x, --extract-defender-quarantined
-                            Extract Defender-quarantined files
+  -o, --output <DIR>                  New directory in which to create per-computer results
+  -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
+  -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
+  -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
 Use a new output directory when practical. `-C` removes or overwrites only the exact generated
