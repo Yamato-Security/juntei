@@ -851,6 +851,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &[],
         );
         add("sam", &["parse-registry", "sam"], OutputShape::File, &[]);
+        add(
+            "persistence",
+            &["parse-registry", "persistence"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -931,7 +937,8 @@ impl InputInventory {
             }
             if crate::registry::is_hive_file(&path) {
                 found.add_size("registry", size);
-                let artifact = match crate::registry::hive_type_of_file(&path).as_deref() {
+                let kind = crate::registry::hive_type_of_file(&path);
+                let artifact = match kind.as_deref() {
                     Some("SYSTEM") => Some("services"),
                     Some("NTUSER.DAT") => Some("recentdocs"),
                     Some("SOFTWARE") => Some("taskcache"),
@@ -940,6 +947,12 @@ impl InputInventory {
                 };
                 if let Some(artifact) = artifact {
                     found.add_size(artifact, size);
+                }
+                if matches!(
+                    kind.as_deref(),
+                    Some("SOFTWARE" | "SYSTEM" | "NTUSER.DAT" | "USRCLASS.DAT")
+                ) {
+                    found.add_size("persistence", size);
                 }
             }
             // Defender reads entry metadata, resource records, and encrypted content.
@@ -1860,6 +1873,7 @@ mod tests {
         assert_eq!(inputs.sizes["prefetch-timeline"], 3072);
         assert_eq!(inputs.sizes["registry"], 0x70);
         assert_eq!(inputs.sizes["taskcache"], 0x70);
+        assert_eq!(inputs.sizes["persistence"], 0x70);
         assert_eq!(inputs.sizes["defender-quarantine"], 256);
         assert_eq!(inputs.mfts, vec![dir.path().join("$MFT")]);
         assert_eq!(inputs.journals, vec![dir.path().join("$J")]);

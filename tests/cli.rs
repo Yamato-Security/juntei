@@ -333,7 +333,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 17);
+    assert_eq!(tasks.len(), 18);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -4411,6 +4411,7 @@ fn registry_subcommands() {
     assert!(help.contains("recentdocs "), "{help}");
     assert!(help.contains("taskcache "), "{help}");
     assert!(help.contains("sam "), "{help}");
+    assert!(help.contains("persistence "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -7114,4 +7115,695 @@ fn i30_input_and_output_errors() {
         "-K",
     ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
+}
+
+// --- parse-registry persistence -----------------------------------------------------------------
+
+/// `parse-registry persistence`'s CSV columns.
+const PERSISTENCE_COLUMNS: [&str; 22] = [
+    "Host",
+    "SourcePath",
+    "HiveType",
+    "User",
+    "UserSid",
+    "Mechanism",
+    "AttackTechnique",
+    "KeyPath",
+    "ValueName",
+    "Data",
+    "ImagePath",
+    "Arguments",
+    "Enabled",
+    "DisabledAtUTC",
+    "Details",
+    "OverridesMachineRegistration",
+    "Wow64",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// A hive whose root is named `root`, with the values `(key path, name, type, data)` and the
+/// keys along their paths, each last written at `LINKED`.
+fn reg_tree(root: &str, values: &[(&str, &str, u32, Vec<u8>)]) -> Vec<u8> {
+    #[derive(Default)]
+    struct Node {
+        keys: Vec<(String, Node)>,
+        values: Vec<(String, u32, Vec<u8>)>,
+    }
+    fn build(name: &str, node: &Node) -> RegKey {
+        RegKey {
+            name: name.to_string(),
+            values: node.values.clone(),
+            subkeys: node.keys.iter().map(|(n, c)| build(n, c)).collect(),
+            written: LINKED,
+        }
+    }
+    let mut tree = Node::default();
+    for (path, name, kind, data) in values {
+        let mut node = &mut tree;
+        for part in path.split('\\') {
+            let i = if let Some(i) = node.keys.iter().position(|(n, _)| n == part) {
+                i
+            } else {
+                node.keys.push((part.to_string(), Node::default()));
+                node.keys.len() - 1
+            };
+            node = &mut node.keys[i].1;
+        }
+        node.values.push((name.to_string(), *kind, data.clone()));
+    }
+    regf(&build(root, &tree))
+}
+
+fn multi_sz(items: &[&str]) -> Vec<u8> {
+    let mut data: Vec<u8> = items.iter().flat_map(|i| utf16z(i)).collect();
+    data.extend([0, 0]);
+    data
+}
+
+/// A `StartupApproved` entry: enabled, or disabled at `LINKED`.
+fn approved(enabled: bool) -> Vec<u8> {
+    let mut b = vec![0u8; 12];
+    if enabled {
+        b[0] = 2;
+    } else {
+        b[0] = 3;
+        b[4..].copy_from_slice(&LINKED.to_le_bytes());
+    }
+    b
+}
+
+/// One system's SOFTWARE, SYSTEM, NTUSER.DAT and UsrClass.dat, where Windows keeps them under
+/// `root`: Run keys with a disabled entry and one only `StartupApproved` names, Startup folder
+/// files enabled and disabled, an IFEO debugger,
+/// LSA packages in two control sets, and a user's COM classes, one of them overriding the
+/// machine's.
+fn persistence_collection(root: &Path) {
+    let cv = r"Microsoft\Windows\CurrentVersion";
+    let approved_run = format!(r"{cv}\Explorer\StartupApproved\Run");
+    let run = format!(r"{cv}\Run");
+    let software = reg_tree(
+        "ROOT",
+        &[
+            (
+                &run,
+                "Updater",
+                REG_SZ,
+                utf16z(r#""C:\Program Files\Up\up.exe" /bg"#),
+            ),
+            (&run, "Off", REG_SZ, utf16z(r"C:\Tools\off.exe")),
+            (&approved_run, "Off", REG_BINARY, approved(false)),
+            (&approved_run, "Gone", REG_BINARY, approved(false)),
+            (
+                r"Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe",
+                "Debugger",
+                REG_SZ,
+                utf16z(r"C:\Windows\System32\cmd.exe"),
+            ),
+            (r"Classes\CLSID\{AAAA}", "", REG_SZ, utf16z("Shell thing")),
+            (
+                r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Users\alice"),
+            ),
+        ],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+            (
+                r"ControlSet001\Control\Lsa",
+                "Notification Packages",
+                REG_MULTI_SZ,
+                multi_sz(&["scecli", "pwfilter"]),
+            ),
+            (
+                r"ControlSet002\Control\Lsa",
+                "Notification Packages",
+                REG_MULTI_SZ,
+                multi_sz(&["scecli"]),
+            ),
+        ],
+    );
+    let ntuser = reg_tree(
+        "ROOT",
+        &[
+            (
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                "Sync",
+                REG_SZ,
+                utf16z(r"C:\Users\alice\sync.exe /background"),
+            ),
+            (
+                r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder",
+                "Good.lnk",
+                REG_BINARY,
+                approved(true),
+            ),
+            (
+                r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder",
+                "Off.lnk",
+                REG_BINARY,
+                approved(false),
+            ),
+            (
+                "Environment",
+                "UserInitMprLogonScript",
+                REG_SZ,
+                utf16z(r"C:\Users\alice\logon.bat"),
+            ),
+        ],
+    );
+    let classes = reg_tree(
+        "S-1-5-21-1-2-3-1001_Classes",
+        &[
+            (
+                r"CLSID\{AAAA}\InprocServer32",
+                "",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Users\alice\h.dll"),
+            ),
+            (
+                r"CLSID\{BBBB}\LocalServer32",
+                "",
+                REG_SZ,
+                utf16z(r#""C:\Users\alice\own.exe" -Embedding"#),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    let profile = root.join("C/Users/alice");
+    let local = profile.join("AppData/Local/Microsoft/Windows");
+    for dir in [&config, &local] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(profile.join("NTUSER.DAT"), ntuser).unwrap();
+    std::fs::write(local.join("UsrClass.dat"), classes).unwrap();
+}
+
+/// `parse-registry persistence` with `args`, as JSON Lines.
+fn persistence_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "persistence"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+/// Each record as `hive mechanism key\value = data`.
+fn persistence_lines(records: &[Value]) -> Vec<String> {
+    records
+        .iter()
+        .map(|r| {
+            format!(
+                r"{} {} {}\{} = {}",
+                r["hive_type"].as_str().unwrap(),
+                r["mechanism"].as_str().unwrap(),
+                r["key_path"].as_str().unwrap(),
+                r["value_name"].as_str().unwrap(),
+                r["data"].as_str().unwrap_or("-")
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn registry_persistence_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    persistence_collection(dir.path());
+    let records = persistence_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(
+        persistence_lines(&records),
+        [
+            r"UsrClass.dat com_server CLSID\{AAAA}\InprocServer32\ = C:\Users\alice\h.dll",
+            r#"UsrClass.dat com_server CLSID\{BBBB}\LocalServer32\ = "C:\Users\alice\own.exe" -Embedding"#,
+            r"NTUSER.DAT run Software\Microsoft\Windows\CurrentVersion\Run\Sync = C:\Users\alice\sync.exe /background",
+            r"NTUSER.DAT startup_folder Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder\Good.lnk = -",
+            r"NTUSER.DAT startup_folder Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder\Off.lnk = -",
+            r"NTUSER.DAT logon_script Environment\UserInitMprLogonScript = C:\Users\alice\logon.bat",
+            r#"SOFTWARE run Microsoft\Windows\CurrentVersion\Run\Updater = "C:\Program Files\Up\up.exe" /bg"#,
+            r"SOFTWARE run Microsoft\Windows\CurrentVersion\Run\Off = C:\Tools\off.exe",
+            r"SOFTWARE run Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run\Gone = -",
+            r"SOFTWARE ifeo_debugger Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe\Debugger = C:\Windows\System32\cmd.exe",
+            r"SYSTEM lsa_notification_package ControlSet001\Control\Lsa\Notification Packages = scecli",
+            r"SYSTEM lsa_notification_package ControlSet001\Control\Lsa\Notification Packages = pwfilter",
+        ]
+    );
+    assert!(records.iter().all(|r| r["host"] == "HOST1"));
+    // the user hives' user and SID: UsrClass.dat's root name, NTUSER.DAT's profile in ProfileList
+    for r in &records[..6] {
+        assert_eq!(r["user"], "alice");
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+    }
+    assert!(records[6..].iter().all(|r| r["user"].is_null()));
+    // the user's class {AAAA} overrides the machine's
+    assert_eq!(records[0]["overrides_machine_registration"], true);
+    assert_eq!(records[1]["overrides_machine_registration"], false);
+    assert_eq!(records[1]["image_path"], r"C:\Users\alice\own.exe");
+    assert_eq!(records[1]["arguments"], "-Embedding");
+    assert_eq!(records[0]["attack_technique"], "T1546.015");
+    // StartupApproved: Startup folder files enabled and disabled; Updater has no entry, Off is
+    // disabled, Gone has no Run value
+    assert_eq!(records[3]["enabled"], true);
+    assert!(records[3]["disabled_at"].is_null());
+    assert_eq!(records[3]["details"], "a file in the Startup folder");
+    assert_eq!(records[4]["enabled"], false);
+    assert_eq!(records[4]["disabled_at"], "2022-02-08T21:03:52Z");
+    assert!(records[6]["enabled"].is_null());
+    assert_eq!(records[7]["enabled"], false);
+    assert_eq!(records[7]["disabled_at"], "2022-02-08T21:03:52Z");
+    assert_eq!(records[8]["enabled"], false);
+    assert_eq!(
+        records[8]["details"],
+        "only in StartupApproved: the Run key has no value of this name"
+    );
+    assert!(
+        records
+            .iter()
+            .all(|r| r["transaction_log_status"] == "clean" && r["problems"] == json!([]))
+    );
+    assert!(
+        records
+            .iter()
+            .all(|r| r["key_last_written"] == "2022-02-08T21:03:52Z")
+    );
+
+    // every control set
+    let records = persistence_read(&["-d", dir.path().to_str().unwrap(), "--all-control-sets"]);
+    assert_eq!(
+        persistence_lines(&records)[10..],
+        [
+            r"SYSTEM lsa_notification_package ControlSet001\Control\Lsa\Notification Packages = scecli",
+            r"SYSTEM lsa_notification_package ControlSet001\Control\Lsa\Notification Packages = pwfilter",
+            r"SYSTEM lsa_notification_package ControlSet002\Control\Lsa\Notification Packages = scecli",
+        ]
+    );
+}
+
+#[test]
+fn registry_persistence_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    persistence_collection(dir.path());
+    let out = dir.path().join("persistence.csv");
+    let r = run(&[
+        "parse-registry",
+        "persistence",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "Hives parsed: 4 (NTUSER.DAT 1, SOFTWARE 1, SYSTEM 1, UsrClass.dat 1)",
+        "Hosts: HOST1",
+        "Users: alice",
+        "Autostarts: 12",
+        "  com_server: 2",
+        "  run: 4",
+        "  startup_folder: 2",
+        "Disabled: 3",
+        "StartupApproved Run entries without their Run value: 1\n",
+        r"StartupApproved\Run\Gone",
+        "A user's COM classes and commands overriding the machine's: 1",
+        r"CLSID\{AAAA}\InprocServer32\ = C:\Users\alice\h.dll",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    // Startup folder files have no Run value to lose
+    assert!(!r.stdout.contains("Good.lnk"), "{}", r.stdout);
+    assert!(!r.stdout.contains("Off.lnk"), "{}", r.stdout);
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, PERSISTENCE_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 12);
+    assert_eq!(&rows[0][2], "UsrClass.dat");
+    assert_eq!(&rows[0][15], "True");
+    assert_eq!(&rows[7][12], "False");
+
+    // an exported user hive without its system's SOFTWARE hive: overrides unknown
+    let alone = dir.path().join("alone");
+    std::fs::create_dir_all(&alone).unwrap();
+    std::fs::copy(
+        dir.path()
+            .join("C/Users/alice/AppData/Local/Microsoft/Windows/UsrClass.dat"),
+        alone.join("UsrClass.dat"),
+    )
+    .unwrap();
+    let records = persistence_read(&["-f", alone.join("UsrClass.dat").to_str().unwrap()]);
+    assert_eq!(records.len(), 2);
+    assert!(
+        records
+            .iter()
+            .all(|r| r["overrides_machine_registration"].is_null()
+                && r["user_sid"] == "S-1-5-21-1-2-3-1001")
+    );
+    let r = run(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        alone.join("UsrClass.dat").to_str().unwrap(),
+        "-K",
+    ]);
+    assert!(
+        r.stdout
+            .contains("User hives without their system's SOFTWARE hive"),
+        "{}",
+        r.stdout
+    );
+}
+
+#[test]
+fn registry_persistence_of_public_hives() {
+    let dir = tempfile::tempdir().unwrap();
+    // regipy's Windows 7 NTUSER.DAT: the Run value regipy's ntuser_persistence reads
+    unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
+    let records = persistence_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    assert_eq!(
+        persistence_lines(&records),
+        [
+            r"NTUSER.DAT run Software\Microsoft\Windows\CurrentVersion\Run\Sidebar = %ProgramFiles%\Windows Sidebar\Sidebar.exe /autoRun"
+        ]
+    );
+    assert_eq!(
+        records[0]["image_path"],
+        r"%ProgramFiles%\Windows Sidebar\Sidebar.exe"
+    );
+    assert_eq!(records[0]["arguments"], "/autoRun");
+
+    // regipy's Windows 7 SYSTEM: the LSA packages regipy's lsa_packages reads
+    use std::io::Read as _;
+    let gz = std::fs::File::open(repo("test_files/shimcache/regipy/SYSTEM.gz")).unwrap();
+    let mut bytes = Vec::new();
+    flate2::read::GzDecoder::new(gz)
+        .read_to_end(&mut bytes)
+        .unwrap();
+    let system = dir.path().join("SYSTEM");
+    std::fs::write(&system, bytes).unwrap();
+    let records = persistence_read(&["-f", system.to_str().unwrap()]);
+    let packages = |mechanism: &str| -> Vec<&str> {
+        records
+            .iter()
+            .filter(|r| r["mechanism"] == mechanism)
+            .map(|r| r["data"].as_str().unwrap())
+            .collect()
+    };
+    assert_eq!(packages("lsa_authentication_package"), ["msv1_0"]);
+    assert_eq!(
+        packages("lsa_security_package"),
+        [
+            "kerberos", "msv1_0", "schannel", "wdigest", "tspkg", "pku2u"
+        ]
+    );
+    assert_eq!(packages("lsa_notification_package"), ["scecli"]);
+    assert_eq!(packages("known_dlls").len(), 28);
+
+    // the DFIR Artifact Museum's dirty Windows 11 NTUSER.DAT, with its logs
+    let w11 = dir.path().join("w11");
+    unpack_registry(
+        "rathbun_w11",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        &w11,
+    );
+    let records = persistence_read(&["-f", w11.join("NTUSER.DAT").to_str().unwrap()]);
+    assert!(!records.is_empty());
+    assert!(records.iter().all(|r| {
+        ["replayed", "unchanged"].contains(&r["transaction_log_status"].as_str().unwrap())
+    }));
+}
+
+#[test]
+fn registry_persistence_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let r = run(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        dir.path().join("SAM").to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stderr
+            .contains("a SAM hive, not a SOFTWARE, SYSTEM, NTUSER.DAT or UsrClass.dat hive")
+            || r.stdout
+                .contains("a SAM hive, not a SOFTWARE, SYSTEM, NTUSER.DAT or UsrClass.dat hive"),
+        "{}{}",
+        r.stdout,
+        r.stderr
+    );
+    // a directory with a SAM hive only
+    let r = run(&[
+        "parse-registry",
+        "persistence",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let all = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        all.contains("No SOFTWARE, SYSTEM, NTUSER.DAT or UsrClass.dat hives were found"),
+        "{all}"
+    );
+    let r = run(&["parse-registry", "persistence", "-h"]);
+    assert_eq!(r.code, 0);
+    assert!(r.stdout.contains("--all-control-sets"), "{}", r.stdout);
+}
+
+#[test]
+fn registry_output_never_overwrites_a_file_read() {
+    let dir = tempfile::tempdir().unwrap();
+    persistence_collection(dir.path());
+    let config = dir.path().join("C/Windows/System32/config");
+    let software = config.join("SOFTWARE");
+    let ntuser = dir.path().join("C/Users/alice/NTUSER.DAT");
+    let log = config.join("SOFTWARE.LOG1");
+    std::fs::write(&log, vec![0u8; 512]).unwrap();
+    let given_log = dir.path().join("given.LOG1");
+    std::fs::write(&given_log, vec![0u8; 512]).unwrap();
+    let hard_link = dir.path().join("hard.csv");
+    std::fs::hard_link(&software, &hard_link).unwrap();
+    let originals: Vec<(PathBuf, Vec<u8>)> = [&software, &config.join("SYSTEM"), &log, &given_log]
+        .iter()
+        .map(|p| ((*p).clone(), std::fs::read(p).unwrap()))
+        .collect();
+    let refused = |args: &[&str]| {
+        let mut all = args.to_vec();
+        all.extend(["-C", "-K", "-q"]);
+        let r = run(&all);
+        assert_eq!(r.code, 1, "{all:?}\n{}{}", r.stdout, r.stderr);
+        let said = format!("{}{}", r.stdout, r.stderr);
+        assert!(
+            said.contains("The output file is also an input file and cannot be overwritten"),
+            "{all:?}\n{said}"
+        );
+        for (path, bytes) in &originals {
+            assert_eq!(&std::fs::read(path).unwrap(), bytes, "{}", path.display());
+        }
+    };
+    let s = |p: &Path| p.to_str().unwrap().to_owned();
+    let (software_s, ntuser_s) = (s(&software), s(&ntuser));
+    // the hive itself, by its path and by a hard link
+    refused(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        &software_s,
+        "-o",
+        &software_s,
+    ]);
+    refused(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        &software_s,
+        "-o",
+        &s(&hard_link),
+    ]);
+    // its log next to it, and a log given
+    refused(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        &software_s,
+        "-o",
+        &s(&log),
+    ]);
+    refused(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        &ntuser_s,
+        "--log1",
+        &s(&given_log),
+        "-o",
+        &s(&given_log),
+    ]);
+    // the system's SOFTWARE and SYSTEM hives a user hive is read with
+    refused(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        &ntuser_s,
+        "-o",
+        &software_s,
+    ]);
+    refused(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        &ntuser_s,
+        "-o",
+        &s(&config.join("SYSTEM")),
+    ]);
+    // every registry command shares the check
+    refused(&[
+        "parse-registry",
+        "taskcache",
+        "-f",
+        &software_s,
+        "-o",
+        &software_s,
+    ]);
+    refused(&[
+        "parse-registry",
+        "read",
+        "-d",
+        &s(dir.path()),
+        "-o",
+        &s(&hard_link),
+    ]);
+    #[cfg(unix)]
+    {
+        let link = dir.path().join("link.csv");
+        std::os::unix::fs::symlink(&software, &link).unwrap();
+        refused(&[
+            "parse-registry",
+            "persistence",
+            "-f",
+            &software_s,
+            "-o",
+            &s(&link),
+        ]);
+        refused(&[
+            "parse-registry",
+            "services",
+            "-d",
+            &s(dir.path()),
+            "-o",
+            &s(&link),
+        ]);
+    }
+    // an output that is no input is written
+    let out = dir.path().join("out.csv");
+    std::fs::write(&out, b"old").unwrap();
+    let r = run(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        &software_s,
+        "-o",
+        &s(&out),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}{}", r.stdout, r.stderr);
+    assert!(std::fs::read_to_string(&out).unwrap().starts_with("Host,"));
+}
+
+/// A write-only input can't be opened to tell what it is, yet could be truncated: it is told
+/// apart without opening it, and an output that can't be told apart is not written.
+#[cfg(unix)]
+#[test]
+fn registry_output_never_overwrites_a_write_only_input() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    persistence_collection(dir.path());
+    let software = dir.path().join("C/Windows/System32/config/SOFTWARE");
+    let hard_link = dir.path().join("hard.csv");
+    std::fs::hard_link(&software, &hard_link).unwrap();
+    let original = std::fs::read(&software).unwrap();
+    let set_mode = |path: &Path, mode: u32| {
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode)).unwrap();
+    };
+    let software_s = software.to_str().unwrap();
+    set_mode(&software, 0o200);
+    let mut said = Vec::new();
+    for out in [&software, &hard_link] {
+        let r = run(&[
+            "parse-registry",
+            "persistence",
+            "-f",
+            software_s,
+            "-o",
+            out.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        said.push((r.code, format!("{}{}", r.stdout, r.stderr)));
+    }
+    set_mode(&software, 0o600);
+    assert_eq!(std::fs::read(&software).unwrap(), original);
+    for (code, said) in said {
+        assert_eq!(code, 1, "{said}");
+        assert!(
+            said.contains("The output file is also an input file and cannot be overwritten"),
+            "{said}"
+        );
+    }
+
+    // an output whose identity can't be read (its directory can't be searched) is not written
+    let locked = dir.path().join("locked");
+    std::fs::create_dir(&locked).unwrap();
+    let out = locked.join("out.csv");
+    std::fs::write(&out, b"kept").unwrap();
+    set_mode(&locked, 0o600);
+    // root can search it anyway: nothing to test then
+    let privileged = std::fs::metadata(&out).is_ok();
+    let r = run(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        software_s,
+        "-o",
+        out.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    set_mode(&locked, 0o700);
+    if !privileged {
+        let said = format!("{}{}", r.stdout, r.stderr);
+        assert_eq!(r.code, 1, "{said}");
+        assert!(
+            said.contains("Could not tell whether the output file"),
+            "{said}"
+        );
+        assert_eq!(std::fs::read(&out).unwrap(), b"kept");
+    }
 }

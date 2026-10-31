@@ -3,6 +3,7 @@
 //! here: finding the hives of a collection, opening each with its transaction logs replayed when
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
+pub mod persistence;
 pub mod read;
 pub mod recentdocs;
 pub mod sam;
@@ -344,16 +345,135 @@ fn find_in(dir: &Path, names: &[&str]) -> Option<PathBuf> {
 
 // --- output -----------------------------------------------------------------------------------
 
+/// The transaction logs next to the hive at `path`: `<hive>.LOG`, `.LOG1` and `.LOG2`, in any
+/// case (the files `registry::find_logs` reads).
+fn logs_next_to(path: &Path) -> Vec<PathBuf> {
+    let Some(name) = path.file_name().map(|n| n.to_string_lossy().to_uppercase()) else {
+        return Vec::new();
+    };
+    let dir = path
+        .parent()
+        .filter(|d| !d.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let wanted: Vec<String> = [".LOG", ".LOG1", ".LOG2"]
+        .iter()
+        .map(|x| format!("{name}{x}"))
+        .collect();
+    std::fs::read_dir(dir)
+        .map(|entries| {
+            entries
+                .flatten()
+                .filter(|e| wanted.contains(&e.file_name().to_string_lossy().to_uppercase()))
+                .map(|e| e.path())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Every file a registry command may read for the hives `files`: each hive and the logs next to
+/// it, the logs given (`--log1`, `--log2`), and the SYSTEM and SOFTWARE hives of its system with
+/// their logs (read for its host, and by `persistence` for the machine's classes and profiles).
+pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
+    let mut hives: Vec<PathBuf> = files.to_vec();
+    for path in files {
+        let dir = path
+            .parent()
+            .filter(|d| !d.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        for name in ["SYSTEM", "SOFTWARE"] {
+            hives.extend(
+                system_root(path)
+                    .and_then(|root| find_in(&root, &["Windows", "System32", "config", name])),
+            );
+            hives.extend(find_in(dir, &[name]));
+        }
+    }
+    let mut read: Vec<PathBuf> = given_logs.to_vec();
+    for hive in hives {
+        read.extend(logs_next_to(&hive));
+        read.push(hive);
+    }
+    read.sort();
+    read.dedup();
+    read
+}
+
+/// What tells files apart: the same for every path, symbolic link or hard link to one file. On
+/// Unix the device and inode `stat` gives, which needs no permission on the file itself (opening
+/// it would: a write-only file couldn't be told apart, yet could be truncated); on Windows
+/// `same_file`'s handle, opened without asking for access.
+#[cfg(unix)]
+type Identity = (u64, u64);
+#[cfg(not(unix))]
+type Identity = same_file::Handle;
+
+#[cfg(unix)]
+fn identity(path: &Path) -> io::Result<Identity> {
+    use std::os::unix::fs::MetadataExt;
+    let meta = std::fs::metadata(path)?;
+    Ok((meta.dev(), meta.ino()))
+}
+
+#[cfg(not(unix))]
+fn identity(path: &Path) -> io::Result<Identity> {
+    same_file::Handle::from_path(path)
+}
+
+/// An error when the output file `path` is one of the files `reads` gives, or when that can't be
+/// told (fail closed: it is not overwritten). A file that isn't there can't be one of them.
+fn check_not_read(path: &Path, reads: impl FnOnce() -> Vec<PathBuf>) -> Result<(), String> {
+    let unsure = |of: &Path, e: &io::Error| {
+        format!(
+            "Could not tell whether the output file {} is the input file {}, so it is not overwritten: {e}",
+            path.display(),
+            of.display()
+        )
+    };
+    let out = match identity(path) {
+        Ok(out) => out,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(e) => {
+            return Err(format!(
+                "Could not tell whether the output file {} is one of the input files, so it is not overwritten: {e}",
+                path.display()
+            ));
+        }
+    };
+    for input in reads() {
+        match identity(&input) {
+            Ok(id) if id == out => {
+                let also = if input == path {
+                    String::new()
+                } else {
+                    format!(" (the same file as {})", input.display())
+                };
+                return Err(format!(
+                    "The output file is also an input file and cannot be overwritten: {}{also}",
+                    path.display()
+                ));
+            }
+            Ok(_) => {}
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+            Err(e) => return Err(unsure(&input, &e)),
+        }
+    }
+    Ok(())
+}
+
 /// Where the records go: the file of `-o` (created, with its directory), stdout (`-t` without
-/// `-o`), or nowhere (the summary only).
+/// `-o`), or nowhere (the summary only). An existing `-o` that is one of the files `reads` gives
+/// (the same file by path, symbolic link or hard link), or that can't be told apart from them, is
+/// refused, even with `-C`, before anything is written.
 pub fn sink(
     output: Option<&PathBuf>,
     clobber: bool,
     data_on_stdout: bool,
+    reads: impl FnOnce() -> Vec<PathBuf>,
 ) -> Result<Option<Box<dyn Write>>, String> {
     let Some(path) = output else {
         return Ok(data_on_stdout.then(|| Box::new(BufWriter::new(io::stdout())) as Box<dyn Write>));
     };
+    check_not_read(path, reads)?;
     check_output(path, false, clobber)?;
     if let Some(parent) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)

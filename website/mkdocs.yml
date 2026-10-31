@@ -136,6 +136,7 @@ nav:
           - Registry Hives: artifacts/registry.md
           - Windows Services: artifacts/services.md
           - Task Scheduler Cache: artifacts/taskcache.md
+          - Registry Autostarts: artifacts/persistence.md
       - Accounts:
           - SAM Local Accounts: artifacts/sam.md
   - Resources:
