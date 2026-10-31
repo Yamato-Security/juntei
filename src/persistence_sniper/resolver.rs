@@ -1375,6 +1375,39 @@ mod tests {
         ));
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn file_backed_user_commands_accept_the_original_evidence_directory_alias() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("evidence");
+        let settings = root.join("D/Users/alice/AppData/Local/settings.json");
+        let payload = root.join("D/Users/alice/AppData/Roaming/agent.ps1");
+        std::fs::create_dir_all(root.join("D/Windows/System32")).unwrap();
+        std::fs::write(root.join("D/Windows/System32/marker"), b"marker").unwrap();
+        std::fs::create_dir_all(settings.parent().unwrap()).unwrap();
+        std::fs::write(&settings, b"{}").unwrap();
+        std::fs::create_dir_all(payload.parent().unwrap()).unwrap();
+        std::fs::write(&payload, b"test").unwrap();
+        let alias = dir.path().join("capture-alias");
+        std::os::unix::fs::symlink(&root, &alias).unwrap();
+        let ctx = Context::open(&alias, true).unwrap();
+        let mut finding = Finding {
+            source_file: alias
+                .join("D/Users/alice/AppData/Local/settings.json")
+                .display()
+                .to_string(),
+            value: "powershell.exe -File %APPDATA%\\agent.ps1".into(),
+            ..Default::default()
+        };
+        enrich(&ctx, &mut finding);
+        assert_eq!(finding.resolution_status, "collected");
+        assert_eq!(
+            finding.resolved_path,
+            "Users/alice/AppData/Roaming/agent.ps1"
+        );
+        assert_eq!(finding.exists, Some(true));
+    }
+
     #[test]
     fn nested_command_proxies_have_a_depth_limit() {
         let command = format!("{}C:\\payload.exe", "cmd.exe /c ".repeat(2000));

@@ -260,17 +260,18 @@ impl Context {
     }
 
     pub fn user_for_source(&self, source: &str) -> Option<&str> {
+        // Inventory paths originate under the canonical evidence root. A caller may still
+        // use its original spelling (/var instead of /private/var, a Windows path without
+        // the verbatim prefix, or an explicitly supplied directory alias).
+        let source = self.canonical_source(Path::new(source))?;
         if let Some(hive) = self
             .hives
             .iter()
-            .find(|h| h.path.to_string_lossy() == source && !h.user.is_empty())
+            .find(|h| h.path == source && !h.user.is_empty())
         {
             return Some(&hive.user);
         }
-        let file = self
-            .files
-            .iter()
-            .find(|file| file.physical.to_string_lossy() == source)?;
+        let file = self.files.iter().find(|file| file.physical == source)?;
         let mut parts = file.logical.split('/');
         while let Some(part) = parts.next() {
             if ["Users", "Documents and Settings", "ServiceProfiles"]
@@ -297,8 +298,14 @@ impl Context {
         None
     }
 
+    fn canonical_source(&self, source: &Path) -> Option<PathBuf> {
+        let source = fs::canonicalize(source).ok()?;
+        source.starts_with(&self.root).then_some(source)
+    }
+
     pub(super) fn drive_of(&self, path: &Path) -> char {
-        path_drive(path).unwrap_or('C')
+        let canonical = self.canonical_source(path);
+        path_drive(canonical.as_deref().unwrap_or(path)).unwrap_or('C')
     }
 
     pub(super) fn system_drive(&self) -> char {
@@ -722,6 +729,49 @@ mod tests {
         assert_eq!(
             context.user_for_source("/outside/Users/attacker/settings.json"),
             None
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn source_directory_aliases_keep_captured_identity_and_reject_outside_targets() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("evidence");
+        let settings = root.join("D/Users/alice/AppData/Local/settings.json");
+        fs::create_dir_all(settings.parent().unwrap()).unwrap();
+        fs::write(&settings, b"{}").unwrap();
+        let alias = dir.path().join("capture-alias");
+        std::os::unix::fs::symlink(&root, &alias).unwrap();
+        // The alias includes a misleading C/Users component; drive inference must use
+        // the inventoried D path rather than the alias's directory names.
+        let drive_alias = dir.path().join("C/Users");
+        fs::create_dir_all(drive_alias.parent().unwrap()).unwrap();
+        std::os::unix::fs::symlink(root.join("D/Users"), &drive_alias).unwrap();
+        let context = Context::open(&alias, true).unwrap();
+        let aliased_settings = alias.join("D/Users/alice/AppData/Local/settings.json");
+        assert_eq!(
+            context.user_for_source(&aliased_settings.to_string_lossy()),
+            Some("alice")
+        );
+        assert_eq!(
+            context.drive_of(&drive_alias.join("alice/AppData/Local/settings.json")),
+            'D'
+        );
+
+        let outside = dir.path().join("outside/Users/alice/settings.json");
+        fs::create_dir_all(outside.parent().unwrap()).unwrap();
+        fs::write(&outside, b"{}").unwrap();
+        let linked_outside = root.join("outside-source.json");
+        std::os::unix::fs::symlink(&outside, &linked_outside).unwrap();
+        assert!(
+            context
+                .user_for_source(&outside.to_string_lossy())
+                .is_none()
+        );
+        assert!(
+            context
+                .user_for_source(&linked_outside.to_string_lossy())
+                .is_none()
         );
     }
 
