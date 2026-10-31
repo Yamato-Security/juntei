@@ -5,7 +5,6 @@
 use crate::cli::{AutoOutputType, AutoParseOptions};
 use crate::color::JunteiColor;
 use crate::progress;
-use crate::registry::{Hosts, Logs, open};
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use chrono::Utc;
 use serde::Serialize;
@@ -14,7 +13,7 @@ use serde_json::{Map, Value};
 use std::collections::{BTreeMap, HashSet};
 use std::ffi::OsString;
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, BufRead, BufReader, BufWriter, Write};
+use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
@@ -43,7 +42,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
-        "persistence" | "services" | "taskcache" => "persistence",
+        "persistence" | "persistence-sniper" | "services" | "taskcache" => "persistence",
         "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
         "defender-quarantine" => "security_products",
@@ -62,6 +61,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "logfile" => "LogFile",
         "mft" => "MFT",
         "persistence" => "Persistence",
+        "persistence-sniper" => "PersistenceSniper",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "RecentDocs",
@@ -591,7 +591,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     i32::from(failed > 0 || succeeded == 0 || timeline_failed)
 }
 
-fn discover_hosts(input: &Path, max_depth: usize) -> io::Result<Vec<Host>> {
+fn discovered_roots(input: &Path, max_depth: usize) -> io::Result<BTreeMap<PathBuf, Vec<PathBuf>>> {
     let windows = windows_directories(input, max_depth)?;
     let mut roots: BTreeMap<PathBuf, Vec<PathBuf>> = BTreeMap::new();
     for windows_dir in windows {
@@ -604,7 +604,17 @@ fn discover_hosts(input: &Path, max_depth: usize) -> io::Result<Vec<Host>> {
         };
         roots.entry(root).or_default().push(windows_dir);
     }
-    let roots = merge_nested_roots(roots);
+    Ok(merge_nested_roots(roots))
+}
+
+/// Discover collection boundaries without loading registry hives or client metadata.
+/// The persistence hunter applies its bounded readers after these roots are known.
+pub(crate) fn evidence_roots(input: &Path, max_depth: usize) -> io::Result<Vec<PathBuf>> {
+    Ok(discovered_roots(input, max_depth)?.into_keys().collect())
+}
+
+fn discover_hosts(input: &Path, max_depth: usize) -> io::Result<Vec<Host>> {
+    let roots = discovered_roots(input, max_depth)?;
     let mut hosts = Vec::new();
     for (root, mut windows) in roots {
         windows.sort();
@@ -730,8 +740,25 @@ fn collection_root(input: &Path, windows: &Path) -> Option<PathBuf> {
 }
 
 fn client_info(root: &Path) -> Option<(String, Option<String>)> {
-    let file = File::open(root.join("client_info.json")).ok()?;
-    let value: Value = serde_json::from_reader(BufReader::new(file)).ok()?;
+    let path = root.join("client_info.json");
+    let metadata = fs::symlink_metadata(&path).ok()?;
+    if !metadata.is_file() || metadata.len() > 1024 * 1024 {
+        return None;
+    }
+    if !path
+        .canonicalize()
+        .ok()?
+        .starts_with(root.canonicalize().ok()?)
+    {
+        return None;
+    }
+    let file = File::open(path).ok()?;
+    let mut bytes = Vec::new();
+    file.take(1024 * 1024 + 1).read_to_end(&mut bytes).ok()?;
+    if bytes.len() > 1024 * 1024 {
+        return None;
+    }
+    let value: Value = serde_json::from_slice(&bytes).ok()?;
     let hostname = value.get("hostname")?.as_str()?.trim();
     if hostname.is_empty() {
         return None;
@@ -752,11 +779,26 @@ fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
         let Some(system) = system else {
             continue;
         };
-        let Ok(opened) = open(&system, Logs::NextToIt) else {
+        if !fs::symlink_metadata(&system).is_ok_and(|m| m.is_file()) {
+            continue;
+        }
+        let (Ok(real_system), Ok(real_windows)) = (system.canonicalize(), windows.canonicalize())
+        else {
             continue;
         };
-        let mut hosts = Hosts::new(true);
-        if let Some(name) = hosts.of(&system, &opened) {
+        if !real_system.starts_with(&real_windows) {
+            continue;
+        }
+        // Use the hunter's bounded hive/log reader during discovery as well:
+        // an oversized or linked transaction log must not bypass its guards
+        // before the actual parser starts.
+        let Ok(context) = crate::persistence_sniper::context::Context::open(&system, false) else {
+            continue;
+        };
+        if let Some(name) = context
+            .machine_hive("SYSTEM")
+            .and_then(|h| registry::system::computer_name(&h.opened.hive))
+        {
             return Some(name);
         }
     }
@@ -981,6 +1023,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &["--all-control-sets"],
         );
         add(
+            "persistence-sniper",
+            &["persistence-sniper"],
+            OutputShape::File,
+            &["--min-severity", "info"],
+        );
+        add(
             "userassist",
             &["parse-registry", "userassist"],
             OutputShape::File,
@@ -1047,6 +1095,9 @@ impl InputInventory {
         for path in util::find_files(root, |_| true) {
             let name = path.file_name().unwrap_or_default().to_string_lossy();
             let size = path.metadata().map_or(0, |meta| meta.len());
+            // Cross-source hunting inspects the host's hives and filesystem
+            // evidence, with optional MFT and event-log correlation.
+            found.add_size("persistence-sniper", size);
             for (artifact, matches) in [
                 ("amcache", crate::amcache::is_amcache_name(&name)),
                 ("prefetch", crate::prefetch::is_prefetch_name(&name)),
@@ -1724,7 +1775,7 @@ fn output_separate_from_evidence(evidence: &Path, output: &Path) -> Result<(), S
     Ok(())
 }
 
-fn absolute_candidate(path: &Path) -> io::Result<PathBuf> {
+pub(crate) fn absolute_candidate(path: &Path) -> io::Result<PathBuf> {
     let path = if path.is_absolute() {
         path.to_path_buf()
     } else {
@@ -1747,7 +1798,15 @@ fn absolute_candidate(path: &Path) -> io::Result<PathBuf> {
     for part in suffix.into_iter().rev() {
         absolute.push(part);
     }
-    Ok(normalize_absolute(&absolute))
+    let normalized = normalize_absolute(&absolute);
+    if normalized != absolute {
+        // Creating a missing parent can make `new/../link/file` traversable.
+        // Resolve again after removing those components, including symlinks
+        // which only become reachable in the normalized path.
+        absolute_candidate(&normalized)
+    } else {
+        Ok(normalized)
+    }
 }
 
 fn normalize_absolute(path: &Path) -> PathBuf {
@@ -1769,6 +1828,51 @@ fn normalize_absolute(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn metadata_discovery_bounds_client_info_and_does_not_follow_links() {
+        let root = tempfile::tempdir().unwrap();
+        let client = root.path().join("client_info.json");
+        fs::write(&client, br#"{"hostname":"EXAMPLE-PC"}"#).unwrap();
+        assert_eq!(client_info(root.path()).unwrap().0, "EXAMPLE-PC");
+        File::create(&client)
+            .unwrap()
+            .set_len(1024 * 1024 + 1)
+            .unwrap();
+        assert!(client_info(root.path()).is_none());
+        #[cfg(unix)]
+        {
+            let external = tempfile::tempdir().unwrap();
+            let other = external.path().join("client_info.json");
+            fs::write(&other, br#"{"hostname":"OUTSIDE-PC"}"#).unwrap();
+            let linked_root = tempfile::tempdir().unwrap();
+            std::os::unix::fs::symlink(other, linked_root.path().join("client_info.json")).unwrap();
+            assert!(client_info(linked_root.path()).is_none());
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn hostname_discovery_does_not_read_an_external_system_hive() {
+        let outside = tempfile::tempdir().unwrap();
+        let source = File::open(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("test_files/shimcache/regipy/SYSTEM.gz"),
+        )
+        .unwrap();
+        let mut decoded = flate2::read::GzDecoder::new(source);
+        let hive = outside.path().join("SYSTEM");
+        io::copy(&mut decoded, &mut File::create(&hive).unwrap()).unwrap();
+        let evidence = tempfile::tempdir().unwrap();
+        let windows = evidence.path().join("Windows");
+        fs::create_dir_all(windows.join("System32/config")).unwrap();
+        std::os::unix::fs::symlink(&hive, windows.join("System32/config/SYSTEM")).unwrap();
+        assert!(system_computer_name(std::slice::from_ref(&windows)).is_none());
+        let second = tempfile::tempdir().unwrap();
+        let second_windows = second.path().join("Windows");
+        fs::create_dir_all(second_windows.join("System32")).unwrap();
+        std::os::unix::fs::symlink(outside.path(), second_windows.join("System32/config")).unwrap();
+        assert!(system_computer_name(&[second_windows]).is_none());
+    }
 
     #[test]
     fn totals_include_nested_results_and_logs_without_following_symlinks() {

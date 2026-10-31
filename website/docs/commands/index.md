@@ -61,6 +61,12 @@ The former flat parser names have been replaced by the source-and-artifact paths
 existing parser options after the artifact name. `auto-parse` and existing registry subcommands
 keep their names.
 
+## [Persistence Sniper](persistence-sniper.md)
+
+`juntei persistence-sniper` hunts across several source formats, so it is a top-level analysis
+command. It complements the full configuration inventory from `parse-registry persistence` with
+130 checks, allow/block classification, payload metadata, coverage, and timestamp correlation.
+
 ## Top-level usage
 
 ```text
@@ -73,6 +79,7 @@ Commands:
   parse-file      Parse file artifacts
   parse-ntfs      Parse NTFS artifacts
   parse-registry  Parse registry hives
+  persistence-sniper  Hunt offline Windows persistence
 
 Options:
   -h, --help     Print help

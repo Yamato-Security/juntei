@@ -113,6 +113,7 @@ nav:
       - Files: commands/execution.md
       - NTFS: commands/filesystem.md
       - Registry: commands/security-registry.md
+      - Persistence Sniper: commands/persistence-sniper.md
       - Common Output Patterns: commands/output.md
   - Artifacts:
       - Artifact Guide: artifacts/index.md

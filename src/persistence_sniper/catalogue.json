@@ -1,0 +1,3490 @@
+[
+  {
+    "id": "accessibility_tools",
+    "technique": "Accessibility Features Backdoor",
+    "mitre_id": "T1546.008",
+    "description": "Accessibility tools (sethc.exe, osk.exe, utilman.exe, etc.) execute at the lock screen before authentication. Replacing one on disk with a shell, a script host, or an implant provides pre-logon SYSTEM access, typically exploited via RDP. A binary that is not the Microsoft-signed original, or that is signed but identifies itself as a different program, has been replaced.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/008/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": []
+  },
+  {
+    "id": "active_setup",
+    "technique": "Active Setup",
+    "mitre_id": "T1547.014",
+    "description": "Active Setup StubPath commands run once per user at first logon. Adversaries register components under Installed Components to achieve per-user persistence with SYSTEM-level registry access. The 32-bit component list under Wow6432Node is processed independently and is checked as well.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/014/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Built-in active setup component",
+        "value_matches": "\\\\system32\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in 32-bit active setup component",
+        "value_matches": "\\\\syswow64\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in media/IE setup",
+        "value_matches": "(unregmp2|ie4uinit)\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Google Chrome per-user setup",
+        "value_matches": "Google\\\\Chrome\\\\Application\\\\.*\\\\Installer\\\\chrmstp\\.exe",
+        "signer": "Google"
+      },
+      {
+        "reason": "Microsoft Edge per-user setup",
+        "value_matches": "Microsoft\\\\Edge\\\\Application\\\\.*\\\\Installer\\\\setup\\.exe",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "admin_group_membership",
+    "technique": "Administrators Group Membership",
+    "mitre_id": "T1098",
+    "description": "Adding a SID to the Builtin\\Administrators alias grants admin rights without touching any account's own SAM record, so the RID checks cannot see it. Every host has legitimate administrators, so membership alone is not reportable: only a member hidden from the sign-in screen, or a SID naming no account or group the SAM contains, is reported.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1098/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SAM",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "ae_debug",
+    "technique": "AeDebug Debugger Hijack",
+    "mitre_id": "T1546.012",
+    "description": "The AeDebug Debugger value specifies the Just-In-Time debugger launched on application crashes. Replacing it with a malicious binary provides persistence triggered by any user-mode crash.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/012/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug",
+        "values": "Debugger",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Known JIT debugger",
+        "value_matches": "(vsjitdebugger|drwtsn32)\\.exe",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "ae_debug_protected",
+    "technique": "AeDebug Protected Process Debugger",
+    "mitre_id": "T1546.012",
+    "description": "The AeDebugProtected Debugger value targets protected-process crash debugging and can be abused identically to AeDebug for crash-triggered persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/012/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AeDebugProtected",
+        "values": "Debugger",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "amsi_providers",
+    "technique": "AMSI Provider DLL",
+    "mitre_id": "T1546.015",
+    "description": "AMSI providers are COM DLLs loaded by the Antimalware Scan Interface into every process that invokes AMSI. A malicious provider intercepts all scan requests and executes attacker code in-process.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/015/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Windows Defender AMSI provider",
+        "value_matches": "MpOav\\.dll",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "app_paths",
+    "technique": "App Paths Hijack",
+    "mitre_id": "T1546",
+    "description": "App Paths entries map short executable names to full filesystem paths. Registering or hijacking an entry redirects legitimate program launches to a malicious binary.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Built-in OS application",
+        "value_matches": "\\\\system32\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Microsoft application in Program Files",
+        "value_matches": "(?i)\\\\Program Files( \\(x86\\))?\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Google Chrome application path",
+        "value_matches": "Google\\\\Chrome\\\\Application\\\\chrome\\.exe",
+        "signer": "Google"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "appcert_dlls",
+    "technique": "AppCert DLLs",
+    "mitre_id": "T1546.009",
+    "description": "AppCertDlls are loaded into every process that calls CreateProcess and related Win32 APIs. Abuse provides code execution within the context of any spawned process.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/009/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager\\AppCertDlls",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "appdomain_manager",
+    "technique": "AppDomainManager Injection",
+    "mitre_id": "T1574.014",
+    "description": "APPDOMAIN_MANAGER_ASM and APPDOMAIN_MANAGER_TYPE environment variables instruct the .NET CLR to load a custom AppDomainManager assembly before any .NET application executes. These variables are never set in legitimate configurations.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/014/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager\\Environment",
+        "values": "APPDOMAIN_MANAGER_ASM",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager\\Environment",
+        "values": "APPDOMAIN_MANAGER_TYPE",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "Environment",
+        "values": "APPDOMAIN_MANAGER_ASM",
+        "scope": "HKU",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "Environment",
+        "values": "APPDOMAIN_MANAGER_TYPE",
+        "scope": "HKU",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "appinit_dlls",
+    "technique": "AppInit DLLs",
+    "mitre_id": "T1546.010",
+    "description": "AppInit_DLLs are injected into every process that loads user32.dll. Both native and WoW64 paths are checked. The mechanism is only active when LoadAppInit_DLLs is set to 1 and is disabled by default on Windows 8+ with Secure Boot enabled.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/010/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "assistive_technology",
+    "technique": "Accessibility Features",
+    "mitre_id": "T1546.008",
+    "description": "Assistive Technology (AT) applications registered under the Accessibility ATs key may be launched when accessibility features are enabled. The Configuration value lists the ATs Windows auto-launches: per user at logon, and in the DEFAULT hive on the sign-in desktop before any user authenticates. Registering a malicious AT or adding its name to a Configuration list provides persistence triggered by accessibility shortcuts, user logon, or the lock screen.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/008/",
+      "https://www.hexacorn.com/blog/2016/07/22/beyond-good-ol-run-key-part-42/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows accessibility tool (.exe)",
+        "value_matches": "(?i)(EoAExperiences|LiveCaptions|Magnify|Narrator|osk|sapisvr|VoiceAccess)\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Default Windows accessibility tool (bare name)",
+        "value_matches": "(?i)^(cursorindicator|livecaptions|magnifierpane|narrator|osk|speechreco|voiceaccess)$"
+      },
+      {
+        "reason": "Default Windows accessibility tool (bare name, Screen Tint)",
+        "value_matches": "(?i)^screentint$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "DEFAULT",
+      "NTUSER.DAT"
+    ]
+  },
+  {
+    "id": "authentication_packages",
+    "technique": "Authentication Packages",
+    "mitre_id": "T1547.002",
+    "description": "Authentication Packages are DLLs loaded by LSA at system start. A non-default package (beyond 'msv1_0') may intercept credentials or provide boot-level persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/002/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Lsa",
+        "values": "Authentication Packages",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default auth package",
+        "value_matches": "^msv1_0$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "autodial_dll",
+    "technique": "AutodialDLL Override",
+    "mitre_id": "T1574.001",
+    "description": "The AutodialDLL value specifies a DLL loaded by the WinSock auto-dial feature. A non-OS DLL provides persistent code execution in any process that uses WinSock.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Services\\WinSock2\\Parameters",
+        "values": "AutodialDLL",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default autodial DLL",
+        "value_matches": "rasadhlp\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "bits_notify_command",
+    "technique": "BITS Job Notification Command",
+    "mitre_id": "T1197",
+    "description": "A BITS job can carry a notification command line that the queue manager runs when the transfer completes or finally fails. The job survives reboots and lives in no registry key and no scheduled task, so no other check sees it. Only jobs that set a notification command are reported: an ordinary transfer job is not persistence, and Windows creates those constantly.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1197/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": []
+  },
+  {
+    "id": "boot_execute",
+    "technique": "Boot Execute",
+    "mitre_id": "T1547.001",
+    "description": "Session Manager BootExecute programs run before the Windows subsystem starts. The legitimate default is 'autocheck autochk *'; any other entry indicates persistence or tampering.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager",
+        "values": "BootExecute",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows boot-time disk check",
+        "value_matches": "^autocheck\\s+autochk"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "boot_verification_program",
+    "technique": "Boot Verification Program",
+    "mitre_id": "T1547.001",
+    "description": "The BootVerificationProgram ImagePath specifies a program that confirms boot success. Hijacking this value provides SYSTEM-level persistence triggered on every boot.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\BootVerificationProgram",
+        "values": "ImagePath",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "chm_helper_dll",
+    "technique": "CHM Helper DLL",
+    "mitre_id": "T1574.001",
+    "description": "The CHM helper DLL Location value specifies a DLL loaded when rendering compiled HTML help files. Hijacking this provides code execution when .chm files are opened.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\HtmlHelp Author",
+        "values": "Location",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "cmd_autorun",
+    "technique": "Command Processor AutoRun",
+    "mitre_id": "T1546",
+    "description": "The Command Processor AutoRun value executes a command every time cmd.exe launches. This provides persistence triggered by any interactive or scripted use of the command prompt.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Command Processor",
+        "values": "AutoRun",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "com_treat_as",
+    "technique": "COM Object Hijack",
+    "mitre_id": "T1546.015",
+    "description": "A TreatAs subkey under a CLSID redirects COM object instantiation to a different class. Attackers abuse this to hijack legitimate COM objects and gain code execution whenever the original CLSID is activated.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/015/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to packager.dll",
+        "path_matches": "\\\\CLSID\\\\\\{(00020C01-0000-0000-C000-000000000046|00022601-0000-0000-C000-000000000046|00022602-0000-0000-C000-000000000046|00022603-0000-0000-C000-000000000046|0003000C-0000-0000-C000-000000000046|0003000D-0000-0000-C000-000000000046|0003000E-0000-0000-C000-000000000046)\\}\\\\TreatAs$",
+        "value_matches": "^\\{F20DA720-C02F-11CE-927B-0800095AE340\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to Excel",
+        "path_matches": "\\\\CLSID\\\\\\{(00020810-0000-0000-C000-000000000046|00030000-0000-0000-C000-000000000046|00030002-0000-0000-C000-000000000046)\\}\\\\TreatAs$",
+        "value_matches": "^\\{00020820-0000-0000-C000-000000000046\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to Excel",
+        "path_matches": "\\\\CLSID\\\\\\{(00020811-0000-0000-C000-000000000046|00030001-0000-0000-C000-000000000046)\\}\\\\TreatAs$",
+        "value_matches": "^\\{00020821-0000-0000-C000-000000000046\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to Word",
+        "path_matches": "\\\\CLSID\\\\\\{(00020900-0000-0000-C000-000000000046|00020901-0000-0000-C000-000000000046)\\}\\\\TreatAs$",
+        "value_matches": "^\\{00020906-0000-0000-C000-000000000046\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to PowerPoint",
+        "path_matches": "\\\\CLSID\\\\\\{(00044851-0000-0000-C000-000000000046|EA7BAE70-FB3B-11CD-A903-00AA00510EA3)\\}\\\\TreatAs$",
+        "value_matches": "^\\{64818D10-4F9B-11CF-86EA-00AA00B929E8\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to PowerPoint",
+        "path_matches": "\\\\CLSID\\\\\\{(000498C4-0000-0000-C000-000000000046|EA7BAE71-FB3B-11CD-A903-00AA00510EA3)\\}\\\\TreatAs$",
+        "value_matches": "^\\{64818D11-4F9B-11CF-86EA-00AA00B929E8\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to Office Interceptor.dll",
+        "path_matches": "\\\\CLSID\\\\\\{(9F9C4924-C3F3-4459-A396-9E9E0D8B83D1|BDEADEF2-C265-11D0-BCED-00A0C90AB50F)\\}\\\\TreatAs$",
+        "value_matches": "^\\{9203C2CB-1DC1-482D-967E-597AFF270F0D\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to Office Interceptor.dll",
+        "path_matches": "\\\\CLSID\\\\\\{(BDEADEF4-C265-11D0-BCED-00A0C90AB50F)\\}\\\\TreatAs$",
+        "value_matches": "^\\{BDEADEF5-C265-11D0-BCED-00A0C90AB50F\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to Outlook",
+        "path_matches": "\\\\CLSID\\\\\\{(0006F033-0000-0000-C000-000000000046)\\}\\\\TreatAs$",
+        "value_matches": "^\\{0006F03A-0000-0000-C000-000000000046\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to Outlook OUTLCTL.DLL",
+        "path_matches": "\\\\CLSID\\\\\\{(0006F063-0000-0000-C000-000000000046)\\}\\\\TreatAs$",
+        "value_matches": "^\\{261B8CA9-3BAF-4BD0-B0C2-BF04286785C6\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to Ink tiptsf.dll",
+        "path_matches": "\\\\CLSID\\\\\\{(F744E496-1B5A-489E-81DC-FBD7AC6298A8)\\}\\\\TreatAs$",
+        "value_matches": "^\\{802B1FB9-056B-4720-B0CC-80D23B71171E\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to mspaint.exe",
+        "path_matches": "\\\\CLSID\\\\\\{(0003000A-0000-0000-C000-000000000046)\\}\\\\TreatAs$",
+        "value_matches": "^\\{D3E34B21-9D75-101A-8C3D-00AA001A1652\\}$"
+      },
+      {
+        "reason": "Shipped Microsoft TreatAs forwarding to oleaut32.dll",
+        "path_matches": "\\\\CLSID\\\\\\{(D14E3180-11FD-11CE-B841-00AA004CD6D8)\\}\\\\TreatAs$",
+        "value_matches": "^\\{0BE35204-8F91-11CE-9DE3-00AA004BB851\\}$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "content_index_dll",
+    "technique": "NL6 ContentIndex DLL Override",
+    "mitre_id": "T1574",
+    "description": "DLLOverridePath under ContentIndex\\Language subkeys overrides the default NL6 content indexing DLL. This value is normally absent. If present, the specified DLL is loaded by the Windows Search indexer when processing content.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "cor_profiler",
+    "technique": ".NET CLR Profiler Hijack",
+    "mitre_id": "T1574.012",
+    "description": "COR_PROFILER environment variables specify a DLL loaded by the .NET Framework CLR into every managed process. The machine-wide (HKLM), per-service and per-user (HKU) Environment values are all checked; the per-service one is the documented way to attach a profiler to a single service such as W3SVC.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/012/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "coreclr_profiler",
+    "technique": ".NET Core CLR Profiler Hijack",
+    "mitre_id": "T1574.012",
+    "description": "CORECLR_PROFILER environment variables specify a DLL loaded by the .NET Core/5+ runtime into every managed process. System-wide, per-service and per-user Environment keys are checked.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/012/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "crypto_expo_offload",
+    "technique": "Crypto ExpoOffload DLL",
+    "mitre_id": "T1574.001",
+    "description": "The ExpoOffload value specifies a DLL loaded by the cryptography subsystem for exponentiation offloading. Any value present indicates potential DLL hijacking persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Cryptography\\Offload",
+        "values": "ExpoOffload",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "diagtrack_dll",
+    "technique": "DiagTrack DLL",
+    "mitre_id": "T1574.001",
+    "description": "The DiagTrack service ImagePath specifies the service binary. Replacing it with a non-OS executable provides SYSTEM-level persistence triggered by the telemetry service.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Services\\DiagTrack",
+        "values": "ImagePath",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default DiagTrack service",
+        "value_matches": "svchost\\.exe",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "diagtrack_listener_dll",
+    "technique": "DiagTrack Listener DLL",
+    "mitre_id": "T1574.001",
+    "description": "The DiagTrack Autologger listener FileName specifies the DLL loaded for telemetry collection. Hijacking this value provides SYSTEM-level persistence at boot.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\WMI\\Autologger\\DiagTrack-Listener",
+        "values": "FileName",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default DiagTrack listener",
+        "value_matches": "Diagtrack-Listener\\.etl",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "direct3d_dll",
+    "technique": "Direct3D Software Rasterizer DLL",
+    "mitre_id": "T1574.001",
+    "description": "The D3D SoftwareRasterizer value specifies the DLL loaded as the Direct3D software rasterizer. Hijacking provides code execution in any process that initializes Direct3D.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Direct3D\\Drivers",
+        "values": "SoftwareRasterizer",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "disk_cleanup_handler",
+    "technique": "Disk Cleanup Handler Hijack",
+    "mitre_id": "T1546.015",
+    "description": "Disk Cleanup VolumeCaches handlers are COM objects loaded when cleanmgr.exe runs. Replacing the InprocServer32 DLL path for a handler CLSID provides code execution as SYSTEM during cleanup operations.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/015/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Built-in disk cleanup handler",
+        "value_matches": "\\\\system32\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in disk cleanup DLL",
+        "value_matches": "(ieframe|shell32|dataclen|setupcln)\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "dll_search_mode",
+    "technique": "DLL Search Order Weakening",
+    "mitre_id": "T1574.001",
+    "description": "SafeDllSearchMode set to 0 moves the current directory ahead of System32 in the DLL search order, and CWDIllegalInDllSearch set to 0 restores the current directory as a search location. Both are the enabling half of search-order hijacking and leave no other registry trace. Windows ships neither value set.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/",
+      "https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-security"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "dotnet_dbg_managed_debugger",
+    "technique": ".NET DbgManagedDebugger Hijack",
+    "mitre_id": "T1546",
+    "description": "DbgManagedDebugger specifies the debugger for managed (.NET) application crashes. Both native and WoW64 paths are checked. Abuse provides persistence when any .NET application faults.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\.NETFramework",
+        "values": "DbgManagedDebugger",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Wow6432Node\\Microsoft\\.NETFramework",
+        "values": "DbgManagedDebugger",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "dotnet_framework_profiler",
+    "technique": ".NET Framework COR_PROFILER Registry Key",
+    "mitre_id": "T1574.012",
+    "description": "COR_PROFILER, COR_PROFILER_PATH, and COR_ENABLE_PROFILING values in the .NETFramework registry key cause the CLR to load a custom profiler DLL into every managed process. The per-user and WoW64 copies of the key are checked too; the per-user one needs no administrative rights. Profiling is rarely enabled in production environments.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/012/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\.NETFramework",
+        "values": "COR_PROFILER",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": true
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\.NETFramework",
+        "values": "COR_PROFILER_PATH",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": true
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\.NETFramework",
+        "values": "COR_ENABLE_PROFILING",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "dotnet_startup_hooks",
+    "technique": "DOTNET_STARTUP_HOOKS",
+    "mitre_id": "T1574.012",
+    "description": "DOTNET_STARTUP_HOOKS specifies assemblies loaded at .NET application startup before the Main entry point. Setting this system-wide provides persistent code injection across all .NET 5+ applications.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/012/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "dsrm_backdoor",
+    "technique": "DSRM Admin Logon Behavior",
+    "mitre_id": "T1547.001",
+    "description": "Setting DsrmAdminLogonBehavior to 2 on a domain controller enables network logon with the DSRM password, creating a persistent backdoor that survives password resets.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "error_handler_cmd",
+    "technique": "ErrorHandler.cmd Persistence",
+    "mitre_id": "T1546",
+    "description": "ErrorHandler.cmd in System32 is executed by Windows Error Reporting on certain crashes. The file does not exist by default; its presence indicates persistence or tampering.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": []
+  },
+  {
+    "id": "exclude_from_known_dlls",
+    "technique": "KnownDLLs Exclusion",
+    "mitre_id": "T1574.001",
+    "description": "ExcludeFromKnownDlls drops a DLL out of the KnownDLLs section namespace, so the loader searches the application directory for it instead of mapping the System32 copy. Every name listed here is a DLL that search-order hijacking has been re-enabled for. Windows ships the value empty.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/",
+      "https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "explorer_app_key",
+    "technique": "Explorer AppKey Override",
+    "mitre_id": "T1547.001",
+    "description": "Explorer AppKey entries map special keyboard keys (mail, browser, etc.) to custom programs. Overriding the ShellExecute or Association values provides persistence triggered by physical key presses.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "explorer_bho",
+    "technique": "Browser Helper Objects",
+    "mitre_id": "T1547.001",
+    "description": "Browser Helper Objects (BHOs) are COM DLLs registered under Explorer\\Browser Helper Objects. Each BHO is loaded into Explorer (and historically Internet Explorer), providing persistent in-process code execution.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Microsoft Edge IE-to-Edge redirection BHO",
+        "value_matches": "ie_to_edge_bho(_64)?\\.dll",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "explorer_clsid_hijack",
+    "technique": "Explorer Desktop CLSID Hijack",
+    "mitre_id": "T1546.015",
+    "description": "Commonly hijacked Explorer CLSIDs (Desktop, My Computer, My Documents) shell command handlers are checked. Hijacking these command subkeys executes arbitrary code when a user opens the corresponding Explorer namespace.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/015/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{52205fd8-5dfb-447d-801a-d0b52f2e83e1}\\shell\\opennewwindow\\command",
+        "values": "(Default)",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\open\\command",
+        "values": "(Default)",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\open\\command",
+        "values": "(Default)",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "explorer_context_menu",
+    "technique": "Explorer Context Menu Handlers",
+    "mitre_id": "T1547.001",
+    "description": "Context-menu shell extensions (ContextMenuHandlers) are COM DLLs loaded by Explorer on right-click. Registering a malicious handler provides DLL-based persistence under SYSTEM or the invoking user. Both halves of HKCR are read: the machine-wide SOFTWARE\\Classes and each user's UsrClass.dat, which wins the merge and needs no administrator rights.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Built-in context menu handler",
+        "value_matches": "(\\\\system32\\\\|\\\\Windows Defender\\\\)",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "OneDrive sync status shell extension",
+        "value_matches": "^[a-z]:\\\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\Microsoft\\\\OneDrive\\\\[\\d.]+\\\\(i386\\\\)?FileSyncShell(64)?\\.dll$",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in shell extension DLL",
+        "value_matches": "(shell32|ieframe)\\.dll$",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "7-Zip context menu handler",
+        "value_matches": "7-Zip\\\\7-zip\\.dll"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "explorer_load",
+    "technique": "Explorer Load Value",
+    "mitre_id": "T1547.001",
+    "description": "The Load value under Windows\\CurrentVersion\\Windows specifies a program run by Explorer at user logon, providing user-context persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows",
+        "values": "Load",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "file_association_hijack",
+    "technique": "File Association Hijacking",
+    "mitre_id": "T1546.001",
+    "description": "Per-user and system-wide file association command handlers for high-risk extensions (.txt, .pdf, .doc, .js, .exe, etc.) are checked. Both direct extension handlers and progid-redirected handlers are examined. Every registered handler is reported: a hijack most often repoints the handler at an attacker-dropped executable rather than at an interpreter.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Default system handler shipped in the OS or Program Files",
+        "value_matches": "(?i)^\"?(%SystemRoot%|%ProgramFiles(\\(x86\\))?%|C:\\\\Windows|C:\\\\Program Files( \\(x86\\))?)\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Default self-executing handler for executable file classes",
+        "path_matches": "(?i)\\\\Classes\\\\(exe|bat|cmd|com|pif|scr)file\\\\shell\\\\open\\\\command$",
+        "value_matches": "^\"%1\"(\\s+%\\*)?$"
+      },
+      {
+        "reason": "Default Windows Script Host handler for script file classes",
+        "path_matches": "(?i)\\\\Classes\\\\(JSE?|VBS|VBE|WS[FH])File\\\\shell\\\\open\\\\command$",
+        "value_matches": "(?i)^\"?(%SystemRoot%|C:\\\\Windows)\\\\System32\\\\[WC]Script\\.exe\"?\\s+\"%1\"\\s+%\\*$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "font_drivers",
+    "technique": "Font Drivers",
+    "mitre_id": "T1547",
+    "description": "The Font Drivers key specifies DLLs loaded by the font subsystem at boot. This is a legacy mechanism that still functions on modern Windows but is never used by legitimate software. Any entry is inherently suspicious.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Font Drivers",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "ghost_task",
+    "technique": "Ghost Scheduled Task",
+    "mitre_id": "T1053.005",
+    "description": "A scheduled task registers itself three times: a TaskCache\\Tree key, a TaskCache\\Tasks key and an XML file under System32\\Tasks. A Tree key with no XML file keeps running while schtasks.exe and the Task Scheduler UI cannot show what it does, and a Tree or Tasks key missing its counterpart is the residue of a partially planted or partially deleted task. A task hidden by deleting its security descriptor is reported by hidden_scheduled_task instead, because Windows ships dozens of tasks that trip this check and none that trip that one, so the two cannot share an allowlist.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1053/005/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows task",
+        "path_matches": "Microsoft\\\\(Windows|OneCore)\\\\"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "gp_extension_dlls",
+    "technique": "Group Policy Extension DLLs",
+    "mitre_id": "T1574.001",
+    "description": "Group Policy Extension DLLs are loaded by the GP engine during policy refresh. A non-OS DLL registered here provides SYSTEM-level persistence triggered at every gpupdate cycle.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\GPExtensions",
+        "values": "DllName",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Built-in GP extension",
+        "value_matches": "\\\\system32\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in GP extension DLL",
+        "value_matches": "^(gptext|scecli|appmgmts|fdeploy|auditcse|dmenrollengine|pwlauncher|dggpext|dot3gpclnt|wlgpclnt|AppManagementConfiguration|WorkFoldersGPExt)\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "gp_scripts",
+    "technique": "Group Policy Scripts",
+    "mitre_id": "T1037.001",
+    "description": "Group Policy scripts.ini and psscripts.ini define startup/shutdown and logon/logoff scripts, so a CmdLine entry runs at boot or at logon. The machine-wide local GPO and every per-user local GPO under GroupPolicyUsers are read.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1037/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": []
+  },
+  {
+    "id": "hhctrl_ocx_dll",
+    "technique": "hhctrl.ocx DLL Override",
+    "mitre_id": "T1574.001",
+    "description": "The hhctrl.ocx CLSID InprocServer32 points to the DLL loaded for HTML Help controls. Hijacking this COM registration provides code execution when any HTML Help content is rendered.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{adb880a6-d8ff-11cf-9377-00aa003b7a11}\\InprocServer32",
+        "values": "(Default)",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default HTML Help control",
+        "value_matches": "(System32|SysWOW64)\\\\hhctrl\\.ocx$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "hidden_account",
+    "technique": "Hidden Local Account",
+    "mitre_id": "T1564.002",
+    "description": "A SpecialAccounts\\UserList entry set to 0 removes the named account from the sign-in screen and from the Settings user list. Windows creates no entry here by default, so a zero is a deliberate decision to keep an account out of sight and is the standard companion to a backdoor local account.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1564/002/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "hidden_scheduled_task",
+    "technique": "Hidden Scheduled Task",
+    "mitre_id": "T1053.005",
+    "description": "Tarrask hides a live scheduled task by deleting the SD value from its TaskCache\\Tree key. The task keeps its XML file, its TaskCache\\Tasks key, its triggers and its execution, but schtasks.exe and the Task Scheduler UI stop listing it. Every Tree key that registers a task carries an SD, so an absent or empty one is a deletion rather than a default. It is a check of its own because the ghost_task allowlist suppresses the Microsoft\\Windows folder, which is where a hidden task sits.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1053/005/",
+      "https://www.microsoft.com/en-us/security/blog/2022/04/12/tarrask-malware-uses-scheduled-task-defense-evasion/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "ifeo_debugger",
+    "technique": "Image File Execution Options Debugger",
+    "mitre_id": "T1546.012",
+    "description": "An IFEO Debugger value causes Windows to launch the specified debugger instead of the target executable. Attackers set this to redirect execution of common tools to malicious binaries. With UseFilter the Debugger lives in a named filter subkey below the image key, so the whole subtree is searched, in the Wow6432Node view as well as the native one.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/012/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "ifeo_delegated_ntdll",
+    "technique": "IFEO Delegated NTDLL",
+    "mitre_id": "T1546.012",
+    "description": "VerifierDlls under IFEO causes a custom DLL to be loaded into the target process at startup, providing reliable DLL injection persistence. It is armed by GlobalFlag 0x100 (Application Verifier), which the loader accepts as either a DWORD or a string, so the DLL list is reported on its own merits. Both registry views are searched.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/012/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "ifeo_silent_process_exit",
+    "technique": "Silent Process Exit Monitor",
+    "mitre_id": "T1546.012",
+    "description": "SilentProcessExit MonitorProcess is invoked when a target process terminates. Configuring this triggers attacker code execution on process exit, providing event-driven persistence. A 32-bit process configures it through the registry redirector, so the Wow6432Node view is read as well.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/012/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "installed_sdb",
+    "technique": "Application Shimming",
+    "mitre_id": "T1546.011",
+    "description": "InstalledSDB registers a custom application compatibility database. A shim database can inject a DLL or redirect execution whenever the shimmed program starts. Windows ships its shims inside the system database, so an entry here is always a database someone installed.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/011/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB",
+        "values": "DatabasePath",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "known_dlls",
+    "technique": "Known DLLs",
+    "mitre_id": "T1574.001",
+    "description": "The KnownDLLs key forces Windows to load specific DLLs from System32. Adding entries causes a malicious DLL to be loaded by any process that imports the specified DLL name. Changes to DllDirectory values are also flagged.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows KnownDLL entry",
+        "value_matches": "^(advapi32|clbcatq|combase|COMDLG32|COML2|CoreMessaging|CoreUIComponents|CRYPT32|difxapi|gdi32|gdiplus|GDI32Full|IMAGEHLP|IMM32|kernel32|KERNELBASE|MFC42u|MSCTF|MSVCP_WIN|MSVCRT|NORMALIZ|NSI|ntdll|OLEAUT32|OLE32|RPCRT4|sechost|Setupapi|SHCORE|SHELL32|shlwapi|TextShaping|ucrtbase|USER32|win32u|WINTRUST|WS2_32|WLDAP32)\\.dll$",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Default Windows KnownDLL entry for ARM64 emulation on x64",
+        "value_matches": "^(wowarmhw|xtajit|xtajitf|xtajitse|xtajit64|xtajit64se)\\.dll$"
+      },
+      {
+        "reason": "Microsoft-signed KnownDLL entry",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "known_managed_debugging_dlls",
+    "technique": "Known Managed Debugging DLLs",
+    "mitre_id": "T1574.001",
+    "description": "KnownManagedDebuggingDlls specifies DLLs loaded by .NET managed debuggers. Registering a malicious DLL provides code execution whenever managed debugging is initiated.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\.NETFramework",
+        "values": "KnownManagedDebuggingDlls",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "logon_scripts",
+    "technique": "Logon Scripts (UserInitMprLogonScript)",
+    "mitre_id": "T1037.001",
+    "description": "UserInitMprLogonScript in a user's Environment key runs a script at logon, before the desktop loads, in that user's own context.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1037/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "Environment",
+        "values": "UserInitMprLogonScript",
+        "scope": "HKU",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT"
+    ]
+  },
+  {
+    "id": "lsa_cfg_flags",
+    "technique": "Credential Guard Configuration",
+    "mitre_id": "T1547.008",
+    "description": "LsaCfgFlags controls Credential Guard. Value 0 disables it, 1 enables with UEFI lock, 2 enables without lock. Disabling Credential Guard weakens credential isolation.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/008/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Lsa",
+        "values": "LsaCfgFlags",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Credential Guard enabled",
+        "value_matches": "^[12]$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "lsa_extensions",
+    "technique": "LSA Extensions DLL",
+    "mitre_id": "T1574.001",
+    "description": "LSA Extensions are DLLs loaded by the Local Security Authority during system startup. A malicious extension can intercept credentials and provide SYSTEM-level persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\LsaExtensionConfig\\LsaSrv",
+        "values": "Extensions",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default LSA extension",
+        "value_matches": "^lsasrv\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "lsa_password_filter",
+    "technique": "LSA Password Filter",
+    "mitre_id": "T1556.002",
+    "description": "LSA password filter DLLs (Notification Packages) are called on every password change. A non-default package (beyond 'scecli') may capture plaintext passwords before they are hashed.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1556/002/"
+    ],
+    "implementation": "custom",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Lsa",
+        "values": "Notification Packages",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows Security Configuration Engine",
+        "value_matches": "^scecli$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "lsa_run_as_ppl",
+    "technique": "LSASS PPL Protection Status",
+    "mitre_id": "T1547.008",
+    "description": "RunAsPPL controls whether LSASS runs as a Protected Process Light. When set to 0 or absent, LSA protection is disabled, weakening credential protection. Value 1 enables protection.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/008/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Lsa",
+        "values": "RunAsPPL",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "LSA protection enabled",
+        "value_matches": "^[12]$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "lsm_debugger",
+    "technique": "LSM Debugger Hijack",
+    "mitre_id": "T1546.012",
+    "description": "The SilentProcessExit MonitorProcess for lsm.exe is invoked when the Local Session Manager terminates, providing persistence tied to session management events.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/012/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SilentProcessExit\\lsm.exe",
+        "values": "MonitorProcess",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "mapi32_dll_path",
+    "technique": "MAPI32 DLL Path Override",
+    "mitre_id": "T1574.001",
+    "description": "Every mail client registers its MAPI provider in a subkey of Clients Mail, where DLLPathEx (or the legacy DLLPath) names the DLL loaded by every process that initialises MAPI. Hijacking it provides code execution in Outlook and in any application that sends mail.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Clients\\Mail",
+        "values": "DLLPathEx",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": true
+      },
+      {
+        "path": "SOFTWARE\\Clients\\Mail",
+        "values": "DLLPath",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows Live Hotmail MAPI provider",
+        "value_matches": "^(%ProgramFiles(\\(x86\\))?%|[a-z]:\\\\Program Files( \\(x86\\))?)\\\\Internet Explorer\\\\hmmapi\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "minidump_auxiliary_dlls",
+    "technique": "MiniDump Auxiliary DLLs",
+    "mitre_id": "T1574.001",
+    "description": "MiniDumpAuxiliaryDlls entries name a trigger module and the auxiliary DLL dbghelp loads into the dumping process when that module is present. The auxiliary DLL runs during every crash dump, so registering one here provides code execution.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Default auxiliary DLL shipped beside a Microsoft runtime module",
+        "value_matches": "(System32|SysWOW64|Microsoft\\.NET\\\\Framework(64)?\\\\v[\\d.]+|Microsoft\\.NETCore\\.App\\\\[\\d.]+)\\\\(mscordacwks|mscordaccore|Chakradiag|jscript9diag|mrt_map)\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "msdtc_xa_dll",
+    "technique": "MSDTC XA DLL",
+    "mitre_id": "T1574.001",
+    "description": "MSDTC XA DLLs (OracleXaLib, OracleOciLib) are loaded by the Distributed Transaction Coordinator. A malicious DLL executes in the SYSTEM context of the MSDTC service.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\MSDTC\\MTxOCI",
+        "values": "OracleXaLib",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\MSDTC\\MTxOCI",
+        "values": "OracleOciLib",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default MSDTC XA/OCI DLL",
+        "value_matches": "^(xa80|oci)\\.dll$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "netsh_helper",
+    "technique": "Netsh Helper DLL",
+    "mitre_id": "T1546.007",
+    "description": "Netsh helper DLLs registered under HKLM\\SOFTWARE\\Microsoft\\NetSh are loaded every time netsh.exe executes. A malicious helper provides persistent code execution in a network-administration context.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/007/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\NetSh",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Built-in netsh helper",
+        "value_matches": "^(ifmon|rasmontr|authfwcfg|dhcpcmonitor|nshdnsclient|dot3cfg|fwcfg|hnetmon|netiohlp|netprofm|nettrace|nshhttp|nshipsec|nshwfp|rpcnsh|WcnNetsh|whhelper|wlancfg|wshelper|wwancfg|peerdistsh)\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "network_provider_dll",
+    "technique": "Network Provider DLL",
+    "mitre_id": "T1556.008",
+    "description": "Network provider DLLs are loaded during logon to handle network authentication. Malicious providers intercept plaintext credentials. Default providers include LanmanWorkstation (ntlanman.dll) and webclient (davclnt.dll).",
+    "references": [
+      "https://attack.mitre.org/techniques/T1556/008/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows network provider",
+        "value_matches": "(ntlanman|davclnt|rdpnp|drprov|P9NP|vmhgfs)\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "nldp_dll",
+    "technique": "NLDP DLL Override",
+    "mitre_id": "T1574.001",
+    "description": "The NlsData DllOverridePath specifies a custom DLL loaded by the Natural Language Processing subsystem. Any value present indicates DLL hijacking persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\NlsData",
+        "values": "DllOverridePath",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "office_addins",
+    "technique": "Office Add-in Registration",
+    "mitre_id": "T1137.006",
+    "description": "Office add-in registrations under per-application Addins keys load code at application startup, either directly through a Manifest, FileName or Path value or, for a classic COM add-in, through the ProgID to CLSID to InprocServer32 chain in Software\\Classes. LoadBehavior records whether the add-in loads automatically. Machine, per-user and ClickToRun hives are checked across all Office applications.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1137/006/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Microsoft-signed OneDrive Office integration add-in",
+        "value_matches": "^[a-z]:\\\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\Microsoft\\\\OneDrive\\\\[\\d.]+\\\\(i386\\\\)?File(SyncShell|CoAuthLib)(64)?\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "office_ai_hijack",
+    "technique": "Office AI Add-in Hijack",
+    "mitre_id": "T1137.006",
+    "description": "Office AI add-in registrations under ClickToRun\\REGISTRY paths can be hijacked to redirect COM loading to malicious DLLs when AI features are invoked.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1137/006/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "office_dll_override",
+    "technique": "Office DLL Override",
+    "mitre_id": "T1137",
+    "description": "Office internal DLL values (WwlibtDll for Word, PPCoreTDLL for PowerPoint) can be overridden in the registry to load a malicious DLL when the respective application starts. The machine, ClickToRun and per-user hives are all checked, because the per-user key needs no administrator rights.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1137/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "office_templates",
+    "technique": "Office Default Templates",
+    "mitre_id": "T1137.001",
+    "description": "Normal.dotm (Word) and every file in the Word STARTUP and Excel XLSTART global template folders load automatically on application start, so a macro embedded in one runs every time the application opens.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1137/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": []
+  },
+  {
+    "id": "office_test_dll",
+    "technique": "Office Test DLL",
+    "mitre_id": "T1137.002",
+    "description": "The undocumented Office Test\\Special\\Perf key specifies a DLL loaded by Office applications at startup. Any value present indicates persistence, as this key has no legitimate use. 32-bit Office reads the WoW64 copy of the key, so both registry views are checked.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1137/002/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Office Test\\Special\\Perf",
+        "values": "*",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "outlook_home_page",
+    "technique": "Outlook Home Page Attack",
+    "mitre_id": "T1137.004",
+    "description": "An Outlook folder Home Page URL loads as an embedded web page inside the folder view and runs arbitrary HTML, JavaScript and ActiveX. Every folder under WebView is read, so user-created and localized folder names are covered. The feature is deprecated and unset in standard deployments.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1137/004/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT"
+    ]
+  },
+  {
+    "id": "platform_execute",
+    "technique": "Platform Execute",
+    "mitre_id": "T1547.001",
+    "description": "PlatformExecute programs run during early boot for hardware-specific initialization. Values here are uncommon and may indicate boot-level persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager",
+        "values": "PlatformExecute",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "power_automate",
+    "technique": "Power Automate Desktop Flows",
+    "mitre_id": "T1546",
+    "description": "Power Automate Desktop stores flow definitions and scripts under the user's AppData. Both the Flows and Scripts directories are checked for automation-based persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": []
+  },
+  {
+    "id": "powershell_profiles",
+    "technique": "PowerShell Profile",
+    "mitre_id": "T1546.013",
+    "description": "PowerShell profile scripts (profile.ps1, Microsoft.PowerShell_profile.ps1) execute automatically on every PowerShell session start. Both system-wide and per-user profiles for Windows PowerShell and PowerShell Core are checked, including Documents folders redirected into OneDrive.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/013/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT"
+    ]
+  },
+  {
+    "id": "print_monitors",
+    "technique": "Print Monitors",
+    "mitre_id": "T1547.010",
+    "description": "Print monitor DLLs are loaded by the Print Spooler service (spoolsv.exe) at startup with SYSTEM privileges. Default monitors include Local Port, Standard TCP/IP Port, USB Monitor, WSD Port. Any additional monitor is suspicious.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/010/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Print\\Monitors",
+        "values": "Driver",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows print monitor",
+        "value_matches": "^(localspl|tcpmon|usbmon|WSDMon|APMon|AppMon|FXSMON|msonppmon)\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "print_processors",
+    "technique": "Print Processors",
+    "mitre_id": "T1547.012",
+    "description": "Print processor DLLs are loaded by the Print Spooler service at startup with SYSTEM privileges. The only default print processor is winprint (winprint.dll). Both x64 and x86 architecture paths are checked.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/012/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Print\\Environments\\Windows x64\\Print Processors",
+        "values": "Driver",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      },
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Print\\Environments\\Windows NT x86\\Print Processors",
+        "values": "Driver",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows print processor",
+        "value_matches": "^winprint\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "protocol_handler_hijack",
+    "technique": "Protocol Handler Hijacking",
+    "mitre_id": "T1546.001",
+    "description": "Protocol handler commands specify the executable invoked when a protocol URI is opened. Known high-risk protocols, custom-registered protocol handlers carrying a URL Protocol value, and per-user class keys that shadow a machine-registered protocol without carrying that value are checked.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Default ms-msdt handler",
+        "value_matches": "msdt\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Default Windows protocol handler",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Default Windows Explorer protocol handler",
+        "value_matches": "explorer\\.exe",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "rdp_clx_dll",
+    "technique": "RDP Client Extension DLL",
+    "mitre_id": "T1547.001",
+    "description": "The ClxDllPath value under Terminal Server DefaultUserConfiguration specifies a DLL loaded during RDP connection initialization.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Terminal Server\\DefaultUserConfiguration",
+        "values": "ClxDllPath",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "rdp_test_dvc_plugin",
+    "technique": "RDP TestDVCPlugin DLL",
+    "mitre_id": "T1574.001",
+    "description": "The TestDVCPlugin value specifies a DLL loaded by the RDP client for Dynamic Virtual Channel testing. Any value present indicates potential DLL-based persistence via RDP sessions.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Terminal Server Client",
+        "values": "TestDVCPlugin",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "rdp_virtual_channel",
+    "technique": "RDP Virtual Channel DLL",
+    "mitre_id": "T1547.001",
+    "description": "RDP Virtual Channel add-in DLLs are loaded during RDP sessions, providing DLL-based persistence for remote connections.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "rdp_wds_startup",
+    "technique": "RDP WDS Startup Programs",
+    "mitre_id": "T1547.001",
+    "description": "The WDS StartupPrograms value specifies programs launched in RDP sessions. The default is 'rdpclip'; any other value warrants investigation.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Terminal Server\\Wds\\rdpwd",
+        "values": "StartupPrograms",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default RDP startup program",
+        "value_matches": "^rdpclip$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "recycle_bin_com_extension",
+    "technique": "Recycle Bin COM Extension Handler",
+    "mitre_id": "T1546.015",
+    "description": "Shell verb commands and shell extension handlers on the Recycle Bin CLSID ({645FF040-...}) are checked for non-standard values, including ContextMenuHandlers and DragDropHandlers.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/015/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\shell\\open\\command",
+        "values": "(Default)",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\shell\\empty\\command",
+        "values": "(Default)",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\shell\\explore\\command",
+        "values": "(Default)",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\shellex\\ContextMenuHandlers",
+        "values": "(Default)",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Classes\\CLSID\\{645FF040-5081-101B-9F08-00AA002F954E}\\shellex\\DragDropHandlers",
+        "values": "(Default)",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "rid_hijacking",
+    "technique": "RID Hijacking",
+    "mitre_id": "T1098",
+    "description": "RID Hijacking rewrites the binary F value in the SAM hive to change an account's effective RID. A subkey RID that disagrees with the F value RID (usually set to 500, Administrator) grants admin privileges to a low-privilege account.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1098/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SAM"
+    ]
+  },
+  {
+    "id": "rid_suborner",
+    "technique": "RID Suborner (Hidden Admin Account)",
+    "mitre_id": "T1098",
+    "description": "The Suborner technique writes SAM hive entries directly, bypassing the account-creation APIs, to leave a hidden account carrying RID 500. An account whose F value RID is 500 while its subkey RID is not is reported.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1098/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SAM"
+    ]
+  },
+  {
+    "id": "run_keys",
+    "technique": "Registry Run Keys",
+    "mitre_id": "T1547.001",
+    "description": "Run, RunOnce, RunEx, and RunOnceEx registry keys execute listed programs at user logon. Both native and WoW64 paths are checked, including the Policies\\Explorer\\Run override. RunEx and RunOnceEx keep their commands in ordered section subkeys, which are descended into rather than read as flat values.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "values": "*",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+        "values": "*",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunEx",
+        "values": "*",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx",
+        "values": "*",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
+        "values": "*",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Windows Security Health tray",
+        "value_matches": "SecurityHealthSystray\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Realtek HD Audio service",
+        "value_matches": "RtkAudUService64\\.exe",
+        "signer": "Realtek"
+      },
+      {
+        "reason": "Waves MaxxAudio service",
+        "value_matches": "WavesSvc64\\.exe",
+        "signer": "Waves"
+      },
+      {
+        "reason": "Microsoft OneDrive auto-start",
+        "value_matches": "OneDrive\\\\OneDrive\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Microsoft OneDrive first start",
+        "value_matches": "System32\\\\OneDriveSetup\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Microsoft Edge WebView cleanup",
+        "value_matches": "Microsoft\\\\EdgeWebView\\\\.*\\\\Installer\\\\setup\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Windows Mail address book",
+        "value_matches": "Windows Mail\\\\wab\\.exe",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "run_services",
+    "technique": "RunServices (Legacy)",
+    "mitre_id": "T1547.001",
+    "description": "RunServices is a deprecated Win9x-era auto-start key that still exists in modern Windows. It is always empty on clean systems. Any entry is suspicious.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunServices",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "run_services_once",
+    "technique": "RunServicesOnce (Legacy)",
+    "mitre_id": "T1547.001",
+    "description": "RunServicesOnce is a deprecated Win9x-era auto-start key that still exists in modern Windows. It is always empty on clean systems. Any entry is suspicious.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunServicesOnce",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "s0_initial_command",
+    "technique": "S0 Initial Command",
+    "mitre_id": "T1547.001",
+    "description": "S0InitialCommand runs a program during Session 0 initialization, before interactive logon. Presence of this value is unusual and suggests persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager",
+        "values": "S0InitialCommand",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "scheduled_task_files",
+    "technique": "Scheduled Task (XML Files)",
+    "mitre_id": "T1053.005",
+    "description": "Scheduled task XML files under System32\\Tasks define actions executed on triggers. Exec actions are reported by command line and ComHandler actions by the COM server their CLSID registers.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1053/005/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Built-in Windows scheduled task",
+        "value_matches": "^%(windir|systemroot)%\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Windows Defender / ATP scheduled task",
+        "value_matches": "Windows Defender",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in Windows service control task",
+        "value_matches": "sc\\.exe\\s+(start|config)\\s+\\w+",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in Windows task with absolute system path",
+        "value_matches": "(?i)^C:\\\\Windows\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in Microsoft task under Windows task folder",
+        "path_matches": "\\\\Microsoft\\\\Windows\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Microsoft OneDrive scheduled task",
+        "value_matches": "Microsoft\\\\OneDrive\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Microsoft Edge Update scheduled task",
+        "value_matches": "Microsoft\\\\EdgeUpdate\\\\MicrosoftEdgeUpdate\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Windows Shell task ComHandler server",
+        "value_matches": "(?i)^(%windir%|%systemroot%|C:\\\\Windows)\\\\system32\\\\shell32\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "scm_extension",
+    "technique": "Service Control Manager Extension",
+    "mitre_id": "T1547.001",
+    "description": "ServiceControlManagerExtension values specify DLLs loaded by the SCM during boot, executing in a highly privileged context.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\ServiceControlManagerExtension",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "screensaver",
+    "technique": "Screensaver Hijack",
+    "mitre_id": "T1546.002",
+    "description": "The SCRNSAVE.EXE registry value defines the screensaver binary. Replacing it with a non-default executable provides per-user persistence triggered by idle timeout.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/002/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT"
+    ]
+  },
+  {
+    "id": "search_indexer_dll",
+    "technique": "Search Indexer DLL Override",
+    "mitre_id": "T1574.001",
+    "description": "The Windows Search Indexer DllPath value can be overridden to load a malicious DLL during indexing operations, providing SYSTEM-level persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows Search",
+        "values": "DllPath",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "search_protocol_handler",
+    "technique": "Search Protocol Handler Hijack",
+    "mitre_id": "T1546.001",
+    "description": "The search-ms protocol handler is normally handled by explorer.exe. Any modification to this handler is a strong indicator of search-ms protocol abuse, as documented in Follina-era attacks.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Classes\\search-ms\\shell\\open\\command",
+        "values": "(Default)",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "Software\\Classes\\search-ms\\shell\\open\\command",
+        "values": "(Default)",
+        "scope": "HKU",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows search handler",
+        "value_matches": "Explorer\\.exe",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "security_packages",
+    "technique": "Security Packages",
+    "mitre_id": "T1547.005",
+    "description": "Security Support Providers (SSPs) are DLLs loaded by LSA into lsass.exe. A malicious SSP captures plaintext credentials for every interactive logon.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/005/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Lsa",
+        "values": "Security Packages",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows SSP",
+        "value_matches": "^(kerberos|msv1_0|schannel|wdigest|tspkg|pku2u|cloudap)$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "server_level_plugin_dll",
+    "technique": "DNS Server Level Plugin DLL",
+    "mitre_id": "T1574.001",
+    "description": "The DNS Server ServerLevelPluginDll value specifies a DLL loaded by the DNS service at startup. Abuse provides SYSTEM-level persistence on domain controllers.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Services\\DNS\\Parameters",
+        "values": "ServerLevelPluginDll",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "service_failure_command",
+    "technique": "Service Failure Command",
+    "mitre_id": "T1543.003",
+    "description": "The FailureCommand value names a program the service control manager runs when the service fails, so a crash triggers it.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1543/003/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "No failure command configured",
+        "value_matches": "^not used$"
+      },
+      {
+        "reason": "NVIDIA display container service recovery",
+        "value_matches": "NVIDIA Corporation\\\\.*\\\\NvContainerRecovery\\.bat",
+        "signer": "Nvidia"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "session_manager_execute",
+    "technique": "Session Manager Execute",
+    "mitre_id": "T1547.001",
+    "description": "The Session Manager Execute value runs programs during session initialization, before user logon. Any value present warrants investigation.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager",
+        "values": "Execute",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "session_manager_subsystems",
+    "technique": "Session Manager SubSystems",
+    "mitre_id": "T1547",
+    "description": "The SubSystems\\Windows value specifies the Windows subsystem server executable loaded by the Session Manager during boot. The default value references csrss.exe. Any modification indicates boot-level persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager\\SubSystems",
+        "values": "Windows",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows subsystem configuration",
+        "value_matches": "csrss\\.exe",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "setup_execute",
+    "technique": "Setup Execute",
+    "mitre_id": "T1547.001",
+    "description": "SetupExecute programs run during early system setup, before the graphical shell. Any value present is suspicious outside fresh OS installs.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Control\\Session Manager",
+        "values": "SetupExecute",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "shared_task_scheduler",
+    "technique": "SharedTaskScheduler",
+    "mitre_id": "T1546",
+    "description": "SharedTaskScheduler COM objects are loaded by Explorer.exe at shell startup, providing early and persistent code execution. The key is normally empty on all modern Windows installations.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SharedTaskScheduler",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "shell_execute_hooks",
+    "technique": "ShellExecuteHooks",
+    "mitre_id": "T1546",
+    "description": "ShellExecuteHooks DLLs are loaded by Explorer.exe every time ShellExecute is called (double-clicking files, opening documents, running programs from the Start menu). The key is normally empty on modern Windows.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ShellExecuteHooks",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "shell_folders_startup",
+    "technique": "Shell Folders Startup Redirect",
+    "mitre_id": "T1547.001",
+    "description": "Shell Folders and User Shell Folders Startup values define the startup folder path. Redirecting to a non-default directory lets an attacker populate it with arbitrary executables that run at logon.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "shell_launcher",
+    "technique": "Shell Launcher Override",
+    "mitre_id": "T1547.001",
+    "description": "The Shell value under Policies\\System and the IniFileMapping boot\\Shell entry override the default Windows shell (explorer.exe), executing an attacker-controlled binary at every logon.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+        "values": "Shell",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\IniFileMapping\\system.ini\\boot",
+        "values": "Shell",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default shell launcher IniFileMapping",
+        "value_matches": "^sys:"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "shim_custom",
+    "technique": "Application Shimming",
+    "mitre_id": "T1546.011",
+    "description": "AppCompatFlags\\Custom binds an executable name to one or more custom shim databases. Each value name is the .sdb that runs when that executable starts, so this key names what a custom shim targets.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/011/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "snmp_extension_agent",
+    "technique": "SNMP Extension Agent DLL",
+    "mitre_id": "T1574",
+    "description": "SNMP ExtensionAgents values specify registry paths to DLL specifications loaded by the SNMP service. Legitimate defaults include inetmib1.dll, snmpmib.dll, hostmib.dll. Any non-default agent DLL is suspicious.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Services\\SNMP\\Parameters\\ExtensionAgents",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "startup_folder",
+    "technique": "Startup Folder",
+    "mitre_id": "T1547.001",
+    "description": "Programs and shortcuts placed in per-user or system-wide Startup folders execute automatically at logon, providing simple file-drop persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT"
+    ]
+  },
+  {
+    "id": "telemetry_controller",
+    "technique": "Telemetry Controller Command",
+    "mitre_id": "T1546",
+    "description": "TelemetryController subkeys under AppCompatFlags name the DLL CompatTelRunner.exe loads and the command it runs on the Microsoft Compatibility Appraiser schedule, both as SYSTEM.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Built-in compatibility appraiser command",
+        "value_matches": "(?i)^(%windir%|%systemroot%|C:\\\\Windows)\\\\system32\\\\CompatTelRunner\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Inbox compatibility appraiser telemetry DLL",
+        "value_matches": "(?i)^(aeinv|aemarebackup|appraiser|devinv|generaltel|invagent)\\.dll$",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Inbox compatibility appraiser exported entry point",
+        "value_matches": "(?i)^(BackupMareData|CreateDeviceInventory|DoScheduledTelemetryRun|GetApplicationKBs|RunGeneralTelemetry|RunUpdate|UpdateAvStatus|UpdateSoftwareInventoryW)( invsvc)?$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "time_providers",
+    "technique": "Time Providers",
+    "mitre_id": "T1547.003",
+    "description": "Time provider DLLs are loaded by the W32Time service at startup. Default providers are NtpClient, NtpServer, and VMICTimeProvider (Hyper-V). Any non-default time provider DLL is a strong indicator of persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/003/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Services\\W32Time\\TimeProviders",
+        "values": "DllName",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows time provider",
+        "value_matches": "w32time\\.dll$",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Hyper-V time provider",
+        "value_matches": "vmictimeprovider\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "ts_initial_program",
+    "technique": "Terminal Services Initial Program",
+    "mitre_id": "T1547.001",
+    "description": "The Terminal Services InitialProgram value replaces the default shell for RDP sessions. Setting it to a malicious binary provides persistence for all incoming RDP connections. The Terminal Server Install shadow of the Run keys is checked too, and its RunOnceEx half keeps its commands in ordered section subkeys, which are descended into rather than read as flat values.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/001/"
+    ],
+    "implementation": "custom",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Policies\\Microsoft\\Windows NT\\Terminal Services",
+        "values": "InitialProgram",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Terminal Server\\Install\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Terminal Server\\Install\\Software\\Microsoft\\Windows\\CurrentVersion\\Runonce",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      },
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Terminal Server\\Install\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnceEx",
+        "values": "*",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "typelib_hijack",
+    "technique": "TypeLib COM Hijacking",
+    "mitre_id": "T1546.015",
+    "description": "TypeLib entries in per-user hives (HKCU\\Software\\Classes\\TypeLib) are reported. HKCU TypeLib entries override HKLM, allowing user-level persistence, so every registered library path is surfaced: a hijack that names a system directory is still a hijack, and known-good publishers are suppressed by the detection profile rather than here.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/015/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Microsoft-signed type library",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Office forms type library cache",
+        "value_matches": "^[a-z]:\\\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\Temp\\\\(Excel|Word|PowerPoint|Outlook|Access)\\d+\\.\\d+\\\\MSForms\\.exd$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "vba_monitors",
+    "technique": "VBA Monitor DLL Hijack",
+    "mitre_id": "T1137",
+    "description": "The InprocServer32 value of a known VBA monitor CLSID names a DLL loaded whenever VBA executes, so hijacking the COM registration runs code on every Office macro. The machine and per-user hives are both read.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1137/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE",
+      "UsrClass.dat"
+    ]
+  },
+  {
+    "id": "wer_debugger",
+    "technique": "WER Debugger Hijack",
+    "mitre_id": "T1546",
+    "description": "The Windows Error Reporting Debugger value is invoked when WER processes an application crash, providing an alternative crash-handler persistence vector.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting",
+        "values": "Debugger",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "wer_hangs",
+    "technique": "WER Hangs Debugger Hijack",
+    "mitre_id": "T1546",
+    "description": "The WER Hangs Debugger value is invoked when Windows detects an application hang (not responding), providing persistence triggered by UI freezes.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting\\Hangs",
+        "values": "Debugger",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "wer_reflect_debugger",
+    "technique": "WER ReflectDebugger Hijack",
+    "mitre_id": "T1546",
+    "description": "The WER ReflectDebugger value is invoked for reflection-based crash analysis and can be hijacked for persistence via application failures.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting",
+        "values": "ReflectDebugger",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": true
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "wer_runtime_exception",
+    "technique": "WER Runtime Exception Modules",
+    "mitre_id": "T1546",
+    "description": "RuntimeExceptionHelperModules are DLLs loaded by WER when handling unhandled exceptions. Registering a malicious module provides DLL-based persistence via application crashes.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Known WER helper module",
+        "value_matches": "(mscordacwks|iertutil|msiwer|wbiosrvc|msedge_wer)\\.dll",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Google Chrome WER helper",
+        "value_matches": "chrome_wer\\.dll",
+        "signer": "Google"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "windows_service_dll",
+    "technique": "Windows Service (ServiceDll)",
+    "mitre_id": "T1543.003",
+    "description": "svchost.exe-hosted services load a ServiceDll. A non-OS DLL may indicate a malicious service DLL.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1543/003/",
+      "https://docs.microsoft.com/en-us/windows/win32/services/service-programs"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Built-in OS service DLL",
+        "value_matches": "system32\\\\",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "windows_service_image_path",
+    "technique": "Windows Service (ImagePath)",
+    "mitre_id": "T1543.003",
+    "description": "Windows services run executables at system start. A non-OS ImagePath may indicate a malicious or third-party service.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1543/003/",
+      "https://docs.microsoft.com/en-us/windows/win32/services/service-programs"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "svchost-hosted service",
+        "value_matches": "svchost\\.exe\\s+-k\\b",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Inbox kernel driver service that omits ImagePath",
+        "value_matches": "(?i)^(Beep|CimFS|exfat|fastfat|Fs_Rec|Msfs|MsRPC|Npfs|Ntfs|Null|ReFS|ReFSv1|Wof)\\.sys$",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Built-in OS service",
+        "value_matches": "(system32|syswow64|\\\\servicing\\\\|Microsoft\\.NET\\\\|Windows Media Player)\\\\",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Windows Defender / ATP service",
+        "value_matches": "Windows Defender",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Default Windows Installer service",
+        "value_matches": "msiexec\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Microsoft Edge / Edge Update service",
+        "value_matches": "Microsoft\\\\(EdgeUpdate\\\\MicrosoftEdgeUpdate|Edge\\\\.*\\\\elevation_service)\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Google Chrome / Update service",
+        "value_matches": "Google\\\\(GoogleUpdater\\\\.*\\\\updater|Chrome\\\\.*\\\\elevation_service)\\.exe",
+        "signer": "Google"
+      },
+      {
+        "reason": "Windows TrustedInstaller",
+        "value_matches": "TrustedInstaller\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Windows Subsystem for Linux service",
+        "value_matches": "WSL\\\\wslservice\\.exe",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": ".NET Framework shared hosting",
+        "value_matches": "Microsoft\\.NET\\\\.*\\\\SMSvcHost\\.exe",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "windows_terminal",
+    "technique": "Windows Terminal Custom Profiles",
+    "mitre_id": "T1546",
+    "description": "Windows Terminal settings.json can define profiles with custom command lines. Non-default profiles may execute arbitrary commands when a new terminal tab is opened.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows shell",
+        "value_matches": "(?i)^(%SystemRoot%\\\\System32\\\\)?cmd\\.exe$",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Default PowerShell",
+        "value_matches": "(?i)^(%SystemRoot%\\\\System32\\\\WindowsPowerShell\\\\v1\\.0\\\\)?powershell\\.exe$",
+        "signer": "Microsoft"
+      },
+      {
+        "reason": "Default PowerShell 7+",
+        "value_matches": "(?i)^pwsh\\.exe$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": []
+  },
+  {
+    "id": "winlogon_appsetup",
+    "technique": "Winlogon AppSetup",
+    "mitre_id": "T1547.004",
+    "description": "AppSetup holds a comma-delimited list of programs Winlogon runs in the SYSTEM context at every interactive logon, before the shell starts.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "custom",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "values": "AppSetup",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winlogon_gina_dll",
+    "technique": "Winlogon GinaDLL",
+    "mitre_id": "T1547.004",
+    "description": "GinaDLL replaces the Graphical Identification and Authentication library Winlogon loads. Windows Vista and later ignore it, so any value on a modern image is a leftover or a credential-capture attempt.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "values": "GinaDLL",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winlogon_mpnotify",
+    "technique": "Winlogon MPNotify",
+    "mitre_id": "T1547.004",
+    "description": "The mpnotify value specifies a notification DLL loaded by Winlogon after authentication. Any value present is suspicious as this mechanism is rarely used legitimately.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "values": "mpnotify",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winlogon_notify_packages",
+    "technique": "Winlogon Notify Packages",
+    "mitre_id": "T1547.004",
+    "description": "Each subkey of Winlogon\\Notify registers a DllName that Winlogon loads into its own process and calls on logon, logoff, lock and unlock events, running as SYSTEM.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Notify",
+        "values": "DllName",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default notification package",
+        "value_matches": "^scecli$"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winlogon_shell",
+    "technique": "Winlogon Shell",
+    "mitre_id": "T1547.004",
+    "description": "The Winlogon Shell value defines the user-mode shell launched after authentication. Replacing the default 'explorer.exe' executes an attacker binary at every logon.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "values": "Shell",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows shell",
+        "value_matches": "^explorer\\.exe$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winlogon_system",
+    "technique": "Winlogon System",
+    "mitre_id": "T1547.004",
+    "description": "The System value holds a comma-delimited list of programs Winlogon starts in the system context during initialisation, and is empty on a default installation.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "custom",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "values": "System",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winlogon_taskman",
+    "technique": "Winlogon Taskman",
+    "mitre_id": "T1547.004",
+    "description": "Taskman names the executable launched in place of Task Manager. It is unset by default, so any value redirects a trusted user action to an attacker binary.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "values": "Taskman",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winlogon_userinit",
+    "technique": "Winlogon Userinit",
+    "mitre_id": "T1547.004",
+    "description": "The Userinit value is a comma-delimited list of programs run immediately after user authentication. Appending entries beyond the default userinit.exe is stealthy logon persistence.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "custom",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "values": "Userinit",
+        "scope": "BOTH",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows userinit",
+        "value_matches": "(?i)^(([a-z]:\\\\Windows|%windir%|%systemroot%)\\\\system32\\\\)?userinit\\.exe$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "NTUSER.DAT",
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winlogon_vmapplet",
+    "technique": "Winlogon VMApplet",
+    "mitre_id": "T1547.004",
+    "description": "VMApplet names the program Winlogon runs when the system runs out of virtual memory. Replacing the default virtual memory applet yields SYSTEM execution.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1547/004/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon",
+        "values": "VMApplet",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows virtual memory applet",
+        "value_matches": "(?i)^SystemPropertiesPerformance\\.exe /pagefile$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SOFTWARE"
+    ]
+  },
+  {
+    "id": "winsock_auto_proxy",
+    "technique": "Winsock AutoProxy DLL",
+    "mitre_id": "T1574.001",
+    "description": "Winsock NameSpace_Catalog5 provider DLLs are loaded for network name resolution. A non-OS library in either the 32-bit or the 64-bit catalog provides persistent DLL loading in any networking process.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Services\\WinSock2\\Parameters\\NameSpace_Catalog5\\Catalog_Entries",
+        "values": "LibraryPath",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      },
+      {
+        "path": "SYSTEM\\{controlset}\\Services\\WinSock2\\Parameters\\NameSpace_Catalog5\\Catalog_Entries64",
+        "values": "LibraryPath",
+        "scope": "HKLM",
+        "recurse": true,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Winsock provider",
+        "value_matches": "(mswsock|napinsp|nlansp_c|winrnr|wshbth)\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  },
+  {
+    "id": "wmi_event_subscription",
+    "technique": "WMI Event Subscription",
+    "mitre_id": "T1546.003",
+    "description": "WMI permanent event subscriptions (CommandLineEventConsumer, ActiveScriptEventConsumer) execute commands or scripts in response to system events. These persist in the CIM repository and survive reboots.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1546/003/"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "builtin_allow": [
+      {
+        "reason": "Stock Service Control Manager event subscription",
+        "value_matches": "^NTEventLogEventConsumer \"SCM Event Log Consumer\" bound to filter \"SCM Event Log Filter\""
+      }
+    ],
+    "builtin_block": [],
+    "hives": []
+  },
+  {
+    "id": "wu_service_startup_dll",
+    "technique": "Windows Update Service Startup DLL",
+    "mitre_id": "T1574.001",
+    "description": "The Windows Update ServiceDll value specifies the DLL loaded by the wuauserv service. A non-OS DLL provides SYSTEM-level persistence triggered by Windows Update operations.",
+    "references": [
+      "https://attack.mitre.org/techniques/T1574/001/"
+    ],
+    "implementation": "declarative",
+    "targets": [
+      {
+        "path": "SYSTEM\\{controlset}\\Services\\wuauserv\\Parameters",
+        "values": "ServiceDll",
+        "scope": "HKLM",
+        "recurse": false,
+        "include_wow64": false
+      }
+    ],
+    "builtin_allow": [
+      {
+        "reason": "Default Windows Update DLL",
+        "value_matches": "wuaueng\\.dll$",
+        "signer": "Microsoft"
+      }
+    ],
+    "builtin_block": [],
+    "hives": [
+      "SYSTEM"
+    ]
+  }
+]
