@@ -2,13 +2,13 @@
 
 use super::{
     Finding, TimeEvidence,
-    context::{Context, explicit_drive, normalize_windows},
+    context::{Context, EvidenceFile, explicit_drive, normalize_windows},
 };
 use chrono::{DateTime, Duration, SecondsFormat, Utc};
 use evtx::{EvtxParser, ParserSettings};
 use mft::{MftParser, attribute::MftAttributeType, csv::FlatMftEntryWithName};
 use serde_json::Value;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
 
 #[derive(Clone, Debug)]
@@ -67,6 +67,253 @@ struct EventKey {
     event_id: u64,
     field: String,
     value: String,
+}
+
+const MAX_RENAME_PROOFS: usize = 4096;
+const MAX_RENAME_CHAIN: usize = 64;
+
+#[derive(Clone, Debug)]
+struct Rename {
+    old: String,
+    new: String,
+    source: String,
+    record_id: u64,
+}
+
+struct HostAliases {
+    current: String,
+    /// Historical name -> the next name toward the captured host and its proof event.
+    parents: HashMap<String, (String, usize)>,
+    proofs: Vec<Rename>,
+}
+
+impl HostAliases {
+    fn new(current: &str, proofs: Vec<Rename>) -> Self {
+        let current = host_key(current).unwrap_or_default();
+        let mut aliases = Self {
+            current: current.clone(),
+            parents: HashMap::new(),
+            proofs,
+        };
+        let mut pending = VecDeque::from([(current.clone(), 0usize)]);
+        let mut known = HashSet::from([current]);
+        while let Some((name, depth)) = pending.pop_front() {
+            if name.is_empty() || depth >= MAX_RENAME_CHAIN {
+                continue;
+            }
+            for (i, proof) in aliases.proofs.iter().enumerate() {
+                let adjacent = if proof.new == name {
+                    &proof.old
+                } else if proof.old == name {
+                    &proof.new
+                } else {
+                    continue;
+                };
+                if known.insert(adjacent.clone()) {
+                    aliases.parents.insert(adjacent.clone(), (name.clone(), i));
+                    pending.push_back((adjacent.clone(), depth + 1));
+                }
+            }
+        }
+        aliases
+    }
+
+    fn accepts(&self, computer: &str) -> bool {
+        host_key(computer).is_some_and(|name| {
+            !self.current.is_empty() && (name == self.current || self.parents.contains_key(&name))
+        })
+    }
+
+    fn proof(&self, computer: &str) -> Option<String> {
+        let mut name = host_key(computer)?;
+        if name == self.current {
+            return None;
+        }
+        let mut proof_lines = Vec::new();
+        for _ in 0..MAX_RENAME_CHAIN {
+            let (next, proof) = self.parents.get(&name)?;
+            let proof = &self.proofs[*proof];
+            proof_lines.push(format!(
+                "{} RecordID {} ({} -> {})",
+                proof.source, proof.record_id, proof.old, proof.new
+            ));
+            name = next.clone();
+            if name == self.current {
+                return Some(format!(
+                    "original event Computer={computer}; captured-host rename chain: {}",
+                    proof_lines.join("; ")
+                ));
+            }
+        }
+        None
+    }
+}
+
+fn host_key(name: &str) -> Option<String> {
+    let name = name.trim().trim_end_matches('.');
+    if name.is_empty()
+        || name.encode_utf16().count() > 255
+        || !name
+            .chars()
+            .all(|c| c.is_alphanumeric() || matches!(c, '-' | '_' | '.'))
+    {
+        return None;
+    }
+    let first = name.split('.').next()?;
+    (!first.is_empty()).then(|| first.to_lowercase())
+}
+
+/// Only the primary installation's live channel files establish local-host identity.
+/// Windows.old, copied exports and forwarded/archived logs cannot introduce aliases.
+fn active_channel_log(ctx: &Context, file: &EvidenceFile, channel: &str) -> bool {
+    let lower = file.logical.to_lowercase();
+    lower
+        .strip_prefix("windows/system32/winevt/logs/")
+        .is_some_and(|name| !name.contains('/') && event_filename_matches(name, channel))
+        && ctx.drive_of(&file.physical) == ctx.system_drive()
+}
+
+fn historical_hosts(ctx: &Context, now: DateTime<Utc>, issues: &mut Vec<String>) -> HostAliases {
+    let mut proofs = Vec::new();
+    for source in ctx
+        .files
+        .iter()
+        .filter(|file| active_channel_log(ctx, file, "System"))
+    {
+        let mut parser = match EvtxParser::from_path(&source.physical) {
+            Ok(parser) => parser.with_configuration(ParserSettings::new().num_threads(1)),
+            Err(e) => {
+                issues.push(format!(
+                    "Cannot read host-rename evidence {}: {e}",
+                    source.physical.display()
+                ));
+                continue;
+            }
+        };
+        let mut unreadable = 0usize;
+        for record in parser.records_json_value() {
+            let record = match record {
+                Ok(record) => record,
+                Err(_) => {
+                    unreadable += 1;
+                    continue;
+                }
+            };
+            let event = record.data.get("Event").unwrap_or(&record.data);
+            let Some(when) = DateTime::from_timestamp(
+                record.timestamp.as_second(),
+                record.timestamp.subsec_nanosecond() as u32,
+            ) else {
+                continue;
+            };
+            if let Some(proof) = rename_event(
+                event,
+                when,
+                now,
+                source.physical.display().to_string(),
+                record.event_record_id,
+            ) {
+                if proofs.len() >= MAX_RENAME_PROOFS {
+                    issues.push(format!("Host rename evidence exceeds {MAX_RENAME_PROOFS} events; additional rename proofs are not used"));
+                    break;
+                }
+                proofs.push(proof);
+            }
+        }
+        if unreadable > 0 {
+            issues.push(format!(
+                "Host-rename EVTX {} skipped {unreadable} unreadable records",
+                source.physical.display()
+            ));
+        }
+    }
+    HostAliases::new(&ctx.computer, proofs)
+}
+
+fn rename_event(
+    event: &Value,
+    when: DateTime<Utc>,
+    now: DateTime<Utc>,
+    source: String,
+    record_id: u64,
+) -> Option<Rename> {
+    if when.timestamp() < 631_152_000 || when > now + Duration::hours(48) {
+        return None;
+    }
+    let system = event.get("System")?;
+    if scalar(system.get("EventID"))?.parse::<u64>().ok()? != 6011
+        || !scalar(system.get("Channel"))?.eq_ignore_ascii_case("System")
+    {
+        return None;
+    }
+    let provider = system
+        .get("Provider")
+        .and_then(|value| value.get("#attributes"))
+        .and_then(|value| value.get("Name"))
+        .or_else(|| {
+            system
+                .get("Provider_attributes")
+                .and_then(|value| value.get("Name"))
+        })?
+        .as_str()?;
+    if !provider.eq_ignore_ascii_case("EventLog") {
+        return None;
+    }
+    let data = event.get("EventData")?.get("Data")?;
+    // Native EVTX rendering represents the two unnamed insertion strings as a
+    // #text array; XML renderers may instead preserve the <string> fragment.
+    let data = data.get("#text").unwrap_or(data);
+    let names = if let Value::Array(values) = data {
+        let names: Vec<_> = values
+            .iter()
+            .map(|value| scalar(Some(value)))
+            .collect::<Option<_>>()?;
+        if names.len() == 2 && names.iter().all(|name| host_key(name).is_some()) {
+            names
+        } else if names.len() == 1 {
+            rename_strings(&names[0])?
+        } else {
+            return None;
+        }
+    } else {
+        rename_strings(&scalar(Some(data))?)?
+    };
+    let old = host_key(names.first()?)?;
+    let new = host_key(names.get(1)?)?;
+    let computer = host_key(&scalar(system.get("Computer"))?)?;
+    if old == new || computer != old && computer != new {
+        return None;
+    }
+    Some(Rename {
+        old,
+        new,
+        source,
+        record_id,
+    })
+}
+
+fn rename_strings(fragment: &str) -> Option<Vec<String>> {
+    if fragment.len() > 4096 {
+        return None;
+    }
+    let mut reader = quick_xml::Reader::from_str(fragment);
+    let mut names = Vec::new();
+    loop {
+        match reader.read_event().ok()? {
+            quick_xml::events::Event::Start(tag)
+                if tag.name().as_ref() == b"string" && tag.attributes().next().is_none() =>
+            {
+                names.push(reader.read_text(tag.name()).ok()?.into_owned());
+                if names.len() > 2 {
+                    return None;
+                }
+            }
+            quick_xml::events::Event::Text(text) if text.decode().ok()?.trim().is_empty() => {}
+            quick_xml::events::Event::Eof => break,
+            _ => return None,
+        }
+    }
+    (names.len() == 2).then_some(names)
 }
 
 /// Parse each relevant channel and MFT once. The indices contain finding identifiers and
@@ -380,6 +627,7 @@ fn scan_events(
     now: DateTime<Utc>,
     issues: &mut Vec<String>,
 ) {
+    let host_aliases = historical_hosts(ctx, now, issues);
     let channels: HashSet<_> = targets.keys().map(|key| key.channel.clone()).collect();
     let mut channel_fields: HashMap<(String, u64), HashSet<String>> = HashMap::new();
     let mut channel_indices: HashMap<String, HashSet<usize>> = HashMap::new();
@@ -397,10 +645,9 @@ fn scan_events(
         .files
         .iter()
         .filter(|file| {
-            file.logical.to_lowercase().ends_with(".evtx")
-                && channels
-                    .iter()
-                    .any(|channel| event_filename_matches(&file.logical, channel))
+            channels
+                .iter()
+                .any(|channel| active_channel_log(ctx, file, channel))
         })
         .collect();
     for source in sources {
@@ -442,14 +689,7 @@ fn scan_events(
                 continue;
             }
             let computer = scalar(system.get("Computer")).unwrap_or_default();
-            if !computer.is_empty()
-                && !ctx.computer.is_empty()
-                && !computer
-                    .split('.')
-                    .next()
-                    .unwrap_or_default()
-                    .eq_ignore_ascii_case(ctx.computer.split('.').next().unwrap_or_default())
-            {
+            if !host_aliases.accepts(&computer) {
                 continue;
             }
             if available_channels.insert(channel.clone())
@@ -501,6 +741,10 @@ fn scan_events(
                         value: normalize_match(&value),
                     };
                     if let Some(indices) = targets.get(&key) {
+                        let alias_proof = host_aliases
+                            .proof(&computer)
+                            .map(|proof| format!("; {proof}"))
+                            .unwrap_or_default();
                         for index in indices {
                             states[*index].add(
                                 Candidate {
@@ -510,7 +754,9 @@ fn scan_events(
                                         source.physical.display(),
                                         record.event_record_id
                                     ),
-                                    detail: format!("{channel} EID {id}; {field}={value}"),
+                                    detail: format!(
+                                        "{channel} EID {id}; {field}={value}{alias_proof}"
+                                    ),
                                     weak: channel == "system"
                                         && id == 7045
                                         && field.eq_ignore_ascii_case("ImagePath"),
@@ -608,6 +854,117 @@ fn event_filename_matches(path: &str, channel: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn synthetic_rename(old: &str, new: &str, computer: &str) -> Value {
+        serde_json::json!({
+            "System": {"Provider": {"#attributes": {"Name": "EventLog"}}, "EventID": 6011, "Channel": "System", "Computer": computer},
+            "EventData": {"Data": format!("<string>{old}</string>\n<string>{new}</string>\n")}
+        })
+    }
+
+    #[test]
+    fn verified_rename_chain_accepts_historical_names_and_preserves_provenance() {
+        let now = Utc::now();
+        let first = rename_event(
+            &synthetic_rename("INITIAL", "MIDDLE", "INITIAL"),
+            now,
+            now,
+            "captured System.evtx".into(),
+            11,
+        )
+        .unwrap();
+        let second = rename_event(
+            &synthetic_rename("MIDDLE", "CURRENT", "CURRENT"),
+            now,
+            now,
+            "captured System.evtx".into(),
+            12,
+        )
+        .unwrap();
+        let unrelated = rename_event(
+            &synthetic_rename("FOREIGN", "OTHER", "OTHER"),
+            now,
+            now,
+            "captured System.evtx".into(),
+            13,
+        )
+        .unwrap();
+        let aliases = HostAliases::new("CURRENT.example.test", vec![first, second, unrelated]);
+        assert!(aliases.accepts("current.EXAMPLE.TEST"));
+        assert!(aliases.accepts("INITIAL.example.test"));
+        assert!(aliases.accepts("MIDDLE"));
+        assert!(!aliases.accepts("FOREIGN"));
+        assert!(!aliases.accepts("UNPROVEN.example.test"));
+        assert!(!aliases.accepts(""));
+        let proof = aliases.proof("INITIAL.example.test").unwrap();
+        assert!(proof.contains("original event Computer=INITIAL.example.test"));
+        assert!(proof.contains("RecordID 11 (initial -> middle)"));
+        assert!(proof.contains("RecordID 12 (middle -> current)"));
+        assert!(aliases.proof("CURRENT").is_none());
+    }
+
+    #[test]
+    fn rename_proof_requires_eventlog_provider_and_an_endpoint_computer() {
+        let now = Utc::now();
+        let mut event = synthetic_rename("INITIAL", "CURRENT", "FOREIGN");
+        assert!(rename_event(&event, now, now, "System.evtx".into(), 1).is_none());
+        event["System"]["Computer"] = Value::String("CURRENT".into());
+        event["System"]["Provider"]["#attributes"]["Name"] =
+            Value::String("UnrelatedProvider".into());
+        assert!(rename_event(&event, now, now, "System.evtx".into(), 1).is_none());
+        assert!(rename_strings("<!DOCTYPE string [<!ENTITY x SYSTEM 'file:///outside'>]><string>&x;</string><string>CURRENT</string>").is_none());
+        assert!(
+            rename_strings(
+                "<string>INITIAL</string><string>CURRENT</string><string>FOREIGN</string>"
+            )
+            .is_none()
+        );
+        let mut native = synthetic_rename("INITIAL", "CURRENT", "CURRENT");
+        native["EventData"]["Data"] = serde_json::json!({"#text": ["INITIAL", "CURRENT"]});
+        assert!(rename_event(&native, now, now, "System.evtx".into(), 1).is_some());
+    }
+
+    #[test]
+    fn host_aliases_and_timeline_records_use_only_live_primary_channel_paths() {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = [
+            "C/Windows/System32/winevt/Logs/System.evtx",
+            "C/Windows.old/Windows/System32/winevt/Logs/System.evtx",
+            "C/archive/Windows/System32/winevt/Logs/System.evtx",
+            "C/Windows/System32/winevt/Logs/ForwardedEvents.evtx",
+            "C/Windows/System32/winevt/Logs/Archive-System-0001.evtx",
+            "D/Windows/System32/winevt/Logs/System.evtx",
+        ];
+        for path in paths {
+            let path = dir.path().join(path);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, b"test").unwrap();
+        }
+        let ctx = Context::open(dir.path(), true).unwrap();
+        let sources: Vec<_> = ctx
+            .files
+            .iter()
+            .filter(|file| active_channel_log(&ctx, file, "System"))
+            .collect();
+        assert_eq!(sources.len(), 1);
+        assert!(sources[0].physical.ends_with(Path::new(paths[0])));
+    }
+
+    #[test]
+    #[ignore = "Set JUNTEI_RENAME_EVIDENCE to a private collection containing System 6011 rename evidence"]
+    fn independent_local_host_rename_evidence() {
+        let path = std::path::PathBuf::from(
+            std::env::var_os("JUNTEI_RENAME_EVIDENCE").expect("JUNTEI_RENAME_EVIDENCE"),
+        );
+        let ctx = Context::open(&path, true).unwrap();
+        let mut issues = Vec::new();
+        let aliases = historical_hosts(&ctx, Utc::now(), &mut issues);
+        assert!(
+            !aliases.parents.is_empty(),
+            "No verified local rename chain: {issues:?}"
+        );
+    }
+
     #[test]
     fn candidate_precision_and_mft_tie_preference_match_upstream() {
         let now = Utc::now();

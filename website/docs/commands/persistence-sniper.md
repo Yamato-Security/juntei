@@ -189,6 +189,10 @@ Where available, it correlates registry writes with Sysmon event 13, task instal
 Security 4698 or Task Scheduler 106, service installation with System 7045, and file-backed
 configuration with original `$MFT` timestamps. The provenance appears in `ChangeSource`.
 An event can date a configuration change without proving that the configured payload ran.
+Local System event 6011 can prove an earlier computer name. The hunter follows verified rename
+chains anchored to the collected computer, preserving its current `Computer` value while recording
+the original event computer and rename-record proof in `ChangeSource`. Unproven foreign names,
+archived logs, forwarded logs, and another Windows installation are not accepted through this rule.
 
 Use `--mft <FILE>` to select an externally collected MFT for a single computer. Use `--no-timeline`
 to skip timestamp correlation. `NOT_RUN`, `NOT_APPLICABLE`, `NO_ARTIFACT`, `NO_MATCH`, and `REJECTED`
