@@ -49,7 +49,9 @@ Collect each hive with its transaction logs. User hives are in `Users\<name>\NTU
 
   An unquoted path with spaces may run a different program (`C:\Program.exe`) if one exists.
 - **`GlobalFlag` decides `Enabled` for `VerifierDlls` and `MonitorProcess`.** `VerifierDlls` loads
-  only with `0x100`, and `MonitorProcess` runs only with `0x200`.
+  only with `0x100`. `MonitorProcess` runs only with `0x200` and `SilentProcessExit\<program>`
+  `ReportingMode`'s `0x1`. A mode of `2` (a dump) or `4` (a notification) runs nothing, and
+  `Details` names the mode's flags.
 - **`KeyLastWrittenUTC` is the key's last write**, not the value's. Several values share it.
 
 ## Parse with Juntei
@@ -77,8 +79,13 @@ juntei parse-registry persistence -f NTUSER.DAT -t jsonl \
   | jq 'select(.mechanism != "com_server" or .overrides_machine_registration == true)'
 ```
 
-The summary counts records by mechanism. It also lists the `StartupApproved` entries left
-without their `Run` value, and the user COM classes and commands that override the machine's.
+The summary counts records by mechanism. It also lists the `StartupApproved\Run` and `Run32`
+entries left without their `Run` value (Startup folder files have none to lose), and the user COM
+classes and commands that override the machine's.
+
+Like every `parse-registry` command, it refuses an `-o` that is one of the files it reads, even
+with `-C`. That covers the hive, its transaction logs, and the system's SYSTEM and SOFTWARE hives,
+by path, symbolic link or hard link.
 
 ## Output fields
 
@@ -91,7 +98,7 @@ without their `Run` value, and the user COM classes and commands that override t
 | `KeyPath`, `ValueName` | The key under the hive's root (names as written) and the value (empty: the default value). |
 | `Data` | The value's text, or one item of a list. Empty when it can't be read, or when only `StartupApproved` names the entry. |
 | `ImagePath`, `Arguments` | The program or DLL, and the arguments, where they can be told apart (see above). |
-| `Enabled`, `DisabledAtUTC` | What `StartupApproved`, `LoadAppInit_DLLs`, `GlobalFlag`, `UseFilter`, `IsInstalled`, the time provider's `Enabled` or `ScreenSaveActive` says. Empty when nothing says. |
+| `Enabled`, `DisabledAtUTC` | What `StartupApproved`, `LoadAppInit_DLLs`, `GlobalFlag` (with `ReportingMode`), `UseFilter`, `IsInstalled`, the time provider's `Enabled` or `ScreenSaveActive` says. Empty when nothing says. |
 | `Details` | More: what a pending rename does, the COM class's name, `ReportingMode`, `FilterFullPath`, an Active Setup `ShellComponent`, … |
 | `OverridesMachineRegistration` | For a user's COM class or command: whether the machine registers the same one. Empty without the system's `SOFTWARE` hive. |
 | `Wow64` | Under `Wow6432Node`: for 32-bit programs. |

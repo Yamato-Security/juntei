@@ -6,7 +6,8 @@
 //! and whether the sign-in screen hides it. Password hashes are not read.
 
 use super::{
-    Hosts, Opened, RecordWriter, choose_logs, filetime, find_hives_of_type, input_files, open, sink,
+    Hosts, Opened, RecordWriter, choose_logs, files_read, filetime, find_hives_of_type,
+    input_files, open, sink,
 };
 use crate::cli::RegistrySamOptions;
 use crate::color::JunteiColor;
@@ -52,11 +53,10 @@ pub fn run(opts: &RegistrySamOptions) -> i32 {
     )
     .and_then(|files| Ok((files, choose_logs(opts.no_logs, &given_logs)?)))
     .and_then(|(files, logs)| {
-        Ok((
-            files,
-            logs,
-            sink(opts.output.as_ref(), opts.clobber, data_on_stdout)?,
-        ))
+        let sink = sink(opts.output.as_ref(), opts.clobber, data_on_stdout, || {
+            files_read(&files, &given_logs)
+        })?;
+        Ok((files, logs, sink))
     });
     let (files, logs, sink) = match inputs {
         Ok(inputs) => inputs,

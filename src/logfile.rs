@@ -44,32 +44,25 @@ pub fn run(opts: &LogfileOptions) -> i32 {
         .iter()
         .map(|f| opts.mft.clone().or_else(|| adjacent_mft(f)))
         .collect();
-    if let Some(out) = &opts.output
-        && files
-            .iter()
-            .chain(mfts.iter().flatten())
-            .any(|input| same_file::is_same_file(input, out).unwrap_or(false))
-    {
-        report("The output file is also an input file and cannot be overwritten.");
-        return 1;
-    }
-    let mut writer = match sink(opts.output.as_ref(), opts.clobber, stdout).and_then(|sink| {
-        sink.map(|w| {
-            RecordWriter::new(
-                w,
-                opts.output_type.unwrap_or(RegistryOutputType::Csv),
-                CSV_HEADER,
-            )
-        })
-        .transpose()
-        .map_err(|e| e.to_string())
-    }) {
-        Ok(w) => w,
-        Err(e) => {
-            report(&e);
-            return 1;
-        }
-    };
+    let reads = || files.iter().chain(mfts.iter().flatten()).cloned().collect();
+    let mut writer =
+        match sink(opts.output.as_ref(), opts.clobber, stdout, reads).and_then(|sink| {
+            sink.map(|w| {
+                RecordWriter::new(
+                    w,
+                    opts.output_type.unwrap_or(RegistryOutputType::Csv),
+                    CSV_HEADER,
+                )
+            })
+            .transpose()
+            .map_err(|e| e.to_string())
+        }) {
+            Ok(w) => w,
+            Err(e) => {
+                report(&e);
+                return 1;
+            }
+        };
     if !stdout {
         p_label(
             opts.common.no_color,

@@ -9,7 +9,7 @@
 //! SYSTEM hive): whether it overrides the machine's registration of the same one.
 
 use super::{
-    Hosts, Logs, Opened, RecordWriter, choose_logs, filetime, find_hives, find_in,
+    Hosts, Logs, Opened, RecordWriter, choose_logs, files_read, filetime, find_hives, find_in,
     hive_type_of_file, input_files, open, profile_of_path, sink, system_root,
 };
 use crate::cli::RegistryPersistenceOptions;
@@ -18,7 +18,7 @@ use crate::progress;
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use indicatif::ProgressBar;
 use registry::ntuser::{classes_sid, profile_name};
-use registry::persistence::{self, Autostart, MachineClasses};
+use registry::persistence::{self, Autostart, MachineClasses, Mechanism};
 use registry::software::profile_list;
 use registry::system::ControlSets;
 use serde::Serialize;
@@ -61,11 +61,10 @@ pub fn run(opts: &RegistryPersistenceOptions) -> i32 {
     )
     .and_then(|files| Ok((files, choose_logs(opts.no_logs, &given_logs)?)))
     .and_then(|(files, logs)| {
-        Ok((
-            files,
-            logs,
-            sink(opts.output.as_ref(), opts.clobber, data_on_stdout)?,
-        ))
+        let sink = sink(opts.output.as_ref(), opts.clobber, data_on_stdout, || {
+            files_read(&files, &given_logs)
+        })?;
+        Ok((files, logs, sink))
     });
     let (files, logs, sink) = match inputs {
         Ok(inputs) => inputs,
@@ -478,7 +477,7 @@ struct Stats {
     records: usize,
     mechanisms: BTreeMap<&'static str, usize>,
     disabled: usize,
-    /// `StartupApproved` entries without their `Run` value.
+    /// `StartupApproved\Run` and `Run32` entries without their `Run` value (enabled or not).
     approved_only: Vec<String>,
     approved_only_count: usize,
     /// A user's classes and commands that override the machine's.
@@ -547,7 +546,11 @@ impl Stats {
         if autostart.enabled == Some(false) {
             self.disabled += 1;
         }
-        if autostart.data.is_none() && autostart.key_path.contains("StartupApproved") {
+        // a Startup folder file has no Run value: only Run and Run32 entries can lose theirs
+        if autostart.mechanism == Mechanism::Run
+            && autostart.data.is_none()
+            && autostart.key_path.contains("StartupApproved")
+        {
             self.approved_only_count += 1;
             if self.approved_only.len() < MAX_PRINTED {
                 self.approved_only.push(at.clone());
@@ -638,7 +641,7 @@ impl Stats {
         p_label(no_color, "Disabled: ", &fmt_num(self.disabled));
         p_label(
             no_color,
-            "Disabled in StartupApproved without their Run value: ",
+            "StartupApproved Run entries without their Run value: ",
             &fmt_num(self.approved_only_count),
         );
         for entry in &self.approved_only {

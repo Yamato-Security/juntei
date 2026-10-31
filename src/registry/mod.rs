@@ -345,16 +345,87 @@ fn find_in(dir: &Path, names: &[&str]) -> Option<PathBuf> {
 
 // --- output -----------------------------------------------------------------------------------
 
+/// The transaction logs next to the hive at `path`: `<hive>.LOG`, `.LOG1` and `.LOG2`, in any
+/// case (the files `registry::find_logs` reads).
+fn logs_next_to(path: &Path) -> Vec<PathBuf> {
+    let Some(name) = path.file_name().map(|n| n.to_string_lossy().to_uppercase()) else {
+        return Vec::new();
+    };
+    let dir = path
+        .parent()
+        .filter(|d| !d.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let wanted: Vec<String> = [".LOG", ".LOG1", ".LOG2"]
+        .iter()
+        .map(|x| format!("{name}{x}"))
+        .collect();
+    std::fs::read_dir(dir)
+        .map(|entries| {
+            entries
+                .flatten()
+                .filter(|e| wanted.contains(&e.file_name().to_string_lossy().to_uppercase()))
+                .map(|e| e.path())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// Every file a registry command may read for the hives `files`: each hive and the logs next to
+/// it, the logs given (`--log1`, `--log2`), and the SYSTEM and SOFTWARE hives of its system with
+/// their logs (read for its host, and by `persistence` for the machine's classes and profiles).
+pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
+    let mut hives: Vec<PathBuf> = files.to_vec();
+    for path in files {
+        let dir = path
+            .parent()
+            .filter(|d| !d.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        for name in ["SYSTEM", "SOFTWARE"] {
+            hives.extend(
+                system_root(path)
+                    .and_then(|root| find_in(&root, &["Windows", "System32", "config", name])),
+            );
+            hives.extend(find_in(dir, &[name]));
+        }
+    }
+    let mut read: Vec<PathBuf> = given_logs.to_vec();
+    for hive in hives {
+        read.extend(logs_next_to(&hive));
+        read.push(hive);
+    }
+    read.sort();
+    read.dedup();
+    read
+}
+
 /// Where the records go: the file of `-o` (created, with its directory), stdout (`-t` without
-/// `-o`), or nowhere (the summary only).
+/// `-o`), or nowhere (the summary only). An existing `-o` that is one of the files `reads` gives
+/// (the same file by path, symbolic link or hard link) is refused, even with `-C`, before
+/// anything is written.
 pub fn sink(
     output: Option<&PathBuf>,
     clobber: bool,
     data_on_stdout: bool,
+    reads: impl FnOnce() -> Vec<PathBuf>,
 ) -> Result<Option<Box<dyn Write>>, String> {
     let Some(path) = output else {
         return Ok(data_on_stdout.then(|| Box::new(BufWriter::new(io::stdout())) as Box<dyn Write>));
     };
+    if let Ok(out) = same_file::Handle::from_path(path)
+        && let Some(input) = reads()
+            .into_iter()
+            .find(|r| same_file::Handle::from_path(r).is_ok_and(|h| h == out))
+    {
+        let also = if input == *path {
+            String::new()
+        } else {
+            format!(" (the same file as {})", input.display())
+        };
+        return Err(format!(
+            "The output file is also an input file and cannot be overwritten: {}{also}",
+            path.display()
+        ));
+    }
     check_output(path, false, clobber)?;
     if let Some(parent) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)

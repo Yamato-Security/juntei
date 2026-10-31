@@ -72,22 +72,9 @@ pub fn run(opts: &I30Options) -> i32 {
         }
         (None, None) => unreachable!("clap requires -f or -d"),
     };
-    if let Some(output) = &opts.output
-        && output.exists()
-        && files
-            .iter()
-            .any(|input| same_file::is_same_file(input, output).unwrap_or(false))
-    {
-        report_error(
-            None,
-            &format!(
-                "The output file is also an input file and cannot be overwritten: {}",
-                output.display()
-            ),
-        );
-        return 1;
-    }
-    let sink = match sink(opts.output.as_ref(), opts.clobber, data_on_stdout) {
+    let sink = match sink(opts.output.as_ref(), opts.clobber, data_on_stdout, || {
+        files.clone()
+    }) {
         Ok(sink) => sink,
         Err(msg) => {
             report_error(None, &msg);
