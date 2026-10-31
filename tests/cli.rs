@@ -8177,3 +8177,128 @@ fn registry_userassist_errors() {
     assert_eq!(r.code, 1);
     assert_eq!(std::fs::read(&sam).unwrap(), original);
 }
+
+#[test]
+fn registry_userassist_no_encrypt_and_corrupt_times() {
+    let ua = r"Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist";
+    let count = format!(r"{ua}\{{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}}\Count");
+    let dir = tempfile::tempdir().unwrap();
+
+    // NoEncrypt: a name written in plain text decodes wrongly; every record says so
+    let plain = dir.path().join("plain");
+    std::fs::create_dir_all(&plain).unwrap();
+    std::fs::write(
+        plain.join("NTUSER.DAT"),
+        reg_tree(
+            "ROOT",
+            &[
+                (
+                    &count,
+                    r"C:\Tools\payload.exe",
+                    REG_BINARY,
+                    ua5(1, 1, 10, LINKED),
+                ),
+                (
+                    &format!(r"{ua}\Settings"),
+                    "NoEncrypt",
+                    REG_DWORD,
+                    1u32.to_le_bytes().to_vec(),
+                ),
+            ],
+        ),
+    )
+    .unwrap();
+    let hive = plain.join("NTUSER.DAT");
+    let no_encrypt = r"UserAssist\Settings NoEncrypt is 1: a name written while it was set is not ROT13, and decodes wrongly";
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-f",
+        hive.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let records = jsonl_records(&r.stdout);
+    assert_eq!(records.len(), 1);
+    assert_eq!(records[0]["name"], r"P:\Gbbyf\cnlybnq.rkr");
+    assert_eq!(records[0]["problems"], json!([no_encrypt]));
+    // with the records on stdout, the hive's warning goes to stderr
+    assert!(r.stderr.contains("NoEncrypt is 1"), "{}", r.stderr);
+    let out = dir.path().join("plain.csv");
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-f",
+        hive.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(&rows[0][19], no_encrypt);
+
+    // last runs past 9999 are no times: they don't push the real run out of the summary
+    let corrupt = dir.path().join("corrupt");
+    std::fs::create_dir_all(&corrupt).unwrap();
+    let names: Vec<String> = (0..21)
+        .map(|i| rot13(&format!(r"C:\Tools\broken{i:02}.exe")))
+        .collect();
+    let mut values: Vec<(&str, &str, u32, Vec<u8>)> = names
+        .iter()
+        .map(|n| {
+            (
+                count.as_str(),
+                n.as_str(),
+                REG_BINARY,
+                ua5(1, 1, 1, u64::MAX),
+            )
+        })
+        .collect();
+    let real = rot13(r"C:\Tools\real.exe");
+    values.push((&count, &real, REG_BINARY, ua5(2, 1, 10, LINKED)));
+    std::fs::write(corrupt.join("NTUSER.DAT"), reg_tree("ROOT", &values)).unwrap();
+    let hive = corrupt.join("NTUSER.DAT");
+    let records = userassist_read(&["-f", hive.to_str().unwrap()]);
+    assert_eq!(records.len(), 22);
+    for r in &records[..21] {
+        assert!(r["last_run"].is_null());
+        assert_eq!(
+            r["problems"],
+            json!(["last run FILETIME 0xffffffffffffffff is past 9999"])
+        );
+        assert_eq!(r["data_raw"].as_str().unwrap().len(), 144);
+    }
+    assert_eq!(records[21]["last_run"], "2022-02-08T21:03:52Z");
+    let out = dir.path().join("corrupt.csv");
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-f",
+        hive.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let start = r.stdout.find("Run last").unwrap();
+    let end = r
+        .stdout
+        .find("Items or keys that could not be read")
+        .unwrap();
+    let ran: Vec<&str> = r.stdout[start..end].lines().skip(1).collect();
+    assert_eq!(
+        ran,
+        [r"  2022-02-08T21:03:52Z  ?  C:\Tools\real.exe (runs 2)"],
+        "{}",
+        r.stdout
+    );
+    assert!(
+        r.stdout
+            .contains("Items or keys that could not be read: 21"),
+        "{}",
+        r.stdout
+    );
+}

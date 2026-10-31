@@ -53,8 +53,8 @@ profile, and the system's `SOFTWARE` hive, which gives the user's SID.
   `Policies\Explorer` `NoInstrumentation` = 1, or `UserAssist\Settings` `NoLog` = 1. The summary
   lists the hives where it is off. An empty or missing UserAssist on an active profile can mean
   anti-forensics.
-- **`NoEncrypt` = 1** makes Windows write names without ROT13. Such names decode wrongly; a
-  problem says so.
+- **`NoEncrypt` = 1** makes Windows write names without ROT13. Such names decode wrongly, so
+  every item of that hive says so in `Problems` (and on stderr when the records go to stdout).
 - **The last-run time and the counts are kept per item,** but the key's last-write time
   (`KeyLastWrittenUTC`) is only the time of the most recent update to any item.
 - **Run counts can be 0** for items that only had the focus. Focus counts and times exist only in
@@ -95,12 +95,12 @@ UserAssist is turned off.
 | `Path` | The decoded name as a path, with a known folder's GUID replaced by its default path; empty for app IDs and shell items. |
 | `RunCount` | How many times it was started from Explorer (version 3: the stored count minus 5). |
 | `FocusCount`, `FocusTimeMs` | How many times it had the focus, and for how long in milliseconds (version 5). |
-| `LastRunUTC` | When it was last started. Empty when Windows stored 0. |
+| `LastRunUTC` | When it was last started. Empty when Windows stored 0, or when the stored time is past 9999 (then `Problems` gives it and `DataRaw` keeps the bytes). |
 | `Format`, `SessionId` | The data's layout (5: 72 bytes, 3: 16 bytes) and the session number it was last written in. |
 | `KeyLastWrittenUTC` | The `Count` key's last write: the most recent update to any of its items. |
 | `DataRaw` | The value's bytes (hex), when they don't decode. |
 | `TransactionLogStatus`, `LogsApplied` | Registry recovery context. |
-| `Problems` | Data of an unknown size, a size that disagrees with the key's `Version`, a version 3 count under 5. |
+| `Problems` | Data of an unknown size, a size that disagrees with the key's `Version`, a version 3 count under 5, a last run past 9999, `NoEncrypt`. |
 
 ## Investigation strategy
 

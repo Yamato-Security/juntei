@@ -89,7 +89,10 @@ pub fn run(opts: &RegistryUserAssistOptions) -> i32 {
     // --- parse and write -------------------------------------------------------------------
     let mut hosts = Hosts::new(!opts.no_logs);
     let mut profiles = Profiles::new(!opts.no_logs);
-    let mut stats = Stats::default();
+    let mut stats = Stats {
+        to_stderr: data_on_stdout,
+        ..Stats::default()
+    };
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
@@ -289,6 +292,9 @@ impl<'a> Record<'a> {
 /// Counts for the results summary.
 #[derive(Default)]
 struct Stats {
+    /// Whether the records go to stdout (`-t` without `-o`): no summary, so what concerns a hive
+    /// rather than one item goes to stderr.
+    to_stderr: bool,
     hives: usize,
     failed: usize,
     hosts: BTreeSet<String>,
@@ -322,7 +328,8 @@ impl Stats {
         } else if opened.recovery.dirty {
             self.dirty.push(opened.source.clone());
         }
-        let off = user_assist_settings(&opened.hive).tracking_off();
+        let settings = user_assist_settings(&opened.hive);
+        let off = settings.tracking_off();
         if !off.is_empty() {
             self.turned_off
                 .push(format!("{}: {}", opened.source, off.join(", ")));
@@ -331,7 +338,16 @@ impl Stats {
             self.without += 1;
             return Ok(());
         };
+        if self.to_stderr && settings.no_encrypt == Some(1) && !entries.is_empty() {
+            eprintln!(
+                r"{}: UserAssist\Settings NoEncrypt is 1: names written while it was set are not ROT13 and decode wrongly (see each item's problems)",
+                opened.source
+            );
+        }
         for problem in &problems {
+            if self.to_stderr {
+                eprintln!("{}: UserAssist: {problem}", opened.source);
+            }
             self.problem(&opened.source, "UserAssist", problem);
         }
         for entry in &entries {
@@ -344,19 +360,18 @@ impl Stats {
                     problem,
                 );
             }
-            if let Some(when) = entry.last_run {
+            // only times that are times: a corrupt one must not push real runs out of the list
+            if let Some((when, at)) = entry
+                .last_run
+                .and_then(|when| Some((when, filetime(when)?)))
+            {
                 let user = user.username.as_deref().unwrap_or("?");
                 let what = entry.path.as_deref().unwrap_or(&entry.name);
                 let runs = entry
                     .run_count
                     .map_or_else(String::new, |n| format!(" (runs {n})"));
-                self.latest.push((
-                    when,
-                    format!(
-                        "{}  {user}  {what}{runs}",
-                        filetime(when).unwrap_or_default()
-                    ),
-                ));
+                self.latest
+                    .push((when, format!("{at}  {user}  {what}{runs}")));
                 // keep the most recent only
                 if self.latest.len() > MAX_PRINTED * 4 {
                     self.trim_latest();
