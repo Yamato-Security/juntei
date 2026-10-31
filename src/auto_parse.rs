@@ -23,6 +23,39 @@ use std::time::Instant;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
+const CATEGORIES: &[&str] = &[
+    "accounts",
+    "file_and_folder_opening",
+    "file_existence",
+    "file_system",
+    "persistence",
+    "process_execution",
+    "registry",
+    "security_products",
+];
+
+/// Investigative categories are independent of a parser's storage format or command group.
+fn artifact_category(artifact: &str) -> &'static str {
+    match artifact {
+        "sam" => "accounts",
+        "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
+        "amcache" | "shimcache" => "file_existence",
+        "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+        "persistence" | "services" | "taskcache" => "persistence",
+        "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
+        "registry" => "registry",
+        "defender-quarantine" => "security_products",
+        _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
+    }
+}
+
+fn defender_extraction_directory(output: &Path, computer_folder: &str) -> PathBuf {
+    output
+        .join(computer_folder)
+        .join(artifact_category("defender-quarantine"))
+        .join("defender-quarantined")
+}
+
 #[derive(Clone)]
 struct Host {
     hostname: String,
@@ -74,6 +107,7 @@ struct TaskResult {
     #[serde(rename = "Computer")]
     computer: String,
     artifact: String,
+    category: &'static str,
     status: TaskStatus,
     duration_ms: u128,
     exit_code: Option<i32>,
@@ -304,7 +338,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p(None, "", true);
     p(
         JunteiColor::Orange.rdg(no_color),
-        "Parsing in progress. Per-parser output is saved under each computer's logs directory.",
+        "Parsing in progress. Per-parser output is saved in each category's logs directory.",
         true,
     );
     p(None, "", true);
@@ -750,9 +784,11 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
     for host in hosts {
         let inputs = InputInventory::scan(&host.root);
         let data_dir = work.join(&host.folder);
-        let log_dir = opts.output.join(&host.folder).join("logs");
-        fs::create_dir_all(&data_dir)?;
-        fs::create_dir_all(&log_dir)?;
+        let host_output_dir = opts.output.join(&host.folder);
+        for category in CATEGORIES {
+            fs::create_dir_all(data_dir.join(category))?;
+            fs::create_dir_all(host_output_dir.join(category).join("logs"))?;
+        }
         let mut add =
             |artifact: &'static str, command: &[&str], shape: OutputShape, extra: &[&str]| {
                 let output = task_output(&data_dir, artifact, opts.output_type, shape);
@@ -767,10 +803,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                 if artifact == "defender-quarantine" && opts.extract_defender_quarantined {
                     args.push("--extract".into());
                     args.push(
-                        opts.output
-                            .join(&host.folder)
-                            .join("defender-quarantined")
-                            .into_os_string(),
+                        defender_extraction_directory(&opts.output, &host.folder).into_os_string(),
                     );
                 }
                 args.push("-C".into());
@@ -782,7 +815,10 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                     input_bytes: inputs.sizes.get(artifact).copied().unwrap_or(0),
                     args,
                     output,
-                    log: log_dir.join(format!("{artifact}.txt")),
+                    log: host_output_dir
+                        .join(artifact_category(artifact))
+                        .join("logs")
+                        .join(format!("{artifact}.txt")),
                 });
             };
 
@@ -890,7 +926,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             host,
             opts,
             &data_dir,
-            &log_dir,
+            &host_output_dir,
             "mft",
             &["parse-ntfs", "mft"],
             inputs.mfts,
@@ -901,7 +937,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             host,
             opts,
             &data_dir,
-            &log_dir,
+            &host_output_dir,
             "usn-journal",
             &["parse-ntfs", "usn-journal"],
             inputs.journals,
@@ -912,7 +948,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             host,
             opts,
             &data_dir,
-            &log_dir,
+            &host_output_dir,
             "logfile",
             &["parse-ntfs", "logfile"],
             inputs.logfiles,
@@ -1017,16 +1053,15 @@ fn prioritize_long_tasks(tasks: &mut [Task]) {
     });
 }
 
-/// File-shaped artifacts are written directly under the computer directory. A normal collected
-/// volume has one of each (`mft.csv`, `usn-journal.csv`). If several volumes were collected for
-/// one computer, keep every artifact as a numbered sibling instead of creating another directory.
+/// File-shaped artifacts are written directly under their category. A normal collected volume
+/// has one of each (`mft.csv`, `usn-journal.csv`). Additional volumes use numbered sibling files.
 #[allow(clippy::too_many_arguments)]
 fn add_file_artifact_tasks(
     tasks: &mut Vec<Task>,
     host: &Host,
     opts: &AutoParseOptions,
     data_dir: &Path,
-    log_dir: &Path,
+    host_output_dir: &Path,
     artifact: &'static str,
     command: &[&str],
     inputs: Vec<PathBuf>,
@@ -1048,7 +1083,10 @@ fn add_file_artifact_tasks(
         } else {
             format!("{artifact}-{}", index + 1)
         };
-        let output = data_dir.join(format!("{stem}.{}", opts.output_type.as_str()));
+        let category = artifact_category(artifact);
+        let output = data_dir
+            .join(category)
+            .join(format!("{stem}.{}", opts.output_type.as_str()));
         let mut args: Vec<OsString> = command.iter().map(OsString::from).collect();
         args.push(input_flag);
         args.push(input.into_os_string());
@@ -1066,7 +1104,10 @@ fn add_file_artifact_tasks(
             input_bytes,
             args,
             output,
-            log: log_dir.join(format!("{stem}.txt")),
+            log: host_output_dir
+                .join(category)
+                .join("logs")
+                .join(format!("{stem}.txt")),
         });
     }
 }
@@ -1077,12 +1118,13 @@ fn task_output(
     output_type: AutoOutputType,
     shape: OutputShape,
 ) -> PathBuf {
+    let category_dir = host_dir.join(artifact_category(artifact));
     let directory = matches!(shape, OutputShape::Directory)
         || (matches!(shape, OutputShape::CsvDirectory) && output_type == AutoOutputType::Csv);
     if directory {
-        host_dir.join(artifact)
+        category_dir.join(artifact)
     } else {
-        host_dir.join(format!("{artifact}.{}", output_type.as_str()))
+        category_dir.join(format!("{artifact}.{}", output_type.as_str()))
     }
 }
 
@@ -1100,10 +1142,13 @@ fn clear_generated_outputs(tasks: &[Task], work: &Path) -> io::Result<()> {
 /// unrecorded stale result.
 fn clear_defender_extractions(hosts: &[Host], output: &Path) -> io::Result<()> {
     for host in hosts {
-        remove_generated_path(
-            &output.join(&host.folder).join("defender-quarantined"),
-            output,
-        )?;
+        // Keep the same clobber protection for the previous flat extraction location, too.
+        for path in [
+            defender_extraction_directory(output, &host.folder),
+            output.join(&host.folder).join("defender-quarantined"),
+        ] {
+            remove_generated_path(&path, output)?;
+        }
     }
     Ok(())
 }
@@ -1229,6 +1274,7 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
     TaskResult {
         computer: task.computer.clone(),
         artifact: task.artifact.to_string(),
+        category: artifact_category(task.artifact),
         status: if error.is_some() && status != TaskStatus::Skipped {
             TaskStatus::Failed
         } else {
@@ -1522,6 +1568,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "HostnameSource",
         "EvidenceRoot",
         "Artifact",
+        "Category",
         "Status",
         "DurationMs",
         "ExitCode",
@@ -1542,6 +1589,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             host.map_or_else(String::new, |host| host.hostname_source.to_string()),
             host.map_or_else(String::new, |host| host.evidence_root.clone()),
             task.artifact.clone(),
+            task.category.to_string(),
             task.status.as_str().to_string(),
             task.duration_ms.to_string(),
             task.exit_code
@@ -1733,7 +1781,7 @@ mod tests {
                 AutoOutputType::Csv,
                 OutputShape::CsvDirectory
             ),
-            root.join("amcache")
+            root.join("file_existence/amcache")
         );
         assert_eq!(
             task_output(
@@ -1742,11 +1790,11 @@ mod tests {
                 AutoOutputType::Jsonl,
                 OutputShape::CsvDirectory
             ),
-            root.join("amcache.jsonl")
+            root.join("file_existence/amcache.jsonl")
         );
         assert_eq!(
             task_output(root, "srum", AutoOutputType::Json, OutputShape::Directory),
-            root.join("srum")
+            root.join("process_execution/srum")
         );
     }
 

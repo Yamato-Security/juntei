@@ -79,33 +79,79 @@ An artifact that was not collected is a normal `skipped` task, not a failure.
 
 ## Output layout
 
-CSV keeps separate tables because each artifact has different columns:
+Results are organized by computer, investigative category, and artifact. Every category has its
+own `logs/` directory, including when its artifacts were not collected. CSV keeps separate tables
+because each artifact has different columns:
 
 ```text
 <OUTPUT>/
 ├── manifest.json
 ├── manifest.csv
 ├── HOST1/
-│   ├── logs/
-│   ├── amcache/
-│   ├── defender-quarantined/  # only with -x
-│   ├── srum/
-│   ├── mft.csv
-│   ├── logfile.csv
-│   ├── usn-journal.csv
-│   ├── prefetch.csv
-│   ├── prefetch-timeline.csv
-│   ├── registry.csv
-│   └── shimcache.csv
+│   ├── accounts/
+│   │   ├── logs/
+│   │   └── sam.csv
+│   ├── file_and_folder_opening/
+│   │   ├── logs/
+│   │   ├── jump-lists/
+│   │   ├── lnk.csv
+│   │   └── recentdocs.csv
+│   ├── file_existence/
+│   │   ├── logs/
+│   │   ├── amcache/
+│   │   └── shimcache.csv
+│   ├── file_system/
+│   │   ├── logs/
+│   │   ├── i30.csv
+│   │   ├── logfile.csv
+│   │   ├── mft.csv
+│   │   └── usn-journal.csv
+│   ├── persistence/
+│   │   ├── logs/
+│   │   ├── persistence.csv
+│   │   ├── services.csv
+│   │   └── taskcache.csv
+│   ├── process_execution/
+│   │   ├── logs/
+│   │   ├── prefetch.csv
+│   │   ├── prefetch-timeline.csv
+│   │   ├── srum/
+│   │   └── userassist.csv
+│   ├── registry/
+│   │   ├── logs/
+│   │   └── registry.csv
+│   └── security_products/
+│       ├── logs/
+│       ├── defender-quarantine.csv
+│       └── defender-quarantined/  # only with -x
 └── HOST2/
     └── …
 ```
 
-Some parsers naturally create several tables, so their output is a directory. `logs` contains a
-`.txt` file with the exact command and messages from every parser. `manifest.json` records the original discovered
-`hostname`, the unique output/record `Computer` identity, hostname provenance, evidence paths,
-command lines, duration, exit code, result path, whether Defender extraction was requested, and
-whether each task succeeded, was skipped, or failed.
+| Category | Artifacts |
+|---|---|
+| `accounts` | SAM local accounts |
+| `file_and_folder_opening` | Jump Lists, LNK shortcuts, RecentDocs |
+| `file_existence` | Amcache, ShimCache |
+| `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
+| `persistence` | Registry autostarts, services, TaskCache |
+| `process_execution` | Prefetch, Prefetch timeline, SRUM, UserAssist |
+| `registry` | General hive keys and values, including recovered records |
+| `security_products` | Defender quarantine metadata and optional extracted content |
+
+Categories help organize investigations; they are not proof of a particular activity. For example,
+Amcache and ShimCache entries alone do not establish execution. SRUM records resource usage;
+consult the artifact guide before drawing conclusions about a program running.
+
+CSV, JSON, and JSONL use the same categories. Parsers that produce several tables retain their
+artifact subdirectory where needed. Each category's `logs/` contains one `.txt` file per parser
+job with its exact command and messages; for example,
+`HOST1/file_system/logs/mft.txt` and `HOST1/process_execution/logs/prefetch.txt`.
+
+`manifest.json` records the original discovered `hostname`, the unique output/record `Computer`
+identity, hostname provenance, evidence paths, artifact `category`, command lines, duration, exit
+code, result path, log path, whether Defender extraction was requested, and whether each task
+succeeded, was skipped, or failed.
 
 The progress message shows the active computer and artifact followed by an approximate input
 size, for example `HOST1 / prefetch (~2.0 MiB)`. A group of files uses their combined size; each
@@ -114,7 +160,7 @@ logs and enrichment files and do not predict the size of the parsed output.
 
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
 parser task. It includes `Computer`, original `Hostname`, `Fqdn`, `HostnameSource`, `EvidenceRoot`,
-`Artifact`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`, `Error`, and `Command`.
+`Artifact`, `Category`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`, `Error`, and `Command`.
 `Command` is a JSON array of the executable and its arguments, preserving spaces and quoting.
 Filter `Status` to `skipped` or `failed` to find tasks requiring review; a skipped task's `Error`
 may be empty, with the explanation in its `Log` file.
@@ -128,11 +174,11 @@ Results saved: output/ ( 125 files / 42.50 MB )
 ```
 
 When a host has one Amcache hive or SRUM database, its CSV tables are written directly under
-`amcache/` or `srum/`. If a collection contains several databases of either kind, each source
-receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
+`file_existence/amcache/` or `process_execution/srum/`. If a collection contains several databases
+of either kind, each source receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
 another. A normal single-volume collection writes `$MFT` and USN Journal records directly to
-`mft.csv` and `usn-journal.csv`. Additional collected volumes use numbered sibling files such as
-`mft-2.csv` rather than another directory level.
+`file_system/mft.csv` and `file_system/usn-journal.csv`. Additional collected volumes use numbered
+sibling files such as `file_system/mft-2.csv` and `file_system/logs/mft-2.txt`.
 
 ## JSON and SIEM ingestion
 
@@ -141,10 +187,11 @@ Every JSON or JSONL record receives two top-level fields:
 - `Computer`: the source system.
 - `Artifact`: the Juntei parser that produced the record, such as `mft` or `prefetch-timeline`.
 
-Without `--single-file`, data remains organized by computer and artifact. With `--single-file`,
+Without `--single-file`, data remains organized by computer, category, and artifact. For example,
+`HOST1/process_execution/prefetch.jsonl` contains Prefetch records. With `--single-file`,
 Juntei streams all successful records into either `all-artifacts.json` or
-`all-artifacts.jsonl`. The per-parser data files are temporary; per-host logs and the manifest are
-retained.
+`all-artifacts.jsonl`. The per-parser data files are temporary; each computer's category directories
+and their `logs/` remain, along with both manifests. The combined dataset stays at the output root.
 
 JSONL is recommended for a large collection because each line can be processed independently:
 
@@ -199,13 +246,16 @@ Parsing:
 
 Use a new output directory when practical. `-C` removes or overwrites only the exact generated
 targets for this run, so a now-missing artifact cannot leave a stale result. It does not delete
-unrelated files or the complete output tree. It also removes every per-host
-`defender-quarantined/` directory from an earlier run before parsing, whether or not the new run
-uses `-x`, so extracted malware cannot remain as an unrecorded stale result.
+unrelated files or the complete output tree. It also removes each computer's
+`security_products/defender-quarantined/` directory, and the reserved `defender-quarantined/`
+directory from the previous flat layout, before parsing, whether or not the new run uses `-x`.
+
+Use a fresh output directory when switching from an older flat layout. Earlier CSV/JSON files
+are not relocated or deleted automatically.
 
 !!! danger "Treat extracted Defender content as malware"
     `-x, --extract-defender-quarantined` writes quarantined content to disk under each computer's
-    `defender-quarantined/` directory. Recovered binary streams end in `.quarantined`, and Juntei
+    `security_products/defender-quarantined/` directory. Recovered binary streams end in `.quarantined`, and Juntei
     removes execute permission. Each binary security descriptor also gets a readable `.security_descriptor.txt`
     report with ownership, permissions and SDDL. Never execute recovered payloads. Use an isolated
     analysis system and expect antivirus or EDR software to alert on or remove the recovered content.

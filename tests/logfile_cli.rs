@@ -571,11 +571,13 @@ fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
             .collect();
         assert_eq!(tasks.len(), 2);
         assert!(tasks.iter().all(|t| t["status"] == "succeeded"));
-        assert!(out.join("HOST1/logs/logfile.txt").is_file());
+        assert!(tasks.iter().all(|t| t["category"] == "file_system"));
+        assert!(out.join("HOST1/file_system/logs/logfile.txt").is_file());
+        assert!(out.join("HOST1/file_system/logs/logfile-2.txt").is_file());
         if format == "csv" {
             for name in ["logfile.csv", "logfile-2.csv"] {
                 assert_eq!(
-                    csv::Reader::from_path(out.join("HOST1").join(name))
+                    csv::Reader::from_path(out.join("HOST1/file_system").join(name))
                         .unwrap()
                         .records()
                         .count(),

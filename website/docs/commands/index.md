@@ -11,7 +11,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 For a multi-computer Windows evidence collection, use
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). It invokes the same grouped commands
-and keeps per-computer output filenames and artifact names unchanged.
+and organizes results and logs by computer and investigative category.
 
 ## [ESE commands](user-activity.md)
 

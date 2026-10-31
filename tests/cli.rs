@@ -215,39 +215,68 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     assert!(
         r.stdout.contains(
-            "Parsing in progress. Per-parser output is saved under each computer's logs directory.\n\n"
+            "Parsing in progress. Per-parser output is saved in each category's logs directory.\n\n"
         ),
         "{}",
         r.stdout
     );
-    assert!(csv.join("HOST1/amcache").is_dir());
-    assert!(csv.join("HOST1/amcache/Amcache_summary.csv").is_file());
-    assert!(csv.join("HOST1/amcache/Amcache_files.csv").is_file());
+    assert!(csv.join("HOST1/file_existence/amcache").is_dir());
     assert!(
-        std::fs::read_dir(csv.join("HOST1/amcache"))
+        csv.join("HOST1/file_existence/amcache/Amcache_summary.csv")
+            .is_file()
+    );
+    assert!(
+        csv.join("HOST1/file_existence/amcache/Amcache_files.csv")
+            .is_file()
+    );
+    assert!(
+        std::fs::read_dir(csv.join("HOST1/file_existence/amcache"))
             .unwrap()
             .flatten()
             .all(|entry| entry.path().is_file())
     );
-    assert!(csv.join("HOST1/srum").is_dir());
-    assert!(csv.join("HOST1/srum/IdentityMap.csv").is_file());
-    assert!(csv.join("HOST1/srum/VfuProvider.csv").is_file());
+    assert!(csv.join("HOST1/process_execution/srum").is_dir());
     assert!(
-        std::fs::read_dir(csv.join("HOST1/srum"))
+        csv.join("HOST1/process_execution/srum/IdentityMap.csv")
+            .is_file()
+    );
+    assert!(
+        csv.join("HOST1/process_execution/srum/VfuProvider.csv")
+            .is_file()
+    );
+    assert!(
+        std::fs::read_dir(csv.join("HOST1/process_execution/srum"))
             .unwrap()
             .flatten()
             .all(|entry| entry.path().is_file())
     );
-    assert!(csv.join("HOST1/mft.csv").is_file());
-    assert!(csv.join("HOST1/usn-journal.csv").is_file());
-    assert!(!csv.join("HOST1/mft").exists());
-    assert!(!csv.join("HOST1/usn-journal").exists());
-    assert!(csv.join("HOST1/prefetch.csv").is_file());
-    assert!(csv.join("HOST1/prefetch-timeline.csv").is_file());
-    assert!(csv.join("HOST1/logs").is_dir());
-    assert!(csv.join("HOST1/logs/prefetch.txt").is_file());
-    assert!(csv.join("HOST1/logs/mft.txt").is_file());
-    assert!(!csv.join("HOST1/logs/prefetch.log").exists());
+    assert!(csv.join("HOST1/file_system/mft.csv").is_file());
+    assert!(csv.join("HOST1/file_system/usn-journal.csv").is_file());
+    assert!(!csv.join("HOST1/file_system/mft").exists());
+    assert!(!csv.join("HOST1/file_system/usn-journal").exists());
+    assert!(csv.join("HOST1/process_execution/prefetch.csv").is_file());
+    assert!(
+        csv.join("HOST1/process_execution/prefetch-timeline.csv")
+            .is_file()
+    );
+    assert!(
+        csv.join("HOST1/process_execution/logs/prefetch.txt")
+            .is_file()
+    );
+    assert!(csv.join("HOST1/file_system/logs/mft.txt").is_file());
+    assert!(!csv.join("HOST1/logs").exists());
+    for category in [
+        "accounts",
+        "file_and_folder_opening",
+        "file_existence",
+        "file_system",
+        "persistence",
+        "process_execution",
+        "registry",
+        "security_products",
+    ] {
+        assert!(csv.join("HOST1").join(category).join("logs").is_dir());
+    }
     assert!(!csv.join("HOST1/_logs").exists());
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(csv.join("manifest.json")).unwrap()).unwrap();
@@ -263,13 +292,32 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     );
     assert!(manifest["tasks"].as_array().unwrap().iter().all(|task| {
         task["log"].as_str().is_some_and(|path| {
-            path.replace('\\', "/").contains("/HOST1/logs/") && path.ends_with(".txt")
+            let category = task["category"].as_str().unwrap();
+            path.replace('\\', "/")
+                .contains(&format!("/HOST1/{category}/logs/"))
+                && path.ends_with(".txt")
+                && Path::new(path).is_file()
         })
     }));
     assert_eq!(manifest["tasks"][0]["artifact"], "mft");
     assert_eq!(manifest["tasks"][1]["artifact"], "usn-journal");
     for task in manifest["tasks"].as_array().unwrap() {
         let artifact = task["artifact"].as_str().unwrap();
+        let category = match artifact {
+            "sam" => "accounts",
+            "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
+            "amcache" | "shimcache" => "file_existence",
+            "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+            "persistence" | "services" | "taskcache" => "persistence",
+            "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
+            "registry" => "registry",
+            "defender-quarantine" => "security_products",
+            _ => panic!("unexpected artifact: {artifact}"),
+        };
+        assert_eq!(task["category"], category);
+        if let Some(output) = task["output"].as_str() {
+            assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
+        }
         let (source, command) = match artifact {
             "mft" | "usn-journal" | "logfile" | "i30" => ("parse-ntfs", artifact),
             "srum" => ("parse-ese", artifact),
@@ -286,6 +334,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     for (row, task) in csv_tasks.iter().zip(manifest["tasks"].as_array().unwrap()) {
         assert_eq!(row["Computer"], task["Computer"].as_str().unwrap());
         assert_eq!(row["Hostname"], "HOST1");
+        assert_eq!(row["Category"], task["category"].as_str().unwrap());
         assert_eq!(row["Status"], task["status"].as_str().unwrap());
         assert_eq!(row["Log"], task["log"].as_str().unwrap());
         assert_eq!(
@@ -309,8 +358,10 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     );
 
     // A previously generated target must not survive when the corresponding artifact is absent.
-    let stale = csv.join("HOST1/i30.csv");
+    let stale = csv.join("HOST1/file_system/i30.csv");
     std::fs::write(&stale, b"stale result\n").unwrap();
+    let notes = csv.join("HOST1/file_system/notes.txt");
+    std::fs::write(&notes, b"examiner notes\n").unwrap();
     let r = run(&[
         "auto-parse",
         "-d",
@@ -327,6 +378,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     assert!(!stale.exists());
+    assert_eq!(std::fs::read(notes).unwrap(), b"examiner notes\n");
 
     // A Windows directory is a valid scope on its own; parsers must not receive its parent.
     let windows = evidence
@@ -360,7 +412,11 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .to_string_lossy()
             .as_ref()
     );
-    assert!(direct.join("Windows/prefetch.csv").is_file());
+    assert!(
+        direct
+            .join("Windows/process_execution/prefetch.csv")
+            .is_file()
+    );
 
     let jsonl = output_root.path().join("jsonl");
     let r = run(&[
@@ -390,12 +446,84 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert!(values.iter().all(|value| value.get("Artifact").is_some()));
     assert!(values.iter().any(|value| value["Artifact"] == "amcache"));
     assert!(values.iter().any(|value| value["Artifact"] == "prefetch"));
+    assert!(
+        jsonl
+            .join("HOST1/process_execution/logs/prefetch.txt")
+            .is_file()
+    );
+    assert!(
+        jsonl
+            .join("HOST1/file_existence/logs/amcache.txt")
+            .is_file()
+    );
+    assert!(
+        !jsonl
+            .join("HOST1/process_execution/prefetch.jsonl")
+            .exists()
+    );
     assert!(std::fs::read_dir(&jsonl).unwrap().flatten().all(|entry| {
         !entry
             .file_name()
             .to_string_lossy()
             .starts_with(".juntei-work-")
     }));
+}
+
+#[test]
+fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
+    let evidence = auto_triage();
+    let root = tempfile::tempdir().unwrap();
+    for format in ["json", "jsonl"] {
+        let output = root.path().join(format);
+        let result = run(&[
+            "auto-parse",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            format,
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+        let host = output.join("HOST1");
+        assert!(
+            host.join(format!("file_existence/amcache.{format}"))
+                .is_file()
+        );
+        assert!(host.join(format!("file_system/mft.{format}")).is_file());
+        assert!(
+            host.join(format!("file_system/usn-journal.{format}"))
+                .is_file()
+        );
+        assert!(host.join("process_execution/srum").is_dir());
+        let prefetch = host.join(format!("process_execution/prefetch.{format}"));
+        let records = json_documents(&std::fs::read_to_string(prefetch).unwrap());
+        assert!(!records.is_empty());
+        assert!(
+            records.iter().all(|record| {
+                record["Computer"] == "HOST1" && record["Artifact"] == "prefetch"
+            })
+        );
+        let manifest: Value =
+            serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+                .unwrap();
+        for task in manifest["tasks"].as_array().unwrap() {
+            let category = task["category"].as_str().unwrap();
+            let log = Path::new(task["log"].as_str().unwrap());
+            assert!(log.starts_with(host.join(category).join("logs")));
+            assert!(log.is_file());
+            if let Some(path) = task["output"].as_str() {
+                assert!(Path::new(path).starts_with(host.join(category)));
+                assert!(Path::new(path).exists());
+            }
+        }
+        assert!(!host.join("logs").exists());
+        assert!(!output.join(format!("all-artifacts.{format}")).exists());
+    }
 }
 
 #[test]
@@ -430,6 +558,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
         .find(|task| task["Artifact"] == "prefetch")
         .unwrap();
     assert_eq!(failed["Status"], "failed");
+    assert_eq!(failed["Category"], "process_execution");
     assert_eq!(failed["ExitCode"], "1");
     assert!(!failed["Error"].is_empty());
     assert!(Path::new(&failed["Log"]).is_file());
@@ -482,7 +611,7 @@ fn auto_parse_can_extract_defender_quarantined_files() {
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let extracted = output
-        .join("HOST1/defender-quarantined")
+        .join("HOST1/security_products/defender-quarantined")
         .join("tool.exe.quarantined");
     assert!(extracted.is_file(), "{}", extracted.display());
     assert!(
@@ -491,7 +620,8 @@ fn auto_parse_can_extract_defender_quarantined_files() {
             .starts_with(b"A harmless line of text")
     );
     let security_text = std::fs::read_to_string(
-        output.join("HOST1/defender-quarantined/tool.exe.security_descriptor.txt"),
+        output
+            .join("HOST1/security_products/defender-quarantined/tool.exe.security_descriptor.txt"),
     )
     .unwrap();
     assert!(security_text.contains("Binary descriptor: tool.exe.security.quarantined"));
@@ -516,7 +646,14 @@ fn auto_parse_can_extract_defender_quarantined_files() {
             .any(|argument| argument == "--extract")
     );
 
-    // A later clobber run without extraction must not leave stale malware from this run.
+    // A later clobber run also clears the reserved extraction directory of older versions.
+    let legacy_extraction = output.join("HOST1/defender-quarantined");
+    std::fs::create_dir_all(&legacy_extraction).unwrap();
+    std::fs::write(
+        legacy_extraction.join("old.quarantined"),
+        b"harmless fixture",
+    )
+    .unwrap();
     let r = run(&[
         "auto-parse",
         "-d",
@@ -530,11 +667,16 @@ fn auto_parse_can_extract_defender_quarantined_files() {
         "-q",
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
-    assert!(!output.join("HOST1/defender-quarantined").exists());
+    assert!(
+        !output
+            .join("HOST1/security_products/defender-quarantined")
+            .exists()
+    );
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
             .unwrap();
     assert_eq!(manifest["extract_defender_quarantined"], false);
+    assert!(!legacy_extraction.exists());
 }
 
 #[test]
