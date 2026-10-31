@@ -333,7 +333,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 18);
+    assert_eq!(tasks.len(), 19);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -4412,6 +4412,7 @@ fn registry_subcommands() {
     assert!(help.contains("taskcache "), "{help}");
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
+    assert!(help.contains("userassist "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -7806,4 +7807,498 @@ fn registry_output_never_overwrites_a_write_only_input() {
         );
         assert_eq!(std::fs::read(&out).unwrap(), b"kept");
     }
+}
+
+// --- parse-registry userassist ------------------------------------------------------------------
+
+/// `parse-registry userassist`'s CSV columns.
+const USERASSIST_COLUMNS: [&str; 20] = [
+    "Host",
+    "Username",
+    "UserSid",
+    "SourcePath",
+    "Guid",
+    "Kind",
+    "NameRot13",
+    "Name",
+    "Path",
+    "RunCount",
+    "FocusCount",
+    "FocusTimeMs",
+    "LastRunUTC",
+    "Format",
+    "SessionId",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+fn rot13(text: &str) -> String {
+    text.chars()
+        .map(|c| match c {
+            'a'..='z' => char::from((c as u8 - b'a' + 13) % 26 + b'a'),
+            'A'..='Z' => char::from((c as u8 - b'A' + 13) % 26 + b'A'),
+            _ => c,
+        })
+        .collect()
+}
+
+/// UserAssist version 5 data: run count, focus count and time, last run.
+fn ua5(count: u32, focus: u32, focus_ms: u32, last_run: u64) -> Vec<u8> {
+    let mut b = vec![0u8; 72];
+    b[4..8].copy_from_slice(&count.to_le_bytes());
+    b[8..12].copy_from_slice(&focus.to_le_bytes());
+    b[12..16].copy_from_slice(&focus_ms.to_le_bytes());
+    b[0x3c..0x44].copy_from_slice(&last_run.to_le_bytes());
+    b
+}
+
+/// One system's SYSTEM and SOFTWARE hives (its name, alice's profile) and alice's NTUSER.DAT with
+/// UserAssist: a program in System32, an app, a shortcut, the session entry, a value cut short,
+/// and a version 3 key; and bob's NTUSER.DAT with UserAssist turned off.
+fn userassist_collection(root: &Path) {
+    let ua = r"Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist";
+    let programs = format!(r"{ua}\{{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}}");
+    let shortcuts = format!(r"{ua}\{{F4E57C4B-2036-45F0-A9AB-443BCFE33D9F}}");
+    let old = format!(r"{ua}\{{75048700-EF1F-11D0-9888-006097DEACF9}}");
+    let count = |key: &str| format!(r"{key}\Count");
+    let mut v3 = vec![0u8; 16];
+    v3[4..8].copy_from_slice(&9u32.to_le_bytes());
+    v3[8..16].copy_from_slice(&(LINKED - DAY).to_le_bytes());
+    let alice = reg_tree(
+        "ROOT",
+        &[
+            (&programs, "Version", REG_DWORD, 5u32.to_le_bytes().to_vec()),
+            (
+                &count(&programs),
+                &rot13(r"{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\cmd.exe"),
+                REG_BINARY,
+                ua5(3, 5, 61_000, LINKED),
+            ),
+            (
+                &count(&programs),
+                &rot13("Microsoft.Windows.Explorer"),
+                REG_BINARY,
+                ua5(0, 2, 900, 0),
+            ),
+            (
+                &count(&programs),
+                &rot13("UEME_CTLSESSION"),
+                REG_BINARY,
+                vec![0; 1612],
+            ),
+            (
+                &count(&programs),
+                &rot13(r"C:\Users\alice\Downloads\cut.exe"),
+                REG_BINARY,
+                vec![1, 2, 3],
+            ),
+            (
+                &shortcuts,
+                "Version",
+                REG_DWORD,
+                5u32.to_le_bytes().to_vec(),
+            ),
+            (
+                &count(&shortcuts),
+                &rot13(r"{9E3995AB-1F9C-4F13-B827-48B24B6C7174}\TaskBar\File Explorer.lnk"),
+                REG_BINARY,
+                ua5(4, 0, 4, LINKED + DAY),
+            ),
+            (&old, "Version", REG_DWORD, 3u32.to_le_bytes().to_vec()),
+            (
+                &count(&old),
+                &rot13(r"UEME_RUNPATH:C:\WINDOWS\system32\notepad.exe"),
+                REG_BINARY,
+                v3,
+            ),
+        ],
+    );
+    let bob = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+            "Start_TrackProgs",
+            REG_DWORD,
+            0u32.to_le_bytes().to_vec(),
+        )],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+            "ProfileImagePath",
+            REG_EXPAND_SZ,
+            utf16z(r"C:\Users\alice"),
+        )],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    for dir in [
+        &config,
+        &root.join("C/Users/alice"),
+        &root.join("C/Users/bob"),
+    ] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(root.join("C/Users/alice/NTUSER.DAT"), alice).unwrap();
+    std::fs::write(root.join("C/Users/bob/NTUSER.DAT"), bob).unwrap();
+}
+
+/// `parse-registry userassist` with `args`, as JSON Lines.
+fn userassist_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "userassist"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_userassist_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    userassist_collection(dir.path());
+    let records = userassist_read(&["-d", dir.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} | {} | {} {} {} {} v{}",
+                r["kind"].as_str().unwrap(),
+                r["name"].as_str().unwrap(),
+                r["path"].as_str().unwrap_or("-"),
+                r["run_count"],
+                r["focus_count"],
+                r["focus_time_ms"],
+                r["last_run"].as_str().unwrap_or("-"),
+                r["format"]
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            r"active_desktop UEME_RUNPATH:C:\WINDOWS\system32\notepad.exe | C:\WINDOWS\system32\notepad.exe | 4 null null 2022-02-07T21:03:52Z v3",
+            r"executable {1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\cmd.exe | %windir%\system32\cmd.exe | 3 5 61000 2022-02-08T21:03:52Z v5",
+            "executable Microsoft.Windows.Explorer | - | 0 2 900 - v5",
+            r"executable C:\Users\alice\Downloads\cut.exe | C:\Users\alice\Downloads\cut.exe | null null null - vnull",
+            r"shortcut {9E3995AB-1F9C-4F13-B827-48B24B6C7174}\TaskBar\File Explorer.lnk | %APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\File Explorer.lnk | 4 0 4 2022-02-09T21:03:52Z v5",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["username"], "alice");
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    // the {GUID} keys in their list's order (by name), each Count's values in theirs
+    assert_eq!(records[1]["guid"], "{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}");
+    assert_eq!(
+        records[1]["name_rot13"],
+        r"{1NP14R77-02R7-4R5Q-O744-2RO1NR5198O7}\pzq.rkr"
+    );
+    // the value cut short keeps its bytes
+    assert_eq!(records[3]["data_raw"], "010203");
+    assert_eq!(
+        records[3]["problems"],
+        json!(["3 bytes: neither 72 (version 5) nor 16 (version 3)"])
+    );
+}
+
+#[test]
+fn registry_userassist_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    userassist_collection(dir.path());
+    let out = dir.path().join("userassist.csv");
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "NTUSER.DAT hives parsed: 2",
+        "Hosts: HOST1",
+        "Users: alice, bob",
+        "Hives without UserAssist: 1",
+        "Hives where UserAssist is turned off: 1",
+        r"NTUSER.DAT: Explorer\Advanced Start_TrackProgs is 0",
+        "Items: 5 (active_desktop 1, executable 3, shortcut 1)",
+        r"2022-02-09T21:03:52Z  alice  %APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\File Explorer.lnk (runs 4)",
+        r"2022-02-08T21:03:52Z  alice  %windir%\system32\cmd.exe (runs 3)",
+        "Items or keys that could not be read: 1",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    // the most recent first
+    let shortcut = r.stdout.find("File Explorer.lnk (runs 4)").unwrap();
+    let cmd = r.stdout.find(r"cmd.exe (runs 3)").unwrap();
+    assert!(shortcut < cmd);
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, USERASSIST_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 5);
+    assert_eq!(&rows[1][8], r"%windir%\system32\cmd.exe");
+    assert_eq!(&rows[1][9], "3");
+    assert_eq!(&rows[1][12], "2022-02-08T21:03:52Z");
+}
+
+#[test]
+fn registry_userassist_of_public_hives() {
+    let dir = tempfile::tempdir().unwrap();
+    // regipy's Windows 7 NTUSER.DAT: the items Plaso's userassist reads
+    unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
+    let records = userassist_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    assert_eq!(records.len(), 29);
+    let welcome = records
+        .iter()
+        .find(|r| {
+            r["name"]
+                .as_str()
+                .unwrap()
+                .ends_with(r"\Welcome Center.lnk")
+        })
+        .unwrap();
+    assert_eq!(welcome["kind"], "shortcut");
+    assert_eq!(
+        welcome["path"],
+        r"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Accessories\Welcome Center.lnk"
+    );
+    assert_eq!(
+        (
+            &welcome["run_count"],
+            &welcome["focus_count"],
+            &welcome["focus_time_ms"]
+        ),
+        (&json!(14), &json!(0), &json!(14))
+    );
+    assert_eq!(welcome["last_run"], "2012-04-03T22:06:58.124282300Z");
+
+    // the DFIR Artifact Museum's dirty Windows 11 NTUSER.DAT, with its logs
+    let w11 = dir.path().join("w11");
+    unpack_registry(
+        "rathbun_w11",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        &w11,
+    );
+    let records = userassist_read(&["-f", w11.join("NTUSER.DAT").to_str().unwrap()]);
+    assert_eq!(records.len(), 22);
+    let notepad = records
+        .iter()
+        .find(|r| r["name"] == "Microsoft.WindowsNotepad_8wekyb3d8bbwe!App")
+        .unwrap();
+    assert_eq!(
+        (
+            &notepad["run_count"],
+            &notepad["focus_count"],
+            &notepad["focus_time_ms"]
+        ),
+        (&json!(16), &json!(9), &json!(83515))
+    );
+    assert_eq!(notepad["last_run"], "2022-02-06T20:15:41.701Z");
+    let cmd = records
+        .iter()
+        .find(|r| r["path"] == r"%windir%\system32\cmd.exe")
+        .unwrap();
+    assert_eq!(
+        (&cmd["run_count"], &cmd["focus_time_ms"]),
+        (&json!(0), &json!(156))
+    );
+    assert!(records.iter().all(|r| r["problems"] == json!([])));
+}
+
+#[test]
+fn registry_userassist_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not an NTUSER.DAT hive"),
+        "{said}"
+    );
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No NTUSER.DAT hives were found"), "{said}");
+    // the output is never one of the files read
+    let original = std::fs::read(&sam).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-f",
+        sam.to_str().unwrap(),
+        "-o",
+        sam.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&sam).unwrap(), original);
+}
+
+#[test]
+fn registry_userassist_no_encrypt_and_corrupt_times() {
+    let ua = r"Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist";
+    let count = format!(r"{ua}\{{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}}\Count");
+    let dir = tempfile::tempdir().unwrap();
+
+    // NoEncrypt: a name written in plain text decodes wrongly; every record says so
+    let plain = dir.path().join("plain");
+    std::fs::create_dir_all(&plain).unwrap();
+    std::fs::write(
+        plain.join("NTUSER.DAT"),
+        reg_tree(
+            "ROOT",
+            &[
+                (
+                    &count,
+                    r"C:\Tools\payload.exe",
+                    REG_BINARY,
+                    ua5(1, 1, 10, LINKED),
+                ),
+                (
+                    &format!(r"{ua}\Settings"),
+                    "NoEncrypt",
+                    REG_DWORD,
+                    1u32.to_le_bytes().to_vec(),
+                ),
+            ],
+        ),
+    )
+    .unwrap();
+    let hive = plain.join("NTUSER.DAT");
+    let no_encrypt = r"UserAssist\Settings NoEncrypt is 1: a name written while it was set is not ROT13, and decodes wrongly";
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-f",
+        hive.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let records = jsonl_records(&r.stdout);
+    assert_eq!(records.len(), 1);
+    assert_eq!(records[0]["name"], r"P:\Gbbyf\cnlybnq.rkr");
+    assert_eq!(records[0]["problems"], json!([no_encrypt]));
+    // with the records on stdout, the hive's warning goes to stderr
+    assert!(r.stderr.contains("NoEncrypt is 1"), "{}", r.stderr);
+    let out = dir.path().join("plain.csv");
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-f",
+        hive.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(&rows[0][19], no_encrypt);
+
+    // last runs past 9999 are no times: they don't push the real run out of the summary
+    let corrupt = dir.path().join("corrupt");
+    std::fs::create_dir_all(&corrupt).unwrap();
+    let names: Vec<String> = (0..21)
+        .map(|i| rot13(&format!(r"C:\Tools\broken{i:02}.exe")))
+        .collect();
+    let mut values: Vec<(&str, &str, u32, Vec<u8>)> = names
+        .iter()
+        .map(|n| {
+            (
+                count.as_str(),
+                n.as_str(),
+                REG_BINARY,
+                ua5(1, 1, 1, u64::MAX),
+            )
+        })
+        .collect();
+    let real = rot13(r"C:\Tools\real.exe");
+    values.push((&count, &real, REG_BINARY, ua5(2, 1, 10, LINKED)));
+    std::fs::write(corrupt.join("NTUSER.DAT"), reg_tree("ROOT", &values)).unwrap();
+    let hive = corrupt.join("NTUSER.DAT");
+    let records = userassist_read(&["-f", hive.to_str().unwrap()]);
+    assert_eq!(records.len(), 22);
+    for r in &records[..21] {
+        assert!(r["last_run"].is_null());
+        assert_eq!(
+            r["problems"],
+            json!(["last run FILETIME 0xffffffffffffffff is past 9999"])
+        );
+        assert_eq!(r["data_raw"].as_str().unwrap().len(), 144);
+    }
+    assert_eq!(records[21]["last_run"], "2022-02-08T21:03:52Z");
+    let out = dir.path().join("corrupt.csv");
+    let r = run(&[
+        "parse-registry",
+        "userassist",
+        "-f",
+        hive.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let start = r.stdout.find("Run last").unwrap();
+    let end = r
+        .stdout
+        .find("Items or keys that could not be read")
+        .unwrap();
+    let ran: Vec<&str> = r.stdout[start..end].lines().skip(1).collect();
+    assert_eq!(
+        ran,
+        [r"  2022-02-08T21:03:52Z  ?  C:\Tools\real.exe (runs 2)"],
+        "{}",
+        r.stdout
+    );
+    assert!(
+        r.stdout
+            .contains("Items or keys that could not be read: 21"),
+        "{}",
+        r.stdout
+    );
 }

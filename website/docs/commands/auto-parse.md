@@ -68,7 +68,7 @@ computer:
 - ShimCache
 - Defender quarantine metadata
 - all registry keys and values, including recoverable deleted data
-- services, RecentDocs, TaskCache, SAM accounts, and registry autostart locations
+- services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, and UserAssist
 
 CSV `$MFT` output includes all timestamps and short names. Registry output includes raw data and a
 FILETIME interpretation of `REG_QWORD` values. JSON and JSONL SRUM output includes value-state

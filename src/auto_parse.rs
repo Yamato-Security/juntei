@@ -857,6 +857,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &["--all-control-sets"],
         );
+        add(
+            "userassist",
+            &["parse-registry", "userassist"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -947,6 +953,9 @@ impl InputInventory {
                 };
                 if let Some(artifact) = artifact {
                     found.add_size(artifact, size);
+                }
+                if kind.as_deref() == Some("NTUSER.DAT") {
+                    found.add_size("userassist", size);
                 }
                 if matches!(
                     kind.as_deref(),

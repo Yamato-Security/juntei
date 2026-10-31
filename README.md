@@ -29,6 +29,7 @@ produce one computer-labelled JSONL file for SIEM ingestion.
 | --- | --- |
 | **Prefetch** (`*.pf`) — Program run counts, recent execution times, and referenced files. | File |
 | **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | File |
+| **UserAssist** (`NTUSER.DAT`) — Programs and shortcuts a user started from Explorer, with run counts, focus time, and last run times. | Registry |
 
 ### File System and File Existence
 

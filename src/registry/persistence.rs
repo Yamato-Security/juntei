@@ -9,8 +9,9 @@
 //! SYSTEM hive): whether it overrides the machine's registration of the same one.
 
 use super::{
-    Hosts, Logs, Opened, RecordWriter, choose_logs, files_read, filetime, find_hives, find_in,
-    hive_type_of_file, input_files, open, profile_of_path, sink, system_root,
+    Hosts, Logs, Opened, RecordWriter, choose_logs, files_read, filetime, find_hives,
+    hive_type_of_file, input_files, open, profile_of_path, sid_of_profile, sink, software_of,
+    system_root,
 };
 use crate::cli::RegistryPersistenceOptions;
 use crate::color::JunteiColor;
@@ -201,20 +202,11 @@ struct Machine {
 impl Machine {
     /// The SID of the profile whose folder is named `user`.
     fn sid_of(&self, user: &str) -> Option<String> {
-        self.profiles
-            .iter()
-            .find(|(_, path)| {
-                path.rsplit(['\\', '/'])
-                    .next()
-                    .is_some_and(|folder| folder.eq_ignore_ascii_case(user))
-            })
-            .map(|(sid, _)| sid.clone())
+        sid_of_profile(&self.profiles, user)
     }
 }
 
-/// The SOFTWARE hives of the systems user hives come from, each read once: the system's
-/// `Windows\System32\config\SOFTWARE` when the user hive is where Windows keeps it, else a
-/// `SOFTWARE` hive next to it (hives exported to one directory), as [`Hosts`] finds SYSTEM hives.
+/// The SOFTWARE hives of the systems user hives come from ([`software_of`]), each read once.
 struct Machines {
     logs: bool,
     read: HashMap<PathBuf, Option<Rc<Machine>>>,
@@ -230,9 +222,7 @@ impl Machines {
 
     /// The machine of the user hive at `path`.
     fn of(&mut self, path: &Path) -> Option<Rc<Machine>> {
-        let software = system_root(path)
-            .and_then(|root| find_in(&root, &["Windows", "System32", "config", "SOFTWARE"]))
-            .or_else(|| find_in(path.parent()?, &["SOFTWARE"]))?;
+        let software = software_of(path)?;
         if let Some(machine) = self.read.get(&software) {
             return machine.clone();
         }

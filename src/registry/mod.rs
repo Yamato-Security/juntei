@@ -9,6 +9,7 @@ pub mod recentdocs;
 pub mod sam;
 pub mod services;
 pub mod taskcache;
+pub mod userassist;
 
 use crate::cli::RegistryOutputType;
 use crate::util::{self, check_output};
@@ -311,6 +312,63 @@ fn system_root(path: &Path) -> Option<PathBuf> {
             _ => parts[..start].iter().collect(),
         })
     })
+}
+
+/// The SOFTWARE hive of the system the user hive at `path` comes from, as [`Hosts`] finds SYSTEM
+/// hives: the system's `Windows\System32\config\SOFTWARE` when the user hive is where Windows
+/// keeps it, else a `SOFTWARE` hive next to it (hives exported to one directory).
+pub fn software_of(path: &Path) -> Option<PathBuf> {
+    system_root(path)
+        .and_then(|root| find_in(&root, &["Windows", "System32", "config", "SOFTWARE"]))
+        .or_else(|| find_in(path.parent()?, &["SOFTWARE"]))
+}
+
+/// The SID of the profile whose folder is named `user`, among `profiles` (`ProfileList`'s SIDs
+/// and folders: `C:\Users\alice`).
+pub fn sid_of_profile(profiles: &[(String, String)], user: &str) -> Option<String> {
+    profiles
+        .iter()
+        .find(|(_, path)| {
+            path.rsplit(['\\', '/'])
+                .next()
+                .is_some_and(|folder| folder.eq_ignore_ascii_case(user))
+        })
+        .map(|(sid, _)| sid.clone())
+}
+
+/// The profiles (`ProfileList`) of the systems user hives come from, each SOFTWARE hive
+/// ([`software_of`]) read once.
+pub struct Profiles {
+    logs: bool,
+    read: HashMap<PathBuf, Vec<(String, String)>>,
+}
+
+impl Profiles {
+    /// `logs`: whether SOFTWARE hives read for their profiles get their logs replayed.
+    pub fn new(logs: bool) -> Self {
+        Profiles {
+            logs,
+            read: HashMap::new(),
+        }
+    }
+
+    /// The SID of `user`, whose hive is at `path`: from its system's `ProfileList`.
+    pub fn sid(&mut self, path: &Path, user: &str) -> Option<String> {
+        let software = software_of(path)?;
+        let logs = if self.logs {
+            Logs::NextToIt
+        } else {
+            Logs::Without
+        };
+        let profiles = self.read.entry(software).or_insert_with_key(|software| {
+            open(software, logs)
+                .ok()
+                .filter(|o| o.hive_type == "SOFTWARE")
+                .map(|o| registry::software::profile_list(&o.hive))
+                .unwrap_or_default()
+        });
+        sid_of_profile(profiles, user)
+    }
 }
 
 /// The name of the profile folder a user hive is in: `alice` for `…\Users\alice\NTUSER.DAT`
