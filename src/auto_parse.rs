@@ -220,7 +220,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         }
     }
     assign_output_folders(&mut hosts);
-    let json_timeline = match opts
+    let mut json_timeline = match opts
         .json_timeline
         .as_deref()
         .map(|path| timeline::validate(path, &evidence, &opts.output, &hosts, opts.clobber))
@@ -297,6 +297,17 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     } else {
         None
     };
+    // Once category directories exist, canonicalization also resolves case-insensitive aliases
+    // of previously missing output parents. Recheck before clearing any prior parser results.
+    if let Some(path) = &json_timeline {
+        match timeline::validate(path, &evidence, &opts.output, &hosts, opts.clobber) {
+            Ok(path) => json_timeline = Some(path),
+            Err(msg) => {
+                error_msg(no_color, &msg);
+                return 1;
+            }
+        }
+    }
     if opts.clobber
         && let Err(e) = clear_generated_outputs(&tasks, &work)
     {
@@ -519,6 +530,8 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     );
     if let Some(path) = combined {
         p_label(no_color, "JSONL timeline: ", &path.to_string_lossy());
+    } else if timeline_failed {
+        p_label(no_color, "JSONL timeline: ", "Failed (see manifest.json)");
     }
     if failed > 0 {
         for result in results.iter().filter(|r| r.status == TaskStatus::Failed) {

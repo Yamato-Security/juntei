@@ -26,6 +26,13 @@ pub(super) fn validate(
     }
     let target = absolute_candidate(path)
         .map_err(|e| format!("Could not resolve JSONL timeline {}: {e}", path.display()))?;
+    for evidence_root in
+        std::iter::once(evidence).chain(hosts.iter().map(|host| host.root.as_path()))
+    {
+        if relative_to_directory(&target, evidence_root)?.is_some() {
+            return Err("The JSONL timeline must be outside the evidence directories.".into());
+        }
+    }
     let root = absolute_candidate(output).map_err(|e| {
         format!(
             "Could not resolve output directory {}: {e}",
@@ -35,11 +42,11 @@ pub(super) fn validate(
     if root.starts_with(&target) {
         return Err("The JSONL timeline must be a file separate from the output directory.".into());
     }
-    if let Ok(relative) = target.strip_prefix(&root) {
+    if let Some(relative) = relative_to_directory(&target, &root)? {
         let first = relative
             .components()
             .next()
-            .unwrap()
+            .ok_or("The JSONL timeline must be a file separate from the output directory.")?
             .as_os_str()
             .to_string_lossy();
         if first.eq_ignore_ascii_case("manifest.json")
@@ -54,6 +61,33 @@ pub(super) fn validate(
     }
     check_destination(&target, clobber)?;
     Ok(target)
+}
+
+/// `realpath` need not normalize filename case on every filesystem. Compare directory identity
+/// for aliases as well as textual prefixes, including Windows short names and macOS case aliases.
+fn relative_to_directory(path: &Path, directory: &Path) -> Result<Option<PathBuf>, String> {
+    if let Ok(relative) = path.strip_prefix(directory) {
+        return Ok(Some(relative.to_path_buf()));
+    }
+    match fs::metadata(directory) {
+        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(format!("Could not inspect {}: {e}", directory.display())),
+        Ok(_) => {}
+    }
+    for ancestor in path.ancestors() {
+        match fs::metadata(ancestor) {
+            Err(e) if e.kind() == io::ErrorKind::NotFound => continue,
+            Err(e) => return Err(format!("Could not inspect {}: {e}", ancestor.display())),
+            Ok(metadata) if !metadata.is_dir() => continue,
+            Ok(_) => {}
+        }
+        if same_file::is_same_file(directory, ancestor)
+            .map_err(|e| format!("Could not compare output directory paths: {e}"))?
+        {
+            return Ok(Some(path.strip_prefix(ancestor).unwrap().to_path_buf()));
+        }
+    }
+    Ok(None)
 }
 
 pub(super) fn write(files: &[DataFile], output: &Path, clobber: bool) -> io::Result<()> {

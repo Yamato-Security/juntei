@@ -573,9 +573,10 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
         let manifest: Value =
             serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
                 .unwrap();
+        let canonical_timeline = std::fs::canonicalize(&timeline).unwrap();
         assert_eq!(
             manifest["json_timeline"],
-            timeline.to_string_lossy().as_ref()
+            canonical_timeline.to_string_lossy().as_ref()
         );
         assert!(manifest["json_timeline_error"].is_null());
         assert!(
@@ -611,7 +612,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
             let path = Path::new(task["output"].as_str().unwrap());
             assert!(path.exists(), "{task}");
             if task["purpose"] == "json_timeline" {
-                assert_eq!(path, timeline);
+                assert_eq!(path, canonical_timeline);
             }
         }
         assert!(std::fs::read_dir(&output).unwrap().flatten().all(|entry| {
@@ -674,6 +675,37 @@ fn auto_parse_timeline_rejects_collisions_before_changing_any_files() {
     assert_eq!(result.code, 1);
     assert_eq!(std::fs::read(existing).unwrap(), b"previous results\n");
     assert!(!output.exists());
+}
+
+#[test]
+fn auto_parse_timeline_rejects_case_insensitive_output_aliases() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::create_dir(root.path().join("CaseProbe")).unwrap();
+    if !root.path().join("caseprobe").is_dir() {
+        return; // Only a case-insensitive filesystem can alias these two output directories.
+    }
+    let evidence = auto_triage();
+    let output = root.path().join("Parsed");
+    let alias = root
+        .path()
+        .join("parsed/HOST1/process_execution/prefetch.jsonl");
+    let result = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-j",
+        alias.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+    assert!(!alias.exists());
+    assert!(!output.join("manifest.json").exists());
 }
 
 #[test]
