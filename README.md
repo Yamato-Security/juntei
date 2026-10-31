@@ -36,4 +36,5 @@ produce one computer-labelled JSONL file for SIEM ingestion.
 | Recent documents (`NTUSER.DAT` `RecentDocs`), in their MRU order | `parse-registry recentdocs` | Supported |
 | Scheduled tasks (`SOFTWARE` `TaskCache`), with their actions and hidden tasks | `parse-registry taskcache` | Supported |
 | Local accounts (`SAM`) | `parse-registry sam` | Supported |
+| Autostart locations (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat`): Run keys, Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks, … | `parse-registry persistence` | Supported |
 | More Windows artifacts | | Planned |

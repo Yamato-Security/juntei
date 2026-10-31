@@ -43,6 +43,7 @@ Commands:
   recentdocs  Decode Explorer RecentDocs from NTUSER.DAT
   taskcache   Decode scheduled tasks and actions from SOFTWARE TaskCache
   sam         Decode local accounts from SAM
+  persistence Decode autostart locations from SOFTWARE, SYSTEM, NTUSER.DAT and UsrClass.dat
   help        Print this message or the help of the given subcommand(s)
 ```
 
@@ -207,6 +208,35 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
+### `parse-registry persistence`
+
+```text
+Usage:
+  juntei parse-registry persistence <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SOFTWARE, SYSTEM, NTUSER.DAT and UsrClass.dat hives
+  -f, --file <FILE>      File path to one of them
+      --log1 <FILE>      Explicit first transaction log
+      --log2 <FILE>      Explicit second transaction log
+      --no-logs          Read the primary hive without transaction-log replay
+
+Filtering:
+      --all-control-sets  Every control set of a SYSTEM hive, not only the one in use
+
+Output:
+  -o, --output <FILE>       Save every record
+  -t, --output-type <TYPE>  csv, json, or jsonl
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
 ### Examples
 
 ```bash
@@ -215,8 +245,10 @@ juntei parse-registry services -f SYSTEM --service ExampleSvc -t jsonl
 juntei parse-registry recentdocs -f NTUSER.DAT -o recentdocs.csv
 juntei parse-registry taskcache -f SOFTWARE --task ScheduledDefrag -t jsonl
 juntei parse-registry sam -f SAM --rid 500 -t jsonl
+juntei parse-registry persistence -d collection/ -o persistence.csv
 ```
 
 The complete options and field semantics are on [Registry Hives](../artifacts/registry.md),
 [Windows Services](../artifacts/services.md), [RecentDocs](../artifacts/recentdocs.md),
-[Task Scheduler Cache](../artifacts/taskcache.md), and [SAM Local Accounts](../artifacts/sam.md).
+[Task Scheduler Cache](../artifacts/taskcache.md), [SAM Local Accounts](../artifacts/sam.md), and
+[Registry Autostarts](../artifacts/persistence.md).

@@ -3,6 +3,7 @@
 //! here: finding the hives of a collection, opening each with its transaction logs replayed when
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
+pub mod persistence;
 pub mod read;
 pub mod recentdocs;
 pub mod sam;
