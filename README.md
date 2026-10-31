@@ -21,7 +21,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
-with a `logs` directory in each category. Add a computer-labelled SIEM JSONL file with `-j <FILE>`
+with `<artifact>-logs.txt` files beside the results. Add a computer-labelled SIEM JSONL file with `-j <FILE>`
 while keeping the CSV or JSON results.
 
 For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, or `parse-registry`.

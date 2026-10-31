@@ -215,7 +215,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     assert!(
         r.stdout.contains(
-            "Parsing in progress. Per-parser output is saved in each category's logs directory.\n\n"
+            "Parsing in progress. Per-parser messages are saved in *-logs.txt files beside the results.\n\n"
         ),
         "{}",
         r.stdout
@@ -260,10 +260,10 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .is_file()
     );
     assert!(
-        csv.join("HOST1/process_execution/logs/prefetch.txt")
+        csv.join("HOST1/process_execution/prefetch-logs.txt")
             .is_file()
     );
-    assert!(csv.join("HOST1/file_system/logs/mft.txt").is_file());
+    assert!(csv.join("HOST1/file_system/mft-logs.txt").is_file());
     assert!(!csv.join("HOST1/logs").exists());
     for category in [
         "accounts",
@@ -275,7 +275,8 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "registry",
         "security_products",
     ] {
-        assert!(csv.join("HOST1").join(category).join("logs").is_dir());
+        assert!(csv.join("HOST1").join(category).is_dir());
+        assert!(!csv.join("HOST1").join(category).join("logs").exists());
     }
     assert!(!csv.join("HOST1/_logs").exists());
     let manifest: Value =
@@ -293,9 +294,8 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert!(manifest["tasks"].as_array().unwrap().iter().all(|task| {
         task["log"].as_str().is_some_and(|path| {
             let category = task["category"].as_str().unwrap();
-            path.replace('\\', "/")
-                .contains(&format!("/HOST1/{category}/logs/"))
-                && path.ends_with(".txt")
+            Path::new(path).parent() == Some(csv.join("HOST1").join(category).as_path())
+                && path.ends_with("-logs.txt")
                 && Path::new(path).is_file()
         })
     }));
@@ -449,12 +449,12 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert!(values.iter().any(|value| value["Artifact"] == "prefetch"));
     assert!(
         jsonl
-            .join("HOST1/process_execution/logs/prefetch.txt")
+            .join("HOST1/process_execution/prefetch-logs.txt")
             .is_file()
     );
     assert!(
         jsonl
-            .join("HOST1/file_existence/logs/amcache.txt")
+            .join("HOST1/file_existence/amcache-logs.txt")
             .is_file()
     );
     assert!(
@@ -515,7 +515,14 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
         for task in manifest["tasks"].as_array().unwrap() {
             let category = task["category"].as_str().unwrap();
             let log = Path::new(task["log"].as_str().unwrap());
-            assert!(log.starts_with(host.join(category).join("logs")));
+            assert_eq!(log.parent(), Some(host.join(category).as_path()));
+            assert!(
+                log.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .ends_with("-logs.txt")
+            );
+            assert!(!host.join(category).join("logs").exists());
             assert!(log.is_file());
             if let Some(path) = task["output"].as_str() {
                 assert!(Path::new(path).starts_with(host.join(category)));
@@ -581,7 +588,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
         assert!(manifest["json_timeline_error"].is_null());
         assert!(
             output
-                .join("HOST1/process_execution/logs/prefetch.txt")
+                .join("HOST1/process_execution/prefetch-logs.txt")
                 .is_file()
         );
         let extension = format!("HOST1/process_execution/prefetch.{format}");
@@ -597,7 +604,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
             );
             assert!(
                 output
-                    .join("HOST1/process_execution/logs/prefetch-json-timeline.txt")
+                    .join("HOST1/process_execution/prefetch-json-timeline-logs.txt")
                     .is_file()
             );
             assert!(
@@ -640,7 +647,7 @@ fn auto_parse_timeline_rejects_collisions_before_changing_any_files() {
         output.join("manifest.json"),
         output.join("manifest.csv"),
         output.join("HOST1/process_execution/prefetch.jsonl"),
-        output.join("HOST1/process_execution/logs/prefetch.txt"),
+        output.join("HOST1/process_execution/prefetch-logs.txt"),
         output.join(".juntei-work-custom/extra.jsonl"),
     ] {
         let result = run(&[

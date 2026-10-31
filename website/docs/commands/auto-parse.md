@@ -79,9 +79,9 @@ An artifact that was not collected is a normal `skipped` task, not a failure.
 
 ## Output layout
 
-Results are organized by computer, investigative category, and artifact. Every category has its
-own `logs/` directory, including when its artifacts were not collected. CSV keeps separate tables
-because each artifact has different columns:
+Results are organized by computer, investigative category, and artifact. Each parser writes an
+`<artifact>-logs.txt` file beside its results, including when the artifact was not collected.
+CSV keeps separate tables because each artifact has different columns:
 
 ```text
 <OUTPUT>/
@@ -89,40 +89,51 @@ because each artifact has different columns:
 ├── manifest.csv
 ├── HOST1/
 │   ├── accounts/
-│   │   ├── logs/
-│   │   └── sam.csv
+│   │   ├── sam.csv
+│   │   └── sam-logs.txt
 │   ├── file_and_folder_opening/
-│   │   ├── logs/
 │   │   ├── jump-lists/
+│   │   ├── jump-lists-logs.txt
 │   │   ├── lnk.csv
-│   │   └── recentdocs.csv
+│   │   ├── lnk-logs.txt
+│   │   ├── recentdocs.csv
+│   │   └── recentdocs-logs.txt
 │   ├── file_existence/
-│   │   ├── logs/
 │   │   ├── amcache/
-│   │   └── shimcache.csv
+│   │   ├── amcache-logs.txt
+│   │   ├── shimcache.csv
+│   │   └── shimcache-logs.txt
 │   ├── file_system/
-│   │   ├── logs/
 │   │   ├── i30.csv
+│   │   ├── i30-logs.txt
 │   │   ├── logfile.csv
+│   │   ├── logfile-logs.txt
 │   │   ├── mft.csv
-│   │   └── usn-journal.csv
+│   │   ├── mft-logs.txt
+│   │   ├── usn-journal.csv
+│   │   └── usn-journal-logs.txt
 │   ├── persistence/
-│   │   ├── logs/
 │   │   ├── persistence.csv
+│   │   ├── persistence-logs.txt
 │   │   ├── services.csv
-│   │   └── taskcache.csv
+│   │   ├── services-logs.txt
+│   │   ├── taskcache.csv
+│   │   └── taskcache-logs.txt
 │   ├── process_execution/
-│   │   ├── logs/
 │   │   ├── prefetch.csv
+│   │   ├── prefetch-logs.txt
 │   │   ├── prefetch-timeline.csv
+│   │   ├── prefetch-timeline-logs.txt
 │   │   ├── srum/
-│   │   └── userassist.csv
+│   │   ├── srum-logs.txt
+│   │   ├── userassist.csv
+│   │   └── userassist-logs.txt
 │   ├── registry/
-│   │   ├── logs/
-│   │   └── registry.csv
+│   │   ├── registry.csv
+│   │   └── registry-logs.txt
 │   └── security_products/
-│       ├── logs/
 │       ├── defender-quarantine.csv
+│       ├── defender-quarantine-logs.txt
 │       └── defender-quarantined/  # only with -x
 └── HOST2/
     └── …
@@ -144,9 +155,11 @@ Amcache and ShimCache entries alone do not establish execution. SRUM records res
 consult the artifact guide before drawing conclusions about a program running.
 
 CSV, JSON, and JSONL use the same categories. Parsers that produce several tables retain their
-artifact subdirectory where needed. Each category's `logs/` contains one `.txt` file per parser
-job with its exact command and messages; for example,
-`HOST1/file_system/logs/mft.txt` and `HOST1/process_execution/logs/prefetch.txt`.
+artifact subdirectory where needed. One `<artifact>-logs.txt` file per parser job contains its
+exact command and messages; for example, `HOST1/file_system/mft-logs.txt` and
+`HOST1/process_execution/prefetch-logs.txt`. JSON and JSONL use the same log filenames.
+Multi-table outputs such as `amcache/` and `srum/` have one log beside the artifact directory,
+covering all its tables. No `logs/` subdirectories are created.
 
 `manifest.json` records the original discovered `hostname`, the unique output/record `Computer`
 identity, hostname provenance, evidence paths, artifact `category`, command lines, duration, exit
@@ -181,7 +194,7 @@ When a host has one Amcache hive or SRUM database, its CSV tables are written di
 of either kind, each source receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
 another. A normal single-volume collection writes `$MFT` and USN Journal records directly to
 `file_system/mft.csv` and `file_system/usn-journal.csv`. Additional collected volumes use numbered
-sibling files such as `file_system/mft-2.csv` and `file_system/logs/mft-2.txt`.
+sibling files such as `file_system/mft-2.csv` and `file_system/mft-2-logs.txt`.
 
 ## JSON and SIEM ingestion
 
@@ -212,7 +225,7 @@ be used as the destination. An existing file requires `-C`; a failed export leav
 In **CSV mode**, Juntei performs an additional native JSONL pass so the SIEM file preserves
 numeric and boolean types, nested data, raw fields, and metadata that CSV tables can omit. The
 extra jobs share the same `-T` concurrency limit, do not extract quarantine contents again, and
-have separate `*-json-timeline.txt` category logs. Both manifests distinguish their purpose and
+have separate `*-json-timeline-logs.txt` sidecar logs. Both manifests distinguish their purpose and
 output format. Temporary JSONL files are removed after a successful run; they are retained if a
 parser or export fails. Plan for the extra processing time and temporary disk space.
 

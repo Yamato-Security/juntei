@@ -277,8 +277,13 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             let mut extra = build_tasks(&hosts, &json_opts, &path)?;
             for task in &mut extra {
                 task.timeline_only = true;
-                let name = task.log.file_stem().unwrap_or_default().to_string_lossy();
-                task.log.set_file_name(format!("{name}-json-timeline.txt"));
+                let name = task
+                    .output
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy();
+                task.log
+                    .set_file_name(format!("{name}-json-timeline-logs.txt"));
             }
             tasks.extend(extra);
             prioritize_long_tasks(&mut tasks);
@@ -369,7 +374,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p(None, "", true);
     p(
         JunteiColor::Orange.rdg(no_color),
-        "Parsing in progress. Per-parser output is saved in each category's logs directory.",
+        "Parsing in progress. Per-parser messages are saved in *-logs.txt files beside the results.",
         true,
     );
     p(None, "", true);
@@ -820,7 +825,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         let host_output_dir = opts.output.join(&host.folder);
         for category in CATEGORIES {
             fs::create_dir_all(data_dir.join(category))?;
-            fs::create_dir_all(host_output_dir.join(category).join("logs"))?;
+            fs::create_dir_all(host_output_dir.join(category))?;
         }
         let mut add =
             |artifact: &'static str, command: &[&str], shape: OutputShape, extra: &[&str]| {
@@ -852,8 +857,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                     output,
                     log: host_output_dir
                         .join(artifact_category(artifact))
-                        .join("logs")
-                        .join(format!("{artifact}.txt")),
+                        .join(format!("{artifact}-logs.txt")),
                 });
             };
 
@@ -1143,8 +1147,7 @@ fn add_file_artifact_tasks(
             output,
             log: host_output_dir
                 .join(category)
-                .join("logs")
-                .join(format!("{stem}.txt")),
+                .join(format!("{stem}-logs.txt")),
         });
     }
 }
@@ -1709,10 +1712,14 @@ mod tests {
     #[test]
     fn totals_include_nested_results_and_logs_without_following_symlinks() {
         let dir = tempfile::tempdir().unwrap();
-        fs::create_dir_all(dir.path().join("HOST/logs")).unwrap();
+        fs::create_dir_all(dir.path().join("HOST/file_system")).unwrap();
         fs::write(dir.path().join("manifest.csv"), b"a,b\n").unwrap();
         fs::write(dir.path().join("HOST/result.csv"), b"x\n1\n").unwrap();
-        fs::write(dir.path().join("HOST/logs/parser.txt"), b"log\n").unwrap();
+        fs::write(
+            dir.path().join("HOST/file_system/parser-logs.txt"),
+            b"log\n",
+        )
+        .unwrap();
         #[cfg(unix)]
         {
             std::os::unix::fs::symlink(dir.path(), dir.path().join("HOST/loop")).unwrap();
