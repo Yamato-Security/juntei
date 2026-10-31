@@ -29,7 +29,7 @@ juntei parse-defender-quarantine -d evidence/ -o quarantine.csv
 juntei parse-defender-quarantine -d evidence/ -o quarantine.csv --extract isolated-output/
 ```
 
-Extraction preserves binary security streams and also creates readable `.security.txt` reports with
+Extraction preserves binary security streams and also creates readable `.security_descriptor.txt` reports with
 ownership, permissions and SDDL. See [Defender Quarantine](../artifacts/defender-quarantine.md).
 
 ## Registry subcommands

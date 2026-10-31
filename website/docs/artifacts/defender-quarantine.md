@@ -112,9 +112,9 @@ text editor. It is a separate backup stream, not another copy of the executable.
 decodes it when extracting, with either `parse-defender-quarantine --extract` or `auto-parse -x`:
 
 ```text
-tool.exe.quarantined           Original file content; treat as malware
-tool.exe.security.quarantined  Original binary security descriptor, preserved unchanged
-tool.exe.security.txt          Readable ownership and permission report
+tool.exe.quarantined              Original file content; treat as malware
+tool.exe.security.quarantined     Original binary security descriptor, preserved unchanged
+tool.exe.security_descriptor.txt  Readable ownership and permission report
 ```
 
 The text filename follows the actual binary name, including any collision identifier. The generated

@@ -205,7 +205,7 @@ uses `-x`, so extracted malware cannot remain as an unrecorded stale result.
 !!! danger "Treat extracted Defender content as malware"
     `-x, --extract-defender-quarantined` writes quarantined content to disk under each computer's
     `defender-quarantined/` directory. Recovered binary streams end in `.quarantined`, and Juntei
-    removes execute permission. Each binary security descriptor also gets a readable `.security.txt`
+    removes execute permission. Each binary security descriptor also gets a readable `.security_descriptor.txt`
     report with ownership, permissions and SDDL. Never execute recovered payloads. Use an isolated
     analysis system and expect antivirus or EDR software to alert on or remove the recovered content.
 

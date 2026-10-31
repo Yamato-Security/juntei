@@ -7,7 +7,7 @@
 //! and records no entry holds are reported too. One record per resource, as CSV, JSON or JSONL,
 //! with Hayabusa's input options, progress bar and results summary. With `--extract`, the
 //! quarantined files are written out with their original filename and a `.quarantined` extension,
-//! and without execute permission. Security streams also get a readable `.security.txt` report.
+//! and without execute permission. Security streams also get a readable `.security_descriptor.txt` report.
 //! Nothing is ever run.
 
 use crate::cli::{DefenderQuarantineOptions, DefenderQuarantineOutputType};
@@ -811,12 +811,13 @@ impl Extractor {
                         );
                         // Derive the report from the actual, collision-resolved binary name.
                         // Reserve its path separately, including on case-insensitive systems.
-                        let name = format!(
-                            "{}.txt",
-                            target.strip_suffix(".quarantined").unwrap_or(&target)
-                        );
+                        let stem = target.strip_suffix(".quarantined").unwrap_or(&target);
+                        let (base, disambiguator) =
+                            stem.rsplit_once(".security").unwrap_or((stem, ""));
+                        let name = format!("{base}{disambiguator}.security_descriptor.txt");
                         let identity = format!("{}:security-text:{}", data.id, file.name);
-                        let text_target = self.target(&name, &identity, &data.id, ".txt");
+                        let text_target =
+                            self.target(&name, &identity, &data.id, ".security_descriptor.txt");
                         let text = format!("Binary descriptor: {target}\n{}", report.text);
                         if let Err(error) = self.write(&self.dir.join(text_target), text.as_bytes())
                         {
@@ -1291,7 +1292,8 @@ mod tests {
             std::fs::read(dir.path().join("tool.exe.security.quarantined")).unwrap(),
             &data.content[security]
         );
-        let text = std::fs::read_to_string(dir.path().join("tool.exe.security.txt")).unwrap();
+        let text =
+            std::fs::read_to_string(dir.path().join("tool.exe.security_descriptor.txt")).unwrap();
         assert!(text.contains("Decode status: incomplete"));
         assert!(text.contains("unsupported descriptor revision"));
         let written = extractor.written;
@@ -1299,7 +1301,7 @@ mod tests {
         assert_eq!(extractor.written, written);
         assert_eq!(
             text,
-            std::fs::read_to_string(dir.path().join("tool.exe.security.txt")).unwrap()
+            std::fs::read_to_string(dir.path().join("tool.exe.security_descriptor.txt")).unwrap()
         );
     }
 
@@ -1317,7 +1319,7 @@ mod tests {
                 .1
                 .is_empty()
         );
-        let text_name = format!("TOOL.exe.{}.security.txt", second.id);
+        let text_name = format!("TOOL.exe.{}.security_descriptor.txt", second.id);
         let binary_name = format!("TOOL.exe.{}.security.quarantined", second.id);
         let text = std::fs::read_to_string(dir.path().join(text_name)).unwrap();
         assert!(text.contains(&format!("Binary descriptor: {binary_name}")));
@@ -1325,7 +1327,11 @@ mod tests {
             std::fs::read(dir.path().join(binary_name)).unwrap(),
             second.stream_data(second.streams.iter().find(|s| s.kind == 3).unwrap())
         );
-        assert!(dir.path().join("tool.exe.security.txt").is_file());
+        assert!(
+            dir.path()
+                .join("tool.exe.security_descriptor.txt")
+                .is_file()
+        );
         let before = std::fs::read_dir(dir.path()).unwrap().count();
         assert!(
             extractor
