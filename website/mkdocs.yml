@@ -118,14 +118,14 @@ nav:
       - Artifact Guide: artifacts/index.md
       - Process Execution:
           - Prefetch: artifacts/prefetch.md
-          - Amcache: artifacts/amcache.md
-          - ShimCache: artifacts/shimcache.md
           - SRUM: artifacts/srum.md
       - File System and File Existence:
           - Master File Table ($MFT): artifacts/mft.md
           - NTFS Transaction Log ($LogFile): artifacts/logfile.md
           - USN Journal: artifacts/usn-journal.md
           - Directory Indexes ($I30): artifacts/i30.md
+          - Amcache: artifacts/amcache.md
+          - ShimCache: artifacts/shimcache.md
       - File and Folder Opening:
           - LNK Shortcuts: artifacts/lnk.md
           - Jump Lists: artifacts/jump-lists.md

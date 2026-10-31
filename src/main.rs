@@ -16,6 +16,7 @@ mod mft_inspect;
 mod prefetch;
 mod progress;
 mod registry;
+mod security_descriptor;
 mod shimcache;
 mod srum;
 mod usn_journal;
