@@ -400,6 +400,12 @@ fn auto_parse_can_extract_defender_quarantined_files() {
             .unwrap()
             .starts_with(b"A harmless line of text")
     );
+    let security_text =
+        std::fs::read_to_string(output.join("HOST1/defender-quarantined/tool.exe.security.txt"))
+            .unwrap();
+    assert!(security_text.contains("Binary descriptor: tool.exe.security.quarantined"));
+    assert!(security_text.contains("Owner: S-1-5-21-1111-2222-3333-1001"));
+    assert!(security_text.contains("Decode status: complete"));
 
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
@@ -4164,9 +4170,20 @@ fn defender_quarantine_extracts_only_when_asked() {
             "tool.exe.Zone.Identifier.quarantined".to_string(),
             "tool.exe.quarantined".to_string(),
             "tool.exe.security.quarantined".to_string(),
+            "tool.exe.security.txt".to_string(),
         ]
     );
-    assert!(names.iter().all(|name| name.ends_with(".quarantined")));
+    assert!(
+        names
+            .iter()
+            .all(|name| name.ends_with(".quarantined") || name.ends_with(".security.txt"))
+    );
+    let security_file = out.join("tool.exe.security.txt");
+    let security_text = std::fs::read_to_string(&security_file).unwrap();
+    assert!(security_text.contains("Binary descriptor: tool.exe.security.quarantined"));
+    assert!(security_text.contains("Owner: S-1-5-21-1111-2222-3333-1001"));
+    assert!(security_text.contains("SDDL (owner, group and ACL entries):"));
+    assert!(security_text.contains("Decode status: complete"));
     let file = out.join("tool.exe.quarantined");
     let data = std::fs::read(&file).unwrap();
     assert!(data.starts_with(b"A harmless line of text"));
@@ -4176,8 +4193,13 @@ fn defender_quarantine_extracts_only_when_asked() {
         use std::os::unix::fs::PermissionsExt;
         let mode = std::fs::metadata(&file).unwrap().permissions().mode();
         assert_eq!(mode & 0o111, 0, "executable: {mode:o}");
+        let mode = std::fs::metadata(&security_file)
+            .unwrap()
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600, "text report permissions: {mode:o}");
     }
-    assert!(r.stdout.contains("Files extracted: 5"), "{}", r.stdout);
+    assert!(r.stdout.contains("Files extracted: 6"), "{}", r.stdout);
     let (_, rows) = csv_rows(&report);
     let extracted = rows
         .iter()
@@ -4195,7 +4217,7 @@ fn defender_quarantine_extracts_only_when_asked() {
         out.to_str().unwrap(),
     ]);
     assert!(r.stdout.contains("Files extracted: 0"), "{}", r.stdout);
-    assert!(r.stdout.contains("5 already there"), "{}", r.stdout);
+    assert!(r.stdout.contains("6 already there"), "{}", r.stdout);
 
     // A file holding something else isn't overwritten, unless -C.
     std::fs::write(&file, b"something else").unwrap();
@@ -4233,6 +4255,43 @@ fn defender_quarantine_extracts_only_when_asked() {
         let mode = std::fs::metadata(&file).unwrap().permissions().mode();
         assert_eq!(mode & 0o111, 0, "executable after -C: {mode:o}");
     }
+}
+
+#[test]
+fn defender_security_text_obeys_overwrite_protection() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("extracted");
+    let (r, _) = quarantine_csv(&["-d", QUARANTINE_DIR, "--extract", out.to_str().unwrap()]);
+    assert_eq!(r.code, 0, "{}{}", r.stdout, r.stderr);
+    let text = out.join("tool.exe.security.txt");
+    let expected = std::fs::read(&text).unwrap();
+    let payload = std::fs::read(out.join("tool.exe.quarantined")).unwrap();
+    let raw_security = std::fs::read(out.join("tool.exe.security.quarantined")).unwrap();
+    std::fs::write(&text, b"analyst's existing file\n").unwrap();
+    let (r, rows) = quarantine_csv(&["-d", QUARANTINE_DIR, "--extract", out.to_str().unwrap()]);
+    assert!(r.stdout.contains("1 not overwritten"), "{}", r.stdout);
+    assert!(
+        rows.iter()
+            .any(|row| row["Problems"].contains("tool.exe.security.txt holds something else"))
+    );
+    assert_eq!(std::fs::read(&text).unwrap(), b"analyst's existing file\n");
+    assert_eq!(
+        std::fs::read(out.join("tool.exe.quarantined")).unwrap(),
+        payload
+    );
+    assert_eq!(
+        std::fs::read(out.join("tool.exe.security.quarantined")).unwrap(),
+        raw_security
+    );
+    let (r, _) = quarantine_csv(&[
+        "-d",
+        QUARANTINE_DIR,
+        "--extract",
+        out.to_str().unwrap(),
+        "-C",
+    ]);
+    assert_eq!(r.code, 0, "{}{}", r.stdout, r.stderr);
+    assert_eq!(std::fs::read(&text).unwrap(), expected);
 }
 
 #[test]

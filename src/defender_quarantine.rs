@@ -7,11 +7,13 @@
 //! and records no entry holds are reported too. One record per resource, as CSV, JSON or JSONL,
 //! with Hayabusa's input options, progress bar and results summary. With `--extract`, the
 //! quarantined files are written out with their original filename and a `.quarantined` extension,
-//! and without execute permission. Nothing is ever run.
+//! and without execute permission. Security streams also get a readable `.security.txt` report.
+//! Nothing is ever run.
 
 use crate::cli::{DefenderQuarantineOptions, DefenderQuarantineOutputType};
 use crate::color::JunteiColor;
 use crate::progress;
+use crate::security_descriptor;
 use crate::util::{self, check_output, error_msg, fmt_num, p, p_label};
 use defender::quarantine::{
     Hashes, Resource, ResourceData, ResourceRecord, detect, hashes, read_entry, read_resource_data,
@@ -696,6 +698,13 @@ struct Extractor {
     paths: HashMap<String, String>,
 }
 
+struct ExtractedStream<'a> {
+    name: String,
+    bytes: &'a [u8],
+    primary: bool,
+    security: bool,
+}
+
 impl Extractor {
     fn new(dir: &Path, clobber: bool) -> Self {
         Self {
@@ -719,7 +728,7 @@ impl Extractor {
         let mut problems = Vec::new();
         let mut first = None;
         let mut primary = None;
-        let mut files: Vec<(String, &[u8], bool)> = Vec::new();
+        let mut files = Vec::new();
         let base = original
             .and_then(original_filename)
             .unwrap_or_else(|| data.id.clone());
@@ -739,7 +748,12 @@ impl Extractor {
         }
         self.names.insert(base_name.to_lowercase(), data.id.clone());
         if data.hive {
-            files.push((format!("{base_name}.hive.quarantined"), &data.content, true));
+            files.push(ExtractedStream {
+                name: format!("{base_name}.hive.quarantined"),
+                bytes: &data.content,
+                primary: true,
+                security: false,
+            });
         } else {
             let mut primary_added = false;
             for stream in &data.streams {
@@ -762,40 +776,52 @@ impl Extractor {
                 };
                 let mut name = format!("{stream_base}.quarantined");
                 let mut n = 1;
-                while files.iter().any(|(f, _, _)| *f == name) {
+                while files.iter().any(|f| f.name.eq_ignore_ascii_case(&name)) {
                     n += 1;
                     name = format!("{stream_base}.{n}.quarantined");
                 }
-                files.push((name, data.stream_data(stream), is_primary));
+                files.push(ExtractedStream {
+                    name,
+                    bytes: data.stream_data(stream),
+                    primary: is_primary,
+                    security: stream.kind == 3,
+                });
             }
         }
-        let has_primary = files.iter().any(|(_, _, is_primary)| *is_primary);
-        for (name, bytes, is_primary) in files {
-            let identity = format!("{}:{is_primary}", data.id);
-            let mut target = name.clone();
-            let mut number = 1;
-            while self
-                .paths
-                .get(&target.to_lowercase())
-                .is_some_and(|id| id != &identity)
-            {
-                let stem = name.strip_suffix(".quarantined").unwrap_or(&name);
-                target = if number == 1 {
-                    format!("{stem}.{}.quarantined", data.id)
-                } else {
-                    format!("{stem}.{}.{number}.quarantined", data.id)
-                };
-                number += 1;
-            }
-            self.paths.insert(target.to_lowercase(), identity);
+        let has_primary = files.iter().any(|f| f.primary);
+        for file in files {
+            let identity = format!("{}:binary:{}", data.id, file.name);
+            let target = self.target(&file.name, &identity, &data.id, ".quarantined");
             let path = self.dir.join(&target);
-            match self.write(&path, bytes) {
+            match self.write(&path, file.bytes) {
                 Ok(()) => {
                     if first.is_none() {
                         first = Some(path.clone());
                     }
-                    if is_primary {
+                    if file.primary {
                         primary = Some(path);
+                    }
+                    if file.security {
+                        let report = security_descriptor::report(file.bytes);
+                        problems.extend(
+                            report
+                                .problems
+                                .iter()
+                                .map(|p| format!("security descriptor {target}: {p}")),
+                        );
+                        // Derive the report from the actual, collision-resolved binary name.
+                        // Reserve its path separately, including on case-insensitive systems.
+                        let name = format!(
+                            "{}.txt",
+                            target.strip_suffix(".quarantined").unwrap_or(&target)
+                        );
+                        let identity = format!("{}:security-text:{}", data.id, file.name);
+                        let text_target = self.target(&name, &identity, &data.id, ".txt");
+                        let text = format!("Binary descriptor: {target}\n{}", report.text);
+                        if let Err(error) = self.write(&self.dir.join(text_target), text.as_bytes())
+                        {
+                            problems.push(error);
+                        }
                     }
                 }
                 Err(e) => problems.push(e),
@@ -803,6 +829,28 @@ impl Extractor {
         }
         let extracted = if has_primary { primary } else { first };
         (extracted.map(|path| path.display().to_string()), problems)
+    }
+
+    /// Reserve a portable output name, keeping the suffix after any collision disambiguator.
+    fn target(&mut self, name: &str, identity: &str, id: &str, extension: &str) -> String {
+        let mut target = name.to_owned();
+        let mut number = 1;
+        while self
+            .paths
+            .get(&target.to_lowercase())
+            .is_some_and(|have| have != identity)
+        {
+            let stem = name.strip_suffix(extension).unwrap_or(name);
+            target = if number == 1 {
+                format!("{stem}.{id}{extension}")
+            } else {
+                format!("{stem}.{id}.{number}{extension}")
+            };
+            number += 1;
+        }
+        self.paths
+            .insert(target.to_lowercase(), identity.to_owned());
+        target
     }
 
     fn write(&mut self, path: &Path, bytes: &[u8]) -> Result<(), String> {
@@ -1207,6 +1255,85 @@ mod tests {
         assert_eq!(stream_name(":../../evil:$DATA"), "_.._evil");
         assert_eq!(stream_name("::$DATA"), "stream");
         assert_eq!(stream_name(":a b/c\\d:$DATA"), "a_b_c_d");
+    }
+
+    fn file_fixture() -> ResourceData {
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("test_files/defender_quarantine/Quarantine/ResourceData/AA/AAB535B2BF6E319A41A914FDF71F7509D42E847F");
+        read_resource_data(&std::fs::read(fixture).unwrap())
+    }
+
+    #[test]
+    fn damaged_security_does_not_prevent_payload_or_report_extraction() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut data = file_fixture();
+        let security = data
+            .streams
+            .iter()
+            .find(|s| s.kind == 3)
+            .unwrap()
+            .range
+            .clone();
+        data.content[security.start] = 0xff;
+        let mut extractor = Extractor::new(dir.path(), false);
+        let (primary, problems) = extractor.extract(&data, Some(r"C:\tool.exe"));
+        assert!(primary.unwrap().ends_with("tool.exe.quarantined"));
+        assert!(
+            problems
+                .iter()
+                .any(|p| p.contains("unsupported descriptor revision"))
+        );
+        assert_eq!(
+            std::fs::read(dir.path().join("tool.exe.quarantined")).unwrap(),
+            data.file_data().unwrap()
+        );
+        assert_eq!(
+            std::fs::read(dir.path().join("tool.exe.security.quarantined")).unwrap(),
+            &data.content[security]
+        );
+        let text = std::fs::read_to_string(dir.path().join("tool.exe.security.txt")).unwrap();
+        assert!(text.contains("Decode status: incomplete"));
+        assert!(text.contains("unsupported descriptor revision"));
+        let written = extractor.written;
+        let _ = extractor.extract(&data, Some(r"C:\tool.exe"));
+        assert_eq!(extractor.written, written);
+        assert_eq!(
+            text,
+            std::fs::read_to_string(dir.path().join("tool.exe.security.txt")).unwrap()
+        );
+    }
+
+    #[test]
+    fn security_reports_follow_collision_resolved_names() {
+        let dir = tempfile::tempdir().unwrap();
+        let first = file_fixture();
+        let mut second = file_fixture();
+        second.id = "1111111111111111111111111111111111111111".into();
+        let mut extractor = Extractor::new(dir.path(), false);
+        assert!(extractor.extract(&first, Some(r"C:\tool.exe")).1.is_empty());
+        assert!(
+            extractor
+                .extract(&second, Some(r"C:\TOOL.exe"))
+                .1
+                .is_empty()
+        );
+        let text_name = format!("TOOL.exe.{}.security.txt", second.id);
+        let binary_name = format!("TOOL.exe.{}.security.quarantined", second.id);
+        let text = std::fs::read_to_string(dir.path().join(text_name)).unwrap();
+        assert!(text.contains(&format!("Binary descriptor: {binary_name}")));
+        assert_eq!(
+            std::fs::read(dir.path().join(binary_name)).unwrap(),
+            second.stream_data(second.streams.iter().find(|s| s.kind == 3).unwrap())
+        );
+        assert!(dir.path().join("tool.exe.security.txt").is_file());
+        let before = std::fs::read_dir(dir.path()).unwrap().count();
+        assert!(
+            extractor
+                .extract(&second, Some(r"C:\TOOL.exe"))
+                .1
+                .is_empty()
+        );
+        assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), before);
     }
 
     #[test]

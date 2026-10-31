@@ -100,9 +100,56 @@ details rather than the CSV's joined text.
 Juntei uses the original filename with a final `.quarantined` extension when the quarantine entry
 records one. It uses the content identifier for orphaned or non-file resources, and adds the
 identifier to resolve filename collisions. Windows-invalid filename characters are replaced. Security
-and alternate streams are written beside the primary file. Juntei removes execute permission;
+and alternate streams are written beside the primary file. Each security stream also gets a readable
+text report. Juntei removes execute permission;
 existing different content is not overwritten without `-C`. These controls reduce accidents but do
 not make the bytes safe.
+
+### Reading the recovered security descriptor
+
+A `.security.quarantined` file contains binary Windows security metadata, so it is not readable in a
+text editor. It is a separate backup stream, not another copy of the executable. Juntei automatically
+decodes it when extracting, with either `parse-defender-quarantine --extract` or `auto-parse -x`:
+
+```text
+tool.exe.quarantined           Original file content; treat as malware
+tool.exe.security.quarantined  Original binary security descriptor, preserved unchanged
+tool.exe.security.txt          Readable ownership and permission report
+```
+
+The text filename follows the actual binary name, including any collision identifier. The generated
+text is ordinary UTF-8 and uses the same overwrite protections as other extracted files. It includes
+the binary filename, byte count and SHA-256 so the report can be matched to its source.
+
+| Report field | How to interpret it |
+|---|---|
+| Owner and primary group | SIDs recorded in the descriptor. Well-known SIDs get names such as `BUILTIN\Administrators` or `NT AUTHORITY\SYSTEM`. Other SIDs remain unresolved; a familiar RID alone is insufficient to name a local/domain account. Ownership does not prove who created or ran a file. |
+| Control flags | Original numeric flags and their names, including ACL presence, inheritance and protection. |
+| DACL | Ordered access-control entries (ACEs): allow/deny type, account SID, permission mask, rights and inheritance flags. These are recorded entries, not a calculation of effective access for a user's token. |
+| SACL | Recorded audit or mandatory-integrity entries. Audit-success/failure flags describe configuration, not a history of access. An absent SACL does not establish that all auditing was disabled. |
+| Object GUIDs | Optional GUIDs for object-specific ACEs, with object-specific rights retained numerically rather than mislabeled as file rights. |
+| SDDL | Security Descriptor Definition Language representation of the owner, group and supported ACL entries. Consult the control flags separately. Juntei does not emit a partial SDDL string if any component is damaged or unsupported. |
+| Decode status and problems | `complete` or `incomplete`, with reasons. Unsupported ACEs retain their raw hex in the report. The original binary is always retained when extraction succeeds. Decode problems also appear in the quarantine record's `Problems` field. |
+
+An absent DACL, a NULL DACL and an empty DACL are reported separately. An absent or NULL DACL provides
+no discretionary access restriction; an empty DACL has no ACEs granting access. Other Windows access
+checks and privileges still matter. Inherited and inherit-only ACEs remain explicitly flagged.
+
+For example, an entry granting inherited full control to Administrators can appear as:
+
+```text
+Entry 1: ALLOW (type 0x00)
+  Flags: 0x10 (INHERITED_ACE)
+  Account: S-1-5-32-544 (BUILTIN\Administrators)
+  Access mask: 0x001F01FF
+  Rights: Full control (FILE_ALL_ACCESS)
+```
+
+The decoder runs offline on Windows, macOS and Linux without Windows APIs, Python or account lookup.
+It decodes basic allow/deny/audit/alarm ACEs, object ACEs and mandatory-integrity labels. Conditional,
+callback, resource-attribute and other unsupported ACEs are identified explicitly and preserved in
+raw form; their access conditions are not evaluated. A damaged descriptor does not stop extraction
+of the other streams.
 
 ## Investigation strategy
 
@@ -119,3 +166,6 @@ not make the bytes safe.
 - [dissect.target Defender plugin](https://docs.dissect.tools/en/latest/projects/dissect.target/plugins/os/windows/defender.html)
 - [Microsoft: Microsoft Defender Antivirus remediation and quarantine](https://learn.microsoft.com/en-us/defender-endpoint/restore-quarantined-files-microsoft-defender-antivirus)
 - [defender-dump](https://github.com/knez/defender-dump)
+- [Microsoft: Security descriptors](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-descriptors)
+- [Microsoft: Security Descriptor String Format](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format)
+- [Microsoft: ACE strings](https://learn.microsoft.com/en-us/windows/win32/secauthz/ace-strings)
