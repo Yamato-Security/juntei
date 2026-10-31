@@ -325,6 +325,11 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
                         .any(|pair| pair[0] == "--min-severity" && pair[1] == "info"),
                     "{task}"
                 );
+                assert!(
+                    args.windows(2)
+                        .any(|pair| pair[0] == "--threads" && pair[1] == "1"),
+                    "{task}"
+                );
                 continue;
             }
             "mft" | "usn-journal" | "logfile" | "i30" => ("parse-ntfs", artifact),
@@ -2939,6 +2944,115 @@ fn persistence_sniper_selected_check_has_csv_json_and_jsonl_parity() {
     let f: Value = serde_json::from_str(&r.stdout).unwrap();
     assert_eq!(f["CheckId"], "run_keys");
     assert!(!r.stdout.contains("JUNTEI"));
+}
+
+#[test]
+fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
+    let evidence = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let windows = evidence.path().join("Windows");
+    let config = windows.join("System32/config");
+    let tasks = windows.join("System32/Tasks");
+    let logs = windows.join("System32/winevt/Logs");
+    for dir in [&config, &tasks, &logs, &evidence.path().join("Example")] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), sniper_software_hive()).unwrap();
+    std::fs::write(config.join("SYSTEM"), services_hive(1)).unwrap();
+    std::fs::write(
+        evidence.path().join("Example/agent.exe"),
+        b"example payload bytes",
+    )
+    .unwrap();
+    std::fs::copy(repo(MFT), evidence.path().join("$MFT")).unwrap();
+    std::fs::write(tasks.join("ExampleTask"), br#"<Task xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Principals><Principal id="Author"><UserId>S-1-5-18</UserId></Principal></Principals><Actions Context="Author"><Exec><Command>C:\Example\agent.exe</Command><Arguments>--task</Arguments></Exec></Actions></Task>"#).unwrap();
+    // Independent channel workers must preserve both failures and their order;
+    // other successfully parsed artifacts must remain in the output.
+    std::fs::write(logs.join("System.evtx"), b"damaged system channel").unwrap();
+    std::fs::write(logs.join("Security.evtx"), b"damaged security channel").unwrap();
+    #[cfg(unix)]
+    {
+        let outside = output.path().join("not-evidence");
+        std::fs::create_dir_all(&outside).unwrap();
+        for branch in ["First/nested", "Second"] {
+            let path = evidence.path().join(branch);
+            std::fs::create_dir_all(&path).unwrap();
+            std::os::unix::fs::symlink(&outside, path.join("outside-link")).unwrap();
+        }
+    }
+
+    for format in ["csv", "json", "jsonl"] {
+        let mut first = None;
+        for threads in ["1", "4", "2"] {
+            let findings = output.path().join(format!("findings-{format}-{threads}"));
+            let coverage = output
+                .path()
+                .join(format!("coverage-{format}-{threads}.csv"));
+            let r = run(&[
+                "check-persistence",
+                "-d",
+                evidence.path().to_str().unwrap(),
+                "--min-severity",
+                "info",
+                "-T",
+                threads,
+                "-t",
+                format,
+                "-o",
+                findings.to_str().unwrap(),
+                "--coverage",
+                coverage.to_str().unwrap(),
+                "-q",
+                "-K",
+            ]);
+            assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+            let result = (
+                std::fs::read(&findings).unwrap(),
+                std::fs::read(&coverage).unwrap(),
+            );
+            if let Some(first) = &first {
+                assert_eq!(
+                    &result, first,
+                    "{format}: -T {threads} changed findings or coverage"
+                );
+            } else {
+                let (_, rows) = csv_rows(&coverage);
+                assert_eq!(
+                    rows.iter()
+                        .filter(|r| r["CheckId"] != "context"
+                            && r["CheckId"] != "timestamp_correlation")
+                        .count(),
+                    130
+                );
+                assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
+                    && r["Detail"].contains("System.evtx")));
+                assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
+                    && r["Detail"].contains("Security.evtx")));
+                if format == "csv" {
+                    let (_, rows) = csv_rows(&findings);
+                    assert!(
+                        rows.iter()
+                            .any(|r| r["CheckId"] == "run_keys" && !r["Sha256"].is_empty())
+                    );
+                    assert!(rows.iter().any(|r| r["CheckId"] == "scheduled_task_files"));
+                }
+                first = Some(result);
+            }
+        }
+    }
+    for threads in ["0", "invalid", "-1"] {
+        assert_ne!(
+            run(&[
+                "check-persistence",
+                "-d",
+                evidence.path().to_str().unwrap(),
+                "--threads",
+                threads
+            ])
+            .code,
+            0
+        );
+    }
 }
 
 #[test]

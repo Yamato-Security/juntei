@@ -77,6 +77,10 @@ Check Persistence retains every severity (`--min-severity info`), including part
 commands too. The automatic inventory does not discard these entries using the manual command's
 default medium threshold.
 
+The hunter uses one worker inside each automatic parser process. This keeps `auto-parse -T <N>`
+from multiplying its process budget by another CPU-sized pool in every child. Standalone
+`check-persistence -T <N>` controls the hunter's own worker threads.
+
 CSV `$MFT` output includes all timestamps and short names. Registry output includes raw data and a
 FILETIME interpretation of `REG_QWORD` values. JSON and JSONL SRUM output includes value-state
 metadata. Defender files and resident `$MFT` streams are **not extracted** automatically.

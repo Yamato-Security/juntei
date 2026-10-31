@@ -176,6 +176,10 @@ pub struct CheckPersistenceOptions {
     )]
     pub mft: Option<PathBuf>,
 
+    /// Worker threads (default: logical CPU count)
+    #[arg(help_heading = "Performance", short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 270)]
+    pub threads: Option<usize>,
+
     /// Save findings to a file
     #[arg(
         help_heading = "Output",

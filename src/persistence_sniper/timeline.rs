@@ -7,6 +7,7 @@ use super::{
 use chrono::{DateTime, Duration, SecondsFormat, Utc};
 use evtx::{EvtxParser, ParserSettings};
 use mft::{MftParser, attribute::MftAttributeType, csv::FlatMftEntryWithName};
+use rayon::prelude::*;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
@@ -58,6 +59,36 @@ impl State {
             }
         }
         None
+    }
+}
+
+fn empty_states(count: usize) -> Vec<State> {
+    (0..count).map(|_| State::default()).collect()
+}
+
+fn merge_states(states: &mut [State], incoming: Vec<State>, now: DateTime<Utc>) {
+    for (state, incoming) in states.iter_mut().zip(incoming) {
+        state.available |= incoming.available;
+        state.rejected |= incoming.rejected;
+        for candidate in incoming.candidates.into_iter().flatten() {
+            state.add(candidate, now);
+        }
+    }
+}
+
+struct SourceScan {
+    states: Vec<State>,
+    issues: Vec<String>,
+    unreadable: usize,
+}
+
+impl SourceScan {
+    fn new(count: usize) -> Self {
+        Self {
+            states: empty_states(count),
+            issues: Vec::new(),
+            unreadable: 0,
+        }
     }
 }
 
@@ -367,18 +398,40 @@ pub fn enrich(ctx: &Context, findings: &mut [Finding], explicit_mft: Option<&Pat
         }
     }
     let now = Utc::now();
-    if !file_targets.is_empty() {
-        scan_mft(
-            ctx,
-            explicit_mft,
-            &file_targets,
-            &mut states,
-            now,
-            &mut issues,
-        );
-    }
-    if !event_targets.is_empty() {
-        scan_events(ctx, &event_targets, &mut states, now, &mut issues);
+    let (file_result, event_result) = rayon::join(
+        || {
+            let mut result = SourceScan::new(findings.len());
+            if !file_targets.is_empty() {
+                scan_mft(
+                    ctx,
+                    explicit_mft,
+                    &file_targets,
+                    &mut result.states,
+                    now,
+                    &mut result.issues,
+                );
+            }
+            result
+        },
+        || {
+            let mut result = SourceScan::new(findings.len());
+            if !event_targets.is_empty() {
+                scan_events(
+                    ctx,
+                    &event_targets,
+                    &mut result.states,
+                    now,
+                    &mut result.issues,
+                );
+            }
+            result
+        },
+    );
+    // Merge in source order rather than completion order: thread count must
+    // not change candidate tie-breaking, missing-source states, or warnings.
+    for result in [file_result, event_result] {
+        merge_states(&mut states, result.states, now);
+        issues.extend(result.issues);
     }
     for (finding, state) in findings.iter_mut().zip(states) {
         finding.last_change.clear();
@@ -517,107 +570,134 @@ fn scan_mft(
         .filter_map(|path| path.split_once(':').map(|(_, path)| path))
         .filter_map(|path| path.rsplit('/').next().map(str::to_string))
         .collect();
-    let mut failures = 0usize;
-    for source in sources {
-        let drive = ctx.drive_of(&source);
-        let mut parser = match MftParser::from_path(&source) {
-            Ok(parser) => parser,
-            Err(e) => {
-                issues.push(format!(
-                    "Cannot read timeline $MFT {}: {e}",
-                    source.display()
-                ));
-                continue;
-            }
-        };
-        let mut readable = false;
-        for i in 0..parser.get_entry_count() {
-            let entry = match parser.get_entry(i) {
-                Ok(entry) if &entry.header.signature == b"FILE" => entry,
-                Ok(_) => continue,
-                Err(_) => {
-                    failures += 1;
-                    continue;
-                }
-            };
-            readable = true;
-            if !entry.header.is_base_record() {
-                continue;
-            }
-            let name_matches = entry
-                .iter_attributes_matching(Some(vec![MftAttributeType::FileName]))
-                .filter_map(Result::ok)
-                .any(|a| {
-                    a.data.as_file_name().is_some_and(|name| {
-                        names.contains(&name.name.to_utf8_string().to_lowercase())
-                    })
-                });
-            if !name_matches {
-                continue;
-            }
-            let Some(path) = parser.get_full_path_for_entry(&entry).ok().flatten() else {
-                continue;
-            };
-            let key = match normalize_windows(&path.to_string_lossy()) {
-                Ok(path) => path.to_lowercase(),
-                Err(_) => continue,
-            };
-            let Some(indices) = targets.get(&format!("{drive}:{key}")) else {
-                continue;
-            };
-            let extensions = parser.get_extension_entries(&entry);
-            let row = FlatMftEntryWithName::from_entry_with_path(&entry, &extensions, path);
-            let Some(modified) = row.standard_info_last_modified else {
-                continue;
-            };
-            let Some(when) =
-                DateTime::from_timestamp(modified.as_second(), modified.subsec_nanosecond() as u32)
-            else {
-                continue;
-            };
-            let mut detail = format!(
-                "$SI Modified of {key}; MFT entry {} sequence {}{}",
-                row.entry_id,
-                row.sequence,
-                if row.is_deleted { " (deleted)" } else { "" }
-            );
-            if let Some(fn_time) = row.file_name_last_modified
-                && modified.as_second() + 2 < fn_time.as_second()
-            {
-                detail.push_str(&format!(
-                    "; timestomping hint: $SI predates $FN Modified {}",
-                    fn_time
-                ));
-            }
-            for (index, weak) in indices {
-                states[*index].add(
-                    Candidate {
-                        when,
-                        source: format!("$MFT {}", source.display()),
-                        detail: detail.clone(),
-                        weak: *weak,
-                        mft: true,
-                    },
-                    now,
-                );
-            }
-        }
-        if readable {
-            for (_, indices) in targets
-                .iter()
-                .filter(|(path, _)| path.starts_with(&format!("{drive}:")))
-            {
-                for (index, _) in indices {
-                    states[*index].available = true;
-                }
-            }
-        }
+    let results: Vec<_> = sources
+        .par_iter()
+        .map(|source| scan_mft_source(ctx, source, targets, &names, states.len(), now))
+        .collect();
+    let mut failures = 0;
+    for result in results {
+        failures += result.unreadable;
+        merge_states(states, result.states, now);
+        issues.extend(result.issues);
     }
     if failures > 0 {
         issues.push(format!(
             "$MFT timeline skipped {failures} unreadable records; correlation is incomplete"
         ));
     }
+}
+
+fn scan_mft_source(
+    ctx: &Context,
+    source: &Path,
+    targets: &HashMap<String, Vec<(usize, bool)>>,
+    names: &HashSet<String>,
+    state_count: usize,
+    now: DateTime<Utc>,
+) -> SourceScan {
+    let mut scan = SourceScan::new(state_count);
+    let drive = ctx.drive_of(source);
+    let mut parser = match MftParser::from_path(source) {
+        Ok(parser) => parser,
+        Err(e) => {
+            scan.issues.push(format!(
+                "Cannot read timeline $MFT {}: {e}",
+                source.display()
+            ));
+            return scan;
+        }
+    };
+    let mut readable = false;
+    for i in 0..parser.get_entry_count() {
+        let entry = match parser.get_entry(i) {
+            Ok(entry) if &entry.header.signature == b"FILE" => entry,
+            Ok(_) => continue,
+            Err(_) => {
+                scan.unreadable += 1;
+                continue;
+            }
+        };
+        readable = true;
+        if !entry.header.is_base_record() {
+            continue;
+        }
+        let name_matches = entry
+            .iter_attributes_matching(Some(vec![MftAttributeType::FileName]))
+            .filter_map(Result::ok)
+            .any(|a| {
+                a.data
+                    .as_file_name()
+                    .is_some_and(|name| names.contains(&name.name.to_utf8_string().to_lowercase()))
+            });
+        if !name_matches {
+            continue;
+        }
+        let Some(path) = parser.get_full_path_for_entry(&entry).ok().flatten() else {
+            continue;
+        };
+        let key = match normalize_windows(&path.to_string_lossy()) {
+            Ok(path) => path.to_lowercase(),
+            Err(_) => continue,
+        };
+        let Some(indices) = targets.get(&format!("{drive}:{key}")) else {
+            continue;
+        };
+        let extensions = parser.get_extension_entries(&entry);
+        let row = FlatMftEntryWithName::from_entry_with_path(&entry, &extensions, path);
+        let Some(modified) = row.standard_info_last_modified else {
+            continue;
+        };
+        let Some(when) =
+            DateTime::from_timestamp(modified.as_second(), modified.subsec_nanosecond() as u32)
+        else {
+            continue;
+        };
+        let mut detail = format!(
+            "$SI Modified of {key}; MFT entry {} sequence {}{}",
+            row.entry_id,
+            row.sequence,
+            if row.is_deleted { " (deleted)" } else { "" }
+        );
+        if let Some(fn_time) = row.file_name_last_modified
+            && modified.as_second() + 2 < fn_time.as_second()
+        {
+            detail.push_str(&format!(
+                "; timestomping hint: $SI predates $FN Modified {}",
+                fn_time
+            ));
+        }
+        for (index, weak) in indices {
+            scan.states[*index].add(
+                Candidate {
+                    when,
+                    source: format!("$MFT {}", source.display()),
+                    detail: detail.clone(),
+                    weak: *weak,
+                    mft: true,
+                },
+                now,
+            );
+        }
+    }
+    if readable {
+        for (_, indices) in targets
+            .iter()
+            .filter(|(path, _)| path.starts_with(&format!("{drive}:")))
+        {
+            for (index, _) in indices {
+                scan.states[*index].available = true;
+            }
+        }
+    }
+    scan
+}
+
+struct EventPlan<'a> {
+    targets: &'a HashMap<EventKey, Vec<usize>>,
+    host_aliases: HostAliases,
+    channels: HashSet<String>,
+    channel_fields: HashMap<(String, u64), HashSet<String>>,
+    channel_indices: HashMap<String, HashSet<usize>>,
 }
 
 fn scan_events(
@@ -627,16 +707,20 @@ fn scan_events(
     now: DateTime<Utc>,
     issues: &mut Vec<String>,
 ) {
-    let host_aliases = historical_hosts(ctx, now, issues);
-    let channels: HashSet<_> = targets.keys().map(|key| key.channel.clone()).collect();
-    let mut channel_fields: HashMap<(String, u64), HashSet<String>> = HashMap::new();
-    let mut channel_indices: HashMap<String, HashSet<usize>> = HashMap::new();
+    // Rename evidence must be complete before channel workers use it.
+    let mut plan = EventPlan {
+        targets,
+        host_aliases: historical_hosts(ctx, now, issues),
+        channels: targets.keys().map(|key| key.channel.clone()).collect(),
+        channel_fields: HashMap::new(),
+        channel_indices: HashMap::new(),
+    };
     for (key, indices) in targets {
-        channel_fields
+        plan.channel_fields
             .entry((key.channel.clone(), key.event_id))
             .or_default()
             .insert(key.field.clone());
-        channel_indices
+        plan.channel_indices
             .entry(key.channel.clone())
             .or_default()
             .extend(indices);
@@ -645,147 +729,162 @@ fn scan_events(
         .files
         .iter()
         .filter(|file| {
-            channels
+            plan.channels
                 .iter()
                 .any(|channel| active_channel_log(ctx, file, channel))
         })
         .collect();
-    for source in sources {
-        let mut parser = match EvtxParser::from_path(&source.physical) {
-            Ok(parser) => parser.with_configuration(ParserSettings::new().num_threads(1)),
-            Err(e) => {
-                issues.push(format!(
-                    "Cannot read timeline EVTX {}: {e}",
-                    source.physical.display()
-                ));
+    let results: Vec<_> = sources
+        .par_iter()
+        .map(|source| scan_event_source(source, &plan, states.len(), now))
+        .collect();
+    for result in results {
+        merge_states(states, result.states, now);
+        issues.extend(result.issues);
+    }
+}
+
+fn scan_event_source(
+    source: &EvidenceFile,
+    plan: &EventPlan<'_>,
+    state_count: usize,
+    now: DateTime<Utc>,
+) -> SourceScan {
+    let mut scan = SourceScan::new(state_count);
+    let mut parser = match EvtxParser::from_path(&source.physical) {
+        Ok(parser) => parser.with_configuration(ParserSettings::new().num_threads(1)),
+        Err(e) => {
+            scan.issues.push(format!(
+                "Cannot read timeline EVTX {}: {e}",
+                source.physical.display()
+            ));
+            return scan;
+        }
+    };
+    let probable_channels: Vec<_> = plan
+        .channels
+        .iter()
+        .filter(|channel| event_filename_matches(&source.logical, channel))
+        .collect();
+    let mut unreadable = 0usize;
+    let mut any_record = false;
+    let mut available_channels = HashSet::new();
+    for record in parser.records_json_value() {
+        let record = match record {
+            Ok(record) => record,
+            Err(_) => {
+                unreadable += 1;
                 continue;
             }
         };
-        let probable_channels: Vec<_> = channels
-            .iter()
-            .filter(|channel| event_filename_matches(&source.logical, channel))
-            .collect();
-        let mut unreadable = 0usize;
-        let mut any_record = false;
-        let mut available_channels = HashSet::new();
-        for record in parser.records_json_value() {
-            let record = match record {
-                Ok(record) => record,
-                Err(_) => {
-                    unreadable += 1;
-                    continue;
-                }
-            };
-            any_record = true;
-            let event = record.data.get("Event").unwrap_or(&record.data);
-            let Some(system) = event.get("System") else {
-                unreadable += 1;
-                continue;
-            };
-            let channel = scalar(system.get("Channel"))
-                .unwrap_or_default()
-                .to_lowercase();
-            if !channels.contains(&channel) {
-                continue;
-            }
-            let computer = scalar(system.get("Computer")).unwrap_or_default();
-            if !host_aliases.accepts(&computer) {
-                continue;
-            }
-            if available_channels.insert(channel.clone())
-                && let Some(indices) = channel_indices.get(&channel)
-            {
-                for index in indices {
-                    states[*index].available = true;
-                }
-            }
-            let Some(id) = scalar(system.get("EventID")).and_then(|id| id.parse::<u64>().ok())
-            else {
-                continue;
-            };
-            let Some(fields) = channel_fields.get(&(channel.clone(), id)) else {
-                continue;
-            };
-            let event_time = system
-                .get("TimeCreated")
-                .and_then(|value| value.get("#attributes"))
-                .and_then(|value| value.get("SystemTime"))
-                .and_then(Value::as_str)
-                .or_else(|| {
-                    system
-                        .get("TimeCreated_attributes")
-                        .and_then(|v| v.get("SystemTime"))
-                        .and_then(Value::as_str)
-                });
-            let when = event_time
-                .and_then(|text| DateTime::parse_from_rfc3339(text).ok())
-                .map(|time| time.with_timezone(&Utc))
-                .or_else(|| {
-                    DateTime::from_timestamp(
-                        record.timestamp.as_second(),
-                        record.timestamp.subsec_nanosecond() as u32,
-                    )
-                });
-            let Some(when) = when else { continue };
-            for field in fields {
-                let values = event
-                    .get("EventData")
-                    .into_iter()
-                    .chain(event.get("UserData"))
-                    .flat_map(|root| named_fields(root, field, 0));
-                for value in values {
-                    let key = EventKey {
-                        channel: channel.clone(),
-                        event_id: id,
-                        field: field.clone(),
-                        value: normalize_match(&value),
-                    };
-                    if let Some(indices) = targets.get(&key) {
-                        let alias_proof = host_aliases
-                            .proof(&computer)
-                            .map(|proof| format!("; {proof}"))
-                            .unwrap_or_default();
-                        for index in indices {
-                            states[*index].add(
-                                Candidate {
-                                    when,
-                                    source: format!(
-                                        "event log {} RecordID {}",
-                                        source.physical.display(),
-                                        record.event_record_id
-                                    ),
-                                    detail: format!(
-                                        "{channel} EID {id}; {field}={value}{alias_proof}"
-                                    ),
-                                    weak: channel == "system"
-                                        && id == 7045
-                                        && field.eq_ignore_ascii_case("ImagePath"),
-                                    mft: false,
-                                },
-                                now,
-                            );
-                        }
-                    }
-                }
+        any_record = true;
+        let event = record.data.get("Event").unwrap_or(&record.data);
+        let Some(system) = event.get("System") else {
+            unreadable += 1;
+            continue;
+        };
+        let channel = scalar(system.get("Channel"))
+            .unwrap_or_default()
+            .to_lowercase();
+        if !plan.channels.contains(&channel) {
+            continue;
+        }
+        let computer = scalar(system.get("Computer")).unwrap_or_default();
+        if !plan.host_aliases.accepts(&computer) {
+            continue;
+        }
+        if available_channels.insert(channel.clone())
+            && let Some(indices) = plan.channel_indices.get(&channel)
+        {
+            for index in indices {
+                scan.states[*index].available = true;
             }
         }
-        // A valid empty EVTX is collected evidence even though there are no wanted events.
-        if !any_record && unreadable == 0 {
-            for channel in probable_channels {
-                if let Some(indices) = channel_indices.get(channel) {
+        let Some(id) = scalar(system.get("EventID")).and_then(|id| id.parse::<u64>().ok()) else {
+            continue;
+        };
+        let Some(fields) = plan.channel_fields.get(&(channel.clone(), id)) else {
+            continue;
+        };
+        let event_time = system
+            .get("TimeCreated")
+            .and_then(|value| value.get("#attributes"))
+            .and_then(|value| value.get("SystemTime"))
+            .and_then(Value::as_str)
+            .or_else(|| {
+                system
+                    .get("TimeCreated_attributes")
+                    .and_then(|v| v.get("SystemTime"))
+                    .and_then(Value::as_str)
+            });
+        let when = event_time
+            .and_then(|text| DateTime::parse_from_rfc3339(text).ok())
+            .map(|time| time.with_timezone(&Utc))
+            .or_else(|| {
+                DateTime::from_timestamp(
+                    record.timestamp.as_second(),
+                    record.timestamp.subsec_nanosecond() as u32,
+                )
+            });
+        let Some(when) = when else { continue };
+        for field in fields {
+            let values = event
+                .get("EventData")
+                .into_iter()
+                .chain(event.get("UserData"))
+                .flat_map(|root| named_fields(root, field, 0));
+            for value in values {
+                let key = EventKey {
+                    channel: channel.clone(),
+                    event_id: id,
+                    field: field.clone(),
+                    value: normalize_match(&value),
+                };
+                if let Some(indices) = plan.targets.get(&key) {
+                    let alias_proof = plan
+                        .host_aliases
+                        .proof(&computer)
+                        .map(|proof| format!("; {proof}"))
+                        .unwrap_or_default();
                     for index in indices {
-                        states[*index].available = true;
+                        scan.states[*index].add(
+                            Candidate {
+                                when,
+                                source: format!(
+                                    "event log {} RecordID {}",
+                                    source.physical.display(),
+                                    record.event_record_id
+                                ),
+                                detail: format!("{channel} EID {id}; {field}={value}{alias_proof}"),
+                                weak: channel == "system"
+                                    && id == 7045
+                                    && field.eq_ignore_ascii_case("ImagePath"),
+                                mft: false,
+                            },
+                            now,
+                        );
                     }
                 }
             }
-        }
-        if unreadable > 0 {
-            issues.push(format!(
-                "Timeline EVTX {} skipped {unreadable} unreadable records",
-                source.physical.display()
-            ));
         }
     }
+    // A valid empty EVTX is collected evidence even though there are no wanted events.
+    if !any_record && unreadable == 0 {
+        for channel in probable_channels {
+            if let Some(indices) = plan.channel_indices.get(channel) {
+                for index in indices {
+                    scan.states[*index].available = true;
+                }
+            }
+        }
+    }
+    if unreadable > 0 {
+        scan.issues.push(format!(
+            "Timeline EVTX {} skipped {unreadable} unreadable records",
+            source.physical.display()
+        ));
+    }
+    scan
 }
 
 fn scalar(value: Option<&Value>) -> Option<String> {

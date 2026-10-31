@@ -11,6 +11,7 @@ use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
+use std::sync::{Arc, OnceLock};
 
 const MAX_CERTIFICATE_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_COMMAND_BYTES: usize = 128 * 1024;
@@ -122,14 +123,27 @@ fn metadata(ctx: &Context, path: &Path) -> Metadata {
         stat.as_ref().map_or(0, |m| m.len()),
         stat.and_then(|m| m.modified().ok())
     );
-    if let Some(cached) = ctx
-        .metadata_cache
-        .lock()
-        .ok()
-        .and_then(|cache| cache.get(&cache_key).cloned())
-    {
-        return cached;
+    let slot = ctx.metadata_cache.lock().ok().and_then(|mut cache| {
+        if let Some(slot) = cache.get(&cache_key) {
+            return Some(Arc::clone(slot));
+        }
+        if cache.len() >= MAX_METADATA_CACHE {
+            return None;
+        }
+        let slot = Arc::new(OnceLock::new());
+        cache.insert(cache_key, Arc::clone(&slot));
+        Some(slot)
+    });
+    // Checks and metadata workers can refer to the same payload concurrently.
+    // Initialize each cache entry once, without holding the cache map lock
+    // during file I/O, hashing, or certificate parsing.
+    match slot {
+        Some(slot) => slot.get_or_init(|| read_metadata(ctx, path)).clone(),
+        None => read_metadata(ctx, path),
     }
+}
+
+fn read_metadata(ctx: &Context, path: &Path) -> Metadata {
     let (mut signer, mut signer_status) = embedded_signer(path);
     let mut original_filename = None;
     let content = File::open(path).ok().and_then(|file| {
@@ -164,19 +178,12 @@ fn metadata(ctx: &Context, path: &Path) -> Metadata {
     } else if signer_status.starts_with("no_embedded_signature") {
         signer_status = "pe_metadata_exceeds_64MiB_limit_or_unreadable".to_string();
     }
-    let metadata = Metadata {
+    Metadata {
         sha256: sha256(path),
         signer,
         signer_status,
         original_filename,
-    };
-    if let Ok(mut cache) = ctx.metadata_cache.lock() {
-        if cache.len() >= MAX_METADATA_CACHE {
-            cache.clear();
-        }
-        cache.insert(cache_key, metadata.clone());
     }
-    metadata
 }
 
 fn safe_authenticode_bounds(pe: &goblin::pe::PE<'_>, bytes: &[u8]) -> bool {

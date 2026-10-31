@@ -4,12 +4,26 @@ use super::{
 };
 use crate::cli::{CheckPersistenceOptions, RegistryOutputType};
 use crate::{progress, registry, util};
+use rayon::prelude::*;
 use std::collections::BTreeSet;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 pub fn run(opts: &CheckPersistenceOptions) -> i32 {
-    match execute(opts) {
+    let result = if opts.list_checks {
+        execute(opts)
+    } else {
+        let threads = opts
+            .threads
+            .unwrap_or_else(|| std::thread::available_parallelism().map_or(1, usize::from));
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .thread_name(|index| format!("persistence-{index}"))
+            .build()
+            .map_err(|e| format!("Could not start persistence worker threads: {e}"))
+            .and_then(|pool| pool.install(|| execute(opts)))
+    };
+    match result {
         Ok(code) => code,
         Err(error) => {
             eprintln!("{error}");
@@ -169,15 +183,8 @@ fn execute(opts: &CheckPersistenceOptions) -> Result<i32, String> {
         inputs.extend(registry::files_read(&hive_paths, &[]));
         let Scan {
             findings: mut registry_findings,
-            coverage: registry_coverage,
-        } = checks::run_definitions(&context, &enabled_definitions);
-        let Scan {
-            findings: file_findings,
-            coverage: file_coverage,
-        } = file_checks::run(&context, &enabled_definitions);
-        registry_findings.extend(file_findings);
-        let mut host_coverage = registry_coverage;
-        host_coverage.extend(file_coverage);
+            coverage: mut host_coverage,
+        } = run_checks(&context, &enabled_definitions);
         for definition in &selected_definitions {
             if !profile.enabled(&definition.id) {
                 host_coverage.push(Coverage::new(
@@ -187,11 +194,11 @@ fn execute(opts: &CheckPersistenceOptions) -> Result<i32, String> {
                 ));
             }
         }
-        for finding in &mut registry_findings {
+        registry_findings.par_iter_mut().for_each(|finding| {
             finding.computer.clone_from(&context.computer);
             resolver::enrich(&context, finding);
             profile.classify(finding);
-        }
+        });
         registry_findings.retain(|f| severity_rank(&f.severity) >= opts.min_severity.rank());
         if !opts.no_timeline {
             for detail in timeline::enrich(&context, &mut registry_findings, opts.mft.as_deref()) {
@@ -335,6 +342,34 @@ fn execute(opts: &CheckPersistenceOptions) -> Result<i32, String> {
         }
     }
     Ok(i32::from(errors > 0))
+}
+
+fn run_checks(ctx: &Context, definitions: &[checks::CheckDefinition]) -> Scan {
+    // Keep the serial registry-then-file order in the collected results. Each
+    // worker owns its findings/coverage and only borrows the loaded evidence.
+    let is_file = |d: &&checks::CheckDefinition| checks::FILE_CHECKS.contains(&d.id.as_str());
+    let ordered: Vec<_> = definitions
+        .iter()
+        .filter(|d| !is_file(d))
+        .chain(definitions.iter().filter(is_file))
+        .collect();
+    let scans: Vec<_> = ordered
+        .par_iter()
+        .map(|definition| {
+            let definitions = std::slice::from_ref(*definition);
+            if checks::FILE_CHECKS.contains(&definition.id.as_str()) {
+                file_checks::run(ctx, definitions)
+            } else {
+                checks::run_definitions(ctx, definitions)
+            }
+        })
+        .collect();
+    let mut result = Scan::default();
+    for mut scan in scans {
+        result.findings.append(&mut scan.findings);
+        result.coverage.append(&mut scan.coverage);
+    }
+    result
 }
 
 fn count_status(coverage: &[Coverage], status: &str) -> usize {

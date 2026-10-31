@@ -1026,7 +1026,9 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             "persistence-sniper",
             &["check-persistence"],
             OutputShape::File,
-            &["--min-severity", "info"],
+            // auto-parse already budgets parallel parser processes; prevent
+            // each child from creating another CPU-sized worker pool.
+            &["--min-severity", "info", "--threads", "1"],
         );
         add(
             "userassist",

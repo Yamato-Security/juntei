@@ -41,6 +41,9 @@ serde_json = { version = "1", features = ["preserve_order"] }
 same-file = "1"
 # parse-registry's filters on key paths, value names and data.
 regex = "1"
+# A command-local pool shares immutable evidence across persistence checks and
+# bounds nested metadata/timeline work to the same --threads budget.
+rayon = "1.12"
 # Native persistence hunting: stream file hashes, parse bounded task XML and
 # YAML profiles, and inspect embedded PE certificate metadata without a runtime.
 sha2 = "0.10"

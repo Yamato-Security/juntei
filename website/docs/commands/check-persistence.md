@@ -37,6 +37,9 @@ Analysis:
       --no-timeline  Skip MFT and event-log timestamp correlation
       --mft <FILE>   MFT to use for timestamp correlation (one host only)
 
+Performance:
+  -T, --threads <N>  Worker threads (default: logical CPU count)
+
 Output:
   -o, --output <FILE>              Save findings to a file
   -t, --output-type <OUTPUT_TYPE>  Output type: csv (default), json, jsonl; without -o, write data to stdout [possible values: csv, json, jsonl]
@@ -77,6 +80,23 @@ juntei check-persistence -d evidence/ --check run_keys,windows_service_image_pat
 Use the check IDs printed by `--list-checks`, or an ATT&CK ID such as `T1547.001`.
 A parent ID such as `T1547` selects its sub-techniques. `--technique` is an alias for `--check`.
 Each check includes its technique, description, and reference links in the findings.
+
+## Parallel scans
+
+The command uses a shared worker pool, defaulting to the number of logical CPUs. Set
+`-T, --threads <N>` to choose the worker count, or `-T 1` for a single-thread scan:
+
+```bash
+juntei check-persistence -d evidence/ --min-severity info -T 4 -o PersistenceSniper.csv
+```
+
+Evidence discovery, independent checks, payload metadata, and MFT/EVTX timeline sources run in parallel. A host's
+loaded registry hives are shared read-only, and cached metadata for the same payload is initialized once.
+Hosts are loaded one at a time to avoid multiplying hive memory across the collection. Findings,
+coverage, timestamp selection, and warning order remain the same at different thread counts.
+
+`auto-parse` already runs parser processes in parallel, so it gives each `check-persistence` child
+one worker. Its own `-T` option controls the number of concurrent parser processes.
 
 ## Evidence to collect
 

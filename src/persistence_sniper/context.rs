@@ -2,11 +2,12 @@
 //! environment variables or executable search path.
 
 use crate::registry::{Logs, Opened};
+use rayon::prelude::*;
 use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::io::Read;
 use std::path::{Component, Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, OnceLock};
 
 const MAX_HIVE_BYTES: u64 = 1024 * 1024 * 1024;
 const MAX_DEPTH: usize = 128;
@@ -41,7 +42,83 @@ pub struct Context {
     pub issues: Vec<String>,
     index: HashMap<String, Vec<usize>>,
     drive_index: HashMap<(char, String), Vec<usize>>,
-    pub(super) metadata_cache: Mutex<HashMap<String, super::resolver::Metadata>>,
+    pub(super) metadata_cache: Mutex<HashMap<String, Arc<OnceLock<super::resolver::Metadata>>>>,
+}
+
+#[derive(Default)]
+struct Inventory {
+    paths: Vec<PathBuf>,
+    issues: Vec<String>,
+}
+
+fn inventory_directory(directory: &Path, depth: usize) -> Inventory {
+    let mut inventory = Inventory::default();
+    let entries = match fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(e) => {
+            inventory
+                .issues
+                .push(format!("Cannot enumerate {}: {e}", directory.display()));
+            return inventory;
+        }
+    };
+    let mut directories = Vec::new();
+    for entry in entries {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(e) => {
+                inventory
+                    .issues
+                    .push(format!("Cannot enumerate {}: {e}", directory.display()));
+                continue;
+            }
+        };
+        let path = entry.path();
+        let kind = match entry.file_type() {
+            Ok(kind) => kind,
+            Err(e) => {
+                inventory
+                    .issues
+                    .push(format!("Cannot inspect {}: {e}", path.display()));
+                continue;
+            }
+        };
+        if kind.is_symlink() {
+            inventory.issues.push(format!(
+                "Not following evidence symlink: {}",
+                path.display()
+            ));
+        } else if kind.is_dir() {
+            if depth < MAX_DEPTH {
+                directories.push(path);
+            } else {
+                inventory
+                    .issues
+                    .push(format!("Directory depth limit reached: {}", path.display()));
+            }
+        } else if kind.is_file() {
+            inventory.paths.push(path);
+        }
+    }
+    // Preserve the old depth-first stack order for diagnostics. Do not create a
+    // global pool when Context is used by metadata discovery outside this command.
+    directories.reverse();
+    let children: Vec<_> = if rayon::current_thread_index().is_some() {
+        directories
+            .par_iter()
+            .map(|dir| inventory_directory(dir, depth + 1))
+            .collect()
+    } else {
+        directories
+            .iter()
+            .map(|dir| inventory_directory(dir, depth + 1))
+            .collect()
+    };
+    for mut child in children {
+        inventory.paths.append(&mut child.paths);
+        inventory.issues.append(&mut child.issues);
+    }
+    inventory
 }
 
 impl Context {
@@ -61,48 +138,9 @@ impl Context {
         if standalone {
             paths.push(input);
         } else {
-            let mut pending = vec![(root.clone(), 0usize)];
-            while let Some((directory, depth)) = pending.pop() {
-                let entries = match fs::read_dir(&directory) {
-                    Ok(entries) => entries,
-                    Err(e) => {
-                        issues.push(format!("Cannot enumerate {}: {e}", directory.display()));
-                        continue;
-                    }
-                };
-                for entry in entries {
-                    let entry = match entry {
-                        Ok(entry) => entry,
-                        Err(e) => {
-                            issues.push(format!("Cannot enumerate {}: {e}", directory.display()));
-                            continue;
-                        }
-                    };
-                    let path = entry.path();
-                    let kind = match entry.file_type() {
-                        Ok(kind) => kind,
-                        Err(e) => {
-                            issues.push(format!("Cannot inspect {}: {e}", path.display()));
-                            continue;
-                        }
-                    };
-                    if kind.is_symlink() {
-                        issues.push(format!(
-                            "Not following evidence symlink: {}",
-                            path.display()
-                        ));
-                    } else if kind.is_dir() {
-                        if depth < MAX_DEPTH {
-                            pending.push((path, depth + 1));
-                        } else {
-                            issues
-                                .push(format!("Directory depth limit reached: {}", path.display()));
-                        }
-                    } else if kind.is_file() {
-                        paths.push(path);
-                    }
-                }
-            }
+            let inventory = inventory_directory(&root, 0);
+            paths = inventory.paths;
+            issues = inventory.issues;
         }
         paths.sort();
         let mut files = Vec::with_capacity(paths.len());
@@ -111,34 +149,44 @@ impl Context {
         let windows_root = root
             .file_name()
             .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("Windows"));
-        for physical in paths {
-            let relative = physical.strip_prefix(&root).unwrap_or(&physical);
+        let describe = |physical: &PathBuf| {
+            let relative = physical.strip_prefix(&root).unwrap_or(physical);
             let logical = if windows_root {
                 format!("Windows/{}", logical_path(relative))
             } else {
                 logical_path(relative)
             };
-            let len = match fs::metadata(&physical) {
-                Ok(meta) => meta.len(),
-                Err(e) => {
-                    issues.push(format!("Cannot inspect {}: {e}", physical.display()));
+            fs::metadata(physical)
+                .map(|metadata| EvidenceFile {
+                    logical,
+                    physical: physical.clone(),
+                    len: metadata.len(),
+                })
+                .map_err(|e| format!("Cannot inspect {}: {e}", physical.display()))
+        };
+        let described: Vec<_> = if rayon::current_thread_index().is_some() {
+            paths.par_iter().map(describe).collect()
+        } else {
+            paths.iter().map(describe).collect()
+        };
+        for file in described {
+            let file = match file {
+                Ok(file) => file,
+                Err(issue) => {
+                    issues.push(issue);
                     continue;
                 }
             };
             index
-                .entry(logical.to_lowercase())
+                .entry(file.logical.to_lowercase())
                 .or_default()
                 .push(files.len());
-            let drive = path_drive(&physical).unwrap_or('C');
+            let drive = path_drive(&file.physical).unwrap_or('C');
             drive_index
-                .entry((drive, logical.to_lowercase()))
+                .entry((drive, file.logical.to_lowercase()))
                 .or_default()
                 .push(files.len());
-            files.push(EvidenceFile {
-                logical,
-                physical,
-                len,
-            });
+            files.push(file);
         }
 
         // Prefer the live config directory to RegBack/Windows.old. When an exported-hive
