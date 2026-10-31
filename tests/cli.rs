@@ -222,13 +222,10 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     );
     assert!(csv.join("HOST1/file_existence/amcache").is_dir());
     assert!(
-        csv.join("HOST1/file_existence/amcache/Amcache_summary.csv")
+        csv.join("HOST1/file_existence/amcache/Summary.csv")
             .is_file()
     );
-    assert!(
-        csv.join("HOST1/file_existence/amcache/Amcache_files.csv")
-            .is_file()
-    );
+    assert!(csv.join("HOST1/file_existence/amcache/Files.csv").is_file());
     assert!(
         std::fs::read_dir(csv.join("HOST1/file_existence/amcache"))
             .unwrap()
@@ -250,20 +247,20 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .flatten()
             .all(|entry| entry.path().is_file())
     );
-    assert!(csv.join("HOST1/file_system/mft.csv").is_file());
-    assert!(csv.join("HOST1/file_system/usn-journal.csv").is_file());
+    assert!(csv.join("HOST1/file_system/MFT.csv").is_file());
+    assert!(csv.join("HOST1/file_system/UsnJournal.csv").is_file());
     assert!(!csv.join("HOST1/file_system/mft").exists());
     assert!(!csv.join("HOST1/file_system/usn-journal").exists());
-    assert!(csv.join("HOST1/process_execution/prefetch.csv").is_file());
+    assert!(csv.join("HOST1/process_execution/Prefetch.csv").is_file());
     assert!(
-        csv.join("HOST1/process_execution/prefetch-timeline.csv")
+        csv.join("HOST1/process_execution/PrefetchTimeline.csv")
             .is_file()
     );
     assert!(
-        csv.join("HOST1/process_execution/prefetch-logs.txt")
+        csv.join("HOST1/process_execution/Prefetch-logs.txt")
             .is_file()
     );
-    assert!(csv.join("HOST1/file_system/mft-logs.txt").is_file());
+    assert!(csv.join("HOST1/file_system/MFT-logs.txt").is_file());
     assert!(!csv.join("HOST1/logs").exists());
     for category in [
         "accounts",
@@ -358,7 +355,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     );
 
     // A previously generated target must not survive when the corresponding artifact is absent.
-    let stale = csv.join("HOST1/file_system/i30.csv");
+    let stale = csv.join("HOST1/file_system/I30.csv");
     std::fs::write(&stale, b"stale result\n").unwrap();
     let notes = csv.join("HOST1/file_system/notes.txt");
     std::fs::write(&notes, b"examiner notes\n").unwrap();
@@ -414,7 +411,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     );
     assert!(
         direct
-            .join("Windows/process_execution/prefetch.csv")
+            .join("Windows/process_execution/Prefetch.csv")
             .is_file()
     );
 
@@ -449,17 +446,17 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert!(values.iter().any(|value| value["Artifact"] == "prefetch"));
     assert!(
         jsonl
-            .join("HOST1/process_execution/prefetch-logs.txt")
+            .join("HOST1/process_execution/Prefetch-logs.txt")
             .is_file()
     );
     assert!(
         jsonl
-            .join("HOST1/file_existence/amcache-logs.txt")
+            .join("HOST1/file_existence/Amcache-logs.txt")
             .is_file()
     );
     assert!(
         jsonl
-            .join("HOST1/process_execution/prefetch.jsonl")
+            .join("HOST1/process_execution/Prefetch.jsonl")
             .is_file()
     );
     assert!(std::fs::read_dir(&jsonl).unwrap().flatten().all(|entry| {
@@ -492,16 +489,16 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
         assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
         let host = output.join("HOST1");
         assert!(
-            host.join(format!("file_existence/amcache.{format}"))
+            host.join(format!("file_existence/Amcache.{format}"))
                 .is_file()
         );
-        assert!(host.join(format!("file_system/mft.{format}")).is_file());
+        assert!(host.join(format!("file_system/MFT.{format}")).is_file());
         assert!(
-            host.join(format!("file_system/usn-journal.{format}"))
+            host.join(format!("file_system/UsnJournal.{format}"))
                 .is_file()
         );
         assert!(host.join("process_execution/srum").is_dir());
-        let prefetch = host.join(format!("process_execution/prefetch.{format}"));
+        let prefetch = host.join(format!("process_execution/Prefetch.{format}"));
         let records = json_documents(&std::fs::read_to_string(prefetch).unwrap());
         assert!(!records.is_empty());
         assert!(
@@ -588,10 +585,10 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
         assert!(manifest["json_timeline_error"].is_null());
         assert!(
             output
-                .join("HOST1/process_execution/prefetch-logs.txt")
+                .join("HOST1/process_execution/Prefetch-logs.txt")
                 .is_file()
         );
-        let extension = format!("HOST1/process_execution/prefetch.{format}");
+        let extension = format!("HOST1/process_execution/Prefetch.{format}");
         assert!(output.join(extension).is_file());
         let tasks = manifest["tasks"].as_array().unwrap();
         if format == "csv" {
@@ -604,12 +601,12 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
             );
             assert!(
                 output
-                    .join("HOST1/process_execution/prefetch-json-timeline-logs.txt")
+                    .join("HOST1/process_execution/Prefetch-json-timeline-logs.txt")
                     .is_file()
             );
             assert!(
                 output
-                    .join("HOST1/file_existence/amcache/Amcache_files.csv")
+                    .join("HOST1/file_existence/amcache/Files.csv")
                     .is_file()
             );
         } else {
@@ -646,8 +643,8 @@ fn auto_parse_timeline_rejects_collisions_before_changing_any_files() {
         output.clone(),
         output.join("manifest.json"),
         output.join("manifest.csv"),
-        output.join("HOST1/process_execution/prefetch.jsonl"),
-        output.join("HOST1/process_execution/prefetch-logs.txt"),
+        output.join("HOST1/process_execution/Prefetch.jsonl"),
+        output.join("HOST1/process_execution/Prefetch-logs.txt"),
         output.join(".juntei-work-custom/extra.jsonl"),
     ] {
         let result = run(&[
@@ -695,7 +692,7 @@ fn auto_parse_timeline_rejects_case_insensitive_output_aliases() {
     let output = root.path().join("Parsed");
     let alias = root
         .path()
-        .join("parsed/HOST1/process_execution/prefetch.jsonl");
+        .join("parsed/HOST1/process_execution/Prefetch.jsonl");
     let result = run(&[
         "auto-parse",
         "-d",
@@ -921,6 +918,8 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
     )
     .unwrap();
     std::fs::copy(repo(WIN10), amcache.join("Amcache.hve")).unwrap();
+    std::fs::create_dir_all(amcache.join("older")).unwrap();
+    std::fs::copy(repo(LEGACY), amcache.join("older/Amcache.hve")).unwrap();
     let output_root = tempfile::tempdir().unwrap();
     let output = output_root.path().join("parsed");
     let combined = output.join("timeline.jsonl");
@@ -931,7 +930,7 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
         "-o",
         output.to_str().unwrap(),
         "-t",
-        "jsonl",
+        "csv",
         "--json-timeline",
         combined.to_str().unwrap(),
         "-T",
@@ -955,6 +954,23 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
             .iter()
             .all(|host| host["hostname_source"] == "directory name")
     );
+    let tables = output.join("HOST3/file_existence/amcache");
+    let sources: Vec<_> = std::fs::read_dir(tables)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect();
+    assert_eq!(sources.len(), 2);
+    for source in sources {
+        let mut files: Vec<_> = std::fs::read_dir(source)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        files.sort();
+        assert_eq!(
+            files,
+            ["Devices.csv", "Files.csv", "Findings.csv", "Summary.csv"]
+        );
+    }
     let records: Vec<Value> = std::fs::read_to_string(combined)
         .unwrap()
         .lines()

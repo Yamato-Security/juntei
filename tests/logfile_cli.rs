@@ -574,10 +574,10 @@ fn auto_parse_outputs_and_jsonl_timeline_include_logfile_and_provenance() {
         assert_eq!(tasks.len(), 2);
         assert!(tasks.iter().all(|t| t["status"] == "succeeded"));
         assert!(tasks.iter().all(|t| t["category"] == "file_system"));
-        assert!(out.join("HOST1/file_system/logfile-logs.txt").is_file());
-        assert!(out.join("HOST1/file_system/logfile-2-logs.txt").is_file());
+        assert!(out.join("HOST1/file_system/LogFile-logs.txt").is_file());
+        assert!(out.join("HOST1/file_system/LogFile-2-logs.txt").is_file());
         if format == "csv" {
-            for name in ["logfile.csv", "logfile-2.csv"] {
+            for name in ["LogFile.csv", "LogFile-2.csv"] {
                 assert_eq!(
                     csv::Reader::from_path(out.join("HOST1/file_system").join(name))
                         .unwrap()

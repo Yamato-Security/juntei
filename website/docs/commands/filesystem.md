@@ -101,7 +101,7 @@ juntei parse-ntfs logfile -f '$LogFile' --raw-data -t jsonl
 
 Directory mode combines inputs with `SourceFile` on every record. LSN order is per input, not
 across volumes. The command reads one whole log into memory at a time. `auto-parse` instead writes
-`<COMPUTER>/logfile.csv` (or JSON/JSONL), with numbered files when a computer has multiple volumes.
+`<COMPUTER>/file_system/LogFile.csv` (or JSON/JSONL), with numbered files when a computer has multiple volumes.
 
 See [NTFS Transaction Log](../artifacts/logfile.md) for field meanings and forensic limitations.
 

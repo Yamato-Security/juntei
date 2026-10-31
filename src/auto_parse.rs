@@ -51,6 +51,32 @@ fn artifact_category(artifact: &str) -> &'static str {
     }
 }
 
+/// User-facing output names are independent of stable CLI and SIEM artifact identifiers.
+fn artifact_filename(artifact: &str) -> &'static str {
+    match artifact {
+        "amcache" => "Amcache",
+        "defender-quarantine" => "DefenderQuarantine",
+        "i30" => "I30",
+        "jump-lists" => "JumpLists",
+        "lnk" => "LNK",
+        "logfile" => "LogFile",
+        "mft" => "MFT",
+        "persistence" => "Persistence",
+        "prefetch" => "Prefetch",
+        "prefetch-timeline" => "PrefetchTimeline",
+        "recentdocs" => "RecentDocs",
+        "registry" => "Registry",
+        "sam" => "SAM",
+        "services" => "Services",
+        "shimcache" => "ShimCache",
+        "srum" => "SRUM",
+        "taskcache" => "TaskCache",
+        "usn-journal" => "UsnJournal",
+        "userassist" => "UserAssist",
+        _ => unreachable!("unknown auto-parse artifact: {artifact}"),
+    }
+}
+
 fn defender_extraction_directory(output: &Path, computer_folder: &str) -> PathBuf {
     output
         .join(computer_folder)
@@ -277,11 +303,8 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             let mut extra = build_tasks(&hosts, &json_opts, &path)?;
             for task in &mut extra {
                 task.timeline_only = true;
-                let name = task
-                    .output
-                    .file_stem()
-                    .unwrap_or_default()
-                    .to_string_lossy();
+                let name = task.log.file_stem().unwrap_or_default().to_string_lossy();
+                let name = name.strip_suffix("-logs").unwrap_or(&name);
                 task.log
                     .set_file_name(format!("{name}-json-timeline-logs.txt"));
             }
@@ -382,6 +405,16 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     let bar = progress::progress_bar(tasks.len(), no_color);
     let mut results = run_tasks(&tasks, &executable, threads, &bar);
     bar.finish_with_message(progress::finished_message(no_color));
+    for (task, result) in tasks.iter().zip(&mut results) {
+        if task.artifact == "amcache"
+            && task.output_type == AutoOutputType::Csv
+            && let Err(e) = rename_amcache_tables(&task.output)
+        {
+            result.status = TaskStatus::Failed;
+            result.output = None;
+            result.error = Some(format!("could not name Amcache CSV tables: {e}"));
+        }
+    }
     let mut data_files = Vec::new();
     {
         for (task, result) in tasks.iter().zip(&mut results) {
@@ -857,7 +890,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                     output,
                     log: host_output_dir
                         .join(artifact_category(artifact))
-                        .join(format!("{artifact}-logs.txt")),
+                        .join(format!("{}-logs.txt", artifact_filename(artifact))),
                 });
             };
 
@@ -1093,7 +1126,7 @@ fn prioritize_long_tasks(tasks: &mut [Task]) {
 }
 
 /// File-shaped artifacts are written directly under their category. A normal collected volume
-/// has one of each (`mft.csv`, `usn-journal.csv`). Additional volumes use numbered sibling files.
+/// has one of each (`MFT.csv`, `UsnJournal.csv`). Additional volumes use numbered sibling files.
 #[allow(clippy::too_many_arguments)]
 fn add_file_artifact_tasks(
     tasks: &mut Vec<Task>,
@@ -1118,9 +1151,9 @@ fn add_file_artifact_tasks(
             0
         };
         let stem = if index == 0 {
-            artifact.to_string()
+            artifact_filename(artifact).to_string()
         } else {
-            format!("{artifact}-{}", index + 1)
+            format!("{}-{}", artifact_filename(artifact), index + 1)
         };
         let category = artifact_category(artifact);
         let output = data_dir
@@ -1164,8 +1197,36 @@ fn task_output(
     if directory {
         category_dir.join(artifact)
     } else {
-        category_dir.join(format!("{artifact}.{}", output_type.as_str()))
+        category_dir.join(format!(
+            "{}.{}",
+            artifact_filename(artifact),
+            output_type.as_str()
+        ))
     }
+}
+
+/// The library retains its own native CSV names; auto-parse presents concise table names in
+/// each source directory, including collections that contain multiple Amcache hives.
+fn rename_amcache_tables(root: &Path) -> io::Result<()> {
+    for source in util::find_files(root, |name| {
+        matches!(
+            name,
+            "Amcache_devices.csv"
+                | "Amcache_files.csv"
+                | "Amcache_findings.csv"
+                | "Amcache_summary.csv"
+        )
+    }) {
+        let name = match source.file_name().and_then(|name| name.to_str()) {
+            Some("Amcache_devices.csv") => "Devices.csv",
+            Some("Amcache_files.csv") => "Files.csv",
+            Some("Amcache_findings.csv") => "Findings.csv",
+            Some("Amcache_summary.csv") => "Summary.csv",
+            _ => unreachable!(),
+        };
+        fs::rename(&source, source.with_file_name(name))?;
+    }
+    Ok(())
 }
 
 /// With explicit `--clobber`, remove only the exact task targets under this run's work directory.
@@ -1817,7 +1878,7 @@ mod tests {
                 AutoOutputType::Jsonl,
                 OutputShape::CsvDirectory
             ),
-            root.join("file_existence/amcache.jsonl")
+            root.join("file_existence/Amcache.jsonl")
         );
         assert_eq!(
             task_output(root, "srum", AutoOutputType::Json, OutputShape::Directory),

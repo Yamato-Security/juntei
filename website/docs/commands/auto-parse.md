@@ -89,51 +89,51 @@ CSV keeps separate tables because each artifact has different columns:
 ├── manifest.csv
 ├── HOST1/
 │   ├── accounts/
-│   │   ├── sam.csv
-│   │   └── sam-logs.txt
+│   │   ├── SAM.csv
+│   │   └── SAM-logs.txt
 │   ├── file_and_folder_opening/
 │   │   ├── jump-lists/
-│   │   ├── jump-lists-logs.txt
-│   │   ├── lnk.csv
-│   │   ├── lnk-logs.txt
-│   │   ├── recentdocs.csv
-│   │   └── recentdocs-logs.txt
+│   │   ├── JumpLists-logs.txt
+│   │   ├── LNK.csv
+│   │   ├── LNK-logs.txt
+│   │   ├── RecentDocs.csv
+│   │   └── RecentDocs-logs.txt
 │   ├── file_existence/
 │   │   ├── amcache/
-│   │   ├── amcache-logs.txt
-│   │   ├── shimcache.csv
-│   │   └── shimcache-logs.txt
+│   │   ├── Amcache-logs.txt
+│   │   ├── ShimCache.csv
+│   │   └── ShimCache-logs.txt
 │   ├── file_system/
-│   │   ├── i30.csv
-│   │   ├── i30-logs.txt
-│   │   ├── logfile.csv
-│   │   ├── logfile-logs.txt
-│   │   ├── mft.csv
-│   │   ├── mft-logs.txt
-│   │   ├── usn-journal.csv
-│   │   └── usn-journal-logs.txt
+│   │   ├── I30.csv
+│   │   ├── I30-logs.txt
+│   │   ├── LogFile.csv
+│   │   ├── LogFile-logs.txt
+│   │   ├── MFT.csv
+│   │   ├── MFT-logs.txt
+│   │   ├── UsnJournal.csv
+│   │   └── UsnJournal-logs.txt
 │   ├── persistence/
-│   │   ├── persistence.csv
-│   │   ├── persistence-logs.txt
-│   │   ├── services.csv
-│   │   ├── services-logs.txt
-│   │   ├── taskcache.csv
-│   │   └── taskcache-logs.txt
+│   │   ├── Persistence.csv
+│   │   ├── Persistence-logs.txt
+│   │   ├── Services.csv
+│   │   ├── Services-logs.txt
+│   │   ├── TaskCache.csv
+│   │   └── TaskCache-logs.txt
 │   ├── process_execution/
-│   │   ├── prefetch.csv
-│   │   ├── prefetch-logs.txt
-│   │   ├── prefetch-timeline.csv
-│   │   ├── prefetch-timeline-logs.txt
+│   │   ├── Prefetch.csv
+│   │   ├── Prefetch-logs.txt
+│   │   ├── PrefetchTimeline.csv
+│   │   ├── PrefetchTimeline-logs.txt
 │   │   ├── srum/
-│   │   ├── srum-logs.txt
-│   │   ├── userassist.csv
-│   │   └── userassist-logs.txt
+│   │   ├── SRUM-logs.txt
+│   │   ├── UserAssist.csv
+│   │   └── UserAssist-logs.txt
 │   ├── registry/
-│   │   ├── registry.csv
-│   │   └── registry-logs.txt
+│   │   ├── Registry.csv
+│   │   └── Registry-logs.txt
 │   └── security_products/
-│       ├── defender-quarantine.csv
-│       ├── defender-quarantine-logs.txt
+│       ├── DefenderQuarantine.csv
+│       ├── DefenderQuarantine-logs.txt
 │       └── defender-quarantined/  # only with -x
 └── HOST2/
     └── …
@@ -156,10 +156,24 @@ consult the artifact guide before drawing conclusions about a program running.
 
 CSV, JSON, and JSONL use the same categories. Parsers that produce several tables retain their
 artifact subdirectory where needed. One `<artifact>-logs.txt` file per parser job contains its
-exact command and messages; for example, `HOST1/file_system/mft-logs.txt` and
-`HOST1/process_execution/prefetch-logs.txt`. JSON and JSONL use the same log filenames.
+exact command and messages; for example, `HOST1/file_system/MFT-logs.txt` and
+`HOST1/process_execution/Prefetch-logs.txt`. JSON and JSONL use the same log filenames.
 Multi-table outputs such as `amcache/` and `srum/` have one log beside the artifact directory,
 covering all its tables. No `logs/` subdirectories are created.
+
+Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
+`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `Registry.csv`, and
+`DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
+`Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
+separate source subdirectories, each with the same four table names. SRUM retains separate provider
+tables in `srum/`, with its parser messages in `SRUM-logs.txt`.
+
+Logs match the capitalized artifact name, such as `SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
+and `UserAssist-logs.txt`. JSON/JSONL files use the same stems, for example `MFT.jsonl`; the
+record's `Artifact` identifier is `mft` for queries. Multi-table outputs have `Amcache-logs.txt`,
+`JumpLists-logs.txt`, or `SRUM-logs.txt` beside their directory.
+
 
 `manifest.json` records the original discovered `hostname`, the unique output/record `Computer`
 identity, hostname provenance, evidence paths, artifact `category`, command lines, duration, exit
@@ -193,8 +207,8 @@ When a host has one Amcache hive or SRUM database, its CSV tables are written di
 `file_existence/amcache/` or `process_execution/srum/`. If a collection contains several databases
 of either kind, each source receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
 another. A normal single-volume collection writes `$MFT` and USN Journal records directly to
-`file_system/mft.csv` and `file_system/usn-journal.csv`. Additional collected volumes use numbered
-sibling files such as `file_system/mft-2.csv` and `file_system/mft-2-logs.txt`.
+`file_system/MFT.csv` and `file_system/UsnJournal.csv`. Additional collected volumes use numbered
+sibling files such as `file_system/MFT-2.csv` and `file_system/MFT-2-logs.txt`.
 
 ## JSON and SIEM ingestion
 
