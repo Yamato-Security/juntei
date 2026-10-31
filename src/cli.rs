@@ -81,11 +81,11 @@ pub enum Commands {
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei persistence-sniper -d <EVIDENCE> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei check-persistence -d <EVIDENCE> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    PersistenceSniper(PersistenceSniperOptions),
+    CheckPersistence(CheckPersistenceOptions),
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, Default)]
@@ -109,7 +109,7 @@ impl SniperSeverity {
 }
 
 #[derive(Args, Clone, Debug, Default)]
-pub struct PersistenceSniperOptions {
+pub struct CheckPersistenceOptions {
     /// Evidence directory (a mounted Windows volume or a collection of hosts)
     #[arg(help_heading = "Input", short = 'd', long, value_name = "DIR", required_unless_present_any = ["filepath", "list_checks"], conflicts_with = "filepath", display_order = 100)]
     pub directory: Option<PathBuf>,
@@ -213,7 +213,7 @@ pub struct PersistenceSniperOptions {
     pub common: CommonOptions,
 }
 
-impl PersistenceSniperOptions {
+impl CheckPersistenceOptions {
     pub fn data_on_stdout(&self) -> bool {
         self.output.is_none() && self.output_type.is_some()
     }

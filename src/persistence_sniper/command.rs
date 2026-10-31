@@ -2,13 +2,13 @@ use super::{
     Coverage, Finding, Scan, checks, context::Context, file_checks, profile::Profile, resolver,
     timeline,
 };
-use crate::cli::{PersistenceSniperOptions, RegistryOutputType};
+use crate::cli::{CheckPersistenceOptions, RegistryOutputType};
 use crate::{progress, registry, util};
 use std::collections::BTreeSet;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-pub fn run(opts: &PersistenceSniperOptions) -> i32 {
+pub fn run(opts: &CheckPersistenceOptions) -> i32 {
     match execute(opts) {
         Ok(code) => code,
         Err(error) => {
@@ -18,7 +18,7 @@ pub fn run(opts: &PersistenceSniperOptions) -> i32 {
     }
 }
 
-fn execute(opts: &PersistenceSniperOptions) -> Result<i32, String> {
+fn execute(opts: &CheckPersistenceOptions) -> Result<i32, String> {
     let definitions = checks::catalogue();
     if opts.list_checks {
         let mut stdout = io::BufWriter::new(io::stdout().lock());

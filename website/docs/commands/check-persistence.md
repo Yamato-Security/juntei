@@ -1,10 +1,10 @@
-# Persistence Sniper
+# Check Persistence
 
 Persistence lets a program run again after a reboot, a sign-in, a scheduled trigger, or another
 event. An attacker can use normal Windows configuration for this purpose. Many legitimate programs
 use exactly the same mechanisms, so finding a persistence entry is a starting point for analysis.
 
-`juntei persistence-sniper` is a native Rust port of
+`juntei check-persistence` is a native Rust port of
 [Hexastrike's PyrsistenceSniper](https://github.com/hexastrike/PyrsistenceSniper), using the
 130-check catalogue from upstream commit `b99c117a3cd16c33992a56dd698aedaec024460f`.
 It reads evidence offline. It does not start services, register tasks, load DLLs, or execute
@@ -17,7 +17,7 @@ Version: 1.0.0
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei persistence-sniper -d <EVIDENCE> [OPTIONS]
+  juntei check-persistence -d <EVIDENCE> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Evidence directory (a mounted Windows volume or a collection of hosts)
@@ -51,7 +51,7 @@ Display Settings:
 ## First scan
 
 ```bash
-juntei persistence-sniper -d evidence/ -o PersistenceSniper.csv --coverage Coverage.csv
+juntei check-persistence -d evidence/ -o PersistenceSniper.csv --coverage Coverage.csv
 ```
 
 The evidence can be a mounted Windows volume, a Velociraptor collection, or a directory containing
@@ -61,7 +61,7 @@ several collected computers. Computers are kept separate during analysis, and ev
 For one hive:
 
 ```bash
-juntei persistence-sniper -f SOFTWARE -o software-persistence.csv --no-timeline
+juntei check-persistence -f SOFTWARE -o software-persistence.csv --no-timeline
 ```
 
 A single hive cannot supply checks that need another hive or filesystem evidence. Read the coverage
@@ -70,8 +70,8 @@ report before treating an empty result as meaningful.
 List the check IDs and their ATT&CK mappings:
 
 ```bash
-juntei persistence-sniper --list-checks
-juntei persistence-sniper -d evidence/ --check run_keys,windows_service_image_path -o focused.csv
+juntei check-persistence --list-checks
+juntei check-persistence -d evidence/ --check run_keys,windows_service_image_path -o focused.csv
 ```
 
 Use the check IDs printed by `--list-checks`, or an ATT&CK ID such as `T1547.001`.
@@ -109,7 +109,7 @@ The default minimum classification is `medium`. To inspect the full inventory, i
 entries matched by the bundled allowlist:
 
 ```bash
-juntei persistence-sniper -d evidence/ --min-severity info -o all-persistence.csv
+juntei check-persistence -d evidence/ --min-severity info -o all-persistence.csv
 ```
 
 !!! warning "Use all severities when reviewing incomplete collections"

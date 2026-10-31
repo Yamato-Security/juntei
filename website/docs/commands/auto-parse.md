@@ -67,12 +67,12 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - LNK shortcuts
 - Jump Lists
 - ShimCache
-- Persistence Sniper (130 cross-source persistence checks with allow/block profiles)
+- Check Persistence (130 cross-source persistence checks with allow/block profiles)
 - Defender quarantine metadata
 - all registry keys and values, including recoverable deleted data
 - services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, and UserAssist
 
-Persistence Sniper retains every severity (`--min-severity info`), including partial allow matches.
+Check Persistence retains every severity (`--min-severity info`), including partial allow matches.
 `LOW` is a classification to investigate; missing signature metadata can produce it for malicious
 commands too. The automatic inventory does not discard these entries using the manual command's
 default medium threshold.

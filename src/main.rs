@@ -44,7 +44,7 @@ fn main() {
     let start = Instant::now();
     let cli = Cli::parse();
     let code = match &cli.cmd {
-        Commands::PersistenceSniper(opts) => {
+        Commands::CheckPersistence(opts) => {
             let data_only = opts.data_on_stdout();
             if !data_only && !opts.list_checks {
                 display_logo(opts.common.quiet, opts.common.no_color, true, false);

@@ -317,7 +317,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         }
         let (source, command) = match artifact {
             "persistence-sniper" => {
-                assert_eq!(task["command"][1], "persistence-sniper", "{task}");
+                assert_eq!(task["command"][1], "check-persistence", "{task}");
                 assert_eq!(task["command"][2], "-d", "{task}");
                 let args = task["command"].as_array().unwrap();
                 assert!(
@@ -2892,7 +2892,7 @@ fn persistence_sniper_selected_check_has_csv_json_and_jsonl_parity() {
         let result = output.path().join(format!("findings.{format}"));
         let coverage = output.path().join(format!("coverage-{format}.csv"));
         let r = run(&[
-            "persistence-sniper",
+            "check-persistence",
             "-f",
             hive.to_str().unwrap(),
             "--check",
@@ -2926,7 +2926,7 @@ fn persistence_sniper_selected_check_has_csv_json_and_jsonl_parity() {
         }
     }
     let r = run(&[
-        "persistence-sniper",
+        "check-persistence",
         "-f",
         hive.to_str().unwrap(),
         "--technique",
@@ -2953,7 +2953,7 @@ fn persistence_sniper_rejects_bad_inputs_and_preserves_evidence() {
         vec!["-o", "same.csv", "--coverage", "./same.csv", "-C"],
     ] {
         let mut command = vec![
-            "persistence-sniper",
+            "check-persistence",
             "-f",
             hive.to_str().unwrap(),
             "--no-timeline",
@@ -2966,10 +2966,10 @@ fn persistence_sniper_rejects_bad_inputs_and_preserves_evidence() {
     let fake = source.path().join("fake.bin");
     std::fs::write(&fake, b"not a hive").unwrap();
     assert_ne!(
-        run(&["persistence-sniper", "-f", fake.to_str().unwrap()]).code,
+        run(&["check-persistence", "-f", fake.to_str().unwrap()]).code,
         0
     );
-    let r = run(&["persistence-sniper", "--list-checks"]);
+    let r = run(&["check-persistence", "--list-checks"]);
     assert_eq!(r.code, 0);
     assert_eq!(r.stdout.lines().count(), 130);
 }
@@ -2984,7 +2984,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     std::fs::write(&log, b"original transaction-log evidence").unwrap();
     for flag in ["-o", "--coverage"] {
         let r = run(&[
-            "persistence-sniper",
+            "check-persistence",
             "-f",
             hive.to_str().unwrap(),
             "--check",
@@ -3003,7 +3003,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     let traversal = source.path().join("missing/../SOFTWARE");
     let original = std::fs::read(&hive).unwrap();
     let r = run(&[
-        "persistence-sniper",
+        "check-persistence",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -3022,7 +3022,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
         std::os::unix::fs::symlink(source.path(), &alias).unwrap();
         let traversal = output.path().join("missing/../evidence-link/SOFTWARE");
         let r = run(&[
-            "persistence-sniper",
+            "check-persistence",
             "-f",
             hive.to_str().unwrap(),
             "--check",
@@ -3040,7 +3040,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     let child_coverage = findings.join("coverage.csv");
     std::fs::write(&findings, b"previous results").unwrap();
     let r = run(&[
-        "persistence-sniper",
+        "check-persistence",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -3057,7 +3057,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     let a = output.path().join("new-result");
     let b = a.join("coverage.csv");
     let r = run(&[
-        "persistence-sniper",
+        "check-persistence",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -3073,7 +3073,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     let mixed = output.path().join("Results.csv");
     let lower = output.path().join("results.csv");
     let r = run(&[
-        "persistence-sniper",
+        "check-persistence",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -3101,7 +3101,7 @@ fn persistence_sniper_disabled_profile_retains_coverage_without_findings() {
     std::fs::write(&hive, sniper_software_hive()).unwrap();
     std::fs::write(&profile, "checks:\n  run_keys:\n    enabled: false\n").unwrap();
     let r = run(&[
-        "persistence-sniper",
+        "check-persistence",
         "-f",
         hive.to_str().unwrap(),
         "--check",

@@ -26,7 +26,7 @@ embedded in Juntei; consult each project for its license.
 
 - [**PyrsistenceSniper**](https://github.com/hexastrike/PyrsistenceSniper), by Hexastrike,
   supplied the persistence check catalogue, default allowlist, LOLBAS snapshot, and reference
-  behavior for the native Rust `persistence-sniper` command. Its MIT license and copyright notice
+  behavior for the native Rust `check-persistence` command. Its MIT license and copyright notice
   are retained in `THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt`.
 
 - Maxim Suhanov's **regf specification** and **yarp** informed registry structures, transaction-log

@@ -4,7 +4,7 @@
 
 **New Features:**
 
-- `persistence-sniper`: native Rust port of Hexastrike's PyrsistenceSniper, with 130 offline persistence checks, bundled and custom YAML allow/block profiles, CSV/JSON/JSONL findings, per-check coverage, payload hashes and descriptive signature metadata, and independent MFT/event-log timestamp correlation. Supports mounted Windows volumes, standalone hives and multi-host Velociraptor collections; `auto-parse` saves its findings under each host's `persistence` category. Upstream MIT attribution is retained. (@YamatoSecurity)
+- `check-persistence`: native Rust port of Hexastrike's PyrsistenceSniper, with 130 offline persistence checks, bundled and custom YAML allow/block profiles, CSV/JSON/JSONL findings, per-check coverage, payload hashes and descriptive signature metadata, and independent MFT/event-log timestamp correlation. Supports mounted Windows volumes, standalone hives and multi-host Velociraptor collections; `auto-parse` saves its findings under each host's `persistence` category. Upstream MIT attribution is retained. (@YamatoSecurity)
 
 - `auto-parse` uses readable, capitalized artifact filenames (`SAM.csv`, `MFT.csv`, `UsnJournal.csv`, `PrefetchTimeline.csv`, etc.) with matching `-logs.txt` names. Amcache tables are `Devices.csv`, `Files.csv`, `Findings.csv`, and `Summary.csv` inside each source directory. JSON/JSONL filenames use the same artifact stems, while category folders and SIEM artifact identifiers retain their established names. (@YamatoSecurity)
 
