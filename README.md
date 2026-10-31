@@ -8,6 +8,10 @@ Juntei is a Windows forensics artifact parser by [Yamato Security](https://githu
 a sibling of [Hayabusa](https://github.com/Yamato-Security/hayabusa) for the artifacts that are
 not event logs.
 
+(Juntei is short for Juntei Kannon (准胝観音), or "Pure Avalokitesvara" in English, a bodhisattva
+associated with great compassion. She brings that compassion to your investigations, using her
+18 arms to parse all the Windows DFIR artifacts you need.)
+
 ## [The Juntei documentation →](https://yamato-security.github.io/juntei/)
 
 **The Juntei documentation explains how to install and use Juntei, collect evidence, parse every
