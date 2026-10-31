@@ -22,6 +22,7 @@ Run `juntei --help` for the current list and `juntei <COMMAND> --help` for one c
 | `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
 | `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
 | `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
+| `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 
 ## Top-level usage
 

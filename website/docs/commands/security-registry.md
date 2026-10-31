@@ -45,6 +45,7 @@ Commands:
   taskcache   Decode scheduled tasks and actions from SOFTWARE TaskCache
   sam         Decode local accounts from SAM
   persistence Decode autostart locations from SOFTWARE, SYSTEM, NTUSER.DAT and UsrClass.dat
+  userassist  Decode programs and shortcuts started from Explorer from NTUSER.DAT UserAssist
   help        Print this message or the help of the given subcommand(s)
 ```
 
@@ -238,6 +239,32 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
+### `parse-registry userassist`
+
+```text
+Usage:
+  juntei parse-registry userassist <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
+  -f, --file <FILE>      File path to one NTUSER.DAT hive
+      --log1 <FILE>      Explicit first transaction log
+      --log2 <FILE>      Explicit second transaction log
+      --no-logs          Read the primary hive without transaction-log replay
+
+Output:
+  -o, --output <FILE>       Save every record
+  -t, --output-type <TYPE>  csv, json, or jsonl
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
 ### Examples
 
 ```bash
@@ -247,9 +274,10 @@ juntei parse-registry recentdocs -f NTUSER.DAT -o recentdocs.csv
 juntei parse-registry taskcache -f SOFTWARE --task ScheduledDefrag -t jsonl
 juntei parse-registry sam -f SAM --rid 500 -t jsonl
 juntei parse-registry persistence -d collection/ -o persistence.csv
+juntei parse-registry userassist -d collection/ -o userassist.csv
 ```
 
 The complete options and field semantics are on [Registry Hives](../artifacts/registry.md),
 [Windows Services](../artifacts/services.md), [RecentDocs](../artifacts/recentdocs.md),
-[Task Scheduler Cache](../artifacts/taskcache.md), [SAM Local Accounts](../artifacts/sam.md), and
-[Registry Autostarts](../artifacts/persistence.md).
+[Task Scheduler Cache](../artifacts/taskcache.md), [SAM Local Accounts](../artifacts/sam.md),
+[Registry Autostarts](../artifacts/persistence.md), and [UserAssist](../artifacts/userassist.md).

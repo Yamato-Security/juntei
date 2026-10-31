@@ -119,6 +119,7 @@ nav:
       - Process Execution:
           - Prefetch: artifacts/prefetch.md
           - SRUM: artifacts/srum.md
+          - UserAssist: artifacts/userassist.md
       - File System and File Existence:
           - Master File Table ($MFT): artifacts/mft.md
           - NTFS Transaction Log ($LogFile): artifacts/logfile.md
