@@ -107,14 +107,76 @@ fn banner_and_help() {
         r.stdout
     );
     assert!(r.stdout.contains("by Yamato Security"));
-    assert!(r.stdout.contains("parse-amcache"));
-    let r = run(&["parse-amcache", "-h", "-K"]);
+    assert!(r.stdout.contains("parse-registry"));
+    let r = run(&["parse-registry", "amcache", "-h", "-K"]);
     assert_eq!(r.code, 0);
     assert!(
-        r.stdout.contains("juntei parse-amcache <INPUT> [OPTIONS]"),
+        r.stdout
+            .contains("juntei parse-registry amcache <INPUT> [OPTIONS]"),
         "{}",
         r.stdout
     );
+}
+
+#[test]
+fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
+    for (source, description, artifacts) in [
+        (
+            "parse-ntfs",
+            "Parse NTFS artifacts",
+            &["mft", "usn-journal", "logfile", "i30"][..],
+        ),
+        (
+            "parse-registry",
+            "Parse registry hives",
+            &[
+                "amcache",
+                "shimcache",
+                "read",
+                "services",
+                "recentdocs",
+                "taskcache",
+                "sam",
+                "persistence",
+                "userassist",
+            ][..],
+        ),
+        ("parse-ese", "Parse ESE databases", &["srum"][..]),
+        (
+            "parse-file",
+            "Parse file artifacts",
+            &["prefetch", "lnk", "jump-lists", "defender-quarantine"][..],
+        ),
+    ] {
+        let top = run(&["--help"]);
+        assert_eq!(top.code, 0);
+        assert!(top.stdout.contains(source) && top.stdout.contains(description));
+
+        for help in ["-h", "--help"] {
+            let group = run(&[source, help]);
+            assert_eq!(group.code, 0, "{}", group.stderr);
+            assert!(group.stdout.contains(&format!("juntei {source} <COMMAND>")));
+            for artifact in artifacts {
+                assert!(group.stdout.contains(artifact), "{}", group.stdout);
+                let leaf = run(&[source, artifact, help]);
+                assert_eq!(leaf.code, 0, "{}", leaf.stderr);
+                assert!(
+                    leaf.stdout
+                        .contains(&format!("juntei {source} {artifact} <INPUT> [OPTIONS]")),
+                    "{}",
+                    leaf.stdout
+                );
+                assert!(leaf.stdout.contains("--output-type") && leaf.stdout.contains("--file"));
+            }
+        }
+        let help_subcommand = run(&[source, "help", artifacts[0]]);
+        assert_eq!(help_subcommand.code, 0, "{}", help_subcommand.stderr);
+        assert!(
+            help_subcommand
+                .stdout
+                .contains(&format!("juntei {source} {}", artifacts[0]))
+        );
+    }
 }
 
 #[test]
@@ -191,6 +253,19 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     }));
     assert_eq!(manifest["tasks"][0]["artifact"], "mft");
     assert_eq!(manifest["tasks"][1]["artifact"], "usn-journal");
+    for task in manifest["tasks"].as_array().unwrap() {
+        let artifact = task["artifact"].as_str().unwrap();
+        let (source, command) = match artifact {
+            "mft" | "usn-journal" | "logfile" | "i30" => ("parse-ntfs", artifact),
+            "srum" => ("parse-ese", artifact),
+            "prefetch-timeline" => ("parse-file", "prefetch"),
+            "prefetch" | "lnk" | "jump-lists" | "defender-quarantine" => ("parse-file", artifact),
+            "registry" => ("parse-registry", "read"),
+            _ => ("parse-registry", artifact),
+        };
+        assert_eq!(task["command"][1], source, "{task}");
+        assert_eq!(task["command"][2], command, "{task}");
+    }
     let (_, csv_tasks) = csv_rows(&csv.join("manifest.csv"));
     assert_eq!(csv_tasks.len(), manifest["tasks"].as_array().unwrap().len());
     for (row, task) in csv_tasks.iter().zip(manifest["tasks"].as_array().unwrap()) {
@@ -541,7 +616,7 @@ fn auto_parse_accepts_a_new_relative_output_directory() {
 
 #[test]
 fn terminal_report_has_the_summary_and_findings() {
-    let r = run(&["parse-amcache", "-f", WIN10, "-K"]);
+    let r = run(&["parse-registry", "amcache", "-f", WIN10, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stdout.contains("Start time: "));
     assert!(
@@ -563,7 +638,15 @@ fn terminal_report_has_the_summary_and_findings() {
     assert!(r.stdout.contains("Inventoried devices: 189"));
     assert!(r.stdout.contains("Findings: 4 (medium: 4)"));
     assert!(r.stdout.contains("Elapsed time: "));
-    let r = run(&["parse-amcache", "-f", WIN10, "-K", "-q", "--files"]);
+    let r = run(&[
+        "parse-registry",
+        "amcache",
+        "-f",
+        WIN10,
+        "-K",
+        "-q",
+        "--files",
+    ]);
     assert!(
         !r.stdout.contains("by Yamato Security"),
         "-q hides the banner"
@@ -573,7 +656,7 @@ fn terminal_report_has_the_summary_and_findings() {
 
 #[test]
 fn legacy_hives_are_read() {
-    let r = run(&["parse-amcache", "-f", LEGACY, "-K", "-q"]);
+    let r = run(&["parse-registry", "amcache", "-f", LEGACY, "-K", "-q"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(
         r.stdout
@@ -591,7 +674,8 @@ fn json_and_jsonl_files_hold_every_record() {
     let dir = tempfile::tempdir().unwrap();
     let json = dir.path().join("amcache.json");
     let r = run(&[
-        "parse-amcache",
+        "parse-registry",
+        "amcache",
         "-f",
         WIN10,
         "-o",
@@ -621,7 +705,8 @@ fn json_and_jsonl_files_hold_every_record() {
 
     let jsonl = dir.path().join("amcache.jsonl");
     let r = run(&[
-        "parse-amcache",
+        "parse-registry",
+        "amcache",
         "-f",
         WIN10,
         "-o",
@@ -636,7 +721,8 @@ fn json_and_jsonl_files_hold_every_record() {
     assert_eq!(text.lines().count(), 317);
     // --files narrows the default of every record
     let r = run(&[
-        "parse-amcache",
+        "parse-registry",
+        "amcache",
         "-f",
         WIN10,
         "-o",
@@ -660,7 +746,8 @@ fn csv_tables_go_into_one_directory_per_hive() {
     let out = tempfile::tempdir().unwrap();
     let out_dir = out.path().join("csv");
     let r = run(&[
-        "parse-amcache",
+        "parse-registry",
+        "amcache",
         "-d",
         tree.path().to_str().unwrap(),
         "-o",
@@ -700,7 +787,8 @@ fn csv_tables_go_into_one_directory_per_hive() {
     }
     // the results are not overwritten without -C
     let r = run(&[
-        "parse-amcache",
+        "parse-registry",
+        "amcache",
         "-d",
         tree.path().to_str().unwrap(),
         "-o",
@@ -710,7 +798,8 @@ fn csv_tables_go_into_one_directory_per_hive() {
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("already exists"), "{}", r.stdout);
     let r = run(&[
-        "parse-amcache",
+        "parse-registry",
+        "amcache",
         "-d",
         tree.path().to_str().unwrap(),
         "-o",
@@ -725,7 +814,8 @@ fn csv_tables_go_into_one_directory_per_hive() {
 fn structured_stdout_holds_only_the_data() {
     let tree = triage();
     let r = run(&[
-        "parse-amcache",
+        "parse-registry",
+        "amcache",
         "-d",
         tree.path().to_str().unwrap(),
         "-t",
@@ -741,7 +831,7 @@ fn structured_stdout_holds_only_the_data() {
         "errors go to stderr: {}",
         r.stderr
     );
-    let r = run(&["parse-amcache", "-f", WIN10, "-t", "jsonl"]);
+    let r = run(&["parse-registry", "amcache", "-f", WIN10, "-t", "jsonl"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     for line in r.stdout.lines() {
         serde_json::from_str::<Value>(line).unwrap_or_else(|e| panic!("{e}: {line}"));
@@ -754,7 +844,8 @@ fn text_reports_can_be_saved() {
     let out = tempfile::tempdir().unwrap();
     let file = out.path().join("amcache.txt");
     let r = run(&[
-        "parse-amcache",
+        "parse-registry",
+        "amcache",
         "-d",
         tree.path().to_str().unwrap(),
         "-o",
@@ -776,10 +867,16 @@ fn text_reports_can_be_saved() {
 
 #[test]
 fn input_and_output_errors() {
-    let r = run(&["parse-amcache", "-f", "no/such/Amcache.hve", "-K"]);
+    let r = run(&[
+        "parse-registry",
+        "amcache",
+        "-f",
+        "no/such/Amcache.hve",
+        "-K",
+    ]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("The file does not exist"), "{}", r.stdout);
-    let r = run(&["parse-amcache", "-f", "README.md", "-K", "-q"]);
+    let r = run(&["parse-registry", "amcache", "-f", "README.md", "-K", "-q"]);
     assert_eq!(r.code, 1, "nothing could be parsed");
     assert!(
         r.stdout.contains("Could not parse README.md"),
@@ -787,7 +884,13 @@ fn input_and_output_errors() {
         r.stdout
     );
     let empty = tempfile::tempdir().unwrap();
-    let r = run(&["parse-amcache", "-d", empty.path().to_str().unwrap(), "-K"]);
+    let r = run(&[
+        "parse-registry",
+        "amcache",
+        "-d",
+        empty.path().to_str().unwrap(),
+        "-K",
+    ]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout
@@ -795,7 +898,7 @@ fn input_and_output_errors() {
         "{}",
         r.stdout
     );
-    let r = run(&["parse-amcache", "-f", WIN10, "-t", "csv", "-K"]);
+    let r = run(&["parse-registry", "amcache", "-f", WIN10, "-t", "csv", "-K"]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("CSV output needs -o <DIR>"),
@@ -804,7 +907,7 @@ fn input_and_output_errors() {
     );
 }
 
-// ----- parse-mft --------------------------------------------------------------------------------
+// ----- parse-ntfs mft --------------------------------------------------------------------------------
 
 const MFT: &str = "test_files/mft/MFT";
 
@@ -824,7 +927,7 @@ fn full_paths(csv_text: &str) -> Vec<(String, String)> {
 
 #[test]
 fn mft_summary_on_the_terminal() {
-    let r = run(&["parse-mft", "-f", MFT, "-K"]);
+    let r = run(&["parse-ntfs", "mft", "-f", MFT, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stdout.contains("$MFT files: 1"), "{}", r.stdout);
     assert!(r.stdout.contains("Parsing in progress. Please wait."));
@@ -843,7 +946,8 @@ fn mft_csv_json_and_jsonl() {
     let dir = tempfile::tempdir().unwrap();
     let csv_path = dir.path().join("mft.csv");
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-f",
         MFT,
         "-o",
@@ -903,7 +1007,8 @@ fn mft_csv_json_and_jsonl() {
     let mut texts = Vec::new();
     for output_type in ["ys-mft-parser-csv", "mft-dump-csv"] {
         let r = run(&[
-            "parse-mft",
+            "parse-ntfs",
+            "mft",
             "-f",
             MFT,
             "-o",
@@ -936,7 +1041,8 @@ fn mft_csv_json_and_jsonl() {
 
     let json_path = dir.path().join("mft.json");
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-f",
         MFT,
         "-o",
@@ -958,7 +1064,16 @@ fn mft_csv_json_and_jsonl() {
     assert_eq!(config["full_path"], r"WINDOWS\system32\config");
 
     // -t without -o: only the entries on stdout
-    let r = run(&["parse-mft", "-f", MFT, "-t", "jsonl", "-r", "0-5,30"]);
+    let r = run(&[
+        "parse-ntfs",
+        "mft",
+        "-f",
+        MFT,
+        "-t",
+        "jsonl",
+        "-r",
+        "0-5,30",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let ids: Vec<u64> = r
         .stdout
@@ -974,7 +1089,7 @@ fn mft_csv_json_and_jsonl() {
 
 #[test]
 fn mft_csv_options() {
-    let help = run(&["parse-mft", "-h", "-K"]);
+    let help = run(&["parse-ntfs", "mft", "-h", "-K"]);
     assert_eq!(help.code, 0, "{}", help.stderr);
     assert!(help.stdout.contains("-a, --all-times"), "{}", help.stdout);
     assert!(help.stdout.contains("-s, --short-names"), "{}", help.stdout);
@@ -989,7 +1104,8 @@ fn mft_csv_options() {
     let out = dir.path().join("mft.csv");
     let csv = |extra: &[&str]| {
         let mut args = vec![
-            "parse-mft",
+            "parse-ntfs",
+            "mft",
             "-f",
             MFT,
             "-o",
@@ -1024,19 +1140,36 @@ fn mft_csv_options() {
     assert_eq!(rows[0]["LastModified0x10"], "2009-01-19T04:17:44.7268320Z");
     assert_eq!(csv(&["--cutoff", "2007-07-01T09:00:00+09:00"]).len(), 8);
 
-    let r = run(&["parse-mft", "-f", MFT, "-t", "jsonl", "--short-names"]);
+    let r = run(&[
+        "parse-ntfs",
+        "mft",
+        "-f",
+        MFT,
+        "-t",
+        "jsonl",
+        "--short-names",
+    ]);
     assert_eq!(r.code, 1);
     assert!(
         r.stderr.contains("options of the CSV output"),
         "{}",
         r.stderr
     );
-    let r = run(&["parse-mft", "-f", MFT, "--cutoff", "yesterday", "-K"]);
+    let r = run(&[
+        "parse-ntfs",
+        "mft",
+        "-f",
+        MFT,
+        "--cutoff",
+        "yesterday",
+        "-K",
+    ]);
     assert_ne!(r.code, 0);
     assert!(r.stderr.contains("is not a date or time"), "{}", r.stderr);
     // a year chrono accepts but a FILETIME can't hold: an error, not an overflow
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-f",
         MFT,
         "--cutoff",
@@ -1057,7 +1190,8 @@ fn mft_recover_slack() {
     let out = dir.path().join("mft.csv");
     let csv = |extra: &[&str]| {
         let mut args = vec![
-            "parse-mft",
+            "parse-ntfs",
+            "mft",
             "-f",
             MFT,
             "-o",
@@ -1128,7 +1262,7 @@ fn mft_recover_slack() {
     assert_eq!(rows.len(), 1014);
 
     // JSON: each entry's slack_file_names, with their offsets in the $MFT.
-    let r = run(&["parse-mft", "-f", MFT, "-t", "jsonl", "-x"]);
+    let r = run(&["parse-ntfs", "mft", "-f", MFT, "-t", "jsonl", "-x"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let entries: Vec<serde_json::Value> = r
         .stdout
@@ -1153,10 +1287,18 @@ fn mft_recover_slack() {
             .count(),
         33
     );
-    let r = run(&["parse-mft", "-f", MFT, "-t", "jsonl"]);
+    let r = run(&["parse-ntfs", "mft", "-f", MFT, "-t", "jsonl"]);
     assert!(!r.stdout.contains("slack_file_names"));
 
-    let r = run(&["parse-mft", "-f", MFT, "-t", "ys-mft-parser-csv", "-x"]);
+    let r = run(&[
+        "parse-ntfs",
+        "mft",
+        "-f",
+        MFT,
+        "-t",
+        "ys-mft-parser-csv",
+        "-x",
+    ]);
     assert_eq!(r.code, 1);
     assert!(
         r.stderr.contains("--recover-slack adds rows"),
@@ -1180,7 +1322,8 @@ fn mft_slack_provenance_and_damage() {
     let out = dir.path().join("mft.csv");
     let export = |mft: &Path, extra: &[&str]| {
         let mut args = vec![
-            "parse-mft",
+            "parse-ntfs",
+            "mft",
             "-f",
             mft.to_str().unwrap(),
             "-x",
@@ -1259,7 +1402,8 @@ fn mft_slack_provenance_and_damage() {
         ini[0]["ParseErrors"]
     );
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-f",
         zeroed.to_str().unwrap(),
         "-x",
@@ -1277,7 +1421,8 @@ fn mft_slack_provenance_and_damage() {
             .starts_with("its size in use (0x0)")
     );
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-f",
         zeroed.to_str().unwrap(),
         "-D",
@@ -1295,7 +1440,7 @@ fn mft_slack_provenance_and_damage() {
 
 #[test]
 fn mft_resident_data() {
-    let help = run(&["parse-mft", "-h", "-K"]);
+    let help = run(&["parse-ntfs", "mft", "-h", "-K"]);
     for option in [
         "-x, --recover-slack",
         "-i, --include-resident-data",
@@ -1311,7 +1456,8 @@ fn mft_resident_data() {
     let out = dir.path().join("mft.csv");
     let csv = |extra: &[&str]| {
         let mut args = vec![
-            "parse-mft",
+            "parse-ntfs",
+            "mft",
             "-f",
             MFT,
             "-o",
@@ -1363,9 +1509,9 @@ fn mft_resident_data() {
         .collect();
     assert_eq!(names, ["system.ini", "desktop.ini"]);
 
-    let r = run(&["parse-mft", "-f", MFT, "-E", "ini", "-K"]);
+    let r = run(&["parse-ntfs", "mft", "-f", MFT, "-E", "ini", "-K"]);
     assert_ne!(r.code, 0, "-E needs -i");
-    let r = run(&["parse-mft", "-f", MFT, "-t", "jsonl", "-i"]);
+    let r = run(&["parse-ntfs", "mft", "-f", MFT, "-t", "jsonl", "-i"]);
     assert_eq!(r.code, 1);
     assert!(
         r.stderr.contains("always has the resident data"),
@@ -1376,7 +1522,7 @@ fn mft_resident_data() {
 
 #[test]
 fn mft_dump_entry_and_list_directory() {
-    let r = run(&["parse-mft", "-f", MFT, "-D", "28", "-K", "-q"]);
+    let r = run(&["parse-ntfs", "mft", "-f", MFT, "-D", "28", "-K", "-q"]);
     assert_eq!(r.code, 0, "{}", r.stdout);
     for line in [
         "Entry 28-1 at offset 0x7000 of the $MFT (1024 bytes)",
@@ -1396,7 +1542,7 @@ fn mft_dump_entry_and_list_directory() {
             .collect::<Vec<_>>()
             .join("\n")
     };
-    let hex = run(&["parse-mft", "-f", MFT, "-D", "0x1C-0x1", "-K", "-q"]);
+    let hex = run(&["parse-ntfs", "mft", "-f", MFT, "-D", "0x1C-0x1", "-K", "-q"]);
     assert_eq!(shown(&hex.stdout), shown(&r.stdout));
     for (args, message) in [
         (
@@ -1414,21 +1560,41 @@ fn mft_dump_entry_and_list_directory() {
         ),
         (&["-D", "5", "-o", "x.csv"], "they don't take -o"),
     ] {
-        let mut all = vec!["parse-mft", "-f", MFT, "-K", "-q"];
+        let mut all = vec!["parse-ntfs", "mft", "-f", MFT, "-K", "-q"];
         all.extend_from_slice(args);
         let r = run(&all);
         assert_eq!(r.code, 1, "{args:?}");
         assert!(r.stdout.contains(message), "{args:?}: {}", r.stdout);
     }
-    let r = run(&["parse-mft", "-d", "test_files/mft", "-D", "5", "-K", "-q"]);
+    let r = run(&[
+        "parse-ntfs",
+        "mft",
+        "-d",
+        "test_files/mft",
+        "-D",
+        "5",
+        "-K",
+        "-q",
+    ]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("give it with -f"), "{}", r.stdout);
-    let r = run(&["parse-mft", "-f", MFT, "-D", "5", "-L", "5", "-K", "-q"]);
+    let r = run(&[
+        "parse-ntfs",
+        "mft",
+        "-f",
+        MFT,
+        "-D",
+        "5",
+        "-L",
+        "5",
+        "-K",
+        "-q",
+    ]);
     assert_ne!(r.code, 0, "one inspection at a time");
 
     // A directory by path (case-insensitive, either separator) or by entry.
     for target in [r"\WINDOWS", "windows", "28", "28-1"] {
-        let r = run(&["parse-mft", "-f", MFT, "-L", target, "-K", "-q"]);
+        let r = run(&["parse-ntfs", "mft", "-f", MFT, "-L", target, "-K", "-q"]);
         assert_eq!(r.code, 0, "{target}: {}", r.stdout);
         assert!(
             r.stdout
@@ -1441,7 +1607,7 @@ fn mft_dump_entry_and_list_directory() {
                 .contains("33 names: directories 29, files 4, deleted 0")
         );
     }
-    let r = run(&["parse-mft", "-f", MFT, "-L", "windows", "-K", "-q"]);
+    let r = run(&["parse-ntfs", "mft", "-f", MFT, "-L", "windows", "-K", "-q"]);
     let line = r
         .stdout
         .lines()
@@ -1463,7 +1629,8 @@ fn mft_csv_reports_damaged_attributes() {
     std::fs::write(&damaged, &data).unwrap();
     let out = dir.path().join("mft.csv");
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-f",
         damaged.to_str().unwrap(),
         "-o",
@@ -1508,7 +1675,8 @@ fn mft_csv_reports_damaged_extension_records() {
     std::fs::write(&damaged, &data).unwrap();
     let out = dir.path().join("mft.csv");
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-f",
         damaged.to_str().unwrap(),
         "-o",
@@ -1546,7 +1714,8 @@ fn mft_resident_streams_and_directory_mode() {
     let csv_dir = out.path().join("csv");
     let streams = out.path().join("streams");
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-d",
         tree.path().to_str().unwrap(),
         "-o",
@@ -1593,7 +1762,8 @@ fn mft_resident_streams_and_directory_mode() {
     assert!(names.iter().all(|n| n.ends_with(".dontrun")), "{names:?}");
     // the entries of several $MFT files cannot share stdout
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-d",
         tree.path().to_str().unwrap(),
         "-t",
@@ -1653,7 +1823,14 @@ fn mft_damaged_inputs_do_not_stop_the_run() {
     std::fs::write(&cycle, &data).unwrap();
     let zero = dir.path().join("zero_$MFT");
     std::fs::write(&zero, vec![0u8; 4096]).unwrap();
-    let r = run(&["parse-mft", "-d", dir.path().to_str().unwrap(), "-K", "-q"]);
+    let r = run(&[
+        "parse-ntfs",
+        "mft",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
     assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
     assert!(
         r.stdout
@@ -1670,7 +1847,8 @@ fn mft_damaged_inputs_do_not_stop_the_run() {
     // the CSV's parent paths of the loop end in PathUnknown
     let out = dir.path().join("cycle.csv");
     let r = run(&[
-        "parse-mft",
+        "parse-ntfs",
+        "mft",
         "-f",
         cycle.to_str().unwrap(),
         "-o",
@@ -1692,7 +1870,7 @@ fn mft_damaged_inputs_do_not_stop_the_run() {
         "{looped:?}"
     );
 
-    let r = run(&["parse-mft", "-f", "README.md", "-K", "-q"]);
+    let r = run(&["parse-ntfs", "mft", "-f", "README.md", "-K", "-q"]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout
@@ -1707,7 +1885,7 @@ const PREFETCH_CMD10: &str = "test_files/prefetch/CMD.EXE-6D6290C5.pf";
 
 #[test]
 fn prefetch_summary_on_the_terminal() {
-    let r = run(&["parse-prefetch", "-d", PREFETCH_DIR, "-K"]);
+    let r = run(&["parse-file", "prefetch", "-d", PREFETCH_DIR, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stdout.contains("Prefetch files: 6"), "{}", r.stdout);
     assert!(r.stdout.contains("Parsing in progress. Please wait."));
@@ -1734,7 +1912,8 @@ fn prefetch_csv_json_and_jsonl() {
     let dir = tempfile::tempdir().unwrap();
     let csv_path = dir.path().join("prefetch.csv");
     let r = run(&[
-        "parse-prefetch",
+        "parse-file",
+        "prefetch",
         "-f",
         PREFETCH_CMD10,
         "-o",
@@ -1761,7 +1940,8 @@ fn prefetch_csv_json_and_jsonl() {
     // one pretty JSON document per file, with every field
     let json_path = dir.path().join("prefetch.json");
     let r = run(&[
-        "parse-prefetch",
+        "parse-file",
+        "prefetch",
         "-d",
         PREFETCH_DIR,
         "-o",
@@ -1795,7 +1975,14 @@ fn prefetch_csv_json_and_jsonl() {
     );
 
     // JSON Lines on stdout: only the data
-    let r = run(&["parse-prefetch", "-f", PREFETCH_CMD10, "-t", "jsonl"]);
+    let r = run(&[
+        "parse-file",
+        "prefetch",
+        "-f",
+        PREFETCH_CMD10,
+        "-t",
+        "jsonl",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let lines: Vec<&str> = r.stdout.lines().collect();
     assert_eq!(lines.len(), 1, "{}", r.stdout);
@@ -1805,7 +1992,15 @@ fn prefetch_csv_json_and_jsonl() {
 
 #[test]
 fn prefetch_timeline_is_one_record_per_execution_sorted_by_time() {
-    let r = run(&["parse-prefetch", "-d", PREFETCH_DIR, "-T", "-t", "csv"]);
+    let r = run(&[
+        "parse-file",
+        "prefetch",
+        "-d",
+        PREFETCH_DIR,
+        "-T",
+        "-t",
+        "csv",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stderr.contains("Could not parse "), "errors go to stderr");
     let mut csv = csv::Reader::from_reader(r.stdout.as_bytes());
@@ -1857,7 +2052,7 @@ fn prefetch_system_binary_outside_system32_is_a_high_finding() {
     let pf = dir.path().join("SVCHOST.EXE-531BD9EA.pf");
     std::fs::write(&pf, data).unwrap();
 
-    let r = run(&["parse-prefetch", "-f", pf.to_str().unwrap(), "-K"]);
+    let r = run(&["parse-file", "prefetch", "-f", pf.to_str().unwrap(), "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stdout.contains("Findings: 1 (high: 1)"), "{}", r.stdout);
     assert!(r.stdout.contains(
@@ -1869,7 +2064,13 @@ fn prefetch_system_binary_outside_system32_is_a_high_finding() {
 #[test]
 fn prefetch_input_and_output_errors() {
     let dir = tempfile::tempdir().unwrap();
-    let r = run(&["parse-prefetch", "-d", dir.path().to_str().unwrap(), "-K"]);
+    let r = run(&[
+        "parse-file",
+        "prefetch",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("No prefetch files (*.pf) were found"),
@@ -1878,7 +2079,8 @@ fn prefetch_input_and_output_errors() {
     );
 
     let r = run(&[
-        "parse-prefetch",
+        "parse-file",
+        "prefetch",
         "-f",
         "test_files/prefetch/corrupt/SEARCHPROTOCOLHOST.EXE-AFAD3EF9.pf",
         "-K",
@@ -1892,7 +2094,8 @@ fn prefetch_input_and_output_errors() {
     let out = dir.path().join("exists.csv");
     std::fs::write(&out, b"x").unwrap();
     let r = run(&[
-        "parse-prefetch",
+        "parse-file",
+        "prefetch",
         "-f",
         PREFETCH_CMD10,
         "-o",
@@ -1902,7 +2105,8 @@ fn prefetch_input_and_output_errors() {
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("The output file already exists"));
     let r = run(&[
-        "parse-prefetch",
+        "parse-file",
+        "prefetch",
         "-f",
         PREFETCH_CMD10,
         "-o",
@@ -2017,7 +2221,8 @@ fn usn_journal_paths_are_those_of_each_records_time() {
     let dir = usn_triage();
     let journal = dir.path().join("HOST1/C/$Extend/$J");
     let r = run(&[
-        "parse-usn-journal",
+        "parse-ntfs",
+        "usn-journal",
         "-f",
         journal.to_str().unwrap(),
         "-t",
@@ -2082,7 +2287,8 @@ fn usn_journal_summary_and_directory_mode() {
     let dir = usn_triage();
     let out = dir.path().join("out");
     let r = run(&[
-        "parse-usn-journal",
+        "parse-ntfs",
+        "usn-journal",
         "-d",
         dir.path().to_str().unwrap(),
         "-o",
@@ -2108,7 +2314,8 @@ fn usn_journal_summary_and_directory_mode() {
     // JSON Lines: every field, and the range-tracking record with its extents
     let journal = dir.path().join("HOST1/C/$Extend/$J");
     let r = run(&[
-        "parse-usn-journal",
+        "parse-ntfs",
+        "usn-journal",
         "-f",
         journal.to_str().unwrap(),
         "-t",
@@ -2129,7 +2336,7 @@ fn usn_journal_summary_and_directory_mode() {
 
 #[test]
 fn usn_journal_without_an_mft_and_real_records() {
-    let r = run(&["parse-usn-journal", "-f", USN_SLICE, "-K"]);
+    let r = run(&["parse-ntfs", "usn-journal", "-f", USN_SLICE, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     for line in [
         "Records: 199 (V2: 199, V3: 0)",
@@ -2152,7 +2359,8 @@ fn usn_records_are_carved_from_other_data() {
     data.extend([0xA5; 4096]);
     std::fs::write(&image, &data).unwrap();
     let r = run(&[
-        "parse-usn-journal",
+        "parse-ntfs",
+        "usn-journal",
         "-f",
         image.to_str().unwrap(),
         "--carve",
@@ -2179,7 +2387,8 @@ fn usn_records_are_carved_from_other_data() {
     );
 
     let r = run(&[
-        "parse-usn-journal",
+        "parse-ntfs",
+        "usn-journal",
         "-f",
         image.to_str().unwrap(),
         "--carve",
@@ -2193,7 +2402,7 @@ fn usn_records_are_carved_from_other_data() {
     assert!(r.stdout.contains("Paths: none (no $MFT given)"));
 }
 
-// --- parse-srum --------------------------------------------------------------------------------
+// --- parse-ese srum --------------------------------------------------------------------------------
 
 const SRUM_WIN10: &str = "test_files/srum/win10_rathbunvm_SRUDB.dat";
 const SRUM_SERVER: &str = "test_files/srum/server2022_aptsimulatorvm_SRUDB.dat";
@@ -2437,7 +2646,7 @@ fn csv_rows(path: &Path) -> (Vec<String>, Vec<std::collections::HashMap<String, 
 
 #[test]
 fn srum_summary_on_the_terminal() {
-    let r = run(&["parse-srum", "-f", SRUM_WIN10, "-K"]);
+    let r = run(&["parse-ese", "srum", "-f", SRUM_WIN10, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     for line in [
         "SRUM databases parsed: 1",
@@ -2468,7 +2677,8 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     let out = dir.path().join("out");
     let hive_arg = hive.to_str().unwrap();
     let r = run(&[
-        "parse-srum",
+        "parse-ese",
+        "srum",
         "-f",
         SRUM_WIN10,
         "-r",
@@ -2573,14 +2783,21 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     assert_eq!(vfu.len(), 4);
 
     // existing results are kept without -C
-    let again = run(&["parse-srum", "-f", SRUM_WIN10, "-o", out.to_str().unwrap()]);
+    let again = run(&[
+        "parse-ese",
+        "srum",
+        "-f",
+        SRUM_WIN10,
+        "-o",
+        out.to_str().unwrap(),
+    ]);
     assert_eq!(again.code, 1);
     assert!(again.stdout.contains("already exists"), "{}", again.stdout);
 }
 
 #[test]
 fn srum_json_and_jsonl() {
-    let r = run(&["parse-srum", "-f", SRUM_WIN10, "-t", "jsonl"]);
+    let r = run(&["parse-ese", "srum", "-f", SRUM_WIN10, "-t", "jsonl"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(!r.stdout.contains("Results Summary"));
     let lines: Vec<&str> = r.stdout.lines().collect();
@@ -2614,7 +2831,8 @@ fn srum_json_and_jsonl() {
     let dir = tempfile::tempdir().unwrap();
     let file = dir.path().join("srum.json");
     let r = run(&[
-        "parse-srum",
+        "parse-ese",
+        "srum",
         "-f",
         SRUM_WIN10,
         "-t",
@@ -2632,7 +2850,8 @@ fn srum_json_and_jsonl() {
 #[test]
 fn srum_value_states_and_bytes() {
     let r = run(&[
-        "parse-srum",
+        "parse-ese",
+        "srum",
         "-f",
         SRUM_WIN10,
         "-t",
@@ -2679,13 +2898,14 @@ fn srum_value_states_and_bytes() {
     assert_eq!(nulls, 4333);
 
     // not asked for: as before
-    let r = run(&["parse-srum", "-f", SRUM_WIN10, "-t", "jsonl"]);
+    let r = run(&["parse-ese", "srum", "-f", SRUM_WIN10, "-t", "jsonl"]);
     assert!(!r.stdout.contains("_value_state"));
     assert!(!r.stdout.contains("_raw"));
     // a CSV cell can't say it
     let dir = tempfile::tempdir().unwrap();
     let r = run(&[
-        "parse-srum",
+        "parse-ese",
+        "srum",
         "-f",
         SRUM_WIN10,
         "-o",
@@ -2718,7 +2938,8 @@ fn srum_triage_directory_with_server_tables() {
 
     let out = tempfile::tempdir().unwrap();
     let r = run(&[
-        "parse-srum",
+        "parse-ese",
+        "srum",
         "-d",
         triage,
         "-o",
@@ -2768,7 +2989,8 @@ fn srum_triage_directory_with_server_tables() {
     // one JSONL file per database
     let jsonl = tempfile::tempdir().unwrap();
     let r = run(&[
-        "parse-srum",
+        "parse-ese",
+        "srum",
         "-d",
         triage,
         "-t",
@@ -2790,19 +3012,25 @@ fn srum_triage_directory_with_server_tables() {
 
 #[test]
 fn srum_input_and_output_errors() {
-    let r = run(&["parse-srum", "-f", "test_files/srum/missing.dat", "-K"]);
+    let r = run(&[
+        "parse-ese",
+        "srum",
+        "-f",
+        "test_files/srum/missing.dat",
+        "-K",
+    ]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("The file does not exist"), "{}", r.stdout);
 
-    let r = run(&["parse-srum", "-f", "test_files/srum/README.md", "-K"]);
+    let r = run(&["parse-ese", "srum", "-f", "test_files/srum/README.md", "-K"]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("Could not parse"), "{}", r.stdout);
 
-    let r = run(&["parse-srum", "-d", "test_files/amcache", "-K"]);
+    let r = run(&["parse-ese", "srum", "-d", "test_files/amcache", "-K"]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("No SRUM databases"), "{}", r.stdout);
 
-    let r = run(&["parse-srum", "-f", SRUM_WIN10, "-t", "csv"]);
+    let r = run(&["parse-ese", "srum", "-f", SRUM_WIN10, "-t", "csv"]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("CSV output needs -o <DIR>"),
@@ -2810,7 +3038,7 @@ fn srum_input_and_output_errors() {
         r.stdout
     );
 
-    let r = run(&["parse-srum", "-d", "test_files/srum", "-t", "jsonl"]);
+    let r = run(&["parse-ese", "srum", "-d", "test_files/srum", "-t", "jsonl"]);
     assert_eq!(r.code, 1);
     assert!(
         r.stderr.contains("With -d, save the entries with -o"),
@@ -2823,7 +3051,8 @@ fn srum_input_and_output_errors() {
     let hive = dir.path().join("SOFTWARE");
     std::fs::write(&hive, b"regf but not a hive").unwrap();
     let r = run(&[
-        "parse-srum",
+        "parse-ese",
+        "srum",
         "-f",
         SRUM_WIN10,
         "-r",
@@ -2839,13 +3068,13 @@ fn srum_input_and_output_errors() {
     assert!(r.stdout.contains("Entries: 309"), "{}", r.stdout);
 }
 
-// --- parse-lnk ---------------------------------------------------------------------------------
+// --- parse-file lnk ---------------------------------------------------------------------------------
 
 const LNK_DIR: &str = "test_files/lnk";
 
 #[test]
 fn lnk_summary_on_the_terminal() {
-    let r = run(&["parse-lnk", "-d", LNK_DIR, "-K"]);
+    let r = run(&["parse-file", "lnk", "-d", LNK_DIR, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     // found under -d, so with the platform's separator
     let found = |name: &str| format!("  {} -> ", Path::new(LNK_DIR).join(name).display());
@@ -2872,7 +3101,8 @@ fn lnk_csv_has_the_common_columns() {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("lnk.csv");
     let r = run(&[
-        "parse-lnk",
+        "parse-file",
+        "lnk",
         "-d",
         LNK_DIR,
         "-o",
@@ -2948,7 +3178,8 @@ fn lnk_csv_has_the_common_columns() {
 #[test]
 fn lnk_json_and_jsonl() {
     let r = run(&[
-        "parse-lnk",
+        "parse-file",
+        "lnk",
         "-f",
         "test_files/lnk/nero_infotool.lnk",
         "-t",
@@ -2978,7 +3209,8 @@ fn lnk_json_and_jsonl() {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("lnk.json");
     let r = run(&[
-        "parse-lnk",
+        "parse-file",
+        "lnk",
         "-d",
         LNK_DIR,
         "-t",
@@ -3010,7 +3242,14 @@ fn lnk_times_that_are_not_times() {
     data[28..36].copy_from_slice(&0x8000_0000_0000_0000u64.to_le_bytes());
     let file = dir.path().join("nero_infotool.lnk");
     std::fs::write(&file, &data).unwrap();
-    let r = run(&["parse-lnk", "-f", file.to_str().unwrap(), "-t", "jsonl"]);
+    let r = run(&[
+        "parse-file",
+        "lnk",
+        "-f",
+        file.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let v: Value = serde_json::from_str(r.stdout.trim()).unwrap();
     assert_eq!(v["header"]["target_created"], "");
@@ -3019,12 +3258,19 @@ fn lnk_times_that_are_not_times() {
 
 #[test]
 fn lnk_input_and_output_errors() {
-    let r = run(&["parse-lnk", "-f", "test_files/lnk/missing.lnk", "-K"]);
+    let r = run(&[
+        "parse-file",
+        "lnk",
+        "-f",
+        "test_files/lnk/missing.lnk",
+        "-K",
+    ]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("The file does not exist"), "{}", r.stdout);
 
     let r = run(&[
-        "parse-lnk",
+        "parse-file",
+        "lnk",
         "-f",
         "test_files/lnk/../amcache/README.md",
         "-K",
@@ -3033,12 +3279,13 @@ fn lnk_input_and_output_errors() {
     assert!(r.stdout.contains("Could not parse"), "{}", r.stdout);
     assert!(r.stdout.contains("not a shell link"), "{}", r.stdout);
 
-    let r = run(&["parse-lnk", "-d", "test_files/amcache", "-K"]);
+    let r = run(&["parse-file", "lnk", "-d", "test_files/amcache", "-K"]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("No shortcuts (*.lnk)"), "{}", r.stdout);
 
     let r = run(&[
-        "parse-lnk",
+        "parse-file",
+        "lnk",
         "-f",
         "test_files/lnk/nero_infotool.lnk",
         "--code-page",
@@ -3056,7 +3303,8 @@ fn lnk_input_and_output_errors() {
     let out = dir.path().join("x.csv");
     std::fs::write(&out, b"keep").unwrap();
     let r = run(&[
-        "parse-lnk",
+        "parse-file",
+        "lnk",
         "-f",
         "test_files/lnk/nero_infotool.lnk",
         "-o",
@@ -3067,7 +3315,7 @@ fn lnk_input_and_output_errors() {
     assert!(r.stdout.contains("already exists"), "{}", r.stdout);
 }
 
-// --- parse-jump-lists --------------------------------------------------------------------------
+// --- parse-file jump-lists --------------------------------------------------------------------------
 
 const JUMP_LIST_DIR: &str = "test_files/jump_lists";
 const EXPLORER_WIN10: &str = "test_files/jump_lists/f01b4d95cf55d32a.automaticDestinations-ms";
@@ -3075,7 +3323,7 @@ const CHROME_WIN11: &str = "test_files/jump_lists/5d696d521de238c3.customDestina
 
 #[test]
 fn jump_list_summary_on_the_terminal() {
-    let r = run(&["parse-jump-lists", "-d", JUMP_LIST_DIR, "-K"]);
+    let r = run(&["parse-file", "jump-lists", "-d", JUMP_LIST_DIR, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     // found under -d, so with the platform's separator
     let found = |name: &str| format!("  {} (", Path::new(JUMP_LIST_DIR).join(name).display());
@@ -3105,7 +3353,8 @@ fn jump_list_csv_has_the_common_columns() {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("jl");
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-d",
         JUMP_LIST_DIR,
         "-o",
@@ -3240,7 +3489,14 @@ fn jump_list_csv_has_the_common_columns() {
 
 #[test]
 fn jump_list_json_and_jsonl() {
-    let r = run(&["parse-jump-lists", "-f", EXPLORER_WIN10, "-t", "jsonl"]);
+    let r = run(&[
+        "parse-file",
+        "jump-lists",
+        "-f",
+        EXPLORER_WIN10,
+        "-t",
+        "jsonl",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(!r.stdout.contains("Results Summary"));
     let v: Value = serde_json::from_str(r.stdout.trim()).unwrap();
@@ -3266,7 +3522,8 @@ fn jump_list_json_and_jsonl() {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("jl.json");
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-f",
         CHROME_WIN11,
         "-t",
@@ -3327,7 +3584,8 @@ fn jump_list_streams_no_entry_names() {
     std::fs::write(&file, &data).unwrap();
     let out = dir.path().join("jl");
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-f",
         file.to_str().unwrap(),
         "-o",
@@ -3380,7 +3638,8 @@ fn jump_list_times_that_are_not_times() {
     let file = dir.path().join("f01b4d95cf55d32a.automaticDestinations-ms");
     std::fs::write(&file, &data).unwrap();
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-f",
         file.to_str().unwrap(),
         "-t",
@@ -3395,7 +3654,8 @@ fn jump_list_times_that_are_not_times() {
     );
     let out = dir.path().join("jl");
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-f",
         file.to_str().unwrap(),
         "-o",
@@ -3414,7 +3674,8 @@ fn jump_list_times_that_are_not_times() {
 #[test]
 fn jump_list_input_and_output_errors() {
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-f",
         "test_files/jump_lists/missing",
         "-K",
@@ -3422,7 +3683,13 @@ fn jump_list_input_and_output_errors() {
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("The file does not exist"), "{}", r.stdout);
 
-    let r = run(&["parse-jump-lists", "-f", "test_files/lnk/README.md", "-K"]);
+    let r = run(&[
+        "parse-file",
+        "jump-lists",
+        "-f",
+        "test_files/lnk/README.md",
+        "-K",
+    ]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("Could not parse") && r.stdout.contains("not a custom jump list"),
@@ -3430,12 +3697,13 @@ fn jump_list_input_and_output_errors() {
         r.stdout
     );
 
-    let r = run(&["parse-jump-lists", "-d", "test_files/lnk", "-K"]);
+    let r = run(&["parse-file", "jump-lists", "-d", "test_files/lnk", "-K"]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("No jump lists"), "{}", r.stdout);
 
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-f",
         EXPLORER_WIN10,
         "--code-page",
@@ -3453,7 +3721,8 @@ fn jump_list_input_and_output_errors() {
     let dir = tempfile::tempdir().unwrap();
     std::fs::write(dir.path().join("keep"), b"keep").unwrap();
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-f",
         EXPLORER_WIN10,
         "-o",
@@ -3464,7 +3733,8 @@ fn jump_list_input_and_output_errors() {
     assert!(r.stdout.contains("already exists"), "{}", r.stdout);
     let file = dir.path().join("keep");
     let r = run(&[
-        "parse-jump-lists",
+        "parse-file",
+        "jump-lists",
         "-f",
         EXPLORER_WIN10,
         "-o",
@@ -3502,7 +3772,13 @@ fn system_hive() -> tempfile::TempDir {
 #[test]
 fn shimcache_summary_on_the_terminal() {
     let hive = system_hive();
-    let r = run(&["parse-shimcache", "-d", hive.path().to_str().unwrap(), "-K"]);
+    let r = run(&[
+        "parse-registry",
+        "shimcache",
+        "-d",
+        hive.path().to_str().unwrap(),
+        "-K",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     for line in [
         "SYSTEM hives: 1",
@@ -3525,7 +3801,8 @@ fn shimcache_summary_on_the_terminal() {
 
     // the hive as it is: dirty, its logs not applied (they don't change this cache)
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-d",
         hive.path().to_str().unwrap(),
         "--no-logs",
@@ -3554,7 +3831,13 @@ fn shimcache_hive_with_a_damaged_base_block_is_recovered_from_its_logs() {
     let config = hive.path().join("HOST/C/Windows/System32/config");
     // no `regf` signature: the base block comes from the log with the latest entries
     flip_byte(&config.join("SYSTEM"), 0);
-    let r = run(&["parse-shimcache", "-d", hive.path().to_str().unwrap(), "-K"]);
+    let r = run(&[
+        "parse-registry",
+        "shimcache",
+        "-d",
+        hive.path().to_str().unwrap(),
+        "-K",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stdout);
     for line in [
         "SYSTEM hives parsed: 1",
@@ -3573,7 +3856,13 @@ fn shimcache_logs_whose_entries_are_damaged_are_not_applied() {
     for log in ["SYSTEM.LOG1", "SYSTEM.LOG2"] {
         flip_byte(&config.join(log), 512 + 100);
     }
-    let r = run(&["parse-shimcache", "-d", hive.path().to_str().unwrap(), "-K"]);
+    let r = run(&[
+        "parse-registry",
+        "shimcache",
+        "-d",
+        hive.path().to_str().unwrap(),
+        "-K",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stdout);
     for line in [
         "Dirty hives recovered with their transaction logs: 0",
@@ -3590,7 +3879,8 @@ fn shimcache_csv_has_the_common_columns() {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("shimcache.csv");
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-d",
         hive.path().to_str().unwrap(),
         "-o",
@@ -3682,7 +3972,8 @@ fn shimcache_select_and_the_size_of_each_value() {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("shimcache.csv");
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-f",
         system.to_str().unwrap(),
         "-o",
@@ -3710,7 +4001,8 @@ fn shimcache_select_and_the_size_of_each_value() {
     }
     // the same in JSON Lines
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-f",
         system.to_str().unwrap(),
         "-t",
@@ -3743,7 +4035,8 @@ fn shimcache_values_as_json() {
     // AppCompatCache values saved on their own: Windows XP, 7 (32-bit), Server 2012 R2 (its
     // first dword 0) and 11
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-f",
         &format!("{SHIMCACHE_DIR}/WinXPx86.bin"),
         "-t",
@@ -3795,7 +4088,8 @@ fn shimcache_values_as_json() {
         ),
     ] {
         let r = run(&[
-            "parse-shimcache",
+            "parse-registry",
+            "shimcache",
             "-f",
             &format!("{SHIMCACHE_DIR}/{file}"),
             "-t",
@@ -3810,7 +4104,8 @@ fn shimcache_values_as_json() {
         assert_eq!(entries[0]["path"], path, "{file}");
     }
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-f",
         &format!("{SHIMCACHE_DIR}/win11shim.raw"),
         "-t",
@@ -3824,7 +4119,8 @@ fn shimcache_values_as_json() {
 
     // the summary of a value
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-f",
         &format!("{SHIMCACHE_DIR}/WinXPx86.bin"),
         "-K",
@@ -3843,7 +4139,8 @@ fn shimcache_values_as_json() {
 #[test]
 fn shimcache_input_and_output_errors() {
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-f",
         "test_files/shimcache/missing",
         "-K",
@@ -3851,7 +4148,13 @@ fn shimcache_input_and_output_errors() {
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("The file does not exist"), "{}", r.stdout);
 
-    let r = run(&["parse-shimcache", "-f", "test_files/lnk/README.md", "-K"]);
+    let r = run(&[
+        "parse-registry",
+        "shimcache",
+        "-f",
+        "test_files/lnk/README.md",
+        "-K",
+    ]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("Could not parse")
@@ -3861,7 +4164,7 @@ fn shimcache_input_and_output_errors() {
         r.stdout
     );
 
-    let r = run(&["parse-shimcache", "-d", "test_files/lnk", "-K"]);
+    let r = run(&["parse-registry", "shimcache", "-d", "test_files/lnk", "-K"]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("No SYSTEM hives"), "{}", r.stdout);
 
@@ -3870,7 +4173,8 @@ fn shimcache_input_and_output_errors() {
     std::fs::write(&file, b"keep").unwrap();
     let value = format!("{SHIMCACHE_DIR}/regipy_win7x86.bin");
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-f",
         &value,
         "-o",
@@ -3880,7 +4184,8 @@ fn shimcache_input_and_output_errors() {
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("already exists"), "{}", r.stdout);
     let r = run(&[
-        "parse-shimcache",
+        "parse-registry",
+        "shimcache",
         "-f",
         &value,
         "-o",
@@ -3891,7 +4196,7 @@ fn shimcache_input_and_output_errors() {
     assert!(r.stdout.contains("is a directory"), "{}", r.stdout);
 }
 
-// --- parse-defender-quarantine ---------------------------------------------------------------
+// --- parse-file defender-quarantine ---------------------------------------------------------------
 
 const QUARANTINE_DIR: &str = "test_files/defender_quarantine";
 const QUARANTINED_FILE: &str = "AAB535B2BF6E319A41A914FDF71F7509D42E847F";
@@ -3925,7 +4230,7 @@ fn quarantine_host(dir: &Path, host: &str) -> PathBuf {
 fn quarantine_csv(args: &[&str]) -> (Run, Vec<std::collections::HashMap<String, String>>) {
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("quarantine.csv");
-    let mut argv = vec!["parse-defender-quarantine", "-K"];
+    let mut argv = vec!["parse-file", "defender-quarantine", "-K"];
     argv.extend_from_slice(args);
     argv.extend(["-o", out.to_str().unwrap()]);
     let r = run(&argv);
@@ -3956,7 +4261,8 @@ fn quarantine_csv(args: &[&str]) -> (Run, Vec<std::collections::HashMap<String, 
 #[test]
 fn defender_quarantine_summary_on_the_terminal() {
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-d",
         QUARANTINE_DIR,
@@ -4038,7 +4344,8 @@ fn defender_quarantine_json_and_jsonl() {
     let dir = tempfile::tempdir().unwrap();
     let json_out = dir.path().join("q.json");
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-d",
         QUARANTINE_DIR,
@@ -4064,7 +4371,8 @@ fn defender_quarantine_json_and_jsonl() {
     );
     // JSONL on stdout: the data alone
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-d",
         QUARANTINE_DIR,
@@ -4147,7 +4455,8 @@ fn defender_quarantine_extracts_only_when_asked() {
     let out = dir.path().join("extracted");
     let report = dir.path().join("quarantine.csv");
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-d",
         QUARANTINE_DIR,
@@ -4210,7 +4519,8 @@ fn defender_quarantine_extracts_only_when_asked() {
 
     // Again: the same files are there, nothing written.
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-d",
         QUARANTINE_DIR,
@@ -4238,7 +4548,8 @@ fn defender_quarantine_extracts_only_when_asked() {
     let dir2 = tempfile::tempdir().unwrap();
     let csv = dir2.path().join("q.csv");
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-d",
         QUARANTINE_DIR,
@@ -4296,11 +4607,18 @@ fn defender_security_text_obeys_overwrite_protection() {
 
 #[test]
 fn defender_quarantine_input_and_output_errors() {
-    let r = run(&["parse-defender-quarantine", "-K", "-d", "no/such/dir"]);
+    let r = run(&[
+        "parse-file",
+        "defender-quarantine",
+        "-K",
+        "-d",
+        "no/such/dir",
+    ]);
     assert_eq!(r.code, 1);
     let empty = tempfile::tempdir().unwrap();
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-d",
         empty.path().to_str().unwrap(),
@@ -4313,7 +4631,8 @@ fn defender_quarantine_input_and_output_errors() {
     );
     // -C needs somewhere to write
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-d",
         QUARANTINE_DIR,
@@ -4328,7 +4647,8 @@ fn defender_quarantine_input_and_output_errors() {
     assert_eq!(rows.len(), 1, "no orphans with -f");
     assert_eq!(rows[0]["SHA256"], FILE_SHA256);
     let r = run(&[
-        "parse-defender-quarantine",
+        "parse-file",
+        "defender-quarantine",
         "-K",
         "-f",
         "test_files/defender_quarantine/README.md",
@@ -6734,7 +7054,7 @@ fn registry_sam_hidden_accounts_and_errors() {
     assert!(r.stdout.contains("No SAM hives were found"), "{}", r.stdout);
 }
 
-// --- parse-i30 --------------------------------------------------------------------------------
+// --- parse-ntfs i30 --------------------------------------------------------------------------------
 
 const LOGS_I30: &str = "test_files/i30/Logs_I30";
 const PHOTOS_I30: &str = "test_files/i30/Photos_I30";
@@ -6752,7 +7072,7 @@ fn i30_triage() -> tempfile::TempDir {
 
 #[test]
 fn i30_summary_on_the_terminal() {
-    let r = run(&["parse-i30", "-f", LOGS_I30, "-K"]);
+    let r = run(&["parse-ntfs", "i30", "-f", LOGS_I30, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     for line in [
         "$I30 files: 1",
@@ -6771,7 +7091,13 @@ fn i30_summary_on_the_terminal() {
 
     // several files: each name with its file
     let dir = i30_triage();
-    let r = run(&["parse-i30", "-d", dir.path().to_str().unwrap(), "-K"]);
+    let r = run(&[
+        "parse-ntfs",
+        "i30",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     // as the directory is read: with the platform's separators
     let logs = dir.path().join("HOST").join("C").join("Logs_$I30");
@@ -6795,7 +7121,8 @@ fn i30_csv_json_and_jsonl() {
     let out = tempfile::tempdir().unwrap();
     let csv = out.path().join("i30.csv");
     let r = run(&[
-        "parse-i30",
+        "parse-ntfs",
+        "i30",
         "-d",
         dir.path().to_str().unwrap(),
         "-o",
@@ -6855,7 +7182,8 @@ fn i30_csv_json_and_jsonl() {
     // JSON: one pretty document per entry
     let json = out.path().join("i30.json");
     let r = run(&[
-        "parse-i30",
+        "parse-ntfs",
+        "i30",
         "-f",
         LOGS_I30,
         "-t",
@@ -6931,7 +7259,7 @@ fn i30_csv_json_and_jsonl() {
     );
 
     // JSONL on stdout: nothing but the entries
-    let r = run(&["parse-i30", "-f", PHOTOS_I30, "-t", "jsonl", "-K"]);
+    let r = run(&["parse-ntfs", "i30", "-f", PHOTOS_I30, "-t", "jsonl", "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let lines: Vec<Value> = r
         .stdout
@@ -6964,7 +7292,7 @@ fn i30_csv_json_and_jsonl() {
 #[test]
 fn i30_slack_only_and_no_copies() {
     let count = |extra: &[&str]| {
-        let mut args = vec!["parse-i30", "-f", LOGS_I30, "-t", "jsonl", "-K"];
+        let mut args = vec!["parse-ntfs", "i30", "-f", LOGS_I30, "-t", "jsonl", "-K"];
         args.extend_from_slice(extra);
         let r = run(&args);
         assert_eq!(r.code, 0, "{}", r.stderr);
@@ -6979,7 +7307,8 @@ fn i30_slack_only_and_no_copies() {
     let out = tempfile::tempdir().unwrap();
     let csv = out.path().join("slack.csv");
     let r = run(&[
-        "parse-i30",
+        "parse-ntfs",
+        "i30",
         "-f",
         LOGS_I30,
         "--slack-only",
@@ -7002,7 +7331,8 @@ fn i30_records_in_other_data_and_records_written_in_part() {
     data.extend(vec![0u8; 0x1000]);
     std::fs::write(&image, &data).unwrap();
     let r = run(&[
-        "parse-i30",
+        "parse-ntfs",
+        "i30",
         "-f",
         image.to_str().unwrap(),
         "-t",
@@ -7024,7 +7354,7 @@ fn i30_records_in_other_data_and_records_written_in_part() {
     let mut logs = std::fs::read(repo(LOGS_I30)).unwrap();
     logs[4096 + 510] ^= 0xFF;
     std::fs::write(&torn, &logs).unwrap();
-    let r = run(&["parse-i30", "-f", torn.to_str().unwrap(), "-K"]);
+    let r = run(&["parse-ntfs", "i30", "-f", torn.to_str().unwrap(), "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     for line in [
         "INDX records: 7 (written in part: 1)".to_string(),
@@ -7040,11 +7370,11 @@ fn i30_records_in_other_data_and_records_written_in_part() {
 
 #[test]
 fn i30_input_and_output_errors() {
-    let r = run(&["parse-i30", "-f", "test_files/i30/missing", "-K"]);
+    let r = run(&["parse-ntfs", "i30", "-f", "test_files/i30/missing", "-K"]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("The file does not exist"), "{}", r.stdout);
 
-    let r = run(&["parse-i30", "-f", "test_files/lnk/README.md", "-K"]);
+    let r = run(&["parse-ntfs", "i30", "-f", "test_files/lnk/README.md", "-K"]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("Could not parse") && r.stdout.contains("no INDX records"),
@@ -7052,7 +7382,7 @@ fn i30_input_and_output_errors() {
         r.stdout
     );
 
-    let r = run(&["parse-i30", "-d", "test_files/lnk", "-K"]);
+    let r = run(&["parse-ntfs", "i30", "-d", "test_files/lnk", "-K"]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("No $I30 files were found"),
@@ -7065,7 +7395,8 @@ fn i30_input_and_output_errors() {
     std::fs::copy(repo(LOGS_I30), &input).unwrap();
     let original = std::fs::read(&input).unwrap();
     let r = run(&[
-        "parse-i30",
+        "parse-ntfs",
+        "i30",
         "-f",
         input.to_str().unwrap(),
         "-o",
@@ -7081,7 +7412,8 @@ fn i30_input_and_output_errors() {
     let linked_output = dir.path().join("linked.csv");
     std::fs::hard_link(&input, &linked_output).unwrap();
     let r = run(&[
-        "parse-i30",
+        "parse-ntfs",
+        "i30",
         "-f",
         input.to_str().unwrap(),
         "-o",
@@ -7096,7 +7428,8 @@ fn i30_input_and_output_errors() {
     let file = dir.path().join("keep.csv");
     std::fs::write(&file, b"keep").unwrap();
     let r = run(&[
-        "parse-i30",
+        "parse-ntfs",
+        "i30",
         "-f",
         LOGS_I30,
         "-o",
@@ -7107,7 +7440,8 @@ fn i30_input_and_output_errors() {
     assert!(r.stdout.contains("already exists"), "{}", r.stdout);
     assert_eq!(std::fs::read(&file).unwrap(), b"keep");
     let r = run(&[
-        "parse-i30",
+        "parse-ntfs",
+        "i30",
         "-f",
         LOGS_I30,
         "-o",

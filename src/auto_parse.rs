@@ -788,41 +788,56 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
 
         add(
             "amcache",
-            &["parse-amcache"],
+            &["parse-registry", "amcache"],
             OutputShape::CsvDirectory,
             &["-a"],
         );
-        add("prefetch", &["parse-prefetch"], OutputShape::File, &[]);
+        add(
+            "prefetch",
+            &["parse-file", "prefetch"],
+            OutputShape::File,
+            &[],
+        );
         add(
             "prefetch-timeline",
-            &["parse-prefetch"],
+            &["parse-file", "prefetch"],
             OutputShape::File,
             &["--timeline"],
         );
-        add("i30", &["parse-i30"], OutputShape::File, &[]);
+        add("i30", &["parse-ntfs", "i30"], OutputShape::File, &[]);
         let srum_extra: &[&str] = if opts.output_type.is_json() {
             &["--include-value-state"]
         } else {
             &[]
         };
-        add("srum", &["parse-srum"], OutputShape::Directory, srum_extra);
+        add(
+            "srum",
+            &["parse-ese", "srum"],
+            OutputShape::Directory,
+            srum_extra,
+        );
         let code_page = opts.code_page.to_string();
         add(
             "lnk",
-            &["parse-lnk"],
+            &["parse-file", "lnk"],
             OutputShape::File,
             &["--code-page", &code_page],
         );
         add(
             "jump-lists",
-            &["parse-jump-lists"],
+            &["parse-file", "jump-lists"],
             OutputShape::CsvDirectory,
             &["--code-page", &code_page],
         );
-        add("shimcache", &["parse-shimcache"], OutputShape::File, &[]);
+        add(
+            "shimcache",
+            &["parse-registry", "shimcache"],
+            OutputShape::File,
+            &[],
+        );
         add(
             "defender-quarantine",
-            &["parse-defender-quarantine"],
+            &["parse-file", "defender-quarantine"],
             OutputShape::File,
             &[],
         );
@@ -877,7 +892,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &data_dir,
             &log_dir,
             "mft",
-            &["parse-mft"],
+            &["parse-ntfs", "mft"],
             inputs.mfts,
             mft_extra,
         );
@@ -888,7 +903,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &data_dir,
             &log_dir,
             "usn-journal",
-            &["parse-usn-journal"],
+            &["parse-ntfs", "usn-journal"],
             inputs.journals,
             &[],
         );
@@ -899,7 +914,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &data_dir,
             &log_dir,
             "logfile",
-            &["parse-logfile"],
+            &["parse-ntfs", "logfile"],
             inputs.logfiles,
             &[],
         );

@@ -3,8 +3,8 @@
 ## One artifact or a collection
 
 ```bash
-juntei parse-prefetch -f 'Prefetch/POWERSHELL.EXE-12345678.pf'
-juntei parse-prefetch -d evidence/
+juntei parse-file prefetch -f 'Prefetch/POWERSHELL.EXE-12345678.pf'
+juntei parse-file prefetch -d evidence/
 ```
 
 `-d` searches recursively for files appropriate to that command. Source-path columns distinguish
@@ -13,15 +13,15 @@ hosts and artifacts in combined output.
 ## Save CSV
 
 ```bash
-juntei parse-prefetch -d evidence/ -o prefetch.csv
+juntei parse-file prefetch -d evidence/ -o prefetch.csv
 ```
 
 Some parsers need a directory because they emit multiple CSV tables:
 
 ```bash
-juntei parse-amcache -f Amcache.hve -o amcache-tables
-juntei parse-srum -f SRUDB.dat -o srum-tables
-juntei parse-jump-lists -d evidence/ -o jump-list-tables
+juntei parse-registry amcache -f Amcache.hve -o amcache-tables
+juntei parse-ese srum -f SRUDB.dat -o srum-tables
+juntei parse-file jump-lists -d evidence/ -o jump-list-tables
 ```
 
 ## Stream JSONL
@@ -39,7 +39,7 @@ Juntei refuses to overwrite existing output by default. Confirm the target, pres
 result that matters, then add `-C` / `--clobber`:
 
 ```bash
-juntei parse-prefetch -d evidence/ -o prefetch.csv --clobber
+juntei parse-file prefetch -d evidence/ -o prefetch.csv --clobber
 ```
 
 ## Quiet and no-color modes
@@ -47,7 +47,7 @@ juntei parse-prefetch -d evidence/ -o prefetch.csv --clobber
 Use `-q` for automation and `-K` when terminal color codes are inappropriate:
 
 ```bash
-juntei parse-mft -f '$MFT' -o mft.csv -q -K
+juntei parse-ntfs mft -f '$MFT' -o mft.csv -q -K
 ```
 
 ## Case and paths
@@ -56,5 +56,5 @@ Quote Windows paths containing spaces, `$`, shell metacharacters, or backslashes
 shell. On Bash-like shells, single quotes prevent `$MFT` and `$J` from becoming variables:
 
 ```bash
-juntei parse-mft -f '/evidence/C/$MFT' -o mft.csv
+juntei parse-ntfs mft -f '/evidence/C/$MFT' -o mft.csv
 ```

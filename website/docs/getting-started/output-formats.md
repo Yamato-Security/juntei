@@ -22,7 +22,7 @@ JSON stores the complete result as one document. It preserves arrays, nested str
 large integers, and distinctions that a flat CSV cannot always represent.
 
 ```bash
-juntei parse-lnk -f sample.lnk -o lnk.json -t json
+juntei parse-file lnk -f sample.lnk -o lnk.json -t json
 ```
 
 ## JSON Lines

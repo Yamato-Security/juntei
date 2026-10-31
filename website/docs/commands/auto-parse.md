@@ -54,7 +54,8 @@ The manifest keeps the hostname exactly as discovered in a separate `hostname` f
 ## Parsers it runs
 
 One parser failing does not stop the others. `auto-parse` runs these jobs for every discovered
-computer:
+computer. Jobs use the same source-grouped commands as manual parsing, such as
+`parse-ntfs mft`, `parse-registry amcache`, `parse-ese srum`, and `parse-file prefetch`:
 
 - Amcache
 - `$MFT`

@@ -3,10 +3,10 @@
 A `SYSTEM` hive with its transaction logs and AppCompatCache values from the test sets
 ys-shimcache-parser is checked against, with the values of a reference parser.
 
-| File | Source | Expected (`parse-shimcache`) |
+| File | Source | Expected (`parse-registry shimcache`) |
 | --- | --- | --- |
 | `SYSTEM.gz`, `SYSTEM.LOG1.gz`, `SYSTEM.LOG2.gz` | The [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)'s `Windows/Registry/Win11/RathbunVM/RathbunVM_W11RegistryHives.7z` (MIT, Copyright (c) 2022 DFIR Artifact Museum), gzipped; the tests unpack them | a dirty Windows 11 hive whose logs apply 16 entries: `ControlSet001`, 359 entries, 30 executed, 27 findings |
-| `SYSTEM.expected.csv` | The reference's CSV output for that hive, `SourceFile` set to `SYSTEM` | every row: `parse-shimcache`'s first 8 columns have its values (its times to the second) |
+| `SYSTEM.expected.csv` | The reference's CSV output for that hive, `SourceFile` set to `SYSTEM` | every row: `parse-registry shimcache`'s first 8 columns have its values (its times to the second) |
 | `WinXPx86.bin` | A public AppCompatCache test set (MIT, `LICENSE-test-set.txt`), also in the DFIR Artifact Museum's `Windows/AppCompatCache/WinXP/` | Windows XP: 17 entries in the order of its LRU array, no execution flag |
 | `regipy_win7x86.bin` | `ControlSet001`'s value in [regipy](https://github.com/mkorman90/regipy)'s `regipy_tests/data/SYSTEM.xz` (MIT, Copyright (c) 2019), a 32-bit Windows 7 hive | 330 entries, 238 executed |
 | `Win2012R2-StolenSzechuan-ControlSet001.bin` | `ControlSet001`'s value in the DFIR Artifact Museum's `Windows/Registry/Win2012R2/StolenSzechuan` `SYSTEM` hive, its transaction logs applied | Windows Server 2012 R2 (first dword 0, not 0x80): 140 entries, 101 executed |

@@ -23,12 +23,15 @@ Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected
 and parse every supported artifact in parallel. It creates per-computer output directories and can
 produce one computer-labelled JSONL file for SIEM ingestion.
 
+For individual artifacts, choose `parse-ntfs`, `parse-registry`, `parse-ese`, or `parse-file`.
+For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
+
 ### Process Execution
 
 | Artifact | Type |
 | --- | --- |
 | **Prefetch** (`*.pf`) — Program run counts, recent execution times, and referenced files. | File |
-| **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | File |
+| **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | ESE |
 | **UserAssist** (`NTUSER.DAT`) — Programs and shortcuts a user started from Explorer, with run counts, focus time, and last run times. | Registry |
 
 ### File System and File Existence

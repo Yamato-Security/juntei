@@ -1,4 +1,4 @@
-//! `parse-defender-quarantine`: Microsoft Defender's quarantine
+//! `parse-file defender-quarantine`: Microsoft Defender's quarantine
 //! (`ProgramData\Microsoft\Windows Defender\Quarantine`) with Yamato Security's
 //! ys-defender-history-parser: every quarantine entry's threat, scan and time and every resource
 //! it quarantined (files, registry keys, services, startup items, scheduled tasks), each matched
@@ -1133,7 +1133,7 @@ fn write_records(
     }
     for r in records {
         let v = json_record(r);
-        // JSON: pretty objects separated by newlines, like parse-mft; JSONL: one per line
+        // JSON: pretty objects separated by newlines, like parse-ntfs mft; JSONL: one per line
         if output_type == DefenderQuarantineOutputType::Json {
             serde_json::to_writer_pretty(&mut w, &v)?;
         } else {

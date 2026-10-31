@@ -1,4 +1,4 @@
-//! `parse-mft --dump-entry` and `--list-directory`: one entry in full detail, or what a directory
+//! `parse-ntfs mft --dump-entry` and `--list-directory`: one entry in full detail, or what a directory
 //! holds, on the terminal.
 
 use crate::cli::{EntrySpec, MftOptions};
@@ -75,7 +75,7 @@ fn same_sequence(sequence: u16, actual: u16, in_use: bool) -> bool {
     sequence == actual || (!in_use && sequence.wrapping_add(1) == actual)
 }
 
-/// One entry: its header, its attributes and slack as `parse-mft -t json` writes them, and its
+/// One entry: its header, its attributes and slack as `parse-ntfs mft -t json` writes them, and its
 /// bytes.
 fn dump_entry(parser: &mut MftParser<BufReader<File>>, spec: EntrySpec) -> Result<String, String> {
     let count = parser.get_entry_count();
@@ -199,7 +199,7 @@ fn dump_entry(parser: &mut MftParser<BufReader<File>>, spec: EntrySpec) -> Resul
     let _ = writeln!(out);
     let _ = writeln!(
         out,
-        "Attributes and slack, as parse-mft -t json -x writes them:"
+        "Attributes and slack, as parse-ntfs mft -t json -x writes them:"
     );
     let json = JsonEntry {
         full_path,

@@ -1,21 +1,33 @@
 # Command List
 
-Run `juntei --help` for the current list and `juntei <COMMAND> --help` for one command.
+Individual parsers are grouped by their source type. Run `juntei --help`,
+`juntei <SOURCE> --help`, or `juntei <SOURCE> <ARTIFACT> --help` to explore them:
+
+```bash
+juntei parse-ntfs --help
+juntei parse-registry amcache --help
+juntei parse-file prefetch -d evidence/ -o prefetch.csv
+```
+
+For a multi-computer Windows evidence collection, use
+[`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). It invokes the same grouped commands
+and keeps per-computer output filenames and artifact names unchanged.
+
+## [NTFS commands](filesystem.md)
 
 | Command | Input artifact | Detailed guide |
 |---|---|---|
-| `auto-parse` | Multi-computer Windows evidence collection | [Automatic Collection Parsing](auto-parse.md) |
-| `parse-amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
-| `parse-mft` | NTFS `$MFT` | [Master File Table](../artifacts/mft.md) |
-| `parse-logfile` | NTFS `$LogFile` | [NTFS Transaction Log](../artifacts/logfile.md) |
-| `parse-prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
-| `parse-usn-journal` | `$UsnJrnl:$J` | [USN Journal](../artifacts/usn-journal.md) |
-| `parse-i30` | `$I30` (`$INDEX_ALLOCATION`), or a disk image | [Directory Indexes ($I30)](../artifacts/i30.md) |
-| `parse-srum` | `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
-| `parse-lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |
-| `parse-jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
-| `parse-shimcache` | `SYSTEM` or raw AppCompatCache | [ShimCache](../artifacts/shimcache.md) |
-| `parse-defender-quarantine` | Defender quarantine tree or entry | [Defender Quarantine](../artifacts/defender-quarantine.md) |
+| `parse-ntfs mft` | NTFS `$MFT` | [Master File Table](../artifacts/mft.md) |
+| `parse-ntfs logfile` | NTFS `$LogFile` | [NTFS Transaction Log](../artifacts/logfile.md) |
+| `parse-ntfs usn-journal` | `$UsnJrnl:$J` | [USN Journal](../artifacts/usn-journal.md) |
+| `parse-ntfs i30` | `$I30` (`$INDEX_ALLOCATION`), or a disk image | [Directory Indexes ($I30)](../artifacts/i30.md) |
+
+## [Registry commands](security-registry.md)
+
+| Command | Input artifact | Detailed guide |
+|---|---|---|
+| `parse-registry amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
+| `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |
 | `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
 | `parse-registry services` | `SYSTEM` | [Windows Services](../artifacts/services.md) |
 | `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
@@ -24,15 +36,48 @@ Run `juntei --help` for the current list and `juntei <COMMAND> --help` for one c
 | `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
 | `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 
+## [ESE commands](user-activity.md)
+
+| Command | Input artifact | Detailed guide |
+|---|---|---|
+| `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+
+## [File commands](execution.md)
+
+| Command | Input artifact | Detailed guide |
+|---|---|---|
+| `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |
+| `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
+| `parse-file defender-quarantine` | Defender quarantine tree or entry | [Defender Quarantine](../artifacts/defender-quarantine.md) |
+
+## Source types and format changes
+
+Groups describe the formats Juntei currently supports. `parse-registry amcache` reads
+`Amcache.hve`; it does not imply support for SQLite Amcache inventory databases. Artifact parser
+crates remain separate so support for another storage format can be added independently.
+
+The former flat parser names have been replaced by the source-and-artifact paths above. Keep
+existing parser options after the artifact name. `auto-parse` and existing registry subcommands
+keep their names.
+
 ## Top-level usage
 
 ```text
 Usage: juntei <COMMAND>
+
+Commands:
+  auto-parse      Discover and parse Windows evidence
+  parse-ntfs      Parse NTFS artifacts
+  parse-registry  Parse registry hives
+  parse-ese       Parse ESE databases
+  parse-file      Parse file artifacts
+  help            Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
   -V, --version  Print version
 ```
 
-The pages in this section reproduce the command usage and give short examples. The artifact guides
-explain the evidence, output fields, limitations, and investigation strategy.
+The source pages reproduce command usage and give short examples. The artifact guides explain
+the evidence, output fields, limitations, and investigation strategy.

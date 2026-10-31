@@ -1,4 +1,4 @@
-//! `parse-shimcache`: the ShimCache (AppCompatCache) of `SYSTEM` hives with Yamato Security's
+//! `parse-registry shimcache`: the ShimCache (AppCompatCache) of `SYSTEM` hives with Yamato Security's
 //! ys-shimcache-parser (a fork of shimcache-forensic that reads every format from Windows XP to
 //! 11): the hive's transaction logs replayed
 //! when it is dirty, every control set's cache and the entries left in the slack of its value,
@@ -499,7 +499,7 @@ fn write_records(
     }
     for r in &records {
         let v = json_record(r);
-        // JSON: pretty objects separated by newlines, like parse-mft; JSONL: one per line
+        // JSON: pretty objects separated by newlines, like parse-ntfs mft; JSONL: one per line
         if output_type == ShimcacheOutputType::Json {
             serde_json::to_writer_pretty(&mut w, &v)?;
         } else {

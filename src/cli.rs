@@ -19,11 +19,11 @@ pub struct Cli {
     pub cmd: Commands,
 }
 
-// The variant names are the command names (parse-amcache, parse-mft, ...).
+// Commands are grouped by the storage source of the supported artifact format.
 #[allow(clippy::enum_variant_names)]
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Discover Windows collections and parse every supported artifact in parallel
+    /// Discover and parse Windows evidence
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -33,117 +33,18 @@ pub enum Commands {
     )]
     AutoParse(AutoParseOptions),
 
-    /// Parse Amcache.hve: inventoried executables (with SHA-1), PnP devices and findings
+    /// Parse NTFS artifacts
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-amcache <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs <COMMAND> [OPTIONS]\n\n{all-args}",
+        subcommand_required = true,
+        arg_required_else_help = true,
         disable_version_flag = true
     )]
-    ParseAmcache(AmcacheOptions),
+    ParseNtfs(NtfsCommand),
 
-    /// Parse $MFT: every file record with its full path, flags, sizes and timestamps
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-mft <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseMft(MftOptions),
-
-    /// Parse Prefetch files (*.pf): executions with run counts, last run times and loaded files
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-prefetch <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParsePrefetch(PrefetchOptions),
-
-    /// Parse the USN journal ($UsnJrnl:$J): every file change with its reasons and the path it had
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-usn-journal <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseUsnJournal(UsnJournalOptions),
-
-    /// Parse $LogFile: NTFS redo/undo records, earlier filenames and timestamps, and journal writes
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-logfile <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseLogfile(LogfileOptions),
-
-    /// Parse directory indexes ($I30): the files in a directory, and possible deleted or renamed file names left in slack
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-i30 <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseI30(I30Options),
-
-    /// Parse SRUM (SRUDB.dat): about 30 days of network and resource usage per program and user
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-srum <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseSrum(SrumOptions),
-
-    /// Parse shortcuts (*.lnk): what each points at, its arguments and the machine it was made on
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-lnk <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseLnk(LnkOptions),
-
-    /// Parse jump lists: files and folders each application opened, pinned items and tasks
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-jump-lists <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseJumpLists(JumpListOptions),
-
-    /// Parse the ShimCache (AppCompatCache) of SYSTEM hives: executables Windows saw, with their times and whether they ran
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-shimcache <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseShimcache(ShimcacheOptions),
-
-    /// Parse Microsoft Defender's quarantine: what was quarantined, for which threat and when, and the quarantined files' hashes, owners and download origins (extracted only with --extract)
-    #[command(
-        author = AUTHOR,
-        version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-defender-quarantine <INPUT> [OPTIONS]\n\n{all-args}",
-        disable_help_flag = true,
-        disable_version_flag = true
-    )]
-    ParseDefenderQuarantine(DefenderQuarantineOptions),
-
-    /// Parse registry hives (SYSTEM, SOFTWARE, SAM, NTUSER.DAT, UsrClass.dat, ...): one subcommand per artifact; dirty hives replayed with their transaction logs
+    /// Parse registry hives
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -153,6 +54,145 @@ pub enum Commands {
         disable_version_flag = true
     )]
     ParseRegistry(RegistryCommand),
+
+    /// Parse ESE databases
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ese <COMMAND> [OPTIONS]\n\n{all-args}",
+        subcommand_required = true,
+        arg_required_else_help = true,
+        disable_version_flag = true
+    )]
+    ParseEse(EseCommand),
+
+    /// Parse file artifacts
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file <COMMAND> [OPTIONS]\n\n{all-args}",
+        subcommand_required = true,
+        arg_required_else_help = true,
+        disable_version_flag = true
+    )]
+    ParseFile(FileCommand),
+}
+
+#[derive(Args)]
+pub struct NtfsCommand {
+    #[command(subcommand)]
+    pub cmd: NtfsCommands,
+}
+
+#[derive(Subcommand)]
+pub enum NtfsCommands {
+    /// Parse the Master File Table
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs mft <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Mft(MftOptions),
+
+    /// Parse the USN journal
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs usn-journal <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    UsnJournal(UsnJournalOptions),
+
+    /// Parse the NTFS transaction log
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs logfile <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Logfile(LogfileOptions),
+
+    /// Parse directory indexes
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs i30 <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    I30(I30Options),
+}
+
+#[derive(Args)]
+pub struct EseCommand {
+    #[command(subcommand)]
+    pub cmd: EseCommands,
+}
+
+#[derive(Subcommand)]
+pub enum EseCommands {
+    /// Parse SRUM databases
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ese srum <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Srum(SrumOptions),
+}
+
+#[derive(Args)]
+pub struct FileCommand {
+    #[command(subcommand)]
+    pub cmd: FileCommands,
+}
+
+#[derive(Subcommand)]
+pub enum FileCommands {
+    /// Parse Prefetch files
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file prefetch <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Prefetch(PrefetchOptions),
+
+    /// Parse shortcuts
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file lnk <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Lnk(LnkOptions),
+
+    /// Parse Jump Lists
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file jump-lists <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    JumpLists(JumpListOptions),
+
+    /// Parse Defender quarantine
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file defender-quarantine <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    DefenderQuarantine(DefenderQuarantineOptions),
 }
 
 /// What `auto-parse` writes.
@@ -257,7 +297,7 @@ pub struct CommonOptions {
     pub quiet: bool,
 }
 
-/// What `parse-amcache` writes.
+/// What `parse-registry amcache` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OutputType {
     /// One CSV table per record type (summary, findings, files, devices); needs -o <DIR>
@@ -339,7 +379,7 @@ impl AmcacheOptions {
     }
 }
 
-/// What `parse-mft` writes.
+/// What `parse-ntfs mft` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MftOutputType {
     /// One row per file name and per alternate data stream
@@ -555,7 +595,7 @@ impl MftOptions {
     }
 }
 
-/// What `parse-prefetch` writes.
+/// What `parse-file prefetch` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PrefetchOutputType {
     /// One row per prefetch file (or per execution with -T)
@@ -608,7 +648,7 @@ impl PrefetchOptions {
     }
 }
 
-/// What `parse-usn-journal` writes.
+/// What `parse-ntfs usn-journal` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UsnOutputType {
     /// One row per record
@@ -735,7 +775,7 @@ impl LogfileOptions {
     }
 }
 
-/// What `parse-i30` writes.
+/// What `parse-ntfs i30` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum I30OutputType {
     /// One row per index entry
@@ -792,7 +832,7 @@ impl I30Options {
     }
 }
 
-/// What `parse-srum` writes.
+/// What `parse-ese srum` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SrumOutputType {
     /// One CSV table per provider in a directory
@@ -864,7 +904,7 @@ impl SrumOptions {
     }
 }
 
-/// What `parse-lnk` writes.
+/// What `parse-file lnk` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LnkOutputType {
     /// One row per shortcut
@@ -917,7 +957,7 @@ impl LnkOptions {
     }
 }
 
-/// What `parse-jump-lists` writes.
+/// What `parse-file jump-lists` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum JumpListOutputType {
     /// Two tables in a directory: AutomaticDestinations.csv and CustomDestinations.csv
@@ -975,7 +1015,7 @@ impl JumpListOptions {
     }
 }
 
-/// What `parse-shimcache` writes.
+/// What `parse-registry shimcache` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShimcacheOutputType {
     /// One row per entry
@@ -1028,7 +1068,7 @@ impl ShimcacheOptions {
     }
 }
 
-/// What `parse-defender-quarantine` writes.
+/// What `parse-file defender-quarantine` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DefenderQuarantineOutputType {
     /// One row per resource quarantined (and per content or record no entry holds)
@@ -1092,7 +1132,27 @@ pub struct RegistryCommand {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum RegistryCommands {
-    /// Read keys and values as they are: types, data (strings, multi-strings, numbers, binary), key last-write times, DWORD/QWORD numbers and FILETIMEs, allocated, replayed or deleted
+    /// Parse Amcache inventories
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry amcache <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Amcache(AmcacheOptions),
+
+    /// Parse ShimCache entries
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry shimcache <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Shimcache(ShimcacheOptions),
+
+    /// Read keys and values
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -1102,7 +1162,7 @@ pub enum RegistryCommands {
     )]
     Read(RegistryReadOptions),
 
-    /// Services of SYSTEM hives: image path, service DLL, start and type, account, and failure actions decoded, for the control set in use (or all)
+    /// Parse services
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -1112,7 +1172,7 @@ pub enum RegistryCommands {
     )]
     Services(RegistryServicesOptions),
 
-    /// Explorer's recent documents in NTUSER.DAT hives (RecentDocs): every item in its MRU order, per extension, with its shortcut's name and the time the most recent was opened
+    /// Parse recent documents
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -1122,7 +1182,7 @@ pub enum RegistryCommands {
     )]
     Recentdocs(RegistryRecentDocsOptions),
 
-    /// The Task Scheduler's cache in SOFTWARE hives (TaskCache): every task with its actions decoded (program, arguments, COM handler), times, and tasks hidden from the Task Scheduler
+    /// Parse scheduled tasks
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -1132,7 +1192,7 @@ pub enum RegistryCommands {
     )]
     Taskcache(RegistryTaskCacheOptions),
 
-    /// Local accounts in SAM hives: RID, user name, account flags, last logon, password last set, expiry, failed and total logons, password hint, accounts hidden from the sign-in screen
+    /// Parse local accounts
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -1142,7 +1202,7 @@ pub enum RegistryCommands {
     )]
     Sam(RegistrySamOptions),
 
-    /// Autostart locations in SOFTWARE, SYSTEM, NTUSER.DAT and UsrClass.dat hives: Run keys (and whether the Task Manager disabled them), Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks and more, with their ATT&CK techniques
+    /// Parse autostart locations
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -1152,7 +1212,7 @@ pub enum RegistryCommands {
     )]
     Persistence(RegistryPersistenceOptions),
 
-    /// The programs and shortcuts users started from Explorer, from UserAssist in NTUSER.DAT hives: run counts, focus count and time, and last run, with names decoded from ROT13 and known folders resolved
+    /// Parse UserAssist entries
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -1590,17 +1650,45 @@ mod tests {
     use clap::CommandFactory;
 
     fn parse(args: &[&str]) -> AmcacheOptions {
-        let mut argv = vec!["juntei", "parse-amcache"];
+        let mut argv = vec!["juntei", "parse-registry", "amcache"];
         argv.extend_from_slice(args);
         match Cli::try_parse_from(argv).unwrap().cmd {
-            Commands::ParseAmcache(opts) => opts,
-            _ => panic!("not parse-amcache"),
+            Commands::ParseRegistry(RegistryCommand {
+                cmd: RegistryCommands::Amcache(opts),
+            }) => opts,
+            _ => panic!("not parse-registry amcache"),
         }
     }
 
     #[test]
     fn cli_definition_is_valid() {
         Cli::command().debug_assert();
+    }
+
+    #[test]
+    fn source_groups_require_an_artifact_and_reject_other_source_types() {
+        use clap::error::ErrorKind;
+
+        for (source, wrong_artifact) in [
+            ("parse-ntfs", "amcache"),
+            ("parse-registry", "mft"),
+            ("parse-ese", "prefetch"),
+            ("parse-file", "srum"),
+        ] {
+            let err = Cli::try_parse_from(["juntei", source]).err().unwrap();
+            assert_eq!(
+                err.kind(),
+                ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+            );
+            assert!(
+                err.to_string()
+                    .contains(&format!("juntei {source} <COMMAND>"))
+            );
+            let err = Cli::try_parse_from(["juntei", source, wrong_artifact, "-f", "input"])
+                .err()
+                .unwrap();
+            assert_eq!(err.kind(), ErrorKind::InvalidSubcommand);
+        }
     }
 
     #[test]
@@ -1664,7 +1752,7 @@ mod tests {
     #[test]
     fn input_is_one_file_or_one_directory() {
         let p = |a: &[&str]| {
-            let mut argv = vec!["juntei", "parse-amcache"];
+            let mut argv = vec!["juntei", "parse-registry", "amcache"];
             argv.extend_from_slice(a);
             Cli::try_parse_from(argv)
         };
@@ -1691,10 +1779,12 @@ mod tests {
     #[test]
     fn mft_output_defaults() {
         let parse = |a: &[&str]| {
-            let mut argv = vec!["juntei", "parse-mft"];
+            let mut argv = vec!["juntei", "parse-ntfs", "mft"];
             argv.extend_from_slice(a);
             match Cli::try_parse_from(argv).unwrap().cmd {
-                Commands::ParseMft(o) => o,
+                Commands::ParseNtfs(NtfsCommand {
+                    cmd: NtfsCommands::Mft(o),
+                }) => o,
                 _ => panic!(),
             }
         };
@@ -1734,10 +1824,12 @@ mod tests {
     #[test]
     fn prefetch_output_defaults() {
         let parse = |a: &[&str]| {
-            let mut argv = vec!["juntei", "parse-prefetch"];
+            let mut argv = vec!["juntei", "parse-file", "prefetch"];
             argv.extend_from_slice(a);
             match Cli::try_parse_from(argv).unwrap().cmd {
-                Commands::ParsePrefetch(o) => o,
+                Commands::ParseFile(FileCommand {
+                    cmd: FileCommands::Prefetch(o),
+                }) => o,
                 _ => panic!(),
             }
         };
@@ -1747,17 +1839,19 @@ mod tests {
         assert!(!o.timeline);
         assert!(parse(&["-d", "Prefetch", "-t", "csv", "-T"]).data_on_stdout());
         assert!(!parse(&["-f", "A.pf", "-o", "a.json", "-t", "json"]).data_on_stdout());
-        let argv = ["juntei", "parse-prefetch", "-f", "A.pf", "-C"];
+        let argv = ["juntei", "parse-file", "prefetch", "-f", "A.pf", "-C"];
         assert!(Cli::try_parse_from(argv).is_err(), "-C needs -o");
     }
 
     #[test]
     fn usn_journal_options() {
         let parse = |a: &[&str]| {
-            let mut argv = vec!["juntei", "parse-usn-journal"];
+            let mut argv = vec!["juntei", "parse-ntfs", "usn-journal"];
             argv.extend_from_slice(a);
             Cli::try_parse_from(argv).map(|c| match c.cmd {
-                Commands::ParseUsnJournal(o) => o,
+                Commands::ParseNtfs(NtfsCommand {
+                    cmd: NtfsCommands::UsnJournal(o),
+                }) => o,
                 _ => panic!(),
             })
         };
@@ -1783,10 +1877,12 @@ mod tests {
     #[test]
     fn srum_options() {
         let parse = |a: &[&str]| {
-            let mut argv = vec!["juntei", "parse-srum"];
+            let mut argv = vec!["juntei", "parse-ese", "srum"];
             argv.extend_from_slice(a);
             Cli::try_parse_from(argv).map(|c| match c.cmd {
-                Commands::ParseSrum(o) => o,
+                Commands::ParseEse(EseCommand {
+                    cmd: EseCommands::Srum(o),
+                }) => o,
                 _ => panic!(),
             })
         };
@@ -1814,10 +1910,12 @@ mod tests {
     #[test]
     fn lnk_options() {
         let parse = |a: &[&str]| {
-            let mut argv = vec!["juntei", "parse-lnk"];
+            let mut argv = vec!["juntei", "parse-file", "lnk"];
             argv.extend_from_slice(a);
             Cli::try_parse_from(argv).map(|c| match c.cmd {
-                Commands::ParseLnk(o) => o,
+                Commands::ParseFile(FileCommand {
+                    cmd: FileCommands::Lnk(o),
+                }) => o,
                 _ => panic!(),
             })
         };
@@ -1842,10 +1940,12 @@ mod tests {
     #[test]
     fn jump_list_options() {
         let parse = |a: &[&str]| {
-            let mut argv = vec!["juntei", "parse-jump-lists"];
+            let mut argv = vec!["juntei", "parse-file", "jump-lists"];
             argv.extend_from_slice(a);
             Cli::try_parse_from(argv).map(|c| match c.cmd {
-                Commands::ParseJumpLists(o) => o,
+                Commands::ParseFile(FileCommand {
+                    cmd: FileCommands::JumpLists(o),
+                }) => o,
                 _ => panic!(),
             })
         };

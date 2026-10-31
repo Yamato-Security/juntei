@@ -37,7 +37,7 @@ streams; custom lists use their own category/link format.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-jump-lists <INPUT> [OPTIONS]
+Usage: juntei parse-file jump-lists <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find automatic/custom destination files
@@ -50,8 +50,8 @@ Output:
 ```
 
 ```bash
-juntei parse-jump-lists -d evidence/ -o jump-list-csv
-juntei parse-jump-lists -f sample.automaticDestinations-ms -t jsonl | jq .
+juntei parse-file jump-lists -d evidence/ -o jump-list-csv
+juntei parse-file jump-lists -f sample.automaticDestinations-ms -t jsonl | jq .
 ```
 
 ## AutomaticDestinations CSV fields

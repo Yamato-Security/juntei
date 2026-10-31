@@ -42,7 +42,7 @@ Collect `SYSTEM`, `SYSTEM.LOG1`, and `SYSTEM.LOG2`. Juntei reads all control set
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-shimcache <INPUT> [OPTIONS]
+Usage: juntei parse-registry shimcache <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find SYSTEM hives
@@ -55,8 +55,8 @@ Output:
 ```
 
 ```bash
-juntei parse-shimcache -f SYSTEM -o shimcache.csv
-juntei parse-shimcache -d evidence/ -t jsonl \
+juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
+juntei parse-registry shimcache -d evidence/ -t jsonl \
   | jq 'select(.executed == true or (.findings | length > 0))'
 ```
 

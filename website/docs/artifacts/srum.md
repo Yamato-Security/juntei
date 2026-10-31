@@ -45,7 +45,7 @@ directory.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-srum <INPUT> [OPTIONS]
+Usage: juntei parse-ese srum <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find SRUDB.dat
@@ -59,10 +59,10 @@ Output:
 ```
 
 ```bash
-juntei parse-srum -f SRUDB.dat -r SOFTWARE -o srum-csv
-juntei parse-srum -f SRUDB.dat -t jsonl \
+juntei parse-ese srum -f SRUDB.dat -r SOFTWARE -o srum-csv
+juntei parse-ese srum -f SRUDB.dat -t jsonl \
   | jq 'select(.Provider == "NetworkUsages" and (.BytesSent // 0) > 100000000)'
-juntei parse-srum -f SRUDB.dat -t jsonl --include-value-state \
+juntei parse-ese srum -f SRUDB.dat -t jsonl --include-value-state \
   | jq '{Provider, Timestamp, _value_state, _raw}'
 ```
 
