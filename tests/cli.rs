@@ -7734,3 +7734,76 @@ fn registry_output_never_overwrites_a_file_read() {
     assert_eq!(r.code, 0, "{}{}", r.stdout, r.stderr);
     assert!(std::fs::read_to_string(&out).unwrap().starts_with("Host,"));
 }
+
+/// A write-only input can't be opened to tell what it is, yet could be truncated: it is told
+/// apart without opening it, and an output that can't be told apart is not written.
+#[cfg(unix)]
+#[test]
+fn registry_output_never_overwrites_a_write_only_input() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    persistence_collection(dir.path());
+    let software = dir.path().join("C/Windows/System32/config/SOFTWARE");
+    let hard_link = dir.path().join("hard.csv");
+    std::fs::hard_link(&software, &hard_link).unwrap();
+    let original = std::fs::read(&software).unwrap();
+    let set_mode = |path: &Path, mode: u32| {
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode)).unwrap();
+    };
+    let software_s = software.to_str().unwrap();
+    set_mode(&software, 0o200);
+    let mut said = Vec::new();
+    for out in [&software, &hard_link] {
+        let r = run(&[
+            "parse-registry",
+            "persistence",
+            "-f",
+            software_s,
+            "-o",
+            out.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        said.push((r.code, format!("{}{}", r.stdout, r.stderr)));
+    }
+    set_mode(&software, 0o600);
+    assert_eq!(std::fs::read(&software).unwrap(), original);
+    for (code, said) in said {
+        assert_eq!(code, 1, "{said}");
+        assert!(
+            said.contains("The output file is also an input file and cannot be overwritten"),
+            "{said}"
+        );
+    }
+
+    // an output whose identity can't be read (its directory can't be searched) is not written
+    let locked = dir.path().join("locked");
+    std::fs::create_dir(&locked).unwrap();
+    let out = locked.join("out.csv");
+    std::fs::write(&out, b"kept").unwrap();
+    set_mode(&locked, 0o600);
+    // root can search it anyway: nothing to test then
+    let privileged = std::fs::metadata(&out).is_ok();
+    let r = run(&[
+        "parse-registry",
+        "persistence",
+        "-f",
+        software_s,
+        "-o",
+        out.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    set_mode(&locked, 0o700);
+    if !privileged {
+        let said = format!("{}{}", r.stdout, r.stderr);
+        assert_eq!(r.code, 1, "{said}");
+        assert!(
+            said.contains("Could not tell whether the output file"),
+            "{said}"
+        );
+        assert_eq!(std::fs::read(&out).unwrap(), b"kept");
+    }
+}

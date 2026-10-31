@@ -398,10 +398,72 @@ pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
     read
 }
 
+/// What tells files apart: the same for every path, symbolic link or hard link to one file. On
+/// Unix the device and inode `stat` gives, which needs no permission on the file itself (opening
+/// it would: a write-only file couldn't be told apart, yet could be truncated); on Windows
+/// `same_file`'s handle, opened without asking for access.
+#[cfg(unix)]
+type Identity = (u64, u64);
+#[cfg(not(unix))]
+type Identity = same_file::Handle;
+
+#[cfg(unix)]
+fn identity(path: &Path) -> io::Result<Identity> {
+    use std::os::unix::fs::MetadataExt;
+    let meta = std::fs::metadata(path)?;
+    Ok((meta.dev(), meta.ino()))
+}
+
+#[cfg(not(unix))]
+fn identity(path: &Path) -> io::Result<Identity> {
+    same_file::Handle::from_path(path)
+}
+
+/// An error when the output file `path` is one of the files `reads` gives, or when that can't be
+/// told (fail closed: it is not overwritten). A file that isn't there can't be one of them.
+fn check_not_read(path: &Path, reads: impl FnOnce() -> Vec<PathBuf>) -> Result<(), String> {
+    let unsure = |of: &Path, e: &io::Error| {
+        format!(
+            "Could not tell whether the output file {} is the input file {}, so it is not overwritten: {e}",
+            path.display(),
+            of.display()
+        )
+    };
+    let out = match identity(path) {
+        Ok(out) => out,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(e) => {
+            return Err(format!(
+                "Could not tell whether the output file {} is one of the input files, so it is not overwritten: {e}",
+                path.display()
+            ));
+        }
+    };
+    for input in reads() {
+        match identity(&input) {
+            Ok(id) if id == out => {
+                let also = if input == path {
+                    String::new()
+                } else {
+                    format!(" (the same file as {})", input.display())
+                };
+                return Err(format!(
+                    "The output file is also an input file and cannot be overwritten: {}{also}",
+                    path.display()
+                ));
+            }
+            Ok(_) => {}
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {}
+            Err(e) => return Err(unsure(&input, &e)),
+        }
+    }
+    Ok(())
+}
+
 /// Where the records go: the file of `-o` (created, with its directory), stdout (`-t` without
 /// `-o`), or nowhere (the summary only). An existing `-o` that is one of the files `reads` gives
-/// (the same file by path, symbolic link or hard link) is refused, even with `-C`, before
-/// anything is written.
+/// (the same file by path, symbolic link or hard link), or that can't be told apart from them, is
+/// refused, even with `-C`, before anything is written.
 pub fn sink(
     output: Option<&PathBuf>,
     clobber: bool,
@@ -411,21 +473,7 @@ pub fn sink(
     let Some(path) = output else {
         return Ok(data_on_stdout.then(|| Box::new(BufWriter::new(io::stdout())) as Box<dyn Write>));
     };
-    if let Ok(out) = same_file::Handle::from_path(path)
-        && let Some(input) = reads()
-            .into_iter()
-            .find(|r| same_file::Handle::from_path(r).is_ok_and(|h| h == out))
-    {
-        let also = if input == *path {
-            String::new()
-        } else {
-            format!(" (the same file as {})", input.display())
-        };
-        return Err(format!(
-            "The output file is also an input file and cannot be overwritten: {}{also}",
-            path.display()
-        ));
-    }
+    check_not_read(path, reads)?;
     check_output(path, false, clobber)?;
     if let Some(parent) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)

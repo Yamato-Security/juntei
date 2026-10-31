@@ -85,7 +85,7 @@ classes and commands that override the machine's.
 
 Like every `parse-registry` command, it refuses an `-o` that is one of the files it reads, even
 with `-C`. That covers the hive, its transaction logs, and the system's SYSTEM and SOFTWARE hives,
-by path, symbolic link or hard link.
+by path, symbolic link or hard link. When it can't tell, it doesn't write.
 
 ## Output fields
 
