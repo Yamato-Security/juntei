@@ -7,6 +7,7 @@ Run `juntei --help` for the current list and `juntei <COMMAND> --help` for one c
 | `auto-parse` | Multi-computer Windows evidence collection | [Automatic Collection Parsing](auto-parse.md) |
 | `parse-amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
 | `parse-mft` | NTFS `$MFT` | [Master File Table](../artifacts/mft.md) |
+| `parse-logfile` | NTFS `$LogFile` | [NTFS Transaction Log](../artifacts/logfile.md) |
 | `parse-prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 | `parse-usn-journal` | `$UsnJrnl:$J` | [USN Journal](../artifacts/usn-journal.md) |
 | `parse-i30` | `$I30` (`$INDEX_ALLOCATION`), or a disk image | [Directory Indexes ($I30)](../artifacts/i30.md) |

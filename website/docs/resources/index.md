@@ -21,6 +21,8 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 - [Omer Ben-Amram's mft parser](https://github.com/omerbenamram/mft)
 - [dfir_ntfs](https://github.com/msuhanov/dfir_ntfs) — NTFS parser with INDX record and index-slack carving.
 - [INDXRipper](https://github.com/harelsegev/INDXRipper) — carves `$I30` slack for file names.
+- [LogFileParser](https://github.com/jschicht/LogFileParser) — detailed NTFS transaction-log research and parsing.
+- [ntfs-linker](https://github.com/strozfriedberg/ntfs-linker) — correlates `$LogFile`, `$MFT`, and USN history.
 
 ## Execution and inventory artifacts
 
@@ -63,6 +65,7 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
 - [ys-mft-parser](https://github.com/Yamato-Security/ys-mft-parser)
+- [ys-logfile-parser](https://github.com/Yamato-Security/ys-logfile-parser)
 - [ys-prefetch-parser](https://github.com/Yamato-Security/ys-prefetch-parser)
 - [ys-usn-journal-parser](https://github.com/Yamato-Security/ys-usn-journal-parser)
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)

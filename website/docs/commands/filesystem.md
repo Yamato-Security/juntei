@@ -72,6 +72,49 @@ juntei parse-usn-journal -f unallocated.bin --carve -o carved.csv
 
 See [USN Journal](../artifacts/usn-journal.md).
 
+## `parse-logfile`
+
+```text
+Usage:
+  juntei parse-logfile <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find $LogFile, LogFile, $LogFile.bin or volume_$LogFile exports
+  -f, --file <FILE>      One NTFS $LogFile (any filename)
+  -m, --mft <FILE>       Same volume's $MFT for current paths; requires -f
+                        Default: adjacent MFT with the same volume prefix
+
+Parsing:
+      --cluster-size <BYTES>  Volume cluster size; otherwise from checkpoints or inferred
+      --record-size <BYTES>   MFT record size (default: 1024)
+
+Output:
+      --raw-data              Include redo, undo and unknown client data as hex
+  -o, --output <FILE>          Save every log record to one file
+  -t, --output-type <TYPE>     csv (default), json, jsonl; with -t and no -o, write data to stdout
+  -C, --clobber                Overwrite existing output files
+
+General Options:
+  -h, --help      Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Do not display the launch banner
+```
+
+```bash
+juntei parse-logfile -f '$LogFile' -o logfile.csv
+juntei parse-logfile -f '$LogFile' -m '$MFT' -o logfile.jsonl -t jsonl
+juntei parse-logfile -d evidence -o all-logs.csv
+juntei parse-logfile -f '$LogFile' --raw-data -t jsonl
+```
+
+Directory mode combines inputs with `SourceFile` on every record. LSN order is per input, not
+across volumes. The command reads one whole log into memory at a time. `auto-parse` instead writes
+`<COMPUTER>/logfile.csv` (or JSON/JSONL), with numbered files when a computer has multiple volumes.
+
+See [NTFS Transaction Log](../artifacts/logfile.md) for field meanings and forensic limitations.
+
 ## `parse-i30`
 
 ```text
