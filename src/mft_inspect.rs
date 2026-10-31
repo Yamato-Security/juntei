@@ -104,7 +104,8 @@ fn dump_entry(parser: &mut MftParser<BufReader<File>>, spec: EntrySpec) -> Resul
     }
     let full_path = parser.get_full_path_for_entry(&entry).ok().flatten();
     let names = NamesInUse::of(parser);
-    let mut slack = mft_csv::slack_names(&entry, spec.entry);
+    let found = mft_csv::slack_names(&entry, spec.entry);
+    let mut slack = found.clone().unwrap_or_default();
     for name in &mut slack {
         name.copy_of_entry_in_use = names.has(name);
     }
@@ -182,12 +183,19 @@ fn dump_entry(parser: &mut MftParser<BufReader<File>>, spec: EntrySpec) -> Resul
             None => "not applied (not a FILE record)",
         }
     );
-    let _ = writeln!(
-        out,
-        "  Names in slack:     {} ({} that no file in use has)",
-        slack.len(),
-        slack.iter().filter(|n| !n.copy_of_entry_in_use).count()
-    );
+    match &found {
+        Ok(_) => {
+            let _ = writeln!(
+                out,
+                "  Names in slack:     {} ({} that no file in use has)",
+                slack.len(),
+                slack.iter().filter(|n| !n.copy_of_entry_in_use).count()
+            );
+        }
+        Err(e) => {
+            let _ = writeln!(out, "  Names in slack:     not read: {e}");
+        }
+    }
     let _ = writeln!(out);
     let _ = writeln!(
         out,
@@ -197,6 +205,7 @@ fn dump_entry(parser: &mut MftParser<BufReader<File>>, spec: EntrySpec) -> Resul
         full_path,
         entry: &entry,
         slack_file_names: Some(slack),
+        slack_problem: found.err(),
     };
     let _ = writeln!(
         out,

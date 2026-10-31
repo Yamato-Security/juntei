@@ -329,13 +329,17 @@ fn parse_one(
                 extract_resident_streams(&entry, &extensions, &path.to_string_lossy(), dir)?;
         }
         let slack = names_in_use.as_ref().map(|names| {
-            let mut found = crate::mft_csv::slack_names(&entry, id);
-            for name in &mut found {
+            let found = crate::mft_csv::slack_names(&entry, id);
+            let mut names_found = found.clone().unwrap_or_default();
+            for name in &mut names_found {
                 name.copy_of_entry_in_use = names.has(name);
             }
-            stats.slack += found.len() as u64;
-            stats.slack_copies += found.iter().filter(|n| n.copy_of_entry_in_use).count() as u64;
-            found
+            stats.slack += names_found.len() as u64;
+            stats.slack_copies += names_found
+                .iter()
+                .filter(|n| n.copy_of_entry_in_use)
+                .count() as u64;
+            (names_found, found.err())
         });
         if let Some(w) = writer.as_deref_mut() {
             w.write(&entry, full_path, &row, slack)?;
@@ -404,12 +408,17 @@ impl EntryWriter {
         entry: &MftEntry,
         full_path: Option<PathBuf>,
         row: &FlatMftEntryWithName,
-        slack_file_names: Option<Vec<crate::mft_csv::SlackName>>,
+        slack: Option<(Vec<crate::mft_csv::SlackName>, Option<String>)>,
     ) -> io::Result<()> {
+        let (slack_file_names, slack_problem) = match slack {
+            Some((names, problem)) => (Some(names), problem),
+            None => (None, None),
+        };
         let json = JsonEntry {
             full_path,
             entry,
             slack_file_names,
+            slack_problem,
         };
         match self {
             EntryWriter::Csv(_) => Ok(()),
@@ -434,7 +443,8 @@ impl EntryWriter {
 }
 
 /// One JSON entry as `ys-mft-parser` writes it: the entry with its full path (`\` separators);
-/// with `--recover-slack`, the file names in its slack (their offsets in the $MFT).
+/// with `--recover-slack`, the file names in its slack (their offsets in the $MFT), or why its
+/// slack was not read.
 #[derive(Serialize)]
 pub(crate) struct JsonEntry<'a> {
     #[serde(serialize_with = "mft::serialize_option_windows_path")]
@@ -443,6 +453,9 @@ pub(crate) struct JsonEntry<'a> {
     pub(crate) entry: &'a MftEntry,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) slack_file_names: Option<Vec<crate::mft_csv::SlackName>>,
+    /// Why the record's slack was not read: its sizes and attributes don't say where it starts.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) slack_problem: Option<String>,
 }
 
 /// Whether `entry` is one of the extension records that its base entry's `$ATTRIBUTE_LIST` leads

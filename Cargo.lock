@@ -1300,7 +1300,7 @@ dependencies = [
 [[package]]
 name = "ys-mft-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-mft-parser?branch=ys%2Ffile-record-slack#e714b41cbf0d2b2ac8da8db0de1f279238f1d6cf"
+source = "git+https://github.com/Yamato-Security/ys-mft-parser?branch=ys%2Ffile-record-slack#a41ffb39e44c9e63152cf8610dda145f3a5c3aed"
 dependencies = [
  "bitflags 2.13.2",
  "byteorder",

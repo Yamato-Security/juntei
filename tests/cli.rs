@@ -1158,6 +1158,119 @@ fn mft_recover_slack() {
     );
 }
 
+/// The test $MFT with `change` applied, in `dir`.
+fn changed_mft(dir: &Path, name: &str, change: impl Fn(&mut Vec<u8>)) -> std::path::PathBuf {
+    let mut data = std::fs::read(MFT).unwrap();
+    change(&mut data);
+    let path = dir.join(name);
+    std::fs::write(&path, data).unwrap();
+    path
+}
+
+#[test]
+fn mft_slack_provenance_and_damage() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("mft.csv");
+    let export = |mft: &Path, extra: &[&str]| {
+        let mut args = vec![
+            "parse-mft",
+            "-f",
+            mft.to_str().unwrap(),
+            "-x",
+            "-o",
+            out.to_str().unwrap(),
+            "-C",
+            "-K",
+        ];
+        args.extend_from_slice(extra);
+        let r = run(&args);
+        assert_eq!(r.code, 0, "{}", r.stdout);
+        csv_rows(&out).1
+    };
+    let slack = |rows: &[std::collections::HashMap<String, String>], name: &str| {
+        rows.iter()
+            .find(|r| r["FromSlack"] == "True" && r["FileName"] == name)
+            .cloned()
+            .unwrap()
+    };
+
+    // The names in an extension record's slack keep that record as their source, not its base.
+    let extension = changed_mft(dir.path(), "extension.MFT", |d| {
+        d[28 * 1024 + 0x20..28 * 1024 + 0x28].copy_from_slice(&(5u64 | 5 << 48).to_le_bytes());
+    });
+    let rows = export(&extension, &[]);
+    for (name, offset) in [("setuperr.log", "29208"), ("twunk_32.exe", "29328")] {
+        let row = slack(&rows, name);
+        assert_eq!(
+            (row["SlackRecord"].as_str(), row["SlackOffset"].as_str()),
+            ("28", offset),
+            "{name}"
+        );
+    }
+
+    // A record written in part: its slack rows say so too.
+    let torn = changed_mft(dir.path(), "torn.MFT", |d| d[28 * 1024 + 510] ^= 0xFF);
+    let rows = export(&torn, &["-r", "28"]);
+    for name in ["setuperr.log", "twunk_32.exe"] {
+        assert!(
+            slack(&rows, name)["ParseErrors"].contains("fixup values do not match"),
+            "{name}"
+        );
+    }
+
+    // A size in use of zero: the record's own attributes are not slack, and its row says why its
+    // slack was not read.
+    let zeroed = changed_mft(dir.path(), "zeroed.MFT", |d| {
+        d[209 * 1024 + 0x18..209 * 1024 + 0x1C].copy_from_slice(&0u32.to_le_bytes());
+    });
+    let rows = export(&zeroed, &["-r", "209"]);
+    let ini: Vec<_> = rows
+        .iter()
+        .filter(|r| r["FileName"] == "system.ini")
+        .collect();
+    assert_eq!(ini.len(), 1, "no recovered copy of the live name");
+    assert_eq!(ini[0]["FromSlack"], "False");
+    assert!(
+        ini[0]["ParseErrors"]
+            .contains("slack not read: its size in use (0x0) ends before its attributes do"),
+        "{}",
+        ini[0]["ParseErrors"]
+    );
+    let r = run(&[
+        "parse-mft",
+        "-f",
+        zeroed.to_str().unwrap(),
+        "-x",
+        "-t",
+        "jsonl",
+        "-r",
+        "209",
+    ]);
+    let entry: serde_json::Value = serde_json::from_str(r.stdout.lines().next().unwrap()).unwrap();
+    assert_eq!(entry["slack_file_names"], serde_json::json!([]));
+    assert!(
+        entry["slack_problem"]
+            .as_str()
+            .unwrap()
+            .starts_with("its size in use (0x0)")
+    );
+    let r = run(&[
+        "parse-mft",
+        "-f",
+        zeroed.to_str().unwrap(),
+        "-D",
+        "209",
+        "-K",
+        "-q",
+    ]);
+    assert!(
+        r.stdout
+            .contains("Names in slack:     not read: its size in use (0x0)"),
+        "{}",
+        r.stdout
+    );
+}
+
 #[test]
 fn mft_resident_data() {
     let help = run(&["parse-mft", "-h", "-K"]);

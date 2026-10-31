@@ -257,12 +257,25 @@ struct Record {
     base: (u64, u16),
     attrs: Vec<Attr>,
     errors: Vec<String>,
-    /// With `--recover-slack`: the file names left in its slack, their offsets in the $MFT.
-    slack: Vec<SlackName>,
+    /// With `--recover-slack`: the file names left in its slack (and, once merged, in its
+    /// extension records').
+    slack: Vec<Slack>,
 }
 
 /// A file name found in the slack of a FILE record.
 pub type SlackName = mft_slack::i30::IndexEntry;
+
+/// A file name found in slack, with where it was found.
+#[derive(Clone, Debug)]
+struct Slack {
+    /// The FILE record whose slack held it (an extension record's own number, after merging).
+    record: u64,
+    /// The name, its offset in the $MFT.
+    name: SlackName,
+    /// That record's problems (a sector written in part, damaged attributes), which concern
+    /// the bytes the name was read from.
+    problems: String,
+}
 
 /// What [`Record::of`] keeps besides what every row needs.
 #[derive(Clone, Copy, Debug, Default)]
@@ -283,19 +296,16 @@ impl Keep {
 }
 
 /// The file names left in the slack of `entry` (its bytes past the size in use, up to its
-/// allocated size), at its `position` in the $MFT: their offsets are in the $MFT.
-pub fn slack_names(entry: &MftEntry, position: u64) -> Vec<SlackName> {
-    let size = entry.data.len();
-    let start = entry.header.used_entry_size as usize;
-    let end = (entry.header.total_entry_size as usize).min(size);
-    entry
-        .data
-        .get(start..end)
-        .map(|slack| {
-            let offset = position.saturating_mul(size as u64) + start as u64;
-            mft_slack::i30::slack_entries_in(slack, offset)
-        })
-        .unwrap_or_default()
+/// allocated size), at its `position` in the $MFT: their offsets are in the $MFT. An error when
+/// the record's sizes and attributes don't say where its slack starts (ys-mft-parser's
+/// `slack_bounds`): its bytes in use are never taken for slack.
+pub fn slack_names(entry: &MftEntry, position: u64) -> Result<Vec<SlackName>, String> {
+    let (start, end) = mft_slack::entry::slack_bounds(&entry.data)?;
+    let offset = position.saturating_mul(entry.data.len() as u64) + start as u64;
+    Ok(mft_slack::i30::slack_entries_in(
+        &entry.data[start..end],
+        offset,
+    ))
 }
 
 impl Record {
@@ -324,11 +334,7 @@ impl Record {
             ),
             attrs: Vec::new(),
             errors: Vec::new(),
-            slack: if keep.slack {
-                slack_names(entry, position)
-            } else {
-                Vec::new()
-            },
+            slack: Vec::new(),
         };
         if entry.valid_fixup == Some(false) {
             record.errors.push("fixup values do not match".to_string());
@@ -394,6 +400,23 @@ impl Record {
                     attribute_name(header.type_code),
                     header.start_offset
                 )),
+            }
+        }
+        if keep.slack {
+            match slack_names(entry, position) {
+                Ok(names) => {
+                    // The record's problems so far concern the bytes the names come from.
+                    let problems = record.errors.join("; ");
+                    record.slack = names
+                        .into_iter()
+                        .map(|name| Slack {
+                            record: number,
+                            name,
+                            problems: problems.clone(),
+                        })
+                        .collect();
+                }
+                Err(e) => record.errors.push(format!("slack not read: {e}")),
             }
         }
         Some(record)
@@ -1364,7 +1387,7 @@ fn finish_row(
     row: &mut Vec<String>,
     resident: Option<[String; 3]>,
     options: &Options,
-    slack: Option<(&Record, &SlackName, bool)>,
+    slack: Option<(&Slack, bool)>,
 ) {
     if options.resident.is_some() {
         let errors = row.len() - 1;
@@ -1372,10 +1395,10 @@ fn finish_row(
     }
     if options.recover_slack {
         match slack {
-            Some((record, found, copy)) => row.extend([
+            Some((slack, copy)) => row.extend([
                 flag(true).to_string(),
-                record.entry.to_string(),
-                found.offset.to_string(),
+                slack.record.to_string(),
+                slack.name.offset.to_string(),
                 flag(copy).to_string(),
             ]),
             None => row.extend([
@@ -1438,7 +1461,8 @@ fn slack_rows(
     options: &Options,
 ) -> Vec<(Vec<String>, bool)> {
     let mut rows = Vec::new();
-    for found in &record.slack {
+    for slack in &record.slack {
+        let found = &slack.name;
         let time = |raw: u64| filetime(raw as i64);
         if let Some(cutoff) = options.cutoff
             && !(time(found.created).is_some_and(|t| t >= cutoff)
@@ -1490,9 +1514,9 @@ fn slack_rows(
             String::new(),
             String::new(),
             source.to_string(),
-            String::new(),
+            slack.problems.clone(),
         ];
-        finish_row(&mut row, None, options, Some((record, found, copy)));
+        finish_row(&mut row, None, options, Some((slack, copy)));
         rows.push((row, copy));
     }
     rows

@@ -40,7 +40,9 @@ and volume metadata when possible.
 - A FILE record's **slack** (its bytes past the size in use) can keep names it held before: the
   index entries of a small directory whose index moved to an index allocation (most of them are
   still in use there), an earlier name, or a reused record's previous occupant. Recovered names
-  have no `$STANDARD_INFORMATION`, and a name's entry header may have been written over.
+  have no `$STANDARD_INFORMATION`, and a name's entry header may have been written over. When a
+  record's size in use or attributes don't say where its slack starts, nothing is recovered from it
+  and its row's `ParseErrors` says `slack not read` and why.
 
 ## Parse with Juntei
 
@@ -129,7 +131,7 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | With `-i`: the content of the row's resident `$DATA` (the file's, or the alternate data stream's), as Base64, as bytes (`41-42`), and as text when it is printable ASCII. Empty when the data is non-resident or filtered out by `-E`/`-M`. |
 | `ParseErrors` | Damage or unsupported relationships affecting this row. Never discard this column during filtering. |
 | `FromSlack` | With `-x`: `True` for a name recovered from the slack of a FILE record. Its `EntryNumber` and `SequenceNumber` are the file the name pointed to (empty when its entry header was written over), its `$FILE_NAME` times are in the `0x30` columns, and `InUse` is `False`. |
-| `SlackRecord`, `SlackOffset` | With `-x`: the FILE record whose slack held the name, and its byte offset in the `$MFT`. |
+| `SlackRecord`, `SlackOffset` | With `-x`: the FILE record whose slack held the name (an extension record's own number, even though its names are listed with its base record), and the name's byte offset in the `$MFT`. A slack row's `ParseErrors` are that record's problems, such as `fixup values do not match`: the recovered bytes may be affected. |
 | `CopyOfEntryInUse` | With `-x`: a file in use still has this name in the same directory (and is the same file, when the reference survived). Names that no file in use has are the interesting ones: deleted, renamed, or a reused record's previous occupant. |
 
 `-t ys-mft-parser-csv` uses the maintained parser's entry-oriented schema. JSON/JSONL retains every
