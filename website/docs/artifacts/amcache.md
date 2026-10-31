@@ -20,7 +20,7 @@ device. An executable record is **evidence of presence, not proof of execution**
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-Collect the hive from the affected installation. `parse-amcache` currently parses the primary
+Collect the hive from the affected installation. `parse-registry amcache` currently parses the primary
 hive but does **not** replay adjacent Amcache transaction logs, so records present only in those
 logs may be missing from a live or inconsistent collection. Note that limitation in the report.
 
@@ -38,7 +38,7 @@ logs may be missing from a live or inconsistent collection. Note that limitation
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-amcache <INPUT> [OPTIONS]
+Usage: juntei parse-registry amcache <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find Amcache hives
@@ -56,17 +56,19 @@ Output:
 
 ```bash
 # Inspect the summary and findings
-juntei parse-amcache -f Amcache.hve
+juntei parse-registry amcache -f Amcache.hve
 
 # Save all record types as CSV tables
-juntei parse-amcache -f Amcache.hve -a -o amcache-output
+juntei parse-registry amcache -f Amcache.hve -a -o amcache-output
 
 # Hunt for one SHA-1 in JSONL
-juntei parse-amcache -f Amcache.hve -t jsonl \
+juntei parse-registry amcache -f Amcache.hve -t jsonl \
   | jq 'select(.record_type == "file" and .sha1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
-CSV output contains summary, findings, files, and devices tables. JSONL records use
+CSV output contains summary, findings, files, and devices tables. With `auto-parse`, these are
+`Summary.csv`, `Findings.csv`, `Files.csv`, and `Devices.csv` under each computer's
+`file_existence/amcache/` directory, with `Amcache-logs.txt` beside that directory. JSONL records use
 `record_type` values `summary`, `finding`, `file`, and `device`.
 
 ## File output fields

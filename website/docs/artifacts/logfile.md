@@ -67,22 +67,22 @@ evidence that it never happened.
 
 ```bash
 # Single log, current paths from an adjacent $MFT when present
-juntei parse-logfile -f '$LogFile' -o logfile.csv
+juntei parse-ntfs logfile -f '$LogFile' -o logfile.csv
 
 # Explicit MFT from the SAME volume
-juntei parse-logfile -f '$LogFile' -m '$MFT' -t jsonl -o logfile.jsonl
+juntei parse-ntfs logfile -f '$LogFile' -m '$MFT' -t jsonl -o logfile.jsonl
 
 # Multiple collected logs; SourceFile distinguishes every input
-juntei parse-logfile -d evidence -o collected-logs.csv
+juntei parse-ntfs logfile -d evidence -o collected-logs.csv
 
 # Preserve the underlying payloads for low-level validation
-juntei parse-logfile -f '$LogFile' --raw-data -t jsonl -o logfile-raw.jsonl
+juntei parse-ntfs logfile -f '$LogFile' --raw-data -t jsonl -o logfile-raw.jsonl
 
 # Automatic per-computer output
 juntei auto-parse -d evidence -o parsed
 ```
 
-See the [command reference](../commands/filesystem.md#parse-logfile) for all options. Directory
+See the [command reference](../commands/filesystem.md#parse-ntfs-logfile) for all options. Directory
 discovery accepts `$LogFile`, `LogFile`, their `.bin` forms, and names such as `C_$LogFile` or
 `C_$LogFile.bin`, ignoring case. A single file passed with `-f` can have any name.
 
@@ -215,7 +215,7 @@ jq 'select(any(.RedoFileNames[]?, .UndoFileNames[]?;
 This is a filename search, not a complete ransomware detector. To inspect journal payloads,
 export with `--raw-data` and select records with a non-null `JournalWriteOffset`; the `RedoData`
 hex represents bytes written at that offset. Parsing and deduplicating those embedded USN records
-is a separate step. Juntei does not yet merge them with `parse-usn-journal` output.
+is a separate step. Juntei does not yet merge them with `parse-ntfs usn-journal` output.
 
 ## Further Details
 

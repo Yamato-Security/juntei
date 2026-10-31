@@ -8,7 +8,7 @@ SHA-1 names as Defender writes them; dissect.target's quarantine reader reads th
 it. The threat names, paths and identifiers are made up, and the quarantined "file" is a line of
 text: nothing here is malware.
 
-| File | What it is | Expected (`parse-defender-quarantine`) |
+| File | What it is | Expected (`parse-file defender-quarantine`) |
 | --- | --- | --- |
 | `Entries/{80012345-0000-0000-1A2B-3C4D5E6F7081}` | an entry: `HackTool:Win32/Example!MSR`, one file | `C:\Users\alice\Downloads\tool\tool.exe`, 61 bytes, owner `S-1-5-21-1111-2222-3333-1001`, `ZoneId` 3, `HostUrl` `https://example.com/tool.zip`, SHA-256 `828804761c959b70327e6b05c4cab83c30aafdcc193bc29209d41b15e6d9c358` |
 | `ResourceData/AA/AAB535B2BF6E319A41A914FDF71F7509D42E847F`, `Resources/AA/…` | that file's content (its security descriptor, data and `Zone.Identifier` stream) and its resource record | |

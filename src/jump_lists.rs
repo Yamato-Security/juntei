@@ -1,4 +1,4 @@
-//! `parse-jump-lists`: Windows jump lists with Yamato Security's ys-jump-lists-parser (from
+//! `parse-file jump-lists`: Windows jump lists with Yamato Security's ys-jump-lists-parser (from
 //! sootmark-shell's jump list and compound file code, with links read by ys-lnk-parser). An
 //! automatic jump list (`*.automaticDestinations-ms`) is Windows' own record of what an
 //! application opened: each entry's last use, interaction count, pin, the machine and tracker
@@ -658,7 +658,7 @@ fn write_json(
 ) -> io::Result<()> {
     for r in parsed {
         let v = json_record(r);
-        // JSON: pretty objects separated by newlines, like parse-lnk; JSONL: one per line
+        // JSON: pretty objects separated by newlines, like parse-file lnk; JSONL: one per line
         if output_type == JumpListOutputType::Json {
             serde_json::to_writer_pretty(&mut w, &v)?;
         } else {

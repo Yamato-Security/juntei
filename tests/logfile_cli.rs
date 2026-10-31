@@ -44,7 +44,8 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
     unpack("go-ntfs/LogFile.gz", &input);
     unpack("go-ntfs/MFT.gz", &dir.path().join("$MFT"));
     let args = [
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-f",
         input.to_str().unwrap(),
         "-t",
@@ -130,7 +131,8 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
         }
     }
     let pretty = run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-f",
         input.to_str().unwrap(),
         "-t",
@@ -144,7 +146,8 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
         .collect();
     assert_eq!(pretty, values);
     let csv = run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-f",
         input.to_str().unwrap(),
         "-t",
@@ -174,7 +177,8 @@ fn version_two_log_exposes_journal_writes_and_damage() {
     let input = dir.path().join("$LogFile");
     unpack("museum-win11/LogFile.gz", &input);
     let output = run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-f",
         input.to_str().unwrap(),
         "-t",
@@ -193,7 +197,8 @@ fn version_two_log_exposes_journal_writes_and_damage() {
     data[..4].copy_from_slice(b"BAD!");
     std::fs::write(&input, data).unwrap();
     let damaged = run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-f",
         input.to_str().unwrap(),
         "-t",
@@ -220,7 +225,8 @@ fn current_paths_do_not_follow_a_reused_mft_record_number() {
     bytes[11 * 1024 + 0x10..11 * 1024 + 0x12].copy_from_slice(&12_u16.to_le_bytes());
     std::fs::write(&mft, bytes).unwrap();
     let values = rows(&run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-f",
         input.to_str().unwrap(),
         "-t",
@@ -246,7 +252,8 @@ fn non_utf8_source_paths_do_not_panic() {
     unpack("go-ntfs/LogFile.gz", &nested.join("$LogFile"));
     unpack("go-ntfs/MFT.gz", &nested.join("$MFT"));
     let output = run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-d",
         dir.path().to_str().unwrap(),
         "-t",
@@ -279,7 +286,8 @@ fn discovery_combines_sources_and_distinguishes_unused_from_invalid() {
     unpack("go-ntfs/LogFile.gz", &b.join("c_$logfile.bin"));
     std::fs::write(dir.path().join("LogFile.txt"), b"unrelated").unwrap();
     let values = rows(&run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-d",
         dir.path().to_str().unwrap(),
         "-t",
@@ -295,7 +303,8 @@ fn discovery_combines_sources_and_distinguishes_unused_from_invalid() {
     std::fs::write(&unused, [0xff; 65536]).unwrap();
     assert!(
         rows(&run(&[
-            "parse-logfile",
+            "parse-ntfs",
+            "logfile",
             "-f",
             unused.to_str().unwrap(),
             "-t",
@@ -307,7 +316,8 @@ fn discovery_combines_sources_and_distinguishes_unused_from_invalid() {
         std::fs::write(&unused, data).unwrap();
         assert!(
             !run(&[
-                "parse-logfile",
+                "parse-ntfs",
+                "logfile",
                 "-f",
                 unused.to_str().unwrap(),
                 "-t",
@@ -319,7 +329,8 @@ fn discovery_combines_sources_and_distinguishes_unused_from_invalid() {
     }
     let empty = tempfile::tempdir().unwrap();
     let output = run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-d",
         empty.path().to_str().unwrap(),
         "-t",
@@ -341,7 +352,8 @@ fn prefixed_logs_pair_only_with_their_own_mft() {
     // A plain MFT must not be used for a differently prefixed volume.
     unpack("go-ntfs/MFT.gz", &dir.path().join("$MFT"));
     let output = run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-d",
         dir.path().to_str().unwrap(),
         "-t",
@@ -368,7 +380,8 @@ fn prefixed_logs_pair_only_with_their_own_mft() {
     bytes[11 * 1024 + 0x10..11 * 1024 + 0x12].copy_from_slice(&12_u16.to_le_bytes());
     std::fs::write(&d_mft, bytes).unwrap();
     let values = rows(&run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-d",
         dir.path().to_str().unwrap(),
         "-t",
@@ -388,7 +401,8 @@ fn prefixed_logs_pair_only_with_their_own_mft() {
     let before = std::fs::read(&c_mft).unwrap();
     assert!(
         !run(&[
-            "parse-logfile",
+            "parse-ntfs",
+            "logfile",
             "-f",
             c_log.to_str().unwrap(),
             "-o",
@@ -412,7 +426,8 @@ fn protects_input_mft_and_existing_outputs() {
         let before = std::fs::read(out).unwrap();
         assert!(
             !run(&[
-                "parse-logfile",
+                "parse-ntfs",
+                "logfile",
                 "-f",
                 input.to_str().unwrap(),
                 "-o",
@@ -428,7 +443,8 @@ fn protects_input_mft_and_existing_outputs() {
     std::fs::hard_link(&mft, &alias).unwrap();
     assert!(
         !run(&[
-            "parse-logfile",
+            "parse-ntfs",
+            "logfile",
             "-f",
             input.to_str().unwrap(),
             "-o",
@@ -442,7 +458,8 @@ fn protects_input_mft_and_existing_outputs() {
     std::fs::write(&out, b"keep this").unwrap();
     assert!(
         !run(&[
-            "parse-logfile",
+            "parse-ntfs",
+            "logfile",
             "-f",
             input.to_str().unwrap(),
             "-o",
@@ -454,7 +471,8 @@ fn protects_input_mft_and_existing_outputs() {
     assert_eq!(std::fs::read(&out).unwrap(), b"keep this");
     assert!(
         run(&[
-            "parse-logfile",
+            "parse-ntfs",
+            "logfile",
             "-f",
             input.to_str().unwrap(),
             "-o",
@@ -466,7 +484,8 @@ fn protects_input_mft_and_existing_outputs() {
     );
     assert!(
         !run(&[
-            "parse-logfile",
+            "parse-ntfs",
+            "logfile",
             "-f",
             input.to_str().unwrap(),
             "--cluster-size",
@@ -476,7 +495,8 @@ fn protects_input_mft_and_existing_outputs() {
         .success()
     );
     let override_values = rows(&run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-f",
         input.to_str().unwrap(),
         "--cluster-size",
@@ -494,7 +514,8 @@ fn protects_input_mft_and_existing_outputs() {
     // Broken auxiliary evidence must not discard valid log records or pretend paths loaded.
     std::fs::write(&mft, b"not a valid MFT").unwrap();
     let output = run(&[
-        "parse-logfile",
+        "parse-ntfs",
+        "logfile",
         "-f",
         input.to_str().unwrap(),
         "-t",
@@ -507,7 +528,7 @@ fn protects_input_mft_and_existing_outputs() {
 }
 
 #[test]
-fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
+fn auto_parse_outputs_and_jsonl_timeline_include_logfile_and_provenance() {
     let evidence = tempfile::tempdir().unwrap();
     let host = evidence.path().join("HOST1");
     std::fs::create_dir_all(host.join("C/Windows/System32")).unwrap();
@@ -517,9 +538,10 @@ fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
     // Both collected volumes must survive as separate outputs.
     unpack("go-ntfs/LogFile.gz", &host.join("D/$LogFile"));
     let root = tempfile::tempdir().unwrap();
-    for (format, folder, extra) in [("csv", "csv", vec![]), ("jsonl", "jsonl", vec!["-s"])] {
-        let out = root.path().join(folder);
-        let mut args = vec![
+    for format in ["csv", "json", "jsonl"] {
+        let out = root.path().join(format);
+        let combined = out.join("timeline.jsonl");
+        let args = vec![
             "auto-parse",
             "-d",
             evidence.path().to_str().unwrap(),
@@ -527,12 +549,13 @@ fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
             out.to_str().unwrap(),
             "-t",
             format,
+            "-j",
+            combined.to_str().unwrap(),
             "-T",
             "2",
             "-K",
             "-q",
         ];
-        args.extend(extra);
         let output = run(&args);
         assert!(
             output.status.success(),
@@ -546,23 +569,26 @@ fn auto_parse_csv_and_single_file_jsonl_include_logfile_and_provenance() {
             .as_array()
             .unwrap()
             .iter()
-            .filter(|t| t["artifact"] == "logfile")
+            .filter(|t| t["artifact"] == "logfile" && t["purpose"] == "artifact")
             .collect();
         assert_eq!(tasks.len(), 2);
         assert!(tasks.iter().all(|t| t["status"] == "succeeded"));
-        assert!(out.join("HOST1/logs/logfile.txt").is_file());
+        assert!(tasks.iter().all(|t| t["category"] == "file_system"));
+        assert!(out.join("HOST1/file_system/LogFile-logs.txt").is_file());
+        assert!(out.join("HOST1/file_system/LogFile-2-logs.txt").is_file());
         if format == "csv" {
-            for name in ["logfile.csv", "logfile-2.csv"] {
+            for name in ["LogFile.csv", "LogFile-2.csv"] {
                 assert_eq!(
-                    csv::Reader::from_path(out.join("HOST1").join(name))
+                    csv::Reader::from_path(out.join("HOST1/file_system").join(name))
                         .unwrap()
                         .records()
                         .count(),
                     2129
                 );
             }
-        } else {
-            let data = std::fs::read_to_string(out.join("all-artifacts.jsonl")).unwrap();
+        }
+        {
+            let data = std::fs::read_to_string(combined).unwrap();
             let values: Vec<Value> = data
                 .lines()
                 .map(|l| serde_json::from_str(l).unwrap())

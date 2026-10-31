@@ -40,7 +40,7 @@ the source file's own times and path because location changes interpretation.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-lnk <INPUT> [OPTIONS]
+Usage: juntei parse-file lnk <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find *.lnk
@@ -53,9 +53,9 @@ Output:
 ```
 
 ```bash
-juntei parse-lnk -d evidence/ -o lnk.csv
-juntei parse-lnk -d evidence/ --code-page 932 -o lnk-ja.csv
-juntei parse-lnk -f suspicious.lnk -t jsonl | jq .
+juntei parse-file lnk -d evidence/ -o lnk.csv
+juntei parse-file lnk -d evidence/ --code-page 932 -o lnk-ja.csv
+juntei parse-file lnk -f suspicious.lnk -t jsonl | jq .
 ```
 
 ## CSV output fields

@@ -40,7 +40,7 @@ juntei <COMMAND> -d <COLLECTION> [OPTIONS]
 Display current options rather than copying an old command from a report:
 
 ```bash
-juntei parse-prefetch --help
+juntei parse-file prefetch --help
 juntei parse-registry read --help
 ```
 

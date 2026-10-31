@@ -38,7 +38,7 @@ be compared.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-prefetch <INPUT> [OPTIONS]
+Usage: juntei parse-file prefetch <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find *.pf files
@@ -53,9 +53,9 @@ Output:
 ```
 
 ```bash
-juntei parse-prefetch -d Prefetch/ -o prefetch.csv
-juntei parse-prefetch -d Prefetch/ -T -o prefetch-timeline.csv
-juntei parse-prefetch -d Prefetch/ -t jsonl \
+juntei parse-file prefetch -d Prefetch/ -o prefetch.csv
+juntei parse-file prefetch -d Prefetch/ -T -o prefetch-timeline.csv
+juntei parse-file prefetch -d Prefetch/ -t jsonl \
   | jq 'select(.executable_name? | test("powershell|rundll32"; "i"))'
 ```
 

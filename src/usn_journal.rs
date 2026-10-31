@@ -1,4 +1,4 @@
-//! `parse-usn-journal`: NTFS USN change journal ($UsnJrnl:$J) parsing with Yamato Security's
+//! `parse-ntfs usn-journal`: NTFS USN change journal ($UsnJrnl:$J) parsing with Yamato Security's
 //! ys-usn-journal-parser (a fork of sootmark-usn): every record with the path its directory had
 //! when the record was written (the journal rewound, seeded from the volume's $MFT when one is
 //! found), as CSV columns or every field as JSON / JSONL. `--carve` finds records in
@@ -335,7 +335,7 @@ fn carve_one(
     Ok(())
 }
 
-/// A FILETIME as an RFC 3339 UTC time, like the timestamps of `parse-mft` and `parse-prefetch`;
+/// A FILETIME as an RFC 3339 UTC time, like the timestamps of `parse-ntfs mft` and `parse-file prefetch`;
 /// empty when it is not a time.
 fn filetime(record_time: usn::Filetime) -> String {
     let Some(ticks) = record_time.unix_ticks() else {
@@ -506,7 +506,7 @@ impl RecordWriter {
     }
 }
 
-/// JSON: a pretty object and a newline, like parse-mft; JSONL: one object per line.
+/// JSON: a pretty object and a newline, like parse-ntfs mft; JSONL: one object per line.
 fn write_json(writer: &mut RecordWriter, v: &Value) -> io::Result<()> {
     match writer {
         RecordWriter::Json(w) => {

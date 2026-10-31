@@ -1,4 +1,4 @@
-//! `parse-srum`: Windows System Resource Usage Monitor (`SRUDB.dat`) parsing with Yamato
+//! `parse-ese srum`: Windows System Resource Usage Monitor (`SRUDB.dat`) parsing with Yamato
 //! Security's ys-srum-parser (a fork of Sootmark's ese and srum crates): every entry of every
 //! provider table, with its program, account and network named, as
 //! one CSV table per provider or one JSON object per entry. The volume's SOFTWARE hive, given or

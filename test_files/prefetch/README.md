@@ -4,7 +4,7 @@ From the test sets of [frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefe
 MIT license, Copyright (c) 2024 Samuel Garcés Marín) and [artemis](https://github.com/puffycid/artemis)
 (`forensics/tests/test_data/windows/prefetch/`, MIT license, Copyright (c) 2023 puffyCid).
 
-| File | Source | Format version | Expected (`parse-prefetch`) |
+| File | Source | Format version | Expected (`parse-file prefetch`) |
 | --- | --- | --- | --- |
 | `CMD.EXE-087B4001.pf` | A public Prefetch test set (`TestFiles/XPPro/`, MIT, `LICENSE-test-set.txt`), also in frnsc-prefetch | 17 (Windows XP) | run count 2, 1 run time |
 | `CONSENT.EXE-531BD9EA.pf` | artemis (`win7/`) | 23 (Windows 7) | run count 3, 1 run time, 72 file references |

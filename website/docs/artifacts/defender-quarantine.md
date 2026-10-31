@@ -40,7 +40,7 @@ useful metadata but cannot yield the file bytes or computed hashes.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-defender-quarantine <INPUT> [OPTIONS]
+Usage: juntei parse-file defender-quarantine <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find quarantine folders
@@ -54,12 +54,12 @@ Output:
 ```
 
 ```bash
-juntei parse-defender-quarantine -d evidence/ -o quarantine.csv
-juntei parse-defender-quarantine -d evidence/ -t jsonl \
+juntei parse-file defender-quarantine -d evidence/ -o quarantine.csv
+juntei parse-file defender-quarantine -d evidence/ -t jsonl \
   | jq '{quarantine_time, threat_name, path, sha256, problems}'
 
 # Only in an isolated malware-analysis environment
-juntei parse-defender-quarantine -d evidence/ -o quarantine.csv --extract extracted/
+juntei parse-file defender-quarantine -d evidence/ -o quarantine.csv --extract extracted/
 ```
 
 For example, `tool.exe` becomes `tool.exe.quarantined`. Auxiliary streams include their type in
@@ -109,7 +109,7 @@ not make the bytes safe.
 
 A `.security.quarantined` file contains binary Windows security metadata, so it is not readable in a
 text editor. It is a separate backup stream, not another copy of the executable. Juntei automatically
-decodes it when extracting, with either `parse-defender-quarantine --extract` or `auto-parse -x`:
+decodes it when extracting, with either `parse-file defender-quarantine --extract` or `auto-parse -x`:
 
 ```text
 tool.exe.quarantined              Original file content; treat as malware

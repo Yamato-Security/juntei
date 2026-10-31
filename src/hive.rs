@@ -1,5 +1,5 @@
 //! A small reader of registry hive files (REGF) for the few keys and values Juntei reads from
-//! them (the SOFTWARE hive's account and Wi-Fi names for `parse-srum`). Every offset, count and
+//! them (the SOFTWARE hive's account and Wi-Fi names for `parse-ese srum`). Every offset, count and
 //! length is checked against the file, and the cells read are counted: a damaged or crafted
 //! hive gives errors, never a panic, a hang or an allocation larger than the file.
 

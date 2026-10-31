@@ -1,4 +1,4 @@
-//! `parse-prefetch`: Windows Prefetch parsing with Yamato Security's ys-prefetch-parser (a fork of
+//! `parse-file prefetch`: Windows Prefetch parsing with Yamato Security's ys-prefetch-parser (a fork of
 //! Samuel Garcés Marín's frnsc-prefetch that matches libscca and does not crash on damaged files):
 //! one record per prefetch file, or per execution with `-T`, as CSV, JSON or JSONL, with
 //! Hayabusa's input options, progress bar and results summary. The findings follow
@@ -252,7 +252,7 @@ fn findings(pf: &PrefetchFile) -> Vec<Finding> {
     out
 }
 
-/// A FILETIME as an RFC 3339 UTC time, like the timestamps of `parse-mft`; empty when it is 0.
+/// A FILETIME as an RFC 3339 UTC time, like the timestamps of `parse-ntfs mft`; empty when it is 0.
 fn filetime(ft: u64) -> String {
     if ft == 0 {
         return String::new();
@@ -459,7 +459,7 @@ fn write_records(
         parsed.iter().map(json_record).collect()
     };
     for v in values {
-        // JSON: pretty objects separated by newlines, like parse-mft; JSONL: one per line
+        // JSON: pretty objects separated by newlines, like parse-ntfs mft; JSONL: one per line
         if output_type == PrefetchOutputType::Json {
             serde_json::to_writer_pretty(&mut w, &v)?;
         } else {

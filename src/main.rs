@@ -24,7 +24,7 @@ mod util;
 
 use chrono::Local;
 use clap::{CommandFactory, Parser};
-use cli::{Cli, Commands, RegistryCommands, VERSION};
+use cli::{Cli, Commands, EseCommands, FileCommands, NtfsCommands, RegistryCommands, VERSION};
 use color::JunteiColor::Green;
 use std::env;
 use std::time::Instant;
@@ -49,129 +49,136 @@ fn main() {
             print_elapsed(start, opts.common.no_color);
             code
         }
-        Commands::ParseAmcache(opts) => {
-            // JSON / JSONL on stdout: nothing but the data is printed there
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
+        Commands::ParseNtfs(source) => match &source.cmd {
+            NtfsCommands::Mft(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = mft::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            let code = amcache::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
+            NtfsCommands::UsnJournal(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = usn_journal::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            code
-        }
-        Commands::ParseMft(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            NtfsCommands::Logfile(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = logfile::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            let code = mft::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
+            NtfsCommands::I30(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = i30::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            code
-        }
-        Commands::ParsePrefetch(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
+        },
+        Commands::ParseEse(source) => match &source.cmd {
+            EseCommands::Srum(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = srum::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            let code = prefetch::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
+        },
+        Commands::ParseFile(source) => match &source.cmd {
+            FileCommands::Prefetch(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = prefetch::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            code
-        }
-        Commands::ParseLogfile(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            FileCommands::Lnk(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = lnk::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            let code = logfile::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
+            FileCommands::JumpLists(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = jump_lists::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            code
-        }
-        Commands::ParseI30(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            FileCommands::DefenderQuarantine(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = defender_quarantine::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
             }
-            let code = i30::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
-            }
-            code
-        }
-        Commands::ParseUsnJournal(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
-            }
-            let code = usn_journal::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
-            }
-            code
-        }
-        Commands::ParseSrum(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
-            }
-            let code = srum::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
-            }
-            code
-        }
-        Commands::ParseLnk(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
-            }
-            let code = lnk::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
-            }
-            code
-        }
-        Commands::ParseJumpLists(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
-            }
-            let code = jump_lists::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
-            }
-            code
-        }
-        Commands::ParseDefenderQuarantine(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
-            }
-            let code = defender_quarantine::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
-            }
-            code
-        }
-        Commands::ParseShimcache(opts) => {
-            let data_only = opts.data_on_stdout();
-            if !data_only {
-                display_logo(opts.common.quiet, opts.common.no_color, true, false);
-            }
-            let code = shimcache::run(opts);
-            if !data_only {
-                print_elapsed(start, opts.common.no_color);
-            }
-            code
-        }
+        },
         Commands::ParseRegistry(registry) => match &registry.cmd {
+            RegistryCommands::Amcache(opts) => {
+                // JSON / JSONL on stdout: nothing but the data is printed there
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = amcache::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            RegistryCommands::Shimcache(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = shimcache::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+
             RegistryCommands::Read(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {

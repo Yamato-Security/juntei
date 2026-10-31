@@ -1,4 +1,4 @@
-//! `parse-lnk`: Windows shortcut (`.lnk`) parsing with Yamato Security's ys-lnk-parser (a fork of
+//! `parse-file lnk`: Windows shortcut (`.lnk`) parsing with Yamato Security's ys-lnk-parser (a fork of
 //! sootmark-shell that reads every part of a link and does not crash on damaged ones): one record
 //! per link with what it points at (the target's times, size and attributes when the link was
 //! saved, its path, volume and network share), its arguments, the machine it was made on, and
@@ -302,7 +302,7 @@ fn parse_file(path: &Path, options: &lnk::Options) -> Result<Parsed, String> {
     })
 }
 
-/// The largest FILETIME that is a time: 9999-12-31 23:59:59.9999999 UTC (as in `parse-mft`'s
+/// The largest FILETIME that is a time: 9999-12-31 23:59:59.9999999 UTC (as in `parse-ntfs mft`'s
 /// CSV, and .NET's limit).
 const MAX_FILETIME: u64 = 2_650_467_743_999_999_999;
 
@@ -667,7 +667,7 @@ fn write_records(
     }
     for r in parsed {
         let v = json_record(r);
-        // JSON: pretty objects separated by newlines, like parse-mft; JSONL: one per line
+        // JSON: pretty objects separated by newlines, like parse-ntfs mft; JSONL: one per line
         if output_type == LnkOutputType::Json {
             serde_json::to_writer_pretty(&mut w, &v)?;
         } else {

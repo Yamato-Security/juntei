@@ -1,4 +1,4 @@
-//! `parse-mft`: $MFT parsing with Yamato Security's ys-mft-parser (a fork of Omer Ben-Amram's
+//! `parse-ntfs mft`: $MFT parsing with Yamato Security's ys-mft-parser (a fork of Omer Ben-Amram's
 //! `mft` crate that does not crash on damaged or crafted records): the same CSV rows and JSON
 //! entries as its `ys-mft-parser` command, with Hayabusa's input options, progress bar and results
 //! summary around it.
