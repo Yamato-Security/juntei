@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./art/Juntei_Goddess%20of%20Digital%20Forensics_small.png" alt="Juntei, Goddess of Digital Forensics" width="50%">
+  <img src="./art/Juntei_Goddess%20of%20Digital%20Forensics_small.png" alt="Juntei, Goddess of Digital Forensics" width="65%">
 </p>
 
 # Juntei
@@ -10,7 +10,7 @@ not event logs.
 
 (Juntei is short for Juntei Kannon (准胝観音), or "Pure Avalokitesvara" in English, a bodhisattva
 associated with great compassion. She brings that compassion to your investigations, using her
-18 arms to parse all the Windows DFIR artifacts you need.)
+many arms to parse all the Windows DFIR artifacts you need.)
 
 ## [The Juntei documentation →](https://yamato-security.github.io/juntei/)
 
