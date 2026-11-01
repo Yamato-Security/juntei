@@ -296,6 +296,8 @@ pub(super) fn scheduled(check: &mut Check<'_>) {
                     Identity::Machine
                 } else if !user.is_empty() {
                     Identity::Principal(user)
+                } else if !group.is_empty() {
+                    Identity::Group(group)
                 } else {
                     Identity::Unknown
                 };

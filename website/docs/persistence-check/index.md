@@ -790,14 +790,15 @@ Task Scheduler stores configuration in both XML files and the SOFTWARE hive. Rea
 
 - `Windows\System32\Tasks\<task path>` XML files, including Exec, ComHandler, and available principal fields.
 - Matching user's captured `UsrClass.dat` and NTUSER `Software\Classes`, plus machine SOFTWARE `Classes\CLSID`, in native and 32-bit views.
-- Captured SOFTWARE `ProfileList` and per-user `Volatile Environment` for principal mapping.
+- Captured SOFTWARE `ProfileList` for SID principals. Unique collected `user` or `user.DOMAIN` folder names provide explicitly labeled heuristic matches for named principals; ambiguous matches remain unresolved. Volatile registry keys are not required.
 - Managed `CodeBase` (including version subkeys), AppID associations, and SYSTEM service `ImagePath` for an AppID `LocalService`.
 
 COM server candidates include their registry source in `Description`. Executable-name-only
 AppID associations remain unresolved rather than being assigned a guessed directory. Local
 `file:` URLs are decoded; remote URLs are retained without network access. User class overrides
 are scoped to that profile, and an incomplete user CLSID does not fall through to its shadowed
-machine registration.
+machine registration. Group-only tasks retain machine candidates with the individual-user
+limitation in their description, without adding routine notices to the coverage error summary.
 
 **How to investigate:** Inspect triggers, enabled state, principal, and run history in the source XML and event logs. A created task may never run. An unresolved COM handler is still a candidate, and missing/group-only principal data must not be assumed to mean SYSTEM.
 

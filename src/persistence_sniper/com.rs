@@ -23,6 +23,7 @@ pub(super) enum Identity<'a> {
     Machine,
     User(&'a str),
     Principal(&'a str),
+    Group(&'a str),
     Unknown,
 }
 
@@ -134,8 +135,8 @@ impl Resolution {
     }
 }
 
-/// Resolve a task principal only through collected identity data. A group is not
-/// an individual user, and a similarly named user in another domain is not proof.
+/// Use saved ProfileList data for SIDs and unique captured folder names for
+/// account-name heuristics. Ambiguous candidates are never picked arbitrarily.
 fn principal_user(ctx: &Context, name: &str, out: &mut Resolution) -> Option<String> {
     let mut matches = BTreeSet::new();
     let profiles = ctx
@@ -167,34 +168,56 @@ fn principal_user(ctx: &Context, name: &str, out: &mut Resolution) -> Option<Str
         let (domain, account) = name
             .split_once('\\')
             .map_or((None, name), |(d, a)| (Some(d), a));
-        for h in ctx
-            .hives
-            .iter()
-            .filter(|h| h.kind == "NTUSER.DAT" && !h.user.is_empty())
+        // Volatile Environment is normally memory-only and absent from saved
+        // hives. Profile folder names are usable offline, but are an inference,
+        // not an authoritative domain/account-to-SID mapping.
+        if !account.is_empty()
+            && !account.contains(['\\', '/', '\0'])
+            && domain.is_none_or(|d| !d.is_empty() && !d.contains(['/', '\0']))
         {
-            let recorded_name = out.text(h, "Volatile Environment", "USERNAME");
-            let recorded_domain = out.text(h, "Volatile Environment", "USERDOMAIN");
-            let user_matches = recorded_name
-                .as_deref()
-                .unwrap_or(&h.user)
-                .eq_ignore_ascii_case(account);
-            let domain_matches = domain.is_none_or(|d| {
-                recorded_domain
-                    .as_deref()
-                    .is_some_and(|v| v.eq_ignore_ascii_case(d))
-            });
-            if user_matches && domain_matches {
-                matches.insert(h.user.clone());
-            }
-        }
-        if domain.is_none() {
+            let qualified = domain.map(|domain| format!("{account}.{domain}"));
+            // A .\user principal can also use a user.HOST profile folder. Only
+            // captured host identities are eligible, never the evidence folder.
+            let local_names: Vec<_> = if domain == Some(".") {
+                ctx.host_identities()
+                    .into_iter()
+                    .map(|(n, _)| format!("{account}.{n}"))
+                    .collect()
+            } else {
+                Vec::new()
+            };
             for h in ctx
                 .hives
                 .iter()
-                .filter(|h| h.kind == "USRCLASS.DAT" && h.user.eq_ignore_ascii_case(account))
+                .filter(|h| matches!(h.kind.as_str(), "NTUSER.DAT" | "USRCLASS.DAT"))
             {
-                matches.insert(h.user.clone());
+                if h.user.eq_ignore_ascii_case(account)
+                    || qualified
+                        .as_deref()
+                        .is_some_and(|q| h.user.eq_ignore_ascii_case(q))
+                    || local_names.iter().any(|q| h.user.eq_ignore_ascii_case(q))
+                {
+                    matches.insert(h.user.clone());
+                }
             }
+        }
+        if matches.len() == 1 {
+            let user = matches.first().expect("one matching profile");
+            let qualifier = if let Some(domain) = domain {
+                if domain == "."
+                    || ctx
+                        .host_identities()
+                        .iter()
+                        .any(|(n, _)| n.eq_ignore_ascii_case(domain))
+                {
+                    "qualifier matches a captured host name; account ownership is unverified"
+                } else {
+                    "domain membership and account ownership are unverified"
+                }
+            } else {
+                "account ownership is unverified"
+            };
+            out.notes.push(format!("Principal {name} mapped to collected profile {user} by folder-name heuristic ({qualifier})."));
         }
     }
     if matches.len() == 1 {
@@ -259,6 +282,10 @@ pub(super) fn resolve(ctx: &Context, clsid: &str, identity: Identity<'_>) -> Res
         Identity::Machine => None,
         Identity::User(user) => Some(user.to_string()),
         Identity::Principal(name) => principal_user(ctx, name, &mut out),
+        Identity::Group(group) => {
+            out.notes.push(format!("Group principal {group}: machine COM candidates only; an individual user's overrides cannot be determined from the group alone."));
+            None
+        }
         Identity::Unknown => {
             out.issues.push(
                 "No unambiguous individual task principal; per-user COM lookup unavailable".into(),

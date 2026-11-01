@@ -1247,9 +1247,20 @@ fn task_com_sid_joins_the_correct_profile_and_keeps_architectures_separate() {
     );
 }
 
+fn save_com_user(root: &Path, user: &str, command: &str) {
+    let mut classes = Node::default();
+    classes.text(&format!(r"CLSID\{COM_ID}\InprocServer32"), "", command);
+    let path = root
+        .join("Users")
+        .join(user)
+        .join("AppData/Local/Microsoft/Windows/UsrClass.dat");
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(path, Builder::new().hive(&classes, "USRCLASS.DAT")).unwrap();
+}
+
 #[test]
-fn task_com_domain_identity_never_borrows_a_different_domains_user() {
-    for domain in ["LAB", "OTHER"] {
+fn task_com_qualified_principals_work_without_volatile_hive_data() {
+    for domain in ["HOST", "LAB", "."] {
         let dir = tempfile::tempdir().unwrap();
         let mut sw = Node::default();
         sw.text(
@@ -1257,40 +1268,154 @@ fn task_com_domain_identity_never_borrows_a_different_domains_user() {
             "",
             r"C:\machine.dll",
         );
-        let mut user = Node::default();
-        user.text("Volatile Environment", "USERNAME", "fixture");
-        user.text("Volatile Environment", "USERDOMAIN", "LAB");
-        user.text(
-            &format!(r"Software\Classes\CLSID\{COM_ID}\InprocServer32"),
-            "",
-            r"C:\user.dll",
+        sw.text(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+            "ProfileImagePath",
+            r"C:\Users\fixture",
+        );
+        let mut system = Node::default();
+        system.text(
+            r"ControlSet001\Control\ComputerName\ComputerName",
+            "ComputerName",
+            "HOST",
         );
         save(dir.path(), "SOFTWARE", &sw);
-        save(dir.path(), "NTUSER.DAT", &user);
-        com_task(dir.path(), "Domain", &format!(r"{domain}\fixture"), COM_ID);
+        save(dir.path(), "SYSTEM", &system);
+        save_com_user(dir.path(), "fixture", r"%LOCALAPPDATA%\user.dll");
+        let dll = dir.path().join("Users/fixture/AppData/Local/user.dll");
+        std::fs::write(&dll, b"inert payload marker").unwrap();
+        com_task(
+            dir.path(),
+            "Qualified",
+            &format!(r"{domain}\fixture"),
+            COM_ID,
+        );
         let scan = com_scan(dir.path());
         let row = scan
             .findings
             .iter()
             .find(|f| f.check_id == "scheduled_task_files")
             .unwrap();
+        assert_eq!(row.value, r"%LOCALAPPDATA%\user.dll");
+        assert_eq!(row.exists, Some(true));
+        let mut classified = row.clone();
+        crate::persistence_sniper::profile::Profile::load(None, catalogue())
+            .unwrap()
+            .classify(&mut classified);
         assert_eq!(
-            row.value,
-            if domain == "LAB" {
-                r"C:\user.dll"
-            } else {
-                r"C:\machine.dll"
-            }
+            classified.severity, "MEDIUM",
+            "the user override must survive the default severity threshold"
         );
-        if domain == "OTHER" {
-            assert!(
-                scan.coverage
-                    .iter()
-                    .any(|c| c.check_id == "scheduled_task_files"
-                        && c.status == "partial"
-                        && c.detail.contains("Cannot map principal"))
-            );
+        assert!(row.description.contains("folder-name heuristic"));
+        assert!(
+            !scan
+                .coverage
+                .iter()
+                .any(|c| c.check_id == "scheduled_task_files"
+                    && c.detail.contains("Cannot map principal"))
+        );
+    }
+}
+
+#[test]
+fn task_com_qualified_profile_suffix_does_not_borrow_another_domains_user() {
+    let dir = tempfile::tempdir().unwrap();
+    save(dir.path(), "SOFTWARE", &Node::default());
+    save_com_user(dir.path(), "fixture.LAB", r"C:\lab.dll");
+    save_com_user(dir.path(), "fixture.OTHER", r"C:\other.dll");
+    for domain in ["LAB", "OTHER", "MISSING"] {
+        com_task(dir.path(), domain, &format!(r"{domain}\fixture"), COM_ID);
+    }
+    let scan = com_scan(dir.path());
+    for (domain, dll) in [("LAB", r"C:\lab.dll"), ("OTHER", r"C:\other.dll")] {
+        let row = scan
+            .findings
+            .iter()
+            .find(|f| f.path.ends_with(domain) && f.check_id == "scheduled_task_files")
+            .unwrap();
+        assert_eq!(row.value, dll);
+        assert!(row.description.contains("folder-name heuristic"));
+    }
+    let row = scan
+        .findings
+        .iter()
+        .find(|f| f.path.ends_with("MISSING") && f.check_id == "scheduled_task_files")
+        .unwrap();
+    assert_eq!(row.value, COM_ID);
+    assert_eq!(row.resolution_status, "unresolved_com_class");
+}
+
+#[test]
+fn task_com_qualified_profiles_remain_ambiguous_when_several_names_match() {
+    let dir = tempfile::tempdir().unwrap();
+    save(dir.path(), "SOFTWARE", &Node::default());
+    save_com_user(dir.path(), "fixture", r"C:\unqualified.dll");
+    save_com_user(dir.path(), "fixture.LAB", r"C:\qualified.dll");
+    com_task(dir.path(), "Ambiguous", r"LAB\fixture", COM_ID);
+    let scan = com_scan(dir.path());
+    let row = scan
+        .findings
+        .iter()
+        .find(|f| f.check_id == "scheduled_task_files")
+        .unwrap();
+    assert_eq!(row.value, COM_ID);
+    assert!(
+        scan.coverage
+            .iter()
+            .any(|c| c.check_id == "scheduled_task_files"
+                && c.status == "partial"
+                && c.detail.contains("Cannot map principal"))
+    );
+}
+
+#[test]
+fn group_principal_notices_do_not_hide_malformed_task_evidence() {
+    for damaged in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut sw = Node::default();
+        sw.text(
+            &format!(r"Classes\CLSID\{COM_ID}\InprocServer32"),
+            "",
+            r"C:\group.dll",
+        );
+        save(dir.path(), "SOFTWARE", &sw);
+        let root = dir.path().join("Windows/System32/Tasks");
+        let builtin = root.join("Microsoft/Windows/Builtin");
+        std::fs::create_dir_all(&builtin).unwrap();
+        for n in 0..21 {
+            std::fs::write(builtin.join(format!("Task{n:02}")), format!(r#"<Task><Principals><Principal><GroupId>S-1-5-32-545</GroupId></Principal></Principals><Actions><ComHandler><ClassId>{COM_ID}</ClassId></ComHandler></Actions></Task>"#)).unwrap();
         }
+        if damaged {
+            std::fs::write(root.join("Updater"), "<Task><Actions><Exec>").unwrap();
+        }
+        let scan = com_scan(dir.path());
+        let coverage = scan
+            .coverage
+            .iter()
+            .find(|c| c.check_id == "scheduled_task_files")
+            .unwrap();
+        assert!(
+            !coverage
+                .detail
+                .contains("No unambiguous individual task principal")
+        );
+        if damaged {
+            assert_eq!(coverage.status, "partial");
+            assert!(coverage.detail.contains("Updater"));
+            assert!(coverage.detail.contains("1 issue(s)"));
+        } else {
+            assert_eq!(coverage.status, "complete");
+        }
+        let rows: Vec<_> = scan
+            .findings
+            .iter()
+            .filter(|f| f.check_id == "scheduled_task_files")
+            .collect();
+        assert_eq!(rows.len(), 21);
+        assert!(
+            rows.iter()
+                .all(|f| f.description.contains("individual user unknown"))
+        );
     }
 }
 
