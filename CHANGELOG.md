@@ -14,6 +14,8 @@
 
 - `persistence-hunter`: prevent Unicode registry text from crashing or indefinitely expanding a scan; restrict hive selection to canonical capture locations; retain readable hives and file checks when the input budget is reached; handle captured/original drive labels and DNS/NetBIOS host aliases; bound PE resource traversal; retain accessibility replacement candidates with damaged metadata and recover malformed registry/BITS text; classify OS-directory targets after resolution. (@YamatoSecurity)
 
+- `persistence-hunter`: retain recovered service DLL payloads, match installation events using same-state display names, and keep key-only recovery origins as provenance without duplicate empty rows. Partial allow matches do not raise informational candidates' severity. (@YamatoSecurity)
+
 **New Features:**
 
 - Rename the persistence command to `persistence-hunter` and its Rust module to `persistence_hunter`. Automatic parsing saves the hunter's findings as `PersistenceHunter.csv` (or JSON/JSONL) with matching log names; simplify the progress message and update the website terminology. (@YamatoSecurity)

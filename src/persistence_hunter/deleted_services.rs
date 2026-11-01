@@ -14,7 +14,26 @@ struct Snapshot {
     fields: BTreeMap<String, String>,
     ambiguous: bool,
 }
-fn service(path: &str) -> Option<(&str, &str)> {
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PayloadKind {
+    ImagePath,
+    ServiceDll,
+}
+impl PayloadKind {
+    fn value_name(self) -> &'static str {
+        match self {
+            Self::ImagePath => "ImagePath",
+            Self::ServiceDll => "ServiceDll",
+        }
+    }
+    fn field(self) -> &'static str {
+        match self {
+            Self::ImagePath => "imagepath",
+            Self::ServiceDll => "servicedll",
+        }
+    }
+}
+fn service(path: &str) -> Option<(&str, &str, PayloadKind)> {
     let mut p = path.split('\\');
     let control = p.next()?;
     let services = p.next()?;
@@ -26,19 +45,54 @@ fn service(path: &str) -> Option<(&str, &str)> {
         || !services.eq_ignore_ascii_case("Services")
         || name.is_empty()
         || name.contains("[unknown]")
-        || p.next().is_some()
     {
         return None;
     }
-    Some((control, name))
+    let kind = match p.next() {
+        None => PayloadKind::ImagePath,
+        Some(child) if child.eq_ignore_ascii_case("Parameters") && p.next().is_none() => {
+            PayloadKind::ServiceDll
+        }
+        _ => return None,
+    };
+    Some((control, name, kind))
+}
+fn relevant_field(kind: PayloadKind, field: &str) -> bool {
+    field.eq_ignore_ascii_case(kind.field())
+        || (kind == PayloadKind::ImagePath
+            && matches!(
+                field.to_ascii_lowercase().as_str(),
+                "start" | "type" | "objectname" | "displayname" | "deleteflag"
+            ))
+}
+fn value_origins(key: &RecoveredKey) -> BTreeSet<String> {
+    let kind = service(&key.path).map_or(PayloadKind::ImagePath, |(_, _, kind)| kind);
+    key.values
+        .iter()
+        .filter(|v| relevant_field(kind, &v.name))
+        .flat_map(|v| &v.sources)
+        .map(Source::name)
+        .collect()
+}
+fn key_only_origins(key: &RecoveredKey) -> BTreeSet<String> {
+    let values = value_origins(key);
+    if values.is_empty() {
+        return BTreeSet::new();
+    }
+    key.sources
+        .iter()
+        .map(Source::name)
+        .filter(|s| !values.contains(s))
+        .collect()
 }
 fn snapshots(key: &RecoveredKey) -> BTreeMap<Snapshot, BTreeSet<String>> {
-    let origins: BTreeSet<_> = key
-        .sources
-        .iter()
-        .chain(key.values.iter().flat_map(|v| &v.sources))
-        .map(Source::name)
-        .collect();
+    let kind = service(&key.path).map_or(PayloadKind::ImagePath, |(_, _, kind)| kind);
+    // A key-only log write supplies provenance, not a second empty value state.
+    // If no value data survived anywhere, retain the key-only observation itself.
+    let mut origins = value_origins(key);
+    if origins.is_empty() {
+        origins.extend(key.sources.iter().map(Source::name));
+    }
     let mut out = BTreeMap::<Snapshot, BTreeSet<String>>::new();
     for origin in origins {
         let mut values = BTreeMap::<String, BTreeSet<String>>::new();
@@ -49,14 +103,11 @@ fn snapshots(key: &RecoveredKey) -> BTreeMap<Snapshot, BTreeSet<String>> {
             .filter(|v| v.sources.iter().any(|s| s.name() == origin))
         {
             let field = v.name.to_ascii_lowercase();
-            if !matches!(
-                field.as_str(),
-                "imagepath" | "start" | "type" | "objectname" | "displayname" | "deleteflag"
-            ) {
+            if !relevant_field(kind, &field) {
                 continue;
             }
             let decoded = match (field.as_str(), v.data_type) {
-                ("imagepath" | "objectname" | "displayname", 1 | 2) => {
+                ("imagepath" | "servicedll" | "objectname" | "displayname", 1 | 2) => {
                     match registry::decode(v.data_type, &v.data) {
                         registry::Data::Text { value, lossy } => {
                             damaged |= lossy;
@@ -77,7 +128,7 @@ fn snapshots(key: &RecoveredKey) -> BTreeMap<Snapshot, BTreeSet<String>> {
                 values.entry(field).or_default().insert(value);
             }
         }
-        let images = values.remove("imagepath").unwrap_or_default();
+        let images = values.remove(kind.field()).unwrap_or_default();
         let multiple_images = images.len() > 1;
         let ambiguous = damaged || multiple_images || values.values().any(|v| v.len() > 1);
         let fields = if multiple_images {
@@ -156,6 +207,7 @@ pub(super) fn run(ctx: &Context, definition: &CheckDefinition) -> Scan {
     let mut sources = 0;
     let mut keys = 0;
     let mut incomplete = 0;
+    let mut display_names = HashMap::<usize, String>::new();
     if let Some(h) = ctx.machine_hive("SYSTEM") {
         sources += 1;
         if h.opened.hive.bytes().len() > MAX_RECOVERY_BYTES {
@@ -163,6 +215,15 @@ pub(super) fn run(ctx: &Context, definition: &CheckDefinition) -> Scan {
         } else {
             let recovery = h.opened.hive.recover();
             for key in recovery.keys.iter().filter(|k| service(&k.path).is_some()) {
+                let (control, name, kind) = service(&key.path).unwrap();
+                if kind == PayloadKind::ServiceDll
+                    && !key
+                        .values
+                        .iter()
+                        .any(|v| v.name.eq_ignore_ascii_case("ServiceDll"))
+                {
+                    continue;
+                }
                 if keys >= MAX_KEYS || scan.findings.len() >= MAX_KEYS {
                     issues.push("Historical service key limit reached (50000)".into());
                     break;
@@ -172,7 +233,10 @@ pub(super) fn run(ctx: &Context, definition: &CheckDefinition) -> Scan {
                     issues.push(format!("{}: incomplete recovered key path", key.path));
                     continue;
                 }
-                let (control, name) = service(&key.path).unwrap();
+                let key_only = key_only_origins(key)
+                    .into_iter()
+                    .collect::<Vec<_>>()
+                    .join(" | ");
                 for (snapshot, origins) in snapshots(key) {
                     if scan.findings.len() >= MAX_KEYS {
                         issues.push("Historical service state limit reached (50000)".into());
@@ -186,7 +250,7 @@ pub(super) fn run(ctx: &Context, definition: &CheckDefinition) -> Scan {
                         &definition.id,
                         &definition.technique,
                         &definition.mitre_id,
-                        format!("HKLM\\SYSTEM\\{}\\ImagePath", key.path),
+                        format!("HKLM\\SYSTEM\\{}\\{}", key.path, kind.value_name()),
                         snapshot.image.clone().unwrap_or_default(),
                         "UNKNOWN",
                     );
@@ -239,22 +303,38 @@ pub(super) fn run(ctx: &Context, definition: &CheckDefinition) -> Scan {
                         .into();
                     }
                     f.description = format!(
-                        "Recovered service {name}; {}. Recovery: {}; source: {origin}. {} This is historical configuration, not proof of an active service, execution, deletion time, or persistence. Historical payload bytes are not established; a current file at this path is not hashed as the historical payload.",
+                        "Recovered service {name} ({}); {}. Recovery: {}; source: {origin}. {} This is historical configuration, not proof of an active service, execution, deletion time, or persistence. Historical payload bytes are not established; a current file at this path is not hashed as the historical payload.",
+                        kind.value_name(),
                         if control.eq_ignore_ascii_case(&ctx.active_controlset()) {
                             "current control-set name"
                         } else {
                             "historical/non-selected control set"
                         },
                         key.status.name(),
-                        description(&snapshot)
+                        if kind == PayloadKind::ImagePath {
+                            description(&snapshot)
+                        } else {
+                            "ServiceDll recovered independently from the Parameters key; parent ImagePath, account and startup state are not inferred. ".to_string() + &description(&snapshot)
+                        }
                     );
+                    if !key_only.is_empty() {
+                        f.description.push_str(&format!(" Additional key provenance without service values: {key_only}; no value state attributed to these origins."));
+                    }
+                    if kind == PayloadKind::ImagePath
+                        && !snapshot.ambiguous
+                        && key.problems.is_empty()
+                        && let Some(display) =
+                            snapshot.fields.get("displayname").filter(|s| !s.is_empty())
+                    {
+                        display_names.insert(scan.findings.len(), display.clone());
+                    }
                     scan.findings.push(f);
                 }
             }
         }
     }
     if ctx.service_event_correlation && !scan.findings.is_empty() {
-        corroborate(ctx, &mut scan.findings, &mut issues);
+        corroborate(ctx, &mut scan.findings, &display_names, &mut issues);
     }
     if incomplete > 0 {
         issues.push(format!("{incomplete} service states have incomplete/ambiguous fields; missing values were not filled from current keys or other versions"));
@@ -269,7 +349,7 @@ pub(super) fn run(ctx: &Context, definition: &CheckDefinition) -> Scan {
             "partial"
         },
         format!(
-            "{sources} SYSTEM hive(s); {keys} recovered service key records; {} distinct historical states. No active state or historical execution inferred. {}",
+            "{sources} SYSTEM hive(s); {keys} recovered service key records; {} distinct recovered service observations. No active state or historical execution inferred. {}",
             scan.findings.len(),
             issues
                 .iter()
@@ -342,8 +422,13 @@ fn install_key(ctx: &Context, event: &Value) -> Option<(String, (String, Vec<Str
     }
     Some((names[0].to_lowercase(), command_key(ctx, &images[0])?))
 }
-fn corroborate(ctx: &Context, findings: &mut [Finding], issues: &mut Vec<String>) {
-    let mut wanted = HashMap::<(String, (String, Vec<String>)), Vec<usize>>::new();
+type InstallationKey = (String, (String, Vec<String>));
+fn installation_candidates(
+    ctx: &Context,
+    findings: &[Finding],
+    display_names: &HashMap<usize, String>,
+) -> HashMap<InstallationKey, Vec<usize>> {
+    let mut wanted = HashMap::<InstallationKey, Vec<usize>>::new();
     for (i, f) in findings.iter().enumerate() {
         let Some(name) = f
             .path
@@ -353,12 +438,24 @@ fn corroborate(ctx: &Context, findings: &mut [Finding], issues: &mut Vec<String>
             continue;
         };
         if let Some(command) = command_key(ctx, &f.value) {
-            wanted
-                .entry((name.to_lowercase(), command))
-                .or_default()
-                .push(i);
+            // Only same-state, unambiguous recovered display names are supplied.
+            let names: BTreeSet<_> = std::iter::once(name.to_lowercase())
+                .chain(display_names.get(&i).map(|name| name.to_lowercase()))
+                .collect();
+            for name in names {
+                wanted.entry((name, command.clone())).or_default().push(i);
+            }
         }
     }
+    wanted
+}
+fn corroborate(
+    ctx: &Context,
+    findings: &mut [Finding],
+    display_names: &HashMap<usize, String>,
+    issues: &mut Vec<String>,
+) {
+    let wanted = installation_candidates(ctx, findings, display_names);
     if wanted.is_empty() {
         return;
     }
@@ -414,7 +511,7 @@ fn corroborate(ctx: &Context, findings: &mut [Finding], issues: &mut Vec<String>
         }
     }
     for (index, refs) in refs {
-        findings[index].description.push_str(&format!(" Related installation evidence matches the service name AND complete command: {}. It establishes registration of that name/command, not this recovered version's time or execution.",refs.join(" | ")));
+        findings[index].description.push_str(&format!(" Related installation evidence matches the service key/display name AND complete command: {}. It establishes registration of that name/command, not this recovered version's time or execution.",refs.join(" | ")));
     }
 }
 
@@ -470,14 +567,27 @@ mod tests {
         let mut second = value("ImagePath", r"C:\new.exe", b.clone());
         first.sources.push(Source::BeforeReplay);
         second.sources.push(Source::FreeCell);
-        let old = value("ObjectName", "LocalSystem", a);
-        let new = value("ObjectName", r"DOMAIN\deployment", b);
-        let states = snapshots(&key(vec![first, second, old, new]));
+        let old = value("ObjectName", "LocalSystem", a.clone());
+        let new = value("ObjectName", r"DOMAIN\deployment", b.clone());
+        let old_display = value("DisplayName", "Old display name", a);
+        let new_display = value("DisplayName", "New display name", b);
+        let states = snapshots(&key(vec![
+            first,
+            second,
+            old,
+            new,
+            old_display,
+            new_display,
+        ]));
         for state in states.keys() {
             if state.image.as_deref() == Some(r"C:\old.exe") {
                 assert_ne!(
                     state.fields.get("objectname").map(String::as_str),
                     Some(r"DOMAIN\deployment")
+                );
+                assert_ne!(
+                    state.fields.get("displayname").map(String::as_str),
+                    Some("New display name")
                 );
             }
             if state.image.as_deref() == Some(r"C:\new.exe") {
@@ -485,9 +595,70 @@ mod tests {
                     state.fields.get("objectname").map(String::as_str),
                     Some("LocalSystem")
                 );
+                assert_ne!(
+                    state.fields.get("displayname").map(String::as_str),
+                    Some("Old display name")
+                );
             }
         }
         assert_eq!(states.len(), 4); // Different completeness/provenance remains explicit.
+    }
+    #[test]
+    fn key_only_log_writes_are_provenance_not_duplicate_empty_states() {
+        let a = Source::LogEntry {
+            log: "SYSTEM.LOG1".into(),
+            sequence: Some(244),
+        };
+        let b = Source::LogEntry {
+            log: "SYSTEM.LOG1".into(),
+            sequence: Some(247),
+        };
+        let mut key = key(vec![value("ImagePath", r"C:\service.exe", a.clone())]);
+        key.sources = vec![a.clone(), b.clone()];
+        let states = snapshots(&key);
+        assert_eq!(states.len(), 1);
+        assert!(
+            states
+                .keys()
+                .all(|s| s.image.as_deref() == Some(r"C:\service.exe"))
+        );
+        assert_eq!(states.values().next().unwrap(), &BTreeSet::from([a.name()]));
+        assert_eq!(key_only_origins(&key), BTreeSet::from([b.name()]));
+        key.values.clear();
+        let states = snapshots(&key);
+        assert_eq!(states.len(), 1, "retain a genuinely key-only recovery");
+        assert!(states.keys().next().unwrap().image.is_none());
+        assert_eq!(
+            states.values().next().unwrap(),
+            &BTreeSet::from([a.name(), b.name()])
+        );
+    }
+    #[test]
+    fn parameters_payloads_do_not_inherit_parent_fields_or_other_origin_dlls() {
+        let a = Source::LogEntry {
+            log: "SYSTEM.LOG1".into(),
+            sequence: Some(1),
+        };
+        let b = Source::LogEntry {
+            log: "SYSTEM.LOG1".into(),
+            sequence: Some(2),
+        };
+        let mut key = key(vec![
+            value("ServiceDll", r"C:\old.dll", a.clone()),
+            value("ServiceDll", r"C:\new.dll", b),
+            value("ObjectName", "LocalSystem", a),
+        ]);
+        key.path.push_str(r"\Parameters");
+        let states = snapshots(&key);
+        assert_eq!(states.len(), 2);
+        assert!(states.keys().all(|s| s.fields.is_empty() && !s.ambiguous));
+        assert_eq!(
+            states
+                .keys()
+                .filter_map(|s| s.image.as_deref())
+                .collect::<BTreeSet<_>>(),
+            BTreeSet::from([r"C:\old.dll", r"C:\new.dll"])
+        );
     }
     #[test]
     fn conflicting_values_are_not_silently_selected() {
@@ -501,10 +672,12 @@ mod tests {
         assert!(states.keys().all(|s| s.ambiguous && s.fields.is_empty()));
     }
     #[test]
-    fn only_top_level_service_keys_in_known_control_sets_are_candidates() {
+    fn only_service_root_and_parameters_keys_in_known_control_sets_are_candidates() {
         assert!(service(r"ControlSet001\Services\Example").is_some());
+        assert!(service(r"ControlSet001\Services\Example\Parameters").is_some());
         for s in [
-            r"ControlSet001\Services\Example\Parameters",
+            r"ControlSet001\Services\Example\Parameters\Unrelated",
+            r"ControlSet001\Services\Example\Unrelated",
             r"ControlSet001\Services\[unknown]",
             r"Software\Services\Example",
             r"CurrentControlSet\Services\Example",
@@ -595,6 +768,9 @@ mod tests {
         }
     }
     fn hive(command: &str, deleted: bool) -> Vec<u8> {
+        hive_with_dll(command, deleted, None)
+    }
+    fn hive_with_dll(command: &str, deleted: bool, dll: Option<&str>) -> Vec<u8> {
         let mut b = Builder { bin: vec![0; 32] };
         let root = b.node("ROOT", u32::MAX, false, &[], &[]);
         let control = b.node("ControlSet001", root, false, &[], &[]);
@@ -612,6 +788,24 @@ mod tests {
             ],
             &[],
         );
+        if let Some(dll) = dll {
+            let params = b.node(
+                "Parameters",
+                service,
+                deleted,
+                &[("ServiceDll", 2, text(dll))],
+                &[],
+            );
+            if !deleted {
+                let mut li = b"li".to_vec();
+                li.extend(1u16.to_le_bytes());
+                li.extend(params.to_le_bytes());
+                let list = b.cell(&li, false);
+                let at = service as usize + 4;
+                b.bin[at + 0x14..at + 0x18].copy_from_slice(&1u32.to_le_bytes());
+                b.bin[at + 0x1c..at + 0x20].copy_from_slice(&list.to_le_bytes());
+            }
+        }
         // Set the known allocated parent lists after their child offsets exist.
         for (parent, child) in [(root, control), (control, services)] {
             let mut li = b"li".to_vec();
@@ -659,9 +853,12 @@ mod tests {
         bytes
     }
     fn scan_native(root: &Path, command: &str, deleted: bool) -> Scan {
+        scan_bytes(root, hive(command, deleted))
+    }
+    fn scan_bytes(root: &Path, bytes: Vec<u8>) -> Scan {
         let path = root.join("Windows/System32/config/SYSTEM");
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        std::fs::write(&path, hive(command, deleted)).unwrap();
+        std::fs::write(&path, bytes).unwrap();
         let ctx = Context::open(root, true).unwrap();
         let definition = super::super::checks::catalogue()
             .iter()
@@ -692,6 +889,76 @@ mod tests {
         assert!(f.last_change.is_empty());
         assert_eq!(f.change_evidence, "HISTORICAL_RECORD");
         assert_eq!(scan.coverage[0].status, "complete");
+    }
+    #[test]
+    fn native_deleted_parameters_expose_the_dll_as_an_independent_historical_row() {
+        let dir = tempfile::tempdir().unwrap();
+        let command = r"%SystemRoot%\system32\svchost.exe -k netsvcs";
+        let dll = r"C:\ProgramData\Updater\payload.dll";
+        let scan = scan_bytes(dir.path(), hive_with_dll(command, true, Some(dll)));
+        assert_eq!(scan.findings.len(), 2, "{:#?}", scan.coverage);
+        let f = scan
+            .findings
+            .iter()
+            .find(|f| f.path.ends_with(r"\Parameters\ServiceDll"))
+            .unwrap();
+        assert_eq!(f.value, dll);
+        assert_eq!(f.severity, "INFO");
+        assert_eq!(f.access_gained, "UNKNOWN");
+        assert_eq!(f.record_status, "deleted_complete");
+        assert!(f.sha256.is_empty() && f.exists.is_none() && f.last_change.is_empty());
+        assert!(f.description.contains("recovered independently"));
+        assert!(f.description.contains("free_cell"));
+        assert!(f.description.contains("Start: unknown"));
+        assert!(f.description.contains("Account: unknown"));
+        assert_eq!(f.change_evidence, "HISTORICAL_RECORD");
+        assert!(
+            scan_bytes(dir.path(), hive_with_dll(command, false, Some(dll)))
+                .findings
+                .is_empty()
+        );
+    }
+    #[test]
+    fn unrelated_parameters_values_do_not_create_empty_dll_findings() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut bytes = hive_with_dll(r"C:\service.exe", true, Some(r"C:\payload.dll"));
+        let at = bytes.windows(10).position(|w| w == b"ServiceDll").unwrap();
+        bytes[at..at + 10].copy_from_slice(b"OtherValue");
+        let scan = scan_bytes(dir.path(), bytes);
+        assert_eq!(scan.findings.len(), 1);
+        assert!(scan.findings[0].path.ends_with(r"\ImagePath"));
+    }
+    #[test]
+    fn installation_matching_accepts_same_state_display_name_but_not_another_command() {
+        let dir = tempfile::tempdir().unwrap();
+        let ctx = Context::open(dir.path(), true).unwrap();
+        let f = Finding {
+            path: r"HKLM\SYSTEM\ControlSet001\Services\gupdate\ImagePath".into(),
+            value: r#""C:\Program Files\Google\Update\GoogleUpdate.exe" /svc"#.into(),
+            ..Default::default()
+        };
+        let display = HashMap::from([(0, "Google Update Service (gupdate)".into())]);
+        let candidates = installation_candidates(&ctx, &[f], &display);
+        let command = command_key(
+            &ctx,
+            r#""C:\Program Files\Google\Update\GoogleUpdate.exe" /svc"#,
+        )
+        .unwrap();
+        assert_eq!(
+            candidates.get(&(display[&0].to_lowercase(), command.clone())),
+            Some(&vec![0])
+        );
+        assert_eq!(candidates.get(&("gupdate".into(), command)), Some(&vec![0]));
+        assert!(
+            !candidates.contains_key(&(
+                display[&0].to_lowercase(),
+                command_key(
+                    &ctx,
+                    r#""C:\Program Files\Google\Update\GoogleUpdate.exe" /other"#
+                )
+                .unwrap()
+            ))
+        );
     }
     #[test]
     fn recovered_service_never_borrows_current_payload_bytes() {

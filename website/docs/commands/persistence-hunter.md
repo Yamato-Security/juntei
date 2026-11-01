@@ -296,10 +296,11 @@ juntei persistence-hunter -d evidence/ --check deleted_services --min-severity i
 ```
 
 The check preserves separate recovered service states and their provenance, including deleted
-registry cells and transaction-log versions. Missing fields remain unknown. Historical records
+registry cells and transaction-log versions, including independent `Parameters\ServiceDll` payload
+rows. Missing fields remain unknown. Key-only origins add provenance without duplicate empty states. Historical records
 default to informational severity; they do not establish active persistence or execution. Current
 files at old paths are not treated as historical payload bytes. Matching local System 7045 events
-can provide independent installation references; `--no-timeline` disables this optional correlation.
+can provide independent installation references using the key name or same-state display name; `--no-timeline` disables this optional correlation.
 See the [historical-service guide](../persistence-hunter/index.md#deleted_services) for limits and interpretation.
 
 ## Further details

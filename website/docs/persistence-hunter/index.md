@@ -576,10 +576,18 @@ Windows services and extensible system components provide many legitimate ways t
 recovered state retains its own command, key last-write time, recovery status, and origin. It does
 not copy missing values from the currently allocated service or from another transaction-log origin.
 
+Recovered `Parameters\ServiceDll` values are separate rows with their own source, origin and key
+last-write time. This exposes DLL payloads behind an `svchost.exe` ImagePath. Parent service commands,
+accounts and startup modes are not inferred or copied into a DLL observation. Unrelated Parameters
+values do not produce empty DLL candidates. Origins with only a key record are retained as extra key
+provenance when another origin supplies service values, rather than creating duplicate empty rows.
+If no values survived anywhere, the recovered service key remains an explicit incomplete observation.
+
 **How to investigate:** Ordinary service upgrades, uninstallers, and Windows maintenance leave
 historical records, so candidates default to `INFO`. Use `--min-severity info` to see them. A static
 PowerShell download-and-execute pattern can raise a candidate to `MEDIUM`; an explicit profile rule
-can also change severity. Neither classification proves an attack or execution.
+can also change severity. A partial allow match cannot raise an INFO candidate to LOW.
+Neither classification proves an attack or execution.
 
 `Description` records the observed `Start`, `Type`, account, display name, deletion flag, and source
 origins. `Start: 3` means demand-start, and `Start: 4` means disabled. Missing or conflicting fields
@@ -590,9 +598,10 @@ recovered/deleted records from `historical_service_version` records whose old ke
 
 The current bytes at a recovered path may belong to a replacement file. Consequently these rows do
 not hash or identify a current payload as the historical payload, and their existence remains unknown.
-When a captured primary `System.evtx` is available, matching computer identity, service name, and
-complete command can add a `7045` installation reference with timestamp and record ID. Arguments
-are compared case-sensitively. This proves registration of that name/command, not the recovered
+When a captured primary `System.evtx` is available, matching computer identity, the service key name or an unambiguous display name from the same
+recovered state, and the complete command can add a `7045` installation reference with timestamp and record ID. Arguments
+are compared case-sensitively. Indirect/localized display names are not guessed. DLL-only rows
+are not joined to another key's host command for correlation. This proves registration of that name/command, not the recovered
 version's time or its execution. `--no-timeline` disables this optional event correlation.
 
 Recovery is bounded to `SYSTEM` hives up to 128 MiB and at most 50,000 service keys/states. Missing,
