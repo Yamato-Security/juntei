@@ -749,7 +749,7 @@ fn unicode_registry_content_cannot_abort_persistence_or_timeline() {
     assert!(scan.findings.iter().any(|f| f.check_id == "typelib_hijack"
         && f.resolve_target.contains(r"Users\fixture\AppData\Roaming")));
     assert!(scan.findings.iter().any(|f| f.path.contains('K')));
-    crate::persistence_sniper::timeline::enrich(&ctx, &mut scan.findings, None);
+    crate::persistence_hunter::timeline::enrich(&ctx, &mut scan.findings, None);
 }
 
 #[test]
@@ -880,7 +880,7 @@ fn memory_budget_keeps_machine_hives_and_file_checks_and_reports_skips() {
             .iter()
             .any(|i| i.contains("Skipped NTUSER.DAT") && i.contains("memory budget"))
     );
-    let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+    let scan = crate::persistence_hunter::file_checks::run(&ctx, catalogue());
     assert!(
         scan.findings
             .iter()
@@ -899,7 +899,7 @@ fn memory_budget_keeps_machine_hives_and_file_checks_and_reports_skips() {
 
 #[test]
 fn original_host_drive_is_mapped_to_the_captured_system_volume() {
-    use crate::persistence_sniper::{context::Resolution, resolver};
+    use crate::persistence_hunter::{context::Resolution, resolver};
     let dir = tempfile::tempdir().unwrap();
     let captured = dir.path().join("E");
     let mut sw = Node::default();
@@ -943,7 +943,7 @@ fn original_host_drive_is_mapped_to_the_captured_system_volume() {
 
 #[test]
 fn user_environment_empty_fanout_keeps_the_run_finding_without_unbounded_work() {
-    use crate::persistence_sniper::resolver::{enrich, expand_environment};
+    use crate::persistence_hunter::resolver::{enrich, expand_environment};
     let dir = tempfile::tempdir().unwrap();
     let mut user = Node::default();
     for n in 1..8 {
@@ -976,7 +976,7 @@ fn user_environment_empty_fanout_keeps_the_run_finding_without_unbounded_work() 
 
 #[test]
 fn profile_homepath_is_taken_after_the_normalized_drive_prefix() {
-    use crate::persistence_sniper::resolver::expand_environment;
+    use crate::persistence_hunter::resolver::expand_environment;
     for prefix in ["\u{3000}", "  ", r"\\?\", r"\??\", r"\\.\"] {
         let dir = tempfile::tempdir().unwrap();
         let mut sw = Node::default();
@@ -994,7 +994,7 @@ fn profile_homepath_is_taken_after_the_normalized_drive_prefix() {
             "prefix {prefix:?}"
         );
         // Every user is expanded by Startup checks, even without a Run value.
-        let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+        let scan = crate::persistence_hunter::file_checks::run(&ctx, catalogue());
         assert!(!scan.coverage.is_empty());
     }
 }
@@ -1010,7 +1010,7 @@ fn sparse_drive_named_roots_preserve_common_startup_findings() {
         std::fs::write(&payload, b"fixture").unwrap();
         let ctx = Context::open(&root, true).unwrap();
         assert!(ctx.hives.is_empty());
-        let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+        let scan = crate::persistence_hunter::file_checks::run(&ctx, catalogue());
         let finding = scan
             .findings
             .iter()
@@ -1040,7 +1040,7 @@ fn startup_redirects_share_bounded_environment_expansion_and_keep_lossy_registry
     std::fs::create_dir_all(payload.parent().unwrap()).unwrap();
     std::fs::write(&payload, b"test").unwrap();
     let ctx = Context::open(dir.path(), true).unwrap();
-    let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+    let scan = crate::persistence_hunter::file_checks::run(&ctx, catalogue());
     assert!(
         scan.findings
             .iter()
@@ -1120,7 +1120,7 @@ fn service_account_default_startup_is_not_misreported_as_a_redirect() {
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(path, Builder::new().hive(&user, "NTUSER.DAT")).unwrap();
         let ctx = Context::open(dir.path(), true).unwrap();
-        let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+        let scan = crate::persistence_hunter::file_checks::run(&ctx, catalogue());
         assert!(
             !scan
                 .findings
@@ -1161,7 +1161,7 @@ fn startup_redirection_to_a_different_volume_is_preserved_and_scoped() {
         std::fs::write(file, b"test").unwrap();
     }
     let ctx = Context::open(dir.path(), true).unwrap();
-    let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+    let scan = crate::persistence_hunter::file_checks::run(&ctx, catalogue());
     assert!(
         scan.findings
             .iter()
@@ -1188,9 +1188,9 @@ fn com_task(root: &Path, name: &str, principal: &str, clsid: &str) {
 }
 fn com_scan(root: &Path) -> Scan {
     let ctx = Context::open(root, true).unwrap();
-    let mut scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+    let mut scan = crate::persistence_hunter::file_checks::run(&ctx, catalogue());
     for f in &mut scan.findings {
-        crate::persistence_sniper::resolver::enrich(&ctx, f);
+        crate::persistence_hunter::resolver::enrich(&ctx, f);
     }
     scan
 }
@@ -1299,7 +1299,7 @@ fn task_com_qualified_principals_work_without_volatile_hive_data() {
         assert_eq!(row.value, r"%LOCALAPPDATA%\user.dll");
         assert_eq!(row.exists, Some(true));
         let mut classified = row.clone();
-        crate::persistence_sniper::profile::Profile::load(None, catalogue())
+        crate::persistence_hunter::profile::Profile::load(None, catalogue())
             .unwrap()
             .classify(&mut classified);
         assert_eq!(

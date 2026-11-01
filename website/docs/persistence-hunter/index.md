@@ -1,23 +1,22 @@
-# Persistence Check
+# Persistence Hunter
 
 Persistence is a way to make code run again: when Windows starts, a user signs in, an application
 opens, a scheduled time arrives, or another event occurs. Attackers can abuse the same settings
 that legitimate software uses for updates, device support, security, and administration.
 
-`juntei check-persistence` examines captured Windows evidence offline for **131 checks** covering
+`juntei persistence-hunter` examines captured Windows evidence offline for **131 checks** covering
 these mechanisms and related account/protection anomalies. It reads registry hives, task files,
-scripts, application settings, and selected database records. It does not execute the programs it
-finds or change the source computer. No Python interpreter or Windows runtime is required.
+scripts, application settings, and selected database records.
 
 This page explains every implemented check. For complete options, output fields, profiles, and
-timestamp handling, open the [command guide](../commands/check-persistence.md). The
+timestamp handling, open the [command guide](../commands/persistence-hunter.md). The
 [acknowledgements](acknowledgements.md) link the Python PyrsistenceSniper project and the original
 PowerShell PersistenceSniper tool.
 
 ## Start an investigation
 
 ```bash
-juntei check-persistence -d evidence/ --min-severity info -o PersistenceSniper.csv --coverage Coverage.csv
+juntei persistence-hunter -d evidence/ --min-severity info -o CheckPersistence.csv --coverage Coverage.csv
 ```
 
 Use `--min-severity info` for the complete candidate inventory. The manual command defaults to
@@ -29,8 +28,8 @@ under each computer's `persistence/` category.
 To focus on a mechanism, copy its **Check ID** from below:
 
 ```bash
-juntei check-persistence --list-checks
-juntei check-persistence -d evidence/ --check run_keys,scheduled_task_files --min-severity info -o focused.csv
+juntei persistence-hunter --list-checks
+juntei persistence-hunter -d evidence/ --check run_keys,scheduled_task_files --min-severity info -o focused.csv
 ```
 
 The command uses a shared worker pool by default. Add `-T 4` to select four workers, or `-T 1`
@@ -56,8 +55,8 @@ partial, disabled, or failed checks. The hunter is not a live-memory, network, o
 
 ## Catalogue and location notation
 
-The catalogue includes the 130 checks from PyrsistenceSniper commit `b99c117` plus the native
-`start_menu_com` check; the descriptions below document
+The catalogue is based on PyrsistenceSniper, plus the native `start_menu_com` check;
+the descriptions below document
 Juntei's native behavior, including its evidence limitations. There are **116 registry-backed
 checks and 15 file/repository checks**. Some file checks also join registry data, so these are
 implementation counts rather than mutually exclusive acquisition requirements. The mechanisms
@@ -2002,6 +2001,6 @@ The Local Security Authority (LSA) handles security functions through LSASS and 
    unverified signer metadata, historical carved records, or a trigger that cannot be corroborated.
 
 For command syntax, profiles, every output field, and coverage states, return to the
-[Check Persistence command guide](../commands/check-persistence.md). The
+[Persistence Hunter command guide](../commands/persistence-hunter.md). The
 [artifact guides](../artifacts/index.md) explain the underlying sources, and the
 [acknowledgements](acknowledgements.md) identify the upstream persistence tools.

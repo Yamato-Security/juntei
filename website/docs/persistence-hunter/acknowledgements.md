@@ -1,6 +1,6 @@
-# Persistence Check Acknowledgements
+# Persistence Hunter Acknowledgements
 
-Juntei's `check-persistence` command builds on two generations of community persistence hunting.
+Juntei's `persistence-hunter` command builds on two generations of community persistence hunting.
 Thank you to the authors and contributors who made their techniques, implementations, and research
 available to investigators.
 
@@ -16,7 +16,7 @@ The Python project is MIT licensed. Juntei retains its copyright and license not
 [`THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt`](https://github.com/Yamato-Security/juntei/blob/main/THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt).
 Juntei's implementation runs offline without a Python interpreter. Its collection handling,
 coverage reporting, and conservative interpretation of incomplete evidence are documented in the
-[command guide](../commands/check-persistence.md).
+[command guide](../commands/persistence-hunter.md).
 
 ## PersistenceSniper: the original PowerShell tool
 

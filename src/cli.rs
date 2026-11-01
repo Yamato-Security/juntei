@@ -81,15 +81,15 @@ pub enum Commands {
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei check-persistence -d <EVIDENCE> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei persistence-hunter -d <EVIDENCE> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    CheckPersistence(CheckPersistenceOptions),
+    PersistenceHunter(PersistenceHunterOptions),
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, Default)]
-pub enum SniperSeverity {
+pub enum PersistenceSeverity {
     Info,
     Low,
     #[default]
@@ -97,7 +97,7 @@ pub enum SniperSeverity {
     High,
 }
 
-impl SniperSeverity {
+impl PersistenceSeverity {
     pub fn rank(self) -> u8 {
         match self {
             Self::Info => 0,
@@ -109,7 +109,7 @@ impl SniperSeverity {
 }
 
 #[derive(Args, Clone, Debug, Default)]
-pub struct CheckPersistenceOptions {
+pub struct PersistenceHunterOptions {
     /// Evidence directory (a mounted Windows volume or a collection of hosts)
     #[arg(help_heading = "Input", short = 'd', long, value_name = "DIR", required_unless_present_any = ["filepath", "list_checks"], conflicts_with = "filepath", display_order = 100)]
     pub directory: Option<PathBuf>,
@@ -145,7 +145,7 @@ pub struct CheckPersistenceOptions {
         default_value = "medium",
         display_order = 201
     )]
-    pub min_severity: SniperSeverity,
+    pub min_severity: PersistenceSeverity,
 
     /// Run only these check or ATT&CK IDs (comma separated; repeatable)
     #[arg(
@@ -217,7 +217,7 @@ pub struct CheckPersistenceOptions {
     pub common: CommonOptions,
 }
 
-impl CheckPersistenceOptions {
+impl PersistenceHunterOptions {
     pub fn data_on_stdout(&self) -> bool {
         self.output.is_none() && self.output_type.is_some()
     }

@@ -1,18 +1,16 @@
-# Check Persistence
+# Persistence Hunter
 
 Persistence lets a program run again after a reboot, a sign-in, a scheduled trigger, or another
 event. An attacker can use normal Windows configuration for this purpose. Many legitimate programs
 use exactly the same mechanisms, so finding a persistence entry is a starting point for analysis.
 
-`juntei check-persistence` is a native Rust port of
+`juntei persistence-hunter` is a native Rust port of
 [Hexastrike's PyrsistenceSniper](https://github.com/hexastrike/PyrsistenceSniper), with 131 checks: the
-130-check catalogue from upstream commit `b99c117a3cd16c33992a56dd698aedaec024460f` plus a native Start Menu COM check.
-It reads evidence offline. It does not start services, register tasks, load DLLs, or execute
-the programs it finds. It needs no Python interpreter or Windows runtime.
+130-check PyrsistenceSniper catalogue plus a native Start Menu COM check.
 
 For an explanation of every mechanism, its evidence locations, and how to investigate a finding,
-see the [131-check persistence guide](../persistence-check/index.md). The
-[persistence acknowledgements](../persistence-check/acknowledgements.md) describe the Python and
+see the [131-check persistence guide](../persistence-hunter/index.md). The
+[persistence acknowledgements](../persistence-hunter/acknowledgements.md) describe the Python and
 PowerShell projects behind the catalogue.
 
 ## Usage
@@ -22,7 +20,7 @@ Version: 1.0.0
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei check-persistence -d <EVIDENCE> [OPTIONS]
+  juntei persistence-hunter -d <EVIDENCE> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Evidence directory (a mounted Windows volume or a collection of hosts)
@@ -59,7 +57,7 @@ Display Settings:
 ## First scan
 
 ```bash
-juntei check-persistence -d evidence/ -o PersistenceSniper.csv --coverage Coverage.csv
+juntei persistence-hunter -d evidence/ -o CheckPersistence.csv --coverage Coverage.csv
 ```
 
 The evidence can be a mounted Windows volume, a Velociraptor collection, or a directory containing
@@ -69,7 +67,7 @@ several collected computers. Computers are kept separate during analysis, and ev
 For one hive:
 
 ```bash
-juntei check-persistence -f SOFTWARE -o software-persistence.csv --no-timeline
+juntei persistence-hunter -f SOFTWARE -o software-persistence.csv --no-timeline
 ```
 
 A single hive cannot supply checks that need another hive or filesystem evidence. Read the coverage
@@ -78,8 +76,8 @@ report before treating an empty result as meaningful.
 List the check IDs and their ATT&CK mappings:
 
 ```bash
-juntei check-persistence --list-checks
-juntei check-persistence -d evidence/ --check run_keys,windows_service_image_path -o focused.csv
+juntei persistence-hunter --list-checks
+juntei persistence-hunter -d evidence/ --check run_keys,windows_service_image_path -o focused.csv
 ```
 
 Use the check IDs printed by `--list-checks`, or an ATT&CK ID such as `T1547.001`.
@@ -92,7 +90,7 @@ The command uses a shared worker pool, defaulting to the number of logical CPUs.
 `-T, --threads <N>` to choose the worker count, or `-T 1` for a single-thread scan:
 
 ```bash
-juntei check-persistence -d evidence/ --min-severity info -T 4 -o PersistenceSniper.csv
+juntei persistence-hunter -d evidence/ --min-severity info -T 4 -o CheckPersistence.csv
 ```
 
 Evidence discovery, independent checks, payload metadata, and MFT/EVTX timeline sources run in parallel. A host's
@@ -100,7 +98,7 @@ loaded registry hives are shared read-only, and cached metadata for the same pay
 Hosts are loaded one at a time to avoid multiplying hive memory across the collection. Findings,
 coverage, timestamp selection, and warning order remain the same at different thread counts.
 
-`auto-parse` already runs parser processes in parallel, so it gives each `check-persistence` child
+`auto-parse` already runs parser processes in parallel, so it gives each `persistence-hunter` child
 one worker. Its own `-T` option controls the number of concurrent parser processes.
 
 ## Evidence to collect
@@ -133,8 +131,8 @@ hive identity; a copy inside a user's temporary directory cannot replace that us
 The original system drive recorded in SOFTWARE is mapped to the captured system volume, so mounting
 an original `C:` volume under a different evidence drive label does not discard payload metadata.
 
-`auto-parse` also runs the hunter and saves `persistence/PersistenceSniper.csv` (or `.json`/`.jsonl`)
-inside each computer directory, with `PersistenceSniper-logs.txt` beside it. Its findings also enter
+`auto-parse` also runs the hunter and saves `persistence/CheckPersistence.csv` (or `.json`/`.jsonl`)
+inside each computer directory, with `CheckPersistence-logs.txt` beside it. Its findings also enter
 the optional `-j <FILE>` SIEM timeline. Automatic parsing uses `--min-severity info` to retain the
 complete configuration inventory, including entries matched by allow rules.
 
@@ -177,7 +175,7 @@ The default minimum classification is `medium`. To inspect the full inventory, i
 entries matched by the bundled allowlist:
 
 ```bash
-juntei check-persistence -d evidence/ --min-severity info -o all-persistence.csv
+juntei persistence-hunter -d evidence/ --min-severity info -o all-persistence.csv
 ```
 
 !!! warning "Use all severities when reviewing incomplete collections"

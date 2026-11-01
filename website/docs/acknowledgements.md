@@ -26,10 +26,10 @@ embedded in Juntei; consult each project for its license.
 
 - [**PyrsistenceSniper**](https://github.com/hexastrike/PyrsistenceSniper), by Hexastrike,
   supplied the persistence check catalogue, default allowlist, LOLBAS snapshot, and reference
-  behavior for the native Rust `check-persistence` command. Its MIT license and copyright notice
+  behavior for the native Rust `persistence-hunter` command. Its MIT license and copyright notice
   are retained in `THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt`. The original
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) inspired the Python project;
-  see the [persistence acknowledgements](persistence-check/acknowledgements.md) for the full lineage.
+  see the [persistence acknowledgements](persistence-hunter/acknowledgements.md) for the full lineage.
 
 - Maxim Suhanov's **regf specification** and **yarp** informed registry structures, transaction-log
   replay, and deleted-record recovery; his **dfir_ntfs** was the reference for INDX records and

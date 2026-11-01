@@ -1,7 +1,7 @@
 use super::{Check, decode_text};
-use crate::persistence_sniper::com::{self, Identity};
-use crate::persistence_sniper::context::Resolution;
-use crate::persistence_sniper::{Finding, TimeEvidence};
+use crate::persistence_hunter::com::{self, Identity};
+use crate::persistence_hunter::context::Resolution;
+use crate::persistence_hunter::{Finding, TimeEvidence};
 use quick_xml::NsReader;
 use quick_xml::events::Event;
 use quick_xml::name::ResolveResult;

@@ -113,7 +113,7 @@ nav:
       - Files: commands/execution.md
       - NTFS: commands/filesystem.md
       - Registry: commands/security-registry.md
-      - Check Persistence: commands/check-persistence.md
+      - Persistence Hunter: commands/persistence-hunter.md
       - Common Output Patterns: commands/output.md
   - Artifacts:
       - Artifact Guide: artifacts/index.md
@@ -141,9 +141,9 @@ nav:
           - Registry Autostarts: artifacts/persistence.md
       - Accounts:
           - SAM Local Accounts: artifacts/sam.md
-  - Persistence Check:
-      - Persistence Mechanisms: persistence-check/index.md
-      - Acknowledgements: persistence-check/acknowledgements.md
+  - Persistence Hunter:
+      - Persistence Mechanisms: persistence-hunter/index.md
+      - Acknowledgements: persistence-hunter/acknowledgements.md
   - Resources:
       - Articles and References: resources/index.md
       - Cross-Artifact Workflows: resources/workflows.md

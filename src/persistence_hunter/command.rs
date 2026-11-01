@@ -2,14 +2,14 @@ use super::{
     Coverage, Finding, Scan, checks, context::Context, file_checks, profile::Profile, resolver,
     timeline,
 };
-use crate::cli::{CheckPersistenceOptions, RegistryOutputType};
+use crate::cli::{PersistenceHunterOptions, RegistryOutputType};
 use crate::{progress, registry, util};
 use rayon::prelude::*;
 use std::collections::BTreeSet;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-pub fn run(opts: &CheckPersistenceOptions) -> i32 {
+pub fn run(opts: &PersistenceHunterOptions) -> i32 {
     let result = if opts.list_checks {
         execute(opts)
     } else {
@@ -32,7 +32,7 @@ pub fn run(opts: &CheckPersistenceOptions) -> i32 {
     }
 }
 
-fn execute(opts: &CheckPersistenceOptions) -> Result<i32, String> {
+fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
     let definitions = checks::catalogue();
     if opts.list_checks {
         let mut stdout = io::BufWriter::new(io::stdout().lock());

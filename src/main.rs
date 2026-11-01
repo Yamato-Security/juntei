@@ -13,7 +13,7 @@ mod logfile;
 mod mft;
 mod mft_csv;
 mod mft_inspect;
-mod persistence_sniper;
+mod persistence_hunter;
 mod prefetch;
 mod progress;
 mod registry;
@@ -44,12 +44,12 @@ fn main() {
     let start = Instant::now();
     let cli = Cli::parse();
     let code = match &cli.cmd {
-        Commands::CheckPersistence(opts) => {
+        Commands::PersistenceHunter(opts) => {
             let data_only = opts.data_on_stdout();
             if !data_only && !opts.list_checks {
                 display_logo(opts.common.quiet, opts.common.no_color, true, false);
             }
-            let code = persistence_sniper::run(opts);
+            let code = persistence_hunter::run(opts);
             if !data_only && !opts.list_checks {
                 print_elapsed(start, opts.common.no_color);
             }

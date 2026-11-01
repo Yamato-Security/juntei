@@ -27,7 +27,7 @@ while keeping the CSV or JSON results.
 For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, or `parse-registry`.
 For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
 
-Use [`juntei check-persistence`](https://yamato-security.github.io/juntei/commands/check-persistence/)
+Use [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/commands/persistence-hunter/)
 to hunt for persistence across registry hives, scheduled tasks, startup files, WMI, and BITS.
 This native Rust port of [PyrsistenceSniper](https://github.com/hexastrike/PyrsistenceSniper)
 provides 131 checks, configurable allow/block profiles, source evidence, and CSV, JSON, or JSONL

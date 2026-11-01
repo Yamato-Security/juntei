@@ -1,7 +1,7 @@
 //! COM activation triggers placed in a user's Start Menu. Inspired by the
 //! mechanism described in PersistenceSniper #32; independently implemented.
 use super::{Check, decode_text};
-use crate::persistence_sniper::com::{self, Identity};
+use crate::persistence_hunter::com::{self, Identity};
 use quick_xml::{NsReader, events::Event, name::ResolveResult};
 use std::collections::BTreeSet;
 
