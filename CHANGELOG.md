@@ -4,6 +4,8 @@
 
 **Bug Fixes:**
 
+- `persistence-hunter`: retain SYSVOL payload references beneath deleted GPO directories while rejecting reused directory records. Partial allow matches cannot raise INFO inventory to LOW severity. (@YamatoSecurity)
+
 - `persistence-hunter`: prefer domain- or host-qualified profile folders over a plain-name profile when resolving task COM handlers. Keep genuinely ambiguous mappings unresolved and explain unavailable per-user lookup in the finding as well as coverage. (@YamatoSecurity)
 
 
@@ -15,6 +17,9 @@
 - `persistence-hunter`: prevent Unicode registry text from crashing or indefinitely expanding a scan; restrict hive selection to canonical capture locations; retain readable hives and file checks when the input budget is reached; handle captured/original drive labels and DNS/NetBIOS host aliases; bound PE resource traversal; retain accessibility replacement candidates with damaged metadata and recover malformed registry/BITS text; classify OS-directory targets after resolution. (@YamatoSecurity)
 
 **New Features:**
+
+- `persistence-hunter`: extend `gp_scripts` to SYSVOL script configuration and collected/MFT-only payload references. Preserve GPO scope, trigger, source and deleted state; keep inventory INFO and combined suspicious shell patterns MEDIUM, with profile overrides. Missing configuration, metadata-only dates and unavailable file bytes remain explicit. (@YamatoSecurity)
+
 
 - Rename the persistence command to `persistence-hunter` and its Rust module to `persistence_hunter`. Automatic parsing saves the hunter's findings as `PersistenceHunter.csv` (or JSON/JSONL) with matching log names; simplify the progress message and update the website terminology. (@YamatoSecurity)
 

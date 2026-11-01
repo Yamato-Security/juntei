@@ -390,6 +390,9 @@ pub fn enrich(ctx: &Context, findings: &mut [Finding], explicit_mft: Option<&Pat
     let mut file_targets: HashMap<String, Vec<(usize, bool)>> = HashMap::new();
     let mut event_targets: HashMap<EventKey, Vec<usize>> = HashMap::new();
     for (i, finding) in findings.iter().enumerate() {
+        if finding.skip_correlation {
+            continue;
+        }
         let descriptors = if finding.time_evidence.is_empty() {
             fallback(ctx, finding)
         } else {
@@ -474,6 +477,9 @@ pub fn enrich(ctx: &Context, findings: &mut [Finding], explicit_mft: Option<&Pat
         issues.extend(result.issues);
     }
     for (finding, state) in findings.iter_mut().zip(states) {
+        if finding.skip_correlation {
+            continue;
+        }
         finding.last_change.clear();
         finding.change_source.clear();
         if let Some(candidate) = state.winner() {

@@ -218,13 +218,25 @@ impl Profile {
                 }
             }
         }
+        let base = finding.base_classification.unwrap_or(("MEDIUM", ""));
         finding.severity = match best {
-            Match::None => "MEDIUM",
-            Match::Partial => "LOW",
+            Match::None => base.0,
+            // An allow rule can lower severity, never promote INFO inventory.
+            Match::Partial => {
+                if base.0 == "INFO" {
+                    "INFO"
+                } else {
+                    "LOW"
+                }
+            }
             Match::Full => "INFO",
         }
         .into();
-        finding.policy_reason = reason;
+        finding.policy_reason = if best == Match::None {
+            base.1.into()
+        } else {
+            reason
+        };
         if best == Match::Partial {
             finding
                 .policy_reason
@@ -265,6 +277,32 @@ mod tests {
         profile.classify(&mut f);
         assert_eq!(f.severity, "HIGH");
         assert_eq!(f.policy_reason, "blocked");
+    }
+
+    #[test]
+    fn partial_allow_never_raises_a_checks_base_classification() {
+        let defs = super::super::checks::catalogue();
+        let profile = Profile::parse("allow:\n  - value_matches: '^example\\.exe$'\n    signer: Microsoft\n    reason: expected\nblock:\n  - hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n    reason: blocked\n", defs).unwrap();
+        for (base, expected) in [
+            ("INFO", "INFO"),
+            ("LOW", "LOW"),
+            ("MEDIUM", "LOW"),
+            ("HIGH", "LOW"),
+        ] {
+            let mut f = Finding {
+                value: "example.exe".into(),
+                base_classification: Some((base, "check default")),
+                resolution_unavailable: true,
+                ..Default::default()
+            };
+            profile.classify(&mut f);
+            assert_eq!(f.severity, expected, "base {base}");
+            assert!(f.policy_reason.contains("partial allow match"));
+            assert!(f.signer.is_empty());
+            f.sha256 = "a".repeat(64);
+            profile.classify(&mut f);
+            assert_eq!(f.severity, "HIGH", "explicit block still wins");
+        }
     }
 
     #[test]

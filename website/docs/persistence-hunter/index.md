@@ -187,14 +187,49 @@ These settings arrange for a command or library to run during boot, sign-in, or 
 
 **Check ID:** `gp_scripts` · **Catalogue ATT&CK:** [T1037.001](https://attack.mitre.org/techniques/T1037/001/)
 
-**What Juntei checks:** Parses command/parameter pairs from the captured local Group Policy `scripts.ini` and `psscripts.ini` registration files, including per-user local policy stores. Startup/shutdown and logon/logoff sections retain their configured commands and arguments, with machine sections distinguished from user sections.
+**What Juntei checks:** Reads local policy script registration and SYSVOL GPO `scripts.ini` /
+`psscripts.ini` files. For SYSVOL, Machine Startup/Shutdown and User Logon/Logoff sections are
+kept separate; repeated section instances and ambiguous arguments are not silently combined.
+It also inventories executable/script-like payloads under those SYSVOL trigger directories,
+including references found only in collected `$MFT` records.
 
 **Evidence examined:**
 
-- `Windows\System32\GroupPolicy\Machine\Scripts\scripts.ini` / `psscripts.ini` and the equivalent `GroupPolicy\User\Scripts` files.
-- `Windows\System32\GroupPolicyUsers\<SID>\User\Scripts\scripts.ini` / `psscripts.ini`.
+- Local `Windows\System32\GroupPolicy` and `GroupPolicyUsers` script configuration.
+- `Windows\SYSVOL\domain\Policies\{GPO GUID}\<Machine|User>\Scripts` and the corresponding
+  `SYSVOL\sysvol\<domain>` / `SYSVOL_DFSR` layouts, including directly exported SYSVOL paths.
+- Collected payload files and MFT filename records. DOS short-name aliases are not separate
+  payload findings. Deleted references are kept distinct from current collected file bytes. Deleted
+  directory sequences follow NTFS's one-step increment on deletion; reused allocated parents are rejected.
 
-**How to investigate:** Only the implemented local policy registration locations are examined; this is not a complete SYSVOL/GPO audit. A script file lying elsewhere under a policy directory is not sufficient. Correlate its registration with policy processing and execution evidence.
+**Finding states:**
+
+- `sysvol_configuration`: a command and parameters were recovered from configuration. This
+  does not establish that the policy was linked, enabled, applied, or executed. Matching MFT
+  references are attached to `Description` without replacing configuration dates or file hashes.
+- `sysvol_payload`: a collected executable/script-like file was found without linked configuration.
+- `mft_allocated` / `mft_deleted`: only filesystem metadata was found. `SourceFile` names the MFT;
+  `Description` identifies the entry/sequence; `ChangeEvidence: MFT_METADATA` and `LastChange`
+  describe `$SI Modified`, not GPO registration time. `Exists` stays unknown and no payload hash
+  is borrowed from another file at that path.
+
+**Classification:** New SYSVOL inventory findings default to INFO. A combined PowerShell
+network-download-and-execute command pattern is a MEDIUM review candidate, not a malware verdict.
+Custom profile allow/block rules take precedence; a partial allow match never raises an INFO row
+to LOW. Existing local-policy classification is retained.
+
+**How to investigate:** Start with `--min-severity info` (automatic parsing already includes it).
+Review the GPO GUID, scope, trigger, command, source and recovery state. Check policy linkage and
+filtering, deployment baselines, script content, and independent execution evidence. An EXE in a
+Startup directory can be legitimate or unreferenced; a metadata-only finding does not prove the
+configuration or file bytes were acquired. Missing configuration is reported in coverage.
+Remote UNC commands are retained without fetching shares. User-dependent targets remain unresolved
+when no individual user context can be established. MFT discovery uses preferred filename records
+and a bounded directory/candidate index; unsupported payload extensions and missing MFT ancestors
+can limit coverage. `--mft` can supply a single host's MFT; `--no-timeline` disables additional
+change-time correlation, not the metadata hunt itself.
+
+**Further details:** [Microsoft Scripts.ini format](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpscr/ff1fd13e-1e18-4160-9b50-0263e108e5e1).
 
 ### Logon Scripts (UserInitMprLogonScript) {#logon_scripts}
 

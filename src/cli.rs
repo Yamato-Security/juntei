@@ -166,7 +166,7 @@ pub struct PersistenceHunterOptions {
     #[arg(help_heading = "Analysis", long, display_order = 250)]
     pub no_timeline: bool,
 
-    /// MFT to use for timestamp correlation (one host only)
+    /// MFT for metadata checks and timestamp correlation (one host only)
     #[arg(
         help_heading = "Analysis",
         long,

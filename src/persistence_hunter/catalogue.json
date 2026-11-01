@@ -1150,9 +1150,10 @@
     "id": "gp_scripts",
     "technique": "Group Policy Scripts",
     "mitre_id": "T1037.001",
-    "description": "Group Policy scripts.ini and psscripts.ini define startup/shutdown and logon/logoff scripts, so a CmdLine entry runs at boot or at logon. The machine-wide local GPO and every per-user local GPO under GroupPolicyUsers are read.",
+    "description": "Reads local and SYSVOL Group Policy script configuration, and inventories SYSVOL startup/shutdown/logon/logoff payload references in collected files or MFT metadata. Configuration, file existence, policy application and execution are separate facts.",
     "references": [
-      "https://attack.mitre.org/techniques/T1037/001/"
+      "https://attack.mitre.org/techniques/T1037/001/",
+      "https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-gpscr/ff1fd13e-1e18-4160-9b50-0263e108e5e1"
     ],
     "implementation": "custom",
     "targets": [],

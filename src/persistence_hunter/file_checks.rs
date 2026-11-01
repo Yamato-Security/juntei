@@ -3,6 +3,7 @@
 
 mod accessibility;
 mod carve;
+mod gpo;
 mod start_menu;
 mod tasks;
 mod text;
@@ -35,7 +36,7 @@ pub fn run(ctx: &Context, definitions: &[CheckDefinition]) -> Scan {
             "ghost_task" | "hidden_scheduled_task" => tasks::cache(&mut check),
             "wmi_event_subscription" => carve::wmi(&mut check),
             "bits_notify_command" => carve::bits(&mut check),
-            "gp_scripts" => text::gp_scripts(&mut check),
+            "gp_scripts" => gpo::run(&mut check),
             "windows_terminal" => text::terminal(&mut check),
             "startup_folder" | "shell_folders_startup" => startup(&mut check),
             "powershell_profiles" => powershell(&mut check),
