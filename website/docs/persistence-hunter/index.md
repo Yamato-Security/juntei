@@ -789,7 +789,7 @@ Task Scheduler stores configuration in both XML files and the SOFTWARE hive. Rea
 
 - `Windows\System32\Tasks\<task path>` XML files, including Exec, ComHandler, and available principal fields.
 - Matching user's captured `UsrClass.dat` and NTUSER `Software\Classes`, plus machine SOFTWARE `Classes\CLSID`, in native and 32-bit views.
-- Captured SOFTWARE `ProfileList` for SID principals. Unique collected `user` or `user.DOMAIN` folder names provide explicitly labeled heuristic matches for named principals; ambiguous matches remain unresolved. Volatile registry keys are not required.
+- Captured SOFTWARE `ProfileList` for SID principals. Named principals prefer a unique matching `user.DOMAIN` folder, then captured local-host suffixes, and finally the plain `user` folder. Matches are explicitly labeled as heuristics; genuine ambiguity stays unresolved and is noted in the finding and coverage. Volatile registry keys are not required.
 - Managed `CodeBase` (including version subkeys), AppID associations, and SYSTEM service `ImagePath` for an AppID `LocalService`.
 
 COM server candidates include their registry source in `Description`. Executable-name-only

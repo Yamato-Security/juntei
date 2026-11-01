@@ -1346,19 +1346,128 @@ fn task_com_qualified_profile_suffix_does_not_borrow_another_domains_user() {
 }
 
 #[test]
-fn task_com_qualified_profiles_remain_ambiguous_when_several_names_match() {
+fn task_com_prefers_the_qualified_profile_over_an_existing_plain_profile() {
+    for (principal, folder) in [
+        (r"CORP\Administrator", "Administrator.CORP"),
+        (r"HOST\alice", "alice.HOST"),
+        (r".\alice", "alice.HOST"),
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let account = principal.split('\\').next_back().unwrap();
+        let mut sw = Node::default();
+        sw.text(
+            &format!(r"Classes\CLSID\{COM_ID}\InprocServer32"),
+            "",
+            r"C:\Windows\System32\machine.dll",
+        );
+        let mut system = Node::default();
+        system.text(
+            r"ControlSet001\Control\ComputerName\ComputerName",
+            "ComputerName",
+            "HOST",
+        );
+        save(dir.path(), "SOFTWARE", &sw);
+        save(dir.path(), "SYSTEM", &system);
+        save_com_user(dir.path(), account, r"C:\unqualified.dll");
+        save_com_user(dir.path(), folder, r"%LOCALAPPDATA%\qualified.dll");
+        let dll = dir
+            .path()
+            .join("Users")
+            .join(folder)
+            .join("AppData/Local/qualified.dll");
+        std::fs::write(&dll, b"inert DLL marker").unwrap();
+        com_task(dir.path(), "Qualified", principal, COM_ID);
+        let scan = com_scan(dir.path());
+        let row = scan
+            .findings
+            .iter()
+            .find(|f| f.check_id == "scheduled_task_files")
+            .unwrap();
+        assert_eq!(row.value, r"%LOCALAPPDATA%\qualified.dll", "{principal}");
+        assert_eq!(row.exists, Some(true));
+        assert_eq!(
+            row.resolved_path,
+            format!("Users/{folder}/AppData/Local/qualified.dll")
+        );
+        assert!(row.description.contains("folder-name heuristic"));
+        assert!(row.description.contains(folder));
+        let mut classified = row.clone();
+        crate::persistence_hunter::profile::Profile::load(None, catalogue())
+            .unwrap()
+            .classify(&mut classified);
+        assert_eq!(classified.severity, "MEDIUM");
+        assert!(
+            !scan
+                .coverage
+                .iter()
+                .any(|c| c.check_id == "scheduled_task_files"
+                    && c.detail.contains("Cannot map principal"))
+        );
+    }
+}
+
+#[test]
+fn task_com_explicit_host_suffix_wins_over_other_captured_host_aliases() {
     let dir = tempfile::tempdir().unwrap();
     save(dir.path(), "SOFTWARE", &Node::default());
-    save_com_user(dir.path(), "fixture", r"C:\unqualified.dll");
-    save_com_user(dir.path(), "fixture.LAB", r"C:\qualified.dll");
-    com_task(dir.path(), "Ambiguous", r"LAB\fixture", COM_ID);
+    let mut system = Node::default();
+    system.text(
+        r"ControlSet001\Control\ComputerName\ComputerName",
+        "ComputerName",
+        "HOST",
+    );
+    system.text(
+        r"ControlSet001\Control\ComputerName\ActiveComputerName",
+        "ComputerName",
+        "OTHERHOST",
+    );
+    save(dir.path(), "SYSTEM", &system);
+    save_com_user(dir.path(), "fixture.HOST", r"C:\host.dll");
+    save_com_user(dir.path(), "fixture.OTHERHOST", r"C:\otherhost.dll");
+    com_task(dir.path(), "Explicit", r"HOST\fixture", COM_ID);
     let scan = com_scan(dir.path());
     let row = scan
         .findings
         .iter()
         .find(|f| f.check_id == "scheduled_task_files")
         .unwrap();
-    assert_eq!(row.value, COM_ID);
+    assert_eq!(row.value, r"C:\host.dll");
+}
+
+#[test]
+fn task_com_ambiguous_local_host_profiles_do_not_fall_back_to_the_plain_profile() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut sw = Node::default();
+    sw.text(
+        &format!(r"Classes\CLSID\{COM_ID}\InprocServer32"),
+        "",
+        r"C:\machine.dll",
+    );
+    let mut system = Node::default();
+    system.text(
+        r"ControlSet001\Control\ComputerName\ComputerName",
+        "ComputerName",
+        "HOST",
+    );
+    system.text(
+        r"ControlSet001\Control\ComputerName\ActiveComputerName",
+        "ComputerName",
+        "OTHERHOST",
+    );
+    save(dir.path(), "SOFTWARE", &sw);
+    save(dir.path(), "SYSTEM", &system);
+    for user in ["fixture", "fixture.HOST", "fixture.OTHERHOST"] {
+        save_com_user(dir.path(), user, r"C:\must-not-select.dll");
+    }
+    com_task(dir.path(), "Ambiguous", r".\fixture", COM_ID);
+    let scan = com_scan(dir.path());
+    let row = scan
+        .findings
+        .iter()
+        .find(|f| f.check_id == "scheduled_task_files")
+        .unwrap();
+    assert_eq!(row.value, r"C:\machine.dll");
+    assert!(row.description.contains("per-user COM lookup unavailable"));
     assert!(
         scan.coverage
             .iter()

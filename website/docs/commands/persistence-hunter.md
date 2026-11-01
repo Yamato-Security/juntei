@@ -145,11 +145,14 @@ it cannot establish which individual user's class registrations would be used.
 COM-handler candidates are resolved separately in native and 32-bit class views. Only the
 matching user's captured `UsrClass.dat`/`NTUSER.DAT` and machine `SOFTWARE` are considered.
 SID principals are joined through captured `ProfileList` paths. Account names, including
-`HOST\user` and `DOMAIN\user`, can select a unique collected `user` or `user.DOMAIN`
-profile folder. Every such match is explicitly labeled a **folder-name heuristic** in
-`Description`; it does not prove account ownership or domain membership. Ambiguous matches
-remain unresolved and are reported in coverage. This does not depend on `Volatile Environment`,
-which is normally memory-only and is not saved with registry hives. A duplicate user CLSID
+`HOST\user` and `DOMAIN\user`, prefer a matching `user.DOMAIN` profile over a plain
+`user` profile. Local host aliases and `.\user` use captured host names for suffix matching;
+an exact suffix takes precedence over other host aliases. The plain profile is considered
+only when no qualified profile matches. Every such match is explicitly labeled a
+**folder-name heuristic** in `Description`; it does not prove account ownership or domain membership. Ambiguous matches
+remain unresolved and are reported in both the finding description and coverage; ambiguity
+among qualified profiles does not trigger a fallback to the plain profile. This does not depend
+on `Volatile Environment`, which is normally memory-only and is not saved with registry hives. A duplicate user CLSID
 shadows the machine CLSID's children. Group principals use machine COM candidates and retain
 that limitation in the finding description; a normal group principal does not itself make
 coverage partial or consume the error-summary entries.

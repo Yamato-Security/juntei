@@ -4,6 +4,9 @@
 
 **Bug Fixes:**
 
+- `persistence-hunter`: prefer domain- or host-qualified profile folders over a plain-name profile when resolving task COM handlers. Keep genuinely ambiguous mappings unresolved and explain unavailable per-user lookup in the finding as well as coverage. (@YamatoSecurity)
+
+
 - `persistence-hunter`: map qualified task principals from collected profile names with explicit heuristic provenance instead of relying on memory-only volatile registry keys. Keep normal group-principal limits in findings so they do not hide malformed task errors in coverage. (@YamatoSecurity)
 
 

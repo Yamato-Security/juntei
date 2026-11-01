@@ -175,31 +175,47 @@ fn principal_user(ctx: &Context, name: &str, out: &mut Resolution) -> Option<Str
             && !account.contains(['\\', '/', '\0'])
             && domain.is_none_or(|d| !d.is_empty() && !d.contains(['/', '\0']))
         {
-            let qualified = domain.map(|domain| format!("{account}.{domain}"));
-            // A .\user principal can also use a user.HOST profile folder. Only
-            // captured host identities are eligible, never the evidence folder.
-            let local_names: Vec<_> = if domain == Some(".") {
-                ctx.host_identities()
-                    .into_iter()
-                    .map(|(n, _)| format!("{account}.{n}"))
-                    .collect()
-            } else {
-                Vec::new()
-            };
+            let qualified = domain
+                .filter(|d| *d != ".")
+                .map(|d| format!("{account}.{d}"));
+            let hosts = ctx.host_identities();
+            let local = domain
+                .is_some_and(|d| d == "." || hosts.iter().any(|(h, _)| h.eq_ignore_ascii_case(d)));
+            let mut exact_matches = BTreeSet::new();
+            let mut local_matches = BTreeSet::new();
+            let mut plain_matches = BTreeSet::new();
             for h in ctx
                 .hives
                 .iter()
                 .filter(|h| matches!(h.kind.as_str(), "NTUSER.DAT" | "USRCLASS.DAT"))
             {
-                if h.user.eq_ignore_ascii_case(account)
-                    || qualified
-                        .as_deref()
-                        .is_some_and(|q| h.user.eq_ignore_ascii_case(q))
-                    || local_names.iter().any(|q| h.user.eq_ignore_ascii_case(q))
+                if qualified
+                    .as_deref()
+                    .is_some_and(|q| h.user.eq_ignore_ascii_case(q))
                 {
-                    matches.insert(h.user.clone());
+                    exact_matches.insert(h.user.clone());
+                }
+                if local
+                    && hosts
+                        .iter()
+                        .any(|(host, _)| h.user.eq_ignore_ascii_case(&format!("{account}.{host}")))
+                {
+                    local_matches.insert(h.user.clone());
+                }
+                if h.user.eq_ignore_ascii_case(account) {
+                    plain_matches.insert(h.user.clone());
                 }
             }
+            // Domain-qualified profile folders are more specific than a plain
+            // account name. Local aliases are eligible only from captured host
+            // identities. Never hide ambiguity at one rank by using a lower rank.
+            matches = if !exact_matches.is_empty() {
+                exact_matches
+            } else if !local_matches.is_empty() {
+                local_matches
+            } else {
+                plain_matches
+            };
         }
         if matches.len() == 1 {
             let user = matches.first().expect("one matching profile");
@@ -224,6 +240,7 @@ fn principal_user(ctx: &Context, name: &str, out: &mut Resolution) -> Option<Str
         matches.pop_first()
     } else {
         out.issues.push(format!("Cannot map principal {name} uniquely to a collected user profile; per-user COM lookup unavailable"));
+        out.notes.push(format!("Principal {name}: per-user COM lookup unavailable (missing or ambiguous captured profile mapping)."));
         None
     }
 }
