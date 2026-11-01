@@ -57,52 +57,15 @@ pub(super) fn run(check: &mut Check<'_>) {
             .find(|(p, _)| p.eq_ignore_ascii_case(&file.logical))
             .map(|(_, names)| *names)
             .unwrap_or(&[]);
-        let reason = if metadata
-            .signer
-            .trim()
-            .to_lowercase()
-            .starts_with("microsoft")
-        {
-            match metadata.original_filename.as_deref() {
-                Some(name) if !allowed.iter().any(|n| n.eq_ignore_ascii_case(name.trim())) => {
-                    Some(format!(
-                        "Microsoft-named certificate metadata but unexpected PE OriginalFilename: {name}"
-                    ))
-                }
-                None => {
-                    check.issue(
-                        "unresolved",
-                        format!(
-                            "{} has no readable OriginalFilename identity",
-                            file.physical.display()
-                        ),
-                    );
-                    None
-                }
-                _ => None,
+        let reason = match replacement_reason(&metadata, allowed) {
+            Ok(reason) => reason,
+            Err(reason) => {
+                check.issue(
+                    "unresolved",
+                    format!("{}: {reason}", file.physical.display()),
+                );
+                None
             }
-        } else if metadata.signer_status == "no_embedded_signature_no_catalog_match"
-            || !metadata.signer.is_empty()
-        {
-            Some(format!(
-                "No matching Microsoft embedded/catalog signer metadata (status: {}, signer: {})",
-                metadata.signer_status,
-                if metadata.signer.is_empty() {
-                    "not recorded"
-                } else {
-                    &metadata.signer
-                }
-            ))
-        } else {
-            check.issue(
-                "unresolved",
-                format!(
-                    "{} signer/identity coverage incomplete: {}",
-                    file.physical.display(),
-                    metadata.signer_status
-                ),
-            );
-            None
         };
         if let Some(reason) = reason {
             let mut finding = check.file_finding(&file, &reason, "SYSTEM");
@@ -113,5 +76,85 @@ pub(super) fn run(check: &mut Check<'_>) {
             finding.signer_status = metadata.signer_status;
             check.scan.findings.push(finding);
         }
+    }
+}
+
+fn replacement_reason(
+    metadata: &crate::persistence_sniper::resolver::PeMetadata,
+    allowed: &[&str],
+) -> Result<Option<String>, &'static str> {
+    if metadata
+        .signer
+        .trim()
+        .to_ascii_lowercase()
+        .starts_with("microsoft")
+    {
+        match metadata.original_filename.as_deref() {
+            Some(name) if !allowed.iter().any(|n| n.eq_ignore_ascii_case(name.trim())) => {
+                Ok(Some(format!(
+                    "Microsoft-named certificate metadata but unexpected PE OriginalFilename: {name}"
+                )))
+            }
+            None => Err("no readable OriginalFilename identity"),
+            _ => Ok(None),
+        }
+    } else {
+        Ok(Some(format!(
+            "No matching Microsoft embedded/catalog signer metadata (status: {}, signer: {})",
+            metadata.signer_status,
+            if metadata.signer.is_empty() {
+                "not recorded"
+            } else {
+                &metadata.signer
+            }
+        )))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::persistence_sniper::resolver::PeMetadata;
+
+    #[test]
+    fn missing_or_damaged_metadata_cannot_hide_a_replacement_after_reference_validation() {
+        for status in [
+            "pe_metadata_exceeds_64MiB_limit_or_unreadable",
+            "damaged_pe_certificate_bounds",
+            "damaged_pe_authenticode_bounds",
+            "catalog_unreadable_or_damaged",
+            "not_pe",
+            "no_embedded_signature_no_catalog_match",
+        ] {
+            let metadata = PeMetadata {
+                signer: String::new(),
+                signer_status: status.into(),
+                original_filename: None,
+            };
+            assert!(
+                replacement_reason(&metadata, &["sethc.exe"])
+                    .unwrap()
+                    .unwrap()
+                    .contains(status)
+            );
+        }
+        let mut metadata = PeMetadata {
+            signer: "Microsoft Windows".into(),
+            signer_status: "catalog_certificate_unverified".into(),
+            original_filename: Some("sethc.exe".into()),
+        };
+        assert!(
+            replacement_reason(&metadata, &["sethc.exe"])
+                .unwrap()
+                .is_none()
+        );
+        metadata.original_filename = Some("cmd.exe".into());
+        assert!(
+            replacement_reason(&metadata, &["sethc.exe"])
+                .unwrap()
+                .is_some()
+        );
+        metadata.original_filename = None;
+        assert!(replacement_reason(&metadata, &["sethc.exe"]).is_err());
     }
 }

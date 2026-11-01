@@ -2,6 +2,10 @@
 
 ## 1.0.0 [xxxx/xx/xx]
 
+**Bug Fixes:**
+
+- `check-persistence`: prevent Unicode registry text from crashing or indefinitely expanding a scan; restrict hive selection to canonical capture locations; retain readable hives and file checks when the input budget is reached; handle captured/original drive labels and DNS/NetBIOS host aliases; bound PE resource traversal; retain accessibility replacement candidates with damaged metadata and recover malformed registry/BITS text; classify OS-directory targets after resolution. (@YamatoSecurity)
+
 **New Features:**
 
 - `check-persistence` uses a shared worker pool for independent checks, payload metadata, and MFT/EVTX timeline streams. `-T, --threads <N>` chooses the worker count (default: logical CPU count); loaded hives and per-payload metadata are shared, and results, coverage, and timestamp selection remain deterministic. Automatic parsing gives each hunter child one worker within its existing process budget. (@YamatoSecurity)

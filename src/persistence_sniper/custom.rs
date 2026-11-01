@@ -1106,7 +1106,8 @@ fn typelib(r: &mut CheckRun<'_>) {
                             &value
                         };
                         if !path.to_lowercase().starts_with("script:") {
-                            r.findings[i].resolve_target = expand_user_env(path, &h.user);
+                            r.findings[i].resolve_target =
+                                super::resolver::expand_environment(r.ctx, path, &h.user);
                         }
                     }
                 }
@@ -1492,24 +1493,6 @@ fn admin_members(r: &mut CheckRun<'_>) {
     }
 }
 
-fn expand_user_env(s: &str, user: &str) -> String {
-    let mut result = s.to_string();
-    for (k, v) in [
-        ("%appdata%", format!(r"Users\{user}\AppData\Roaming")),
-        ("%localappdata%", format!(r"Users\{user}\AppData\Local")),
-        ("%userprofile%", format!(r"Users\{user}")),
-    ] {
-        loop {
-            let lower = result.to_lowercase();
-            let Some(i) = lower.find(k) else {
-                break;
-            };
-            result.replace_range(i..i + k.len(), &v);
-        }
-    }
-    result
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1520,13 +1503,6 @@ mod tests {
         assert_eq!(sid(&b[..15], 0), None);
         assert_eq!(sid(&b, usize::MAX), None);
         assert_eq!(dword(&b, usize::MAX), None);
-    }
-    #[test]
-    fn user_expansion_is_case_insensitive() {
-        assert_eq!(
-            expand_user_env(r"%USERPROFILE%\run.dll", "Alice"),
-            r"Users\Alice\run.dll"
-        );
     }
     #[test]
     fn service_image_aliases_are_compared_conservatively() {

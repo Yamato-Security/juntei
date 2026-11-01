@@ -1,6 +1,6 @@
 //! Bounded offline record recovery. Carved records may be stale/deleted: never
 //! claim that a recovered WMI consumer or BITS job was active at acquisition.
-use super::{Check, decode_utf16};
+use super::Check;
 use crate::persistence_sniper::TimeEvidence;
 use regex::bytes::Regex;
 use sha2::{Digest, Sha256};
@@ -296,7 +296,13 @@ fn counted_at(data: &[u8], offset: usize) -> Option<(String, usize)> {
     if !bytes.ends_with(&[0, 0]) {
         return None;
     }
-    let value = decode_utf16(&bytes[..bytes.len() - 2], false).ok()?;
+    let words: Vec<_> = bytes[..bytes.len() - 2]
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|p| u16::from_le_bytes([p[0], p[1]]))
+        .collect();
+    let value = String::from_utf16_lossy(&words);
     if value.contains('\0') {
         return None;
     }
@@ -409,6 +415,12 @@ pub(super) fn bits(check: &mut Check<'_>) {
             );
         }
         for job in jobs {
+            if [&job.display, &job.program, &job.parameters, &job.owner]
+                .iter()
+                .any(|s| s.contains('\u{fffd}'))
+            {
+                check.issue("lossy_text", format!("BITS job {} contains Unicode replacement characters; inspect its original counted UTF-16 source bytes", guid(&job.guid)));
+            }
             let program = job.program.trim();
             if program.is_empty() {
                 continue;
@@ -480,6 +492,21 @@ mod tests {
         assert_eq!(job.owner, "S-1-5-18");
         assert!(bits_job(&raw[..raw.len() - 1], owner).is_none());
     }
+
+    #[test]
+    fn bits_bad_display_utf16_does_not_discard_its_notification_command() {
+        let mut raw = vec![1; 16];
+        raw.extend(3u32.to_le_bytes());
+        raw.extend([0x78, 0, 0, 0xd8, 0, 0]); // x + unpaired surrogate + NUL
+        for field in ["Description", r"C:\Tools\test.exe", "-flag", "S-1-5-18"] {
+            raw.extend(counted(field));
+        }
+        let owner = raw.windows(6).position(|w| w == b"S\0-\x001\0").unwrap();
+        let job = bits_job(&raw, owner).unwrap();
+        assert_eq!(job.display, "x\u{fffd}");
+        assert_eq!(job.program, r"C:\Tools\test.exe");
+    }
+
     #[test]
     fn bits_owners_preserve_local_service_and_network_service_privileges() {
         assert_eq!(bits_owner_access("S-1-5-18"), "SYSTEM");

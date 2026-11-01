@@ -80,6 +80,8 @@ struct SourceScan {
     states: Vec<State>,
     issues: Vec<String>,
     unreadable: usize,
+    computers: HashSet<String>,
+    rejected_computers: HashSet<String>,
 }
 
 impl SourceScan {
@@ -88,6 +90,8 @@ impl SourceScan {
             states: empty_states(count),
             issues: Vec::new(),
             unreadable: 0,
+            computers: HashSet::new(),
+            rejected_computers: HashSet::new(),
         }
     }
 }
@@ -116,18 +120,37 @@ struct HostAliases {
     /// Historical name -> the next name toward the captured host and its proof event.
     parents: HashMap<String, (String, usize)>,
     proofs: Vec<Rename>,
+    seeds: HashMap<String, String>,
 }
 
 impl HostAliases {
+    #[cfg(test)]
     fn new(current: &str, proofs: Vec<Rename>) -> Self {
-        let current = host_key(current).unwrap_or_default();
+        Self::from_names(
+            vec![(current.into(), "captured computer name".into())],
+            proofs,
+        )
+    }
+
+    fn from_names(names: Vec<(String, String)>, proofs: Vec<Rename>) -> Self {
+        let current = names
+            .first()
+            .and_then(|(n, _)| host_key(n))
+            .unwrap_or_default();
+        let seeds: HashMap<_, _> = names
+            .into_iter()
+            .filter_map(|(n, source)| host_key(&n).map(|n| (n, source)))
+            .collect();
         let mut aliases = Self {
             current: current.clone(),
             parents: HashMap::new(),
             proofs,
+            seeds,
         };
-        let mut pending = VecDeque::from([(current.clone(), 0usize)]);
-        let mut known = HashSet::from([current]);
+        let mut known: HashSet<_> = aliases.seeds.keys().cloned().collect();
+        let mut starts: Vec<_> = known.iter().cloned().collect();
+        starts.sort();
+        let mut pending: VecDeque<_> = starts.into_iter().map(|n| (n, 0usize)).collect();
         while let Some((name, depth)) = pending.pop_front() {
             if name.is_empty() || depth >= MAX_RENAME_CHAIN {
                 continue;
@@ -151,7 +174,9 @@ impl HostAliases {
 
     fn accepts(&self, computer: &str) -> bool {
         host_key(computer).is_some_and(|name| {
-            !self.current.is_empty() && (name == self.current || self.parents.contains_key(&name))
+            self.seeds.is_empty()
+                || self.seeds.contains_key(&name)
+                || self.parents.contains_key(&name)
         })
     }
 
@@ -159,6 +184,16 @@ impl HostAliases {
         let mut name = host_key(computer)?;
         if name == self.current {
             return None;
+        }
+        if self.seeds.is_empty() {
+            return Some(format!(
+                "original event Computer={computer}; captured registry/client host identity unavailable; identity inferred only from this collection's primary logs"
+            ));
+        }
+        if let Some(source) = self.seeds.get(&name) {
+            return Some(format!(
+                "original event Computer={computer}; matched {source}"
+            ));
         }
         let mut proof_lines = Vec::new();
         for _ in 0..MAX_RENAME_CHAIN {
@@ -169,7 +204,7 @@ impl HostAliases {
                 proof.source, proof.record_id, proof.old, proof.new
             ));
             name = next.clone();
-            if name == self.current {
+            if self.seeds.contains_key(&name) {
                 return Some(format!(
                     "original event Computer={computer}; captured-host rename chain: {}",
                     proof_lines.join("; ")
@@ -258,7 +293,7 @@ fn historical_hosts(ctx: &Context, now: DateTime<Utc>, issues: &mut Vec<String>)
             ));
         }
     }
-    HostAliases::new(&ctx.computer, proofs)
+    HostAliases::from_names(ctx.host_identities(), proofs)
 }
 
 fn rename_event(
@@ -365,8 +400,13 @@ pub fn enrich(ctx: &Context, findings: &mut [Finding], explicit_mft: Option<&Pat
             match descriptor {
                 TimeEvidence::FileWrite { path, weak } => {
                     if let Ok(key) = normalize_windows(&path) {
-                        let drive = explicit_drive(&path)
-                            .unwrap_or_else(|| ctx.drive_of(Path::new(&finding.source_file)));
+                        let drive = match explicit_drive(&path) {
+                            Some(drive) => match ctx.captured_drive(drive) {
+                                Some(drive) => drive,
+                                None => continue,
+                            },
+                            None => ctx.drive_of(Path::new(&finding.source_file)),
+                        };
                         file_targets
                             .entry(format!("{drive}:{}", key.to_lowercase()))
                             .or_default()
@@ -513,7 +553,7 @@ fn registry_spellings(ctx: &Context, path: &str) -> Vec<String> {
         path.push_str("(Default)");
     }
     let mut paths = vec![path.clone()];
-    let lower = path.to_lowercase();
+    let lower = path.to_ascii_lowercase();
     if let Some(at) = lower.find("\\controlset") {
         let start = at + "\\controlset".len();
         if path
@@ -738,7 +778,30 @@ fn scan_events(
         .par_iter()
         .map(|source| scan_event_source(source, &plan, states.len(), now))
         .collect();
-    for result in results {
+    let computers: HashSet<_> = results
+        .iter()
+        .flat_map(|r| r.computers.iter().cloned())
+        .collect();
+    let unknown = plan.host_aliases.seeds.is_empty();
+    let ambiguous = unknown && computers.len() > 1;
+    if unknown && !sources.is_empty() {
+        issues.push(if ambiguous {
+            "No captured registry/client host identity and primary logs contain multiple Computer names; event dating is not attributed to this host".into()
+        } else {
+            "No captured registry/client host identity; event dating uses the Computer name in the collection's primary logs and preserves that unverified identity in ChangeSource".into()
+        });
+    }
+    for mut result in results {
+        if !result.rejected_computers.is_empty() {
+            let mut rejected: Vec<_> = result.rejected_computers.iter().cloned().collect();
+            rejected.sort();
+            result.issues.push(format!("Timeline event Computer names do not match captured host identity: {}; channels remain marked as collected", rejected.join(", ")));
+        }
+        if ambiguous {
+            for state in &mut result.states {
+                state.candidates = [None, None, None, None];
+            }
+        }
         merge_states(states, result.states, now);
         issues.extend(result.issues);
     }
@@ -790,15 +853,23 @@ fn scan_event_source(
             continue;
         }
         let computer = scalar(system.get("Computer")).unwrap_or_default();
-        if !plan.host_aliases.accepts(&computer) {
-            continue;
-        }
         if available_channels.insert(channel.clone())
             && let Some(indices) = plan.channel_indices.get(&channel)
         {
             for index in indices {
                 scan.states[*index].available = true;
             }
+        }
+        if !plan.host_aliases.accepts(&computer) {
+            if scan.rejected_computers.len() < 32 {
+                scan.rejected_computers.insert(computer);
+            }
+            continue;
+        }
+        if scan.computers.len() < 2
+            && let Some(name) = host_key(&computer)
+        {
+            scan.computers.insert(name);
         }
         let Some(id) = scalar(system.get("EventID")).and_then(|id| id.parse::<u64>().ok()) else {
             continue;
@@ -1176,5 +1247,121 @@ mod tests {
         assert!(findings[0].change_source.contains("MFT entry 0 sequence"));
         assert_eq!(findings[1].change_evidence, "NO_ARTIFACT");
         assert!(findings[1].last_change.is_empty());
+    }
+}
+
+#[cfg(test)]
+mod review_tests {
+    use super::*;
+
+    fn task_fixture(root: &Path) -> Finding {
+        let target = root.join("Windows/System32/winevt/Logs/Security.evtx");
+        std::fs::create_dir_all(target.parent().unwrap()).unwrap();
+        std::fs::copy(
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("test_files/persistence/task-creation.evtx"),
+            &target,
+        )
+        .unwrap();
+        let mut parser = EvtxParser::from_path(&target).unwrap();
+        let task = parser
+            .records_json_value()
+            .filter_map(Result::ok)
+            .find_map(|r| {
+                let e = r.data.get("Event")?;
+                (scalar(e.get("System")?.get("EventID"))? == "4698").then(|| {
+                    named_fields(e.get("EventData").unwrap(), "taskname", 0)
+                        .into_iter()
+                        .next()
+                        .unwrap()
+                })
+            })
+            .unwrap();
+        Finding {
+            time_evidence: vec![TimeEvidence::EventLog {
+                channel: "Security".into(),
+                event_ids: vec![4698],
+                match_field: "TaskName".into(),
+                match_value: task,
+            }],
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn independent_task_events_use_client_dns_identity_and_report_mismatches() {
+        let dir = tempfile::tempdir().unwrap();
+        let finding = task_fixture(dir.path());
+        std::fs::write(
+            dir.path().join("client_info.json"),
+            br#"{"hostname":"SRVDEFENDER","fqdn":"srvdefender01.offsec.lan"}"#,
+        )
+        .unwrap();
+        let ctx = Context::open(dir.path(), true).unwrap();
+        let mut findings = [finding.clone()];
+        let issues = enrich(&ctx, &mut findings, None);
+        assert!(issues.is_empty(), "{issues:?}");
+        assert_eq!(findings[0].change_evidence, "RESOLVED");
+        assert!(
+            findings[0]
+                .last_change
+                .starts_with("2021-04-21T13:30:00.589460")
+        );
+        assert!(findings[0].change_source.contains("client_info.json fqdn"));
+        std::fs::write(
+            dir.path().join("client_info.json"),
+            br#"{"hostname":"FOREIGN"}"#,
+        )
+        .unwrap();
+        let ctx = Context::open(dir.path(), true).unwrap();
+        let mut findings = [finding];
+        let issues = enrich(&ctx, &mut findings, None);
+        assert_eq!(findings[0].change_evidence, "NO_MATCH");
+        assert!(
+            issues
+                .iter()
+                .any(|s| s.contains("do not match captured host identity"))
+        );
+    }
+
+    #[test]
+    fn unknown_host_identity_preserves_source_provenance_and_reports_coverage() {
+        let dir = tempfile::tempdir().unwrap();
+        let finding = task_fixture(dir.path());
+        let ctx = Context::open(dir.path(), true).unwrap();
+        let mut findings = [finding];
+        let issues = enrich(&ctx, &mut findings, None);
+        assert_eq!(findings[0].change_evidence, "RESOLVED");
+        assert!(
+            findings[0]
+                .change_source
+                .contains("original event Computer=srvdefender01.offsec.lan")
+        );
+        assert!(findings[0].change_source.contains("identity unavailable"));
+        assert!(
+            issues
+                .iter()
+                .any(|s| s.contains("No captured registry/client host identity"))
+        );
+    }
+
+    #[test]
+    fn multiple_captured_host_aliases_reject_unproven_computers() {
+        let aliases = HostAliases::from_names(
+            vec![
+                ("NETBIOS-LIMITED".into(), "ComputerName".into()),
+                ("long-dns-host-name".into(), "Tcpip Hostname".into()),
+                ("PENDING".into(), "NV Hostname".into()),
+            ],
+            vec![],
+        );
+        assert!(aliases.accepts("long-dns-host-name.example.test"));
+        assert!(aliases.accepts("PENDING"));
+        assert!(!aliases.accepts("FOREIGN"));
+        assert!(
+            aliases
+                .proof("long-dns-host-name.example.test")
+                .unwrap()
+                .contains("Tcpip Hostname")
+        );
     }
 }

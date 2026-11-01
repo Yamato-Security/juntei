@@ -65,12 +65,17 @@ impl Builder {
             };
             let mut v = vec![0; 0x14];
             v[..2].copy_from_slice(b"vk");
-            v[2..4].copy_from_slice(&(n.len() as u16).to_le_bytes());
+            let name_bytes: Vec<_> = if n.is_ascii() {
+                n.as_bytes().to_vec()
+            } else {
+                n.encode_utf16().flat_map(u16::to_le_bytes).collect()
+            };
+            v[2..4].copy_from_slice(&(name_bytes.len() as u16).to_le_bytes());
             v[4..8].copy_from_slice(&len.to_le_bytes());
             v[8..12].copy_from_slice(&ptr.to_le_bytes());
             v[12..16].copy_from_slice(&kind.to_le_bytes());
-            v[16..18].copy_from_slice(&1u16.to_le_bytes());
-            v.extend(n.as_bytes());
+            v[16..18].copy_from_slice(&u16::from(n.is_ascii()).to_le_bytes());
+            v.extend(name_bytes);
             values.push(self.cell(&v));
         }
         let sub = if children.is_empty() {
@@ -719,4 +724,375 @@ fn shared_service_images_cannot_date_a_different_services_installation() {
             |t| matches!(t,TimeEvidence::EventLog{match_field,..} if match_field=="ServiceName")
         ));
     }
+}
+
+#[test]
+fn unicode_registry_content_cannot_abort_persistence_or_timeline() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut classes = Node::default();
+    classes.text(r"TypeLib\{fixture}\1.0\0\win32", "", "K%APPDATA%\\evil.dll");
+    save(dir.path(), "USRCLASS.DAT", &classes);
+    let mut sw = Node::default();
+    sw.text(
+        r"Microsoft\Windows\CurrentVersion\Run",
+        "K\\CurrentControlSet\\x",
+        r"C:\agent.exe",
+    );
+    sw.text(
+        r"Microsoft\Windows\CurrentVersion\Run",
+        "K\\ControlSet001\\x",
+        r"C:\agent2.exe",
+    );
+    save(dir.path(), "SOFTWARE", &sw);
+    let ctx = Context::open(dir.path(), true).unwrap();
+    let mut scan = run(&ctx);
+    assert!(scan.findings.iter().any(|f| f.check_id == "typelib_hijack"
+        && f.resolve_target.contains(r"Users\fixture\AppData\Roaming")));
+    assert!(scan.findings.iter().any(|f| f.path.contains('K')));
+    crate::persistence_sniper::timeline::enrich(&ctx, &mut scan.findings, None);
+}
+
+#[test]
+fn canonical_hives_cannot_be_replaced_by_user_writable_decoys_or_shadow_copies() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut real = Node::default();
+    real.text(
+        r"Microsoft\Windows\CurrentVersion\Run",
+        "Real",
+        r"C:\real.exe",
+    );
+    save(dir.path(), "SOFTWARE", &real);
+    let mut user = Node::default();
+    user.text(
+        r"Software\Microsoft\Windows\CurrentVersion\Run",
+        "Real",
+        r"C:\user.exe",
+    );
+    save(dir.path(), "NTUSER.DAT", &user);
+    let mut decoy = Node::default();
+    decoy.text(
+        r"Microsoft\Windows\CurrentVersion\Run",
+        "Decoy",
+        r"C:\decoy.exe",
+    );
+    for path in [
+        "Users/Public/Documents/C/Windows/System32/config/SOFTWARE",
+        "Users/fixture/AppData/Local/Temp/NTUSER.DAT",
+        "uploads/auto/%5C%5C%3F%5CGLOBALROOT%5CDevice%5CHarddiskVolumeShadowCopy1/Users/fixture/NTUSER.DAT",
+    ] {
+        let path = dir.path().join(path);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let kind = if path.ends_with("SOFTWARE") {
+            "SOFTWARE"
+        } else {
+            "NTUSER.DAT"
+        };
+        std::fs::write(path, Builder::new().hive(&decoy, kind)).unwrap();
+    }
+    let ctx = Context::open(dir.path(), true).unwrap();
+    assert_eq!(ctx.hives.len(), 2);
+    let scan = run(&ctx);
+    assert!(scan.findings.iter().any(|f| f.value == r"C:\real.exe"));
+    assert!(scan.findings.iter().any(|f| f.value == r"C:\user.exe"));
+    assert!(!scan.findings.iter().any(|f| f.value == r"C:\decoy.exe"));
+}
+
+#[test]
+fn canonical_hive_is_preferred_and_bad_copy_can_fall_back_to_explicit_export() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut real = Node::default();
+    real.text(
+        r"Microsoft\Windows\CurrentVersion\Run",
+        "Real",
+        r"C:\real.exe",
+    );
+    save(dir.path(), "SOFTWARE", &real);
+    std::fs::write(dir.path().join("SOFTWARE"), b"bad exported copy").unwrap();
+    let ctx = Context::open(dir.path(), true).unwrap();
+    assert!(
+        ctx.machine_hive("SOFTWARE")
+            .unwrap()
+            .path
+            .ends_with("Windows/System32/config/SOFTWARE")
+    );
+    std::fs::write(
+        dir.path().join("Windows/System32/config/SOFTWARE"),
+        b"bad canonical copy",
+    )
+    .unwrap();
+    std::fs::write(
+        dir.path().join("SOFTWARE"),
+        Builder::new().hive(&real, "SOFTWARE"),
+    )
+    .unwrap();
+    let ctx = Context::open(dir.path(), true).unwrap();
+    assert_eq!(
+        ctx.machine_hive("SOFTWARE").unwrap().path,
+        dir.path().join("SOFTWARE")
+    );
+    assert!(ctx.issues.iter().any(|i| i.contains("Cannot parse hive")));
+}
+
+#[test]
+fn a_volume_named_windows_retains_machine_hives_and_user_hives() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("windows");
+    let mut sw = Node::default();
+    sw.text(
+        r"Microsoft\Windows\CurrentVersion\Run",
+        "Probe",
+        r"C:\probe.exe",
+    );
+    save(&root, "SOFTWARE", &sw);
+    save(&root, "NTUSER.DAT", &Node::default());
+    let ctx = Context::open(&root, true).unwrap();
+    assert!(ctx.machine_hive("SOFTWARE").is_some());
+    assert_eq!(ctx.hives.len(), 2);
+    assert!(
+        run(&ctx)
+            .findings
+            .iter()
+            .any(|f| f.value == r"C:\probe.exe")
+    );
+    assert_eq!(
+        crate::auto_parse::evidence_roots(&root, 10).unwrap(),
+        vec![root]
+    );
+}
+
+#[test]
+fn memory_budget_keeps_machine_hives_and_file_checks_and_reports_skips() {
+    let dir = tempfile::tempdir().unwrap();
+    save(dir.path(), "SYSTEM", &Node::default());
+    save(dir.path(), "SOFTWARE", &Node::default());
+    save(dir.path(), "NTUSER.DAT", &Node::default());
+    let profile = dir
+        .path()
+        .join("Users/fixture/Documents/PowerShell/profile.ps1");
+    std::fs::create_dir_all(profile.parent().unwrap()).unwrap();
+    std::fs::write(&profile, "Write-Output fixture").unwrap();
+    let ctx = Context::open_with_budget(dir.path(), true, 16_384).unwrap();
+    assert!(ctx.machine_hive("SYSTEM").is_some());
+    assert!(ctx.machine_hive("SOFTWARE").is_some());
+    assert!(!ctx.hives.iter().any(|h| h.kind == "NTUSER.DAT"));
+    assert!(
+        ctx.issues
+            .iter()
+            .any(|i| i.contains("Skipped NTUSER.DAT") && i.contains("memory budget"))
+    );
+    let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+    assert!(
+        scan.findings
+            .iter()
+            .any(|f| f.check_id == "powershell_profiles")
+    );
+    let log = dir.path().join("Windows/System32/config/SYSTEM.LOG1");
+    std::fs::write(log, vec![0; 16_384]).unwrap();
+    let ctx = Context::open_with_budget(dir.path(), false, 16_384).unwrap();
+    assert!(ctx.machine_hive("SYSTEM").is_some());
+    assert!(
+        ctx.issues
+            .iter()
+            .any(|i| i.contains("Skipped transaction log"))
+    );
+}
+
+#[test]
+fn original_host_drive_is_mapped_to_the_captured_system_volume() {
+    use crate::persistence_sniper::{context::Resolution, resolver};
+    let dir = tempfile::tempdir().unwrap();
+    let captured = dir.path().join("E");
+    let mut sw = Node::default();
+    sw.text(
+        r"Microsoft\Windows NT\CurrentVersion",
+        "SystemRoot",
+        r"C:\Windows",
+    );
+    save(&captured, "SOFTWARE", &sw);
+    std::fs::write(captured.join("Windows/System32/agent.exe"), b"test").unwrap();
+    let ctx = Context::open(dir.path(), true).unwrap();
+    assert_eq!(ctx.system_drive(), 'E');
+    assert_eq!(ctx.original_system_drive(), 'C');
+    for value in [
+        r"C:\Windows\System32\agent.exe",
+        r"%SystemRoot%\System32\agent.exe",
+        r"System32\agent.exe",
+    ] {
+        let mut finding = Finding {
+            value: value.into(),
+            ..Default::default()
+        };
+        resolver::enrich(&ctx, &mut finding);
+        assert_eq!(
+            finding.resolution_status, "collected",
+            "{value}: {}",
+            finding.resolution_status
+        );
+        assert_eq!(finding.is_in_os_directory, Some(true));
+        assert!(!finding.sha256.is_empty());
+    }
+    assert!(matches!(
+        ctx.resolve(r"D:\Windows\System32\agent.exe"),
+        Resolution::NotCollected
+    ));
+    assert!(matches!(
+        ctx.resolve(r"E:\Windows\System32\agent.exe"),
+        Resolution::NotCollected
+    ));
+}
+
+#[test]
+fn startup_redirects_share_bounded_environment_expansion_and_keep_lossy_registry_text() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut user = Node::default();
+    let key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders";
+    let mut bytes = utf16(r"%TEMP%\Startup");
+    bytes.push(0x41); // Windows accepts a trailing odd byte on this text value.
+    user.put(key, "Startup", 2, bytes);
+    user.text("Environment", "TEMP", r"%LOCALAPPDATA%\Temp");
+    save(dir.path(), "NTUSER.DAT", &user);
+    let payload = dir
+        .path()
+        .join("Users/fixture/AppData/Local/Temp/Startup/agent.exe");
+    std::fs::create_dir_all(payload.parent().unwrap()).unwrap();
+    std::fs::write(&payload, b"test").unwrap();
+    let ctx = Context::open(dir.path(), true).unwrap();
+    let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+    assert!(
+        scan.findings
+            .iter()
+            .any(|f| f.check_id == "startup_folder" && f.value.ends_with("agent.exe"))
+    );
+    assert!(scan.coverage.iter().any(|c| c.check_id == "startup_folder"
+        && c.status == "partial"
+        && c.detail.contains("UTF-16")));
+}
+
+#[test]
+fn captured_host_names_include_dns_pending_and_client_identities() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut system = Node::default();
+    system.text(
+        r"ControlSet001\Control\ComputerName\ComputerName",
+        "ComputerName",
+        "NETBIOS-LIMITED",
+    );
+    system.text(
+        r"ControlSet001\Control\ComputerName\ActiveComputerName",
+        "ComputerName",
+        "CURRENT",
+    );
+    system.text(
+        r"ControlSet001\Services\Tcpip\Parameters",
+        "Hostname",
+        "long-dns-host-name",
+    );
+    system.text(
+        r"ControlSet001\Services\Tcpip\Parameters",
+        "NV Hostname",
+        "PENDING",
+    );
+    save(dir.path(), "SYSTEM", &system);
+    std::fs::write(
+        dir.path().join("client_info.json"),
+        br#"{"hostname":"CLIENT","fqdn":"client.example.test"}"#,
+    )
+    .unwrap();
+    let ctx = Context::open(dir.path(), true).unwrap();
+    let identities = ctx.host_identities();
+    for name in [
+        "NETBIOS-LIMITED",
+        "CURRENT",
+        "long-dns-host-name",
+        "PENDING",
+        "CLIENT",
+        "client.example.test",
+    ] {
+        assert!(identities.iter().any(|(n, _)| n == name), "{name}");
+    }
+}
+
+#[test]
+fn service_account_default_startup_is_not_misreported_as_a_redirect() {
+    for with_software in [true, false] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut sw = Node::default();
+        sw.text(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-19",
+            "ProfileImagePath",
+            r"C:\Windows\ServiceProfiles\LocalService",
+        );
+        if with_software {
+            save(dir.path(), "SOFTWARE", &sw);
+        }
+        let mut user = Node::default();
+        user.text(
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders",
+            "Startup",
+            r"%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup",
+        );
+        let path = dir
+            .path()
+            .join("Windows/ServiceProfiles/LocalService/NTUSER.DAT");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, Builder::new().hive(&user, "NTUSER.DAT")).unwrap();
+        let ctx = Context::open(dir.path(), true).unwrap();
+        let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+        assert!(
+            !scan
+                .findings
+                .iter()
+                .any(|f| f.check_id == "shell_folders_startup")
+        );
+    }
+}
+
+#[test]
+fn exported_hives_next_to_a_system32_export_are_not_rebased_as_windows_contents() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(dir.path().join("System32")).unwrap();
+    std::fs::write(dir.path().join("System32/agent.exe"), b"test").unwrap();
+    let bytes = Builder::new().hive(&Node::default(), "SOFTWARE");
+    std::fs::write(dir.path().join("SOFTWARE"), bytes).unwrap();
+    let ctx = Context::open(dir.path(), true).unwrap();
+    assert!(ctx.machine_hive("SOFTWARE").is_some());
+}
+
+#[test]
+fn startup_redirection_to_a_different_volume_is_preserved_and_scoped() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut user = Node::default();
+    user.text(
+        r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders",
+        "Startup",
+        r"D:\Users\fixture\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup",
+    );
+    save(&dir.path().join("C"), "NTUSER.DAT", &user);
+    for (drive, name) in [("C", "wrong-volume.exe"), ("D", "right-volume.exe")] {
+        let file = dir
+            .path()
+            .join(drive)
+            .join("Users/fixture/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup")
+            .join(name);
+        std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+        std::fs::write(file, b"test").unwrap();
+    }
+    let ctx = Context::open(dir.path(), true).unwrap();
+    let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+    assert!(
+        scan.findings
+            .iter()
+            .any(|f| f.check_id == "shell_folders_startup" && f.path.starts_with("HKU"))
+    );
+    assert!(
+        scan.findings
+            .iter()
+            .any(|f| f.check_id == "startup_folder" && f.value.ends_with("right-volume.exe"))
+    );
+    assert!(
+        !scan
+            .findings
+            .iter()
+            .any(|f| f.check_id == "startup_folder" && f.value.ends_with("wrong-volume.exe"))
+    );
 }

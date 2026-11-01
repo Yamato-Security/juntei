@@ -125,6 +125,13 @@ set is used for active-system checks. The DSRM backdoor check additionally exami
 against `SYSTEM\\Select` before describing that setting as active. Other historical control sets
 can be examined with the individual registry parser commands.
 
+Hive reads share a 1 GiB per-computer input budget. Machine hives are attempted before user hives;
+inputs or transaction logs that do not fit are named in partial coverage. Other readable hives and
+file-backed checks continue. Only canonical hive locations or explicitly supplied exports establish
+hive identity; a copy inside a user's temporary directory cannot replace that user's real hive.
+The original system drive recorded in SOFTWARE is mapped to the captured system volume, so mounting
+an original `C:` volume under a different evidence drive label does not discard payload metadata.
+
 `auto-parse` also runs the hunter and saves `persistence/PersistenceSniper.csv` (or `.json`/`.jsonl`)
 inside each computer directory, with `PersistenceSniper-logs.txt` beside it. Its findings also enter
 the optional `-j <FILE>` SIEM timeline. Automatic parsing uses `--min-severity info` to retain the
@@ -220,6 +227,12 @@ Local System event 6011 can prove an earlier computer name. The hunter follows v
 chains anchored to the collected computer, preserving its current `Computer` value while recording
 the original event computer and rename-record proof in `ChangeSource`. Unproven foreign names,
 archived logs, forwarded logs, and another Windows installation are not accepted through this rule.
+
+Captured ComputerName/ActiveComputerName, TCP/IP Hostname/NV Hostname, and client-info hostname/FQDN
+supply host aliases, covering DNS/NetBIOS differences and pending renames. With no captured identity,
+a single name in the primary logs can support dating with explicit unverified-identity provenance
+and a coverage warning. Multiple unverified names are not attributed to the host. Rejected Computer
+names are reported as a correlation coverage limitation; their channels are still marked collected.
 
 Use `--mft <FILE>` to select an externally collected MFT for a single computer. Use `--no-timeline`
 to skip timestamp correlation. `NOT_RUN`, `NOT_APPLICABLE`, `NO_ARTIFACT`, `NO_MATCH`, and `REJECTED`

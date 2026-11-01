@@ -24,6 +24,7 @@ pub struct EvidenceFile {
     pub logical: String,
     pub physical: PathBuf,
     pub len: u64,
+    pub(super) volume: char,
 }
 
 #[derive(Debug, Clone)]
@@ -42,6 +43,9 @@ pub struct Context {
     pub issues: Vec<String>,
     index: HashMap<String, Vec<usize>>,
     drive_index: HashMap<(char, String), Vec<usize>>,
+    source_drives: HashMap<PathBuf, char>,
+    system_volume: OnceLock<char>,
+    original_drive: OnceLock<char>,
     pub(super) metadata_cache: Mutex<HashMap<String, Arc<OnceLock<super::resolver::Metadata>>>>,
 }
 
@@ -123,6 +127,14 @@ fn inventory_directory(directory: &Path, depth: usize) -> Inventory {
 
 impl Context {
     pub fn open(root: &Path, no_logs: bool) -> Result<Self, String> {
+        Self::open_with_budget(root, no_logs, MAX_HIVE_BYTES)
+    }
+
+    pub(super) fn open_with_budget(
+        root: &Path,
+        no_logs: bool,
+        budget: u64,
+    ) -> Result<Self, String> {
         let input = fs::canonicalize(root).map_err(|e| format!("{}: {e}", root.display()))?;
         let standalone = input.is_file();
         let root = if standalone {
@@ -146,9 +158,46 @@ impl Context {
         let mut files = Vec::with_capacity(paths.len());
         let mut index: HashMap<String, Vec<usize>> = HashMap::new();
         let mut drive_index: HashMap<(char, String), Vec<usize>> = HashMap::new();
-        let windows_root = root
+        // A mount point called "windows" may contain a full volume. Inspect its
+        // children instead of trusting the analyst's choice of directory name.
+        let windows_root = paths.iter().any(|p| {
+            p.strip_prefix(&root)
+                .ok()
+                .and_then(|p| p.components().next())
+                .is_some_and(|p| {
+                    ["System32", "Prefetch", "AppCompat"]
+                        .iter()
+                        .any(|n| p.as_os_str().to_string_lossy().eq_ignore_ascii_case(n))
+                })
+        }) && !paths.iter().any(|p| {
+            p.strip_prefix(&root)
+                .ok()
+                .and_then(|p| p.components().next())
+                .is_some_and(|p| {
+                    p.as_os_str()
+                        .to_string_lossy()
+                        .eq_ignore_ascii_case("Windows")
+                })
+        });
+        let flat_exports = paths.iter().any(|p| {
+            p.strip_prefix(&root).ok().is_some_and(|p| {
+                p.components().count() == 1
+                    && ["SYSTEM", "SOFTWARE", "SAM", "SECURITY", "DEFAULT"]
+                        .iter()
+                        .any(|n| p.to_string_lossy().eq_ignore_ascii_case(n))
+            })
+        });
+        let windows_root = windows_root && !flat_exports;
+        let root_drive = root
             .file_name()
-            .is_some_and(|name| name.to_string_lossy().eq_ignore_ascii_case("Windows"));
+            .and_then(|p| {
+                let p = decode_component(&p.to_string_lossy());
+                drive_component(&p).or_else(|| {
+                    (p.len() == 1 && p.as_bytes()[0].is_ascii_alphabetic())
+                        .then(|| (p.as_bytes()[0] as char).to_ascii_uppercase())
+                })
+            })
+            .unwrap_or('C');
         let describe = |physical: &PathBuf| {
             let relative = physical.strip_prefix(&root).unwrap_or(physical);
             let logical = if windows_root {
@@ -161,6 +210,7 @@ impl Context {
                     logical,
                     physical: physical.clone(),
                     len: metadata.len(),
+                    volume: collection_drive(relative).unwrap_or(root_drive),
                 })
                 .map_err(|e| format!("Cannot inspect {}: {e}", physical.display()))
         };
@@ -181,7 +231,7 @@ impl Context {
                 .entry(file.logical.to_lowercase())
                 .or_default()
                 .push(files.len());
-            let drive = path_drive(&file.physical).unwrap_or('C');
+            let drive = file.volume;
             drive_index
                 .entry((drive, file.logical.to_lowercase()))
                 .or_default()
@@ -189,90 +239,89 @@ impl Context {
             files.push(file);
         }
 
-        // Prefer the live config directory to RegBack/Windows.old. When an exported-hive
-        // directory is supplied, named hives at its root remain usable.
-        let mut selected: BTreeMap<String, usize> = BTreeMap::new();
+        // Only canonical locations (or explicitly supplied hive exports) establish
+        // identity. Sort canonical copies ahead of flat exports, never by an arbitrary
+        // path containing Users/.../C/Windows, and try a valid fallback if parsing fails.
+        let mut selected: BTreeMap<String, Vec<usize>> = BTreeMap::new();
         for (i, file) in files.iter().enumerate() {
             if let Some((kind, user)) = identity_of(file, standalone) {
-                let identity = format!("{kind}\0{user}");
-                if let Some(previous) = selected.get(&identity) {
-                    issues.push(format!(
-                        "Multiple copies of {kind}{}; using {} instead of {}",
-                        if user.is_empty() {
-                            String::new()
-                        } else {
-                            format!(" for {user}")
-                        },
-                        files[*previous].physical.display(),
-                        file.physical.display()
-                    ));
-                } else {
-                    selected.insert(identity, i);
-                }
+                selected
+                    .entry(format!("{}\0{kind}", user.to_ascii_lowercase()))
+                    .or_default()
+                    .push(i);
             }
-        }
-        let hive_bytes = selected
-            .values()
-            .try_fold(0u64, |total, i| total.checked_add(files[*i].len))
-            .ok_or("selected hive sizes overflowed the size counter")?;
-        if hive_bytes > MAX_HIVE_BYTES {
-            return Err(format!(
-                "The selected hives total {hive_bytes} bytes, exceeding the {MAX_HIVE_BYTES}-byte per-computer memory budget; scan fewer user hives together"
-            ));
-        }
-        let mut hive_inputs = Vec::new();
-        let mut input_bytes = hive_bytes;
-        for i in selected.values() {
-            let logs = if no_logs {
-                Vec::new()
-            } else {
-                adjacent_logs(&files[*i].physical, &mut issues)
-            };
-            for log in &logs {
-                let size = fs::metadata(log)
-                    .map_err(|e| format!("{}: {e}", log.display()))?
-                    .len();
-                input_bytes = input_bytes
-                    .checked_add(size)
-                    .ok_or("registry input sizes overflowed the size counter")?;
-            }
-            if input_bytes > MAX_HIVE_BYTES {
-                return Err(format!(
-                    "Hives and transaction logs total {input_bytes} bytes, exceeding the {MAX_HIVE_BYTES}-byte per-computer input memory budget"
-                ));
-            }
-            hive_inputs.push((*i, logs));
         }
         let mut hives = Vec::new();
-        for (i, logs) in hive_inputs {
-            let file = &files[i];
-            let Some((kind, user)) = identity_of(file, standalone) else {
-                continue;
-            };
-            match crate::registry::open(&file.physical, Logs::Given(&logs)) {
-                Ok(opened) => {
-                    if !opened.hive_type.is_empty() && !opened.hive_type.eq_ignore_ascii_case(&kind)
-                    {
-                        issues.push(format!("Hive type mismatch: {} is stored as {kind} but its recorded type is {}; not scanning it under the wrong hive", file.physical.display(), opened.hive_type));
-                        continue;
-                    }
-                    if opened.recovery.dirty && !opened.recovery.recovered {
-                        issues.push(format!(
-                            "Dirty hive without applicable transaction-log replay: {}",
-                            file.physical.display()
-                        ));
-                    }
-                    hives.push(HiveInput {
-                        opened,
-                        kind,
-                        user,
-                        path: file.physical.clone(),
-                    });
+        let mut input_bytes = 0u64;
+        for candidates in selected.values_mut() {
+            candidates.sort_by_key(|i| {
+                let f = &files[*i];
+                (
+                    !f.logical.contains('/'),
+                    f.volume != root_drive,
+                    f.physical.clone(),
+                )
+            });
+            let mut chosen: Option<usize> = None;
+            for &i in candidates.iter() {
+                let file = &files[i];
+                if let Some(previous) = chosen {
+                    issues.push(format!(
+                        "Multiple copies of {}; using {} instead of {}",
+                        file.logical,
+                        files[previous].physical.display(),
+                        file.physical.display()
+                    ));
+                    continue;
                 }
-                Err(e) => issues.push(format!(
-                    "Cannot parse hive {}: {e}",
-                    file.physical.display()
-                )),
+                let Some((kind, user)) = identity_of(file, standalone) else {
+                    continue;
+                };
+                if file.len > budget.saturating_sub(input_bytes) {
+                    issues.push(format!("Skipped {kind} hive {}: {} bytes exceed remaining per-computer input memory budget of {} bytes; other hives and file checks are retained", file.physical.display(), file.len, budget.saturating_sub(input_bytes)));
+                    continue;
+                }
+                let mut cost = file.len;
+                let mut logs = Vec::new();
+                if !no_logs {
+                    for log in adjacent_logs(&file.physical, &mut issues) {
+                        match fs::metadata(&log) {
+                            Ok(m) if m.len() <= budget.saturating_sub(input_bytes).saturating_sub(cost) => {
+                                cost += m.len(); logs.push(log);
+                            }
+                            Ok(_) => issues.push(format!("Skipped transaction log {}: per-computer input memory budget reached; hive retained without this log", log.display())),
+                            Err(e) => issues.push(format!("Cannot inspect transaction log {}: {e}", log.display())),
+                        }
+                    }
+                }
+                match crate::registry::open(&file.physical, Logs::Given(&logs)) {
+                    Ok(opened) => {
+                        if !opened.hive_type.is_empty()
+                            && !opened.hive_type.eq_ignore_ascii_case(&kind)
+                        {
+                            issues.push(format!("Hive type mismatch: {} is stored as {kind} but its recorded type is {}; not scanning it under the wrong hive", file.physical.display(), opened.hive_type));
+                            continue;
+                        }
+                        if opened.recovery.dirty && !opened.recovery.recovered {
+                            issues.push(format!(
+                                "Dirty hive without applicable transaction-log replay: {}",
+                                file.physical.display()
+                            ));
+                        }
+                        input_bytes += cost;
+                        hives.push(HiveInput {
+                            opened,
+                            kind,
+                            user,
+                            path: file.physical.clone(),
+                        });
+                        chosen = Some(i);
+                    }
+                    Err(e) => issues.push(format!(
+                        "Cannot parse hive {}: {e}",
+                        file.physical.display()
+                    )),
+                }
             }
         }
         let computer = hives
@@ -289,6 +338,10 @@ impl Context {
                     .unwrap_or("UNKNOWN")
                     .to_string()
             });
+        let source_drives = files
+            .iter()
+            .map(|f| (f.physical.clone(), f.volume))
+            .collect();
         Ok(Self {
             root,
             computer,
@@ -297,6 +350,9 @@ impl Context {
             issues,
             index,
             drive_index,
+            source_drives,
+            system_volume: OnceLock::new(),
+            original_drive: OnceLock::new(),
             metadata_cache: Mutex::new(HashMap::new()),
         })
     }
@@ -352,20 +408,108 @@ impl Context {
     }
 
     pub(super) fn drive_of(&self, path: &Path) -> char {
-        let canonical = self.canonical_source(path);
-        path_drive(canonical.as_deref().unwrap_or(path)).unwrap_or('C')
+        // Inventoried paths are already canonical. Avoid network-filesystem stats
+        // for every payload; canonicalize only external spellings such as aliases.
+        self.source_drives
+            .get(path)
+            .copied()
+            .or_else(|| {
+                self.canonical_source(path)
+                    .and_then(|p| self.source_drives.get(&p).copied())
+            })
+            .unwrap_or('C')
     }
 
+    /// Captured volume letter; it can differ from the original host's system drive.
     pub(super) fn system_drive(&self) -> char {
-        self.machine_hive("SYSTEM")
-            .map(|h| self.drive_of(&h.path))
-            .or_else(|| {
-                self.files
-                    .iter()
-                    .find(|f| f.logical.to_lowercase().starts_with("windows/"))
-                    .map(|f| self.drive_of(&f.physical))
-            })
-            .unwrap_or_else(|| self.drive_of(&self.root))
+        *self.system_volume.get_or_init(|| {
+            self.machine_hive("SYSTEM")
+                .or_else(|| self.machine_hive("SOFTWARE"))
+                .map(|h| self.drive_of(&h.path))
+                .or_else(|| {
+                    self.files
+                        .iter()
+                        .find(|f| f.logical.to_ascii_lowercase().starts_with("windows/"))
+                        .map(|f| f.volume)
+                })
+                .unwrap_or('C')
+        })
+    }
+
+    pub(super) fn original_system_drive(&self) -> char {
+        *self.original_drive.get_or_init(|| {
+            self.machine_hive("SOFTWARE")
+                .and_then(|h| h.opened.hive.key(r"Microsoft\Windows NT\CurrentVersion"))
+                .and_then(|key| key.value("SystemRoot"))
+                .and_then(
+                    |v| match registry::decode(v.data_type(), &v.read_data().0) {
+                        registry::Data::Text { value, .. } => explicit_drive(&value),
+                        _ => None,
+                    },
+                )
+                .unwrap_or_else(|| self.system_drive())
+        })
+    }
+
+    pub(super) fn captured_user_profile(&self, user: &str) -> Option<String> {
+        let hive = self
+            .hives
+            .iter()
+            .find(|h| h.kind == "NTUSER.DAT" && h.user.eq_ignore_ascii_case(user))?;
+        let file = self.files.iter().find(|f| f.physical == hive.path)?;
+        let (parent, _) = file.logical.rsplit_once('/')?;
+        let drive = if file.volume == self.system_drive() {
+            self.original_system_drive()
+        } else {
+            file.volume
+        };
+        Some(format!("{drive}:\\{}", parent.replace('/', "\\")))
+    }
+
+    /// Registry/client identity is independent of analyst-chosen evidence folder names.
+    pub(super) fn host_identities(&self) -> Vec<(String, String)> {
+        let mut names = Vec::new();
+        if let Some(h) = self.machine_hive("SYSTEM") {
+            let set = self.active_controlset();
+            for (key, field) in [
+                (
+                    format!(r"{set}\Control\ComputerName\ComputerName"),
+                    "ComputerName",
+                ),
+                (
+                    format!(r"{set}\Control\ComputerName\ActiveComputerName"),
+                    "ComputerName",
+                ),
+                (format!(r"{set}\Services\Tcpip\Parameters"), "Hostname"),
+                (format!(r"{set}\Services\Tcpip\Parameters"), "NV Hostname"),
+            ] {
+                if let Some(v) = h.opened.hive.key(&key).and_then(|k| k.value(field))
+                    && let registry::Data::Text { value, .. } =
+                        registry::decode(v.data_type(), &v.read_data().0)
+                    && !value.trim().is_empty()
+                {
+                    names.push((value, format!("captured SYSTEM {key} {field}")));
+                }
+            }
+        }
+        names.extend(
+            client_names(&self.root)
+                .into_iter()
+                .map(|(name, field)| (name, format!("captured client_info.json {field}"))),
+        );
+        names
+    }
+
+    pub(super) fn captured_drive(&self, original: char) -> Option<char> {
+        let host = self.original_system_drive();
+        let captured = self.system_drive();
+        if original == host {
+            Some(captured)
+        } else if original == captured && host != captured {
+            None
+        } else {
+            Some(original)
+        }
     }
 
     pub fn active_controlset(&self) -> String {
@@ -381,7 +525,13 @@ impl Context {
             Err(e) => return Resolution::Invalid(e),
         };
         let key = normalized.to_lowercase();
-        let requested_drive = explicit_drive(windows_path);
+        let requested_drive = match explicit_drive(windows_path) {
+            Some(drive) => match self.captured_drive(drive) {
+                Some(drive) => Some(drive),
+                None => return Resolution::NotCollected,
+            },
+            None => None,
+        };
         let lookup = |key: &str| match requested_drive {
             Some(drive) => self.drive_index.get(&(drive, key.to_string())),
             None => self.index.get(key),
@@ -459,28 +609,6 @@ fn drive_component(component: &str) -> Option<char> {
         .then(|| (last.as_bytes()[0] as char).to_ascii_uppercase())
 }
 
-fn path_drive(path: &Path) -> Option<char> {
-    let parts: Vec<_> = path
-        .components()
-        .filter_map(|part| match part {
-            Component::Normal(part) => Some(decode_component(&part.to_string_lossy())),
-            _ => None,
-        })
-        .collect();
-    parts
-        .iter()
-        .enumerate()
-        .filter_map(|(i, part)| {
-            drive_component(part).or_else(|| {
-                (part.len() == 1
-                    && part.as_bytes()[0].is_ascii_alphabetic()
-                    && parts.get(i + 1).is_some_and(|next| volume_root_name(next)))
-                .then(|| (part.as_bytes()[0] as char).to_ascii_uppercase())
-            })
-        })
-        .next_back()
-}
-
 fn volume_root_name(name: &str) -> bool {
     [
         "Windows",
@@ -520,7 +648,7 @@ fn identity_of(file: &EvidenceFile, standalone: bool) -> Option<(String, String)
     hive_identity(&file.logical, standalone)
 }
 
-fn client_computer(root: &Path) -> Option<String> {
+fn client_names_inner(root: &Path) -> Option<Vec<(String, String)>> {
     let path = root.join("client_info.json");
     let metadata = fs::symlink_metadata(&path).ok()?;
     if !metadata.is_file()
@@ -539,11 +667,25 @@ fn client_computer(root: &Path) -> Option<String> {
         return None;
     }
     let value: serde_json::Value = serde_json::from_slice(&bytes).ok()?;
-    value
-        .get("hostname")?
-        .as_str()
-        .filter(|name| !name.is_empty())
-        .map(str::to_string)
+    Some(
+        ["hostname", "fqdn"]
+            .into_iter()
+            .filter_map(|field| {
+                value
+                    .get(field)?
+                    .as_str()
+                    .filter(|name| !name.trim().is_empty())
+                    .map(|name| (name.to_string(), field.to_string()))
+            })
+            .collect(),
+    )
+}
+
+fn client_names(root: &Path) -> Vec<(String, String)> {
+    client_names_inner(root).unwrap_or_default()
+}
+fn client_computer(root: &Path) -> Option<String> {
+    client_names(root).into_iter().next().map(|(name, _)| name)
 }
 
 fn hive_identity(logical: &str, standalone: bool) -> Option<(String, String)> {
@@ -560,28 +702,31 @@ fn hive_identity(logical: &str, standalone: bool) -> Option<(String, String)> {
         return Some((name, String::new()));
     }
     if matches!(name.as_str(), "NTUSER.DAT" | "USRCLASS.DAT") {
-        let user = components
-            .windows(2)
-            .find(|p| {
-                p[0].eq_ignore_ascii_case("Users")
-                    || p[0].eq_ignore_ascii_case("Documents and Settings")
-                    || p[0].eq_ignore_ascii_case("ServiceProfiles")
-            })
-            .map(|p| p[1].to_string())
-            .or_else(|| {
-                components
-                    .iter()
-                    .position(|part| part.eq_ignore_ascii_case("AppData"))
-                    .and_then(|at| at.checked_sub(1))
-                    .map(|at| components[at].to_string())
-            })
-            .or_else(|| {
-                (name == "NTUSER.DAT" && components.len() > 1)
-                    .then(|| components[components.len() - 2].to_string())
-            })
-            .unwrap_or_else(|| "standalone_user".to_string());
-        if standalone || components.len() == 1 || !logical.to_lowercase().contains("windows.old/") {
-            return Some((name, user));
+        if standalone || components.len() == 1 {
+            return Some((name, "standalone_user".into()));
+        }
+        let lower: Vec<_> = components.iter().map(|s| s.to_ascii_lowercase()).collect();
+        let user_at = if matches!(lower[0].as_str(), "users" | "documents and settings") {
+            Some(1)
+        } else if lower.starts_with(&["windows".into(), "serviceprofiles".into()]) {
+            Some(2)
+        } else if lower.starts_with(&["windows".into(), "system32".into(), "config".into()])
+            && lower.get(3).is_some_and(|s| s == "systemprofile")
+        {
+            Some(3)
+        } else {
+            None
+        };
+        if let Some(at) = user_at {
+            let tail = &lower[at + 1..];
+            let canonical = if name == "NTUSER.DAT" {
+                tail == ["ntuser.dat"]
+            } else {
+                tail == ["appdata", "local", "microsoft", "windows", "usrclass.dat"]
+            };
+            if canonical {
+                return Some((name, components[at].to_string()));
+            }
         }
     }
     None
@@ -611,22 +756,46 @@ fn decode_component(value: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-fn logical_path(relative: &Path) -> String {
-    let parts: Vec<_> = relative
+fn collection_parts(relative: &Path) -> Vec<String> {
+    relative
         .components()
         .filter_map(|part| match part {
             Component::Normal(part) => Some(decode_component(&part.to_string_lossy())),
             _ => None,
         })
-        .collect();
-    let drive = parts.iter().enumerate().find_map(|(i, part)| {
-        (drive_component(part).is_some()
-            || part.len() == 1
-                && part.as_bytes()[0].is_ascii_alphabetic()
-                && parts.get(i + 1).is_some_and(|next| volume_root_name(next)))
-        .then_some(i)
-    });
-    let start = drive.map(|i| i + 1).unwrap_or(0);
+        .collect()
+}
+
+/// Drive prefixes are only meaningful at the root of known collection layouts.
+/// A nested Users/Public/.../C/Windows directory is ordinary evidence, not a volume.
+fn volume_prefix(parts: &[String]) -> Option<(usize, char)> {
+    let at = if parts.first()?.eq_ignore_ascii_case("uploads") {
+        if !parts.get(1).is_some_and(|s| {
+            ["auto", "ntfs", "file", "lazy_ntfs"]
+                .iter()
+                .any(|a| s.eq_ignore_ascii_case(a))
+        }) {
+            return None;
+        }
+        2
+    } else {
+        0
+    };
+    let part = parts.get(at)?;
+    let drive = drive_component(part).or_else(|| {
+        (part.len() == 1
+            && part.as_bytes()[0].is_ascii_alphabetic()
+            && parts.get(at + 1).is_some_and(|next| volume_root_name(next)))
+        .then(|| (part.as_bytes()[0] as char).to_ascii_uppercase())
+    })?;
+    Some((at + 1, drive))
+}
+fn collection_drive(relative: &Path) -> Option<char> {
+    volume_prefix(&collection_parts(relative)).map(|(_, drive)| drive)
+}
+fn logical_path(relative: &Path) -> String {
+    let parts = collection_parts(relative);
+    let start = volume_prefix(&parts).map(|(start, _)| start).unwrap_or(0);
     parts[start..].join("/")
 }
 

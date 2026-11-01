@@ -201,6 +201,19 @@ impl Check<'_> {
     }
 
     fn folder(&mut self, folder: &str, access: &str, limit: usize, shortcut: bool) {
+        let drive = match super::context::explicit_drive(folder) {
+            Some(d) => match self.ctx.captured_drive(d) {
+                Some(d) => d,
+                None => {
+                    self.issue(
+                        "not_collected",
+                        format!("Startup volume not collected: {folder}"),
+                    );
+                    return;
+                }
+            },
+            None => self.ctx.system_drive(),
+        };
         let Ok(folder) = super::context::normalize_windows(folder) else {
             self.issue(
                 "unresolved",
@@ -214,6 +227,7 @@ impl Check<'_> {
                 && !p[prefix.len()..].contains('/')
                 && !p.ends_with("/desktop.ini")
         });
+        let files: Vec<_> = files.into_iter().filter(|f| f.volume == drive).collect();
         if files.is_empty() {
             self.issue("not_collected",format!("No collected files in {folder}; the directory may be empty or omitted from collection"));
         }
@@ -235,7 +249,7 @@ impl Check<'_> {
             {
                 match shell::lnk::parse(&data) {
                     Ok(link) => {
-                        let target = shortcut_target(&link, &file.logical);
+                        let target = shortcut_target(self.ctx, &link, &file.logical);
                         if !target.is_empty() {
                             finding.value =
                                 format!("{} {}", target, link.arguments).trim().to_string();
@@ -262,16 +276,16 @@ impl Check<'_> {
     }
 }
 
-fn shortcut_target(link: &shell::lnk::Link, logical: &str) -> String {
+fn shortcut_target(ctx: &Context, link: &shell::lnk::Link, logical: &str) -> String {
     let user = logical.split('/').nth(1).unwrap_or("");
     if link.flags & 0x100 == 0 && (!link.local_path.is_empty() || !link.network_path.is_empty()) {
-        return expand(&crate::lnk::link_target(link), user);
+        return super::resolver::expand_environment(ctx, &crate::lnk::link_target(link), user);
     }
     if !link.environment_target.is_empty() {
-        return expand(&link.environment_target, user);
+        return super::resolver::expand_environment(ctx, &link.environment_target, user);
     }
     if !link.relative_path.is_empty() {
-        let relative = expand(&link.relative_path, user);
+        let relative = super::resolver::expand_environment(ctx, &link.relative_path, user);
         if relative.as_bytes().get(1) == Some(&b':') || relative.starts_with("\\\\") {
             return relative;
         }
@@ -295,35 +309,32 @@ pub(super) fn registry_text(
     key: &str,
     name: &str,
 ) -> Option<String> {
+    registry_text_status(hive, key, name).0
+}
+
+fn registry_text_status(
+    hive: &super::context::HiveInput,
+    key: &str,
+    name: &str,
+) -> (Option<String>, bool) {
+    registry_text_inner(hive, key, name).unwrap_or((None, false))
+}
+fn registry_text_inner(
+    hive: &super::context::HiveInput,
+    key: &str,
+    name: &str,
+) -> Option<(Option<String>, bool)> {
     let value = hive.opened.hive.key(key)?.value(name)?;
     if !matches!(value.data_type(), 1 | 2) {
         return None;
     }
     let bytes = value.data().ok()?;
-    let text = decode_utf16(&bytes, false).ok()?;
+    let registry::Data::Text { value: text, lossy } = registry::decode(value.data_type(), &bytes)
+    else {
+        return None;
+    };
     let text = text.trim_end_matches('\0').trim();
-    (!text.is_empty()).then(|| text.to_string())
-}
-
-fn expand(value: &str, user: &str) -> String {
-    let values = [
-        ("systemroot", "C:\\Windows".to_string()),
-        ("windir", "C:\\Windows".to_string()),
-        ("systemdrive", "C:".to_string()),
-        ("programdata", "C:\\ProgramData".to_string()),
-        ("programfiles", "C:\\Program Files".to_string()),
-        ("programfiles(x86)", "C:\\Program Files (x86)".to_string()),
-        ("userprofile", format!("C:\\Users\\{user}")),
-        ("appdata", format!("C:\\Users\\{user}\\AppData\\Roaming")),
-        ("localappdata", format!("C:\\Users\\{user}\\AppData\\Local")),
-    ];
-    let mut out = value.to_string();
-    for (key, val) in values {
-        let re =
-            regex::Regex::new(&format!("(?i)%{}%", regex::escape(key))).expect("escaped regex");
-        out = re.replace_all(&out, regex::NoExpand(&val)).into_owned();
-    }
-    out
+    Some(((!text.is_empty()).then(|| text.to_string()), lossy))
 }
 
 fn users(ctx: &Context) -> BTreeSet<String> {
@@ -354,7 +365,11 @@ fn startup(check: &mut Check<'_>) {
     for user in users(check.ctx) {
         folders.push((
             user.clone(),
-            format!("Users/{user}/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup"),
+            super::resolver::expand_environment(
+                check.ctx,
+                r"%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup",
+                &user,
+            ),
             "USER",
         ));
     }
@@ -379,8 +394,16 @@ fn startup(check: &mut Check<'_>) {
             check.sources += 1;
             for suffix in ["User Shell Folders", "Shell Folders"] {
                 let key = format!("{prefix}Microsoft\\Windows\\CurrentVersion\\Explorer\\{suffix}");
-                if let Some(value) = registry_text(hive, &key, name) {
-                    redirected.push((key, value.clone(), expand(&value, &user)));
+                let (value, lossy) = registry_text_status(hive, &key, name);
+                if lossy {
+                    check.issue("lossy_text", format!("{} {key} {name}: malformed UTF-16 decoded with replacement/trailing-byte recovery", hive.path.display()));
+                }
+                if let Some(value) = value {
+                    redirected.push((
+                        key,
+                        value.clone(),
+                        super::resolver::expand_environment(check.ctx, &value, &user),
+                    ));
                 }
             }
         }
@@ -391,8 +414,12 @@ fn startup(check: &mut Check<'_>) {
                 .unwrap_or(&default);
             check.folder(folder, access, 256, true);
         } else {
-            let normalize =
-                |p: &str| super::context::normalize_windows(p).map(|s| s.to_lowercase());
+            let normalize = |p: &str| {
+                let volume = super::context::explicit_drive(p)
+                    .map(|d| check.ctx.captured_drive(d))
+                    .unwrap_or(Some(check.ctx.system_drive()));
+                super::context::normalize_windows(p).map(|s| (volume, s.to_lowercase()))
+            };
             let mut scanned = BTreeSet::new();
             for (key, raw, folder) in redirected {
                 if normalize(&folder).ok() == normalize(&default).ok() {
@@ -435,7 +462,9 @@ fn powershell(check: &mut Check<'_>) {
                     &format!("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\{suffix}"),
                     "Personal",
                 ) {
-                    if let Ok(path) = super::context::normalize_windows(&expand(&raw, &user)) {
+                    if let Ok(path) = super::context::normalize_windows(
+                        &super::resolver::expand_environment(check.ctx, &raw, &user),
+                    ) {
                         docs.insert(path);
                     }
                     break;
@@ -753,6 +782,7 @@ mod tests {
     }
     #[test]
     fn startup_shortcut_relative_targets_are_resolved_from_link_directory() {
+        let dir = tempfile::tempdir().unwrap();
         let relative = r"..\..\payload.exe";
         let mut bytes = vec![0; 0x4c];
         bytes[..4].copy_from_slice(&0x4cu32.to_le_bytes());
@@ -763,7 +793,11 @@ mod tests {
         bytes.extend([0; 4]);
         let link = shell::lnk::parse(&bytes).unwrap();
         assert_eq!(
-            shortcut_target(&link, "Users/alice/Startup/test.lnk"),
+            shortcut_target(
+                &Context::open(dir.path(), true).unwrap(),
+                &link,
+                "Users/alice/Startup/test.lnk"
+            ),
             "Users/payload.exe"
         );
     }

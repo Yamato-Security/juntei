@@ -48,11 +48,6 @@ pub fn enrich(ctx: &Context, finding: &mut Finding) {
         finding.is_builtin = Some(BUILTIN.contains(&basename(&target).as_str()));
     }
     let normalized = normalize_windows(&target).unwrap_or_default();
-    let lower = normalized.to_lowercase();
-    if finding.is_in_os_directory.is_none() {
-        finding.is_in_os_directory =
-            Some(lower.starts_with("windows/system32/") || lower.starts_with("windows/syswow64/"));
-    }
     finding.resolved_path = normalized;
     finding.signer_status = "not_available".to_string();
     match ctx.resolve(&target) {
@@ -82,6 +77,11 @@ pub fn enrich(ctx: &Context, finding: &mut Finding) {
         Resolution::Ambiguous(paths) => {
             finding.resolution_status = format!("ambiguous: {} collected copies", paths.len())
         }
+    }
+    if finding.is_in_os_directory.is_none() {
+        let lower = finding.resolved_path.to_ascii_lowercase();
+        finding.is_in_os_directory =
+            Some(lower.starts_with("windows/system32/") || lower.starts_with("windows/syswow64/"));
     }
 }
 
@@ -372,6 +372,47 @@ fn rva_offset(pe: &goblin::pe::PE<'_>, rva: u32, size: u32, bytes_len: usize) ->
     None
 }
 
+// Bound total work as well as tree depth: resource directories/data may alias each other.
+const MAX_RESOURCE_ENTRIES: usize = 16_384;
+const MAX_VERSION_BYTES: usize = 16 * 1024 * 1024;
+
+#[derive(Default)]
+struct ResourceWalk {
+    directories: std::collections::HashSet<usize>,
+    data_entries: std::collections::HashSet<usize>,
+    blobs: std::collections::HashSet<(usize, usize)>,
+    entries: usize,
+    bytes: usize,
+}
+impl ResourceWalk {
+    fn entries(&mut self, data: &[u8], offset: usize) -> Vec<(u32, u32)> {
+        if !self.directories.insert(offset) || self.entries >= MAX_RESOURCE_ENTRIES {
+            return Vec::new();
+        }
+        let Some(header) = data.get(offset..offset.saturating_add(16)) else {
+            return Vec::new();
+        };
+        let named = u16::from_le_bytes(header[12..14].try_into().unwrap()) as usize;
+        let ids = u16::from_le_bytes(header[14..16].try_into().unwrap()) as usize;
+        let count = (named + ids).min(MAX_RESOURCE_ENTRIES - self.entries);
+        let Some(entries) = data.get(offset + 16..(offset + 16).saturating_add(count * 8)) else {
+            return Vec::new();
+        };
+        self.entries += count;
+        entries
+            .as_chunks::<8>()
+            .0
+            .iter()
+            .map(|entry| {
+                (
+                    u32::from_le_bytes(entry[..4].try_into().unwrap()),
+                    u32::from_le_bytes(entry[4..8].try_into().unwrap()),
+                )
+            })
+            .collect()
+    }
+}
+
 fn version_original_filename(pe: &goblin::pe::PE<'_>, bytes: &[u8]) -> Option<String> {
     let optional = pe.header.optional_header.as_ref()?;
     let resource = optional.data_directories.get_resource_table()?;
@@ -380,28 +421,51 @@ fn version_original_filename(pe: &goblin::pe::PE<'_>, bytes: &[u8]) -> Option<St
     }
     let root = rva_offset(pe, resource.virtual_address, resource.size, bytes.len())?;
     let data = bytes.get(root..root + resource.size as usize)?;
-    let versions = resource_entries(data, 0)
+    version_resource(pe, bytes, data, &mut ResourceWalk::default())
+}
+
+fn version_resource(
+    pe: &goblin::pe::PE<'_>,
+    bytes: &[u8],
+    data: &[u8],
+    walk: &mut ResourceWalk,
+) -> Option<String> {
+    for (_, type_entry) in walk
+        .entries(data, 0)
         .into_iter()
-        .filter(|(id, _)| *id == 16);
-    for (_, type_entry) in versions {
+        .filter(|(id, _)| *id == 16)
+    {
         if type_entry & 0x8000_0000 == 0 {
             continue;
         }
-        for (_, name_entry) in resource_entries(data, (type_entry & 0x7fff_ffff) as usize) {
+        for (_, name_entry) in walk.entries(data, (type_entry & 0x7fff_ffff) as usize) {
             if name_entry & 0x8000_0000 == 0 {
                 continue;
             }
-            for (_, language) in resource_entries(data, (name_entry & 0x7fff_ffff) as usize) {
-                if language & 0x8000_0000 != 0 {
+            for (_, language) in walk.entries(data, (name_entry & 0x7fff_ffff) as usize) {
+                if language & 0x8000_0000 != 0 || !walk.data_entries.insert(language as usize) {
                     continue;
                 }
-                let entry = data.get(language as usize..language as usize + 16)?;
+                let Some(entry) =
+                    data.get(language as usize..(language as usize).saturating_add(16))
+                else {
+                    continue;
+                };
                 let rva = u32::from_le_bytes(entry[..4].try_into().ok()?);
                 let size = u32::from_le_bytes(entry[4..8].try_into().ok()?);
                 if size > 4 * 1024 * 1024 {
                     continue;
                 }
-                let offset = rva_offset(pe, rva, size, bytes.len())?;
+                let Some(offset) = rva_offset(pe, rva, size, bytes.len()) else {
+                    continue;
+                };
+                if !walk.blobs.insert((offset, size as usize)) {
+                    continue;
+                }
+                walk.bytes = walk.bytes.saturating_add(size as usize);
+                if walk.bytes > MAX_VERSION_BYTES {
+                    return None;
+                }
                 if let Some(name) = version_string(bytes.get(offset..offset + size as usize)?, 0) {
                     return Some(name);
                 }
@@ -409,29 +473,6 @@ fn version_original_filename(pe: &goblin::pe::PE<'_>, bytes: &[u8]) -> Option<St
         }
     }
     None
-}
-
-fn resource_entries(data: &[u8], offset: usize) -> Vec<(u32, u32)> {
-    let Some(header) = data.get(offset..offset.saturating_add(16)) else {
-        return Vec::new();
-    };
-    let named = u16::from_le_bytes(header[12..14].try_into().unwrap()) as usize;
-    let ids = u16::from_le_bytes(header[14..16].try_into().unwrap()) as usize;
-    let count = named + ids;
-    let Some(entries) = data.get(offset + 16..(offset + 16).saturating_add(count * 8)) else {
-        return Vec::new();
-    };
-    entries
-        .as_chunks::<8>()
-        .0
-        .iter()
-        .map(|entry| {
-            (
-                u32::from_le_bytes(entry[..4].try_into().unwrap()),
-                u32::from_le_bytes(entry[4..8].try_into().unwrap()),
-            )
-        })
-        .collect()
 }
 
 fn version_string(data: &[u8], depth: usize) -> Option<String> {
@@ -652,7 +693,7 @@ fn path_like(value: &str) -> bool {
     !value.contains([';', '{', '}', '\n']) && executable_extension(value)
 }
 
-fn expand_environment(ctx: &Context, value: &str, user: &str) -> String {
+pub(super) fn expand_environment(ctx: &Context, value: &str, user: &str) -> String {
     let mut variables = std::collections::HashMap::from([
         ("systemroot".to_string(), "Windows".to_string()),
         ("windir".into(), "Windows".into()),
@@ -745,16 +786,25 @@ fn expand_environment(ctx: &Context, value: &str, user: &str) -> String {
                     })
                     .map(|(_, path)| path)
             })
+            .or_else(|| ctx.captured_user_profile(user))
             .unwrap_or_else(|| format!("{system_drive}:\\Users\\{user}"));
         for (name, tail) in [
             ("userprofile", ""),
-            ("homepath", ""),
             ("appdata", "\\AppData\\Roaming"),
             ("localappdata", "\\AppData\\Local"),
             ("temp", "\\AppData\\Local\\Temp"),
             ("tmp", "\\AppData\\Local\\Temp"),
         ] {
             variables.insert(name.into(), format!("{profile}{tail}"));
+        }
+        let homepath = if super::context::explicit_drive(&profile).is_some() {
+            &profile[2..]
+        } else {
+            &profile
+        };
+        variables.insert("homepath".into(), homepath.to_string());
+        if let Some(drive) = super::context::explicit_drive(&profile) {
+            variables.insert("homedrive".into(), format!("{drive}:"));
         }
         if let Some(hive) = ctx
             .hives
@@ -775,40 +825,48 @@ fn expand_environment(ctx: &Context, value: &str, user: &str) -> String {
             }
         }
     }
-    let mut result = value.to_string();
-    // Environment variables may refer to one another. Bound substitutions and preserve an
-    // unknown variable verbatim; analyst environment variables are never consulted.
-    for _ in 0..8 {
-        let mut next = String::new();
-        let mut rest = result.as_str();
-        while let Some(start) = rest.find('%') {
-            next.push_str(&rest[..start]);
-            let after = &rest[start + 1..];
-            let Some(end) = after.find('%') else {
-                next.push_str(&rest[start..]);
-                rest = "";
-                break;
-            };
-            let name = &after[..end];
-            if let Some(replacement) = variables.get(&name.to_lowercase()) {
-                next.push_str(replacement);
-            } else {
-                next.push('%');
-                next.push_str(name);
-                next.push('%');
-            }
-            rest = &after[end + 1..];
-            if next.len() > MAX_COMMAND_BYTES {
-                return value.to_string();
-            }
-        }
-        next.push_str(rest);
-        if next == result {
+    // One left-to-right pass per variable, with an explicit recursion chain. A profile
+    // literally named %appdata% must stay literal instead of recursively expanding itself.
+    let mut budget = MAX_COMMAND_BYTES;
+    expand_tokens(value, &variables, &mut Vec::new(), &mut budget)
+        .unwrap_or_else(|| value.to_string())
+}
+
+fn expand_tokens(
+    value: &str,
+    variables: &std::collections::HashMap<String, String>,
+    chain: &mut Vec<String>,
+    budget: &mut usize,
+) -> Option<String> {
+    let mut result = String::new();
+    let mut rest = value;
+    while let Some(start) = rest.find('%') {
+        let after = &rest[start + 1..];
+        let Some(end) = after.find('%') else {
             break;
+        };
+        let prefix = &rest[..start];
+        *budget = budget.checked_sub(prefix.len())?;
+        result.push_str(prefix);
+        let name = after[..end].to_lowercase();
+        if chain.len() < 8
+            && !chain.contains(&name)
+            && let Some(replacement) = variables.get(&name)
+        {
+            chain.push(name);
+            let expanded = expand_tokens(replacement, variables, chain, budget)?;
+            chain.pop();
+            result.push_str(&expanded);
+        } else {
+            let token = &rest[start..start + end + 2];
+            *budget = budget.checked_sub(token.len())?;
+            result.push_str(token);
         }
-        result = next;
+        rest = &after[end + 1..];
     }
-    result
+    *budget = budget.checked_sub(rest.len())?;
+    result.push_str(rest);
+    Some(result)
 }
 
 fn embedded_signer(path: &Path) -> (String, String) {
@@ -1413,6 +1471,115 @@ mod tests {
             "Users/alice/AppData/Roaming/agent.ps1"
         );
         assert_eq!(finding.exists, Some(true));
+    }
+
+    #[test]
+    fn environment_expansion_is_unicode_safe_bounded_and_uses_windows_homepath() {
+        let dir = tempfile::tempdir().unwrap();
+        let ctx = Context::open(dir.path(), true).unwrap();
+        assert_eq!(
+            expand_environment(&ctx, "K%APPDATA%\\evil.dll", "Alice"),
+            "KC:\\Users\\Alice\\AppData\\Roaming\\evil.dll"
+        );
+        assert_eq!(
+            expand_environment(&ctx, r"%HOMEDRIVE%%HOMEPATH%\x.exe", "Alice"),
+            r"C:\Users\Alice\x.exe"
+        );
+        for (token, expected) in [
+            ("%TEMP%", r"C:\Users\Alice\AppData\Local\Temp"),
+            ("%TMP%", r"C:\Users\Alice\AppData\Local\Temp"),
+            ("%PUBLIC%", r"Users\Public"),
+            ("%ALLUSERSPROFILE%", "ProgramData"),
+            ("%COMMONPROGRAMFILES%", r"Program Files\Common Files"),
+        ] {
+            assert_eq!(expand_environment(&ctx, token, "Alice"), expected);
+        }
+        let recursive = expand_environment(&ctx, r"%APPDATA%\evil.dll", "%appdata%");
+        assert!(recursive.len() < MAX_COMMAND_BYTES);
+        assert_eq!(recursive, r"C:\Users\%appdata%\AppData\Roaming\evil.dll");
+        assert_eq!(
+            expand_environment(&ctx, "K%Unknown%", "Alice"),
+            "K%Unknown%"
+        );
+    }
+
+    #[test]
+    fn os_directory_flag_uses_the_resolved_target_not_the_bare_command() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join("Windows/System32")).unwrap();
+        for name in ["userinit.exe", "evil.dll"] {
+            std::fs::write(dir.path().join("Windows/System32").join(name), b"test").unwrap();
+        }
+        let ctx = Context::open(dir.path(), true).unwrap();
+        for value in ["userinit.exe", "rundll32.exe evil.dll,Start"] {
+            let mut finding = Finding {
+                value: value.into(),
+                ..Default::default()
+            };
+            enrich(&ctx, &mut finding);
+            assert_eq!(finding.resolution_status, "collected");
+            assert_eq!(finding.is_in_os_directory, Some(true), "{value}");
+        }
+    }
+
+    #[test]
+    fn aliased_version_resources_are_visited_once_with_a_total_work_budget() {
+        let count = 1024usize;
+        let dir_bytes = 16 + count * 8;
+        let data_entry = 3 * dir_bytes;
+        let mut resource = vec![0; data_entry + 32];
+        for level in 0..3 {
+            let base = level * dir_bytes;
+            resource[base + 14..base + 16].copy_from_slice(&(count as u16).to_le_bytes());
+            for n in 0..count {
+                let at = base + 16 + n * 8;
+                resource[at..at + 4]
+                    .copy_from_slice(&(if level == 0 { 16u32 } else { n as u32 }).to_le_bytes());
+                let target = if level < 2 {
+                    0x8000_0000 | ((level + 1) * dir_bytes) as u32
+                } else {
+                    data_entry as u32
+                };
+                resource[at + 4..at + 8].copy_from_slice(&target.to_le_bytes());
+            }
+        }
+        resource[data_entry..data_entry + 4]
+            .copy_from_slice(&(0x1000 + data_entry as u32 + 16).to_le_bytes());
+        resource[data_entry + 4..data_entry + 8].copy_from_slice(&16u32.to_le_bytes());
+        let mut bytes = vec![0u8; 512 + resource.len()];
+        bytes[..2].copy_from_slice(b"MZ");
+        bytes[60..64].copy_from_slice(&64u32.to_le_bytes());
+        bytes[64..68].copy_from_slice(b"PE\0\0");
+        bytes[68..70].copy_from_slice(&0x8664u16.to_le_bytes());
+        bytes[70..72].copy_from_slice(&1u16.to_le_bytes());
+        bytes[84..86].copy_from_slice(&240u16.to_le_bytes());
+        bytes[88..90].copy_from_slice(&0x20bu16.to_le_bytes());
+        bytes[120..124].copy_from_slice(&4096u32.to_le_bytes());
+        bytes[124..128].copy_from_slice(&512u32.to_le_bytes());
+        bytes[144..148].copy_from_slice(&65536u32.to_le_bytes());
+        bytes[148..152].copy_from_slice(&512u32.to_le_bytes());
+        bytes[196..200].copy_from_slice(&16u32.to_le_bytes());
+        bytes[216..220].copy_from_slice(&0x1000u32.to_le_bytes());
+        bytes[220..224].copy_from_slice(&(resource.len() as u32).to_le_bytes());
+        bytes[328..333].copy_from_slice(b".rsrc");
+        bytes[336..340].copy_from_slice(&(resource.len() as u32).to_le_bytes());
+        bytes[340..344].copy_from_slice(&0x1000u32.to_le_bytes());
+        bytes[344..348].copy_from_slice(&(resource.len() as u32).to_le_bytes());
+        bytes[348..352].copy_from_slice(&512u32.to_le_bytes());
+        bytes[512..].copy_from_slice(&resource);
+        let pe = goblin::pe::PE::parse(&bytes).unwrap();
+        let mut walk = ResourceWalk::default();
+        assert!(version_resource(&pe, &bytes, &resource, &mut walk).is_none());
+        assert_eq!(walk.entries, 3 * count);
+        assert_eq!(walk.directories.len(), 3);
+        assert_eq!(walk.data_entries.len(), 1);
+        assert!(version_original_filename(&pe, &bytes).is_none());
+        let mut walk = ResourceWalk {
+            entries: MAX_RESOURCE_ENTRIES - 1,
+            ..Default::default()
+        };
+        assert_eq!(walk.entries(&resource, 0).len(), 1);
+        assert!(walk.entries(&resource, dir_bytes).is_empty());
     }
 
     #[test]
