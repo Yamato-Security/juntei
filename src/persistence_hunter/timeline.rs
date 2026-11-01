@@ -215,7 +215,7 @@ impl HostAliases {
     }
 }
 
-fn host_key(name: &str) -> Option<String> {
+pub(super) fn host_key(name: &str) -> Option<String> {
     let name = name.trim().trim_end_matches('.');
     if name.is_empty()
         || name.encode_utf16().count() > 255
@@ -231,7 +231,7 @@ fn host_key(name: &str) -> Option<String> {
 
 /// Only the primary installation's live channel files establish local-host identity.
 /// Windows.old, copied exports and forwarded/archived logs cannot introduce aliases.
-fn active_channel_log(ctx: &Context, file: &EvidenceFile, channel: &str) -> bool {
+pub(super) fn active_channel_log(ctx: &Context, file: &EvidenceFile, channel: &str) -> bool {
     let lower = file.logical.to_lowercase();
     lower
         .strip_prefix("windows/system32/winevt/logs/")
@@ -390,6 +390,9 @@ pub fn enrich(ctx: &Context, findings: &mut [Finding], explicit_mft: Option<&Pat
     let mut file_targets: HashMap<String, Vec<(usize, bool)>> = HashMap::new();
     let mut event_targets: HashMap<EventKey, Vec<usize>> = HashMap::new();
     for (i, finding) in findings.iter().enumerate() {
+        if finding.skip_correlation {
+            continue;
+        }
         let descriptors = if finding.time_evidence.is_empty() {
             fallback(ctx, finding)
         } else {
@@ -474,6 +477,9 @@ pub fn enrich(ctx: &Context, findings: &mut [Finding], explicit_mft: Option<&Pat
         issues.extend(result.issues);
     }
     for (finding, state) in findings.iter_mut().zip(states) {
+        if finding.skip_correlation {
+            continue;
+        }
         finding.last_change.clear();
         finding.change_source.clear();
         if let Some(candidate) = state.winner() {
@@ -958,7 +964,7 @@ fn scan_event_source(
     scan
 }
 
-fn scalar(value: Option<&Value>) -> Option<String> {
+pub(super) fn scalar(value: Option<&Value>) -> Option<String> {
     match value? {
         Value::String(value) => Some(value.clone()),
         Value::Number(value) => Some(value.to_string()),
@@ -967,7 +973,7 @@ fn scalar(value: Option<&Value>) -> Option<String> {
     }
 }
 
-fn named_fields(value: &Value, field: &str, depth: usize) -> Vec<String> {
+pub(super) fn named_fields(value: &Value, field: &str, depth: usize) -> Vec<String> {
     if depth > 16 {
         return Vec::new();
     }

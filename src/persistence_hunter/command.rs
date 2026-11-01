@@ -176,6 +176,7 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
                 context.issues.join("; ")
             ));
         }
+        context.service_event_correlation = !opts.no_timeline;
         inputs.extend(context.files.iter().map(|f| f.physical.clone()));
         // A standalone hive's replay reads adjacent transaction logs even
         // though those files are not in its single-file inventory.
@@ -239,6 +240,8 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
             .then_with(|| a.check_id.cmp(&b.check_id))
             .then_with(|| a.path.cmp(&b.path))
             .then_with(|| a.value.cmp(&b.value))
+            .then_with(|| a.source_file.cmp(&b.source_file))
+            .then_with(|| a.record_identity.cmp(&b.record_identity))
     });
     // A source can be seen through both HKCR views; preserve distinct provenance,
     // but suppress identical rows emitted by the same check and same source.
@@ -248,6 +251,7 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
             && a.path == b.path
             && a.value == b.value
             && a.source_file == b.source_file
+            && a.record_identity == b.record_identity
     });
     inputs.sort();
     inputs.dedup();

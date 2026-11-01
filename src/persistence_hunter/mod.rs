@@ -6,7 +6,9 @@ mod com;
 mod command;
 pub mod context;
 pub mod custom;
+mod deleted_services;
 pub mod file_checks;
+mod patterns;
 pub mod profile;
 pub mod resolver;
 pub mod timeline;
@@ -47,6 +49,19 @@ pub struct Finding {
     pub is_in_os_directory: Option<bool>,
     pub launcher: String,
     pub references: String,
+    /// A check may distinguish ordinary artifact inventory from suspicious commands.
+    /// Explicit profile allow/block rules still take precedence.
+    #[serde(skip)]
+    pub base_classification: Option<(&'static str, &'static str)>,
+    /// Metadata-only/historical references must not borrow another file's bytes.
+    #[serde(skip)]
+    pub resolution_unavailable: bool,
+    /// Preserve an already attributed artifact time, or leave historical change time unknown.
+    #[serde(skip)]
+    pub skip_correlation: bool,
+    /// Distinguish recovered records/versions without changing legacy CSV columns.
+    #[serde(skip)]
+    pub record_identity: String,
     #[serde(skip)]
     pub resolve_target: String,
     #[serde(skip)]

@@ -425,6 +425,7 @@ fn custom_checks_find_controlled_native_configuration() {
             && !FILE_CHECKS.contains(&c.id.as_str())
             && !c.id.starts_with("winlogon_")
             && c.id != "admin_group_membership"
+            && c.id != "deleted_services"
     }) {
         assert!(
             ids.contains(check.id.as_str()),

@@ -14,6 +14,8 @@
 
 - `persistence-hunter`: prevent Unicode registry text from crashing or indefinitely expanding a scan; restrict hive selection to canonical capture locations; retain readable hives and file checks when the input budget is reached; handle captured/original drive labels and DNS/NetBIOS host aliases; bound PE resource traversal; retain accessibility replacement candidates with damaged metadata and recover malformed registry/BITS text; classify OS-directory targets after resolution. (@YamatoSecurity)
 
+- `persistence-hunter`: retain recovered service DLL payloads, match installation events using same-state display names, and keep key-only recovery origins as provenance without duplicate empty rows. Partial allow matches do not raise informational candidates' severity. (@YamatoSecurity)
+
 **New Features:**
 
 - Rename the persistence command to `persistence-hunter` and its Rust module to `persistence_hunter`. Automatic parsing saves the hunter's findings as `PersistenceHunter.csv` (or JSON/JSONL) with matching log names; simplify the progress message and update the website terminology. (@YamatoSecurity)
@@ -25,6 +27,8 @@
 - `persistence-hunter` uses a shared worker pool for independent checks, payload metadata, and MFT/EVTX timeline streams. `-T, --threads <N>` chooses the worker count (default: logical CPU count); loaded hives and per-payload metadata are shared, and results, coverage, and timestamp selection remain deterministic. Automatic parsing gives each hunter child one worker within its existing process budget. (@YamatoSecurity)
 
 - `persistence-hunter`: native Rust port of Hexastrike's PyrsistenceSniper, with 130 offline persistence checks, bundled and custom YAML allow/block profiles, CSV/JSON/JSONL findings, per-check coverage, payload hashes and descriptive signature metadata, and independent MFT/event-log timestamp correlation. Supports mounted Windows volumes, standalone hives and multi-host Velociraptor collections; `auto-parse` saves its findings under each host's `persistence` category. Upstream MIT attribution is retained. (@YamatoSecurity)
+
+- Persistence Hunter adds `deleted_services`: recover service history from deleted registry cells and transaction logs, keeping versions, missing fields, and provenance separate. Ordinary history is informational; suspicious PowerShell staging can be raised for review. Matching local System 7045 events add installation references without claiming execution or borrowing current payload bytes. (@YamatoSecurity)
 
 - `auto-parse` uses readable, capitalized artifact filenames (`SAM.csv`, `MFT.csv`, `UsnJournal.csv`, `PrefetchTimeline.csv`, etc.) with matching `-logs.txt` names. Amcache tables are `Devices.csv`, `Files.csv`, `Findings.csv`, and `Summary.csv` inside each source directory. JSON/JSONL filenames use the same artifact stems, while category folders and SIEM artifact identifiers retain their established names. (@YamatoSecurity)
 
