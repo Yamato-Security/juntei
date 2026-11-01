@@ -44,6 +44,7 @@ pub struct Context {
     index: HashMap<String, Vec<usize>>,
     drive_index: HashMap<(char, String), Vec<usize>>,
     source_drives: HashMap<PathBuf, char>,
+    root_drive: char,
     system_volume: OnceLock<char>,
     original_drive: OnceLock<char>,
     pub(super) metadata_cache: Mutex<HashMap<String, Arc<OnceLock<super::resolver::Metadata>>>>,
@@ -351,6 +352,7 @@ impl Context {
             index,
             drive_index,
             source_drives,
+            root_drive,
             system_volume: OnceLock::new(),
             original_drive: OnceLock::new(),
             metadata_cache: Mutex::new(HashMap::new()),
@@ -417,7 +419,7 @@ impl Context {
                 self.canonical_source(path)
                     .and_then(|p| self.source_drives.get(&p).copied())
             })
-            .unwrap_or('C')
+            .unwrap_or(self.root_drive)
     }
 
     /// Captured volume letter; it can differ from the original host's system drive.
@@ -432,7 +434,7 @@ impl Context {
                         .find(|f| f.logical.to_ascii_lowercase().starts_with("windows/"))
                         .map(|f| f.volume)
                 })
-                .unwrap_or('C')
+                .unwrap_or(self.root_drive)
         })
     }
 
@@ -624,6 +626,12 @@ fn volume_root_name(name: &str) -> bool {
 }
 
 pub(super) fn explicit_drive(path: &str) -> Option<char> {
+    split_drive(path).map(|(drive, _)| drive)
+}
+
+/// Keep the drive and remainder relative to the same normalized string. Offsets
+/// into a trimmed/prefix-stripped path cannot be applied to the original input.
+pub(super) fn split_drive(path: &str) -> Option<(char, &str)> {
     let mut path = path.trim().trim_matches(['\'', '"']);
     for prefix in ["\\\\?\\", "\\??\\", "\\\\.\\"] {
         if let Some(rest) = path.strip_prefix(prefix) {
@@ -633,7 +641,7 @@ pub(super) fn explicit_drive(path: &str) -> Option<char> {
     }
     let bytes = path.as_bytes();
     (bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':')
-        .then(|| (bytes[0] as char).to_ascii_uppercase())
+        .then(|| ((bytes[0] as char).to_ascii_uppercase(), &path[2..]))
 }
 
 fn identity_of(file: &EvidenceFile, standalone: bool) -> Option<(String, String)> {
@@ -854,6 +862,29 @@ pub(super) fn normalize_windows(value: &str) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn drive_and_remainder_share_normalized_prefixes() {
+        for path in [
+            "\u{3000}d:\\Users\\fixture",
+            r#""d:\Users\fixture""#,
+            r"'d:\Users\fixture'",
+            r"\\?\d:\Users\fixture",
+            r"\??\d:\Users\fixture",
+            r"\\.\d:\Users\fixture",
+        ] {
+            assert_eq!(
+                split_drive(path),
+                Some(('D', r"\Users\fixture")),
+                "{path:?}"
+            );
+            assert_eq!(explicit_drive(path), Some('D'));
+        }
+        for path in ["", "\u{3000}", "K:", r"Users\fixture", r"\\server\share"] {
+            assert_eq!(split_drive(path), None, "{path:?}");
+            assert_eq!(explicit_drive(path), None);
+        }
+    }
+
     #[test]
     fn collection_paths_decode_once() {
         assert_eq!(

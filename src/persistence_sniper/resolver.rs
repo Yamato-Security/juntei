@@ -797,13 +797,10 @@ pub(super) fn expand_environment(ctx: &Context, value: &str, user: &str) -> Stri
         ] {
             variables.insert(name.into(), format!("{profile}{tail}"));
         }
-        let homepath = if super::context::explicit_drive(&profile).is_some() {
-            &profile[2..]
-        } else {
-            &profile
-        };
+        let profile_drive = super::context::split_drive(&profile);
+        let homepath = profile_drive.map_or(profile.as_str(), |(_, tail)| tail);
         variables.insert("homepath".into(), homepath.to_string());
-        if let Some(drive) = super::context::explicit_drive(&profile) {
+        if let Some((drive, _)) = profile_drive {
             variables.insert("homedrive".into(), format!("{drive}:"));
         }
         if let Some(hive) = ctx
@@ -827,6 +824,7 @@ pub(super) fn expand_environment(ctx: &Context, value: &str, user: &str) -> Stri
     }
     // One left-to-right pass per variable, with an explicit recursion chain. A profile
     // literally named %appdata% must stay literal instead of recursively expanding itself.
+    // The shared budget bounds both emitted bytes and substitutions, including empty ones.
     let mut budget = MAX_COMMAND_BYTES;
     expand_tokens(value, &variables, &mut Vec::new(), &mut budget)
         .unwrap_or_else(|| value.to_string())
@@ -848,6 +846,10 @@ fn expand_tokens(
         let prefix = &rest[..start];
         *budget = budget.checked_sub(prefix.len())?;
         result.push_str(prefix);
+        let token = &rest[start..start + end + 2];
+        // Charge before recursion: repeated references ending in empty values can
+        // otherwise perform exponential work without emitting a single byte.
+        *budget = budget.checked_sub(token.len())?;
         let name = after[..end].to_lowercase();
         if chain.len() < 8
             && !chain.contains(&name)
@@ -858,8 +860,6 @@ fn expand_tokens(
             chain.pop();
             result.push_str(&expanded);
         } else {
-            let token = &rest[start..start + end + 2];
-            *budget = budget.checked_sub(token.len())?;
             result.push_str(token);
         }
         rest = &after[end + 1..];
@@ -1501,6 +1501,36 @@ mod tests {
             expand_environment(&ctx, "K%Unknown%", "Alice"),
             "K%Unknown%"
         );
+    }
+
+    #[test]
+    fn empty_environment_substitutions_exhaust_the_work_budget() {
+        let mut variables = std::collections::HashMap::new();
+        for n in 1..8 {
+            variables.insert(format!("v{n}"), format!("%v{}%", n + 1).repeat(4));
+        }
+        variables.insert("v8".into(), String::new());
+        let mut budget = 128;
+        assert!(expand_tokens("%v1%", &variables, &mut Vec::new(), &mut budget).is_none());
+    }
+
+    #[test]
+    fn bounded_empty_substitutions_can_still_resolve_normal_commands() {
+        let variables = std::collections::HashMap::from([
+            ("empty".into(), String::new()),
+            ("root".into(), r"C:\Windows".into()),
+        ]);
+        let mut budget = MAX_COMMAND_BYTES;
+        assert_eq!(
+            expand_tokens(
+                r"%empty%%root%\agent.exe",
+                &variables,
+                &mut Vec::new(),
+                &mut budget
+            ),
+            Some(r"C:\Windows\agent.exe".into())
+        );
+        assert!(budget < MAX_COMMAND_BYTES - r"C:\Windows\agent.exe".len());
     }
 
     #[test]

@@ -942,6 +942,89 @@ fn original_host_drive_is_mapped_to_the_captured_system_volume() {
 }
 
 #[test]
+fn user_environment_empty_fanout_keeps_the_run_finding_without_unbounded_work() {
+    use crate::persistence_sniper::resolver::{enrich, expand_environment};
+    let dir = tempfile::tempdir().unwrap();
+    let mut user = Node::default();
+    for n in 1..8 {
+        user.text(
+            "Environment",
+            &format!("v{n}"),
+            &format!("%v{}%", n + 1).repeat(40),
+        );
+    }
+    user.text("Environment", "v8", "");
+    let command = r"%v1%C:\agent.exe";
+    user.text(
+        r"Software\Microsoft\Windows\CurrentVersion\Run",
+        "Agent",
+        command,
+    );
+    save(dir.path(), "NTUSER.DAT", &user);
+    let ctx = Context::open(dir.path(), true).unwrap();
+    assert_eq!(expand_environment(&ctx, command, "fixture"), command);
+    let mut scan = run(&ctx);
+    let finding = scan
+        .findings
+        .iter_mut()
+        .find(|f| f.check_id == "run_keys" && f.value == command)
+        .expect("The unexpanded persistence entry must remain visible");
+    enrich(&ctx, finding);
+    assert_eq!(finding.value, command);
+    assert_ne!(finding.resolution_status, "collected");
+}
+
+#[test]
+fn profile_homepath_is_taken_after_the_normalized_drive_prefix() {
+    use crate::persistence_sniper::resolver::expand_environment;
+    for prefix in ["\u{3000}", "  ", r"\\?\", r"\??\", r"\\.\"] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut sw = Node::default();
+        sw.text(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-0-0",
+            "ProfileImagePath",
+            &format!("{prefix}D:\\Users\\fixture"),
+        );
+        save(dir.path(), "SOFTWARE", &sw);
+        save(dir.path(), "NTUSER.DAT", &Node::default());
+        let ctx = Context::open(dir.path(), true).unwrap();
+        assert_eq!(
+            expand_environment(&ctx, r"%HOMEDRIVE%%HOMEPATH%\agent.exe", "fixture"),
+            r"D:\Users\fixture\agent.exe",
+            "prefix {prefix:?}"
+        );
+        // Every user is expanded by Startup checks, even without a Run value.
+        let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+        assert!(!scan.coverage.is_empty());
+    }
+}
+
+#[test]
+fn sparse_drive_named_roots_preserve_common_startup_findings() {
+    for name in ["evidence", "C", "E", "e", "E%3A"] {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join(name);
+        let payload =
+            root.join("ProgramData/Microsoft/Windows/Start Menu/Programs/StartUp/agent.exe");
+        std::fs::create_dir_all(payload.parent().unwrap()).unwrap();
+        std::fs::write(&payload, b"fixture").unwrap();
+        let ctx = Context::open(&root, true).unwrap();
+        assert!(ctx.hives.is_empty());
+        let scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+        let finding = scan
+            .findings
+            .iter()
+            .find(|f| f.check_id == "startup_folder" && f.value.ends_with("agent.exe"))
+            .unwrap_or_else(|| panic!("Startup file lost for root {name}"));
+        assert_eq!(
+            finding.source_file,
+            payload.canonicalize().unwrap().display().to_string()
+        );
+        assert_eq!(ctx.system_drive(), ctx.files[0].volume);
+    }
+}
+
+#[test]
 fn startup_redirects_share_bounded_environment_expansion_and_keep_lossy_registry_text() {
     let dir = tempfile::tempdir().unwrap();
     let mut user = Node::default();

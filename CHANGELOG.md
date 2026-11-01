@@ -4,6 +4,8 @@
 
 **Bug Fixes:**
 
+- `check-persistence`: bound recursive environment expansion even when substitutions are empty; derive `HOMEPATH` safely from normalized profile paths; retain Startup findings in sparse collections whose root is named after a non-C drive. (@YamatoSecurity)
+
 - `check-persistence`: prevent Unicode registry text from crashing or indefinitely expanding a scan; restrict hive selection to canonical capture locations; retain readable hives and file checks when the input budget is reached; handle captured/original drive labels and DNS/NetBIOS host aliases; bound PE resource traversal; retain accessibility replacement candidates with damaged metadata and recover malformed registry/BITS text; classify OS-directory targets after resolution. (@YamatoSecurity)
 
 **New Features:**
