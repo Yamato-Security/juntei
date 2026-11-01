@@ -16,6 +16,9 @@
 
 **New Features:**
 
+- `persistence-hunter`: extend `gp_scripts` to SYSVOL script configuration and collected/MFT-only payload references. Preserve GPO scope, trigger, source and deleted state; keep inventory INFO and combined suspicious shell patterns MEDIUM, with profile overrides. Missing configuration, metadata-only dates and unavailable file bytes remain explicit. (@YamatoSecurity)
+
+
 - Rename the persistence command to `persistence-hunter` and its Rust module to `persistence_hunter`. Automatic parsing saves the hunter's findings as `PersistenceHunter.csv` (or JSON/JSONL) with matching log names; simplify the progress message and update the website terminology. (@YamatoSecurity)
 
 

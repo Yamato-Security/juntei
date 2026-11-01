@@ -1776,3 +1776,41 @@ fn inproc_com_dll_paths_with_spaces_are_not_split_as_command_lines() {
     assert_eq!(row.exists, Some(true));
     assert!(!row.sha256.is_empty());
 }
+
+#[test]
+fn sysvol_relative_payloads_use_the_original_drive_when_captured_under_another_letter() {
+    let dir = tempfile::tempdir().unwrap();
+    let root = dir.path().join("E");
+    let mut sw = Node::default();
+    sw.text(
+        r"Microsoft\Windows NT\CurrentVersion",
+        "SystemRoot",
+        r"C:\Windows",
+    );
+    save(&root, "SOFTWARE", &sw);
+    let base = root.join(
+        "Windows/SYSVOL/domain/Policies/{00112233-4455-6677-8899-AABBCCDDEEFF}/Machine/Scripts",
+    );
+    std::fs::create_dir_all(base.join("Startup")).unwrap();
+    std::fs::write(
+        base.join("scripts.ini"),
+        "[Startup]\n0CmdLine=deploy.cmd\n0Parameters=\n",
+    )
+    .unwrap();
+    std::fs::write(base.join("Startup/deploy.cmd"), b"REM approved deployment").unwrap();
+    let ctx = Context::open(&root, true).unwrap();
+    let defs: Vec<_> = catalogue()
+        .iter()
+        .filter(|c| c.id == "gp_scripts")
+        .cloned()
+        .collect();
+    let mut scan = crate::persistence_hunter::file_checks::run(&ctx, &defs);
+    assert_eq!(scan.findings.len(), 1);
+    crate::persistence_hunter::resolver::enrich(&ctx, &mut scan.findings[0]);
+    assert_eq!(scan.findings[0].exists, Some(true));
+    assert!(
+        scan.findings[0]
+            .resolved_path
+            .ends_with("Startup/deploy.cmd")
+    );
+}

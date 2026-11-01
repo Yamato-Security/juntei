@@ -27,7 +27,7 @@ pub(super) struct Metadata {
 }
 
 pub fn enrich(ctx: &Context, finding: &mut Finding) {
-    if finding.resolution_status == "unresolved_com_class" {
+    if finding.resolution_unavailable || finding.resolution_status == "unresolved_com_class" {
         // A CLSID or AppID executable basename is not a proven payload path.
         finding.signer_status = "not_available".into();
         return;

@@ -40,6 +40,7 @@ pub struct Context {
     pub computer: String,
     pub hives: Vec<HiveInput>,
     pub files: Vec<EvidenceFile>,
+    pub(super) explicit_mft: Option<PathBuf>,
     /// Collected directories, including empty CLSID-named Start Menu folders.
     /// Kept separate so file-backed parsers never read a directory as a file.
     pub(super) directories: Vec<EvidenceFile>,
@@ -367,6 +368,7 @@ impl Context {
             computer,
             hives,
             files,
+            explicit_mft: None,
             directories,
             issues,
             index,

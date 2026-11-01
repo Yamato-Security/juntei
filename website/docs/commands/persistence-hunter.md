@@ -38,7 +38,7 @@ General Options:
 
 Analysis:
       --no-timeline  Skip MFT and event-log timestamp correlation
-      --mft <FILE>   MFT to use for timestamp correlation (one host only)
+      --mft <FILE>   MFT for metadata checks and timestamp correlation (one host only)
 
 Performance:
   -T, --threads <N>  Worker threads (default: logical CPU count)
@@ -135,6 +135,18 @@ an original `C:` volume under a different evidence drive label does not discard 
 inside each computer directory, with `PersistenceHunter-logs.txt` beside it. Its findings also enter
 the optional `-j <FILE>` SIEM timeline. Automatic parsing uses `--min-severity info` to retain the
 complete configuration inventory, including entries matched by allow rules.
+
+## SYSVOL Group Policy scripts
+
+```bash
+juntei persistence-hunter -d evidence/ --check gp_scripts --min-severity info -o PersistenceHunter.csv --coverage Coverage.csv
+```
+
+The GPO check now covers SYSVOL configuration, loose payload files and MFT-only payload
+references as well as local policy files. Ordinary SYSVOL entries are INFO; combined suspicious
+PowerShell download-and-execute patterns are MEDIUM. Profile rules still take precedence.
+The [GPO mechanism guide](../persistence-hunter/index.md#gp_scripts) explains the evidence states,
+missing configuration, deleted references, remote paths and acquisition limits.
 
 ## COM registrations and activation triggers
 
