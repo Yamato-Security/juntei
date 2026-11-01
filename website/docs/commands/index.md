@@ -61,18 +61,25 @@ The former flat parser names have been replaced by the source-and-artifact paths
 existing parser options after the artifact name. `auto-parse` and existing registry subcommands
 keep their names.
 
+## [Check Persistence](check-persistence.md)
+
+`juntei check-persistence` hunts across several source formats, so it is a top-level analysis
+command. It complements the full configuration inventory from `parse-registry persistence` with
+130 checks, allow/block classification, payload metadata, coverage, and timestamp correlation.
+
 ## Top-level usage
 
 ```text
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse      Discover and parse Windows evidence
-  help            Print this message or the help of the given subcommand(s)
-  parse-ese       Parse ESE databases
-  parse-file      Parse file artifacts
-  parse-ntfs      Parse NTFS artifacts
-  parse-registry  Parse registry hives
+  auto-parse         Discover and parse Windows evidence
+  check-persistence  Hunt offline Windows persistence
+  help               Print this message or the help of the given subcommand(s)
+  parse-ese          Parse ESE databases
+  parse-file         Parse file artifacts
+  parse-ntfs         Parse NTFS artifacts
+  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

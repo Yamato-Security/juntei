@@ -305,7 +305,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
-            "persistence" | "services" | "taskcache" => "persistence",
+            "persistence" | "persistence-sniper" | "services" | "taskcache" => "persistence",
             "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
             "registry" => "registry",
             "defender-quarantine" => "security_products",
@@ -316,6 +316,22 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
         }
         let (source, command) = match artifact {
+            "persistence-sniper" => {
+                assert_eq!(task["command"][1], "check-persistence", "{task}");
+                assert_eq!(task["command"][2], "-d", "{task}");
+                let args = task["command"].as_array().unwrap();
+                assert!(
+                    args.windows(2)
+                        .any(|pair| pair[0] == "--min-severity" && pair[1] == "info"),
+                    "{task}"
+                );
+                assert!(
+                    args.windows(2)
+                        .any(|pair| pair[0] == "--threads" && pair[1] == "1"),
+                    "{task}"
+                );
+                continue;
+            }
             "mft" | "usn-journal" | "logfile" | "i30" => ("parse-ntfs", artifact),
             "srum" => ("parse-ese", artifact),
             "prefetch-timeline" => ("parse-file", "prefetch"),
@@ -597,7 +613,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                19
+                20
             );
             assert!(
                 output
@@ -743,7 +759,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 38);
+    assert_eq!(tasks.len(), 40);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -2852,6 +2868,371 @@ fn utf16z(s: &str) -> Vec<u8> {
         .chain([0])
         .flat_map(u16::to_le_bytes)
         .collect()
+}
+
+fn sniper_software_hive() -> Vec<u8> {
+    let mut key = reg_key(
+        "Run",
+        vec![(
+            "ExampleAgent",
+            REG_SZ,
+            utf16z(r"C:\Example\agent.exe --start"),
+        )],
+        vec![],
+    );
+    for parent in ["CurrentVersion", "Windows", "Microsoft", "SOFTWARE"] {
+        key = reg_key(parent, vec![], vec![key]);
+    }
+    regf(&key)
+}
+
+#[test]
+fn persistence_sniper_selected_check_has_csv_json_and_jsonl_parity() {
+    let source = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let hive = source.path().join("SOFTWARE");
+    std::fs::write(&hive, sniper_software_hive()).unwrap();
+    let mut expected = None;
+    for format in ["csv", "json", "jsonl"] {
+        let result = output.path().join(format!("findings.{format}"));
+        let coverage = output.path().join(format!("coverage-{format}.csv"));
+        let r = run(&[
+            "check-persistence",
+            "-f",
+            hive.to_str().unwrap(),
+            "--check",
+            "run_keys",
+            "--no-timeline",
+            "-o",
+            result.to_str().unwrap(),
+            "-t",
+            format,
+            "--coverage",
+            coverage.to_str().unwrap(),
+            "-q",
+            "-K",
+        ]);
+        assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+        let (headers, rows) = csv_rows(&coverage);
+        assert!(headers.iter().any(|name| name == "Status"));
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["CheckId"], "run_keys");
+        if format == "csv" {
+            let (_, rows) = csv_rows(&result);
+            assert_eq!(rows.len(), 1);
+            assert_eq!(rows[0]["Value"], r"C:\Example\agent.exe --start");
+            expected = Some(rows[0]["Path"].clone());
+        } else {
+            let f: Value = serde_json::from_slice(&std::fs::read(result).unwrap()).unwrap();
+            assert_eq!(f["Path"], expected.as_ref().unwrap().as_str());
+            assert_eq!(f["CheckId"], "run_keys");
+            assert_eq!(f["Value"], r"C:\Example\agent.exe --start");
+            assert!(f["Exists"].is_null());
+        }
+    }
+    let r = run(&[
+        "check-persistence",
+        "-f",
+        hive.to_str().unwrap(),
+        "--technique",
+        "T1547.001",
+        "--no-timeline",
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let f: Value = serde_json::from_str(&r.stdout).unwrap();
+    assert_eq!(f["CheckId"], "run_keys");
+    assert!(!r.stdout.contains("JUNTEI"));
+}
+
+#[test]
+fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
+    let evidence = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let windows = evidence.path().join("Windows");
+    let config = windows.join("System32/config");
+    let tasks = windows.join("System32/Tasks");
+    let logs = windows.join("System32/winevt/Logs");
+    for dir in [&config, &tasks, &logs, &evidence.path().join("Example")] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), sniper_software_hive()).unwrap();
+    std::fs::write(config.join("SYSTEM"), services_hive(1)).unwrap();
+    std::fs::write(
+        evidence.path().join("Example/agent.exe"),
+        b"example payload bytes",
+    )
+    .unwrap();
+    std::fs::copy(repo(MFT), evidence.path().join("$MFT")).unwrap();
+    std::fs::write(tasks.join("ExampleTask"), br#"<Task xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Principals><Principal id="Author"><UserId>S-1-5-18</UserId></Principal></Principals><Actions Context="Author"><Exec><Command>C:\Example\agent.exe</Command><Arguments>--task</Arguments></Exec></Actions></Task>"#).unwrap();
+    // Independent channel workers must preserve both failures and their order;
+    // other successfully parsed artifacts must remain in the output.
+    std::fs::write(logs.join("System.evtx"), b"damaged system channel").unwrap();
+    std::fs::write(logs.join("Security.evtx"), b"damaged security channel").unwrap();
+    #[cfg(unix)]
+    {
+        let outside = output.path().join("not-evidence");
+        std::fs::create_dir_all(&outside).unwrap();
+        for branch in ["First/nested", "Second"] {
+            let path = evidence.path().join(branch);
+            std::fs::create_dir_all(&path).unwrap();
+            std::os::unix::fs::symlink(&outside, path.join("outside-link")).unwrap();
+        }
+    }
+
+    for format in ["csv", "json", "jsonl"] {
+        let mut first = None;
+        for threads in ["1", "4", "2"] {
+            let findings = output.path().join(format!("findings-{format}-{threads}"));
+            let coverage = output
+                .path()
+                .join(format!("coverage-{format}-{threads}.csv"));
+            let r = run(&[
+                "check-persistence",
+                "-d",
+                evidence.path().to_str().unwrap(),
+                "--min-severity",
+                "info",
+                "-T",
+                threads,
+                "-t",
+                format,
+                "-o",
+                findings.to_str().unwrap(),
+                "--coverage",
+                coverage.to_str().unwrap(),
+                "-q",
+                "-K",
+            ]);
+            assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+            let result = (
+                std::fs::read(&findings).unwrap(),
+                std::fs::read(&coverage).unwrap(),
+            );
+            if let Some(first) = &first {
+                assert_eq!(
+                    &result, first,
+                    "{format}: -T {threads} changed findings or coverage"
+                );
+            } else {
+                let (_, rows) = csv_rows(&coverage);
+                assert_eq!(
+                    rows.iter()
+                        .filter(|r| r["CheckId"] != "context"
+                            && r["CheckId"] != "timestamp_correlation")
+                        .count(),
+                    130
+                );
+                assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
+                    && r["Detail"].contains("System.evtx")));
+                assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
+                    && r["Detail"].contains("Security.evtx")));
+                if format == "csv" {
+                    let (_, rows) = csv_rows(&findings);
+                    assert!(
+                        rows.iter()
+                            .any(|r| r["CheckId"] == "run_keys" && !r["Sha256"].is_empty())
+                    );
+                    assert!(rows.iter().any(|r| r["CheckId"] == "scheduled_task_files"));
+                }
+                first = Some(result);
+            }
+        }
+    }
+    for threads in ["0", "invalid", "-1"] {
+        assert_ne!(
+            run(&[
+                "check-persistence",
+                "-d",
+                evidence.path().to_str().unwrap(),
+                "--threads",
+                threads
+            ])
+            .code,
+            0
+        );
+    }
+}
+
+#[test]
+fn persistence_sniper_rejects_bad_inputs_and_preserves_evidence() {
+    let source = tempfile::tempdir().unwrap();
+    let hive = source.path().join("SOFTWARE");
+    let original = sniper_software_hive();
+    std::fs::write(&hive, &original).unwrap();
+    for args in [
+        vec!["--check", "does_not_exist"],
+        vec!["-o", hive.to_str().unwrap(), "-C"],
+        vec!["-o", "same.csv", "--coverage", "./same.csv", "-C"],
+    ] {
+        let mut command = vec![
+            "check-persistence",
+            "-f",
+            hive.to_str().unwrap(),
+            "--no-timeline",
+        ];
+        command.extend(args);
+        let r = run(&command);
+        assert_ne!(r.code, 0, "{}", r.stdout);
+        assert_eq!(std::fs::read(&hive).unwrap(), original);
+    }
+    let fake = source.path().join("fake.bin");
+    std::fs::write(&fake, b"not a hive").unwrap();
+    assert_ne!(
+        run(&["check-persistence", "-f", fake.to_str().unwrap()]).code,
+        0
+    );
+    let r = run(&["check-persistence", "--list-checks"]);
+    assert_eq!(r.code, 0);
+    assert_eq!(r.stdout.lines().count(), 130);
+}
+
+#[test]
+fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
+    let source = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let hive = source.path().join("SOFTWARE");
+    std::fs::write(&hive, sniper_software_hive()).unwrap();
+    let log = hive.with_extension("LOG1");
+    std::fs::write(&log, b"original transaction-log evidence").unwrap();
+    for flag in ["-o", "--coverage"] {
+        let r = run(&[
+            "check-persistence",
+            "-f",
+            hive.to_str().unwrap(),
+            "--check",
+            "run_keys",
+            "--no-timeline",
+            flag,
+            log.to_str().unwrap(),
+            "-C",
+        ]);
+        assert_ne!(r.code, 0, "{}", r.stdout);
+        assert_eq!(
+            std::fs::read(&log).unwrap(),
+            b"original transaction-log evidence"
+        );
+    }
+    let traversal = source.path().join("missing/../SOFTWARE");
+    let original = std::fs::read(&hive).unwrap();
+    let r = run(&[
+        "check-persistence",
+        "-f",
+        hive.to_str().unwrap(),
+        "--check",
+        "run_keys",
+        "--no-timeline",
+        "-o",
+        traversal.to_str().unwrap(),
+        "-C",
+    ]);
+    assert_ne!(r.code, 0);
+    assert_eq!(std::fs::read(&hive).unwrap(), original);
+    assert!(!source.path().join("missing").exists());
+    #[cfg(unix)]
+    {
+        let alias = output.path().join("evidence-link");
+        std::os::unix::fs::symlink(source.path(), &alias).unwrap();
+        let traversal = output.path().join("missing/../evidence-link/SOFTWARE");
+        let r = run(&[
+            "check-persistence",
+            "-f",
+            hive.to_str().unwrap(),
+            "--check",
+            "run_keys",
+            "--no-timeline",
+            "-o",
+            traversal.to_str().unwrap(),
+            "-C",
+        ]);
+        assert_ne!(r.code, 0);
+        assert_eq!(std::fs::read(&hive).unwrap(), original);
+        assert!(!output.path().join("missing").exists());
+    }
+    let findings = output.path().join("result");
+    let child_coverage = findings.join("coverage.csv");
+    std::fs::write(&findings, b"previous results").unwrap();
+    let r = run(&[
+        "check-persistence",
+        "-f",
+        hive.to_str().unwrap(),
+        "--check",
+        "run_keys",
+        "--no-timeline",
+        "-o",
+        findings.to_str().unwrap(),
+        "--coverage",
+        child_coverage.to_str().unwrap(),
+        "-C",
+    ]);
+    assert_ne!(r.code, 0);
+    assert_eq!(std::fs::read(&findings).unwrap(), b"previous results");
+    let a = output.path().join("new-result");
+    let b = a.join("coverage.csv");
+    let r = run(&[
+        "check-persistence",
+        "-f",
+        hive.to_str().unwrap(),
+        "--check",
+        "run_keys",
+        "--no-timeline",
+        "-o",
+        a.to_str().unwrap(),
+        "--coverage",
+        b.to_str().unwrap(),
+    ]);
+    assert_ne!(r.code, 0);
+    assert!(!a.exists());
+    let mixed = output.path().join("Results.csv");
+    let lower = output.path().join("results.csv");
+    let r = run(&[
+        "check-persistence",
+        "-f",
+        hive.to_str().unwrap(),
+        "--check",
+        "run_keys",
+        "--no-timeline",
+        "-o",
+        mixed.to_str().unwrap(),
+        "--coverage",
+        lower.to_str().unwrap(),
+        "-C",
+    ]);
+    assert_ne!(r.code, 0);
+    assert!(!mixed.exists());
+    assert!(!lower.exists());
+}
+
+#[test]
+fn persistence_sniper_disabled_profile_retains_coverage_without_findings() {
+    let source = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let hive = source.path().join("SOFTWARE");
+    let profile = source.path().join("profile.yaml");
+    let findings = output.path().join("findings.csv");
+    let coverage = output.path().join("coverage.csv");
+    std::fs::write(&hive, sniper_software_hive()).unwrap();
+    std::fs::write(&profile, "checks:\n  run_keys:\n    enabled: false\n").unwrap();
+    let r = run(&[
+        "check-persistence",
+        "-f",
+        hive.to_str().unwrap(),
+        "--check",
+        "run_keys",
+        "--no-timeline",
+        "--profile",
+        profile.to_str().unwrap(),
+        "-o",
+        findings.to_str().unwrap(),
+        "--coverage",
+        coverage.to_str().unwrap(),
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    assert_eq!(csv_rows(&findings).1.len(), 0);
+    let rows = csv_rows(&coverage).1;
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["Status"], "disabled");
 }
 
 fn put_u32(buf: &mut [u8], at: usize, v: u32) {
