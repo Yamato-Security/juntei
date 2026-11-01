@@ -1179,3 +1179,366 @@ fn startup_redirection_to_a_different_volume_is_preserved_and_scoped() {
             .any(|f| f.check_id == "startup_folder" && f.value.ends_with("wrong-volume.exe"))
     );
 }
+
+// COM task and Start Menu regression cases use actual registry hive bytes.
+fn com_task(root: &Path, name: &str, principal: &str, clsid: &str) {
+    let path = root.join("Windows/System32/Tasks").join(name);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(path, format!(r#"<Task xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Principals><Principal id="P"><UserId>{principal}</UserId></Principal></Principals><Actions Context="P"><ComHandler><ClassId>{clsid}</ClassId></ComHandler></Actions></Task>"#)).unwrap();
+}
+fn com_scan(root: &Path) -> Scan {
+    let ctx = Context::open(root, true).unwrap();
+    let mut scan = crate::persistence_sniper::file_checks::run(&ctx, catalogue());
+    for f in &mut scan.findings {
+        crate::persistence_sniper::resolver::enrich(&ctx, f);
+    }
+    scan
+}
+const COM_ID: &str = "{00112233-4455-6677-8899-AABBCCDDEEFF}";
+const APP_ID: &str = "{11223344-5566-7788-99AA-BBCCDDEEFF00}";
+
+#[test]
+fn task_com_sid_joins_the_correct_profile_and_keeps_architectures_separate() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut sw = Node::default();
+    sw.text(
+        r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+        "ProfileImagePath",
+        r"C:\Users\fixture",
+    );
+    sw.text(
+        &format!(r"Classes\CLSID\{COM_ID}\InprocServer32"),
+        "",
+        r"C:\machine.dll",
+    );
+    let mut user = Node::default();
+    user.text(
+        &format!(r"Software\Classes\CLSID\{COM_ID}\InprocServer32"),
+        "",
+        r"%LOCALAPPDATA%\user.dll",
+    );
+    let mut classes = Node::default();
+    classes.text(
+        &format!(r"Wow6432Node\CLSID\{COM_ID}\InprocServer32"),
+        "",
+        r"C:\wow.dll",
+    );
+    save(dir.path(), "SOFTWARE", &sw);
+    save(dir.path(), "NTUSER.DAT", &user);
+    save(dir.path(), "USRCLASS.DAT", &classes);
+    let payload = dir.path().join("Users/fixture/AppData/Local/user.dll");
+    std::fs::create_dir_all(payload.parent().unwrap()).unwrap();
+    std::fs::write(payload, b"inert test bytes").unwrap();
+    com_task(dir.path(), "SID", "S-1-5-21-1-2-3-1001", COM_ID);
+    let scan = com_scan(dir.path());
+    let rows: Vec<_> = scan
+        .findings
+        .iter()
+        .filter(|f| f.check_id == "scheduled_task_files")
+        .collect();
+    assert_eq!(rows.len(), 2);
+    assert!(rows.iter().all(|f| f.value != r"C:\machine.dll"));
+    assert!(rows.iter().any(
+        |f| f.resolved_path == "Users/fixture/AppData/Local/user.dll" && !f.sha256.is_empty()
+    ));
+    assert!(
+        rows.iter()
+            .any(|f| f.value == r"C:\wow.dll" && f.description.contains("32-bit view"))
+    );
+}
+
+#[test]
+fn task_com_domain_identity_never_borrows_a_different_domains_user() {
+    for domain in ["LAB", "OTHER"] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut sw = Node::default();
+        sw.text(
+            &format!(r"Classes\CLSID\{COM_ID}\InprocServer32"),
+            "",
+            r"C:\machine.dll",
+        );
+        let mut user = Node::default();
+        user.text("Volatile Environment", "USERNAME", "fixture");
+        user.text("Volatile Environment", "USERDOMAIN", "LAB");
+        user.text(
+            &format!(r"Software\Classes\CLSID\{COM_ID}\InprocServer32"),
+            "",
+            r"C:\user.dll",
+        );
+        save(dir.path(), "SOFTWARE", &sw);
+        save(dir.path(), "NTUSER.DAT", &user);
+        com_task(dir.path(), "Domain", &format!(r"{domain}\fixture"), COM_ID);
+        let scan = com_scan(dir.path());
+        let row = scan
+            .findings
+            .iter()
+            .find(|f| f.check_id == "scheduled_task_files")
+            .unwrap();
+        assert_eq!(
+            row.value,
+            if domain == "LAB" {
+                r"C:\user.dll"
+            } else {
+                r"C:\machine.dll"
+            }
+        );
+        if domain == "OTHER" {
+            assert!(
+                scan.coverage
+                    .iter()
+                    .any(|c| c.check_id == "scheduled_task_files"
+                        && c.status == "partial"
+                        && c.detail.contains("Cannot map principal"))
+            );
+        }
+    }
+}
+
+#[test]
+fn task_com_user_classes_only_sid_profile_is_supported() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut sw = Node::default();
+    sw.text(
+        r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+        "ProfileImagePath",
+        r"C:\Users\fixture",
+    );
+    let mut user = Node::default();
+    user.text(
+        &format!(r"CLSID\{COM_ID}\InprocServer32"),
+        "",
+        r"C:\classes-only.dll",
+    );
+    save(dir.path(), "SOFTWARE", &sw);
+    save(dir.path(), "USRCLASS.DAT", &user);
+    com_task(dir.path(), "ClassesOnly", "S-1-5-21-1-2-3-1001", COM_ID);
+    assert!(
+        com_scan(dir.path())
+            .findings
+            .iter()
+            .any(|f| f.value == r"C:\classes-only.dll")
+    );
+}
+
+#[test]
+fn an_incomplete_per_user_class_does_not_fall_back_to_the_shadowed_machine_class() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut sw = Node::default();
+    sw.text(
+        &format!(r"Classes\CLSID\{COM_ID}\InprocServer32"),
+        "",
+        r"C:\machine.dll",
+    );
+    let mut user = Node::default();
+    user.text(
+        &format!(r"Software\Classes\CLSID\{COM_ID}"),
+        "",
+        "incomplete user override",
+    );
+    save(dir.path(), "SOFTWARE", &sw);
+    save(dir.path(), "NTUSER.DAT", &user);
+    com_task(dir.path(), "Shadow", "fixture", COM_ID);
+    let scan = com_scan(dir.path());
+    let row = scan
+        .findings
+        .iter()
+        .find(|f| f.check_id == "scheduled_task_files")
+        .unwrap();
+    assert_eq!(row.value, COM_ID);
+    assert_eq!(row.resolution_status, "unresolved_com_class");
+    assert!(row.resolved_path.is_empty() && row.exists.is_none() && row.sha256.is_empty());
+}
+
+#[test]
+fn managed_com_uses_local_codebase_and_keeps_version_registrations() {
+    for versioned in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut sw = Node::default();
+        let base = format!(r"Classes\CLSID\{COM_ID}\InprocServer32");
+        sw.text(&base, "", r"C:\Windows\System32\mscoree.dll");
+        let key = if versioned {
+            format!(r"{base}\1.0.0.0")
+        } else {
+            base
+        };
+        sw.text(
+            &key,
+            "CodeBase",
+            "file:///C:/Program%20Files/Test/assembly.dll",
+        );
+        save(dir.path(), "SOFTWARE", &sw);
+        let payload = dir.path().join("Program Files/Test/assembly.dll");
+        std::fs::create_dir_all(payload.parent().unwrap()).unwrap();
+        std::fs::write(payload, b"not executable").unwrap();
+        com_task(dir.path(), "Managed", "SYSTEM", COM_ID);
+        let scan = com_scan(dir.path());
+        let row = scan
+            .findings
+            .iter()
+            .find(|f| f.check_id == "scheduled_task_files")
+            .unwrap();
+        assert_eq!(row.resolved_path, "Program Files/Test/assembly.dll");
+        assert!(row.description.contains("CodeBase") && row.exists == Some(true));
+    }
+}
+
+#[test]
+fn remote_or_damaged_managed_codebases_are_retained_as_unresolved_evidence() {
+    for codebase in [
+        "https://example.invalid/a.dll",
+        "file://server/share/a.dll",
+        "file:///C:/a%ZZ.dll",
+        "file:///C:/a%00.dll",
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut sw = Node::default();
+        let base = format!(r"Classes\CLSID\{COM_ID}\InprocServer32");
+        sw.text(&base, "", "mscoree.dll");
+        sw.text(&base, "CodeBase", codebase);
+        save(dir.path(), "SOFTWARE", &sw);
+        com_task(dir.path(), "Remote", "SYSTEM", COM_ID);
+        let scan = com_scan(dir.path());
+        let row = scan
+            .findings
+            .iter()
+            .find(|f| f.check_id == "scheduled_task_files")
+            .unwrap();
+        assert_eq!(row.resolution_status, "unresolved_com_class");
+        assert!(row.description.contains(codebase));
+        assert!(row.exists.is_none());
+    }
+}
+
+#[test]
+fn appid_service_is_joined_to_collected_system_and_aliases_do_not_guess_paths() {
+    for service in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut sw = Node::default();
+        sw.text(&format!(r"Classes\CLSID\{COM_ID}"), "AppID", APP_ID);
+        sw.text(r"Classes\AppID\example.exe", "AppID", APP_ID);
+        if service {
+            sw.text(
+                &format!(r"Classes\AppID\{APP_ID}"),
+                "LocalService",
+                "ExampleSvc",
+            );
+            let mut system = Node::default();
+            system.text(
+                r"ControlSet001\Services\ExampleSvc",
+                "ImagePath",
+                r"C:\service.exe -Embedding",
+            );
+            save(dir.path(), "SYSTEM", &system);
+        }
+        save(dir.path(), "SOFTWARE", &sw);
+        com_task(dir.path(), "AppID", "SYSTEM", COM_ID);
+        let scan = com_scan(dir.path());
+        let row = scan
+            .findings
+            .iter()
+            .find(|f| f.check_id == "scheduled_task_files")
+            .unwrap();
+        if service {
+            assert_eq!(row.value, r"C:\service.exe -Embedding");
+            assert!(row.description.contains("LocalService=ExampleSvc"));
+        } else {
+            assert_eq!(row.value, "example.exe");
+            assert_eq!(row.resolution_status, "unresolved_com_class");
+            assert!(row.resolved_path.is_empty() && row.exists.is_none());
+            assert!(row.description.contains("association only"));
+        }
+    }
+}
+
+#[test]
+fn start_menu_com_finds_library_urls_and_empty_clsid_folders_but_not_other_documents() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut sw = Node::default();
+    sw.text(
+        &format!(r"Classes\CLSID\{COM_ID}\InprocServer32"),
+        "",
+        r"C:\trigger.dll",
+    );
+    save(dir.path(), "SOFTWARE", &sw);
+    save(dir.path(), "NTUSER.DAT", &Node::default());
+    let menu = dir
+        .path()
+        .join("Users/fixture/AppData/Roaming/Microsoft/Windows/Start Menu");
+    std::fs::create_dir_all(menu.join(format!("Programs/Folder.{COM_ID}"))).unwrap();
+    std::fs::create_dir_all(menu.join(format!("Programs/NotAFolder.{COM_ID}.bak"))).unwrap();
+    let library = format!(
+        r#"<libraryDescription><searchConnectorDescription><simpleLocation><url>shell:::{COM_ID}</url></simpleLocation></searchConnectorDescription></libraryDescription>"#
+    );
+    std::fs::write(menu.join("Example.library-ms"), &library).unwrap();
+    std::fs::write(menu.join("ordinary.txt"), &library).unwrap();
+    let elsewhere = dir.path().join("Users/fixture/Documents");
+    std::fs::create_dir_all(&elsewhere).unwrap();
+    std::fs::write(elsewhere.join("NotStartup.library-ms"), &library).unwrap();
+    let scan = com_scan(dir.path());
+    let rows: Vec<_> = scan
+        .findings
+        .iter()
+        .filter(|f| f.check_id == "start_menu_com")
+        .collect();
+    assert_eq!(rows.len(), 2);
+    assert!(rows.iter().all(|f| f.value == r"C:\trigger.dll"));
+    assert!(
+        rows.iter()
+            .any(|f| f.source_file.ends_with("Example.library-ms"))
+    );
+    assert!(
+        rows.iter()
+            .any(|f| f.description.contains("CLSID-named Start Menu folder"))
+    );
+}
+
+#[test]
+fn start_menu_com_retains_missing_server_and_marks_malformed_input_partial() {
+    let dir = tempfile::tempdir().unwrap();
+    let menu = dir
+        .path()
+        .join("Users/fixture/AppData/Roaming/Microsoft/Windows/Start Menu");
+    std::fs::create_dir_all(menu.join(format!("Folder.{COM_ID}"))).unwrap();
+    std::fs::write(
+        menu.join("bad.library-ms"),
+        b"<!DOCTYPE libraryDescription><libraryDescription/>",
+    )
+    .unwrap();
+    let scan = com_scan(dir.path());
+    let row = scan
+        .findings
+        .iter()
+        .find(|f| f.check_id == "start_menu_com")
+        .unwrap();
+    assert_eq!(row.value, COM_ID);
+    assert_eq!(row.resolution_status, "unresolved_com_class");
+    assert!(scan.coverage.iter().any(|c| c.check_id == "start_menu_com"
+        && c.status == "partial"
+        && c.detail.contains("DTD")));
+}
+
+#[test]
+fn inproc_com_dll_paths_with_spaces_are_not_split_as_command_lines() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut sw = Node::default();
+    sw.text(
+        &format!(r"Classes\CLSID\{COM_ID}\InprocServer32"),
+        "",
+        r"C:\Program Files\Example\server.dll",
+    );
+    save(dir.path(), "SOFTWARE", &sw);
+    let payload = dir.path().join("Program Files/Example/server.dll");
+    std::fs::create_dir_all(payload.parent().unwrap()).unwrap();
+    std::fs::write(&payload, b"inert DLL placeholder").unwrap();
+    com_task(dir.path(), "SpacedDLL", "SYSTEM", COM_ID);
+    let scan = com_scan(dir.path());
+    let row = scan
+        .findings
+        .iter()
+        .find(|f| f.check_id == "scheduled_task_files")
+        .unwrap();
+    assert_eq!(row.value, r"C:\Program Files\Example\server.dll");
+    assert_eq!(row.resolved_path, "Program Files/Example/server.dll");
+    assert_eq!(row.exists, Some(true));
+    assert!(!row.sha256.is_empty());
+}

@@ -5,13 +5,13 @@ event. An attacker can use normal Windows configuration for this purpose. Many l
 use exactly the same mechanisms, so finding a persistence entry is a starting point for analysis.
 
 `juntei check-persistence` is a native Rust port of
-[Hexastrike's PyrsistenceSniper](https://github.com/hexastrike/PyrsistenceSniper), using the
-130-check catalogue from upstream commit `b99c117a3cd16c33992a56dd698aedaec024460f`.
+[Hexastrike's PyrsistenceSniper](https://github.com/hexastrike/PyrsistenceSniper), with 131 checks: the
+130-check catalogue from upstream commit `b99c117a3cd16c33992a56dd698aedaec024460f` plus a native Start Menu COM check.
 It reads evidence offline. It does not start services, register tasks, load DLLs, or execute
 the programs it finds. It needs no Python interpreter or Windows runtime.
 
 For an explanation of every mechanism, its evidence locations, and how to investigate a finding,
-see the [130-check persistence guide](../persistence-check/index.md). The
+see the [131-check persistence guide](../persistence-check/index.md). The
 [persistence acknowledgements](../persistence-check/acknowledgements.md) describe the Python and
 PowerShell projects behind the catalogue.
 
@@ -112,6 +112,7 @@ one worker. Its own `-T` option controls the number of concurrent parser process
 | Each user's `NTUSER.DAT` and `UsrClass.dat` | User autostarts, environment variables, COM overrides, Office settings |
 | `SAM` and `SOFTWARE` | RID anomalies, hidden accounts, unusual local Administrators membership |
 | `Windows/System32/Tasks` | Scheduled-task commands and COM handlers; comparison with TaskCache |
+| Per-user Start Menu `.library-ms` files and CLSID-named folders | COM activation-trigger candidates, joined to matching user/machine class registrations |
 | Startup folders, PowerShell profiles, Office templates, Terminal settings | Files and commands run by user or system triggers |
 | WMI `OBJECTS.DATA` | Event consumer instances and filter-to-consumer bindings |
 | BITS `qmgr.db` or `qmgr*.dat` | Recovered notification commands and owner SIDs |
@@ -136,6 +137,33 @@ an original `C:` volume under a different evidence drive label does not discard 
 inside each computer directory, with `PersistenceSniper-logs.txt` beside it. Its findings also enter
 the optional `-j <FILE>` SIEM timeline. Automatic parsing uses `--min-severity info` to retain the
 complete configuration inventory, including entries matched by allow rules.
+
+## COM registrations and activation triggers
+
+The `scheduled_task_files` check selects each action's principal using the task XML's
+`Actions Context` and matching `Principal id`. A group principal is retained as a group;
+it cannot establish which individual user's class registrations would be used.
+
+COM-handler candidates are resolved separately in native and 32-bit class views. Only the
+matching user's captured `UsrClass.dat`/`NTUSER.DAT` and machine `SOFTWARE` are considered.
+SID principals are joined through captured `ProfileList` paths. Qualified account names need
+matching captured `Volatile Environment` account/domain data; missing or ambiguous mappings
+are reported in coverage. A duplicate user CLSID shadows the machine CLSID's children.
+
+The resolver follows `InprocServer32` and `LocalServer32`, uses managed `CodeBase` paths
+(including version subkeys), and joins AppID `LocalService` to the collected SYSTEM service
+`ImagePath`. AppID executable-name associations are retained, but a basename does not establish
+an executable's full path. Local `file:` CodeBase URLs are decoded; remote URLs are recorded
+without accessing them. Missing registrations retain the CLSID with
+`ResolutionStatus: unresolved_com_class`, empty path/hash fields, and unknown `Exists`.
+
+The `start_menu_com` check reads per-user Start Menu `.library-ms` XML URLs and collects
+CLSID-named folders, including empty directories. It reports the trigger path, CLSID, candidate
+server, and registry provenance. A file-only acquisition cannot preserve an empty directory,
+and missing user hives prevent a complete per-user registration lookup. Symbolic links are
+not followed. These are configuration candidates: architecture, elevation, UAC, policy and
+activation context can affect whether a registration is actually used. Corroborate execution
+with process, module-load or other independent evidence.
 
 ## Classification and profiles
 

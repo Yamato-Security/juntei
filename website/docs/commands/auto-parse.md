@@ -67,7 +67,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - LNK shortcuts
 - Jump Lists
 - ShimCache
-- Check Persistence (130 cross-source persistence checks with allow/block profiles)
+- Check Persistence (131 cross-source persistence checks with allow/block profiles)
 - Defender quarantine metadata
 - all registry keys and values, including recoverable deleted data
 - services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, and UserAssist

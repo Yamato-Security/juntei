@@ -3022,7 +3022,7 @@ fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
                         .filter(|r| r["CheckId"] != "context"
                             && r["CheckId"] != "timestamp_correlation")
                         .count(),
-                    130
+                    131
                 );
                 assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
                     && r["Detail"].contains("System.evtx")));
@@ -3085,7 +3085,7 @@ fn persistence_sniper_rejects_bad_inputs_and_preserves_evidence() {
     );
     let r = run(&["check-persistence", "--list-checks"]);
     assert_eq!(r.code, 0);
-    assert_eq!(r.stdout.lines().count(), 130);
+    assert_eq!(r.stdout.lines().count(), 131);
 }
 
 #[test]
@@ -9418,4 +9418,51 @@ fn registry_userassist_no_encrypt_and_corrupt_times() {
         "{}",
         r.stdout
     );
+}
+
+#[test]
+fn persistence_sniper_start_menu_unresolved_candidates_survive_all_output_formats() {
+    let evidence = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let clsid = "{00112233-4455-6677-8899-AABBCCDDEEFF}";
+    let folder = evidence
+        .path()
+        .join("Users/alice/AppData/Roaming/Microsoft/Windows/Start Menu")
+        .join(format!("Programs/Example.{clsid}"));
+    std::fs::create_dir_all(&folder).unwrap();
+    for kind in ["csv", "json", "jsonl"] {
+        let path = output.path().join(format!("findings.{kind}"));
+        let r = run(&[
+            "check-persistence",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "--check",
+            "start_menu_com",
+            "--no-timeline",
+            "--min-severity",
+            "info",
+            "-t",
+            kind,
+            "-o",
+            path.to_str().unwrap(),
+            "-q",
+            "-K",
+        ]);
+        assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+        if kind == "csv" {
+            let (_, rows) = csv_rows(&path);
+            assert_eq!(rows.len(), 1);
+            assert_eq!(rows[0]["Value"], clsid);
+            assert_eq!(rows[0]["ResolutionStatus"], "unresolved_com_class");
+            assert_eq!(rows[0]["ResolvedPath"], "");
+            assert_eq!(rows[0]["Exists"], "");
+        } else {
+            let row: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+            assert_eq!(row["Value"], clsid);
+            assert_eq!(row["ResolutionStatus"], "unresolved_com_class");
+            assert_eq!(row["ResolvedPath"], "");
+            assert!(row["Exists"].is_null());
+        }
+    }
 }

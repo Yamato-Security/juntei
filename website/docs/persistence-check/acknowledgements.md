@@ -27,7 +27,11 @@ contributors. We thank the original project and its contributors for making Wind
 mechanisms easier to investigate.
 
 Juntei's direct porting reference is the Python project. The original PowerShell tool is credited
-for that lineage; this does not imply that every live-system feature in either upstream project
+for that lineage. Juntei also independently implements the mechanisms proposed by
+[hongson11698](https://github.com/hongson11698) in the original project's
+[scheduled-task COM resolution PR #31](https://github.com/last-byte/PersistenceSniper/pull/31)
+and [Start Menu library/CLSID-folder PR #32](https://github.com/last-byte/PersistenceSniper/pull/32).
+These add to the Python reference catalogue; this does not imply that every live-system feature in either upstream project
 is implemented by Juntei's offline command.
 
 ## Supporting research and tools

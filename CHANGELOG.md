@@ -10,6 +10,9 @@
 
 **New Features:**
 
+- `check-persistence`: add `start_menu_com` for per-user Start Menu library URLs and CLSID-named folders (131 checks total). Extend task COM resolution with matching-user class overrides, separate native/32-bit views, managed CodeBase, and AppID/service joins. Select principals by task action context; retain unresolved candidates and explicit provenance without claiming execution. Inspired by PersistenceSniper PRs #31/#32 by @hongson11698. (@YamatoSecurity)
+
+
 - `check-persistence` uses a shared worker pool for independent checks, payload metadata, and MFT/EVTX timeline streams. `-T, --threads <N>` chooses the worker count (default: logical CPU count); loaded hives and per-payload metadata are shared, and results, coverage, and timestamp selection remain deterministic. Automatic parsing gives each hunter child one worker within its existing process budget. (@YamatoSecurity)
 
 - `check-persistence`: native Rust port of Hexastrike's PyrsistenceSniper, with 130 offline persistence checks, bundled and custom YAML allow/block profiles, CSV/JSON/JSONL findings, per-check coverage, payload hashes and descriptive signature metadata, and independent MFT/event-log timestamp correlation. Supports mounted Windows volumes, standalone hives and multi-host Velociraptor collections; `auto-parse` saves its findings under each host's `persistence` category. Upstream MIT attribution is retained. (@YamatoSecurity)

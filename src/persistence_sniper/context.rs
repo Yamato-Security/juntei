@@ -40,6 +40,9 @@ pub struct Context {
     pub computer: String,
     pub hives: Vec<HiveInput>,
     pub files: Vec<EvidenceFile>,
+    /// Collected directories, including empty CLSID-named Start Menu folders.
+    /// Kept separate so file-backed parsers never read a directory as a file.
+    pub(super) directories: Vec<EvidenceFile>,
     pub issues: Vec<String>,
     index: HashMap<String, Vec<usize>>,
     drive_index: HashMap<(char, String), Vec<usize>>,
@@ -53,6 +56,7 @@ pub struct Context {
 #[derive(Default)]
 struct Inventory {
     paths: Vec<PathBuf>,
+    directories: Vec<PathBuf>,
     issues: Vec<String>,
 }
 
@@ -94,6 +98,7 @@ fn inventory_directory(directory: &Path, depth: usize) -> Inventory {
                 path.display()
             ));
         } else if kind.is_dir() {
+            inventory.directories.push(path.clone());
             if depth < MAX_DEPTH {
                 directories.push(path);
             } else {
@@ -121,6 +126,7 @@ fn inventory_directory(directory: &Path, depth: usize) -> Inventory {
     };
     for mut child in children {
         inventory.paths.append(&mut child.paths);
+        inventory.directories.append(&mut child.directories);
         inventory.issues.append(&mut child.issues);
     }
     inventory
@@ -148,11 +154,13 @@ impl Context {
         };
         let mut issues = Vec::new();
         let mut paths = Vec::new();
+        let mut directory_paths = Vec::new();
         if standalone {
             paths.push(input);
         } else {
             let inventory = inventory_directory(&root, 0);
             paths = inventory.paths;
+            directory_paths = inventory.directories;
             issues = inventory.issues;
         }
         paths.sort();
@@ -343,11 +351,23 @@ impl Context {
             .iter()
             .map(|f| (f.physical.clone(), f.volume))
             .collect();
+        directory_paths.sort();
+        let directories = directory_paths
+            .iter()
+            .filter_map(|path| match describe(path) {
+                Ok(directory) => Some(directory),
+                Err(e) => {
+                    issues.push(e);
+                    None
+                }
+            })
+            .collect();
         Ok(Self {
             root,
             computer,
             hives,
             files,
+            directories,
             issues,
             index,
             drive_index,
