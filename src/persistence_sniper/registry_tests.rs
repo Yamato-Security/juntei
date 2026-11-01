@@ -828,7 +828,7 @@ fn canonical_hive_is_preferred_and_bad_copy_can_fall_back_to_explicit_export() {
     let ctx = Context::open(dir.path(), true).unwrap();
     assert_eq!(
         ctx.machine_hive("SOFTWARE").unwrap().path,
-        dir.path().join("SOFTWARE")
+        dir.path().join("SOFTWARE").canonicalize().unwrap()
     );
     assert!(ctx.issues.iter().any(|i| i.contains("Cannot parse hive")));
 }
