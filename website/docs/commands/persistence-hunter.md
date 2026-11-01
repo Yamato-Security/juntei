@@ -57,7 +57,7 @@ Display Settings:
 ## First scan
 
 ```bash
-juntei persistence-hunter -d evidence/ -o CheckPersistence.csv --coverage Coverage.csv
+juntei persistence-hunter -d evidence/ -o PersistenceHunter.csv --coverage Coverage.csv
 ```
 
 The evidence can be a mounted Windows volume, a Velociraptor collection, or a directory containing
@@ -90,7 +90,7 @@ The command uses a shared worker pool, defaulting to the number of logical CPUs.
 `-T, --threads <N>` to choose the worker count, or `-T 1` for a single-thread scan:
 
 ```bash
-juntei persistence-hunter -d evidence/ --min-severity info -T 4 -o CheckPersistence.csv
+juntei persistence-hunter -d evidence/ --min-severity info -T 4 -o PersistenceHunter.csv
 ```
 
 Evidence discovery, independent checks, payload metadata, and MFT/EVTX timeline sources run in parallel. A host's
@@ -131,8 +131,8 @@ hive identity; a copy inside a user's temporary directory cannot replace that us
 The original system drive recorded in SOFTWARE is mapped to the captured system volume, so mounting
 an original `C:` volume under a different evidence drive label does not discard payload metadata.
 
-`auto-parse` also runs the hunter and saves `persistence/CheckPersistence.csv` (or `.json`/`.jsonl`)
-inside each computer directory, with `CheckPersistence-logs.txt` beside it. Its findings also enter
+`auto-parse` also runs the hunter and saves `persistence/PersistenceHunter.csv` (or `.json`/`.jsonl`)
+inside each computer directory, with `PersistenceHunter-logs.txt` beside it. Its findings also enter
 the optional `-j <FILE>` SIEM timeline. Automatic parsing uses `--min-severity info` to retain the
 complete configuration inventory, including entries matched by allow rules.
 

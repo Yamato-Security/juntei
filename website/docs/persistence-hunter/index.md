@@ -16,7 +16,7 @@ PowerShell PersistenceSniper tool.
 ## Start an investigation
 
 ```bash
-juntei persistence-hunter -d evidence/ --min-severity info -o CheckPersistence.csv --coverage Coverage.csv
+juntei persistence-hunter -d evidence/ --min-severity info -o PersistenceHunter.csv --coverage Coverage.csv
 ```
 
 Use `--min-severity info` for the complete candidate inventory. The manual command defaults to

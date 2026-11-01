@@ -219,9 +219,12 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         r.stdout
     );
     assert!(!r.stdout.contains("Per-parser messages are saved"));
-    assert!(csv.join("HOST1/persistence/CheckPersistence.csv").is_file());
     assert!(
-        csv.join("HOST1/persistence/CheckPersistence-logs.txt")
+        csv.join("HOST1/persistence/PersistenceHunter.csv")
+            .is_file()
+    );
+    assert!(
+        csv.join("HOST1/persistence/PersistenceHunter-logs.txt")
             .is_file()
     );
     assert!(csv.join("HOST1/file_existence/amcache").is_dir());

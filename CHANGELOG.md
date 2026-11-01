@@ -16,7 +16,7 @@
 
 **New Features:**
 
-- Rename the persistence command to `persistence-hunter` and its Rust module to `persistence_hunter`. Automatic parsing saves the hunter's findings as `CheckPersistence.csv` (or JSON/JSONL) with matching log names; simplify the progress message and update the website terminology. (@YamatoSecurity)
+- Rename the persistence command to `persistence-hunter` and its Rust module to `persistence_hunter`. Automatic parsing saves the hunter's findings as `PersistenceHunter.csv` (or JSON/JSONL) with matching log names; simplify the progress message and update the website terminology. (@YamatoSecurity)
 
 
 - `persistence-hunter`: add `start_menu_com` for per-user Start Menu library URLs and CLSID-named folders (131 checks total). Extend task COM resolution with matching-user class overrides, separate native/32-bit views, managed CodeBase, and AppID/service joins. Select principals by task action context; retain unresolved candidates and explicit provenance without claiming execution. Inspired by PersistenceSniper PRs #31/#32 by @hongson11698. (@YamatoSecurity)

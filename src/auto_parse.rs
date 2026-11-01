@@ -61,7 +61,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "logfile" => "LogFile",
         "mft" => "MFT",
         "persistence" => "Persistence",
-        "persistence-hunter" => "CheckPersistence",
+        "persistence-hunter" => "PersistenceHunter",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "RecentDocs",
