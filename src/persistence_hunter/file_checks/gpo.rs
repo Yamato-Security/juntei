@@ -590,7 +590,10 @@ mod tests {
         let f = &scan.findings[0];
         assert_eq!(f.severity, "INFO");
         assert_eq!(f.value, "configure.cmd /quiet");
-        assert_eq!(f.source_file, config.display().to_string());
+        assert_eq!(
+            f.source_file,
+            fs::canonicalize(config).unwrap().display().to_string()
+        );
         assert_eq!(f.exists, Some(true));
         assert!(f.resolved_path.ends_with("Startup/configure.cmd"));
         assert_eq!(f.record_status, "sysvol_configuration");
