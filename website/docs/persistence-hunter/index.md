@@ -199,7 +199,8 @@ including references found only in collected `$MFT` records.
 - `Windows\SYSVOL\domain\Policies\{GPO GUID}\<Machine|User>\Scripts` and the corresponding
   `SYSVOL\sysvol\<domain>` / `SYSVOL_DFSR` layouts, including directly exported SYSVOL paths.
 - Collected payload files and MFT filename records. DOS short-name aliases are not separate
-  payload findings. Deleted references are kept distinct from current collected file bytes.
+  payload findings. Deleted references are kept distinct from current collected file bytes. Deleted
+  directory sequences follow NTFS's one-step increment on deletion; reused allocated parents are rejected.
 
 **Finding states:**
 
@@ -214,7 +215,8 @@ including references found only in collected `$MFT` records.
 
 **Classification:** New SYSVOL inventory findings default to INFO. A combined PowerShell
 network-download-and-execute command pattern is a MEDIUM review candidate, not a malware verdict.
-Custom profile allow/block rules take precedence. Existing local-policy classification is retained.
+Custom profile allow/block rules take precedence; a partial allow match never raises an INFO row
+to LOW. Existing local-policy classification is retained.
 
 **How to investigate:** Start with `--min-severity info` (automatic parsing already includes it).
 Review the GPO GUID, scope, trigger, command, source and recovery state. Check policy linkage and

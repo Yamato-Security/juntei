@@ -335,6 +335,22 @@ pub(super) fn run(check: &mut Check<'_>) {
     }
 }
 
+struct Directory {
+    sequence: u16,
+    allocated: bool,
+    parent: (u64, u16),
+    trigger_root: bool,
+}
+impl Directory {
+    fn accepts(&self, sequence: u16) -> bool {
+        // Match ys-mft-parser's is_referenced_version: freeing a record advances
+        // its sequence once; an allocated replacement must never inherit children.
+        sequence == 0
+            || self.sequence == sequence
+            || (!self.allocated && self.sequence == sequence.wrapping_add(1))
+    }
+}
+
 fn scan_mft(check: &mut Check<'_>, source: &Path, claimed: &mut HashSet<(char, String)>) {
     check.sources += 1;
     let mut parser = match MftParser::from_path(source) {
@@ -344,8 +360,7 @@ fn scan_mft(check: &mut Check<'_>, source: &Path, claimed: &mut HashSet<(char, S
             return;
         }
     };
-    let mut parents = HashMap::<(u64, u16), (u64, u16)>::new();
-    let mut roots = HashSet::new();
+    let mut parents = HashMap::<u64, Directory>::new();
     let mut files = Vec::new();
     let mut damaged = 0;
     for id in 0..parser.get_entry_count() {
@@ -370,18 +385,28 @@ fn scan_mft(check: &mut Check<'_>, source: &Path, claimed: &mut HashSet<(char, S
                 check.issue("limit_reached", "SYSVOL MFT directory index limit reached");
                 break;
             }
-            let identity = (id, entry.header.sequence);
-            parents.insert(identity, parent);
-            if matches!(
+            let trigger_root = matches!(
                 text.to_ascii_lowercase().as_str(),
                 "startup" | "shutdown" | "logon" | "logoff"
-            ) && let Ok(Some(path)) = parser.get_full_path_for_entry(&entry)
-                && let Some(loc) = location(&path.to_string_lossy())
-                && loc.tail.len() == 1
-                && trigger(&loc.scope, &loc.tail[0].to_ascii_lowercase())
-            {
-                roots.insert(identity);
-            }
+            ) && parser
+                .get_full_path_for_entry(&entry)
+                .ok()
+                .flatten()
+                .is_some_and(|path| {
+                    location(&path.to_string_lossy()).is_some_and(|loc| {
+                        loc.tail.len() == 1
+                            && trigger(&loc.scope, &loc.tail[0].to_ascii_lowercase())
+                    })
+                });
+            parents.insert(
+                id,
+                Directory {
+                    sequence: entry.header.sequence,
+                    allocated: entry.is_allocated(),
+                    parent,
+                    trigger_root,
+                },
+            );
         } else if launchable(&text) {
             if files.len() >= MAX_INDEX {
                 check.issue("limit_reached", "SYSVOL MFT candidate limit reached");
@@ -403,17 +428,17 @@ fn scan_mft(check: &mut Check<'_>, source: &Path, claimed: &mut HashSet<(char, S
     for (id, mut parent) in files {
         let mut relevant = false;
         for _ in 0..64 {
-            if roots.contains(&parent) {
+            let Some(directory) = parents.get(&parent.0).filter(|d| d.accepts(parent.1)) else {
+                break;
+            };
+            if directory.trigger_root {
                 relevant = true;
                 break;
             }
-            let Some(next) = parents.get(&parent) else {
-                break;
-            };
-            if *next == parent {
+            if directory.parent == parent {
                 break;
             }
-            parent = *next;
+            parent = directory.parent;
         }
         if !relevant {
             continue;
@@ -770,6 +795,68 @@ mod tests {
             assert!(f.change_source.contains("sequence 1"));
         }
         assert_eq!(scan.coverage[0].status, "partial");
+    }
+    fn mark_directory(bytes: &mut [u8], id: usize, sequence: u16, allocated: bool) {
+        let r = &mut bytes[id * 1024..(id + 1) * 1024];
+        r[16..18].copy_from_slice(&sequence.to_le_bytes());
+        r[22..24].copy_from_slice(&(2u16 | u16::from(allocated)).to_le_bytes());
+    }
+    #[test]
+    fn deleted_startup_and_deleted_gpo_ancestors_retain_both_payloads() {
+        for directories in [&[13][..], &[10, 11, 12, 13][..]] {
+            let dir = tempfile::tempdir().unwrap();
+            let mut bytes = mft();
+            for &id in directories {
+                mark_directory(&mut bytes, id, 2, false);
+            }
+            for id in [14, 15] {
+                bytes[id * 1024 + 16..id * 1024 + 18].copy_from_slice(&2u16.to_le_bytes());
+                bytes[id * 1024 + 22..id * 1024 + 24].copy_from_slice(&0u16.to_le_bytes());
+            }
+            fs::write(dir.path().join("$MFT"), bytes).unwrap();
+            let scan = scan(dir.path());
+            assert_eq!(
+                scan.findings.len(),
+                2,
+                "deleted directories {directories:?}: {:#?}",
+                scan.coverage
+            );
+            assert!(
+                scan.findings
+                    .iter()
+                    .all(|f| f.record_status == "mft_deleted" && f.severity == "INFO")
+            );
+        }
+    }
+    #[test]
+    fn reused_or_unrelated_parent_sequences_do_not_attach_payloads() {
+        for (sequence, allocated) in [(2, true), (3, false)] {
+            let dir = tempfile::tempdir().unwrap();
+            let mut bytes = mft();
+            mark_directory(&mut bytes, 13, sequence, allocated);
+            fs::write(dir.path().join("$MFT"), bytes).unwrap();
+            assert!(
+                scan(dir.path()).findings.is_empty(),
+                "sequence={sequence}, allocated={allocated}"
+            );
+        }
+    }
+    #[test]
+    fn directory_versions_match_the_parser_including_sequence_wrap() {
+        let mut d = Directory {
+            sequence: 0,
+            allocated: false,
+            parent: (0, 0),
+            trigger_root: false,
+        };
+        assert!(d.accepts(u16::MAX));
+        assert!(d.accepts(0));
+        d.allocated = true;
+        assert!(!d.accepts(u16::MAX));
+        d.sequence = 5;
+        assert!(d.accepts(5));
+        assert!(d.accepts(0));
+        assert!(!d.accepts(4));
     }
     #[test]
     fn mft_metadata_never_hashes_a_current_file_at_a_deleted_reference() {

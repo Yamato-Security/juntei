@@ -4,6 +4,8 @@
 
 **Bug Fixes:**
 
+- `persistence-hunter`: retain SYSVOL payload references beneath deleted GPO directories while rejecting reused directory records. Partial allow matches cannot raise INFO inventory to LOW severity. (@YamatoSecurity)
+
 - `persistence-hunter`: prefer domain- or host-qualified profile folders over a plain-name profile when resolving task COM handlers. Keep genuinely ambiguous mappings unresolved and explain unavailable per-user lookup in the finding as well as coverage. (@YamatoSecurity)
 
 
