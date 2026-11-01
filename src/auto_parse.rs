@@ -42,7 +42,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
-        "persistence" | "persistence-sniper" | "services" | "taskcache" => "persistence",
+        "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
         "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
         "defender-quarantine" => "security_products",
@@ -61,7 +61,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "logfile" => "LogFile",
         "mft" => "MFT",
         "persistence" => "Persistence",
-        "persistence-sniper" => "PersistenceSniper",
+        "persistence-hunter" => "PersistenceHunter",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "RecentDocs",
@@ -397,7 +397,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p(None, "", true);
     p(
         JunteiColor::Orange.rdg(no_color),
-        "Parsing in progress. Per-parser messages are saved in *-logs.txt files beside the results.",
+        "Parsing in progress.",
         true,
     );
     p(None, "", true);
@@ -792,7 +792,7 @@ fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
         // Use the hunter's bounded hive/log reader during discovery as well:
         // an oversized or linked transaction log must not bypass its guards
         // before the actual parser starts.
-        let Ok(context) = crate::persistence_sniper::context::Context::open(&system, false) else {
+        let Ok(context) = crate::persistence_hunter::context::Context::open(&system, false) else {
             continue;
         };
         if let Some(name) = context
@@ -1023,8 +1023,8 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &["--all-control-sets"],
         );
         add(
-            "persistence-sniper",
-            &["check-persistence"],
+            "persistence-hunter",
+            &["persistence-hunter"],
             OutputShape::File,
             // auto-parse already budgets parallel parser processes; prevent
             // each child from creating another CPU-sized worker pool.
@@ -1099,7 +1099,7 @@ impl InputInventory {
             let size = path.metadata().map_or(0, |meta| meta.len());
             // Cross-source hunting inspects the host's hives and filesystem
             // evidence, with optional MFT and event-log correlation.
-            found.add_size("persistence-sniper", size);
+            found.add_size("persistence-hunter", size);
             for (artifact, matches) in [
                 ("amcache", crate::amcache::is_amcache_name(&name)),
                 ("prefetch", crate::prefetch::is_prefetch_name(&name)),

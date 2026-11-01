@@ -3,6 +3,7 @@
 
 mod accessibility;
 mod carve;
+mod start_menu;
 mod tasks;
 mod text;
 
@@ -13,22 +14,7 @@ use std::collections::{BTreeSet, HashMap};
 use std::fs::File;
 use std::io::Read;
 
-const FILE_CHECKS: &[&str] = &[
-    "accessibility_tools",
-    "bits_notify_command",
-    "error_handler_cmd",
-    "ghost_task",
-    "gp_scripts",
-    "hidden_scheduled_task",
-    "office_templates",
-    "power_automate",
-    "powershell_profiles",
-    "scheduled_task_files",
-    "shell_folders_startup",
-    "startup_folder",
-    "windows_terminal",
-    "wmi_event_subscription",
-];
+use super::checks::FILE_CHECKS;
 
 pub fn run(ctx: &Context, definitions: &[CheckDefinition]) -> Scan {
     let mut scan = Scan::default();
@@ -44,6 +30,7 @@ pub fn run(ctx: &Context, definitions: &[CheckDefinition]) -> Scan {
             issues: Vec::new(),
         };
         match definition.id.as_str() {
+            "start_menu_com" => start_menu::run(&mut check),
             "scheduled_task_files" => tasks::scheduled(&mut check),
             "ghost_task" | "hidden_scheduled_task" => tasks::cache(&mut check),
             "wmi_event_subscription" => carve::wmi(&mut check),

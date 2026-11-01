@@ -1,23 +1,22 @@
-# Persistence Check
+# Persistence Hunter
 
 Persistence is a way to make code run again: when Windows starts, a user signs in, an application
 opens, a scheduled time arrives, or another event occurs. Attackers can abuse the same settings
 that legitimate software uses for updates, device support, security, and administration.
 
-`juntei check-persistence` examines captured Windows evidence offline for **130 checks** covering
+`juntei persistence-hunter` examines captured Windows evidence offline for **131 checks** covering
 these mechanisms and related account/protection anomalies. It reads registry hives, task files,
-scripts, application settings, and selected database records. It does not execute the programs it
-finds or change the source computer. No Python interpreter or Windows runtime is required.
+scripts, application settings, and selected database records.
 
 This page explains every implemented check. For complete options, output fields, profiles, and
-timestamp handling, open the [command guide](../commands/check-persistence.md). The
+timestamp handling, open the [command guide](../commands/persistence-hunter.md). The
 [acknowledgements](acknowledgements.md) link the Python PyrsistenceSniper project and the original
 PowerShell PersistenceSniper tool.
 
 ## Start an investigation
 
 ```bash
-juntei check-persistence -d evidence/ --min-severity info -o PersistenceSniper.csv --coverage Coverage.csv
+juntei persistence-hunter -d evidence/ --min-severity info -o PersistenceHunter.csv --coverage Coverage.csv
 ```
 
 Use `--min-severity info` for the complete candidate inventory. The manual command defaults to
@@ -29,8 +28,8 @@ under each computer's `persistence/` category.
 To focus on a mechanism, copy its **Check ID** from below:
 
 ```bash
-juntei check-persistence --list-checks
-juntei check-persistence -d evidence/ --check run_keys,scheduled_task_files --min-severity info -o focused.csv
+juntei persistence-hunter --list-checks
+juntei persistence-hunter -d evidence/ --check run_keys,scheduled_task_files --min-severity info -o focused.csv
 ```
 
 The command uses a shared worker pool by default. Add `-T 4` to select four workers, or `-T 1`
@@ -56,9 +55,10 @@ partial, disabled, or failed checks. The hunter is not a live-memory, network, o
 
 ## Catalogue and location notation
 
-The catalogue is based on PyrsistenceSniper commit `b99c117`; the descriptions below document
+The catalogue is based on PyrsistenceSniper, plus the native `start_menu_com` check;
+the descriptions below document
 Juntei's native behavior, including its evidence limitations. There are **116 registry-backed
-checks and 14 file/repository checks**. Some file checks also join registry data, so these are
+checks and 15 file/repository checks**. Some file checks also join registry data, so these are
 implementation counts rather than mutually exclusive acquisition requirements. The mechanisms
 are grouped by investigative purpose below, and alphabetized by Check ID within each group.
 
@@ -87,14 +87,14 @@ checks may describe enabling conditions rather than a standalone persistence mec
 | [Services and system extensions](#services-and-system-extensions) | 13 |
 | [Scheduled tasks](#scheduled-tasks) | 3 |
 | [WMI, BITS, and other event triggers](#wmi-bits-and-other-event-triggers) | 11 |
-| [Explorer, COM, and file or URL handlers](#explorer-com-and-file-or-url-handlers) | 14 |
+| [Explorer, COM, and file or URL handlers](#explorer-com-and-file-or-url-handlers) | 15 |
 | [Office applications and add-ins](#office-applications-and-add-ins) | 7 |
 | [Debuggers, crash handlers, and compatibility shims](#debuggers-crash-handlers-and-compatibility-shims) | 13 |
 | [.NET runtime and profiler settings](#net-runtime-and-profiler-settings) | 7 |
 | [DLL and executable lookup overrides](#dll-and-executable-lookup-overrides) | 18 |
 | [Accounts and sign-in visibility](#accounts-and-sign-in-visibility) | 4 |
 | [Authentication components and credential protection](#authentication-components-and-credential-protection) | 8 |
-| **Total** | **130** |
+| **Total** | **131** |
 
 ## Boot, sign-in, and startup
 
@@ -783,12 +783,21 @@ Task Scheduler stores configuration in both XML files and the SOFTWARE hive. Rea
 
 **Check ID:** `scheduled_task_files` · **Catalogue ATT&CK:** [T1053.005](https://attack.mitre.org/techniques/T1053/005/)
 
-**What Juntei checks:** Parses captured task XML for Exec commands/arguments and COM-handler class IDs/data. It retains unresolved COM actions and reports the principal as SYSTEM, USER, or UNKNOWN from the available UserId.
+**What Juntei checks:** Parses captured task XML for Exec commands/arguments and COM-handler class IDs/data. It selects the principal by `Actions Context`/`Principal id`, retains user and group identity separately, and reports SYSTEM, USER, or UNKNOWN. Unresolved COM actions remain visible.
 
 **Evidence examined:**
 
 - `Windows\System32\Tasks\<task path>` XML files, including Exec, ComHandler, and available principal fields.
-- Collected machine SOFTWARE `Classes\CLSID` server registrations for COM-handler resolution.
+- Matching user's captured `UsrClass.dat` and NTUSER `Software\Classes`, plus machine SOFTWARE `Classes\CLSID`, in native and 32-bit views.
+- Captured SOFTWARE `ProfileList` for SID principals. Named principals prefer a unique matching `user.DOMAIN` folder, then captured local-host suffixes, and finally the plain `user` folder. Matches are explicitly labeled as heuristics; genuine ambiguity stays unresolved and is noted in the finding and coverage. Volatile registry keys are not required.
+- Managed `CodeBase` (including version subkeys), AppID associations, and SYSTEM service `ImagePath` for an AppID `LocalService`.
+
+COM server candidates include their registry source in `Description`. Executable-name-only
+AppID associations remain unresolved rather than being assigned a guessed directory. Local
+`file:` URLs are decoded; remote URLs are retained without network access. User class overrides
+are scoped to that profile, and an incomplete user CLSID does not fall through to its shadowed
+machine registration. Group-only tasks retain machine candidates with the individual-user
+limitation in their description, without adding routine notices to the coverage error summary.
 
 **How to investigate:** Inspect triggers, enabled state, principal, and run history in the source XML and event logs. A created task may never run. An unresolved COM handler is still a candidate, and missing/group-only principal data must not be assumed to mean SYSTEM.
 
@@ -1120,6 +1129,39 @@ Component Object Model (COM) lets applications activate registered software comp
 | `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellExecuteHooks` | All nonempty values |
 
 **How to investigate:** Resolve any referenced CLSID and verify whether the Windows build and policy permit the hook. A legacy registration can be unused; the value itself is not an observed shell execution.
+
+### Start Menu Library and CLSID Folder COM Persistence {#start_menu_com}
+
+**Check ID:** `start_menu_com` · **Catalogue ATT&CK:** [T1546.015](https://attack.mitre.org/techniques/T1546/015/)
+
+**What Juntei checks:** Finds `.library-ms` library XML files whose `simpleLocation` URL references
+a COM CLSID, and directories named `<name>.{CLSID}`, beneath
+`Users\<user>\AppData\Roaming\Microsoft\Windows\Start Menu`. Explorer interaction with these
+objects can activate COM code. The check includes empty captured directories; it does not follow
+symbolic links. Ordinary library files outside the Start Menu and GUIDs in XML comments are not
+reported by this check.
+
+**Evidence examined:**
+
+- Per-user Start Menu `.library-ms` files and CLSID-named directory entries.
+- Matching user's captured class registrations and machine SOFTWARE, separately by architecture.
+- Managed CodeBase/AppID/service configuration through the same resolver as scheduled tasks.
+
+**How to investigate:** `Path` and `SourceFile` identify the activation-trigger artifact. `Value`
+contains the candidate server command, or the CLSID if resolution is unavailable. `Description`
+links the trigger to the CLSID and captured registry source. `ResolvedPath`/`Sha256` describe only
+a resolved, collected payload. An executable-name-only AppID association remains unresolved.
+A trigger can be legitimate; existence does not prove a sign-in, activation, execution, or attack.
+Inspect the library URL, class registration, payload, user context and independent execution logs.
+
+**Collection cautions:** File-only collections can omit empty directories. Standard user Start Menu
+paths are examined; redirected Start Menus and other Explorer namespace locations are not covered
+by this check. Missing hives or unresolved registrations produce partial coverage while retaining
+the candidate. Task architecture, elevation and policy can change effective COM lookup behavior.
+
+**Further details:** [Original proposal and researcher credit](https://github.com/last-byte/PersistenceSniper/pull/32),
+[COM per-user/machine merged views](https://learn.microsoft.com/en-us/windows/win32/sysinfo/merged-view-of-hkey-classes-root),
+[MITRE COM hijacking](https://attack.mitre.org/techniques/T1546/015/).
 
 ### TypeLib COM Hijacking {#typelib_hijack}
 
@@ -1959,6 +2001,6 @@ The Local Security Authority (LSA) handles security functions through LSASS and 
    unverified signer metadata, historical carved records, or a trigger that cannot be corroborated.
 
 For command syntax, profiles, every output field, and coverage states, return to the
-[Check Persistence command guide](../commands/check-persistence.md). The
+[Persistence Hunter command guide](../commands/persistence-hunter.md). The
 [artifact guides](../artifacts/index.md) explain the underlying sources, and the
 [acknowledgements](acknowledgements.md) identify the upstream persistence tools.

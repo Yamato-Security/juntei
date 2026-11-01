@@ -214,11 +214,18 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     ]);
     assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     assert!(
-        r.stdout.contains(
-            "Parsing in progress. Per-parser messages are saved in *-logs.txt files beside the results.\n\n"
-        ),
+        r.stdout.contains("Parsing in progress.\n\n"),
         "{}",
         r.stdout
+    );
+    assert!(!r.stdout.contains("Per-parser messages are saved"));
+    assert!(
+        csv.join("HOST1/persistence/PersistenceHunter.csv")
+            .is_file()
+    );
+    assert!(
+        csv.join("HOST1/persistence/PersistenceHunter-logs.txt")
+            .is_file()
     );
     assert!(csv.join("HOST1/file_existence/amcache").is_dir());
     assert!(
@@ -305,7 +312,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
-            "persistence" | "persistence-sniper" | "services" | "taskcache" => "persistence",
+            "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
             "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
             "registry" => "registry",
             "defender-quarantine" => "security_products",
@@ -316,8 +323,8 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
         }
         let (source, command) = match artifact {
-            "persistence-sniper" => {
-                assert_eq!(task["command"][1], "check-persistence", "{task}");
+            "persistence-hunter" => {
+                assert_eq!(task["command"][1], "persistence-hunter", "{task}");
                 assert_eq!(task["command"][2], "-d", "{task}");
                 let args = task["command"].as_array().unwrap();
                 assert!(
@@ -2870,7 +2877,7 @@ fn utf16z(s: &str) -> Vec<u8> {
         .collect()
 }
 
-fn sniper_software_hive() -> Vec<u8> {
+fn hunter_software_hive() -> Vec<u8> {
     let mut key = reg_key(
         "Run",
         vec![(
@@ -2887,17 +2894,17 @@ fn sniper_software_hive() -> Vec<u8> {
 }
 
 #[test]
-fn persistence_sniper_selected_check_has_csv_json_and_jsonl_parity() {
+fn persistence_hunter_selected_check_has_csv_json_and_jsonl_parity() {
     let source = tempfile::tempdir().unwrap();
     let output = tempfile::tempdir().unwrap();
     let hive = source.path().join("SOFTWARE");
-    std::fs::write(&hive, sniper_software_hive()).unwrap();
+    std::fs::write(&hive, hunter_software_hive()).unwrap();
     let mut expected = None;
     for format in ["csv", "json", "jsonl"] {
         let result = output.path().join(format!("findings.{format}"));
         let coverage = output.path().join(format!("coverage-{format}.csv"));
         let r = run(&[
-            "check-persistence",
+            "persistence-hunter",
             "-f",
             hive.to_str().unwrap(),
             "--check",
@@ -2931,7 +2938,7 @@ fn persistence_sniper_selected_check_has_csv_json_and_jsonl_parity() {
         }
     }
     let r = run(&[
-        "check-persistence",
+        "persistence-hunter",
         "-f",
         hive.to_str().unwrap(),
         "--technique",
@@ -2957,7 +2964,7 @@ fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
     for dir in [&config, &tasks, &logs, &evidence.path().join("Example")] {
         std::fs::create_dir_all(dir).unwrap();
     }
-    std::fs::write(config.join("SOFTWARE"), sniper_software_hive()).unwrap();
+    std::fs::write(config.join("SOFTWARE"), hunter_software_hive()).unwrap();
     std::fs::write(config.join("SYSTEM"), services_hive(1)).unwrap();
     std::fs::write(
         evidence.path().join("Example/agent.exe"),
@@ -2989,7 +2996,7 @@ fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
                 .path()
                 .join(format!("coverage-{format}-{threads}.csv"));
             let r = run(&[
-                "check-persistence",
+                "persistence-hunter",
                 "-d",
                 evidence.path().to_str().unwrap(),
                 "--min-severity",
@@ -3022,7 +3029,7 @@ fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
                         .filter(|r| r["CheckId"] != "context"
                             && r["CheckId"] != "timestamp_correlation")
                         .count(),
-                    130
+                    131
                 );
                 assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
                     && r["Detail"].contains("System.evtx")));
@@ -3043,7 +3050,7 @@ fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
     for threads in ["0", "invalid", "-1"] {
         assert_ne!(
             run(&[
-                "check-persistence",
+                "persistence-hunter",
                 "-d",
                 evidence.path().to_str().unwrap(),
                 "--threads",
@@ -3056,10 +3063,10 @@ fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
 }
 
 #[test]
-fn persistence_sniper_rejects_bad_inputs_and_preserves_evidence() {
+fn persistence_hunter_rejects_bad_inputs_and_preserves_evidence() {
     let source = tempfile::tempdir().unwrap();
     let hive = source.path().join("SOFTWARE");
-    let original = sniper_software_hive();
+    let original = hunter_software_hive();
     std::fs::write(&hive, &original).unwrap();
     for args in [
         vec!["--check", "does_not_exist"],
@@ -3067,7 +3074,7 @@ fn persistence_sniper_rejects_bad_inputs_and_preserves_evidence() {
         vec!["-o", "same.csv", "--coverage", "./same.csv", "-C"],
     ] {
         let mut command = vec![
-            "check-persistence",
+            "persistence-hunter",
             "-f",
             hive.to_str().unwrap(),
             "--no-timeline",
@@ -3080,25 +3087,25 @@ fn persistence_sniper_rejects_bad_inputs_and_preserves_evidence() {
     let fake = source.path().join("fake.bin");
     std::fs::write(&fake, b"not a hive").unwrap();
     assert_ne!(
-        run(&["check-persistence", "-f", fake.to_str().unwrap()]).code,
+        run(&["persistence-hunter", "-f", fake.to_str().unwrap()]).code,
         0
     );
-    let r = run(&["check-persistence", "--list-checks"]);
+    let r = run(&["persistence-hunter", "--list-checks"]);
     assert_eq!(r.code, 0);
-    assert_eq!(r.stdout.lines().count(), 130);
+    assert_eq!(r.stdout.lines().count(), 131);
 }
 
 #[test]
-fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
+fn persistence_hunter_protects_adjacent_logs_and_conflicting_destinations() {
     let source = tempfile::tempdir().unwrap();
     let output = tempfile::tempdir().unwrap();
     let hive = source.path().join("SOFTWARE");
-    std::fs::write(&hive, sniper_software_hive()).unwrap();
+    std::fs::write(&hive, hunter_software_hive()).unwrap();
     let log = hive.with_extension("LOG1");
     std::fs::write(&log, b"original transaction-log evidence").unwrap();
     for flag in ["-o", "--coverage"] {
         let r = run(&[
-            "check-persistence",
+            "persistence-hunter",
             "-f",
             hive.to_str().unwrap(),
             "--check",
@@ -3117,7 +3124,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     let traversal = source.path().join("missing/../SOFTWARE");
     let original = std::fs::read(&hive).unwrap();
     let r = run(&[
-        "check-persistence",
+        "persistence-hunter",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -3136,7 +3143,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
         std::os::unix::fs::symlink(source.path(), &alias).unwrap();
         let traversal = output.path().join("missing/../evidence-link/SOFTWARE");
         let r = run(&[
-            "check-persistence",
+            "persistence-hunter",
             "-f",
             hive.to_str().unwrap(),
             "--check",
@@ -3154,7 +3161,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     let child_coverage = findings.join("coverage.csv");
     std::fs::write(&findings, b"previous results").unwrap();
     let r = run(&[
-        "check-persistence",
+        "persistence-hunter",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -3171,7 +3178,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     let a = output.path().join("new-result");
     let b = a.join("coverage.csv");
     let r = run(&[
-        "check-persistence",
+        "persistence-hunter",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -3187,7 +3194,7 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
     let mixed = output.path().join("Results.csv");
     let lower = output.path().join("results.csv");
     let r = run(&[
-        "check-persistence",
+        "persistence-hunter",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -3205,17 +3212,17 @@ fn persistence_sniper_protects_adjacent_logs_and_conflicting_destinations() {
 }
 
 #[test]
-fn persistence_sniper_disabled_profile_retains_coverage_without_findings() {
+fn persistence_hunter_disabled_profile_retains_coverage_without_findings() {
     let source = tempfile::tempdir().unwrap();
     let output = tempfile::tempdir().unwrap();
     let hive = source.path().join("SOFTWARE");
     let profile = source.path().join("profile.yaml");
     let findings = output.path().join("findings.csv");
     let coverage = output.path().join("coverage.csv");
-    std::fs::write(&hive, sniper_software_hive()).unwrap();
+    std::fs::write(&hive, hunter_software_hive()).unwrap();
     std::fs::write(&profile, "checks:\n  run_keys:\n    enabled: false\n").unwrap();
     let r = run(&[
-        "check-persistence",
+        "persistence-hunter",
         "-f",
         hive.to_str().unwrap(),
         "--check",
@@ -9418,4 +9425,65 @@ fn registry_userassist_no_encrypt_and_corrupt_times() {
         "{}",
         r.stdout
     );
+}
+
+#[test]
+fn persistence_hunter_start_menu_unresolved_candidates_survive_all_output_formats() {
+    let evidence = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let clsid = "{00112233-4455-6677-8899-AABBCCDDEEFF}";
+    let folder = evidence
+        .path()
+        .join("Users/alice/AppData/Roaming/Microsoft/Windows/Start Menu")
+        .join(format!("Programs/Example.{clsid}"));
+    std::fs::create_dir_all(&folder).unwrap();
+    for kind in ["csv", "json", "jsonl"] {
+        let path = output.path().join(format!("findings.{kind}"));
+        let r = run(&[
+            "persistence-hunter",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "--check",
+            "start_menu_com",
+            "--no-timeline",
+            "--min-severity",
+            "info",
+            "-t",
+            kind,
+            "-o",
+            path.to_str().unwrap(),
+            "-q",
+            "-K",
+        ]);
+        assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+        if kind == "csv" {
+            let (_, rows) = csv_rows(&path);
+            assert_eq!(rows.len(), 1);
+            assert_eq!(rows[0]["Value"], clsid);
+            assert_eq!(rows[0]["ResolutionStatus"], "unresolved_com_class");
+            assert_eq!(rows[0]["ResolvedPath"], "");
+            assert_eq!(rows[0]["Exists"], "");
+        } else {
+            let row: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+            assert_eq!(row["Value"], clsid);
+            assert_eq!(row["ResolutionStatus"], "unresolved_com_class");
+            assert_eq!(row["ResolvedPath"], "");
+            assert!(row["Exists"].is_null());
+        }
+    }
+}
+
+#[test]
+fn persistence_hunter_has_consistent_command_help() {
+    let root = run(&["-h"]);
+    assert_eq!(root.code, 0);
+    assert!(root.stdout.contains("persistence-hunter"));
+    let help = run(&["persistence-hunter", "-h"]);
+    assert_eq!(help.code, 0, "{}", help.stderr);
+    assert!(
+        help.stdout
+            .contains("juntei persistence-hunter -d <EVIDENCE>")
+    );
+    assert!(help.stdout.contains("--min-severity") && help.stdout.contains("--coverage"));
 }

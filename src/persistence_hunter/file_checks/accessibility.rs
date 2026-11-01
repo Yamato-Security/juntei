@@ -1,6 +1,6 @@
 use super::Check;
-use crate::persistence_sniper::context::Resolution;
-use crate::persistence_sniper::resolver::pe_metadata;
+use crate::persistence_hunter::context::Resolution;
+use crate::persistence_hunter::resolver::pe_metadata;
 
 const TOOLS: &[(&str, &[&str])] = &[
     ("windows/system32/sethc.exe", &["sethc.exe"]),
@@ -80,7 +80,7 @@ pub(super) fn run(check: &mut Check<'_>) {
 }
 
 fn replacement_reason(
-    metadata: &crate::persistence_sniper::resolver::PeMetadata,
+    metadata: &crate::persistence_hunter::resolver::PeMetadata,
     allowed: &[&str],
 ) -> Result<Option<String>, &'static str> {
     if metadata
@@ -114,7 +114,7 @@ fn replacement_reason(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::persistence_sniper::resolver::PeMetadata;
+    use crate::persistence_hunter::resolver::PeMetadata;
 
     #[test]
     fn missing_or_damaged_metadata_cannot_hide_a_replacement_after_reference_validation() {

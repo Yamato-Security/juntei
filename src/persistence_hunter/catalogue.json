@@ -2770,6 +2770,25 @@
     ]
   },
   {
+    "id": "start_menu_com",
+    "technique": "Start Menu Library and CLSID Folder COM Persistence",
+    "mitre_id": "T1546.015",
+    "description": "Finds COM class references in per-user Start Menu .library-ms files and CLSID-named folders, then joins them to the relevant captured user and machine class registrations. A trigger or server registration is configuration evidence, not proof of activation or maliciousness.",
+    "references": [
+      "https://github.com/last-byte/PersistenceSniper/pull/32",
+      "https://attack.mitre.org/techniques/T1546/015/"
+    ],
+    "implementation": "filesystem",
+    "targets": [],
+    "hives": [
+      "SOFTWARE",
+      "NTUSER.DAT",
+      "USRCLASS.DAT"
+    ],
+    "builtin_allow": [],
+    "builtin_block": []
+  },
+  {
     "id": "startup_folder",
     "technique": "Startup Folder",
     "mitre_id": "T1547.001",

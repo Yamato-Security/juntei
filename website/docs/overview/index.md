@@ -11,16 +11,16 @@ of a separate program for every artifact.
 
 ## Design goals
 
-- **Defensible parsing:** preserve raw values and report damage instead of silently inventing data.
-- **Useful for all:** default usage should be easy to use for beginners but customizable and full
+- **Defensible parsing:** Preserve raw values and report damage instead of silently inventing data.
+- **Useful for all:** Default usage should be easy to use for beginners but customizable and full
   featured for veterans as well.
 - **Standalone binary:** Does not require any runtime libraries to execute. It just works out of
   the box.
 - **Blazing fast:** Aims to be the fastest parser while also not requiring a large amount of
   memory.
-- **Cross-platform use:** analyze Windows evidence without requiring a Windows workstation.
+- **Cross-platform use:** Analyze Windows evidence without requiring a Windows workstation.
 - **Automation:** CSV for spreadsheets and timeline tools; JSON/JSONL for `jq`, scripts, and data lakes.
-- **Safe failure:** malformed records are reported and skipped where possible.
+- **Safe failure:** Malformed records are reported and skipped where possible.
 - **Transparent lineage:** Juntei identifies the open-source parsers and reference tools behind each implementation.
 
 ## What Juntei does not do
@@ -29,9 +29,7 @@ Juntei does not acquire a live disk, mount a forensic image, or replace evidence
 does not automatically combine every artifact into a single incident narrative. It parses the
 evidence you provide and produces records suitable for investigation and correlation.
 
-It also does not make every suspicious-looking record malicious. Analysts must account for the
-artifact's semantics, retention, operating-system version, collection method, and alternative
-explanations. The [Evidence and Interpretation](evidence-model.md) page introduces that process.
+Juntei will also not do the analysis for you. A DFIR specialist is required to perform the analysis on the evidence.
 
 ## License
 

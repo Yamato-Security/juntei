@@ -67,19 +67,19 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - LNK shortcuts
 - Jump Lists
 - ShimCache
-- Check Persistence (130 cross-source persistence checks with allow/block profiles)
+- Persistence Hunter (131 cross-source persistence checks with allow/block profiles)
 - Defender quarantine metadata
 - all registry keys and values, including recoverable deleted data
 - services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, and UserAssist
 
-Check Persistence retains every severity (`--min-severity info`), including partial allow matches.
+Persistence Hunter retains every severity (`--min-severity info`), including partial allow matches.
 `LOW` is a classification to investigate; missing signature metadata can produce it for malicious
 commands too. The automatic inventory does not discard these entries using the manual command's
 default medium threshold.
 
 The hunter uses one worker inside each automatic parser process. This keeps `auto-parse -T <N>`
 from multiplying its process budget by another CPU-sized pool in every child. Standalone
-`check-persistence -T <N>` controls the hunter's own worker threads.
+`persistence-hunter -T <N>` controls the hunter's own worker threads.
 
 CSV `$MFT` output includes all timestamps and short names. Registry output includes raw data and a
 FILETIME interpretation of `REG_QWORD` values. JSON and JSONL SRUM output includes value-state

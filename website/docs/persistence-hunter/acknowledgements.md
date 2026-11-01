@@ -1,6 +1,6 @@
-# Persistence Check Acknowledgements
+# Persistence Hunter Acknowledgements
 
-Juntei's `check-persistence` command builds on two generations of community persistence hunting.
+Juntei's `persistence-hunter` command builds on two generations of community persistence hunting.
 Thank you to the authors and contributors who made their techniques, implementations, and research
 available to investigators.
 
@@ -16,7 +16,7 @@ The Python project is MIT licensed. Juntei retains its copyright and license not
 [`THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt`](https://github.com/Yamato-Security/juntei/blob/main/THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt).
 Juntei's implementation runs offline without a Python interpreter. Its collection handling,
 coverage reporting, and conservative interpretation of incomplete evidence are documented in the
-[command guide](../commands/check-persistence.md).
+[command guide](../commands/persistence-hunter.md).
 
 ## PersistenceSniper: the original PowerShell tool
 
@@ -27,7 +27,11 @@ contributors. We thank the original project and its contributors for making Wind
 mechanisms easier to investigate.
 
 Juntei's direct porting reference is the Python project. The original PowerShell tool is credited
-for that lineage; this does not imply that every live-system feature in either upstream project
+for that lineage. Juntei also independently implements the mechanisms proposed by
+[hongson11698](https://github.com/hongson11698) in the original project's
+[scheduled-task COM resolution PR #31](https://github.com/last-byte/PersistenceSniper/pull/31)
+and [Start Menu library/CLSID-folder PR #32](https://github.com/last-byte/PersistenceSniper/pull/32).
+These add to the Python reference catalogue; this does not imply that every live-system feature in either upstream project
 is implemented by Juntei's offline command.
 
 ## Supporting research and tools

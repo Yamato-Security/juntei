@@ -2,6 +2,7 @@
 //! PyrsistenceSniper. See THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt.
 
 pub mod checks;
+mod com;
 mod command;
 pub mod context;
 pub mod custom;

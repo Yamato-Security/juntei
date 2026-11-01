@@ -1,7 +1,7 @@
 //! Bounded offline record recovery. Carved records may be stale/deleted: never
 //! claim that a recovered WMI consumer or BITS job was active at acquisition.
 use super::Check;
-use crate::persistence_sniper::TimeEvidence;
+use crate::persistence_hunter::TimeEvidence;
 use regex::bytes::Regex;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
@@ -240,7 +240,7 @@ pub(super) fn wmi(check: &mut Check<'_>) {
             let mut f = check.file_finding(&file, &value, "SYSTEM");
             if !target.is_empty() {
                 let (payload, launcher) =
-                    crate::persistence_sniper::resolver::command_target(&target);
+                    crate::persistence_hunter::resolver::command_target(&target);
                 f.resolve_target = payload;
                 f.launcher = launcher;
             } else {

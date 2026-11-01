@@ -40,6 +40,7 @@ pub fn catalogue() -> &'static [CheckDefinition] {
 }
 
 pub(crate) const FILE_CHECKS: &[&str] = &[
+    "start_menu_com",
     "gp_scripts",
     "scheduled_task_files",
     "ghost_task",
@@ -483,8 +484,8 @@ mod tests {
     #[test]
     fn complete_catalogue() {
         let c = catalogue();
-        assert_eq!(c.len(), 130);
-        assert_eq!(c.iter().map(|c| &c.id).collect::<BTreeSet<_>>().len(), 130);
+        assert_eq!(c.len(), 131);
+        assert_eq!(c.iter().map(|c| &c.id).collect::<BTreeSet<_>>().len(), 131);
         assert_eq!(c.iter().map(|c| c.builtin_allow.len()).sum::<usize>(), 115);
         assert!(
             c.iter()
