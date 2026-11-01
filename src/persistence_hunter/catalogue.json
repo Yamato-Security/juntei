@@ -630,6 +630,22 @@
     ]
   },
   {
+    "id": "deleted_services",
+    "technique": "Deleted and Historical Windows Services",
+    "mitre_id": "T1543.003",
+    "description": "Recovers deleted and historical service configuration from SYSTEM hives and transaction-log provenance. Values from distinct recovery origins are kept separate; registration, recovered configuration, current state and execution are distinct facts.",
+    "references": [
+      "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4697"
+    ],
+    "implementation": "custom",
+    "targets": [],
+    "hives": [
+      "SYSTEM"
+    ],
+    "builtin_allow": [],
+    "builtin_block": []
+  },
+  {
     "id": "diagtrack_dll",
     "technique": "DiagTrack DLL",
     "mitre_id": "T1574.001",

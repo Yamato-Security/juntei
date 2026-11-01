@@ -27,7 +27,7 @@ pub(super) struct Metadata {
 }
 
 pub fn enrich(ctx: &Context, finding: &mut Finding) {
-    if finding.resolution_status == "unresolved_com_class" {
+    if finding.resolution_unavailable || finding.resolution_status == "unresolved_com_class" {
         // A CLSID or AppID executable basename is not a proven payload path.
         finding.signer_status = "not_available".into();
         return;
@@ -538,7 +538,7 @@ fn basename(path: &str) -> String {
 
 /// Windows quoting, rather than POSIX backslash escaping: a path such as C:\temp
 /// must retain its backslashes. An unmatched quote leaves a token available for reporting.
-fn tokens(command: &str) -> Vec<String> {
+pub(super) fn tokens(command: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut token = String::new();
     let mut quoted = false;

@@ -66,6 +66,12 @@ pub fn run(ctx: &Context) -> Scan {
 pub fn run_definitions(ctx: &Context, definitions: &[CheckDefinition]) -> Scan {
     let mut result = Scan::default();
     for check in definitions {
+        if check.id == "deleted_services" {
+            let mut scan = super::deleted_services::run(ctx, check);
+            result.findings.append(&mut scan.findings);
+            result.coverage.append(&mut scan.coverage);
+            continue;
+        }
         if FILE_CHECKS.contains(&check.id.as_str()) {
             continue;
         }
@@ -484,8 +490,8 @@ mod tests {
     #[test]
     fn complete_catalogue() {
         let c = catalogue();
-        assert_eq!(c.len(), 131);
-        assert_eq!(c.iter().map(|c| &c.id).collect::<BTreeSet<_>>().len(), 131);
+        assert_eq!(c.len(), 132);
+        assert_eq!(c.iter().map(|c| &c.id).collect::<BTreeSet<_>>().len(), 132);
         assert_eq!(c.iter().map(|c| c.builtin_allow.len()).sum::<usize>(), 115);
         assert!(
             c.iter()

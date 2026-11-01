@@ -3029,7 +3029,7 @@ fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
                         .filter(|r| r["CheckId"] != "context"
                             && r["CheckId"] != "timestamp_correlation")
                         .count(),
-                    131
+                    132
                 );
                 assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
                     && r["Detail"].contains("System.evtx")));
@@ -3092,7 +3092,7 @@ fn persistence_hunter_rejects_bad_inputs_and_preserves_evidence() {
     );
     let r = run(&["persistence-hunter", "--list-checks"]);
     assert_eq!(r.code, 0);
-    assert_eq!(r.stdout.lines().count(), 131);
+    assert_eq!(r.stdout.lines().count(), 132);
 }
 
 #[test]

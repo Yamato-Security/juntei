@@ -65,7 +65,7 @@ keep their names.
 
 `juntei persistence-hunter` hunts across several source formats, so it is a top-level analysis
 command. It complements the full configuration inventory from `parse-registry persistence` with
-131 checks, allow/block classification, payload metadata, coverage, and timestamp correlation.
+132 checks, allow/block classification, payload metadata, coverage, and timestamp correlation.
 
 ## Top-level usage
 

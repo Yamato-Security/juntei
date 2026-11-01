@@ -218,13 +218,18 @@ impl Profile {
                 }
             }
         }
+        let base = finding.base_classification.unwrap_or(("MEDIUM", ""));
         finding.severity = match best {
-            Match::None => "MEDIUM",
+            Match::None => base.0,
             Match::Partial => "LOW",
             Match::Full => "INFO",
         }
         .into();
-        finding.policy_reason = reason;
+        finding.policy_reason = if best == Match::None {
+            base.1.into()
+        } else {
+            reason
+        };
         if best == Match::Partial {
             finding
                 .policy_reason

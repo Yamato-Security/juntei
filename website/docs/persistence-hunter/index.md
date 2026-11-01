@@ -4,7 +4,7 @@ Persistence is a way to make code run again: when Windows starts, a user signs i
 opens, a scheduled time arrives, or another event occurs. Attackers can abuse the same settings
 that legitimate software uses for updates, device support, security, and administration.
 
-`juntei persistence-hunter` examines captured Windows evidence offline for **131 checks** covering
+`juntei persistence-hunter` examines captured Windows evidence offline for **132 checks** covering
 these mechanisms and related account/protection anomalies. It reads registry hives, task files,
 scripts, application settings, and selected database records.
 
@@ -55,9 +55,9 @@ partial, disabled, or failed checks. The hunter is not a live-memory, network, o
 
 ## Catalogue and location notation
 
-The catalogue is based on PyrsistenceSniper, plus the native `start_menu_com` check;
+The catalogue is based on PyrsistenceSniper, plus the native `start_menu_com` and `deleted_services` checks;
 the descriptions below document
-Juntei's native behavior, including its evidence limitations. There are **116 registry-backed
+Juntei's native behavior, including its evidence limitations. There are **117 registry-backed
 checks and 15 file/repository checks**. Some file checks also join registry data, so these are
 implementation counts rather than mutually exclusive acquisition requirements. The mechanisms
 are grouped by investigative purpose below, and alphabetized by Check ID within each group.
@@ -84,7 +84,7 @@ checks may describe enabling conditions rather than a standalone persistence mec
 | Mechanism group | Checks |
 |---|---:|
 | [Boot, sign-in, and startup](#boot-sign-in-and-startup) | 32 |
-| [Services and system extensions](#services-and-system-extensions) | 13 |
+| [Services and system extensions](#services-and-system-extensions) | 14 |
 | [Scheduled tasks](#scheduled-tasks) | 3 |
 | [WMI, BITS, and other event triggers](#wmi-bits-and-other-event-triggers) | 11 |
 | [Explorer, COM, and file or URL handlers](#explorer-com-and-file-or-url-handlers) | 15 |
@@ -94,7 +94,7 @@ checks may describe enabling conditions rather than a standalone persistence mec
 | [DLL and executable lookup overrides](#dll-and-executable-lookup-overrides) | 18 |
 | [Accounts and sign-in visibility](#accounts-and-sign-in-visibility) | 4 |
 | [Authentication components and credential protection](#authentication-components-and-credential-protection) | 8 |
-| **Total** | **131** |
+| **Total** | **132** |
 
 ## Boot, sign-in, and startup
 
@@ -566,6 +566,41 @@ These settings arrange for a command or library to run during boot, sign-in, or 
 ## Services and system extensions
 
 Windows services and extensible system components provide many legitimate ways to load executables or DLLs. Compare the configured target with the expected product, service account, start settings, and source-backed installation history.
+
+### Deleted and Historical Windows Services {#deleted_services}
+
+**Check ID:** `deleted_services` · **Catalogue ATT&CK:** [T1543.003](https://attack.mitre.org/techniques/T1543/003/)
+
+**What Juntei checks:** Recovers top-level `ControlSetNNN\Services\<service>` keys from the captured
+`SYSTEM` hive, free cells, pre-replay hive state, and available transaction-log history. Each distinct
+recovered state retains its own command, key last-write time, recovery status, and origin. It does
+not copy missing values from the currently allocated service or from another transaction-log origin.
+
+**How to investigate:** Ordinary service upgrades, uninstallers, and Windows maintenance leave
+historical records, so candidates default to `INFO`. Use `--min-severity info` to see them. A static
+PowerShell download-and-execute pattern can raise a candidate to `MEDIUM`; an explicit profile rule
+can also change severity. Neither classification proves an attack or execution.
+
+`Description` records the observed `Start`, `Type`, account, display name, deletion flag, and source
+origins. `Start: 3` means demand-start, and `Start: 4` means disabled. Missing or conflicting fields
+remain unknown; a demand-start service may have been launched manually. `RecordStatus` distinguishes
+recovered/deleted records from `historical_service_version` records whose old key was allocated.
+`KeyLastWrite` dates the recovered key; it does not establish installation, deletion, or execution.
+`LastChange` stays empty with `ChangeEvidence: HISTORICAL_RECORD`, rather than borrowing a newer event.
+
+The current bytes at a recovered path may belong to a replacement file. Consequently these rows do
+not hash or identify a current payload as the historical payload, and their existence remains unknown.
+When a captured primary `System.evtx` is available, matching computer identity, service name, and
+complete command can add a `7045` installation reference with timestamp and record ID. Arguments
+are compared case-sensitively. This proves registration of that name/command, not the recovered
+version's time or its execution. `--no-timeline` disables this optional event correlation.
+
+Recovery is bounded to `SYSTEM` hives up to 128 MiB and at most 50,000 service keys/states. Missing,
+ambiguous, damaged, or limited evidence is reported in coverage. For deeper recovery, use
+`parse-registry read --recover-deleted` and inspect the underlying records separately.
+
+**Further details:** [Microsoft service installation event 4697](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4697),
+[Service Control Manager](https://learn.microsoft.com/en-us/windows/win32/services/service-control-manager).
 
 ### DiagTrack DLL {#diagtrack_dll}
 
