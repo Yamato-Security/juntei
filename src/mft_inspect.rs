@@ -224,7 +224,9 @@ fn dump_entry(parser: &mut MftParser<BufReader<File>>, spec: EntrySpec) -> Resul
     let _ = writeln!(
         out,
         "{}",
-        serde_json::to_string_pretty(&json).map_err(|e| e.to_string())?
+        crate::output_schema::to_value(&json)
+            .and_then(|value| serde_json::to_string_pretty(&value).map_err(std::io::Error::other))
+            .map_err(|e| e.to_string())?
     );
     let _ = writeln!(out);
     let _ = writeln!(

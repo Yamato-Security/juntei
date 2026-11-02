@@ -171,15 +171,15 @@ fn amcache_records(value: Value, writer: &mut impl Write) -> io::Result<()> {
     };
     let mut groups = Vec::new();
     for (field, kind) in [
-        ("summary", "summary"),
-        ("findings", "finding"),
-        ("files", "file"),
-        ("devices", "device"),
+        ("Summary", "summary"),
+        ("Findings", "finding"),
+        ("Files", "file"),
+        ("Devices", "device"),
     ] {
         let value = common
             .remove(field)
             .ok_or_else(|| io::Error::other(format!("Amcache JSON report is missing {field}")))?;
-        let records = if field == "summary" {
+        let records = if field == "Summary" {
             vec![value]
         } else if let Value::Array(records) = value {
             records
@@ -196,7 +196,7 @@ fn amcache_records(value: Value, writer: &mut impl Write) -> io::Result<()> {
                 return Err(io::Error::other("Amcache JSON record is not an object"));
             };
             let mut envelope = common.clone();
-            envelope.insert("record_type".into(), kind.into());
+            envelope.insert("RecordType".into(), kind.into());
             envelope.extend(fields);
             line(&Value::Object(envelope), writer)?;
         }

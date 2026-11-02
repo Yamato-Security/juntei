@@ -391,11 +391,11 @@ const LINK_COLUMNS: &[&str] = &[
     "VolumeLabel",
     "LocalPath",
     "CommonPath",
-    "TargetIDAbsolutePath",
-    "TargetMFTEntryNumber",
-    "TargetMFTSequenceNumber",
+    "TargetID-AbsolutePath",
+    "TargetMFT-EntryNumber",
+    "TargetMFT-SequenceNumber",
     "MachineID",
-    "MachineMACAddress",
+    "MachineMAC-Address",
     "TrackerCreatedOn",
     "ExtraBlocksPresent",
     "Arguments",
@@ -407,8 +407,8 @@ const AUTOMATIC_COLUMNS: &[&str] = &[
     "SourceCreated",
     "SourceModified",
     "SourceAccessed",
-    "AppId",
-    "AppIdDescription",
+    "AppID",
+    "AppID-Description",
     "HasSps",
     "DestListVersion",
     "LastUsedEntryNumber",
@@ -417,7 +417,7 @@ const AUTOMATIC_COLUMNS: &[&str] = &[
     "CreationTime",
     "LastModified",
     "Hostname",
-    "MacAddress",
+    "MAC-Address",
     "Path",
     "InteractionCount",
     "PinStatus",
@@ -433,8 +433,8 @@ const CUSTOM_COLUMNS: &[&str] = &[
     "SourceCreated",
     "SourceModified",
     "SourceAccessed",
-    "AppId",
-    "AppIdDescription",
+    "AppID",
+    "AppID-Description",
     "EntryName",
 ];
 
@@ -673,9 +673,9 @@ fn write_json(
         let v = json_record(r);
         // JSON: pretty objects separated by newlines, like parse-file lnk; JSONL: one per line
         if output_type == JumpListOutputType::Json {
-            serde_json::to_writer_pretty(&mut w, &v)?;
+            crate::output_schema::write_json(&mut w, &v, true)?;
         } else {
-            serde_json::to_writer(&mut w, &v)?;
+            crate::output_schema::write_json(&mut w, &v, false)?;
         }
         w.write_all(b"\n")?;
     }

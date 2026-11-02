@@ -80,7 +80,7 @@ Output:
 
 ```bash
 juntei parse-registry lsa-secrets -d collection/ -o lsa-secrets.csv
-juntei parse-registry lsa-secrets -f SECURITY -t jsonl | jq 'select(.kind == "service_account")'
+juntei parse-registry lsa-secrets -f SECURITY -t jsonl | jq 'select(.Kind == "service_account")'
 ```
 
 For each hive, the summary lists each secret with its kind and when it was set. It then names
@@ -92,7 +92,7 @@ the services whose account passwords LSA stores, and counts the cached logon slo
 |---|---|
 | `Host`, `SourcePath` | Host (from the system's `SYSTEM` hive), and the `SECURITY` hive. |
 | `Secret`, `Kind` | The secret's name, and what it is (see the table above); `Cache` and `cached_logons` for the cached logons' record. |
-| `ServiceName`, `UserSid` | The service an `_SC_` secret is for, and the user's SID a name gives (`L$_SQSA_`, `RasDialParams`). |
+| `ServiceName`, `UserSID` | The service an `_SC_` secret is for, and the user's SID a name gives (`L$_SQSA_`, `RasDialParams`). |
 | `CurrentSetUTC`, `OldSetUTC` | `CupdTime` and `OupdTime`: when the current and previous values were set. |
 | `HasCurrentValue`, `HasOldValue` | Whether `CurrVal` and `OldVal` hold data. |
 | `CurrentValueLastWrittenUTC`, `OldValueLastWrittenUTC`, `KeyLastWrittenUTC` | The `CurrVal`, `OldVal` and secret keys' last writes. |

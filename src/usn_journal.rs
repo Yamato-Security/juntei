@@ -412,7 +412,7 @@ const CSV_HEADER: &[&str] = &[
     "OffsetToData",
     "SourceFile",
     "SourceInfo",
-    "SecurityId",
+    "SecurityID",
     "Version",
 ];
 
@@ -524,11 +524,11 @@ impl RecordWriter {
 fn write_json(writer: &mut RecordWriter, v: &Value) -> io::Result<()> {
     match writer {
         RecordWriter::Json(w) => {
-            serde_json::to_writer_pretty(&mut *w, v)?;
+            crate::output_schema::write_json(&mut *w, v, true)?;
             w.write_all(b"\n")
         }
         RecordWriter::Jsonl(w) => {
-            serde_json::to_writer(&mut *w, v)?;
+            crate::output_schema::write_json(&mut *w, v, false)?;
             w.write_all(b"\n")
         }
         RecordWriter::Csv(_) => Ok(()),

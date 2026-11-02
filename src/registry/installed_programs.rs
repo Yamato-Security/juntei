@@ -296,35 +296,65 @@ impl<T> Pairs<'_, T> {
 /// A program's record, its fields in this order.
 #[derive(serde::Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "HiveType")]
     hive_type: &'a str,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "Source")]
     source: &'static str,
+    #[serde(rename = "Scope")]
     scope: &'static str,
+    #[serde(rename = "Name")]
     name: Option<&'a str>,
+    #[serde(rename = "Version")]
     version: Option<&'a str>,
+    #[serde(rename = "Publisher")]
     publisher: Option<&'a str>,
+    #[serde(rename = "InstallDate")]
     install_date: Option<&'a str>,
+    #[serde(rename = "InstallDateRaw")]
     install_date_raw: Option<&'a str>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "InstallLocation")]
     install_location: Option<&'a str>,
+    #[serde(rename = "InstallSource")]
     install_source: Option<&'a str>,
+    #[serde(rename = "Program")]
     program: Option<&'a str>,
+    #[serde(rename = "UninstallCommand")]
     uninstall_command: Option<&'a str>,
+    #[serde(rename = "QuietUninstallCommand")]
     quiet_uninstall_command: Option<&'a str>,
+    #[serde(rename = "SizeKB")]
     size_kb: Option<u32>,
+    #[serde(rename = "SystemComponent")]
     system_component: Option<bool>,
+    #[serde(rename = "WindowsInstaller")]
     windows_installer: Option<bool>,
+    #[serde(rename = "ProductCode")]
     product_code: Option<&'a str>,
+    #[serde(rename = "Architecture")]
     architecture: Option<&'a str>,
+    #[serde(rename = "WOW64")]
     wow64: bool,
+    #[serde(rename = "Details")]
     details: Pairs<'a, String>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "DataRaw")]
     data_raw: Pairs<'a, Vec<u8>>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -333,7 +363,7 @@ const CSV_HEADER: [&str; 30] = [
     "SourcePath",
     "HiveType",
     "Username",
-    "UserSid",
+    "UserSID",
     "Source",
     "Scope",
     "Name",
@@ -347,12 +377,12 @@ const CSV_HEADER: [&str; 30] = [
     "Program",
     "UninstallCommand",
     "QuietUninstallCommand",
-    "SizeKb",
+    "SizeKB",
     "SystemComponent",
     "WindowsInstaller",
     "ProductCode",
     "Architecture",
-    "Wow64",
+    "WOW64",
     "Details",
     "KeyPath",
     "DataRaw",

@@ -42,14 +42,14 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 
 For each discovered system, the computer name is chosen in this order:
 
-1. `hostname` in the nearest ancestor `client_info.json` (with `fqdn` retained in the manifest).
+1. `hostname` in the nearest ancestor `client_info.json` (with its value retained as `FQDN` in the manifest).
 2. `ComputerName` in a collected `SYSTEM` registry hive.
 3. The nearest useful collection-directory name, with drive and Velociraptor `uploads/auto`
    scaffolding skipped and a suffix such as `_F.…` removed.
 
 Names are made safe for use as directory names. Duplicate names receive a numeric suffix in both
 their output directory and `Computer` value so separate systems remain distinguishable in JSON.
-The manifest keeps the hostname exactly as discovered in a separate `hostname` field.
+The manifest keeps the hostname exactly as discovered in a separate `Hostname` field.
 
 When it lists the systems it found, `auto-parse` also prints each one's time zone from its `SYSTEM`
 hive (for example `Eastern Standard Time, UTC-05:00; daylight time UTC-04:00 from the second
@@ -249,8 +249,8 @@ record's `Artifact` identifier is `mft` for queries. Multi-table outputs have `A
 `JumpLists-logs.txt`, or `SRUM-logs.txt` beside their directory.
 
 
-`manifest.json` records the original discovered `hostname`, the unique output/record `Computer`
-identity, hostname provenance, evidence paths, artifact `category`, command lines, duration, exit
+`manifest.json` records the original discovered `Hostname`, the unique output/record `Computer`
+identity, hostname provenance, evidence paths, artifact `Category`, command lines, duration, exit
 code, result path, log path, the requested JSONL timeline and any export error, whether Defender extraction was requested,
 and whether each task
 succeeded, was skipped, or failed.
@@ -261,7 +261,7 @@ MFT, LogFile or USN Journal task shows its individual input size. Estimates excl
 logs and enrichment files and do not predict the size of the parsed output.
 
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
-parser task. It includes `Computer`, original `Hostname`, `Fqdn`, `HostnameSource`, `EvidenceRoot`,
+parser task. It includes `Computer`, original `Hostname`, `FQDN`, `HostnameSource`, `EvidenceRoot`,
 `Artifact`, `Category`, `OutputType`, `Purpose`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`,
 `Error`, and `Command`. `Purpose` is `artifact` for the categorized results or `json_timeline` for
 the additional native JSONL pass used with CSV. `OutputType` is the actual parser output format.
@@ -325,10 +325,10 @@ fields; it does not invent a common event timestamp or globally sort heterogeneo
 
 ```bash
 jq -c 'select(.Computer == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
-jq -r 'select(.Artifact == "mft") | .full_path? // empty' parsed/timeline.jsonl
+jq -r 'select(.Artifact == "mft") | .FullPath? // empty' parsed/timeline.jsonl
 ```
 
-`manifest.json` records the requested `json_timeline` path and any `json_timeline_error`. Its task
+`manifest.json` records the requested `JSON-Timeline` path and any `JSON-TimelineError`. Its task
 records, and `manifest.csv`, still point to retained artifact outputs. Successful CSV timeline-only
 jobs reference the final JSONL file instead of deleted temporary files. If any parser fails, the
 run exits unsuccessfully and the timeline contains only successful results; inspect the manifests

@@ -19,9 +19,7 @@ use crate::cli::{AmcacheOptions, OutputType};
 use crate::color::JunteiColor;
 use crate::progress;
 use crate::util::{self, error_msg, fmt_num, p, p_label};
-use amcache_forensic::output::{
-    OutputOptions, write_csv_directory, write_json, write_jsonl, write_text,
-};
+use amcache_forensic::output::{OutputOptions, write_csv_directory, write_jsonl, write_text};
 use amcache_forensic::{AmcacheReport, AmcacheSchema, analyze_bytes};
 use forensicnomicon::report::Observation;
 use indicatif::ProgressBar;
@@ -160,12 +158,22 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
                 } else {
                     out.to_path_buf()
                 };
-                write_csv_directory(&dir, &source, &report, options).map(|mut paths| {
+                write_csv_directory(&dir, &source, &report, options).and_then(|mut paths| {
+                    for path in &paths {
+                        crate::amcache_output::csv(path)?;
+                    }
                     saved.append(&mut paths);
+                    Ok(())
                 })
             }
-            (OutputType::Json, Some(w)) => write_json(w, &source, &report, options),
-            (OutputType::Jsonl, Some(w)) => write_jsonl(w, &source, &report, options),
+            (OutputType::Json | OutputType::Jsonl, Some(w)) => {
+                let mut adapter = crate::amcache_output::JsonOutput::new(
+                    &mut **w,
+                    output_type == OutputType::Json,
+                );
+                write_jsonl(&mut adapter, &source, &report, options)
+                    .and_then(|()| adapter.finish().map_err(Into::into))
+            }
             (OutputType::Text, Some(w)) => {
                 let header = if i == 0 {
                     format!("Amcache hive: {source}")

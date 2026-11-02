@@ -87,7 +87,7 @@ Output:
 ```bash
 juntei parse-registry featureusage -d evidence/ -o featureusage.csv
 juntei parse-registry featureusage -f NTUSER.DAT -t jsonl \
-  | jq 'select(.source == "AppSwitched") | [.count, .application_path // .application]'
+  | jq 'select(.Source == "AppSwitched") | [.Count, .ApplicationPath // .Application]'
 ```
 
 The summary lists records by source, when each hive's FeatureUsage started counting, the
@@ -97,7 +97,7 @@ applications switched to most, the recent apps and items (newest first) and the 
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSid`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList`, and the hive. |
+| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList`, and the hive. |
 | `Source` | `AppSwitched`, `AppLaunch`, `ShowJumpView`, `AppBadgeUpdated`, `TrayButtonClicked` (FeatureUsage), `RecentApps`, `RecentItems`, `Taskband` or `ProgramsCache`. |
 | `Application` | A FeatureUsage value's name, a recent app's `AppId`, or a pin's application user model ID. |
 | `ApplicationPath` | `Application` as a path, a known folder's GUID replaced by its default path; empty for IDs. |

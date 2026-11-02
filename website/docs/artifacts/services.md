@@ -58,7 +58,7 @@ Output:
 ```bash
 juntei parse-registry services -f SYSTEM -o services.csv
 juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
-  | jq 'select(.failure_command != null or (.image_path? | test("temp|public"; "i")))'
+  | jq 'select(.FailureCommand != null or (.ImagePath? | test("temp|public"; "i")))'
 ```
 
 ## Output fields
@@ -70,7 +70,7 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ServiceName` | Registry key/internal service name. Strong pivot into events and Service Control Manager commands. |
 | `DisplayName`, `Description` | User-facing text; can be resource references or attacker-controlled. |
 | `ImagePath` | Executable/driver command as configured. Parse quoting, arguments, environment variables, and device paths. |
-| `ServiceDll` | DLL loaded by a host service. Often the actual payload for shared-process services. |
+| `ServiceDLL` | DLL loaded by a host service. Often the actual payload for shared-process services. |
 | `StartType`, `StartValue` | Friendly/raw start mode: boot (0), system (1), automatic (2), manual (3), disabled (4). |
 | `DelayedAutostart` | Automatic service starts after initial boot phase; still persistence-capable. |
 | `ServiceType`, `TypeValue` | Decoded/raw flags: kernel driver, file-system driver, own/share process, user service, etc. |

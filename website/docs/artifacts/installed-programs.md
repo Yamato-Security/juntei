@@ -91,7 +91,7 @@ Output:
 ```bash
 juntei parse-registry installed-programs -d evidence/ -o installed.csv
 juntei parse-registry installed-programs -d evidence/ -t jsonl \
-  | jq 'select(.scope == "user" and .source != "package")'
+  | jq 'select(.Scope == "user" and .Source != "package")'
 ```
 
 The summary lists the programs installed last (by `InstallDate`), what users installed for
@@ -102,7 +102,7 @@ themselves, and the WSL distributions.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath`, `HiveType` | Host, hive file, and `SOFTWARE` or `NTUSER.DAT`. |
-| `Username`, `UserSid` | A user hive's user (its profile folder and `ProfileList` SID), or the user a package is listed for. |
+| `Username`, `UserSID` | A user hive's user (its profile folder and `ProfileList` SID), or the user a package is listed for. |
 | `Source`, `Scope` | The list (`uninstall`, `msi_product`, `app_path`, `wsl`, `package`), and `machine` or `user`. |
 | `Name`, `Version`, `Publisher` | `DisplayName`, `DisplayVersion`, `Publisher`; a product's `ProductName` and `Version`; an App Path's program file name; a distribution's name and WSL version; a package's name and version. |
 | `InstallDate`, `InstallDateRaw` | `InstallDate` as a date when written `YYYYMMDD`; otherwise as written. |
@@ -110,9 +110,9 @@ themselves, and the WSL distributions.
 | `InstallLocation`, `InstallSource` | `InstallLocation` (an App Path's `Path`, a distribution's `BasePath`, a package's `Path`); `InstallSource` (a product's last-used source folder). |
 | `Program` | An App Path's program. |
 | `UninstallCommand`, `QuietUninstallCommand` | `UninstallString`, `QuietUninstallString`. |
-| `SizeKb`, `SystemComponent`, `WindowsInstaller` | `EstimatedSize` in KiB; whether it is hidden; whether Windows Installer installed it. |
+| `SizeKB`, `SystemComponent`, `WindowsInstaller` | `EstimatedSize` in KiB; whether it is hidden; whether Windows Installer installed it. |
 | `ProductCode` | The Windows Installer product code (`{GUID}`). |
-| `Architecture`, `Wow64` | `x86` under `Wow6432Node`, or a package's architecture; whether the key is under `Wow6432Node`. |
+| `Architecture`, `WOW64` | `x86` under `Wow6432Node`, or a package's architecture; whether the key is under `Wow6432Node`. |
 | `Details` | More: `DisplayIcon`, `ModifyPath`, `ParentKeyName`, `ReleaseType`, `Inno Setup: User` (the account that ran an Inno Setup installer); a product's `PackageCode`, `PackageName`; a distribution's `Flags`, `State`, `DefaultUid`, `Version`, `PackageFamilyName`, `Default`; a package's `List`, `ResourceId`, `PublisherId`. |
 | `KeyPath` | The entry's key. |
 | `DataRaw` | The bytes (hex) of values that are not what their names say. |

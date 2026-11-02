@@ -185,24 +185,43 @@ pub fn run(opts: &RegistryLsaSecretsOptions) -> i32 {
 /// A secret's record, or the cached logons', its fields in this order.
 #[derive(Serialize, Default)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "Secret")]
     secret: &'a str,
+    #[serde(rename = "Kind")]
     kind: &'static str,
+    #[serde(rename = "ServiceName")]
     service_name: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "CurrentSet")]
     current_set: Option<String>,
+    #[serde(rename = "OldSet")]
     old_set: Option<String>,
+    #[serde(rename = "HasCurrentValue")]
     has_current_value: Option<bool>,
+    #[serde(rename = "HasOldValue")]
     has_old_value: Option<bool>,
+    #[serde(rename = "CurrentValueLastWritten")]
     current_value_last_written: Option<String>,
+    #[serde(rename = "OldValueLastWritten")]
     old_value_last_written: Option<String>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "CachedLogons")]
     cached_logons: Option<usize>,
+    #[serde(rename = "CachedLogonsInUse")]
     cached_logons_in_use: Option<usize>,
+    #[serde(rename = "CachedLogonsKept")]
     cached_logons_kept: Option<u32>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -212,7 +231,7 @@ const CSV_HEADER: [&str; 19] = [
     "Secret",
     "Kind",
     "ServiceName",
-    "UserSid",
+    "UserSID",
     "CurrentSetUTC",
     "OldSetUTC",
     "HasCurrentValue",

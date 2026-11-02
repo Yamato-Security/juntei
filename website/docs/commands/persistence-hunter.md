@@ -232,7 +232,7 @@ warnings go to stderr. Without either option, Juntei prints a summary and up to 
 
 | Fields | How to interpret them |
 |---|---|
-| `Computer`, `CheckId`, `Technique`, `MitreId` | Which computer and persistence mechanism the row describes |
+| `Computer`, `CheckID`, `Technique`, `MitreID` | Which computer and persistence mechanism the row describes |
 | `Path`, `Value` | The registry location, file, task, or recovered record and its configured content |
 | `Description`, `References` | Why the mechanism matters and where to read more |
 | `AccessGained` | The mechanism's usual scope (`USER` or `SYSTEM`; BITS can also identify `LOCAL_SERVICE`/`NETWORK_SERVICE`); not proof that a specific command achieved that privilege |
@@ -241,10 +241,10 @@ warnings go to stderr. Without either option, Juntei prints a summary and up to 
 | `KeyLastWrite` | The registry **key's** timestamp. It does not date an individual value |
 | `LastChange`, `ChangeSource`, `ChangeEvidence` | Independently correlated change time, source proof, and whether correlation succeeded |
 | `ResolvedPath`, `ResolutionStatus`, `Exists` | Payload path and offline resolution result; uncollected evidence is unknown, not `false` |
-| `Sha256` | SHA256 of the collected payload bytes, when readable |
+| `SHA256` | SHA256 of the collected payload bytes, when readable |
 | `Signer`, `SignerStatus` | Descriptive embedded certificate/catalog metadata and its availability; certificate trust and signature validity are not verified |
 | `IsLolbin`, `Launcher` | Whether the configured launcher or payload is in the bundled LOLBAS list, and the launcher used for a proxied payload |
-| `IsBuiltin`, `IsInOsDirectory` | Context for common Windows commands and system directories; neither field establishes legitimacy |
+| `IsBuiltin`, `IsInOS-Directory` | Context for common Windows commands and system directories; neither field establishes legitimacy |
 
 A `rundll32.exe` command can name a DLL payload. Juntei preserves the launcher while resolving and
 hashing the payload. A reference outside the collected computer, a missing drive, an ambiguous

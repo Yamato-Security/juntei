@@ -185,40 +185,68 @@ pub fn run(opts: &RegistryServicesOptions) -> i32 {
 /// One failure action in JSON.
 #[derive(Serialize)]
 struct ActionRecord {
-    #[serde(rename = "type")]
+    #[serde(rename = "Type")]
     kind: String,
+    #[serde(rename = "DelayMs")]
     delay_ms: u32,
 }
 
 /// A service's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "ControlSet")]
     control_set: String,
+    #[serde(rename = "IsCurrentControlSet")]
     is_current_control_set: bool,
+    #[serde(rename = "ServiceName")]
     service_name: &'a str,
+    #[serde(rename = "DisplayName")]
     display_name: Option<&'a str>,
+    #[serde(rename = "Description")]
     description: Option<&'a str>,
+    #[serde(rename = "ImagePath")]
     image_path: Option<&'a str>,
+    #[serde(rename = "ServiceDLL")]
     service_dll: Option<&'a str>,
+    #[serde(rename = "StartType")]
     start_type: Option<String>,
+    #[serde(rename = "StartValue")]
     start_value: Option<u32>,
+    #[serde(rename = "DelayedAutostart")]
     delayed_autostart: Option<bool>,
+    #[serde(rename = "ServiceType")]
     service_type: Option<String>,
+    #[serde(rename = "TypeValue")]
     type_value: Option<u32>,
+    #[serde(rename = "ErrorControl")]
     error_control: Option<String>,
+    #[serde(rename = "ObjectName")]
     object_name: Option<&'a str>,
+    #[serde(rename = "Group")]
     group: Option<&'a str>,
+    #[serde(rename = "FailureResetPeriod")]
     failure_reset_period: Option<u32>,
+    #[serde(rename = "FailureCommand")]
     failure_command: Option<&'a str>,
+    #[serde(rename = "FailureActions")]
     failure_actions: Option<Vec<ActionRecord>>,
+    #[serde(rename = "FailureActionType")]
     failure_action_type: Option<String>,
+    #[serde(rename = "FailureActionDelayMs")]
     failure_action_delay_ms: Option<u32>,
+    #[serde(rename = "FailureActionsRaw")]
     failure_actions_raw: Option<String>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -231,7 +259,7 @@ const CSV_HEADER: [&str; 27] = [
     "DisplayName",
     "Description",
     "ImagePath",
-    "ServiceDll",
+    "ServiceDLL",
     "StartType",
     "StartValue",
     "DelayedAutostart",

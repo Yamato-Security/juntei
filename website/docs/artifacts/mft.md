@@ -112,21 +112,21 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `ReferenceCount` | NTFS hard-link reference count; compare with the number of surviving names cautiously. |
 | `ReparseTarget` | Decoded target for supported reparse points such as junctions/symlinks. Paths may redirect. |
 | `IsDirectory` | Record has the directory flag. |
-| `HasAds` | Record contains named alternate data streams. This does not make it malicious. |
-| `IsAds` | This row represents a named alternate data stream rather than the unnamed file data. |
-| `SI<FN` | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
-| `uSecZeros` | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
+| `HasADS` | Record contains named alternate data streams. This does not make it malicious. |
+| `IsADS` | This row represents a named alternate data stream rather than the unnamed file data. |
+| `SI-BeforeFN` | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
+| `MicrosecondZeros` | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
 | `Copied` | Modified time precedes created time. Often consistent with file copy; not proof of attacker action. |
-| `SiFlags` | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
+| `SI-Flags` | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
 | `NameType` | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |
 | `Created0x10`, `LastModified0x10`, `LastRecordChange0x10`, `LastAccess0x10` | SI times. Common timeline fields, but user-mode tools can change several of them. |
 | `Created0x30`, `LastModified0x30`, `LastRecordChange0x30`, `LastAccess0x30` | FN times. Updated differently and generally harder for ordinary APIs to alter; still not immutable. |
 | `UpdateSequenceNumber` | Last USN associated with the record's SI attribute. Pivot into `$J` if that USN survives. |
 | `LogfileSequenceNumber` | NTFS `$LogFile` sequence number from the FILE record header; useful in low-level transaction analysis. |
-| `SecurityId` | Index into NTFS `$Secure`; not a Windows SID by itself. |
-| `ObjectIdFileDroid` | Object ID / distributed-link-tracking identifier where present; correlate with LNK/Jump List droids. |
+| `SecurityID` | Index into NTFS `$Secure`; not a Windows SID by itself. |
+| `ObjectID-FileDroid` | Object ID / distributed-link-tracking identifier where present; correlate with LNK/Jump List droids. |
 | `LoggedUtilStream` | Decoded `$LOGGED_UTILITY_STREAM` context where supported. Review unfamiliar values. |
-| `ZoneIdContents` | Resident `Zone.Identifier` content, such as ZoneId and download URLs. It may be absent, removed, or non-resident. |
+| `ZoneID-Contents` | Resident `Zone.Identifier` content, such as ZoneId and download URLs. It may be absent, removed, or non-resident. |
 | `SourceFile` | The input `$MFT`, essential when combining hosts or volumes. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | With `-i`: the content of the row's resident `$DATA` (the file's, or the alternate data stream's), as Base64, as bytes (`41-42`), and as text when it is printable ASCII. Empty when the data is non-resident or filtered out by `-E`/`-M`. |
 | `ParseErrors` | Damage or unsupported relationships affecting this row. Never discard this column during filtering. |

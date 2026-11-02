@@ -388,7 +388,7 @@ fn parse_one(
 enum EntryWriter {
     /// The CSV, written after the entries are read (see [`crate::mft_csv`]).
     Csv(Box<csv::Writer<Box<dyn Write>>>),
-    YsNtfsParserCsv(Box<csv::Writer<Box<dyn Write>>>),
+    YsNtfsParserCsv(Box<csv::Writer<Box<dyn Write>>>, bool),
     Json(Box<dyn Write>),
     Jsonl(Box<dyn Write>),
 }
@@ -406,9 +406,10 @@ impl EntryWriter {
                     .map_err(io::Error::other)?;
                 EntryWriter::Csv(Box::new(csv))
             }
-            MftOutputType::YsNtfsParserCsv => {
-                EntryWriter::YsNtfsParserCsv(Box::new(csv::Writer::from_writer(w)))
-            }
+            MftOutputType::YsNtfsParserCsv => EntryWriter::YsNtfsParserCsv(
+                Box::new(csv::WriterBuilder::new().has_headers(false).from_writer(w)),
+                false,
+            ),
             MftOutputType::Json => EntryWriter::Json(w),
             MftOutputType::Jsonl => EntryWriter::Jsonl(w),
         })
@@ -436,13 +437,23 @@ impl EntryWriter {
         };
         match self {
             EntryWriter::Csv(_) => Ok(()),
-            EntryWriter::YsNtfsParserCsv(w) => w.serialize(row).map_err(io::Error::other),
+            EntryWriter::YsNtfsParserCsv(w, header_written) => {
+                if !*header_written {
+                    let mut sample = csv::Writer::from_writer(Vec::new());
+                    sample.serialize(row)?;
+                    let bytes = sample.into_inner().map_err(io::Error::other)?;
+                    let mut sample = csv::Reader::from_reader(bytes.as_slice());
+                    w.write_record(crate::output_schema::headers(sample.headers()?.iter())?)?;
+                    *header_written = true;
+                }
+                w.serialize(row).map_err(io::Error::other)
+            }
             EntryWriter::Json(w) => {
-                serde_json::to_writer_pretty(&mut *w, &json)?;
+                crate::output_schema::write_json(&mut *w, &json, true)?;
                 w.write_all(b"\n")
             }
             EntryWriter::Jsonl(w) => {
-                serde_json::to_writer(&mut *w, &json)?;
+                crate::output_schema::write_json(&mut *w, &json, false)?;
                 w.write_all(b"\n")
             }
         }
@@ -450,7 +461,7 @@ impl EntryWriter {
 
     fn finish(self) -> io::Result<()> {
         match self {
-            EntryWriter::Csv(mut w) | EntryWriter::YsNtfsParserCsv(mut w) => w.flush(),
+            EntryWriter::Csv(mut w) | EntryWriter::YsNtfsParserCsv(mut w, _) => w.flush(),
             EntryWriter::Json(mut w) | EntryWriter::Jsonl(mut w) => w.flush(),
         }
     }
@@ -462,6 +473,7 @@ impl EntryWriter {
 #[derive(Serialize)]
 pub(crate) struct JsonEntry<'a> {
     #[serde(serialize_with = "mft::serialize_option_windows_path")]
+    #[serde(rename = "FullPath")]
     pub(crate) full_path: Option<PathBuf>,
     #[serde(flatten)]
     pub(crate) entry: &'a MftEntry,

@@ -81,7 +81,7 @@ Output:
 ```bash
 juntei parse-registry muicache -d evidence/ -o muicache.csv
 juntei parse-registry muicache -f UsrClass.dat -t jsonl \
-  | jq 'select(.path | test("\\\\(Users|ProgramData|Temp)\\\\"; "i"))'
+  | jq 'select(.Path | test("\\\\(Users|ProgramData|Temp)\\\\"; "i"))'
 ```
 
 The summary lists the programs outside the Windows and Program Files folders (user folders,
@@ -95,7 +95,7 @@ file system.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSid`, `SourcePath` | Host, the profile folder's name, the user's SID (a `UsrClass.dat`'s root key names it; else the system's `ProfileList`), and the hive. |
+| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID (a `UsrClass.dat`'s root key names it; else the system's `ProfileList`), and the hive. |
 | `HiveType` | `UsrClass.dat` or `NTUSER.DAT`. |
 | `Path` | The program's path: the value's name without `.FriendlyAppName` or `.ApplicationCompany`. |
 | `FriendlyAppName` | The program's description, from `<path>.FriendlyAppName` or `<path>`. |

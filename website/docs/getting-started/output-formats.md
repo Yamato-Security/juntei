@@ -16,6 +16,22 @@ types (Amcache, Jump Lists, and SRUM).
     it as a formula. Import all fields as text or use a forensic-safe CSV viewer. Juntei preserves
     evidence strings rather than altering them.
 
+## Field names
+
+CSV column headers and JSON/JSONL field names use PascalCase, including Amcache and the
+`auto-parse` manifests. Acronyms remain uppercase: `ProcessID`, `TimestampUTC`, `UserSID`,
+`SHA256`. A word following an acronym is separated with a hyphen: `IP-Address`, `MFT-Entry`,
+`USN-Journal`. With `jq`, quote a hyphenated field: `.["IP-Address"]`.
+
+Evidence values keep their original spelling. Source-provided dictionary keys, such as registry
+value names under `Details`/`DataRaw` and `Zone.Identifier` names under `ZoneIdentifier`, also
+remain unchanged. SRUM's `ValueState` and `Raw` dictionaries use the same labels as their data
+columns. A normalization collision is reported rather than silently dropping a field.
+
+This changes previous export schemas. Regenerate existing results and update saved queries
+(for example, `.record_type` becomes `.RecordType`, and Amcache `full_path` becomes `FullPath`).
+Human-readable text reports and input/configuration formats keep their existing conventions.
+
 ## JSON
 
 JSON stores the complete result as one document. It preserves arrays, nested structures, nulls,
@@ -31,7 +47,7 @@ JSONL writes one independent JSON object per line. It streams well and works nat
 
 ```bash
 juntei parse-registry services -d evidence/ -t jsonl \
-  | jq -c 'select(.start_type == "automatic") | {host, service_name, image_path}'
+  | jq -c 'select(.StartType == "automatic") | {Host, ServiceName, ImagePath}'
 ```
 
 When structured output goes to standard output, Juntei sends progress and messages to standard

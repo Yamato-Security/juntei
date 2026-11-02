@@ -185,19 +185,33 @@ pub fn run(opts: &RegistryRecentDocsOptions) -> i32 {
 /// A recent document's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "Extension")]
     extension: Option<&'a str>,
+    #[serde(rename = "MRU-Position")]
     mru_position: Option<u32>,
+    #[serde(rename = "ValueIndex")]
     value_index: u32,
+    #[serde(rename = "Filename")]
     filename: Option<&'a str>,
+    #[serde(rename = "LinkName")]
     link_name: Option<&'a str>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "LastOpened")]
     last_opened: Option<String>,
+    #[serde(rename = "ValueDataRaw")]
     value_data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -206,7 +220,7 @@ const CSV_HEADER: [&str; 14] = [
     "Username",
     "SourcePath",
     "Extension",
-    "MruPosition",
+    "MRU-Position",
     "ValueIndex",
     "Filename",
     "LinkName",

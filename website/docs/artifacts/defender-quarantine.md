@@ -56,7 +56,7 @@ Output:
 ```bash
 juntei parse-file defender-quarantine -d evidence/ -o quarantine.csv
 juntei parse-file defender-quarantine -d evidence/ -t jsonl \
-  | jq '{quarantine_time, threat_name, path, sha256, problems}'
+  | jq '{QuarantineTime, ThreatName, Path, SHA256: .Content.SHA256, Problems}'
 
 # Only in an isolated malware-analysis environment
 juntei parse-file defender-quarantine -d evidence/ -o quarantine.csv --extract extracted/
@@ -73,20 +73,20 @@ treated as malware.
 |---|---|
 | `Record` | `resource`, entry without resources, `orphan-content`, or `orphan-record`. Orphans expose incomplete linkage/collection. |
 | `QuarantineTime` | Defender quarantine/remediation time in UTC, not execution time. |
-| `ThreatName`, `ThreatId` | Defender classification and numeric ID. Treat as vendor verdict/context. |
+| `ThreatName`, `ThreatID` | Defender classification and numeric ID. Treat as vendor verdict/context. |
 | `ResourceType` | File, registry key, service, startup item, scheduled task, or other resource category. |
 | `Path`, `PhysicalPath` | Original logical/physical location. Primary correlation pivot; preserve exact spelling. |
 | `FileSize` | Size recorded by the resource metadata. Compare with `ContentSize` and MFT. |
 | `CreationTime`, `LastAccessTime`, `LastWriteTime` | Metadata captured for the quarantined resource; separate from quarantine time and vulnerable to timestomping. |
 | `Attributes` | Recorded file attributes. Hidden/system status can be useful context. |
 | `Owner` | SID from the recovered security descriptor; ownership is not necessarily executing user. |
-| `ZoneId`, `ReferrerUrl`, `HostUrl` | Download-zone and URL values from `Zone.Identifier`. Strong origin leads when present; ADS can be absent/removed. |
+| `ZoneID`, `ReferrerURL`, `HostURL` | Download-zone and URL values from `Zone.Identifier`. Strong origin leads when present; ADS can be absent/removed. |
 | `ContentSize` | Actual recovered primary content size. Compare with recorded `FileSize`. |
 | `MD5`, `SHA1`, `SHA256` | Computed from recovered bytes. Use SHA-256 for modern content identification; keep all for interoperability. |
 | `Streams` | Recovered stream kinds/names/sizes; can include ADS, security data, or a registry hive. |
-| `ResourceId` | Identifier linking resource metadata/content records. |
-| `EntryId` | Quarantine entry GUID; also links to Defender history/event evidence. |
-| `ScanId` | Defender scan identifier for grouping resources/actions. |
+| `ResourceID` | Identifier linking resource metadata/content records. |
+| `EntryID` | Quarantine entry GUID; also links to Defender history/event evidence. |
+| `ScanID` | Defender scan identifier for grouping resources/actions. |
 | `QuarantineFolder` | Root source folder/host distinction. |
 | `EntryFile`, `ContentFile`, `ResourceRecordFile` | Exact source files used to build the row. Essential for validation. |
 | `ExtractedFile` | Primary quarantined file written by `--extract`; empty when no primary extraction occurred. Auxiliary streams are written beside it. |

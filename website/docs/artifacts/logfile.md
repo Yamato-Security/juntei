@@ -112,16 +112,16 @@ count in the summary; they do not count as parse failures.
 | Field | Meaning and interpretation |
 |---|---|
 | `SourceFile`, `FileOffset` | Input path and the byte offset where this record's header was read; use them to validate the bytes. |
-| `Lsn` | The record's log sequence number. Large values are integers, not timestamps. |
-| `PreviousLsn`, `UndoNextLsn` | Links to previous and rollback records. Zero means no link; nonzero links may point outside retained data. |
-| `TransactionId`, `TransactionFirstLsn` | Transaction-table slot and the earliest LSN linked to this transaction; the slot alone is not unique. |
+| `LSN` | The record's log sequence number. Large values are integers, not timestamps. |
+| `PreviousLSN`, `UndoNextLSN` | Links to previous and rollback records. Zero means no link; nonzero links may point outside retained data. |
+| `TransactionID`, `TransactionFirstLSN` | Transaction-table slot and the earliest LSN linked to this transaction; the slot alone is not unique. |
 | `RecordType` | `ClientRecord` (update), `ClientRestart` (checkpoint), or `Other`. |
 | `ClientIndex`, `ClientSequence` | Identity of the log client; normally NTFS. These are not a user account or process ID. |
 | `Flags`, `SpansPages` | Raw record flags and whether client data continues onto another page. Spanning pages is normal. |
 | `Truncated` | True if the parser found a missing continuation for this LSN. It does not summarize all damage in the entire file. |
 | `ClusterSize`, `ClusterSizeSource` | Bytes per cluster used for target offsets; source is `Caller`, `Checkpoint`, or `Inferred`. Supply the real value with `--cluster-size` if known. |
 | `LogVersion` | Version from the latest readable restart page, typically `1.1` or `2.0`; null if no readable restart page survives. |
-| `MftSource` | The MFT used for current path enrichment, if present. It must belong to the same volume. |
+| `MFT-Source` | The MFT used for current path enrichment, if present. It must belong to the same volume. |
 
 In `auto-parse` JSON/JSONL, `Computer` and `Artifact` are added as for other parsers. The task's
 `.txt` log holds diagnostics; the manifests say whether the task succeeded, failed, or was skipped.
@@ -138,7 +138,7 @@ Salvageable damage can produce a successful task with a nonzero `Parse problems`
 | `OpenAttributeEntryNumber`, `OpenAttributeSequenceNumber`, `OpenAttributePath` | File owning the open attribute through which the operation writes, with its current MFT path. For file-record operations these preserve the `$MFT` context separately from the affected record. |
 | `TargetAttribute` | Offset in the log's open-attribute table; this is different from the attribute's type or MFT identifier. |
 | `TargetInferred` | True if the target mapping comes from another stretch of the log. A null target remains unresolved even if this flag is false. |
-| `TargetVcn`, `Lcns` | Virtual cluster in the target and physical cluster numbers; useful for low-level validation rather than timing. |
+| `TargetVCN`, `Lcns` | Virtual cluster in the target and physical cluster numbers; useful for low-level validation rather than timing. |
 | `RecordOffset`, `AttributeOffset` | Offsets of the attribute/entry and the update within it. |
 | `ClusterBlockOffset`, `TargetBlockSize` | Offset and target size in units of 512 bytes. |
 | `OffsetInTarget` | Computed byte offset in the affected file record or non-resident stream. Depends on cluster and MFT record sizes. |

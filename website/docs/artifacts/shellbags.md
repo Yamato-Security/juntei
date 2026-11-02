@@ -91,7 +91,7 @@ Output:
 ```bash
 juntei parse-registry shellbags -d evidence/ -o shellbags.csv
 juntei parse-registry shellbags -f UsrClass.dat -t jsonl \
-  | jq 'select(.item_type == "volume" and .guid == "{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}")'
+  | jq 'select(.ItemType == "volume" and .GUID == "{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}")'
 ```
 
 Shell items are decoded with ys-lnk-parser, the shell item parser of `parse-file lnk`. The
@@ -102,15 +102,15 @@ with their users.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSid`, `SourcePath`, `HiveType` | Host, the profile folder's name, the user's SID (a `UsrClass.dat`'s root key names it; for `NTUSER.DAT`, the system's `ProfileList`), the hive and its type. |
+| `Host`, `Username`, `UserSID`, `SourcePath`, `HiveType` | Host, the profile folder's name, the user's SID (a `UsrClass.dat`'s root key names it; for `NTUSER.DAT`, the system's `ProfileList`), the hive and its type. |
 | `BagKey` | The item's key, under the hive's root (`…\BagMRU\4\3\0`): its value is in the key above it. |
-| `MruPosition`, `IsMostRecentInParent` | Its place in its parent key's `MRUListEx` (0: the most recently opened); empty when the list doesn't have it. |
+| `MRU-Position`, `IsMostRecentInParent` | Its place in its parent key's `MRUListEx` (0: the most recently opened); empty when the list doesn't have it. |
 | `NodeSlot` | The number of its `Bags\<N>` key (the folder's view settings). |
 | `Path` | The items from the top of its tree down to it, joined with `\`. `[unknown]` stands for an item whose value is missing. |
 | `ItemType`, `ItemClass` | What the item is (`root_folder`, `volume`, `directory`, `file`, `network_location`, `uri`, `ftp_folder`, `compressed_folder`, `portable_device`, `portable_device_folder`, `users_files_folder`, `property_view`, `control_panel_item`, `control_panel_category`, `cd_burn`, `unknown`), and its class byte. |
-| `ItemName`, `Guid` | Its name (a folder's long name), and the class identifier of a root folder, Control Panel item or delegate folder. |
+| `ItemName`, `GUID` | Its name (a folder's long name), and the class identifier of a root folder, Control Panel item or delegate folder. |
 | `ItemModifiedUTC`, `ItemCreatedUTC`, `ItemAccessedUTC` | **From the shell item:** the folder's times when the item was written (FAT, 2-second precision). |
-| `MftEntry`, `MftSequence` | **From the shell item:** the folder's NTFS file reference. |
+| `MFT-Entry`, `MFT-Sequence` | **From the shell item:** the folder's NTFS file reference. |
 | `ExtensionBlocks` | How many extension blocks the item has. |
 | `KeyLastWrittenUTC` | **From the registry:** the last write of the item's own key: when its most recent child was opened. |
 | `ParentKeyLastWrittenUTC` | **From the registry:** the last write of the key its value is in: when it was last opened, if `IsMostRecentInParent` is true. |

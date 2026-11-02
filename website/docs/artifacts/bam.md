@@ -77,7 +77,7 @@ Output:
 ```bash
 juntei parse-registry bam -d evidence/ -o bam.csv
 juntei parse-registry bam -f SYSTEM -t jsonl \
-  | jq 'select(.path? // "" | test("\\\\(Users|ProgramData|Temp)\\\\"; "i"))'
+  | jq 'select(.Path? // "" | test("\\\\(Users|ProgramData|Temp)\\\\"; "i"))'
 ```
 
 The summary lists each user with its SID, name and number of entries, and the programs run last
@@ -90,7 +90,7 @@ The summary lists each user with its SID, name and number of entries, and the pr
 | `Host`, `SourcePath` | Host, and the `SYSTEM` hive. |
 | `ControlSet`, `IsCurrentControlSet` | The control set the entry is in, and whether it is the one Windows used last. |
 | `Moderator` | `bam` or `dam`. |
-| `UserSid`, `UserName`, `UserNameSource` | The SID the key is named after, the user's name, and where it comes from (`sam`, `profile_list`, `well_known`). |
+| `UserSID`, `UserName`, `UserNameSource` | The SID the key is named after, the user's name, and where it comes from (`sam`, `profile_list`, `well_known`). |
 | `Program` | The value's name as Windows wrote it: a device path or a packaged app's ID. |
 | `DevicePath`, `Path` | For a device path, the device (`\Device\HarddiskVolume3`) and the path on it (`\Windows\System32\cmd.exe`); empty for a packaged app. |
 | `LastRunUTC` | When the program last ran (to the 100 ns). |

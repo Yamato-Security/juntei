@@ -27,10 +27,10 @@ logs may be missing from a live or inconsistent collection. Note that limitation
 ## Analyst cautions
 
 - An Amcache executable entry does not prove that a user launched the file.
-- `publisher` is PE/version-resource metadata recorded by Windows. It does not prove the file had
+- `Publisher` is PE/version-resource metadata recorded by Windows. It does not prove the file had
   a valid Authenticode signature at collection time.
 - Hashes may be absent and legacy/modern schemas do not expose identical values.
-- `link_date` comes from the PE header and can be forged, copied, or produced by reproducible builds.
+- `LinkDate` comes from the PE header and can be forged, copied, or produced by reproducible builds.
 - A key last-write time describes the registry record's update, not necessarily download, creation,
   first execution, or last execution.
 - Paths can refer to removable or no-longer-present volumes.
@@ -63,37 +63,37 @@ juntei parse-registry amcache -f Amcache.hve -a -o amcache-output
 
 # Hunt for one SHA-1 in JSONL
 juntei parse-registry amcache -f Amcache.hve -t jsonl \
-  | jq 'select(.record_type == "file" and .sha1 == "0123456789abcdef0123456789abcdef01234567")'
+  | jq 'select(.RecordType == "file" and .SHA1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
 CSV output contains summary, findings, files, and devices tables. With `auto-parse`, these are
 `Summary.csv`, `Findings.csv`, `Files.csv`, and `Devices.csv` under each computer's
 `FileExistence/Amcache/` directory, with `Amcache-logs.txt` beside that directory. JSONL records use
-`record_type` values `summary`, `finding`, `file`, and `device`.
+`RecordType` values `summary`, `finding`, `file`, and `device`.
 
 ## File output fields
 
 | Field | How an analyst should use it |
 |---|---|
-| `key_name`, `source_key_path` | Identify the exact source registry record and schema branch. Preserve for reproducibility. |
-| `key_last_written_utc`, `key_last_written_filetime` | Registry record update time, in readable and raw form. Do not label it an execution time. |
-| `legacy_volume_key_last_written_utc`, `legacy_volume_key_last_written_filetime` | Parent volume-key time on legacy schemas; contextual, not a file action time. |
-| `file_id` | Amcache's recorded file identifier. Retained exactly; do not assume it is always a SHA-1. |
-| `sha1`, `sha256` | Strong pivots into Defender, threat intelligence, EDR, and file repositories. Null means not recorded. |
-| `name`, `original_file_name`, `description` | Recorded PE/version names. Compare with the actual path to detect masquerading; metadata is attacker-controlled. |
-| `full_path` | Most useful location pivot. Normalize case carefully but retain the original evidence string. |
-| `long_path_hash` | Windows' path-related identifier; useful for matching records, not a content hash. |
-| `program_id` | Links the file to an application inventory record where available. |
-| `publisher` | Recorded publisher text. Treat as metadata, not signature validation. |
-| `version`, `bin_file_version`, `product_name`, `product_version`, `bin_product_version` | Version-resource context. Differences or implausible values can support masquerading analysis. |
-| `binary_type` | Recorded architecture/type context; compare with PE analysis when the file is recovered. |
-| `link_date` | PE compile/link timestamp as recorded. Useful only with skepticism and corroboration. |
-| `size` | Recorded size; compare with `$MFT`, Defender content, or a recovered file. |
-| `language` | PE language identifier; a weak contextual clue, not attribution. |
-| `is_pe_file`, `is_os_component` | Windows' recorded classification flags. A false value does not prove harmlessness. |
-| `usn` | NTFS update sequence value recorded by Amcache; can help pivot to surviving USN records. |
-| `appx_package_full_name`, `appx_package_relative_id` | Associates packaged applications/components with the file. |
-| `registry_values` | Every original registry value with type, decoded value, and raw hex. Use when a typed field is absent or for future/legacy fields. |
+| `KeyName`, `SourceKeyPath` | Identify the exact source registry record and schema branch. Preserve for reproducibility. |
+| `KeyLastWrittenUTC`, `KeyLastWrittenFiletime` | Registry record update time, in readable and raw form. Do not label it an execution time. |
+| `SourceVolumeKeyLastWrittenUTC`, `SourceVolumeKeyLastWrittenFiletime` | Parent volume-key time on legacy schemas; contextual, not a file action time. |
+| `FileID` | Amcache's recorded file identifier. Retained exactly; do not assume it is always a SHA-1. |
+| `SHA1`, `SHA256` | Strong pivots into Defender, threat intelligence, EDR, and file repositories. Null means not recorded. |
+| `Name`, `OriginalFileName`, `Description` | Recorded PE/version names. Compare with the actual path to detect masquerading; metadata is attacker-controlled. |
+| `FullPath` | Most useful location pivot. Normalize case carefully but retain the original evidence string. |
+| `LongPathHash` | Windows' path-related identifier; useful for matching records, not a content hash. |
+| `ProgramID` | Links the file to an application inventory record where available. |
+| `Publisher` | Recorded publisher text. Treat as metadata, not signature validation. |
+| `Version`, `BinFileVersion`, `ProductName`, `ProductVersion`, `BinProductVersion` | Version-resource context. Differences or implausible values can support masquerading analysis. |
+| `BinaryType` | Recorded architecture/type context; compare with PE analysis when the file is recovered. |
+| `LinkDate` | PE compile/link timestamp as recorded. Useful only with skepticism and corroboration. |
+| `Size` | Recorded size; compare with `$MFT`, Defender content, or a recovered file. |
+| `Language` | PE language identifier; a weak contextual clue, not attribution. |
+| `IsPE-File`, `IsOS-Component` | Windows' recorded classification flags. A false value does not prove harmlessness. |
+| `USN` | NTFS update sequence value recorded by Amcache; can help pivot to surviving USN records. |
+| `APPX-PackageFullName`, `APPX-PackageRelativeID` | Associates packaged applications/components with the file. |
+| `RegistryValues` | Every original registry value with type, decoded value, and raw hex. Use when a typed field is absent or for future/legacy fields. |
 
 ## Device output fields
 
@@ -110,7 +110,7 @@ CSV output contains summary, findings, files, and devices tables. With `auto-par
 
 ## Investigation strategy
 
-1. Pivot on `full_path`, `sha1`, `name`, and `usn`.
+1. Pivot on `FullPath`, `SHA1`, `Name`, and `USN`.
 2. Look for matching Prefetch to support execution.
 3. Use `$MFT` and USN Journal to establish file creation, rename, deletion, and size.
 4. Compare publisher/version metadata with an independently recovered PE and signature validation.

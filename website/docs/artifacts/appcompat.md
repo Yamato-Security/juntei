@@ -81,7 +81,7 @@ Output:
 ```bash
 juntei parse-registry appcompat -d evidence/ -o appcompat.csv
 juntei parse-registry appcompat -d evidence/ -t jsonl \
-  | jq 'select(.source == "installed_sdb" or .source == "custom_sdb")'
+  | jq 'select(.Source == "installed_sdb" or .Source == "custom_sdb")'
 ```
 
 The summary lists the custom shim databases, the programs with layers, and the CIT modules' last
@@ -92,14 +92,14 @@ uses.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath`, `HiveType` | Host, hive file, and `SOFTWARE` or `NTUSER.DAT`. |
-| `Username`, `UserSid` | A user hive's profile folder name, and its SID from the system's `ProfileList`. |
+| `Username`, `UserSID` | A user hive's profile folder name, and its SID from the system's `ProfileList`. |
 | `Source`, `Scope` | `layers`, `pca_store`, `pca_persisted`, `cit_module`, `cit_system`, `installed_sdb`, `custom_sdb`; `machine` or `user`. |
 | `Path` | The program (the value's name), a path or command line in a CIT database, or the program a shim database applies to. |
 | `Layers` | The compatibility layers, as written (`~ RUNASADMIN`). |
 | `LastSeenUTC` | When a program last loaded a CIT module. |
-| `SdbGuid`, `SdbPath`, `SdbInstalledUTC` | A shim database's GUID, file and install time. |
+| `SdbGUID`, `SdbPath`, `SdbInstalledUTC` | A shim database's GUID, file and install time. |
 | `Details` | A CIT module's name, a CIT database's value name, a program's removable media id (`SignMedia`), a shim database's `DatabaseDescription` and `DatabaseType`. |
-| `KeyPath`, `KeyLastWrittenUTC`, `ValueName`, `Wow64` | Where the record comes from, when that key last changed, and whether it is under `Wow6432Node`. |
+| `KeyPath`, `KeyLastWrittenUTC`, `ValueName`, `WOW64` | Where the record comes from, when that key last changed, and whether it is under `Wow6432Node`. |
 | `DataRaw` | The `Store` value's `SACP` data, or data that isn't what it should be (hex). |
 | `TransactionLogStatus`, `LogsApplied` | Registry recovery context. |
 | `Problems` | Data that couldn't be decoded or read. |

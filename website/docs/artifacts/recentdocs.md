@@ -53,7 +53,7 @@ Output:
 ```bash
 juntei parse-registry recentdocs -f NTUSER.DAT -o recentdocs.csv
 juntei parse-registry recentdocs -d evidence/ -t jsonl \
-  | jq 'select(.extension == ".docx" or .extension == ".pdf")'
+  | jq 'select(.Extension == ".docx" or .Extension == ".pdf")'
 ```
 
 ## Output fields
@@ -64,7 +64,7 @@ juntei parse-registry recentdocs -d evidence/ -t jsonl \
 | `Username` | Profile owner inferred from path or shell-folder paths; preserve uncertainty when empty. |
 | `SourcePath` | Input `NTUSER.DAT`. Essential when combining users. |
 | `Extension` | Sublist (`.docx`, `Folder`, etc.); null for root RecentDocs list. |
-| `MruPosition` | Zero is most recent within this list. This is relative order, not elapsed time. |
+| `MRU-Position` | Zero is most recent within this list. This is relative order, not elapsed time. |
 | `ValueIndex` | Numbered registry value referenced by `MRUListEx`. Structural pivot only. |
 | `Filename` | Decoded item name. Correlate full path through LNK, Jump List, MFT, or application data. |
 | `LinkName` | Shortcut name encoded in the shell item, often found in the user's Recent directory. |

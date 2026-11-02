@@ -74,7 +74,7 @@ Output:
 juntei parse-registry mru -d evidence/ -o mru.csv
 juntei parse-registry mru -f NTUSER.DAT --list wordwheelquery,typedpaths -t jsonl
 juntei parse-registry mru -f NTUSER.DAT --list runmru -t jsonl \
-  | jq 'select(.value | test("powershell|cmd|mshta"; "i"))'
+  | jq 'select(.Value | test("powershell|cmd|mshta"; "i"))'
 ```
 
 The summary lists the entries per list and the entries dated last (typed addresses, and each
@@ -84,10 +84,10 @@ list's most recent entry), newest first.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSid`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
+| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
 | `List` | `RunMRU`, `TypedPaths`, `WordWheelQuery`, `TypedURLs`, `Paint`, `Wordpad` or `ACMru`. |
 | `Subkey` | `ACMru`'s subkey: the kind of search (`5603`, `5604`, `5647`, `5001`). |
-| `MruPosition`, `IsMostRecent` | The place in the list (0 is the most recent); empty when the list doesn't name the value. |
+| `MRU-Position`, `IsMostRecent` | The place in the list (0 is the most recent); empty when the list doesn't name the value. |
 | `ValueName` | `a`, `0`, `url1`, `File1`, `000`, … |
 | `Value` | The command (without its `\1`), path, search term, address or file. |
 | `TypedTimeUTC` | When the address was typed, from `TypedURLsTime`. |

@@ -116,7 +116,7 @@ Output:
 ```bash
 juntei parse-registry usb -d evidence/ -o usb.csv
 juntei parse-registry usb -f C/Windows/System32/config/SYSTEM -t jsonl \
-  | jq 'select(.device_class == "usbstor") | {vendor, product, serial, last_arrival, drive_letters, users}'
+  | jq 'select(.DeviceClass == "usbstor") | {Vendor, Product, Serial, LastArrival, DriveLetters, Users}'
 ```
 
 The summary lists the USB storage devices that arrived last (newest first), with their drive
@@ -130,14 +130,14 @@ letters, and how many volumes belong to USB storage devices without a device key
 | `DeviceClass` | `usbstor`, `usb`, `wpdbusenum`, or, without a device key, `volume`, `portable_device` or `readyboost`. |
 | `ControlSet` | The control set of the device key. |
 | `Vendor`, `Product`, `Revision` | USB storage: from the device's name (`Disk&Ven_…&Prod_…&Rev_…`), also for a device a volume or `SOFTWARE` key names. |
-| `Vid`, `Pid` | The USB vendor and product IDs. |
+| `Vid`, `PID` | The USB vendor and product IDs. |
 | `Serial`, `Instance` | The serial number, and the instance key's name as written. |
-| `FriendlyName`, `DeviceDesc`, `Service`, `ContainerId` | The device key's values, as written (`DeviceDesc` is often `@<inf>,%…%;<text>`). A portable device's `FriendlyName` is usually its volume's label or drive. |
+| `FriendlyName`, `DeviceDesc`, `Service`, `ContainerID` | The device key's values, as written (`DeviceDesc` is often `@<inf>,%…%;<text>`). A portable device's `FriendlyName` is usually its volume's label or drive. |
 | `DeviceFirstInstallUTC`, `DriverLastInstalledUTC`, `LastArrivalUTC`, `LastRemovalUTC` | The device property times (see above). |
 | `DriveLetters` | The drive letters whose `MountedDevices` data is the volume's. |
-| `VolumeGuid`, `VolumeData` | The volume's GUID, and what its `MountedDevices` data says it is on: a device path, an MBR disk signature and partition offset, or a GPT partition. |
+| `VolumeGUID`, `VolumeData` | The volume's GUID, and what its `MountedDevices` data says it is on: a device path, an MBR disk signature and partition offset, or a GPT partition. |
 | `VolumeNames`, `VolumeSerials` | Names Explorer gave the device or its volume, ReadyBoost labels, and volume serial numbers (`1234-ABCD`). |
-| `Users` | The users whose `MountPoints2` has the volume, with that key's last write (JSON: `username`, `mount_points2_last_written`, `source_path`). |
+| `Users` | The users whose `MountPoints2` has the volume, with that key's last write (JSON: `Username`, `MountPoints2LastWritten`, `SourcePath`). |
 | `FoundIn`, `SourceKeys` | Where it was found (`Enum`, `MountedDevices`, `Windows Portable Devices`, `EMDMgmt`, `MountPoints2`), and every key and value it was joined from. |
 | `KeyPath`, `KeyLastWrittenUTC` | The device's instance key and its last write. |
 | `SourcePath`, `SoftwarePath` | The `SYSTEM` hive, and the `SOFTWARE` hive when it gave something. |

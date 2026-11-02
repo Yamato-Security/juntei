@@ -28,7 +28,7 @@ juntei parse-file jump-lists -d evidence/ -o jump-list-tables
 
 ```bash
 juntei parse-registry services -d evidence/ -t jsonl \
-  | jq -c 'select(.image_path? | test("temp|public"; "i"))'
+  | jq -c 'select(.ImagePath? | test("temp|public"; "i"))'
 ```
 
 Messages and progress go to standard error; standard output remains parseable.

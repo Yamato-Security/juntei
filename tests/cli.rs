@@ -321,28 +321,28 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert!(!csv.join("HOST1/_logs").exists());
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(csv.join("manifest.json")).unwrap()).unwrap();
-    assert_eq!(manifest["hosts"][0]["Computer"], "HOST1");
-    assert_eq!(manifest["hosts"][0]["hostname"], "HOST1");
-    assert_eq!(manifest["hosts"][0]["hostname_source"], "client_info.json");
+    assert_eq!(manifest["Hosts"][0]["Computer"], "HOST1");
+    assert_eq!(manifest["Hosts"][0]["Hostname"], "HOST1");
+    assert_eq!(manifest["Hosts"][0]["HostnameSource"], "client_info.json");
     assert!(
-        manifest["tasks"]
+        manifest["Tasks"]
             .as_array()
             .unwrap()
             .iter()
-            .all(|task| task["status"] != "failed")
+            .all(|task| task["Status"] != "failed")
     );
-    assert!(manifest["tasks"].as_array().unwrap().iter().all(|task| {
-        task["log"].as_str().is_some_and(|path| {
-            let category = task["category"].as_str().unwrap();
+    assert!(manifest["Tasks"].as_array().unwrap().iter().all(|task| {
+        task["Log"].as_str().is_some_and(|path| {
+            let category = task["Category"].as_str().unwrap();
             Path::new(path).parent() == Some(csv.join("HOST1").join(category).as_path())
                 && path.ends_with("-logs.txt")
                 && Path::new(path).is_file()
         })
     }));
-    assert_eq!(manifest["tasks"][0]["artifact"], "mft");
-    assert_eq!(manifest["tasks"][1]["artifact"], "usn-journal");
-    for task in manifest["tasks"].as_array().unwrap() {
-        let artifact = task["artifact"].as_str().unwrap();
+    assert_eq!(manifest["Tasks"][0]["Artifact"], "mft");
+    assert_eq!(manifest["Tasks"][1]["Artifact"], "usn-journal");
+    for task in manifest["Tasks"].as_array().unwrap() {
+        let artifact = task["Artifact"].as_str().unwrap();
         let category = match artifact {
             "lsa-secrets" | "sam" => "Accounts",
             "app-history" => "Applications",
@@ -365,15 +365,15 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "auditpol" => "SystemInformation",
             _ => panic!("unexpected artifact: {artifact}"),
         };
-        assert_eq!(task["category"], category);
-        if let Some(output) = task["output"].as_str() {
+        assert_eq!(task["Category"], category);
+        if let Some(output) = task["Output"].as_str() {
             assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
         }
         let (source, command) = match artifact {
             "persistence-hunter" => {
-                assert_eq!(task["command"][1], "persistence-hunter", "{task}");
-                assert_eq!(task["command"][2], "-d", "{task}");
-                let args = task["command"].as_array().unwrap();
+                assert_eq!(task["Command"][1], "persistence-hunter", "{task}");
+                assert_eq!(task["Command"][2], "-d", "{task}");
+                let args = task["Command"].as_array().unwrap();
                 assert!(
                     args.windows(2)
                         .any(|pair| pair[0] == "--min-severity" && pair[1] == "info"),
@@ -393,20 +393,20 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "registry" => ("parse-registry", "read"),
             _ => ("parse-registry", artifact),
         };
-        assert_eq!(task["command"][1], source, "{task}");
-        assert_eq!(task["command"][2], command, "{task}");
+        assert_eq!(task["Command"][1], source, "{task}");
+        assert_eq!(task["Command"][2], command, "{task}");
     }
     let (_, csv_tasks) = csv_rows(&csv.join("manifest.csv"));
-    assert_eq!(csv_tasks.len(), manifest["tasks"].as_array().unwrap().len());
-    for (row, task) in csv_tasks.iter().zip(manifest["tasks"].as_array().unwrap()) {
+    assert_eq!(csv_tasks.len(), manifest["Tasks"].as_array().unwrap().len());
+    for (row, task) in csv_tasks.iter().zip(manifest["Tasks"].as_array().unwrap()) {
         assert_eq!(row["Computer"], task["Computer"].as_str().unwrap());
         assert_eq!(row["Hostname"], "HOST1");
-        assert_eq!(row["Category"], task["category"].as_str().unwrap());
-        assert_eq!(row["Status"], task["status"].as_str().unwrap());
-        assert_eq!(row["Log"], task["log"].as_str().unwrap());
+        assert_eq!(row["Category"], task["Category"].as_str().unwrap());
+        assert_eq!(row["Status"], task["Status"].as_str().unwrap());
+        assert_eq!(row["Log"], task["Log"].as_str().unwrap());
         assert_eq!(
             serde_json::from_str::<Value>(&row["Command"]).unwrap(),
-            task["command"]
+            task["Command"]
         );
     }
     assert!(!r.stdout.contains("Manifest: "), "{}", r.stdout);
@@ -473,7 +473,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         serde_json::from_reader(std::fs::File::open(direct.join("manifest.json")).unwrap())
             .unwrap();
     assert_eq!(
-        direct_manifest["hosts"][0]["evidence_root"],
+        direct_manifest["Hosts"][0]["EvidenceRoot"],
         std::fs::canonicalize(&windows)
             .unwrap()
             .to_string_lossy()
@@ -575,9 +575,9 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
         let manifest: Value =
             serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
                 .unwrap();
-        for task in manifest["tasks"].as_array().unwrap() {
-            let category = task["category"].as_str().unwrap();
-            let log = Path::new(task["log"].as_str().unwrap());
+        for task in manifest["Tasks"].as_array().unwrap() {
+            let category = task["Category"].as_str().unwrap();
+            let log = Path::new(task["Log"].as_str().unwrap());
             assert_eq!(log.parent(), Some(host.join(category).as_path()));
             assert!(
                 log.file_name()
@@ -587,7 +587,7 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
             );
             assert!(!host.join(category).join("logs").exists());
             assert!(log.is_file());
-            if let Some(path) = task["output"].as_str() {
+            if let Some(path) = task["Output"].as_str() {
                 assert!(Path::new(path).starts_with(host.join(category)));
                 assert!(Path::new(path).exists());
             }
@@ -632,7 +632,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
         assert!(
             records
                 .iter()
-                .any(|record| record["Artifact"] == "amcache" && record["record_type"] == "file")
+                .any(|record| record["Artifact"] == "amcache" && record["RecordType"] == "file")
         );
         assert!(records.iter().any(|record| record["Artifact"] == "srum"));
         // Value equality ignores object key order but checks native types and nested fields.
@@ -645,10 +645,10 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                 .unwrap();
         let canonical_timeline = std::fs::canonicalize(&timeline).unwrap();
         assert_eq!(
-            manifest["json_timeline"],
+            manifest["JSON-Timeline"],
             canonical_timeline.to_string_lossy().as_ref()
         );
-        assert!(manifest["json_timeline_error"].is_null());
+        assert!(manifest["JSON-TimelineError"].is_null());
         assert!(
             output
                 .join("HOST1/ProcessExecution/Prefetch-logs.txt")
@@ -656,12 +656,12 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
         );
         let extension = format!("HOST1/ProcessExecution/Prefetch.{format}");
         assert!(output.join(extension).is_file());
-        let tasks = manifest["tasks"].as_array().unwrap();
+        let tasks = manifest["Tasks"].as_array().unwrap();
         if format == "csv" {
             assert_eq!(
                 tasks
                     .iter()
-                    .filter(|task| task["purpose"] == "json_timeline")
+                    .filter(|task| task["Purpose"] == "json_timeline")
                     .count(),
                 38
             );
@@ -676,12 +676,12 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .is_file()
             );
         } else {
-            assert!(tasks.iter().all(|task| task["purpose"] == "artifact"));
+            assert!(tasks.iter().all(|task| task["Purpose"] == "artifact"));
         }
-        for task in tasks.iter().filter(|task| task["status"] == "succeeded") {
-            let path = Path::new(task["output"].as_str().unwrap());
+        for task in tasks.iter().filter(|task| task["Status"] == "succeeded") {
+            let path = Path::new(task["Output"].as_str().unwrap());
             assert!(path.exists(), "{task}");
-            if task["purpose"] == "json_timeline" {
+            if task["Purpose"] == "json_timeline" {
                 assert_eq!(path, canonical_timeline);
             }
         }
@@ -899,31 +899,31 @@ fn auto_parse_can_extract_defender_quarantined_files() {
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
             .unwrap();
-    assert_eq!(manifest["extract_defender_quarantined"], true);
-    let defender = manifest["tasks"]
+    assert_eq!(manifest["ExtractDefenderQuarantined"], true);
+    let defender = manifest["Tasks"]
         .as_array()
         .unwrap()
         .iter()
-        .find(|task| task["artifact"] == "defender-quarantine")
+        .find(|task| task["Artifact"] == "defender-quarantine")
         .unwrap();
     assert!(
-        defender["command"]
+        defender["Command"]
             .as_array()
             .unwrap()
             .iter()
             .any(|argument| argument == "--extract")
     );
 
-    let timeline_defender = manifest["tasks"]
+    let timeline_defender = manifest["Tasks"]
         .as_array()
         .unwrap()
         .iter()
         .find(|task| {
-            task["artifact"] == "defender-quarantine" && task["purpose"] == "json_timeline"
+            task["Artifact"] == "defender-quarantine" && task["Purpose"] == "json_timeline"
         })
         .unwrap();
     assert!(
-        !timeline_defender["command"]
+        !timeline_defender["Command"]
             .as_array()
             .unwrap()
             .iter()
@@ -971,7 +971,7 @@ fn auto_parse_can_extract_defender_quarantined_files() {
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
             .unwrap();
-    assert_eq!(manifest["extract_defender_quarantined"], false);
+    assert_eq!(manifest["ExtractDefenderQuarantined"], false);
     assert!(!legacy_extraction.exists());
     assert!(!legacy_category_extraction.exists());
 }
@@ -1015,17 +1015,17 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
     let manifest: Value =
         serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
             .unwrap();
-    assert_eq!(manifest["hosts"].as_array().unwrap().len(), 2);
-    assert_eq!(manifest["hosts"][0]["Computer"], "HOST2");
-    assert_eq!(manifest["hosts"][0]["hostname"], "HOST2");
-    assert_eq!(manifest["hosts"][1]["Computer"], "HOST3");
-    assert_eq!(manifest["hosts"][1]["hostname"], "HOST3");
+    assert_eq!(manifest["Hosts"].as_array().unwrap().len(), 2);
+    assert_eq!(manifest["Hosts"][0]["Computer"], "HOST2");
+    assert_eq!(manifest["Hosts"][0]["Hostname"], "HOST2");
+    assert_eq!(manifest["Hosts"][1]["Computer"], "HOST3");
+    assert_eq!(manifest["Hosts"][1]["Hostname"], "HOST3");
     assert!(
-        manifest["hosts"]
+        manifest["Hosts"]
             .as_array()
             .unwrap()
             .iter()
-            .all(|host| host["hostname_source"] == "directory name")
+            .all(|host| host["HostnameSource"] == "directory name")
     );
     let tables = output.join("HOST3/FileExistence/Amcache");
     let sources: Vec<_> = std::fs::read_dir(tables)
@@ -1165,18 +1165,18 @@ fn json_and_jsonl_files_hold_every_record() {
     let docs = json_documents(&std::fs::read_to_string(&json).unwrap());
     assert_eq!(docs.len(), 1);
     let doc = &docs[0];
-    assert_eq!(doc["amcache_schema"], "modern");
-    assert_eq!(doc["summary"]["file_count"], 123);
-    assert_eq!(doc["files"].as_array().unwrap().len(), 123);
-    assert_eq!(doc["devices"].as_array().unwrap().len(), 189);
-    assert_eq!(doc["findings"].as_array().unwrap().len(), 4);
-    let sevenzip = doc["files"]
+    assert_eq!(doc["AmcacheSchema"], "modern");
+    assert_eq!(doc["Summary"]["FileCount"], 123);
+    assert_eq!(doc["Files"].as_array().unwrap().len(), 123);
+    assert_eq!(doc["Devices"].as_array().unwrap().len(), 189);
+    assert_eq!(doc["Findings"].as_array().unwrap().len(), 4);
+    let sevenzip = doc["Files"]
         .as_array()
         .unwrap()
         .iter()
-        .find(|f| f["full_path"] == "c:\\program files\\7-zip\\7z.exe")
+        .find(|f| f["FullPath"] == "c:\\program files\\7-zip\\7z.exe")
         .expect("7z.exe is inventoried");
-    assert_eq!(sevenzip["sha1"], "1189cebeb8ffed7316f98b895ff949a726f4026f");
+    assert_eq!(sevenzip["SHA1"], "1189cebeb8ffed7316f98b895ff949a726f4026f");
 
     let jsonl = dir.path().join("amcache.jsonl");
     let r = run(&[
@@ -1299,8 +1299,8 @@ fn structured_stdout_holds_only_the_data() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     let docs = json_documents(&r.stdout);
     assert_eq!(docs.len(), 2);
-    assert_eq!(docs[0]["amcache_schema"], "modern");
-    assert_eq!(docs[1]["amcache_schema"], "legacy");
+    assert_eq!(docs[0]["AmcacheSchema"], "modern");
+    assert_eq!(docs[1]["AmcacheSchema"], "legacy");
     assert!(
         r.stderr.contains("Could not parse "),
         "errors go to stderr: {}",
@@ -1390,7 +1390,7 @@ const MFT: &str = "test_files/mft/MFT";
 fn full_paths(csv_text: &str) -> Vec<(String, String)> {
     let mut rdr = csv::Reader::from_reader(csv_text.as_bytes());
     let headers = rdr.headers().unwrap().clone();
-    let id = headers.iter().position(|h| h == "EntryId").unwrap();
+    let id = headers.iter().position(|h| h == "EntryID").unwrap();
     let path = headers.iter().position(|h| h == "FullPath").unwrap();
     rdr.records()
         .map(|r| {
@@ -1463,10 +1463,10 @@ fn mft_csv_json_and_jsonl() {
     for (column, value) in [
         ("Extension", ".dll"),
         ("FileSize", "12288"),
-        ("SI<FN", "True"),
-        ("uSecZeros", "True"),
+        ("SI-BeforeFN", "True"),
+        ("MicrosecondZeros", "True"),
         ("Copied", "False"),
-        ("SiFlags", "Archive"),
+        ("SI-Flags", "Archive"),
         ("NameType", "DosWindows"),
         ("Created0x10", "2006-02-28T12:00:00.0000000Z"),
         ("Created0x30", "2007-06-30T12:51:00.8147072Z"),
@@ -1474,9 +1474,9 @@ fn mft_csv_json_and_jsonl() {
         assert_eq!(bootvid[column], value, "{column}");
     }
     let ads = row("8", "$BadClus:$Bad");
-    assert_eq!(ads["IsAds"], "True");
+    assert_eq!(ads["IsADS"], "True");
     assert_eq!(ads["FileSize"], "1261821952");
-    assert_eq!(row("8", "$BadClus")["HasAds"], "True");
+    assert_eq!(row("8", "$BadClus")["HasADS"], "True");
 
     // The ys-ntfs-parser command's columns: one row per entry (`ys-mft-parser-csv`, the command's
     // former name, and `mft-dump-csv`, upstream's, still work)
@@ -1502,7 +1502,7 @@ fn mft_csv_json_and_jsonl() {
     }
     let text = &texts[0];
     assert!(text.starts_with(
-        "Signature,EntryId,Sequence,BaseEntryId,BaseEntrySequence,HardLinkCount,Flags,"
+        "Signature,EntryID,Sequence,BaseEntryID,BaseEntrySequence,HardLinkCount,Flags,"
     ));
     let paths = full_paths(text);
     assert_eq!(paths.len(), 1016);
@@ -1532,14 +1532,14 @@ fn mft_csv_json_and_jsonl() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     let docs = json_documents(&std::fs::read_to_string(&json_path).unwrap());
     assert_eq!(docs.len(), 1016);
-    assert_eq!(docs[0]["header"]["record_number"], 0);
-    assert_eq!(docs[0]["full_path"], "$MFT");
-    assert!(docs[0]["attributes"].as_array().unwrap().len() > 2);
+    assert_eq!(docs[0]["Header"]["RecordNumber"], 0);
+    assert_eq!(docs[0]["FullPath"], "$MFT");
+    assert!(docs[0]["Attributes"].as_array().unwrap().len() > 2);
     let config = docs
         .iter()
-        .find(|d| d["header"]["record_number"] == 30)
+        .find(|d| d["Header"]["RecordNumber"] == 30)
         .unwrap();
-    assert_eq!(config["full_path"], r"WINDOWS\system32\config");
+    assert_eq!(config["FullPath"], r"WINDOWS\system32\config");
 
     // -t without -o: only the entries on stdout
     let r = run(&[
@@ -1557,7 +1557,7 @@ fn mft_csv_json_and_jsonl() {
         .stdout
         .lines()
         .map(|l| {
-            serde_json::from_str::<Value>(l).unwrap()["header"]["record_number"]
+            serde_json::from_str::<Value>(l).unwrap()["Header"]["RecordNumber"]
                 .as_u64()
                 .unwrap()
         })
@@ -1749,19 +1749,19 @@ fn mft_recover_slack() {
         .collect();
     let names: Vec<&serde_json::Value> = entries
         .iter()
-        .flat_map(|e| e["slack_file_names"].as_array().unwrap())
+        .flat_map(|e| e["SlackFileNames"].as_array().unwrap())
         .collect();
     assert_eq!(names.len(), 117);
     let windows = entries
         .iter()
-        .find(|e| e["header"]["record_number"] == 28)
+        .find(|e| e["Header"]["RecordNumber"] == 28)
         .unwrap();
-    assert_eq!(windows["slack_file_names"][0]["name"], "setuperr.log");
-    assert_eq!(windows["slack_file_names"][0]["offset"], 29208);
+    assert_eq!(windows["SlackFileNames"][0]["Name"], "setuperr.log");
+    assert_eq!(windows["SlackFileNames"][0]["Offset"], 29208);
     assert_eq!(
         names
             .iter()
-            .filter(|n| n["copy_of_entry_in_use"] == true)
+            .filter(|n| n["CopyOfEntryInUse"] == true)
             .count(),
         33
     );
@@ -1891,9 +1891,9 @@ fn mft_slack_provenance_and_damage() {
         "209",
     ]);
     let entry: serde_json::Value = serde_json::from_str(r.stdout.lines().next().unwrap()).unwrap();
-    assert_eq!(entry["slack_file_names"], serde_json::json!([]));
+    assert_eq!(entry["SlackFileNames"], serde_json::json!([]));
     assert!(
-        entry["slack_problem"]
+        entry["SlackProblem"]
             .as_str()
             .unwrap()
             .starts_with("its size in use (0x0)")
@@ -2007,8 +2007,8 @@ fn mft_dump_entry_and_list_directory() {
         "  Flags:              0x0003 (in use, directory)",
         "  Size in use:        472 of 1024 bytes",
         "  Names in slack:     2 (2 that no file in use has)",
-        "\"slack_file_names\": [",
-        "\"name\": \"setuperr.log\"",
+        "\"SlackFileNames\": [",
+        "\"Name\": \"setuperr.log\"",
         "0000  46 49 4C 45",
     ] {
         assert!(r.stdout.contains(line), "{line}: {}", r.stdout);
@@ -2432,21 +2432,21 @@ fn prefetch_csv_json_and_jsonl() {
     assert_eq!(docs.len(), 5);
     let rust_out = docs
         .iter()
-        .find(|d| d["executable_name"] == "RUST_OUT.EXE")
+        .find(|d| d["ExecutableName"] == "RUST_OUT.EXE")
         .unwrap();
-    assert_eq!(rust_out["findings"][0]["code"], "SuspiciousExecutionPath");
-    assert_eq!(rust_out["findings"][0]["severity"], "medium");
+    assert_eq!(rust_out["Findings"][0]["Code"], "SuspiciousExecutionPath");
+    assert_eq!(rust_out["Findings"][0]["Severity"], "medium");
     let consent = docs
         .iter()
-        .find(|d| d["executable_name"] == "CONSENT.EXE")
+        .find(|d| d["ExecutableName"] == "CONSENT.EXE")
         .unwrap();
-    assert_eq!(consent["windows_version"], "Windows Vista/7");
+    assert_eq!(consent["WindowsVersion"], "Windows Vista/7");
     assert!(
-        consent["files"][0]["mft_entry"].is_u64(),
+        consent["Files"][0]["MFT-Entry"].is_u64(),
         "version 23 has file references"
     );
     assert!(
-        !consent["volumes"][0]["directories"]
+        !consent["Volumes"][0]["Directories"]
             .as_array()
             .unwrap()
             .is_empty()
@@ -2465,7 +2465,7 @@ fn prefetch_csv_json_and_jsonl() {
     let lines: Vec<&str> = r.stdout.lines().collect();
     assert_eq!(lines.len(), 1, "{}", r.stdout);
     let doc: Value = serde_json::from_str(lines[0]).unwrap();
-    assert_eq!(doc["last_run_times"].as_array().unwrap().len(), 4);
+    assert_eq!(doc["LastRunTimes"].as_array().unwrap().len(), 4);
 }
 
 #[test]
@@ -2806,10 +2806,10 @@ fn usn_journal_summary_and_directory_mode() {
         .map(|l| serde_json::from_str(l).unwrap())
         .collect();
     assert_eq!(docs.len(), 10);
-    assert_eq!(docs[0]["file"]["entry"], 900);
-    assert_eq!(docs[0]["reasons"][0], "FILE_CREATE");
-    assert_eq!(docs[9]["version"], "4.0");
-    assert_eq!(docs[9]["extents"][0]["length"], 4096);
+    assert_eq!(docs[0]["File"]["Entry"], 900);
+    assert_eq!(docs[0]["Reasons"][0], "FILE_CREATE");
+    assert_eq!(docs[9]["Version"], "4.0");
+    assert_eq!(docs[9]["Extents"][0]["Length"], 4096);
 }
 
 #[test]
@@ -2858,9 +2858,9 @@ fn usn_records_are_carved_from_other_data() {
         9,
         "every V2 record, nothing from the other data"
     );
-    assert_eq!(docs[0]["offset"], 80_000);
+    assert_eq!(docs[0]["Offset"], 80_000);
     assert_eq!(
-        docs[0]["parent_path"],
+        docs[0]["ParentPath"],
         r".\WINDOWS\system32\spool\drivers\w32x86"
     );
 
@@ -2976,7 +2976,7 @@ fn persistence_hunter_selected_check_has_csv_json_and_jsonl_parity() {
         let (headers, rows) = csv_rows(&coverage);
         assert!(headers.iter().any(|name| name == "Status"));
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0]["CheckId"], "run_keys");
+        assert_eq!(rows[0]["CheckID"], "run_keys");
         if format == "csv" {
             let (_, rows) = csv_rows(&result);
             assert_eq!(rows.len(), 1);
@@ -2985,7 +2985,7 @@ fn persistence_hunter_selected_check_has_csv_json_and_jsonl_parity() {
         } else {
             let f: Value = serde_json::from_slice(&std::fs::read(result).unwrap()).unwrap();
             assert_eq!(f["Path"], expected.as_ref().unwrap().as_str());
-            assert_eq!(f["CheckId"], "run_keys");
+            assert_eq!(f["CheckID"], "run_keys");
             assert_eq!(f["Value"], r"C:\Example\agent.exe --start");
             assert!(f["Exists"].is_null());
         }
@@ -3002,7 +3002,7 @@ fn persistence_hunter_selected_check_has_csv_json_and_jsonl_parity() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let f: Value = serde_json::from_str(&r.stdout).unwrap();
-    assert_eq!(f["CheckId"], "run_keys");
+    assert_eq!(f["CheckID"], "run_keys");
     assert!(!r.stdout.contains("JUNTEI"));
 }
 
@@ -3079,22 +3079,22 @@ fn persistence_workers_preserve_records_coverage_and_errors_in_every_format() {
                 let (_, rows) = csv_rows(&coverage);
                 assert_eq!(
                     rows.iter()
-                        .filter(|r| r["CheckId"] != "context"
-                            && r["CheckId"] != "timestamp_correlation")
+                        .filter(|r| r["CheckID"] != "context"
+                            && r["CheckID"] != "timestamp_correlation")
                         .count(),
                     131
                 );
-                assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
+                assert!(rows.iter().any(|r| r["CheckID"] == "timestamp_correlation"
                     && r["Detail"].contains("System.evtx")));
-                assert!(rows.iter().any(|r| r["CheckId"] == "timestamp_correlation"
+                assert!(rows.iter().any(|r| r["CheckID"] == "timestamp_correlation"
                     && r["Detail"].contains("Security.evtx")));
                 if format == "csv" {
                     let (_, rows) = csv_rows(&findings);
                     assert!(
                         rows.iter()
-                            .any(|r| r["CheckId"] == "run_keys" && !r["Sha256"].is_empty())
+                            .any(|r| r["CheckID"] == "run_keys" && !r["SHA256"].is_empty())
                     );
-                    assert!(rows.iter().any(|r| r["CheckId"] == "scheduled_task_files"));
+                    assert!(rows.iter().any(|r| r["CheckID"] == "scheduled_task_files"));
                 }
                 first = Some(result);
             }
@@ -3566,19 +3566,19 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     assert_eq!(
         header,
         [
-            "Id",
+            "ID",
             "Timestamp",
-            "ExeInfo",
-            "ExeInfoDescription",
-            "ExeTimestamp",
+            "EXE-Info",
+            "EXE-InfoDescription",
+            "EXE-Timestamp",
             "AppType",
-            "Sid",
+            "SID",
             "UserName",
-            "UserId",
-            "AppId",
-            "InterfaceLuid",
+            "UserID",
+            "AppID",
+            "InterfaceLUID",
             "InterfaceType",
-            "L2ProfileId",
+            "L2ProfileID",
             "ProfileName",
             "L2ProfileFlags",
             "BytesSent",
@@ -3588,11 +3588,11 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     assert_eq!(rows.len(), 23);
     let first = &rows[0];
     for (column, value) in [
-        ("Id", "1"),
+        ("ID", "1"),
         ("Timestamp", "2022-02-05T22:19:00Z"),
-        ("ExeInfo", "wlidsvc"),
+        ("EXE-Info", "wlidsvc"),
         ("AppType", "Service"),
-        ("Sid", "S-1-5-19"),
+        ("SID", "S-1-5-19"),
         ("UserName", "LocalService"),
         ("InterfaceType", "IF_TYPE_ETHERNET_CSMACD"),
         ("ProfileName", "CoffeeShop"),
@@ -3601,7 +3601,7 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     ] {
         assert_eq!(first[column], value, "{column}");
     }
-    let rathbun: Vec<_> = rows.iter().filter(|r| r["Sid"] == RATHBUN_SID).collect();
+    let rathbun: Vec<_> = rows.iter().filter(|r| r["SID"] == RATHBUN_SID).collect();
     assert!(!rathbun.is_empty());
     assert!(rathbun.iter().all(|r| r["UserName"] == "rathbun"));
 
@@ -3609,10 +3609,10 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     let (_, timeline) = csv_rows(&out.join("AppTimelineProvider.csv"));
     let split = timeline
         .iter()
-        .find(|r| r["ExeInfoDescription"] == "[LocalService] [WdiServiceHost]")
+        .find(|r| r["EXE-InfoDescription"] == "[LocalService] [WdiServiceHost]")
         .unwrap();
-    assert_eq!(split["ExeInfo"], "svchost.exe");
-    assert_eq!(split["ExeTimestamp"], "1972-12-14T16:22:50Z");
+    assert_eq!(split["EXE-Info"], "svchost.exe");
+    assert_eq!(split["EXE-Timestamp"], "1972-12-14T16:22:50Z");
     assert_eq!(split["EndTime"], "2022-02-05T22:18:49.336199700Z");
     assert!(
         timeline
@@ -3621,7 +3621,7 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     );
     let (_, ids) = csv_rows(&out.join("IdentityMap.csv"));
     assert_eq!(ids.len(), 288);
-    assert_eq!(ids[3]["IdBlob"], "S-1-5-19");
+    assert_eq!(ids[3]["ID-Blob"], "S-1-5-19");
     let (_, vfu) = csv_rows(&out.join("VfuProvider.csv"));
     assert_eq!(vfu.len(), 4);
 
@@ -3709,33 +3709,33 @@ fn srum_value_states_and_bytes() {
         .collect();
     assert_eq!(entries.len(), 309);
     for e in &entries {
-        let states = e["_value_state"].as_object().unwrap();
+        let states = e["ValueState"].as_object().unwrap();
         // the database's values, not what is made from them
-        for column in ["Id", "Timestamp", "UserId", "AppId"] {
+        for column in ["ID", "Timestamp", "UserID", "AppID"] {
             assert_eq!(states[column], "parsed", "{column}");
         }
-        for made in ["ExeInfo", "Sid", "AppType", "SourceFile"] {
+        for made in ["EXE-Info", "SID", "AppType", "SourceFile"] {
             assert!(!states.contains_key(made), "{made}");
         }
         // the id's bytes: a Long, little-endian
-        let id = i32::try_from(e["Id"].as_i64().unwrap()).unwrap();
+        let id = i32::try_from(e["ID"].as_i64().unwrap()).unwrap();
         let hex: String = id
             .to_le_bytes()
             .iter()
             .map(|b| format!("{b:02X}"))
             .collect();
-        assert_eq!(e["_raw"]["Id"], hex);
+        assert_eq!(e["Raw"]["ID"], hex);
     }
     // a NULL in the database: null, no bytes
     let timeline = entries
         .iter()
         .find(|e| e["Provider"] == "AppTimelineProvider" && e["AudioInS"].is_null())
         .unwrap();
-    assert_eq!(timeline["_value_state"]["AudioInS"], "null");
-    assert!(timeline["_raw"].get("AudioInS").is_none());
+    assert_eq!(timeline["ValueState"]["AudioInS"], "null");
+    assert!(timeline["Raw"].get("AudioInS").is_none());
     let nulls = entries
         .iter()
-        .flat_map(|e| e["_value_state"].as_object().unwrap().values())
+        .flat_map(|e| e["ValueState"].as_object().unwrap().values())
         .filter(|s| *s == "null")
         .count();
     assert_eq!(nulls, 4333);
@@ -3982,14 +3982,14 @@ fn lnk_csv_has_the_common_columns() {
             r"C:\Program Files (x86)\Nero\Nero 9\Nero InfoTool\InfoTool.exe",
         ),
         (
-            "TargetIDAbsolutePath",
+            "TargetID-AbsolutePath",
             r"This PC\C:\Program Files (x86)\Nero\Nero 9\Nero InfoTool\InfoTool.exe",
         ),
         ("Arguments", "-ScParameter=30002  "),
-        ("TargetMFTEntryNumber", "81349"),
-        ("TargetMFTSequenceNumber", "1"),
+        ("TargetMFT-EntryNumber", "81349"),
+        ("TargetMFT-SequenceNumber", "1"),
         ("MachineID", "win-3qmdjgkf3g9"),
-        ("MachineMACAddress", "70:5a:b6:16:a5:f3"),
+        ("MachineMAC-Address", "70:5a:b6:16:a5:f3"),
         ("TrackerCreatedOn", "2010-01-29T21:02:17.840171700Z"),
         ("VolumeSerialNumber", "70ECFA33"),
         ("DriveType", "DRIVE_FIXED"),
@@ -4031,19 +4031,19 @@ fn lnk_json_and_jsonl() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(!r.stdout.contains("Results Summary"));
     let v: Value = serde_json::from_str(r.stdout.trim()).unwrap();
-    assert_eq!(v["tracker"]["machine_id"], "win-3qmdjgkf3g9");
+    assert_eq!(v["Tracker"]["MachineID"], "win-3qmdjgkf3g9");
     assert_eq!(
-        v["tracker"]["volume_droid_birth"],
+        v["Tracker"]["VolumeDroidBirth"],
         "c989f572-4deb-4c64-b0d1-dc4959bbff28"
     );
-    assert_eq!(v["target_mft_entry"], 81_349);
-    assert_eq!(v["header"]["show_command"], "SW_SHOWNORMAL");
-    let items = v["target_items"].as_array().unwrap();
-    assert_eq!(items[0]["name"], "This PC");
-    assert_eq!(items.last().unwrap()["name"], "InfoTool.exe");
-    assert_eq!(v["extra_blocks"][0], "IconEnvironmentDataBlock");
+    assert_eq!(v["TargetMFT-Entry"], 81_349);
+    assert_eq!(v["Header"]["ShowCommand"], "SW_SHOWNORMAL");
+    let items = v["TargetItems"].as_array().unwrap();
+    assert_eq!(items[0]["Name"], "This PC");
+    assert_eq!(items.last().unwrap()["Name"], "InfoTool.exe");
+    assert_eq!(v["ExtraBlocks"][0], "IconEnvironmentDataBlock");
     assert!(
-        v["icon_environment"]
+        v["IconEnvironment"]
             .as_str()
             .unwrap()
             .starts_with("%ProgramFiles%")
@@ -4068,13 +4068,13 @@ fn lnk_json_and_jsonl() {
     let padded = docs
         .iter()
         .find(|d| {
-            d["source_file"]
+            d["SourceFile"]
                 .as_str()
                 .unwrap()
                 .ends_with("padded_cli_arguments.lnk")
         })
         .unwrap();
-    assert_eq!(padded["problems"].as_array().unwrap().len(), 2);
+    assert_eq!(padded["Problems"].as_array().unwrap().len(), 2);
 }
 
 #[test]
@@ -4095,8 +4095,8 @@ fn lnk_times_that_are_not_times() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let v: Value = serde_json::from_str(r.stdout.trim()).unwrap();
-    assert_eq!(v["header"]["target_created"], "");
-    assert_eq!(v["header"]["target_modified"], "2009-06-05T20:13:20Z");
+    assert_eq!(v["Header"]["TargetCreated"], "");
+    assert_eq!(v["Header"]["TargetModified"], "2009-06-05T20:13:20Z");
 }
 
 #[test]
@@ -4214,8 +4214,8 @@ fn jump_list_csv_has_the_common_columns() {
             "SourceCreated",
             "SourceModified",
             "SourceAccessed",
-            "AppId",
-            "AppIdDescription",
+            "AppID",
+            "AppID-Description",
             "HasSps"
         ]
     );
@@ -4230,15 +4230,15 @@ fn jump_list_csv_has_the_common_columns() {
     // Windows 10 Explorer, from the DFIR Artifact Museum: as the reference reads it
     let targets = row("f01b4d95cf55d32a.automaticDestinations-ms", "3");
     for (column, value) in [
-        ("AppId", "f01b4d95cf55d32a"),
-        ("AppIdDescription", "Windows Explorer Windows 8.1"),
+        ("AppID", "f01b4d95cf55d32a"),
+        ("AppID-Description", "Windows Explorer Windows 8.1"),
         ("DestListVersion", "4"),
         ("LastUsedEntryNumber", "9"),
         ("EntryNumber", "7"),
         ("CreationTime", "2022-02-05T19:30:37.504034700Z"),
         ("LastModified", "2022-02-05T19:39:12.024818800Z"),
         ("Hostname", "desktop-gnccvrk"),
-        ("MacAddress", "ec:63:d7:72:83:36"),
+        ("MAC-Address", "ec:63:d7:72:83:36"),
         ("Path", r"C:\Users\AndrewRathbun\Desktop\Targets"),
         ("InteractionCount", "1"),
         ("PinStatus", "False"),
@@ -4247,11 +4247,11 @@ fn jump_list_csv_has_the_common_columns() {
         ("TargetCreated", "2022-02-05T19:39:11.619072400Z"),
         ("LocalPath", r"C:\Users\AndrewRathbun\Desktop\Targets"),
         (
-            "TargetIDAbsolutePath",
+            "TargetID-AbsolutePath",
             r"This PC\C:\Users\AndrewRathbun\Desktop\Targets",
         ),
-        ("TargetMFTEntryNumber", "105479"),
-        ("TargetMFTSequenceNumber", "2"),
+        ("TargetMFT-EntryNumber", "105479"),
+        ("TargetMFT-SequenceNumber", "2"),
         ("DriveType", "DRIVE_FIXED"),
         (
             "ExtraBlocksPresent",
@@ -4280,7 +4280,7 @@ fn jump_list_csv_has_the_common_columns() {
         ("Path", r"C:\FileShare\Secret\Beth_Secret.txt"),
         ("LastModified", "2020-09-19T03:35:07.829277600Z"),
         ("NetworkPath", r"\\CITADEL-DC01\FileShare"),
-        ("TargetMFTEntryNumber", "87111"),
+        ("TargetMFT-EntryNumber", "87111"),
     ] {
         assert_eq!(notepad[column], value, "{column}");
     }
@@ -4288,7 +4288,7 @@ fn jump_list_csv_has_the_common_columns() {
     // for a CD burn, named as the reference names it
     let burn = row("5f7b5f1e01b83767.automaticDestinations-ms", "36");
     assert_eq!(burn["DestListVersion"], "6");
-    assert_eq!(burn["TargetIDAbsolutePath"], r"This PC\D:\autorun.inf");
+    assert_eq!(burn["TargetID-AbsolutePath"], r"This PC\D:\autorun.inf");
     assert_eq!(burn["DriveType"], "DRIVE_CDROM");
     assert_eq!(
         rows.iter()
@@ -4343,24 +4343,24 @@ fn jump_list_json_and_jsonl() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(!r.stdout.contains("Results Summary"));
     let v: Value = serde_json::from_str(r.stdout.trim()).unwrap();
-    assert_eq!(v["type"], "automatic");
-    assert_eq!(v["app_id"], "f01b4d95cf55d32a");
-    assert_eq!(v["dest_list"]["version"], 4);
-    assert_eq!(v["dest_list"]["last_entry_number"], 9);
-    let entries = v["entries"].as_array().unwrap();
+    assert_eq!(v["Type"], "automatic");
+    assert_eq!(v["AppID"], "f01b4d95cf55d32a");
+    assert_eq!(v["DestList"]["Version"], 4);
+    assert_eq!(v["DestList"]["LastEntryNumber"], 9);
+    let entries = v["Entries"].as_array().unwrap();
     assert_eq!(entries.len(), 9);
-    assert_eq!(entries[3]["stream"], "7");
-    assert_eq!(entries[3]["interaction_count"], 1);
+    assert_eq!(entries[3]["Stream"], "7");
+    assert_eq!(entries[3]["InteractionCount"], 1);
     assert_eq!(
-        entries[3]["link"]["target_path"],
+        entries[3]["Link"]["TargetPath"],
         r"This PC\C:\Users\AndrewRathbun\Desktop\Targets"
     );
     assert_eq!(
-        entries[3]["link"]["tracker"]["machine_id"],
+        entries[3]["Link"]["Tracker"]["MachineID"],
         "desktop-gnccvrk"
     );
-    assert_eq!(v["streams"].as_array().unwrap().len(), 10);
-    assert_eq!(v["problems"].as_array().unwrap().len(), 0);
+    assert_eq!(v["Streams"].as_array().unwrap().len(), 10);
+    assert_eq!(v["Problems"].as_array().unwrap().len(), 0);
 
     let dir = tempfile::tempdir().unwrap();
     let out = dir.path().join("jl.json");
@@ -4379,15 +4379,15 @@ fn jump_list_json_and_jsonl() {
     let docs = json_documents(&std::fs::read_to_string(&out).unwrap());
     assert_eq!(docs.len(), 1);
     let chrome = &docs[0];
-    assert_eq!(chrome["type"], "custom");
-    assert_eq!(chrome["format_version"], 2);
-    let categories = chrome["categories"].as_array().unwrap();
-    assert_eq!(categories[0]["name"], "Most visited");
-    assert_eq!(categories[2]["kind"], "tasks");
-    assert_eq!(chrome["trailing_bytes"], 3250);
-    assert_eq!(chrome["leftover"][0]["offset"], 11472);
+    assert_eq!(chrome["Type"], "custom");
+    assert_eq!(chrome["FormatVersion"], 2);
+    let categories = chrome["Categories"].as_array().unwrap();
+    assert_eq!(categories[0]["Name"], "Most visited");
+    assert_eq!(categories[2]["Kind"], "tasks");
+    assert_eq!(chrome["TrailingBytes"], 3250);
+    assert_eq!(chrome["Leftover"][0]["Offset"], 11472);
     assert_eq!(
-        chrome["leftover"][0]["link"]["arguments"],
+        chrome["Leftover"][0]["Link"]["Arguments"],
         "--win-jumplist-action=most-visited http://192.168.50.33:5000/"
     );
 }
@@ -4490,9 +4490,9 @@ fn jump_list_times_that_are_not_times() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let v: Value = serde_json::from_str(r.stdout.trim()).unwrap();
-    assert_eq!(v["entries"][0]["last_used"], "");
+    assert_eq!(v["Entries"][0]["LastUsed"], "");
     assert_eq!(
-        v["entries"][1]["last_used"],
+        v["Entries"][1]["LastUsed"],
         "2022-02-06T22:09:00.177299400Z"
     );
     let out = dir.path().join("jl");
@@ -4857,17 +4857,17 @@ fn shimcache_select_and_the_size_of_each_value() {
         .lines()
         .map(|l| serde_json::from_str(l).unwrap())
         .collect();
-    let second = entries.iter().find(|e| e["control_set"] == 2).unwrap();
-    assert_eq!(second["is_current"], false);
-    assert_eq!(second["cache_value_size"], 56_256);
-    assert!(second["data_size"].as_u64().unwrap() < 56_256);
-    assert_eq!(second["registry_value_name"], "AppCompatCache");
+    let second = entries.iter().find(|e| e["ControlSet"] == 2).unwrap();
+    assert_eq!(second["IsCurrent"], false);
+    assert_eq!(second["CacheValueSize"], 56_256);
+    assert!(second["DataSize"].as_u64().unwrap() < 56_256);
+    assert_eq!(second["RegistryValueName"], "AppCompatCache");
     assert_eq!(
         (
-            second["select_current"].as_u64(),
-            second["select_default"].as_u64(),
-            second["select_last_known_good"].as_u64(),
-            second["select_failed"].as_u64()
+            second["SelectCurrent"].as_u64(),
+            second["SelectDefault"].as_u64(),
+            second["SelectLastKnownGood"].as_u64(),
+            second["SelectFailed"].as_u64()
         ),
         (Some(1), Some(1), Some(2), Some(0))
     );
@@ -4894,18 +4894,18 @@ fn shimcache_values_as_json() {
         .collect();
     assert_eq!(entries.len(), 17);
     let xp = &entries[0];
-    assert_eq!(xp["cache_format"], "WindowsXP");
-    assert_eq!(xp["control_set"], Value::Null);
-    assert_eq!(xp["path"], r"C:\WINDOWS\system32\wscntfy.exe");
-    assert_eq!(xp["last_modified"], "2008-04-14T12:00:00Z");
-    assert_eq!(xp["executed"], Value::Null);
-    assert_eq!(xp["file_size"], 13824);
+    assert_eq!(xp["CacheFormat"], "WindowsXP");
+    assert_eq!(xp["ControlSet"], Value::Null);
+    assert_eq!(xp["Path"], r"C:\WINDOWS\system32\wscntfy.exe");
+    assert_eq!(xp["LastModified"], "2008-04-14T12:00:00Z");
+    assert_eq!(xp["Executed"], Value::Null);
+    assert_eq!(xp["FileSize"], 13824);
     // a value on its own: its size is the file's, and no control set is known to be current
-    assert_eq!(xp["cache_value_size"], 53_392);
-    assert_eq!(xp["is_current"], Value::Null);
-    assert_eq!(xp["registry_path"], Value::Null);
-    assert_eq!(xp["select_current"], Value::Null);
-    assert_eq!(xp["last_update"], "2016-01-13T22:20:03.265625Z");
+    assert_eq!(xp["CacheValueSize"], 53_392);
+    assert_eq!(xp["IsCurrent"], Value::Null);
+    assert_eq!(xp["RegistryPath"], Value::Null);
+    assert_eq!(xp["SelectCurrent"], Value::Null);
+    assert_eq!(xp["LastUpdate"], "2016-01-13T22:20:03.265625Z");
 
     for (file, count, executed, format, path) in [
         (
@@ -4941,10 +4941,10 @@ fn shimcache_values_as_json() {
         assert_eq!(r.code, 0, "{}", r.stderr);
         let entries = json_documents(&r.stdout);
         assert_eq!(entries.len(), count, "{file}");
-        let ran = entries.iter().filter(|e| e["executed"] == true).count();
+        let ran = entries.iter().filter(|e| e["Executed"] == true).count();
         assert_eq!(ran, executed, "{file}");
-        assert_eq!(entries[0]["cache_format"], format, "{file}");
-        assert_eq!(entries[0]["path"], path, "{file}");
+        assert_eq!(entries[0]["CacheFormat"], format, "{file}");
+        assert_eq!(entries[0]["Path"], path, "{file}");
     }
     let r = run(&[
         "parse-registry",
@@ -4955,10 +4955,10 @@ fn shimcache_values_as_json() {
         "jsonl",
     ]);
     let w11: Value = serde_json::from_str(r.stdout.lines().next().unwrap()).unwrap();
-    assert_eq!(w11["executed"], false);
-    assert_eq!(w11["machine"], "x64");
-    assert_eq!(w11["data_size"], 136);
-    assert_eq!(w11["last_modified"], "2022-06-18T22:26:50.670515700Z");
+    assert_eq!(w11["Executed"], false);
+    assert_eq!(w11["Machine"], "x64");
+    assert_eq!(w11["DataSize"], 136);
+    assert_eq!(w11["LastModified"], "2022-06-18T22:26:50.670515700Z");
 
     // the summary of a value
     let r = run(&[
@@ -5146,7 +5146,7 @@ fn defender_quarantine_csv_has_every_resource() {
     for (column, value) in [
         ("QuarantineTime", "2023-12-19T09:36:40.1234567Z"),
         ("ThreatName", "HackTool:Win32/Example!MSR"),
-        ("ThreatId", "2147700000"),
+        ("ThreatID", "2147700000"),
         ("Path", r"\\?\C:\Users\alice\Downloads\tool\tool.exe"),
         ("PhysicalPath", r"C:\Users\alice\Downloads\tool\tool.exe"),
         ("FileSize", "61"),
@@ -5155,17 +5155,17 @@ fn defender_quarantine_csv_has_every_resource() {
         ("LastWriteTime", "2023-12-19T09:30:00.0000000Z"),
         ("Attributes", "0x20"),
         ("Owner", "S-1-5-21-1111-2222-3333-1001"),
-        ("ZoneId", "3"),
-        ("HostUrl", "https://example.com/tool.zip"),
+        ("ZoneID", "3"),
+        ("HostURL", "https://example.com/tool.zip"),
         ("ContentSize", "61"),
         ("SHA256", FILE_SHA256),
         (
             "Streams",
             "SecurityData, Data, AlternateData :Zone.Identifier:$DATA",
         ),
-        ("ResourceId", QUARANTINED_FILE),
-        ("EntryId", "80012345-0000-0000-1A2B-3C4D5E6F7081"),
-        ("ScanId", "6B1E0C2D-3F4A-4B5C-8D9E-0F1A2B3C4D5E"),
+        ("ResourceID", QUARANTINED_FILE),
+        ("EntryID", "80012345-0000-0000-1A2B-3C4D5E6F7081"),
+        ("ScanID", "6B1E0C2D-3F4A-4B5C-8D9E-0F1A2B3C4D5E"),
         ("ExtractedFile", ""),
         ("Problems", ""),
     ] {
@@ -5175,10 +5175,10 @@ fn defender_quarantine_csv_has_every_resource() {
     let service = &rows[1];
     assert_eq!(service["Streams"], "Hive");
     assert_eq!(service["ContentSize"], "4096");
-    assert_eq!(service["ResourceId"], QUARANTINED_HIVE);
-    assert_eq!(rows[2]["ResourceId"], "");
+    assert_eq!(service["ResourceID"], QUARANTINED_HIVE);
+    assert_eq!(rows[2]["ResourceID"], "");
     let orphan = &rows[3];
-    assert_eq!(orphan["ResourceId"], ORPHAN_CONTENT);
+    assert_eq!(orphan["ResourceID"], ORPHAN_CONTENT);
     assert_eq!(orphan["Problems"], "no entry holds this content");
 }
 
@@ -5201,15 +5201,15 @@ fn defender_quarantine_json_and_jsonl() {
     let docs = json_documents(&std::fs::read_to_string(&json_out).unwrap());
     assert_eq!(docs.len(), 4);
     let file = &docs[0];
-    assert_eq!(file["record"], "resource");
-    assert_eq!(file["resource_type"], "file");
-    assert_eq!(file["fields"].as_array().unwrap().len(), 8);
-    assert_eq!(file["fields"][0]["name"], "ResourceId");
-    assert_eq!(file["content"]["sha256"], FILE_SHA256);
-    assert_eq!(file["content"]["streams"].as_array().unwrap().len(), 3);
-    assert_eq!(file["content"]["zone_identifier"]["ZoneId"], "3");
+    assert_eq!(file["Record"], "resource");
+    assert_eq!(file["ResourceType"], "file");
+    assert_eq!(file["Fields"].as_array().unwrap().len(), 8);
+    assert_eq!(file["Fields"][0]["Name"], "ResourceId");
+    assert_eq!(file["Content"]["SHA256"], FILE_SHA256);
+    assert_eq!(file["Content"]["Streams"].as_array().unwrap().len(), 3);
+    assert_eq!(file["Content"]["ZoneIdentifier"]["ZoneId"], "3");
     assert_eq!(
-        file["resource_record_entries"],
+        file["ResourceRecordEntries"],
         serde_json::json!(["80012345-0000-0000-1A2B-3C4D5E6F7081"])
     );
     // JSONL on stdout: the data alone
@@ -5229,7 +5229,7 @@ fn defender_quarantine_json_and_jsonl() {
         .map(|l| serde_json::from_str(l).unwrap())
         .collect();
     assert_eq!(lines.len(), 4);
-    assert_eq!(lines[3]["record"], "orphan-content");
+    assert_eq!(lines[3]["Record"], "orphan-content");
 }
 
 #[test]
@@ -5356,7 +5356,7 @@ fn defender_quarantine_extracts_only_when_asked() {
     let (_, rows) = csv_rows(&report);
     let extracted = rows
         .iter()
-        .find(|row| row["ResourceId"] == QUARANTINED_FILE)
+        .find(|row| row["ResourceID"] == QUARANTINED_FILE)
         .unwrap();
     assert_eq!(extracted["ExtractedFile"], file.to_string_lossy());
 
@@ -5526,24 +5526,24 @@ const REGISTRY_COLUMNS: [&str; 18] = [
 ];
 /// `parse-registry read`'s JSON fields, in their order.
 const REGISTRY_FIELDS: [&str; 18] = [
-    "host",
-    "hive_type",
-    "source_path",
-    "record_type",
-    "key_path",
-    "key_last_written",
-    "value_name",
-    "value_type",
-    "value_data",
-    "data_size",
-    "value_data_raw",
-    "value_u64",
-    "value_filetime_utc",
-    "allocation_status",
-    "recovered_from",
-    "transaction_log_status",
-    "logs_applied",
-    "problems",
+    "Host",
+    "HiveType",
+    "SourcePath",
+    "RecordType",
+    "KeyPath",
+    "KeyLastWritten",
+    "ValueName",
+    "ValueType",
+    "ValueData",
+    "DataSize",
+    "ValueDataRaw",
+    "ValueU64",
+    "ValueFiletimeUTC",
+    "AllocationStatus",
+    "RecoveredFrom",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
 ];
 
 fn jsonl_records(text: &str) -> Vec<Value> {
@@ -5719,17 +5719,17 @@ fn registry_every_key_and_value_of_a_hive() {
     let find = |name: &str| {
         records
             .iter()
-            .find(|r| r["key_path"] == seven && r["value_name"] == name)
+            .find(|r| r["KeyPath"] == seven && r["ValueName"] == name)
             .unwrap()
     };
-    assert_eq!(find("Publisher")["value_data"], "igor pavlov");
-    assert_eq!(find("Publisher")["host"], Value::Null);
-    assert_eq!(find("Publisher")["transaction_log_status"], "not_applied");
-    assert_eq!(find("Size")["value_data"], 535_040);
-    assert_eq!(find("Size")["value_u64"], 535_040);
-    assert_eq!(find("Size")["value_filetime_utc"], Value::Null);
+    assert_eq!(find("Publisher")["ValueData"], "igor pavlov");
+    assert_eq!(find("Publisher")["Host"], Value::Null);
+    assert_eq!(find("Publisher")["TransactionLogStatus"], "not_applied");
+    assert_eq!(find("Size")["ValueData"], 535_040);
+    assert_eq!(find("Size")["ValueU64"], 535_040);
+    assert_eq!(find("Size")["ValueFiletimeUTC"], Value::Null);
     assert_eq!(
-        find("Size")["key_last_written"],
+        find("Size")["KeyLastWritten"],
         "2022-03-10T19:49:31.658344400Z"
     );
 }
@@ -5763,14 +5763,14 @@ fn registry_dirty_hive_with_its_logs() {
         registry_read(&["-f", system, "--key", r"HKEY_LOCAL_MACHINE\SYSTEM\Select"])
             .iter()
             .map(|v| {
-                assert_eq!(v["host"], "GOLDPAPERW11");
-                assert_eq!(v["value_type"], "REG_DWORD");
-                assert_eq!(v["transaction_log_status"], "unchanged");
-                assert_eq!(v["logs_applied"], json!(["SYSTEM.LOG1", "SYSTEM.LOG2"]));
-                assert_eq!(v["value_data"], v["value_u64"]);
+                assert_eq!(v["Host"], "GOLDPAPERW11");
+                assert_eq!(v["ValueType"], "REG_DWORD");
+                assert_eq!(v["TransactionLogStatus"], "unchanged");
+                assert_eq!(v["LogsApplied"], json!(["SYSTEM.LOG1", "SYSTEM.LOG2"]));
+                assert_eq!(v["ValueData"], v["ValueU64"]);
                 (
-                    v["value_name"].as_str().unwrap().to_string(),
-                    v["value_u64"].as_u64().unwrap(),
+                    v["ValueName"].as_str().unwrap().to_string(),
+                    v["ValueU64"].as_u64().unwrap(),
                 )
             })
             .collect();
@@ -5795,11 +5795,11 @@ fn registry_dirty_hive_with_its_logs() {
     ]);
     assert_eq!(name.len(), 1);
     assert_eq!(
-        name[0]["key_path"],
+        name[0]["KeyPath"],
         r"ControlSet001\Control\ComputerName\ComputerName"
     );
-    assert_eq!(name[0]["value_name"], "ComputerName");
-    assert_eq!(name[0]["value_data"], "GOLDPAPERW11");
+    assert_eq!(name[0]["ValueName"], "ComputerName");
+    assert_eq!(name[0]["ValueData"], "GOLDPAPERW11");
     // a FILETIME the logs changed, kept as a number too; and the same without the logs
     let secure_time = |extra: &[&str]| {
         let mut args = vec![
@@ -5817,27 +5817,24 @@ fn registry_dirty_hive_with_its_logs() {
         records[0].clone()
     };
     let replayed = secure_time(&[]);
-    assert_eq!(replayed["value_type"], "REG_QWORD");
-    assert_eq!(replayed["value_data"], 132_891_424_373_386_666_u64);
-    assert_eq!(replayed["value_u64"], 132_891_424_373_386_666_u64);
+    assert_eq!(replayed["ValueType"], "REG_QWORD");
+    assert_eq!(replayed["ValueData"], 132_891_424_373_386_666_u64);
+    assert_eq!(replayed["ValueU64"], 132_891_424_373_386_666_u64);
     assert_eq!(
-        replayed["value_filetime_utc"],
+        replayed["ValueFiletimeUTC"],
         "2022-02-12T12:27:17.338666600Z"
     );
-    assert_eq!(replayed["transaction_log_status"], "replayed");
-    assert_eq!(replayed["key_last_written"], "2022-02-08T21:03:52.520572Z");
+    assert_eq!(replayed["TransactionLogStatus"], "replayed");
+    assert_eq!(replayed["KeyLastWritten"], "2022-02-08T21:03:52.520572Z");
     let as_it_is = secure_time(&["--no-logs"]);
-    assert_eq!(as_it_is["value_u64"], 132_888_271_724_338_846_u64);
+    assert_eq!(as_it_is["ValueU64"], 132_888_271_724_338_846_u64);
     assert_eq!(
-        as_it_is["value_filetime_utc"],
+        as_it_is["ValueFiletimeUTC"],
         "2022-02-08T20:52:52.433884600Z"
     );
-    assert_eq!(as_it_is["transaction_log_status"], "not_applied");
-    assert_eq!(as_it_is["logs_applied"], json!([]));
-    assert_eq!(
-        as_it_is["key_last_written"],
-        "2022-02-08T20:52:54.093671200Z"
-    );
+    assert_eq!(as_it_is["TransactionLogStatus"], "not_applied");
+    assert_eq!(as_it_is["LogsApplied"], json!([]));
+    assert_eq!(as_it_is["KeyLastWritten"], "2022-02-08T20:52:54.093671200Z");
     let r = run(&["parse-registry", "read", "-f", system, "--no-logs", "-K"]);
     for line in [
         "Dirty hives whose transaction logs were not applied (keys or values may be missing): 1",
@@ -5907,23 +5904,23 @@ fn registry_deleted_keys_and_values() {
     ]);
     let bus = records
         .iter()
-        .find(|r| r["value_name"] == "BusType" && r["allocation_status"] != "allocated")
+        .find(|r| r["ValueName"] == "BusType" && r["AllocationStatus"] != "allocated")
         .unwrap();
     assert_eq!(
-        bus["key_path"],
+        bus["KeyPath"],
         r"[unknown]\Configurations\Stornvme_Inst\Services\stornvme\Parameters"
     );
-    assert_eq!(bus["allocation_status"], "deleted_partial");
-    assert_eq!(bus["recovered_from"], json!(["free_cell", "before_replay"]));
-    assert_eq!(bus["key_last_written"], "2022-02-07T07:38:03.052139100Z");
-    assert_eq!(bus["value_type"], "REG_DWORD");
-    assert_eq!(bus["value_u64"], 17);
-    assert_eq!(bus["transaction_log_status"], "unchanged");
+    assert_eq!(bus["AllocationStatus"], "deleted_partial");
+    assert_eq!(bus["RecoveredFrom"], json!(["free_cell", "before_replay"]));
+    assert_eq!(bus["KeyLastWritten"], "2022-02-07T07:38:03.052139100Z");
+    assert_eq!(bus["ValueType"], "REG_DWORD");
+    assert_eq!(bus["ValueU64"], 17);
+    assert_eq!(bus["TransactionLogStatus"], "unchanged");
     let allocated = records
         .iter()
-        .filter(|r| r["allocation_status"] == "allocated")
+        .filter(|r| r["AllocationStatus"] == "allocated")
         .collect::<Vec<_>>();
-    assert!(allocated.iter().all(|r| r["recovered_from"] == json!([])));
+    assert!(allocated.iter().all(|r| r["RecoveredFrom"] == json!([])));
     // a key only an older log entry holds: an earlier Edge's event provider
     let edge = registry_read(&[
         "-f",
@@ -5934,16 +5931,16 @@ fn registry_deleted_keys_and_values() {
     ]);
     let message = edge
         .iter()
-        .find(|r| r["value_name"] == "EventMessageFile")
+        .find(|r| r["ValueName"] == "EventMessageFile")
         .unwrap();
     assert_eq!(
-        message["key_path"],
+        message["KeyPath"],
         r"ControlSet001\Services\EventLog\System\Microsoft Edge Etw"
     );
-    assert_eq!(message["allocation_status"], "transaction_log_recovered");
-    assert_eq!(message["recovered_from"], json!(["SYSTEM.LOG2#344"]));
+    assert_eq!(message["AllocationStatus"], "transaction_log_recovered");
+    assert_eq!(message["RecoveredFrom"], json!(["SYSTEM.LOG2#344"]));
     assert_eq!(
-        message["value_data"],
+        message["ValueData"],
         r"C:\Program Files (x86)\Microsoft\Edge\Application\90.0.818.66\msedge.dll"
     );
     // without --recover-deleted: only what is in use
@@ -5953,18 +5950,14 @@ fn registry_deleted_keys_and_values() {
         "--key-regex",
         r"\\Services\\stornvme\\Parameters$",
     ]);
-    assert!(
-        records
-            .iter()
-            .all(|r| r["allocation_status"] == "allocated")
-    );
+    assert!(records.iter().all(|r| r["AllocationStatus"] == "allocated"));
     // values without their key: no key filter takes them
     let all = registry_read(&["-f", system, "--recover-deleted", "--value-regex", "^"]);
-    let residual: Vec<&Value> = all.iter().filter(|r| r["key_path"].is_null()).collect();
+    let residual: Vec<&Value> = all.iter().filter(|r| r["KeyPath"].is_null()).collect();
     let count = |status: &str| {
         residual
             .iter()
-            .filter(|r| r["allocation_status"] == status)
+            .filter(|r| r["AllocationStatus"] == status)
             .count()
     };
     assert_eq!(
@@ -5974,7 +5967,7 @@ fn registry_deleted_keys_and_values() {
         ),
         (53, 47)
     );
-    assert!(residual.iter().all(|r| r["key_last_written"].is_null()));
+    assert!(residual.iter().all(|r| r["KeyLastWritten"].is_null()));
 }
 
 /// A hive with a value of every common type, the default value, values that don't decode, a key
@@ -6118,12 +6111,12 @@ fn registry_value_types_and_damage() {
     let find = |name: &str| {
         records
             .iter()
-            .find(|r| r["value_name"] == name && r["record_type"] != "key")
+            .find(|r| r["ValueName"] == name && r["RecordType"] != "key")
             .unwrap()
     };
-    assert_eq!(find("Multi")["value_data"], json!(["a", "b c"]));
-    assert_eq!(find("Qword")["value_data"], json!(u64::MAX));
-    assert_eq!(find("Qword")["value_u64"], json!(u64::MAX));
+    assert_eq!(find("Multi")["ValueData"], json!(["a", "b c"]));
+    assert_eq!(find("Qword")["ValueData"], json!(u64::MAX));
+    assert_eq!(find("Qword")["ValueU64"], json!(u64::MAX));
     // past year 9999: no FILETIME, but the number is kept
     let qword = registry_read(&[
         "-f",
@@ -6134,16 +6127,16 @@ fn registry_value_types_and_damage() {
         "qword",
         "--qword-as-filetime",
     ]);
-    assert_eq!(qword[0]["value_filetime_utc"], Value::Null);
-    assert_eq!(qword[0]["value_u64"], json!(u64::MAX));
-    assert_eq!(find("Dword")["value_data_raw"], "07000000");
-    assert_eq!(find("ShortDword")["value_data"], Value::Null);
+    assert_eq!(qword[0]["ValueFiletimeUTC"], Value::Null);
+    assert_eq!(qword[0]["ValueU64"], json!(u64::MAX));
+    assert_eq!(find("Dword")["ValueDataRaw"], "07000000");
+    assert_eq!(find("ShortDword")["ValueData"], Value::Null);
     assert_eq!(
-        find("ShortDword")["problems"],
+        find("ShortDword")["Problems"],
         json!(["REG_DWORD of 3 bytes"])
     );
-    assert_eq!(find("")["value_data"], "the default");
-    assert_eq!(find("")["record_type"], "default_value");
+    assert_eq!(find("")["ValueData"], "the default");
+    assert_eq!(find("")["RecordType"], "default_value");
 
     // the default value, and a value a key hasn't (subkeys come in the order of their names)
     let default = registry_read(&[
@@ -6158,9 +6151,9 @@ fn registry_value_types_and_damage() {
         .iter()
         .map(|r| {
             (
-                r["key_path"].as_str().unwrap(),
-                r["record_type"].as_str().unwrap(),
-                r["value_name"].as_str().unwrap(),
+                r["KeyPath"].as_str().unwrap(),
+                r["RecordType"].as_str().unwrap(),
+                r["ValueName"].as_str().unwrap(),
             )
         })
         .collect();
@@ -6173,10 +6166,10 @@ fn registry_value_types_and_damage() {
     );
     let absent = registry_read(&["-f", hive, "--key", "GoodKey", "--value", "Missing"]);
     assert_eq!(absent.len(), 1);
-    assert_eq!(absent[0]["record_type"], "absent_value");
-    assert_eq!(absent[0]["value_name"], "Missing");
-    assert_eq!(absent[0]["value_type"], Value::Null);
-    assert_eq!(absent[0]["value_data"], Value::Null);
+    assert_eq!(absent[0]["RecordType"], "absent_value");
+    assert_eq!(absent[0]["ValueName"], "Missing");
+    assert_eq!(absent[0]["ValueType"], Value::Null);
+    assert_eq!(absent[0]["ValueData"], Value::Null);
     // without a key filter, keys without the value are not listed
     let r = registry_read(&["-f", hive, "--value", "Missing"]);
     assert!(r.is_empty());
@@ -6253,7 +6246,7 @@ fn registry_group_policy_state() {
     ]);
     let paths: Vec<&str> = links
         .iter()
-        .map(|r| r["key_path"].as_str().unwrap())
+        .map(|r| r["KeyPath"].as_str().unwrap())
         .collect();
     assert_eq!(
         paths,
@@ -6263,9 +6256,9 @@ fn registry_group_policy_state() {
             format!(r"{state}\S-1-5-21-1-2-3-1001\GPLink-List\0"),
         ]
     );
-    assert_eq!(links[0]["hive_type"], "SOFTWARE");
-    assert_eq!(links[0]["key_last_written"], "2022-02-08T21:03:52Z");
-    assert_eq!(links[1]["key_last_written"], "2022-02-09T21:03:52Z");
+    assert_eq!(links[0]["HiveType"], "SOFTWARE");
+    assert_eq!(links[0]["KeyLastWritten"], "2022-02-08T21:03:52Z");
+    assert_eq!(links[1]["KeyLastWritten"], "2022-02-09T21:03:52Z");
     // one key, the path also given with the hive's name
     let one = registry_read(&[
         "-f",
@@ -6276,7 +6269,7 @@ fn registry_group_policy_state() {
     assert_eq!(one.len(), 2);
     assert!(
         one.iter()
-            .all(|r| r["key_path"] == format!(r"{state}\Machine\GPLink-List\1"))
+            .all(|r| r["KeyPath"] == format!(r"{state}\Machine\GPLink-List\1"))
     );
     // a GUID matches in any case; the evidence keeps its own
     let default_policy = registry_read(&[
@@ -6287,7 +6280,7 @@ fn registry_group_policy_state() {
     ]);
     let found: Vec<&str> = default_policy
         .iter()
-        .map(|r| r["value_data"].as_str().unwrap())
+        .map(|r| r["ValueData"].as_str().unwrap())
         .collect();
     assert_eq!(
         found,
@@ -6314,7 +6307,7 @@ fn registry_group_policy_state() {
     assert!(
         later
             .iter()
-            .all(|r| r["key_path"] == format!(r"{state}\Machine\GPLink-List\1"))
+            .all(|r| r["KeyPath"] == format!(r"{state}\Machine\GPLink-List\1"))
     );
     // a key the hive hasn't
     let r = run(&["parse-registry", "read", "-f", hive, "-k", "Policies", "-K"]);
@@ -6371,8 +6364,8 @@ fn registry_hosts_from_system_hives() {
     std::fs::copy(repo(AMCACHE_HIVE), users.join("NTUSER.DAT")).unwrap();
     let records = registry_read(&["-d", hive.path().to_str().unwrap(), "--key-regex", "^Root$"]);
     assert_eq!(records.len(), 1);
-    assert_eq!(records[0]["host"], "GOLDPAPERW11");
-    assert_eq!(records[0]["hive_type"], "AMCACHE.HVE");
+    assert_eq!(records[0]["Host"], "GOLDPAPERW11");
+    assert_eq!(records[0]["HiveType"], "AMCACHE.HVE");
     // hives exported to one directory: the SYSTEM hive next to it
     let flat = tempfile::tempdir().unwrap();
     let config = hive.path().join("HOST/C/Windows/System32/config");
@@ -6382,7 +6375,7 @@ fn registry_hosts_from_system_hives() {
     std::fs::copy(repo(AMCACHE_HIVE), flat.path().join("Amcache.hve")).unwrap();
     let amcache = flat.path().join("Amcache.hve");
     let records = registry_read(&["-f", amcache.to_str().unwrap(), "--key-regex", "^Root$"]);
-    assert_eq!(records[0]["host"], "GOLDPAPERW11");
+    assert_eq!(records[0]["Host"], "GOLDPAPERW11");
 }
 
 #[test]
@@ -6476,7 +6469,7 @@ const SERVICES_COLUMNS: [&str; 27] = [
     "DisplayName",
     "Description",
     "ImagePath",
-    "ServiceDll",
+    "ServiceDLL",
     "StartType",
     "StartValue",
     "DelayedAutostart",
@@ -6565,7 +6558,7 @@ fn registry_services_of_a_system_hive() {
             "ImagePath",
             r"%SystemRoot%\System32\svchost.exe -k LocalServiceNetworkRestricted",
         ),
-        ("ServiceDll", r"%SystemRoot%\System32\wevtsvc.dll"),
+        ("ServiceDLL", r"%SystemRoot%\System32\wevtsvc.dll"),
         ("StartType", "automatic"),
         ("StartValue", "2"),
         ("DelayedAutostart", ""),
@@ -6578,7 +6571,7 @@ fn registry_services_of_a_system_hive() {
         ("FailureCommand", ""),
         (
             "FailureActions",
-            r#"[{"type":"restart","delay_ms":60000},{"type":"restart","delay_ms":120000},{"type":"none","delay_ms":0}]"#,
+            r#"[{"Type":"restart","DelayMs":60000},{"Type":"restart","DelayMs":120000},{"Type":"none","DelayMs":0}]"#,
         ),
         ("FailureActionType", "restart"),
         ("FailureActionDelayMs", "60000"),
@@ -6592,28 +6585,28 @@ fn registry_services_of_a_system_hive() {
     // one service, in any case; started after the other automatic ones
     let wu = services_read(&["-f", system, "--service", "WUAUSERV"]);
     assert_eq!(wu.len(), 1);
-    assert_eq!(wu[0]["service_name"], "wuauserv");
-    assert_eq!(wu[0]["delayed_autostart"], true);
+    assert_eq!(wu[0]["ServiceName"], "wuauserv");
+    assert_eq!(wu[0]["DelayedAutostart"], true);
     assert_eq!(
-        wu[0]["failure_actions"][0],
-        json!({"type": "restart", "delay_ms": 60000})
+        wu[0]["FailureActions"][0],
+        json!({"Type": "restart", "DelayMs": 60000})
     );
     // a driver: no failure actions
     let tcpip = services_read(&["-f", system, "--service", "tcpip"]);
-    assert_eq!(tcpip[0]["start_type"], "boot");
-    assert_eq!(tcpip[0]["service_type"], "kernel_driver");
-    assert_eq!(tcpip[0]["failure_actions"], Value::Null);
-    assert_eq!(tcpip[0]["failure_action_type"], Value::Null);
+    assert_eq!(tcpip[0]["StartType"], "boot");
+    assert_eq!(tcpip[0]["ServiceType"], "kernel_driver");
+    assert_eq!(tcpip[0]["FailureActions"], Value::Null);
+    assert_eq!(tcpip[0]["FailureActionType"], Value::Null);
 
     // every control set: the one not in use said so
     let all = services_read(&["-f", system, "--all-control-sets"]);
     assert_eq!(all.len(), 933);
     let second: Vec<&Value> = all
         .iter()
-        .filter(|r| r["control_set"] == "ControlSet002")
+        .filter(|r| r["ControlSet"] == "ControlSet002")
         .collect();
     assert_eq!(second.len(), 466);
-    assert!(second.iter().all(|r| r["is_current_control_set"] == false));
+    assert!(second.iter().all(|r| r["IsCurrentControlSet"] == false));
     // a service the hive hasn't
     let r = run(&[
         "parse-registry",
@@ -6650,36 +6643,33 @@ fn registry_services_with_logs() {
     }
     let spectrum = services_read(&["-f", system, "--service", "Spectrum"]);
     let s = &spectrum[0];
-    assert_eq!(s["failure_reset_period"], 60);
+    assert_eq!(s["FailureResetPeriod"], 60);
     assert_eq!(
-        s["failure_command"],
+        s["FailureCommand"],
         r#""C:\Windows\System32\Spectrum.exe" -safemode"#
     );
-    let actions: Vec<&str> = s["failure_actions"]
+    let actions: Vec<&str> = s["FailureActions"]
         .as_array()
         .unwrap()
         .iter()
-        .map(|a| a["type"].as_str().unwrap())
+        .map(|a| a["Type"].as_str().unwrap())
         .collect();
     assert_eq!(
         actions,
         ["restart", "restart", "restart", "restart", "run_command"]
     );
-    assert_eq!(s["transaction_log_status"], "unchanged");
-    assert_eq!(s["logs_applied"], json!(["SYSTEM.LOG1", "SYSTEM.LOG2"]));
+    assert_eq!(s["TransactionLogStatus"], "unchanged");
+    assert_eq!(s["LogsApplied"], json!(["SYSTEM.LOG1", "SYSTEM.LOG2"]));
     // user services: their type's flags
     let all = services_read(&["-f", system]);
     assert!(
         all.iter()
-            .any(|r| r["service_type"] == "win32_share_process|user_service|user_service_instance")
+            .any(|r| r["ServiceType"] == "win32_share_process|user_service|user_service_instance")
     );
     // the logs wrote some services
-    assert!(
-        all.iter()
-            .any(|r| r["transaction_log_status"] == "replayed")
-    );
+    assert!(all.iter().any(|r| r["TransactionLogStatus"] == "replayed"));
     let without = services_read(&["-f", system, "--no-logs", "--service", "spectrum"]);
-    assert_eq!(without[0]["transaction_log_status"], "not_applied");
+    assert_eq!(without[0]["TransactionLogStatus"], "not_applied");
 }
 
 /// A SYSTEM hive whose services have a FailureActions value that is cut short, a Start value
@@ -6797,49 +6787,49 @@ fn registry_services_damage_and_discovery() {
     let records = services_read(&["-d", dir.path().to_str().unwrap()]);
     let good = records
         .iter()
-        .find(|record| record["service_name"] == "ExampleSvc")
+        .find(|record| record["ServiceName"] == "ExampleSvc")
         .unwrap();
-    assert_eq!(good["service_name"], "ExampleSvc");
-    assert_eq!(good["service_dll"], r"C:\ProgramData\example\svc.dll");
-    assert_eq!(good["failure_action_type"], "restart");
-    assert_eq!(good["failure_action_delay_ms"], 60000);
-    assert_eq!(good["failure_actions"][1]["type"], "run_command");
-    assert_eq!(good["key_last_written"], "2022-02-08T21:03:52Z");
+    assert_eq!(good["ServiceName"], "ExampleSvc");
+    assert_eq!(good["ServiceDLL"], r"C:\ProgramData\example\svc.dll");
+    assert_eq!(good["FailureActionType"], "restart");
+    assert_eq!(good["FailureActionDelayMs"], 60000);
+    assert_eq!(good["FailureActions"][1]["Type"], "run_command");
+    assert_eq!(good["KeyLastWritten"], "2022-02-08T21:03:52Z");
     // what can't be read is a problem, its bytes kept; the rest is still read
     let short = records
         .iter()
-        .find(|record| record["service_name"] == "Short")
+        .find(|record| record["ServiceName"] == "Short")
         .unwrap();
-    assert_eq!(short["start_type"], Value::Null);
-    assert_eq!(short["failure_actions"], Value::Null);
+    assert_eq!(short["StartType"], Value::Null);
+    assert_eq!(short["FailureActions"], Value::Null);
     assert_eq!(
-        short["problems"],
+        short["Problems"],
         json!([
             "Start: is REG_SZ, not REG_DWORD",
             "FailureActions counts 3 actions, its 28 bytes hold 1"
         ])
     );
     assert!(
-        short["failure_actions_raw"]
+        short["FailureActionsRaw"]
             .as_str()
             .unwrap()
             .starts_with("100e0000")
     );
     let wrong = records
         .iter()
-        .find(|record| record["service_name"] == "WrongTypes")
+        .find(|record| record["ServiceName"] == "WrongTypes")
         .unwrap();
-    assert_eq!(wrong["start_type"], Value::Null);
-    assert_eq!(wrong["failure_actions"], Value::Null);
+    assert_eq!(wrong["StartType"], Value::Null);
+    assert_eq!(wrong["FailureActions"], Value::Null);
     assert_eq!(
-        wrong["problems"],
+        wrong["Problems"],
         json!([
             "Start: is REG_QWORD, not REG_DWORD",
             "FailureActions: is REG_SZ, not REG_BINARY"
         ])
     );
     assert!(
-        wrong["failure_actions_raw"]
+        wrong["FailureActionsRaw"]
             .as_str()
             .unwrap()
             .starts_with("100e0000")
@@ -6879,12 +6869,12 @@ fn registry_services_falls_back_when_select_current_is_unusable() {
     assert!(
         records
             .iter()
-            .all(|record| record["control_set"] == "ControlSet001")
+            .all(|record| record["ControlSet"] == "ControlSet001")
     );
     assert!(
         records
             .iter()
-            .all(|record| record["is_current_control_set"] == false)
+            .all(|record| record["IsCurrentControlSet"] == false)
     );
 
     let r = run(&["parse-registry", "services", "-f", system, "-K"]);
@@ -6905,7 +6895,7 @@ const RECENTDOCS_COLUMNS: [&str; 14] = [
     "Username",
     "SourcePath",
     "Extension",
-    "MruPosition",
+    "MRU-Position",
     "ValueIndex",
     "Filename",
     "LinkName",
@@ -6970,36 +6960,36 @@ fn registry_recentdocs_in_a_collection() {
     assert_eq!(records.len(), 22);
     let first = &records[0];
     for (field, expected) in [
-        ("host", json!("GOLDPAPERW11")),
-        ("username", json!("AndrewRathbun")),
-        ("extension", Value::Null),
-        ("mru_position", json!(0)),
-        ("value_index", json!(10)),
-        ("filename", json!("The Internet")),
-        ("link_name", json!("The Internet.lnk")),
-        ("key_last_written", json!("2022-02-13T03:54:53.963087500Z")),
-        ("last_opened", json!("2022-02-13T03:54:53.963087500Z")),
-        ("value_data_raw", Value::Null),
-        ("transaction_log_status", json!("unchanged")),
-        ("problems", json!([])),
+        ("Host", json!("GOLDPAPERW11")),
+        ("Username", json!("AndrewRathbun")),
+        ("Extension", Value::Null),
+        ("MRU-Position", json!(0)),
+        ("ValueIndex", json!(10)),
+        ("Filename", json!("The Internet")),
+        ("LinkName", json!("The Internet.lnk")),
+        ("KeyLastWritten", json!("2022-02-13T03:54:53.963087500Z")),
+        ("LastOpened", json!("2022-02-13T03:54:53.963087500Z")),
+        ("ValueDataRaw", Value::Null),
+        ("TransactionLogStatus", json!("unchanged")),
+        ("Problems", json!([])),
     ] {
         assert_eq!(first[field], expected, "{field}");
     }
     // the most recent item of all, as the issue's jq query finds it
     let latest: Vec<&Value> = records
         .iter()
-        .filter(|r| r["extension"].is_null() && r["mru_position"] == 0)
+        .filter(|r| r["Extension"].is_null() && r["MRU-Position"] == 0)
         .collect();
     assert_eq!(latest.len(), 1);
     // one extension's list: only its most recent item has the time it was opened
     let txt: Vec<(&str, &str, &Value)> = records
         .iter()
-        .filter(|r| r["extension"] == ".txt")
+        .filter(|r| r["Extension"] == ".txt")
         .map(|r| {
             (
-                r["filename"].as_str().unwrap(),
-                r["link_name"].as_str().unwrap(),
-                &r["last_opened"],
+                r["Filename"].as_str().unwrap(),
+                r["LinkName"].as_str().unwrap(),
+                &r["LastOpened"],
             )
         })
         .collect();
@@ -7016,8 +7006,8 @@ fn registry_recentdocs_in_a_collection() {
     );
     let folders: Vec<&str> = records
         .iter()
-        .filter(|r| r["extension"] == "Folder")
-        .map(|r| r["filename"].as_str().unwrap())
+        .filter(|r| r["Extension"] == "Folder")
+        .map(|r| r["Filename"].as_str().unwrap())
         .collect();
     assert_eq!(folders, ["The Internet", "UsageLogs", "OneDrive", "logs"]);
     // without the logs: the same items, said to be possibly out of date
@@ -7026,7 +7016,7 @@ fn registry_recentdocs_in_a_collection() {
     assert!(
         without
             .iter()
-            .all(|r| r["transaction_log_status"] == "not_applied")
+            .all(|r| r["TransactionLogStatus"] == "not_applied")
     );
 }
 
@@ -7058,7 +7048,7 @@ fn registry_recentdocs_of_an_exported_hive() {
     assert_eq!(rows.len(), 22);
     let row = |ext: &str, position: &str| {
         rows.iter()
-            .find(|r| r["Extension"] == ext && r["MruPosition"] == position)
+            .find(|r| r["Extension"] == ext && r["MRU-Position"] == position)
             .unwrap()
     };
     for (column, expected) in [
@@ -7130,10 +7120,10 @@ fn registry_recentdocs_damage_and_errors() {
         .iter()
         .map(|r| {
             (
-                &r["mru_position"],
-                &r["value_index"],
-                &r["filename"],
-                &r["problems"],
+                &r["MRU-Position"],
+                &r["ValueIndex"],
+                &r["Filename"],
+                &r["Problems"],
             )
         })
         .collect();
@@ -7156,9 +7146,9 @@ fn registry_recentdocs_damage_and_errors() {
             ),
         ]
     );
-    assert_eq!(records[0]["username"], "bob");
-    assert_eq!(records[0]["last_opened"], "2022-02-08T21:03:52Z");
-    assert!(records[3]["value_data_raw"].is_string());
+    assert_eq!(records[0]["Username"], "bob");
+    assert_eq!(records[0]["LastOpened"], "2022-02-08T21:03:52Z");
+    assert!(records[3]["ValueDataRaw"].is_string());
     let r = run(&[
         "parse-registry",
         "recentdocs",
@@ -7222,7 +7212,7 @@ const TASKCACHE_COLUMNS: [&str; 31] = [
     "Host",
     "SourcePath",
     "TaskName",
-    "TaskGuid",
+    "TaskGUID",
     "TaskIndex",
     "TaskLists",
     "Hidden",
@@ -7236,11 +7226,11 @@ const TASKCACHE_COLUMNS: [&str; 31] = [
     "Executable",
     "Arguments",
     "WorkingDirectory",
-    "ComClassId",
+    "COM-ClassID",
     "ActionData",
     "Context",
     "Author",
-    "Uri",
+    "URI",
     "Description",
     "LastRegisteredUTC",
     "LastRunUTC",
@@ -7436,7 +7426,7 @@ fn registry_taskcache_of_a_software_hive() {
     );
     let game_over = &rows[1];
     for (column, expected) in [
-        ("TaskGuid", "{13ABE1C7-3F21-4017-9BF6-899BE8C1BA89}"),
+        ("TaskGUID", "{13ABE1C7-3F21-4017-9BF6-899BE8C1BA89}"),
         ("TaskIndex", "3"),
         ("TaskLists", "Plain"),
         ("Hidden", "False"),
@@ -7452,7 +7442,7 @@ fn registry_taskcache_of_a_software_hive() {
         ("WorkingDirectory", ""),
         ("Context", "Author"),
         ("Author", "Example"),
-        ("Uri", r"\GameOver"),
+        ("URI", r"\GameOver"),
         ("LastRegisteredUTC", "2022-03-10T20:59:03.583034500Z"),
         ("LastRunUTC", "2022-03-10T21:39:00.616591100Z"),
         ("LastSuccessfulRunUTC", ""),
@@ -7468,49 +7458,42 @@ fn registry_taskcache_of_a_software_hive() {
     let find = |name: &str| {
         records
             .iter()
-            .find(|r| r["task_name"] == name)
+            .find(|r| r["TaskName"] == name)
             .unwrap()
             .clone()
     };
     // the system task: its lists, its last successful run
     let sync = find(r"\Microsoft\Windows\Time Synchronization\SynchronizeTime");
-    assert_eq!(sync["task_lists"], json!(["Plain", "Maintenance"]));
-    assert_eq!(sync["context"], "LocalService");
-    assert_eq!(sync["executable"], r"%windir%\system32\sc.exe");
-    assert_eq!(sync["arguments"], "start w32time task_started");
-    assert_eq!(
-        sync["last_successful_run"],
-        "2022-02-13T03:54:43.724066300Z"
-    );
-    assert_eq!(sync["last_result"], "0x00000420");
+    assert_eq!(sync["TaskLists"], json!(["Plain", "Maintenance"]));
+    assert_eq!(sync["Context"], "LocalService");
+    assert_eq!(sync["Executable"], r"%windir%\system32\sc.exe");
+    assert_eq!(sync["Arguments"], "start w32time task_started");
+    assert_eq!(sync["LastSuccessfulRun"], "2022-02-13T03:54:43.724066300Z");
+    assert_eq!(sync["LastResult"], "0x00000420");
     // hidden: no SD
     let falsh = find(r"\falshupdate22");
-    assert_eq!(falsh["hidden"], true);
-    assert_eq!(falsh["has_security_descriptor"], false);
-    assert_eq!(falsh["task_lists"], json!(["Logon"]));
+    assert_eq!(falsh["Hidden"], true);
+    assert_eq!(falsh["HasSecurityDescriptor"], false);
+    assert_eq!(falsh["TaskLists"], json!(["Logon"]));
     // an Index 0 entry without a Tasks key: one record, no action
     let defrag = find(r"\Microsoft\Windows\Defrag\ScheduledDefrag");
     assert_eq!(
-        (
-            &defrag["task_index"],
-            &defrag["in_tasks"],
-            &defrag["hidden"]
-        ),
+        (&defrag["TaskIndex"], &defrag["InTasks"], &defrag["Hidden"]),
         (&json!(0), &json!(false), &json!(false))
     );
-    assert_eq!(defrag["action_type"], Value::Null);
+    assert_eq!(defrag["ActionType"], Value::Null);
     // no Tree entry: hidden, its cut Actions kept
     let orphan = find(r"\Orphan");
     assert_eq!(
-        (&orphan["in_tree"], &orphan["hidden"]),
+        (&orphan["InTree"], &orphan["Hidden"]),
         (&json!(false), &json!(true))
     );
-    assert_eq!(orphan["has_security_descriptor"], Value::Null);
+    assert_eq!(orphan["HasSecurityDescriptor"], Value::Null);
     assert_eq!(
-        orphan["problems"],
+        orphan["Problems"],
         json!(["Actions: a string of 48 bytes at 36 is cut short (20 bytes left)"])
     );
-    assert_eq!(orphan["actions_raw"].as_str().unwrap().len(), 120);
+    assert_eq!(orphan["ActionsRaw"].as_str().unwrap().len(), 120);
 
     // one task, by its last name or its whole name
     let one = taskcache_read(&["-f", hive, "--task", "gameover"]);
@@ -7602,7 +7585,7 @@ fn registry_taskcache_discovery_and_errors() {
 const SAM_COLUMNS: [&str; 34] = [
     "Host",
     "SourcePath",
-    "Rid",
+    "RID",
     "Username",
     "FullName",
     "Comment",
@@ -7670,39 +7653,39 @@ fn registry_sam_in_a_collection() {
     let user = sam_read(&["-d", dir, "--rid", "1001"]);
     assert_eq!(user.len(), 1);
     for (field, expected) in [
-        ("host", json!("GOLDPAPERW11")),
-        ("rid", json!(1001)),
-        ("username", json!("AndrewRathbun")),
+        ("Host", json!("GOLDPAPERW11")),
+        ("RID", json!(1001)),
+        ("Username", json!("AndrewRathbun")),
         (
-            "account_flags",
+            "AccountFlags",
             json!([
                 "password_not_required",
                 "normal_account",
                 "dont_expire_password"
             ]),
         ),
-        ("account_flags_value", json!(532)),
-        ("country_code", json!(0)),
-        ("code_page", json!(0)),
-        ("last_logon", json!("2022-02-08T20:43:51.966977200Z")),
-        ("last_logon_whole_seconds", json!("2022-02-08T20:43:51Z")),
+        ("AccountFlagsValue", json!(532)),
+        ("CountryCode", json!(0)),
+        ("CodePage", json!(0)),
+        ("LastLogon", json!("2022-02-08T20:43:51.966977200Z")),
+        ("LastLogonWholeSeconds", json!("2022-02-08T20:43:51Z")),
         // never set, never expires: null, the numbers kept
-        ("password_last_set", Value::Null),
-        ("password_last_set_filetime", json!(0)),
-        ("account_expiration", Value::Null),
+        ("PasswordLastSet", Value::Null),
+        ("PasswordLastSetFiletime", json!(0)),
+        ("AccountExpiration", Value::Null),
         (
-            "account_expiration_filetime",
+            "AccountExpirationFiletime",
             json!(0x7FFF_FFFF_FFFF_FFFF_u64),
         ),
-        ("logon_count", json!(4)),
-        ("failed_logon_count", json!(0)),
+        ("LogonCount", json!(4)),
+        ("FailedLogonCount", json!(0)),
         (
-            "names_key_last_written",
+            "NamesKeyLastWritten",
             json!("2022-02-05T18:59:49.448358500Z"),
         ),
-        ("hidden_from_logon_ui", Value::Null),
-        ("transaction_log_status", json!("clean")),
-        ("problems", json!([])),
+        ("HiddenFromLogonUi", Value::Null),
+        ("TransactionLogStatus", json!("clean")),
+        ("Problems", json!([])),
     ] {
         assert_eq!(user[0][field], expected, "{field}");
     }
@@ -7710,8 +7693,8 @@ fn registry_sam_in_a_collection() {
     let all = sam_read(&["-d", dir]);
     let hidden: Vec<&Value> = all
         .iter()
-        .filter(|r| r["hidden_from_logon_ui"] == true)
-        .map(|r| &r["rid"])
+        .filter(|r| r["HiddenFromLogonUi"] == true)
+        .map(|r| &r["RID"])
         .collect();
     assert_eq!(hidden, [&json!(503), &json!(504)]);
 }
@@ -7743,7 +7726,7 @@ fn registry_sam_of_an_exported_hive() {
     let admin = &rows[0];
     for (column, expected) in [
         ("Host", ""),
-        ("Rid", "500"),
+        ("RID", "500"),
         ("Username", "Administrator"),
         (
             "Comment",
@@ -7774,9 +7757,9 @@ fn registry_sam_of_an_exported_hive() {
         assert_eq!(admin[column], expected, "{column}");
     }
     let guest = sam_read(&["-f", hive, "--rid", "501"]);
-    assert_eq!(guest[0]["username"], "Guest");
+    assert_eq!(guest[0]["Username"], "Guest");
     assert_eq!(
-        guest[0]["account_expiration_filetime"],
+        guest[0]["AccountExpirationFiletime"],
         json!(0x7FFF_FFFF_FFFF_FFFF_u64)
     );
     let r = run(&["parse-registry", "sam", "-f", hive, "--rid", "9999", "-K"]);
@@ -7884,20 +7867,20 @@ fn registry_sam_hidden_accounts_and_errors() {
     }
     let records = sam_read(&["-d", dir]);
     let support = &records[0];
-    assert_eq!(support["hidden_from_logon_ui"], true);
-    assert_eq!(support["password_hint"], "the usual");
-    assert_eq!(support["internet_user_name"], "support@example.com");
-    assert_eq!(support["home_drive"], "H:");
-    assert_eq!(support["last_logon"], "2022-02-08T21:03:52Z");
+    assert_eq!(support["HiddenFromLogonUi"], true);
+    assert_eq!(support["PasswordHint"], "the usual");
+    assert_eq!(support["InternetUserName"], "support@example.com");
+    assert_eq!(support["HomeDrive"], "H:");
+    assert_eq!(support["LastLogon"], "2022-02-08T21:03:52Z");
     assert_eq!(
-        support["account_flags"],
+        support["AccountFlags"],
         json!(["normal_account", "dont_expire_password"])
     );
     let partial = &records[2];
-    assert_eq!(partial["rid"], 1003);
-    assert_eq!(partial["account_flags"], Value::Null);
-    assert_eq!(partial["account_flags_value"], Value::Null);
-    assert_eq!(partial["problems"], json!(["F is not there"]));
+    assert_eq!(partial["RID"], 1003);
+    assert_eq!(partial["AccountFlags"], Value::Null);
+    assert_eq!(partial["AccountFlagsValue"], Value::Null);
+    assert_eq!(partial["Problems"], json!(["F is not there"]));
 
     let ntuser = std::path::Path::new(dir).join("C/Users/bob/NTUSER.DAT");
     let r = run(&[
@@ -8003,8 +7986,8 @@ fn i30_csv_json_and_jsonl() {
         [
             "SourcePath",
             "RecordOffset",
-            "RecordVcn",
-            "RecordLsn",
+            "RecordVCN",
+            "RecordLSN",
             "EntryOffset",
             "FromSlack",
             "CopyOfEntryInUse",
@@ -8016,7 +7999,7 @@ fn i30_csv_json_and_jsonl() {
             "ParentSequence",
             "CreatedUTC",
             "ModifiedUTC",
-            "MftModifiedUTC",
+            "MFT-ModifiedUTC",
             "AccessedUTC",
             "AllocatedSize",
             "RealSize",
@@ -8057,49 +8040,49 @@ fn i30_csv_json_and_jsonl() {
     assert_eq!(records.len(), 217);
     let deleted = records
         .iter()
-        .find(|r| r["file_name"] == "app-022.log")
+        .find(|r| r["FileName"] == "app-022.log")
         .unwrap();
     // the fields in their order
     let text = std::fs::read_to_string(&json).unwrap();
     let first = &text[..text.find("\n}").unwrap()];
     let at = |key: &str| first.find(&format!("\"{key}\":")).unwrap();
     let order = [
-        "source_path",
-        "record_offset",
-        "record_vcn",
-        "record_lsn",
-        "entry_offset",
-        "from_slack",
-        "copy_of_entry_in_use",
-        "file_name",
-        "namespace",
-        "file_entry",
-        "file_sequence",
-        "parent_entry",
-        "parent_sequence",
-        "created",
-        "modified",
-        "mft_modified",
-        "accessed",
-        "allocated_size",
-        "real_size",
-        "file_attributes",
-        "reparse_value",
-        "problems",
+        "SourcePath",
+        "RecordOffset",
+        "RecordVCN",
+        "RecordLSN",
+        "EntryOffset",
+        "FromSlack",
+        "CopyOfEntryInUse",
+        "FileName",
+        "Namespace",
+        "FileEntry",
+        "FileSequence",
+        "ParentEntry",
+        "ParentSequence",
+        "Created",
+        "Modified",
+        "MFT-Modified",
+        "Accessed",
+        "AllocatedSize",
+        "RealSize",
+        "FileAttributes",
+        "ReparseValue",
+        "Problems",
     ];
     assert!(order.windows(2).all(|w| at(w[0]) < at(w[1])), "{first}");
-    assert_eq!(deleted["from_slack"], true);
-    assert_eq!(deleted["copy_of_entry_in_use"], false);
-    assert_eq!(deleted["file_entry"], 87);
-    assert_eq!(deleted["parent_entry"], 64);
+    assert_eq!(deleted["FromSlack"], true);
+    assert_eq!(deleted["CopyOfEntryInUse"], false);
+    assert_eq!(deleted["FileEntry"], 87);
+    assert_eq!(deleted["ParentEntry"], 64);
     assert_eq!(
-        (&deleted["real_size"], &deleted["allocated_size"]),
+        (&deleted["RealSize"], &deleted["AllocatedSize"]),
         (&json!(8), &json!(8))
     );
-    assert_eq!(deleted["namespace"], "posix");
-    assert_eq!(deleted["file_attributes"], "archive");
-    assert_eq!(deleted["problems"], json!([]));
-    for time in ["created", "modified", "mft_modified", "accessed"] {
+    assert_eq!(deleted["Namespace"], "posix");
+    assert_eq!(deleted["FileAttributes"], "archive");
+    assert_eq!(deleted["Problems"], json!([]));
+    for time in ["Created", "Modified", "MFT-Modified", "Accessed"] {
         assert!(
             deleted[time].as_str().unwrap().ends_with('Z'),
             "{time}: {}",
@@ -8109,13 +8092,13 @@ fn i30_csv_json_and_jsonl() {
     // the password list's copies, their parent written over
     let passwords: Vec<&Value> = records
         .iter()
-        .filter(|r| r["file_name"] == "passwords.txt")
+        .filter(|r| r["FileName"] == "passwords.txt")
         .collect();
     assert_eq!(passwords.len(), 11);
     assert!(
         passwords
             .iter()
-            .all(|r| r["parent_entry"].is_null() && r["file_entry"].is_null())
+            .all(|r| r["ParentEntry"].is_null() && r["FileEntry"].is_null())
     );
 
     // JSONL on stdout: nothing but the entries
@@ -8130,9 +8113,9 @@ fn i30_csv_json_and_jsonl() {
         .iter()
         .map(|r| {
             (
-                r["file_name"].as_str().unwrap(),
-                r["from_slack"].as_bool().unwrap(),
-                r["copy_of_entry_in_use"].as_bool().unwrap(),
+                r["FileName"].as_str().unwrap(),
+                r["FromSlack"].as_bool().unwrap(),
+                r["CopyOfEntryInUse"].as_bool().unwrap(),
             )
         })
         .collect();
@@ -8206,8 +8189,8 @@ fn i30_records_in_other_data_and_records_written_in_part() {
         .map(|l| serde_json::from_str(l).unwrap())
         .collect();
     assert_eq!(lines.len(), 6);
-    assert!(lines.iter().all(|r| r["record_offset"] == 0x30200));
-    assert_eq!(lines[5]["entry_offset"], 0x30200 + 576);
+    assert!(lines.iter().all(|r| r["RecordOffset"] == 0x30200));
+    assert_eq!(lines[5]["EntryOffset"], 0x30200 + 576);
 
     // the end of the second record's first sector not written
     let torn = dir.path().join("Logs_$I30");
@@ -8320,7 +8303,7 @@ const PERSISTENCE_COLUMNS: [&str; 22] = [
     "SourcePath",
     "HiveType",
     "User",
-    "UserSid",
+    "UserSID",
     "Mechanism",
     "AttackTechnique",
     "KeyPath",
@@ -8332,7 +8315,7 @@ const PERSISTENCE_COLUMNS: [&str; 22] = [
     "DisabledAtUTC",
     "Details",
     "OverridesMachineRegistration",
-    "Wow64",
+    "WOW64",
     "KeyLastWrittenUTC",
     "DataRaw",
     "TransactionLogStatus",
@@ -8526,11 +8509,11 @@ fn persistence_lines(records: &[Value]) -> Vec<String> {
         .map(|r| {
             format!(
                 r"{} {} {}\{} = {}",
-                r["hive_type"].as_str().unwrap(),
-                r["mechanism"].as_str().unwrap(),
-                r["key_path"].as_str().unwrap(),
-                r["value_name"].as_str().unwrap(),
-                r["data"].as_str().unwrap_or("-")
+                r["HiveType"].as_str().unwrap(),
+                r["Mechanism"].as_str().unwrap(),
+                r["KeyPath"].as_str().unwrap(),
+                r["ValueName"].as_str().unwrap(),
+                r["Data"].as_str().unwrap_or("-")
             )
         })
         .collect()
@@ -8558,43 +8541,43 @@ fn registry_persistence_of_a_collection() {
             r"SYSTEM lsa_notification_package ControlSet001\Control\Lsa\Notification Packages = pwfilter",
         ]
     );
-    assert!(records.iter().all(|r| r["host"] == "HOST1"));
+    assert!(records.iter().all(|r| r["Host"] == "HOST1"));
     // the user hives' user and SID: UsrClass.dat's root name, NTUSER.DAT's profile in ProfileList
     for r in &records[..6] {
-        assert_eq!(r["user"], "alice");
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["User"], "alice");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
     }
-    assert!(records[6..].iter().all(|r| r["user"].is_null()));
+    assert!(records[6..].iter().all(|r| r["User"].is_null()));
     // the user's class {AAAA} overrides the machine's
-    assert_eq!(records[0]["overrides_machine_registration"], true);
-    assert_eq!(records[1]["overrides_machine_registration"], false);
-    assert_eq!(records[1]["image_path"], r"C:\Users\alice\own.exe");
-    assert_eq!(records[1]["arguments"], "-Embedding");
-    assert_eq!(records[0]["attack_technique"], "T1546.015");
+    assert_eq!(records[0]["OverridesMachineRegistration"], true);
+    assert_eq!(records[1]["OverridesMachineRegistration"], false);
+    assert_eq!(records[1]["ImagePath"], r"C:\Users\alice\own.exe");
+    assert_eq!(records[1]["Arguments"], "-Embedding");
+    assert_eq!(records[0]["AttackTechnique"], "T1546.015");
     // StartupApproved: Startup folder files enabled and disabled; Updater has no entry, Off is
     // disabled, Gone has no Run value
-    assert_eq!(records[3]["enabled"], true);
-    assert!(records[3]["disabled_at"].is_null());
-    assert_eq!(records[3]["details"], "a file in the Startup folder");
-    assert_eq!(records[4]["enabled"], false);
-    assert_eq!(records[4]["disabled_at"], "2022-02-08T21:03:52Z");
-    assert!(records[6]["enabled"].is_null());
-    assert_eq!(records[7]["enabled"], false);
-    assert_eq!(records[7]["disabled_at"], "2022-02-08T21:03:52Z");
-    assert_eq!(records[8]["enabled"], false);
+    assert_eq!(records[3]["Enabled"], true);
+    assert!(records[3]["DisabledAt"].is_null());
+    assert_eq!(records[3]["Details"], "a file in the Startup folder");
+    assert_eq!(records[4]["Enabled"], false);
+    assert_eq!(records[4]["DisabledAt"], "2022-02-08T21:03:52Z");
+    assert!(records[6]["Enabled"].is_null());
+    assert_eq!(records[7]["Enabled"], false);
+    assert_eq!(records[7]["DisabledAt"], "2022-02-08T21:03:52Z");
+    assert_eq!(records[8]["Enabled"], false);
     assert_eq!(
-        records[8]["details"],
+        records[8]["Details"],
         "only in StartupApproved: the Run key has no value of this name"
     );
     assert!(
         records
             .iter()
-            .all(|r| r["transaction_log_status"] == "clean" && r["problems"] == json!([]))
+            .all(|r| r["TransactionLogStatus"] == "clean" && r["Problems"] == json!([]))
     );
     assert!(
         records
             .iter()
-            .all(|r| r["key_last_written"] == "2022-02-08T21:03:52Z")
+            .all(|r| r["KeyLastWritten"] == "2022-02-08T21:03:52Z")
     );
 
     // every control set
@@ -8671,8 +8654,8 @@ fn registry_persistence_csv_and_summary() {
     assert!(
         records
             .iter()
-            .all(|r| r["overrides_machine_registration"].is_null()
-                && r["user_sid"] == "S-1-5-21-1-2-3-1001")
+            .all(|r| r["OverridesMachineRegistration"].is_null()
+                && r["UserSID"] == "S-1-5-21-1-2-3-1001")
     );
     let r = run(&[
         "parse-registry",
@@ -8702,10 +8685,10 @@ fn registry_persistence_of_public_hives() {
         ]
     );
     assert_eq!(
-        records[0]["image_path"],
+        records[0]["ImagePath"],
         r"%ProgramFiles%\Windows Sidebar\Sidebar.exe"
     );
-    assert_eq!(records[0]["arguments"], "/autoRun");
+    assert_eq!(records[0]["Arguments"], "/autoRun");
 
     // regipy's Windows 7 SYSTEM: the LSA packages regipy's lsa_packages reads
     use std::io::Read as _;
@@ -8720,8 +8703,8 @@ fn registry_persistence_of_public_hives() {
     let packages = |mechanism: &str| -> Vec<&str> {
         records
             .iter()
-            .filter(|r| r["mechanism"] == mechanism)
-            .map(|r| r["data"].as_str().unwrap())
+            .filter(|r| r["Mechanism"] == mechanism)
+            .map(|r| r["Data"].as_str().unwrap())
             .collect()
     };
     assert_eq!(packages("lsa_authentication_package"), ["msv1_0"]);
@@ -8744,7 +8727,7 @@ fn registry_persistence_of_public_hives() {
     let records = persistence_read(&["-f", w11.join("NTUSER.DAT").to_str().unwrap()]);
     assert!(!records.is_empty());
     assert!(records.iter().all(|r| {
-        ["replayed", "unchanged"].contains(&r["transaction_log_status"].as_str().unwrap())
+        ["replayed", "unchanged"].contains(&r["TransactionLogStatus"].as_str().unwrap())
     }));
 }
 
@@ -9014,19 +8997,19 @@ const USB_COLUMNS: [&str; 33] = [
     "Product",
     "Revision",
     "Vid",
-    "Pid",
+    "PID",
     "Serial",
     "Instance",
     "FriendlyName",
     "DeviceDesc",
     "Service",
-    "ContainerId",
+    "ContainerID",
     "DeviceFirstInstallUTC",
     "DriverLastInstalledUTC",
     "LastArrivalUTC",
     "LastRemovalUTC",
     "DriveLetters",
-    "VolumeGuid",
+    "VolumeGUID",
     "VolumeData",
     "VolumeNames",
     "VolumeSerials",
@@ -9205,7 +9188,7 @@ fn registry_usb_of_a_collection() {
             .iter()
             .map(|x| {
                 x.as_str()
-                    .map_or_else(|| x["username"].to_string(), str::to_owned)
+                    .map_or_else(|| x["Username"].to_string(), str::to_owned)
             })
             .collect::<Vec<_>>()
             .join(",")
@@ -9215,18 +9198,18 @@ fn registry_usb_of_a_collection() {
         .map(|r| {
             format!(
                 "{} {}/{}/{} {}:{} {} [{}] {} [{}] [{}] [{}]",
-                text(&r["device_class"]),
-                text(&r["vendor"]),
-                text(&r["product"]),
-                text(&r["revision"]),
-                text(&r["vid"]),
-                text(&r["pid"]),
-                text(&r["serial"]),
-                list(&r["drive_letters"]),
-                text(&r["volume_guid"]),
-                list(&r["volume_names"]),
-                list(&r["volume_serials"]),
-                list(&r["users"]),
+                text(&r["DeviceClass"]),
+                text(&r["Vendor"]),
+                text(&r["Product"]),
+                text(&r["Revision"]),
+                text(&r["Vid"]),
+                text(&r["PID"]),
+                text(&r["Serial"]),
+                list(&r["DriveLetters"]),
+                text(&r["VolumeGUID"]),
+                list(&r["VolumeNames"]),
+                list(&r["VolumeSerials"]),
+                list(&r["Users"]),
             )
         })
         .collect();
@@ -9243,14 +9226,14 @@ fn registry_usb_of_a_collection() {
         ]
     );
     let stick = &records[0];
-    assert_eq!(stick["host"], "HOST1");
-    assert_eq!(stick["control_set"], 1);
+    assert_eq!(stick["Host"], "HOST1");
+    assert_eq!(stick["ControlSet"], 1);
     assert_eq!(
         (
-            &stick["device_first_install"],
-            &stick["driver_last_installed"],
-            &stick["last_arrival"],
-            &stick["last_removal"]
+            &stick["DeviceFirstInstall"],
+            &stick["DriverLastInstalled"],
+            &stick["LastArrival"],
+            &stick["LastRemoval"]
         ),
         (
             &json!("2022-02-07T21:03:52Z"),
@@ -9261,40 +9244,36 @@ fn registry_usb_of_a_collection() {
     );
     // a removal time that isn't 8 bytes keeps them in a problem
     assert_eq!(
-        stick["problems"],
+        stick["Problems"],
         json!([
             r"Properties\{83da6326-97a6-4088-9453-a1923f573b29}\0067: type 0xffff0010 of 4 bytes, not a FILETIME (01020304)"
         ])
     );
     assert_eq!(
-        stick["found_in"],
+        stick["FoundIn"],
         json!(["Enum", "EMDMgmt", "MountedDevices", "MountPoints2"])
     );
     assert_eq!(
-        stick["users"][0]["mount_points2_last_written"],
+        stick["Users"][0]["MountPoints2LastWritten"],
         "2022-02-08T21:03:52Z"
     );
     assert!(
-        stick["users"][0]["source_path"]
+        stick["Users"][0]["SourcePath"]
             .as_str()
             .unwrap()
             .ends_with("NTUSER.DAT")
     );
     assert!(
-        stick["software_path"]
+        stick["SoftwarePath"]
             .as_str()
             .unwrap()
             .ends_with("SOFTWARE")
     );
     assert_eq!(
-        records[3]["volume_data"],
+        records[3]["VolumeData"],
         "MBR disk signature 12345678, partition offset 1048576"
     );
-    assert!(
-        records
-            .iter()
-            .all(|r| r["transaction_log_status"] == "clean")
-    );
+    assert!(records.iter().all(|r| r["TransactionLogStatus"] == "clean"));
 }
 
 #[test]
@@ -9354,15 +9333,15 @@ fn registry_usb_of_public_hives() {
     let records = usb_read(&["-d", dir.path().to_str().unwrap()]);
     let hp = records
         .iter()
-        .find(|r| r["device_class"] == "usbstor")
+        .find(|r| r["DeviceClass"] == "usbstor")
         .unwrap();
     assert_eq!(
         (
-            &hp["vendor"],
-            &hp["product"],
-            &hp["revision"],
-            &hp["serial"],
-            &hp["friendly_name"]
+            &hp["Vendor"],
+            &hp["Product"],
+            &hp["Revision"],
+            &hp["Serial"],
+            &hp["FriendlyName"]
         ),
         (
             &json!("HP"),
@@ -9373,14 +9352,14 @@ fn registry_usb_of_public_hives() {
         )
     );
     // Windows 7 keeps the install times in 00000064\00000000 and 00000065\00000000
-    assert_eq!(hp["driver_last_installed"], "2011-04-01T04:52:38.686Z");
-    assert_eq!(hp["device_first_install"], "2011-04-01T04:52:38.686Z");
-    assert_eq!(hp["drive_letters"], json!(["E:"]));
-    assert_eq!(hp["volume_guid"], "{eba74da6-5bb2-11e0-95d1-000c2971073c}");
+    assert_eq!(hp["DriverLastInstalled"], "2011-04-01T04:52:38.686Z");
+    assert_eq!(hp["DeviceFirstInstall"], "2011-04-01T04:52:38.686Z");
+    assert_eq!(hp["DriveLetters"], json!(["E:"]));
+    assert_eq!(hp["VolumeGUID"], "{eba74da6-5bb2-11e0-95d1-000c2971073c}");
     let mounted: Vec<String> = records
         .iter()
-        .filter(|r| !r["users"].as_array().unwrap().is_empty())
-        .map(|r| format!("{} {}", r["drive_letters"], r["users"][0]["username"]))
+        .filter(|r| !r["Users"].as_array().unwrap().is_empty())
+        .map(|r| format!("{} {}", r["DriveLetters"], r["Users"][0]["Username"]))
         .collect();
     assert_eq!(mounted, [r#"["C:"] "user""#, r#"["D:"] "user""#]);
     assert_eq!(records.len(), 14);
@@ -9388,8 +9367,8 @@ fn registry_usb_of_public_hives() {
     let all = usb_read(&["-d", dir.path().to_str().unwrap(), "--all-control-sets"]);
     let sets: Vec<&Value> = all
         .iter()
-        .filter(|r| r["device_class"] == "usbstor")
-        .map(|r| &r["control_set"])
+        .filter(|r| r["DeviceClass"] == "usbstor")
+        .map(|r| &r["ControlSet"])
         .collect();
     assert_eq!(sets, [&json!(1), &json!(2)]);
 
@@ -9403,13 +9382,13 @@ fn registry_usb_of_public_hives() {
     let records = usb_read(&["-d", w11.path().to_str().unwrap()]);
     let volumes: Vec<String> = records
         .iter()
-        .filter(|r| r["device_class"] == "volume")
+        .filter(|r| r["DeviceClass"] == "volume")
         .map(|r| {
             format!(
                 "{} {} {}",
-                r["drive_letters"],
-                r["users"].as_array().unwrap().len(),
-                r["transaction_log_status"]
+                r["DriveLetters"],
+                r["Users"].as_array().unwrap().len(),
+                r["TransactionLogStatus"]
             )
         })
         .collect();
@@ -9424,7 +9403,7 @@ fn registry_usb_of_public_hives() {
             r#"[] 1 "unchanged""#,
         ]
     );
-    assert!(records.iter().all(|r| r["host"] == "GOLDPAPERW11"));
+    assert!(records.iter().all(|r| r["Host"] == "GOLDPAPERW11"));
 }
 
 #[test]
@@ -9471,9 +9450,9 @@ fn registry_usb_errors() {
 const USERASSIST_COLUMNS: [&str; 20] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
-    "Guid",
+    "GUID",
     "Kind",
     "NameRot13",
     "Name",
@@ -9483,7 +9462,7 @@ const USERASSIST_COLUMNS: [&str; 20] = [
     "FocusTimeMs",
     "LastRunUTC",
     "Format",
-    "SessionId",
+    "SessionID",
     "KeyLastWrittenUTC",
     "DataRaw",
     "TransactionLogStatus",
@@ -9636,14 +9615,14 @@ fn registry_userassist_of_a_collection() {
         .map(|r| {
             format!(
                 "{} {} | {} | {} {} {} {} v{}",
-                r["kind"].as_str().unwrap(),
-                r["name"].as_str().unwrap(),
-                r["path"].as_str().unwrap_or("-"),
-                r["run_count"],
-                r["focus_count"],
-                r["focus_time_ms"],
-                r["last_run"].as_str().unwrap_or("-"),
-                r["format"]
+                r["Kind"].as_str().unwrap(),
+                r["Name"].as_str().unwrap(),
+                r["Path"].as_str().unwrap_or("-"),
+                r["RunCount"],
+                r["FocusCount"],
+                r["FocusTimeMs"],
+                r["LastRun"].as_str().unwrap_or("-"),
+                r["Format"]
             )
         })
         .collect();
@@ -9658,22 +9637,22 @@ fn registry_userassist_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["username"], "alice");
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["Username"], "alice");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
     // the {GUID} keys in their list's order (by name), each Count's values in theirs
-    assert_eq!(records[1]["guid"], "{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}");
+    assert_eq!(records[1]["GUID"], "{CEBFF5CD-ACE2-4F4F-9178-9926F41749EA}");
     assert_eq!(
-        records[1]["name_rot13"],
+        records[1]["NameRot13"],
         r"{1NP14R77-02R7-4R5Q-O744-2RO1NR5198O7}\pzq.rkr"
     );
     // the value cut short keeps its bytes
-    assert_eq!(records[3]["data_raw"], "010203");
+    assert_eq!(records[3]["DataRaw"], "010203");
     assert_eq!(
-        records[3]["problems"],
+        records[3]["Problems"],
         json!(["3 bytes: neither 72 (version 5) nor 16 (version 3)"])
     );
 }
@@ -9736,26 +9715,26 @@ fn registry_userassist_of_public_hives() {
     let welcome = records
         .iter()
         .find(|r| {
-            r["name"]
+            r["Name"]
                 .as_str()
                 .unwrap()
                 .ends_with(r"\Welcome Center.lnk")
         })
         .unwrap();
-    assert_eq!(welcome["kind"], "shortcut");
+    assert_eq!(welcome["Kind"], "shortcut");
     assert_eq!(
-        welcome["path"],
+        welcome["Path"],
         r"%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu\Programs\Accessories\Welcome Center.lnk"
     );
     assert_eq!(
         (
-            &welcome["run_count"],
-            &welcome["focus_count"],
-            &welcome["focus_time_ms"]
+            &welcome["RunCount"],
+            &welcome["FocusCount"],
+            &welcome["FocusTimeMs"]
         ),
         (&json!(14), &json!(0), &json!(14))
     );
-    assert_eq!(welcome["last_run"], "2012-04-03T22:06:58.124282300Z");
+    assert_eq!(welcome["LastRun"], "2012-04-03T22:06:58.124282300Z");
 
     // the DFIR Artifact Museum's dirty Windows 11 NTUSER.DAT, with its logs
     let w11 = dir.path().join("w11");
@@ -9768,26 +9747,26 @@ fn registry_userassist_of_public_hives() {
     assert_eq!(records.len(), 22);
     let notepad = records
         .iter()
-        .find(|r| r["name"] == "Microsoft.WindowsNotepad_8wekyb3d8bbwe!App")
+        .find(|r| r["Name"] == "Microsoft.WindowsNotepad_8wekyb3d8bbwe!App")
         .unwrap();
     assert_eq!(
         (
-            &notepad["run_count"],
-            &notepad["focus_count"],
-            &notepad["focus_time_ms"]
+            &notepad["RunCount"],
+            &notepad["FocusCount"],
+            &notepad["FocusTimeMs"]
         ),
         (&json!(16), &json!(9), &json!(83515))
     );
-    assert_eq!(notepad["last_run"], "2022-02-06T20:15:41.701Z");
+    assert_eq!(notepad["LastRun"], "2022-02-06T20:15:41.701Z");
     let cmd = records
         .iter()
-        .find(|r| r["path"] == r"%windir%\system32\cmd.exe")
+        .find(|r| r["Path"] == r"%windir%\system32\cmd.exe")
         .unwrap();
     assert_eq!(
-        (&cmd["run_count"], &cmd["focus_time_ms"]),
+        (&cmd["RunCount"], &cmd["FocusTimeMs"]),
         (&json!(0), &json!(156))
     );
-    assert!(records.iter().all(|r| r["problems"] == json!([])));
+    assert!(records.iter().all(|r| r["Problems"] == json!([])));
 }
 
 #[test]
@@ -9877,8 +9856,8 @@ fn registry_userassist_no_encrypt_and_corrupt_times() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     let records = jsonl_records(&r.stdout);
     assert_eq!(records.len(), 1);
-    assert_eq!(records[0]["name"], r"P:\Gbbyf\cnlybnq.rkr");
-    assert_eq!(records[0]["problems"], json!([no_encrypt]));
+    assert_eq!(records[0]["Name"], r"P:\Gbbyf\cnlybnq.rkr");
+    assert_eq!(records[0]["Problems"], json!([no_encrypt]));
     // with the records on stdout, the hive's warning goes to stderr
     assert!(r.stderr.contains("NoEncrypt is 1"), "{}", r.stderr);
     let out = dir.path().join("plain.csv");
@@ -9920,14 +9899,14 @@ fn registry_userassist_no_encrypt_and_corrupt_times() {
     let records = userassist_read(&["-f", hive.to_str().unwrap()]);
     assert_eq!(records.len(), 22);
     for r in &records[..21] {
-        assert!(r["last_run"].is_null());
+        assert!(r["LastRun"].is_null());
         assert_eq!(
-            r["problems"],
+            r["Problems"],
             json!(["last run FILETIME 0xffffffffffffffff is past 9999"])
         );
-        assert_eq!(r["data_raw"].as_str().unwrap().len(), 144);
+        assert_eq!(r["DataRaw"].as_str().unwrap().len(), 144);
     }
-    assert_eq!(records[21]["last_run"], "2022-02-08T21:03:52Z");
+    assert_eq!(records[21]["LastRun"], "2022-02-08T21:03:52Z");
     let out = dir.path().join("corrupt.csv");
     let r = run(&[
         "parse-registry",
@@ -10068,13 +10047,13 @@ fn registry_usb_duplicate_user_names_preserve_each_source_hive() {
         sources.push(ntuser.to_string_lossy().to_string());
     }
     let records = usb_read(&["-f", dir.path().join("SYSTEM").to_str().unwrap()]);
-    let volume = records.iter().find(|r| r["volume_guid"] == guid).unwrap();
-    let users = volume["users"].as_array().unwrap();
+    let volume = records.iter().find(|r| r["VolumeGUID"] == guid).unwrap();
+    let users = volume["Users"].as_array().unwrap();
     assert_eq!(users.len(), 2);
-    assert!(users.iter().all(|u| u["username"] == "alice"));
+    assert!(users.iter().all(|u| u["Username"] == "alice"));
     let paths: std::collections::BTreeSet<_> = users
         .iter()
-        .map(|u| u["source_path"].as_str().unwrap().to_owned())
+        .map(|u| u["SourcePath"].as_str().unwrap().to_owned())
         .collect();
     assert_eq!(paths, sources.into_iter().collect());
 }
@@ -10091,11 +10070,11 @@ fn registry_usb_does_not_discover_user_hives_through_external_symlinks() {
     std::os::unix::fs::symlink(outside.path(), &link).unwrap();
     let rows = usb_read(&["-d", dir.path().to_str().unwrap()]);
     assert!(
-        !rows.iter().any(|r| r["users"]
+        !rows.iter().any(|r| r["Users"]
             .as_array()
             .unwrap()
             .iter()
-            .any(|u| u["source_path"]
+            .any(|u| u["SourcePath"]
                 .as_str()
                 .is_some_and(|p| p.contains("outside-profile"))))
     );
@@ -10110,7 +10089,7 @@ const BAM_COLUMNS: [&str; 18] = [
     "ControlSet",
     "IsCurrentControlSet",
     "Moderator",
-    "UserSid",
+    "UserSID",
     "UserName",
     "UserNameSource",
     "Program",
@@ -10238,13 +10217,13 @@ fn registry_bam_of_a_collection() {
         .map(|r| {
             format!(
                 "{} {} {} ({}) {} | {} | {}",
-                r["moderator"].as_str().unwrap(),
-                r["user_sid"].as_str().unwrap(),
-                r["user_name"].as_str().unwrap_or("-"),
-                r["user_name_source"].as_str().unwrap_or("-"),
-                r["program"].as_str().unwrap(),
-                r["path"].as_str().unwrap_or("-"),
-                r["last_run"].as_str().unwrap_or("-"),
+                r["Moderator"].as_str().unwrap(),
+                r["UserSID"].as_str().unwrap(),
+                r["UserName"].as_str().unwrap_or("-"),
+                r["UserNameSource"].as_str().unwrap_or("-"),
+                r["Program"].as_str().unwrap(),
+                r["Path"].as_str().unwrap_or("-"),
+                r["LastRun"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -10259,29 +10238,29 @@ fn registry_bam_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["control_set"], "ControlSet001");
-        assert_eq!(r["is_current_control_set"], true);
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["ControlSet"], "ControlSet001");
+        assert_eq!(r["IsCurrentControlSet"], true);
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
-    assert_eq!(records[1]["device_path"], r"\Device\HarddiskVolume3");
-    assert_eq!(records[2]["device_path"], Value::Null);
+    assert_eq!(records[1]["DevicePath"], r"\Device\HarddiskVolume3");
+    assert_eq!(records[2]["DevicePath"], Value::Null);
     assert_eq!(
-        records[1]["key_path"],
+        records[1]["KeyPath"],
         r"ControlSet001\Services\bam\State\UserSettings\S-1-5-21-1-2-3-1001"
     );
     assert_eq!(
-        records[4]["key_path"],
+        records[4]["KeyPath"],
         r"ControlSet001\Services\dam\State\UserSettings\S-1-5-21-1-2-3-1001"
     );
     // the value cut short keeps its bytes, and no time is guessed
-    assert_eq!(records[3]["data_raw"], "010203");
+    assert_eq!(records[3]["DataRaw"], "010203");
     assert_eq!(
-        records[3]["problems"],
+        records[3]["Problems"],
         json!(["3 data bytes, fewer than the 8 of a time it last ran"])
     );
-    assert_eq!(records[1]["data_raw"], Value::Null);
+    assert_eq!(records[1]["DataRaw"], Value::Null);
 
     // every control set: the domain administrator's entry in ControlSet002's older layout, named
     // from its profile folder
@@ -10290,10 +10269,10 @@ fn registry_bam_of_a_collection() {
     let old = &records[5];
     assert_eq!(
         (
-            &old["control_set"],
-            &old["is_current_control_set"],
-            &old["user_name"],
-            &old["key_path"]
+            &old["ControlSet"],
+            &old["IsCurrentControlSet"],
+            &old["UserName"],
+            &old["KeyPath"]
         ),
         (
             &json!("ControlSet002"),
@@ -10302,7 +10281,7 @@ fn registry_bam_of_a_collection() {
             &json!(r"ControlSet002\Services\bam\UserSettings\S-1-5-21-9-9-9-500")
         )
     );
-    assert_eq!(old["device_path"], r"\Device\HarddiskVolume2");
+    assert_eq!(old["DevicePath"], r"\Device\HarddiskVolume2");
 }
 
 #[test]
@@ -10364,14 +10343,14 @@ fn registry_bam_of_public_hives() {
     unpack_registry("rathbun_w11", &["SAM"], &config);
     let records = bam_read(&["-f", config.join("SYSTEM").to_str().unwrap()]);
     assert_eq!(records.len(), 19);
-    assert!(records.iter().all(|r| r["problems"] == json!([])
-        && r["moderator"] == "bam"
-        && r["control_set"] == "ControlSet001"));
+    assert!(records.iter().all(|r| r["Problems"] == json!([])
+        && r["Moderator"] == "bam"
+        && r["ControlSet"] == "ControlSet001"));
     let named = |sid_end: &str| {
         records
             .iter()
-            .filter(|r| r["user_sid"].as_str().unwrap().ends_with(sid_end))
-            .map(|r| format!("{} {}", r["user_name"], r["user_name_source"]))
+            .filter(|r| r["UserSID"].as_str().unwrap().ends_with(sid_end))
+            .map(|r| format!("{} {}", r["UserName"], r["UserNameSource"]))
             .collect::<std::collections::BTreeSet<_>>()
     };
     assert_eq!(
@@ -10386,15 +10365,15 @@ fn registry_bam_of_public_hives() {
     );
     let cmd = records
         .iter()
-        .find(|r| r["path"] == r"\Windows\System32\cmd.exe")
+        .find(|r| r["Path"] == r"\Windows\System32\cmd.exe")
         .unwrap();
-    assert_eq!(cmd["device_path"], r"\Device\HarddiskVolume3");
-    assert_eq!(cmd["last_run"], "2022-02-07T07:38:40.992105700Z");
-    assert_eq!(cmd["transaction_log_status"], "replayed");
+    assert_eq!(cmd["DevicePath"], r"\Device\HarddiskVolume3");
+    assert_eq!(cmd["LastRun"], "2022-02-07T07:38:40.992105700Z");
+    assert_eq!(cmd["TransactionLogStatus"], "replayed");
     assert_eq!(
         records
             .iter()
-            .filter(|r| r["device_path"] == Value::Null)
+            .filter(|r| r["DevicePath"] == Value::Null)
             .count(),
         8
     );
@@ -10458,16 +10437,16 @@ fn registry_bam_preserves_out_of_range_times_and_rejects_wrong_hive_types() {
     std::fs::write(&system, &bytes).unwrap();
     let rows = bam_read(&["-f", system.to_str().unwrap()]);
     assert_eq!(rows.len(), 1);
-    assert!(rows[0]["last_run"].is_null());
+    assert!(rows[0]["LastRun"].is_null());
     assert_eq!(
-        rows[0]["data_raw"],
+        rows[0]["DataRaw"],
         bam_data(u64::MAX)
             .iter()
             .map(|b| format!("{b:02x}"))
             .collect::<String>()
     );
     assert!(
-        rows[0]["problems"]
+        rows[0]["Problems"]
             .as_array()
             .unwrap()
             .iter()
@@ -10542,23 +10521,23 @@ fn registry_bam_recent_summary_keeps_identical_activity_on_distinct_hosts() {
 const SHELLBAGS_COLUMNS: [&str; 26] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "HiveType",
     "BagKey",
-    "MruPosition",
+    "MRU-Position",
     "IsMostRecentInParent",
     "NodeSlot",
     "Path",
     "ItemType",
     "ItemClass",
     "ItemName",
-    "Guid",
+    "GUID",
     "ItemModifiedUTC",
     "ItemCreatedUTC",
     "ItemAccessedUTC",
-    "MftEntry",
-    "MftSequence",
+    "MFT-Entry",
+    "MFT-Sequence",
     "ExtensionBlocks",
     "KeyLastWrittenUTC",
     "ParentKeyLastWrittenUTC",
@@ -10610,31 +10589,31 @@ fn registry_shellbags_of_a_public_hive() {
     assert_eq!(
         records
             .iter()
-            .filter(|r| r["transaction_log_status"] == "replayed")
+            .filter(|r| r["TransactionLogStatus"] == "replayed")
             .count(),
         24
     );
     for r in &records {
-        assert_eq!(r["username"], "jcloudy");
+        assert_eq!(r["Username"], "jcloudy");
         assert_eq!(
-            r["user_sid"],
+            r["UserSID"],
             "S-1-5-21-2734969515-1644526556-1039763013-1001"
         );
-        assert_eq!(r["hive_type"], "UsrClass.dat");
-        assert_eq!(r["source_path"], hive.to_str().unwrap());
-        assert_eq!(r["problems"], json!([]));
+        assert_eq!(r["HiveType"], "UsrClass.dat");
+        assert_eq!(r["SourcePath"], hive.to_str().unwrap());
+        assert_eq!(r["Problems"], json!([]));
     }
     let at = |key: &str| {
         records
             .iter()
-            .find(|r| r["bag_key"] == format!(r"{BAG_MRU}\{key}"))
+            .find(|r| r["BagKey"] == format!(r"{BAG_MRU}\{key}"))
             .unwrap()
     };
     // This PC, opened last: its parent key's time dates it.
     let this_pc = &records[0];
-    assert_eq!(this_pc["bag_key"], format!(r"{BAG_MRU}\4"));
+    assert_eq!(this_pc["BagKey"], format!(r"{BAG_MRU}\4"));
     assert_eq!(
-        (&this_pc["path"], &this_pc["item_type"], &this_pc["guid"]),
+        (&this_pc["Path"], &this_pc["ItemType"], &this_pc["GUID"]),
         (
             &json!("This PC"),
             &json!("root_folder"),
@@ -10643,32 +10622,32 @@ fn registry_shellbags_of_a_public_hive() {
     );
     assert_eq!(
         (
-            &this_pc["mru_position"],
-            &this_pc["is_most_recent_in_parent"],
-            &this_pc["node_slot"]
+            &this_pc["MRU-Position"],
+            &this_pc["IsMostRecentInParent"],
+            &this_pc["NodeSlot"]
         ),
         (&json!(0), &json!(true), &json!(7))
     );
     assert_eq!(
-        this_pc["parent_key_last_written"],
+        this_pc["ParentKeyLastWritten"],
         "2018-04-06T12:42:02.778956500Z"
     );
     // A folder: its long name, FAT times and NTFS reference from its shell item.
     let box_sync = at(r"4\3\0\0\3");
-    assert_eq!(box_sync["path"], r"This PC\C:\Users\jcloudy\Box Sync");
+    assert_eq!(box_sync["Path"], r"This PC\C:\Users\jcloudy\Box Sync");
     assert_eq!(
         (
-            &box_sync["item_type"],
-            &box_sync["item_class"],
-            &box_sync["mru_position"]
+            &box_sync["ItemType"],
+            &box_sync["ItemClass"],
+            &box_sync["MRU-Position"]
         ),
         (&json!("directory"), &json!("0x31"), &json!(1))
     );
     assert_eq!(
         (
-            &box_sync["item_modified"],
-            &box_sync["item_created"],
-            &box_sync["item_accessed"]
+            &box_sync["ItemModified"],
+            &box_sync["ItemCreated"],
+            &box_sync["ItemAccessed"]
         ),
         (
             &json!("2018-04-05T02:11:16Z"),
@@ -10678,23 +10657,20 @@ fn registry_shellbags_of_a_public_hive() {
     );
     assert_eq!(
         (
-            &box_sync["mft_entry"],
-            &box_sync["mft_sequence"],
-            &box_sync["extension_blocks"]
+            &box_sync["MFT-Entry"],
+            &box_sync["MFT-Sequence"],
+            &box_sync["ExtensionBlocks"]
         ),
         (&json!(140782), &json!(2), &json!(1))
     );
-    assert_eq!(
-        box_sync["key_last_written"],
-        "2018-04-05T02:12:11.004647700Z"
-    );
-    assert_eq!(box_sync["transaction_log_status"], "unchanged");
-    assert!(box_sync["data_raw"].is_null());
+    assert_eq!(box_sync["KeyLastWritten"], "2018-04-05T02:12:11.004647700Z");
+    assert_eq!(box_sync["TransactionLogStatus"], "unchanged");
+    assert!(box_sync["DataRaw"].is_null());
     // Removable drives (D: in the hive, F: only in its logs) and search results.
     for (key, name) in [("1", "D:"), ("10", "F:")] {
         let drive = at(key);
         assert_eq!(
-            (&drive["path"], &drive["item_type"], &drive["guid"]),
+            (&drive["Path"], &drive["ItemType"], &drive["GUID"]),
             (
                 &json!(name),
                 &json!("volume"),
@@ -10702,10 +10678,10 @@ fn registry_shellbags_of_a_public_hive() {
             )
         );
     }
-    assert_eq!(at(r"1\0\0\0")["path"], r"D:\AKMonitor\logs\pic");
+    assert_eq!(at(r"1\0\0\0")["Path"], r"D:\AKMonitor\logs\pic");
     let search = at("3");
     assert_eq!(
-        (&search["path"], &search["item_type"]),
+        (&search["Path"], &search["ItemType"]),
         (&json!("Search Folder"), &json!("property_view"))
     );
 
@@ -10715,7 +10691,7 @@ fn registry_shellbags_of_a_public_hive() {
     assert!(
         records
             .iter()
-            .all(|r| r["transaction_log_status"] == "not_applied")
+            .all(|r| r["TransactionLogStatus"] == "not_applied")
     );
 }
 
@@ -10809,11 +10785,11 @@ fn registry_shellbags_of_windows_xp_and_damage() {
         .map(|r| {
             format!(
                 "{} | {} | {} | {} | {}",
-                r["bag_key"].as_str().unwrap(),
-                r["path"].as_str().unwrap(),
-                r["item_type"].as_str().unwrap_or("-"),
-                r["node_slot"],
-                r["problems"]
+                r["BagKey"].as_str().unwrap(),
+                r["Path"].as_str().unwrap(),
+                r["ItemType"].as_str().unwrap_or("-"),
+                r["NodeSlot"],
+                r["Problems"]
             )
         })
         .collect();
@@ -10832,11 +10808,11 @@ fn registry_shellbags_of_windows_xp_and_damage() {
     assert!(
         records
             .iter()
-            .all(|r| r["username"] == "bob" && r["hive_type"] == "NTUSER.DAT")
+            .all(|r| r["Username"] == "bob" && r["HiveType"] == "NTUSER.DAT")
     );
     // the unknown item keeps its bytes
-    assert_eq!(records[2]["data_raw"], "0600990102030000");
-    assert_eq!(records[2]["item_class"], "0x99");
+    assert_eq!(records[2]["DataRaw"], "0600990102030000");
+    assert_eq!(records[2]["ItemClass"], "0x99");
 
     // a SAM hive is not read
     unpack_registry("regipy", &["SAM"], dir.path());
@@ -10906,8 +10882,8 @@ fn registry_shellbags_never_guesses_an_ambiguous_or_backup_profile_sid() {
         std::fs::write(config.join("SOFTWARE"), reg_tree("ROOT", &values)).unwrap();
         let rows = shellbags_read(&["-f", ntuser.to_str().unwrap()]);
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0]["username"], "alice");
-        assert!(rows[0]["user_sid"].is_null(), "{rows:?}");
+        assert_eq!(rows[0]["Username"], "alice");
+        assert!(rows[0]["UserSID"].is_null(), "{rows:?}");
     }
 }
 
@@ -10917,7 +10893,7 @@ fn registry_shellbags_never_guesses_an_ambiguous_or_backup_profile_sid() {
 const MUICACHE_COLUMNS: [&str; 15] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "HiveType",
     "Path",
@@ -11063,12 +11039,12 @@ fn registry_muicache_of_a_collection() {
         .map(|r| {
             format!(
                 "{} {} {} | {} | {} | {}",
-                r["username"].as_str().unwrap(),
-                r["user_sid"].as_str().unwrap(),
-                r["hive_type"].as_str().unwrap(),
-                r["path"].as_str().unwrap(),
-                r["friendly_app_name"].as_str().unwrap_or("-"),
-                r["application_company"].as_str().unwrap_or("-"),
+                r["Username"].as_str().unwrap(),
+                r["UserSID"].as_str().unwrap(),
+                r["HiveType"].as_str().unwrap(),
+                r["Path"].as_str().unwrap(),
+                r["FriendlyAppName"].as_str().unwrap_or("-"),
+                r["ApplicationCompany"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -11083,26 +11059,26 @@ fn registry_muicache_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
     assert_eq!(
-        records[0]["key_path"],
+        records[0]["KeyPath"],
         r"Software\Microsoft\Windows\ShellNoRoam\MUICache"
     );
     assert_eq!(
-        records[1]["key_path"],
+        records[1]["KeyPath"],
         r"Local Settings\Software\Microsoft\Windows\Shell\MuiCache"
     );
     // the value that isn't a string keeps its bytes
-    assert_eq!(records[4]["friendly_app_name_raw"], "010203");
-    assert_eq!(records[4]["application_company_raw"], Value::Null);
+    assert_eq!(records[4]["FriendlyAppNameRaw"], "010203");
+    assert_eq!(records[4]["ApplicationCompanyRaw"], Value::Null);
     assert_eq!(
-        records[4]["problems"],
+        records[4]["Problems"],
         json!(["FriendlyAppName: is REG_BINARY, not a string"])
     );
-    assert!(records[..4].iter().all(|r| r["problems"] == json!([])));
+    assert!(records[..4].iter().all(|r| r["Problems"] == json!([])));
 }
 
 #[test]
@@ -11175,22 +11151,22 @@ fn registry_muicache_of_public_hives() {
     let records = muicache_read(&["-d", dir]);
     assert_eq!(records.len(), 12);
     for r in &records {
-        assert_eq!(r["host"], "GOLDPAPERW11");
-        assert_eq!(r["username"], "AndrewRathbun");
+        assert_eq!(r["Host"], "GOLDPAPERW11");
+        assert_eq!(r["Username"], "AndrewRathbun");
         assert_eq!(
-            r["user_sid"],
+            r["UserSID"],
             "S-1-5-21-4063860464-1508573791-632671957-1001"
         );
-        assert_eq!(r["hive_type"], "UsrClass.dat");
-        assert_eq!(r["key_last_written"], "2022-02-07T05:41:02.220813100Z");
-        assert_eq!(r["transaction_log_status"], "unchanged");
-        assert_eq!(r["problems"], json!([]));
+        assert_eq!(r["HiveType"], "UsrClass.dat");
+        assert_eq!(r["KeyLastWritten"], "2022-02-07T05:41:02.220813100Z");
+        assert_eq!(r["TransactionLogStatus"], "unchanged");
+        assert_eq!(r["Problems"], json!([]));
     }
     let program = |path: &str| {
-        let r = records.iter().find(|r| r["path"] == path).unwrap();
+        let r = records.iter().find(|r| r["Path"] == path).unwrap();
         (
-            r["friendly_app_name"].as_str().unwrap(),
-            r["application_company"].as_str().unwrap(),
+            r["FriendlyAppName"].as_str().unwrap(),
+            r["ApplicationCompany"].as_str().unwrap(),
         )
     };
     assert_eq!(
@@ -11332,7 +11308,7 @@ const INSTALLED_PROGRAMS_COLUMNS: [&str; 30] = [
     "SourcePath",
     "HiveType",
     "Username",
-    "UserSid",
+    "UserSID",
     "Source",
     "Scope",
     "Name",
@@ -11346,12 +11322,12 @@ const INSTALLED_PROGRAMS_COLUMNS: [&str; 30] = [
     "Program",
     "UninstallCommand",
     "QuietUninstallCommand",
-    "SizeKb",
+    "SizeKB",
     "SystemComponent",
     "WindowsInstaller",
     "ProductCode",
     "Architecture",
-    "Wow64",
+    "WOW64",
     "Details",
     "KeyPath",
     "DataRaw",
@@ -11501,15 +11477,15 @@ fn registry_installed_programs_of_a_collection() {
         .map(|r| {
             format!(
                 "{} {} {} {} | {} {} | {} | {} | {}",
-                r["hive_type"].as_str().unwrap(),
-                r["source"].as_str().unwrap(),
-                r["scope"].as_str().unwrap(),
-                r["username"].as_str().unwrap_or("-"),
-                r["name"].as_str().unwrap_or("-"),
-                r["version"].as_str().unwrap_or("-"),
-                r["install_date"].as_str().unwrap_or("-"),
-                r["install_location"].as_str().unwrap_or("-"),
-                r["architecture"].as_str().unwrap_or("-"),
+                r["HiveType"].as_str().unwrap(),
+                r["Source"].as_str().unwrap(),
+                r["Scope"].as_str().unwrap(),
+                r["Username"].as_str().unwrap_or("-"),
+                r["Name"].as_str().unwrap_or("-"),
+                r["Version"].as_str().unwrap_or("-"),
+                r["InstallDate"].as_str().unwrap_or("-"),
+                r["InstallLocation"].as_str().unwrap_or("-"),
+                r["Architecture"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -11528,17 +11504,17 @@ fn registry_installed_programs_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
     let agent = &records[3];
     assert_eq!(
         (
-            &agent["product_code"],
-            &agent["size_kb"],
-            &agent["windows_installer"],
-            &agent["publisher"]
+            &agent["ProductCode"],
+            &agent["SizeKB"],
+            &agent["WindowsInstaller"],
+            &agent["Publisher"]
         ),
         (
             &json!("{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}"),
@@ -11547,42 +11523,42 @@ fn registry_installed_programs_of_a_collection() {
             &json!("Example Corp")
         )
     );
-    assert_eq!(agent["user_sid"], Value::Null);
-    assert_eq!(agent["details"], json!({}));
-    assert_eq!(agent["data_raw"], json!({}));
+    assert_eq!(agent["UserSID"], Value::Null);
+    assert_eq!(agent["Details"], json!({}));
+    assert_eq!(agent["DataRaw"], json!({}));
     // a date written otherwise is kept as written; a size written as text keeps its bytes
     let tool = &records[2];
-    assert_eq!(tool["install_date_raw"], "2022-02-08");
-    assert_eq!(tool["details"], json!({"Inno Setup: User": "alice"}));
-    assert_eq!(tool["data_raw"], json!({"EstimatedSize": "310032000000"}));
+    assert_eq!(tool["InstallDateRaw"], "2022-02-08");
+    assert_eq!(tool["Details"], json!({"Inno Setup: User": "alice"}));
+    assert_eq!(tool["DataRaw"], json!({"EstimatedSize": "310032000000"}));
     assert_eq!(
-        tool["problems"],
+        tool["Problems"],
         json!(["EstimatedSize: is REG_SZ, not REG_DWORD"])
     );
     assert_eq!(
-        (&records[4]["wow64"], &records[4]["system_component"]),
+        (&records[4]["WOW64"], &records[4]["SystemComponent"]),
         (&json!(true), &json!(true))
     );
     let product = &records[5];
-    assert_eq!(product["install_source"], r"C:\Users\alice\Downloads\");
+    assert_eq!(product["InstallSource"], r"C:\Users\alice\Downloads\");
     assert_eq!(
-        product["product_code"],
+        product["ProductCode"],
         "{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}"
     );
-    assert_eq!(product["details"], json!({"PackageName": "agent.msi"}));
-    assert_eq!(records[6]["program"], r"C:\Tool\tool.exe");
+    assert_eq!(product["Details"], json!({"PackageName": "agent.msi"}));
+    assert_eq!(records[6]["Program"], r"C:\Tool\tool.exe");
     // a package SOFTWARE lists for alice, named from its ProfileList; her own hive's records
     // take her SID from it too
     for r in [&records[0], &records[1], &records[7]] {
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
     }
     assert_eq!(
-        records[7]["details"],
+        records[7]["Details"],
         json!({"List": "User", "PublisherId": "abcdefghijkmn"})
     );
-    assert_eq!(records[1]["details"], json!({"Flags": "0xf"}));
+    assert_eq!(records[1]["Details"], json!({"Flags": "0xf"}));
     assert_eq!(
-        records[1]["key_path"],
+        records[1]["KeyPath"],
         r"Software\Microsoft\Windows\CurrentVersion\Lxss\{70E495E1-D4D3-4B8D-BBE8-79FDC01E50EA}"
     );
 }
@@ -11628,9 +11604,9 @@ fn registry_installed_programs_csv_and_summary() {
     assert_eq!(rows[2]["Details"], "Inno Setup: User=alice");
     assert_eq!(rows[2]["DataRaw"], "EstimatedSize=310032000000");
     assert_eq!(rows[2]["InstallDateRaw"], "2022-02-08");
-    assert_eq!(rows[3]["SizeKb"], "2048");
+    assert_eq!(rows[3]["SizeKB"], "2048");
     assert_eq!(rows[3]["WindowsInstaller"], "True");
-    assert_eq!(rows[3]["Wow64"], "False");
+    assert_eq!(rows[3]["WOW64"], "False");
     assert_eq!(rows[4]["Architecture"], "x86");
     assert_eq!(rows[0]["Username"], "alice");
     assert_eq!(rows[1]["Details"], "Flags=0xf");
@@ -11648,7 +11624,7 @@ fn registry_installed_programs_of_public_hives() {
     let counts = records
         .iter()
         .fold(std::collections::BTreeMap::new(), |mut m, r| {
-            *m.entry(r["source"].as_str().unwrap().to_owned())
+            *m.entry(r["Source"].as_str().unwrap().to_owned())
                 .or_insert(0) += 1;
             m
         });
@@ -11662,33 +11638,29 @@ fn registry_installed_programs_of_public_hives() {
     );
     let wsl: Vec<String> = records
         .iter()
-        .filter(|r| r["source"] == "wsl")
+        .filter(|r| r["Source"] == "wsl")
         .map(|r| {
             format!(
                 "{} {} {}",
-                r["name"].as_str().unwrap(),
-                r["version"].as_str().unwrap(),
-                r["details"]["Default"].as_str().unwrap_or("-")
+                r["Name"].as_str().unwrap(),
+                r["Version"].as_str().unwrap(),
+                r["Details"]["Default"].as_str().unwrap_or("-")
             )
         })
         .collect();
     assert_eq!(wsl, ["Debian 1 -", "Ubuntu 1 -", "Ubuntu-20.04 1 true"]);
     let onedrive = &records[0];
     assert_eq!(
-        (
-            &onedrive["name"],
-            &onedrive["version"],
-            &onedrive["size_kb"]
-        ),
+        (&onedrive["Name"], &onedrive["Version"], &onedrive["SizeKB"]),
         (
             &json!("Microsoft OneDrive"),
             &json!("21.220.1024.0005"),
             &json!(174_061)
         )
     );
-    assert!(records.iter().all(|r| r["problems"] == json!([])
-        && r["scope"] == "user"
-        && r["hive_type"] == "NTUSER.DAT"));
+    assert!(records.iter().all(|r| r["Problems"] == json!([])
+        && r["Scope"] == "user"
+        && r["HiveType"] == "NTUSER.DAT"));
 
     // the DFIR Artifact Museum's dirty Windows 11 NTUSER.DAT, with its logs
     let dir = tempfile::tempdir().unwrap();
@@ -11700,7 +11672,7 @@ fn registry_installed_programs_of_public_hives() {
     let records = installed_programs_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
     let names: Vec<&str> = records
         .iter()
-        .map(|r| r["name"].as_str().unwrap())
+        .map(|r| r["Name"].as_str().unwrap())
         .collect();
     assert_eq!(
         names,
@@ -11713,19 +11685,19 @@ fn registry_installed_programs_of_public_hives() {
             "wt.exe"
         ]
     );
-    assert_eq!(records[0]["version"], "22.002.0103.0004");
+    assert_eq!(records[0]["Version"], "22.002.0103.0004");
     assert_eq!(
-        records[0]["key_last_written"],
+        records[0]["KeyLastWritten"],
         "2022-02-06T21:36:22.847509700Z"
     );
     assert_eq!(
-        records[5]["program"],
+        records[5]["Program"],
         r"C:\Program Files\WindowsApps\Microsoft.WindowsTerminal_1.11.3471.0_x64__8wekyb3d8bbwe\wt.exe"
     );
     assert!(
         records
             .iter()
-            .all(|r| r["transaction_log_status"] == "unchanged" && r["problems"] == json!([]))
+            .all(|r| r["TransactionLogStatus"] == "unchanged" && r["Problems"] == json!([]))
     );
 }
 
@@ -11808,8 +11780,8 @@ fn registry_installed_programs_resolves_profiles_with_trailing_separators() {
         .unwrap();
         let rows = installed_programs_read(&["-f", hive.to_str().unwrap()]);
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0]["username"], "alice", "{folder}");
-        assert_eq!(rows[0]["user_sid"], sid);
+        assert_eq!(rows[0]["Username"], "alice", "{folder}");
+        assert_eq!(rows[0]["UserSID"], sid);
     }
 }
 
@@ -11859,7 +11831,7 @@ fn registry_installed_programs_data_stdout_reports_hive_damage_on_stderr() {
         .map(|line| serde_json::from_str::<Value>(line).unwrap())
         .collect::<Vec<_>>();
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["name"], "Good program");
+    assert_eq!(rows[0]["Name"], "Good program");
     assert!(result.stderr.contains("Uninstall"), "{}", result.stderr);
 }
 
@@ -11869,11 +11841,11 @@ fn registry_installed_programs_data_stdout_reports_hive_damage_on_stderr() {
 const OPENSAVEMRU_COLUMNS: [&str; 24] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "List",
     "Extension",
-    "MruPosition",
+    "MRU-Position",
     "IsMostRecent",
     "ValueName",
     "Program",
@@ -11882,8 +11854,8 @@ const OPENSAVEMRU_COLUMNS: [&str; 24] = [
     "ItemModifiedUTC",
     "ItemCreatedUTC",
     "ItemAccessedUTC",
-    "MftEntry",
-    "MftSequence",
+    "MFT-Entry",
+    "MFT-Sequence",
     "LastUsedUTC",
     "KeyPath",
     "KeyLastWrittenUTC",
@@ -12126,14 +12098,14 @@ fn registry_opensavemru_of_a_collection() {
         .map(|r| {
             format!(
                 "{} {} {} {} {} | {} | {} | {}",
-                text(&r["list"]),
-                text(&r["extension"]),
-                r["mru_position"],
-                text(&r["value_name"]),
-                r["is_most_recent"],
-                text(&r["program"]),
-                text(&r["path"]),
-                text(&r["item_type"]),
+                text(&r["List"]),
+                text(&r["Extension"]),
+                r["MRU-Position"],
+                text(&r["ValueName"]),
+                r["IsMostRecent"],
+                text(&r["Program"]),
+                text(&r["Path"]),
+                text(&r["ItemType"]),
             )
         })
         .collect();
@@ -12154,28 +12126,28 @@ fn registry_opensavemru_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["username"], "alice");
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["Username"], "alice");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
         // the key's time dates its most recent entry only
-        let last_used = if r["is_most_recent"] == true {
+        let last_used = if r["IsMostRecent"] == true {
             json!("2022-02-08T21:03:52Z")
         } else {
             Value::Null
         };
-        assert_eq!(r["last_used"], last_used, "{r}");
+        assert_eq!(r["LastUsed"], last_used, "{r}");
     }
     // the file's own times and NTFS file reference, from its shell item
     let report = &records[0];
     assert_eq!(
         (
-            &report["item_modified"],
-            &report["item_created"],
-            &report["item_accessed"],
-            &report["mft_entry"],
-            &report["mft_sequence"]
+            &report["ItemModified"],
+            &report["ItemCreated"],
+            &report["ItemAccessed"],
+            &report["MFT-Entry"],
+            &report["MFT-Sequence"]
         ),
         (
             &json!("2022-02-08T12:00:00Z"),
@@ -12185,19 +12157,19 @@ fn registry_opensavemru_of_a_collection() {
             &json!(3)
         )
     );
-    assert_eq!(report["key_path"], format!(r"{COMDLG32}\OpenSavePidlMRU\*"));
-    assert!(report["data_raw"].is_null());
-    assert_eq!(records[4]["mft_entry"], 512);
+    assert_eq!(report["KeyPath"], format!(r"{COMDLG32}\OpenSavePidlMRU\*"));
+    assert!(report["DataRaw"].is_null());
+    assert_eq!(records[4]["MFT-Entry"], 512);
     // an item of an unknown type keeps the list's bytes; a value cut short keeps its own
-    let odd = records[2]["data_raw"].as_str().unwrap();
+    let odd = records[2]["DataRaw"].as_str().unwrap();
     assert!(
         odd.starts_with("14001f50") && odd.ends_with("08005201020304050000"),
         "{odd}"
     );
-    assert_eq!(records[2]["problems"], json!([]));
-    assert_eq!(records[6]["data_raw"], "630075007400");
+    assert_eq!(records[2]["Problems"], json!([]));
+    assert_eq!(records[6]["DataRaw"], "630075007400");
     assert_eq!(
-        records[6]["problems"],
+        records[6]["Problems"],
         json!(["its program's name has no NUL: the data is cut short"])
     );
 }
@@ -12267,12 +12239,12 @@ fn registry_opensavemru_of_a_public_hive() {
         .map(|r| {
             format!(
                 "{} {} {} {} | {} | {}",
-                r["list"].as_str().unwrap(),
-                r["extension"].as_str().unwrap_or("-"),
-                r["mru_position"],
-                r["value_name"].as_str().unwrap(),
-                r["program"].as_str().unwrap_or("-"),
-                r["path"].as_str().unwrap_or("-"),
+                r["List"].as_str().unwrap(),
+                r["Extension"].as_str().unwrap_or("-"),
+                r["MRU-Position"],
+                r["ValueName"].as_str().unwrap(),
+                r["Program"].as_str().unwrap_or("-"),
+                r["Path"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -12288,13 +12260,13 @@ fn registry_opensavemru_of_a_public_hive() {
             r"FirstFolder - 0 0 | C:\Program Files\Internet Explorer\iexplore.exe | -",
         ]
     );
-    assert_eq!(records[0]["username"], "bperry");
-    assert_eq!(records[0]["item_type"], "file");
-    assert_eq!(records[0]["last_used"], "2016-10-09T19:59:17.734597Z");
-    assert_eq!(records[4]["item_type"], "root_folder");
-    assert!(records.iter().all(|r| r["problems"] == json!([])
-        && r["data_raw"].is_null()
-        && r["transaction_log_status"] == "clean"));
+    assert_eq!(records[0]["Username"], "bperry");
+    assert_eq!(records[0]["ItemType"], "file");
+    assert_eq!(records[0]["LastUsed"], "2016-10-09T19:59:17.734597Z");
+    assert_eq!(records[4]["ItemType"], "root_folder");
+    assert!(records.iter().all(|r| r["Problems"] == json!([])
+        && r["DataRaw"].is_null()
+        && r["TransactionLogStatus"] == "clean"));
 }
 
 #[test]
@@ -12453,15 +12425,15 @@ fn registry_opensavemru_decodes_nested_zip_items_with_their_parents() {
     let records = opensavemru_read(&["-f", hive.to_str().unwrap()]);
     assert_eq!(records.len(), 1);
     assert!(
-        records[0]["path"]
+        records[0]["Path"]
             .as_str()
             .unwrap()
             .ends_with(r"bundle.zip\docs\note.txt"),
         "{}",
         records[0]
     );
-    assert_eq!(records[0]["item_type"], "compressed_folder");
-    assert_eq!(records[0]["data_raw"], Value::Null);
+    assert_eq!(records[0]["ItemType"], "compressed_folder");
+    assert_eq!(records[0]["DataRaw"], Value::Null);
 }
 
 #[test]
@@ -12492,9 +12464,9 @@ fn registry_opensavemru_damaged_first_letter_does_not_date_the_next_file() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     let records = jsonl_records(&r.stdout);
     assert_eq!(records.len(), 1);
-    assert_eq!(records[0]["mru_position"], 1);
-    assert_eq!(records[0]["is_most_recent"], false);
-    assert_eq!(records[0]["last_used"], Value::Null);
+    assert_eq!(records[0]["MRU-Position"], 1);
+    assert_eq!(records[0]["IsMostRecent"], false);
+    assert_eq!(records[0]["LastUsed"], Value::Null);
     assert!(r.stderr.contains("not valid UTF-16"), "{}", r.stderr);
 }
 
@@ -12504,7 +12476,7 @@ fn registry_opensavemru_damaged_first_letter_does_not_date_the_next_file() {
 const REMOTE_ACCESS_COLUMNS: [&str; 25] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "Client",
     "Kind",
@@ -12512,7 +12484,7 @@ const REMOTE_ACCESS_COLUMNS: [&str; 25] = [
     "Port",
     "RemoteUsername",
     "Protocol",
-    "MruPosition",
+    "MRU-Position",
     "SessionName",
     "HostKeyType",
     "HostKeyFingerprint",
@@ -12630,20 +12602,20 @@ fn remote_access_lines(records: &[Value]) -> Vec<String> {
         .map(|r| {
             let mut line = format!(
                 "{} {} {}",
-                r["client"].as_str().unwrap(),
-                r["kind"].as_str().unwrap(),
-                r["target"].as_str().unwrap_or("-")
+                r["Client"].as_str().unwrap(),
+                r["Kind"].as_str().unwrap(),
+                r["Target"].as_str().unwrap_or("-")
             );
-            if let Some(port) = r["port"].as_u64() {
+            if let Some(port) = r["Port"].as_u64() {
                 line += &format!(":{port}");
             }
-            if let Some(user) = r["remote_username"].as_str() {
+            if let Some(user) = r["RemoteUsername"].as_str() {
                 line += &format!(" {user}");
             }
-            if let Some(n) = r["mru_position"].as_u64() {
+            if let Some(n) = r["MRU-Position"].as_u64() {
                 line += &format!(" | {n}");
             }
-            if let Some(drive) = r["drive_letter"].as_str() {
+            if let Some(drive) = r["DriveLetter"].as_str() {
                 line += &format!(" | {drive}:");
             }
             line
@@ -12672,31 +12644,31 @@ fn registry_remote_access_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["username"], "alice");
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["Username"], "alice");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
     // the damaged MRU value keeps its bytes
-    assert_eq!(records[2]["data_raw"], "010203");
+    assert_eq!(records[2]["DataRaw"], "010203");
     assert_eq!(
-        records[2]["problems"],
+        records[2]["Problems"],
         json!(["is REG_BINARY, not a string"])
     );
-    assert_eq!(records[2]["value_name"], "MRU2");
+    assert_eq!(records[2]["ValueName"], "MRU2");
     // PuTTY: the session's proxy and that it keeps the proxy's password, not the password
     let session = &records[4];
     assert_eq!(
         (
-            &session["session_name"],
-            &session["protocol"],
-            &session["password_stored"]
+            &session["SessionName"],
+            &session["Protocol"],
+            &session["PasswordStored"]
         ),
         (&json!("web server"), &json!("ssh"), &json!(true))
     );
     assert_eq!(
-        session["details"],
+        session["Details"],
         json!({
             "ProxyMethod": "3 (http)",
             "ProxyHost": "proxy.example.com",
@@ -12705,20 +12677,20 @@ fn registry_remote_access_of_a_collection() {
     );
     assert!(!session.to_string().contains("not output"));
     let key = &records[5];
-    assert_eq!(key["host_key_type"], "ssh-ed25519");
-    assert_eq!(key["host_key_fingerprint"], ED25519_FINGERPRINT);
-    assert_eq!(key["host_key"], ED25519_HOST_KEY);
-    assert_eq!(key["value_name"], "ssh-ed25519@22:203.0.113.10");
+    assert_eq!(key["HostKeyType"], "ssh-ed25519");
+    assert_eq!(key["HostKeyFingerprint"], ED25519_FINGERPRINT);
+    assert_eq!(key["HostKey"], ED25519_HOST_KEY);
+    assert_eq!(key["ValueName"], "ssh-ed25519@22:203.0.113.10");
     let winscp = &records[6];
     assert_eq!(
-        (&winscp["protocol"], &winscp["password_stored"]),
+        (&winscp["Protocol"], &winscp["PasswordStored"]),
         (&json!("sftp"), &json!(true))
     );
     assert!(!winscp.to_string().contains("A35C4E"));
-    assert_eq!(records[7]["protocol"], "Microsoft Windows Network");
-    assert_eq!(records[9]["details"], json!({"Label": "Team"}));
+    assert_eq!(records[7]["Protocol"], "Microsoft Windows Network");
+    assert_eq!(records[9]["Details"], json!({"Label": "Team"}));
     assert_eq!(
-        records[9]["key_path"],
+        records[9]["KeyPath"],
         r"Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\##fs01#share"
     );
 }
@@ -12786,7 +12758,7 @@ fn registry_remote_access_of_public_hives() {
     unpack_registry("notatin", &["win7_ntuser.dat"], &profile);
     let records = remote_access_read(&["-f", profile.join("win7_ntuser.dat").to_str().unwrap()]);
     assert_eq!(records.len(), 32);
-    let by_client = |client: &str| records.iter().filter(|r| r["client"] == client).count();
+    let by_client = |client: &str| records.iter().filter(|r| r["Client"] == client).count();
     assert_eq!(
         [
             by_client("rdp"),
@@ -12797,9 +12769,9 @@ fn registry_remote_access_of_public_hives() {
         ],
         [10, 1, 3, 11, 7]
     );
-    assert!(records.iter().all(|r| r["problems"] == json!([])
-        && r["username"] == "jmroberts"
-        && r["transaction_log_status"] == "clean"));
+    assert!(records.iter().all(|r| r["Problems"] == json!([])
+        && r["Username"] == "jmroberts"
+        && r["TransactionLogStatus"] == "clean"));
     let lines = remote_access_lines(&records);
     assert_eq!(lines[2], "rdp rdp_mru 10.150.16.30:63389 | 2");
     assert_eq!(
@@ -12807,23 +12779,23 @@ fn registry_remote_access_of_public_hives() {
         r"rdp rdp_server nyfkws0009015 strozllc.com\jmroberts"
     );
     assert_eq!(
-        records[5]["details"]["CertHash"],
+        records[5]["Details"]["CertHash"],
         "f0cab303aeef9d77871d07953bcb60dc86e0f5e0"
     );
     assert_eq!(
-        records[5]["key_last_written"],
+        records[5]["KeyLastWritten"],
         "2014-12-12T19:03:26.217191100Z"
     );
     for key in [&records[10], &records[13]] {
         assert_eq!(
-            key["host_key_fingerprint"],
+            key["HostKeyFingerprint"],
             "SHA256:NIWlL38s6iTDvDtHtTXpRipSrsGvuFRtIXjJS2JU7WQ"
         );
     }
-    assert_eq!(records[12]["session_name"], "malware@10.1.200.20");
-    assert_eq!(records[12]["password_stored"], true);
+    assert_eq!(records[12]["SessionName"], "malware@10.1.200.20");
+    assert_eq!(records[12]["PasswordStored"], true);
     assert_eq!(
-        records[12]["details"]["LocalDirectory"],
+        records[12]["Details"]["LocalDirectory"],
         r"C:\Users\jmroberts\Desktop"
     );
     assert_eq!(
@@ -12951,7 +12923,7 @@ fn registry_remote_access_keeps_password_bytes_private_in_all_stdout_formats() {
         } else {
             let records = json_documents(&r.stdout);
             assert_eq!(records.len(), 2);
-            assert!(records.iter().all(|r| r["password_stored"] == true));
+            assert!(records.iter().all(|r| r["PasswordStored"] == true));
         }
     }
 }
@@ -13153,73 +13125,73 @@ fn registry_system_info_of_a_collection() {
     assert_eq!(records.len(), 1);
     let r = &records[0];
     for (field, value) in [
-        ("host", json!("HOST1")),
-        ("computer_name", json!("HOST1")),
-        ("hostname", json!("host1")),
-        ("domain", json!("corp.example.com")),
-        ("primary_domain", json!("CORP")),
-        ("dns_domain", json!("corp.example.com")),
-        ("product_name", json!("Windows 10 Enterprise")),
-        ("edition", json!("Enterprise")),
-        ("display_version", json!("22H2")),
-        ("version", json!("10.0")),
-        ("build", json!("19045")),
-        ("ubr", json!(4170)),
-        ("install_date", json!("2022-02-01T00:00:00Z")),
-        ("registered_owner", json!("IT")),
-        ("time_zone", json!("Tokyo Standard Time")),
+        ("Host", json!("HOST1")),
+        ("ComputerName", json!("HOST1")),
+        ("Hostname", json!("host1")),
+        ("Domain", json!("corp.example.com")),
+        ("PrimaryDomain", json!("CORP")),
+        ("DNS-Domain", json!("corp.example.com")),
+        ("ProductName", json!("Windows 10 Enterprise")),
+        ("Edition", json!("Enterprise")),
+        ("DisplayVersion", json!("22H2")),
+        ("Version", json!("10.0")),
+        ("Build", json!("19045")),
+        ("Ubr", json!(4170)),
+        ("InstallDate", json!("2022-02-01T00:00:00Z")),
+        ("RegisteredOwner", json!("IT")),
+        ("TimeZone", json!("Tokyo Standard Time")),
         (
-            "time_zone_description",
+            "TimeZoneDescription",
             json!("Tokyo Standard Time, UTC+09:00; no daylight saving time"),
         ),
-        ("utc_offset", json!("UTC+09:00")),
-        ("daylight_utc_offset", Value::Null),
-        ("bias_minutes", json!(-540)),
-        ("active_bias_minutes", json!(-540)),
-        ("standard_start", Value::Null),
-        ("last_shutdown", json!("2022-02-08T21:03:52Z")),
-        ("current_control_set", json!("ControlSet001")),
-        ("processor_architecture", json!("AMD64")),
-        ("ansi_code_page", json!("932")),
-        ("last_logged_on_user", json!(r"CORP\alice")),
-        ("last_logged_on_user_sid", json!("S-1-5-21-7-8-9-1105")),
+        ("UTC-Offset", json!("UTC+09:00")),
+        ("DaylightUTC-Offset", Value::Null),
+        ("BiasMinutes", json!(-540)),
+        ("ActiveBiasMinutes", json!(-540)),
+        ("StandardStart", Value::Null),
+        ("LastShutdown", json!("2022-02-08T21:03:52Z")),
+        ("CurrentControlSet", json!("ControlSet001")),
+        ("ProcessorArchitecture", json!("AMD64")),
+        ("AnsiCodePage", json!("932")),
+        ("LastLoggedOnUser", json!(r"CORP\alice")),
+        ("LastLoggedOnUserSID", json!("S-1-5-21-7-8-9-1105")),
         // no SAM: the computer's SID from LSA's account domain
-        ("machine_sid", json!("S-1-5-21-1-2-3")),
-        ("domain_sid", json!("S-1-5-21-7-8-9")),
-        ("sam_path", Value::Null),
-        ("transaction_log_status", json!("clean")),
-        ("problems", json!([])),
+        ("MachineSID", json!("S-1-5-21-1-2-3")),
+        ("DomainSID", json!("S-1-5-21-7-8-9")),
+        ("SamPath", Value::Null),
+        ("TransactionLogStatus", json!("clean")),
+        ("Problems", json!([])),
     ] {
         assert_eq!(r[field], value, "{field}");
     }
     assert!(
-        r["source_path"]
+        r["SourcePath"]
             .as_str()
             .unwrap()
             .ends_with(&format!("config{}SYSTEM", std::path::MAIN_SEPARATOR))
     );
-    assert!(r["security_path"].as_str().unwrap().ends_with("SECURITY"));
+    assert!(r["SecurityPath"].as_str().unwrap().ends_with("SECURITY"));
     assert_eq!(
-        r["previous_versions"],
+        r["PreviousVersions"],
         json!([{
-            "key_name": "Source OS (Updated on 5/16/2019 00:55:20)",
-            "updated_on": "2019-05-16T00:55:20",
-            "product_name": "Windows 10 Pro",
-            "edition": null,
-            "display_version": "1803",
-            "build": "17134",
-            "ubr": 765,
-            "install_date": null,
-            "install_time": null,
-            "key_last_written": "2022-02-08T21:03:52Z"
+            "KeyName": "Source OS (Updated on 5/16/2019 00:55:20)",
+            "UpdatedOn": "2019-05-16T00:55:20",
+            "ProductName": "Windows 10 Pro",
+            "Edition": null,
+            "DisplayVersion": "1803",
+            "Build": "17134",
+            "Ubr": 765,
+            "InstallDate": null,
+            "InstallTime": null,
+            "KeyLastWritten": "2022-02-08T21:03:52Z"
         }])
     );
-    let profiles = r["profiles"].as_array().unwrap();
+    let profiles = r["Profiles"].as_array().unwrap();
     assert_eq!(profiles.len(), 2);
-    assert_eq!(profiles[1]["sid"], "S-1-5-21-7-8-9-1105");
-    assert_eq!(profiles[1]["path"], r"C:\Users\alice");
-    assert_eq!(profiles[1]["local_load_time"], "2022-02-08T21:03:52Z");
-    assert_eq!(profiles[1]["local_unload_time"], Value::Null);
+    assert_eq!(profiles[1]["SID"], "S-1-5-21-7-8-9-1105");
+    assert_eq!(profiles[1]["Path"], r"C:\Users\alice");
+    assert_eq!(profiles[1]["LocalLoadTime"], "2022-02-08T21:03:52Z");
+    assert_eq!(profiles[1]["LocalUnloadTime"], Value::Null);
 }
 
 #[test]
@@ -13270,9 +13242,9 @@ fn registry_system_info_csv_and_summary() {
     assert_eq!(rows.len(), 1);
     let row = &rows[0];
     assert_eq!(row["TimeZone"], "Tokyo Standard Time");
-    assert_eq!(row["UtcOffset"], "UTC+09:00");
+    assert_eq!(row["UTC-Offset"], "UTC+09:00");
     assert_eq!(row["LastShutdownUTC"], "2022-02-08T21:03:52Z");
-    assert_eq!(row["DomainSid"], "S-1-5-21-7-8-9");
+    assert_eq!(row["DomainSID"], "S-1-5-21-7-8-9");
     assert_eq!(
         row["PreviousVersions"],
         "Windows 10 Pro 1803, build 17134.765, upgraded on 2019-05-16T00:55:20"
@@ -13295,37 +13267,37 @@ fn registry_system_info_of_public_hives() {
     assert_eq!(records.len(), 1);
     let r = &records[0];
     for (field, value) in [
-        ("host", json!("GOLDPAPERW11")),
-        ("computer_name", json!("GOLDPAPERW11")),
-        ("hostname", json!("GoldPaperW11")),
-        ("domain", Value::Null),
-        ("time_zone", json!("Eastern Standard Time")),
-        ("utc_offset", json!("UTC-05:00")),
-        ("daylight_utc_offset", json!("UTC-04:00")),
-        ("bias_minutes", json!(300)),
-        ("active_bias_minutes", json!(300)),
-        ("standard_start", json!("first Sunday of November, 02:00")),
-        ("daylight_start", json!("second Sunday of March, 02:00")),
-        ("dynamic_daylight_time_disabled", json!(false)),
-        ("last_shutdown", json!("2022-02-07T07:37:47.374974700Z")),
-        ("processor_architecture", json!("AMD64")),
-        ("ansi_code_page", json!("1252")),
-        ("oem_code_page", json!("437")),
+        ("Host", json!("GOLDPAPERW11")),
+        ("ComputerName", json!("GOLDPAPERW11")),
+        ("Hostname", json!("GoldPaperW11")),
+        ("Domain", Value::Null),
+        ("TimeZone", json!("Eastern Standard Time")),
+        ("UTC-Offset", json!("UTC-05:00")),
+        ("DaylightUTC-Offset", json!("UTC-04:00")),
+        ("BiasMinutes", json!(300)),
+        ("ActiveBiasMinutes", json!(300)),
+        ("StandardStart", json!("first Sunday of November, 02:00")),
+        ("DaylightStart", json!("second Sunday of March, 02:00")),
+        ("DynamicDaylightTimeDisabled", json!(false)),
+        ("LastShutdown", json!("2022-02-07T07:37:47.374974700Z")),
+        ("ProcessorArchitecture", json!("AMD64")),
+        ("AnsiCodePage", json!("1252")),
+        ("OemCodePage", json!("437")),
         (
-            "machine_sid",
+            "MachineSID",
             json!("S-1-5-21-4063860464-1508573791-632671957"),
         ),
-        ("product_name", Value::Null),
-        ("transaction_log_status", json!("replayed")),
-        ("problems", json!([])),
+        ("ProductName", Value::Null),
+        ("TransactionLogStatus", json!("replayed")),
+        ("Problems", json!([])),
     ] {
         assert_eq!(r[field], value, "{field}");
     }
     // -f SAM found the SYSTEM next to it
-    assert!(r["source_path"].as_str().unwrap().ends_with("SYSTEM"));
-    assert!(r["sam_path"].as_str().unwrap().ends_with("SAM"));
+    assert!(r["SourcePath"].as_str().unwrap().ends_with("SYSTEM"));
+    assert!(r["SamPath"].as_str().unwrap().ends_with("SAM"));
     assert!(
-        r["logs_applied"]
+        r["LogsApplied"]
             .as_array()
             .unwrap()
             .iter()
@@ -13458,8 +13430,8 @@ fn registry_system_info_preserves_sam_replay_provenance() {
     std::fs::write(dir.path().join("SAM.LOG"), log).unwrap();
     let records = system_info_read(&["-f", dir.path().join("SAM").to_str().unwrap()]);
     assert_eq!(records.len(), 1);
-    assert_eq!(records[0]["machine_sid"], "S-1-5-21-1-2-3");
-    assert_eq!(records[0]["transaction_log_status"], "replayed");
+    assert_eq!(records[0]["MachineSID"], "S-1-5-21-1-2-3");
+    assert_eq!(records[0]["TransactionLogStatus"], "replayed");
 }
 
 // --- parse-registry mru -------------------------------------------------------------------------
@@ -13468,11 +13440,11 @@ fn registry_system_info_preserves_sam_replay_provenance() {
 const MRU_COLUMNS: [&str; 18] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "List",
     "Subkey",
-    "MruPosition",
+    "MRU-Position",
     "IsMostRecent",
     "ValueName",
     "Value",
@@ -13607,12 +13579,12 @@ fn mru_lines(records: &[Value]) -> Vec<String> {
         .map(|r| {
             format!(
                 "{} {} {} {} | {} | {}",
-                text(&r["list"]),
-                text(&r["subkey"]),
-                r["mru_position"],
-                text(&r["value_name"]),
-                text(&r["value"]),
-                text(&r["typed_time"]),
+                text(&r["List"]),
+                text(&r["Subkey"]),
+                r["MRU-Position"],
+                text(&r["ValueName"]),
+                text(&r["Value"]),
+                text(&r["TypedTime"]),
             )
         })
         .collect()
@@ -13640,28 +13612,28 @@ fn registry_mru_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["username"], "alice");
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["Username"], "alice");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
         // the key's time dates its most recent entry only
-        let last_used = if r["is_most_recent"] == true {
+        let last_used = if r["IsMostRecent"] == true {
             json!("2022-02-08T21:03:52Z")
         } else {
             Value::Null
         };
-        assert_eq!(r["last_used"], last_used, "{r}");
+        assert_eq!(r["LastUsed"], last_used, "{r}");
     }
     // a term cut short keeps its bytes
-    assert_eq!(records[4]["data_raw"], "700061007300");
+    assert_eq!(records[4]["DataRaw"], "700061007300");
     assert_eq!(
-        records[4]["problems"],
+        records[4]["Problems"],
         json!(["its term has no NUL: the data is cut short"])
     );
-    assert!(records[5]["data_raw"].is_null());
+    assert!(records[5]["DataRaw"].is_null());
     assert_eq!(
-        records[10]["key_path"],
+        records[10]["KeyPath"],
         r"Software\Microsoft\Search Assistant\ACMru\5603"
     );
 
@@ -13755,17 +13727,17 @@ fn registry_mru_of_public_hives() {
             "TypedURLs - 1 url2 | http://go.microsoft.com/fwlink/?LinkId=69157 | -",
         ]
     );
-    assert_eq!(records[0]["last_used"], "2012-04-04T15:45:18.551339700Z");
+    assert_eq!(records[0]["LastUsed"], "2012-04-04T15:45:18.551339700Z");
 
     // Plaso's NTUSER.DAT: typed addresses with their times from TypedURLsTime
     let plaso = dir.path().join("plaso");
     unpack_registry("plaso", &["NTUSER.DAT"], &plaso);
     let records = mru_read(&["-f", plaso.join("NTUSER.DAT").to_str().unwrap()]);
     assert_eq!(records.len(), 5);
-    assert_eq!(records[0]["value"], "http://www.catnews.com/");
-    assert_eq!(records[0]["typed_time"], "2016-10-05T09:47:50.967417100Z");
-    assert_eq!(records[3]["typed_time"], "2016-10-05T09:35:04.641445600Z");
-    assert!(records[4]["typed_time"].is_null());
+    assert_eq!(records[0]["Value"], "http://www.catnews.com/");
+    assert_eq!(records[0]["TypedTime"], "2016-10-05T09:47:50.967417100Z");
+    assert_eq!(records[3]["TypedTime"], "2016-10-05T09:35:04.641445600Z");
+    assert!(records[4]["TypedTime"].is_null());
 
     // the DFIR Artifact Museum's dirty Windows 11 NTUSER.DAT, with its logs
     let w11 = dir.path().join("w11");
@@ -13782,7 +13754,7 @@ fn registry_mru_of_public_hives() {
             "TypedURLs - 0 url1 | http://go.microsoft.com/fwlink/p/?LinkId=255141 | -",
         ]
     );
-    assert!(records.iter().all(|r| r["problems"] == json!([])));
+    assert!(records.iter().all(|r| r["Problems"] == json!([])));
 }
 
 #[test]
@@ -13890,10 +13862,10 @@ const APP_HISTORY_COLUMNS: [&str; 18] = [
     "Host",
     "SourcePath",
     "Username",
-    "UserSid",
+    "UserSID",
     "Application",
     "Item",
-    "MruPosition",
+    "MRU-Position",
     "Path",
     "Value",
     "FirstUsedUTC",
@@ -14024,12 +13996,12 @@ fn registry_app_history_of_a_collection() {
         .map(|r| {
             format!(
                 "{} {} {} | {} | {} | {}",
-                r["application"].as_str().unwrap(),
-                r["item"].as_str().unwrap(),
-                r["mru_position"],
-                r["path"].as_str().unwrap_or("-"),
-                r["value"].as_str().unwrap_or("-"),
-                r["first_used"].as_str().unwrap_or("-"),
+                r["Application"].as_str().unwrap(),
+                r["Item"].as_str().unwrap(),
+                r["MRU-Position"],
+                r["Path"].as_str().unwrap_or("-"),
+                r["Value"].as_str().unwrap_or("-"),
+                r["FirstUsed"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -14050,23 +14022,23 @@ fn registry_app_history_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["username"], "alice");
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["Username"], "alice");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
-    assert_eq!(records[1]["key_path"], r"Software\Sysinternals\PsExec");
-    assert_eq!(records[1]["value_name"], Value::Null);
-    assert_eq!(records[2]["value_name"], "0");
-    assert_eq!(records[2]["details"], json!({}));
+    assert_eq!(records[1]["KeyPath"], r"Software\Sysinternals\PsExec");
+    assert_eq!(records[1]["ValueName"], Value::Null);
+    assert_eq!(records[2]["ValueName"], "0");
+    assert_eq!(records[2]["Details"], json!({}));
     // the list cut short: its entries as far as they go, and its bytes
     let cut = &records[6];
     assert_eq!(
-        cut["problems"],
+        cut["Problems"],
         json!(["is not a list of valid UTF-16 strings"])
     );
-    assert!(cut["data_raw"].as_str().unwrap().ends_with("000041"));
+    assert!(cut["DataRaw"].as_str().unwrap().ends_with("000041"));
 }
 
 #[test]
@@ -14107,9 +14079,9 @@ fn registry_app_history_csv_and_summary() {
     assert_eq!(rows.len(), 10);
     assert_eq!(rows[1]["FirstUsedUTC"], "2022-02-08T21:03:52Z");
     assert_eq!(rows[0]["FirstUsedUTC"], "");
-    assert_eq!(rows[3]["MruPosition"], "1");
+    assert_eq!(rows[3]["MRU-Position"], "1");
     assert_eq!(rows[3]["ValueName"], "1");
-    assert_eq!(rows[6]["MruPosition"], "");
+    assert_eq!(rows[6]["MRU-Position"], "");
     assert_eq!(rows[8]["Value"], "alice@example.com");
 }
 
@@ -14129,11 +14101,11 @@ fn registry_app_history_of_public_hives() {
         .map(|r| {
             format!(
                 "{} {} {} {} {}",
-                r["application"].as_str().unwrap(),
-                r["item"].as_str().unwrap(),
-                r["value"].as_str().unwrap_or("-"),
-                r["first_used"].as_str().unwrap_or("-"),
-                r["path"].as_str().unwrap_or("-"),
+                r["Application"].as_str().unwrap(),
+                r["Item"].as_str().unwrap(),
+                r["Value"].as_str().unwrap_or("-"),
+                r["FirstUsed"].as_str().unwrap_or("-"),
+                r["Path"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -14145,9 +14117,9 @@ fn registry_app_history_of_public_hives() {
             r"OneDrive Personal - - C:\Users\TestUser\OneDrive",
         ]
     );
-    assert!(records.iter().all(|r| r["problems"] == json!([])
-        && r["transaction_log_status"] == "unchanged"
-        && r["username"] == "TestUser"));
+    assert!(records.iter().all(|r| r["Problems"] == json!([])
+        && r["TransactionLogStatus"] == "unchanged"
+        && r["Username"] == "TestUser"));
 
     // regipy's NTUSER.DAT: WinRAR's history, as regipy's winrar_plugin and Plaso's winrar_mru
     // give it
@@ -14159,9 +14131,9 @@ fn registry_app_history_of_public_hives() {
         .map(|r| {
             format!(
                 "{} {} {}",
-                r["item"].as_str().unwrap(),
-                r["mru_position"],
-                r["path"].as_str().unwrap()
+                r["Item"].as_str().unwrap(),
+                r["MRU-Position"],
+                r["Path"].as_str().unwrap()
             )
         })
         .collect();
@@ -14177,7 +14149,7 @@ fn registry_app_history_of_public_hives() {
         ]
     );
     assert_eq!(
-        records[0]["key_last_written"],
+        records[0]["KeyLastWritten"],
         "2021-11-18T13:59:04.888952700Z"
     );
 }
@@ -14272,7 +14244,7 @@ fn registry_app_history_keeps_damaged_list_warnings_in_exports() {
         } else {
             let records = json_documents(&r.stdout);
             assert_eq!(records.len(), 1);
-            assert!(records[0]["first_used"].is_null());
+            assert!(records[0]["FirstUsed"].is_null());
         }
     }
 }
@@ -14283,7 +14255,7 @@ fn registry_app_history_keeps_damaged_list_warnings_in_exports() {
 const FEATUREUSAGE_COLUMNS: [&str; 20] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "Source",
     "Application",
@@ -14337,7 +14309,7 @@ fn featureusage_collection(root: &Path) {
             (&tray, "StartButton", REG_DWORD, 3u32.to_le_bytes().to_vec()),
             (
                 app,
-                "AppId",
+                "AppID",
                 REG_SZ,
                 utf16z(r"C:\Users\alice\Downloads\tool.exe"),
             ),
@@ -14428,12 +14400,12 @@ fn registry_featureusage_of_a_collection() {
         .map(|r| {
             format!(
                 "{} | {} | {} | {} | {} | {}",
-                r["source"].as_str().unwrap(),
-                r["application"].as_str().unwrap_or("-"),
-                r["application_path"].as_str().unwrap_or("-"),
-                r["count"],
-                r["last_accessed"].as_str().unwrap_or("-"),
-                r["item_path"].as_str().unwrap_or("-"),
+                r["Source"].as_str().unwrap(),
+                r["Application"].as_str().unwrap_or("-"),
+                r["ApplicationPath"].as_str().unwrap_or("-"),
+                r["Count"],
+                r["LastAccessed"].as_str().unwrap_or("-"),
+                r["ItemPath"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -14450,18 +14422,18 @@ fn registry_featureusage_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["username"], "alice");
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
-        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["Username"], "alice");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["TransactionLogStatus"], "clean");
     }
-    assert_eq!(records[5]["display_name"], "report.docx");
+    assert_eq!(records[5]["DisplayName"], "report.docx");
     // what doesn't decode keeps its bytes
-    assert_eq!(records[2]["data_raw"], "33000000");
-    assert_eq!(records[2]["problems"], json!(["is REG_SZ, not REG_DWORD"]));
-    assert_eq!(records[6]["data_raw"], "0700000001");
+    assert_eq!(records[2]["DataRaw"], "33000000");
+    assert_eq!(records[2]["Problems"], json!(["is REG_SZ, not REG_DWORD"]));
+    assert_eq!(records[6]["DataRaw"], "0700000001");
     assert_eq!(
-        records[6]["problems"],
+        records[6]["Problems"],
         json!(["format version 7 is not known"])
     );
 }
@@ -14532,12 +14504,12 @@ fn registry_featureusage_of_public_hives() {
         .map(|r| {
             format!(
                 "{} {} {} | {} | {} | {}",
-                r["source"].as_str().unwrap(),
-                r["value_name"].as_str().unwrap(),
-                r["index"],
-                r["application"].as_str().unwrap_or("-"),
-                r["count"],
-                r["item_path"].as_str().unwrap_or("-"),
+                r["Source"].as_str().unwrap(),
+                r["ValueName"].as_str().unwrap(),
+                r["Index"],
+                r["Application"].as_str().unwrap_or("-"),
+                r["Count"],
+                r["ItemPath"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -14556,13 +14528,13 @@ fn registry_featureusage_of_public_hives() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "GOLDPAPERW11");
-        assert_eq!(r["username"], "AndrewRathbun");
-        assert_eq!(r["problems"], json!([]));
+        assert_eq!(r["Host"], "GOLDPAPERW11");
+        assert_eq!(r["Username"], "AndrewRathbun");
+        assert_eq!(r["Problems"], json!([]));
     }
-    assert_eq!(records[5]["pin_type"], "SystemPinned");
+    assert_eq!(records[5]["PinType"], "SystemPinned");
     assert_eq!(
-        records[0]["key_last_written"],
+        records[0]["KeyLastWritten"],
         "2022-02-05T19:49:18.979827400Z"
     );
 
@@ -14573,7 +14545,7 @@ fn registry_featureusage_of_public_hives() {
     let count = |source: &str, value: &str| {
         records
             .iter()
-            .filter(|r| r["source"] == source && r["value_name"] == value)
+            .filter(|r| r["Source"] == source && r["ValueName"] == value)
             .count()
     };
     assert_eq!(
@@ -14587,13 +14559,13 @@ fn registry_featureusage_of_public_hives() {
     );
     let accessories = records
         .iter()
-        .find(|r| r["item_path"] == r"Programs\Accessories")
+        .find(|r| r["ItemPath"] == r"Programs\Accessories")
         .unwrap();
     assert_eq!(
-        accessories["key_path"],
+        accessories["KeyPath"],
         r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage2"
     );
-    assert!(records.iter().all(|r| r["problems"] == json!([])));
+    assert!(records.iter().all(|r| r["Problems"] == json!([])));
 }
 
 #[test]
@@ -14650,7 +14622,7 @@ const SECURITY_SETTINGS_COLUMNS: [&str; 20] = [
     "ControlSet",
     "IsCurrentControlSet",
     "Username",
-    "UserSid",
+    "UserSID",
     "Area",
     "Setting",
     "Value",
@@ -14789,11 +14761,11 @@ fn security_settings_lines(records: &[Value]) -> Vec<String> {
         .map(|r| {
             format!(
                 "{} {} {} {} {}",
-                r["hive_type"].as_str().unwrap(),
-                r["area"].as_str().unwrap(),
-                r["setting"].as_str().unwrap(),
-                r["value"].as_str().unwrap_or("-"),
-                match r["weakens_default"].as_bool() {
+                r["HiveType"].as_str().unwrap(),
+                r["Area"].as_str().unwrap(),
+                r["Setting"].as_str().unwrap(),
+                r["Value"].as_str().unwrap_or("-"),
+                match r["WeakensDefault"].as_bool() {
                     Some(true) => "weakened",
                     Some(false) => "ok",
                     None => "-",
@@ -14824,37 +14796,37 @@ fn registry_security_settings_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
     // the user of NTUSER.DAT, from its folder and the system's ProfileList
     assert_eq!(
-        (&records[0]["username"], &records[0]["user_sid"]),
+        (&records[0]["Username"], &records[0]["UserSID"]),
         (&json!("alice"), &json!("S-1-5-21-1-2-3-1001"))
     );
-    assert_eq!(records[1]["username"], Value::Null);
+    assert_eq!(records[1]["Username"], Value::Null);
     // a policy, its meaning; the control set of SYSTEM's
-    assert_eq!(records[1]["policy"], true);
+    assert_eq!(records[1]["Policy"], true);
     assert_eq!(
-        records[1]["key_path"],
+        records[1]["KeyPath"],
         r"Policies\Microsoft\Windows Defender\Real-Time Protection"
     );
-    assert_eq!(records[1]["meaning"], "real-time protection turned off");
-    assert_eq!(records[4]["policy"], false);
+    assert_eq!(records[1]["Meaning"], "real-time protection turned off");
+    assert_eq!(records[4]["Policy"], false);
     assert_eq!(
-        records[5]["meaning"],
+        records[5]["Meaning"],
         "Microsoft Defender doesn't scan files under this path"
     );
-    assert_eq!(records[5]["value_name"], r"C:\Users\Public\Tools");
+    assert_eq!(records[5]["ValueName"], r"C:\Users\Public\Tools");
     assert_eq!(
         (
-            &records[7]["control_set"],
-            &records[7]["is_current_control_set"]
+            &records[7]["ControlSet"],
+            &records[7]["IsCurrentControlSet"]
         ),
         (&json!("ControlSet001"), &json!(true))
     );
-    assert_eq!(records[2]["control_set"], Value::Null);
+    assert_eq!(records[2]["ControlSet"], Value::Null);
 
     // only what weakens the default; every control set
     let weakened = security_settings_read(&[
@@ -14864,14 +14836,14 @@ fn registry_security_settings_of_a_collection() {
         "--all-control-sets",
     ]);
     assert_eq!(weakened.len(), 9);
-    assert!(weakened.iter().all(|r| r["weakens_default"] == true));
+    assert!(weakened.iter().all(|r| r["WeakensDefault"] == true));
     let all = security_settings_read(&["-d", dir.path().to_str().unwrap(), "--all-control-sets"]);
     let other = all.last().unwrap();
     assert_eq!(
         (
-            &other["control_set"],
-            &other["is_current_control_set"],
-            &other["setting"]
+            &other["ControlSet"],
+            &other["IsCurrentControlSet"],
+            &other["Setting"]
         ),
         (
             &json!("ControlSet002"),
@@ -14951,24 +14923,24 @@ fn registry_security_settings_of_public_hives() {
         ]
     );
     assert_eq!(
-        records[3]["meaning"],
+        records[3]["Meaning"],
         "the Application log keeps up to 4 MiB, less than the default 20 MiB"
     );
     // the DFIR Artifact Museum's dirty Windows 11 SYSTEM with its logs: Windows' defaults
     let w11 = system_hive();
     let records = security_settings_read(&["-d", w11.path().to_str().unwrap()]);
     assert_eq!(records.len(), 13);
-    assert!(records.iter().all(|r| r["weakens_default"] != true
-        && r["host"] == "GOLDPAPERW11"
-        && r["transaction_log_status"] == "unchanged"
-        && r["problems"] == json!([])));
+    assert!(records.iter().all(|r| r["WeakensDefault"] != true
+        && r["Host"] == "GOLDPAPERW11"
+        && r["TransactionLogStatus"] == "unchanged"
+        && r["Problems"] == json!([])));
     let last_access = records
         .iter()
-        .find(|r| r["setting"] == "ntfs_disable_last_access_update")
+        .find(|r| r["Setting"] == "ntfs_disable_last_access_update")
         .unwrap();
-    assert_eq!(last_access["value"], "2147483650");
+    assert_eq!(last_access["Value"], "2147483650");
     assert_eq!(
-        last_access["meaning"],
+        last_access["Meaning"],
         "last access times updated (system managed, the default since Windows 10 1803)"
     );
 }
@@ -15078,10 +15050,10 @@ fn registry_security_settings_keep_amsi_com_replay_provenance() {
     let records = security_settings_read(&["-f", dir.path().join("SOFTWARE").to_str().unwrap()]);
     let r = records
         .iter()
-        .find(|r| r["setting"] == "amsi_provider")
+        .find(|r| r["Setting"] == "amsi_provider")
         .unwrap();
-    assert!(r["meaning"].as_str().unwrap().contains("new.dll"));
-    assert_eq!(r["transaction_log_status"], "replayed");
+    assert!(r["Meaning"].as_str().unwrap().contains("new.dll"));
+    assert_eq!(r["TransactionLogStatus"], "replayed");
 }
 
 #[test]
@@ -15145,7 +15117,7 @@ fn registry_security_settings_leaves_unknown_current_control_set_null() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     let rows = jsonl_records(&r.stdout);
     assert_eq!(rows.len(), 1);
-    assert!(rows[0]["is_current_control_set"].is_null());
+    assert!(rows[0]["IsCurrentControlSet"].is_null());
     assert!(r.stderr.contains("Select\\Current"), "{}", r.stderr);
 }
 
@@ -15155,14 +15127,14 @@ fn registry_security_settings_leaves_unknown_current_control_set_null() {
 const OFFICE_COLUMNS: [&str; 24] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "OfficeVersion",
     "Application",
     "List",
     "Account",
     "Policy",
-    "MruPosition",
+    "MRU-Position",
     "IsMostRecent",
     "Path",
     "LastOpenedUTC",
@@ -15332,18 +15304,18 @@ fn office_lines(records: &[Value]) -> Vec<String> {
         .map(|r| {
             format!(
                 "{} {} {} {} {} {} | {} {} | {} {} {} {}",
-                text(&r["list"]),
-                text(&r["office_version"]),
-                text(&r["application"]),
-                text(&r["account"]),
-                r["policy"],
-                r["mru_position"],
-                text(&r["path"]),
-                text(&r["setting"]),
-                text(&r["last_opened"]),
-                text(&r["trusted_at"]),
-                r["macros_enabled"],
-                text(&r["value"]),
+                text(&r["List"]),
+                text(&r["OfficeVersion"]),
+                text(&r["Application"]),
+                text(&r["Account"]),
+                r["Policy"],
+                r["MRU-Position"],
+                text(&r["Path"]),
+                text(&r["Setting"]),
+                text(&r["LastOpened"]),
+                text(&r["TrustedAt"]),
+                r["MacrosEnabled"],
+                text(&r["Value"]),
             )
         })
         .collect()
@@ -15370,25 +15342,25 @@ fn registry_office_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["username"], "alice");
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
-        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["Username"], "alice");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["TransactionLogStatus"], "clean");
     }
-    assert_eq!(records[1]["is_most_recent"], true);
-    assert_eq!(records[2]["is_most_recent"], false);
-    assert_eq!(records[5]["trust_flags"], "0x7FFFFFFF");
-    assert_eq!(records[6]["trust_flags"], "0x00000001");
+    assert_eq!(records[1]["IsMostRecent"], true);
+    assert_eq!(records[2]["IsMostRecent"], false);
+    assert_eq!(records[5]["TrustFlags"], "0x7FFFFFFF");
+    assert_eq!(records[6]["TrustFlags"], "0x00000001");
     // an item without its * keeps its bytes
-    assert_eq!(records[0]["problems"], json!(["no * before the path"]));
+    assert_eq!(records[0]["Problems"], json!(["no * before the path"]));
     assert!(
-        records[0]["data_raw"]
+        records[0]["DataRaw"]
             .as_str()
             .unwrap()
             .starts_with("5b0046003000")
     );
     assert_eq!(
-        records[9]["key_path"],
+        records[9]["KeyPath"],
         r"Software\Policies\Microsoft\Office\16.0\Excel\Security"
     );
 }
@@ -15473,15 +15445,15 @@ fn registry_office_of_public_hives() {
         ]
     );
     assert_eq!(records.len(), 23);
-    assert!(records.iter().all(|r| r["problems"] == json!([])));
+    assert!(records.iter().all(|r| r["Problems"] == json!([])));
 
     // regipy's Windows 7 NTUSER.DAT: Excel 2010's lists
     unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
     let records = office_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
-    let excel: Vec<&Value> = records.iter().filter(|r| r["list"] == "File MRU").collect();
+    let excel: Vec<&Value> = records.iter().filter(|r| r["List"] == "File MRU").collect();
     assert_eq!(excel.len(), 4);
-    assert_eq!(excel[0]["application"], "Excel");
-    assert_eq!(excel[0]["last_opened"], "2012-04-04T15:43:16.848Z");
+    assert_eq!(excel[0]["Application"], "Excel");
+    assert_eq!(excel[0]["LastOpened"], "2012-04-04T15:43:16.848Z");
 }
 
 #[test]
@@ -15592,13 +15564,13 @@ fn registry_office_does_not_classify_wrong_type_macro_settings_as_weak() {
     let rows = office_read(&["-f", hive.to_str().unwrap()]);
     assert_eq!(rows.len(), 1);
     assert!(
-        rows[0]["problems"]
+        rows[0]["Problems"]
             .as_array()
             .unwrap()
             .iter()
             .any(|p| p.as_str().unwrap().contains("REG_SZ"))
     );
-    assert!(rows[0]["data_raw"].is_string());
+    assert!(rows[0]["DataRaw"].is_string());
 }
 
 // --- parse-registry auditpol --------------------------------------------------------------------
@@ -15632,42 +15604,42 @@ fn registry_auditpol_of_a_public_hive() {
     let records = auditpol_read(&["-d", dir.path().to_str().unwrap()]);
     assert_eq!(records.len(), 59);
     for r in &records {
-        assert_eq!(r["host"], "GOLDPAPERW11");
-        assert_eq!(r["layout"], "subcategories");
-        assert_eq!(r["problems"], json!([]));
-        assert_eq!(r["data_raw"], Value::Null);
-        assert_eq!(r["auditing_enabled"], Value::Null);
+        assert_eq!(r["Host"], "GOLDPAPERW11");
+        assert_eq!(r["Layout"], "subcategories");
+        assert_eq!(r["Problems"], json!([]));
+        assert_eq!(r["DataRaw"], Value::Null);
+        assert_eq!(r["AuditingEnabled"], Value::Null);
     }
     let find = |name: &str| {
         records
             .iter()
-            .find(|r| r["subcategory"] == name)
+            .find(|r| r["Subcategory"] == name)
             .unwrap_or_else(|| panic!("{name}"))
     };
     // Windows' order: Special Logon is Logon/Logoff's index 4, before IPsec Quick Mode
     let special = find("Special Logon");
-    assert_eq!(special["category"], "Logon/Logoff");
-    assert_eq!(special["setting"], "success");
+    assert_eq!(special["Category"], "Logon/Logoff");
+    assert_eq!(special["Setting"], "success");
     assert_eq!(
-        special["subcategory_guid"],
+        special["SubcategoryGUID"],
         "0CCE921B-69AE-11D9-BED3-505054503030"
     );
-    assert_eq!(special["subcategory_id"], "%%12548");
-    assert_eq!(special["events"], json!([4672, 4964]));
-    assert_eq!(find("IPsec Quick Mode")["setting"], "none");
+    assert_eq!(special["SubcategoryID"], "%%12548");
+    assert_eq!(special["Events"], json!([4672, 4964]));
+    assert_eq!(find("IPsec Quick Mode")["Setting"], "none");
     assert_eq!(
-        find("Network Policy Server")["setting"],
+        find("Network Policy Server")["Setting"],
         "success_and_failure"
     );
     let process = find("Process Creation");
     assert_eq!(
-        (&process["setting"], &process["success"], &process["events"]),
+        (&process["Setting"], &process["Success"], &process["Events"]),
         (&json!("none"), &json!(false), &json!([4688]))
     );
     let audited: Vec<&str> = records
         .iter()
-        .filter(|r| r["setting"] != "none")
-        .map(|r| r["subcategory"].as_str().unwrap())
+        .filter(|r| r["Setting"] != "none")
+        .map(|r| r["Subcategory"].as_str().unwrap())
         .collect();
     assert_eq!(
         audited,
@@ -15689,18 +15661,18 @@ fn registry_auditpol_of_a_public_hive() {
     assert_eq!(
         records
             .iter()
-            .map(|r| r["category"].as_str().unwrap())
+            .map(|r| r["Category"].as_str().unwrap())
             .collect::<std::collections::BTreeSet<_>>()
             .len(),
         9
     );
     assert!(
-        records[0]["key_last_written"]
+        records[0]["KeyLastWritten"]
             .as_str()
             .unwrap()
             .starts_with("2022-02-05T21:49:55")
     );
-    assert_ne!(records[0]["transaction_log_status"], "clean");
+    assert_ne!(records[0]["TransactionLogStatus"], "clean");
 }
 
 #[test]
@@ -15740,8 +15712,8 @@ fn registry_auditpol_csv_and_summary() {
             "Layout",
             "Category",
             "Subcategory",
-            "SubcategoryGuid",
-            "SubcategoryId",
+            "SubcategoryGUID",
+            "SubcategoryID",
             "Setting",
             "Success",
             "Failure",
@@ -15762,7 +15734,7 @@ fn registry_auditpol_csv_and_summary() {
         ("True", "True")
     );
     assert_eq!(logon["Events"], "4624|4625|4648");
-    assert_eq!(logon["SubcategoryId"], "%%12544");
+    assert_eq!(logon["SubcategoryID"], "%%12544");
 }
 
 #[test]
@@ -15789,30 +15761,30 @@ fn registry_auditpol_layouts_and_errors() {
     let records = auditpol_read(&["-d", dir.path().to_str().unwrap()]);
     let odd: Vec<&Value> = records
         .iter()
-        .filter(|r| r["source_path"].as_str().unwrap().contains("odd"))
+        .filter(|r| r["SourcePath"].as_str().unwrap().contains("odd"))
         .collect();
     assert_eq!(odd.len(), 1);
     assert_eq!(
-        (&odd[0]["layout"], &odd[0]["category"], &odd[0]["data_raw"]),
+        (&odd[0]["Layout"], &odd[0]["Category"], &odd[0]["DataRaw"]),
         (&Value::Null, &Value::Null, &json!("010203"))
     );
     assert_eq!(
-        odd[0]["problems"],
+        odd[0]["Problems"],
         json!(["an unknown layout of 3 bytes: shorter than the 12-byte header"])
     );
     let xp: Vec<&Value> = records
         .iter()
-        .filter(|r| r["source_path"].as_str().unwrap().contains("xp"))
+        .filter(|r| r["SourcePath"].as_str().unwrap().contains("xp"))
         .collect();
     assert_eq!(xp.len(), 9);
-    assert!(xp.iter().all(|r| r["layout"] == "categories"
-        && r["auditing_enabled"] == false
-        && r["subcategory"] == Value::Null));
+    assert!(xp.iter().all(|r| r["Layout"] == "categories"
+        && r["AuditingEnabled"] == false
+        && r["Subcategory"] == Value::Null));
     assert_eq!(
-        (&xp[0]["category"], &xp[0]["setting"]),
+        (&xp[0]["Category"], &xp[0]["Setting"]),
         (&json!("System"), &json!("success_and_failure"))
     );
-    assert_eq!(xp[2]["setting"], "failure");
+    assert_eq!(xp[2]["Setting"], "failure");
     let r = run(&[
         "parse-registry",
         "auditpol",
@@ -15892,9 +15864,9 @@ fn registry_auditpol_does_not_claim_unknown_flags_are_audited() {
     .unwrap();
     let rows = auditpol_read(&["-f", hive.to_str().unwrap()]);
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["setting"], "0x9");
-    assert!(rows[0]["success"].is_null());
-    assert!(rows[0]["failure"].is_null());
+    assert_eq!(rows[0]["Setting"], "0x9");
+    assert!(rows[0]["Success"].is_null());
+    assert!(rows[0]["Failure"].is_null());
     let r = run(&[
         "parse-registry",
         "auditpol",
@@ -15914,20 +15886,20 @@ const APPCOMPAT_COLUMNS: [&str; 22] = [
     "SourcePath",
     "HiveType",
     "Username",
-    "UserSid",
+    "UserSID",
     "Source",
     "Scope",
     "Path",
     "Layers",
     "LastSeenUTC",
-    "SdbGuid",
+    "SdbGUID",
     "SdbPath",
     "SdbInstalledUTC",
     "Details",
     "KeyPath",
     "KeyLastWrittenUTC",
     "ValueName",
-    "Wow64",
+    "WOW64",
     "DataRaw",
     "TransactionLogStatus",
     "LogsApplied",
@@ -16059,15 +16031,15 @@ fn registry_appcompat_of_a_collection() {
         .map(|r| {
             format!(
                 "{} {} {} {} | {} | {} | {} {} {}",
-                r["hive_type"].as_str().unwrap(),
-                r["source"].as_str().unwrap(),
-                r["scope"].as_str().unwrap(),
-                r["username"].as_str().unwrap_or("-"),
-                r["path"].as_str().unwrap_or("-"),
-                r["layers"].as_str().unwrap_or("-"),
-                r["last_seen"].as_str().unwrap_or("-"),
-                r["sdb_path"].as_str().unwrap_or("-"),
-                r["sdb_installed"].as_str().unwrap_or("-"),
+                r["HiveType"].as_str().unwrap(),
+                r["Source"].as_str().unwrap(),
+                r["Scope"].as_str().unwrap(),
+                r["Username"].as_str().unwrap_or("-"),
+                r["Path"].as_str().unwrap_or("-"),
+                r["Layers"].as_str().unwrap_or("-"),
+                r["LastSeen"].as_str().unwrap_or("-"),
+                r["SdbPath"].as_str().unwrap_or("-"),
+                r["SdbInstalled"].as_str().unwrap_or("-"),
             )
         })
         .collect();
@@ -16085,35 +16057,35 @@ fn registry_appcompat_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["transaction_log_status"], "clean");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["TransactionLogStatus"], "clean");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
     for r in &records[..3] {
-        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["UserSID"], "S-1-5-21-1-2-3-1001");
     }
-    assert_eq!(records[3]["user_sid"], Value::Null);
+    assert_eq!(records[3]["UserSID"], Value::Null);
     // the Store data is kept, and a program on removable media keeps its media id
     assert!(
-        records[1]["data_raw"]
+        records[1]["DataRaw"]
             .as_str()
             .unwrap()
             .starts_with("53414350")
     );
-    assert_eq!(records[2]["details"], json!({"SignMedia": "1FF3254"}));
-    assert_eq!(records[2]["value_name"], "SIGN.MEDIA=1FF3254 setup64.exe");
+    assert_eq!(records[2]["Details"], json!({"SignMedia": "1FF3254"}));
+    assert_eq!(records[2]["ValueName"], "SIGN.MEDIA=1FF3254 setup64.exe");
     assert_eq!(
-        records[4]["details"],
+        records[4]["Details"],
         json!({"Module": "System32/mrt100.dll"})
     );
     let guid = "{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}";
-    assert_eq!(records[5]["sdb_guid"], guid);
+    assert_eq!(records[5]["SdbGUID"], guid);
     assert_eq!(
-        records[5]["details"],
+        records[5]["Details"],
         json!({"DatabaseDescription": "Updater", "DatabaseType": "0x10000"})
     );
-    assert_eq!(records[6]["sdb_guid"], guid);
-    assert_eq!(records[6]["value_name"], format!("{guid}.sdb"));
+    assert_eq!(records[6]["SdbGUID"], guid);
+    assert_eq!(records[6]["ValueName"], format!("{guid}.sdb"));
 }
 
 #[test]
@@ -16153,7 +16125,7 @@ fn registry_appcompat_csv_and_summary() {
     assert_eq!(rows[4]["LastSeenUTC"], "2022-02-08T21:03:52Z");
     assert_eq!(rows[5]["SdbInstalledUTC"], "2022-02-07T21:03:52Z");
     assert_eq!(rows[6]["Scope"], "machine");
-    assert_eq!(rows[0]["Wow64"], "False");
+    assert_eq!(rows[0]["WOW64"], "False");
 }
 
 #[test]
@@ -16168,23 +16140,23 @@ fn registry_appcompat_of_public_hives() {
     );
     let records = appcompat_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
     assert_eq!(records.len(), 11);
-    assert!(records.iter().all(|r| r["source"] == "pca_store"
-        && r["problems"] == json!([])
-        && r["last_seen"].is_null()
-        && r["data_raw"].as_str().unwrap().starts_with("53414350")));
+    assert!(records.iter().all(|r| r["Source"] == "pca_store"
+        && r["Problems"] == json!([])
+        && r["LastSeen"].is_null()
+        && r["DataRaw"].as_str().unwrap().starts_with("53414350")));
     let media: Vec<&Value> = records
         .iter()
-        .filter(|r| r["details"]["SignMedia"].is_string())
+        .filter(|r| r["Details"]["SignMedia"].is_string())
         .collect();
     assert_eq!(media.len(), 1);
     assert_eq!(
-        (&media[0]["path"], &media[0]["details"]["SignMedia"]),
+        (&media[0]["Path"], &media[0]["Details"]["SignMedia"]),
         (&json!("setup64.exe"), &json!("1FF3254"))
     );
     assert_eq!(
         records
             .iter()
-            .filter(|r| r["path"]
+            .filter(|r| r["Path"]
                 .as_str()
                 .unwrap()
                 .ends_with(r"\WindowsTerminal.exe"))
@@ -16192,7 +16164,7 @@ fn registry_appcompat_of_public_hives() {
         2
     );
     assert_eq!(
-        records[0]["key_last_written"],
+        records[0]["KeyLastWritten"],
         "2022-02-07T07:37:00.507738100Z"
     );
 }
@@ -16272,9 +16244,9 @@ fn registry_appcompat_custom_shims_keep_installed_path_replay() {
         &build(r"C:\new.sdb"),
     );
     let rows = appcompat_read(&["-f", dir.path().join("SOFTWARE").to_str().unwrap()]);
-    let row = rows.iter().find(|r| r["source"] == "custom_sdb").unwrap();
-    assert_eq!(row["sdb_path"], r"C:\new.sdb");
-    assert_eq!(row["transaction_log_status"], "replayed");
+    let row = rows.iter().find(|r| r["Source"] == "custom_sdb").unwrap();
+    assert_eq!(row["SdbPath"], r"C:\new.sdb");
+    assert_eq!(row["TransactionLogStatus"], "replayed");
 }
 
 #[test]
@@ -16317,7 +16289,7 @@ const BCD_COLUMNS: [&str; 22] = [
     "Host",
     "SourcePath",
     "HiveType",
-    "ObjectGuid",
+    "ObjectGUID",
     "ObjectType",
     "ObjectTypeName",
     "Description",
@@ -16488,63 +16460,63 @@ fn registry_bcd_of_a_compromised_store() {
     bcd_collection(dir.path());
     let records = bcd_read(&["-d", dir.path().to_str().unwrap()]);
     assert_eq!(records.len(), 3);
-    let find = |guid: &str| records.iter().find(|r| r["object_guid"] == guid).unwrap();
+    let find = |guid: &str| records.iter().find(|r| r["ObjectGUID"] == guid).unwrap();
     let windows = find(BCD_WINDOWS);
     for (field, expected) in [
-        ("host", json!("HOST1")),
-        ("hive_type", json!("BCD")),
-        ("object_type", json!("0x10200003")),
-        ("object_type_name", json!("Windows boot loader")),
-        ("description", json!("Windows 11")),
-        ("is_default", json!(true)),
-        ("display_order", json!(0)),
+        ("Host", json!("HOST1")),
+        ("HiveType", json!("BCD")),
+        ("ObjectType", json!("0x10200003")),
+        ("ObjectTypeName", json!("Windows boot loader")),
+        ("Description", json!("Windows 11")),
+        ("IsDefault", json!(true)),
+        ("DisplayOrder", json!(0)),
         (
-            "device",
+            "Device",
             json!(
                 "partition {11111111-1111-1111-1111-111111111111} on disk {22222222-2222-2222-2222-222222222222}"
             ),
         ),
-        ("path", json!(r"\Windows\system32\winload.efi")),
-        ("recovery_enabled", json!(false)),
-        ("test_signing", json!(true)),
-        ("no_integrity_checks", json!(true)),
-        ("safe_boot", Value::Null),
-        ("boot_status_policy", json!("IgnoreAllFailures (1)")),
+        ("Path", json!(r"\Windows\system32\winload.efi")),
+        ("RecoveryEnabled", json!(false)),
+        ("TestSigning", json!(true)),
+        ("NoIntegrityChecks", json!(true)),
+        ("SafeBoot", Value::Null),
+        ("BootStatusPolicy", json!("IgnoreAllFailures (1)")),
         (
-            "inherited",
+            "Inherited",
             json!([format!("test_signing from {BCD_SETTINGS}")]),
         ),
-        ("transaction_log_status", json!("clean")),
+        ("TransactionLogStatus", json!("clean")),
         (
-            "problems",
+            "Problems",
             json!([r"Elements\16000040: boolean 2 is neither 0 nor 1"]),
         ),
     ] {
         assert_eq!(windows[field], expected, "{field}");
     }
-    let elements = windows["elements"].as_array().unwrap();
+    let elements = windows["Elements"].as_array().unwrap();
     assert_eq!(elements.len(), 8);
-    let element = |t: &str| elements.iter().find(|e| e["element_type"] == t).unwrap();
+    let element = |t: &str| elements.iter().find(|e| e["ElementType"] == t).unwrap();
     assert_eq!(
-        element("16000009")["name"],
+        element("16000009")["Name"],
         "BcdLibraryBoolean_AutoRecoveryEnabled"
     );
-    assert_eq!(element("16000009")["value"], false);
+    assert_eq!(element("16000009")["Value"], false);
     assert_eq!(
-        element("250000e0")["name"],
+        element("250000e0")["Name"],
         "BcdOSLoaderInteger_BootStatusPolicy"
     );
-    assert_eq!(element("250000e0")["value"], 1);
-    assert_eq!(element("14000006")["value"], json!([BCD_SETTINGS]));
-    assert_eq!(element("16000040")["value"], Value::Null);
-    assert_eq!(element("16000040")["data_raw"], "02");
+    assert_eq!(element("250000e0")["Value"], 1);
+    assert_eq!(element("14000006")["Value"], json!([BCD_SETTINGS]));
+    assert_eq!(element("16000040")["Value"], Value::Null);
+    assert_eq!(element("16000040")["DataRaw"], "02");
     assert_eq!(
-        element("16000009")["key_last_written"],
+        element("16000009")["KeyLastWritten"],
         "2022-02-08T21:03:52Z"
     );
-    assert_eq!(find(BCD_SETTINGS)["test_signing"], true);
-    assert_eq!(find(BCD_SETTINGS)["inherited"], json!([]));
-    assert_eq!(find(BCD_MANAGER)["is_default"], false);
+    assert_eq!(find(BCD_SETTINGS)["TestSigning"], true);
+    assert_eq!(find(BCD_SETTINGS)["Inherited"], json!([]));
+    assert_eq!(find(BCD_MANAGER)["IsDefault"], false);
 }
 
 #[test]
@@ -16608,34 +16580,34 @@ fn registry_bcd_of_public_hives() {
     unpack_registry("regipy", &["BCD"], dir.path());
     let records = bcd_read(&["-f", dir.path().join("BCD").to_str().unwrap()]);
     assert_eq!(records.len(), 17);
-    let default: Vec<&Value> = records.iter().filter(|r| r["is_default"] == true).collect();
+    let default: Vec<&Value> = records.iter().filter(|r| r["IsDefault"] == true).collect();
     assert_eq!(default.len(), 1);
     for (field, expected) in [
         (
-            "object_guid",
+            "ObjectGUID",
             json!("{733b62e5-f608-11eb-825c-c112f60133ab}"),
         ),
-        ("description", json!("Windows 10")),
-        ("path", json!(r"\Windows\system32\winload.efi")),
+        ("Description", json!("Windows 10")),
+        ("Path", json!(r"\Windows\system32\winload.efi")),
         (
-            "device",
+            "Device",
             json!(
                 "partition {8e0f2c38-e4ea-47ba-b7fc-9d8c74dccf0b} on disk {0b2394a9-095e-487d-8d48-719ecd4d78ca}"
             ),
         ),
-        ("recovery_enabled", json!(true)),
-        ("test_signing", Value::Null),
-        ("no_integrity_checks", Value::Null),
-        ("boot_status_policy", Value::Null),
+        ("RecoveryEnabled", json!(true)),
+        ("TestSigning", Value::Null),
+        ("NoIntegrityChecks", Value::Null),
+        ("BootStatusPolicy", Value::Null),
     ] {
         assert_eq!(default[0][field], expected, "{field}");
     }
     let manager = records
         .iter()
-        .find(|r| r["object_type_name"] == "Windows boot manager")
+        .find(|r| r["ObjectTypeName"] == "Windows boot manager")
         .unwrap();
-    assert_eq!(manager["path"], r"\EFI\Microsoft\Boot\bootmgfw.efi");
-    assert!(records.iter().all(|r| r["problems"] == json!([])));
+    assert_eq!(manager["Path"], r"\EFI\Microsoft\Boot\bootmgfw.efi");
+    assert!(records.iter().all(|r| r["Problems"] == json!([])));
 
     // the DFIR Artifact Museum's Windows 11 BCD-Template, where Windows keeps it
     let collection = system_hive();
@@ -16646,14 +16618,14 @@ fn registry_bcd_of_public_hives() {
     assert!(
         records
             .iter()
-            .all(|r| r["host"] == "GOLDPAPERW11" && r["hive_type"] == "BCD-Template")
+            .all(|r| r["Host"] == "GOLDPAPERW11" && r["HiveType"] == "BCD-Template")
     );
-    let default = records.iter().find(|r| r["is_default"] == true).unwrap();
+    let default = records.iter().find(|r| r["IsDefault"] == true).unwrap();
     assert_eq!(
-        default["object_guid"],
+        default["ObjectGUID"],
         "{cbd971bf-b7b8-4885-951a-fa03044f5d71}"
     );
-    assert_eq!(default["object_type_name"], "Windows boot loader");
+    assert_eq!(default["ObjectTypeName"], "Windows boot loader");
 }
 
 #[test]
@@ -16800,11 +16772,11 @@ fn registry_lsa_secrets_of_a_public_hive() {
         .map(|r| {
             format!(
                 "{} {} {} {} {}",
-                r["secret"].as_str().unwrap(),
-                r["kind"].as_str().unwrap(),
-                r["current_set"].as_str().unwrap_or("-"),
-                r["has_current_value"],
-                r["has_old_value"],
+                r["Secret"].as_str().unwrap(),
+                r["Kind"].as_str().unwrap(),
+                r["CurrentSet"].as_str().unwrap_or("-"),
+                r["HasCurrentValue"],
+                r["HasOldValue"],
             )
         })
         .collect();
@@ -16818,17 +16790,17 @@ fn registry_lsa_secrets_of_a_public_hive() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "GOLDPAPERW11");
-        assert_eq!(r["problems"], json!([]));
-        assert_eq!(r["transaction_log_status"], "unchanged");
+        assert_eq!(r["Host"], "GOLDPAPERW11");
+        assert_eq!(r["Problems"], json!([]));
+        assert_eq!(r["TransactionLogStatus"], "unchanged");
     }
-    assert_eq!(records[0]["old_set"], "2022-02-05T19:00:06.070794800Z");
+    assert_eq!(records[0]["OldSet"], "2022-02-05T19:00:06.070794800Z");
     let cache = &records[3];
     assert_eq!(
         (
-            &cache["cached_logons"],
-            &cache["cached_logons_in_use"],
-            &cache["cached_logons_kept"]
+            &cache["CachedLogons"],
+            &cache["CachedLogonsInUse"],
+            &cache["CachedLogonsKept"]
         ),
         (&json!(10), &json!(0), &json!(10))
     );
@@ -16843,10 +16815,10 @@ fn registry_lsa_secrets_never_write_secret_bytes() {
         .iter()
         .map(|r| {
             (
-                r["secret"].as_str().unwrap(),
-                r["kind"].as_str().unwrap(),
-                &r["service_name"],
-                &r["user_sid"],
+                r["Secret"].as_str().unwrap(),
+                r["Kind"].as_str().unwrap(),
+                &r["ServiceName"],
+                &r["UserSID"],
             )
         })
         .collect();
@@ -16870,32 +16842,29 @@ fn registry_lsa_secrets_never_write_secret_bytes() {
             ("Cache", "cached_logons", &Value::Null, &Value::Null),
         ]
     );
-    assert_eq!(records[2]["current_set"], "2022-02-08T21:03:52Z");
-    assert_eq!(records[2]["old_set"], "2022-02-07T21:03:52Z");
+    assert_eq!(records[2]["CurrentSet"], "2022-02-08T21:03:52Z");
+    assert_eq!(records[2]["OldSet"], "2022-02-07T21:03:52Z");
     assert_eq!(
-        records[2]["current_value_last_written"],
+        records[2]["CurrentValueLastWritten"],
         "2022-02-08T21:03:52Z"
     );
     // security questions without an old value; autologon with an empty one
     assert_eq!(
         (
-            &records[1]["has_old_value"],
-            &records[1]["old_value_last_written"]
+            &records[1]["HasOldValue"],
+            &records[1]["OldValueLastWritten"]
         ),
         (&json!(false), &Value::Null)
     );
     assert_eq!(
-        (
-            &records[0]["has_current_value"],
-            &records[0]["has_old_value"]
-        ),
+        (&records[0]["HasCurrentValue"], &records[0]["HasOldValue"]),
         (&json!(true), &json!(false))
     );
     assert_eq!(
         (
-            &records[3]["cached_logons"],
-            &records[3]["cached_logons_in_use"],
-            &records[3]["cached_logons_kept"]
+            &records[3]["CachedLogons"],
+            &records[3]["CachedLogonsInUse"],
+            &records[3]["CachedLogonsKept"]
         ),
         (&json!(2), &json!(1), &json!(2))
     );
@@ -17036,10 +17005,10 @@ const NETWORKS_COLUMNS: [&str; 35] = [
     "FirstConnectedLocal",
     "LastConnectedLocal",
     "TimeZone",
-    "GatewayMac",
-    "DnsSuffix",
-    "InterfaceGuid",
-    "IpAddress",
+    "GatewayMAC",
+    "DNS-Suffix",
+    "InterfaceGUID",
+    "IP-Address",
     "DhcpServer",
     "LeaseObtainedUTC",
     "LeaseExpiresUTC",
@@ -17220,7 +17189,7 @@ fn registry_networks_of_a_collection() {
     let records = networks_read(&["-d", dir.path().to_str().unwrap()]);
     let sources: Vec<&str> = records
         .iter()
-        .map(|r| r["source"].as_str().unwrap())
+        .map(|r| r["Source"].as_str().unwrap())
         .collect();
     assert_eq!(
         sources,
@@ -17235,18 +17204,18 @@ fn registry_networks_of_a_collection() {
         ]
     );
     for r in &records {
-        assert_eq!(r["host"], "HOST1");
-        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        assert_eq!(r["Host"], "HOST1");
+        assert_eq!(r["KeyLastWritten"], "2022-02-08T21:03:52Z");
     }
     // the domain network: its local times, in UTC with the system's Eastern time
     let corp = &records[0];
     assert_eq!(
         (
-            &corp["profile_name"],
-            &corp["category"],
-            &corp["connection_type"],
-            &corp["gateway_mac"],
-            &corp["dns_suffix"]
+            &corp["ProfileName"],
+            &corp["Category"],
+            &corp["ConnectionType"],
+            &corp["GatewayMAC"],
+            &corp["DNS-Suffix"]
         ),
         (
             &json!("corp.example"),
@@ -17256,13 +17225,13 @@ fn registry_networks_of_a_collection() {
             &json!("corp.example")
         )
     );
-    assert_eq!(corp["first_connected_local"], "2021-02-10T14:50:37.716");
-    assert_eq!(corp["first_connected"], "2021-02-10T19:50:37.716Z");
-    assert_eq!(corp["last_connected_local"], "2021-07-04T12:00:00.000");
-    assert_eq!(corp["last_connected"], "2021-07-04T16:00:00Z");
-    assert_eq!(corp["time_zone"], "Eastern Standard Time");
+    assert_eq!(corp["FirstConnectedLocal"], "2021-02-10T14:50:37.716");
+    assert_eq!(corp["FirstConnected"], "2021-02-10T19:50:37.716Z");
+    assert_eq!(corp["LastConnectedLocal"], "2021-07-04T12:00:00.000");
+    assert_eq!(corp["LastConnected"], "2021-07-04T16:00:00Z");
+    assert_eq!(corp["TimeZone"], "Eastern Standard Time");
     assert_eq!(
-        corp["details"]["Signatures"]
+        corp["Details"]["Signatures"]
             .as_str()
             .unwrap()
             .matches('|')
@@ -17272,28 +17241,28 @@ fn registry_networks_of_a_collection() {
     // the café: wireless, a damaged time kept as bytes
     let cafe = &records[1];
     assert_eq!(
-        (&cafe["category"], &cafe["connection_type"]),
+        (&cafe["Category"], &cafe["ConnectionType"]),
         (&json!("public"), &json!("wireless"))
     );
-    assert_eq!(cafe["first_connected"], Value::Null);
-    assert_eq!(cafe["data_raw"], "01".repeat(15));
+    assert_eq!(cafe["FirstConnected"], Value::Null);
+    assert_eq!(cafe["DataRaw"], "01".repeat(15));
     assert_eq!(
-        cafe["problems"],
+        cafe["Problems"],
         json!(["DateCreated: 15 bytes, not the 16 of a SYSTEMTIME"])
     );
     // the card, and its interface with the adapter's name
     assert_eq!(
-        records[2]["interface_guid"],
+        records[2]["InterfaceGUID"],
         "{DAE79B04-8A4E-46D0-A8DB-EE10ABBFFE64}"
     );
     let interface = &records[3];
     assert_eq!(
         (
-            &interface["ip_address"],
-            &interface["dhcp_server"],
-            &interface["lease_obtained"],
-            &interface["lease_expires"],
-            &interface["control_set"]
+            &interface["IP-Address"],
+            &interface["DhcpServer"],
+            &interface["LeaseObtained"],
+            &interface["LeaseExpires"],
+            &interface["ControlSet"]
         ),
         (
             &json!("192.0.2.25"),
@@ -17303,20 +17272,20 @@ fn registry_networks_of_a_collection() {
             &json!("ControlSet001")
         )
     );
-    assert_eq!(interface["details"]["Adapter"], "Example Network Adapter");
+    assert_eq!(interface["Details"]["Adapter"], "Example Network Adapter");
     let share = &records[4];
     assert_eq!(
-        (&share["share_name"], &share["share_path"]),
+        (&share["ShareName"], &share["SharePath"]),
         (&json!("Stage$"), &json!(r"C:\ProgramData\stage"))
     );
-    assert_eq!(share["details"]["Type"], "0 (disk)");
+    assert_eq!(share["Details"]["Type"], "0 (disk)");
     let proxy = &records[5];
     assert_eq!(
         (
-            &proxy["listen_address"],
-            &proxy["listen_port"],
-            &proxy["connect_address"],
-            &proxy["connect_port"]
+            &proxy["ListenAddress"],
+            &proxy["ListenPort"],
+            &proxy["ConnectAddress"],
+            &proxy["ConnectPort"]
         ),
         (
             &json!("0.0.0.0"),
@@ -17325,8 +17294,8 @@ fn registry_networks_of_a_collection() {
             &json!(3389)
         )
     );
-    assert_eq!(records[6]["route"], "10.10.0.0,255.255.0.0,192.0.2.254,1");
-    assert_eq!(records[6]["details"]["Gateway"], "192.0.2.254");
+    assert_eq!(records[6]["Route"], "10.10.0.0,255.255.0.0,192.0.2.254,1");
+    assert_eq!(records[6]["Details"]["Gateway"], "192.0.2.254");
 }
 
 #[test]
@@ -17384,9 +17353,9 @@ fn registry_networks_of_public_hives() {
         .map(|r| {
             format!(
                 "{} {} {}",
-                r["source"].as_str().unwrap(),
-                r["ip_address"].as_str().unwrap_or("-"),
-                r["route"].as_str().unwrap_or("-")
+                r["Source"].as_str().unwrap(),
+                r["IP-Address"].as_str().unwrap_or("-"),
+                r["Route"].as_str().unwrap_or("-")
             )
         })
         .collect();
@@ -17400,18 +17369,18 @@ fn registry_networks_of_public_hives() {
             "route - 0.0.0.0,0.0.0.0,10.3.58.1,-1",
         ]
     );
-    assert_eq!(records[1]["lease_obtained"], "2010-11-10T17:06:43Z");
-    assert_eq!(records[0]["lease_obtained"], Value::Null);
+    assert_eq!(records[1]["LeaseObtained"], "2010-11-10T17:06:43Z");
+    assert_eq!(records[0]["LeaseObtained"], Value::Null);
     // the DFIR Artifact Museum's dirty Windows 11 SYSTEM with its logs: its DHCP interface
     let w11 = system_hive();
     let records = networks_read(&["-d", w11.path().to_str().unwrap()]);
-    assert!(records.iter().all(|r| r["host"] == "GOLDPAPERW11"
-        && r["source"] == "interface"
-        && r["problems"] == json!([])));
+    assert!(records.iter().all(|r| r["Host"] == "GOLDPAPERW11"
+        && r["Source"] == "interface"
+        && r["Problems"] == json!([])));
     assert_eq!(
         records
             .iter()
-            .filter(|r| r["dhcp_server"].is_string())
+            .filter(|r| r["DhcpServer"].is_string())
             .count(),
         1
     );
@@ -17498,7 +17467,7 @@ fn registry_networks_missing_select_remains_unknown_and_warns_on_stderr() {
         if format != "csv" {
             let records = json_documents(&r.stdout);
             assert_eq!(records.len(), 1);
-            assert!(records[0]["is_current_control_set"].is_null());
+            assert!(records[0]["IsCurrentControlSet"].is_null());
         }
     }
 }

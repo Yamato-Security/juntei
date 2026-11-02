@@ -79,7 +79,7 @@ Output:
 ```bash
 juntei parse-registry userassist -d evidence/ -o userassist.csv
 juntei parse-registry userassist -f NTUSER.DAT -t jsonl \
-  | jq 'select(.path? // "" | test("\\\\(Users|ProgramData|Temp)\\\\"; "i"))'
+  | jq 'select(.Path? // "" | test("\\\\(Users|ProgramData|Temp)\\\\"; "i"))'
 ```
 
 The summary lists the items run last (newest first) with their users, and the hives where
@@ -89,14 +89,14 @@ UserAssist is turned off.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSid`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList` (with the system's `SOFTWARE` hive), and the hive. |
-| `Guid`, `Kind` | The `{GUID}` key and what it holds (`executable`, `shortcut`, `active_desktop`, `internet_toolbar`, `other`). |
+| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList` (with the system's `SOFTWARE` hive), and the hive. |
+| `GUID`, `Kind` | The `{GUID}` key and what it holds (`executable`, `shortcut`, `active_desktop`, `internet_toolbar`, `other`). |
 | `NameRot13`, `Name` | The value's name as stored, and decoded. |
 | `Path` | The decoded name as a path, with a known folder's GUID replaced by its default path; empty for app IDs and shell items. |
 | `RunCount` | How many times it was started from Explorer (version 3: the stored count minus 5). |
 | `FocusCount`, `FocusTimeMs` | How many times it had the focus, and for how long in milliseconds (version 5). |
 | `LastRunUTC` | When it was last started. Empty when Windows stored 0, or when the stored time is past 9999 (then `Problems` gives it and `DataRaw` keeps the bytes). |
-| `Format`, `SessionId` | The data's layout (5: 72 bytes, 3: 16 bytes) and the session number it was last written in. |
+| `Format`, `SessionID` | The data's layout (5: 72 bytes, 3: 16 bytes) and the session number it was last written in. |
 | `KeyLastWrittenUTC` | The `Count` key's last write: the most recent update to any of its items. |
 | `DataRaw` | The value's bytes (hex), when they don't decode. |
 | `TransactionLogStatus`, `LogsApplied` | Registry recovery context. |

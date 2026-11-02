@@ -56,7 +56,7 @@ Output:
 juntei parse-file prefetch -d Prefetch/ -o prefetch.csv
 juntei parse-file prefetch -d Prefetch/ -T -o prefetch-timeline.csv
 juntei parse-file prefetch -d Prefetch/ -t jsonl \
-  | jq 'select(.executable_name? | test("powershell|rundll32"; "i"))'
+  | jq 'select(.ExecutableName? | test("powershell|rundll32"; "i"))'
 ```
 
 ## Standard CSV fields

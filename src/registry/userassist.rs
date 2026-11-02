@@ -197,34 +197,54 @@ struct User {
 /// An item's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "GUID")]
     guid: &'a str,
+    #[serde(rename = "Kind")]
     kind: &'static str,
+    #[serde(rename = "NameRot13")]
     name_rot13: &'a str,
+    #[serde(rename = "Name")]
     name: &'a str,
+    #[serde(rename = "Path")]
     path: Option<&'a str>,
+    #[serde(rename = "RunCount")]
     run_count: Option<u32>,
+    #[serde(rename = "FocusCount")]
     focus_count: Option<u32>,
+    #[serde(rename = "FocusTimeMs")]
     focus_time_ms: Option<u32>,
+    #[serde(rename = "LastRun")]
     last_run: Option<String>,
+    #[serde(rename = "Format")]
     format: Option<u32>,
+    #[serde(rename = "SessionID")]
     session_id: Option<u32>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 20] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
-    "Guid",
+    "GUID",
     "Kind",
     "NameRot13",
     "Name",
@@ -234,7 +254,7 @@ const CSV_HEADER: [&str; 20] = [
     "FocusTimeMs",
     "LastRunUTC",
     "Format",
-    "SessionId",
+    "SessionID",
     "KeyLastWrittenUTC",
     "DataRaw",
     "TransactionLogStatus",

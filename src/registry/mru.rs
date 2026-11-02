@@ -218,34 +218,52 @@ struct User {
 /// An entry's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "List")]
     list: &'static str,
+    #[serde(rename = "Subkey")]
     subkey: Option<&'a str>,
+    #[serde(rename = "MRU-Position")]
     mru_position: Option<u32>,
+    #[serde(rename = "IsMostRecent")]
     is_most_recent: bool,
+    #[serde(rename = "ValueName")]
     value_name: &'a str,
+    #[serde(rename = "Value")]
     value: Option<&'a str>,
+    #[serde(rename = "TypedTime")]
     typed_time: Option<String>,
+    #[serde(rename = "LastUsed")]
     last_used: Option<String>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 18] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "List",
     "Subkey",
-    "MruPosition",
+    "MRU-Position",
     "IsMostRecent",
     "ValueName",
     "Value",

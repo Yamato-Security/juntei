@@ -369,7 +369,7 @@ const CSV_HEADER: &[&str] = &[
     "LastUpdateTimeUTC",
     "PackageName",
     "PackageVersion",
-    "PackagePublisherId",
+    "PackagePublisherID",
     "Findings",
     "RegistryPath",
     "RegistryValueName",
@@ -514,9 +514,9 @@ fn write_records(
         let v = json_record(r);
         // JSON: pretty objects separated by newlines, like parse-ntfs mft; JSONL: one per line
         if output_type == ShimcacheOutputType::Json {
-            serde_json::to_writer_pretty(&mut w, &v)?;
+            crate::output_schema::write_json(&mut w, &v, true)?;
         } else {
-            serde_json::to_writer(&mut w, &v)?;
+            crate::output_schema::write_json(&mut w, &v, false)?;
         }
         w.write_all(b"\n")?;
     }

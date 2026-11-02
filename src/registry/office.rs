@@ -201,43 +201,67 @@ struct User {
 /// An entry's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "OfficeVersion")]
     office_version: &'a str,
+    #[serde(rename = "Application")]
     application: &'a str,
+    #[serde(rename = "List")]
     list: &'static str,
+    #[serde(rename = "Account")]
     account: Option<&'a str>,
+    #[serde(rename = "Policy")]
     policy: bool,
+    #[serde(rename = "MRU-Position")]
     mru_position: Option<u32>,
+    #[serde(rename = "IsMostRecent")]
     is_most_recent: bool,
+    #[serde(rename = "Path")]
     path: Option<&'a str>,
+    #[serde(rename = "LastOpened")]
     last_opened: Option<String>,
+    #[serde(rename = "TrustedAt")]
     trusted_at: Option<String>,
+    #[serde(rename = "MacrosEnabled")]
     macros_enabled: Option<bool>,
+    #[serde(rename = "TrustFlags")]
     trust_flags: Option<String>,
+    #[serde(rename = "Setting")]
     setting: Option<&'a str>,
+    #[serde(rename = "Value")]
     value: Option<&'a str>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 24] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "OfficeVersion",
     "Application",
     "List",
     "Account",
     "Policy",
-    "MruPosition",
+    "MRU-Position",
     "IsMostRecent",
     "Path",
     "LastOpenedUTC",

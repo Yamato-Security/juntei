@@ -223,23 +223,41 @@ impl Pairs<'_> {
 /// A trace's record, its fields in this order.
 #[derive(serde::Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "Application")]
     application: &'static str,
+    #[serde(rename = "Item")]
     item: &'a str,
+    #[serde(rename = "MRU-Position")]
     mru_position: Option<u32>,
+    #[serde(rename = "Path")]
     path: Option<&'a str>,
+    #[serde(rename = "Value")]
     value: Option<&'a str>,
+    #[serde(rename = "FirstUsed")]
     first_used: Option<String>,
+    #[serde(rename = "Details")]
     details: Pairs<'a>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "ValueName")]
     value_name: Option<&'a str>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -247,10 +265,10 @@ const CSV_HEADER: [&str; 18] = [
     "Host",
     "SourcePath",
     "Username",
-    "UserSid",
+    "UserSID",
     "Application",
     "Item",
-    "MruPosition",
+    "MRU-Position",
     "Path",
     "Value",
     "FirstUsedUTC",

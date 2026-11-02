@@ -81,7 +81,7 @@ Display Settings:
 ```bash
 juntei parse-registry amcache -f Amcache.hve --files
 juntei parse-registry amcache -d evidence/ -o amcache-csv
-juntei parse-registry amcache -f Amcache.hve -t jsonl | jq 'select(.record_type == "file")'
+juntei parse-registry amcache -f Amcache.hve -t jsonl | jq 'select(.RecordType == "file")'
 ```
 
 See [Amcache](../artifacts/amcache.md).

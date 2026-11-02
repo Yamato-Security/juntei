@@ -269,40 +269,64 @@ fn decode_items(list: &[u8], code_page: u16) -> Decoded {
 /// An entry's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "List")]
     list: &'static str,
+    #[serde(rename = "Extension")]
     extension: Option<&'a str>,
+    #[serde(rename = "MRU-Position")]
     mru_position: Option<u32>,
+    #[serde(rename = "IsMostRecent")]
     is_most_recent: bool,
+    #[serde(rename = "ValueName")]
     value_name: &'a str,
+    #[serde(rename = "Program")]
     program: Option<&'a str>,
+    #[serde(rename = "Path")]
     path: Option<String>,
+    #[serde(rename = "ItemType")]
     item_type: Option<&'static str>,
+    #[serde(rename = "ItemModified")]
     item_modified: Option<String>,
+    #[serde(rename = "ItemCreated")]
     item_created: Option<String>,
+    #[serde(rename = "ItemAccessed")]
     item_accessed: Option<String>,
+    #[serde(rename = "MFT-Entry")]
     mft_entry: Option<u64>,
+    #[serde(rename = "MFT-Sequence")]
     mft_sequence: Option<u16>,
+    #[serde(rename = "LastUsed")]
     last_used: Option<String>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 24] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "List",
     "Extension",
-    "MruPosition",
+    "MRU-Position",
     "IsMostRecent",
     "ValueName",
     "Program",
@@ -311,8 +335,8 @@ const CSV_HEADER: [&str; 24] = [
     "ItemModifiedUTC",
     "ItemCreatedUTC",
     "ItemAccessedUTC",
-    "MftEntry",
-    "MftSequence",
+    "MFT-Entry",
+    "MFT-Sequence",
     "LastUsedUTC",
     "KeyPath",
     "KeyLastWrittenUTC",
