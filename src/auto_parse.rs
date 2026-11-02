@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `auto-parse`: discover collected Windows systems, run every Juntei parser in parallel, and
 //! organize the results by computer. Parser commands run as child processes so one damaged
 //! artifact cannot take down the whole collection and CPU-heavy parsers can run concurrently.
@@ -26,28 +39,38 @@ const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
 const CATEGORIES: &[&str] = &[
     "accounts",
+    "applications",
+    "external_devices",
     "file_and_folder_opening",
     "file_existence",
     "file_system",
+    "lateral_movement",
     "persistence",
     "process_execution",
     "registry",
     "security_products",
+    "system_information",
 ];
 
 /// Investigative categories are independent of a parser's storage format or command group.
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
         "sam" => "accounts",
-        "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
+        "app-history" => "applications",
+        "installed-programs" => "applications",
+        "usb" => "external_devices",
+        "jump-lists" | "lnk" | "mru" | "opensavemru" | "recentdocs" | "shellbags" => {
+            "file_and_folder_opening"
+        }
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+        "remote-access" => "lateral_movement",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-        "featureusage" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => {
-            "process_execution"
-        }
+        "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline" | "srum"
+        | "userassist" => "process_execution",
         "registry" => "registry",
         "defender-quarantine" => "security_products",
+        "system-info" => "system_information",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
     }
 }
@@ -56,24 +79,34 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "app-history" => "AppHistory",
+        "bam" => "BAM",
         "defender-quarantine" => "DefenderQuarantine",
         "featureusage" => "FeatureUsage",
         "i30" => "I30",
+        "installed-programs" => "InstalledPrograms",
         "jump-lists" => "JumpLists",
         "lnk" => "LNK",
         "logfile" => "LogFile",
         "mft" => "MFT",
+        "mru" => "MRU",
+        "muicache" => "MuiCache",
+        "opensavemru" => "OpenSaveMRU",
         "persistence" => "Persistence",
         "persistence-hunter" => "PersistenceHunter",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "RecentDocs",
         "registry" => "Registry",
+        "remote-access" => "RemoteAccess",
         "sam" => "SAM",
         "services" => "Services",
+        "shellbags" => "ShellBags",
         "shimcache" => "ShimCache",
         "srum" => "SRUM",
+        "system-info" => "SystemInfo",
         "taskcache" => "TaskCache",
+        "usb" => "USB",
         "usn-journal" => "UsnJournal",
         "userassist" => "UserAssist",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
@@ -394,6 +427,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             &format!("  {}{}: {}", host.computer, fqdn, host.root.display()),
             true,
         );
+        // the local times the system kept
+        if let Some(zone) = system_time_zone(&host.windows) {
+            p(None, &format!("    Time zone: {zone}"), true);
+        }
     }
     p_label(no_color, "Parser tasks: ", &fmt_num(tasks.len()));
     p_label(no_color, "Parallel processes: ", &fmt_num(threads));
@@ -776,6 +813,24 @@ fn client_info(root: &Path) -> Option<(String, Option<String>)> {
 }
 
 fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
+    read_system_hive(windows, registry::system::computer_name)
+}
+
+/// The time zone of a collected system's `SYSTEM` hive, in words: the local times it kept.
+fn system_time_zone(windows: &[PathBuf]) -> Option<String> {
+    read_system_hive(windows, |hive| {
+        registry::system_info::system(hive)
+            .time_zone
+            .as_ref()
+            .map(crate::registry::system_info::describe_time_zone)
+    })
+}
+
+/// What `read` finds in the first `System32\config\SYSTEM` of `windows` that gives something.
+fn read_system_hive<T>(
+    windows: &[PathBuf],
+    read: impl Fn(&registry::Hive) -> Option<T>,
+) -> Option<T> {
     for windows in windows {
         let config = child_ci(windows, "System32").and_then(|p| child_ci(&p, "config"));
         let system = config.and_then(|p| child_ci(&p, "SYSTEM"));
@@ -798,11 +853,11 @@ fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
         let Ok(context) = crate::persistence_hunter::context::Context::open(&system, false) else {
             continue;
         };
-        if let Some(name) = context
+        if let Some(found) = context
             .machine_hive("SYSTEM")
-            .and_then(|h| registry::system::computer_name(&h.opened.hive))
+            .and_then(|h| read(&h.opened.hive))
         {
-            return Some(name);
+            return Some(found);
         }
     }
     None
@@ -1020,6 +1075,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add("sam", &["parse-registry", "sam"], OutputShape::File, &[]);
         add(
+            "system-info",
+            &["parse-registry", "system-info"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "persistence",
             &["parse-registry", "persistence"],
             OutputShape::File,
@@ -1036,6 +1097,55 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         add(
             "userassist",
             &["parse-registry", "userassist"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "bam",
+            &["parse-registry", "bam"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
+        add(
+            "shellbags",
+            &["parse-registry", "shellbags"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "usb",
+            &["parse-registry", "usb"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
+        add(
+            "muicache",
+            &["parse-registry", "muicache"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "installed-programs",
+            &["parse-registry", "installed-programs"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "opensavemru",
+            &["parse-registry", "opensavemru"],
+            OutputShape::File,
+            &["--code-page", &code_page],
+        );
+        add(
+            "remote-access",
+            &["parse-registry", "remote-access"],
+            OutputShape::File,
+            &[],
+        );
+        add("mru", &["parse-registry", "mru"], OutputShape::File, &[]);
+        add(
+            "app-history",
+            &["parse-registry", "app-history"],
             OutputShape::File,
             &[],
         );
@@ -1142,6 +1252,27 @@ impl InputInventory {
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
                     found.add_size("featureusage", size);
+                    found.add_size("app-history", size);
+                    found.add_size("mru", size);
+                }
+                if matches!(
+                    kind.as_deref(),
+                    Some("SYSTEM" | "SOFTWARE" | "SAM" | "SECURITY")
+                ) {
+                    found.add_size("system-info", size);
+                    found.add_size("remote-access", size);
+                    found.add_size("opensavemru", size);
+                }
+                if matches!(kind.as_deref(), Some("SOFTWARE" | "NTUSER.DAT")) {
+                    found.add_size("installed-programs", size);
+                }
+                if matches!(kind.as_deref(), Some("NTUSER.DAT" | "USRCLASS.DAT")) {
+                    found.add_size("muicache", size);
+                    found.add_size("shellbags", size);
+                }
+                if kind.as_deref() == Some("SYSTEM") {
+                    found.add_size("bam", size);
+                    found.add_size("usb", size);
                 }
                 if matches!(
                     kind.as_deref(),

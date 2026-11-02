@@ -1,15 +1,38 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `parse-registry`: registry hives (SYSTEM, SOFTWARE, SAM, SECURITY, NTUSER.DAT, UsrClass.dat,
 //! Amcache.hve, …) read by ys-registry-parser, one subcommand per artifact. What they share is
 //! here: finding the hives of a collection, opening each with its transaction logs replayed when
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
+pub mod app_history;
+pub mod bam;
 pub mod featureusage;
+pub mod installed_programs;
+pub mod mru;
+pub mod muicache;
+pub mod opensavemru;
 pub mod persistence;
 pub mod read;
 pub mod recentdocs;
+pub mod remote_access;
 pub mod sam;
 pub mod services;
+pub mod shellbags;
+pub mod system_info;
 pub mod taskcache;
+pub mod usb;
 pub mod userassist;
 
 use crate::cli::RegistryOutputType;
@@ -324,17 +347,108 @@ pub fn software_of(path: &Path) -> Option<PathBuf> {
         .or_else(|| find_in(path.parent()?, &["SOFTWARE"]))
 }
 
+/// The `NTUSER.DAT` hives of the system whose SYSTEM hive is at `system`: each profile's under
+/// the system's `Users` and `Documents and Settings` when SYSTEM is where Windows keeps it, else
+/// those next to it and one directory down (hives exported to one directory). In path order.
+pub fn users_of(system: &Path) -> Vec<PathBuf> {
+    let children = |dir: &Path| -> Vec<PathBuf> {
+        let mut paths: Vec<PathBuf> = std::fs::read_dir(dir)
+            .map(|entries| {
+                entries
+                    .flatten()
+                    .filter(|e| e.file_type().is_ok_and(|t| !t.is_symlink()))
+                    .map(|e| e.path())
+                    .collect()
+            })
+            .unwrap_or_default();
+        paths.sort();
+        paths
+    };
+    let is_ntuser = |p: &PathBuf| {
+        p.is_file()
+            && p.file_name()
+                .is_some_and(|n| n.to_string_lossy().eq_ignore_ascii_case("NTUSER.DAT"))
+    };
+    let ntuser_in = |dir: &Path| children(dir).into_iter().find(|p| is_ntuser(p));
+    if let Some(root) = system_root(system) {
+        return children(&root)
+            .iter()
+            .filter(|d| {
+                d.file_name().is_some_and(|n| {
+                    let n = n.to_string_lossy();
+                    n.eq_ignore_ascii_case("Users")
+                        || n.eq_ignore_ascii_case("Documents and Settings")
+                })
+            })
+            .flat_map(|d| children(d))
+            .filter(|profile| profile.is_dir())
+            .filter_map(|profile| ntuser_in(&profile))
+            .collect();
+    }
+    let dir = system
+        .parent()
+        .filter(|d| !d.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let mut found: Vec<PathBuf> = children(dir).into_iter().filter(is_ntuser).collect();
+    found.extend(
+        children(dir)
+            .iter()
+            .filter(|d| d.is_dir())
+            .filter_map(|d| ntuser_in(d)),
+    );
+    found
+}
+
+/// The hive `name` (`SOFTWARE`, `SAM`, …) of the system the hive at `path` comes from: the
+/// system's `Windows\System32\config\<name>` when the hive is where Windows keeps it, else a
+/// hive of that name next to it (hives exported to one directory); never the hive itself.
+pub fn system_hive_of(path: &Path, name: &str) -> Option<PathBuf> {
+    system_root(path)
+        .and_then(|root| find_in(&root, &["Windows", "System32", "config", name]))
+        .or_else(|| find_in(path.parent()?, &[name]))
+        .filter(|found| found != path)
+}
+
 /// The SID of the profile whose folder is named `user`, among `profiles` (`ProfileList`'s SIDs
 /// and folders: `C:\Users\alice`).
 pub fn sid_of_profile(profiles: &[(String, String)], user: &str) -> Option<String> {
-    profiles
+    let matches: std::collections::BTreeSet<_> = profiles
         .iter()
-        .find(|(_, path)| {
-            path.rsplit(['\\', '/'])
-                .next()
-                .is_some_and(|folder| folder.eq_ignore_ascii_case(user))
+        .filter(|(sid, path)| {
+            valid_sid(sid)
+                && path
+                    .trim_end_matches(['\\', '/'])
+                    .rsplit(['\\', '/'])
+                    .next()
+                    .is_some_and(|folder| folder.eq_ignore_ascii_case(user))
         })
-        .map(|(sid, _)| sid.clone())
+        .map(|(sid, _)| sid.to_ascii_uppercase())
+        .collect();
+    (matches.len() == 1)
+        .then(|| matches.into_iter().next())
+        .flatten()
+}
+
+/// A complete Windows SID, excluding ProfileList backup names such as `S-1-...bak`.
+fn valid_sid(sid: &str) -> bool {
+    let mut parts = sid.split('-');
+    if !parts.next().is_some_and(|s| s.eq_ignore_ascii_case("S")) || parts.next() != Some("1") {
+        return false;
+    }
+    let Some(authority) = parts.next() else {
+        return false;
+    };
+    if authority.is_empty()
+        || !authority.bytes().all(|b| b.is_ascii_digit())
+        || !authority.parse::<u64>().is_ok_and(|n| n < (1u64 << 48))
+    {
+        return false;
+    }
+    let sub: Vec<_> = parts.collect();
+    (1..=15).contains(&sub.len())
+        && sub.iter().all(|s| {
+            !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()) && s.parse::<u32>().is_ok()
+        })
 }
 
 /// The profiles (`ProfileList`) of the systems user hives come from, each SOFTWARE hive
@@ -430,8 +544,9 @@ fn logs_next_to(path: &Path) -> Vec<PathBuf> {
 }
 
 /// Every file a registry command may read for the hives `files`: each hive and the logs next to
-/// it, the logs given (`--log1`, `--log2`), and the SYSTEM and SOFTWARE hives of its system with
-/// their logs (read for its host, and by `persistence` for the machine's classes and profiles).
+/// it, the logs given (`--log1`, `--log2`), and the SYSTEM, SOFTWARE and SAM hives of its system
+/// with their logs (read for its host, by `persistence` for the machine's classes and profiles,
+/// and by `bam` for its users' names).
 pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
     let mut hives: Vec<PathBuf> = files.to_vec();
     for path in files {
@@ -439,7 +554,7 @@ pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
             .parent()
             .filter(|d| !d.as_os_str().is_empty())
             .unwrap_or(Path::new("."));
-        for name in ["SYSTEM", "SOFTWARE"] {
+        for name in ["SYSTEM", "SOFTWARE", "SAM"] {
             hives.extend(
                 system_root(path)
                     .and_then(|root| find_in(&root, &["Windows", "System32", "config", name])),
@@ -609,6 +724,47 @@ pub fn filetime(ft: u64) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn profile_sid_requires_a_unique_valid_identity() {
+        let a = "S-1-5-21-1-2-3-1001";
+        let b = "S-1-5-21-4-5-6-1001";
+        let profiles = vec![
+            (a.into(), r"C:\Users\alice".into()),
+            (b.into(), r"D:\Profiles\ALICE".into()),
+        ];
+        assert_eq!(sid_of_profile(&profiles, "alice"), None);
+        assert_eq!(
+            sid_of_profile(&[(format!("{a}.bak"), r"C:\Users\alice".into())], "alice"),
+            None
+        );
+        assert_eq!(
+            sid_of_profile(&[(a.into(), r"C:\Users\Alice\".into())], "alice"),
+            Some(a.into())
+        );
+        assert_eq!(
+            sid_of_profile(
+                &[
+                    (a.into(), r"C:\Users\alice".into()),
+                    (a.to_lowercase(), r"C:\Users\ALICE".into())
+                ],
+                "alice"
+            ),
+            Some(a.into())
+        );
+        for sid in ["S-1-5-18", a] {
+            assert!(valid_sid(sid));
+        }
+        for sid in [
+            "S-1-5",
+            "S-1-5-+18",
+            "S-1-5-4294967296",
+            "S-1-281474976710656-1",
+            "S-1-5-18.bak",
+        ] {
+            assert!(!valid_sid(sid), "{sid}");
+        }
+    }
 
     #[test]
     fn hive_files_and_logs() {
