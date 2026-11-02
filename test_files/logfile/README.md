@@ -9,5 +9,6 @@
   Exercises journal writes and recovery with a damaged restart-page copy.
 
 Copied without modification from ys-logfile-parser at
-`d825dd28af9c3b3f2f6580fdfb29a634196bc18d`. `tests/logfile_cli.rs` decompresses them into temporary
+`d825dd28af9c3b3f2f6580fdfb29a634196bc18d` (now the `logfile` crate of
+[ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser)). `tests/logfile_cli.rs` decompresses them into temporary
 directories. No private investigation evidence is committed.

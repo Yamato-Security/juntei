@@ -89,5 +89,5 @@ their extents. Use it when low-level version-specific fields matter.
 - [Microsoft: Change Journals](https://learn.microsoft.com/en-us/windows/win32/fileio/change-journals)
 - [Microsoft: USN_RECORD_V2](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-usn_record_v2)
 - [Microsoft: Change Journal reason flags](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-usn_record_v2#members)
-- [ys-usn-journal-parser](https://github.com/Yamato-Security/ys-usn-journal-parser)
+- [ys-ntfs-parser's usn crate](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/usn)
 - [Sootmark usn](https://github.com/Sootmark/usn)

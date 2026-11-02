@@ -219,7 +219,7 @@ is a separate step. Juntei does not yet merge them with `parse-ntfs usn-journal`
 
 ## Further Details
 
-- [ys-logfile-parser](https://github.com/Yamato-Security/ys-logfile-parser): supported structures, validation corpus, and known limitations.
+- [ys-ntfs-parser's logfile crate](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/logfile): supported structures, validation corpus, and known limitations.
 - [Sootmark ntfslog](https://github.com/Sootmark/ntfslog): upstream Rust implementation.
 - [libfsntfs NTFS format documentation](https://github.com/libyal/libfsntfs/tree/main/documentation): log pages, fixups, and metadata structures.
 - [dfir_ntfs](https://github.com/msuhanov/dfir_ntfs): independent NTFS parsing research and implementation.

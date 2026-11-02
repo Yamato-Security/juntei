@@ -14,9 +14,9 @@
 // Parts of this file are adapted from MIT-licensed code: its copyright and permission notice are
 // in THIRD_PARTY_NOTICES/mft-csv-LICENSE.txt.
 
-//! `parse-ntfs mft`'s CSV, computed from the FILE records that ys-mft-parser reads: one row per file
-//! name of every base record (in-use records first, then free ones), and one more per alternate
-//! data stream, with the parent paths of a directory map, both sets of timestamps and the
+//! `parse-ntfs mft`'s CSV, computed from the FILE records that ys-ntfs-parser reads: one row per
+//! file name of every base record (in-use records first, then free ones), and one more per
+//! alternate data stream, with the parent paths of a directory map, both sets of timestamps and the
 //! timestomping indicators `SI<FN`, `uSecZeros` and `Copied`.
 //!
 //! The values come from the attributes' raw bytes, at fixed offsets; a time that is zero, negative
@@ -34,6 +34,7 @@ use mft::attribute::header::ResidentialHeader;
 use mft::{MftEntry, MftParser};
 use std::collections::{HashMap, HashSet};
 use std::io::{self, Read, Seek, Write};
+use ys_ntfs_parser::mft;
 
 /// The columns, in order.
 pub const CSV_HEADER: [&str; 35] = [
@@ -279,7 +280,7 @@ struct Record {
 }
 
 /// A file name found in the slack of a FILE record.
-pub type SlackName = mft_slack::i30::IndexEntry;
+pub type SlackName = mft::i30::IndexEntry;
 
 /// A file name found in slack, with where it was found.
 #[derive(Clone, Debug)]
@@ -314,15 +315,12 @@ impl Keep {
 
 /// The file names left in the slack of `entry` (its bytes past the size in use, up to its
 /// allocated size), at its `position` in the $MFT: their offsets are in the $MFT. An error when
-/// the record's sizes and attributes don't say where its slack starts (ys-mft-parser's
+/// the record's sizes and attributes don't say where its slack starts (the mft crate's
 /// `slack_bounds`): its bytes in use are never taken for slack.
 pub fn slack_names(entry: &MftEntry, position: u64) -> Result<Vec<SlackName>, String> {
-    let (start, end) = mft_slack::entry::slack_bounds(&entry.data)?;
+    let (start, end) = mft::entry::slack_bounds(&entry.data)?;
     let offset = position.saturating_mul(entry.data.len() as u64) + start as u64;
-    Ok(mft_slack::i30::slack_entries_in(
-        &entry.data[start..end],
-        offset,
-    ))
+    Ok(mft::i30::slack_entries_in(&entry.data[start..end], offset))
 }
 
 impl Record {

@@ -949,14 +949,11 @@ dependencies = [
  "ys-defender-history-parser",
  "ys-jump-lists-parser",
  "ys-lnk-parser",
- "ys-logfile-parser",
- "ys-mft-parser 1.0.0 (git+https://github.com/Yamato-Security/ys-mft-parser?branch=ys%2Ffile-record-slack)",
- "ys-mft-parser 1.0.0 (git+https://github.com/Yamato-Security/ys-mft-parser)",
+ "ys-ntfs-parser",
  "ys-prefetch-parser",
  "ys-registry-parser",
  "ys-shimcache-parser",
  "ys-srum-parser",
- "ys-usn-journal-parser",
 ]
 
 [[package]]
@@ -2025,14 +2022,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "ys-logfile-parser"
+name = "ys-ntfs-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-logfile-parser#d825dd28af9c3b3f2f6580fdfb29a634196bc18d"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fimport#7ec58f693db3527f0f9a4d4f1881745331a8c021"
+dependencies = [
+ "ys-ntfs-parser-logfile",
+ "ys-ntfs-parser-mft",
+ "ys-ntfs-parser-usn",
+]
 
 [[package]]
-name = "ys-mft-parser"
+name = "ys-ntfs-parser-common"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-mft-parser?branch=ys%2Ffile-record-slack#a41ffb39e44c9e63152cf8610dda145f3a5c3aed"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fimport#7ec58f693db3527f0f9a4d4f1881745331a8c021"
+
+[[package]]
+name = "ys-ntfs-parser-logfile"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fimport#7ec58f693db3527f0f9a4d4f1881745331a8c021"
+dependencies = [
+ "ys-ntfs-parser-common",
+]
+
+[[package]]
+name = "ys-ntfs-parser-mft"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fimport#7ec58f693db3527f0f9a4d4f1881745331a8c021"
 dependencies = [
  "bitflags 2.13.2",
  "byteorder",
@@ -2051,24 +2066,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "ys-mft-parser"
+name = "ys-ntfs-parser-usn"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-mft-parser#508ab9803d06f6668be1bce505e20f00f95ad531"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fimport#7ec58f693db3527f0f9a4d4f1881745331a8c021"
 dependencies = [
- "bitflags 2.13.2",
- "byteorder",
- "csv",
- "itertools",
- "jiff",
- "log",
- "lru",
- "num-derive 0.5.1",
- "num-traits",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "utf16-simd",
- "winstructs",
+ "ys-ntfs-parser-common",
+ "ys-ntfs-parser-mft",
 ]
 
 [[package]]
@@ -2111,14 +2114,6 @@ dependencies = [
 name = "ys-srum-parser-ese"
 version = "1.0.0"
 source = "git+https://github.com/Yamato-Security/ys-srum-parser#e7cdd5ea1c1613fdebe39a402e5f8e566334f78b"
-
-[[package]]
-name = "ys-usn-journal-parser"
-version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-usn-journal-parser#bf2f91d41eab0682e2b981f3308bb4c8f458043c"
-dependencies = [
- "ys-mft-parser 1.0.0 (git+https://github.com/Yamato-Security/ys-mft-parser)",
-]
 
 [[package]]
 name = "zerocopy"

@@ -58,7 +58,7 @@ Filtering:
 
 Output:
   -o, --output <PATH>                   Save records
-  -t, --output-type <TYPE>              csv, ys-mft-parser-csv, json, jsonl
+  -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
 
 CSV Output:
@@ -134,7 +134,8 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `SlackRecord`, `SlackOffset` | With `-x`: the FILE record whose slack held the name, by its place in the `$MFT` rather than the record number written inside it (an extension record's own, even though its names are listed with its base record), and the name's byte offset in the `$MFT`. A slack row's `ParseErrors` are that record's problems, such as `fixup values do not match`: the recovered bytes may be affected. |
 | `CopyOfEntryInUse` | With `-x`: a file in use still has this name in the same directory (and is the same file, when the reference survived). Names that no file in use has are the interesting ones: deleted, renamed, or a reused record's previous occupant. |
 
-`-t ys-mft-parser-csv` uses the maintained parser's entry-oriented schema. JSON/JSONL retains every
+`-t ys-ntfs-parser-csv` (formerly `ys-mft-parser-csv`, still accepted) uses the maintained parser's
+entry-oriented schema. JSON/JSONL retains every
 attribute (resident `$DATA` included, in hexadecimal) and `full_path`; use it when the flat
 investigative CSV omits low-level structure. With `-x`, each JSON entry also has
 `slack_file_names`.
@@ -153,6 +154,6 @@ investigative CSV omits low-level structure. With `-x`, each JSON entry also has
 
 - [Microsoft: Master File Table](https://learn.microsoft.com/en-us/windows/win32/fileio/master-file-table)
 - [Microsoft Open Specifications: NTFS](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ntfs/)
-- [ys-mft-parser](https://github.com/Yamato-Security/ys-mft-parser)
+- [ys-ntfs-parser's mft crate](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram's mft parser](https://github.com/omerbenamram/mft)
 - [libfsntfs format documentation](https://github.com/libyal/libfsntfs/tree/main/documentation)

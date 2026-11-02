@@ -18,7 +18,7 @@ defines every executable, device, finding, and summary field.
 
 ## Master File Table
 
-[ys-mft-parser](https://github.com/Yamato-Security/ys-mft-parser) is a maintained fork of Omer
+The mft crate of [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) is a maintained fork of Omer
 Ben-Amram's [mft](https://github.com/omerbenamram/mft) crate. Across eight `$MFT` files—the crate's
 sample, the NIST hacking case, and six DFIR Artifact Museum files—1,048,733 CSV rows and columns
 matched a reference parser in order. Comparisons covered default output, `--all-times`,
@@ -26,7 +26,7 @@ matched a reference parser in order. Comparisons covered default output, `--all-
 
 ## NTFS transaction log ($LogFile)
 
-[ys-logfile-parser](https://github.com/Yamato-Security/ys-logfile-parser) is maintained from
+The logfile crate of [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) is maintained from
 [Sootmark ntfslog](https://github.com/Sootmark/ntfslog). Its validation covers six complete DFIR
 Artifact Museum logs, public version 1.1 and 2.0 fixtures, decoded redo/undo metadata, and journal
 writes compared against independently parsed NTFS data. See the parser repository for detailed
@@ -53,7 +53,7 @@ implementation.
 
 ## USN Journal
 
-[ys-usn-journal-parser](https://github.com/Yamato-Security/ys-usn-journal-parser) is a maintained
+The usn crate of [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) is a maintained
 fork of [Sootmark usn](https://github.com/Sootmark/usn). On six real journals, Juntei's
 time-aware parent paths matched an independent parser wherever that parser resolved a path. Juntei
 also resolved 4,321 records that the comparison left unresolved. Its carver produced no false
@@ -61,7 +61,7 @@ records while tested against 880 MB of `$MFT` data.
 
 ## Directory indexes ($I30)
 
-The `i30` module of [ys-mft-parser](https://github.com/Yamato-Security/ys-mft-parser) reads INDX
+The `i30` module of [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser)'s mft crate reads INDX
 records and their slack. On two `$I30` streams of a volume built with ntfs-3g (Juntei's
 `test_files/i30/`) and on three public Windows-written `$I30` samples, its entries in use and in
 slack matched those of Maxim Suhanov's [dfir_ntfs](https://github.com/msuhanov/dfir_ntfs), with the
