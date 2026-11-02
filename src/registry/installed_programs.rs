@@ -104,7 +104,10 @@ pub fn run(opts: &RegistryInstalledProgramsOptions) -> i32 {
     // --- parse and write -------------------------------------------------------------------
     let mut hosts = Hosts::new(!opts.no_logs);
     let mut profiles = Profiles::new(!opts.no_logs);
-    let mut stats = Stats::default();
+    let mut stats = Stats {
+        to_stderr: data_on_stdout,
+        ..Stats::default()
+    };
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
@@ -126,7 +129,11 @@ pub fn run(opts: &RegistryInstalledProgramsOptions) -> i32 {
                 let names = profile_list(&opened.hive)
                     .into_iter()
                     .filter_map(|(sid, folder)| {
-                        let name = folder.rsplit(['\\', '/']).next()?.to_owned();
+                        let name = folder
+                            .trim_end_matches(['\\', '/'])
+                            .rsplit(['\\', '/'])
+                            .next()?
+                            .to_owned();
                         (!name.is_empty()).then(|| (sid.to_ascii_uppercase(), name))
                     })
                     .collect();
@@ -425,6 +432,8 @@ impl<'a> Record<'a> {
 /// Counts for the results summary.
 #[derive(Default)]
 struct Stats {
+    /// Records are written to stdout; hive-level diagnostics must remain on stderr.
+    to_stderr: bool,
     /// Hives parsed, by type.
     types: BTreeMap<&'static str, usize>,
     failed: usize,
@@ -473,6 +482,9 @@ impl Stats {
             self.dirty.push(opened.source.clone());
         }
         for problem in &read.problems {
+            if self.to_stderr {
+                eprintln!("{}: {problem}", opened.source);
+            }
             self.problem(&opened.source, problem);
         }
         for program in &read.programs {

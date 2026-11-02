@@ -70,8 +70,8 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - Persistence Hunter (131 cross-source persistence checks with allow/block profiles)
 - Defender quarantine metadata
 - all registry keys and values, including recoverable deleted data
-- services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, UserAssist, and
-  installed programs
+- services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, UserAssist, BAM,
+  installed programs, MuiCache, ShellBags, and USB devices
 
 Persistence Hunter retains every severity (`--min-severity info`), including partial allow matches.
 `LOW` is a classification to investigate; missing signature metadata can produce it for malicious
@@ -105,13 +105,18 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── applications/
 │   │   ├── InstalledPrograms.csv
 │   │   └── InstalledPrograms-logs.txt
+│   ├── external_devices/
+│   │   ├── USB.csv
+│   │   └── USB-logs.txt
 │   ├── file_and_folder_opening/
 │   │   ├── jump-lists/
 │   │   ├── JumpLists-logs.txt
 │   │   ├── LNK.csv
 │   │   ├── LNK-logs.txt
 │   │   ├── RecentDocs.csv
-│   │   └── RecentDocs-logs.txt
+│   │   ├── RecentDocs-logs.txt
+│   │   ├── ShellBags.csv
+│   │   └── ShellBags-logs.txt
 │   ├── file_existence/
 │   │   ├── amcache/
 │   │   ├── Amcache-logs.txt
@@ -134,6 +139,10 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── TaskCache.csv
 │   │   └── TaskCache-logs.txt
 │   ├── process_execution/
+│   │   ├── BAM.csv
+│   │   ├── BAM-logs.txt
+│   │   ├── MuiCache.csv
+│   │   ├── MuiCache-logs.txt
 │   │   ├── Prefetch.csv
 │   │   ├── Prefetch-logs.txt
 │   │   ├── PrefetchTimeline.csv
@@ -157,11 +166,12 @@ CSV keeps separate tables because each artifact has different columns:
 |---|---|
 | `accounts` | SAM local accounts |
 | `applications` | Installed programs |
-| `file_and_folder_opening` | Jump Lists, LNK shortcuts, RecentDocs |
+| `external_devices` | USB devices and volumes |
+| `file_and_folder_opening` | Jump Lists, LNK shortcuts, RecentDocs, ShellBags |
 | `file_existence` | Amcache, ShimCache |
 | `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
 | `persistence` | Registry autostarts, services, TaskCache |
-| `process_execution` | Prefetch, Prefetch timeline, SRUM, UserAssist |
+| `process_execution` | BAM and DAM, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
 | `registry` | General hive keys and values, including recovered records |
 | `security_products` | Defender quarantine metadata and optional extracted content |
 
@@ -178,7 +188,7 @@ covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `InstalledPrograms.csv`, `Registry.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider

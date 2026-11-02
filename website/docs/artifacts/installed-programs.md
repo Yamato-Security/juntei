@@ -45,13 +45,18 @@ Collect `SOFTWARE`, every `NTUSER.DAT`, and their transaction logs. `SYSTEM` nam
 - **Uninstalled software.** A program removed cleanly loses its keys. Use `parse-registry read
   --recover-deleted` for deleted `Uninstall` keys, and Amcache, Prefetch and the `$MFT` for traces
   left behind.
-- **Per-user installs.** `NTUSER.DAT` `Uninstall` entries and products are installed for one user,
-  without administrator rights: remote access tools and tunnelling clients are often installed so.
+- **Per-user registrations.** `NTUSER.DAT` entries identify software registered for a profile.
+  That scope does not establish who ran the installer or whether administrator rights were used.
 - **Hidden entries.** `SystemComponent` hides an entry from *Programs and Features*; entries
   without a `DisplayName` (updates, components) are not shown either. They are all reported.
-- **Product codes.** An `Uninstall` key named `{GUID}` is a Windows Installer product: the same
-  code as the `msi_product` record whose key is that code *packed* (its characters reordered).
-  `ProductCode` gives both in the `{GUID}` form, so they can be matched.
+- **Product codes.** A GUID-shaped `Uninstall` key can be matched against a packed
+  `msi_product` key through `ProductCode`. The GUID-shaped name alone does not prove that
+  Windows Installer created the entry.
+- **App Paths.** These are registrations used to locate programs, rather than execution
+  records. The `Path` value can hold multiple search directories and is not necessarily the
+  installation directory.
+- **Publisher.** This is registry metadata supplied by the installer, not verified signature
+  information.
 - **Architecture.** `Wow6432Node` holds 32-bit programs on 64-bit Windows (`Architecture` `x86`,
   `Wow64` `True`); other entries are the system's own architecture (empty). A package's
   architecture is its own (`x64`, `neutral`, …).
@@ -61,6 +66,11 @@ Collect `SOFTWARE`, every `NTUSER.DAT`, and their transaction logs. `SYSTEM` nam
   (WSL 1): collect it to look inside.
 - **Packages.** The `<SID>` lists are the packages registered for each user; most are Windows'
   own. `Deprovisioned` packages were removed for new users, `EndOfLife\<SID>` ones for that user.
+- **Damaged values.** Malformed numbers, wrong value types and invalid UTF-16 are reported in
+  `Problems` and retained in `DataRaw`, including an empty hex string for a present value with
+  zero bytes. A clean empty string in an optional numeric field is treated as absent. A package
+  version must contain four decimal components, each within the unsigned 16-bit range.
+  Hive-level warnings stay on stderr when `-t` streams records to stdout.
 
 ## Parse with Juntei
 
