@@ -4,7 +4,7 @@ version = "1.0.0"
 repository = "https://github.com/Yamato-Security/juntei"
 authors = ["Yamato Security @SecurityYamato"]
 description = "Windows forensics artifact parser"
-license = "AGPL-3.0-only"
+license = "RPL-1.5"
 edition = "2024"
 rust-version = "1.99"
 include = ["src/**/*", "art/**/*", "LICENSE", "THIRD_PARTY_NOTICES/**/*", "README.md", "CHANGELOG.md"]
@@ -70,9 +70,9 @@ jumplist = { package = "ys-jump-lists-parser", git = "https://github.com/Yamato-
 # control set, and the findings.
 shimcache-forensic = { package = "ys-shimcache-parser", git = "https://github.com/Yamato-Security/ys-shimcache-parser" }
 # Registry hives for parse-registry: Yamato Security's ys-registry-parser (Apache-2.0): keys and
-# values, transaction log replay, deleted keys and values, registry autostart locations, UserAssist
-# and most-recently-used lists.
-registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Security/ys-registry-parser", branch = "ys/mru" }
+# values, transaction log replay, deleted keys and values, registry autostart locations, UserAssist,
+# BAM, installed software, MuiCache, Open/Save MRU, ShellBags and USB.
+registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Security/ys-registry-parser" }
 # The order of parse-ese srum's JSON columns, and parse-ntfs mft's JSON entries (as ys-mft-parser writes them).
 serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
@@ -92,4 +92,3 @@ tempfile = "3"
 lto = "fat"
 codegen-units = 1
 strip = "debuginfo"
-
