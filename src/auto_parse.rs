@@ -38,42 +38,42 @@ mod timeline;
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
 const CATEGORIES: &[&str] = &[
-    "accounts",
-    "applications",
-    "external_devices",
-    "file_and_folder_opening",
-    "file_existence",
-    "file_system",
-    "network_activity",
-    "lateral_movement",
-    "persistence",
-    "process_execution",
-    "registry",
-    "security_products",
-    "system_information",
+    "Accounts",
+    "Applications",
+    "ExternalDevices",
+    "FileAndFolderOpening",
+    "FileExistence",
+    "FileSystem",
+    "LateralMovement",
+    "NetworkActivity",
+    "Persistence",
+    "ProcessExecution",
+    "Registry",
+    "SecurityProducts",
+    "SystemInformation",
 ];
 
 /// Investigative categories are independent of a parser's storage format or command group.
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
-        "lsa-secrets" | "sam" => "accounts",
-        "app-history" => "applications",
-        "installed-programs" => "applications",
-        "usb" => "external_devices",
+        "lsa-secrets" | "sam" => "Accounts",
+        "app-history" => "Applications",
+        "installed-programs" => "Applications",
+        "usb" => "ExternalDevices",
         "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
-            "file_and_folder_opening"
+            "FileAndFolderOpening"
         }
-        "amcache" | "shimcache" => "file_existence",
-        "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
-        "networks" => "network_activity",
-        "remote-access" => "lateral_movement",
-        "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
+        "amcache" | "shimcache" => "FileExistence",
+        "i30" | "logfile" | "mft" | "usn-journal" => "FileSystem",
+        "networks" => "NetworkActivity",
+        "remote-access" => "LateralMovement",
+        "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "Persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
-        | "srum" | "userassist" => "process_execution",
-        "registry" => "registry",
-        "defender-quarantine" | "security-settings" => "security_products",
-        "system-info" => "system_information",
-        "auditpol" => "system_information",
+        | "srum" | "userassist" => "ProcessExecution",
+        "registry" => "Registry",
+        "defender-quarantine" | "security-settings" => "SecurityProducts",
+        "system-info" => "SystemInformation",
+        "auditpol" => "SystemInformation",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
     }
 }
@@ -127,7 +127,7 @@ fn defender_extraction_directory(output: &Path, computer_folder: &str) -> PathBu
     output
         .join(computer_folder)
         .join(artifact_category("defender-quarantine"))
-        .join("defender-quarantined")
+        .join("DefenderQuarantined")
 }
 
 #[derive(Clone)]
@@ -1451,7 +1451,7 @@ fn task_output(
     let directory = matches!(shape, OutputShape::Directory)
         || (matches!(shape, OutputShape::CsvDirectory) && output_type == AutoOutputType::Csv);
     if directory {
-        category_dir.join(artifact)
+        category_dir.join(artifact_filename(artifact))
     } else {
         category_dir.join(format!(
             "{}.{}",
@@ -1499,9 +1499,12 @@ fn clear_generated_outputs(tasks: &[Task], work: &Path) -> io::Result<()> {
 /// unrecorded stale result.
 fn clear_defender_extractions(hosts: &[Host], output: &Path) -> io::Result<()> {
     for host in hosts {
-        // Keep the same clobber protection for the previous flat extraction location, too.
+        // Keep clobber protection for the previous category and flat extraction locations.
         for path in [
             defender_extraction_directory(output, &host.folder),
+            output
+                .join(&host.folder)
+                .join("security_products/defender-quarantined"),
             output.join(&host.folder).join("defender-quarantined"),
         ] {
             remove_generated_path(&path, output)?;
@@ -2082,14 +2085,10 @@ mod tests {
     #[test]
     fn totals_include_nested_results_and_logs_without_following_symlinks() {
         let dir = tempfile::tempdir().unwrap();
-        fs::create_dir_all(dir.path().join("HOST/file_system")).unwrap();
+        fs::create_dir_all(dir.path().join("HOST/FileSystem")).unwrap();
         fs::write(dir.path().join("manifest.csv"), b"a,b\n").unwrap();
         fs::write(dir.path().join("HOST/result.csv"), b"x\n1\n").unwrap();
-        fs::write(
-            dir.path().join("HOST/file_system/parser-logs.txt"),
-            b"log\n",
-        )
-        .unwrap();
+        fs::write(dir.path().join("HOST/FileSystem/parser-logs.txt"), b"log\n").unwrap();
         #[cfg(unix)]
         {
             std::os::unix::fs::symlink(dir.path(), dir.path().join("HOST/loop")).unwrap();
@@ -2178,7 +2177,7 @@ mod tests {
                 AutoOutputType::Csv,
                 OutputShape::CsvDirectory
             ),
-            root.join("file_existence/amcache")
+            root.join("FileExistence/Amcache")
         );
         assert_eq!(
             task_output(
@@ -2187,11 +2186,11 @@ mod tests {
                 AutoOutputType::Jsonl,
                 OutputShape::CsvDirectory
             ),
-            root.join("file_existence/Amcache.jsonl")
+            root.join("FileExistence/Amcache.jsonl")
         );
         assert_eq!(
             task_output(root, "srum", AutoOutputType::Json, OutputShape::Directory),
-            root.join("process_execution/srum")
+            root.join("ProcessExecution/SRUM")
         );
     }
 

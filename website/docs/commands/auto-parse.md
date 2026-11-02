@@ -101,7 +101,10 @@ An artifact that was not collected is a normal `skipped` task, not a failure.
 
 ## Output layout
 
-Results are organized by computer, investigative category, and artifact. Each parser writes an
+Results are organized by computer, investigative category, and artifact. Generated category and
+artifact directories use PascalCase, such as `Accounts`, `FileAndFolderOpening`, `Amcache`,
+and `SRUM`. Computer directory names retain their discovered spelling. Existing output
+directories are not migrated; choose a new output directory when switching from the older naming. Each parser writes an
 `<artifact>-logs.txt` file beside its results, including when the artifact was not collected.
 CSV keeps separate tables because each artifact has different columns:
 
@@ -110,22 +113,21 @@ CSV keeps separate tables because each artifact has different columns:
 ├── manifest.json
 ├── manifest.csv
 ├── HOST1/
-│   ├── accounts/
+│   ├── Accounts/
 │   │   ├── LsaSecrets.csv
 │   │   ├── LsaSecrets-logs.txt
 │   │   ├── SAM.csv
 │   │   └── SAM-logs.txt
-│   ├── applications/
+│   ├── Applications/
 │   │   ├── AppHistory.csv
-│   │   └── AppHistory-logs.txt
-│   ├── applications/
+│   │   ├── AppHistory-logs.txt
 │   │   ├── InstalledPrograms.csv
 │   │   └── InstalledPrograms-logs.txt
-│   ├── external_devices/
+│   ├── ExternalDevices/
 │   │   ├── USB.csv
 │   │   └── USB-logs.txt
-│   ├── file_and_folder_opening/
-│   │   ├── jump-lists/
+│   ├── FileAndFolderOpening/
+│   │   ├── JumpLists/
 │   │   ├── JumpLists-logs.txt
 │   │   ├── LNK.csv
 │   │   ├── LNK-logs.txt
@@ -139,12 +141,12 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── RecentDocs-logs.txt
 │   │   ├── ShellBags.csv
 │   │   └── ShellBags-logs.txt
-│   ├── file_existence/
-│   │   ├── amcache/
+│   ├── FileExistence/
+│   │   ├── Amcache/
 │   │   ├── Amcache-logs.txt
 │   │   ├── ShimCache.csv
 │   │   └── ShimCache-logs.txt
-│   ├── file_system/
+│   ├── FileSystem/
 │   │   ├── I30.csv
 │   │   ├── I30-logs.txt
 │   │   ├── LogFile.csv
@@ -153,13 +155,13 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── MFT-logs.txt
 │   │   ├── UsnJournal.csv
 │   │   └── UsnJournal-logs.txt
-│   ├── network_activity/
+│   ├── NetworkActivity/
 │   │   ├── Networks.csv
 │   │   └── Networks-logs.txt
-│   ├── lateral_movement/
+│   ├── LateralMovement/
 │   │   ├── RemoteAccess.csv
 │   │   └── RemoteAccess-logs.txt
-│   ├── persistence/
+│   ├── Persistence/
 │   │   ├── BCD.csv
 │   │   ├── BCD-logs.txt
 │   │   ├── Persistence.csv
@@ -168,7 +170,7 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Services-logs.txt
 │   │   ├── TaskCache.csv
 │   │   └── TaskCache-logs.txt
-│   ├── process_execution/
+│   ├── ProcessExecution/
 │   │   ├── AppCompat.csv
 │   │   ├── AppCompat-logs.txt
 │   │   ├── FeatureUsage.csv
@@ -181,20 +183,20 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Prefetch-logs.txt
 │   │   ├── PrefetchTimeline.csv
 │   │   ├── PrefetchTimeline-logs.txt
-│   │   ├── srum/
+│   │   ├── SRUM/
 │   │   ├── SRUM-logs.txt
 │   │   ├── UserAssist.csv
 │   │   └── UserAssist-logs.txt
-│   ├── registry/
+│   ├── Registry/
 │   │   ├── Registry.csv
 │   │   └── Registry-logs.txt
-│   ├── security_products/
+│   ├── SecurityProducts/
 │   │   ├── SecuritySettings.csv
 │   │   ├── SecuritySettings-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
-│   │   └── defender-quarantined/  # only with -x
-│   └── system_information/
+│   │   └── DefenderQuarantined/  # only with -x
+│   └── SystemInformation/
 │       ├── AuditPolicy.csv
 │       ├── AuditPolicy-logs.txt
 │       ├── SystemInfo.csv
@@ -205,21 +207,21 @@ CSV keeps separate tables because each artifact has different columns:
 
 | Category | Artifacts |
 |---|---|
-| `accounts` | SAM local accounts, LSA secrets' names and times |
-| `applications` | Application history (third-party tools' traces) |
-| `applications` | Installed programs |
-| `external_devices` | USB devices and volumes |
-| `file_and_folder_opening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
-| `file_existence` | Amcache, ShimCache |
-| `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
-| `network_activity` | Network profiles, interfaces, shares, port proxies and routes |
-| `lateral_movement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
-| `persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
-| `process_execution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
-| `registry` | General hive keys and values, including recovered records |
-| `security_products` | Defender quarantine metadata and optional extracted content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
-| `system_information` | Names, Windows version, time zone, last shutdown, profiles and SIDs of the system |
-| `system_information` | The audit policy: which security events the system was set to log |
+| `Accounts` | SAM local accounts, LSA secrets' names and times |
+| `Applications` | Application history (third-party tools' traces) |
+| `Applications` | Installed programs |
+| `ExternalDevices` | USB devices and volumes |
+| `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
+| `FileExistence` | Amcache, ShimCache |
+| `FileSystem` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
+| `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes |
+| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
+| `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
+| `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
+| `Registry` | General hive keys and values, including recovered records |
+| `SecurityProducts` | Defender quarantine metadata and optional extracted content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
+| `SystemInformation` | Names, Windows version, time zone, last shutdown, profiles and SIDs of the system |
+| `SystemInformation` | The audit policy: which security events the system was set to log |
 
 Categories help organize investigations; they are not proof of a particular activity. For example,
 Amcache and ShimCache entries alone do not establish execution. SRUM records resource usage;
@@ -227,19 +229,19 @@ consult the artifact guide before drawing conclusions about a program running.
 
 CSV, JSON, and JSONL use the same categories. Parsers that produce several tables retain their
 artifact subdirectory where needed. One `<artifact>-logs.txt` file per parser job contains its
-exact command and messages; for example, `HOST1/file_system/MFT-logs.txt` and
-`HOST1/process_execution/Prefetch-logs.txt`. JSON and JSONL use the same log filenames.
-Multi-table outputs such as `amcache/` and `srum/` have one log beside the artifact directory,
+exact command and messages; for example, `HOST1/FileSystem/MFT-logs.txt` and
+`HOST1/ProcessExecution/Prefetch-logs.txt`. JSON and JSONL use the same log filenames.
+Multi-table outputs such as `Amcache/` and `SRUM/` have one log beside the artifact directory,
 covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Networks.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`, `BCD.csv`,
 `SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `AppCompat.csv`, `Office.csv`, `FeatureUsage.csv`, `AppHistory.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `SecuritySettings.csv`, `AuditPolicy.csv`, `Registry.csv`, and
-`DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
+`DefenderQuarantine.csv`. Amcache's `Amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider
-tables in `srum/`, with its parser messages in `SRUM-logs.txt`.
+tables in `SRUM/`, with its parser messages in `SRUM-logs.txt`.
 
 Logs match the capitalized artifact name, such as `SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
 and `UserAssist-logs.txt`. JSON/JSONL files use the same stems, for example `MFT.jsonl`; the
@@ -276,11 +278,11 @@ Results saved: output/ ( 125 files / 42.50 MB )
 ```
 
 When a host has one Amcache hive or SRUM database, its CSV tables are written directly under
-`file_existence/amcache/` or `process_execution/srum/`. If a collection contains several databases
+`FileExistence/Amcache/` or `ProcessExecution/SRUM/`. If a collection contains several databases
 of either kind, each source receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
 another. A normal single-volume collection writes `$MFT` and USN Journal records directly to
-`file_system/MFT.csv` and `file_system/UsnJournal.csv`. Additional collected volumes use numbered
-sibling files such as `file_system/MFT-2.csv` and `file_system/MFT-2-logs.txt`.
+`FileSystem/MFT.csv` and `FileSystem/UsnJournal.csv`. Additional collected volumes use numbered
+sibling files such as `FileSystem/MFT-2.csv` and `FileSystem/MFT-2-logs.txt`.
 
 ## JSON and SIEM ingestion
 
@@ -380,7 +382,7 @@ Display Settings:
 Use a new output directory when practical. `-C` removes or overwrites only the exact generated
 targets for this run, so a now-missing artifact cannot leave a stale result. It does not delete
 unrelated files or the complete output tree. It also removes each computer's
-`security_products/defender-quarantined/` directory, and the reserved `defender-quarantined/`
+`SecurityProducts/DefenderQuarantined/` directory, and the reserved `defender-quarantined/`
 directory from the previous flat layout, before parsing, whether or not the new run uses `-x`.
 
 Use a fresh output directory when switching from an older flat layout. Earlier CSV/JSON files
@@ -388,7 +390,7 @@ are not relocated or deleted automatically.
 
 !!! danger "Treat extracted Defender content as malware"
     `-x, --extract-defender-quarantined` writes quarantined content to disk under each computer's
-    `security_products/defender-quarantined/` directory. Recovered binary streams end in `.quarantined`, and Juntei
+    `SecurityProducts/DefenderQuarantined/` directory. Recovered binary streams end in `.quarantined`, and Juntei
     removes execute permission. Each binary security descriptor also gets a readable `.security_descriptor.txt`
     report with ownership, permissions and SDDL. Never execute recovered payloads. Use an isolated
     analysis system and expect antivirus or EDR software to alert on or remove the recovered content.
