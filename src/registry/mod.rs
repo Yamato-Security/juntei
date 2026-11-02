@@ -19,6 +19,7 @@
 pub mod bam;
 pub mod installed_programs;
 pub mod muicache;
+pub mod opensavemru;
 pub mod persistence;
 pub mod read;
 pub mod recentdocs;

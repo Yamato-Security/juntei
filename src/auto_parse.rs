@@ -56,7 +56,9 @@ fn artifact_category(artifact: &str) -> &'static str {
         "sam" => "accounts",
         "installed-programs" => "applications",
         "usb" => "external_devices",
-        "jump-lists" | "lnk" | "recentdocs" | "shellbags" => "file_and_folder_opening",
+        "jump-lists" | "lnk" | "opensavemru" | "recentdocs" | "shellbags" => {
+            "file_and_folder_opening"
+        }
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
@@ -82,6 +84,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "logfile" => "LogFile",
         "mft" => "MFT",
         "muicache" => "MuiCache",
+        "opensavemru" => "OpenSaveMRU",
         "persistence" => "Persistence",
         "persistence-hunter" => "PersistenceHunter",
         "prefetch" => "Prefetch",
@@ -1090,6 +1093,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "opensavemru",
+            &["parse-registry", "opensavemru"],
+            OutputShape::File,
+            &["--code-page", &code_page],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1186,6 +1195,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("opensavemru", size);
                 }
                 if matches!(kind.as_deref(), Some("SOFTWARE" | "NTUSER.DAT")) {
                     found.add_size("installed-programs", size);
