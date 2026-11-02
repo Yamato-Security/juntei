@@ -54,6 +54,7 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
 | `parse-registry remote-access` | `NTUSER.DAT` (with `SOFTWARE` for user SIDs) | [Remote Access (User Side)](../artifacts/remote-access.md) |
 | `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
+| `parse-registry security-settings` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT` | [Security Settings](../artifacts/security-settings.md) |
 | `parse-registry services` | `SYSTEM` | [Windows Services](../artifacts/services.md) |
 | `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |
 | `parse-registry system-info` | `SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` of one system | [System Information](../artifacts/system-info.md) |

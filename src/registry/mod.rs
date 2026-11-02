@@ -28,6 +28,7 @@ pub mod read;
 pub mod recentdocs;
 pub mod remote_access;
 pub mod sam;
+pub mod security_settings;
 pub mod services;
 pub mod shellbags;
 pub mod system_info;

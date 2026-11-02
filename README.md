@@ -130,3 +130,4 @@ Shirofune Security Co., Ltd. Its source code was published under the AGPLv3 befo
 of the crates and other third-party code and data that Juntei is built with are in
 [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES/), and the licenses of the test files are next to them
 in [`test_files`](test_files/).
+| **Security settings** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`) — Defender and its exclusions, UAC, WDigest and LSA protection, RDP, the firewall, SMBv1, PowerShell logging and AMSI, and event log settings, flagged where they weaken the default. | Registry |
