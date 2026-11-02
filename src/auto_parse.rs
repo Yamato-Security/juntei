@@ -59,7 +59,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "app-history" => "applications",
         "installed-programs" => "applications",
         "usb" => "external_devices",
-        "jump-lists" | "lnk" | "mru" | "opensavemru" | "recentdocs" | "shellbags" => {
+        "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
             "file_and_folder_opening"
         }
         "amcache" | "shimcache" => "file_existence",
@@ -89,6 +89,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "lnk" => "LNK",
         "logfile" => "LogFile",
         "mft" => "MFT",
+        "office" => "Office",
         "mru" => "MRU",
         "muicache" => "MuiCache",
         "opensavemru" => "OpenSaveMRU",
@@ -1162,6 +1163,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &["--all-control-sets"],
         );
+        add(
+            "office",
+            &["parse-registry", "office"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1258,6 +1265,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("office", size);
                     found.add_size("featureusage", size);
                     found.add_size("app-history", size);
                     found.add_size("mru", size);

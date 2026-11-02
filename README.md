@@ -61,6 +61,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Shortcuts** (`*.lnk`) — Target paths, arguments, timestamps, volumes, network shares, and source-computer information. | File |
+| **Microsoft Office** (`NTUSER.DAT` `Software\Microsoft\Office`) — Documents and folders each application opened with their times, documents whose macros the user enabled (Trusted Documents), and macro settings and trusted locations. | Registry |
 | **Jump lists** (`*.automaticDestinations-ms`, `*.customDestinations-ms`) — Application-specific recent and pinned items, usage metadata, and embedded shortcuts. | File |
 | **MRU lists** (`NTUSER.DAT` `RunMRU`, `TypedPaths`, `WordWheelQuery`, `TypedURLs`, …) — Commands typed into the Run dialog, paths typed into Explorer, Explorer searches, typed Internet Explorer addresses with their times, and Paint's and WordPad's recent files. | Registry |
 | **Recent documents** (`NTUSER.DAT` `RecentDocs`) — Recently accessed files and folders in most-recently-used order. | Registry |

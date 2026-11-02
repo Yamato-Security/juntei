@@ -22,6 +22,7 @@ pub mod featureusage;
 pub mod installed_programs;
 pub mod mru;
 pub mod muicache;
+pub mod office;
 pub mod opensavemru;
 pub mod persistence;
 pub mod read;

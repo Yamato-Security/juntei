@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "office",
                 "security-settings",
                 "featureusage",
                 "app-history",
@@ -339,9 +340,8 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "app-history" => "applications",
             "installed-programs" => "applications",
             "usb" => "external_devices",
-            "jump-lists" | "lnk" | "mru" | "opensavemru" | "recentdocs" | "shellbags" => {
-                "file_and_folder_opening"
-            }
+            "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs"
+            | "shellbags" => "file_and_folder_opening",
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
             "remote-access" => "lateral_movement",
@@ -655,7 +655,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                32
+                33
             );
             assert!(
                 output
@@ -801,7 +801,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 64);
+    assert_eq!(tasks.len(), 66);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5558,6 +5558,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("office "), "{help}");
     assert!(help.contains("security-settings "), "{help}");
     assert!(help.contains("featureusage "), "{help}");
     assert!(help.contains("app-history "), "{help}");
@@ -15123,4 +15124,456 @@ fn registry_security_settings_leaves_unknown_current_control_set_null() {
     assert_eq!(rows.len(), 1);
     assert!(rows[0]["is_current_control_set"].is_null());
     assert!(r.stderr.contains("Select\\Current"), "{}", r.stderr);
+}
+
+// --- parse-registry office ----------------------------------------------------------------------
+
+/// `parse-registry office`'s CSV columns.
+const OFFICE_COLUMNS: [&str; 24] = [
+    "Host",
+    "Username",
+    "UserSid",
+    "SourcePath",
+    "OfficeVersion",
+    "Application",
+    "List",
+    "Account",
+    "Policy",
+    "MruPosition",
+    "IsMostRecent",
+    "Path",
+    "LastOpenedUTC",
+    "TrustedAtUTC",
+    "MacrosEnabled",
+    "TrustFlags",
+    "Setting",
+    "Value",
+    "KeyPath",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// A trust record: trusted at `when`, with `flags`.
+fn office_trust(when: u64, flags: u32) -> Vec<u8> {
+    let mut b = when.to_le_bytes().to_vec();
+    b.extend([0, 0xd0, 0x88, 0xc3, 0x10, 0, 0, 0, 0x32, 0x82, 0xa2, 0x01]);
+    b.extend(flags.to_le_bytes());
+    b
+}
+
+/// An Office MRU item opened at `when`.
+fn office_item(when: u64, path: &str) -> Vec<u8> {
+    utf16z(&format!("[F00000000][T{when:016X}][O00000000]*{path}"))
+}
+
+/// One system's SYSTEM and SOFTWARE hives (its name, alice's profile), alice's NTUSER.DAT with
+/// Word 2016's recent documents and folder, a Microsoft 365 account's document, a document whose
+/// macros she enabled and one she only edited, all macros enabled, a trusted location she added,
+/// a policy that blocks macros in Excel, and an Excel 2013 item cut short; and bob's NTUSER.DAT
+/// without Office.
+fn office_collection(root: &Path) {
+    let word = r"Software\Microsoft\Office\16.0\Word";
+    let records = format!(r"{word}\Security\Trusted Documents\TrustRecords");
+    let location = format!(r"{word}\Security\Trusted Locations\Location99");
+    let policy = r"Software\Policies\Microsoft\Office\16.0\Excel\Security";
+    let alice = reg_tree(
+        "ROOT",
+        &[
+            (
+                &format!(r"{word}\File MRU"),
+                "Item 1",
+                REG_SZ,
+                office_item(LINKED, r"C:\Users\alice\Downloads\invoice.docm"),
+            ),
+            (
+                &format!(r"{word}\File MRU"),
+                "Item 2",
+                REG_SZ,
+                office_item(LINKED - DAY, r"C:\Users\alice\notes.docx"),
+            ),
+            (
+                &format!(r"{word}\File MRU"),
+                "Max Display",
+                REG_DWORD,
+                25u32.to_le_bytes().to_vec(),
+            ),
+            (
+                &format!(r"{word}\Place MRU"),
+                "Item 1",
+                REG_SZ,
+                office_item(LINKED, r"C:\Users\alice\Downloads\"),
+            ),
+            (
+                &format!(r"{word}\User MRU\ADAL_0123\File MRU"),
+                "Item 1",
+                REG_SZ,
+                office_item(LINKED + DAY, "https://example.sharepoint.com/report.docx"),
+            ),
+            (
+                &records,
+                "%USERPROFILE%/Downloads/invoice.docm",
+                REG_BINARY,
+                office_trust(LINKED, 0x7fff_ffff),
+            ),
+            (
+                &records,
+                "%USERPROFILE%/notes.docx",
+                REG_BINARY,
+                office_trust(LINKED - DAY, 1),
+            ),
+            (
+                &format!(r"{word}\Security"),
+                "VBAWarnings",
+                REG_DWORD,
+                1u32.to_le_bytes().to_vec(),
+            ),
+            (&location, "Path", REG_SZ, utf16z(r"C:\Users\Public\")),
+            (&location, "Date", REG_SZ, utf16z("2/8/2022 9:03 PM")),
+            (
+                policy,
+                "VBAWarnings",
+                REG_DWORD,
+                4u32.to_le_bytes().to_vec(),
+            ),
+            (
+                r"Software\Microsoft\Office\15.0\Excel\File MRU",
+                "Item 1",
+                REG_SZ,
+                utf16z(r"[F00000000][T01D0000000000000]C:\cut.xlsx"),
+            ),
+        ],
+    );
+    let bob = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+            "Start_TrackProgs",
+            REG_DWORD,
+            1u32.to_le_bytes().to_vec(),
+        )],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+            "ProfileImagePath",
+            REG_EXPAND_SZ,
+            utf16z(r"C:\Users\alice"),
+        )],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    for dir in [
+        &config,
+        &root.join("C/Users/alice"),
+        &root.join("C/Users/bob"),
+    ] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(root.join("C/Users/alice/NTUSER.DAT"), alice).unwrap();
+    std::fs::write(root.join("C/Users/bob/NTUSER.DAT"), bob).unwrap();
+}
+
+/// `parse-registry office` with `args`, as JSON Lines.
+fn office_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "office"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+/// Each record's list, version, application, account, policy, place, path or setting, and
+/// times, macros and value.
+fn office_lines(records: &[Value]) -> Vec<String> {
+    let text = |v: &Value| v.as_str().map_or("-".to_string(), str::to_string);
+    records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} {} {} | {} {} | {} {} {} {}",
+                text(&r["list"]),
+                text(&r["office_version"]),
+                text(&r["application"]),
+                text(&r["account"]),
+                r["policy"],
+                r["mru_position"],
+                text(&r["path"]),
+                text(&r["setting"]),
+                text(&r["last_opened"]),
+                text(&r["trusted_at"]),
+                r["macros_enabled"],
+                text(&r["value"]),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn registry_office_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    office_collection(dir.path());
+    let records = office_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(
+        office_lines(&records),
+        [
+            r"File MRU 15.0 Excel - false 0 | - - | - - null -",
+            r"File MRU 16.0 Word - false 0 | C:\Users\alice\Downloads\invoice.docm - | 2022-02-08T21:03:52Z - null -",
+            r"File MRU 16.0 Word - false 1 | C:\Users\alice\notes.docx - | 2022-02-07T21:03:52Z - null -",
+            r"Place MRU 16.0 Word - false 0 | C:\Users\alice\Downloads\ - | 2022-02-08T21:03:52Z - null -",
+            "File MRU 16.0 Word ADAL_0123 false 0 | https://example.sharepoint.com/report.docx - | 2022-02-09T21:03:52Z - null -",
+            "TrustRecords 16.0 Word - false null | %USERPROFILE%/Downloads/invoice.docm - | - 2022-02-08T21:03:52Z true -",
+            "TrustRecords 16.0 Word - false null | %USERPROFILE%/notes.docx - | - 2022-02-07T21:03:52Z false -",
+            "Security 16.0 Word - false null | - VBAWarnings | - - null 1 (all macros enabled)",
+            r"Trusted Locations 16.0 Word - false null | C:\Users\Public\ Location99 | - - null Date=2/8/2022 9:03 PM",
+            "Security 16.0 Excel - true null | - VBAWarnings | - - null 4 (macros disabled without notification)",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["username"], "alice");
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["transaction_log_status"], "clean");
+    }
+    assert_eq!(records[1]["is_most_recent"], true);
+    assert_eq!(records[2]["is_most_recent"], false);
+    assert_eq!(records[5]["trust_flags"], "0x7FFFFFFF");
+    assert_eq!(records[6]["trust_flags"], "0x00000001");
+    // an item without its * keeps its bytes
+    assert_eq!(records[0]["problems"], json!(["no * before the path"]));
+    assert!(
+        records[0]["data_raw"]
+            .as_str()
+            .unwrap()
+            .starts_with("5b0046003000")
+    );
+    assert_eq!(
+        records[9]["key_path"],
+        r"Software\Policies\Microsoft\Office\16.0\Excel\Security"
+    );
+}
+
+#[test]
+fn registry_office_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    office_collection(dir.path());
+    let out = dir.path().join("office.csv");
+    let r = run(&[
+        "parse-registry",
+        "office",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "NTUSER.DAT hives parsed: 2",
+        "Hosts: HOST1",
+        "Users: alice, bob",
+        "Hives without Office: 1",
+        "Office versions: 15.0, 16.0",
+        "Entries: 10 (File MRU 4, Place MRU 1, Security 2, TrustRecords 2, Trusted Locations 1)",
+        "Documents whose macros were enabled (UTC trusted, user, application): 1",
+        "2022-02-08T21:03:52Z  alice  Word 16.0: %USERPROFILE%/Downloads/invoice.docm",
+        "Settings that let macros run more freely: 1",
+        "alice  Word 16.0: VBAWarnings = 1 (all macros enabled)",
+        "Trusted locations added by users or set by policy: 1",
+        r"alice  Word 16.0: C:\Users\Public\ (Date=2/8/2022 9:03 PM)",
+        "2022-02-09T21:03:52Z  alice  Word 16.0: https://example.sharepoint.com/report.docx",
+        "Entries or keys that could not be read: 1",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, OFFICE_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 10);
+    assert_eq!(&rows[1][6], "File MRU");
+    assert_eq!(&rows[1][11], r"C:\Users\alice\Downloads\invoice.docm");
+    assert_eq!(&rows[1][12], "2022-02-08T21:03:52Z");
+    assert_eq!(&rows[5][14], "true");
+    assert_eq!(&rows[7][16], "VBAWarnings");
+    assert_eq!(&rows[9][8], "true");
+}
+
+#[test]
+fn registry_office_of_public_hives() {
+    let dir = tempfile::tempdir().unwrap();
+    // Plaso's Windows 7 NTUSER.DAT: Word 2010's documents (as Plaso's officemru and
+    // dissect.target's Office MRU parser read them) and three documents trusted for editing
+    unpack_registry("plaso", &["NTUSER-WIN7.DAT"], dir.path());
+    let hive = dir.path().join("NTUSER-WIN7.DAT");
+    let records = office_read(&["-f", hive.to_str().unwrap()]);
+    let lists: Vec<String> = office_lines(&records)
+        .into_iter()
+        .filter(|l| !l.starts_with("Trusted Locations"))
+        .collect();
+    let docs = r"C:\Users\nfury\Documents";
+    assert_eq!(
+        lists,
+        [
+            format!(r"File MRU 14.0 Word - false 0 | {docs}\StarFury\StarFury\SA-23E Mitchell-Hyundyne Starfury.docx - | 2012-03-13T18:27:15.083Z - null -"),
+            format!(r"File MRU 14.0 Word - false 1 | {docs}\StarFury\StarFury\Earthforce SA-26 Thunderbolt Star Fury.docx - | 2012-03-12T20:53:06.159Z - null -"),
+            format!(r"File MRU 14.0 Word - false 2 | {docs}\StarFury\StarFury\StarFury.docx - | 2012-03-12T20:52:27.092Z - null -"),
+            format!(r"File MRU 14.0 Word - false 3 | {docs}\VIBRANIUM.docx - | 2012-03-09T15:41:46.975Z - null -"),
+            format!(r"File MRU 14.0 Word - false 4 | {docs}\ADAMANTIUM-Background.docx - | 2012-03-07T23:30:58.035Z - null -"),
+            format!(r"Place MRU 14.0 Word - false 0 | {docs}\StarFury\StarFury\ - | 2012-03-13T18:27:15.080Z - null -"),
+            format!(r"Place MRU 14.0 Word - false 1 | {docs}\ - | 2012-03-09T15:41:46.972Z - null -"),
+            "TrustRecords 14.0 Word - false null | %USERPROFILE%/Documents/StarFury/StarFury/StarFury.docx - | - 2012-03-12T23:50:22Z false -".to_string(),
+            "TrustRecords 14.0 Word - false null | %USERPROFILE%/Documents/StarFury/StarFury/Earthforce%20SA-26%20Thunderbolt%20Star%20Fury.docx - | - 2012-03-12T20:52:00Z false -".to_string(),
+            "TrustRecords 14.0 Word - false null | %USERPROFILE%/Documents/StarFury/StarFury/SA-23E%20Mitchell-Hyundyne%20Starfury.docx - | - 2012-03-12T20:52:00Z false -".to_string(),
+        ]
+    );
+    assert_eq!(records.len(), 23);
+    assert!(records.iter().all(|r| r["problems"] == json!([])));
+
+    // regipy's Windows 7 NTUSER.DAT: Excel 2010's lists
+    unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
+    let records = office_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    let excel: Vec<&Value> = records.iter().filter(|r| r["list"] == "File MRU").collect();
+    assert_eq!(excel.len(), 4);
+    assert_eq!(excel[0]["application"], "Excel");
+    assert_eq!(excel[0]["last_opened"], "2012-04-04T15:43:16.848Z");
+}
+
+#[test]
+fn registry_office_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM", "NTUSER.DAT"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "office",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not an NTUSER.DAT hive"),
+        "{said}"
+    );
+    let empty = tempfile::tempdir().unwrap();
+    let r = run(&[
+        "parse-registry",
+        "office",
+        "-d",
+        empty.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No NTUSER.DAT hives were found"), "{said}");
+    // the output is never one of the files read
+    let ntuser = dir.path().join("NTUSER.DAT");
+    let original = std::fs::read(&ntuser).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "office",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "-o",
+        ntuser.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&ntuser).unwrap(), original);
+}
+
+#[test]
+fn registry_office_keeps_list_warnings_on_stderr() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("NTUSER.DAT");
+    let mut bytes = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Microsoft\Office\16.0\Word\File MRU",
+            "Item 1",
+            REG_SZ,
+            utf16z("[T0]*C:\\file.docx"),
+        )],
+    );
+    let name = bytes.windows(8).position(|b| b == b"File MRU").unwrap();
+    put_u32(&mut bytes, name - 76 + 36, 2);
+    std::fs::write(&hive, bytes).unwrap();
+    for format in ["csv", "json", "jsonl"] {
+        let r = run(&[
+            "parse-registry",
+            "office",
+            "-f",
+            hive.to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        assert!(r.stderr.contains("File MRU"), "{}", r.stderr);
+        if format != "csv" {
+            assert_eq!(json_documents(&r.stdout).len(), 1);
+        }
+    }
+}
+
+#[test]
+fn registry_office_does_not_classify_wrong_type_macro_settings_as_weak() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("NTUSER.DAT");
+    std::fs::write(
+        &hive,
+        reg_tree(
+            "ROOT",
+            &[(
+                r"Software\Microsoft\Office\16.0\Word\Security",
+                "VBAWarnings",
+                REG_SZ,
+                utf16z("1"),
+            )],
+        ),
+    )
+    .unwrap();
+    let r = run(&[
+        "parse-registry",
+        "office",
+        "-f",
+        hive.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    assert!(!r.stdout.contains("VBAWarnings = 1"), "{}", r.stdout);
+    let rows = office_read(&["-f", hive.to_str().unwrap()]);
+    assert_eq!(rows.len(), 1);
+    assert!(
+        rows[0]["problems"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|p| p.as_str().unwrap().contains("REG_SZ"))
+    );
+    assert!(rows[0]["data_raw"].is_string());
 }
