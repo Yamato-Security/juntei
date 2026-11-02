@@ -44,6 +44,7 @@ const CATEGORIES: &[&str] = &[
     "file_and_folder_opening",
     "file_existence",
     "file_system",
+    "network_activity",
     "lateral_movement",
     "persistence",
     "process_execution",
@@ -64,6 +65,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         }
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+        "networks" => "network_activity",
         "remote-access" => "lateral_movement",
         "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
@@ -94,6 +96,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "logfile" => "LogFile",
         "lsa-secrets" => "LsaSecrets",
         "mft" => "MFT",
+        "networks" => "Networks",
         "office" => "Office",
         "mru" => "MRU",
         "muicache" => "MuiCache",
@@ -1193,6 +1196,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &[],
         );
         add("bcd", &["parse-registry", "bcd"], OutputShape::File, &[]);
+        add(
+            "networks",
+            &["parse-registry", "networks"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1326,6 +1335,9 @@ impl InputInventory {
                     Some("SOFTWARE" | "SYSTEM" | "NTUSER.DAT" | "USRCLASS.DAT")
                 ) {
                     found.add_size("persistence", size);
+                }
+                if matches!(kind.as_deref(), Some("SOFTWARE" | "SYSTEM")) {
+                    found.add_size("networks", size);
                 }
                 if matches!(kind.as_deref(), Some("SOFTWARE" | "SYSTEM" | "NTUSER.DAT")) {
                     found.add_size("security-settings", size);

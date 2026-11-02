@@ -42,6 +42,7 @@ and organizes results and logs by computer and investigative category.
 | Command | Input artifact | Detailed guide |
 |---|---|---|
 | `parse-registry amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
+| `parse-registry networks` | `SOFTWARE`, `SYSTEM` | [Networks](../artifacts/networks.md) |
 | `parse-registry lsa-secrets` | `SECURITY` | [LSA Secrets](../artifacts/lsa-secrets.md) |
 | `parse-registry bcd` | `BCD` (and `BCD-Template`) | [Boot Configuration Data (BCD)](../artifacts/bcd.md) |
 | `parse-registry appcompat` | `SOFTWARE`, `NTUSER.DAT` | [Application Compatibility](../artifacts/appcompat.md) |

@@ -20,6 +20,7 @@ Commands:
   lsa-secrets         Parse LSA secrets' names and times
   mru                 Parse most-recently-used lists
   muicache            Parse MuiCache program names
+  networks            Parse network profiles, interfaces, shares, port proxies and routes
   office              Parse Office recent files, trusted documents and macro settings
   opensavemru         Parse Open and Save As dialog history
   persistence         Parse autostart locations
@@ -611,6 +612,42 @@ names, when its values were set and whether they hold data, and one for the cach
 (`Cache`). Names and times only: nothing is decrypted. See [LSA Secrets](../artifacts/lsa-secrets.md).
 
 
+## `parse-registry networks`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry networks <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SOFTWARE and SYSTEM hives
+  -f, --file <FILE>      File path to one SOFTWARE or SYSTEM hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Filtering:
+      --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+Profile times are converted to UTC with the time zone of the system's `SYSTEM` hive, found as the
+host is, and kept as found too. See [Networks](../artifacts/networks.md).
+
+
 ## `parse-registry persistence`
 
 ```text
@@ -992,3 +1029,5 @@ See also [appcompat](../artifacts/appcompat.md).
 See also [bcd](../artifacts/bcd.md).
 
 See also [lsa-secrets](../artifacts/lsa-secrets.md).
+
+See also [networks](../artifacts/networks.md).

@@ -2083,7 +2083,7 @@ dependencies = [
 [[package]]
 name = "ys-registry-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-registry-parser#e3beb5fdf25bd9961f086e8638492f1479cd5739"
+source = "git+https://github.com/Yamato-Security/ys-registry-parser#ed9823edf1f7c237f85977ad2f17ad0772f43b27"
 
 [[package]]
 name = "ys-shimcache-parser"

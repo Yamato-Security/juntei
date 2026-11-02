@@ -127,6 +127,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Audit policy** (`SECURITY` `PolAdtEv`) — Which security events the system was set to log, per subcategory, and so which missing events say nothing. | Registry |
 
+### Network Activity
+
+| Artifact | Type |
+| --- | --- |
+| **Networks** (`SOFTWARE`, `SYSTEM`) — Networks joined with first and last connection times in UTC, gateway MAC addresses and DNS suffixes, interfaces and DHCP leases, shares, port proxies and persistent routes. | Registry |
+
 ### Security Products
 
 | Artifact | Type |

@@ -138,6 +138,8 @@ nav:
           - Jump Lists: artifacts/jump-lists.md
           - MRU Lists: artifacts/mru.md
           - RecentDocs: artifacts/recentdocs.md
+      - Network Activity:
+          - Networks: artifacts/networks.md
       - Lateral Movement:
           - Remote Access (User Side): artifacts/remote-access.md
           - Open and Save As Dialogs: artifacts/opensavemru.md

@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "networks",
                 "lsa-secrets",
                 "bcd",
                 "appcompat",
@@ -304,6 +305,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "file_and_folder_opening",
         "file_existence",
         "file_system",
+        "network_activity",
         "lateral_movement",
         "persistence",
         "process_execution",
@@ -348,6 +350,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             | "shellbags" => "file_and_folder_opening",
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+            "networks" => "network_activity",
             "remote-access" => "lateral_movement",
             "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => {
                 "persistence"
@@ -662,7 +665,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                37
+                38
             );
             assert!(
                 output
@@ -808,7 +811,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 74);
+    assert_eq!(tasks.len(), 76);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5565,6 +5568,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("networks "), "{help}");
     assert!(help.contains("lsa-secrets "), "{help}");
     assert!(help.contains("bcd "), "{help}");
     assert!(help.contains("appcompat "), "{help}");
@@ -17003,6 +17007,490 @@ fn registry_lsa_secrets_keeps_list_warnings_on_stderr() {
         assert!(r.stderr.contains("Policy\\Secrets"), "{}", r.stderr);
         if format != "csv" {
             assert_eq!(json_documents(&r.stdout).len(), 1);
+        }
+    }
+}
+
+// --- parse-registry networks --------------------------------------------------------------------
+
+/// `parse-registry networks`' CSV columns.
+const NETWORKS_COLUMNS: [&str; 35] = [
+    "Host",
+    "SourcePath",
+    "ControlSet",
+    "IsCurrentControlSet",
+    "Source",
+    "ProfileName",
+    "Category",
+    "ConnectionType",
+    "FirstConnectedUTC",
+    "LastConnectedUTC",
+    "FirstConnectedLocal",
+    "LastConnectedLocal",
+    "TimeZone",
+    "GatewayMac",
+    "DnsSuffix",
+    "InterfaceGuid",
+    "IpAddress",
+    "DhcpServer",
+    "LeaseObtainedUTC",
+    "LeaseExpiresUTC",
+    "ShareName",
+    "SharePath",
+    "ListenAddress",
+    "ListenPort",
+    "ConnectAddress",
+    "ConnectPort",
+    "Route",
+    "Details",
+    "KeyPath",
+    "ValueName",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// A `SYSTEMTIME`: year, month, weekday, day, hour, minute, second, millisecond.
+fn systemtime(fields: [u16; 8]) -> Vec<u8> {
+    fields.iter().flat_map(|n| n.to_le_bytes()).collect()
+}
+
+/// One system (HOST1, Eastern time) with a domain network and a café's Wi-Fi in SOFTWARE, its
+/// network card, and in SYSTEM a DHCP interface, a staging share, a port proxy and a persistent
+/// route.
+fn networks_collection(root: &Path) {
+    let dword = |n: u32| n.to_le_bytes().to_vec();
+    let list = r"Microsoft\Windows NT\CurrentVersion\NetworkList";
+    let corp = format!(r"{list}\Profiles\{{8148D564-B67F-423F-9C2C-9CA1D61F18AE}}");
+    let cafe = format!(r"{list}\Profiles\{{D4BA51F6-8576-40A9-953A-42027C41ED4F}}");
+    let signature = format!(r"{list}\Signatures\Managed\010103000F0000F0A000");
+    let software = reg_tree(
+        "ROOT",
+        &[
+            (
+                r"Microsoft\Windows NT\CurrentVersion\NetworkCards\2",
+                "ServiceName",
+                REG_SZ,
+                utf16z("{DAE79B04-8A4E-46D0-A8DB-EE10ABBFFE64}"),
+            ),
+            (
+                r"Microsoft\Windows NT\CurrentVersion\NetworkCards\2",
+                "Description",
+                REG_SZ,
+                utf16z("Example Network Adapter"),
+            ),
+            (
+                &signature,
+                "ProfileGuid",
+                REG_SZ,
+                utf16z("{8148D564-B67F-423F-9C2C-9CA1D61F18AE}"),
+            ),
+            (&signature, "DnsSuffix", REG_SZ, utf16z("corp.example")),
+            (
+                &signature,
+                "DefaultGatewayMac",
+                REG_BINARY,
+                vec![0, 0x0c, 0x29, 0x67, 0x10, 0x19],
+            ),
+            (&corp, "ProfileName", REG_SZ, utf16z("corp.example")),
+            (&corp, "Category", REG_DWORD, dword(2)),
+            (&corp, "NameType", REG_DWORD, dword(6)),
+            // winter (EST) and summer (EDT)
+            (
+                &corp,
+                "DateCreated",
+                REG_BINARY,
+                systemtime([2021, 2, 3, 10, 14, 50, 37, 716]),
+            ),
+            (
+                &corp,
+                "DateLastConnected",
+                REG_BINARY,
+                systemtime([2021, 7, 0, 4, 12, 0, 0, 0]),
+            ),
+            (&cafe, "ProfileName", REG_SZ, utf16z("Cafe WiFi")),
+            (&cafe, "Category", REG_DWORD, dword(0)),
+            (&cafe, "NameType", REG_DWORD, dword(71)),
+            // damaged: 15 bytes
+            (&cafe, "DateCreated", REG_BINARY, vec![1; 15]),
+        ],
+    );
+    let interface = r"ControlSet001\Services\Tcpip\Parameters\Interfaces\{dae79b04-8a4e-46d0-a8db-ee10abbffe64}";
+    let tz = r"ControlSet001\Control\TimeZoneInformation";
+    // TIME_FIELDS: year, month, day (the week), hour, minute, second, millisecond, weekday
+    let rule = |month: u16, week: u16| systemtime([0, month, week, 2, 0, 0, 0, 0]);
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, dword(1)),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+            (
+                tz,
+                "TimeZoneKeyName",
+                REG_SZ,
+                utf16z("Eastern Standard Time"),
+            ),
+            (tz, "Bias", REG_DWORD, dword(300)),
+            (tz, "DaylightBias", REG_DWORD, dword(0xffff_ffc4)),
+            (tz, "StandardStart", REG_BINARY, rule(11, 1)),
+            (tz, "DaylightStart", REG_BINARY, rule(3, 2)),
+            (interface, "EnableDHCP", REG_DWORD, dword(1)),
+            (interface, "DhcpIPAddress", REG_SZ, utf16z("192.0.2.25")),
+            (interface, "DhcpServer", REG_SZ, utf16z("192.0.2.1")),
+            (interface, "DhcpSubnetMask", REG_SZ, utf16z("255.255.255.0")),
+            (
+                interface,
+                "LeaseObtainedTime",
+                REG_DWORD,
+                dword(1_625_414_400),
+            ),
+            (
+                interface,
+                "LeaseTerminatesTime",
+                REG_DWORD,
+                dword(1_625_500_800),
+            ),
+            (
+                r"ControlSet001\Services\LanmanServer\Shares",
+                "Stage$",
+                REG_MULTI_SZ,
+                [
+                    "CSCFlags=0",
+                    "MaxUses=4294967295",
+                    r"Path=C:\ProgramData\stage",
+                    "Permissions=0",
+                    "Remark=",
+                    "ShareName=Stage$",
+                    "Type=0",
+                ]
+                .iter()
+                .flat_map(|s| utf16z(s))
+                .chain([0, 0])
+                .collect(),
+            ),
+            (
+                r"ControlSet001\Services\PortProxy\v4tov4\tcp",
+                "0.0.0.0/8443",
+                REG_SZ,
+                utf16z("10.0.0.5/3389"),
+            ),
+            (
+                r"ControlSet001\Services\Tcpip\Parameters\PersistentRoutes",
+                "10.10.0.0,255.255.0.0,192.0.2.254,1",
+                REG_SZ,
+                utf16z(""),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+}
+
+/// `parse-registry networks` with `args`, as JSON Lines.
+fn networks_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "networks"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_networks_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    networks_collection(dir.path());
+    let records = networks_read(&["-d", dir.path().to_str().unwrap()]);
+    let sources: Vec<&str> = records
+        .iter()
+        .map(|r| r["source"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        sources,
+        [
+            "network_profile",
+            "network_profile",
+            "network_card",
+            "interface",
+            "share",
+            "port_proxy",
+            "route"
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    // the domain network: its local times, in UTC with the system's Eastern time
+    let corp = &records[0];
+    assert_eq!(
+        (
+            &corp["profile_name"],
+            &corp["category"],
+            &corp["connection_type"],
+            &corp["gateway_mac"],
+            &corp["dns_suffix"]
+        ),
+        (
+            &json!("corp.example"),
+            &json!("domain"),
+            &json!("wired"),
+            &json!("00:0c:29:67:10:19"),
+            &json!("corp.example")
+        )
+    );
+    assert_eq!(corp["first_connected_local"], "2021-02-10T14:50:37.716");
+    assert_eq!(corp["first_connected"], "2021-02-10T19:50:37.716Z");
+    assert_eq!(corp["last_connected_local"], "2021-07-04T12:00:00.000");
+    assert_eq!(corp["last_connected"], "2021-07-04T16:00:00Z");
+    assert_eq!(corp["time_zone"], "Eastern Standard Time");
+    assert_eq!(
+        corp["details"]["Signatures"]
+            .as_str()
+            .unwrap()
+            .matches('|')
+            .count(),
+        0
+    );
+    // the café: wireless, a damaged time kept as bytes
+    let cafe = &records[1];
+    assert_eq!(
+        (&cafe["category"], &cafe["connection_type"]),
+        (&json!("public"), &json!("wireless"))
+    );
+    assert_eq!(cafe["first_connected"], Value::Null);
+    assert_eq!(cafe["data_raw"], "01".repeat(15));
+    assert_eq!(
+        cafe["problems"],
+        json!(["DateCreated: 15 bytes, not the 16 of a SYSTEMTIME"])
+    );
+    // the card, and its interface with the adapter's name
+    assert_eq!(
+        records[2]["interface_guid"],
+        "{DAE79B04-8A4E-46D0-A8DB-EE10ABBFFE64}"
+    );
+    let interface = &records[3];
+    assert_eq!(
+        (
+            &interface["ip_address"],
+            &interface["dhcp_server"],
+            &interface["lease_obtained"],
+            &interface["lease_expires"],
+            &interface["control_set"]
+        ),
+        (
+            &json!("192.0.2.25"),
+            &json!("192.0.2.1"),
+            &json!("2021-07-04T16:00:00Z"),
+            &json!("2021-07-05T16:00:00Z"),
+            &json!("ControlSet001")
+        )
+    );
+    assert_eq!(interface["details"]["Adapter"], "Example Network Adapter");
+    let share = &records[4];
+    assert_eq!(
+        (&share["share_name"], &share["share_path"]),
+        (&json!("Stage$"), &json!(r"C:\ProgramData\stage"))
+    );
+    assert_eq!(share["details"]["Type"], "0 (disk)");
+    let proxy = &records[5];
+    assert_eq!(
+        (
+            &proxy["listen_address"],
+            &proxy["listen_port"],
+            &proxy["connect_address"],
+            &proxy["connect_port"]
+        ),
+        (
+            &json!("0.0.0.0"),
+            &json!(8443),
+            &json!("10.0.0.5"),
+            &json!(3389)
+        )
+    );
+    assert_eq!(records[6]["route"], "10.10.0.0,255.255.0.0,192.0.2.254,1");
+    assert_eq!(records[6]["details"]["Gateway"], "192.0.2.254");
+}
+
+#[test]
+fn registry_networks_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    networks_collection(dir.path());
+    let out = dir.path().join("networks.csv");
+    let r = run(&[
+        "parse-registry",
+        "networks",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "Hives parsed: 2 (SOFTWARE 1, SYSTEM 1)",
+        "Hosts: HOST1",
+        "Records: 7 (interface 1, network_card 1, network_profile 2, port_proxy 1, route 1, share 1)",
+        "HOST1  2021-07-04T16:00:00Z  corp.example  wired  gateway 00:0c:29:67:10:19",
+        r"HOST1  Stage$  C:\ProgramData\stage",
+        "HOST1  v4tov4  0.0.0.0:8443 -> 10.0.0.5:3389",
+        "HOST1  10.10.0.0,255.255.0.0,192.0.2.254,1",
+        "Keys or values that could not be read: 1",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, NETWORKS_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 7);
+    assert_eq!(&rows[0][4], "network_profile");
+    assert_eq!(&rows[0][9], "2021-07-04T16:00:00Z");
+    assert_eq!(&rows[0][11], "2021-07-04T12:00:00.000");
+    assert_eq!(&rows[3][16], "192.0.2.25");
+    assert_eq!(&rows[5][23], "8443");
+}
+
+#[test]
+fn registry_networks_of_public_hives() {
+    // regipy's Windows 7 SYSTEM: two static interfaces, one leased before, and two routes; what
+    // regipy's network_data and routes give
+    let regipy = regipy_system();
+    let records = networks_read(&["-d", regipy.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {}",
+                r["source"].as_str().unwrap(),
+                r["ip_address"].as_str().unwrap_or("-"),
+                r["route"].as_str().unwrap_or("-")
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            "interface 10.3.58.5 -",
+            "interface 192.168.1.123 -",
+            "interface - -",
+            "route - 0.0.0.0,0.0.0.0,192.168.1.1,-1",
+            "route - 0.0.0.0,0.0.0.0,10.3.58.1,-1",
+        ]
+    );
+    assert_eq!(records[1]["lease_obtained"], "2010-11-10T17:06:43Z");
+    assert_eq!(records[0]["lease_obtained"], Value::Null);
+    // the DFIR Artifact Museum's dirty Windows 11 SYSTEM with its logs: its DHCP interface
+    let w11 = system_hive();
+    let records = networks_read(&["-d", w11.path().to_str().unwrap()]);
+    assert!(records.iter().all(|r| r["host"] == "GOLDPAPERW11"
+        && r["source"] == "interface"
+        && r["problems"] == json!([])));
+    assert_eq!(
+        records
+            .iter()
+            .filter(|r| r["dhcp_server"].is_string())
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn registry_networks_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "networks",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not a SOFTWARE or SYSTEM hive"),
+        "{said}"
+    );
+    let r = run(&[
+        "parse-registry",
+        "networks",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("No SOFTWARE or SYSTEM hives were found"),
+        "{said}"
+    );
+    // the output is never one of the files read: the SOFTWARE's SYSTEM
+    let collection = tempfile::tempdir().unwrap();
+    networks_collection(collection.path());
+    let config = collection.path().join("C/Windows/System32/config");
+    let original = std::fs::read(config.join("SYSTEM")).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "networks",
+        "-f",
+        config.join("SOFTWARE").to_str().unwrap(),
+        "-o",
+        config.join("SYSTEM").to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(config.join("SYSTEM")).unwrap(), original);
+}
+
+#[test]
+fn registry_networks_missing_select_remains_unknown_and_warns_on_stderr() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("SYSTEM");
+    std::fs::write(
+        &hive,
+        reg_tree(
+            "ROOT",
+            &[(
+                r"ControlSet001\Services\Tcpip\Parameters\Interfaces\{interface}",
+                "NameServer",
+                REG_SZ,
+                utf16z("192.0.2.1"),
+            )],
+        ),
+    )
+    .unwrap();
+    for format in ["csv", "json", "jsonl"] {
+        let r = run(&[
+            "parse-registry",
+            "networks",
+            "-f",
+            hive.to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        assert!(r.stderr.contains("Select"), "{}", r.stderr);
+        if format != "csv" {
+            let records = json_documents(&r.stdout);
+            assert_eq!(records.len(), 1);
+            assert!(records[0]["is_current_control_set"].is_null());
         }
     }
 }

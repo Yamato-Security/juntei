@@ -81,6 +81,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - system information: names, Windows version, time zone, last shutdown, profiles and SIDs
 - the audit policy: which security events the system was set to log
 - boot configuration (BCD and BCD-Template)
+- network profiles, interfaces, shares, port proxies and routes
 - LSA secrets' names and times, and cached domain logons in use (nothing is decrypted)
 
 Persistence Hunter retains every severity (`--min-severity info`), including partial allow matches.
@@ -152,6 +153,9 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── MFT-logs.txt
 │   │   ├── UsnJournal.csv
 │   │   └── UsnJournal-logs.txt
+│   ├── network_activity/
+│   │   ├── Networks.csv
+│   │   └── Networks-logs.txt
 │   ├── lateral_movement/
 │   │   ├── RemoteAccess.csv
 │   │   └── RemoteAccess-logs.txt
@@ -208,6 +212,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `file_and_folder_opening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `file_existence` | Amcache, ShimCache |
 | `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
+| `network_activity` | Network profiles, interfaces, shares, port proxies and routes |
 | `lateral_movement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
 | `persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `process_execution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
@@ -228,7 +233,7 @@ Multi-table outputs such as `amcache/` and `srum/` have one log beside the artif
 covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
-`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`, `BCD.csv`,
+`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Networks.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`, `BCD.csv`,
 `SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `AppCompat.csv`, `Office.csv`, `FeatureUsage.csv`, `AppHistory.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `SecuritySettings.csv`, `AuditPolicy.csv`, `Registry.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,

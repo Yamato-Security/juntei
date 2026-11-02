@@ -26,6 +26,7 @@ pub mod installed_programs;
 pub mod lsa_secrets;
 pub mod mru;
 pub mod muicache;
+pub mod networks;
 pub mod office;
 pub mod opensavemru;
 pub mod persistence;
