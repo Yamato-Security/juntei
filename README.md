@@ -81,6 +81,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Local accounts** (`SAM`) — Local usernames, RIDs, account flags, and recorded logon and password metadata. | Registry |
 
+### Network Activity
+
+| Artifact | Type |
+| --- | --- |
+| **Networks** (`SOFTWARE`, `SYSTEM`) — Networks joined with first and last connection times in UTC, gateway MAC addresses and DNS suffixes, interfaces and DHCP leases, shares, port proxies and persistent routes. | Registry |
+
 ### Security Products
 
 | Artifact | Type |

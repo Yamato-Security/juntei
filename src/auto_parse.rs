@@ -29,6 +29,7 @@ const CATEGORIES: &[&str] = &[
     "file_and_folder_opening",
     "file_existence",
     "file_system",
+    "network_activity",
     "persistence",
     "process_execution",
     "registry",
@@ -42,6 +43,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+        "networks" => "network_activity",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
         "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
@@ -60,6 +62,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "lnk" => "LNK",
         "logfile" => "LogFile",
         "mft" => "MFT",
+        "networks" => "Networks",
         "persistence" => "Persistence",
         "persistence-hunter" => "PersistenceHunter",
         "prefetch" => "Prefetch",
@@ -1036,6 +1039,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "networks",
+            &["parse-registry", "networks"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1138,6 +1147,9 @@ impl InputInventory {
                     Some("SOFTWARE" | "SYSTEM" | "NTUSER.DAT" | "USRCLASS.DAT")
                 ) {
                     found.add_size("persistence", size);
+                }
+                if matches!(kind.as_deref(), Some("SOFTWARE" | "SYSTEM")) {
+                    found.add_size("networks", size);
                 }
             }
             // Defender reads entry metadata, resource records, and encrypted content.

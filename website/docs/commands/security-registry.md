@@ -10,6 +10,7 @@ Usage:
 Commands:
   amcache      Parse Amcache inventories
   help         Print this message or the help of the given subcommand(s)
+  networks     Parse network profiles, interfaces, shares, port proxies and routes
   persistence  Parse autostart locations
   read         Read keys and values
   recentdocs   Parse recent documents
@@ -67,6 +68,41 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl | jq 'select(.record_type 
 ```
 
 See [Amcache](../artifacts/amcache.md).
+
+## `parse-registry networks`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry networks <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SOFTWARE and SYSTEM hives
+  -f, --file <FILE>      File path to one SOFTWARE or SYSTEM hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Filtering:
+      --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+Profile times are converted to UTC with the time zone of the system's `SYSTEM` hive, found as the
+host is, and kept as found too. See [Networks](../artifacts/networks.md).
 
 ## `parse-registry persistence`
 
@@ -345,9 +381,11 @@ juntei parse-registry taskcache -f SOFTWARE --task ScheduledDefrag -t jsonl
 juntei parse-registry sam -f SAM --rid 500 -t jsonl
 juntei parse-registry persistence -d collection/ -o persistence.csv
 juntei parse-registry userassist -d collection/ -o userassist.csv
+juntei parse-registry networks -d collection/ --all-control-sets -o networks.csv
 ```
 
 The complete options and field semantics are on [Registry Hives](../artifacts/registry.md),
 [Windows Services](../artifacts/services.md), [RecentDocs](../artifacts/recentdocs.md),
 [Task Scheduler Cache](../artifacts/taskcache.md), [SAM Local Accounts](../artifacts/sam.md),
-[Registry Autostarts](../artifacts/persistence.md), and [UserAssist](../artifacts/userassist.md).
+[Registry Autostarts](../artifacts/persistence.md), [UserAssist](../artifacts/userassist.md), and
+[Networks](../artifacts/networks.md).
