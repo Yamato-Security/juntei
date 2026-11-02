@@ -4,7 +4,7 @@ Third-party crates in Juntei
 Juntei is built with the Rust crates below. Each license text is given once, followed by the
 crates under it. Generated from Cargo.lock by cargo-about: see README.md in this directory.
 
-MIT License: 193
+MIT License: 199
 Apache License 2.0: 24
 Creative Commons Zero v1.0 Universal: 6
 BSD 3-Clause "New" or "Revised" License: 2
@@ -3675,7 +3675,8 @@ MIT License (MIT)
 Used by:
 - ys-defender-history-parser 1.0.0 (https://github.com/Yamato-Security/ys-defender-history-parser)
 - ys-jump-lists-parser 1.0.0 (https://github.com/Yamato-Security/ys-jump-lists-parser)
-- ys-logfile-parser 1.0.0 (https://github.com/Yamato-Security/ys-logfile-parser)
+- ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser-logfile 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
 - ys-srum-parser 1.0.0 (https://github.com/Yamato-Security/ys-srum-parser)
 
 MIT License
@@ -3824,10 +3825,14 @@ Used by:
 - ys-defender-history-parser 1.0.0 (https://github.com/Yamato-Security/ys-defender-history-parser)
 - ys-jump-lists-parser 1.0.0 (https://github.com/Yamato-Security/ys-jump-lists-parser)
 - ys-lnk-parser 1.0.0 (https://github.com/Yamato-Security/ys-lnk-parser)
-- ys-logfile-parser 1.0.0 (https://github.com/Yamato-Security/ys-logfile-parser)
+- ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser-common 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser-logfile 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser-usn 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
 - ys-srum-parser 1.0.0 (https://github.com/Yamato-Security/ys-srum-parser)
 - ys-srum-parser-ese 1.0.0 (https://github.com/Yamato-Security/ys-srum-parser)
-- ys-usn-journal-parser 1.0.0 (https://github.com/Yamato-Security/ys-usn-journal-parser)
 - sootmark-common 0.3.7 (https://github.com/Sootmark/common)
 
 MIT License
@@ -4431,8 +4436,9 @@ SOFTWARE.
 MIT License (MIT)
 
 Used by:
-- ys-mft-parser 1.0.0 (https://github.com/Yamato-Security/ys-mft-parser)
-- ys-mft-parser 1.0.0 (https://github.com/Yamato-Security/ys-mft-parser)
+- ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser-mft 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
 - evtx 0.12.3 (https://github.com/omerbenamram/EVTX)
 
 The MIT License (MIT)

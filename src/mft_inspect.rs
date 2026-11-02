@@ -23,6 +23,7 @@ use mft::entry::ZERO_HEADER;
 use std::fmt::Write;
 use std::fs::File;
 use std::io::BufReader;
+use ys_ntfs_parser::mft;
 
 /// Run `--dump-entry` or `--list-directory`; returns the exit status.
 pub fn run(opts: &MftOptions) -> i32 {

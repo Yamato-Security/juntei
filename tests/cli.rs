@@ -1478,9 +1478,10 @@ fn mft_csv_json_and_jsonl() {
     assert_eq!(ads["FileSize"], "1261821952");
     assert_eq!(row("8", "$BadClus")["HasAds"], "True");
 
-    // ys-mft-parser's columns: one row per entry (`mft-dump-csv`, upstream's name, still works)
+    // The ys-ntfs-parser command's columns: one row per entry (`ys-mft-parser-csv`, the command's
+    // former name, and `mft-dump-csv`, upstream's, still work)
     let mut texts = Vec::new();
-    for output_type in ["ys-mft-parser-csv", "mft-dump-csv"] {
+    for output_type in ["ys-ntfs-parser-csv", "ys-mft-parser-csv", "mft-dump-csv"] {
         let r = run(&[
             "parse-ntfs",
             "mft",
@@ -1496,7 +1497,9 @@ fn mft_csv_json_and_jsonl() {
         assert_eq!(r.code, 0, "{output_type}: {}", r.stderr);
         texts.push(std::fs::read_to_string(&csv_path).unwrap());
     }
-    assert_eq!(texts[0], texts[1]);
+    for text in &texts[1..] {
+        assert_eq!(text, &texts[0]);
+    }
     let text = &texts[0];
     assert!(text.starts_with(
         "Signature,EntryId,Sequence,BaseEntryId,BaseEntrySequence,HardLinkCount,Flags,"
@@ -1570,7 +1573,7 @@ fn mft_csv_options() {
     assert!(help.stdout.contains("-s, --short-names"), "{}", help.stdout);
     assert!(
         help.stdout
-            .contains("Output type: csv (default), ys-mft-parser-csv, json, jsonl"),
+            .contains("Output type: csv (default), ys-ntfs-parser-csv, json, jsonl"),
         "{}",
         help.stdout
     );
@@ -1771,7 +1774,7 @@ fn mft_recover_slack() {
         "-f",
         MFT,
         "-t",
-        "ys-mft-parser-csv",
+        "ys-ntfs-parser-csv",
         "-x",
     ]);
     assert_eq!(r.code, 1);

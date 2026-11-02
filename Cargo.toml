@@ -24,14 +24,11 @@ chrono = { version = "0.4", features = ["clock"] }
 clap = { version = "4.5", features = ["derive"] }
 csv = "1"
 indicatif = "0.18"
-# $MFT parsing: Yamato Security's ys-mft-parser, a fork of Omer Ben-Amram's mft crate
-# (MIT / Apache-2.0), without its ys-mft-parser command.
-mft = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-mft-parser", default-features = false }
-# parse-ntfs mft -x: the file names in FILE record slack (i30::slack_entries_in), from ys-mft-parser's
-# ys/file-record-slack branch until it is merged; then from `mft` above.
-mft-slack = { package = "ys-mft-parser", git = "https://github.com/Yamato-Security/ys-mft-parser", branch = "ys/file-record-slack", default-features = false }
-# NTFS redo/undo transaction records (MIT OR Apache-2.0).
-ntfslog = { package = "ys-logfile-parser", git = "https://github.com/Yamato-Security/ys-logfile-parser" }
+# NTFS parsing ($MFT and $I30 indexes, the USN change journal, $LogFile): Yamato Security's
+# ys-ntfs-parser, whose mft, usn and logfile crates are forks of Omer Ben-Amram's mft, sootmark-usn
+# and sootmark-ntfslog (MIT OR Apache-2.0), without its ys-ntfs-parser command. Pin the reviewed
+# import commit while Yamato-Security/ys-ntfs-parser#1 is pending.
+ys-ntfs-parser = { git = "https://github.com/Yamato-Security/ys-ntfs-parser", rev = "7ec58f693db3527f0f9a4d4f1881745331a8c021", default-features = false }
 # Prefetch parsing: Yamato Security's ys-prefetch-parser, a fork of Samuel Garcés Marín's
 # frnsc-prefetch crate (MIT).
 frnsc-prefetch = { package = "ys-prefetch-parser", git = "https://github.com/Yamato-Security/ys-prefetch-parser" }
@@ -55,10 +52,6 @@ der = { version = "0.7", features = ["alloc", "std"] }
 evtx = { version = "0.12.3", default-features = false }
 goblin = "0.10"
 sha1 = "0.10"
-# USN journal parsing: Yamato Security's ys-usn-journal-parser, a fork of sootmark-usn
-# (MIT OR Apache-2.0); its `mft` feature seeds paths from the $MFT with the same ys-mft-parser as
-# above.
-usn = { package = "ys-usn-journal-parser", git = "https://github.com/Yamato-Security/ys-usn-journal-parser", features = ["mft"] }
 # LNK parsing: Yamato Security's ys-lnk-parser, a fork of sootmark-shell (MIT OR Apache-2.0),
 # with its code pages for links from non-Western systems.
 shell = { package = "ys-lnk-parser", git = "https://github.com/Yamato-Security/ys-lnk-parser", features = ["codepages"] }
@@ -73,7 +66,7 @@ shimcache-forensic = { package = "ys-shimcache-parser", git = "https://github.co
 # values, transaction log replay, deleted keys and values, registry autostart locations, UserAssist,
 # BAM, installed software, MuiCache, Open/Save MRU, ShellBags and USB.
 registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Security/ys-registry-parser" }
-# The order of parse-ese srum's JSON columns, and parse-ntfs mft's JSON entries (as ys-mft-parser writes them).
+# The order of parse-ese srum's JSON columns, and parse-ntfs mft's JSON entries (as ys-ntfs-parser's command writes them).
 serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
 # (MIT OR Apache-2.0).

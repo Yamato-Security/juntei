@@ -545,9 +545,10 @@ impl AmcacheOptions {
 pub enum MftOutputType {
     /// One row per file name and per alternate data stream
     Csv,
-    /// One row per entry (the columns of ys-mft-parser, upstream's mft_dump)
-    #[value(alias = "mft-dump-csv")]
-    YsMftParserCsv,
+    /// One row per entry (the columns of the ys-ntfs-parser command, formerly ys-mft-parser;
+    /// upstream's mft_dump)
+    #[value(aliases = ["ys-mft-parser-csv", "mft-dump-csv"])]
+    YsNtfsParserCsv,
     /// One pretty-printed JSON object per entry
     Json,
     /// One JSON object per line
@@ -557,7 +558,7 @@ pub enum MftOutputType {
 impl MftOutputType {
     pub fn extension(&self) -> &'static str {
         match self {
-            MftOutputType::Csv | MftOutputType::YsMftParserCsv => "csv",
+            MftOutputType::Csv | MftOutputType::YsNtfsParserCsv => "csv",
             MftOutputType::Json => "json",
             MftOutputType::Jsonl => "jsonl",
         }
@@ -666,7 +667,7 @@ pub struct MftOptions {
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "PATH", display_order = 300)]
     pub output: Option<PathBuf>,
 
-    /// Output type: csv (default), ys-mft-parser-csv, json, jsonl. Without -o, the entries are written to stdout
+    /// Output type: csv (default), ys-ntfs-parser-csv, json, jsonl. Without -o, the entries are written to stdout
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
     pub output_type: Option<MftOutputType>,
 

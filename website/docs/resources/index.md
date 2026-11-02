@@ -64,10 +64,8 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 ## Juntei parser projects
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [ys-mft-parser](https://github.com/Yamato-Security/ys-mft-parser)
-- [ys-logfile-parser](https://github.com/Yamato-Security/ys-logfile-parser)
+- [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`$MFT`, `$I30`, USN Journal, `$LogFile`)
 - [ys-prefetch-parser](https://github.com/Yamato-Security/ys-prefetch-parser)
-- [ys-usn-journal-parser](https://github.com/Yamato-Security/ys-usn-journal-parser)
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)

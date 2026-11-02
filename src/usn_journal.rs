@@ -12,11 +12,11 @@
 // and limitations under the RPL.
 
 //! `parse-ntfs usn-journal`: NTFS USN change journal ($UsnJrnl:$J) parsing with Yamato Security's
-//! ys-usn-journal-parser (a fork of sootmark-usn): every record with the path its directory had
-//! when the record was written (the journal rewound, seeded from the volume's $MFT when one is
-//! found), as CSV columns or every field as JSON / JSONL. `--carve` finds records in
-//! disk images and other data that is not a journal. Hayabusa's input options, progress bar and
-//! results summary around it.
+//! ys-ntfs-parser's usn crate (a fork of sootmark-usn): every record with the path its directory
+//! had when the record was written (the journal rewound, seeded from the volume's $MFT when one is
+//! found), as CSV columns or every field as JSON / JSONL. `--carve` finds records in disk images
+//! and other data that is not a journal. Hayabusa's input options, progress bar and results summary
+//! around it.
 
 use crate::cli::{UsnJournalOptions, UsnOutputType};
 use crate::color::JunteiColor;
@@ -30,6 +30,7 @@ use std::fs::File;
 use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 use usn::{Attributes, Entry, PathBuilder, Paths, RangeRecord, Reasons, Record, Reference};
+use ys_ntfs_parser::{mft, usn};
 
 /// Damaged spans printed per journal; the rest are only counted.
 const MAX_PRINTED_PROBLEMS: usize = 10;

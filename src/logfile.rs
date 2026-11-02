@@ -25,6 +25,7 @@ use serde_json::{Value, json};
 use std::collections::{BTreeMap, HashSet};
 use std::io;
 use std::path::{Path, PathBuf};
+use ys_ntfs_parser::{mft, ntfslog, usn};
 
 const MAX_ERRORS: usize = 20;
 

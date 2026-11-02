@@ -11,13 +11,13 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-ntfs i30`: directory indexes (`$I30`), read by ys-mft-parser's `i30` module, with Hayabusa's
-//! input options, progress bar and results summary. One record per index entry: the file's name
-//! in the directory, its MFT reference, its parent, the four times and two sizes its `$FILE_NAME`
-//! keeps, and whether it was found in the slack of an INDX record, where entries of files deleted
-//! or renamed out of the directory are left (and copies of entries moved when the index was
-//! rebalanced, marked as such). A file holding INDX records (an exported `$I30`, a disk image,
-//! unallocated space) is read in chunks.
+//! `parse-ntfs i30`: directory indexes (`$I30`), read by the `i30` module of ys-ntfs-parser's mft
+//! crate, with Hayabusa's input options, progress bar and results summary. One record per index
+//! entry: the file's name in the directory, its MFT reference, its parent, the four times and two
+//! sizes its `$FILE_NAME` keeps, and whether it was found in the slack of an INDX record, where
+//! entries of files deleted or renamed out of the directory are left (and copies of entries moved
+//! when the index was rebalanced, marked as such). A file holding INDX records (an exported `$I30`,
+//! a disk image, unallocated space) is read in chunks.
 
 use crate::cli::RegistryOutputType;
 use crate::cli::{I30Options, I30OutputType};
@@ -35,6 +35,7 @@ use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
+use ys_ntfs_parser::mft;
 
 /// Parse errors printed; the rest are only counted.
 const MAX_PRINTED_ERRORS: usize = 20;

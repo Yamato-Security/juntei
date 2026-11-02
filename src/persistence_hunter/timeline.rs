@@ -24,6 +24,7 @@ use rayon::prelude::*;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::{Path, PathBuf};
+use ys_ntfs_parser::mft;
 
 #[derive(Clone, Debug)]
 struct Candidate {

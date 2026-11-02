@@ -11,10 +11,9 @@ accepted = [
     "Unicode-3.0",
     "Unlicense",
     "Zlib",
+    # Juntei's own license (LICENSE), and that of Yamato Security's crates such as ys-ntfs-parser:
+    # the template leaves it out, and lists the upstream licenses those crates also carry.
+    "RPL-1.5",
 ]
 # Test-only crates are not part of Juntei.
 ignore-dev-dependencies = true
-
-# Juntei itself, whose license is LICENSE: the template leaves it out.
-[juntei]
-accepted = ["RPL-1.5"]
