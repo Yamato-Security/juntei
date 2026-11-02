@@ -43,6 +43,10 @@ database's path names (usually `C:\Windows\AppPatch\Custom\`).
 
 ## Analyst cautions
 
+- **CIT expansion is bounded.** Values declaring more than 64 MiB uncompressed are retained
+  as raw bytes with a diagnostic. Malformed compression and size mismatches are reported.
+
+
 - **No run time for Program Compatibility Assistant entries.** The `Store` data (`SACP`, kept in
   `DataRaw`) has one time, but on Windows 8.1, 10 and 11 it is the same for every program of a
   hive, and for other systems: it is not when the program ran. Only the `Store` key's last write
