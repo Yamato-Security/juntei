@@ -19,6 +19,8 @@
 | TaskCache | `parse-registry taskcache` | Scheduled-task actions, metadata, hidden tasks | Correlate with task XML and event logs for runtime proof |
 | Registry autostarts | `parse-registry persistence` | Run keys, Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks and other autostart locations | Configuration, not proof of execution; most entries are Windows defaults |
 | ShellBags | `parse-registry shellbags` | Folders a user opened in Explorer and dialogs, including removable, network, portable-device, ZIP and deleted ones, as full paths | Only the most recent item in each key gets a defensible open time; item times are the folder's, not the visit's |
+| BAM and DAM | `parse-registry bam` | The last time each user ran each program, including from removable and network devices | One time per program and user, recent activity only; device paths, not drive letters |
+| USB devices | `parse-registry usb` | USB storage and other devices, serial numbers, install/arrival/removal times, drive letters, volume names and serials, users who mounted them | Only the last arrival and removal are kept; drive letters are reused |
 | UserAssist | `parse-registry userassist` | Programs and shortcuts a user started from Explorer, with run counts, focus time and last run | Only Explorer starts are counted; new profiles are seeded with default items |
 | SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | Local accounts only; last-logon values are not a complete logon history |
 

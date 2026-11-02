@@ -42,6 +42,7 @@ and organizes results and logs by computer and investigative category.
 | Command | Input artifact | Detailed guide |
 |---|---|---|
 | `parse-registry amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
+| `parse-registry bam` | `SYSTEM` (with `SAM`, `SOFTWARE` for user names) | [BAM and DAM](../artifacts/bam.md) |
 | `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
 | `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
 | `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
@@ -49,6 +50,7 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry services` | `SYSTEM` | [Windows Services](../artifacts/services.md) |
 | `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |
 | `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
+| `parse-registry usb` | `SYSTEM`, with `SOFTWARE` and `NTUSER.DAT` | [USB Devices](../artifacts/usb.md) |
 | `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shellbags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 

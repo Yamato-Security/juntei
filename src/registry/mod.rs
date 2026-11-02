@@ -3,6 +3,7 @@
 //! here: finding the hives of a collection, opening each with its transaction logs replayed when
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
+pub mod bam;
 pub mod persistence;
 pub mod read;
 pub mod recentdocs;
@@ -10,6 +11,7 @@ pub mod sam;
 pub mod services;
 pub mod shellbags;
 pub mod taskcache;
+pub mod usb;
 pub mod userassist;
 
 use crate::cli::RegistryOutputType;
@@ -324,6 +326,68 @@ pub fn software_of(path: &Path) -> Option<PathBuf> {
         .or_else(|| find_in(path.parent()?, &["SOFTWARE"]))
 }
 
+/// The `NTUSER.DAT` hives of the system whose SYSTEM hive is at `system`: each profile's under
+/// the system's `Users` and `Documents and Settings` when SYSTEM is where Windows keeps it, else
+/// those next to it and one directory down (hives exported to one directory). In path order.
+pub fn users_of(system: &Path) -> Vec<PathBuf> {
+    let children = |dir: &Path| -> Vec<PathBuf> {
+        let mut paths: Vec<PathBuf> = std::fs::read_dir(dir)
+            .map(|entries| {
+                entries
+                    .flatten()
+                    .filter(|e| e.file_type().is_ok_and(|t| !t.is_symlink()))
+                    .map(|e| e.path())
+                    .collect()
+            })
+            .unwrap_or_default();
+        paths.sort();
+        paths
+    };
+    let is_ntuser = |p: &PathBuf| {
+        p.is_file()
+            && p.file_name()
+                .is_some_and(|n| n.to_string_lossy().eq_ignore_ascii_case("NTUSER.DAT"))
+    };
+    let ntuser_in = |dir: &Path| children(dir).into_iter().find(|p| is_ntuser(p));
+    if let Some(root) = system_root(system) {
+        return children(&root)
+            .iter()
+            .filter(|d| {
+                d.file_name().is_some_and(|n| {
+                    let n = n.to_string_lossy();
+                    n.eq_ignore_ascii_case("Users")
+                        || n.eq_ignore_ascii_case("Documents and Settings")
+                })
+            })
+            .flat_map(|d| children(d))
+            .filter(|profile| profile.is_dir())
+            .filter_map(|profile| ntuser_in(&profile))
+            .collect();
+    }
+    let dir = system
+        .parent()
+        .filter(|d| !d.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let mut found: Vec<PathBuf> = children(dir).into_iter().filter(is_ntuser).collect();
+    found.extend(
+        children(dir)
+            .iter()
+            .filter(|d| d.is_dir())
+            .filter_map(|d| ntuser_in(d)),
+    );
+    found
+}
+
+/// The hive `name` (`SOFTWARE`, `SAM`, …) of the system the hive at `path` comes from: the
+/// system's `Windows\System32\config\<name>` when the hive is where Windows keeps it, else a
+/// hive of that name next to it (hives exported to one directory); never the hive itself.
+pub fn system_hive_of(path: &Path, name: &str) -> Option<PathBuf> {
+    system_root(path)
+        .and_then(|root| find_in(&root, &["Windows", "System32", "config", name]))
+        .or_else(|| find_in(path.parent()?, &[name]))
+        .filter(|found| found != path)
+}
+
 /// The SID of the profile whose folder is named `user`, among `profiles` (`ProfileList`'s SIDs
 /// and folders: `C:\Users\alice`).
 pub fn sid_of_profile(profiles: &[(String, String)], user: &str) -> Option<String> {
@@ -459,8 +523,9 @@ fn logs_next_to(path: &Path) -> Vec<PathBuf> {
 }
 
 /// Every file a registry command may read for the hives `files`: each hive and the logs next to
-/// it, the logs given (`--log1`, `--log2`), and the SYSTEM and SOFTWARE hives of its system with
-/// their logs (read for its host, and by `persistence` for the machine's classes and profiles).
+/// it, the logs given (`--log1`, `--log2`), and the SYSTEM, SOFTWARE and SAM hives of its system
+/// with their logs (read for its host, by `persistence` for the machine's classes and profiles,
+/// and by `bam` for its users' names).
 pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
     let mut hives: Vec<PathBuf> = files.to_vec();
     for path in files {
@@ -468,7 +533,7 @@ pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
             .parent()
             .filter(|d| !d.as_os_str().is_empty())
             .unwrap_or(Path::new("."));
-        for name in ["SYSTEM", "SOFTWARE"] {
+        for name in ["SYSTEM", "SOFTWARE", "SAM"] {
             hives.extend(
                 system_root(path)
                     .and_then(|root| find_in(&root, &["Windows", "System32", "config", name])),

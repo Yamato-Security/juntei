@@ -26,6 +26,7 @@ const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
 const CATEGORIES: &[&str] = &[
     "accounts",
+    "external_devices",
     "file_and_folder_opening",
     "file_existence",
     "file_system",
@@ -39,11 +40,12 @@ const CATEGORIES: &[&str] = &[
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
         "sam" => "accounts",
+        "usb" => "external_devices",
         "jump-lists" | "lnk" | "recentdocs" | "shellbags" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-        "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
+        "bam" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
         "defender-quarantine" => "security_products",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
@@ -54,6 +56,7 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "bam" => "BAM",
         "defender-quarantine" => "DefenderQuarantine",
         "i30" => "I30",
         "jump-lists" => "JumpLists",
@@ -72,6 +75,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "shimcache" => "ShimCache",
         "srum" => "SRUM",
         "taskcache" => "TaskCache",
+        "usb" => "USB",
         "usn-journal" => "UsnJournal",
         "userassist" => "UserAssist",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
@@ -1038,10 +1042,22 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &[],
         );
         add(
+            "bam",
+            &["parse-registry", "bam"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
+        add(
             "shellbags",
             &["parse-registry", "shellbags"],
             OutputShape::File,
             &[],
+        );
+        add(
+            "usb",
+            &["parse-registry", "usb"],
+            OutputShape::File,
+            &["--all-control-sets"],
         );
         drop(add);
 
@@ -1142,6 +1158,10 @@ impl InputInventory {
                 }
                 if matches!(kind.as_deref(), Some("NTUSER.DAT" | "USRCLASS.DAT")) {
                     found.add_size("shellbags", size);
+                }
+                if kind.as_deref() == Some("SYSTEM") {
+                    found.add_size("bam", size);
+                    found.add_size("usb", size);
                 }
                 if matches!(
                     kind.as_deref(),
