@@ -26,9 +26,9 @@ csv = "1"
 indicatif = "0.18"
 # NTFS parsing ($MFT and $I30 indexes, the USN change journal, $LogFile): Yamato Security's
 # ys-ntfs-parser, whose mft, usn and logfile crates are forks of Omer Ben-Amram's mft, sootmark-usn
-# and sootmark-ntfslog (MIT OR Apache-2.0), without its ys-ntfs-parser command. Pin the reviewed
-# import commit while Yamato-Security/ys-ntfs-parser#1 is pending.
-ys-ntfs-parser = { git = "https://github.com/Yamato-Security/ys-ntfs-parser", rev = "7ec58f693db3527f0f9a4d4f1881745331a8c021", default-features = false }
+# and sootmark-ntfslog (MIT OR Apache-2.0), without its ys-ntfs-parser command. Keep all four
+# artifacts on one reviewed workspace revision (including its shared byte/text/time helpers).
+ys-ntfs-parser = { git = "https://github.com/Yamato-Security/ys-ntfs-parser", rev = "741866a0cac27cdba7eb0d09454c08c531df4b7d", default-features = false }
 # Prefetch parsing: Yamato Security's ys-prefetch-parser, a fork of Samuel Garcés Marín's
 # frnsc-prefetch crate (MIT).
 frnsc-prefetch = { package = "ys-prefetch-parser", git = "https://github.com/Yamato-Security/ys-prefetch-parser" }

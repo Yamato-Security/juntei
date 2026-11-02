@@ -8,6 +8,8 @@
 
 **Bug Fixes:**
 
+- Pin the reviewed consolidated `ys-ntfs-parser` workspace, retaining one source for MFT, I30, USN and LogFile parsing. The revision includes standalone-command input protection and export-error fixes; no legacy NTFS parser repositories are used. (@YamatoSecurity)
+
 - AppCompat exports retain list warnings and joined shim-path provenance; malformed compressed data, invalid times and Unicode paths are handled safely. (@YamatoSecurity)
 
 - Audit-policy exports leave unknown flags unknown and exclude them from audited-setting counts; malformed policy values retain diagnostics and bytes. (@YamatoSecurity)
