@@ -133,3 +133,5 @@ with their users.
 
 - [libyal libfwsi: Windows Shell Item format](https://github.com/libyal/libfwsi/blob/main/documentation/Windows%20Shell%20Item%20format.asciidoc)
 - [libyal winreg-kb: Most recently used (BagMRU)](https://winreg-kb.readthedocs.io/en/latest/sources/explorer-keys/Most-recently-used.html)
+
+SID lookup from `ProfileList` requires one unique, syntactically valid SID. Ambiguous profile-folder mappings and backup keys such as `S-1-...bak` leave `UserSid` unknown.

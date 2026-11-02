@@ -9810,3 +9810,57 @@ fn registry_shellbags_of_windows_xp_and_damage() {
         r.stderr
     );
 }
+
+#[test]
+fn registry_shellbags_never_guesses_an_ambiguous_or_backup_profile_sid() {
+    let dir = tempfile::tempdir().unwrap();
+    let user = dir.path().join("C/Users/alice");
+    let config = dir.path().join("C/Windows/System32/config");
+    std::fs::create_dir_all(&user).unwrap();
+    std::fs::create_dir_all(&config).unwrap();
+    let location = r"Software\Microsoft\Windows\Shell\BagMRU";
+    let volume = [
+        vec![0x19, 0, 0x2f],
+        b"C:\\".to_vec(),
+        vec![0; 19],
+        vec![0, 0],
+    ]
+    .concat();
+    let hive = reg_tree(
+        "ROOT",
+        &[
+            (
+                location,
+                "MRUListEx",
+                REG_BINARY,
+                [0u32.to_le_bytes(), u32::MAX.to_le_bytes()].concat(),
+            ),
+            (location, "0", REG_BINARY, volume),
+        ],
+    );
+    let ntuser = user.join("NTUSER.DAT");
+    std::fs::write(&ntuser, hive).unwrap();
+    let profile = r"Microsoft\Windows NT\CurrentVersion\ProfileList";
+    for sids in [
+        vec!["S-1-5-21-1-2-3-1001", "S-1-5-21-4-5-6-1001"],
+        vec!["S-1-5-21-1-2-3-1001.bak"],
+    ] {
+        let paths: Vec<_> = sids.iter().map(|sid| format!("{profile}\\{sid}")).collect();
+        let values: Vec<_> = paths
+            .iter()
+            .map(|p| {
+                (
+                    p.as_str(),
+                    "ProfileImagePath",
+                    REG_SZ,
+                    utf16z(r"C:\Users\alice"),
+                )
+            })
+            .collect();
+        std::fs::write(config.join("SOFTWARE"), reg_tree("ROOT", &values)).unwrap();
+        let rows = shellbags_read(&["-f", ntuser.to_str().unwrap()]);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["username"], "alice");
+        assert!(rows[0]["user_sid"].is_null(), "{rows:?}");
+    }
+}

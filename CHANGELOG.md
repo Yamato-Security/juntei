@@ -4,6 +4,8 @@
 
 **Bug Fixes:**
 
+- `parse-registry shellbags`: leave ambiguous profile-to-SID mappings unknown, exclude invalid/backup ProfileList key names, and support trailing profile-path separators. (@YamatoSecurity)
+
 - `persistence-hunter`: prefer domain- or host-qualified profile folders over a plain-name profile when resolving task COM handlers. Keep genuinely ambiguous mappings unresolved and explain unavailable per-user lookup in the finding as well as coverage. (@YamatoSecurity)
 
 

@@ -327,14 +327,43 @@ pub fn software_of(path: &Path) -> Option<PathBuf> {
 /// The SID of the profile whose folder is named `user`, among `profiles` (`ProfileList`'s SIDs
 /// and folders: `C:\Users\alice`).
 pub fn sid_of_profile(profiles: &[(String, String)], user: &str) -> Option<String> {
-    profiles
+    let matches: std::collections::BTreeSet<_> = profiles
         .iter()
-        .find(|(_, path)| {
-            path.rsplit(['\\', '/'])
-                .next()
-                .is_some_and(|folder| folder.eq_ignore_ascii_case(user))
+        .filter(|(sid, path)| {
+            valid_sid(sid)
+                && path
+                    .trim_end_matches(['\\', '/'])
+                    .rsplit(['\\', '/'])
+                    .next()
+                    .is_some_and(|folder| folder.eq_ignore_ascii_case(user))
         })
-        .map(|(sid, _)| sid.clone())
+        .map(|(sid, _)| sid.to_ascii_uppercase())
+        .collect();
+    (matches.len() == 1)
+        .then(|| matches.into_iter().next())
+        .flatten()
+}
+
+/// A complete Windows SID, excluding ProfileList backup names such as `S-1-...bak`.
+fn valid_sid(sid: &str) -> bool {
+    let mut parts = sid.split('-');
+    if !parts.next().is_some_and(|s| s.eq_ignore_ascii_case("S")) || parts.next() != Some("1") {
+        return false;
+    }
+    let Some(authority) = parts.next() else {
+        return false;
+    };
+    if authority.is_empty()
+        || !authority.bytes().all(|b| b.is_ascii_digit())
+        || !authority.parse::<u64>().is_ok_and(|n| n < (1u64 << 48))
+    {
+        return false;
+    }
+    let sub: Vec<_> = parts.collect();
+    (1..=15).contains(&sub.len())
+        && sub.iter().all(|s| {
+            !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()) && s.parse::<u32>().is_ok()
+        })
 }
 
 /// The profiles (`ProfileList`) of the systems user hives come from, each SOFTWARE hive
@@ -609,6 +638,47 @@ pub fn filetime(ft: u64) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn profile_sid_requires_a_unique_valid_identity() {
+        let a = "S-1-5-21-1-2-3-1001";
+        let b = "S-1-5-21-4-5-6-1001";
+        let profiles = vec![
+            (a.into(), r"C:\Users\alice".into()),
+            (b.into(), r"D:\Profiles\ALICE".into()),
+        ];
+        assert_eq!(sid_of_profile(&profiles, "alice"), None);
+        assert_eq!(
+            sid_of_profile(&[(format!("{a}.bak"), r"C:\Users\alice".into())], "alice"),
+            None
+        );
+        assert_eq!(
+            sid_of_profile(&[(a.into(), r"C:\Users\Alice\".into())], "alice"),
+            Some(a.into())
+        );
+        assert_eq!(
+            sid_of_profile(
+                &[
+                    (a.into(), r"C:\Users\alice".into()),
+                    (a.to_lowercase(), r"C:\Users\ALICE".into())
+                ],
+                "alice"
+            ),
+            Some(a.into())
+        );
+        for sid in ["S-1-5-18", a] {
+            assert!(valid_sid(sid));
+        }
+        for sid in [
+            "S-1-5",
+            "S-1-5-+18",
+            "S-1-5-4294967296",
+            "S-1-281474976710656-1",
+            "S-1-5-18.bak",
+        ] {
+            assert!(!valid_sid(sid), "{sid}");
+        }
+    }
 
     #[test]
     fn hive_files_and_logs() {
