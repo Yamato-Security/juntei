@@ -26,7 +26,7 @@ Two kinds of attack change them:
   `bcdedit /set {default} recoveryenabled No` and
   `bcdedit /set {default} bootstatuspolicy ignoreallfailures`. Some families set `safeboot` so
   that Windows restarts in safe mode, where security products don't run.
-- **Rootkits and unsigned drivers** need `testsigning on` or `nointegritychecks on`.
+- **Rootkits and unsigned drivers** may use `testsigning on` or `nointegritychecks on` to weaken boot-time checks. These settings alone do not prove a rootkit ran.
 
 <span class="evidence-strength">Best conclusion:</span> at the time of collection, this boot entry
 had this setting. The element's key's last-write time is when the setting was last written.
@@ -55,8 +55,8 @@ is hidden. Collect it explicitly, or mount the partition. `-d` also reads `BCD-T
 - **Settings are inherited.** A boot loader inherits from the objects in its
   `BcdLibraryObjectList_InheritedObjects` (usually `{bootloadersettings}`, which inherits
   `{globalsettings}`). `RecoveryEnabled`, `TestSigning`, `NoIntegrityChecks`, `SafeBoot` and
-  `BootStatusPolicy` are the effective values (own, else inherited), and `Inherited` says which
-  come from another object. `bcdedit /set {globalsettings} testsigning on` affects every entry.
+  `BootStatusPolicy` are resolved stored values (own, else inherited), and `Inherited` says which
+  come from another object. Inheritance is followed for at most eight levels, with cycles bounded. A referenced object can be absent from a partial store. Empty fields do not establish an effective Windows default. Firmware and Secure Boot may also prevent a stored option from taking effect.
 - **Not set is not off.** An empty `RecoveryEnabled` means the element isn't there; Windows'
   default applies.
 - **Times are per element.** Each element's key time (`key_last_written` in `Elements`) is when it
@@ -100,7 +100,7 @@ it is inherited from.
 | `ObjectGuid`, `ObjectType`, `ObjectTypeName` | The object's GUID, its type (`0x10200003`) and what it is (`Windows boot loader`, `inherited settings for Windows boot loader`, …). |
 | `Description`, `Path`, `Device` | The description, the application's path, and its device (a GPT partition and disk, or a ramdisk's options object). |
 | `IsDefault`, `DisplayOrder` | Whether the Windows boot manager boots it by default, and its place in the boot menu. |
-| `RecoveryEnabled`, `TestSigning`, `NoIntegrityChecks` | `recoveryenabled`, `testsigning`, `nointegritychecks`, effective. |
+| `RecoveryEnabled`, `TestSigning`, `NoIntegrityChecks` | `recoveryenabled`, `testsigning`, `nointegritychecks`, as resolved from the store. |
 | `SafeBoot`, `BootStatusPolicy` | `safeboot` (`Minimal`, `Network`, `DsRepair`) and `bootstatuspolicy` (`IgnoreAllFailures`, …), with the number. |
 | `Inherited` | Which of these come from another object, and which. |
 | `Elements` | Every element: its type, name, value, bytes (for devices, undocumented types and data that doesn't decode) and key time. |
