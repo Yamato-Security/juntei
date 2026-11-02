@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "lsa-secrets",
                 "bcd",
                 "appcompat",
                 "auditpol",
@@ -339,7 +340,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     for task in manifest["tasks"].as_array().unwrap() {
         let artifact = task["artifact"].as_str().unwrap();
         let category = match artifact {
-            "sam" => "accounts",
+            "lsa-secrets" | "sam" => "accounts",
             "app-history" => "applications",
             "installed-programs" => "applications",
             "usb" => "external_devices",
@@ -661,7 +662,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                36
+                37
             );
             assert!(
                 output
@@ -807,7 +808,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 72);
+    assert_eq!(tasks.len(), 74);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5564,6 +5565,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("lsa-secrets "), "{help}");
     assert!(help.contains("bcd "), "{help}");
     assert!(help.contains("appcompat "), "{help}");
     assert!(help.contains("auditpol "), "{help}");
@@ -16689,4 +16691,318 @@ fn registry_bcd_errors() {
     ]);
     assert_eq!(r.code, 1);
     assert_eq!(std::fs::read(&sam).unwrap(), original);
+}
+
+// --- parse-registry lsa-secrets -----------------------------------------------------------------
+
+/// `parse-registry lsa-secrets` with `args`, as JSON Lines.
+fn lsa_secrets_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "lsa-secrets"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+/// What every secret value of the built hive holds: never to be seen in the output.
+const SECRET_CANARY: &[u8] = b"CANARY-SECRET-VALUE";
+
+/// A cached logon slot: in use (a user name of `user_length` bytes) or empty.
+fn cache_slot(user_length: u16) -> Vec<u8> {
+    let mut slot = vec![0u8; 168];
+    slot[..2].copy_from_slice(&user_length.to_le_bytes());
+    if user_length > 0 {
+        slot[96..96 + SECRET_CANARY.len()].copy_from_slice(SECRET_CANARY);
+    }
+    slot
+}
+
+/// A SECURITY hive with a service's secret, security questions, an autologon password without
+/// an old value, and a cache with one slot of two in use.
+fn lsa_secrets_hive(dir: &Path) -> PathBuf {
+    let service = r"Policy\Secrets\_SC_ExampleSvc";
+    let questions = r"Policy\Secrets\L$_SQSA_S-1-5-21-1-2-3-1001";
+    let autologon = r"Policy\Secrets\DefaultPassword";
+    let secret: Vec<u8> = SECRET_CANARY.repeat(3);
+    let hive = reg_tree(
+        "ROOT",
+        &[
+            (&format!(r"{service}\CurrVal"), "", 0, secret.clone()),
+            (&format!(r"{service}\OldVal"), "", 0, secret.clone()),
+            (
+                &format!(r"{service}\CupdTime"),
+                "",
+                0,
+                LINKED.to_le_bytes().to_vec(),
+            ),
+            (
+                &format!(r"{service}\OupdTime"),
+                "",
+                0,
+                (LINKED - DAY).to_le_bytes().to_vec(),
+            ),
+            (&format!(r"{questions}\CurrVal"), "", 0, secret.clone()),
+            (
+                &format!(r"{questions}\CupdTime"),
+                "",
+                0,
+                LINKED.to_le_bytes().to_vec(),
+            ),
+            (&format!(r"{autologon}\CurrVal"), "", 0, secret),
+            (&format!(r"{autologon}\OldVal"), "", 0, Vec::new()),
+            (
+                &format!(r"{autologon}\CupdTime"),
+                "",
+                0,
+                (LINKED + DAY).to_le_bytes().to_vec(),
+            ),
+            ("Cache", "NL$1", REG_BINARY, cache_slot(10)),
+            ("Cache", "NL$2", REG_BINARY, cache_slot(0)),
+            (
+                "Cache",
+                "NL$Control",
+                REG_BINARY,
+                vec![4, 0, 1, 0, 2, 0, 0, 0],
+            ),
+        ],
+    );
+    let path = dir.join("SECURITY");
+    std::fs::write(&path, hive).unwrap();
+    path
+}
+
+#[test]
+fn registry_lsa_secrets_of_a_public_hive() {
+    // the DFIR Artifact Museum's dirty Windows 11 SECURITY with its logs, and its SYSTEM
+    let dir = system_hive();
+    let config = dir.path().join("HOST/C/Windows/System32/config");
+    unpack_registry(
+        "rathbun_w11",
+        &["SECURITY", "SECURITY.LOG1", "SECURITY.LOG2"],
+        &config,
+    );
+    let records = lsa_secrets_read(&["-f", config.join("SECURITY").to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} {}",
+                r["secret"].as_str().unwrap(),
+                r["kind"].as_str().unwrap(),
+                r["current_set"].as_str().unwrap_or("-"),
+                r["has_current_value"],
+                r["has_old_value"],
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            "DefaultPassword autologon 2022-02-05T19:00:06.835826800Z true true",
+            "DPAPI_SYSTEM dpapi_system 2022-02-05T21:50:29.394285500Z true true",
+            "NL$KM cached_logon_key 2022-02-05T21:49:55.130252900Z true true",
+            "Cache cached_logons - null null",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "GOLDPAPERW11");
+        assert_eq!(r["problems"], json!([]));
+        assert_eq!(r["transaction_log_status"], "unchanged");
+    }
+    assert_eq!(records[0]["old_set"], "2022-02-05T19:00:06.070794800Z");
+    let cache = &records[3];
+    assert_eq!(
+        (
+            &cache["cached_logons"],
+            &cache["cached_logons_in_use"],
+            &cache["cached_logons_kept"]
+        ),
+        (&json!(10), &json!(0), &json!(10))
+    );
+}
+
+#[test]
+fn registry_lsa_secrets_never_write_secret_bytes() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = lsa_secrets_hive(dir.path());
+    let records = lsa_secrets_read(&["-f", hive.to_str().unwrap()]);
+    let got: Vec<(&str, &str, &Value, &Value)> = records
+        .iter()
+        .map(|r| {
+            (
+                r["secret"].as_str().unwrap(),
+                r["kind"].as_str().unwrap(),
+                &r["service_name"],
+                &r["user_sid"],
+            )
+        })
+        .collect();
+    assert_eq!(
+        got,
+        // in the order of the keys' names, as Windows sorts them
+        [
+            ("DefaultPassword", "autologon", &Value::Null, &Value::Null),
+            (
+                "L$_SQSA_S-1-5-21-1-2-3-1001",
+                "security_questions",
+                &Value::Null,
+                &json!("S-1-5-21-1-2-3-1001")
+            ),
+            (
+                "_SC_ExampleSvc",
+                "service_account",
+                &json!("ExampleSvc"),
+                &Value::Null
+            ),
+            ("Cache", "cached_logons", &Value::Null, &Value::Null),
+        ]
+    );
+    assert_eq!(records[2]["current_set"], "2022-02-08T21:03:52Z");
+    assert_eq!(records[2]["old_set"], "2022-02-07T21:03:52Z");
+    assert_eq!(
+        records[2]["current_value_last_written"],
+        "2022-02-08T21:03:52Z"
+    );
+    // security questions without an old value; autologon with an empty one
+    assert_eq!(
+        (
+            &records[1]["has_old_value"],
+            &records[1]["old_value_last_written"]
+        ),
+        (&json!(false), &Value::Null)
+    );
+    assert_eq!(
+        (
+            &records[0]["has_current_value"],
+            &records[0]["has_old_value"]
+        ),
+        (&json!(true), &json!(false))
+    );
+    assert_eq!(
+        (
+            &records[3]["cached_logons"],
+            &records[3]["cached_logons_in_use"],
+            &records[3]["cached_logons_kept"]
+        ),
+        (&json!(2), &json!(1), &json!(2))
+    );
+    // no output holds a secret's bytes, as text or in hex
+    let out = dir.path().join("secrets.csv");
+    let r = run(&[
+        "parse-registry",
+        "lsa-secrets",
+        "-f",
+        hive.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let jsonl = run(&[
+        "parse-registry",
+        "lsa-secrets",
+        "-f",
+        hive.to_str().unwrap(),
+        "-t",
+        "json",
+    ]);
+    let canary_hex: String = SECRET_CANARY.iter().map(|b| format!("{b:02x}")).collect();
+    let csv_text = std::fs::read_to_string(&out).unwrap();
+    for text in [&r.stdout, &r.stderr, &csv_text, &jsonl.stdout] {
+        assert!(!text.contains("CANARY"), "{text}");
+        assert!(!text.to_lowercase().contains(&canary_hex[..16]), "{text}");
+    }
+    for expected in [
+        "Secrets (names and times only; nothing is decrypted): 3 (autologon 1, security_questions 1, service_account 1)",
+        "_SC_ExampleSvc  (service_account for ExampleSvc; set 2022-02-08T21:03:52Z)",
+        "Services whose account passwords LSA stores: ExampleSvc",
+        "Cached domain logons: 1 of 2 slots in use, 2 kept (NL$Control)",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header.len(), 19);
+    assert_eq!(header[2..4], ["Secret", "Kind"]);
+    assert_eq!(rows[2]["ServiceName"], "ExampleSvc");
+    assert_eq!(rows[2]["HasCurrentValue"], "True");
+    assert_eq!(rows[3]["CachedLogonsInUse"], "1");
+}
+
+#[test]
+fn registry_lsa_secrets_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let r = run(&[
+        "parse-registry",
+        "lsa-secrets",
+        "-f",
+        dir.path().join("SAM").to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stderr.contains("not a SECURITY hive"), "{}", r.stderr);
+    let r = run(&[
+        "parse-registry",
+        "lsa-secrets",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stderr.contains("No SECURITY hives were found"),
+        "{}",
+        r.stderr
+    );
+    // the output is never the hive read, even with -C
+    let hive = lsa_secrets_hive(dir.path());
+    let original = std::fs::read(&hive).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "lsa-secrets",
+        "-f",
+        hive.to_str().unwrap(),
+        "-o",
+        hive.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&hive).unwrap(), original);
+}
+
+#[test]
+fn registry_lsa_secrets_keeps_list_warnings_on_stderr() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("SECURITY");
+    let mut bytes = reg_tree(
+        "ROOT",
+        &[(
+            r"Policy\Secrets\Example\CupdTime",
+            "",
+            REG_BINARY,
+            132_726_344_757_163_260u64.to_le_bytes().to_vec(),
+        )],
+    );
+    let name = bytes.windows(7).position(|b| b == b"Secrets").unwrap();
+    put_u32(&mut bytes, name - 76 + 20, 2);
+    std::fs::write(&hive, bytes).unwrap();
+    for format in ["csv", "json", "jsonl"] {
+        let r = run(&[
+            "parse-registry",
+            "lsa-secrets",
+            "-f",
+            hive.to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        assert!(r.stderr.contains("Policy\\Secrets"), "{}", r.stderr);
+        if format != "csv" {
+            assert_eq!(json_documents(&r.stdout).len(), 1);
+        }
+    }
 }

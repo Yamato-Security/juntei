@@ -55,7 +55,7 @@ const CATEGORIES: &[&str] = &[
 /// Investigative categories are independent of a parser's storage format or command group.
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
-        "sam" => "accounts",
+        "lsa-secrets" | "sam" => "accounts",
         "app-history" => "applications",
         "installed-programs" => "applications",
         "usb" => "external_devices",
@@ -92,6 +92,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "jump-lists" => "JumpLists",
         "lnk" => "LNK",
         "logfile" => "LogFile",
+        "lsa-secrets" => "LsaSecrets",
         "mft" => "MFT",
         "office" => "Office",
         "mru" => "MRU",
@@ -1093,6 +1094,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &[],
         );
         add(
+            "lsa-secrets",
+            &["parse-registry", "lsa-secrets"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "persistence",
             &["parse-registry", "persistence"],
             OutputShape::File,
@@ -1280,6 +1287,9 @@ impl InputInventory {
                 };
                 if let Some(artifact) = artifact {
                     found.add_size(artifact, size);
+                }
+                if kind.as_deref() == Some("SECURITY") {
+                    found.add_size("lsa-secrets", size);
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
@@ -2379,9 +2389,13 @@ mod tests {
         }
         hive.resize(0x90, 0);
         fs::write(dir.path().join("NTUSER.DAT"), &hive).unwrap();
+        hive.resize(0xa0, 0);
+        fs::write(dir.path().join("SECURITY"), &hive).unwrap();
         let mixed = InputInventory::scan(dir.path());
         assert_eq!(mixed.sizes["appcompat"], 0x100);
-        assert_eq!(mixed.sizes["system-info"], 0x70);
+        assert_eq!(mixed.sizes["system-info"], 0x110);
+        assert_eq!(mixed.sizes["auditpol"], 0xa0);
+        assert_eq!(mixed.sizes["lsa-secrets"], 0xa0);
         for user_reader in [
             "office",
             "featureusage",

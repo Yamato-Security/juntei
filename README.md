@@ -95,6 +95,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Local accounts** (`SAM`) — Local usernames, RIDs, account flags, and recorded logon and password metadata. | Registry |
+| **LSA secrets** (`SECURITY`) — Which secrets LSA holds (autologon, service account and machine account passwords) and when they were set, and cached domain logons in use; names and times only, nothing decrypted. | Registry |
 
 ### Applications
 

@@ -23,6 +23,7 @@ pub mod bam;
 pub mod bcd;
 pub mod featureusage;
 pub mod installed_programs;
+pub mod lsa_secrets;
 pub mod mru;
 pub mod muicache;
 pub mod office;

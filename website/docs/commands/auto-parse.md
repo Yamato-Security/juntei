@@ -81,6 +81,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - system information: names, Windows version, time zone, last shutdown, profiles and SIDs
 - the audit policy: which security events the system was set to log
 - boot configuration (BCD and BCD-Template)
+- LSA secrets' names and times, and cached domain logons in use (nothing is decrypted)
 
 Persistence Hunter retains every severity (`--min-severity info`), including partial allow matches.
 `LOW` is a classification to investigate; missing signature metadata can produce it for malicious
@@ -109,6 +110,8 @@ CSV keeps separate tables because each artifact has different columns:
 ├── manifest.csv
 ├── HOST1/
 │   ├── accounts/
+│   │   ├── LsaSecrets.csv
+│   │   ├── LsaSecrets-logs.txt
 │   │   ├── SAM.csv
 │   │   └── SAM-logs.txt
 │   ├── applications/
@@ -198,7 +201,7 @@ CSV keeps separate tables because each artifact has different columns:
 
 | Category | Artifacts |
 |---|---|
-| `accounts` | SAM local accounts |
+| `accounts` | SAM local accounts, LSA secrets' names and times |
 | `applications` | Application history (third-party tools' traces) |
 | `applications` | Installed programs |
 | `external_devices` | USB devices and volumes |

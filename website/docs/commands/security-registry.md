@@ -17,6 +17,7 @@ Commands:
   featureusage        Parse Explorer use counts and pins
   help                Print this message or the help of the given subcommand(s)
   installed-programs  Parse installed programs
+  lsa-secrets         Parse LSA secrets' names and times
   mru                 Parse most-recently-used lists
   muicache            Parse MuiCache program names
   office              Parse Office recent files, trusted documents and macro settings
@@ -576,6 +577,40 @@ policy and safe mode resolved through inheritance. See
 [Boot Configuration Data (BCD)](../artifacts/bcd.md).
 
 
+## `parse-registry lsa-secrets`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry lsa-secrets <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SECURITY hives
+  -f, --file <FILE>      File path to one SECURITY hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+One record per LSA secret (`Policy\Secrets\<name>`) with its kind, the service or user it
+names, when its values were set and whether they hold data, and one for the cached logons
+(`Cache`). Names and times only: nothing is decrypted. See [LSA Secrets](../artifacts/lsa-secrets.md).
+
+
 ## `parse-registry persistence`
 
 ```text
@@ -955,3 +990,5 @@ See also [auditpol](../artifacts/auditpol.md).
 See also [appcompat](../artifacts/appcompat.md).
 
 See also [bcd](../artifacts/bcd.md).
+
+See also [lsa-secrets](../artifacts/lsa-secrets.md).

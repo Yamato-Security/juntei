@@ -155,6 +155,7 @@ nav:
           - Boot Configuration (BCD): artifacts/bcd.md
       - Accounts:
           - SAM Local Accounts: artifacts/sam.md
+          - LSA Secrets: artifacts/lsa-secrets.md
       - System Information:
           - Audit Policy: artifacts/auditpol.md
       - Applications:
