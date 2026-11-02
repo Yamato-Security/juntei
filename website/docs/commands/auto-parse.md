@@ -51,6 +51,11 @@ Names are made safe for use as directory names. Duplicate names receive a numeri
 their output directory and `Computer` value so separate systems remain distinguishable in JSON.
 The manifest keeps the hostname exactly as discovered in a separate `hostname` field.
 
+When it lists the systems it found, `auto-parse` also prints each one's time zone from its `SYSTEM`
+hive (for example `Eastern Standard Time, UTC-05:00; daylight time UTC-04:00 from the second
+Sunday of March, 02:00 to the first Sunday of November, 02:00`): the local times the system kept.
+See [System Information](../artifacts/system-info.md).
+
 ## Parsers it runs
 
 One parser failing does not stop the others. `auto-parse` runs these jobs for every discovered
@@ -73,6 +78,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - all registry keys and values, including recoverable deleted data
 - services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, UserAssist, BAM,
   installed programs, MuiCache, ShellBags, and USB devices
+- system information: names, Windows version, time zone, last shutdown, profiles and SIDs
 
 Persistence Hunter retains every severity (`--min-severity info`), including partial allow matches.
 `LOW` is a classification to investigate; missing signature metadata can produce it for malicious
@@ -160,10 +166,13 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── registry/
 │   │   ├── Registry.csv
 │   │   └── Registry-logs.txt
-│   └── security_products/
-│       ├── DefenderQuarantine.csv
-│       ├── DefenderQuarantine-logs.txt
-│       └── defender-quarantined/  # only with -x
+│   ├── security_products/
+│   │   ├── DefenderQuarantine.csv
+│   │   ├── DefenderQuarantine-logs.txt
+│   │   └── defender-quarantined/  # only with -x
+│   └── system_information/
+│       ├── SystemInfo.csv
+│       └── SystemInfo-logs.txt
 └── HOST2/
     └── …
 ```
@@ -181,6 +190,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `process_execution` | BAM and DAM, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
 | `registry` | General hive keys and values, including recovered records |
 | `security_products` | Defender quarantine metadata and optional extracted content |
+| `system_information` | Names, Windows version, time zone, last shutdown, profiles and SIDs of the system |
 
 Categories help organize investigations; they are not proof of a particular activity. For example,
 Amcache and ShimCache entries alone do not establish execution. SRUM records resource usage;
@@ -195,7 +205,7 @@ covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider

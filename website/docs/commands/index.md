@@ -53,6 +53,7 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
 | `parse-registry services` | `SYSTEM` | [Windows Services](../artifacts/services.md) |
 | `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |
+| `parse-registry system-info` | `SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` of one system | [System Information](../artifacts/system-info.md) |
 | `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
 | `parse-registry usb` | `SYSTEM`, with `SOFTWARE` and `NTUSER.DAT` | [USB Devices](../artifacts/usb.md) |
 | `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |

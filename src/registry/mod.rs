@@ -27,6 +27,7 @@ pub mod remote_access;
 pub mod sam;
 pub mod services;
 pub mod shellbags;
+pub mod system_info;
 pub mod taskcache;
 pub mod usb;
 pub mod userassist;

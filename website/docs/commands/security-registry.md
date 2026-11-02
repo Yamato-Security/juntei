@@ -240,6 +240,39 @@ passwords are reported as present, never decoded. See
 [Remote Access (User Side)](../artifacts/remote-access.md).
 
 
+## `parse-registry system-info`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry system-info <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SYSTEM, SOFTWARE, SAM and SECURITY hives (those in one directory are one system's)
+  -f, --file <FILE>      File path to a SYSTEM, SOFTWARE, SAM or SECURITY hive of one system; repeat for each (the others are looked for next to them)
+      --no-logs          Read dirty hives as they are, without their transaction logs (default: <hive>.LOG, .LOG1 and .LOG2 next to each are replayed)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+One record per system: its names, domain or workgroup, Windows version and install date, time
+zone, last shutdown, last user, profiles and SIDs. The hives in one directory are one system's;
+with `-f`, the hives given and the others of the four found next to them.
+See [System Information](../artifacts/system-info.md).
+
+
 ## `parse-registry persistence`
 
 ```text
@@ -601,3 +634,5 @@ The complete options and field semantics are on [Registry Hives](../artifacts/re
 See also [Open and Save As Dialogs](../artifacts/opensavemru.md).
 
 See also [remote-access](../artifacts/remote-access.md).
+
+See also [system-info](../artifacts/system-info.md).

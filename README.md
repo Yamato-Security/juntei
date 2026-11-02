@@ -103,6 +103,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Remote access, user side** (`NTUSER.DAT`) — Computers a user reached with Remote Desktop, PuTTY and WinSCP, the accounts used, accepted SSH host keys with their fingerprints, mapped drives and shares. | Registry |
 
+### System Information
+
+| Artifact | Type |
+| --- | --- |
+| **System information** (`SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY`) — Computer and domain names, Windows version and install date, time zone and the local times it kept, last shutdown, last user, profiles, and SIDs. | Registry |
+
 ### Security Products
 
 | Artifact | Type |

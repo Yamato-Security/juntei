@@ -49,6 +49,7 @@ const CATEGORIES: &[&str] = &[
     "process_execution",
     "registry",
     "security_products",
+    "system_information",
 ];
 
 /// Investigative categories are independent of a parser's storage format or command group.
@@ -69,6 +70,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         }
         "registry" => "registry",
         "defender-quarantine" => "security_products",
+        "system-info" => "system_information",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
     }
 }
@@ -99,6 +101,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "shellbags" => "ShellBags",
         "shimcache" => "ShimCache",
         "srum" => "SRUM",
+        "system-info" => "SystemInfo",
         "taskcache" => "TaskCache",
         "usb" => "USB",
         "usn-journal" => "UsnJournal",
@@ -421,6 +424,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             &format!("  {}{}: {}", host.computer, fqdn, host.root.display()),
             true,
         );
+        // the local times the system kept
+        if let Some(zone) = system_time_zone(&host.windows) {
+            p(None, &format!("    Time zone: {zone}"), true);
+        }
     }
     p_label(no_color, "Parser tasks: ", &fmt_num(tasks.len()));
     p_label(no_color, "Parallel processes: ", &fmt_num(threads));
@@ -803,6 +810,24 @@ fn client_info(root: &Path) -> Option<(String, Option<String>)> {
 }
 
 fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
+    read_system_hive(windows, registry::system::computer_name)
+}
+
+/// The time zone of a collected system's `SYSTEM` hive, in words: the local times it kept.
+fn system_time_zone(windows: &[PathBuf]) -> Option<String> {
+    read_system_hive(windows, |hive| {
+        registry::system_info::system(hive)
+            .time_zone
+            .as_ref()
+            .map(crate::registry::system_info::describe_time_zone)
+    })
+}
+
+/// What `read` finds in the first `System32\config\SYSTEM` of `windows` that gives something.
+fn read_system_hive<T>(
+    windows: &[PathBuf],
+    read: impl Fn(&registry::Hive) -> Option<T>,
+) -> Option<T> {
     for windows in windows {
         let config = child_ci(windows, "System32").and_then(|p| child_ci(&p, "config"));
         let system = config.and_then(|p| child_ci(&p, "SYSTEM"));
@@ -825,11 +850,11 @@ fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
         let Ok(context) = crate::persistence_hunter::context::Context::open(&system, false) else {
             continue;
         };
-        if let Some(name) = context
+        if let Some(found) = context
             .machine_hive("SYSTEM")
-            .and_then(|h| registry::system::computer_name(&h.opened.hive))
+            .and_then(|h| read(&h.opened.hive))
         {
-            return Some(name);
+            return Some(found);
         }
     }
     None
@@ -1047,6 +1072,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add("sam", &["parse-registry", "sam"], OutputShape::File, &[]);
         add(
+            "system-info",
+            &["parse-registry", "system-info"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "persistence",
             &["parse-registry", "persistence"],
             OutputShape::File,
@@ -1204,6 +1235,12 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                }
+                if matches!(
+                    kind.as_deref(),
+                    Some("SYSTEM" | "SOFTWARE" | "SAM" | "SECURITY")
+                ) {
+                    found.add_size("system-info", size);
                     found.add_size("remote-access", size);
                     found.add_size("opensavemru", size);
                 }

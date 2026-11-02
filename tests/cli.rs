@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "system-info",
                 "remote-access",
                 "opensavemru",
                 "bam",
@@ -299,6 +300,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "process_execution",
         "registry",
         "security_products",
+        "system_information",
     ] {
         assert!(csv.join("HOST1").join(category).is_dir());
         assert!(!csv.join("HOST1").join(category).join("logs").exists());
@@ -344,6 +346,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             }
             "registry" => "registry",
             "defender-quarantine" => "security_products",
+            "system-info" => "system_information",
             _ => panic!("unexpected artifact: {artifact}"),
         };
         assert_eq!(task["category"], category);
@@ -648,7 +651,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                27
+                28
             );
             assert!(
                 output
@@ -794,7 +797,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 54);
+    assert_eq!(tasks.len(), 56);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5551,6 +5554,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("system-info "), "{help}");
     assert!(help.contains("remote-access "), "{help}");
     assert!(help.contains("opensavemru "), "{help}");
     assert!(help.contains("bam "), "{help}");
@@ -12918,4 +12922,510 @@ fn registry_remote_access_keeps_password_bytes_private_in_all_stdout_formats() {
             assert!(records.iter().all(|r| r["password_stored"] == true));
         }
     }
+}
+
+// --- parse-registry system-info -----------------------------------------------------------------
+
+/// A `TIME_FIELDS`: year, month, day, hour, minute, second, milliseconds, weekday.
+fn time_fields(fields: [u16; 8]) -> Vec<u8> {
+    fields.iter().flat_map(|f| f.to_le_bytes()).collect()
+}
+
+/// A `UNICODE_STRING` as LSA keeps it: length, maximum length, the text's offset, the text.
+fn lsa_string(text: &str) -> Vec<u8> {
+    let units: Vec<u8> = text.encode_utf16().flat_map(u16::to_le_bytes).collect();
+    let mut b = (units.len() as u16).to_le_bytes().to_vec();
+    b.extend(((units.len() + 2) as u16).to_le_bytes());
+    b.extend(8u32.to_le_bytes());
+    b.extend(&units);
+    b.extend([0, 0]);
+    b
+}
+
+/// A SID `S-1-5-<subs>`.
+fn sid_bytes(subs: &[u32]) -> Vec<u8> {
+    let mut b = vec![1, subs.len() as u8, 0, 0, 0, 0, 0, 5];
+    b.extend(subs.iter().flat_map(|s| s.to_le_bytes()));
+    b
+}
+
+/// One domain-joined system's SYSTEM, SOFTWARE and SECURITY hives under `root`, where Windows
+/// keeps them: a Tokyo time zone, an upgrade from 1803, two profiles and the last user.
+fn system_info_collection(root: &Path) {
+    let zone = r"ControlSet001\Control\TimeZoneInformation";
+    let upgrade = r"Setup\Source OS (Updated on 5/16/2019 00:55:20)";
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+            (
+                r"ControlSet001\Services\Tcpip\Parameters",
+                "Hostname",
+                REG_SZ,
+                utf16z("host1"),
+            ),
+            (
+                r"ControlSet001\Services\Tcpip\Parameters",
+                "Domain",
+                REG_SZ,
+                utf16z("corp.example.com"),
+            ),
+            (
+                zone,
+                "TimeZoneKeyName",
+                REG_SZ,
+                utf16z("Tokyo Standard Time"),
+            ),
+            (zone, "Bias", REG_DWORD, (-540i32).to_le_bytes().to_vec()),
+            (
+                zone,
+                "ActiveTimeBias",
+                REG_DWORD,
+                (-540i32).to_le_bytes().to_vec(),
+            ),
+            (zone, "StandardBias", REG_DWORD, 0u32.to_le_bytes().to_vec()),
+            (
+                zone,
+                "DaylightBias",
+                REG_DWORD,
+                (-60i32).to_le_bytes().to_vec(),
+            ),
+            (zone, "StandardStart", REG_BINARY, time_fields([0; 8])),
+            (zone, "DaylightStart", REG_BINARY, time_fields([0; 8])),
+            (
+                r"ControlSet001\Control\Windows",
+                "ShutdownTime",
+                REG_BINARY,
+                LINKED.to_le_bytes().to_vec(),
+            ),
+            (
+                r"ControlSet001\Control\Session Manager\Environment",
+                "PROCESSOR_ARCHITECTURE",
+                REG_SZ,
+                utf16z("AMD64"),
+            ),
+            (
+                r"ControlSet001\Control\Nls\CodePage",
+                "ACP",
+                REG_SZ,
+                utf16z("932"),
+            ),
+            (upgrade, "ProductName", REG_SZ, utf16z("Windows 10 Pro")),
+            (upgrade, "ReleaseId", REG_SZ, utf16z("1803")),
+            (upgrade, "CurrentBuild", REG_SZ, utf16z("17134")),
+            (upgrade, "UBR", REG_DWORD, 765u32.to_le_bytes().to_vec()),
+        ],
+    );
+    let cv = r"Microsoft\Windows NT\CurrentVersion";
+    let alice = format!(r"{cv}\ProfileList\S-1-5-21-7-8-9-1105");
+    let logon = r"Microsoft\Windows\CurrentVersion\Authentication\LogonUI";
+    let software = reg_tree(
+        "ROOT",
+        &[
+            (cv, "ProductName", REG_SZ, utf16z("Windows 10 Enterprise")),
+            (cv, "EditionID", REG_SZ, utf16z("Enterprise")),
+            (cv, "DisplayVersion", REG_SZ, utf16z("22H2")),
+            (cv, "CurrentBuild", REG_SZ, utf16z("19045")),
+            (cv, "UBR", REG_DWORD, 4170u32.to_le_bytes().to_vec()),
+            (
+                cv,
+                "CurrentMajorVersionNumber",
+                REG_DWORD,
+                10u32.to_le_bytes().to_vec(),
+            ),
+            (
+                cv,
+                "CurrentMinorVersionNumber",
+                REG_DWORD,
+                0u32.to_le_bytes().to_vec(),
+            ),
+            // 2022-02-01T00:00:00Z
+            (
+                cv,
+                "InstallDate",
+                REG_DWORD,
+                1_643_673_600u32.to_le_bytes().to_vec(),
+            ),
+            (cv, "RegisteredOwner", REG_SZ, utf16z("IT")),
+            (
+                &format!(r"{cv}\ProfileList\S-1-5-18"),
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"%systemroot%\system32\config\systemprofile"),
+            ),
+            (
+                &alice,
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Users\alice"),
+            ),
+            (
+                &alice,
+                "LocalProfileLoadTimeHigh",
+                REG_DWORD,
+                ((LINKED >> 32) as u32).to_le_bytes().to_vec(),
+            ),
+            (
+                &alice,
+                "LocalProfileLoadTimeLow",
+                REG_DWORD,
+                (LINKED as u32).to_le_bytes().to_vec(),
+            ),
+            (logon, "LastLoggedOnUser", REG_SZ, utf16z(r"CORP\alice")),
+            (
+                logon,
+                "LastLoggedOnUserSID",
+                REG_SZ,
+                utf16z("S-1-5-21-7-8-9-1105"),
+            ),
+        ],
+    );
+    let security = reg_tree(
+        "ROOT",
+        &[
+            (r"Policy\PolAcDmN", "", 0, lsa_string("HOST1")),
+            (r"Policy\PolAcDmS", "", 0, sid_bytes(&[21, 1, 2, 3])),
+            (r"Policy\PolPrDmN", "", 0, lsa_string("CORP")),
+            (r"Policy\PolPrDmS", "", 0, sid_bytes(&[21, 7, 8, 9])),
+            (r"Policy\PolDnDDN", "", 0, lsa_string("corp.example.com")),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SECURITY"), security).unwrap();
+}
+
+/// `parse-registry system-info` with `args`, as JSON Lines.
+fn system_info_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "system-info"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_system_info_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    system_info_collection(dir.path());
+    let records = system_info_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(records.len(), 1);
+    let r = &records[0];
+    for (field, value) in [
+        ("host", json!("HOST1")),
+        ("computer_name", json!("HOST1")),
+        ("hostname", json!("host1")),
+        ("domain", json!("corp.example.com")),
+        ("primary_domain", json!("CORP")),
+        ("dns_domain", json!("corp.example.com")),
+        ("product_name", json!("Windows 10 Enterprise")),
+        ("edition", json!("Enterprise")),
+        ("display_version", json!("22H2")),
+        ("version", json!("10.0")),
+        ("build", json!("19045")),
+        ("ubr", json!(4170)),
+        ("install_date", json!("2022-02-01T00:00:00Z")),
+        ("registered_owner", json!("IT")),
+        ("time_zone", json!("Tokyo Standard Time")),
+        (
+            "time_zone_description",
+            json!("Tokyo Standard Time, UTC+09:00; no daylight saving time"),
+        ),
+        ("utc_offset", json!("UTC+09:00")),
+        ("daylight_utc_offset", Value::Null),
+        ("bias_minutes", json!(-540)),
+        ("active_bias_minutes", json!(-540)),
+        ("standard_start", Value::Null),
+        ("last_shutdown", json!("2022-02-08T21:03:52Z")),
+        ("current_control_set", json!("ControlSet001")),
+        ("processor_architecture", json!("AMD64")),
+        ("ansi_code_page", json!("932")),
+        ("last_logged_on_user", json!(r"CORP\alice")),
+        ("last_logged_on_user_sid", json!("S-1-5-21-7-8-9-1105")),
+        // no SAM: the computer's SID from LSA's account domain
+        ("machine_sid", json!("S-1-5-21-1-2-3")),
+        ("domain_sid", json!("S-1-5-21-7-8-9")),
+        ("sam_path", Value::Null),
+        ("transaction_log_status", json!("clean")),
+        ("problems", json!([])),
+    ] {
+        assert_eq!(r[field], value, "{field}");
+    }
+    assert!(
+        r["source_path"]
+            .as_str()
+            .unwrap()
+            .ends_with(&format!("config{}SYSTEM", std::path::MAIN_SEPARATOR))
+    );
+    assert!(r["security_path"].as_str().unwrap().ends_with("SECURITY"));
+    assert_eq!(
+        r["previous_versions"],
+        json!([{
+            "key_name": "Source OS (Updated on 5/16/2019 00:55:20)",
+            "updated_on": "2019-05-16T00:55:20",
+            "product_name": "Windows 10 Pro",
+            "edition": null,
+            "display_version": "1803",
+            "build": "17134",
+            "ubr": 765,
+            "install_date": null,
+            "install_time": null,
+            "key_last_written": "2022-02-08T21:03:52Z"
+        }])
+    );
+    let profiles = r["profiles"].as_array().unwrap();
+    assert_eq!(profiles.len(), 2);
+    assert_eq!(profiles[1]["sid"], "S-1-5-21-7-8-9-1105");
+    assert_eq!(profiles[1]["path"], r"C:\Users\alice");
+    assert_eq!(profiles[1]["local_load_time"], "2022-02-08T21:03:52Z");
+    assert_eq!(profiles[1]["local_unload_time"], Value::Null);
+}
+
+#[test]
+fn registry_system_info_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    system_info_collection(dir.path());
+    let out = dir.path().join("system.csv");
+    let r = run(&[
+        "parse-registry",
+        "system-info",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "Systems: 1",
+        "Hives parsed: SYSTEM 1, SOFTWARE 1, SECURITY 1",
+        "HOST1  (",
+        "Windows:        Windows 10 Enterprise (Enterprise) 22H2, build 19045.4170",
+        "Installed:      2022-02-01T00:00:00Z",
+        "Time zone:      Tokyo Standard Time, UTC+09:00; no daylight saving time",
+        "Last shutdown:  2022-02-08T21:03:52Z",
+        "Domain:         CORP, corp.example.com (joined, S-1-5-21-7-8-9)",
+        r"Last logged on: CORP\alice",
+        "Computer SID:   S-1-5-21-1-2-3",
+        "Profiles:       2",
+        "Upgraded from:  Windows 10 Pro 1803, build 17134.765, upgraded on 2019-05-16T00:55:20",
+        "Values that could not be read or don't match: 0",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header.len(), 59);
+    assert_eq!(
+        header[..6],
+        [
+            "Host",
+            "SourcePath",
+            "SoftwarePath",
+            "SamPath",
+            "SecurityPath",
+            "ComputerName"
+        ]
+    );
+    assert_eq!(rows.len(), 1);
+    let row = &rows[0];
+    assert_eq!(row["TimeZone"], "Tokyo Standard Time");
+    assert_eq!(row["UtcOffset"], "UTC+09:00");
+    assert_eq!(row["LastShutdownUTC"], "2022-02-08T21:03:52Z");
+    assert_eq!(row["DomainSid"], "S-1-5-21-7-8-9");
+    assert_eq!(
+        row["PreviousVersions"],
+        "Windows 10 Pro 1803, build 17134.765, upgraded on 2019-05-16T00:55:20"
+    );
+    assert_eq!(
+        row["Profiles"],
+        r"S-1-5-18 %systemroot%\system32\config\systemprofile (key 2022-02-08T21:03:52Z) | S-1-5-21-7-8-9-1105 C:\Users\alice (key 2022-02-08T21:03:52Z, loaded 2022-02-08T21:03:52Z)"
+    );
+    assert_eq!(row["Problems"], "");
+}
+
+#[test]
+fn registry_system_info_of_public_hives() {
+    // the DFIR Artifact Museum's dirty Windows 11 SYSTEM with its logs, and its SAM: the values
+    // regipy's and Plaso's plugins read, and the SAM's SID
+    let hive = system_hive();
+    let config = hive.path().join("HOST/C/Windows/System32/config");
+    unpack_registry("rathbun_w11", &["SAM"], &config);
+    let records = system_info_read(&["-f", config.join("SAM").to_str().unwrap()]);
+    assert_eq!(records.len(), 1);
+    let r = &records[0];
+    for (field, value) in [
+        ("host", json!("GOLDPAPERW11")),
+        ("computer_name", json!("GOLDPAPERW11")),
+        ("hostname", json!("GoldPaperW11")),
+        ("domain", Value::Null),
+        ("time_zone", json!("Eastern Standard Time")),
+        ("utc_offset", json!("UTC-05:00")),
+        ("daylight_utc_offset", json!("UTC-04:00")),
+        ("bias_minutes", json!(300)),
+        ("active_bias_minutes", json!(300)),
+        ("standard_start", json!("first Sunday of November, 02:00")),
+        ("daylight_start", json!("second Sunday of March, 02:00")),
+        ("dynamic_daylight_time_disabled", json!(false)),
+        ("last_shutdown", json!("2022-02-07T07:37:47.374974700Z")),
+        ("processor_architecture", json!("AMD64")),
+        ("ansi_code_page", json!("1252")),
+        ("oem_code_page", json!("437")),
+        (
+            "machine_sid",
+            json!("S-1-5-21-4063860464-1508573791-632671957"),
+        ),
+        ("product_name", Value::Null),
+        ("transaction_log_status", json!("replayed")),
+        ("problems", json!([])),
+    ] {
+        assert_eq!(r[field], value, "{field}");
+    }
+    // -f SAM found the SYSTEM next to it
+    assert!(r["source_path"].as_str().unwrap().ends_with("SYSTEM"));
+    assert!(r["sam_path"].as_str().unwrap().ends_with("SAM"));
+    assert!(
+        r["logs_applied"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|l| l.as_str().unwrap().starts_with("SYSTEM.LOG"))
+    );
+}
+
+#[test]
+fn registry_system_info_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    system_info_collection(dir.path());
+    let config = dir.path().join("C/Windows/System32/config");
+    let copy = dir.path().join("SYSTEM.copy");
+    std::fs::copy(config.join("SYSTEM"), &copy).unwrap();
+    // two SYSTEM hives: the base block names the copy
+    std::fs::write(
+        &copy,
+        reg_tree(
+            "ROOT",
+            &[("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec())],
+        ),
+    )
+    .unwrap();
+    let mut bytes = std::fs::read(&copy).unwrap();
+    let name: Vec<u8> = "SYSTEM".encode_utf16().flat_map(u16::to_le_bytes).collect();
+    bytes[0x30..0x30 + name.len()].copy_from_slice(&name);
+    std::fs::write(&copy, bytes).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "system-info",
+        "-f",
+        config.join("SYSTEM").to_str().unwrap(),
+        "-f",
+        copy.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stderr.contains("Two SYSTEM hives were given")
+            || r.stdout.contains("Two SYSTEM hives were given"),
+        "{}{}",
+        r.stdout,
+        r.stderr
+    );
+    // not one of the four
+    let ntuser = dir.path().join("NTUSER.DAT");
+    std::fs::write(&ntuser, reg_tree("ROOT", &[])).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "system-info",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stderr
+            .contains("is not a SYSTEM, SOFTWARE, SAM or SECURITY hive"),
+        "{}",
+        r.stderr
+    );
+    let empty = tempfile::tempdir().unwrap();
+    let r = run(&[
+        "parse-registry",
+        "system-info",
+        "-d",
+        empty.path().to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stderr
+            .contains("No SYSTEM, SOFTWARE, SAM or SECURITY hives were found")
+    );
+    // the output is never one of the hives read, even with -C
+    let original = std::fs::read(config.join("SECURITY")).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "system-info",
+        "-f",
+        config.join("SYSTEM").to_str().unwrap(),
+        "-o",
+        config.join("SECURITY").to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(config.join("SECURITY")).unwrap(), original);
+}
+
+#[test]
+fn registry_system_info_preserves_sam_replay_provenance() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut sid = vec![1, 4, 0, 0, 0, 0, 0, 5];
+    for number in [21u32, 1, 2, 3] {
+        sid.extend(number.to_le_bytes());
+    }
+    let mut hive = reg_tree("ROOT", &[(r"SAM\Domains\Account", "V", REG_BINARY, sid)]);
+    // An old-format transaction log writing all hive-bin pages. The SAM value is
+    // recovered from those pages, so the exported SID must retain that provenance.
+    let bins = hive.len() - 4096;
+    let mut log = hive[..512].to_vec();
+    put_u32(&mut log, 28, 1);
+    let checksum = log[..508]
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .fold(0u32, |x, w| x ^ u32::from_le_bytes(*w));
+    put_u32(&mut log, 508, checksum);
+    log.extend(b"DIRT");
+    log.extend(vec![0xff; bins / 4096]);
+    log.resize(log.len().next_multiple_of(512), 0);
+    log.extend_from_slice(&hive[4096..]);
+    // The primary still has an older SID; the log replaces its last subauthority.
+    let sid_start = hive
+        .windows(12)
+        .position(|w| w == [1, 4, 0, 0, 0, 0, 0, 5, 21, 0, 0, 0])
+        .unwrap();
+    put_u32(&mut hive, sid_start + 20, 4);
+    put_u32(&mut hive, 4, 2);
+    let checksum = hive[..508]
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .fold(0u32, |x, w| x ^ u32::from_le_bytes(*w));
+    put_u32(&mut hive, 508, checksum);
+    std::fs::write(dir.path().join("SAM"), hive).unwrap();
+    std::fs::write(dir.path().join("SAM.LOG"), log).unwrap();
+    let records = system_info_read(&["-f", dir.path().join("SAM").to_str().unwrap()]);
+    assert_eq!(records.len(), 1);
+    assert_eq!(records[0]["machine_sid"], "S-1-5-21-1-2-3");
+    assert_eq!(records[0]["transaction_log_status"], "replayed");
 }
