@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! Juntei: Windows forensics artifact parser.
 
 mod amcache;
@@ -224,6 +237,17 @@ fn main() {
                 }
                 code
             }
+            RegistryCommands::Shellbags(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::shellbags::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
             RegistryCommands::Taskcache(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
@@ -257,12 +281,67 @@ fn main() {
                 }
                 code
             }
+            RegistryCommands::Usb(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::usb::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
             RegistryCommands::Userassist(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = registry::userassist::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            RegistryCommands::Opensavemru(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::opensavemru::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            RegistryCommands::Bam(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::bam::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            RegistryCommands::InstalledPrograms(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::installed_programs::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            RegistryCommands::Muicache(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::muicache::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }

@@ -38,9 +38,11 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 
 | Artifact | Type |
 | --- | --- |
+| **BAM and DAM** (`SYSTEM`) — The last time each user ran each program, with users named from the SAM and ProfileList. | Registry |
 | **Prefetch** (`*.pf`) — Program run counts, recent execution times, and referenced files. | File |
 | **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | ESE |
 | **UserAssist** (`NTUSER.DAT`) — Programs and shortcuts a user started from Explorer, with run counts, focus time, and last run times. | Registry |
+| **MuiCache** (`UsrClass.dat`) — Program paths, descriptions and companies cached in a user's shell profile. | Registry |
 
 ### File System and File Existence
 
@@ -60,6 +62,14 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Shortcuts** (`*.lnk`) — Target paths, arguments, timestamps, volumes, network shares, and source-computer information. | File |
 | **Jump lists** (`*.automaticDestinations-ms`, `*.customDestinations-ms`) — Application-specific recent and pinned items, usage metadata, and embedded shortcuts. | File |
 | **Recent documents** (`NTUSER.DAT` `RecentDocs`) — Recently accessed files and folders in most-recently-used order. | Registry |
+| **Open and Save As dialogs** (`NTUSER.DAT` `ComDlg32`) — Files opened or saved through the common dialogs, by extension, and the programs and folders that used them. | Registry |
+| **ShellBags** (`UsrClass.dat`, `NTUSER.DAT` `BagMRU`) — Folders a user opened in Explorer, including removable drives, network shares, portable devices, ZIP archives and FTP sites, as full paths. | Registry |
+
+### External Devices
+
+| Artifact | Type |
+| --- | --- |
+| **USB devices** (`SYSTEM`, `SOFTWARE`, `NTUSER.DAT`) — USB storage, USB and portable devices with their serial numbers and install, arrival and removal times, their volumes' drive letters, names and serial numbers, and the users who had them mounted. | Registry |
 
 ### Registry
 
@@ -81,6 +91,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Local accounts** (`SAM`) — Local usernames, RIDs, account flags, and recorded logon and password metadata. | Registry |
 
+### Applications
+
+| Artifact | Type |
+| --- | --- |
+| **Installed programs** (`SOFTWARE`, `NTUSER.DAT`) — Programs installed machine-wide and per user, Windows Installer products, App Paths, WSL distributions, and packaged apps, with install dates and key times. | Registry |
+
 ### Lateral Movement
 
 | Artifact | Type |
@@ -92,3 +108,11 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Microsoft Defender quarantine** (`Quarantine\Entries`, `ResourceData`, `Resources`) — Threat records, original paths, hashes, download origins, and recoverable quarantined content. | File |
+
+## License
+
+Juntei is released under the [Reciprocal Public License 1.5](LICENSE) (RPL-1.5) and copyright
+Shirofune Security Co., Ltd. Its source code was published under the AGPLv3 before version 1.0.0. The licenses
+of the crates and other third-party code and data that Juntei is built with are in
+[`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES/), and the licenses of the test files are next to them
+in [`test_files`](test_files/).

@@ -91,7 +91,10 @@ pub fn run(opts: &RegistryRemoteAccessOptions) -> i32 {
     // --- parse and write -------------------------------------------------------------------
     let mut hosts = Hosts::new(!opts.no_logs);
     let mut profiles = Profiles::new(!opts.no_logs);
-    let mut stats = Stats::default();
+    let mut stats = Stats {
+        to_stderr: data_on_stdout,
+        ..Stats::default()
+    };
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
@@ -331,6 +334,7 @@ impl<'a> Record<'a> {
 /// Counts for the results summary.
 #[derive(Default)]
 struct Stats {
+    to_stderr: bool,
     hives: usize,
     failed: usize,
     hosts: BTreeSet<String>,
@@ -372,6 +376,9 @@ impl Stats {
             self.without += 1;
         }
         for problem in &problems {
+            if self.to_stderr {
+                eprintln!("{}: {problem}", opened.source);
+            }
             self.problem(&opened.source, problem);
         }
         let who = user.username.as_deref().unwrap_or("?");
