@@ -60,6 +60,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Shortcuts** (`*.lnk`) — Target paths, arguments, timestamps, volumes, network shares, and source-computer information. | File |
 | **Jump lists** (`*.automaticDestinations-ms`, `*.customDestinations-ms`) — Application-specific recent and pinned items, usage metadata, and embedded shortcuts. | File |
 | **Recent documents** (`NTUSER.DAT` `RecentDocs`) — Recently accessed files and folders in most-recently-used order. | Registry |
+| **Open and Save As dialogs** (`NTUSER.DAT` `ComDlg32`) — Files opened or saved through the common dialogs, by extension, and the programs and folders that used them. | Registry |
 
 ### Registry
 

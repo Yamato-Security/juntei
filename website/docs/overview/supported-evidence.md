@@ -16,6 +16,7 @@
 | Registry hives | `parse-registry read` | Configuration, persistence, deleted/replayed values | Key time is not a value time; live hives need transaction logs |
 | Services | `parse-registry services` | Service/driver persistence and failure actions | Configuration does not prove the service started |
 | RecentDocs | `parse-registry recentdocs` | Recently opened files and folders per user | Only the most recent item in each list gets a defensible open time |
+| Open and Save As dialogs | `parse-registry opensavemru` | Files opened or saved through the common dialogs, by extension, and the programs and folders that used them | Only the most recent entry of each list is dated; opened and saved are not told apart |
 | TaskCache | `parse-registry taskcache` | Scheduled-task actions, metadata, hidden tasks | Correlate with task XML and event logs for runtime proof |
 | Registry autostarts | `parse-registry persistence` | Run keys, Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks and other autostart locations | Configuration, not proof of execution; most entries are Windows defaults |
 | UserAssist | `parse-registry userassist` | Programs and shortcuts a user started from Explorer, with run counts, focus time and last run | Only Explorer starts are counted; new profiles are seeded with default items |
