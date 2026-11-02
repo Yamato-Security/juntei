@@ -152,6 +152,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "sam",
                 "persistence",
                 "userassist",
+                "muicache",
             ][..],
         ),
         ("parse-ese", "Parse ESE databases", &["srum"][..]),
@@ -313,7 +314,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
             "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-            "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
+            "muicache" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => {
+                "process_execution"
+            }
             "registry" => "registry",
             "defender-quarantine" => "security_products",
             _ => panic!("unexpected artifact: {artifact}"),
@@ -620,7 +623,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                20
+                21
             );
             assert!(
                 output
@@ -766,7 +769,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 40);
+    assert_eq!(tasks.len(), 42);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5523,6 +5526,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("muicache "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -9486,4 +9490,364 @@ fn persistence_hunter_has_consistent_command_help() {
             .contains("juntei persistence-hunter -d <EVIDENCE>")
     );
     assert!(help.stdout.contains("--min-severity") && help.stdout.contains("--coverage"));
+}
+
+// --- parse-registry muicache --------------------------------------------------------------------
+
+/// `parse-registry muicache`'s CSV columns.
+const MUICACHE_COLUMNS: [&str; 15] = [
+    "Host",
+    "Username",
+    "UserSid",
+    "SourcePath",
+    "HiveType",
+    "Path",
+    "FriendlyAppName",
+    "ApplicationCompany",
+    "KeyPath",
+    "KeyLastWrittenUTC",
+    "FriendlyAppNameRaw",
+    "ApplicationCompanyRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// One system's SYSTEM and SOFTWARE hives (its name, alice's and bob's profiles); alice's
+/// UsrClass.dat with MuiCache in the Windows 10 form (a download and cmd.exe), the Windows 7 form
+/// (a program on a removable drive) and a value that isn't a string; her NTUSER.DAT, without
+/// MuiCache; and bob's Windows XP NTUSER.DAT with a resource string.
+fn muicache_collection(root: &Path) {
+    let mui = r"Local Settings\Software\Microsoft\Windows\Shell\MuiCache";
+    let xp = r"Software\Microsoft\Windows\ShellNoRoam\MUICache";
+    let tool = r"C:\Users\alice\Downloads\tool.exe";
+    let cmd = r"C:\Windows\System32\cmd.exe";
+    let classes = reg_tree(
+        "S-1-5-21-1-2-3-1001_Classes",
+        &[
+            (mui, "LangID", REG_BINARY, vec![9, 4]),
+            (
+                mui,
+                &format!("{tool}.FriendlyAppName"),
+                REG_SZ,
+                utf16z("Tool Setup"),
+            ),
+            (
+                mui,
+                &format!("{tool}.ApplicationCompany"),
+                REG_SZ,
+                utf16z("Example Ltd"),
+            ),
+            (
+                mui,
+                &format!("{cmd}.FriendlyAppName"),
+                REG_SZ,
+                utf16z("Windows Command Processor"),
+            ),
+            (
+                mui,
+                &format!("{cmd}.ApplicationCompany"),
+                REG_SZ,
+                utf16z("Microsoft Corporation"),
+            ),
+            (mui, r"E:\run.exe", REG_SZ, utf16z("Run")),
+            (
+                mui,
+                r"C:\Users\alice\bad.exe.FriendlyAppName",
+                REG_BINARY,
+                vec![1, 2, 3],
+            ),
+        ],
+    );
+    let alice = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+            "Start_TrackProgs",
+            REG_DWORD,
+            1u32.to_le_bytes().to_vec(),
+        )],
+    );
+    let bob = reg_tree(
+        "ROOT",
+        &[
+            (xp, "LangID", REG_BINARY, vec![9, 4]),
+            (xp, "@shell32.dll,-22019", REG_SZ, utf16z("Calculator")),
+            (
+                xp,
+                r"C:\WINDOWS\system32\notepad.exe",
+                REG_SZ,
+                utf16z("Notepad"),
+            ),
+        ],
+    );
+    let list = r"Microsoft\Windows NT\CurrentVersion\ProfileList";
+    let software = reg_tree(
+        "ROOT",
+        &[
+            (
+                &format!(r"{list}\S-1-5-21-1-2-3-1001"),
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Users\alice"),
+            ),
+            (
+                &format!(r"{list}\S-1-5-21-1-2-3-1002"),
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Documents and Settings\bob"),
+            ),
+        ],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    let windows = root.join("C/Users/alice/AppData/Local/Microsoft/Windows");
+    let bob_dir = root.join("C/Documents and Settings/bob");
+    for dir in [&config, &windows, &bob_dir] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(windows.join("UsrClass.dat"), classes).unwrap();
+    std::fs::write(root.join("C/Users/alice/NTUSER.DAT"), alice).unwrap();
+    std::fs::write(bob_dir.join("NTUSER.DAT"), bob).unwrap();
+}
+
+/// `parse-registry muicache` with `args`, as JSON Lines.
+fn muicache_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "muicache"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_muicache_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    muicache_collection(dir.path());
+    let records = muicache_read(&["-d", dir.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} | {} | {} | {}",
+                r["username"].as_str().unwrap(),
+                r["user_sid"].as_str().unwrap(),
+                r["hive_type"].as_str().unwrap(),
+                r["path"].as_str().unwrap(),
+                r["friendly_app_name"].as_str().unwrap_or("-"),
+                r["application_company"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            r"bob S-1-5-21-1-2-3-1002 NTUSER.DAT | C:\WINDOWS\system32\notepad.exe | Notepad | -",
+            r"alice S-1-5-21-1-2-3-1001 UsrClass.dat | C:\Users\alice\Downloads\tool.exe | Tool Setup | Example Ltd",
+            r"alice S-1-5-21-1-2-3-1001 UsrClass.dat | C:\Windows\System32\cmd.exe | Windows Command Processor | Microsoft Corporation",
+            r"alice S-1-5-21-1-2-3-1001 UsrClass.dat | E:\run.exe | Run | -",
+            r"alice S-1-5-21-1-2-3-1001 UsrClass.dat | C:\Users\alice\bad.exe | - | -",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    assert_eq!(
+        records[0]["key_path"],
+        r"Software\Microsoft\Windows\ShellNoRoam\MUICache"
+    );
+    assert_eq!(
+        records[1]["key_path"],
+        r"Local Settings\Software\Microsoft\Windows\Shell\MuiCache"
+    );
+    // the value that isn't a string keeps its bytes
+    assert_eq!(records[4]["friendly_app_name_raw"], "010203");
+    assert_eq!(records[4]["application_company_raw"], Value::Null);
+    assert_eq!(
+        records[4]["problems"],
+        json!(["FriendlyAppName: is REG_BINARY, not a string"])
+    );
+    assert!(records[..4].iter().all(|r| r["problems"] == json!([])));
+}
+
+#[test]
+fn registry_muicache_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    muicache_collection(dir.path());
+    let out = dir.path().join("muicache.csv");
+    let r = run(&[
+        "parse-registry",
+        "muicache",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "UsrClass.dat and NTUSER.DAT hives parsed: 3",
+        "Hosts: HOST1",
+        "Users: alice, bob",
+        "Hives without MuiCache (NTUSER.DAT of Windows Vista and later keeps none): 1",
+        "Programs: 5",
+        "Resource strings left out (@<file>,-<number>): 1",
+        "Programs outside the Windows and Program Files folders: 3",
+        r"  alice  C:\Users\alice\Downloads\tool.exe (Tool Setup)",
+        r"  alice  E:\run.exe (Run)",
+        r"  alice  C:\Users\alice\bad.exe",
+        "Programs or keys that could not be read: 1",
+        "FriendlyAppName: is REG_BINARY, not a string",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    assert!(!r.stdout.contains(r"  alice  C:\Windows\System32\cmd.exe"));
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, MUICACHE_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 5);
+    assert_eq!(&rows[1][5], r"C:\Users\alice\Downloads\tool.exe");
+    assert_eq!(&rows[1][6], "Tool Setup");
+    assert_eq!(&rows[1][7], "Example Ltd");
+    assert_eq!(&rows[4][10], "010203");
+}
+
+#[test]
+fn registry_muicache_of_public_hives() {
+    // the DFIR Artifact Museum's Windows 11 system: its SYSTEM, and the user's dirty
+    // UsrClass.dat and NTUSER.DAT with their logs, where they were. The programs and their names
+    // are those regipy and dissect.target read from the hive.
+    let collection = system_hive();
+    let profile = collection.path().join("HOST/C/Users/AndrewRathbun");
+    let windows = profile.join("AppData/Local/Microsoft/Windows");
+    unpack_registry(
+        "rathbun_w11",
+        &["UsrClass.dat", "UsrClass.dat.LOG1", "UsrClass.dat.LOG2"],
+        &windows,
+    );
+    unpack_registry(
+        "rathbun_w11",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        &profile,
+    );
+    let dir = collection.path().to_str().unwrap();
+    let records = muicache_read(&["-d", dir]);
+    assert_eq!(records.len(), 12);
+    for r in &records {
+        assert_eq!(r["host"], "GOLDPAPERW11");
+        assert_eq!(r["username"], "AndrewRathbun");
+        assert_eq!(
+            r["user_sid"],
+            "S-1-5-21-4063860464-1508573791-632671957-1001"
+        );
+        assert_eq!(r["hive_type"], "UsrClass.dat");
+        assert_eq!(r["key_last_written"], "2022-02-07T05:41:02.220813100Z");
+        assert_eq!(r["transaction_log_status"], "unchanged");
+        assert_eq!(r["problems"], json!([]));
+    }
+    let program = |path: &str| {
+        let r = records.iter().find(|r| r["path"] == path).unwrap();
+        (
+            r["friendly_app_name"].as_str().unwrap(),
+            r["application_company"].as_str().unwrap(),
+        )
+    };
+    assert_eq!(
+        program(r"C:\Windows\system32\OpenWith.exe"),
+        ("Pick an app", "Microsoft Corporation")
+    );
+    assert_eq!(
+        program(r"D:\setup64.exe"),
+        ("VMware installation launcher", "VMware, Inc.")
+    );
+    assert_eq!(
+        program(r"C:\Windows\System32\PickerHost.exe"),
+        ("File Picker UI Host", "Microsoft Corporation")
+    );
+    let r = run(&["parse-registry", "muicache", "-d", dir, "-K"]);
+    for expected in [
+        "UsrClass.dat and NTUSER.DAT hives parsed: 2",
+        "Hosts: GOLDPAPERW11",
+        "Dirty hives recovered with their transaction logs: 2",
+        "Hives without MuiCache (NTUSER.DAT of Windows Vista and later keeps none): 1",
+        "Programs: 12",
+        "Programs outside the Windows and Program Files folders: 2",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+
+    // regipy's Windows 7 NTUSER.DAT: MuiCache is in its UsrClass.dat
+    let regipy = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["NTUSER.DAT"], regipy.path());
+    let records = muicache_read(&["-f", regipy.path().join("NTUSER.DAT").to_str().unwrap()]);
+    assert!(records.is_empty());
+}
+
+#[test]
+fn registry_muicache_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "muicache",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not a UsrClass.dat or NTUSER.DAT hive"),
+        "{said}"
+    );
+    let r = run(&[
+        "parse-registry",
+        "muicache",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("No UsrClass.dat or NTUSER.DAT hives were found"),
+        "{said}"
+    );
+    // the output is never one of the files read
+    let original = std::fs::read(&sam).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "muicache",
+        "-f",
+        sam.to_str().unwrap(),
+        "-o",
+        sam.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&sam).unwrap(), original);
 }
