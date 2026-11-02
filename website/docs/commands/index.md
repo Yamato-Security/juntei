@@ -50,6 +50,7 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |
 | `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
 | `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
+| `parse-registry shellbags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
 ## Source types and format changes
 
