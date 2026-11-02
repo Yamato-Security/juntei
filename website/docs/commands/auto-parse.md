@@ -156,6 +156,8 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── TaskCache.csv
 │   │   └── TaskCache-logs.txt
 │   ├── process_execution/
+│   │   ├── FeatureUsage.csv
+│   │   ├── FeatureUsage-logs.txt
 │   │   ├── BAM.csv
 │   │   ├── BAM-logs.txt
 │   │   ├── MuiCache.csv
@@ -193,7 +195,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
 | `lateral_movement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
 | `persistence` | Registry autostarts, services, TaskCache |
-| `process_execution` | BAM and DAM, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
+| `process_execution` | BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
 | `registry` | General hive keys and values, including recovered records |
 | `security_products` | Defender quarantine metadata and optional extracted content |
 | `system_information` | Names, Windows version, time zone, last shutdown, profiles and SIDs of the system |
@@ -211,7 +213,7 @@ covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `AppHistory.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `FeatureUsage.csv`, `AppHistory.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider

@@ -66,9 +66,8 @@ fn artifact_category(artifact: &str) -> &'static str {
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
         "remote-access" => "lateral_movement",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-        "bam" | "muicache" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => {
-            "process_execution"
-        }
+        "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline" | "srum"
+        | "userassist" => "process_execution",
         "registry" => "registry",
         "defender-quarantine" => "security_products",
         "system-info" => "system_information",
@@ -83,6 +82,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "app-history" => "AppHistory",
         "bam" => "BAM",
         "defender-quarantine" => "DefenderQuarantine",
+        "featureusage" => "FeatureUsage",
         "i30" => "I30",
         "installed-programs" => "InstalledPrograms",
         "jump-lists" => "JumpLists",
@@ -1149,6 +1149,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "featureusage",
+            &["parse-registry", "featureusage"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1245,6 +1251,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("featureusage", size);
                     found.add_size("app-history", size);
                     found.add_size("mru", size);
                 }

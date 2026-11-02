@@ -18,6 +18,7 @@
 
 pub mod app_history;
 pub mod bam;
+pub mod featureusage;
 pub mod installed_programs;
 pub mod mru;
 pub mod muicache;

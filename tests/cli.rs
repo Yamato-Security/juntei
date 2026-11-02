@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "featureusage",
                 "app-history",
                 "mru",
                 "system-info",
@@ -344,9 +345,8 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
             "remote-access" => "lateral_movement",
             "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-            "bam" | "muicache" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => {
-                "process_execution"
-            }
+            "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline" | "srum"
+            | "userassist" => "process_execution",
             "registry" => "registry",
             "defender-quarantine" => "security_products",
             "system-info" => "system_information",
@@ -654,7 +654,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                30
+                31
             );
             assert!(
                 output
@@ -800,7 +800,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 60);
+    assert_eq!(tasks.len(), 62);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5557,6 +5557,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("featureusage "), "{help}");
     assert!(help.contains("app-history "), "{help}");
     assert!(help.contains("mru "), "{help}");
     assert!(help.contains("system-info "), "{help}");
@@ -14248,4 +14249,367 @@ fn registry_app_history_keeps_damaged_list_warnings_in_exports() {
             assert!(records[0]["first_used"].is_null());
         }
     }
+}
+
+// --- parse-registry featureusage ----------------------------------------------------------------
+
+/// `parse-registry featureusage`'s CSV columns.
+const FEATUREUSAGE_COLUMNS: [&str; 20] = [
+    "Host",
+    "Username",
+    "UserSid",
+    "SourcePath",
+    "Source",
+    "Application",
+    "ApplicationPath",
+    "Count",
+    "LastAccessedUTC",
+    "ItemPath",
+    "DisplayName",
+    "PinType",
+    "Index",
+    "ValueName",
+    "KeyPath",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// One system's SYSTEM and SOFTWARE hives (its name, alice's profile) and alice's NTUSER.DAT
+/// with FeatureUsage counts (one of them a string), a recent app with a file it opened, and a
+/// Windows 7 ProgramsCache whose format version is unknown; and bob's NTUSER.DAT, without any.
+fn featureusage_collection(root: &Path) {
+    let usage = r"Software\Microsoft\Windows\CurrentVersion\Explorer\FeatureUsage";
+    let switched = format!(r"{usage}\AppSwitched");
+    let tray = format!(r"{usage}\TrayButtonClicked");
+    let app = r"Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\{6153EB14-4709-4178-8D85-8DC8A345B6FC}";
+    let item = format!(r"{app}\RecentItems\{{0B2C3D4E-0000-0000-0000-000000000001}}");
+    let alice = reg_tree(
+        "ROOT",
+        &[
+            (
+                usage,
+                "KeyCreationTime",
+                REG_QWORD,
+                (LINKED - DAY).to_le_bytes().to_vec(),
+            ),
+            (
+                &switched,
+                "Microsoft.Windows.Explorer",
+                REG_DWORD,
+                12u32.to_le_bytes().to_vec(),
+            ),
+            (
+                &switched,
+                r"{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\cmd.exe",
+                REG_DWORD,
+                5u32.to_le_bytes().to_vec(),
+            ),
+            (&switched, "Damaged", REG_SZ, utf16z("3")),
+            (&tray, "StartButton", REG_DWORD, 3u32.to_le_bytes().to_vec()),
+            (
+                app,
+                "AppId",
+                REG_SZ,
+                utf16z(r"C:\Users\alice\Downloads\tool.exe"),
+            ),
+            (app, "LaunchCount", REG_DWORD, 2u32.to_le_bytes().to_vec()),
+            (
+                app,
+                "LastAccessedTime",
+                REG_QWORD,
+                LINKED.to_le_bytes().to_vec(),
+            ),
+            (&item, "DisplayName", REG_SZ, utf16z("report.docx")),
+            (&item, "Path", REG_SZ, utf16z(r"C:\Users\alice\report.docx")),
+            (
+                &item,
+                "LastAccessedTime",
+                REG_QWORD,
+                (LINKED + DAY).to_le_bytes().to_vec(),
+            ),
+            (
+                r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage2",
+                "ProgramsCache",
+                REG_BINARY,
+                vec![7, 0, 0, 0, 1],
+            ),
+        ],
+    );
+    let bob = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+            "Start_TrackProgs",
+            REG_DWORD,
+            1u32.to_le_bytes().to_vec(),
+        )],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+            "ProfileImagePath",
+            REG_EXPAND_SZ,
+            utf16z(r"C:\Users\alice"),
+        )],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    for dir in [
+        &config,
+        &root.join("C/Users/alice"),
+        &root.join("C/Users/bob"),
+    ] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(root.join("C/Users/alice/NTUSER.DAT"), alice).unwrap();
+    std::fs::write(root.join("C/Users/bob/NTUSER.DAT"), bob).unwrap();
+}
+
+/// `parse-registry featureusage` with `args`, as JSON Lines.
+fn featureusage_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "featureusage"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_featureusage_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    featureusage_collection(dir.path());
+    let records = featureusage_read(&["-d", dir.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} | {} | {} | {} | {} | {}",
+                r["source"].as_str().unwrap(),
+                r["application"].as_str().unwrap_or("-"),
+                r["application_path"].as_str().unwrap_or("-"),
+                r["count"],
+                r["last_accessed"].as_str().unwrap_or("-"),
+                r["item_path"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            "AppSwitched | Microsoft.Windows.Explorer | - | 12 | - | -",
+            r"AppSwitched | {1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\cmd.exe | %windir%\system32\cmd.exe | 5 | - | -",
+            "AppSwitched | Damaged | - | null | - | -",
+            "TrayButtonClicked | StartButton | - | 3 | - | -",
+            r"RecentApps | C:\Users\alice\Downloads\tool.exe | C:\Users\alice\Downloads\tool.exe | 2 | 2022-02-08T21:03:52Z | -",
+            r"RecentItems | C:\Users\alice\Downloads\tool.exe | C:\Users\alice\Downloads\tool.exe | null | 2022-02-09T21:03:52Z | C:\Users\alice\report.docx",
+            "ProgramsCache | - | - | null | - | -",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["username"], "alice");
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["transaction_log_status"], "clean");
+    }
+    assert_eq!(records[5]["display_name"], "report.docx");
+    // what doesn't decode keeps its bytes
+    assert_eq!(records[2]["data_raw"], "33000000");
+    assert_eq!(records[2]["problems"], json!(["is REG_SZ, not REG_DWORD"]));
+    assert_eq!(records[6]["data_raw"], "0700000001");
+    assert_eq!(
+        records[6]["problems"],
+        json!(["format version 7 is not known"])
+    );
+}
+
+#[test]
+fn registry_featureusage_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    featureusage_collection(dir.path());
+    let out = dir.path().join("featureusage.csv");
+    let r = run(&[
+        "parse-registry",
+        "featureusage",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "NTUSER.DAT hives parsed: 2",
+        "Hosts: HOST1",
+        "Users: alice, bob",
+        "Hives without FeatureUsage, RecentApps, Taskband or ProgramsCache: 1",
+        "Records: 7 (AppSwitched 3, ProgramsCache 1, RecentApps 1, RecentItems 1, TrayButtonClicked 1)",
+        "2022-02-07T21:03:52Z  alice",
+        "      12  alice  Microsoft.Windows.Explorer",
+        r"       5  alice  %windir%\system32\cmd.exe",
+        r"2022-02-09T21:03:52Z  alice  C:\Users\alice\Downloads\tool.exe: C:\Users\alice\report.docx",
+        r"2022-02-08T21:03:52Z  alice  C:\Users\alice\Downloads\tool.exe",
+        "Pinned to the taskbar (Favorites): 0",
+        "Records or keys that could not be read: 2",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, FEATUREUSAGE_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 7);
+    assert_eq!(&rows[1][4], "AppSwitched");
+    assert_eq!(&rows[1][6], r"%windir%\system32\cmd.exe");
+    assert_eq!(&rows[1][7], "5");
+    assert_eq!(&rows[5][9], r"C:\Users\alice\report.docx");
+    assert_eq!(&rows[5][10], "report.docx");
+}
+
+#[test]
+fn registry_featureusage_of_public_hives() {
+    // the DFIR Artifact Museum's Windows 11 system: its SYSTEM, and the user's dirty
+    // NTUSER.DAT with its logs, where they were
+    let collection = system_hive();
+    let profile = collection.path().join("HOST/C/Users/AndrewRathbun");
+    unpack_registry(
+        "rathbun_w11",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        &profile,
+    );
+    let dir = collection.path().to_str().unwrap();
+    let records = featureusage_read(&["-d", dir]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} | {} | {} | {}",
+                r["source"].as_str().unwrap(),
+                r["value_name"].as_str().unwrap(),
+                r["index"],
+                r["application"].as_str().unwrap_or("-"),
+                r["count"],
+                r["item_path"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    let link = r"C:\Users\AndrewRathbun\AppData\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar";
+    assert_eq!(
+        lines,
+        [
+            "AppLaunch Microsoft.Windows.Explorer null | Microsoft.Windows.Explorer | 2 | -".to_string(),
+            "AppSwitched Microsoft.Windows.Explorer null | Microsoft.Windows.Explorer | 2 | -".to_string(),
+            format!(r"Taskband FavoritesResolve 0 | Microsoft.Windows.Explorer | null | {link}\File Explorer.lnk"),
+            format!(r"Taskband FavoritesResolve 1 | MSEdge | null | {link}\Microsoft Edge.lnk"),
+            r"Taskband FavoritesResolve 2 | Microsoft.WindowsStore_8wekyb3d8bbwe!App | null | Applications\Microsoft.WindowsStore_8wekyb3d8bbwe!App".to_string(),
+            r"Taskband Favorites 0 | Microsoft.Windows.Explorer | null | User Pinned\TaskBar\File Explorer.lnk".to_string(),
+            r"Taskband Favorites 1 | MSEdge | null | User Pinned\TaskBar\Microsoft Edge.lnk".to_string(),
+            r"Taskband Favorites 2 | Microsoft.WindowsStore_8wekyb3d8bbwe!App | null | Applications\Microsoft.WindowsStore_8wekyb3d8bbwe!App".to_string(),
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "GOLDPAPERW11");
+        assert_eq!(r["username"], "AndrewRathbun");
+        assert_eq!(r["problems"], json!([]));
+    }
+    assert_eq!(records[5]["pin_type"], "SystemPinned");
+    assert_eq!(
+        records[0]["key_last_written"],
+        "2022-02-05T19:49:18.979827400Z"
+    );
+
+    // regipy's Windows 7 NTUSER.DAT: the taskbar's pins and the Start menu's programs cache
+    let regipy = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["NTUSER.DAT"], regipy.path());
+    let records = featureusage_read(&["-f", regipy.path().join("NTUSER.DAT").to_str().unwrap()]);
+    let count = |source: &str, value: &str| {
+        records
+            .iter()
+            .filter(|r| r["source"] == source && r["value_name"] == value)
+            .count()
+    };
+    assert_eq!(
+        [
+            count("Taskband", "Favorites"),
+            count("Taskband", "FavoritesResolve"),
+            count("ProgramsCache", "ProgramsCache"),
+            count("ProgramsCache", "ProgramsCacheTBP"),
+        ],
+        [3, 3, 19, 3]
+    );
+    let accessories = records
+        .iter()
+        .find(|r| r["item_path"] == r"Programs\Accessories")
+        .unwrap();
+    assert_eq!(
+        accessories["key_path"],
+        r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage2"
+    );
+    assert!(records.iter().all(|r| r["problems"] == json!([])));
+}
+
+#[test]
+fn registry_featureusage_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "featureusage",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not an NTUSER.DAT hive"),
+        "{said}"
+    );
+    let r = run(&[
+        "parse-registry",
+        "featureusage",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No NTUSER.DAT hives were found"), "{said}");
+    // the output is never one of the files read
+    let original = std::fs::read(&sam).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "featureusage",
+        "-f",
+        sam.to_str().unwrap(),
+        "-o",
+        sam.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&sam).unwrap(), original);
 }

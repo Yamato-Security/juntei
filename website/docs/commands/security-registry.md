@@ -9,17 +9,23 @@ Usage:
 
 Commands:
   amcache             Parse Amcache inventories
+  app-history         Parse third-party tools' traces
   bam                 Parse BAM and DAM last runs
+  featureusage        Parse Explorer use counts and pins
   help                Print this message or the help of the given subcommand(s)
   installed-programs  Parse installed programs
+  mru                 Parse most-recently-used lists
   muicache            Parse MuiCache program names
+  opensavemru         Parse Open and Save As dialog history
   persistence         Parse autostart locations
   read                Read keys and values
   recentdocs          Parse recent documents
+  remote-access       Parse outbound RDP, PuTTY, WinSCP and mapped drive connections
   sam                 Parse local accounts
   services            Parse services
   shellbags           Parse ShellBags (folders opened in Explorer)
   shimcache           Parse ShimCache entries
+  system-info         Parse system information
   taskcache           Parse scheduled tasks
   usb                 Parse USB devices and volumes
   userassist          Parse UserAssist entries
@@ -339,6 +345,39 @@ Display Settings:
 
 Sysinternals tools, WinRAR, 7-Zip and WinZip history, OneDrive accounts, Adobe recent files,
 TeamViewer and CCleaner. See [Application History](../artifacts/app-history.md).
+
+
+## `parse-registry featureusage`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry featureusage <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
+  -f, --file <FILE>      File path to one NTUSER.DAT hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+Reads `FeatureUsage`, `RecentApps`, `Taskband` and `ProgramsCache`. See
+[FeatureUsage, RecentApps and Taskbar Pins](../artifacts/featureusage.md).
 
 
 ## `parse-registry persistence`
@@ -708,3 +747,5 @@ See also [system-info](../artifacts/system-info.md).
 See also [mru](../artifacts/mru.md).
 
 See also [app-history](../artifacts/app-history.md).
+
+See also [featureusage](../artifacts/featureusage.md).
