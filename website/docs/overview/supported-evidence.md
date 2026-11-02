@@ -19,6 +19,7 @@
 | TaskCache | `parse-registry taskcache` | Scheduled-task actions, metadata, hidden tasks | Correlate with task XML and event logs for runtime proof |
 | Registry autostarts | `parse-registry persistence` | Run keys, Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks and other autostart locations | Configuration, not proof of execution; most entries are Windows defaults |
 | UserAssist | `parse-registry userassist` | Programs and shortcuts a user started from Explorer, with run counts, focus time and last run | Only Explorer starts are counted; new profiles are seeded with default items |
+| Application history | `parse-registry app-history` | Sysinternals tools a user ran, archive and folder history (WinRAR, 7-Zip, WinZip), OneDrive accounts, Adobe recent files, TeamViewer and CCleaner values | Most list entries have no time; only the most recent entry of each list is dated |
 | SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | Local accounts only; last-logon values are not a complete logon history |
 
 ## Collection types

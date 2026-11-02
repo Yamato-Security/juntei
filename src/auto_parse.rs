@@ -26,6 +26,7 @@ const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
 const CATEGORIES: &[&str] = &[
     "accounts",
+    "applications",
     "file_and_folder_opening",
     "file_existence",
     "file_system",
@@ -39,6 +40,7 @@ const CATEGORIES: &[&str] = &[
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
         "sam" => "accounts",
+        "app-history" => "applications",
         "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
@@ -54,6 +56,7 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "app-history" => "AppHistory",
         "defender-quarantine" => "DefenderQuarantine",
         "i30" => "I30",
         "jump-lists" => "JumpLists",
@@ -1036,6 +1039,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "app-history",
+            &["parse-registry", "app-history"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1132,6 +1141,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("app-history", size);
                 }
                 if matches!(
                     kind.as_deref(),

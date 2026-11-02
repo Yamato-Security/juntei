@@ -81,6 +81,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Local accounts** (`SAM`) — Local usernames, RIDs, account flags, and recorded logon and password metadata. | Registry |
 
+### Applications
+
+| Artifact | Type |
+| --- | --- |
+| **Application history** (`NTUSER.DAT`) — Sysinternals tools a user ran, WinRAR, 7-Zip and WinZip archive and folder history, OneDrive accounts, Adobe recent files, and TeamViewer and CCleaner values. | Registry |
+
 ### Security Products
 
 | Artifact | Type |
