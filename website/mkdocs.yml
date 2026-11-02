@@ -131,6 +131,7 @@ nav:
       - File and Folder Opening:
           - LNK Shortcuts: artifacts/lnk.md
           - Jump Lists: artifacts/jump-lists.md
+          - MRU Lists: artifacts/mru.md
           - RecentDocs: artifacts/recentdocs.md
       - Security Products:
           - Defender Quarantine: artifacts/defender-quarantine.md
