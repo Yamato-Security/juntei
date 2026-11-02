@@ -3,6 +3,7 @@
 //! here: finding the hives of a collection, opening each with its transaction logs replayed when
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
+pub mod bam;
 pub mod persistence;
 pub mod read;
 pub mod recentdocs;
@@ -323,6 +324,16 @@ pub fn software_of(path: &Path) -> Option<PathBuf> {
         .or_else(|| find_in(path.parent()?, &["SOFTWARE"]))
 }
 
+/// The hive `name` (`SOFTWARE`, `SAM`, …) of the system the hive at `path` comes from: the
+/// system's `Windows\System32\config\<name>` when the hive is where Windows keeps it, else a
+/// hive of that name next to it (hives exported to one directory); never the hive itself.
+pub fn system_hive_of(path: &Path, name: &str) -> Option<PathBuf> {
+    system_root(path)
+        .and_then(|root| find_in(&root, &["Windows", "System32", "config", name]))
+        .or_else(|| find_in(path.parent()?, &[name]))
+        .filter(|found| found != path)
+}
+
 /// The SID of the profile whose folder is named `user`, among `profiles` (`ProfileList`'s SIDs
 /// and folders: `C:\Users\alice`).
 pub fn sid_of_profile(profiles: &[(String, String)], user: &str) -> Option<String> {
@@ -429,8 +440,9 @@ fn logs_next_to(path: &Path) -> Vec<PathBuf> {
 }
 
 /// Every file a registry command may read for the hives `files`: each hive and the logs next to
-/// it, the logs given (`--log1`, `--log2`), and the SYSTEM and SOFTWARE hives of its system with
-/// their logs (read for its host, and by `persistence` for the machine's classes and profiles).
+/// it, the logs given (`--log1`, `--log2`), and the SYSTEM, SOFTWARE and SAM hives of its system
+/// with their logs (read for its host, by `persistence` for the machine's classes and profiles,
+/// and by `bam` for its users' names).
 pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
     let mut hives: Vec<PathBuf> = files.to_vec();
     for path in files {
@@ -438,7 +450,7 @@ pub fn files_read(files: &[PathBuf], given_logs: &[PathBuf]) -> Vec<PathBuf> {
             .parent()
             .filter(|d| !d.as_os_str().is_empty())
             .unwrap_or(Path::new("."));
-        for name in ["SYSTEM", "SOFTWARE"] {
+        for name in ["SYSTEM", "SOFTWARE", "SAM"] {
             hives.extend(
                 system_root(path)
                     .and_then(|root| find_in(&root, &["Windows", "System32", "config", name])),

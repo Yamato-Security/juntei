@@ -18,6 +18,7 @@
 | RecentDocs | `parse-registry recentdocs` | Recently opened files and folders per user | Only the most recent item in each list gets a defensible open time |
 | TaskCache | `parse-registry taskcache` | Scheduled-task actions, metadata, hidden tasks | Correlate with task XML and event logs for runtime proof |
 | Registry autostarts | `parse-registry persistence` | Run keys, Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks and other autostart locations | Configuration, not proof of execution; most entries are Windows defaults |
+| BAM and DAM | `parse-registry bam` | The last time each user ran each program, including from removable and network devices | One time per program and user, recent activity only; device paths, not drive letters |
 | UserAssist | `parse-registry userassist` | Programs and shortcuts a user started from Explorer, with run counts, focus time and last run | Only Explorer starts are counted; new profiles are seeded with default items |
 | SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | Local accounts only; last-logon values are not a complete logon history |
 

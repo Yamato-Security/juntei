@@ -152,6 +152,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "sam",
                 "persistence",
                 "userassist",
+                "bam",
             ][..],
         ),
         ("parse-ese", "Parse ESE databases", &["srum"][..]),
@@ -313,7 +314,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
             "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-            "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
+            "bam" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
             "registry" => "registry",
             "defender-quarantine" => "security_products",
             _ => panic!("unexpected artifact: {artifact}"),
@@ -620,7 +621,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                20
+                21
             );
             assert!(
                 output
@@ -766,7 +767,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 40);
+    assert_eq!(tasks.len(), 42);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5523,6 +5524,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("bam "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -9486,4 +9488,342 @@ fn persistence_hunter_has_consistent_command_help() {
             .contains("juntei persistence-hunter -d <EVIDENCE>")
     );
     assert!(help.stdout.contains("--min-severity") && help.stdout.contains("--coverage"));
+}
+
+// --- parse-registry bam -------------------------------------------------------------------------
+
+/// `parse-registry bam`'s CSV columns.
+const BAM_COLUMNS: [&str; 18] = [
+    "Host",
+    "SourcePath",
+    "ControlSet",
+    "IsCurrentControlSet",
+    "Moderator",
+    "UserSid",
+    "UserName",
+    "UserNameSource",
+    "Program",
+    "DevicePath",
+    "Path",
+    "LastRunUTC",
+    "KeyPath",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// BAM's data: the time a program last ran, then 16 bytes Windows writes after it.
+fn bam_data(when: u64) -> Vec<u8> {
+    let mut data = when.to_le_bytes().to_vec();
+    data.extend([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0]);
+    data
+}
+
+/// One system's SYSTEM hive (its name; BAM and DAM entries of alice, SYSTEM and a domain
+/// administrator in two control sets and both layouts, a value cut short) and its SOFTWARE hive
+/// (alice's and the administrator's profiles).
+fn bam_collection(root: &Path) {
+    let alice = r"ControlSet001\Services\bam\State\UserSettings\S-1-5-21-1-2-3-1001";
+    let system_user = r"ControlSet001\Services\bam\State\UserSettings\S-1-5-18";
+    let dam = r"ControlSet001\Services\dam\State\UserSettings\S-1-5-21-1-2-3-1001";
+    let admin = r"ControlSet002\Services\bam\UserSettings\S-1-5-21-9-9-9-500";
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+            (alice, "Version", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                alice,
+                "SequenceNumber",
+                REG_DWORD,
+                7u32.to_le_bytes().to_vec(),
+            ),
+            (
+                alice,
+                r"\Device\HarddiskVolume3\Users\alice\Downloads\tool.exe",
+                REG_BINARY,
+                bam_data(LINKED),
+            ),
+            (
+                alice,
+                "Microsoft.WindowsCalculator_8wekyb3d8bbwe",
+                REG_BINARY,
+                bam_data(LINKED - DAY),
+            ),
+            (
+                alice,
+                r"\Device\HarddiskVolume3\Users\alice\cut.exe",
+                REG_BINARY,
+                vec![1, 2, 3],
+            ),
+            (
+                system_user,
+                r"\Device\HarddiskVolume3\Windows\System32\oobe\FirstLogonAnim.exe",
+                REG_BINARY,
+                bam_data(LINKED - 2 * DAY),
+            ),
+            (
+                dam,
+                r"\Device\HarddiskVolume3\Windows\notepad.exe",
+                REG_BINARY,
+                bam_data(LINKED + DAY),
+            ),
+            (
+                admin,
+                r"\Device\HarddiskVolume2\Tools\old.exe",
+                REG_BINARY,
+                bam_data(LINKED - 3 * DAY),
+            ),
+        ],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[
+            (
+                r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Users\alice"),
+            ),
+            (
+                r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-9-9-9-500",
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Users\Administrator.CORP"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+}
+
+/// `parse-registry bam` with `args`, as JSON Lines.
+fn bam_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "bam"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_bam_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    bam_collection(dir.path());
+    let records = bam_read(&["-d", dir.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} ({}) {} | {} | {}",
+                r["moderator"].as_str().unwrap(),
+                r["user_sid"].as_str().unwrap(),
+                r["user_name"].as_str().unwrap_or("-"),
+                r["user_name_source"].as_str().unwrap_or("-"),
+                r["program"].as_str().unwrap(),
+                r["path"].as_str().unwrap_or("-"),
+                r["last_run"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            r"bam S-1-5-18 SYSTEM (well_known) \Device\HarddiskVolume3\Windows\System32\oobe\FirstLogonAnim.exe | \Windows\System32\oobe\FirstLogonAnim.exe | 2022-02-06T21:03:52Z",
+            r"bam S-1-5-21-1-2-3-1001 alice (profile_list) \Device\HarddiskVolume3\Users\alice\Downloads\tool.exe | \Users\alice\Downloads\tool.exe | 2022-02-08T21:03:52Z",
+            "bam S-1-5-21-1-2-3-1001 alice (profile_list) Microsoft.WindowsCalculator_8wekyb3d8bbwe | - | 2022-02-07T21:03:52Z",
+            r"bam S-1-5-21-1-2-3-1001 alice (profile_list) \Device\HarddiskVolume3\Users\alice\cut.exe | \Users\alice\cut.exe | -",
+            r"dam S-1-5-21-1-2-3-1001 alice (profile_list) \Device\HarddiskVolume3\Windows\notepad.exe | \Windows\notepad.exe | 2022-02-09T21:03:52Z",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["control_set"], "ControlSet001");
+        assert_eq!(r["is_current_control_set"], true);
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    assert_eq!(records[1]["device_path"], r"\Device\HarddiskVolume3");
+    assert_eq!(records[2]["device_path"], Value::Null);
+    assert_eq!(
+        records[1]["key_path"],
+        r"ControlSet001\Services\bam\State\UserSettings\S-1-5-21-1-2-3-1001"
+    );
+    assert_eq!(
+        records[4]["key_path"],
+        r"ControlSet001\Services\dam\State\UserSettings\S-1-5-21-1-2-3-1001"
+    );
+    // the value cut short keeps its bytes, and no time is guessed
+    assert_eq!(records[3]["data_raw"], "010203");
+    assert_eq!(
+        records[3]["problems"],
+        json!(["3 data bytes, fewer than the 8 of a time it last ran"])
+    );
+    assert_eq!(records[1]["data_raw"], Value::Null);
+
+    // every control set: the domain administrator's entry in ControlSet002's older layout, named
+    // from its profile folder
+    let records = bam_read(&["-d", dir.path().to_str().unwrap(), "--all-control-sets"]);
+    assert_eq!(records.len(), 6);
+    let old = &records[5];
+    assert_eq!(
+        (
+            &old["control_set"],
+            &old["is_current_control_set"],
+            &old["user_name"],
+            &old["key_path"]
+        ),
+        (
+            &json!("ControlSet002"),
+            &json!(false),
+            &json!("Administrator.CORP"),
+            &json!(r"ControlSet002\Services\bam\UserSettings\S-1-5-21-9-9-9-500")
+        )
+    );
+    assert_eq!(old["device_path"], r"\Device\HarddiskVolume2");
+}
+
+#[test]
+fn registry_bam_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    bam_collection(dir.path());
+    let out = dir.path().join("bam.csv");
+    let r = run(&[
+        "parse-registry",
+        "bam",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "SYSTEM hives parsed: 1",
+        "Hosts: HOST1",
+        "Control sets read: 1 (the one in use; --all-control-sets for every one)",
+        "Entries: 5 (bam 4, dam 1)",
+        "HOST1  S-1-5-18  SYSTEM  1",
+        "HOST1  S-1-5-21-1-2-3-1001  alice  4",
+        r"2022-02-09T21:03:52Z  alice  \Device\HarddiskVolume3\Windows\notepad.exe (dam)",
+        r"2022-02-08T21:03:52Z  alice  \Device\HarddiskVolume3\Users\alice\Downloads\tool.exe",
+        "Entries or keys that could not be read: 1",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    // the most recent first
+    let notepad = r.stdout.find("notepad.exe (dam)").unwrap();
+    let tool = r.stdout.find(r"Downloads\tool.exe").unwrap();
+    assert!(notepad < tool);
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, BAM_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 5);
+    assert_eq!(&rows[1][4], "bam");
+    assert_eq!(&rows[1][6], "alice");
+    assert_eq!(&rows[1][9], r"\Device\HarddiskVolume3");
+    assert_eq!(&rows[1][10], r"\Users\alice\Downloads\tool.exe");
+    assert_eq!(&rows[1][11], "2022-02-08T21:03:52Z");
+    assert_eq!(&rows[3][14], "010203");
+}
+
+#[test]
+fn registry_bam_of_public_hives() {
+    // the DFIR Artifact Museum's dirty Windows 11 SYSTEM with its logs, and its SAM: the entries
+    // regipy's and Plaso's bam read, local users named from the SAM
+    let hive = system_hive();
+    let config = hive.path().join("HOST/C/Windows/System32/config");
+    unpack_registry("rathbun_w11", &["SAM"], &config);
+    let records = bam_read(&["-f", config.join("SYSTEM").to_str().unwrap()]);
+    assert_eq!(records.len(), 19);
+    assert!(records.iter().all(|r| r["problems"] == json!([])
+        && r["moderator"] == "bam"
+        && r["control_set"] == "ControlSet001"));
+    let named = |sid_end: &str| {
+        records
+            .iter()
+            .filter(|r| r["user_sid"].as_str().unwrap().ends_with(sid_end))
+            .map(|r| format!("{} {}", r["user_name"], r["user_name_source"]))
+            .collect::<std::collections::BTreeSet<_>>()
+    };
+    assert_eq!(
+        named("-632671957-1001"),
+        [r#""AndrewRathbun" "sam""#.to_string()].into()
+    );
+    // a RID the SAM no longer has, and no ProfileList to name it
+    assert_eq!(named("-632671957-1000"), ["null null".to_string()].into());
+    assert_eq!(
+        named("S-1-5-90-0-2"),
+        [r#""DWM-2" "well_known""#.to_string()].into()
+    );
+    let cmd = records
+        .iter()
+        .find(|r| r["path"] == r"\Windows\System32\cmd.exe")
+        .unwrap();
+    assert_eq!(cmd["device_path"], r"\Device\HarddiskVolume3");
+    assert_eq!(cmd["last_run"], "2022-02-07T07:38:40.992105700Z");
+    assert_eq!(cmd["transaction_log_status"], "replayed");
+    assert_eq!(
+        records
+            .iter()
+            .filter(|r| r["device_path"] == Value::Null)
+            .count(),
+        8
+    );
+}
+
+#[test]
+fn registry_bam_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&["parse-registry", "bam", "-f", sam.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("not a SYSTEM hive"), "{said}");
+    let r = run(&[
+        "parse-registry",
+        "bam",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No SYSTEM hives were found"), "{said}");
+    // the output is never one of the files read: the system's SAM included
+    let collection = tempfile::tempdir().unwrap();
+    bam_collection(collection.path());
+    let config = collection.path().join("C/Windows/System32/config");
+    std::fs::copy(&sam, config.join("SAM")).unwrap();
+    let original = std::fs::read(config.join("SAM")).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "bam",
+        "-f",
+        config.join("SYSTEM").to_str().unwrap(),
+        "-o",
+        config.join("SAM").to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(config.join("SAM")).unwrap(), original);
 }

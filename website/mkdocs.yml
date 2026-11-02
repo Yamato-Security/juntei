@@ -118,6 +118,7 @@ nav:
   - Artifacts:
       - Artifact Guide: artifacts/index.md
       - Process Execution:
+          - BAM and DAM: artifacts/bam.md
           - Prefetch: artifacts/prefetch.md
           - SRUM: artifacts/srum.md
           - UserAssist: artifacts/userassist.md
