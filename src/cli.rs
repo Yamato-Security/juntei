@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! Command line definition (clap derive). Option letters and help headings follow Hayabusa so a
 //! user of the sibling tools finds the same flags in the same places.
 
@@ -1291,6 +1304,138 @@ pub enum RegistryCommands {
     )]
     Amcache(AmcacheOptions),
 
+    /// Parse Open and Save As dialog history
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry opensavemru <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Opensavemru(RegistryOpenSaveMruOptions),
+
+    /// Parse outbound RDP, PuTTY, WinSCP and mapped drive connections
+    #[command(
+        name = "remote-access",
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry remote-access <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    RemoteAccess(RegistryRemoteAccessOptions),
+
+    /// Parse system information
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry system-info <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    SystemInfo(RegistrySystemInfoOptions),
+
+    /// Parse most-recently-used lists
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry mru <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Mru(RegistryMruOptions),
+
+    /// Parse third-party tools' traces
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry app-history <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    AppHistory(RegistryAppHistoryOptions),
+
+    /// Parse Explorer use counts and pins
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry featureusage <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Featureusage(RegistryFeatureUsageOptions),
+
+    /// Parse security settings: Defender, UAC, credentials, RDP, firewall, logging
+    #[command(
+        name = "security-settings",
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry security-settings <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    SecuritySettings(RegistrySecuritySettingsOptions),
+
+    /// Parse Office recent files, trusted documents and macro settings
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry office <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Office(RegistryOfficeOptions),
+
+    /// Parse the audit policy
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry auditpol <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Auditpol(RegistryAuditpolOptions),
+
+    /// Parse application compatibility data
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry appcompat <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Appcompat(RegistryAppCompatOptions),
+
+    /// Parse boot configuration
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry bcd <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Bcd(RegistryBcdOptions),
+
+    /// Parse LSA secrets' names and times
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry lsa-secrets <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    LsaSecrets(RegistryLsaSecretsOptions),
+
+    /// Parse network profiles, interfaces, shares, port proxies and routes
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry networks <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Networks(RegistryNetworksOptions),
+
     /// Parse autostart locations
     #[command(
         author = AUTHOR,
@@ -1341,6 +1486,16 @@ pub enum RegistryCommands {
     )]
     Services(RegistryServicesOptions),
 
+    /// Parse ShellBags (folders opened in Explorer)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry shellbags <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Shellbags(RegistryShellBagsOptions),
+
     /// Parse ShimCache entries
     #[command(
         author = AUTHOR,
@@ -1361,6 +1516,16 @@ pub enum RegistryCommands {
     )]
     Taskcache(RegistryTaskCacheOptions),
 
+    /// Parse USB devices and volumes
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry usb <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Usb(RegistryUsbOptions),
+
     /// Parse UserAssist entries
     #[command(
         author = AUTHOR,
@@ -1371,15 +1536,35 @@ pub enum RegistryCommands {
     )]
     Userassist(RegistryUserAssistOptions),
 
-    /// Parse network profiles, interfaces, shares, port proxies and routes
+    /// Parse BAM and DAM last runs
     #[command(
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry networks <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry bam <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Networks(RegistryNetworksOptions),
+    Bam(RegistryBamOptions),
+
+    /// Parse installed programs
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry installed-programs <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    InstalledPrograms(RegistryInstalledProgramsOptions),
+
+    /// Parse MuiCache program names
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry muicache <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Muicache(RegistryMuiCacheOptions),
 }
 
 /// What `parse-registry read` writes.
@@ -1755,6 +1940,60 @@ impl RegistryPersistenceOptions {
 
 #[derive(Args, Clone, Debug, Default)]
 #[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryUsbOptions {
+    /// Directory to search recursively for SYSTEM hives (each system's SOFTWARE and users' NTUSER.DAT hives are read with it)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one SYSTEM hive (its system's SOFTWARE and users' NTUSER.DAT hives are read with it)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The SYSTEM hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The SYSTEM hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read dirty hives as they are, without their transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Every control set (ControlSet001, ControlSet002, ...), not only the one Windows used last
+    #[arg(help_heading = Some("Filtering"), long, display_order = 200)]
+    pub all_control_sets: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryUsbOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
 pub struct RegistryUserAssistOptions {
     /// Directory to search recursively for NTUSER.DAT hives
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
@@ -1790,6 +2029,851 @@ pub struct RegistryUserAssistOptions {
 
     #[clap(flatten)]
     pub common: CommonOptions,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryBamOptions {
+    /// Directory to search recursively for SYSTEM hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one SYSTEM hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Every control set (ControlSet001, ControlSet002, ...), not only the one Windows used last
+    #[arg(help_heading = Some("Filtering"), long, display_order = 200)]
+    pub all_control_sets: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryBamOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+impl RegistryUserAssistOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryShellBagsOptions {
+    /// Directory to search recursively for UsrClass.dat and NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one UsrClass.dat or NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Windows code page for the ANSI names of shell items (8.3 names, network shares)
+    #[arg(help_heading = Some("Parsing"), long, value_name = "NUMBER", default_value_t = 1252, display_order = 200)]
+    pub code_page: u16,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryShellBagsOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryMuiCacheOptions {
+    /// Directory to search recursively for UsrClass.dat and NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one UsrClass.dat (Windows Vista and later) or NTUSER.DAT (Windows XP) hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryMuiCacheOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryInstalledProgramsOptions {
+    /// Directory to search recursively for SOFTWARE and NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one SOFTWARE or NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryInstalledProgramsOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryOpenSaveMruOptions {
+    /// Directory to search recursively for NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Code page of shell item names that aren't Unicode (8.3 names, network shares): the system's ANSI code page (932 for Japanese)
+    #[arg(help_heading = Some("Input"), long = "code-page", value_name = "CP", default_value_t = 1252, display_order = 105)]
+    pub code_page: u16,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryOpenSaveMruOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryRemoteAccessOptions {
+    /// Directory to search recursively for NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryRemoteAccessOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistrySystemInfoOptions {
+    /// Directory to search recursively for SYSTEM, SOFTWARE, SAM and SECURITY hives (those in one directory are one system's)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to a SYSTEM, SOFTWARE, SAM or SECURITY hive of one system; repeat for each (the others are looked for next to them)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", action = ArgAction::Append, display_order = 101)]
+    pub filepath: Vec<PathBuf>,
+
+    /// Read dirty hives as they are, without their transaction logs (default: <hive>.LOG, .LOG1 and .LOG2 next to each are replayed)
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistrySystemInfoOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryMruOptions {
+    /// Directory to search recursively for NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Only these lists (comma separated): runmru, typedpaths, wordwheelquery, typedurls, paint, wordpad, acmru
+    #[arg(help_heading = Some("Filtering"), long, value_name = "LISTS", value_enum, value_delimiter = ',', ignore_case = true, hide_possible_values = true, display_order = 200)]
+    pub list: Vec<RegistryMruList>,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryMruOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RegistryMruList {
+    /// Commands typed into the Run dialog (Explorer\RunMRU)
+    Runmru,
+    /// Paths typed into Explorer's address bar (Explorer\TypedPaths)
+    Typedpaths,
+    /// Terms searched for in Explorer (Explorer\WordWheelQuery)
+    Wordwheelquery,
+    /// Addresses typed into Internet Explorer, with TypedURLsTime
+    Typedurls,
+    /// Files Paint opened last (Applets\Paint\Recent File List)
+    Paint,
+    /// Files WordPad opened last (Applets\Wordpad\Recent File List)
+    Wordpad,
+    /// Windows XP's search terms (Search Assistant\ACMru)
+    Acmru,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryAppHistoryOptions {
+    /// Directory to search recursively for NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryAppHistoryOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryFeatureUsageOptions {
+    /// Directory to search recursively for NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryFeatureUsageOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistrySecuritySettingsOptions {
+    /// Directory to search recursively for SOFTWARE, SYSTEM and NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one SOFTWARE, SYSTEM or NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
+    #[arg(help_heading = Some("Filtering"), long, display_order = 200)]
+    pub all_control_sets: bool,
+
+    /// Only settings whose value weakens what Windows does by default
+    #[arg(help_heading = Some("Filtering"), long, display_order = 201)]
+    pub weakened_only: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistrySecuritySettingsOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryOfficeOptions {
+    /// Directory to search recursively for NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryOfficeOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryAuditpolOptions {
+    /// Directory to search recursively for SECURITY hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one SECURITY hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryAuditpolOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryAppCompatOptions {
+    /// Directory to search recursively for SOFTWARE and NTUSER.DAT hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one SOFTWARE or NTUSER.DAT hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryAppCompatOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryBcdOptions {
+    /// Directory to search recursively for BCD hives (and BCD-Template)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one BCD hive (\Boot\BCD, \EFI\Microsoft\Boot\BCD)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryBcdOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RegistryLsaSecretsOptions {
+    /// Directory to search recursively for SECURITY hives
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one SECURITY hive
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 102)]
+    pub log1: Option<PathBuf>,
+
+    /// The hive's second transaction log (.LOG2), for -f
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", conflicts_with_all = ["directory", "no_logs"], display_order = 103)]
+    pub log2: Option<PathBuf>,
+
+    /// Read a dirty hive as it is, without its transaction logs
+    #[arg(help_heading = Some("Input"), long = "no-logs", display_order = 104)]
+    pub no_logs: bool,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RegistryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RegistryLsaSecretsOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        self.output_type.unwrap_or(RegistryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
 }
 
 #[derive(Args, Clone, Debug, Default)]
@@ -1836,17 +2920,6 @@ pub struct RegistryNetworksOptions {
 }
 
 impl RegistryNetworksOptions {
-    pub fn output_type(&self) -> RegistryOutputType {
-        self.output_type.unwrap_or(RegistryOutputType::Csv)
-    }
-
-    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
-    pub fn data_on_stdout(&self) -> bool {
-        self.output.is_none() && self.output_type.is_some()
-    }
-}
-
-impl RegistryUserAssistOptions {
     pub fn output_type(&self) -> RegistryOutputType {
         self.output_type.unwrap_or(RegistryOutputType::Csv)
     }

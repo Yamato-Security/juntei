@@ -53,12 +53,12 @@ times to UTC.
     SYSTEM hive (`TimeZone`) and its daylight saving rule.
   - A time from before the time zone was changed, or from a year with another daylight saving
     rule (US dates before 2007), can be off by the difference.
-  - Without the SYSTEM hive, only the local times are given.
+  - Without a readable SYSTEM hive and a valid current control set, only local times are given. DST gaps and ambiguous repeated hours have no single proven UTC timestamp: UTC is left empty and `Problems` explains the limitation. Invalid offsets or dates also remain unconverted.
 - **First and last only.** Each profile has one first and one last connection, not every
   connection. The profile key's last write usually matches the last connection.
 - **Names repeat.** Windows names unmanaged wired networks "Network", "Network 2", and so on.
   Wi-Fi SSIDs are not unique. Use `GatewayMac` and `DnsSuffix` to tell networks apart, and
-  look a gateway's MAC address up in Wi-Fi databases to place a network.
+  correlate these with DHCP logs and asset inventory. A gateway MAC is not necessarily a Wi-Fi access point BSSID and alone does not establish physical location.
 - **Shares, proxies and routes** are configuration: a share or a port proxy can be set up and
   never used. Each value has no time of its own; the key's last write is when any of them
   changed.

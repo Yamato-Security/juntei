@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `parse-registry persistence`: autostart locations in SOFTWARE, SYSTEM, NTUSER.DAT and
 //! UsrClass.dat hives, read by ys-registry-parser's `persistence` module, with Hayabusa's input
 //! options, progress bar and results summary. One record per program, DLL or package a key or
@@ -247,7 +260,7 @@ impl Machines {
 
 /// The name of the profile folder a `UsrClass.dat` is in, when it is where Windows keeps it
 /// (`…\Users\alice\AppData\Local\Microsoft\Windows\UsrClass.dat`).
-fn profile_of_classes_path(path: &Path) -> Option<String> {
+pub(super) fn profile_of_classes_path(path: &Path) -> Option<String> {
     let root = system_root(path)?;
     let rest = path.strip_prefix(&root).ok()?;
     let mut parts = rest.components().map(|c| c.as_os_str().to_string_lossy());

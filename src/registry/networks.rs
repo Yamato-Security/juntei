@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `parse-registry networks`: the networks a system joined and how it was set up, from SOFTWARE
 //! and SYSTEM hives, read by ys-registry-parser's `networks` module, with Hayabusa's input
 //! options, progress bar and results summary. One record per network profile (with its first and
@@ -101,7 +114,10 @@ pub fn run(opts: &RegistryNetworksOptions) -> i32 {
     // --- parse and write -------------------------------------------------------------------
     let mut hosts = Hosts::new(!opts.no_logs);
     let mut systems = Systems::new(!opts.no_logs);
-    let mut stats = Stats::default();
+    let mut stats = Stats {
+        to_stderr: data_on_stdout,
+        ..Stats::default()
+    };
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
@@ -228,7 +244,8 @@ impl Systems {
                 let opened = open(system, logs)
                     .ok()
                     .filter(|o| o.hive_type == "SYSTEM")?;
-                let set = ControlSets::read(&opened.hive).current_or_first()?;
+                let sets = ControlSets::read(&opened.hive);
+                let set = sets.current.filter(|set| sets.present.contains(set))?;
                 TimeZone::read(&opened.hive, set)
             })
             .clone()
@@ -288,7 +305,7 @@ enum Item {
 #[derive(Clone, Copy)]
 struct ControlSet {
     set: u32,
-    current: bool,
+    current: Option<bool>,
 }
 
 impl Read {
@@ -331,6 +348,12 @@ impl Read {
         read.without_select = sets
             .current
             .is_none_or(|current| !sets.present.contains(&current));
+        if read.without_select {
+            read.problems.push(
+                "Select\\Current is missing or invalid; the current control set is unknown"
+                    .to_owned(),
+            );
+        }
         let chosen: Vec<u32> = if opts.all_control_sets {
             sets.present.clone()
         } else {
@@ -344,7 +367,10 @@ impl Read {
             read.control_sets += 1;
             let at = ControlSet {
                 set,
-                current: sets.current == Some(set),
+                current: sets
+                    .current
+                    .filter(|current| sets.present.contains(current))
+                    .map(|current| current == set),
             };
             read.records.extend(found.interfaces.into_iter().map(|i| {
                 let adapter = adapters.get(&i.guid.to_ascii_uppercase()).cloned();
@@ -491,7 +517,7 @@ impl<'a> Record<'a> {
             host: opened.host.as_deref(),
             source_path: &opened.source,
             control_set: at.map(|a| control_set_name(a.set)),
-            is_current_control_set: at.map(|a| a.current),
+            is_current_control_set: at.and_then(|a| a.current),
             source,
             transaction_log_status: opened.log_status(false),
             logs_applied: &opened.recovery.logs_applied,
@@ -547,6 +573,18 @@ impl<'a> Record<'a> {
                 r.key_last_written = filetime(p.key_last_written);
                 r.data_raw = p.data_raw.as_deref().map(hex);
                 r.problems.clone_from(&p.problems);
+                for (label, local, utc) in [
+                    ("DateCreated", &p.date_created, &r.first_connected),
+                    (
+                        "DateLastConnected",
+                        &p.date_last_connected,
+                        &r.last_connected,
+                    ),
+                ] {
+                    if local.is_some() && utc.is_none() {
+                        r.problems.push(format!("{label}: UTC conversion unavailable (missing/invalid time zone, DST gap/fold, or unsupported date); local time retained"));
+                    }
+                }
                 for s in &p.signatures {
                     r.problems
                         .extend(s.problems.iter().map(|w| format!("{}: {w}", s.key_path)));
@@ -749,6 +787,7 @@ impl<'a> Record<'a> {
 /// Counts for the results summary.
 #[derive(Default)]
 struct Stats {
+    to_stderr: bool,
     /// Hives read, by type.
     hives: BTreeMap<String, usize>,
     failed: usize,
@@ -790,6 +829,9 @@ impl Stats {
         }
         self.control_sets += read.control_sets;
         for problem in &read.problems {
+            if self.to_stderr {
+                eprintln!("{}: {problem}", opened.source);
+            }
             self.problem(&opened.source, problem);
         }
         let host = opened.host.as_deref().unwrap_or(&opened.source);
