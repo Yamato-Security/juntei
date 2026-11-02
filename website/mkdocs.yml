@@ -10,7 +10,7 @@ repo_name: Yamato-Security/juntei
 edit_uri: edit/main/website/docs/
 
 copyright: >-
-  Copyright &copy; 2026 Yamato Security — Documentation built with Material for MkDocs
+  Copyright &copy; 2026 Shirofune Security Co., Ltd. — Documentation built with Material for MkDocs
 
 docs_dir: docs
 
@@ -118,6 +118,9 @@ nav:
   - Artifacts:
       - Artifact Guide: artifacts/index.md
       - Process Execution:
+          - FeatureUsage and Pins: artifacts/featureusage.md
+          - BAM and DAM: artifacts/bam.md
+          - MuiCache: artifacts/muicache.md
           - Prefetch: artifacts/prefetch.md
           - SRUM: artifacts/srum.md
           - UserAssist: artifacts/userassist.md
@@ -132,9 +135,17 @@ nav:
           - LNK Shortcuts: artifacts/lnk.md
           - Microsoft Office: artifacts/office.md
           - Jump Lists: artifacts/jump-lists.md
+          - MRU Lists: artifacts/mru.md
           - RecentDocs: artifacts/recentdocs.md
+      - Lateral Movement:
+          - Remote Access (User Side): artifacts/remote-access.md
+          - Open and Save As Dialogs: artifacts/opensavemru.md
+          - ShellBags: artifacts/shellbags.md
+      - External Devices:
+          - USB Devices: artifacts/usb.md
       - Security Products:
           - Defender Quarantine: artifacts/defender-quarantine.md
+          - Security Settings: artifacts/security-settings.md
       - Registry and Persistence:
           - Registry Hives: artifacts/registry.md
           - Windows Services: artifacts/services.md
@@ -142,6 +153,12 @@ nav:
           - Registry Autostarts: artifacts/persistence.md
       - Accounts:
           - SAM Local Accounts: artifacts/sam.md
+      - Applications:
+          - Application History: artifacts/app-history.md
+      - System Information:
+          - System Information: artifacts/system-info.md
+      - Applications:
+          - Installed Programs: artifacts/installed-programs.md
   - Persistence Hunter:
       - Persistence Mechanisms: persistence-hunter/index.md
       - Acknowledgements: persistence-hunter/acknowledgements.md

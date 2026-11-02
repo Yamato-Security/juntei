@@ -54,9 +54,12 @@ when its macros were enabled and `0x00000001` when only its editing was.
 - **Paths as Office stores them.** Trust records name the document by a path that may use
   `%USERPROFILE%`, forward slashes, a `file:///` URL and URL encoding (`%20`). MRU items of
   cloud documents are URLs.
-- **Defaults.** Office creates default trusted locations (`Templates`, `XLSTART`, `STARTUP`, …)
-  without a `Date`; a location with a `Date` was added by a user. `VBAWarnings` unset means the
-  default (macros disabled with notification).
+- **Defaults and effective policy.** Office creates default trusted locations (`Templates`,
+  `XLSTART`, `STARTUP`, …). A location's `Date` is a useful clue, not proof of who created it:
+  administrators, scripts, policies and copied registry settings can also populate it. Missing
+  `VBAWarnings` alone does not establish the effective macro policy. Office version, Internet
+  file marking and other management settings also matter.
+  [Microsoft explains Internet macro blocking](https://learn.microsoft.com/en-us/DeployOffice/security/internet-macros-blocked).
 - **Deleted documents.** The lists outlive the documents; a missing file can still be shown
   here. Lists are short and are cleared by Office's *Clear unpinned items* and cleanup tools.
 
@@ -98,7 +101,7 @@ opened last.
 | `MruPosition`, `IsMostRecent` | An item's place in its list (`Item 1` is 0, the most recent). |
 | `Path` | The document or folder; a trusted document's path as stored; a trusted location's `Path`. |
 | `LastOpenedUTC` | When the item was last opened. |
-| `TrustedAtUTC`, `MacrosEnabled`, `TrustFlags` | When the document was trusted, whether its macros were enabled, and the record's flags. |
+| `TrustedAtUTC`, `MacrosEnabled`, `TrustFlags` | When the document was trusted, whether its macros were enabled, and the record's flags. Unknown flags leave `MacrosEnabled` empty and produce a diagnostic. |
 | `Setting`, `Value` | A macro setting and its value with what it means (`1 (all macros enabled)`); a trusted location's key (`Location3`) and its other values (`AllowSubFolders=1; Date=…; Description=…`). |
 | `KeyPath`, `KeyLastWrittenUTC` | The key and its last write. |
 | `DataRaw` | The value's bytes (hex) when they don't decode. |

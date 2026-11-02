@@ -1,0 +1,25 @@
+Third-party crates in Juntei
+============================
+
+Juntei is built with the Rust crates below. Each license text is given once, followed by the
+crates under it. Generated from Cargo.lock by cargo-about: see README.md in this directory.
+
+{{#each overview}}
+{{#if (ne id "RPL-1.5")}}
+{{{name}}}: {{count}}
+{{/if}}
+{{/each}}
+{{#each licenses}}
+{{#if (ne id "RPL-1.5")}}
+
+================================================================================
+{{{name}}} ({{{id}}})
+
+Used by:
+{{#each used_by}}
+- {{{crate.name}}} {{{crate.version}}}{{#if crate.repository}} ({{{crate.repository}}}){{/if}}
+{{/each}}
+
+{{{text}}}
+{{/if}}
+{{/each}}
