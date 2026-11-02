@@ -9534,7 +9534,17 @@ fn shellbags_read(args: &[&str]) -> Vec<Value> {
 
 /// regipy's dirty `UsrClass.dat` and its logs, where Windows keeps jcloudy's.
 fn shellbags_collection(root: &Path) -> std::path::PathBuf {
-    let dir = root.join(r"C/Users/jcloudy/AppData/Local/Microsoft/Windows");
+    let dir = [
+        "C",
+        "Users",
+        "jcloudy",
+        "AppData",
+        "Local",
+        "Microsoft",
+        "Windows",
+    ]
+    .iter()
+    .fold(root.to_path_buf(), |dir, part| dir.join(part));
     unpack_registry(
         "regipy",
         &["UsrClass.dat", "UsrClass.dat.LOG1", "UsrClass.dat.LOG2"],
