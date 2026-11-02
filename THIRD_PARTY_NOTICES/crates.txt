@@ -5,7 +5,7 @@ Juntei is built with the Rust crates below. Each license text is given once, fol
 crates under it. Generated from Cargo.lock by cargo-about: see README.md in this directory.
 
 MIT License: 193
-Apache License 2.0: 22
+Apache License 2.0: 23
 Creative Commons Zero v1.0 Universal: 6
 BSD 3-Clause "New" or "Revised" License: 2
 Unicode License v3: 1
@@ -15,6 +15,7 @@ zlib License: 1
 Apache License 2.0 (Apache-2.0)
 
 Used by:
+- ys-registry-parser 1.0.0 (https://github.com/Yamato-Security/ys-registry-parser)
 - ys-registry-parser 1.0.0 (https://github.com/Yamato-Security/ys-registry-parser)
 - ys-shimcache-parser 1.0.0 (https://github.com/Yamato-Security/ys-shimcache-parser)
 - flagset 0.4.7 (https://github.com/enarx/flagset)

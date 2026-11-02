@@ -106,7 +106,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 ## License
 
 Juntei is released under the [Reciprocal Public License 1.5](LICENSE) (RPL-1.5) and copyright
-Yamato Security. Its source code was published under the AGPLv3 before version 1.0.0. The licenses
+Shirofune Security Co., Ltd. Its source code was published under the AGPLv3 before version 1.0.0. The licenses
 of the crates and other third-party code and data that Juntei is built with are in
 [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES/), and the licenses of the test files are next to them
 in [`test_files`](test_files/).
