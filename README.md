@@ -81,6 +81,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Local accounts** (`SAM`) — Local usernames, RIDs, account flags, and recorded logon and password metadata. | Registry |
 
+### Applications
+
+| Artifact | Type |
+| --- | --- |
+| **Installed programs** (`SOFTWARE`, `NTUSER.DAT`) — Programs installed machine-wide and per user, Windows Installer products, App Paths, WSL distributions, and packaged apps, with install dates and key times. | Registry |
+
 ### Security Products
 
 | Artifact | Type |

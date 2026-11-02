@@ -152,6 +152,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "sam",
                 "persistence",
                 "userassist",
+                "installed-programs",
             ][..],
         ),
         ("parse-ese", "Parse ESE databases", &["srum"][..]),
@@ -309,6 +310,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         let artifact = task["artifact"].as_str().unwrap();
         let category = match artifact {
             "sam" => "accounts",
+            "installed-programs" => "applications",
             "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
@@ -620,7 +622,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                20
+                21
             );
             assert!(
                 output
@@ -766,7 +768,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 40);
+    assert_eq!(tasks.len(), 42);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5523,6 +5525,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("installed-programs "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -9486,4 +9489,460 @@ fn persistence_hunter_has_consistent_command_help() {
             .contains("juntei persistence-hunter -d <EVIDENCE>")
     );
     assert!(help.stdout.contains("--min-severity") && help.stdout.contains("--coverage"));
+}
+
+// --- parse-registry installed-programs ----------------------------------------------------------
+
+/// `parse-registry installed-programs`' CSV columns.
+const INSTALLED_PROGRAMS_COLUMNS: [&str; 30] = [
+    "Host",
+    "SourcePath",
+    "HiveType",
+    "Username",
+    "UserSid",
+    "Source",
+    "Scope",
+    "Name",
+    "Version",
+    "Publisher",
+    "InstallDate",
+    "InstallDateRaw",
+    "KeyLastWrittenUTC",
+    "InstallLocation",
+    "InstallSource",
+    "Program",
+    "UninstallCommand",
+    "QuietUninstallCommand",
+    "SizeKb",
+    "SystemComponent",
+    "WindowsInstaller",
+    "ProductCode",
+    "Architecture",
+    "Wow64",
+    "Details",
+    "KeyPath",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// One system's SYSTEM hive (its name), SOFTWARE hive (alice's profile; an MSI-installed
+/// program, one with a date written otherwise and a size written as text, a hidden 32-bit one,
+/// its Windows Installer product, an App Path and a package listed for alice) and alice's
+/// NTUSER.DAT (a program she installed for herself and a WSL 2 distribution).
+fn installed_programs_collection(root: &Path) {
+    let cv = r"Microsoft\Windows\CurrentVersion";
+    let agent = format!(r"{cv}\Uninstall\{{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}}");
+    let tool = format!(r"{cv}\Uninstall\Tool");
+    let old = format!(r"Wow6432Node\{cv}\Uninstall\Old32");
+    let product = r"Classes\Installer\Products\c3f8d9e8a7b6c5d4e3f2a1b0c9d8e7f6";
+    let sz = |path: &str, name: &str, text: &str| {
+        (path.to_owned(), name.to_owned(), REG_SZ, utf16z(text))
+    };
+    let dword = |path: &str, name: &str, n: u32| {
+        (
+            path.to_owned(),
+            name.to_owned(),
+            REG_DWORD,
+            n.to_le_bytes().to_vec(),
+        )
+    };
+    let software: Vec<(String, String, u32, Vec<u8>)> = vec![
+        (
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001".to_owned(),
+            "ProfileImagePath".to_owned(),
+            REG_EXPAND_SZ,
+            utf16z(r"C:\Users\alice"),
+        ),
+        sz(&agent, "DisplayName", "Agent"),
+        sz(&agent, "DisplayVersion", "2.1.0"),
+        sz(&agent, "Publisher", "Example Corp"),
+        sz(&agent, "InstallDate", "20220208"),
+        sz(&agent, "InstallLocation", r"C:\Program Files\Agent\"),
+        sz(
+            &agent,
+            "UninstallString",
+            "MsiExec.exe /X{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}",
+        ),
+        dword(&agent, "EstimatedSize", 2048),
+        dword(&agent, "WindowsInstaller", 1),
+        sz(&tool, "DisplayName", "Tool"),
+        sz(&tool, "InstallDate", "2022-02-08"),
+        sz(&tool, "EstimatedSize", "12"),
+        sz(&tool, "Inno Setup: User", "alice"),
+        sz(&old, "DisplayName", "Old"),
+        sz(&old, "InstallDate", "20220101"),
+        dword(&old, "SystemComponent", 1),
+        sz(product, "ProductName", "Agent"),
+        dword(product, "Version", 0x0201_0000),
+        sz(
+            &format!(r"{product}\SourceList"),
+            "PackageName",
+            "agent.msi",
+        ),
+        sz(
+            &format!(r"{product}\SourceList"),
+            "LastUsedSource",
+            r"n;1;C:\Users\alice\Downloads\",
+        ),
+        sz(
+            &format!(r"{cv}\App Paths\tool.exe"),
+            "",
+            r"C:\Tool\tool.exe",
+        ),
+        sz(&format!(r"{cv}\App Paths\tool.exe"), "Path", r"C:\Tool"),
+        sz(
+            &format!(
+                r"{cv}\Appx\AppxAllUserStore\S-1-5-21-1-2-3-1001\Tool.Package_1.0.0.0_x64__abcdefghijkmn"
+            ),
+            "Path",
+            r"C:\Program Files\WindowsApps\Tool.Package_1.0.0.0_x64__abcdefghijkmn\AppxManifest.xml",
+        ),
+    ];
+    let ucv = r"Software\Microsoft\Windows\CurrentVersion";
+    let portable = format!(r"{ucv}\Uninstall\Portable");
+    let ubuntu = format!(r"{ucv}\Lxss\{{70E495E1-D4D3-4B8D-BBE8-79FDC01E50EA}}");
+    let ntuser: Vec<(String, String, u32, Vec<u8>)> = vec![
+        sz(&portable, "DisplayName", "Portable Tool"),
+        sz(&portable, "DisplayVersion", "3.0"),
+        sz(&portable, "InstallDate", "20220209"),
+        sz(
+            &portable,
+            "UninstallString",
+            r"C:\Users\alice\AppData\Local\Portable\uninstall.exe",
+        ),
+        sz(&ubuntu, "DistributionName", "Ubuntu"),
+        dword(&ubuntu, "Flags", 15),
+        sz(
+            &ubuntu,
+            "BasePath",
+            r"C:\Users\alice\AppData\Local\Packages\Ubuntu\LocalState",
+        ),
+    ];
+    let tree = |values: &[(String, String, u32, Vec<u8>)]| {
+        let values: Vec<(&str, &str, u32, Vec<u8>)> = values
+            .iter()
+            .map(|(p, n, k, d)| (p.as_str(), n.as_str(), *k, d.clone()))
+            .collect();
+        reg_tree("ROOT", &values)
+    };
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    let profile = root.join("C/Users/alice");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::create_dir_all(&profile).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(config.join("SOFTWARE"), tree(&software)).unwrap();
+    std::fs::write(profile.join("NTUSER.DAT"), tree(&ntuser)).unwrap();
+}
+
+/// `parse-registry installed-programs` with `args`, as JSON Lines.
+fn installed_programs_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "installed-programs"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_installed_programs_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    installed_programs_collection(dir.path());
+    let records = installed_programs_read(&["-d", dir.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} | {} {} | {} | {} | {}",
+                r["hive_type"].as_str().unwrap(),
+                r["source"].as_str().unwrap(),
+                r["scope"].as_str().unwrap(),
+                r["username"].as_str().unwrap_or("-"),
+                r["name"].as_str().unwrap_or("-"),
+                r["version"].as_str().unwrap_or("-"),
+                r["install_date"].as_str().unwrap_or("-"),
+                r["install_location"].as_str().unwrap_or("-"),
+                r["architecture"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            // the hives in path order (C/Users before C/Windows), the keys in the hive's (sorted)
+            "NTUSER.DAT uninstall user alice | Portable Tool 3.0 | 2022-02-09 | - | -",
+            r"NTUSER.DAT wsl user alice | Ubuntu 2 | - | C:\Users\alice\AppData\Local\Packages\Ubuntu\LocalState | -",
+            "SOFTWARE uninstall machine - | Tool - | - | - | -",
+            r"SOFTWARE uninstall machine - | Agent 2.1.0 | 2022-02-08 | C:\Program Files\Agent\ | -",
+            "SOFTWARE uninstall machine - | Old - | 2022-01-01 | - | x86",
+            "SOFTWARE msi_product machine - | Agent 2.1.0 | - | - | -",
+            r"SOFTWARE app_path machine - | tool.exe - | - | C:\Tool | -",
+            r"SOFTWARE package user alice | Tool.Package 1.0.0.0 | - | C:\Program Files\WindowsApps\Tool.Package_1.0.0.0_x64__abcdefghijkmn\AppxManifest.xml | x64",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    let agent = &records[3];
+    assert_eq!(
+        (
+            &agent["product_code"],
+            &agent["size_kb"],
+            &agent["windows_installer"],
+            &agent["publisher"]
+        ),
+        (
+            &json!("{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}"),
+            &json!(2048),
+            &json!(true),
+            &json!("Example Corp")
+        )
+    );
+    assert_eq!(agent["user_sid"], Value::Null);
+    assert_eq!(agent["details"], json!({}));
+    assert_eq!(agent["data_raw"], json!({}));
+    // a date written otherwise is kept as written; a size written as text keeps its bytes
+    let tool = &records[2];
+    assert_eq!(tool["install_date_raw"], "2022-02-08");
+    assert_eq!(tool["details"], json!({"Inno Setup: User": "alice"}));
+    assert_eq!(tool["data_raw"], json!({"EstimatedSize": "310032000000"}));
+    assert_eq!(
+        tool["problems"],
+        json!(["EstimatedSize: is REG_SZ, not REG_DWORD"])
+    );
+    assert_eq!(
+        (&records[4]["wow64"], &records[4]["system_component"]),
+        (&json!(true), &json!(true))
+    );
+    let product = &records[5];
+    assert_eq!(product["install_source"], r"C:\Users\alice\Downloads\");
+    assert_eq!(
+        product["product_code"],
+        "{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}"
+    );
+    assert_eq!(product["details"], json!({"PackageName": "agent.msi"}));
+    assert_eq!(records[6]["program"], r"C:\Tool\tool.exe");
+    // a package SOFTWARE lists for alice, named from its ProfileList; her own hive's records
+    // take her SID from it too
+    for r in [&records[0], &records[1], &records[7]] {
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+    }
+    assert_eq!(
+        records[7]["details"],
+        json!({"List": "User", "PublisherId": "abcdefghijkmn"})
+    );
+    assert_eq!(records[1]["details"], json!({"Flags": "0xf"}));
+    assert_eq!(
+        records[1]["key_path"],
+        r"Software\Microsoft\Windows\CurrentVersion\Lxss\{70E495E1-D4D3-4B8D-BBE8-79FDC01E50EA}"
+    );
+}
+
+#[test]
+fn registry_installed_programs_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    installed_programs_collection(dir.path());
+    let out = dir.path().join("installed.csv");
+    let r = run(&[
+        "parse-registry",
+        "installed-programs",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "Hives parsed: 2 (NTUSER.DAT 1, SOFTWARE 1)",
+        "Hosts: HOST1",
+        "Users: alice",
+        "Records: 8 (app_path 1, msi_product 1, package 1, uninstall 4, wsl 1)",
+        "2022-02-09  HOST1  Portable Tool 3.0  [alice]",
+        "2022-02-08  HOST1  Agent 2.1.0 (Example Corp)",
+        "2022-01-01  HOST1  Old",
+        "Installed by users for themselves (NTUSER.DAT Uninstall entries and Windows Installer products): 1",
+        "HOST1  alice  Portable Tool 3.0",
+        r"HOST1  alice  Ubuntu (WSL 2)  C:\Users\alice\AppData\Local\Packages\Ubuntu\LocalState",
+        "Records or keys that could not be read: 1",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    // newest first
+    let portable = r.stdout.find("2022-02-09  HOST1").unwrap();
+    let agent = r.stdout.find("2022-02-08  HOST1").unwrap();
+    let old = r.stdout.find("2022-01-01  HOST1").unwrap();
+    assert!(portable < agent && agent < old);
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header, INSTALLED_PROGRAMS_COLUMNS);
+    assert_eq!(rows.len(), 8);
+    assert_eq!(rows[2]["Details"], "Inno Setup: User=alice");
+    assert_eq!(rows[2]["DataRaw"], "EstimatedSize=310032000000");
+    assert_eq!(rows[2]["InstallDateRaw"], "2022-02-08");
+    assert_eq!(rows[3]["SizeKb"], "2048");
+    assert_eq!(rows[3]["WindowsInstaller"], "True");
+    assert_eq!(rows[3]["Wow64"], "False");
+    assert_eq!(rows[4]["Architecture"], "x86");
+    assert_eq!(rows[0]["Username"], "alice");
+    assert_eq!(rows[1]["Details"], "Flags=0xf");
+}
+
+#[test]
+fn registry_installed_programs_of_public_hives() {
+    // regipy's NTUSER-WSL.DAT: three WSL 1 distributions (Ubuntu-20.04 the default), four App
+    // Paths and OneDrive, as regipy's wsl, installed_programs_ntuser give them
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["NTUSER-WSL.DAT"], dir.path());
+    let hive = dir.path().join("NTUSER.DAT");
+    std::fs::rename(dir.path().join("NTUSER-WSL.DAT"), &hive).unwrap();
+    let records = installed_programs_read(&["-f", hive.to_str().unwrap()]);
+    let counts = records
+        .iter()
+        .fold(std::collections::BTreeMap::new(), |mut m, r| {
+            *m.entry(r["source"].as_str().unwrap().to_owned())
+                .or_insert(0) += 1;
+            m
+        });
+    assert_eq!(
+        counts,
+        std::collections::BTreeMap::from([
+            ("app_path".to_owned(), 4),
+            ("uninstall".to_owned(), 1),
+            ("wsl".to_owned(), 3)
+        ])
+    );
+    let wsl: Vec<String> = records
+        .iter()
+        .filter(|r| r["source"] == "wsl")
+        .map(|r| {
+            format!(
+                "{} {} {}",
+                r["name"].as_str().unwrap(),
+                r["version"].as_str().unwrap(),
+                r["details"]["Default"].as_str().unwrap_or("-")
+            )
+        })
+        .collect();
+    assert_eq!(wsl, ["Debian 1 -", "Ubuntu 1 -", "Ubuntu-20.04 1 true"]);
+    let onedrive = &records[0];
+    assert_eq!(
+        (
+            &onedrive["name"],
+            &onedrive["version"],
+            &onedrive["size_kb"]
+        ),
+        (
+            &json!("Microsoft OneDrive"),
+            &json!("21.220.1024.0005"),
+            &json!(174_061)
+        )
+    );
+    assert!(records.iter().all(|r| r["problems"] == json!([])
+        && r["scope"] == "user"
+        && r["hive_type"] == "NTUSER.DAT"));
+
+    // the DFIR Artifact Museum's dirty Windows 11 NTUSER.DAT, with its logs
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry(
+        "rathbun_w11",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        dir.path(),
+    );
+    let records = installed_programs_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    let names: Vec<&str> = records
+        .iter()
+        .map(|r| r["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        names,
+        [
+            "Microsoft OneDrive",
+            "mspaint.exe",
+            "msteams.exe",
+            "notepad.exe",
+            "OneDriveFileLauncher.exe",
+            "wt.exe"
+        ]
+    );
+    assert_eq!(records[0]["version"], "22.002.0103.0004");
+    assert_eq!(
+        records[0]["key_last_written"],
+        "2022-02-06T21:36:22.847509700Z"
+    );
+    assert_eq!(
+        records[5]["program"],
+        r"C:\Program Files\WindowsApps\Microsoft.WindowsTerminal_1.11.3471.0_x64__8wekyb3d8bbwe\wt.exe"
+    );
+    assert!(
+        records
+            .iter()
+            .all(|r| r["transaction_log_status"] == "unchanged" && r["problems"] == json!([]))
+    );
+}
+
+#[test]
+fn registry_installed_programs_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "installed-programs",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("not a SOFTWARE or NTUSER.DAT hive"), "{said}");
+    let r = run(&[
+        "parse-registry",
+        "installed-programs",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("No SOFTWARE or NTUSER.DAT hives were found"),
+        "{said}"
+    );
+    // the output is never one of the files read: a user hive's system's SOFTWARE included
+    let collection = tempfile::tempdir().unwrap();
+    installed_programs_collection(collection.path());
+    let software = collection.path().join("C/Windows/System32/config/SOFTWARE");
+    let original = std::fs::read(&software).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "installed-programs",
+        "-f",
+        collection
+            .path()
+            .join("C/Users/alice/NTUSER.DAT")
+            .to_str()
+            .unwrap(),
+        "-o",
+        software.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&software).unwrap(), original);
 }
