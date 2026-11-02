@@ -24,7 +24,9 @@ Windows Vista and later keep a 12-byte header, then one setting per subcategory,
 category, then how many subcategories each category has. Versions differ only in those counts:
 each adds subcategories at the end of a category (56 on the Windows 8.x and Server 2012 R2 hives
 read, 59 on Windows 10, 11 and Server 2022). Windows XP and Server 2003 keep whether auditing is
-on and nine category settings.
+on (one byte, then padding Windows doesn't clear) and nine category settings. That layout was
+checked on the public Windows XP image of NIST's CFReDS Hacking Case, which audits nothing; the
+values of its category settings follow Microsoft's documentation.
 
 Collect `SECURITY` with its transaction logs, and the system's `SYSTEM` hive, which names the
 host.
