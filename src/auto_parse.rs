@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `auto-parse`: discover collected Windows systems, run every Juntei parser in parallel, and
 //! organize the results by computer. Parser commands run as child processes so one damaged
 //! artifact cannot take down the whole collection and CPU-heavy parsers can run concurrently.
@@ -26,9 +39,12 @@ const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
 const CATEGORIES: &[&str] = &[
     "accounts",
+    "applications",
+    "external_devices",
     "file_and_folder_opening",
     "file_existence",
     "file_system",
+    "lateral_movement",
     "persistence",
     "process_execution",
     "registry",
@@ -40,11 +56,18 @@ const CATEGORIES: &[&str] = &[
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
         "sam" => "accounts",
-        "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
+        "installed-programs" => "applications",
+        "usb" => "external_devices",
+        "jump-lists" | "lnk" | "opensavemru" | "recentdocs" | "shellbags" => {
+            "file_and_folder_opening"
+        }
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+        "remote-access" => "lateral_movement",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-        "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
+        "bam" | "muicache" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => {
+            "process_execution"
+        }
         "registry" => "registry",
         "defender-quarantine" => "security_products",
         "system-info" => "system_information",
@@ -56,24 +79,31 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "bam" => "BAM",
         "defender-quarantine" => "DefenderQuarantine",
         "i30" => "I30",
+        "installed-programs" => "InstalledPrograms",
         "jump-lists" => "JumpLists",
         "lnk" => "LNK",
         "logfile" => "LogFile",
         "mft" => "MFT",
+        "muicache" => "MuiCache",
+        "opensavemru" => "OpenSaveMRU",
         "persistence" => "Persistence",
         "persistence-hunter" => "PersistenceHunter",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "RecentDocs",
         "registry" => "Registry",
+        "remote-access" => "RemoteAccess",
         "sam" => "SAM",
         "services" => "Services",
+        "shellbags" => "ShellBags",
         "shimcache" => "ShimCache",
         "srum" => "SRUM",
         "system-info" => "SystemInfo",
         "taskcache" => "TaskCache",
+        "usb" => "USB",
         "usn-journal" => "UsnJournal",
         "userassist" => "UserAssist",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
@@ -1067,6 +1097,48 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "bam",
+            &["parse-registry", "bam"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
+        add(
+            "shellbags",
+            &["parse-registry", "shellbags"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "usb",
+            &["parse-registry", "usb"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
+        add(
+            "muicache",
+            &["parse-registry", "muicache"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "installed-programs",
+            &["parse-registry", "installed-programs"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "opensavemru",
+            &["parse-registry", "opensavemru"],
+            OutputShape::File,
+            &["--code-page", &code_page],
+        );
+        add(
+            "remote-access",
+            &["parse-registry", "remote-access"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1169,6 +1241,19 @@ impl InputInventory {
                     Some("SYSTEM" | "SOFTWARE" | "SAM" | "SECURITY")
                 ) {
                     found.add_size("system-info", size);
+                    found.add_size("remote-access", size);
+                    found.add_size("opensavemru", size);
+                }
+                if matches!(kind.as_deref(), Some("SOFTWARE" | "NTUSER.DAT")) {
+                    found.add_size("installed-programs", size);
+                }
+                if matches!(kind.as_deref(), Some("NTUSER.DAT" | "USRCLASS.DAT")) {
+                    found.add_size("muicache", size);
+                    found.add_size("shellbags", size);
+                }
+                if kind.as_deref() == Some("SYSTEM") {
+                    found.add_size("bam", size);
+                    found.add_size("usb", size);
                 }
                 if matches!(
                     kind.as_deref(),

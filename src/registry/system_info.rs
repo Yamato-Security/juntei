@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `parse-registry system-info`: what every timeline needs to know about a system, read from its
 //! `SYSTEM`, `SOFTWARE`, `SAM` and `SECURITY` hives by ys-registry-parser's `system_info` module,
 //! with Hayabusa's input options, progress bar and results summary. One record per system: its
@@ -372,8 +385,17 @@ impl Read {
                     || s.profiles.iter().any(|p| p.replayed)
                     || s.last_logged_on.as_ref().is_some_and(|l| l.replayed)
             }),
-            // the SAM's SID is in one value: the hive's status says enough
-            "SAM" => false,
+            "SAM" => {
+                self.sam_sid.is_some()
+                    && self.opened.get(&kind).is_some_and(|opened| {
+                        opened.hive.key(r"SAM\Domains\Account").is_some_and(|key| {
+                            key.status() == registry::Status::Replayed
+                                || key
+                                    .value("V")
+                                    .is_some_and(|v| v.status() == registry::Status::Replayed)
+                        })
+                    })
+            }
             _ => self.domains.as_ref().is_some_and(|d| d.replayed),
         }
     }
