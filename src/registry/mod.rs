@@ -6,6 +6,7 @@
 pub mod persistence;
 pub mod read;
 pub mod recentdocs;
+pub mod remote_access;
 pub mod sam;
 pub mod services;
 pub mod taskcache;

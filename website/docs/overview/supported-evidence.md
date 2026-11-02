@@ -19,6 +19,7 @@
 | TaskCache | `parse-registry taskcache` | Scheduled-task actions, metadata, hidden tasks | Correlate with task XML and event logs for runtime proof |
 | Registry autostarts | `parse-registry persistence` | Run keys, Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks and other autostart locations | Configuration, not proof of execution; most entries are Windows defaults |
 | UserAssist | `parse-registry userassist` | Programs and shortcuts a user started from Explorer, with run counts, focus time and last run | Only Explorer starts are counted; new profiles are seeded with default items |
+| Remote access (user side) | `parse-registry remote-access` | Computers a user reached with Remote Desktop, PuTTY and WinSCP, accepted SSH host keys, mapped drives and shares | A saved or typed target isn't a successful connection; list keys have one time for all their items |
 | SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | Local accounts only; last-logon values are not a complete logon history |
 
 ## Collection types

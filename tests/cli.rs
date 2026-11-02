@@ -152,6 +152,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "sam",
                 "persistence",
                 "userassist",
+                "remote-access",
             ][..],
         ),
         ("parse-ese", "Parse ESE databases", &["srum"][..]),
@@ -274,6 +275,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "file_and_folder_opening",
         "file_existence",
         "file_system",
+        "lateral_movement",
         "persistence",
         "process_execution",
         "registry",
@@ -312,6 +314,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+            "remote-access" => "lateral_movement",
             "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
             "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
             "registry" => "registry",
@@ -620,7 +623,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                20
+                21
             );
             assert!(
                 output
@@ -766,7 +769,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 40);
+    assert_eq!(tasks.len(), 42);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5523,6 +5526,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("remote-access "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -9486,4 +9490,400 @@ fn persistence_hunter_has_consistent_command_help() {
             .contains("juntei persistence-hunter -d <EVIDENCE>")
     );
     assert!(help.stdout.contains("--min-severity") && help.stdout.contains("--coverage"));
+}
+
+// --- parse-registry remote-access ---------------------------------------------------------------
+
+/// `parse-registry remote-access`'s CSV columns.
+const REMOTE_ACCESS_COLUMNS: [&str; 25] = [
+    "Host",
+    "Username",
+    "UserSid",
+    "SourcePath",
+    "Client",
+    "Kind",
+    "Target",
+    "Port",
+    "RemoteUsername",
+    "Protocol",
+    "MruPosition",
+    "SessionName",
+    "HostKeyType",
+    "HostKeyFingerprint",
+    "HostKey",
+    "DriveLetter",
+    "PasswordStored",
+    "Details",
+    "KeyPath",
+    "ValueName",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// A generated Ed25519 host key in PuTTY's `SshHostKeys` form, and its fingerprint as OpenSSH's
+/// `ssh-keygen -l` gives it.
+const ED25519_HOST_KEY: &str = "0x1dc1835f6c2412ce0471e8e93f9bc28c107b658a7c09d1b77cf8328a9727bcbf,0x6a13e584ed673b1b8640774399fbb872c00e7ff64f4e24ea5870315b315b7fd3";
+const ED25519_FINGERPRINT: &str = "SHA256:FHMF6w9trn7uMSI+bN+z7+Biyw+8SJgBfXa9ie8UtuY";
+
+/// One system (HOST1, alice's profile) and alice's `NTUSER.DAT` with a connection of each kind: two
+/// Remote Desktop computers and a damaged MRU value, the account used on one, a PuTTY session
+/// through a proxy with its password and its host key, a WinSCP session with a stored password,
+/// a mapped drive, the path typed to map it, and its share.
+fn remote_access_collection(root: &Path) {
+    let tsc = r"Software\Microsoft\Terminal Server Client";
+    let default = format!(r"{tsc}\Default");
+    let server = format!(r"{tsc}\Servers\server01.example.com");
+    let web = r"Software\SimonTatham\PuTTY\Sessions\web%20server";
+    let keys = r"Software\SimonTatham\PuTTY\SshHostKeys";
+    let files = r"Software\Martin Prikryl\WinSCP 2\Sessions\alice@files.example.com";
+    let mru = r"Software\Microsoft\Windows\CurrentVersion\Explorer\Map Network Drive MRU";
+    let share = r"Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\##fs01#share";
+    let dword = |n: u32| n.to_le_bytes().to_vec();
+    let alice = reg_tree(
+        "ROOT",
+        &[
+            (&default, "MRU0", REG_SZ, utf16z("server01.example.com")),
+            (&default, "MRU1", REG_SZ, utf16z("10.0.0.9:3390")),
+            (&default, "MRU2", REG_BINARY, vec![1, 2, 3]),
+            (&server, "UsernameHint", REG_SZ, utf16z(r"EXAMPLE\alice")),
+            (web, "HostName", REG_SZ, utf16z("admin@203.0.113.10")),
+            (web, "PortNumber", REG_DWORD, dword(22)),
+            (web, "Protocol", REG_SZ, utf16z("ssh")),
+            (web, "ProxyMethod", REG_DWORD, dword(3)),
+            (web, "ProxyHost", REG_SZ, utf16z("proxy.example.com")),
+            (web, "ProxyPassword", REG_SZ, utf16z("not output")),
+            (
+                keys,
+                "ssh-ed25519@22:203.0.113.10",
+                REG_SZ,
+                utf16z(ED25519_HOST_KEY),
+            ),
+            (files, "HostName", REG_SZ, utf16z("files.example.com")),
+            (files, "UserName", REG_SZ, utf16z("alice")),
+            (files, "FSProtocol", REG_DWORD, dword(2)),
+            (files, "Password", REG_SZ, utf16z("A35C4E")),
+            (r"Network\Z", "RemotePath", REG_SZ, utf16z(r"\\fs01\share")),
+            (r"Network\Z", "UserName", REG_DWORD, dword(0)),
+            (
+                r"Network\Z",
+                "ProviderName",
+                REG_SZ,
+                utf16z("Microsoft Windows Network"),
+            ),
+            (mru, "MRUList", REG_SZ, utf16z("a")),
+            (mru, "a", REG_SZ, utf16z(r"\\fs01\share")),
+            (share, "_LabelFromReg", REG_SZ, utf16z("Team")),
+        ],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+            "ProfileImagePath",
+            REG_EXPAND_SZ,
+            utf16z(r"C:\Users\alice"),
+        )],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, dword(1)),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::create_dir_all(root.join("C/Users/alice")).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(root.join("C/Users/alice/NTUSER.DAT"), alice).unwrap();
+}
+
+/// `parse-registry remote-access` with `args`, as JSON Lines.
+fn remote_access_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "remote-access"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+/// Each record as `client kind target:port user | position | drive`.
+fn remote_access_lines(records: &[Value]) -> Vec<String> {
+    records
+        .iter()
+        .map(|r| {
+            let mut line = format!(
+                "{} {} {}",
+                r["client"].as_str().unwrap(),
+                r["kind"].as_str().unwrap(),
+                r["target"].as_str().unwrap_or("-")
+            );
+            if let Some(port) = r["port"].as_u64() {
+                line += &format!(":{port}");
+            }
+            if let Some(user) = r["remote_username"].as_str() {
+                line += &format!(" {user}");
+            }
+            if let Some(n) = r["mru_position"].as_u64() {
+                line += &format!(" | {n}");
+            }
+            if let Some(drive) = r["drive_letter"].as_str() {
+                line += &format!(" | {drive}:");
+            }
+            line
+        })
+        .collect()
+}
+
+#[test]
+fn registry_remote_access_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    remote_access_collection(dir.path());
+    let records = remote_access_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(
+        remote_access_lines(&records),
+        [
+            "rdp rdp_mru server01.example.com | 0",
+            "rdp rdp_mru 10.0.0.9:3390 | 1",
+            "rdp rdp_mru - | 2",
+            r"rdp rdp_server server01.example.com EXAMPLE\alice",
+            "putty putty_session 203.0.113.10:22 admin",
+            "putty putty_host_key 203.0.113.10:22",
+            "winscp winscp_session files.example.com alice",
+            r"mapped_drive network_drive \\fs01\share | Z:",
+            r"mapped_drive map_network_drive_mru \\fs01\share | 0",
+            r"network_share mount_point \\fs01\share",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["username"], "alice");
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    // the damaged MRU value keeps its bytes
+    assert_eq!(records[2]["data_raw"], "010203");
+    assert_eq!(
+        records[2]["problems"],
+        json!(["is REG_BINARY, not a string"])
+    );
+    assert_eq!(records[2]["value_name"], "MRU2");
+    // PuTTY: the session's proxy and that it keeps the proxy's password, not the password
+    let session = &records[4];
+    assert_eq!(
+        (
+            &session["session_name"],
+            &session["protocol"],
+            &session["password_stored"]
+        ),
+        (&json!("web server"), &json!("ssh"), &json!(true))
+    );
+    assert_eq!(
+        session["details"],
+        json!({
+            "ProxyMethod": "3 (http)",
+            "ProxyHost": "proxy.example.com",
+            "StoredPasswords": "ProxyPassword"
+        })
+    );
+    assert!(!session.to_string().contains("not output"));
+    let key = &records[5];
+    assert_eq!(key["host_key_type"], "ssh-ed25519");
+    assert_eq!(key["host_key_fingerprint"], ED25519_FINGERPRINT);
+    assert_eq!(key["host_key"], ED25519_HOST_KEY);
+    assert_eq!(key["value_name"], "ssh-ed25519@22:203.0.113.10");
+    let winscp = &records[6];
+    assert_eq!(
+        (&winscp["protocol"], &winscp["password_stored"]),
+        (&json!("sftp"), &json!(true))
+    );
+    assert!(!winscp.to_string().contains("A35C4E"));
+    assert_eq!(records[7]["protocol"], "Microsoft Windows Network");
+    assert_eq!(records[9]["details"], json!({"Label": "Team"}));
+    assert_eq!(
+        records[9]["key_path"],
+        r"Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\##fs01#share"
+    );
+}
+
+#[test]
+fn registry_remote_access_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    remote_access_collection(dir.path());
+    let out = dir.path().join("remote.csv");
+    let r = run(&[
+        "parse-registry",
+        "remote-access",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "NTUSER.DAT hives parsed: 1",
+        "Hosts: HOST1",
+        "Users: alice",
+        "Connections: 10 (mapped_drive 2, network_share 1, putty 2, rdp 4, winscp 1)",
+        "HOST1  2022-02-08T21:03:52Z  alice  rdp  server01.example.com",
+        "HOST1  2022-02-08T21:03:52Z  alice  putty  203.0.113.10:22",
+        "Sessions with a stored password (not decoded): 2",
+        "HOST1  alice  putty  web server (ProxyPassword)",
+        "HOST1  alice  winscp  alice@files.example.com (Password)",
+        "Keys or values that could not be read: 1",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    // only a list's first item has the list's time as its own
+    assert!(!r.stdout.contains("10.0.0.9"), "{}", r.stdout);
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, REMOTE_ACCESS_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 10);
+    assert_eq!(&rows[4][4], "putty");
+    assert_eq!(&rows[4][6], "203.0.113.10");
+    assert_eq!(&rows[4][16], "True");
+    assert_eq!(
+        &rows[4][17],
+        "ProxyMethod=3 (http); ProxyHost=proxy.example.com; StoredPasswords=ProxyPassword"
+    );
+    assert_eq!(&rows[5][13], ED25519_FINGERPRINT);
+    assert_eq!(&rows[7][15], "Z");
+    assert_eq!(&rows[2][21], "010203");
+}
+
+#[test]
+fn registry_remote_access_of_public_hives() {
+    // notatin's Windows 7 NTUSER.DAT: Remote Desktop, a PuTTY and a WinSCP host key, a WinSCP
+    // session with a stored password, mapped drives and shares; what regipy's and Plaso's plugins
+    // read
+    let dir = tempfile::tempdir().unwrap();
+    let profile = dir.path().join("C/Users/jmroberts");
+    unpack_registry("notatin", &["win7_ntuser.dat"], &profile);
+    let records = remote_access_read(&["-f", profile.join("win7_ntuser.dat").to_str().unwrap()]);
+    assert_eq!(records.len(), 32);
+    let by_client = |client: &str| records.iter().filter(|r| r["client"] == client).count();
+    assert_eq!(
+        [
+            by_client("rdp"),
+            by_client("putty"),
+            by_client("winscp"),
+            by_client("mapped_drive"),
+            by_client("network_share")
+        ],
+        [10, 1, 3, 11, 7]
+    );
+    assert!(records.iter().all(|r| r["problems"] == json!([])
+        && r["username"] == "jmroberts"
+        && r["transaction_log_status"] == "clean"));
+    let lines = remote_access_lines(&records);
+    assert_eq!(lines[2], "rdp rdp_mru 10.150.16.30:63389 | 2");
+    assert_eq!(
+        lines[9],
+        r"rdp rdp_server nyfkws0009015 strozllc.com\jmroberts"
+    );
+    assert_eq!(
+        records[5]["details"]["CertHash"],
+        "f0cab303aeef9d77871d07953bcb60dc86e0f5e0"
+    );
+    assert_eq!(
+        records[5]["key_last_written"],
+        "2014-12-12T19:03:26.217191100Z"
+    );
+    for key in [&records[10], &records[13]] {
+        assert_eq!(
+            key["host_key_fingerprint"],
+            "SHA256:NIWlL38s6iTDvDtHtTXpRipSrsGvuFRtIXjJS2JU7WQ"
+        );
+    }
+    assert_eq!(records[12]["session_name"], "malware@10.1.200.20");
+    assert_eq!(records[12]["password_stored"], true);
+    assert_eq!(
+        records[12]["details"]["LocalDirectory"],
+        r"C:\Users\jmroberts\Desktop"
+    );
+    assert_eq!(
+        lines[18],
+        r"mapped_drive map_network_drive_mru \\NYFKWS0009015\Scratchy | 0"
+    );
+
+    // regipy's NTUSER.DAT: one drive mapped, and its share
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
+    let records = remote_access_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    assert_eq!(
+        remote_access_lines(&records),
+        [
+            r"mapped_drive network_drive \\controller\public | p:",
+            r"network_share mount_point \\controller\public",
+        ]
+    );
+}
+
+#[test]
+fn registry_remote_access_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "remote-access",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not an NTUSER.DAT hive"),
+        "{said}"
+    );
+    let r = run(&[
+        "parse-registry",
+        "remote-access",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No NTUSER.DAT hives were found"), "{said}");
+    // the output is never one of the files read: the user's hive, nor its system's SOFTWARE
+    let collection = tempfile::tempdir().unwrap();
+    remote_access_collection(collection.path());
+    let ntuser = collection.path().join("C/Users/alice/NTUSER.DAT");
+    let software = collection.path().join("C/Windows/System32/config/SOFTWARE");
+    for target in [&ntuser, &software] {
+        let original = std::fs::read(target).unwrap();
+        let r = run(&[
+            "parse-registry",
+            "remote-access",
+            "-f",
+            ntuser.to_str().unwrap(),
+            "-o",
+            target.to_str().unwrap(),
+            "-C",
+            "-K",
+        ]);
+        assert_eq!(r.code, 1);
+        assert_eq!(std::fs::read(target).unwrap(), original);
+    }
 }

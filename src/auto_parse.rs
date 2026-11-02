@@ -29,6 +29,7 @@ const CATEGORIES: &[&str] = &[
     "file_and_folder_opening",
     "file_existence",
     "file_system",
+    "lateral_movement",
     "persistence",
     "process_execution",
     "registry",
@@ -42,6 +43,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+        "remote-access" => "lateral_movement",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
         "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
@@ -66,6 +68,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "RecentDocs",
         "registry" => "Registry",
+        "remote-access" => "RemoteAccess",
         "sam" => "SAM",
         "services" => "Services",
         "shimcache" => "ShimCache",
@@ -1036,6 +1039,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "remote-access",
+            &["parse-registry", "remote-access"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1132,6 +1141,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("remote-access", size);
                 }
                 if matches!(
                     kind.as_deref(),
