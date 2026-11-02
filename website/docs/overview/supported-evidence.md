@@ -23,6 +23,7 @@
 | USB devices | `parse-registry usb` | USB storage and other devices, serial numbers, install/arrival/removal times, drive letters, volume names and serials, users who mounted them | Only the last arrival and removal are kept; drive letters are reused |
 | MuiCache | `parse-registry muicache` | Cached program paths, descriptions and companies associated with a user's shell profile | No time per program; the profile is not necessarily the process account, and metadata can be forged |
 | UserAssist | `parse-registry userassist` | Programs and shortcuts a user started from Explorer, with run counts, focus time and last run | Only Explorer starts are counted; new profiles are seeded with default items |
+| Installed programs | `parse-registry installed-programs` | Installed programs (machine-wide and per user), Windows Installer products, App Paths, WSL distributions and packaged apps | The install date is the installer's; cleanly uninstalled programs leave no entry |
 | SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | Local accounts only; last-logon values are not a complete logon history |
 
 ## Collection types

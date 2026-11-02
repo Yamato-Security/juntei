@@ -301,6 +301,17 @@ fn main() {
                 }
                 code
             }
+            RegistryCommands::InstalledPrograms(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::installed_programs::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
             RegistryCommands::Muicache(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {

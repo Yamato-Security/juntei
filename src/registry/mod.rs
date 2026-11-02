@@ -4,6 +4,7 @@
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
 pub mod bam;
+pub mod installed_programs;
 pub mod muicache;
 pub mod persistence;
 pub mod read;
