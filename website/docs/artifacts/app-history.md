@@ -38,8 +38,10 @@ users' SIDs.
 
 ## Analyst cautions
 
-- **Sysinternals first runs.** A tool's key is made the first time it runs as the user, so its
-  last-write time is that first run (`FirstUsedUTC`) when the key holds only `EulaAccepted`.
+- **Sysinternals EULA acceptance.** `FirstUsedUTC` is a first-use estimate from the key's
+  last-write time when its only value is a readable `EulaAccepted` set to `1`. A declined or
+  damaged EULA does not receive this estimate. Registry settings can also be preconfigured,
+  copied or edited: corroborate execution and its time with other artifacts.
   Tools that keep settings there (Process Explorer, Autoruns, …) rewrite the key later:
   `FirstUsedUTC` is then empty and `KeyLastWrittenUTC` is only the last settings change. A tool
   run with `-accepteula`, or as another user (PsExec's remote side runs as SYSTEM), writes the
@@ -78,7 +80,7 @@ juntei parse-registry app-history -f NTUSER.DAT -t jsonl \
   | jq 'select(.application == "Sysinternals" and .first_used != null)'
 ```
 
-The summary lists the Sysinternals tools first run last, the archives and folders each list used
+The summary lists the newest Sysinternals first-use estimates, the archives and folders each list used
 last, and the OneDrive accounts.
 
 ## Output fields
@@ -92,7 +94,7 @@ last, and the OneDrive accounts.
 | `MruPosition` | The entry's position in its list, 0 the most recent. |
 | `Path` | The archive, folder or document. |
 | `Value` | `EulaAccepted`, a OneDrive account's e-mail address or a synced library's id, a TeamViewer or CCleaner value. |
-| `FirstUsedUTC` | When a Sysinternals tool first ran as the user (see above). |
+| `FirstUsedUTC` | First-use estimate from EULA acceptance (see cautions above). |
 | `Details` | A OneDrive account's `DisplayName`, `UserCID`, `ConfiguredTenantId`, …; an Adobe document's `Version`, `tFileName`, `uFileSize`, `uPageCount`, `sDate`. |
 | `KeyPath`, `KeyLastWrittenUTC`, `ValueName` | Where the record comes from, and when that key last changed. |
 | `DataRaw` | The value's bytes (hex), when they don't decode. |
@@ -102,7 +104,7 @@ last, and the OneDrive accounts.
 ## Investigation strategy
 
 1. Look for Sysinternals tools an ordinary user doesn't run (PsExec, ProcDump, PsLoggedOn,
-   SDelete) and their first runs.
+   SDelete) and their EULA timestamps.
 2. Review archive names and extraction folders around the incident: archives made in
    `ProgramData`, `Temp` or a user's folder before data left the system.
 3. Check OneDrive accounts that aren't the organization's, and TeamViewer account names and file

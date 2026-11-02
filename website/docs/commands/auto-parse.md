@@ -51,6 +51,11 @@ Names are made safe for use as directory names. Duplicate names receive a numeri
 their output directory and `Computer` value so separate systems remain distinguishable in JSON.
 The manifest keeps the hostname exactly as discovered in a separate `hostname` field.
 
+When it lists the systems it found, `auto-parse` also prints each one's time zone from its `SYSTEM`
+hive (for example `Eastern Standard Time, UTC-05:00; daylight time UTC-04:00 from the second
+Sunday of March, 02:00 to the first Sunday of November, 02:00`): the local times the system kept.
+See [System Information](../artifacts/system-info.md).
+
 ## Parsers it runs
 
 One parser failing does not stop the others. `auto-parse` runs these jobs for every discovered
@@ -69,9 +74,11 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - ShimCache
 - Persistence Hunter (131 cross-source persistence checks with allow/block profiles)
 - Defender quarantine metadata
+- Open and Save As dialog history
 - all registry keys and values, including recoverable deleted data
-- services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, UserAssist, and
-  third-party tools' traces (application history)
+- services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, UserAssist, BAM,
+  installed programs, MuiCache, ShellBags, and USB devices
+- system information: names, Windows version, time zone, last shutdown, profiles and SIDs
 
 Persistence Hunter retains every severity (`--min-severity info`), including partial allow matches.
 `LOW` is a classification to investigate; missing signature metadata can produce it for malicious
@@ -105,13 +112,25 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── applications/
 │   │   ├── AppHistory.csv
 │   │   └── AppHistory-logs.txt
+│   ├── applications/
+│   │   ├── InstalledPrograms.csv
+│   │   └── InstalledPrograms-logs.txt
+│   ├── external_devices/
+│   │   ├── USB.csv
+│   │   └── USB-logs.txt
 │   ├── file_and_folder_opening/
 │   │   ├── jump-lists/
 │   │   ├── JumpLists-logs.txt
 │   │   ├── LNK.csv
 │   │   ├── LNK-logs.txt
+│   │   ├── MRU.csv
+│   │   ├── MRU-logs.txt
+│   │   ├── OpenSaveMRU.csv
+│   │   ├── OpenSaveMRU-logs.txt
 │   │   ├── RecentDocs.csv
-│   │   └── RecentDocs-logs.txt
+│   │   ├── RecentDocs-logs.txt
+│   │   ├── ShellBags.csv
+│   │   └── ShellBags-logs.txt
 │   ├── file_existence/
 │   │   ├── amcache/
 │   │   ├── Amcache-logs.txt
@@ -126,6 +145,9 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── MFT-logs.txt
 │   │   ├── UsnJournal.csv
 │   │   └── UsnJournal-logs.txt
+│   ├── lateral_movement/
+│   │   ├── RemoteAccess.csv
+│   │   └── RemoteAccess-logs.txt
 │   ├── persistence/
 │   │   ├── Persistence.csv
 │   │   ├── Persistence-logs.txt
@@ -134,6 +156,10 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── TaskCache.csv
 │   │   └── TaskCache-logs.txt
 │   ├── process_execution/
+│   │   ├── BAM.csv
+│   │   ├── BAM-logs.txt
+│   │   ├── MuiCache.csv
+│   │   ├── MuiCache-logs.txt
 │   │   ├── Prefetch.csv
 │   │   ├── Prefetch-logs.txt
 │   │   ├── PrefetchTimeline.csv
@@ -145,10 +171,13 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── registry/
 │   │   ├── Registry.csv
 │   │   └── Registry-logs.txt
-│   └── security_products/
-│       ├── DefenderQuarantine.csv
-│       ├── DefenderQuarantine-logs.txt
-│       └── defender-quarantined/  # only with -x
+│   ├── security_products/
+│   │   ├── DefenderQuarantine.csv
+│   │   ├── DefenderQuarantine-logs.txt
+│   │   └── defender-quarantined/  # only with -x
+│   └── system_information/
+│       ├── SystemInfo.csv
+│       └── SystemInfo-logs.txt
 └── HOST2/
     └── …
 ```
@@ -157,13 +186,17 @@ CSV keeps separate tables because each artifact has different columns:
 |---|---|
 | `accounts` | SAM local accounts |
 | `applications` | Application history (third-party tools' traces) |
-| `file_and_folder_opening` | Jump Lists, LNK shortcuts, RecentDocs |
+| `applications` | Installed programs |
+| `external_devices` | USB devices and volumes |
+| `file_and_folder_opening` | Jump Lists, LNK shortcuts, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `file_existence` | Amcache, ShimCache |
 | `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
+| `lateral_movement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
 | `persistence` | Registry autostarts, services, TaskCache |
-| `process_execution` | Prefetch, Prefetch timeline, SRUM, UserAssist |
+| `process_execution` | BAM and DAM, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
 | `registry` | General hive keys and values, including recovered records |
 | `security_products` | Defender quarantine metadata and optional extracted content |
+| `system_information` | Names, Windows version, time zone, last shutdown, profiles and SIDs of the system |
 
 Categories help organize investigations; they are not proof of a particular activity. For example,
 Amcache and ShimCache entries alone do not establish execution. SRUM records resource usage;
@@ -178,7 +211,7 @@ covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `AppHistory.csv`, `Registry.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `AppHistory.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider
@@ -338,3 +371,5 @@ are not relocated or deleted automatically.
 
 See [reading the recovered security descriptor](../artifacts/defender-quarantine.md#reading-the-recovered-security-descriptor)
 for the report fields and their forensic limitations.
+
+Auto-parse also reads users' remote connections (RDP, PuTTY, WinSCP and mapped drives).

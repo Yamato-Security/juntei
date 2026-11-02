@@ -1,9 +1,22 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `parse-registry app-history`: traces third-party tools leave in `NTUSER.DAT` hives, read by
 //! ys-registry-parser's `app_history` module, with Hayabusa's input options, progress bar and
-//! results summary. One record per Sysinternals tool (with when it first ran as the user), WinRAR,
+//! results summary. One record per Sysinternals tool (with a first-use estimate), WinRAR,
 //! 7-Zip and WinZip archive and folder history entry, OneDrive account and synced folder, Adobe
 //! Acrobat and Reader recent file and folder, and TeamViewer and CCleaner value. The summary
-//! lists the Sysinternals tools first run last, the archives and folders used last, and the
+//! lists the Sysinternals tools with the newest first-use estimates, the archives and folders used last, and the
 //! OneDrive accounts.
 
 use super::{
@@ -91,7 +104,10 @@ pub fn run(opts: &RegistryAppHistoryOptions) -> i32 {
     // --- parse and write -------------------------------------------------------------------
     let mut hosts = Hosts::new(!opts.no_logs);
     let mut profiles = Profiles::new(!opts.no_logs);
-    let mut stats = Stats::default();
+    let mut stats = Stats {
+        to_stderr: data_on_stdout,
+        ..Stats::default()
+    };
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
@@ -306,6 +322,7 @@ impl<'a> Record<'a> {
 /// Counts for the results summary.
 #[derive(Default)]
 struct Stats {
+    to_stderr: bool,
     hives: usize,
     failed: usize,
     hosts: BTreeSet<String>,
@@ -316,7 +333,7 @@ struct Stats {
     without: usize,
     records: usize,
     apps: BTreeMap<&'static str, usize>,
-    /// Sysinternals tools with their first runs: (first run, line).
+    /// Sysinternals tools with first-use estimates: (estimate, line).
     tools: Vec<(u64, String)>,
     /// Each archive and folder list's most recent entry, by its key's last write: (time, line).
     archives: Vec<(u64, String)>,
@@ -347,6 +364,9 @@ impl Stats {
             self.without += 1;
         }
         for problem in &problems {
+            if self.to_stderr {
+                eprintln!("{}: {problem}", opened.source);
+            }
             self.problem(&opened.source, problem);
         }
         for trace in &traces {
@@ -472,7 +492,7 @@ impl Stats {
         if !self.tools.is_empty() {
             p_label(
                 no_color,
-                "Sysinternals tools first run (UTC, host, user, tool; newest first): ",
+                "Sysinternals first-use estimates (UTC, host, user, tool; newest first): ",
                 "",
             );
             for (_, line) in &self.tools {
