@@ -5,11 +5,11 @@ event. An attacker can use normal Windows configuration for this purpose. Many l
 use exactly the same mechanisms, so finding a persistence entry is a starting point for analysis.
 
 `juntei persistence-hunter` is a native Rust port of
-[Hexastrike's PyrsistenceSniper](https://github.com/hexastrike/PyrsistenceSniper), with 131 checks: the
-130-check PyrsistenceSniper catalogue plus a native Start Menu COM check.
+[Hexastrike's PyrsistenceSniper](https://github.com/hexastrike/PyrsistenceSniper), with 132 checks: the
+130-check PyrsistenceSniper catalogue plus native Start Menu COM and historical-service checks.
 
 For an explanation of every mechanism, its evidence locations, and how to investigate a finding,
-see the [131-check persistence guide](../persistence-hunter/index.md). The
+see the [132-check persistence guide](../persistence-hunter/index.md). The
 [persistence acknowledgements](../persistence-hunter/acknowledgements.md) describe the Python and
 PowerShell projects behind the catalogue.
 
@@ -288,6 +288,20 @@ the limits. Keep `--coverage Coverage.csv` and the parser log with your findings
 
 The port uses Juntei's CSV/JSON/JSONL formats. It does not call the upstream Python program, query
 online enrichment services, or reproduce the upstream HTML/XLSX UI.
+
+## Recover historical services
+
+```bash
+juntei persistence-hunter -d evidence/ --check deleted_services --min-severity info -o HistoricalServices.csv --coverage Coverage.csv
+```
+
+The check preserves separate recovered service states and their provenance, including deleted
+registry cells and transaction-log versions, including independent `Parameters\ServiceDll` payload
+rows. Missing fields remain unknown. Key-only origins add provenance without duplicate empty states. Historical records
+default to informational severity; they do not establish active persistence or execution. Current
+files at old paths are not treated as historical payload bytes. Matching local System 7045 events
+can provide independent installation references using the key name or same-state display name; `--no-timeline` disables this optional correlation.
+See the [historical-service guide](../persistence-hunter/index.md#deleted_services) for limits and interpretation.
 
 ## Further details
 

@@ -51,6 +51,7 @@ pub enum Resolution {
 pub struct Context {
     pub root: PathBuf,
     pub computer: String,
+    pub(super) service_event_correlation: bool,
     pub hives: Vec<HiveInput>,
     pub files: Vec<EvidenceFile>,
     /// Collected directories, including empty CLSID-named Start Menu folders.
@@ -378,6 +379,7 @@ impl Context {
         Ok(Self {
             root,
             computer,
+            service_event_correlation: true,
             hives,
             files,
             directories,
