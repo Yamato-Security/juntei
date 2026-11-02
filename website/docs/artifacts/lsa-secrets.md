@@ -60,7 +60,7 @@ host.
   encrypted; only its user name length is read. `CachedLogonsKept` is `NL$Control`'s count,
   which follows `CachedLogonsCount` (10 by default). Slots in use mean domain users signed in
   interactively, and their credentials can be cracked offline from the hive. The users' names
-  are encrypted and aren't read.
+  are encrypted and aren't decoded. Only validated binary records with a complete header and consistent user-name length count as in use. If `Problems` reports damaged slots, the in-use count covers validated slots only; do not interpret the damaged slots as empty.
 
 ## Parse with Juntei
 
@@ -98,7 +98,7 @@ the services whose account passwords LSA stores, and counts the cached logon slo
 | `CurrentValueLastWrittenUTC`, `OldValueLastWrittenUTC`, `KeyLastWrittenUTC` | The `CurrVal`, `OldVal` and secret keys' last writes. |
 | `CachedLogons`, `CachedLogonsInUse`, `CachedLogonsKept` | The cached logons' record: slots, slots in use, and `NL$Control`'s count. |
 | `TransactionLogStatus`, `LogsApplied` | Registry recovery context. |
-| `Problems` | Times that aren't 8 bytes (their bytes kept: a time, not a secret), and keys that can't be read. |
+| `Problems` | Malformed or out-of-range times (only time metadata is shown), damaged cache headers, wrong cache value types, and keys that can't be read. |
 
 ## Investigation strategy
 

@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `parse-registry lsa-secrets`: which LSA secrets and cached domain logons `SECURITY` hives
 //! hold, and when they were set, read by ys-registry-parser's `lsa_secrets` module, with
 //! Hayabusa's input options, progress bar and results summary. Names and times only: nothing is
@@ -89,7 +102,10 @@ pub fn run(opts: &RegistryLsaSecretsOptions) -> i32 {
 
     // --- parse and write -------------------------------------------------------------------
     let mut hosts = Hosts::new(!opts.no_logs);
-    let mut stats = Stats::default();
+    let mut stats = Stats {
+        to_stderr: data_on_stdout,
+        ..Stats::default()
+    };
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
@@ -288,6 +304,7 @@ impl<'a> Record<'a> {
 /// Counts for the results summary.
 #[derive(Default)]
 struct Stats {
+    to_stderr: bool,
     hives: usize,
     failed: usize,
     hosts: BTreeSet<String>,
@@ -327,6 +344,9 @@ impl Stats {
         }
         let (found, problems) = found.unwrap_or_default();
         for problem in &problems {
+            if self.to_stderr {
+                eprintln!("{}: {problem}", opened.source);
+            }
             self.problem(&opened.source, problem);
         }
         for secret in &found {
