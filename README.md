@@ -38,6 +38,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 
 | Artifact | Type |
 | --- | --- |
+| **BAM and DAM** (`SYSTEM`) — The last time each user ran each program, with users named from the SAM and ProfileList. | Registry |
 | **Prefetch** (`*.pf`) — Program run counts, recent execution times, and referenced files. | File |
 | **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | ESE |
 | **UserAssist** (`NTUSER.DAT`) — Programs and shortcuts a user started from Explorer, with run counts, focus time, and last run times. | Registry |
