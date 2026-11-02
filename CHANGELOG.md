@@ -8,6 +8,8 @@
 
 **Bug Fixes:**
 
+- `parse-registry system-info`: retain replay provenance for a SAM SID restored from transaction logs. (@YamatoSecurity)
+
 - `parse-registry installed-programs`: retain hive-level corruption diagnostics on stderr when streaming records, resolve package owners from profile paths with trailing separators, and use corrected typed-value, package-version and WSL parent-value decoding. (@YamatoSecurity)
 
 - `parse-registry muicache`: keep relative paths and paths that escape Windows or Program Files visible in the summary, and use registry comparisons that keep distinct Unicode names and program paths separate. (@YamatoSecurity)
@@ -28,6 +30,8 @@
 - `persistence-hunter`: prevent Unicode registry text from crashing or indefinitely expanding a scan; restrict hive selection to canonical capture locations; retain readable hives and file checks when the input budget is reached; handle captured/original drive labels and DNS/NetBIOS host aliases; bound PE resource traversal; retain accessibility replacement candidates with damaged metadata and recover malformed registry/BITS text; classify OS-directory targets after resolution. (@YamatoSecurity)
 
 **New Features:**
+
+- Add `parse-registry system-info` for system identity, Windows versions, time zones, shutdown, profiles and SIDs, including `SystemInfo.csv` in automatic parsing. (@YamatoSecurity)
 
 - Rename the persistence command to `persistence-hunter` and its Rust module to `persistence_hunter`. Automatic parsing saves the hunter's findings as `PersistenceHunter.csv` (or JSON/JSONL) with matching log names; simplify the progress message and update the website terminology. (@YamatoSecurity)
 
