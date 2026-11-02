@@ -4,6 +4,8 @@
 
 **Bug Fixes:**
 
+- `parse-registry usb`: preserve each user hive's provenance when profile names repeat, skip symlinks during companion-user discovery, and use corrected USB ID joins with complete source/replay provenance. (@YamatoSecurity)
+
 - `persistence-hunter`: prefer domain- or host-qualified profile folders over a plain-name profile when resolving task COM handlers. Keep genuinely ambiguous mappings unresolved and explain unavailable per-user lookup in the finding as well as coverage. (@YamatoSecurity)
 
 

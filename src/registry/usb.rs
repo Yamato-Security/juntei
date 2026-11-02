@@ -229,11 +229,11 @@ impl SystemOf {
     }
 
     /// The opened user hive of user `user`.
-    fn user(&self, user: &str) -> Option<&Opened> {
+    fn user(&self, source: &str) -> Option<(&str, &Opened)> {
         self.users
             .iter()
-            .find(|(name, _)| name == user)
-            .map(|(_, opened)| opened)
+            .find(|(_, opened)| opened.source == source)
+            .map(|(name, opened)| (name.as_str(), opened))
     }
 }
 
@@ -424,13 +424,14 @@ impl<'a> Record<'a> {
             .users
             .iter()
             .map(|u| {
-                let hive = of.user(&u.user);
+                let source = of.user(&u.user);
+                let hive = source.map(|(_, opened)| opened);
                 if let Some(hive) = hive {
                     statuses.push(hive.log_status(h.replayed_in.contains(&"NTUSER.DAT")));
                     logs.extend(hive.recovery.logs_applied.iter().cloned());
                 }
                 UserRecord {
-                    username: &u.user,
+                    username: source.map_or(u.user.as_str(), |(name, _)| name),
                     mount_points2_last_written: filetime(u.last_written),
                     source_path: hive.map(|o| o.source.as_str()),
                 }
@@ -609,13 +610,14 @@ impl Stats {
         let users: Vec<(String, Vec<usb::MountPoint>)> = of
             .users
             .iter()
-            .map(|(name, opened)| {
+            .map(|(_, opened)| {
                 let points = self.list(
                     &opened.source,
                     "MountPoints2",
                     usb::mount_points(&opened.hive),
                 );
-                (name.clone(), points)
+                // The parser joins on a unique source identity, never a display username.
+                (opened.source.clone(), points)
             })
             .collect();
         let history = usb::history(&Sources {
@@ -626,7 +628,7 @@ impl Stats {
             users: &users,
         });
         for h in &history {
-            self.count(system, h);
+            self.count(system, of, h);
             let record = Record::new(system, of, h);
             match writer.as_deref_mut() {
                 Some(w) if w.is_csv() => w.csv(&record.csv())?,
@@ -647,10 +649,13 @@ impl Stats {
     }
 
     /// Count record `h` of `system`.
-    fn count(&mut self, system: &Opened, h: &History) {
+    fn count(&mut self, system: &Opened, of: &SystemOf, h: &History) {
         self.records += 1;
         *self.classes.entry(class(h)).or_default() += 1;
-        self.users.extend(h.users.iter().map(|u| u.user.clone()));
+        self.users.extend(h.users.iter().map(|u| {
+            of.user(&u.user)
+                .map_or(u.user.clone(), |(name, _)| name.to_owned())
+        }));
         if h.device.is_none()
             && h.volume_guid.is_some()
             && h.named

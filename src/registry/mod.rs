@@ -330,7 +330,13 @@ pub fn software_of(path: &Path) -> Option<PathBuf> {
 pub fn users_of(system: &Path) -> Vec<PathBuf> {
     let children = |dir: &Path| -> Vec<PathBuf> {
         let mut paths: Vec<PathBuf> = std::fs::read_dir(dir)
-            .map(|entries| entries.flatten().map(|e| e.path()).collect())
+            .map(|entries| {
+                entries
+                    .flatten()
+                    .filter(|e| e.file_type().is_ok_and(|t| !t.is_symlink()))
+                    .map(|e| e.path())
+                    .collect()
+            })
             .unwrap_or_default();
         paths.sort();
         paths

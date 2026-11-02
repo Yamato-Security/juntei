@@ -9951,3 +9951,84 @@ fn persistence_hunter_has_consistent_command_help() {
     );
     assert!(help.stdout.contains("--min-severity") && help.stdout.contains("--coverage"));
 }
+
+#[test]
+fn registry_usb_duplicate_user_names_preserve_each_source_hive() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(
+        dir.path().join("SYSTEM"),
+        reg_tree(
+            "ROOT",
+            &[
+                ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+                (
+                    r"ControlSet001\Control\ComputerName\ComputerName",
+                    "ComputerName",
+                    REG_SZ,
+                    utf16z("TESTHOST"),
+                ),
+            ],
+        ),
+    )
+    .unwrap();
+    let guid = "{aaaaaaaa-0000-0000-0000-000000000001}";
+    let mut sources = Vec::new();
+    for folder in ["export-one", "export-two"] {
+        let profile = dir.path().join(folder);
+        std::fs::create_dir(&profile).unwrap();
+        let ntuser = profile.join("NTUSER.DAT");
+        let hive = reg_tree(
+            "ROOT",
+            &[
+                (
+                    r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
+                    "Local AppData",
+                    REG_SZ,
+                    utf16z(r"C:\Users\alice\AppData\Local"),
+                ),
+                (
+                    &format!(
+                        r"Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\{guid}"
+                    ),
+                    "BaseClass",
+                    REG_DWORD,
+                    0u32.to_le_bytes().to_vec(),
+                ),
+            ],
+        );
+        std::fs::write(&ntuser, hive).unwrap();
+        sources.push(ntuser.to_string_lossy().to_string());
+    }
+    let records = usb_read(&["-f", dir.path().join("SYSTEM").to_str().unwrap()]);
+    let volume = records.iter().find(|r| r["volume_guid"] == guid).unwrap();
+    let users = volume["users"].as_array().unwrap();
+    assert_eq!(users.len(), 2);
+    assert!(users.iter().all(|u| u["username"] == "alice"));
+    let paths: std::collections::BTreeSet<_> = users
+        .iter()
+        .map(|u| u["source_path"].as_str().unwrap().to_owned())
+        .collect();
+    assert_eq!(paths, sources.into_iter().collect());
+}
+
+#[cfg(unix)]
+#[test]
+fn registry_usb_does_not_discover_user_hives_through_external_symlinks() {
+    let dir = tempfile::tempdir().unwrap();
+    usb_collection(dir.path());
+    let outside = tempfile::tempdir().unwrap();
+    let ntuser = dir.path().join("C/Users/bob/NTUSER.DAT");
+    std::fs::copy(&ntuser, outside.path().join("NTUSER.DAT")).unwrap();
+    let link = dir.path().join("C/Users/outside-profile");
+    std::os::unix::fs::symlink(outside.path(), &link).unwrap();
+    let rows = usb_read(&["-d", dir.path().to_str().unwrap()]);
+    assert!(
+        !rows.iter().any(|r| r["users"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|u| u["source_path"]
+                .as_str()
+                .is_some_and(|p| p.contains("outside-profile"))))
+    );
+}

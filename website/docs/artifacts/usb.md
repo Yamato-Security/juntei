@@ -162,3 +162,5 @@ letters, and how many volumes belong to USB storage devices without a device key
   [Mounted devices](https://github.com/libyal/winreg-kb/blob/main/docs/sources/system-keys/Mounted-devices.md) and
   [Mount points](https://github.com/libyal/winreg-kb/blob/main/docs/sources/explorer-keys/Mount-points.md)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+
+User joins use each hive's source identity, so exported hives with the same profile name remain separate. `SourceKeys` retains the contributing user-hive paths. Companion-user discovery skips symbolic links, consistent with recursive hive discovery. VID/PID correlation requires a matching usable container ID; without one, serial matching must yield unambiguous IDs. Conflicting candidates remain unknown with a problem.
