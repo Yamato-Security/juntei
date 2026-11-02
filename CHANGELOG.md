@@ -8,7 +8,7 @@
 
 **Bug Fixes:**
 
-- Security-setting exports retain list warnings on stderr, AMSI COM replay/damage provenance, and explain the limits of legacy Defender settings. (@YamatoSecurity)
+- Security-setting exports retain list warnings and AMSI COM replay/damage provenance, leave unknown current-control-set flags empty, and explain the limits of legacy Defender settings. (@YamatoSecurity)
 
 - `parse-registry app-history`: retain list-level export warnings on stderr and avoid treating declined or damaged Sysinternals EULAs as first-use estimates. (@YamatoSecurity)
 
