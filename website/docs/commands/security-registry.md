@@ -308,6 +308,39 @@ Display Settings:
 See [Most-Recently-Used Lists](../artifacts/mru.md).
 
 
+## `parse-registry app-history`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry app-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
+  -f, --file <FILE>      File path to one NTUSER.DAT hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+Sysinternals tools, WinRAR, 7-Zip and WinZip history, OneDrive accounts, Adobe recent files,
+TeamViewer and CCleaner. See [Application History](../artifacts/app-history.md).
+
+
 ## `parse-registry persistence`
 
 ```text
@@ -673,3 +706,5 @@ See also [remote-access](../artifacts/remote-access.md).
 See also [system-info](../artifacts/system-info.md).
 
 See also [mru](../artifacts/mru.md).
+
+See also [app-history](../artifacts/app-history.md).

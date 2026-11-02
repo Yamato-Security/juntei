@@ -110,6 +110,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **System information** (`SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY`) — Computer and domain names, Windows version and install date, time zone and the local times it kept, last shutdown, last user, profiles, and SIDs. | Registry |
 
+### Applications
+
+| Artifact | Type |
+| --- | --- |
+| **Application history** (`NTUSER.DAT`) — Sysinternals tools a user ran, WinRAR, 7-Zip and WinZip archive and folder history, OneDrive accounts, Adobe recent files, and TeamViewer and CCleaner values. | Registry |
+
 ### Security Products
 
 | Artifact | Type |

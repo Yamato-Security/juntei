@@ -110,6 +110,9 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── SAM.csv
 │   │   └── SAM-logs.txt
 │   ├── applications/
+│   │   ├── AppHistory.csv
+│   │   └── AppHistory-logs.txt
+│   ├── applications/
 │   │   ├── InstalledPrograms.csv
 │   │   └── InstalledPrograms-logs.txt
 │   ├── external_devices/
@@ -182,6 +185,7 @@ CSV keeps separate tables because each artifact has different columns:
 | Category | Artifacts |
 |---|---|
 | `accounts` | SAM local accounts |
+| `applications` | Application history (third-party tools' traces) |
 | `applications` | Installed programs |
 | `external_devices` | USB devices and volumes |
 | `file_and_folder_opening` | Jump Lists, LNK shortcuts, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
@@ -207,7 +211,7 @@ covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `AppHistory.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider

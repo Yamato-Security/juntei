@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "app-history",
                 "mru",
                 "system-info",
                 "remote-access",
@@ -333,6 +334,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         let artifact = task["artifact"].as_str().unwrap();
         let category = match artifact {
             "sam" => "accounts",
+            "app-history" => "applications",
             "installed-programs" => "applications",
             "usb" => "external_devices",
             "jump-lists" | "lnk" | "mru" | "opensavemru" | "recentdocs" | "shellbags" => {
@@ -652,7 +654,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                29
+                30
             );
             assert!(
                 output
@@ -798,7 +800,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 58);
+    assert_eq!(tasks.len(), 60);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5555,6 +5557,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("app-history "), "{help}");
     assert!(help.contains("mru "), "{help}");
     assert!(help.contains("system-info "), "{help}");
     assert!(help.contains("remote-access "), "{help}");
@@ -13849,6 +13852,400 @@ fn registry_mru_keeps_list_warnings_in_stdout_exports() {
         );
         if format == "jsonl" {
             assert_eq!(jsonl_records(&r.stdout).len(), 1);
+        }
+    }
+}
+
+// --- parse-registry app-history -----------------------------------------------------------------
+
+/// `parse-registry app-history`'s CSV columns.
+const APP_HISTORY_COLUMNS: [&str; 18] = [
+    "Host",
+    "SourcePath",
+    "Username",
+    "UserSid",
+    "Application",
+    "Item",
+    "MruPosition",
+    "Path",
+    "Value",
+    "FirstUsedUTC",
+    "Details",
+    "KeyPath",
+    "KeyLastWrittenUTC",
+    "ValueName",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// One system's SYSTEM hive (its name), SOFTWARE hive (alice's profile) and alice's NTUSER.DAT
+/// with a trace of each kind: Sysinternals tools, WinRAR and 7-Zip history (one list cut short),
+/// a OneDrive account and a TeamViewer account name.
+fn app_history_collection(root: &Path) {
+    let utf16_list = |items: &[&str]| -> Vec<u8> {
+        let mut b: Vec<u8> = items.iter().flat_map(|i| utf16z(i)).collect();
+        b.extend([0, 0]);
+        b
+    };
+    let mut cut = utf16_list(&[r"C:\Users\alice\Desktop"]);
+    cut.push(0x41);
+    let business = r"Software\Microsoft\OneDrive\Accounts\Business1";
+    let ntuser = reg_tree(
+        "ROOT",
+        &[
+            (
+                r"Software\Sysinternals\PsExec",
+                "EulaAccepted",
+                REG_DWORD,
+                1u32.to_le_bytes().to_vec(),
+            ),
+            (
+                r"Software\Sysinternals\Process Explorer",
+                "EulaAccepted",
+                REG_DWORD,
+                1u32.to_le_bytes().to_vec(),
+            ),
+            (
+                r"Software\Sysinternals\Process Explorer",
+                "ShowLowerpane",
+                REG_DWORD,
+                0u32.to_le_bytes().to_vec(),
+            ),
+            (
+                r"Software\WinRAR\ArcHistory",
+                "1",
+                REG_SZ,
+                utf16z(r"C:\Users\alice\old.rar"),
+            ),
+            (
+                r"Software\WinRAR\ArcHistory",
+                "0",
+                REG_SZ,
+                utf16z(r"C:\Users\alice\loot.rar"),
+            ),
+            (
+                r"Software\7-Zip\Compression",
+                "ArcHistory",
+                REG_BINARY,
+                utf16_list(&[r"C:\ProgramData\out.7z", r"D:\stage.zip"]),
+            ),
+            (r"Software\7-Zip\FM", "FolderHistory", REG_BINARY, cut),
+            (business, "UserEmail", REG_SZ, utf16z("alice@example.com")),
+            (
+                business,
+                "UserFolder",
+                REG_SZ,
+                utf16z(r"C:\Users\alice\OneDrive - Example"),
+            ),
+            (
+                r"Software\TeamViewer",
+                "BuddyLoginName",
+                REG_SZ,
+                utf16z("alice@example.com"),
+            ),
+        ],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+            "ProfileImagePath",
+            REG_EXPAND_SZ,
+            utf16z(r"C:\Users\alice"),
+        )],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    let profile = root.join("C/Users/alice");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::create_dir_all(&profile).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(profile.join("NTUSER.DAT"), ntuser).unwrap();
+}
+
+/// `parse-registry app-history` with `args`, as JSON Lines.
+fn app_history_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "app-history"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_app_history_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    app_history_collection(dir.path());
+    let records = app_history_read(&["-d", dir.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} | {} | {} | {}",
+                r["application"].as_str().unwrap(),
+                r["item"].as_str().unwrap(),
+                r["mru_position"],
+                r["path"].as_str().unwrap_or("-"),
+                r["value"].as_str().unwrap_or("-"),
+                r["first_used"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            // the hive's (sorted) keys: Process Explorer keeps settings, so no first run
+            "Sysinternals Process Explorer null | - | 1 | -",
+            "Sysinternals PsExec null | - | 1 | 2022-02-08T21:03:52Z",
+            r"WinRAR ArcHistory 0 | C:\Users\alice\loot.rar | - | -",
+            r"WinRAR ArcHistory 1 | C:\Users\alice\old.rar | - | -",
+            r"7-Zip ArcHistory 0 | C:\ProgramData\out.7z | - | -",
+            r"7-Zip ArcHistory 1 | D:\stage.zip | - | -",
+            "7-Zip FolderHistory null | - | - | -",
+            r"7-Zip FolderHistory 0 | C:\Users\alice\Desktop | - | -",
+            r"OneDrive Business1 null | C:\Users\alice\OneDrive - Example | alice@example.com | -",
+            "TeamViewer BuddyLoginName null | - | alice@example.com | -",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["username"], "alice");
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    assert_eq!(records[1]["key_path"], r"Software\Sysinternals\PsExec");
+    assert_eq!(records[1]["value_name"], Value::Null);
+    assert_eq!(records[2]["value_name"], "0");
+    assert_eq!(records[2]["details"], json!({}));
+    // the list cut short: its entries as far as they go, and its bytes
+    let cut = &records[6];
+    assert_eq!(
+        cut["problems"],
+        json!(["is not a list of valid UTF-16 strings"])
+    );
+    assert!(cut["data_raw"].as_str().unwrap().ends_with("000041"));
+}
+
+#[test]
+fn registry_app_history_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    app_history_collection(dir.path());
+    let out = dir.path().join("apps.csv");
+    let r = run(&[
+        "parse-registry",
+        "app-history",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "NTUSER.DAT hives parsed: 1",
+        "Hosts: HOST1",
+        "Users: alice",
+        "Traces: 10 (7-Zip 4, OneDrive 1, Sysinternals 2, TeamViewer 1, WinRAR 2)",
+        "2022-02-08T21:03:52Z  HOST1  alice  PsExec",
+        r"2022-02-08T21:03:52Z  HOST1  alice  WinRAR ArcHistory  C:\Users\alice\loot.rar",
+        r"2022-02-08T21:03:52Z  HOST1  alice  7-Zip ArcHistory  C:\ProgramData\out.7z",
+        r"HOST1  alice  Business1  alice@example.com  C:\Users\alice\OneDrive - Example",
+        "Traces or keys that could not be read: 1",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    assert!(
+        !r.stdout.contains("alice  Process Explorer"),
+        "{}",
+        r.stdout
+    );
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header, APP_HISTORY_COLUMNS);
+    assert_eq!(rows.len(), 10);
+    assert_eq!(rows[1]["FirstUsedUTC"], "2022-02-08T21:03:52Z");
+    assert_eq!(rows[0]["FirstUsedUTC"], "");
+    assert_eq!(rows[3]["MruPosition"], "1");
+    assert_eq!(rows[3]["ValueName"], "1");
+    assert_eq!(rows[6]["MruPosition"], "");
+    assert_eq!(rows[8]["Value"], "alice@example.com");
+}
+
+#[test]
+fn registry_app_history_of_public_hives() {
+    // the DFIR Artifact Museum's dirty Windows 10 APT simulation user, with its logs: PsExec and
+    // Sysmon, as regipy's sysinternals gives them
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry(
+        "aptsimulator_w10",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        dir.path(),
+    );
+    let records = app_history_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} {}",
+                r["application"].as_str().unwrap(),
+                r["item"].as_str().unwrap(),
+                r["value"].as_str().unwrap_or("-"),
+                r["first_used"].as_str().unwrap_or("-"),
+                r["path"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            "Sysinternals PsExec 1 2022-03-10T19:57:43.579822600Z -",
+            "Sysinternals System Monitor 1 2022-03-10T19:51:17.013712800Z -",
+            r"OneDrive Personal - - C:\Users\TestUser\OneDrive",
+        ]
+    );
+    assert!(records.iter().all(|r| r["problems"] == json!([])
+        && r["transaction_log_status"] == "unchanged"
+        && r["username"] == "TestUser"));
+
+    // regipy's NTUSER.DAT: WinRAR's history, as regipy's winrar_plugin and Plaso's winrar_mru
+    // give it
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
+    let records = app_history_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {}",
+                r["item"].as_str().unwrap(),
+                r["mru_position"],
+                r["path"].as_str().unwrap()
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            r"ArcHistory 0 C:\Users\tony\Downloads\RegistryFinder64.zip",
+            r"ArcHistory 1 C:\temp\token.zip",
+            "ArcName 0 Tools.zip",
+            "ArcName 1 data.zip",
+            r"ExtrPath 0 C:\Users\tony\Downloads",
+            r"ExtrPath 1 C:\temp",
+        ]
+    );
+    assert_eq!(
+        records[0]["key_last_written"],
+        "2021-11-18T13:59:04.888952700Z"
+    );
+}
+
+#[test]
+fn registry_app_history_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "app-history",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("not an NTUSER.DAT hive"), "{said}");
+    let r = run(&[
+        "parse-registry",
+        "app-history",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No NTUSER.DAT hives were found"), "{said}");
+    // the output is never one of the files read: the hive's system's SOFTWARE included
+    let collection = tempfile::tempdir().unwrap();
+    app_history_collection(collection.path());
+    let software = collection.path().join("C/Windows/System32/config/SOFTWARE");
+    let original = std::fs::read(&software).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "app-history",
+        "-f",
+        collection
+            .path()
+            .join("C/Users/alice/NTUSER.DAT")
+            .to_str()
+            .unwrap(),
+        "-o",
+        software.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&software).unwrap(), original);
+}
+
+#[test]
+fn registry_app_history_keeps_damaged_list_warnings_in_exports() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("NTUSER.DAT");
+    let mut bytes = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Sysinternals\PsExec",
+            "EulaAccepted",
+            REG_DWORD,
+            1u32.to_le_bytes().to_vec(),
+        )],
+    );
+    let name = bytes.windows(6).position(|w| w == b"PsExec").unwrap();
+    // The value list holds one offset, but its key claims two.
+    put_u32(&mut bytes, name - 76 + 36, 2);
+    std::fs::write(&hive, bytes).unwrap();
+    for format in ["csv", "json", "jsonl"] {
+        let r = run(&[
+            "parse-registry",
+            "app-history",
+            "-f",
+            hive.to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        assert!(
+            r.stderr.contains("Software\\Sysinternals\\PsExec"),
+            "{}",
+            r.stderr
+        );
+        if format == "csv" {
+            assert_eq!(
+                csv::Reader::from_reader(r.stdout.as_bytes())
+                    .records()
+                    .count(),
+                1
+            );
+        } else {
+            let records = json_documents(&r.stdout);
+            assert_eq!(records.len(), 1);
+            assert!(records[0]["first_used"].is_null());
         }
     }
 }

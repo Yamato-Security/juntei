@@ -16,6 +16,7 @@
 //! here: finding the hives of a collection, opening each with its transaction logs replayed when
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
+pub mod app_history;
 pub mod bam;
 pub mod installed_programs;
 pub mod mru;

@@ -56,6 +56,7 @@ const CATEGORIES: &[&str] = &[
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
         "sam" => "accounts",
+        "app-history" => "applications",
         "installed-programs" => "applications",
         "usb" => "external_devices",
         "jump-lists" | "lnk" | "mru" | "opensavemru" | "recentdocs" | "shellbags" => {
@@ -79,6 +80,7 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "app-history" => "AppHistory",
         "bam" => "BAM",
         "defender-quarantine" => "DefenderQuarantine",
         "i30" => "I30",
@@ -1141,6 +1143,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &[],
         );
         add("mru", &["parse-registry", "mru"], OutputShape::File, &[]);
+        add(
+            "app-history",
+            &["parse-registry", "app-history"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1237,6 +1245,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("app-history", size);
                     found.add_size("mru", size);
                 }
                 if matches!(

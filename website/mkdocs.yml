@@ -150,6 +150,8 @@ nav:
           - Registry Autostarts: artifacts/persistence.md
       - Accounts:
           - SAM Local Accounts: artifacts/sam.md
+      - Applications:
+          - Application History: artifacts/app-history.md
       - System Information:
           - System Information: artifacts/system-info.md
       - Applications:

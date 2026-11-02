@@ -42,6 +42,7 @@ and organizes results and logs by computer and investigative category.
 | Command | Input artifact | Detailed guide |
 |---|---|---|
 | `parse-registry amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
+| `parse-registry app-history` | `NTUSER.DAT` | [Application History](../artifacts/app-history.md) |
 | `parse-registry mru` | `NTUSER.DAT` | [Most-Recently-Used Lists](../artifacts/mru.md) |
 | `parse-registry bam` | `SYSTEM` (with `SAM`, `SOFTWARE` for user names) | [BAM and DAM](../artifacts/bam.md) |
 | `parse-registry muicache` | `UsrClass.dat` (`NTUSER.DAT` on Windows XP) | [MuiCache](../artifacts/muicache.md) |
