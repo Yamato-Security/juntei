@@ -147,6 +147,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "shimcache",
                 "read",
                 "services",
+                "shellbags",
                 "recentdocs",
                 "taskcache",
                 "sam",
@@ -312,7 +313,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         let category = match artifact {
             "sam" => "accounts",
             "usb" => "external_devices",
-            "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
+            "jump-lists" | "lnk" | "recentdocs" | "shellbags" => "file_and_folder_opening",
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
             "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
@@ -623,7 +624,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                22
+                23
             );
             assert!(
                 output
@@ -769,7 +770,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 44);
+    assert_eq!(tasks.len(), 46);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5527,6 +5528,7 @@ fn registry_subcommands() {
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
     assert!(help.contains("bam "), "{help}");
+    assert!(help.contains("shellbags "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -10468,4 +10470,379 @@ fn registry_bam_recent_summary_keeps_identical_activity_on_distinct_hosts() {
         recent.contains("HOST_A") && recent.contains("HOST_B"),
         "{recent}"
     );
+}
+
+// --- parse-registry shellbags --------------------------------------------------------------------
+
+/// `parse-registry shellbags`'s CSV columns.
+const SHELLBAGS_COLUMNS: [&str; 26] = [
+    "Host",
+    "Username",
+    "UserSid",
+    "SourcePath",
+    "HiveType",
+    "BagKey",
+    "MruPosition",
+    "IsMostRecentInParent",
+    "NodeSlot",
+    "Path",
+    "ItemType",
+    "ItemClass",
+    "ItemName",
+    "Guid",
+    "ItemModifiedUTC",
+    "ItemCreatedUTC",
+    "ItemAccessedUTC",
+    "MftEntry",
+    "MftSequence",
+    "ExtensionBlocks",
+    "KeyLastWrittenUTC",
+    "ParentKeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// `parse-registry shellbags` with `args`, as JSON Lines.
+fn shellbags_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "shellbags"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+/// regipy's dirty `UsrClass.dat` and its logs, where Windows keeps jcloudy's.
+fn shellbags_collection(root: &Path) -> std::path::PathBuf {
+    let dir = [
+        "C",
+        "Users",
+        "jcloudy",
+        "AppData",
+        "Local",
+        "Microsoft",
+        "Windows",
+    ]
+    .iter()
+    .fold(root.to_path_buf(), |dir, part| dir.join(part));
+    unpack_registry(
+        "regipy",
+        &["UsrClass.dat", "UsrClass.dat.LOG1", "UsrClass.dat.LOG2"],
+        &dir,
+    );
+    dir.join("UsrClass.dat")
+}
+
+const BAG_MRU: &str = r"Local Settings\Software\Microsoft\Windows\Shell\BagMRU";
+
+#[test]
+fn registry_shellbags_of_a_public_hive() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = shellbags_collection(dir.path());
+    let records = shellbags_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(records.len(), 38);
+    assert_eq!(
+        records
+            .iter()
+            .filter(|r| r["transaction_log_status"] == "replayed")
+            .count(),
+        24
+    );
+    for r in &records {
+        assert_eq!(r["username"], "jcloudy");
+        assert_eq!(
+            r["user_sid"],
+            "S-1-5-21-2734969515-1644526556-1039763013-1001"
+        );
+        assert_eq!(r["hive_type"], "UsrClass.dat");
+        assert_eq!(r["source_path"], hive.to_str().unwrap());
+        assert_eq!(r["problems"], json!([]));
+    }
+    let at = |key: &str| {
+        records
+            .iter()
+            .find(|r| r["bag_key"] == format!(r"{BAG_MRU}\{key}"))
+            .unwrap()
+    };
+    // This PC, opened last: its parent key's time dates it.
+    let this_pc = &records[0];
+    assert_eq!(this_pc["bag_key"], format!(r"{BAG_MRU}\4"));
+    assert_eq!(
+        (&this_pc["path"], &this_pc["item_type"], &this_pc["guid"]),
+        (
+            &json!("This PC"),
+            &json!("root_folder"),
+            &json!("{20D04FE0-3AEA-1069-A2D8-08002B30309D}")
+        )
+    );
+    assert_eq!(
+        (
+            &this_pc["mru_position"],
+            &this_pc["is_most_recent_in_parent"],
+            &this_pc["node_slot"]
+        ),
+        (&json!(0), &json!(true), &json!(7))
+    );
+    assert_eq!(
+        this_pc["parent_key_last_written"],
+        "2018-04-06T12:42:02.778956500Z"
+    );
+    // A folder: its long name, FAT times and NTFS reference from its shell item.
+    let box_sync = at(r"4\3\0\0\3");
+    assert_eq!(box_sync["path"], r"This PC\C:\Users\jcloudy\Box Sync");
+    assert_eq!(
+        (
+            &box_sync["item_type"],
+            &box_sync["item_class"],
+            &box_sync["mru_position"]
+        ),
+        (&json!("directory"), &json!("0x31"), &json!(1))
+    );
+    assert_eq!(
+        (
+            &box_sync["item_modified"],
+            &box_sync["item_created"],
+            &box_sync["item_accessed"]
+        ),
+        (
+            &json!("2018-04-05T02:11:16Z"),
+            &json!("2018-03-28T00:53:58Z"),
+            &json!("2018-04-05T02:11:16Z")
+        )
+    );
+    assert_eq!(
+        (
+            &box_sync["mft_entry"],
+            &box_sync["mft_sequence"],
+            &box_sync["extension_blocks"]
+        ),
+        (&json!(140782), &json!(2), &json!(1))
+    );
+    assert_eq!(
+        box_sync["key_last_written"],
+        "2018-04-05T02:12:11.004647700Z"
+    );
+    assert_eq!(box_sync["transaction_log_status"], "unchanged");
+    assert!(box_sync["data_raw"].is_null());
+    // Removable drives (D: in the hive, F: only in its logs) and search results.
+    for (key, name) in [("1", "D:"), ("10", "F:")] {
+        let drive = at(key);
+        assert_eq!(
+            (&drive["path"], &drive["item_type"], &drive["guid"]),
+            (
+                &json!(name),
+                &json!("volume"),
+                &json!("{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}")
+            )
+        );
+    }
+    assert_eq!(at(r"1\0\0\0")["path"], r"D:\AKMonitor\logs\pic");
+    let search = at("3");
+    assert_eq!(
+        (&search["path"], &search["item_type"]),
+        (&json!("Search Folder"), &json!("property_view"))
+    );
+
+    // as the hive is, without its logs
+    let records = shellbags_read(&["-f", hive.to_str().unwrap(), "--no-logs"]);
+    assert_eq!(records.len(), 29);
+    assert!(
+        records
+            .iter()
+            .all(|r| r["transaction_log_status"] == "not_applied")
+    );
+}
+
+#[test]
+fn registry_shellbags_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    shellbags_collection(dir.path());
+    let out = dir.path().join("shellbags.csv");
+    let r = run(&[
+        "parse-registry",
+        "shellbags",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "UsrClass.dat and NTUSER.DAT hives parsed: 1",
+        "Users: jcloudy",
+        "Dirty hives recovered with their transaction logs: 1",
+        "Items: 38 (control_panel_category 2, control_panel_item 2, directory 15, property_view 3, root_folder 10, users_files_folder 3, volume 3)",
+        "Opened last (UTC from the parent key's last write, user, folder):",
+        r"2018-04-06T12:42:02.778956500Z  jcloudy  This PC\Downloads",
+        "Items or keys that could not be read: 0",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, SHELLBAGS_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 38);
+    assert_eq!(&rows[0][9], "This PC");
+    assert_eq!(&rows[0][7], "true");
+}
+
+/// An `NTUSER.DAT` with Windows XP's `ShellNoRoam\BagMRU`: This PC, C:, a folder whose class no
+/// parser knows, and a value its list names but the key hasn't.
+fn shellbags_ntuser() -> Vec<u8> {
+    let bag = r"Software\Microsoft\Windows\ShellNoRoam\BagMRU";
+    let mru = |list: &[u32]| -> Vec<u8> {
+        list.iter()
+            .chain(&[u32::MAX])
+            .flat_map(|n| n.to_le_bytes())
+            .collect()
+    };
+    let mut this_pc = vec![0x14, 0, 0x1f, 0x50];
+    this_pc.extend([
+        0xe0, 0x4f, 0xd0, 0x20, 0xea, 0x3a, 0x69, 0x10, 0xa2, 0xd8, 0x08, 0x00, 0x2b, 0x30, 0x30,
+        0x9d, 0, 0,
+    ]);
+    let mut volume = vec![0x19, 0, 0x2f];
+    volume.extend(b"C:\\");
+    volume.resize(0x19 + 2, 0);
+    let unknown = vec![6, 0, 0x99, 1, 2, 3, 0, 0];
+    reg_tree(
+        "ROOT",
+        &[
+            (bag, "MRUListEx", REG_BINARY, mru(&[0])),
+            (bag, "0", REG_BINARY, this_pc),
+            (&format!(r"{bag}\0"), "MRUListEx", REG_BINARY, mru(&[0, 1])),
+            (&format!(r"{bag}\0"), "0", REG_BINARY, volume),
+            (
+                &format!(r"{bag}\0\0"),
+                "NodeSlot",
+                REG_DWORD,
+                3u32.to_le_bytes().to_vec(),
+            ),
+            (&format!(r"{bag}\0\0"), "MRUListEx", REG_BINARY, mru(&[0])),
+            (&format!(r"{bag}\0\0"), "0", REG_BINARY, unknown),
+        ],
+    )
+}
+
+#[test]
+fn registry_shellbags_of_windows_xp_and_damage() {
+    let dir = tempfile::tempdir().unwrap();
+    let profile = dir.path().join("Documents and Settings").join("bob");
+    std::fs::create_dir_all(&profile).unwrap();
+    std::fs::write(profile.join("NTUSER.DAT"), shellbags_ntuser()).unwrap();
+    let records = shellbags_read(&["-d", dir.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} | {} | {} | {} | {}",
+                r["bag_key"].as_str().unwrap(),
+                r["path"].as_str().unwrap(),
+                r["item_type"].as_str().unwrap_or("-"),
+                r["node_slot"],
+                r["problems"]
+            )
+        })
+        .collect();
+    let bag = r"Software\Microsoft\Windows\ShellNoRoam\BagMRU";
+    assert_eq!(
+        lines,
+        [
+            format!(r#"{bag}\0 | This PC | root_folder | null | []"#),
+            format!(r#"{bag}\0\0 | This PC\C: | volume | 3 | []"#),
+            format!(r#"{bag}\0\0\0 | This PC\C:\[class 0x99] | unknown | null | []"#),
+            format!(
+                r#"{bag}\0\1 | This PC\[unknown] | - | null | ["MRUListEx lists value 1, which is not there"]"#
+            ),
+        ]
+    );
+    assert!(
+        records
+            .iter()
+            .all(|r| r["username"] == "bob" && r["hive_type"] == "NTUSER.DAT")
+    );
+    // the unknown item keeps its bytes
+    assert_eq!(records[2]["data_raw"], "0600990102030000");
+    assert_eq!(records[2]["item_class"], "0x99");
+
+    // a SAM hive is not read
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let r = run(&[
+        "parse-registry",
+        "shellbags",
+        "-f",
+        dir.path().join("SAM").to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        format!("{}{}", r.stdout, r.stderr)
+            .contains("a SAM hive, not a UsrClass.dat or NTUSER.DAT hive"),
+        "{}{}",
+        r.stdout,
+        r.stderr
+    );
+}
+
+#[test]
+fn registry_shellbags_never_guesses_an_ambiguous_or_backup_profile_sid() {
+    let dir = tempfile::tempdir().unwrap();
+    let user = dir.path().join("C/Users/alice");
+    let config = dir.path().join("C/Windows/System32/config");
+    std::fs::create_dir_all(&user).unwrap();
+    std::fs::create_dir_all(&config).unwrap();
+    let location = r"Software\Microsoft\Windows\Shell\BagMRU";
+    let volume = [
+        vec![0x19, 0, 0x2f],
+        b"C:\\".to_vec(),
+        vec![0; 19],
+        vec![0, 0],
+    ]
+    .concat();
+    let hive = reg_tree(
+        "ROOT",
+        &[
+            (
+                location,
+                "MRUListEx",
+                REG_BINARY,
+                [0u32.to_le_bytes(), u32::MAX.to_le_bytes()].concat(),
+            ),
+            (location, "0", REG_BINARY, volume),
+        ],
+    );
+    let ntuser = user.join("NTUSER.DAT");
+    std::fs::write(&ntuser, hive).unwrap();
+    let profile = r"Microsoft\Windows NT\CurrentVersion\ProfileList";
+    for sids in [
+        vec!["S-1-5-21-1-2-3-1001", "S-1-5-21-4-5-6-1001"],
+        vec!["S-1-5-21-1-2-3-1001.bak"],
+    ] {
+        let paths: Vec<_> = sids.iter().map(|sid| format!("{profile}\\{sid}")).collect();
+        let values: Vec<_> = paths
+            .iter()
+            .map(|p| {
+                (
+                    p.as_str(),
+                    "ProfileImagePath",
+                    REG_SZ,
+                    utf16z(r"C:\Users\alice"),
+                )
+            })
+            .collect();
+        std::fs::write(config.join("SOFTWARE"), reg_tree("ROOT", &values)).unwrap();
+        let rows = shellbags_read(&["-f", ntuser.to_str().unwrap()]);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["username"], "alice");
+        assert!(rows[0]["user_sid"].is_null(), "{rows:?}");
+    }
 }

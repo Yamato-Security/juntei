@@ -52,6 +52,7 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
 | `parse-registry usb` | `SYSTEM`, with `SOFTWARE` and `NTUSER.DAT` | [USB Devices](../artifacts/usb.md) |
 | `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
+| `parse-registry shellbags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
 ## Source types and format changes
 

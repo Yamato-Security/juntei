@@ -16,6 +16,7 @@ Commands:
   recentdocs   Parse recent documents
   sam          Parse local accounts
   services     Parse services
+  shellbags    Parse ShellBags (folders opened in Explorer)
   shimcache    Parse ShimCache entries
   taskcache    Parse scheduled tasks
   usb          Parse USB devices and volumes
@@ -404,6 +405,38 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
+## `parse-registry shellbags`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry shellbags <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for UsrClass.dat and NTUSER.DAT hives
+  -f, --file <FILE>      File path to one UsrClass.dat or NTUSER.DAT hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Parsing:
+      --code-page <NUMBER>  Windows code page for the ANSI names of shell items (8.3 names, network shares) [default: 1252]
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
 ### Examples
 
 ```bash
@@ -416,10 +449,12 @@ juntei parse-registry persistence -d collection/ -o persistence.csv
 juntei parse-registry usb -d collection/ -o usb.csv
 juntei parse-registry userassist -d collection/ -o userassist.csv
 juntei parse-registry bam -d collection/ --all-control-sets -o bam.csv
+juntei parse-registry shellbags -d collection/ -o shellbags.csv
 ```
 
 The complete options and field semantics are on [Registry Hives](../artifacts/registry.md),
 [Windows Services](../artifacts/services.md), [RecentDocs](../artifacts/recentdocs.md),
 [Task Scheduler Cache](../artifacts/taskcache.md), [SAM Local Accounts](../artifacts/sam.md),
 [Registry Autostarts](../artifacts/persistence.md), [UserAssist](../artifacts/userassist.md),
-[BAM and DAM](../artifacts/bam.md), and [USB Devices](../artifacts/usb.md).
+[BAM and DAM](../artifacts/bam.md), [ShellBags](../artifacts/shellbags.md), and
+[USB Devices](../artifacts/usb.md).
