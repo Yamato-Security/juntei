@@ -45,6 +45,7 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry bam` | `SYSTEM` (with `SAM`, `SOFTWARE` for user names) | [BAM and DAM](../artifacts/bam.md) |
 | `parse-registry muicache` | `UsrClass.dat` (`NTUSER.DAT` on Windows XP) | [MuiCache](../artifacts/muicache.md) |
 | `parse-registry installed-programs` | `SOFTWARE`, `NTUSER.DAT` | [Installed Programs](../artifacts/installed-programs.md) |
+| `parse-registry opensavemru` | `NTUSER.DAT` | [Open and Save As Dialogs](../artifacts/opensavemru.md) |
 | `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
 | `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
 | `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |

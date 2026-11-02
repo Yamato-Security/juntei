@@ -154,6 +154,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "opensavemru",
                 "bam",
                 "installed-programs",
                 "muicache",
@@ -316,7 +317,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "sam" => "accounts",
             "installed-programs" => "applications",
             "usb" => "external_devices",
-            "jump-lists" | "lnk" | "recentdocs" | "shellbags" => "file_and_folder_opening",
+            "jump-lists" | "lnk" | "opensavemru" | "recentdocs" | "shellbags" => {
+                "file_and_folder_opening"
+            }
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
             "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
@@ -629,7 +632,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                25
+                26
             );
             assert!(
                 output
@@ -775,7 +778,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 50);
+    assert_eq!(tasks.len(), 52);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5532,6 +5535,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("opensavemru "), "{help}");
     assert!(help.contains("bam "), "{help}");
     assert!(help.contains("installed-programs "), "{help}");
     assert!(help.contains("muicache "), "{help}");
@@ -11804,4 +11808,639 @@ fn registry_installed_programs_data_stdout_reports_hive_damage_on_stderr() {
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0]["name"], "Good program");
     assert!(result.stderr.contains("Uninstall"), "{}", result.stderr);
+}
+
+// --- parse-registry opensavemru -----------------------------------------------------------------
+
+/// `parse-registry opensavemru`'s CSV columns.
+const OPENSAVEMRU_COLUMNS: [&str; 24] = [
+    "Host",
+    "Username",
+    "UserSid",
+    "SourcePath",
+    "List",
+    "Extension",
+    "MruPosition",
+    "IsMostRecent",
+    "ValueName",
+    "Program",
+    "Path",
+    "ItemType",
+    "ItemModifiedUTC",
+    "ItemCreatedUTC",
+    "ItemAccessedUTC",
+    "MftEntry",
+    "MftSequence",
+    "LastUsedUTC",
+    "KeyPath",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// The common dialogs' key, under the hive's root.
+const COMDLG32: &str = r"Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32";
+
+/// A shell item list of `items` (each with its size), ended by a size of 0.
+fn shell_list(items: &[Vec<u8>]) -> Vec<u8> {
+    let mut out: Vec<u8> = items.concat();
+    out.extend([0, 0]);
+    out
+}
+
+/// This PC, as a root folder item.
+fn this_pc() -> Vec<u8> {
+    let mut item = vec![0x14, 0x00, 0x1f, 0x50];
+    // {20D04FE0-3AEA-1069-A2D8-08002B30309D}
+    item.extend([
+        0xe0, 0x4f, 0xd0, 0x20, 0xea, 0x3a, 0x69, 0x10, 0xa2, 0xd8, 0x08, 0x00, 0x2b, 0x30, 0x30,
+        0x9d,
+    ]);
+    item
+}
+
+/// The volume `C:\`.
+fn volume_c() -> Vec<u8> {
+    let mut item = vec![0x19, 0x00, 0x2f];
+    item.extend(b"C:\\");
+    item.resize(0x19, 0);
+    item
+}
+
+/// A file entry (`0x31` a folder, `0x32` a file) with its 8.3 name and, in a version 9
+/// `0xBEEF0004` block, its long name and NTFS file reference; modified 2022-02-08 12:00:00,
+/// created the same, accessed 2022-02-09 12:00:00.
+fn file_entry(class: u8, short: &str, long: &str, mft: (u64, u16)) -> Vec<u8> {
+    let fat = |day: u16| {
+        let date = ((2022 - 1980) << 9) | (2 << 5) | day;
+        let time: u16 = 12 << 11;
+        [date.to_le_bytes(), time.to_le_bytes()].concat()
+    };
+    let mut item = vec![class, 0];
+    item.extend(0u32.to_le_bytes());
+    item.extend(fat(8));
+    item.extend(0x10u16.to_le_bytes());
+    item.extend(short.as_bytes());
+    item.push(0);
+    if item.len() % 2 == 1 {
+        item.push(0);
+    }
+    // where the block starts in the item, with the item's size
+    let block_at = item.len() + 2;
+    let mut block = vec![0, 0];
+    block.extend(9u16.to_le_bytes());
+    block.extend(0xbeef_0004u32.to_le_bytes());
+    block.extend(fat(8));
+    block.extend(fat(9));
+    block.extend(0x2eu16.to_le_bytes());
+    block.extend(0u16.to_le_bytes());
+    block.extend((mft.0 | (u64::from(mft.1) << 48)).to_le_bytes());
+    block.extend([0; 8 + 2 + 4 + 4]);
+    block.extend(utf16z(long));
+    block.extend((block_at as u16).to_le_bytes());
+    let size = block.len() as u16;
+    block[..2].copy_from_slice(&size.to_le_bytes());
+    item.extend(block);
+    let mut out = ((item.len() + 2) as u16).to_le_bytes().to_vec();
+    out.extend(item);
+    out
+}
+
+/// A program's name (UTF-16, with its NUL), then `rest`.
+fn program_then(program: &str, rest: &[u8]) -> Vec<u8> {
+    let mut b = utf16z(program);
+    b.extend(rest);
+    b
+}
+
+/// One system's SYSTEM and SOFTWARE hives (its name, alice's profile), alice's NTUSER.DAT with
+/// the common dialogs' history (files opened and saved, the programs and their folders, an item
+/// of a type the shell item parser doesn't know, a value cut short, Windows XP's lists), and
+/// bob's NTUSER.DAT without it.
+fn opensavemru_collection(root: &Path) {
+    let at = |list: &str| format!(r"{COMDLG32}\{list}");
+    let report = shell_list(&[
+        this_pc(),
+        volume_c(),
+        file_entry(0x31, "Users", "Users", (512, 1)),
+        file_entry(0x32, "REPORT~1.DOC", "report 2022.docx", (98_765, 3)),
+    ]);
+    let notes = shell_list(&[
+        this_pc(),
+        volume_c(),
+        file_entry(0x32, "notes.txt", "notes.txt", (77, 2)),
+    ]);
+    // a class 0x52 item: not one ys-lnk-parser knows
+    let odd = shell_list(&[this_pc(), vec![0x08, 0x00, 0x52, 1, 2, 3, 4, 5]]);
+    let users = shell_list(&[
+        this_pc(),
+        volume_c(),
+        file_entry(0x31, "Users", "Users", (512, 1)),
+    ]);
+    let mru = |list: &[u32]| -> Vec<u8> {
+        list.iter()
+            .chain(&[u32::MAX])
+            .flat_map(|n| n.to_le_bytes())
+            .collect()
+    };
+    let mut folder = utf16z(r"C:\Program Files\Office\WINWORD.EXE");
+    folder.extend(utf16z(r"C:\Users\alice\Documents"));
+    let mut xp_folder = utf16z("notepad.exe");
+    xp_folder.extend(utf16z(r"C:\Temp"));
+    let alice = reg_tree(
+        "ROOT",
+        &[
+            (
+                &at(r"OpenSavePidlMRU\*"),
+                "MRUListEx",
+                REG_BINARY,
+                mru(&[1, 0, 2]),
+            ),
+            (&at(r"OpenSavePidlMRU\*"), "0", REG_BINARY, notes.clone()),
+            (&at(r"OpenSavePidlMRU\*"), "1", REG_BINARY, report.clone()),
+            (&at(r"OpenSavePidlMRU\*"), "2", REG_BINARY, odd),
+            (
+                &at(r"OpenSavePidlMRU\docx"),
+                "MRUListEx",
+                REG_BINARY,
+                mru(&[0]),
+            ),
+            (&at(r"OpenSavePidlMRU\docx"), "0", REG_BINARY, report),
+            (
+                &at("LastVisitedPidlMRU"),
+                "MRUListEx",
+                REG_BINARY,
+                mru(&[0, 1, 2]),
+            ),
+            (
+                &at("LastVisitedPidlMRU"),
+                "0",
+                REG_BINARY,
+                program_then("WINWORD.EXE", &users),
+            ),
+            (
+                &at("LastVisitedPidlMRU"),
+                "1",
+                REG_BINARY,
+                program_then("notepad.exe", &[0, 0]),
+            ),
+            // cut short: no NUL after the program's name
+            (
+                &at("LastVisitedPidlMRU"),
+                "2",
+                REG_BINARY,
+                utf16z("cut.exe")[..6].to_vec(),
+            ),
+            (&at("CIDSizeMRU"), "MRUListEx", REG_BINARY, mru(&[0])),
+            (
+                &at("CIDSizeMRU"),
+                "0",
+                REG_BINARY,
+                program_then("WINWORD.EXE", &[0; 16]),
+            ),
+            (&at("FirstFolder"), "MRUListEx", REG_BINARY, mru(&[0])),
+            (&at("FirstFolder"), "0", REG_BINARY, folder),
+            (&at(r"OpenSaveMRU\txt"), "MRUList", REG_SZ, utf16z("a")),
+            (&at(r"OpenSaveMRU\txt"), "a", REG_SZ, utf16z(r"C:\old.txt")),
+            (&at("LastVisitedMRU"), "MRUList", REG_SZ, utf16z("a")),
+            (&at("LastVisitedMRU"), "a", REG_BINARY, xp_folder),
+        ],
+    );
+    let bob = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+            "Start_TrackProgs",
+            REG_DWORD,
+            1u32.to_le_bytes().to_vec(),
+        )],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+            "ProfileImagePath",
+            REG_EXPAND_SZ,
+            utf16z(r"C:\Users\alice"),
+        )],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    for dir in [
+        &config,
+        &root.join("C/Users/alice"),
+        &root.join("C/Users/bob"),
+    ] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(root.join("C/Users/alice/NTUSER.DAT"), alice).unwrap();
+    std::fs::write(root.join("C/Users/bob/NTUSER.DAT"), bob).unwrap();
+}
+
+/// `parse-registry opensavemru` with `args`, as JSON Lines.
+fn opensavemru_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "opensavemru"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_opensavemru_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    opensavemru_collection(dir.path());
+    let records = opensavemru_read(&["-d", dir.path().to_str().unwrap()]);
+    let text = |v: &Value| v.as_str().unwrap_or("-").to_string();
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} {} | {} | {} | {}",
+                text(&r["list"]),
+                text(&r["extension"]),
+                r["mru_position"],
+                text(&r["value_name"]),
+                r["is_most_recent"],
+                text(&r["program"]),
+                text(&r["path"]),
+                text(&r["item_type"]),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            r"OpenSavePidlMRU * 0 1 true | - | This PC\C:\Users\report 2022.docx | file",
+            r"OpenSavePidlMRU * 1 0 false | - | This PC\C:\notes.txt | file",
+            r"OpenSavePidlMRU * 2 2 false | - | This PC\[class 0x52] | unknown",
+            r"OpenSavePidlMRU docx 0 0 true | - | This PC\C:\Users\report 2022.docx | file",
+            r"LastVisitedPidlMRU - 0 0 true | WINWORD.EXE | This PC\C:\Users | directory",
+            r"LastVisitedPidlMRU - 1 1 false | notepad.exe |  | -",
+            r"LastVisitedPidlMRU - 2 2 false | - | - | -",
+            r"CIDSizeMRU - 0 0 true | WINWORD.EXE | - | -",
+            r"FirstFolder - 0 0 true | C:\Program Files\Office\WINWORD.EXE | C:\Users\alice\Documents | -",
+            r"OpenSaveMRU txt 0 a true | - | C:\old.txt | -",
+            r"LastVisitedMRU - 0 a true | notepad.exe | C:\Temp | -",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["username"], "alice");
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        // the key's time dates its most recent entry only
+        let last_used = if r["is_most_recent"] == true {
+            json!("2022-02-08T21:03:52Z")
+        } else {
+            Value::Null
+        };
+        assert_eq!(r["last_used"], last_used, "{r}");
+    }
+    // the file's own times and NTFS file reference, from its shell item
+    let report = &records[0];
+    assert_eq!(
+        (
+            &report["item_modified"],
+            &report["item_created"],
+            &report["item_accessed"],
+            &report["mft_entry"],
+            &report["mft_sequence"]
+        ),
+        (
+            &json!("2022-02-08T12:00:00Z"),
+            &json!("2022-02-08T12:00:00Z"),
+            &json!("2022-02-09T12:00:00Z"),
+            &json!(98_765),
+            &json!(3)
+        )
+    );
+    assert_eq!(report["key_path"], format!(r"{COMDLG32}\OpenSavePidlMRU\*"));
+    assert!(report["data_raw"].is_null());
+    assert_eq!(records[4]["mft_entry"], 512);
+    // an item of an unknown type keeps the list's bytes; a value cut short keeps its own
+    let odd = records[2]["data_raw"].as_str().unwrap();
+    assert!(
+        odd.starts_with("14001f50") && odd.ends_with("08005201020304050000"),
+        "{odd}"
+    );
+    assert_eq!(records[2]["problems"], json!([]));
+    assert_eq!(records[6]["data_raw"], "630075007400");
+    assert_eq!(
+        records[6]["problems"],
+        json!(["its program's name has no NUL: the data is cut short"])
+    );
+}
+
+#[test]
+fn registry_opensavemru_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    opensavemru_collection(dir.path());
+    let out = dir.path().join("opensavemru.csv");
+    let r = run(&[
+        "parse-registry",
+        "opensavemru",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "NTUSER.DAT hives parsed: 2",
+        "Hosts: HOST1",
+        "Users: alice, bob",
+        "Hives without ComDlg32: 1",
+        "Entries: 11 (OpenSavePidlMRU 4, LastVisitedPidlMRU 3, CIDSizeMRU 1, FirstFolder 1, OpenSaveMRU 1, LastVisitedMRU 1)",
+        "Extensions: 2",
+        "Programs that used the dialogs: winword.exe (3), notepad.exe (2)",
+        r"NTUSER.DAT: This PC\C:\Users\report 2022.docx (2022-02-08T21:03:52Z, OpenSavePidlMRU)",
+        "Entries with shell items of an unknown type (bytes in DataRaw): 1",
+        "Entries or lists that could not be read: 1",
+        "its program's name has no NUL: the data is cut short",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, OPENSAVEMRU_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 11);
+    assert_eq!(&rows[0][4], "OpenSavePidlMRU");
+    assert_eq!(&rows[0][5], "*");
+    assert_eq!(&rows[0][7], "true");
+    assert_eq!(&rows[0][10], r"This PC\C:\Users\report 2022.docx");
+    assert_eq!(&rows[0][15], "98765");
+    assert_eq!(&rows[0][17], "2022-02-08T21:03:52Z");
+    assert_eq!(&rows[1][17], "");
+    assert_eq!(
+        &rows[6][23],
+        "its program's name has no NUL: the data is cut short"
+    );
+}
+
+#[test]
+fn registry_opensavemru_of_a_public_hive() {
+    // Plaso's NTUSER.DAT: the entries, order and programs Plaso's mrulistex plugins give, and
+    // the files' names in their shell item paths
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("plaso", &["NTUSER.DAT"], dir.path());
+    let records = opensavemru_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} | {} | {}",
+                r["list"].as_str().unwrap(),
+                r["extension"].as_str().unwrap_or("-"),
+                r["mru_position"],
+                r["value_name"].as_str().unwrap(),
+                r["program"].as_str().unwrap_or("-"),
+                r["path"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            r"OpenSavePidlMRU * 0 1 | - | This PC\CLSID_ThisPCMyPicturesRegFolder\ash_0.png",
+            r"OpenSavePidlMRU * 1 0 | - | This PC\CLSID_ThisPCMyPicturesRegFolder\ash.png",
+            r"OpenSavePidlMRU png 0 1 | - | This PC\CLSID_ThisPCMyPicturesRegFolder\ash_0.png",
+            r"OpenSavePidlMRU png 1 0 | - | This PC\CLSID_ThisPCMyPicturesRegFolder\ash.png",
+            r"LastVisitedPidlMRU - 0 0 | iexplore.exe | This PC\CLSID_ThisPCMyPicturesRegFolder",
+            "CIDSizeMRU - 0 0 | iexplore.exe | -",
+            r"FirstFolder - 0 0 | C:\Program Files\Internet Explorer\iexplore.exe | -",
+        ]
+    );
+    assert_eq!(records[0]["username"], "bperry");
+    assert_eq!(records[0]["item_type"], "file");
+    assert_eq!(records[0]["last_used"], "2016-10-09T19:59:17.734597Z");
+    assert_eq!(records[4]["item_type"], "root_folder");
+    assert!(records.iter().all(|r| r["problems"] == json!([])
+        && r["data_raw"].is_null()
+        && r["transaction_log_status"] == "clean"));
+}
+
+#[test]
+fn registry_opensavemru_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM", "NTUSER.DAT"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "opensavemru",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not an NTUSER.DAT hive"),
+        "{said}"
+    );
+    // a hive without ComDlg32 is parsed, with nothing to report
+    let ntuser = dir.path().join("NTUSER.DAT");
+    let r = run(&[
+        "parse-registry",
+        "opensavemru",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    assert!(
+        r.stdout.contains("Hives without ComDlg32: 1"),
+        "{}",
+        r.stdout
+    );
+    let r = run(&[
+        "parse-registry",
+        "opensavemru",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "--code-page",
+        "1",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("Unsupported code page: 1"), "{said}");
+    let empty = tempfile::tempdir().unwrap();
+    let r = run(&[
+        "parse-registry",
+        "opensavemru",
+        "-d",
+        empty.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No NTUSER.DAT hives were found"), "{said}");
+    // the output is never one of the files read
+    let original = std::fs::read(&ntuser).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "opensavemru",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "-o",
+        ntuser.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&ntuser).unwrap(), original);
+}
+
+#[test]
+fn registry_opensavemru_keeps_key_warnings_on_stderr_for_stdout_formats() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("NTUSER.DAT");
+    let at = format!(r"{COMDLG32}\OpenSavePidlMRU\*");
+    let bytes = reg_tree(
+        "ROOT",
+        &[
+            // Its readable prefix lists value 0, but the MRUListEx has no end marker.
+            (&at, "MRUListEx", REG_BINARY, vec![0, 0, 0, 0]),
+            (&at, "0", REG_BINARY, shell_list(&[this_pc(), volume_c()])),
+        ],
+    );
+    std::fs::write(&hive, bytes).unwrap();
+    for format in ["csv", "json", "jsonl"] {
+        let r = run(&[
+            "parse-registry",
+            "opensavemru",
+            "-f",
+            hive.to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        assert!(
+            r.stderr.contains("MRUListEx") && r.stderr.contains("end marker"),
+            "{}",
+            r.stderr
+        );
+        assert!(!r.stdout.contains("MRUListEx:"), "{}", r.stdout);
+        if format == "csv" {
+            assert_eq!(
+                csv::Reader::from_reader(r.stdout.as_bytes())
+                    .records()
+                    .count(),
+                1
+            );
+        } else {
+            assert_eq!(json_documents(&r.stdout).len(), 1);
+        }
+    }
+}
+
+#[test]
+fn registry_opensavemru_decodes_nested_zip_items_with_their_parents() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("NTUSER.DAT");
+    let at = format!(r"{COMDLG32}\OpenSavePidlMRU\*");
+    let zipped = |name: &str| {
+        let mut raw = vec![0u8; 92];
+        raw[2] = 0x52;
+        raw[84..88].copy_from_slice(&(name.encode_utf16().count() as u32).to_le_bytes());
+        raw.extend(utf16z(name));
+        let len = raw.len() as u16;
+        raw[..2].copy_from_slice(&len.to_le_bytes());
+        raw
+    };
+    let bytes = reg_tree(
+        "ROOT",
+        &[
+            (
+                &at,
+                "MRUListEx",
+                REG_BINARY,
+                vec![0, 0, 0, 0, 255, 255, 255, 255],
+            ),
+            (
+                &at,
+                "0",
+                REG_BINARY,
+                shell_list(&[
+                    this_pc(),
+                    volume_c(),
+                    file_entry(0x32, "bundle.zip", "bundle.zip", (98_765, 3)),
+                    zipped("docs"),
+                    zipped("note.txt"),
+                ]),
+            ),
+        ],
+    );
+    std::fs::write(&hive, bytes).unwrap();
+    let records = opensavemru_read(&["-f", hive.to_str().unwrap()]);
+    assert_eq!(records.len(), 1);
+    assert!(
+        records[0]["path"]
+            .as_str()
+            .unwrap()
+            .ends_with(r"bundle.zip\docs\note.txt"),
+        "{}",
+        records[0]
+    );
+    assert_eq!(records[0]["item_type"], "compressed_folder");
+    assert_eq!(records[0]["data_raw"], Value::Null);
+}
+
+#[test]
+fn registry_opensavemru_damaged_first_letter_does_not_date_the_next_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("NTUSER.DAT");
+    let at = format!(r"{COMDLG32}\OpenSaveMRU\txt");
+    let order: Vec<u8> = [0xd800, 0x0061, 0x0000]
+        .into_iter()
+        .flat_map(u16::to_le_bytes)
+        .collect();
+    let bytes = reg_tree(
+        "ROOT",
+        &[
+            (&at, "MRUList", REG_SZ, order),
+            (&at, "a", REG_SZ, utf16z(r"C:\report.txt")),
+        ],
+    );
+    std::fs::write(&hive, bytes).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "opensavemru",
+        "-f",
+        hive.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let records = jsonl_records(&r.stdout);
+    assert_eq!(records.len(), 1);
+    assert_eq!(records[0]["mru_position"], 1);
+    assert_eq!(records[0]["is_most_recent"], false);
+    assert_eq!(records[0]["last_used"], Value::Null);
+    assert!(r.stderr.contains("not valid UTF-16"), "{}", r.stderr);
 }
