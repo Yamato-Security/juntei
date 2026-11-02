@@ -1,8 +1,21 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `parse-registry auditpol`: the audit policy in force in `SECURITY` hives
 //! (`Policy\PolAdtEv`), read by ys-registry-parser's `audit_policy` module, with Hayabusa's
 //! input options, progress bar and results summary. One record per subcategory (Windows Vista
 //! and later) or category (Windows XP and 2003): what it was set to log, and the main events
-//! it logs. Events of what isn't audited are missing whatever happened: the summary lists them.
+//! it logs. The summary lists disabled audit options in the captured policy, not a history of policy changes.
 
 use super::{
     Hosts, Opened, RecordWriter, choose_logs, files_read, filetime, find_hives_of_type,
@@ -302,8 +315,12 @@ impl<'a> Record<'a> {
                 .and_then(AuditSetting::subcategory_id)
                 .map(|id| format!("%%{id}")),
             setting: setting.map(|s| s.setting.name()),
-            success: setting.map(|s| s.setting.success()),
-            failure: setting.map(|s| s.setting.failure()),
+            success: setting
+                .filter(|s| !matches!(s.setting, Setting::Other(_)))
+                .map(|s| s.setting.success()),
+            failure: setting
+                .filter(|s| !matches!(s.setting, Setting::Other(_)))
+                .map(|s| s.setting.failure()),
             auditing_enabled: policy.events.auditing_mode,
             events: setting.and_then(|s| s.subcategory).map_or(&[], events_of),
             key_last_written: filetime(policy.key_last_written),
@@ -405,7 +422,12 @@ impl Stats {
         let off = policy.events.auditing_mode == Some(false);
         let audited = settings
             .iter()
-            .filter(|s| !off && s.setting != Setting::None)
+            .filter(|s| {
+                !off && matches!(
+                    s.setting,
+                    Setting::Success | Setting::Failure | Setting::SuccessAndFailure
+                )
+            })
             .count();
         self.audited += audited;
         if self.listed.len() < MAX_PRINTED {
@@ -499,7 +521,7 @@ impl Stats {
 }
 
 /// A hive's summary: its layout and when it was written, what is audited, and the
-/// subcategories with main events that aren't (their events are missing whatever happened).
+/// subcategories with main events disabled in this captured policy.
 fn lines(opened: &Opened, policy: &AuditPolicy, audited: usize) -> Vec<String> {
     let settings = &policy.events.settings;
     let host = opened
@@ -554,7 +576,7 @@ fn lines(opened: &Opened, policy: &AuditPolicy, audited: usize) -> Vec<String> {
         .collect();
     if !missing.is_empty() {
         lines.push(format!(
-            "  Not audited (these events are missing whatever happened): {}",
+            "  Not audited in captured policy (past policy may differ): {}",
             missing.join("; ")
         ));
     }

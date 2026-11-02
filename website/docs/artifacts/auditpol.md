@@ -33,6 +33,14 @@ host.
 
 ## Analyst cautions
 
+- **Unknown data stays unknown.** Unsupported revisions are preserved with diagnostics. Unknown
+  setting flags leave `Success` and `Failure` empty and are excluded from audited-setting counts.
+  A damaged count table cannot promote the reserved word into another audit setting.
+  Captures can contain additional slots beyond the name/GUID catalogue. Their settings and
+  numeric `SubcategoryId` are retained with empty names/GUIDs; an unmapped slot is not itself
+  evidence of corruption.
+
+
 - **The order is Windows' own.** Within a category, the settings are in the order of the
   subcategories' message IDs, not their GUIDs. Special Logon (`%%12548`, Logon/Logoff's index
   4) comes before IPsec Quick Mode. Tools that read them in GUID order report Windows 10's
@@ -77,7 +85,7 @@ juntei parse-registry auditpol -f SECURITY -t jsonl | jq -r 'select(.setting == 
 For each hive, the summary gives its layout, how many settings are audited and when the policy
 was last written. It lists what is audited for success and failure, success only and failure
 only, then the subcategories that aren't audited, with their main events: those events are
-missing whatever happened.
+disabled in the captured policy; this does not establish the policy during earlier activity.
 
 ## Output fields
 
