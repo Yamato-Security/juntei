@@ -68,7 +68,7 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
 
 CSV output contains summary, findings, files, and devices tables. With `auto-parse`, these are
 `Summary.csv`, `Findings.csv`, `Files.csv`, and `Devices.csv` under each computer's
-`file_existence/amcache/` directory, with `Amcache-logs.txt` beside that directory. JSONL records use
+`FileExistence/Amcache/` directory, with `Amcache-logs.txt` beside that directory. JSONL records use
 `record_type` values `summary`, `finding`, `file`, and `device`.
 
 ## File output fields
