@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "mru",
                 "system-info",
                 "remote-access",
                 "opensavemru",
@@ -334,7 +335,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "sam" => "accounts",
             "installed-programs" => "applications",
             "usb" => "external_devices",
-            "jump-lists" | "lnk" | "opensavemru" | "recentdocs" | "shellbags" => {
+            "jump-lists" | "lnk" | "mru" | "opensavemru" | "recentdocs" | "shellbags" => {
                 "file_and_folder_opening"
             }
             "amcache" | "shimcache" => "file_existence",
@@ -651,7 +652,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                28
+                29
             );
             assert!(
                 output
@@ -797,7 +798,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 56);
+    assert_eq!(tasks.len(), 58);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5554,6 +5555,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("mru "), "{help}");
     assert!(help.contains("system-info "), "{help}");
     assert!(help.contains("remote-access "), "{help}");
     assert!(help.contains("opensavemru "), "{help}");
@@ -13428,4 +13430,425 @@ fn registry_system_info_preserves_sam_replay_provenance() {
     assert_eq!(records.len(), 1);
     assert_eq!(records[0]["machine_sid"], "S-1-5-21-1-2-3");
     assert_eq!(records[0]["transaction_log_status"], "replayed");
+}
+
+// --- parse-registry mru -------------------------------------------------------------------------
+
+/// `parse-registry mru`'s CSV columns.
+const MRU_COLUMNS: [&str; 18] = [
+    "Host",
+    "Username",
+    "UserSid",
+    "SourcePath",
+    "List",
+    "Subkey",
+    "MruPosition",
+    "IsMostRecent",
+    "ValueName",
+    "Value",
+    "TypedTimeUTC",
+    "LastUsedUTC",
+    "KeyPath",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// One system's SYSTEM and SOFTWARE hives (its name, alice's profile), alice's NTUSER.DAT with
+/// every list (a Run command, typed paths, searches with one cut short, typed addresses with
+/// their times, Paint's and WordPad's recent files, Windows XP's search terms), and bob's
+/// NTUSER.DAT without any.
+fn mru_collection(root: &Path) {
+    let explorer = r"Software\Microsoft\Windows\CurrentVersion\Explorer";
+    let run = format!(r"{explorer}\RunMRU");
+    let paths = format!(r"{explorer}\TypedPaths");
+    let words = format!(r"{explorer}\WordWheelQuery");
+    let urls = r"Software\Microsoft\Internet Explorer\TypedURLs";
+    let times = r"Software\Microsoft\Internet Explorer\TypedURLsTime";
+    let applets = r"Software\Microsoft\Windows\CurrentVersion\Applets";
+    let acmru = r"Software\Microsoft\Search Assistant\ACMru\5603";
+    let mru_ex = |list: &[u32]| -> Vec<u8> {
+        list.iter()
+            .chain(&[u32::MAX])
+            .flat_map(|n| n.to_le_bytes())
+            .collect()
+    };
+    let alice = reg_tree(
+        "ROOT",
+        &[
+            (&run, "MRUList", REG_SZ, utf16z("ba")),
+            (&run, "a", REG_SZ, utf16z(r"cmd\1")),
+            (&run, "b", REG_SZ, utf16z(r"powershell -ep bypass\1")),
+            (&paths, "url1", REG_SZ, utf16z(r"\\fileserver\share")),
+            (&paths, "url2", REG_SZ, utf16z(r"C:\Users\alice\Downloads")),
+            (&words, "MRUListEx", REG_BINARY, mru_ex(&[1, 0])),
+            (&words, "0", REG_BINARY, utf16z("invoice")),
+            (&words, "1", REG_BINARY, utf16z("password")[..6].to_vec()),
+            (urls, "url1", REG_SZ, utf16z("http://example.com/")),
+            (urls, "url2", REG_SZ, utf16z("http://example.org/")),
+            (
+                times,
+                "url1",
+                REG_BINARY,
+                (LINKED + DAY).to_le_bytes().to_vec(),
+            ),
+            (
+                times,
+                "url2",
+                REG_BINARY,
+                (LINKED - DAY).to_le_bytes().to_vec(),
+            ),
+            (
+                &format!(r"{applets}\Paint\Recent File List"),
+                "File1",
+                REG_SZ,
+                utf16z(r"C:\Users\alice\Pictures\screen.png"),
+            ),
+            (
+                &format!(r"{applets}\Wordpad\Recent File List"),
+                "File1",
+                REG_SZ,
+                utf16z(r"C:\Users\alice\notes.rtf"),
+            ),
+            (acmru, "000", REG_SZ, utf16z("*.kdbx")),
+        ],
+    );
+    let bob = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+            "Start_TrackProgs",
+            REG_DWORD,
+            1u32.to_le_bytes().to_vec(),
+        )],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[(
+            r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+            "ProfileImagePath",
+            REG_EXPAND_SZ,
+            utf16z(r"C:\Users\alice"),
+        )],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    for dir in [
+        &config,
+        &root.join("C/Users/alice"),
+        &root.join("C/Users/bob"),
+    ] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(root.join("C/Users/alice/NTUSER.DAT"), alice).unwrap();
+    std::fs::write(root.join("C/Users/bob/NTUSER.DAT"), bob).unwrap();
+}
+
+/// `parse-registry mru` with `args`, as JSON Lines.
+fn mru_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "mru"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+/// Each record's list, subkey, place, value name, value and typed time.
+fn mru_lines(records: &[Value]) -> Vec<String> {
+    let text = |v: &Value| v.as_str().unwrap_or("-").to_string();
+    records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} | {} | {}",
+                text(&r["list"]),
+                text(&r["subkey"]),
+                r["mru_position"],
+                text(&r["value_name"]),
+                text(&r["value"]),
+                text(&r["typed_time"]),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn registry_mru_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    mru_collection(dir.path());
+    let records = mru_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(
+        mru_lines(&records),
+        [
+            "RunMRU - 0 b | powershell -ep bypass | -",
+            "RunMRU - 1 a | cmd | -",
+            r"TypedPaths - 0 url1 | \\fileserver\share | -",
+            r"TypedPaths - 1 url2 | C:\Users\alice\Downloads | -",
+            "WordWheelQuery - 0 1 | - | -",
+            "WordWheelQuery - 1 0 | invoice | -",
+            "TypedURLs - 0 url1 | http://example.com/ | 2022-02-09T21:03:52Z",
+            "TypedURLs - 1 url2 | http://example.org/ | 2022-02-07T21:03:52Z",
+            r"Paint - 0 File1 | C:\Users\alice\Pictures\screen.png | -",
+            r"Wordpad - 0 File1 | C:\Users\alice\notes.rtf | -",
+            "ACMru 5603 0 000 | *.kdbx | -",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["username"], "alice");
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+        // the key's time dates its most recent entry only
+        let last_used = if r["is_most_recent"] == true {
+            json!("2022-02-08T21:03:52Z")
+        } else {
+            Value::Null
+        };
+        assert_eq!(r["last_used"], last_used, "{r}");
+    }
+    // a term cut short keeps its bytes
+    assert_eq!(records[4]["data_raw"], "700061007300");
+    assert_eq!(
+        records[4]["problems"],
+        json!(["its term has no NUL: the data is cut short"])
+    );
+    assert!(records[5]["data_raw"].is_null());
+    assert_eq!(
+        records[10]["key_path"],
+        r"Software\Microsoft\Search Assistant\ACMru\5603"
+    );
+
+    // --list keeps some lists, in any case
+    let records = mru_read(&[
+        "-d",
+        dir.path().to_str().unwrap(),
+        "--list",
+        "TypedURLs,acmru",
+    ]);
+    assert_eq!(
+        mru_lines(&records),
+        [
+            "TypedURLs - 0 url1 | http://example.com/ | 2022-02-09T21:03:52Z",
+            "TypedURLs - 1 url2 | http://example.org/ | 2022-02-07T21:03:52Z",
+            "ACMru 5603 0 000 | *.kdbx | -",
+        ]
+    );
+}
+
+#[test]
+fn registry_mru_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    mru_collection(dir.path());
+    let out = dir.path().join("mru.csv");
+    let r = run(&[
+        "parse-registry",
+        "mru",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "NTUSER.DAT hives parsed: 2",
+        "Hosts: HOST1",
+        "Users: alice, bob",
+        "Hives without these lists: 1",
+        "Entries: 11 (RunMRU 2, TypedPaths 2, WordWheelQuery 2, TypedURLs 2, Paint 1, Wordpad 1, ACMru 1)",
+        "2022-02-09T21:03:52Z  alice  TypedURLs: http://example.com/",
+        "2022-02-08T21:03:52Z  alice  RunMRU: powershell -ep bypass",
+        r"2022-02-08T21:03:52Z  alice  ACMru\5603: *.kdbx",
+        "2022-02-07T21:03:52Z  alice  TypedURLs: http://example.org/",
+        "Entries or lists that could not be read: 1",
+        "its term has no NUL: the data is cut short",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    // the typed address first: it is the newest
+    let typed = r.stdout.find("TypedURLs: http://example.com/").unwrap();
+    let run_mru = r.stdout.find("RunMRU: powershell").unwrap();
+    assert!(typed < run_mru);
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, MRU_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 11);
+    assert_eq!(&rows[0][4], "RunMRU");
+    assert_eq!(&rows[0][7], "true");
+    assert_eq!(&rows[0][9], "powershell -ep bypass");
+    assert_eq!(&rows[0][11], "2022-02-08T21:03:52Z");
+    assert_eq!(&rows[1][11], "");
+    assert_eq!(&rows[6][10], "2022-02-09T21:03:52Z");
+    assert_eq!(&rows[10][5], "5603");
+}
+
+#[test]
+fn registry_mru_of_public_hives() {
+    let dir = tempfile::tempdir().unwrap();
+    // regipy's Windows 7 NTUSER.DAT: Explorer's searches and typed addresses, as Plaso's and
+    // regipy's plugins read them
+    unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
+    let records = mru_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    assert_eq!(
+        mru_lines(&records),
+        [
+            "WordWheelQuery - 0 1 | alloy | -",
+            "WordWheelQuery - 1 5 | test-plan | -",
+            "WordWheelQuery - 2 4 | vibranium | -",
+            "WordWheelQuery - 3 3 | accounts | -",
+            "WordWheelQuery - 4 2 | myron maclain | -",
+            "WordWheelQuery - 5 0 | adamantium | -",
+            "TypedURLs - 0 url1 | http://199.73.28.114:53/ | -",
+            "TypedURLs - 1 url2 | http://go.microsoft.com/fwlink/?LinkId=69157 | -",
+        ]
+    );
+    assert_eq!(records[0]["last_used"], "2012-04-04T15:45:18.551339700Z");
+
+    // Plaso's NTUSER.DAT: typed addresses with their times from TypedURLsTime
+    let plaso = dir.path().join("plaso");
+    unpack_registry("plaso", &["NTUSER.DAT"], &plaso);
+    let records = mru_read(&["-f", plaso.join("NTUSER.DAT").to_str().unwrap()]);
+    assert_eq!(records.len(), 5);
+    assert_eq!(records[0]["value"], "http://www.catnews.com/");
+    assert_eq!(records[0]["typed_time"], "2016-10-05T09:47:50.967417100Z");
+    assert_eq!(records[3]["typed_time"], "2016-10-05T09:35:04.641445600Z");
+    assert!(records[4]["typed_time"].is_null());
+
+    // the DFIR Artifact Museum's dirty Windows 11 NTUSER.DAT, with its logs
+    let w11 = dir.path().join("w11");
+    unpack_registry(
+        "rathbun_w11",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        &w11,
+    );
+    let records = mru_read(&["-f", w11.join("NTUSER.DAT").to_str().unwrap()]);
+    assert_eq!(
+        mru_lines(&records),
+        [
+            r"TypedPaths - 0 url1 | C:\Users\AndrewRathbun\AppData | -",
+            "TypedURLs - 0 url1 | http://go.microsoft.com/fwlink/p/?LinkId=255141 | -",
+        ]
+    );
+    assert!(records.iter().all(|r| r["problems"] == json!([])));
+}
+
+#[test]
+fn registry_mru_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM", "NTUSER.DAT"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&["parse-registry", "mru", "-f", sam.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not an NTUSER.DAT hive"),
+        "{said}"
+    );
+    let ntuser = dir.path().join("NTUSER.DAT");
+    let r = run(&[
+        "parse-registry",
+        "mru",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "--list",
+        "runmru,bogus",
+        "-K",
+    ]);
+    assert_ne!(r.code, 0);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("bogus"), "{said}");
+    let empty = tempfile::tempdir().unwrap();
+    let r = run(&[
+        "parse-registry",
+        "mru",
+        "-d",
+        empty.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No NTUSER.DAT hives were found"), "{said}");
+    // the output is never one of the files read
+    let original = std::fs::read(&ntuser).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "mru",
+        "-f",
+        ntuser.to_str().unwrap(),
+        "-o",
+        ntuser.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&ntuser).unwrap(), original);
+}
+
+#[test]
+fn registry_mru_keeps_list_warnings_in_stdout_exports() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("NTUSER.DAT");
+    std::fs::write(
+        &path,
+        reg_tree(
+            "ROOT",
+            &[
+                (
+                    r"Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU",
+                    "MRUList",
+                    REG_SZ,
+                    utf16z("aa"),
+                ),
+                (
+                    r"Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU",
+                    "a",
+                    REG_SZ,
+                    utf16z(r"cmd\1"),
+                ),
+            ],
+        ),
+    )
+    .unwrap();
+    for format in ["csv", "json", "jsonl"] {
+        let r = run(&[
+            "parse-registry",
+            "mru",
+            "-f",
+            path.to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        assert!(r.stderr.contains("listed twice"), "{}", r.stderr);
+        assert!(
+            !r.stdout.contains("listed twice"),
+            "diagnostic polluted records"
+        );
+        if format == "jsonl" {
+            assert_eq!(jsonl_records(&r.stdout).len(), 1);
+        }
+    }
 }

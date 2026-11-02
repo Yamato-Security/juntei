@@ -58,7 +58,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "sam" => "accounts",
         "installed-programs" => "applications",
         "usb" => "external_devices",
-        "jump-lists" | "lnk" | "opensavemru" | "recentdocs" | "shellbags" => {
+        "jump-lists" | "lnk" | "mru" | "opensavemru" | "recentdocs" | "shellbags" => {
             "file_and_folder_opening"
         }
         "amcache" | "shimcache" => "file_existence",
@@ -87,6 +87,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "lnk" => "LNK",
         "logfile" => "LogFile",
         "mft" => "MFT",
+        "mru" => "MRU",
         "muicache" => "MuiCache",
         "opensavemru" => "OpenSaveMRU",
         "persistence" => "Persistence",
@@ -1139,6 +1140,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add("mru", &["parse-registry", "mru"], OutputShape::File, &[]);
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1235,6 +1237,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("mru", size);
                 }
                 if matches!(
                     kind.as_deref(),
