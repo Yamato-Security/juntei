@@ -10,8 +10,8 @@ Usage:
 Commands:
   amcache      Parse Amcache inventories
   bam          Parse BAM and DAM last runs
-  muicache     Parse MuiCache program names
   help         Print this message or the help of the given subcommand(s)
+  muicache     Parse MuiCache program names
   persistence  Parse autostart locations
   read         Read keys and values
   recentdocs   Parse recent documents
