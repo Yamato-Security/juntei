@@ -1,3 +1,16 @@
+// Copyright (C) 2026 Shirofune Security Co., Ltd.
+//
+// Unless explicitly acquired and licensed from Licensor under another license, the contents of this
+// file are subject to the Reciprocal Public License ("RPL") Version 1.5, or subsequent versions as
+// allowed by the RPL, and You may not copy or use this file in either source code or executable
+// form, except in compliance with the terms and conditions of the RPL.
+//
+// All software distributed under the RPL is provided strictly on an "AS IS" basis, WITHOUT WARRANTY
+// OF ANY KIND, EITHER EXPRESS OR IMPLIED, AND LICENSOR HEREBY DISCLAIMS ALL SUCH WARRANTIES,
+// INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
+// and limitations under the RPL.
+
 //! `parse-registry security-settings`: the security settings attackers change, in SOFTWARE,
 //! SYSTEM and NTUSER.DAT hives, read by ys-registry-parser's `security_settings` module, with
 //! Hayabusa's input options, progress bar and results summary. One record per value found:
@@ -100,7 +113,10 @@ pub fn run(opts: &RegistrySecuritySettingsOptions) -> i32 {
     // --- parse and write -------------------------------------------------------------------
     let mut hosts = Hosts::new(!opts.no_logs);
     let mut profiles = Profiles::new(!opts.no_logs);
-    let mut stats = Stats::default();
+    let mut stats = Stats {
+        to_stderr: data_on_stdout,
+        ..Stats::default()
+    };
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
@@ -317,7 +333,7 @@ impl<'a> Record<'a> {
             source_path: &opened.source,
             hive_type: &opened.hive_type,
             control_set: set.map(control_set_name),
-            is_current_control_set: set.map(|_| current),
+            is_current_control_set: set.filter(|_| !read.without_select).map(|_| current),
             username: read.user.as_deref(),
             user_sid: read.user_sid.as_deref(),
             area: setting.area.name(),
@@ -370,6 +386,7 @@ impl<'a> Record<'a> {
 /// Counts for the results summary.
 #[derive(Default)]
 struct Stats {
+    to_stderr: bool,
     /// Hives read, by type.
     hives: BTreeMap<String, usize>,
     failed: usize,
@@ -407,9 +424,18 @@ impl Stats {
             self.dirty.push(opened.source.clone());
         }
         if read.without_select {
+            if self.to_stderr {
+                eprintln!(
+                    "{}: Select\\Current is missing or invalid; the current control set is unknown",
+                    opened.source
+                );
+            }
             self.without_select.push(opened.source.clone());
         }
         for problem in &read.problems {
+            if self.to_stderr {
+                eprintln!("{}: {problem}", opened.source);
+            }
             self.problem(&opened.source, problem);
         }
         let host = opened.host.as_deref().unwrap_or(&opened.source);

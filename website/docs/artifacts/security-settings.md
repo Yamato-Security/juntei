@@ -59,8 +59,18 @@ may only be in the logs.
 
 ## Analyst cautions
 
-- **Only values that are there are reported.** A missing value means Windows uses its default,
-  which the meaning of a present value describes.
+- **Stored configuration is not the effective protection state.** Collected registry values and diagnostic rows for damaged value lists
+  are reported. Missing data can reflect defaults, uncollected sources or another management
+  mechanism; it is not proof that protection is enabled or disabled. `WeakensDefault` flags
+  settings that can reduce the stated baseline when they are honored.
+- **Legacy Defender flags may be ignored.** `DisableAntiSpyware` and `DisableAntivirus` do not
+  prove Defender stopped. Applicability depends on platform version, onboarding and tamper
+  protection. [Microsoft explains these legacy settings](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
+- **Modern managed exclusions can be unavailable in registry captures.** Starting with platform
+  4.18.25110.6, devices using Defender for Endpoint configuration management require supported
+  Defender PowerShell cmdlets to retrieve exclusion configuration. Offline registry absence
+  therefore does not establish an absence of exclusions.
+  [Microsoft configuration guidance](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-settings).
 - **Weakened isn't malicious.** Examples:
   - `DisableAntiSpyware` = 1 is also set by Windows while another antivirus is registered.
   - Remote Desktop is opened deliberately on servers.
@@ -116,7 +126,7 @@ Defender exclusion.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath`, `HiveType` | Host, the hive, and its type (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`). |
-| `ControlSet`, `IsCurrentControlSet` | For `SYSTEM`: the control set, and whether it is the one Windows used last. |
+| `ControlSet`, `IsCurrentControlSet` | For `SYSTEM`: the control set, and whether it is the one Windows used last; unknown when `Select\Current` is missing or invalid. |
 | `Username`, `UserSid` | For `NTUSER.DAT`: the profile folder's name, and the user's SID from the system's `ProfileList`. |
 | `Area` | `defender`, `uac`, `credentials`, `remote_access`, `network`, `powershell`, `evidence`. |
 | `Setting` | What it is: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |

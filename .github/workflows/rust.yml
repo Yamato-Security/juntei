@@ -42,3 +42,35 @@ jobs:
         run: cargo test --no-run --locked --target=${{ matrix.info.target }}
       - name: Run tests
         run: cargo test --locked --target=${{ matrix.info.target }}
+
+  # Juntei is under the RPL 1.5, which needs its License Notice in every source file, and the
+  # crates it is built with need their licenses shipped with it (THIRD_PARTY_NOTICES/crates.txt).
+  notices:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      - name: Install cargo-about
+        uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-about@0.9.2
+      - name: Every Rust file carries the RPL License Notice
+        run: |
+          missing=$(git ls-files '*.rs' | xargs grep -L 'subject to the Reciprocal Public License ("RPL") Version 1.5' || true)
+          if [ -n "$missing" ]; then
+            echo "::error::Add the RPL License Notice (the header of src/main.rs) to:"
+            echo "$missing"
+            exit 1
+          fi
+      - name: THIRD_PARTY_NOTICES/crates.txt matches Cargo.lock
+        run: |
+          cargo fetch --locked
+          cargo about generate --frozen --fail -c THIRD_PARTY_NOTICES/about.toml THIRD_PARTY_NOTICES/about.hbs -o "$RUNNER_TEMP/crates.txt"
+          # Some crates' license files end their lines with CRLF; Git stores crates.txt with LF.
+          if ! diff -u --strip-trailing-cr THIRD_PARTY_NOTICES/crates.txt "$RUNNER_TEMP/crates.txt"; then
+            echo "::error::THIRD_PARTY_NOTICES/crates.txt is out of date: regenerate it as THIRD_PARTY_NOTICES/README.md says"
+            exit 1
+          fi
