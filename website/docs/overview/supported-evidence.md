@@ -20,6 +20,7 @@
 | Registry autostarts | `parse-registry persistence` | Run keys, Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks and other autostart locations | Configuration, not proof of execution; most entries are Windows defaults |
 | UserAssist | `parse-registry userassist` | Programs and shortcuts a user started from Explorer, with run counts, focus time and last run | Only Explorer starts are counted; new profiles are seeded with default items |
 | SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | Local accounts only; last-logon values are not a complete logon history |
+| LSA secrets | `parse-registry lsa-secrets` | Which secrets LSA holds (autologon, service accounts, machine account) and when they were set; cached domain logons in use | Names and times only, nothing decrypted; `DefaultPassword` exists without autologon |
 
 ## Collection types
 

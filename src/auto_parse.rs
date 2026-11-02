@@ -38,7 +38,7 @@ const CATEGORIES: &[&str] = &[
 /// Investigative categories are independent of a parser's storage format or command group.
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
-        "sam" => "accounts",
+        "lsa-secrets" | "sam" => "accounts",
         "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
@@ -59,6 +59,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "jump-lists" => "JumpLists",
         "lnk" => "LNK",
         "logfile" => "LogFile",
+        "lsa-secrets" => "LsaSecrets",
         "mft" => "MFT",
         "persistence" => "Persistence",
         "persistence-hunter" => "PersistenceHunter",
@@ -1017,6 +1018,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add("sam", &["parse-registry", "sam"], OutputShape::File, &[]);
         add(
+            "lsa-secrets",
+            &["parse-registry", "lsa-secrets"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "persistence",
             &["parse-registry", "persistence"],
             OutputShape::File,
@@ -1125,6 +1132,7 @@ impl InputInventory {
                     Some("NTUSER.DAT") => Some("recentdocs"),
                     Some("SOFTWARE") => Some("taskcache"),
                     Some("SAM") => Some("sam"),
+                    Some("SECURITY") => Some("lsa-secrets"),
                     _ => None,
                 };
                 if let Some(artifact) = artifact {

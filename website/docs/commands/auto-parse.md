@@ -71,6 +71,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - Defender quarantine metadata
 - all registry keys and values, including recoverable deleted data
 - services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, and UserAssist
+- LSA secrets' names and times, and cached domain logons in use (nothing is decrypted)
 
 Persistence Hunter retains every severity (`--min-severity info`), including partial allow matches.
 `LOW` is a classification to investigate; missing signature metadata can produce it for malicious
@@ -99,6 +100,8 @@ CSV keeps separate tables because each artifact has different columns:
 ├── manifest.csv
 ├── HOST1/
 │   ├── accounts/
+│   │   ├── LsaSecrets.csv
+│   │   ├── LsaSecrets-logs.txt
 │   │   ├── SAM.csv
 │   │   └── SAM-logs.txt
 │   ├── file_and_folder_opening/
@@ -151,7 +154,7 @@ CSV keeps separate tables because each artifact has different columns:
 
 | Category | Artifacts |
 |---|---|
-| `accounts` | SAM local accounts |
+| `accounts` | SAM local accounts, LSA secrets' names and times |
 | `file_and_folder_opening` | Jump Lists, LNK shortcuts, RecentDocs |
 | `file_existence` | Amcache, ShimCache |
 | `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
@@ -173,7 +176,7 @@ covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `Registry.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `Registry.csv`, `LsaSecrets.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider

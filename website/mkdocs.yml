@@ -141,6 +141,7 @@ nav:
           - Registry Autostarts: artifacts/persistence.md
       - Accounts:
           - SAM Local Accounts: artifacts/sam.md
+          - LSA Secrets: artifacts/lsa-secrets.md
   - Persistence Hunter:
       - Persistence Mechanisms: persistence-hunter/index.md
       - Acknowledgements: persistence-hunter/acknowledgements.md
