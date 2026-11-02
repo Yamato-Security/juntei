@@ -118,6 +118,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Application history** (`NTUSER.DAT`) — Sysinternals tools a user ran, WinRAR, 7-Zip and WinZip archive and folder history, OneDrive accounts, Adobe recent files, and TeamViewer and CCleaner values. | Registry |
 
+### System Information
+
+| Artifact | Type |
+| --- | --- |
+| **Audit policy** (`SECURITY` `PolAdtEv`) — Which security events the system was set to log, per subcategory, and so which missing events say nothing. | Registry |
+
 ### Security Products
 
 | Artifact | Type |

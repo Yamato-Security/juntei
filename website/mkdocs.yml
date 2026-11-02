@@ -153,6 +153,8 @@ nav:
           - Registry Autostarts: artifacts/persistence.md
       - Accounts:
           - SAM Local Accounts: artifacts/sam.md
+      - System Information:
+          - Audit Policy: artifacts/auditpol.md
       - Applications:
           - Application History: artifacts/app-history.md
       - System Information:

@@ -10,6 +10,7 @@ Usage:
 Commands:
   amcache             Parse Amcache inventories
   app-history         Parse third-party tools' traces
+  auditpol            Parse the audit policy
   bam                 Parse BAM and DAM last runs
   featureusage        Parse Explorer use counts and pins
   help                Print this message or the help of the given subcommand(s)
@@ -471,6 +472,40 @@ The complete options and field semantics are on [Registry Hives](../artifacts/re
 [Registry Autostarts](../artifacts/persistence.md), and [UserAssist](../artifacts/userassist.md).
 
 
+## `parse-registry auditpol`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry auditpol <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SECURITY hives
+  -f, --file <FILE>      File path to one SECURITY hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+One record per subcategory (Windows Vista and later) or category (XP and 2003) of the audit
+policy in `Policy\PolAdtEv`: what it logs, its GUID and message ID, and its main events. See
+[Audit Policy](../artifacts/auditpol.md).
+
+
 ## `parse-registry persistence`
 
 ```text
@@ -844,3 +879,5 @@ See also [featureusage](../artifacts/featureusage.md).
 See also [security-settings](../artifacts/security-settings.md).
 
 See also [office](../artifacts/office.md).
+
+See also [auditpol](../artifacts/auditpol.md).

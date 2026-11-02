@@ -1,7 +1,7 @@
 # Registry test hives
 
 `NTUSER.DAT` hives for `parse-registry recentdocs`, `userassist`, `app-history` and `installed-programs`,
-`SAM` hives for `parse-registry sam`, and a `UsrClass.dat` for `parse-registry shellbags` and
+`SECURITY` hives for `parse-registry auditpol`, `SAM` hives for `parse-registry sam`, and a `UsrClass.dat` for `parse-registry shellbags` and
 `parse-registry muicache`, gzipped; the tests unpack them. The `SYSTEM` hives the registry tests
 also use are in `../shimcache/`.
 
@@ -18,3 +18,4 @@ also use are in `../shimcache/`.
 | `rathbun_w11/UsrClass.dat.gz`, `UsrClass.dat.LOG1.gz`, `UsrClass.dat.LOG2.gz` | The same archive: the user's dirty `UsrClass.dat` and its logs (12 programs in MuiCache) | MIT, `rathbun_w11/LICENSE` |
 | `notatin/win7_ntuser.dat.gz` | [notatin](https://github.com/strozfriedberg/notatin)'s `test_data/win7_ntuser.dat` (ae3a706), compressed with gzip: a clean Windows 7 hive with Remote Desktop, PuTTY, WinSCP, mapped drive and `MountPoints2` keys | Apache-2.0, `notatin/LICENSE` |
 | `aptsimulator_w10/NTUSER.DAT.gz`, `ntuser.dat.LOG1.gz`, `ntuser.dat.LOG2.gz` | The [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)'s `Windows/Registry/Win10/APTSimulatorVM/APTSimulatorVM_RegistryHives.7z`: `TestUser`'s dirty hive and its logs (byte-identical to the archive's), with the Sysinternals keys PsExec and Sysmon left | MIT, `aptsimulator_w10/LICENSE` |
+| `rathbun_w11/SECURITY.gz`, `SECURITY.LOG1.gz`, `SECURITY.LOG2.gz` | The same archive: the system's dirty `SECURITY` hive and its logs (its audit policy, and the names and times of its LSA secrets and cached logons) | MIT, `rathbun_w11/LICENSE` |

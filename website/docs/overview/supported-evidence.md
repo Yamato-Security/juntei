@@ -32,6 +32,7 @@
 | Remote access (user side) | `parse-registry remote-access` | Computers a user reached with Remote Desktop, PuTTY and WinSCP, accepted SSH host keys, mapped drives and shares | A saved or typed target isn't a successful connection; list keys have one time for all their items |
 | Installed programs | `parse-registry installed-programs` | Installed programs (machine-wide and per user), Windows Installer products, App Paths, WSL distributions and packaged apps | The install date is the installer's; cleanly uninstalled programs leave no entry |
 | SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | Local accounts only; last-logon values are not a complete logon history |
+| Audit policy | `parse-registry auditpol` | Which security events the system was set to log, and so which missing events say nothing | The policy when the hive was last written; changes are logged by event 4719 |
 | System information | `parse-registry system-info` | Computer and domain names, Windows version and install date, time zone, last shutdown, last user, profiles, SIDs | The configuration when collected; `InstallDate` moves with feature upgrades, and Windows 11 calls itself Windows 10 |
 
 ## Collection types

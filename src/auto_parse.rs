@@ -71,6 +71,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "registry" => "registry",
         "defender-quarantine" | "security-settings" => "security_products",
         "system-info" => "system_information",
+        "auditpol" => "system_information",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
     }
 }
@@ -79,6 +80,7 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "auditpol" => "AuditPolicy",
         "app-history" => "AppHistory",
         "bam" => "BAM",
         "defender-quarantine" => "DefenderQuarantine",
@@ -1083,6 +1085,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &[],
         );
         add(
+            "auditpol",
+            &["parse-registry", "auditpol"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "persistence",
             &["parse-registry", "persistence"],
             OutputShape::File,
@@ -1258,6 +1266,7 @@ impl InputInventory {
                     Some("NTUSER.DAT") => Some("recentdocs"),
                     Some("SOFTWARE") => Some("taskcache"),
                     Some("SAM") => Some("sam"),
+                    Some("SECURITY") => Some("auditpol"),
                     _ => None,
                 };
                 if let Some(artifact) = artifact {
