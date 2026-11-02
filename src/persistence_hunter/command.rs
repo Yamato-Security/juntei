@@ -294,7 +294,7 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
             .ok_or("Missing coverage output")?;
         let mut writer = csv::Writer::from_writer(out);
         writer
-            .write_record(["Computer", "CheckId", "Status", "Detail"])
+            .write_record(["Computer", "CheckID", "Status", "Detail"])
             .map_err(|e| e.to_string())?;
         for row in &coverage {
             writer

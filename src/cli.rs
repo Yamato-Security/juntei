@@ -691,7 +691,7 @@ pub struct MftOptions {
     #[arg(help_heading = Some("CSV Output"), long, value_name = "DATE", value_parser = crate::mft_csv::parse_cutoff, display_order = 402)]
     pub cutoff: Option<i64>,
 
-    /// Recover the file names left in the slack of FILE records (past their attributes): rows marked FromSlack, or slack_file_names in JSON
+    /// Recover the file names left in the slack of FILE records (past their attributes): rows marked FromSlack, or SlackFileNames in JSON
     #[arg(help_heading = Some("Records"), short = 'x', long, display_order = 450)]
     pub recover_slack: bool,
 

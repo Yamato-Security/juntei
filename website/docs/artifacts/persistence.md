@@ -76,7 +76,7 @@ Output:
 ```bash
 juntei parse-registry persistence -d collection/ -o persistence.csv
 juntei parse-registry persistence -f NTUSER.DAT -t jsonl \
-  | jq 'select(.mechanism != "com_server" or .overrides_machine_registration == true)'
+  | jq 'select(.Mechanism != "com_server" or .OverridesMachineRegistration == true)'
 ```
 
 The summary counts records by mechanism. It also lists the `StartupApproved\Run` and `Run32`
@@ -92,7 +92,7 @@ by path, symbolic link or hard link. When it can't tell, it doesn't write.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath`, `HiveType` | Host context, source hive and its type. |
-| `User`, `UserSid` | For user hives: the profile folder, and the SID. The SID comes from `UsrClass.dat`'s root key name, else from the system's `ProfileList`. |
+| `User`, `UserSID` | For user hives: the profile folder, and the SID. The SID comes from `UsrClass.dat`'s root key name, else from the system's `ProfileList`. |
 | `Mechanism` | `run`, `run_once`, `winlogon`, `ifeo_debugger`, `silent_process_exit`, `appinit_dlls`, `appcert_dlls`, `boot_execute`, `lsa_security_package`, `com_server`, `uac_bypass_command`, … |
 | `AttackTechnique` | MITRE ATT&CK technique, where one fits (`T1547.001`, `T1546.012`, …). |
 | `KeyPath`, `ValueName` | The key under the hive's root (names as written) and the value (empty: the default value). |
@@ -101,7 +101,7 @@ by path, symbolic link or hard link. When it can't tell, it doesn't write.
 | `Enabled`, `DisabledAtUTC` | What `StartupApproved`, `LoadAppInit_DLLs`, `GlobalFlag` (with `ReportingMode`), `UseFilter`, `IsInstalled`, the time provider's `Enabled` or `ScreenSaveActive` says. Empty when nothing says. |
 | `Details` | More: what a pending rename does, the COM class's name, `ReportingMode`, `FilterFullPath`, an Active Setup `ShellComponent`, … |
 | `OverridesMachineRegistration` | For a user's COM class or command: whether the machine registers the same one. Empty without the system's `SOFTWARE` hive. |
-| `Wow64` | Under `Wow6432Node`: for 32-bit programs. |
+| `WOW64` | Under `Wow6432Node`: for 32-bit programs. |
 | `KeyLastWrittenUTC` | The key's last write. |
 | `DataRaw` | The value's bytes (hex), when they are not text or not valid UTF-16. |
 | `TransactionLogStatus`, `LogsApplied` | Registry recovery context. |

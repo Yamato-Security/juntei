@@ -303,23 +303,41 @@ impl UserNames {
 /// An entry's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "ControlSet")]
     control_set: String,
+    #[serde(rename = "IsCurrentControlSet")]
     is_current_control_set: bool,
+    #[serde(rename = "Moderator")]
     moderator: &'static str,
+    #[serde(rename = "UserSID")]
     user_sid: &'a str,
+    #[serde(rename = "UserName")]
     user_name: Option<String>,
+    #[serde(rename = "UserNameSource")]
     user_name_source: Option<&'static str>,
+    #[serde(rename = "Program")]
     program: &'a str,
+    #[serde(rename = "DevicePath")]
     device_path: Option<&'a str>,
+    #[serde(rename = "Path")]
     path: Option<&'a str>,
+    #[serde(rename = "LastRun")]
     last_run: Option<String>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -329,7 +347,7 @@ const CSV_HEADER: [&str; 18] = [
     "ControlSet",
     "IsCurrentControlSet",
     "Moderator",
-    "UserSid",
+    "UserSID",
     "UserName",
     "UserNameSource",
     "Program",

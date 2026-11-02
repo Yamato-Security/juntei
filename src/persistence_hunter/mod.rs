@@ -34,8 +34,10 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "PascalCase")]
 pub struct Finding {
     pub computer: String,
+    #[serde(rename(serialize = "CheckID"), alias = "CheckID")]
     pub check_id: String,
     pub technique: String,
+    #[serde(rename(serialize = "MitreID"), alias = "MitreID")]
     pub mitre_id: String,
     pub path: String,
     pub value: String,
@@ -52,11 +54,14 @@ pub struct Finding {
     pub resolved_path: String,
     pub resolution_status: String,
     pub exists: Option<bool>,
+    #[serde(rename(serialize = "SHA256"), alias = "SHA256")]
     pub sha256: String,
     pub signer: String,
     pub signer_status: String,
+    #[serde(rename(serialize = "IsLOLBIN"), alias = "IsLOLBIN")]
     pub is_lolbin: Option<bool>,
     pub is_builtin: Option<bool>,
+    #[serde(rename(serialize = "IsInOS-Directory"), alias = "IsInOS-Directory")]
     pub is_in_os_directory: Option<bool>,
     pub launcher: String,
     pub references: String,
@@ -108,6 +113,7 @@ impl Finding {
 #[serde(rename_all = "PascalCase")]
 pub struct Coverage {
     pub computer: String,
+    #[serde(rename(serialize = "CheckID"), alias = "CheckID")]
     pub check_id: String,
     pub status: String,
     pub detail: String,

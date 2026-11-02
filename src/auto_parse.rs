@@ -182,16 +182,27 @@ impl TaskStatus {
 struct TaskResult {
     #[serde(rename = "Computer")]
     computer: String,
+    #[serde(rename = "Artifact")]
     artifact: String,
+    #[serde(rename = "Category")]
     category: &'static str,
+    #[serde(rename = "OutputType")]
     output_type: &'static str,
+    #[serde(rename = "Purpose")]
     purpose: &'static str,
+    #[serde(rename = "Status")]
     status: TaskStatus,
+    #[serde(rename = "DurationMs")]
     duration_ms: u128,
+    #[serde(rename = "ExitCode")]
     exit_code: Option<i32>,
+    #[serde(rename = "Command")]
     command: Vec<String>,
+    #[serde(rename = "Output")]
     output: Option<String>,
+    #[serde(rename = "Log")]
     log: String,
+    #[serde(rename = "Error")]
     error: Option<String>,
 }
 
@@ -199,27 +210,45 @@ struct TaskResult {
 struct ManifestHost {
     #[serde(rename = "Computer")]
     computer: String,
+    #[serde(rename = "Hostname")]
     hostname: String,
+    #[serde(rename = "FQDN")]
     fqdn: Option<String>,
+    #[serde(rename = "HostnameSource")]
     hostname_source: &'static str,
+    #[serde(rename = "EvidenceRoot")]
     evidence_root: String,
+    #[serde(rename = "WindowsDirectories")]
     windows_directories: Vec<String>,
+    #[serde(rename = "OutputDirectory")]
     output_directory: String,
 }
 
 #[derive(Serialize)]
 struct Manifest<'a> {
+    #[serde(rename = "GeneratedUTC")]
     generated_utc: String,
+    #[serde(rename = "JunteiVersion")]
     juntei_version: &'static str,
+    #[serde(rename = "EvidenceDirectory")]
     evidence_directory: String,
+    #[serde(rename = "OutputDirectory")]
     output_directory: String,
+    #[serde(rename = "OutputType")]
     output_type: &'static str,
+    #[serde(rename = "JSON-Timeline")]
     json_timeline: Option<String>,
+    #[serde(rename = "JSON-TimelineError")]
     json_timeline_error: Option<String>,
+    #[serde(rename = "ExtractDefenderQuarantined")]
     extract_defender_quarantined: bool,
+    #[serde(rename = "Threads")]
     threads: usize,
+    #[serde(rename = "MaxDepth")]
     max_depth: usize,
+    #[serde(rename = "Hosts")]
     hosts: Vec<ManifestHost>,
+    #[serde(rename = "Tasks")]
     tasks: &'a [TaskResult],
 }
 
@@ -1903,7 +1932,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
     writer.write_record([
         "Computer",
         "Hostname",
-        "Fqdn",
+        "FQDN",
         "HostnameSource",
         "EvidenceRoot",
         "Artifact",

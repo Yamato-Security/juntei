@@ -204,27 +204,49 @@ pub fn run(opts: &RegistryBcdOptions) -> i32 {
 /// An object's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "HiveType")]
     hive_type: &'static str,
+    #[serde(rename = "ObjectGUID")]
     object_guid: &'a str,
+    #[serde(rename = "ObjectType")]
     object_type: Option<String>,
+    #[serde(rename = "ObjectTypeName")]
     object_type_name: &'a str,
+    #[serde(rename = "Description")]
     description: Option<&'a str>,
+    #[serde(rename = "IsDefault")]
     is_default: bool,
+    #[serde(rename = "DisplayOrder")]
     display_order: Option<usize>,
+    #[serde(rename = "Device")]
     device: Option<&'a str>,
+    #[serde(rename = "Path")]
     path: Option<&'a str>,
+    #[serde(rename = "RecoveryEnabled")]
     recovery_enabled: Option<bool>,
+    #[serde(rename = "TestSigning")]
     test_signing: Option<bool>,
+    #[serde(rename = "NoIntegrityChecks")]
     no_integrity_checks: Option<bool>,
+    #[serde(rename = "SafeBoot")]
     safe_boot: Option<String>,
+    #[serde(rename = "BootStatusPolicy")]
     boot_status_policy: Option<String>,
+    #[serde(rename = "Inherited")]
     inherited: &'a [String],
+    #[serde(rename = "Elements")]
     elements: Vec<Value>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: Vec<String>,
 }
 
@@ -232,7 +254,7 @@ const CSV_HEADER: [&str; 22] = [
     "Host",
     "SourcePath",
     "HiveType",
-    "ObjectGuid",
+    "ObjectGUID",
     "ObjectType",
     "ObjectTypeName",
     "Description",
@@ -295,12 +317,12 @@ fn value_text(value: &BcdValue) -> String {
 /// An element as JSON.
 fn element_json(e: &BcdElement) -> Value {
     json!({
-        "element_type": e.key_name,
-        "name": e.name,
-        "value": value_json(&e.value),
-        "data_raw": e.data_raw.as_deref().map(hex),
-        "key_last_written": filetime(e.key_last_written),
-        "problems": e.problems,
+        "ElementType": e.key_name,
+        "Name": e.name,
+        "Value": value_json(&e.value),
+        "DataRaw": e.data_raw.as_deref().map(hex),
+        "KeyLastWritten": filetime(e.key_last_written),
+        "Problems": e.problems,
     })
 }
 

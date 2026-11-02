@@ -58,7 +58,7 @@ Output:
 juntei parse-registry sam -f SAM -o accounts.csv
 juntei parse-registry sam -f SAM --rid 500 -t jsonl | jq .
 juntei parse-registry sam -d evidence/ -t jsonl \
-  | jq 'select(.hidden_from_logon_ui == true or (.account_flags | index("disabled") | not))'
+  | jq 'select(.HiddenFromLogonUi == true or (.AccountFlags | index("disabled") | not))'
 ```
 
 ## Output fields
@@ -66,7 +66,7 @@ juntei parse-registry sam -d evidence/ -t jsonl \
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath` | Host context and exact SAM hive. |
-| `Rid` | Relative Identifier. Strong account identity pivot; 500 is built-in Administrator. |
+| `RID` | Relative Identifier. Strong account identity pivot; 500 is built-in Administrator. |
 | `Username` | Current local account name. Can be renamed; correlate by RID. |
 | `FullName`, `Comment`, `UserComment` | Descriptive text; attacker-controlled and useful for masquerading review. |
 | `AccountFlags` | Decoded states such as disabled, locked out, password not required, normal account, password never expires. |

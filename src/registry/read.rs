@@ -562,23 +562,41 @@ impl Record<'_> {
 /// A record in JSON, its fields in this order.
 #[derive(Serialize)]
 struct JsonRecord<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "HiveType")]
     hive_type: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "RecordType")]
     record_type: &'static str,
+    #[serde(rename = "KeyPath")]
     key_path: Option<&'a str>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "ValueName")]
     value_name: Option<&'a str>,
+    #[serde(rename = "ValueType")]
     value_type: Option<String>,
+    #[serde(rename = "ValueData")]
     value_data: Option<Value>,
+    #[serde(rename = "DataSize")]
     data_size: Option<u32>,
+    #[serde(rename = "ValueDataRaw")]
     value_data_raw: Option<String>,
+    #[serde(rename = "ValueU64")]
     value_u64: Option<u64>,
+    #[serde(rename = "ValueFiletimeUTC")]
     value_filetime_utc: Option<String>,
+    #[serde(rename = "AllocationStatus")]
     allocation_status: &'static str,
+    #[serde(rename = "RecoveredFrom")]
     recovered_from: &'a [String],
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 

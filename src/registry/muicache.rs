@@ -271,27 +271,42 @@ struct User {
 /// A program's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "HiveType")]
     hive_type: &'a str,
+    #[serde(rename = "Path")]
     path: &'a str,
+    #[serde(rename = "FriendlyAppName")]
     friendly_app_name: Option<&'a str>,
+    #[serde(rename = "ApplicationCompany")]
     application_company: Option<&'a str>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "FriendlyAppNameRaw")]
     friendly_app_name_raw: Option<String>,
+    #[serde(rename = "ApplicationCompanyRaw")]
     application_company_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 15] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "HiveType",
     "Path",

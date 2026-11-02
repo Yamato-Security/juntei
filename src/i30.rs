@@ -332,35 +332,57 @@ fn time(ft: u64) -> Option<String> {
 /// An index entry's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "RecordOffset")]
     record_offset: u64,
+    #[serde(rename = "RecordVCN")]
     record_vcn: u64,
+    #[serde(rename = "RecordLSN")]
     record_lsn: u64,
+    #[serde(rename = "EntryOffset")]
     entry_offset: u64,
+    #[serde(rename = "FromSlack")]
     from_slack: bool,
+    #[serde(rename = "CopyOfEntryInUse")]
     copy_of_entry_in_use: bool,
+    #[serde(rename = "FileName")]
     file_name: &'a str,
+    #[serde(rename = "Namespace")]
     namespace: &'static str,
+    #[serde(rename = "FileEntry")]
     file_entry: Option<u64>,
+    #[serde(rename = "FileSequence")]
     file_sequence: Option<u16>,
+    #[serde(rename = "ParentEntry")]
     parent_entry: Option<u64>,
+    #[serde(rename = "ParentSequence")]
     parent_sequence: Option<u16>,
+    #[serde(rename = "Created")]
     created: Option<String>,
+    #[serde(rename = "Modified")]
     modified: Option<String>,
+    #[serde(rename = "MFT-Modified")]
     mft_modified: Option<String>,
+    #[serde(rename = "Accessed")]
     accessed: Option<String>,
+    #[serde(rename = "AllocatedSize")]
     allocated_size: u64,
+    #[serde(rename = "RealSize")]
     real_size: u64,
+    #[serde(rename = "FileAttributes")]
     file_attributes: String,
+    #[serde(rename = "ReparseValue")]
     reparse_value: u32,
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 22] = [
     "SourcePath",
     "RecordOffset",
-    "RecordVcn",
-    "RecordLsn",
+    "RecordVCN",
+    "RecordLSN",
     "EntryOffset",
     "FromSlack",
     "CopyOfEntryInUse",
@@ -372,7 +394,7 @@ const CSV_HEADER: [&str; 22] = [
     "ParentSequence",
     "CreatedUTC",
     "ModifiedUTC",
-    "MftModifiedUTC",
+    "MFT-ModifiedUTC",
     "AccessedUTC",
     "AllocatedSize",
     "RealSize",

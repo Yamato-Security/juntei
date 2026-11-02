@@ -187,46 +187,80 @@ pub fn run(opts: &RegistrySamOptions) -> i32 {
 /// An account's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "RID")]
     rid: Option<u32>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "FullName")]
     full_name: Option<&'a str>,
+    #[serde(rename = "Comment")]
     comment: Option<&'a str>,
+    #[serde(rename = "UserComment")]
     user_comment: Option<&'a str>,
+    #[serde(rename = "AccountFlags")]
     account_flags: Option<Vec<String>>,
+    #[serde(rename = "AccountFlagsValue")]
     account_flags_value: Option<u16>,
+    #[serde(rename = "CountryCode")]
     country_code: Option<u16>,
+    #[serde(rename = "CodePage")]
     code_page: Option<u16>,
+    #[serde(rename = "LastLogon")]
     last_logon: Option<String>,
+    #[serde(rename = "LastLogonWholeSeconds")]
     last_logon_whole_seconds: Option<String>,
+    #[serde(rename = "PasswordLastSet")]
     password_last_set: Option<String>,
+    #[serde(rename = "AccountExpiration")]
     account_expiration: Option<String>,
+    #[serde(rename = "LastFailedLogon")]
     last_failed_logon: Option<String>,
+    #[serde(rename = "FailedLogonCount")]
     failed_logon_count: Option<u16>,
+    #[serde(rename = "LogonCount")]
     logon_count: Option<u16>,
+    #[serde(rename = "PasswordHint")]
     password_hint: Option<&'a str>,
+    #[serde(rename = "InternetUserName")]
     internet_user_name: Option<&'a str>,
+    #[serde(rename = "HiddenFromLogonUi")]
     hidden_from_logon_ui: Option<bool>,
+    #[serde(rename = "HomeDirectory")]
     home_directory: Option<&'a str>,
+    #[serde(rename = "HomeDrive")]
     home_drive: Option<&'a str>,
+    #[serde(rename = "ProfilePath")]
     profile_path: Option<&'a str>,
+    #[serde(rename = "LogonScript")]
     logon_script: Option<&'a str>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "NamesKeyLastWritten")]
     names_key_last_written: Option<String>,
+    #[serde(rename = "LastLogonFiletime")]
     last_logon_filetime: Option<u64>,
+    #[serde(rename = "PasswordLastSetFiletime")]
     password_last_set_filetime: Option<u64>,
+    #[serde(rename = "AccountExpirationFiletime")]
     account_expiration_filetime: Option<u64>,
+    #[serde(rename = "LastFailedLogonFiletime")]
     last_failed_logon_filetime: Option<u64>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 34] = [
     "Host",
     "SourcePath",
-    "Rid",
+    "RID",
     "Username",
     "FullName",
     "Comment",

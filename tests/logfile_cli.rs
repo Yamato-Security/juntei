@@ -70,7 +70,7 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
     assert!(
         values
             .windows(2)
-            .all(|w| w[0]["Lsn"].as_u64() < w[1]["Lsn"].as_u64())
+            .all(|w| w[0]["LSN"].as_u64() < w[1]["LSN"].as_u64())
     );
     assert_eq!(
         values
@@ -87,14 +87,14 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
             .sum::<usize>(),
         79
     );
-    let quota = values.iter().find(|v| v["Lsn"] == 1050704_u64).unwrap();
+    let quota = values.iter().find(|v| v["LSN"] == 1050704_u64).unwrap();
     assert_eq!(quota["FileName"], "$Quota");
     assert_eq!(quota["MetadataSide"], "Undo");
     assert_eq!(quota["ParentPath"], ".");
     assert_eq!(quota["CreatedOn"], "2018-09-24T07:53:17.2748380Z");
     assert_eq!(quota["UndoFileNames"][0]["Name"], "$Quota");
     // The directory whose inline index changes is not the child described by its metadata.
-    let directory = values.iter().find(|v| v["Lsn"] == 1058043_u64).unwrap();
+    let directory = values.iter().find(|v| v["LSN"] == 1058043_u64).unwrap();
     assert_eq!(directory["TargetEntryNumber"], 34);
     assert!(directory["TargetSequenceNumber"].is_null());
     assert!(directory["TargetPath"].is_null());
@@ -109,17 +109,17 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
         directory["ContentModifiedOn"],
         "2018-09-24T07:53:20.0877325Z"
     );
-    let data = values.iter().find(|v| v["Lsn"] == 1052517_u64).unwrap();
+    let data = values.iter().find(|v| v["LSN"] == 1052517_u64).unwrap();
     assert_eq!(data["FileSize"], 8);
     assert_eq!(data["AttributeType"], 128);
     for lsn in [1051174_u64, 1051191] {
-        let update = values.iter().find(|v| v["Lsn"] == lsn).unwrap();
+        let update = values.iter().find(|v| v["LSN"] == lsn).unwrap();
         assert!(
             update["EntryNumber"].is_null(),
             "LSN {lsn}: target is not a decoded file identity"
         );
     }
-    let partial_times = values.iter().find(|v| v["Lsn"] == 1053039_u64).unwrap();
+    let partial_times = values.iter().find(|v| v["LSN"] == 1053039_u64).unwrap();
     assert_eq!(partial_times["EntryNumber"], 0);
     assert_eq!(partial_times["AttributeType"], 16);
     assert!(
@@ -179,7 +179,7 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
                 Value::String(s) => s.clone(),
                 v => v.to_string(),
             };
-            assert_eq!(cell, expected, "LSN {} field {field}", value["Lsn"]);
+            assert_eq!(cell, expected, "LSN {} field {field}", value["LSN"]);
         }
     }
 }
@@ -205,7 +205,7 @@ fn version_two_log_exposes_journal_writes_and_damage() {
             .iter()
             .any(|v| v["JournalWriteLength"].as_u64().unwrap_or(0) > 0)
     );
-    assert!(values.iter().all(|v| v["MftSource"].is_null()));
+    assert!(values.iter().all(|v| v["MFT-Source"].is_null()));
     let mut data = std::fs::read(&input).unwrap();
     data[..4].copy_from_slice(b"BAD!");
     std::fs::write(&input, data).unwrap();
@@ -245,7 +245,7 @@ fn current_paths_do_not_follow_a_reused_mft_record_number() {
         "-t",
         "jsonl",
     ]));
-    let quota = values.iter().find(|v| v["Lsn"] == 1051364_u64).unwrap();
+    let quota = values.iter().find(|v| v["LSN"] == 1051364_u64).unwrap();
     assert_eq!(quota["ParentEntryNumber"], 11);
     assert_eq!(quota["ParentSequenceNumber"], 11);
     assert_eq!(quota["ParentPath"], r".\[Unknown 11-11]");
@@ -281,7 +281,7 @@ fn non_utf8_source_paths_do_not_panic() {
             .contains('\u{fffd}')
     );
     assert!(
-        values[0]["MftSource"]
+        values[0]["MFT-Source"]
             .as_str()
             .unwrap()
             .contains('\u{fffd}')
@@ -378,13 +378,16 @@ fn prefixed_logs_pair_only_with_their_own_mft() {
         values
             .iter()
             .find(|v| {
-                v["Lsn"] == 1051364_u64 && v["SourceFile"] == source.to_string_lossy().as_ref()
+                v["LSN"] == 1051364_u64 && v["SourceFile"] == source.to_string_lossy().as_ref()
             })
             .unwrap()
     };
-    assert_eq!(quota(&c_log)["MftSource"], c_mft.to_string_lossy().as_ref());
+    assert_eq!(
+        quota(&c_log)["MFT-Source"],
+        c_mft.to_string_lossy().as_ref()
+    );
     assert_eq!(quota(&c_log)["ParentPath"], r".\$Extend");
-    assert!(quota(&d_log)["MftSource"].is_null());
+    assert!(quota(&d_log)["MFT-Source"].is_null());
     assert!(quota(&d_log)["ParentPath"].is_null());
     assert!(String::from_utf8_lossy(&output.stderr).contains("No unambiguous matching $MFT for"));
     let d_mft = dir.path().join("d_$mft.BIN");
@@ -404,12 +407,15 @@ fn prefixed_logs_pair_only_with_their_own_mft() {
         values
             .iter()
             .find(|v| {
-                v["Lsn"] == 1051364_u64 && v["SourceFile"] == source.to_string_lossy().as_ref()
+                v["LSN"] == 1051364_u64 && v["SourceFile"] == source.to_string_lossy().as_ref()
             })
             .unwrap()
     };
     assert_eq!(quota(&c_log)["ParentPath"], r".\$Extend");
-    assert_eq!(quota(&d_log)["MftSource"], d_mft.to_string_lossy().as_ref());
+    assert_eq!(
+        quota(&d_log)["MFT-Source"],
+        d_mft.to_string_lossy().as_ref()
+    );
     assert_eq!(quota(&d_log)["ParentPath"], r".\[Unknown 11-11]");
     let before = std::fs::read(&c_mft).unwrap();
     assert!(
@@ -536,7 +542,7 @@ fn protects_input_mft_and_existing_outputs() {
     ]);
     let salvaged = rows(&output);
     assert_eq!(salvaged.len(), 2129);
-    assert!(salvaged.iter().all(|v| v["MftSource"].is_null()));
+    assert!(salvaged.iter().all(|v| v["MFT-Source"].is_null()));
     assert!(String::from_utf8_lossy(&output.stderr).contains("without current paths"));
 }
 
@@ -578,15 +584,15 @@ fn auto_parse_outputs_and_jsonl_timeline_include_logfile_and_provenance() {
         );
         let manifest: Value =
             serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
-        let tasks: Vec<_> = manifest["tasks"]
+        let tasks: Vec<_> = manifest["Tasks"]
             .as_array()
             .unwrap()
             .iter()
-            .filter(|t| t["artifact"] == "logfile" && t["purpose"] == "artifact")
+            .filter(|t| t["Artifact"] == "logfile" && t["Purpose"] == "artifact")
             .collect();
         assert_eq!(tasks.len(), 2);
-        assert!(tasks.iter().all(|t| t["status"] == "succeeded"));
-        assert!(tasks.iter().all(|t| t["category"] == "FileSystem"));
+        assert!(tasks.iter().all(|t| t["Status"] == "succeeded"));
+        assert!(tasks.iter().all(|t| t["Category"] == "FileSystem"));
         assert!(out.join("HOST1/FileSystem/LogFile-logs.txt").is_file());
         assert!(out.join("HOST1/FileSystem/LogFile-2-logs.txt").is_file());
         if format == "csv" {

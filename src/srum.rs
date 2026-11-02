@@ -546,6 +546,9 @@ struct Ordered<'a>(&'a [(String, Json)]);
 
 impl Serialize for Ordered<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        // Detect normalization collisions before serde_json can merge duplicate map keys.
+        crate::output_schema::headers(self.0.iter().map(|(name, _)| name.as_str()))
+            .map_err(serde::ser::Error::custom)?;
         let mut map = serializer.serialize_map(Some(self.0.len()))?;
         for (name, value) in self.0 {
             map.serialize_entry(name, value)?;
@@ -646,7 +649,9 @@ fn write_csv_tables(dir: &Path, srum: &Srum) -> io::Result<usize> {
         table.write(&path)?;
     }
     let mut ids = csv::Writer::from_path(dir.join("IdentityMap.csv"))?;
-    ids.write_record(["IdIndex", "IdType", "IdBlob"])?;
+    ids.write_record(crate::output_schema::headers([
+        "IdIndex", "IdType", "IdBlob",
+    ])?)?;
     for id in &srum.ids {
         ids.write_record([
             id.index.to_string(),
@@ -679,7 +684,9 @@ impl CsvTable {
 
     fn write(&self, path: &Path) -> io::Result<()> {
         let mut w = csv::Writer::from_path(path)?;
-        w.write_record(&self.columns)?;
+        w.write_record(crate::output_schema::headers(
+            self.columns.iter().map(String::as_str),
+        )?)?;
         let mut cells = vec![String::new(); self.columns.len()];
         for row in &self.rows {
             cells.iter_mut().for_each(String::clear);
@@ -779,9 +786,9 @@ impl RecordWriter {
         }
         // JSON: a pretty object and a newline, like the other commands; JSONL: one per line.
         if self.pretty {
-            serde_json::to_writer_pretty(&mut self.out, &Ordered(&columns))?;
+            crate::output_schema::write_json(&mut self.out, &Ordered(&columns), true)?;
         } else {
-            serde_json::to_writer(&mut self.out, &Ordered(&columns))?;
+            crate::output_schema::write_json(&mut self.out, &Ordered(&columns), false)?;
         }
         self.out.write_all(b"\n")
     }

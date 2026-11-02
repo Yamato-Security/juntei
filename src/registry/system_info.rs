@@ -544,15 +544,25 @@ fn unix_time(seconds: u32) -> Option<String> {
 /// A Windows version the system was upgraded from, in a record.
 #[derive(Serialize)]
 struct PreviousRecord<'a> {
+    #[serde(rename = "KeyName")]
     key_name: &'a str,
+    #[serde(rename = "UpdatedOn")]
     updated_on: Option<&'a str>,
+    #[serde(rename = "ProductName")]
     product_name: Option<&'a str>,
+    #[serde(rename = "Edition")]
     edition: Option<&'a str>,
+    #[serde(rename = "DisplayVersion")]
     display_version: Option<&'a str>,
+    #[serde(rename = "Build")]
     build: Option<&'a str>,
+    #[serde(rename = "Ubr")]
     ubr: Option<u32>,
+    #[serde(rename = "InstallDate")]
     install_date: Option<String>,
+    #[serde(rename = "InstallTime")]
     install_time: Option<String>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
 }
 
@@ -591,12 +601,19 @@ impl<'a> PreviousRecord<'a> {
 /// A profile, in a record.
 #[derive(Serialize)]
 struct ProfileRecord<'a> {
+    #[serde(rename = "SID")]
     sid: &'a str,
+    #[serde(rename = "Path")]
     path: Option<&'a str>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "LoadTime")]
     load_time: Option<String>,
+    #[serde(rename = "LocalLoadTime")]
     local_load_time: Option<String>,
+    #[serde(rename = "LocalUnloadTime")]
     local_unload_time: Option<String>,
+    #[serde(rename = "State")]
     state: Option<u32>,
 }
 
@@ -636,64 +653,123 @@ impl<'a> ProfileRecord<'a> {
 /// A system's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "SoftwarePath")]
     software_path: Option<&'a str>,
+    #[serde(rename = "SamPath")]
     sam_path: Option<&'a str>,
+    #[serde(rename = "SecurityPath")]
     security_path: Option<&'a str>,
+    #[serde(rename = "ComputerName")]
     computer_name: Option<&'a str>,
+    #[serde(rename = "Hostname")]
     hostname: Option<&'a str>,
+    #[serde(rename = "Domain")]
     domain: Option<&'a str>,
+    #[serde(rename = "PrimaryDomain")]
     primary_domain: Option<&'a str>,
+    #[serde(rename = "DNS-Domain")]
     dns_domain: Option<&'a str>,
+    #[serde(rename = "ProductName")]
     product_name: Option<&'a str>,
+    #[serde(rename = "Edition")]
     edition: Option<&'a str>,
+    #[serde(rename = "DisplayVersion")]
     display_version: Option<&'a str>,
+    #[serde(rename = "Version")]
     version: Option<String>,
+    #[serde(rename = "Build")]
     build: Option<&'a str>,
+    #[serde(rename = "Ubr")]
     ubr: Option<u32>,
+    #[serde(rename = "ServicePack")]
     service_pack: Option<&'a str>,
+    #[serde(rename = "InstallationType")]
     installation_type: Option<&'a str>,
+    #[serde(rename = "InstallDate")]
     install_date: Option<String>,
+    #[serde(rename = "InstallTime")]
     install_time: Option<String>,
+    #[serde(rename = "RegisteredOwner")]
     registered_owner: Option<&'a str>,
+    #[serde(rename = "RegisteredOrganization")]
     registered_organization: Option<&'a str>,
+    #[serde(rename = "SystemRoot")]
     system_root: Option<&'a str>,
+    #[serde(rename = "TimeZone")]
     time_zone: Option<&'a str>,
+    #[serde(rename = "TimeZoneDescription")]
     time_zone_description: Option<String>,
+    #[serde(rename = "UTC-Offset")]
     utc_offset: Option<String>,
+    #[serde(rename = "DaylightUTC-Offset")]
     daylight_utc_offset: Option<String>,
+    #[serde(rename = "BiasMinutes")]
     bias_minutes: Option<i32>,
+    #[serde(rename = "ActiveBiasMinutes")]
     active_bias_minutes: Option<i32>,
+    #[serde(rename = "StandardBiasMinutes")]
     standard_bias_minutes: Option<i32>,
+    #[serde(rename = "DaylightBiasMinutes")]
     daylight_bias_minutes: Option<i32>,
+    #[serde(rename = "StandardName")]
     standard_name: Option<&'a str>,
+    #[serde(rename = "DaylightName")]
     daylight_name: Option<&'a str>,
+    #[serde(rename = "StandardStart")]
     standard_start: Option<String>,
+    #[serde(rename = "DaylightStart")]
     daylight_start: Option<String>,
+    #[serde(rename = "DynamicDaylightTimeDisabled")]
     dynamic_daylight_time_disabled: Option<bool>,
+    #[serde(rename = "RealTimeIsUniversal")]
     real_time_is_universal: Option<bool>,
+    #[serde(rename = "TimeZoneLastWritten")]
     time_zone_last_written: Option<String>,
+    #[serde(rename = "LastShutdown")]
     last_shutdown: Option<String>,
+    #[serde(rename = "CurrentControlSet")]
     current_control_set: Option<String>,
+    #[serde(rename = "ProcessorArchitecture")]
     processor_architecture: Option<&'a str>,
+    #[serde(rename = "AnsiCodePage")]
     ansi_code_page: Option<&'a str>,
+    #[serde(rename = "OemCodePage")]
     oem_code_page: Option<&'a str>,
+    #[serde(rename = "LastLoggedOnUser")]
     last_logged_on_user: Option<&'a str>,
+    #[serde(rename = "LastLoggedOnSamUser")]
     last_logged_on_sam_user: Option<&'a str>,
+    #[serde(rename = "LastLoggedOnUserSID")]
     last_logged_on_user_sid: Option<&'a str>,
+    #[serde(rename = "LastLoggedOnDisplayName")]
     last_logged_on_display_name: Option<&'a str>,
+    #[serde(rename = "LogonUiLastWritten")]
     logon_ui_last_written: Option<String>,
+    #[serde(rename = "MachineSID")]
     machine_sid: Option<&'a str>,
+    #[serde(rename = "DomainSID")]
     domain_sid: Option<&'a str>,
+    #[serde(rename = "MachineAccountSID")]
     machine_account_sid: Option<&'a str>,
+    #[serde(rename = "ComputerNameLastWritten")]
     computer_name_last_written: Option<String>,
+    #[serde(rename = "PrimaryDomainLastWritten")]
     primary_domain_last_written: Option<String>,
+    #[serde(rename = "VersionLastWritten")]
     version_last_written: Option<String>,
+    #[serde(rename = "PreviousVersions")]
     previous_versions: Vec<PreviousRecord<'a>>,
+    #[serde(rename = "Profiles")]
     profiles: Vec<ProfileRecord<'a>>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: Vec<String>,
+    #[serde(rename = "Problems")]
     problems: Vec<String>,
 }
 
@@ -707,7 +783,7 @@ const CSV_HEADER: [&str; 59] = [
     "Hostname",
     "Domain",
     "PrimaryDomain",
-    "DnsDomain",
+    "DNS-Domain",
     "ProductName",
     "Edition",
     "DisplayVersion",
@@ -723,8 +799,8 @@ const CSV_HEADER: [&str; 59] = [
     "SystemRoot",
     "TimeZone",
     "TimeZoneDescription",
-    "UtcOffset",
-    "DaylightUtcOffset",
+    "UTC-Offset",
+    "DaylightUTC-Offset",
     "BiasMinutes",
     "ActiveBiasMinutes",
     "StandardBiasMinutes",
@@ -743,12 +819,12 @@ const CSV_HEADER: [&str; 59] = [
     "OemCodePage",
     "LastLoggedOnUser",
     "LastLoggedOnSamUser",
-    "LastLoggedOnUserSid",
+    "LastLoggedOnUserSID",
     "LastLoggedOnDisplayName",
     "LogonUiLastWrittenUTC",
-    "MachineSid",
-    "DomainSid",
-    "MachineAccountSid",
+    "MachineSID",
+    "DomainSID",
+    "MachineAccountSID",
     "ComputerNameLastWrittenUTC",
     "PrimaryDomainLastWrittenUTC",
     "VersionLastWrittenUTC",

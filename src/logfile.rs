@@ -421,9 +421,9 @@ fn path_of(paths: Option<&usn::Paths>, reference: Option<ntfslog::Reference>) ->
 }
 
 const CSV_HEADER: &[&str] = &[
-    "Lsn",
-    "TransactionId",
-    "TransactionFirstLsn",
+    "LSN",
+    "TransactionID",
+    "TransactionFirstLSN",
     "RedoOperation",
     "UndoOperation",
     "TargetEntryNumber",
@@ -444,12 +444,12 @@ const CSV_HEADER: &[&str] = &[
     "FileSize",
     "FileAttributes",
     "AttributeType",
-    "PreviousLsn",
-    "UndoNextLsn",
+    "PreviousLSN",
+    "UndoNextLSN",
     "RecordType",
     "TargetAttribute",
     "TargetInferred",
-    "TargetVcn",
+    "TargetVCN",
     "Lcns",
     "RecordOffset",
     "AttributeOffset",
@@ -471,7 +471,7 @@ const CSV_HEADER: &[&str] = &[
     "ClusterSize",
     "ClusterSizeSource",
     "LogVersion",
-    "MftSource",
+    "MFT-Source",
     "RedoFileNames",
     "UndoFileNames",
     "RedoTimes",
@@ -508,9 +508,9 @@ fn record_value(
     raw: bool,
 ) -> Value {
     let mut v = json!({
-        "Lsn": r.lsn, "TransactionId": r.transaction_id, "TransactionFirstLsn": r.transaction_first_lsn,
-        "PreviousLsn": r.previous_lsn, "UndoNextLsn": r.undo_next_lsn, "FileOffset": r.offset,
-        "SourceFile": source.to_string_lossy(), "MftSource": mft.map(|p| p.to_string_lossy()), "ClientIndex": r.client.index, "ClientSequence": r.client.sequence,
+        "LSN": r.lsn, "TransactionID": r.transaction_id, "TransactionFirstLSN": r.transaction_first_lsn,
+        "PreviousLSN": r.previous_lsn, "UndoNextLSN": r.undo_next_lsn, "FileOffset": r.offset,
+        "SourceFile": source.to_string_lossy(), "MFT-Source": mft.map(|p| p.to_string_lossy()), "ClientIndex": r.client.index, "ClientSequence": r.client.sequence,
         "Flags": r.flags, "SpansPages": r.spans_pages(), "Truncated": truncated,
         "ClusterSize": log.cluster_size, "ClusterSizeSource": format!("{:?}", log.cluster_size_source),
         "LogVersion": log.restart().map(|p| p.version.to_string()),
@@ -576,7 +576,7 @@ fn record_value(
                 ),
                 ("TargetAttribute", json!(u.target_attribute)),
                 ("TargetInferred", json!(u.target_inferred)),
-                ("TargetVcn", json!(u.target_vcn)),
+                ("TargetVCN", json!(u.target_vcn)),
                 ("Lcns", json!(u.lcns)),
                 ("RecordOffset", json!(u.record_offset)),
                 ("AttributeOffset", json!(u.attribute_offset)),
@@ -754,7 +754,7 @@ fn record_value(
         }
         Body::Checkpoint(c) => {
             v["RecordType"] = json!("ClientRestart");
-            v["Checkpoint"] = json!({"MajorVersion": c.major_version, "MinorVersion": c.minor_version, "StartLsn": c.start_lsn,
+            v["Checkpoint"] = json!({"MajorVersion": c.major_version, "MinorVersion": c.minor_version, "StartLSN": c.start_lsn,
                 "OpenAttributeTable": table_value(c.open_attribute_table), "AttributeNames": table_value(c.attribute_names),
                 "DirtyPageTable": table_value(c.dirty_page_table), "TransactionTable": table_value(c.transaction_table),
                 "BytesPerCluster": c.bytes_per_cluster});
@@ -771,7 +771,7 @@ fn record_value(
 }
 
 fn table_value(t: ntfslog::TableDump) -> Value {
-    json!({"Lsn": t.lsn, "Length": t.length})
+    json!({"LSN": t.lsn, "Length": t.length})
 }
 fn set_times(v: &mut Value, times: [Option<Filetime>; 4]) {
     for (key, time) in [
@@ -787,7 +787,7 @@ fn set_times(v: &mut Value, times: [Option<Filetime>; 4]) {
     }
 }
 fn time_value(time: Filetime) -> Value {
-    json!({"Utc": time.to_iso8601(), "Filetime": time.raw()})
+    json!({"UTC": time.to_iso8601(), "Filetime": time.raw()})
 }
 fn times_value(t: StandardTimes) -> Value {
     json!({"Created": t.created.map(time_value), "Modified": t.modified.map(time_value), "Changed": t.changed.map(time_value), "Accessed": t.accessed.map(time_value)})
@@ -803,10 +803,10 @@ fn name_value(n: &FileName, paths: Option<&usn::Paths>) -> Value {
 }
 fn info_value(s: &ntfslog::StandardInformation) -> Value {
     json!({"Created": time_value(s.created), "Modified": time_value(s.modified), "Changed": time_value(s.changed), "Accessed": time_value(s.accessed),
-        "Attributes": s.attributes, "OwnerId": s.owner_id, "SecurityId": s.security_id, "QuotaCharged": s.quota_charged, "Usn": s.usn})
+        "Attributes": s.attributes, "OwnerID": s.owner_id, "SecurityID": s.security_id, "QuotaCharged": s.quota_charged, "USN": s.usn})
 }
 fn attribute_value(a: &ntfslog::Attribute, paths: Option<&usn::Paths>) -> Value {
-    json!({"Type": a.attribute_type, "Name": a.name, "Resident": a.resident, "Flags": a.flags, "Id": a.id, "Size": a.size,
+    json!({"Type": a.attribute_type, "Name": a.name, "Resident": a.resident, "Flags": a.flags, "ID": a.id, "Size": a.size,
         "AllocatedSize": a.allocated_size, "StandardInformation": a.standard_information.as_ref().map(info_value), "FileName": a.file_name.as_ref().map(|n| name_value(n, paths))})
 }
 fn decoded_value(d: &Decoded, paths: Option<&usn::Paths>) -> Value {
@@ -866,7 +866,7 @@ mod tests {
         let log = ntfslog::parse(&[0xff; 4096]);
         let value = record_value(&record, &path, Some(&path), None, &log, false, false);
         assert_eq!(value["SourceFile"], "evidence-\u{fffd}");
-        assert_eq!(value["MftSource"], "evidence-\u{fffd}");
+        assert_eq!(value["MFT-Source"], "evidence-\u{fffd}");
     }
 
     #[test]

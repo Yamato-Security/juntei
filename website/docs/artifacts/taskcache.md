@@ -56,7 +56,7 @@ Output:
 ```bash
 juntei parse-registry taskcache -f SOFTWARE -o tasks.csv
 juntei parse-registry taskcache -f SOFTWARE -t jsonl \
-  | jq 'select(.hidden == true or (.executable? | test("powershell|cmd|mshta"; "i")))'
+  | jq 'select(.Hidden == true or (.Executable? | test("powershell|cmd|mshta"; "i")))'
 ```
 
 ## Output fields
@@ -65,7 +65,7 @@ juntei parse-registry taskcache -f SOFTWARE -t jsonl \
 |---|---|
 | `Host`, `SourcePath` | Host context and source `SOFTWARE` hive. |
 | `TaskName` | Full scheduler path. Primary pivot into XML and event logs. |
-| `TaskGuid` | GUID joining Tree and Tasks cache entries. Strong correlation key. |
+| `TaskGUID` | GUID joining Tree and Tasks cache entries. Strong correlation key. |
 | `TaskIndex` | Tree/index metadata used by the scheduler; contextual, not an execution count. |
 | `TaskLists` | Cache lists (`Boot`, `Logon`, `Plain`, `Maintenance`) that categorize triggering/handling. |
 | `Hidden` | Structural hidden-task indicator. Review `InTree`, `InTasks`, and descriptor state before concluding tampering. |
@@ -75,9 +75,9 @@ juntei parse-registry taskcache -f SOFTWARE -t jsonl \
 | `ActionIndex` | Zero-based action within the task. One task can produce multiple rows. |
 | `ActionType` | `exec`, `com_handler`, `send_email`, or `show_message`. |
 | `Executable`, `Arguments`, `WorkingDirectory` | Effective execution action. Interpret quoting, variables, relative paths, and LOLBins. |
-| `ComClassId`, `ActionData` | COM handler CLSID and data, or legacy email/message payload. Resolve CLSID separately. |
+| `COM-ClassID`, `ActionData` | COM handler CLSID and data, or legacy email/message payload. Resolve CLSID separately. |
 | `Context` | Principal context encoded with actions (`LocalSystem`, `Author`, etc.); configured identity, not registrar. |
-| `Author`, `Uri`, `Description` | Task metadata. Easily attacker-controlled and not trust evidence. |
+| `Author`, `URI`, `Description` | Task metadata. Easily attacker-controlled and not trust evidence. |
 | `LastRegisteredUTC` | DynamicInfo registration/update time where present. |
 | `LastRunUTC`, `LastSuccessfulRunUTC`, `LastResult` | Cached runtime/result metadata. Correlate with operational logs and process evidence. |
 | `ActionsRaw` | Original action bytes if decoding is incomplete or validation is required. |

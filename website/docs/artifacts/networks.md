@@ -90,7 +90,7 @@ Output:
 ```bash
 juntei parse-registry networks -d evidence/ -o networks.csv
 juntei parse-registry networks -d evidence/ -t jsonl \
-  | jq 'select(.source == "port_proxy" or .source == "share")'
+  | jq 'select(.Source == "port_proxy" or .Source == "share")'
 ```
 
 The summary lists the networks connected last (newest first), and every share, port proxy and
@@ -108,9 +108,9 @@ persistent route.
 | `FirstConnectedUTC`, `LastConnectedUTC` | `DateCreated` and `DateLastConnected` converted to UTC with `TimeZone`. |
 | `FirstConnectedLocal`, `LastConnectedLocal` | The same, as found (local time, to the millisecond). |
 | `TimeZone` | The time zone used for the conversion. |
-| `GatewayMac`, `DnsSuffix` | The gateway's MAC address and the DNS suffix of the profile's signatures (`|` between several). |
-| `InterfaceGuid` | An interface's GUID; a network card's `ServiceName`. |
-| `IpAddress`, `DhcpServer`, `LeaseObtainedUTC`, `LeaseExpiresUTC` | An interface's addresses in use, DHCP server and lease. |
+| `GatewayMAC`, `DNS-Suffix` | The gateway's MAC address and the DNS suffix of the profile's signatures (`|` between several). |
+| `InterfaceGUID` | An interface's GUID; a network card's `ServiceName`. |
+| `IP-Address`, `DhcpServer`, `LeaseObtainedUTC`, `LeaseExpiresUTC` | An interface's addresses in use, DHCP server and lease. |
 | `ShareName`, `SharePath` | A share and the folder it offers. |
 | `ListenAddress`, `ListenPort`, `ConnectAddress`, `ConnectPort` | A port proxy: what it listens on and where it forwards to. |
 | `Route` | A persistent route as stored: `destination,netmask,gateway,metric`. |

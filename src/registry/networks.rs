@@ -413,40 +413,75 @@ impl Serialize for Details {
 /// A record, its fields in this order.
 #[derive(Serialize, Default)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "ControlSet")]
     control_set: Option<String>,
+    #[serde(rename = "IsCurrentControlSet")]
     is_current_control_set: Option<bool>,
+    #[serde(rename = "Source")]
     source: &'static str,
+    #[serde(rename = "ProfileName")]
     profile_name: Option<String>,
+    #[serde(rename = "Category")]
     category: Option<String>,
+    #[serde(rename = "ConnectionType")]
     connection_type: Option<String>,
+    #[serde(rename = "FirstConnected")]
     first_connected: Option<String>,
+    #[serde(rename = "LastConnected")]
     last_connected: Option<String>,
+    #[serde(rename = "FirstConnectedLocal")]
     first_connected_local: Option<String>,
+    #[serde(rename = "LastConnectedLocal")]
     last_connected_local: Option<String>,
+    #[serde(rename = "TimeZone")]
     time_zone: Option<String>,
+    #[serde(rename = "GatewayMAC")]
     gateway_mac: Option<String>,
+    #[serde(rename = "DNS-Suffix")]
     dns_suffix: Option<String>,
+    #[serde(rename = "InterfaceGUID")]
     interface_guid: Option<String>,
+    #[serde(rename = "IP-Address")]
     ip_address: Option<String>,
+    #[serde(rename = "DhcpServer")]
     dhcp_server: Option<String>,
+    #[serde(rename = "LeaseObtained")]
     lease_obtained: Option<String>,
+    #[serde(rename = "LeaseExpires")]
     lease_expires: Option<String>,
+    #[serde(rename = "ShareName")]
     share_name: Option<String>,
+    #[serde(rename = "SharePath")]
     share_path: Option<String>,
+    #[serde(rename = "ListenAddress")]
     listen_address: Option<String>,
+    #[serde(rename = "ListenPort")]
     listen_port: Option<u16>,
+    #[serde(rename = "ConnectAddress")]
     connect_address: Option<String>,
+    #[serde(rename = "ConnectPort")]
     connect_port: Option<u16>,
+    #[serde(rename = "Route")]
     route: Option<String>,
+    #[serde(rename = "Details")]
     details: Details,
+    #[serde(rename = "KeyPath")]
     key_path: String,
+    #[serde(rename = "ValueName")]
     value_name: Option<String>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: Vec<String>,
 }
 
@@ -464,10 +499,10 @@ const CSV_HEADER: [&str; 35] = [
     "FirstConnectedLocal",
     "LastConnectedLocal",
     "TimeZone",
-    "GatewayMac",
-    "DnsSuffix",
-    "InterfaceGuid",
-    "IpAddress",
+    "GatewayMAC",
+    "DNS-Suffix",
+    "InterfaceGUID",
+    "IP-Address",
     "DhcpServer",
     "LeaseObtainedUTC",
     "LeaseExpiresUTC",

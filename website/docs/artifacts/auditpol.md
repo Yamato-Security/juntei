@@ -79,7 +79,7 @@ Output:
 
 ```bash
 juntei parse-registry auditpol -d collection/ -o auditpol.csv
-juntei parse-registry auditpol -f SECURITY -t jsonl | jq -r 'select(.setting == "none") | .subcategory'
+juntei parse-registry auditpol -f SECURITY -t jsonl | jq -r 'select(.Setting == "none") | .Subcategory'
 ```
 
 For each hive, the summary gives its layout, how many settings are audited and when the policy
@@ -94,7 +94,7 @@ disabled in the captured policy; this does not establish the policy during earli
 | `Host`, `SourcePath` | Host (from the system's `SYSTEM` hive), and the `SECURITY` hive. |
 | `Layout` | `subcategories` (Windows Vista and later) or `categories` (XP and 2003); empty when the value doesn't decode. |
 | `Category`, `Subcategory` | As `auditpol` names them. |
-| `SubcategoryGuid`, `SubcategoryId` | The subcategory's GUID, and its message ID as event 4719 gives it (`%%12548`). |
+| `SubcategoryGUID`, `SubcategoryID` | The subcategory's GUID, and its message ID as event 4719 gives it (`%%12548`). |
 | `Setting` | `none`, `success`, `failure` or `success_and_failure`. |
 | `Success`, `Failure` | Whether successes and failures are logged. |
 | `AuditingEnabled` | Windows XP and 2003: whether auditing is on at all. |

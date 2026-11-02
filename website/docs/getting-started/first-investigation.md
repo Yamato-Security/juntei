@@ -53,7 +53,7 @@ service name, or timestamp window. Normalize case only for fields Windows treats
 
 ```bash
 juntei parse-file prefetch -d evidence/ -t jsonl \
-  | jq 'select(.executable_name? | ascii_downcase == "suspicious.exe")'
+  | jq 'select(.ExecutableName? | ascii_downcase == "suspicious.exe")'
 ```
 
 ## 6. Correlate

@@ -63,7 +63,7 @@ juntei parse-ese srum -f SRUDB.dat -r SOFTWARE -o srum-csv
 juntei parse-ese srum -f SRUDB.dat -t jsonl \
   | jq 'select(.Provider == "NetworkUsages" and (.BytesSent // 0) > 100000000)'
 juntei parse-ese srum -f SRUDB.dat -t jsonl --include-value-state \
-  | jq '{Provider, Timestamp, _value_state, _raw}'
+  | jq '{Provider, Timestamp, ValueState, Raw}'
 ```
 
 ## Output tables
@@ -94,19 +94,19 @@ its original name**. The following fields are the stable/common output contract.
 | `SourceFile` | Input database; present in JSON/JSONL and useful across hosts. |
 | `Table` | Original ESE table name/GUID. Preserve when comparing versions or unknown providers. |
 | `Provider` | Friendly provider/output name, or the original table name if unknown. |
-| `Id` | Row's `AutoIncId`; a database row identifier, not a process ID. |
+| `ID` | Row's `AutoIncId`; a database row identifier, not a process ID. |
 | `Timestamp` | When SRUM recorded/aggregated the figures, rounded to milliseconds. Usually not exact event time. |
-| `ExeInfo` | Resolved application/service/package identity from `AppId`. Main program pivot. |
-| `ExeInfoDescription` | Description extracted from composite SRUM application names. Context only. |
-| `ExeTimestamp` | Time embedded in a composite application identity where present; not the row's usage time. |
-| `AppType` | `NormalApp`, `Service`, `ModernApp`, or `Object`; controls how `ExeInfo` should be interpreted. |
-| `Sid` | Resolved account SID from `UserId`. Strong user/service identity pivot. |
-| `UserName` | Friendly profile name enriched from `SOFTWARE`; may be null while `Sid` remains valid. |
-| `UserId`, `AppId` | Raw numeric references into `SruDbIdMapTable`; preserve for unresolved or duplicate names. |
+| `EXE-Info` | Resolved application/service/package identity from `AppID`. Main program pivot. |
+| `EXE-InfoDescription` | Description extracted from composite SRUM application names. Context only. |
+| `EXE-Timestamp` | Time embedded in a composite application identity where present; not the row's usage time. |
+| `AppType` | `NormalApp`, `Service`, `ModernApp`, or `Object`; controls how `EXE-Info` should be interpreted. |
+| `SID` | Resolved account SID from `UserID`. Strong user/service identity pivot. |
+| `UserName` | Friendly profile name enriched from `SOFTWARE`; may be null while `SID` remains valid. |
+| `UserID`, `AppID` | Raw numeric references into `SruDbIdMapTable`; preserve for unresolved or duplicate names. |
 | `IsLt` | `true` for the long-term EnergyUsage table, `false` for short-term. |
-| `InterfaceLuid` | Raw network interface LUID from provider rows. |
+| `InterfaceLUID` | Raw network interface LUID from provider rows. |
 | `InterfaceType` | Decoded interface class (for example `IF_TYPE_IEEE80211`); class, not a unique adapter. |
-| `L2ProfileId` | Numeric network profile reference. |
+| `L2ProfileID` | Numeric network profile reference. |
 | `ProfileName` | Wi-Fi/profile name enriched from `SOFTWARE`; potentially sensitive and not proof of current connection. |
 | `ConnectStartTime`, `EventTimestamp`, `EndTime`, `StartTime` | Known provider FILETIME columns decoded to UTC. Their exact meaning belongs to the provider, not a universal execution time. |
 | Provider-specific columns | Original catalog names such as `BytesSent`, `BytesRecvd`, CPU/disk counters, durations, counts, flags, or estimates. Interpret units according to the provider and compare rows within the same schema. |
@@ -115,15 +115,15 @@ its original name**. The following fields are the stable/common output contract.
 
 | Field | Interpretation |
 |---|---|
-| `_value_state` | Map of database field to `parsed`, `null`, `absent`, `unsupported`, or `damaged`. This separates evidence absence from parser failure. |
-| `_raw` | Original bytes in hexadecimal for values that have bytes. Use for validation and future decoding. |
+| `ValueState` | Map of database field to `parsed`, `null`, `absent`, `unsupported`, or `damaged`. This separates evidence absence from parser failure. |
+| `Raw` | Original bytes in hexadecimal for values that have bytes. Use for validation and future decoding. |
 
 `IdentityMap.csv` (from `SruDbIdMapTable`) contains `IdIndex`, `IdType`, and `IdBlob`: the raw index, identity category,
 and decoded program/SID/object text used by provider rows.
 
 ## Investigation strategy
 
-1. Identify the program with `ExeInfo`, `AppType`, and `AppId`; do not confuse `Id` with PID.
+1. Identify the program with `EXE-Info`, `AppType`, and `AppID`; do not confuse `Id` with PID.
 2. Group network rows by program, user, profile, interface, and time interval.
 3. Compare bytes sent/received with normal baselines and other hosts.
 4. Correlate suspicious intervals with Prefetch, event logs, DNS/proxy/firewall data, and file access.

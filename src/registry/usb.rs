@@ -255,46 +255,82 @@ impl SystemOf {
 /// A user who had a record's volume mounted.
 #[derive(Serialize)]
 struct UserRecord<'a> {
+    #[serde(rename = "Username")]
     username: &'a str,
+    #[serde(rename = "MountPoints2LastWritten")]
     mount_points2_last_written: Option<String>,
+    #[serde(rename = "SourcePath")]
     source_path: Option<&'a str>,
 }
 
 /// A device's or volume's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "DeviceClass")]
     device_class: &'static str,
+    #[serde(rename = "ControlSet")]
     control_set: Option<u32>,
+    #[serde(rename = "Vendor")]
     vendor: Option<String>,
+    #[serde(rename = "Product")]
     product: Option<String>,
+    #[serde(rename = "Revision")]
     revision: Option<String>,
+    #[serde(rename = "Vid")]
     vid: Option<String>,
+    #[serde(rename = "PID")]
     pid: Option<String>,
+    #[serde(rename = "Serial")]
     serial: Option<String>,
+    #[serde(rename = "Instance")]
     instance: Option<&'a str>,
+    #[serde(rename = "FriendlyName")]
     friendly_name: Option<&'a str>,
+    #[serde(rename = "DeviceDesc")]
     device_desc: Option<&'a str>,
+    #[serde(rename = "Service")]
     service: Option<&'a str>,
+    #[serde(rename = "ContainerID")]
     container_id: Option<&'a str>,
+    #[serde(rename = "DeviceFirstInstall")]
     device_first_install: Option<String>,
+    #[serde(rename = "DriverLastInstalled")]
     driver_last_installed: Option<String>,
+    #[serde(rename = "LastArrival")]
     last_arrival: Option<String>,
+    #[serde(rename = "LastRemoval")]
     last_removal: Option<String>,
+    #[serde(rename = "DriveLetters")]
     drive_letters: Vec<String>,
+    #[serde(rename = "VolumeGUID")]
     volume_guid: Option<&'a str>,
+    #[serde(rename = "VolumeData")]
     volume_data: Option<String>,
+    #[serde(rename = "VolumeNames")]
     volume_names: &'a [String],
+    #[serde(rename = "VolumeSerials")]
     volume_serials: Vec<String>,
+    #[serde(rename = "Users")]
     users: Vec<UserRecord<'a>>,
+    #[serde(rename = "FoundIn")]
     found_in: &'a [&'static str],
+    #[serde(rename = "SourceKeys")]
     source_keys: &'a [String],
+    #[serde(rename = "KeyPath")]
     key_path: Option<&'a str>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "SoftwarePath")]
     software_path: Option<&'a str>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: Vec<String>,
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -306,19 +342,19 @@ const CSV_HEADER: [&str; 33] = [
     "Product",
     "Revision",
     "Vid",
-    "Pid",
+    "PID",
     "Serial",
     "Instance",
     "FriendlyName",
     "DeviceDesc",
     "Service",
-    "ContainerId",
+    "ContainerID",
     "DeviceFirstInstallUTC",
     "DriverLastInstalledUTC",
     "LastArrivalUTC",
     "LastRemovalUTC",
     "DriveLetters",
-    "VolumeGuid",
+    "VolumeGUID",
     "VolumeData",
     "VolumeNames",
     "VolumeSerials",

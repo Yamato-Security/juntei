@@ -247,22 +247,39 @@ pub fn run(opts: &RegistryAuditpolOptions) -> i32 {
 /// order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "Layout")]
     layout: Option<&'static str>,
+    #[serde(rename = "Category")]
     category: Option<&'static str>,
+    #[serde(rename = "Subcategory")]
     subcategory: Option<&'static str>,
+    #[serde(rename = "SubcategoryGUID")]
     subcategory_guid: Option<&'static str>,
+    #[serde(rename = "SubcategoryID")]
     subcategory_id: Option<String>,
+    #[serde(rename = "Setting")]
     setting: Option<String>,
+    #[serde(rename = "Success")]
     success: Option<bool>,
+    #[serde(rename = "Failure")]
     failure: Option<bool>,
+    #[serde(rename = "AuditingEnabled")]
     auditing_enabled: Option<bool>,
+    #[serde(rename = "Events")]
     events: &'static [u32],
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: Vec<String>,
 }
 
@@ -272,8 +289,8 @@ const CSV_HEADER: [&str; 17] = [
     "Layout",
     "Category",
     "Subcategory",
-    "SubcategoryGuid",
-    "SubcategoryId",
+    "SubcategoryGUID",
+    "SubcategoryID",
     "Setting",
     "Success",
     "Failure",

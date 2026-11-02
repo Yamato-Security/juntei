@@ -85,7 +85,7 @@ Output:
 ```bash
 juntei parse-registry opensavemru -d evidence/ -o opensavemru.csv
 juntei parse-registry opensavemru -f NTUSER.DAT -t jsonl \
-  | jq 'select(.list == "OpenSavePidlMRU" and .extension != "*")'
+  | jq 'select(.List == "OpenSavePidlMRU" and .Extension != "*")'
 ```
 
 The summary lists the entries per list, the programs that used the dialogs, and each hive's most
@@ -95,16 +95,16 @@ recent file (the first entry of `*`).
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSid`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
+| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
 | `List` | `OpenSavePidlMRU`, `LastVisitedPidlMRU`, `LastVisitedPidlMRULegacy`, `CIDSizeMRU`, `FirstFolder`, `OpenSaveMRU` or `LastVisitedMRU`. |
 | `Extension` | The extension's subkey (`docx`, `*`); empty for the other lists. |
-| `MruPosition`, `IsMostRecent` | The place in the key's list (0 is the most recent); empty when the list doesn't name the value. |
+| `MRU-Position`, `IsMostRecent` | The place in the key's list (0 is the most recent); empty when the list doesn't name the value. |
 | `ValueName` | The value's number (`MRUListEx`) or letter (`MRUList`). |
 | `Program` | The program that showed the dialog. |
 | `Path` | The file or folder: the shell items' names joined, or the path stored as text. |
 | `ItemType` | The last shell item's type: `file`, `directory`, `root_folder`, `volume`, `network_location`, `property_view`, `unknown`, … |
 | `ItemModifiedUTC`, `ItemCreatedUTC`, `ItemAccessedUTC` | The file's or folder's times, as its shell item recorded them. |
-| `MftEntry`, `MftSequence` | The NTFS file reference the shell item recorded. |
+| `MFT-Entry`, `MFT-Sequence` | The NTFS file reference the shell item recorded. |
 | `LastUsedUTC` | The key's last-write time, for the most recent entry only. |
 | `KeyPath`, `KeyLastWrittenUTC` | The key and its last write: the time of its most recent entry, not of every row. |
 | `DataRaw` | The value's bytes (hex) when they don't decode, or the shell item list when an item's type is unknown. |

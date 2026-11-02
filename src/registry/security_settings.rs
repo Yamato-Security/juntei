@@ -271,25 +271,45 @@ impl Read {
 /// A setting's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "HiveType")]
     hive_type: &'a str,
+    #[serde(rename = "ControlSet")]
     control_set: Option<String>,
+    #[serde(rename = "IsCurrentControlSet")]
     is_current_control_set: Option<bool>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "Area")]
     area: &'static str,
+    #[serde(rename = "Setting")]
     setting: &'static str,
+    #[serde(rename = "Value")]
     value: Option<&'a str>,
+    #[serde(rename = "Meaning")]
     meaning: &'a str,
+    #[serde(rename = "WeakensDefault")]
     weakens_default: Option<bool>,
+    #[serde(rename = "Policy")]
     policy: bool,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "ValueName")]
     value_name: &'a str,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -300,7 +320,7 @@ const CSV_HEADER: [&str; 20] = [
     "ControlSet",
     "IsCurrentControlSet",
     "Username",
-    "UserSid",
+    "UserSID",
     "Area",
     "Setting",
     "Value",

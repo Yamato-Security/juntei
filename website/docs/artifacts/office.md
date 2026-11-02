@@ -81,7 +81,7 @@ Output:
 
 ```bash
 juntei parse-registry office -d evidence/ -o office.csv
-juntei parse-registry office -f NTUSER.DAT -t jsonl | jq 'select(.macros_enabled == true)'
+juntei parse-registry office -f NTUSER.DAT -t jsonl | jq 'select(.MacrosEnabled == true)'
 ```
 
 The summary lists the documents whose macros were enabled, settings that let macros run more
@@ -93,12 +93,12 @@ opened last.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSid`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
+| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
 | `OfficeVersion`, `Application` | The version's key (`16.0`) and the application (`Word`, `Excel`, …). |
 | `List` | `File MRU`, `Place MRU`, `TrustRecords`, `Security` or `Trusted Locations`. |
 | `Account` | The Microsoft 365 account of a `User MRU` list. |
 | `Policy` | Whether the setting or location is set by policy. |
-| `MruPosition`, `IsMostRecent` | An item's place in its list (`Item 1` is 0, the most recent). |
+| `MRU-Position`, `IsMostRecent` | An item's place in its list (`Item 1` is 0, the most recent). |
 | `Path` | The document or folder; a trusted document's path as stored; a trusted location's `Path`. |
 | `LastOpenedUTC` | When the item was last opened. |
 | `TrustedAtUTC`, `MacrosEnabled`, `TrustFlags` | When the document was trusted, whether its macros were enabled, and the record's flags. Unknown flags leave `MacrosEnabled` empty and produce a diagnostic. |

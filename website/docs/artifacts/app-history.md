@@ -77,7 +77,7 @@ Output:
 ```bash
 juntei parse-registry app-history -d evidence/ -o app-history.csv
 juntei parse-registry app-history -f NTUSER.DAT -t jsonl \
-  | jq 'select(.application == "Sysinternals" and .first_used != null)'
+  | jq 'select(.Application == "Sysinternals" and .FirstUsed != null)'
 ```
 
 The summary lists the newest Sysinternals first-use estimates, the archives and folders each list used
@@ -88,10 +88,10 @@ last, and the OneDrive accounts.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath` | Host and `NTUSER.DAT`. |
-| `Username`, `UserSid` | The profile folder's name, and its SID from the system's `ProfileList`. |
+| `Username`, `UserSID` | The profile folder's name, and its SID from the system's `ProfileList`. |
 | `Application` | `Sysinternals`, `WinRAR`, `7-Zip`, `WinZip`, `OneDrive`, `Adobe Acrobat Reader`, `Adobe Acrobat`, `TeamViewer`, `CCleaner`. |
 | `Item` | The Sysinternals tool, the list (`ArcHistory`, `ExtrPath`, `FolderHistory`, `filemenu`, `cRecentFiles`, …), the OneDrive account or its synced folders' key, or the value's name. |
-| `MruPosition` | The entry's position in its list, 0 the most recent. |
+| `MRU-Position` | The entry's position in its list, 0 the most recent. |
 | `Path` | The archive, folder or document. |
 | `Value` | `EulaAccepted`, a OneDrive account's e-mail address or a synced library's id, a TeamViewer or CCleaner value. |
 | `FirstUsedUTC` | First-use estimate from EULA acceptance (see cautions above). |

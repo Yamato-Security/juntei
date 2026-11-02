@@ -70,7 +70,7 @@ juntei parse-ntfs usn-journal -f unallocated.bin --carve -o carved-usn.csv
 | `OffsetToData` | Byte offset in the input. Essential for validation and carved records. |
 | `SourceFile` | Input journal/image; distinguishes hosts and volumes. |
 | `SourceInfo` | Source flags describing how the change entered the journal. Usually contextual, not attribution. |
-| `SecurityId` | NTFS security identifier index for the record, not a user SID. |
+| `SecurityID` | NTFS security identifier index for the record, not a user SID. |
 | `Version` | USN record version. Juntei writes V2/V3 to CSV; JSON retains V4 range-tracking extents. |
 
 JSON/JSONL represents 128-bit V3 references correctly and preserves V4 range-tracking records and

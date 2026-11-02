@@ -23,24 +23,39 @@ use std::sync::OnceLock;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RegistryTarget {
+    #[serde(rename(serialize = "Path"))]
     pub path: String,
+    #[serde(rename(serialize = "Values"))]
     pub values: String,
+    #[serde(rename(serialize = "Scope"))]
     pub scope: String,
+    #[serde(rename(serialize = "Recurse"))]
     pub recurse: bool,
+    #[serde(rename(serialize = "IncludeWOW64"))]
     pub include_wow64: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CheckDefinition {
+    #[serde(rename(serialize = "ID"))]
     pub id: String,
+    #[serde(rename(serialize = "Technique"))]
     pub technique: String,
+    #[serde(rename(serialize = "MitreID"))]
     pub mitre_id: String,
+    #[serde(rename(serialize = "Description"))]
     pub description: String,
+    #[serde(rename(serialize = "References"))]
     pub references: Vec<String>,
+    #[serde(rename(serialize = "Implementation"))]
     pub implementation: String,
+    #[serde(rename(serialize = "Targets"))]
     pub targets: Vec<RegistryTarget>,
+    #[serde(rename(serialize = "Hives"))]
     pub hives: Vec<String>,
+    #[serde(rename(serialize = "BuiltinAllow"))]
     pub builtin_allow: Vec<serde_json::Value>,
+    #[serde(rename(serialize = "BuiltinBlock"))]
     pub builtin_block: Vec<serde_json::Value>,
 }
 

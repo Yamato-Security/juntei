@@ -57,7 +57,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.executed == true or (.findings | length > 0))'
+  | jq 'select(.Executed == true or (.Findings | length > 0))'
 ```
 
 ## Output fields
@@ -78,7 +78,7 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `DataSize` | Size of this entry's data, useful for structural validation. |
 | `Machine` | Architecture recorded by newer formats (`x64`, `x86`, `ARM64`). |
 | `FileSize`, `LastUpdateTimeUTC` | Windows XP-specific cached metadata where present. |
-| `PackageName`, `PackageVersion`, `PackagePublisherId` | Packaged-application identity in supported entries. Publisher ID is context, not signature proof. |
+| `PackageName`, `PackageVersion`, `PackagePublisherID` | Packaged-application identity in supported entries. Publisher ID is context, not signature proof. |
 | `Findings` | Juntei anomaly codes such as relocated system binary or suspicious staging path. Leads only. |
 | `RegistryPath`, `RegistryValueName` | Exact hive key/value source. Preserve for validation. |
 | `CacheValueSize` | Whole registry value size, not the individual entry's `DataSize`. |

@@ -208,37 +208,62 @@ impl Serialize for Details<'_> {
 /// A connection's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "Client")]
     client: &'static str,
+    #[serde(rename = "Kind")]
     kind: &'static str,
+    #[serde(rename = "Target")]
     target: Option<&'a str>,
+    #[serde(rename = "Port")]
     port: Option<u32>,
+    #[serde(rename = "RemoteUsername")]
     remote_username: Option<&'a str>,
+    #[serde(rename = "Protocol")]
     protocol: Option<&'a str>,
+    #[serde(rename = "MRU-Position")]
     mru_position: Option<u32>,
+    #[serde(rename = "SessionName")]
     session_name: Option<&'a str>,
+    #[serde(rename = "HostKeyType")]
     host_key_type: Option<&'a str>,
+    #[serde(rename = "HostKeyFingerprint")]
     host_key_fingerprint: Option<&'a str>,
+    #[serde(rename = "HostKey")]
     host_key: Option<&'a str>,
+    #[serde(rename = "DriveLetter")]
     drive_letter: Option<&'a str>,
+    #[serde(rename = "PasswordStored")]
     password_stored: Option<bool>,
+    #[serde(rename = "Details")]
     details: Details<'a>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "ValueName")]
     value_name: Option<&'a str>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 25] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "Client",
     "Kind",
@@ -246,7 +271,7 @@ const CSV_HEADER: [&str; 25] = [
     "Port",
     "RemoteUsername",
     "Protocol",
-    "MruPosition",
+    "MRU-Position",
     "SessionName",
     "HostKeyType",
     "HostKeyFingerprint",

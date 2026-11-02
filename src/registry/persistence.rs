@@ -341,27 +341,49 @@ impl Read {
 /// One autostart's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "HiveType")]
     hive_type: &'a str,
+    #[serde(rename = "User")]
     user: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "Mechanism")]
     mechanism: &'static str,
+    #[serde(rename = "AttackTechnique")]
     attack_technique: Option<&'static str>,
+    #[serde(rename = "KeyPath")]
     key_path: &'a str,
+    #[serde(rename = "ValueName")]
     value_name: &'a str,
+    #[serde(rename = "Data")]
     data: Option<&'a str>,
+    #[serde(rename = "ImagePath")]
     image_path: Option<&'a str>,
+    #[serde(rename = "Arguments")]
     arguments: Option<&'a str>,
+    #[serde(rename = "Enabled")]
     enabled: Option<bool>,
+    #[serde(rename = "DisabledAt")]
     disabled_at: Option<String>,
+    #[serde(rename = "Details")]
     details: Option<&'a str>,
+    #[serde(rename = "OverridesMachineRegistration")]
     overrides_machine_registration: Option<bool>,
+    #[serde(rename = "WOW64")]
     wow64: bool,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -370,7 +392,7 @@ const CSV_HEADER: [&str; 22] = [
     "SourcePath",
     "HiveType",
     "User",
-    "UserSid",
+    "UserSID",
     "Mechanism",
     "AttackTechnique",
     "KeyPath",
@@ -382,7 +404,7 @@ const CSV_HEADER: [&str; 22] = [
     "DisabledAtUTC",
     "Details",
     "OverridesMachineRegistration",
-    "Wow64",
+    "WOW64",
     "KeyLastWrittenUTC",
     "DataRaw",
     "TransactionLogStatus",

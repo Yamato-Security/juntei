@@ -94,7 +94,7 @@ Output:
 ```bash
 juntei parse-registry remote-access -d evidence/ -o remote.csv
 juntei parse-registry remote-access -f NTUSER.DAT -t jsonl \
-  | jq 'select(.client == "rdp" or .host_key_fingerprint != null)'
+  | jq 'select(.Client == "rdp" or .HostKeyFingerprint != null)'
 ```
 
 The summary counts connections by client. It lists the connections whose keys were written last,
@@ -104,13 +104,13 @@ newest first, and the sessions that keep a password.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSid`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList` (with the system's `SOFTWARE` hive), and the hive. |
+| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList` (with the system's `SOFTWARE` hive), and the hive. |
 | `Client` | `rdp`, `putty`, `winscp`, `mapped_drive` or `network_share`. |
 | `Kind` | Where the record comes from: `rdp_mru`, `rdp_server`, `rdp_local_devices`, `putty_session`, `putty_host_key`, `winscp_session`, `winscp_host_key`, `network_drive`, `map_network_drive_mru`, `mount_point`. |
 | `Target`, `Port` | The computer (host name or IP address) and port, or the share (`\\server\share`). A port is given only where Windows or the client wrote one. |
 | `RemoteUsername` | The account used on the target: `UsernameHint`, a session's `UserName` (or the `user@` of PuTTY's `HostName`), a mapped drive's `UserName`. |
 | `Protocol` | PuTTY's `Protocol` (`ssh`, `telnet`, `raw`, …), WinSCP's `FSProtocol` (`sftp`, `scp`, `ftp`, `webdav`, `s3`), a mapped drive's provider (`Microsoft Windows Network`). |
-| `MruPosition` | The place in its list (0 is the most recent): `MRU<n>`, `MRUList`, PuTTY's `Recent sessions`. |
+| `MRU-Position` | The place in its list (0 is the most recent): `MRU<n>`, `MRUList`, PuTTY's `Recent sessions`. |
 | `SessionName` | A saved session's name, with `%20` and other escapes decoded. |
 | `HostKeyType`, `HostKeyFingerprint`, `HostKey` | An accepted SSH host key's type (`rsa2`, `ssh-ed25519`, `ecdsa-sha2-nistp256`, …), its OpenSSH fingerprint, and its numbers as stored. |
 | `DriveLetter` | A mapped drive's letter. |

@@ -14,6 +14,7 @@
 //! Juntei: Windows forensics artifact parser.
 
 mod amcache;
+mod amcache_output;
 mod auto_parse;
 mod cli;
 mod color;
@@ -26,6 +27,7 @@ mod logfile;
 mod mft;
 mod mft_csv;
 mod mft_inspect;
+mod output_schema;
 mod persistence_hunter;
 mod prefetch;
 mod progress;

@@ -247,36 +247,67 @@ impl<'a> ActionFields<'a> {
 /// One action's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "TaskName")]
     task_name: &'a str,
+    #[serde(rename = "TaskGUID")]
     task_guid: Option<&'a str>,
+    #[serde(rename = "TaskIndex")]
     task_index: Option<u32>,
+    #[serde(rename = "TaskLists")]
     task_lists: &'a [String],
+    #[serde(rename = "Hidden")]
     hidden: bool,
+    #[serde(rename = "InTree")]
     in_tree: bool,
+    #[serde(rename = "InTasks")]
     in_tasks: bool,
+    #[serde(rename = "HasSecurityDescriptor")]
     has_security_descriptor: Option<bool>,
+    #[serde(rename = "TreeKeyLastWritten")]
     tree_key_last_written: Option<String>,
+    #[serde(rename = "TaskKeyLastWritten")]
     task_key_last_written: Option<String>,
+    #[serde(rename = "ActionIndex")]
     action_index: Option<usize>,
+    #[serde(rename = "ActionType")]
     action_type: Option<&'static str>,
+    #[serde(rename = "Executable")]
     executable: Option<&'a str>,
+    #[serde(rename = "Arguments")]
     arguments: Option<&'a str>,
+    #[serde(rename = "WorkingDirectory")]
     working_directory: Option<&'a str>,
+    #[serde(rename = "COM-ClassID")]
     com_class_id: Option<&'a str>,
+    #[serde(rename = "ActionData")]
     action_data: Option<String>,
+    #[serde(rename = "Context")]
     context: Option<&'a str>,
+    #[serde(rename = "Author")]
     author: Option<&'a str>,
+    #[serde(rename = "URI")]
     uri: Option<&'a str>,
+    #[serde(rename = "Description")]
     description: Option<&'a str>,
+    #[serde(rename = "LastRegistered")]
     last_registered: Option<String>,
+    #[serde(rename = "LastRun")]
     last_run: Option<String>,
+    #[serde(rename = "LastSuccessfulRun")]
     last_successful_run: Option<String>,
+    #[serde(rename = "LastResult")]
     last_result: Option<String>,
+    #[serde(rename = "ActionsRaw")]
     actions_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
@@ -284,7 +315,7 @@ const CSV_HEADER: [&str; 31] = [
     "Host",
     "SourcePath",
     "TaskName",
-    "TaskGuid",
+    "TaskGUID",
     "TaskIndex",
     "TaskLists",
     "Hidden",
@@ -298,11 +329,11 @@ const CSV_HEADER: [&str; 31] = [
     "Executable",
     "Arguments",
     "WorkingDirectory",
-    "ComClassId",
+    "COM-ClassID",
     "ActionData",
     "Context",
     "Author",
-    "Uri",
+    "URI",
     "Description",
     "LastRegisteredUTC",
     "LastRunUTC",

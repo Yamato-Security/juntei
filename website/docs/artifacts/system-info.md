@@ -107,7 +107,7 @@ Output:
 ```bash
 juntei parse-registry system-info -d collection/ -o system-info.csv
 juntei parse-registry system-info -f SYSTEM -f SOFTWARE -t jsonl \
-  | jq '{host, time_zone_description, product_name, build, last_shutdown}'
+  | jq '{Host, TimeZoneDescription, ProductName, Build, LastShutdown}'
 ```
 
 The summary gives, for each system: its Windows version, when it was installed, its time zone in
@@ -122,12 +122,12 @@ found.
 |---|---|
 | `Host`, `SourcePath`, `SoftwarePath`, `SamPath`, `SecurityPath` | Host, and the hives read (`SourcePath` is the `SYSTEM` hive, else the first one read). |
 | `ComputerName`, `Hostname`, `Domain` | The NetBIOS name (`SYSTEM`, else `SECURITY`'s `PolAcDmN`), the DNS host name and DNS domain (`Tcpip\Parameters`). |
-| `PrimaryDomain`, `DnsDomain` | The domain the computer is joined to, or its workgroup (`PolPrDmN`), and the domain's DNS name (`PolDnDDN`). |
+| `PrimaryDomain`, `DNS-Domain` | The domain the computer is joined to, or its workgroup (`PolPrDmN`), and the domain's DNS name (`PolDnDDN`). |
 | `ProductName`, `Edition`, `DisplayVersion`, `Version`, `Build`, `Ubr`, `ServicePack`, `InstallationType` | `CurrentVersion`: the product name as written, `EditionID`, `DisplayVersion` (else `ReleaseId`), the major and minor version (else `CurrentVersion`), the build, the update build revision, `CSDVersion`, and `Client`, `Server` or `Server Core`. |
 | `InstallDateUTC`, `InstallTimeUTC` | `InstallDate` (to the second) and `InstallTime` (to the 100 ns, Windows 10 and later): installation or the last feature upgrade. |
 | `RegisteredOwner`, `RegisteredOrganization`, `SystemRoot` | As written. |
 | `TimeZone`, `TimeZoneDescription` | `TimeZoneKeyName` (else `StandardName`), and the zone in words with its offsets and daylight saving dates. |
-| `UtcOffset`, `DaylightUtcOffset` | Local standard time's offset from UTC, and daylight time's (empty without daylight saving time). |
+| `UTC-Offset`, `DaylightUTC-Offset` | Local standard time's offset from UTC, and daylight time's (empty without daylight saving time). |
 | `BiasMinutes`, `ActiveBiasMinutes`, `StandardBiasMinutes`, `DaylightBiasMinutes` | `Bias`, `ActiveTimeBias` (in force when the key was written), `StandardBias`, `DaylightBias`. |
 | `StandardName`, `DaylightName` | As written, often a resource reference (`@tzres.dll,-112`). |
 | `StandardStart`, `DaylightStart` | When standard and daylight time begin, in words (`first Sunday of November, 02:00`). |
@@ -135,8 +135,8 @@ found.
 | `TimeZoneLastWrittenUTC` | The time zone key's last write. |
 | `LastShutdownUTC` | `ShutdownTime`: the last clean shutdown. |
 | `CurrentControlSet`, `ProcessorArchitecture`, `AnsiCodePage`, `OemCodePage` | The control set read, `PROCESSOR_ARCHITECTURE`, `ACP` and `OEMCP`. |
-| `LastLoggedOnUser`, `LastLoggedOnSamUser`, `LastLoggedOnUserSid`, `LastLoggedOnDisplayName`, `LogonUiLastWrittenUTC` | The sign-in screen's last user, and its key's last write. |
-| `MachineSid`, `DomainSid`, `MachineAccountSid` | The computer's SID, its domain's SID (`PolPrDmS`) and the computer account's SID in the domain (`PolMachineAccountS`). |
+| `LastLoggedOnUser`, `LastLoggedOnSamUser`, `LastLoggedOnUserSID`, `LastLoggedOnDisplayName`, `LogonUiLastWrittenUTC` | The sign-in screen's last user, and its key's last write. |
+| `MachineSID`, `DomainSID`, `MachineAccountSID` | The computer's SID, its domain's SID (`PolPrDmS`) and the computer account's SID in the domain (`PolMachineAccountS`). |
 | `ComputerNameLastWrittenUTC`, `PrimaryDomainLastWrittenUTC`, `VersionLastWrittenUTC` | About when the computer was last named, last joined a domain or workgroup, and last updated (`CurrentVersion`'s key). |
 | `PreviousVersions` | Each `Source OS` key: the version, its install date, and the date in the key's name (JSON: one object each). |
 | `Profiles` | Each profile: SID, folder, key time, last load and unload (JSON: one object each). |

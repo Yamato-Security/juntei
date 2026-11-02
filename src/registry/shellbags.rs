@@ -327,54 +327,80 @@ fn decode_all(bags: &[ShellBag], code_page: u16) -> Vec<Decoded> {
 /// An item's record, its fields in this order.
 #[derive(Serialize)]
 struct Record<'a> {
+    #[serde(rename = "Host")]
     host: Option<&'a str>,
+    #[serde(rename = "Username")]
     username: Option<&'a str>,
+    #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
+    #[serde(rename = "SourcePath")]
     source_path: &'a str,
+    #[serde(rename = "HiveType")]
     hive_type: &'static str,
+    #[serde(rename = "BagKey")]
     bag_key: String,
+    #[serde(rename = "MRU-Position")]
     mru_position: Option<u32>,
+    #[serde(rename = "IsMostRecentInParent")]
     is_most_recent_in_parent: bool,
+    #[serde(rename = "NodeSlot")]
     node_slot: Option<u32>,
+    #[serde(rename = "Path")]
     path: &'a str,
+    #[serde(rename = "ItemType")]
     item_type: Option<&'static str>,
+    #[serde(rename = "ItemClass")]
     item_class: Option<String>,
+    #[serde(rename = "ItemName")]
     item_name: Option<&'a str>,
+    #[serde(rename = "GUID")]
     guid: Option<&'a str>,
+    #[serde(rename = "ItemModified")]
     item_modified: Option<String>,
+    #[serde(rename = "ItemCreated")]
     item_created: Option<String>,
+    #[serde(rename = "ItemAccessed")]
     item_accessed: Option<String>,
+    #[serde(rename = "MFT-Entry")]
     mft_entry: Option<u64>,
+    #[serde(rename = "MFT-Sequence")]
     mft_sequence: Option<u16>,
+    #[serde(rename = "ExtensionBlocks")]
     extension_blocks: Option<usize>,
+    #[serde(rename = "KeyLastWritten")]
     key_last_written: Option<String>,
+    #[serde(rename = "ParentKeyLastWritten")]
     parent_key_last_written: Option<String>,
+    #[serde(rename = "DataRaw")]
     data_raw: Option<String>,
+    #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,
+    #[serde(rename = "LogsApplied")]
     logs_applied: &'a [String],
+    #[serde(rename = "Problems")]
     problems: &'a [String],
 }
 
 const CSV_HEADER: [&str; 26] = [
     "Host",
     "Username",
-    "UserSid",
+    "UserSID",
     "SourcePath",
     "HiveType",
     "BagKey",
-    "MruPosition",
+    "MRU-Position",
     "IsMostRecentInParent",
     "NodeSlot",
     "Path",
     "ItemType",
     "ItemClass",
     "ItemName",
-    "Guid",
+    "GUID",
     "ItemModifiedUTC",
     "ItemCreatedUTC",
     "ItemAccessedUTC",
-    "MftEntry",
-    "MftSequence",
+    "MFT-Entry",
+    "MFT-Sequence",
     "ExtensionBlocks",
     "KeyLastWrittenUTC",
     "ParentKeyLastWrittenUTC",

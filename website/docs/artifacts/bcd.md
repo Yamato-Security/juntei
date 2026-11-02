@@ -85,7 +85,7 @@ Output:
 ```bash
 juntei parse-registry bcd -f BCD -o bcd.csv
 juntei parse-registry bcd -d evidence/ -t jsonl \
-  | jq 'select(.test_signing == true or .no_integrity_checks == true or .recovery_enabled == false)'
+  | jq 'select(.TestSigning == true or .NoIntegrityChecks == true or .RecoveryEnabled == false)'
 ```
 
 The summary lists each store's default entry and every test signing, integrity check, recovery,
@@ -97,7 +97,7 @@ it is inherited from.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath`, `HiveType` | Host, the hive, and `BCD` or `BCD-Template`. |
-| `ObjectGuid`, `ObjectType`, `ObjectTypeName` | The object's GUID, its type (`0x10200003`) and what it is (`Windows boot loader`, `inherited settings for Windows boot loader`, …). |
+| `ObjectGUID`, `ObjectType`, `ObjectTypeName` | The object's GUID, its type (`0x10200003`) and what it is (`Windows boot loader`, `inherited settings for Windows boot loader`, …). |
 | `Description`, `Path`, `Device` | The description, the application's path, and its device (a GPT partition and disk, or a ramdisk's options object). |
 | `IsDefault`, `DisplayOrder` | Whether the Windows boot manager boots it by default, and its place in the boot menu. |
 | `RecoveryEnabled`, `TestSigning`, `NoIntegrityChecks` | `recoveryenabled`, `testsigning`, `nointegritychecks`, as resolved from the store. |
