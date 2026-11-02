@@ -130,6 +130,7 @@ nav:
           - ShimCache: artifacts/shimcache.md
       - File and Folder Opening:
           - LNK Shortcuts: artifacts/lnk.md
+          - Microsoft Office: artifacts/office.md
           - Jump Lists: artifacts/jump-lists.md
           - RecentDocs: artifacts/recentdocs.md
       - Security Products:

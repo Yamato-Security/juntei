@@ -39,7 +39,7 @@ const CATEGORIES: &[&str] = &[
 fn artifact_category(artifact: &str) -> &'static str {
     match artifact {
         "sam" => "accounts",
-        "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
+        "jump-lists" | "lnk" | "office" | "recentdocs" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
@@ -60,6 +60,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "lnk" => "LNK",
         "logfile" => "LogFile",
         "mft" => "MFT",
+        "office" => "Office",
         "persistence" => "Persistence",
         "persistence-hunter" => "PersistenceHunter",
         "prefetch" => "Prefetch",
@@ -1036,6 +1037,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "office",
+            &["parse-registry", "office"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1132,6 +1139,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("office", size);
                 }
                 if matches!(
                     kind.as_deref(),
