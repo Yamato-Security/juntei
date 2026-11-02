@@ -34,6 +34,9 @@ Juntei will also not do the analysis for you. A DFIR specialist is required to p
 ## License
 
 Juntei is released under the
-[GNU Affero General Public License v3.0](https://github.com/Yamato-Security/juntei/blob/main/LICENSE).
-Its parser dependencies and reference projects have their own licenses; see
+[Reciprocal Public License 1.5](https://github.com/Yamato-Security/juntei/blob/main/LICENSE)
+(RPL-1.5). Its source code was published under the AGPLv3 before version 1.0.0. The licenses of
+the crates and other third-party code and data it is built with are in
+[`THIRD_PARTY_NOTICES`](https://github.com/Yamato-Security/juntei/tree/main/THIRD_PARTY_NOTICES).
+The projects Juntei builds on and was checked against are listed in
 [Acknowledgements](../acknowledgements.md).
