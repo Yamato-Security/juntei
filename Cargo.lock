@@ -2018,7 +2018,7 @@ dependencies = [
 [[package]]
 name = "ys-lnk-parser"
 version = "1.0.0"
-source = "git+https://www.github.com/Yamato-Security/ys-lnk-parser?branch=ys%2Fshellbag-items#33d5e84fac6bedfa2cbe3c0cbf2ce0f95cf390ee"
+source = "git+https://github.com/Yamato-Security/ys-lnk-parser#e98602585d048f7a8ce629d961db6ba8d7fc7e49"
 dependencies = [
  "codepage",
  "encoding_rs",
@@ -2083,7 +2083,7 @@ dependencies = [
 [[package]]
 name = "ys-registry-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-registry-parser?branch=ys%2Fshellbags#d19e6bc216346717241aff921bb2a92ba9084876"
+source = "git+https://github.com/Yamato-Security/ys-registry-parser#4f70c7f46ac950c1c5903279d15be1f023c10f1e"
 
 [[package]]
 name = "ys-shimcache-parser"

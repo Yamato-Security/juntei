@@ -71,8 +71,8 @@ jumplist = { package = "ys-jump-lists-parser", git = "https://github.com/Yamato-
 shimcache-forensic = { package = "ys-shimcache-parser", git = "https://github.com/Yamato-Security/ys-shimcache-parser" }
 # Registry hives for parse-registry: Yamato Security's ys-registry-parser (Apache-2.0): keys and
 # values, transaction log replay, deleted keys and values, registry autostart locations, UserAssist,
-# BAM, ShellBags and USB. ShellBags uses its feature branch until that support is merged.
-registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Security/ys-registry-parser", branch = "ys/shellbags" }
+# BAM, ShellBags and USB.
+registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Security/ys-registry-parser" }
 # The order of parse-ese srum's JSON columns, and parse-ntfs mft's JSON entries (as ys-mft-parser writes them).
 serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
@@ -92,10 +92,3 @@ tempfile = "3"
 lto = "fat"
 codegen-units = 1
 strip = "debuginfo"
-
-# parse-registry shellbags: ys-lnk-parser's ShellBags items (removable drives, portable devices, ZIP
-# and FTP folders, …) from its ys/shellbag-items branch until it is merged, for `shell` and for the
-# ys-jump-lists-parser that reads links with it. Cargo takes a patch only from another source, so
-# the branch is named through www.github.com; drop this patch once the branch is merged.
-[patch."https://github.com/Yamato-Security/ys-lnk-parser"]
-ys-lnk-parser = { git = "https://www.github.com/Yamato-Security/ys-lnk-parser", branch = "ys/shellbag-items" }
