@@ -33,6 +33,7 @@ const CATEGORIES: &[&str] = &[
     "process_execution",
     "registry",
     "security_products",
+    "system_information",
 ];
 
 /// Investigative categories are independent of a parser's storage format or command group.
@@ -46,6 +47,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
         "defender-quarantine" => "security_products",
+        "auditpol" => "system_information",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
     }
 }
@@ -54,6 +56,7 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "auditpol" => "AuditPolicy",
         "defender-quarantine" => "DefenderQuarantine",
         "i30" => "I30",
         "jump-lists" => "JumpLists",
@@ -1017,6 +1020,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add("sam", &["parse-registry", "sam"], OutputShape::File, &[]);
         add(
+            "auditpol",
+            &["parse-registry", "auditpol"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "persistence",
             &["parse-registry", "persistence"],
             OutputShape::File,
@@ -1125,6 +1134,7 @@ impl InputInventory {
                     Some("NTUSER.DAT") => Some("recentdocs"),
                     Some("SOFTWARE") => Some("taskcache"),
                     Some("SAM") => Some("sam"),
+                    Some("SECURITY") => Some("auditpol"),
                     _ => None,
                 };
                 if let Some(artifact) = artifact {

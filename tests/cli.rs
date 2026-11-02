@@ -152,6 +152,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "sam",
                 "persistence",
                 "userassist",
+                "auditpol",
             ][..],
         ),
         ("parse-ese", "Parse ESE databases", &["srum"][..]),
@@ -278,6 +279,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "process_execution",
         "registry",
         "security_products",
+        "system_information",
     ] {
         assert!(csv.join("HOST1").join(category).is_dir());
         assert!(!csv.join("HOST1").join(category).join("logs").exists());
@@ -316,6 +318,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
             "registry" => "registry",
             "defender-quarantine" => "security_products",
+            "auditpol" => "system_information",
             _ => panic!("unexpected artifact: {artifact}"),
         };
         assert_eq!(task["category"], category);
@@ -620,7 +623,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                20
+                21
             );
             assert!(
                 output
@@ -766,7 +769,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 40);
+    assert_eq!(tasks.len(), 42);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5523,6 +5526,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("auditpol "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -9486,4 +9490,277 @@ fn persistence_hunter_has_consistent_command_help() {
             .contains("juntei persistence-hunter -d <EVIDENCE>")
     );
     assert!(help.stdout.contains("--min-severity") && help.stdout.contains("--coverage"));
+}
+
+// --- parse-registry auditpol --------------------------------------------------------------------
+
+/// `parse-registry auditpol` with `args`, as JSON Lines.
+fn auditpol_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "auditpol"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+/// The DFIR Artifact Museum's Windows 11 system: its dirty SYSTEM and SECURITY with their logs,
+/// where Windows keeps them.
+fn auditpol_collection() -> tempfile::TempDir {
+    let hive = system_hive();
+    let config = hive.path().join("HOST/C/Windows/System32/config");
+    unpack_registry(
+        "rathbun_w11",
+        &["SECURITY", "SECURITY.LOG1", "SECURITY.LOG2"],
+        &config,
+    );
+    hive
+}
+
+#[test]
+fn registry_auditpol_of_a_public_hive() {
+    let dir = auditpol_collection();
+    let records = auditpol_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(records.len(), 59);
+    for r in &records {
+        assert_eq!(r["host"], "GOLDPAPERW11");
+        assert_eq!(r["layout"], "subcategories");
+        assert_eq!(r["problems"], json!([]));
+        assert_eq!(r["data_raw"], Value::Null);
+        assert_eq!(r["auditing_enabled"], Value::Null);
+    }
+    let find = |name: &str| {
+        records
+            .iter()
+            .find(|r| r["subcategory"] == name)
+            .unwrap_or_else(|| panic!("{name}"))
+    };
+    // Windows' order: Special Logon is Logon/Logoff's index 4, before IPsec Quick Mode
+    let special = find("Special Logon");
+    assert_eq!(special["category"], "Logon/Logoff");
+    assert_eq!(special["setting"], "success");
+    assert_eq!(
+        special["subcategory_guid"],
+        "0CCE921B-69AE-11D9-BED3-505054503030"
+    );
+    assert_eq!(special["subcategory_id"], "%%12548");
+    assert_eq!(special["events"], json!([4672, 4964]));
+    assert_eq!(find("IPsec Quick Mode")["setting"], "none");
+    assert_eq!(
+        find("Network Policy Server")["setting"],
+        "success_and_failure"
+    );
+    let process = find("Process Creation");
+    assert_eq!(
+        (&process["setting"], &process["success"], &process["events"]),
+        (&json!("none"), &json!(false), &json!([4688]))
+    );
+    let audited: Vec<&str> = records
+        .iter()
+        .filter(|r| r["setting"] != "none")
+        .map(|r| r["subcategory"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        audited,
+        [
+            "Security State Change",
+            "System Integrity",
+            "Other System Events",
+            "Logon",
+            "Logoff",
+            "Account Lockout",
+            "Special Logon",
+            "Network Policy Server",
+            "Audit Policy Change",
+            "Authentication Policy Change",
+            "User Account Management",
+            "Security Group Management",
+        ]
+    );
+    assert_eq!(
+        records
+            .iter()
+            .map(|r| r["category"].as_str().unwrap())
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
+        9
+    );
+    assert!(
+        records[0]["key_last_written"]
+            .as_str()
+            .unwrap()
+            .starts_with("2022-02-05T21:49:55")
+    );
+    assert_ne!(records[0]["transaction_log_status"], "clean");
+}
+
+#[test]
+fn registry_auditpol_csv_and_summary() {
+    let dir = auditpol_collection();
+    let security = dir.path().join("HOST/C/Windows/System32/config/SECURITY");
+    let out = dir.path().join("auditpol.csv");
+    let r = run(&[
+        "parse-registry",
+        "auditpol",
+        "-f",
+        security.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "SECURITY hives parsed: 1",
+        "Hosts: GOLDPAPERW11",
+        "Settings: 59 (12 audited)",
+        "Layout: subcategories; 12 of 59 audited; last written 2022-02-05T21:49:55",
+        "Success only: Security State Change (4608, 4616); Logoff (4634, 4647)",
+        "Not audited (these events are missing whatever happened): Security System Extension (4697)",
+        "Process Creation (4688)",
+        "Other Object Access Events (4698, 4699, 4700, 4701, 4702)",
+        "Values that could not be read or decoded: 0",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(
+        header,
+        [
+            "Host",
+            "SourcePath",
+            "Layout",
+            "Category",
+            "Subcategory",
+            "SubcategoryGuid",
+            "SubcategoryId",
+            "Setting",
+            "Success",
+            "Failure",
+            "AuditingEnabled",
+            "Events",
+            "KeyLastWrittenUTC",
+            "DataRaw",
+            "TransactionLogStatus",
+            "LogsApplied",
+            "Problems",
+        ]
+    );
+    assert_eq!(rows.len(), 59);
+    let logon = rows.iter().find(|r| r["Subcategory"] == "Logon").unwrap();
+    assert_eq!(logon["Setting"], "success_and_failure");
+    assert_eq!(
+        (logon["Success"].as_str(), logon["Failure"].as_str()),
+        ("True", "True")
+    );
+    assert_eq!(logon["Events"], "4624|4625|4648");
+    assert_eq!(logon["SubcategoryId"], "%%12544");
+}
+
+#[test]
+fn registry_auditpol_layouts_and_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    // Windows XP's layout with auditing off; an unknown layout; no PolAdtEv
+    let mut xp = 0u32.to_le_bytes().to_vec();
+    for v in [3u32, 1, 2, 0, 0, 3, 3, 0, 1, 9] {
+        xp.extend(v.to_le_bytes());
+    }
+    for (name, data) in [
+        ("xp", Some(xp)),
+        ("odd", Some(vec![1u8, 2, 3])),
+        ("none", None),
+    ] {
+        let at = dir.path().join(name);
+        std::fs::create_dir_all(&at).unwrap();
+        let values: Vec<(&str, &str, u32, Vec<u8>)> = match data {
+            Some(data) => vec![(r"Policy\PolAdtEv", "", 0, data)],
+            None => vec![(r"Policy\PolRevision", "", 0, vec![0x12, 0, 1, 0])],
+        };
+        std::fs::write(at.join("SECURITY"), reg_tree("ROOT", &values)).unwrap();
+    }
+    let records = auditpol_read(&["-d", dir.path().to_str().unwrap()]);
+    let odd: Vec<&Value> = records
+        .iter()
+        .filter(|r| r["source_path"].as_str().unwrap().contains("odd"))
+        .collect();
+    assert_eq!(odd.len(), 1);
+    assert_eq!(
+        (&odd[0]["layout"], &odd[0]["category"], &odd[0]["data_raw"]),
+        (&Value::Null, &Value::Null, &json!("010203"))
+    );
+    assert_eq!(
+        odd[0]["problems"],
+        json!(["an unknown layout of 3 bytes: shorter than the 12-byte header"])
+    );
+    let xp: Vec<&Value> = records
+        .iter()
+        .filter(|r| r["source_path"].as_str().unwrap().contains("xp"))
+        .collect();
+    assert_eq!(xp.len(), 9);
+    assert!(xp.iter().all(|r| r["layout"] == "categories"
+        && r["auditing_enabled"] == false
+        && r["subcategory"] == Value::Null));
+    assert_eq!(
+        (&xp[0]["category"], &xp[0]["setting"]),
+        (&json!("System"), &json!("success_and_failure"))
+    );
+    assert_eq!(xp[2]["setting"], "failure");
+    let r = run(&[
+        "parse-registry",
+        "auditpol",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "SECURITY hives parsed: 3",
+        r"Hives without Policy\PolAdtEv: 1",
+        "Auditing is off: no category is audited",
+        "Layout: categories; 0 of 9 audited",
+        "Values that could not be read or decoded: 1",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    // a SAM given as SECURITY, a directory without SECURITY hives
+    let sams = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], sams.path());
+    let r = run(&[
+        "parse-registry",
+        "auditpol",
+        "-f",
+        sams.path().join("SAM").to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stderr.contains("not a SECURITY hive"), "{}", r.stderr);
+    let r = run(&[
+        "parse-registry",
+        "auditpol",
+        "-d",
+        sams.path().to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stderr.contains("No SECURITY hives were found"),
+        "{}",
+        r.stderr
+    );
+    // the output is never the hive read, even with -C
+    let security = dir.path().join("xp/SECURITY");
+    let original = std::fs::read(&security).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "auditpol",
+        "-f",
+        security.to_str().unwrap(),
+        "-o",
+        security.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&security).unwrap(), original);
 }

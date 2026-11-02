@@ -42,6 +42,7 @@ and organizes results and logs by computer and investigative category.
 | Command | Input artifact | Detailed guide |
 |---|---|---|
 | `parse-registry amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
+| `parse-registry auditpol` | `SECURITY` | [Audit Policy](../artifacts/auditpol.md) |
 | `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
 | `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
 | `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |

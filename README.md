@@ -81,6 +81,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Local accounts** (`SAM`) — Local usernames, RIDs, account flags, and recorded logon and password metadata. | Registry |
 
+### System Information
+
+| Artifact | Type |
+| --- | --- |
+| **Audit policy** (`SECURITY` `PolAdtEv`) — Which security events the system was set to log, per subcategory, and so which missing events say nothing. | Registry |
+
 ### Security Products
 
 | Artifact | Type |

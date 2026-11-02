@@ -71,6 +71,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - Defender quarantine metadata
 - all registry keys and values, including recoverable deleted data
 - services, RecentDocs, TaskCache, SAM accounts, registry autostart locations, and UserAssist
+- the audit policy: which security events the system was set to log
 
 Persistence Hunter retains every severity (`--min-severity info`), including partial allow matches.
 `LOW` is a classification to investigate; missing signature metadata can produce it for malicious
@@ -141,10 +142,13 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── registry/
 │   │   ├── Registry.csv
 │   │   └── Registry-logs.txt
-│   └── security_products/
-│       ├── DefenderQuarantine.csv
-│       ├── DefenderQuarantine-logs.txt
-│       └── defender-quarantined/  # only with -x
+│   ├── security_products/
+│   │   ├── DefenderQuarantine.csv
+│   │   ├── DefenderQuarantine-logs.txt
+│   │   └── defender-quarantined/  # only with -x
+│   └── system_information/
+│       ├── AuditPolicy.csv
+│       └── AuditPolicy-logs.txt
 └── HOST2/
     └── …
 ```
@@ -159,6 +163,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `process_execution` | Prefetch, Prefetch timeline, SRUM, UserAssist |
 | `registry` | General hive keys and values, including recovered records |
 | `security_products` | Defender quarantine metadata and optional extracted content |
+| `system_information` | The audit policy: which security events the system was set to log |
 
 Categories help organize investigations; they are not proof of a particular activity. For example,
 Amcache and ShimCache entries alone do not establish execution. SRUM records resource usage;
@@ -173,7 +178,7 @@ covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `Registry.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `Registry.csv`, `AuditPolicy.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider
