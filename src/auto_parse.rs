@@ -43,7 +43,9 @@ fn artifact_category(artifact: &str) -> &'static str {
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-        "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
+        "featureusage" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => {
+            "process_execution"
+        }
         "registry" => "registry",
         "defender-quarantine" => "security_products",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
@@ -55,6 +57,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
         "defender-quarantine" => "DefenderQuarantine",
+        "featureusage" => "FeatureUsage",
         "i30" => "I30",
         "jump-lists" => "JumpLists",
         "lnk" => "LNK",
@@ -1036,6 +1039,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "featureusage",
+            &["parse-registry", "featureusage"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1132,6 +1141,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("featureusage", size);
                 }
                 if matches!(
                     kind.as_deref(),

@@ -118,6 +118,7 @@ nav:
   - Artifacts:
       - Artifact Guide: artifacts/index.md
       - Process Execution:
+          - FeatureUsage and Pins: artifacts/featureusage.md
           - Prefetch: artifacts/prefetch.md
           - SRUM: artifacts/srum.md
           - UserAssist: artifacts/userassist.md
