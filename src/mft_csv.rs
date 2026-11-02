@@ -38,31 +38,31 @@ use ys_ntfs_parser::mft;
 
 /// The columns, in order.
 pub const CSV_HEADER: [&str; 35] = [
-    "EntryNumber",
+    "EntryNum",
     "SequenceNumber",
     "InUse",
     "ParentEntryNumber",
     "ParentSequenceNumber",
     "ParentPath",
     "FileName",
-    "Extension",
-    "FileSize",
+    "Ext",
+    "Size",
     "ReferenceCount",
     "ReparseTarget",
-    "IsDirectory",
-    "HasADS",
+    "Dir?",
+    "ADS?",
     "IsADS",
     "SI-BeforeFN",
     "MicrosecondZeros",
     "Copied",
     "SI-Flags",
     "NameType",
-    "Created0x10",
-    "Created0x30",
-    "LastModified0x10",
-    "LastModified0x30",
-    "LastRecordChange0x10",
-    "LastRecordChange0x30",
+    "Created (SI)",
+    "Created (FN)",
+    "DataModified (SI)",
+    "DataModified (FN)",
+    "MFT-RecordChanged (SI)",
+    "MFT-RecordChanged (FN)",
     "LastAccess0x10",
     "LastAccess0x30",
     "UpdateSequenceNumber",
@@ -1270,7 +1270,7 @@ struct Times {
 /// `--all-times`); the timestomping indicators: `SI<FN` (`$STANDARD_INFORMATION` created before a
 /// different `$FILE_NAME` created), `uSecZeros` (created or modified on a whole millisecond) and
 /// `Copied` (modified before created). Without `$STANDARD_INFORMATION`, `$FILE_NAME`'s times go
-/// to `Created0x30` (created) and to the `0x10` columns (the others).
+/// to `Created (FN)` (created) and to the primary modified/changed/accessed columns (the others).
 fn times(si: Option<&StandardInfo>, name: &FileName, all: bool) -> Times {
     let Some(si) = si else {
         return Times {

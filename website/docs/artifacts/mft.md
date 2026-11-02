@@ -31,7 +31,7 @@ and volume metadata when possible.
 - `SequenceNumber` distinguishes generations of the same entry number. Match entry **and** sequence.
 - `$STANDARD_INFORMATION` (`0x10`) and `$FILE_NAME` (`0x30`) timestamps have different update
   behavior. Neither is immune to manipulation.
-- `SI<FN`, `uSecZeros`, and `Copied` are leads, not automatic timestomping verdicts.
+- `SI-BeforeFN`, `MicrosecondZeros`, and `Copied` are leads, not automatic timestomping verdicts.
 - Hard links produce multiple `$FILE_NAME` attributes and paths for one file record.
 - NTFS can store several names (including DOS 8.3), alternate data streams, and extension records.
 - Access-time updates may be disabled, delayed, or coalesced.
@@ -101,26 +101,26 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 
 | Field | Interpretation |
 |---|---|
-| `EntryNumber` | MFT record number. Combine with `SequenceNumber`; record numbers are reused. |
+| `EntryNum` | MFT record number. Combine with `SequenceNumber`; record numbers are reused. |
 | `SequenceNumber` | Generation counter used by NTFS references. A mismatch can reveal stale/deleted relationships. |
 | `InUse` | Allocation flag at collection. `false` means the record is free/deleted, not that all bytes are intact. |
 | `ParentEntryNumber`, `ParentSequenceNumber` | Parent directory reference from `$FILE_NAME`. Validate both parts. |
 | `ParentPath` | Reconstructed parent path. Unknown/orphan markers expose unresolved ancestry. |
 | `FileName` | Name from the current row's `$FILE_NAME` or stream. One record can have several rows. |
-| `Extension` | Convenience extension parsed from the name; not a trusted file-type determination. |
-| `FileSize` | Logical size associated with the row/stream. Sparse/compressed allocation can differ. |
+| `Ext` | Convenience extension parsed from the name; not a trusted file-type determination. |
+| `Size` | Logical size associated with the row/stream. Sparse/compressed allocation can differ. |
 | `ReferenceCount` | NTFS hard-link reference count; compare with the number of surviving names cautiously. |
 | `ReparseTarget` | Decoded target for supported reparse points such as junctions/symlinks. Paths may redirect. |
-| `IsDirectory` | Record has the directory flag. |
-| `HasADS` | Record contains named alternate data streams. This does not make it malicious. |
+| `Dir?` | Record has the directory flag. |
+| `ADS?` | Record contains named alternate data streams. This does not make it malicious. |
 | `IsADS` | This row represents a named alternate data stream rather than the unnamed file data. |
 | `SI-BeforeFN` | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
 | `MicrosecondZeros` | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
 | `Copied` | Modified time precedes created time. Often consistent with file copy; not proof of attacker action. |
 | `SI-Flags` | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
 | `NameType` | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |
-| `Created0x10`, `LastModified0x10`, `LastRecordChange0x10`, `LastAccess0x10` | SI times. Common timeline fields, but user-mode tools can change several of them. |
-| `Created0x30`, `LastModified0x30`, `LastRecordChange0x30`, `LastAccess0x30` | FN times. Updated differently and generally harder for ordinary APIs to alter; still not immutable. |
+| `Created (SI)`, `DataModified (SI)`, `MFT-RecordChanged (SI)`, `LastAccess0x10` | SI times. Common timeline fields, but user-mode tools can change several of them. |
+| `Created (FN)`, `DataModified (FN)`, `MFT-RecordChanged (FN)`, `LastAccess0x30` | FN times. Updated differently and generally harder for ordinary APIs to alter; still not immutable. |
 | `UpdateSequenceNumber` | Last USN associated with the record's SI attribute. Pivot into `$J` if that USN survives. |
 | `LogfileSequenceNumber` | NTFS `$LogFile` sequence number from the FILE record header; useful in low-level transaction analysis. |
 | `SecurityID` | Index into NTFS `$Secure`; not a Windows SID by itself. |
@@ -130,15 +130,23 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `SourceFile` | The input `$MFT`, essential when combining hosts or volumes. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | With `-i`: the content of the row's resident `$DATA` (the file's, or the alternate data stream's), as Base64, as bytes (`41-42`), and as text when it is printable ASCII. Empty when the data is non-resident or filtered out by `-E`/`-M`. |
 | `ParseErrors` | Damage or unsupported relationships affecting this row. Never discard this column during filtering. |
-| `FromSlack` | With `-x`: `True` for a name recovered from the slack of a FILE record. Its `EntryNumber` and `SequenceNumber` are the file the name pointed to (empty when its entry header was written over), its `$FILE_NAME` times are in the `0x30` columns, and `InUse` is `False`. |
+| `FromSlack` | With `-x`: `True` for a name recovered from the slack of a FILE record. Its `EntryNum` and `SequenceNumber` are the file the name pointed to (empty when its entry header was written over), its creation time is in `Created (FN)` (see the timestamp fallback note below), and `InUse` is `False`. |
 | `SlackRecord`, `SlackOffset` | With `-x`: the FILE record whose slack held the name, by its place in the `$MFT` rather than the record number written inside it (an extension record's own, even though its names are listed with its base record), and the name's byte offset in the `$MFT`. A slack row's `ParseErrors` are that record's problems, such as `fixup values do not match`: the recovered bytes may be affected. |
 | `CopyOfEntryInUse` | With `-x`: a file in use still has this name in the same directory (and is the same file, when the reference survived). Names that no file in use has are the interesting ones: deleted, renamed, or a reused record's previous occupant. |
 
+`(SI)` means `$STANDARD_INFORMATION`; `(FN)` means `$FILE_NAME`. These names describe the
+usual source for a complete record. For a filename-only/slack row with no SI attribute, the
+existing fallback places FN creation in `Created (FN)` and FN modified/record-change/access
+values in `DataModified (SI)`, `MFT-RecordChanged (SI)` and `LastAccess0x10` respectively.
+Those fallback values are **not** independent SI evidence. Use the original JSON attributes
+and slack provenance when determining the timestamp source.
+
 `-t ys-ntfs-parser-csv` (formerly `ys-mft-parser-csv`, still accepted) uses the maintained parser's
-entry-oriented schema. JSON/JSONL retains every
-attribute (resident `$DATA` included, in hexadecimal) and `full_path`; use it when the flat
+entry-oriented schema. These readable column names apply to the default `-t csv` output,
+including `auto-parse`'s `MFT.csv`. JSON/JSONL retains every
+attribute (resident `$DATA` included, in hexadecimal) and `FullPath`; use it when the flat
 investigative CSV omits low-level structure. With `-x`, each JSON entry also has
-`slack_file_names`.
+`SlackFileNames`.
 
 ## Investigation strategy
 
