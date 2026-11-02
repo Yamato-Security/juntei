@@ -97,6 +97,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Installed programs** (`SOFTWARE`, `NTUSER.DAT`) — Programs installed machine-wide and per user, Windows Installer products, App Paths, WSL distributions, and packaged apps, with install dates and key times. | Registry |
 
+### Lateral Movement
+
+| Artifact | Type |
+| --- | --- |
+| **Remote access, user side** (`NTUSER.DAT`) — Computers a user reached with Remote Desktop, PuTTY and WinSCP, the accounts used, accepted SSH host keys with their fingerprints, mapped drives and shares. | Registry |
+
 ### Security Products
 
 | Artifact | Type |

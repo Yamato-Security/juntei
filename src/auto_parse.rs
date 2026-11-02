@@ -44,6 +44,7 @@ const CATEGORIES: &[&str] = &[
     "file_and_folder_opening",
     "file_existence",
     "file_system",
+    "lateral_movement",
     "persistence",
     "process_execution",
     "registry",
@@ -61,6 +62,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         }
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
+        "remote-access" => "lateral_movement",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
         "bam" | "muicache" | "prefetch" | "prefetch-timeline" | "srum" | "userassist" => {
             "process_execution"
@@ -91,6 +93,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "RecentDocs",
         "registry" => "Registry",
+        "remote-access" => "RemoteAccess",
         "sam" => "SAM",
         "services" => "Services",
         "shellbags" => "ShellBags",
@@ -1099,6 +1102,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &["--code-page", &code_page],
         );
+        add(
+            "remote-access",
+            &["parse-registry", "remote-access"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1195,6 +1204,7 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("remote-access", size);
                     found.add_size("opensavemru", size);
                 }
                 if matches!(kind.as_deref(), Some("SOFTWARE" | "NTUSER.DAT")) {

@@ -134,6 +134,9 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── MFT-logs.txt
 │   │   ├── UsnJournal.csv
 │   │   └── UsnJournal-logs.txt
+│   ├── lateral_movement/
+│   │   ├── RemoteAccess.csv
+│   │   └── RemoteAccess-logs.txt
 │   ├── persistence/
 │   │   ├── Persistence.csv
 │   │   ├── Persistence-logs.txt
@@ -173,6 +176,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `file_and_folder_opening` | Jump Lists, LNK shortcuts, Open and Save As dialogs, RecentDocs, ShellBags |
 | `file_existence` | Amcache, ShimCache |
 | `file_system` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
+| `lateral_movement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
 | `persistence` | Registry autostarts, services, TaskCache |
 | `process_execution` | BAM and DAM, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
 | `registry` | General hive keys and values, including recovered records |
@@ -191,7 +195,7 @@ covering all its tables. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `Registry.csv`, and
 `DefenderQuarantine.csv`. Amcache's `amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
 separate source subdirectories, each with the same four table names. SRUM retains separate provider
@@ -351,3 +355,5 @@ are not relocated or deleted automatically.
 
 See [reading the recovered security descriptor](../artifacts/defender-quarantine.md#reading-the-recovered-security-descriptor)
 for the report fields and their forensic limitations.
+
+Auto-parse also reads users' remote connections (RDP, PuTTY, WinSCP and mapped drives).

@@ -49,6 +49,7 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
 | `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
 | `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
+| `parse-registry remote-access` | `NTUSER.DAT` (with `SOFTWARE` for user SIDs) | [Remote Access (User Side)](../artifacts/remote-access.md) |
 | `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
 | `parse-registry services` | `SYSTEM` | [Windows Services](../artifacts/services.md) |
 | `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |

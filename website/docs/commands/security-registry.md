@@ -206,6 +206,40 @@ Display Settings:
 Each shell item list is decoded with ys-lnk-parser and joined into a path. See
 [Open and Save As Dialogs](../artifacts/opensavemru.md).
 
+## `parse-registry remote-access`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry remote-access <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
+  -f, --file <FILE>      File path to one NTUSER.DAT hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+Users' SIDs come from the system's `SOFTWARE` (`ProfileList`), found as the host is. Stored
+passwords are reported as present, never decoded. See
+[Remote Access (User Side)](../artifacts/remote-access.md).
+
+
 ## `parse-registry persistence`
 
 ```text
@@ -565,3 +599,5 @@ The complete options and field semantics are on [Registry Hives](../artifacts/re
 [USB Devices](../artifacts/usb.md).
 
 See also [Open and Save As Dialogs](../artifacts/opensavemru.md).
+
+See also [remote-access](../artifacts/remote-access.md).

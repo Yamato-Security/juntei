@@ -15,3 +15,4 @@ also use are in `../shimcache/`.
 | `rathbun_w11/SAM.gz` | The same archive: the system's `SAM` hive (5 accounts) | MIT, `rathbun_w11/LICENSE` |
 | `plaso/NTUSER.DAT.gz` | [Plaso](https://github.com/log2timeline/plaso)'s `test_data/regf/NTUSER.DAT` (ee5a0ab), compressed with gzip: a clean hive with the Open and Save As dialogs' history (`OpenSavePidlMRU`, `LastVisitedPidlMRU`, `CIDSizeMRU`, `FirstFolder`) | Apache-2.0, `plaso/LICENSE` |
 | `rathbun_w11/UsrClass.dat.gz`, `UsrClass.dat.LOG1.gz`, `UsrClass.dat.LOG2.gz` | The same archive: the user's dirty `UsrClass.dat` and its logs (12 programs in MuiCache) | MIT, `rathbun_w11/LICENSE` |
+| `notatin/win7_ntuser.dat.gz` | [notatin](https://github.com/strozfriedberg/notatin)'s `test_data/win7_ntuser.dat` (ae3a706), compressed with gzip: a clean Windows 7 hive with Remote Desktop, PuTTY, WinSCP, mapped drive and `MountPoints2` keys | Apache-2.0, `notatin/LICENSE` |
