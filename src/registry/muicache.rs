@@ -199,25 +199,42 @@ pub fn run(opts: &RegistryMuiCacheOptions) -> i32 {
 /// Whether `path` is in a folder Windows or installed programs are in (`C:\Windows\…`,
 /// `D:\Program Files (x86)\…`, `%windir%\…`, `%ProgramFiles%\…`).
 fn in_usual_folder(path: &str) -> bool {
-    let mut parts = path.split('\\');
+    let mut parts = path.split(['\\', '/']);
     let first = parts.next().unwrap_or_default();
-    let drive = first.len() == 2 && first.ends_with(':');
-    let folder = if drive {
-        parts.next().unwrap_or_default()
-    } else {
-        first
-    };
-    USUAL_FOLDERS
-        .iter()
-        .any(|usual| folder.eq_ignore_ascii_case(usual))
-        || [
-            "%windir%",
-            "%SystemRoot%",
-            "%ProgramFiles%",
-            "%ProgramFiles(x86)%",
-        ]
-        .iter()
-        .any(|variable| first.eq_ignore_ascii_case(variable))
+    let drive =
+        first.len() == 2 && first.as_bytes()[0].is_ascii_alphabetic() && first.ends_with(':');
+    let variable = [
+        "%windir%",
+        "%SystemRoot%",
+        "%ProgramFiles%",
+        "%ProgramFiles(x86)%",
+    ]
+    .iter()
+    .any(|variable| first.eq_ignore_ascii_case(variable));
+    if !drive && !variable {
+        return false;
+    }
+
+    // Resolve lexical components without touching the examiner's file system. A path that
+    // escapes an environment-variable root cannot be assumed to remain in that folder.
+    let mut components = Vec::new();
+    for part in parts {
+        match part {
+            "" | "." => {}
+            ".." => {
+                if components.pop().is_none() && variable {
+                    return false;
+                }
+            }
+            _ => components.push(part),
+        }
+    }
+    variable
+        || components.first().is_some_and(|folder| {
+            USUAL_FOLDERS
+                .iter()
+                .any(|usual| folder.eq_ignore_ascii_case(usual))
+        })
 }
 
 /// A hive type as Windows names the file: `UsrClass.dat`, not `USRCLASS.DAT`.
@@ -509,6 +526,8 @@ mod tests {
             r"d:\program files (x86)\Tool\tool.exe",
             r"%windir%\system32\notepad.exe",
             r"%ProgramFiles%\Tool\tool.exe",
+            r"C:\Windows\System32\..\notepad.exe",
+            r"%windir%\System32\..\notepad.exe",
         ] {
             assert!(in_usual_folder(path), "{path}");
         }
@@ -519,6 +538,11 @@ mod tests {
             r"\\server\share\tool.exe",
             r"C:\Windows.old\x.exe",
             r"C:\Temp\Windows\x.exe",
+            r"Windows\relative.exe",
+            r"Program Files\relative.exe",
+            r"1:\Windows\x.exe",
+            r"C:\Windows\..\Users\alice\payload.exe",
+            r"%windir%\..\Temp\payload.exe",
             "",
         ] {
             assert!(!in_usual_folder(path), "{path}");

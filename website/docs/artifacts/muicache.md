@@ -12,12 +12,13 @@ shell should show (the `FileDescription`, for example "Windows Command Processor
 - **Windows Vista and 7:** one value per program, `<path>`, holding the friendly name.
 - **Windows XP:** the same form, in `NTUSER.DAT`.
 
-MuiCache lists programs the user ran, including programs run from removable drives, network
-shares and folders that no longer exist, with the name and company the file itself gave.
+MuiCache can provide program-execution leads for a user's shell session, including programs
+on removable drives, network shares and folders that no longer exist, with the name and company
+the file itself gave.
 
-<span class="evidence-strength">Best conclusion:</span> this user ran, or opened through the shell,
-a file at this path at some time, and the file then had this description and company. MuiCache
-has no time per program and no run count.
+<span class="evidence-strength">Best conclusion:</span> this shell profile cached a file's path,
+description and company. Correlate it with other execution artifacts. The profile does not identify
+the account the process ran as. MuiCache has no time per program and no run count.
 
 ## Location
 
@@ -39,6 +40,9 @@ system's `SYSTEM` and `SOFTWARE` hives for the host and user names.
 
 ## Analyst cautions
 
+- **Profile owner is not necessarily the process account.** A program started with another
+  account can display a window in this user's session and leave metadata in this user's cache.
+  `Username` and `UserSid` identify the hive's owner, not the process security context.
 - **No time per program.** `KeyLastWrittenUTC` is the key's last write: the most recent change to
   any of its programs, not when a particular one ran. Prefetch, BAM, UserAssist and event logs give
   times.
@@ -55,6 +59,8 @@ system's `SYSTEM` and `SOFTWARE` hives for the host and user names.
   profile), each gets its own record, so neither value is lost.
 - **Damaged values.** A value that isn't a string, isn't valid UTF-16 or can't be read whole keeps
   its bytes (`FriendlyAppNameRaw`, `ApplicationCompanyRaw`) and is reported in `Problems`.
+  Invalid UTF-16 can also produce replacement characters in the displayed text; use the raw
+  column for the original bytes.
 
 ## Parse with Juntei
 
@@ -81,6 +87,9 @@ juntei parse-registry muicache -f UsrClass.dat -t jsonl \
 The summary lists the programs outside the Windows and Program Files folders (user folders,
 other drives, network shares) with their users, and the number of resource strings left out.
 Program Files folders with other names (on Windows in other languages) are listed too.
+Relative paths and paths that escape an environment-variable folder remain listed. Ordinary
+drive paths are checked after resolving `.` and `..` components without accessing the examiner's
+file system.
 
 ## Output fields
 
@@ -109,4 +118,5 @@ Program Files folders with other names (on Windows in other languages) are liste
 ## Further Details
 
 - [Microsoft: VERSIONINFO resource](https://learn.microsoft.com/en-us/windows/win32/menurc/versioninfo-resource)
+- [Cyber Triage: MuiCache experiments, GUI sessions, and process-account limitations](https://www.cybertriage.com/blog/muicache-2026-guide/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
