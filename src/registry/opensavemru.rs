@@ -100,7 +100,10 @@ pub fn run(opts: &RegistryOpenSaveMruOptions) -> i32 {
     // --- parse and write -------------------------------------------------------------------
     let mut hosts = Hosts::new(!opts.no_logs);
     let mut profiles = Profiles::new(!opts.no_logs);
-    let mut stats = Stats::default();
+    let mut stats = Stats {
+        to_stderr: data_on_stdout,
+        ..Stats::default()
+    };
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
@@ -203,6 +206,10 @@ fn kind_name(kind: &Kind) -> &'static str {
         Kind::Uri => "uri",
         Kind::PropertyView => "property_view",
         Kind::CdBurn => "cd_burn",
+        Kind::PortableDevice => "portable_device",
+        Kind::PortableDeviceFolder => "portable_device_folder",
+        Kind::CompressedFolder => "compressed_folder",
+        Kind::FtpFolder => "ftp_folder",
         Kind::Other(_) => "unknown",
     }
 }
@@ -224,7 +231,7 @@ fn decode_items(list: &[u8], code_page: u16) -> Decoded {
     let mut last = None;
     let mut unknown = false;
     for raw in item::items(list) {
-        let decoded = item::decode_with(raw, code_page);
+        let decoded = item::decode_child(raw, last.as_ref(), code_page);
         let name = if decoded.name.is_empty() {
             unknown = true;
             format!("[class 0x{:02x}]", decoded.class)
@@ -398,6 +405,8 @@ impl<'a> Record<'a> {
 /// Counts for the results summary.
 #[derive(Default)]
 struct Stats {
+    /// Hive/list warnings must remain visible when stdout carries only records.
+    to_stderr: bool,
     hives: usize,
     failed: usize,
     hosts: BTreeSet<String>,
@@ -440,6 +449,9 @@ impl Stats {
             return Ok(());
         };
         for problem in &problems {
+            if self.to_stderr {
+                eprintln!("{}: {problem}", opened.source);
+            }
             self.problem(&opened.source, problem);
         }
         for entry in &entries {

@@ -247,7 +247,7 @@ impl Machines {
 
 /// The name of the profile folder a `UsrClass.dat` is in, when it is where Windows keeps it
 /// (`…\Users\alice\AppData\Local\Microsoft\Windows\UsrClass.dat`).
-fn profile_of_classes_path(path: &Path) -> Option<String> {
+pub(super) fn profile_of_classes_path(path: &Path) -> Option<String> {
     let root = system_root(path)?;
     let rest = path.strip_prefix(&root).ok()?;
     let mut parts = rest.components().map(|c| c.as_os_str().to_string_lossy());

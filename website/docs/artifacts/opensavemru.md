@@ -43,14 +43,18 @@ Collect `NTUSER.DAT` with its transaction logs for every profile.
 
 - **One time per list.** A key's last-write time changes when one of its entries moves to the
   front of its list, so it dates the entry at position 0 only (`IsMostRecent`, `LastUsedUTC`).
-  The other entries are in order, older first down the list, but undated.
+  The other entries are in order, newest to oldest down the list, but undated.
 - **The same file in two lists.** A file is in its extension's list and in `*`; do not count it
   as two uses. `*` gives the order across extensions.
 - **Opened or saved.** The lists don't say which. Correlate with the file's `$MFT` and USN
   Journal records, LNK files and jump lists.
 - **Item times are the file's, not the dialog's.** `ItemModifiedUTC`, `ItemCreatedUTC` and
   `ItemAccessedUTC` are the file's times when the item was written, to 2 seconds (FAT). Items of
-  known folders (`CLSID_ThisPCDocumentsRegFolder`, `Downloads`, …) often have none.
+  known folders (`CLSID_ThisPCDocumentsRegFolder`, `Downloads`, …) often have none. These FAT
+  timestamps have no timezone offset. The `UTC` column suffix is a display convention, not
+  evidence that the original clock was UTC; correlate with the source system's timezone and
+  other timestamps before comparing them with registry FILETIMEs. See Microsoft's
+  [file-time guidance](https://learn.microsoft.com/en-us/windows/win32/sysinfo/file-times).
 - **Paths are shell paths.** They start at the desktop: `This PC\C:\Users\…`, a known folder, a
   library (`UsersLibraries\Documents\…`) or a network location. A path that starts with a folder
   or a file is on the desktop. An empty path is the desktop itself.

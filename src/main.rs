@@ -224,6 +224,17 @@ fn main() {
                 }
                 code
             }
+            RegistryCommands::Shellbags(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::shellbags::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
             RegistryCommands::Taskcache(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
@@ -257,6 +268,17 @@ fn main() {
                 }
                 code
             }
+            RegistryCommands::Usb(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::usb::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
             RegistryCommands::Userassist(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
@@ -274,6 +296,39 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = registry::opensavemru::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            RegistryCommands::Bam(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::bam::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            RegistryCommands::InstalledPrograms(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::installed_programs::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            RegistryCommands::Muicache(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = registry::muicache::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }
