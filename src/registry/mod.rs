@@ -20,6 +20,7 @@ pub mod app_history;
 pub mod appcompat;
 pub mod auditpol;
 pub mod bam;
+pub mod bcd;
 pub mod featureusage;
 pub mod installed_programs;
 pub mod mru;

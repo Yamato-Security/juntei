@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "bcd",
                 "appcompat",
                 "auditpol",
                 "office",
@@ -347,7 +348,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "amcache" | "shimcache" => "file_existence",
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
             "remote-access" => "lateral_movement",
-            "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
+            "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => {
+                "persistence"
+            }
             "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch"
             | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
             "registry" => "registry",
@@ -658,7 +661,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                35
+                36
             );
             assert!(
                 output
@@ -804,7 +807,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 70);
+    assert_eq!(tasks.len(), 72);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5561,6 +5564,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("bcd "), "{help}");
     assert!(help.contains("appcompat "), "{help}");
     assert!(help.contains("auditpol "), "{help}");
     assert!(help.contains("office "), "{help}");
@@ -16290,4 +16294,399 @@ fn registry_appcompat_keeps_list_warnings_on_stderr() {
             assert_eq!(json_documents(&r.stdout).len(), 1);
         }
     }
+}
+
+// --- parse-registry bcd -------------------------------------------------------------------------
+
+/// `parse-registry bcd`'s CSV columns.
+const BCD_COLUMNS: [&str; 22] = [
+    "Host",
+    "SourcePath",
+    "HiveType",
+    "ObjectGuid",
+    "ObjectType",
+    "ObjectTypeName",
+    "Description",
+    "IsDefault",
+    "DisplayOrder",
+    "Device",
+    "Path",
+    "RecoveryEnabled",
+    "TestSigning",
+    "NoIntegrityChecks",
+    "SafeBoot",
+    "BootStatusPolicy",
+    "Inherited",
+    "Elements",
+    "KeyLastWrittenUTC",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+const BCD_MANAGER: &str = "{9dea862c-5cdd-4e70-acc1-f32b344d4795}";
+const BCD_WINDOWS: &str = "{11111111-2222-3333-4444-555555555555}";
+const BCD_SETTINGS: &str = "{6efb52bf-1766-41db-a6b3-0ee5eff72bd7}";
+
+/// A BCD store as ransomware and a rootkit leave it, and a SYSTEM hive next to it (exported to
+/// one directory): the boot manager's default entry with recovery off, all failures ignored and
+/// integrity checks off, test signing on in the boot loader settings it inherits, and a boolean
+/// that isn't 0 or 1.
+fn bcd_collection(root: &Path) {
+    let element = |object: &str, element: &str| format!(r"Objects\{object}\Elements\{element}");
+    let kind = |object: &str| format!(r"Objects\{object}\Description");
+    let multi = |items: &[&str]| {
+        let mut data: Vec<u8> = items.iter().flat_map(|i| utf16z(i)).collect();
+        data.extend([0, 0]);
+        data
+    };
+    let mut gpt = vec![0u8; 88];
+    gpt[16] = 6;
+    gpt[24] = 0x48;
+    gpt[32..48].copy_from_slice(&[0x11; 16]);
+    gpt[56..72].copy_from_slice(&[0x22; 16]);
+    let store = reg_tree(
+        "NewStoreRoot",
+        &[
+            (
+                &kind(BCD_MANAGER),
+                "Type",
+                REG_DWORD,
+                0x1010_0002u32.to_le_bytes().to_vec(),
+            ),
+            (
+                &element(BCD_MANAGER, "12000004"),
+                "Element",
+                REG_SZ,
+                utf16z("Windows Boot Manager"),
+            ),
+            (
+                &element(BCD_MANAGER, "23000003"),
+                "Element",
+                REG_SZ,
+                utf16z(BCD_WINDOWS),
+            ),
+            (
+                &element(BCD_MANAGER, "24000001"),
+                "Element",
+                REG_MULTI_SZ,
+                multi(&[BCD_WINDOWS]),
+            ),
+            (
+                &kind(BCD_WINDOWS),
+                "Type",
+                REG_DWORD,
+                0x1020_0003u32.to_le_bytes().to_vec(),
+            ),
+            (
+                &element(BCD_WINDOWS, "11000001"),
+                "Element",
+                REG_BINARY,
+                gpt,
+            ),
+            (
+                &element(BCD_WINDOWS, "12000002"),
+                "Element",
+                REG_SZ,
+                utf16z(r"\Windows\system32\winload.efi"),
+            ),
+            (
+                &element(BCD_WINDOWS, "12000004"),
+                "Element",
+                REG_SZ,
+                utf16z("Windows 11"),
+            ),
+            (
+                &element(BCD_WINDOWS, "14000006"),
+                "Element",
+                REG_MULTI_SZ,
+                multi(&[BCD_SETTINGS]),
+            ),
+            (
+                &element(BCD_WINDOWS, "16000009"),
+                "Element",
+                REG_BINARY,
+                vec![0],
+            ),
+            (
+                &element(BCD_WINDOWS, "16000048"),
+                "Element",
+                REG_BINARY,
+                vec![1],
+            ),
+            (
+                &element(BCD_WINDOWS, "16000040"),
+                "Element",
+                REG_BINARY,
+                vec![2],
+            ),
+            (
+                &element(BCD_WINDOWS, "250000e0"),
+                "Element",
+                REG_BINARY,
+                1u64.to_le_bytes().to_vec(),
+            ),
+            (
+                &kind(BCD_SETTINGS),
+                "Type",
+                REG_DWORD,
+                0x2020_0003u32.to_le_bytes().to_vec(),
+            ),
+            (
+                &element(BCD_SETTINGS, "16000049"),
+                "Element",
+                REG_BINARY,
+                vec![1],
+            ),
+        ],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let dir = root.join("HOST1");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("BCD"), store).unwrap();
+    std::fs::write(dir.join("SYSTEM"), system).unwrap();
+}
+
+/// `parse-registry bcd` with `args`, as JSON Lines.
+fn bcd_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "bcd"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_bcd_of_a_compromised_store() {
+    let dir = tempfile::tempdir().unwrap();
+    bcd_collection(dir.path());
+    let records = bcd_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(records.len(), 3);
+    let find = |guid: &str| records.iter().find(|r| r["object_guid"] == guid).unwrap();
+    let windows = find(BCD_WINDOWS);
+    for (field, expected) in [
+        ("host", json!("HOST1")),
+        ("hive_type", json!("BCD")),
+        ("object_type", json!("0x10200003")),
+        ("object_type_name", json!("Windows boot loader")),
+        ("description", json!("Windows 11")),
+        ("is_default", json!(true)),
+        ("display_order", json!(0)),
+        (
+            "device",
+            json!(
+                "partition {11111111-1111-1111-1111-111111111111} on disk {22222222-2222-2222-2222-222222222222}"
+            ),
+        ),
+        ("path", json!(r"\Windows\system32\winload.efi")),
+        ("recovery_enabled", json!(false)),
+        ("test_signing", json!(true)),
+        ("no_integrity_checks", json!(true)),
+        ("safe_boot", Value::Null),
+        ("boot_status_policy", json!("IgnoreAllFailures (1)")),
+        (
+            "inherited",
+            json!([format!("test_signing from {BCD_SETTINGS}")]),
+        ),
+        ("transaction_log_status", json!("clean")),
+        (
+            "problems",
+            json!([r"Elements\16000040: boolean 2 is neither 0 nor 1"]),
+        ),
+    ] {
+        assert_eq!(windows[field], expected, "{field}");
+    }
+    let elements = windows["elements"].as_array().unwrap();
+    assert_eq!(elements.len(), 8);
+    let element = |t: &str| elements.iter().find(|e| e["element_type"] == t).unwrap();
+    assert_eq!(
+        element("16000009")["name"],
+        "BcdLibraryBoolean_AutoRecoveryEnabled"
+    );
+    assert_eq!(element("16000009")["value"], false);
+    assert_eq!(
+        element("250000e0")["name"],
+        "BcdOSLoaderInteger_BootStatusPolicy"
+    );
+    assert_eq!(element("250000e0")["value"], 1);
+    assert_eq!(element("14000006")["value"], json!([BCD_SETTINGS]));
+    assert_eq!(element("16000040")["value"], Value::Null);
+    assert_eq!(element("16000040")["data_raw"], "02");
+    assert_eq!(
+        element("16000009")["key_last_written"],
+        "2022-02-08T21:03:52Z"
+    );
+    assert_eq!(find(BCD_SETTINGS)["test_signing"], true);
+    assert_eq!(find(BCD_SETTINGS)["inherited"], json!([]));
+    assert_eq!(find(BCD_MANAGER)["is_default"], false);
+}
+
+#[test]
+fn registry_bcd_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    bcd_collection(dir.path());
+    let out = dir.path().join("bcd.csv");
+    let r = run(&[
+        "parse-registry",
+        "bcd",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let store = dir.path().join("HOST1").join("BCD");
+    let store = store.to_str().unwrap();
+    for expected in [
+        "BCD hives parsed: 1".to_string(),
+        "Hosts: HOST1".to_string(),
+        "Objects: 3 (Windows boot loader 1, Windows boot manager 1, inherited settings for Windows boot loader 1)".to_string(),
+        format!(r"{store}: {BCD_WINDOWS} Windows 11, \Windows\system32\winload.efi, partition"),
+        "Test signing, integrity checks off, recovery off, failures ignored, safe mode: 5".to_string(),
+        format!("{store}: {BCD_WINDOWS} (Windows 11): test signing on (inherited from {BCD_SETTINGS})"),
+        format!("{store}: {BCD_WINDOWS} (Windows 11): integrity checks off (set 2022-02-08T21:03:52Z)"),
+        format!("{store}: {BCD_WINDOWS} (Windows 11): recovery off (set 2022-02-08T21:03:52Z)"),
+        format!("{store}: {BCD_WINDOWS} (Windows 11): boot status policy IgnoreAllFailures (1) (set 2022-02-08T21:03:52Z)"),
+        format!("{store}: {BCD_SETTINGS} (inherited settings for Windows boot loader): test signing on (set 2022-02-08T21:03:52Z)"),
+        "Objects or elements that could not be read: 1".to_string(),
+    ] {
+        assert!(r.stdout.contains(&expected), "{expected}\n{}", r.stdout);
+    }
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, BCD_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 3);
+    let windows = rows.iter().find(|r| &r[3] == BCD_WINDOWS).unwrap();
+    assert_eq!(&windows[11], "false");
+    assert_eq!(&windows[12], "true");
+    assert_eq!(&windows[15], "IgnoreAllFailures (1)");
+    assert!(
+        windows[17].contains("16000009 BcdLibraryBoolean_AutoRecoveryEnabled=false"),
+        "{}",
+        &windows[17]
+    );
+    assert!(windows[17].contains("16000040 BcdLibraryBoolean_DisplayAdvancedOptions= [02]"));
+}
+
+#[test]
+fn registry_bcd_of_public_hives() {
+    // regipy's Windows 10 UEFI store: the boot entries its boot_entry_list reads
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["BCD"], dir.path());
+    let records = bcd_read(&["-f", dir.path().join("BCD").to_str().unwrap()]);
+    assert_eq!(records.len(), 17);
+    let default: Vec<&Value> = records.iter().filter(|r| r["is_default"] == true).collect();
+    assert_eq!(default.len(), 1);
+    for (field, expected) in [
+        (
+            "object_guid",
+            json!("{733b62e5-f608-11eb-825c-c112f60133ab}"),
+        ),
+        ("description", json!("Windows 10")),
+        ("path", json!(r"\Windows\system32\winload.efi")),
+        (
+            "device",
+            json!(
+                "partition {8e0f2c38-e4ea-47ba-b7fc-9d8c74dccf0b} on disk {0b2394a9-095e-487d-8d48-719ecd4d78ca}"
+            ),
+        ),
+        ("recovery_enabled", json!(true)),
+        ("test_signing", Value::Null),
+        ("no_integrity_checks", Value::Null),
+        ("boot_status_policy", Value::Null),
+    ] {
+        assert_eq!(default[0][field], expected, "{field}");
+    }
+    let manager = records
+        .iter()
+        .find(|r| r["object_type_name"] == "Windows boot manager")
+        .unwrap();
+    assert_eq!(manager["path"], r"\EFI\Microsoft\Boot\bootmgfw.efi");
+    assert!(records.iter().all(|r| r["problems"] == json!([])));
+
+    // the DFIR Artifact Museum's Windows 11 BCD-Template, where Windows keeps it
+    let collection = system_hive();
+    let config = collection.path().join("HOST/C/Windows/System32/config");
+    unpack_registry("rathbun_w11", &["BCD-Template"], &config);
+    let records = bcd_read(&["-d", collection.path().to_str().unwrap()]);
+    assert_eq!(records.len(), 16);
+    assert!(
+        records
+            .iter()
+            .all(|r| r["host"] == "GOLDPAPERW11" && r["hive_type"] == "BCD-Template")
+    );
+    let default = records.iter().find(|r| r["is_default"] == true).unwrap();
+    assert_eq!(
+        default["object_guid"],
+        "{cbd971bf-b7b8-4885-951a-fa03044f5d71}"
+    );
+    assert_eq!(default["object_type_name"], "Windows boot loader");
+}
+
+#[test]
+fn registry_bcd_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&["parse-registry", "bcd", "-f", sam.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("a SAM hive, not a BCD hive"), "{said}");
+    // a hive of no known type without Objects
+    let other = dir.path().join("store");
+    std::fs::write(
+        &other,
+        reg_tree("ROOT", &[("Description", "KeyName", REG_SZ, utf16z("x"))]),
+    )
+    .unwrap();
+    let r = run(&["parse-registry", "bcd", "-f", other.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("it has no Objects key: not a BCD store"),
+        "{said}"
+    );
+    let r = run(&[
+        "parse-registry",
+        "bcd",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("No BCD hives were found"), "{said}");
+    // the output is never one of the files read
+    let original = std::fs::read(&sam).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "bcd",
+        "-f",
+        sam.to_str().unwrap(),
+        "-o",
+        sam.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&sam).unwrap(), original);
 }

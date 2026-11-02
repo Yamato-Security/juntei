@@ -65,7 +65,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
         "remote-access" => "lateral_movement",
-        "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
+        "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
         | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
@@ -80,6 +80,7 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "bcd" => "BCD",
         "appcompat" => "AppCompat",
         "auditpol" => "AuditPolicy",
         "app-history" => "AppHistory",
@@ -1184,6 +1185,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add("bcd", &["parse-registry", "bcd"], OutputShape::File, &[]);
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1287,6 +1289,9 @@ impl InputInventory {
                     found.add_size("featureusage", size);
                     found.add_size("app-history", size);
                     found.add_size("mru", size);
+                }
+                if kind.as_deref() == Some("BCD") || name.eq_ignore_ascii_case("BCD-Template") {
+                    found.add_size("bcd", size);
                 }
                 if matches!(
                     kind.as_deref(),

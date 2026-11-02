@@ -13,6 +13,7 @@ Commands:
   appcompat           Parse application compatibility data
   auditpol            Parse the audit policy
   bam                 Parse BAM and DAM last runs
+  bcd                 Parse boot configuration
   featureusage        Parse Explorer use counts and pins
   help                Print this message or the help of the given subcommand(s)
   installed-programs  Parse installed programs
@@ -541,6 +542,40 @@ shim databases. The ShimCache is `parse-registry shimcache`'s. See
 [Application Compatibility](../artifacts/appcompat.md).
 
 
+## `parse-registry bcd`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry bcd <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for BCD hives (and BCD-Template)
+  -f, --file <FILE>      File path to one BCD hive (\Boot\BCD, \EFI\Microsoft\Boot\BCD)
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+One record per object of the store, with test signing, integrity checks, recovery, boot status
+policy and safe mode resolved through inheritance. See
+[Boot Configuration Data (BCD)](../artifacts/bcd.md).
+
+
 ## `parse-registry persistence`
 
 ```text
@@ -918,3 +953,5 @@ See also [office](../artifacts/office.md).
 See also [auditpol](../artifacts/auditpol.md).
 
 See also [appcompat](../artifacts/appcompat.md).
+
+See also [bcd](../artifacts/bcd.md).
