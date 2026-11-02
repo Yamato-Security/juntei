@@ -8,6 +8,7 @@ pub mod read;
 pub mod recentdocs;
 pub mod sam;
 pub mod services;
+pub mod system_info;
 pub mod taskcache;
 pub mod userassist;
 

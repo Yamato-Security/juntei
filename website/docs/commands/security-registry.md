@@ -16,6 +16,7 @@ Commands:
   sam          Parse local accounts
   services     Parse services
   shimcache    Parse ShimCache entries
+  system-info  Parse system information
   taskcache    Parse scheduled tasks
   userassist   Parse UserAssist entries
 
@@ -274,6 +275,38 @@ juntei parse-registry shimcache -d evidence/ -o shimcache.csv
 
 See [ShimCache](../artifacts/shimcache.md).
 
+## `parse-registry system-info`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry system-info <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SYSTEM, SOFTWARE, SAM and SECURITY hives (those in one directory are one system's)
+  -f, --file <FILE>      File path to a SYSTEM, SOFTWARE, SAM or SECURITY hive of one system; repeat for each (the others are looked for next to them)
+      --no-logs          Read dirty hives as they are, without their transaction logs (default: <hive>.LOG, .LOG1 and .LOG2 next to each are replayed)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+One record per system: its names, domain or workgroup, Windows version and install date, time
+zone, last shutdown, last user, profiles and SIDs. The hives in one directory are one system's;
+with `-f`, the hives given and the others of the four found next to them.
+See [System Information](../artifacts/system-info.md).
+
 ## `parse-registry taskcache`
 
 ```text
@@ -345,9 +378,11 @@ juntei parse-registry taskcache -f SOFTWARE --task ScheduledDefrag -t jsonl
 juntei parse-registry sam -f SAM --rid 500 -t jsonl
 juntei parse-registry persistence -d collection/ -o persistence.csv
 juntei parse-registry userassist -d collection/ -o userassist.csv
+juntei parse-registry system-info -d collection/ -o system-info.csv
 ```
 
 The complete options and field semantics are on [Registry Hives](../artifacts/registry.md),
 [Windows Services](../artifacts/services.md), [RecentDocs](../artifacts/recentdocs.md),
 [Task Scheduler Cache](../artifacts/taskcache.md), [SAM Local Accounts](../artifacts/sam.md),
-[Registry Autostarts](../artifacts/persistence.md), and [UserAssist](../artifacts/userassist.md).
+[Registry Autostarts](../artifacts/persistence.md), [UserAssist](../artifacts/userassist.md), and
+[System Information](../artifacts/system-info.md).

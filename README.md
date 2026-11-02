@@ -81,6 +81,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Local accounts** (`SAM`) — Local usernames, RIDs, account flags, and recorded logon and password metadata. | Registry |
 
+### System Information
+
+| Artifact | Type |
+| --- | --- |
+| **System information** (`SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY`) — Computer and domain names, Windows version and install date, time zone and the local times it kept, last shutdown, last user, profiles, and SIDs. | Registry |
+
 ### Security Products
 
 | Artifact | Type |
