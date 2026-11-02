@@ -11,6 +11,7 @@ Commands:
   amcache      Parse Amcache inventories
   bam          Parse BAM and DAM last runs
   help         Print this message or the help of the given subcommand(s)
+  muicache     Parse MuiCache program names
   persistence  Parse autostart locations
   read         Read keys and values
   recentdocs   Parse recent documents
@@ -105,6 +106,38 @@ Display Settings:
 
 Users are named from the system's `SAM` and `SOFTWARE` (`ProfileList`), found as the host is.
 See [BAM and DAM](../artifacts/bam.md).
+
+## `parse-registry muicache`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry muicache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for UsrClass.dat and NTUSER.DAT hives
+  -f, --file <FILE>      File path to one UsrClass.dat (Windows Vista and later) or NTUSER.DAT (Windows XP) hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+Users are named from the hive's place in the collection, and their SIDs from a `UsrClass.dat`'s
+root key or the system's `SOFTWARE` (`ProfileList`). See [MuiCache](../artifacts/muicache.md).
 
 ## `parse-registry persistence`
 
@@ -278,6 +311,38 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
+## `parse-registry shellbags`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry shellbags <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for UsrClass.dat and NTUSER.DAT hives
+  -f, --file <FILE>      File path to one UsrClass.dat or NTUSER.DAT hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Parsing:
+      --code-page <NUMBER>  Windows code page for the ANSI names of shell items (8.3 names, network shares) [default: 1252]
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
 ## `parse-registry shimcache`
 
 ```text
@@ -405,38 +470,6 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## `parse-registry shellbags`
-
-```text
-Version: 1.0.0
-Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
-
-Usage:
-  juntei parse-registry shellbags <INPUT> [OPTIONS]
-
-Input:
-  -d, --directory <DIR>  Directory to search recursively for UsrClass.dat and NTUSER.DAT hives
-  -f, --file <FILE>      File path to one UsrClass.dat or NTUSER.DAT hive
-      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
-      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
-      --no-logs          Read a dirty hive as it is, without its transaction logs
-
-Parsing:
-      --code-page <NUMBER>  Windows code page for the ANSI names of shell items (8.3 names, network shares) [default: 1252]
-
-Output:
-  -o, --output <FILE>       Save every record to a file
-  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
-  -C, --clobber             Overwrite files when saving
-
-General Options:
-  -h, --help  Show the help menu
-
-Display Settings:
-  -K, --no-color  Disable color output
-  -q, --quiet     Quiet mode: do not display the launch banner
-```
-
 ### Examples
 
 ```bash
@@ -449,6 +482,7 @@ juntei parse-registry persistence -d collection/ -o persistence.csv
 juntei parse-registry usb -d collection/ -o usb.csv
 juntei parse-registry userassist -d collection/ -o userassist.csv
 juntei parse-registry bam -d collection/ --all-control-sets -o bam.csv
+juntei parse-registry muicache -d collection/ -o muicache.csv
 juntei parse-registry shellbags -d collection/ -o shellbags.csv
 ```
 
@@ -456,5 +490,6 @@ The complete options and field semantics are on [Registry Hives](../artifacts/re
 [Windows Services](../artifacts/services.md), [RecentDocs](../artifacts/recentdocs.md),
 [Task Scheduler Cache](../artifacts/taskcache.md), [SAM Local Accounts](../artifacts/sam.md),
 [Registry Autostarts](../artifacts/persistence.md), [UserAssist](../artifacts/userassist.md),
-[BAM and DAM](../artifacts/bam.md), [ShellBags](../artifacts/shellbags.md), and
+[BAM and DAM](../artifacts/bam.md), [MuiCache](../artifacts/muicache.md),
+[ShellBags](../artifacts/shellbags.md), and
 [USB Devices](../artifacts/usb.md).

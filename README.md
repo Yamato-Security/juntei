@@ -42,6 +42,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Prefetch** (`*.pf`) — Program run counts, recent execution times, and referenced files. | File |
 | **SRUM** (`SRUDB.dat`) — Application and user resource usage, including network bytes sent and received. | ESE |
 | **UserAssist** (`NTUSER.DAT`) — Programs and shortcuts a user started from Explorer, with run counts, focus time, and last run times. | Registry |
+| **MuiCache** (`UsrClass.dat`) — Program paths, descriptions and companies cached in a user's shell profile. | Registry |
 
 ### File System and File Existence
 
