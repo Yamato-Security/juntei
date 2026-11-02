@@ -17,6 +17,7 @@
 //! it is dirty, naming its type and the host it comes from, and writing CSV, JSON or JSONL.
 
 pub mod app_history;
+pub mod appcompat;
 pub mod auditpol;
 pub mod bam;
 pub mod featureusage;

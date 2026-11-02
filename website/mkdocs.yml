@@ -118,6 +118,7 @@ nav:
   - Artifacts:
       - Artifact Guide: artifacts/index.md
       - Process Execution:
+          - Application Compatibility: artifacts/appcompat.md
           - FeatureUsage and Pins: artifacts/featureusage.md
           - BAM and DAM: artifacts/bam.md
           - MuiCache: artifacts/muicache.md

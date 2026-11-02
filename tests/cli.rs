@@ -167,6 +167,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "persistence",
                 "usb",
                 "userassist",
+                "appcompat",
                 "auditpol",
                 "office",
                 "security-settings",
@@ -347,8 +348,8 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
             "remote-access" => "lateral_movement",
             "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-            "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline" | "srum"
-            | "userassist" => "process_execution",
+            "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch"
+            | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
             "registry" => "registry",
             "defender-quarantine" | "security-settings" => "security_products",
             "system-info" => "system_information",
@@ -657,7 +658,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                34
+                35
             );
             assert!(
                 output
@@ -803,7 +804,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 68);
+    assert_eq!(tasks.len(), 70);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5560,6 +5561,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("appcompat "), "{help}");
     assert!(help.contains("auditpol "), "{help}");
     assert!(help.contains("office "), "{help}");
     assert!(help.contains("security-settings "), "{help}");
@@ -15884,4 +15886,408 @@ fn registry_auditpol_does_not_claim_unknown_flags_are_audited() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stdout.contains("1 (0 audited)"), "{}", r.stdout);
+}
+
+// --- parse-registry appcompat -------------------------------------------------------------------
+
+/// `parse-registry appcompat`'s CSV columns.
+const APPCOMPAT_COLUMNS: [&str; 22] = [
+    "Host",
+    "SourcePath",
+    "HiveType",
+    "Username",
+    "UserSid",
+    "Source",
+    "Scope",
+    "Path",
+    "Layers",
+    "LastSeenUTC",
+    "SdbGuid",
+    "SdbPath",
+    "SdbInstalledUTC",
+    "Details",
+    "KeyPath",
+    "KeyLastWrittenUTC",
+    "ValueName",
+    "Wow64",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// One system's SYSTEM hive (its name), SOFTWARE hive (alice's profile; a program run as
+/// administrator; a program that loaded a CIT module; a custom shim database installed and
+/// applied to notepad.exe) and alice's NTUSER.DAT (her own layers, and two programs the Program
+/// Compatibility Assistant saw: one on removable media).
+fn appcompat_collection(root: &Path) {
+    let flags = r"Microsoft\Windows NT\CurrentVersion\AppCompatFlags";
+    let guid = "{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}";
+    let sdb = format!(r"{flags}\InstalledSDB\{guid}");
+    let software = reg_tree(
+        "ROOT",
+        &[
+            (
+                r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Users\alice"),
+            ),
+            (
+                &format!(r"{flags}\Layers"),
+                r"C:\Tools\agent.exe",
+                REG_SZ,
+                utf16z("~ RUNASADMIN"),
+            ),
+            (
+                &format!(r"{flags}\CIT\Module\System32/mrt100.dll"),
+                r"\Device\HarddiskVolume1\Windows\System32\backgroundTaskHost.exe",
+                REG_QWORD,
+                LINKED.to_le_bytes().to_vec(),
+            ),
+            (
+                &format!(r"{flags}\CIT\Module\System32/mrt100.dll"),
+                "OverflowQuota",
+                REG_QWORD,
+                LINKED.to_le_bytes().to_vec(),
+            ),
+            (
+                &sdb,
+                "DatabasePath",
+                REG_SZ,
+                utf16z(r"C:\ProgramData\shim.sdb"),
+            ),
+            (&sdb, "DatabaseDescription", REG_SZ, utf16z("Updater")),
+            (
+                &sdb,
+                "DatabaseInstallTimeStamp",
+                REG_QWORD,
+                (LINKED - DAY).to_le_bytes().to_vec(),
+            ),
+            (
+                &sdb,
+                "DatabaseType",
+                REG_DWORD,
+                0x0001_0000u32.to_le_bytes().to_vec(),
+            ),
+            (
+                &format!(r"{flags}\Custom\notepad.exe"),
+                &format!("{guid}.sdb"),
+                REG_QWORD,
+                (LINKED - DAY).to_le_bytes().to_vec(),
+            ),
+        ],
+    );
+    let user_flags = format!(r"Software\{flags}");
+    let store = format!(r"{user_flags}\Compatibility Assistant\Store");
+    let mut sacp = b"SACP".to_vec();
+    sacp.extend([1, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0x28, 0, 0, 0]);
+    let ntuser = reg_tree(
+        "ROOT",
+        &[
+            (
+                &format!(r"{user_flags}\Layers"),
+                r"C:\Users\alice\game.exe",
+                REG_SZ,
+                utf16z("~ HIGHDPIAWARE"),
+            ),
+            (
+                &store,
+                r"C:\Users\alice\Downloads\tool.exe",
+                REG_BINARY,
+                sacp.clone(),
+            ),
+            (&store, "SIGN.MEDIA=1FF3254 setup64.exe", REG_BINARY, sacp),
+        ],
+    );
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+        ],
+    );
+    let config = root.join("C/Windows/System32/config");
+    let profile = root.join("C/Users/alice");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::create_dir_all(&profile).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(profile.join("NTUSER.DAT"), ntuser).unwrap();
+}
+
+/// `parse-registry appcompat` with `args`, as JSON Lines.
+fn appcompat_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "appcompat"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+#[test]
+fn registry_appcompat_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    appcompat_collection(dir.path());
+    let records = appcompat_read(&["-d", dir.path().to_str().unwrap()]);
+    let lines: Vec<String> = records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} | {} | {} | {} {} {}",
+                r["hive_type"].as_str().unwrap(),
+                r["source"].as_str().unwrap(),
+                r["scope"].as_str().unwrap(),
+                r["username"].as_str().unwrap_or("-"),
+                r["path"].as_str().unwrap_or("-"),
+                r["layers"].as_str().unwrap_or("-"),
+                r["last_seen"].as_str().unwrap_or("-"),
+                r["sdb_path"].as_str().unwrap_or("-"),
+                r["sdb_installed"].as_str().unwrap_or("-"),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            // the hives in path order (C/Users before C/Windows)
+            r"NTUSER.DAT layers user alice | C:\Users\alice\game.exe | ~ HIGHDPIAWARE | - - -",
+            r"NTUSER.DAT pca_store user alice | C:\Users\alice\Downloads\tool.exe | - | - - -",
+            "NTUSER.DAT pca_store user alice | setup64.exe | - | - - -",
+            r"SOFTWARE layers machine - | C:\Tools\agent.exe | ~ RUNASADMIN | - - -",
+            r"SOFTWARE cit_module machine - | \Device\HarddiskVolume1\Windows\System32\backgroundTaskHost.exe | - | 2022-02-08T21:03:52Z - -",
+            r"SOFTWARE installed_sdb machine - | - | - | - C:\ProgramData\shim.sdb 2022-02-07T21:03:52Z",
+            r"SOFTWARE custom_sdb machine - | notepad.exe | - | - C:\ProgramData\shim.sdb 2022-02-07T21:03:52Z",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    for r in &records[..3] {
+        assert_eq!(r["user_sid"], "S-1-5-21-1-2-3-1001");
+    }
+    assert_eq!(records[3]["user_sid"], Value::Null);
+    // the Store data is kept, and a program on removable media keeps its media id
+    assert!(
+        records[1]["data_raw"]
+            .as_str()
+            .unwrap()
+            .starts_with("53414350")
+    );
+    assert_eq!(records[2]["details"], json!({"SignMedia": "1FF3254"}));
+    assert_eq!(records[2]["value_name"], "SIGN.MEDIA=1FF3254 setup64.exe");
+    assert_eq!(
+        records[4]["details"],
+        json!({"Module": "System32/mrt100.dll"})
+    );
+    let guid = "{8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}";
+    assert_eq!(records[5]["sdb_guid"], guid);
+    assert_eq!(
+        records[5]["details"],
+        json!({"DatabaseDescription": "Updater", "DatabaseType": "0x10000"})
+    );
+    assert_eq!(records[6]["sdb_guid"], guid);
+    assert_eq!(records[6]["value_name"], format!("{guid}.sdb"));
+}
+
+#[test]
+fn registry_appcompat_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    appcompat_collection(dir.path());
+    let out = dir.path().join("appcompat.csv");
+    let r = run(&[
+        "parse-registry",
+        "appcompat",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "Hives parsed: 2 (NTUSER.DAT 1, SOFTWARE 1)",
+        "Hosts: HOST1",
+        "Users: alice",
+        "Records: 7 (cit_module 1, custom_sdb 1, installed_sdb 1, layers 2, pca_store 2)",
+        "Custom shim databases (host, installed UTC, GUID, path): 2",
+        r"HOST1  2022-02-07T21:03:52Z  {8E9D8F3C-6B7A-4D5C-3E2F-1A0B9C8D7E6F}  C:\ProgramData\shim.sdb  applied to notepad.exe",
+        "Programs with compatibility layers (host, user, program, layers): 2",
+        r"HOST1  alice  C:\Users\alice\game.exe  ~ HIGHDPIAWARE",
+        r"HOST1  (machine)  C:\Tools\agent.exe  ~ RUNASADMIN",
+        r"2022-02-08T21:03:52Z  HOST1  \Device\HarddiskVolume1\Windows\System32\backgroundTaskHost.exe  (System32/mrt100.dll)",
+        "Records or keys that could not be read: 0",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(header, APPCOMPAT_COLUMNS);
+    assert_eq!(rows.len(), 7);
+    assert_eq!(rows[2]["Details"], "SignMedia=1FF3254");
+    assert_eq!(rows[4]["LastSeenUTC"], "2022-02-08T21:03:52Z");
+    assert_eq!(rows[5]["SdbInstalledUTC"], "2022-02-07T21:03:52Z");
+    assert_eq!(rows[6]["Scope"], "machine");
+    assert_eq!(rows[0]["Wow64"], "False");
+}
+
+#[test]
+fn registry_appcompat_of_public_hives() {
+    // the DFIR Artifact Museum's dirty Windows 11 NTUSER.DAT with its logs: 11 programs the
+    // Program Compatibility Assistant saw run, each with its SACP data, one on removable media
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry(
+        "rathbun_w11",
+        &["NTUSER.DAT", "ntuser.dat.LOG1", "ntuser.dat.LOG2"],
+        dir.path(),
+    );
+    let records = appcompat_read(&["-f", dir.path().join("NTUSER.DAT").to_str().unwrap()]);
+    assert_eq!(records.len(), 11);
+    assert!(records.iter().all(|r| r["source"] == "pca_store"
+        && r["problems"] == json!([])
+        && r["last_seen"].is_null()
+        && r["data_raw"].as_str().unwrap().starts_with("53414350")));
+    let media: Vec<&Value> = records
+        .iter()
+        .filter(|r| r["details"]["SignMedia"].is_string())
+        .collect();
+    assert_eq!(media.len(), 1);
+    assert_eq!(
+        (&media[0]["path"], &media[0]["details"]["SignMedia"]),
+        (&json!("setup64.exe"), &json!("1FF3254"))
+    );
+    assert_eq!(
+        records
+            .iter()
+            .filter(|r| r["path"]
+                .as_str()
+                .unwrap()
+                .ends_with(r"\WindowsTerminal.exe"))
+            .count(),
+        2
+    );
+    assert_eq!(
+        records[0]["key_last_written"],
+        "2022-02-07T07:37:00.507738100Z"
+    );
+}
+
+#[test]
+fn registry_appcompat_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "appcompat",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(said.contains("not a SOFTWARE or NTUSER.DAT hive"), "{said}");
+    let r = run(&[
+        "parse-registry",
+        "appcompat",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("No SOFTWARE or NTUSER.DAT hives were found"),
+        "{said}"
+    );
+    // the output is never one of the files read: a user hive's system's SOFTWARE included
+    let collection = tempfile::tempdir().unwrap();
+    appcompat_collection(collection.path());
+    let software = collection.path().join("C/Windows/System32/config/SOFTWARE");
+    let original = std::fs::read(&software).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "appcompat",
+        "-f",
+        collection
+            .path()
+            .join("C/Users/alice/NTUSER.DAT")
+            .to_str()
+            .unwrap(),
+        "-o",
+        software.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&software).unwrap(), original);
+}
+
+#[test]
+fn registry_appcompat_custom_shims_keep_installed_path_replay() {
+    let dir = tempfile::tempdir().unwrap();
+    let base = r"Microsoft\Windows NT\CurrentVersion\AppCompatFlags";
+    let guid = "{00000000-0000-0000-0000-000000000001}";
+    let installed = format!(r"{base}\InstalledSDB\{guid}");
+    let custom = format!(r"{base}\Custom\target.exe");
+    let name = format!("{guid}.sdb");
+    let build = |path: &str| {
+        reg_tree(
+            "ROOT",
+            &[
+                (&installed, "DatabasePath", REG_SZ, utf16z(path)),
+                (&custom, &name, REG_BINARY, vec![]),
+            ],
+        )
+    };
+    write_replayed_registry_hive(
+        dir.path(),
+        "SOFTWARE",
+        build(r"C:\old.sdb"),
+        &build(r"C:\new.sdb"),
+    );
+    let rows = appcompat_read(&["-f", dir.path().join("SOFTWARE").to_str().unwrap()]);
+    let row = rows.iter().find(|r| r["source"] == "custom_sdb").unwrap();
+    assert_eq!(row["sdb_path"], r"C:\new.sdb");
+    assert_eq!(row["transaction_log_status"], "replayed");
+}
+
+#[test]
+fn registry_appcompat_keeps_list_warnings_on_stderr() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("SOFTWARE");
+    let mut bytes = reg_tree(
+        "ROOT",
+        &[(
+            r"Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers",
+            r"C:\tool.exe",
+            REG_SZ,
+            utf16z("~ RUNASADMIN"),
+        )],
+    );
+    let name = bytes.windows(6).position(|b| b == b"Layers").unwrap();
+    put_u32(&mut bytes, name - 76 + 36, 2);
+    std::fs::write(&hive, bytes).unwrap();
+    for format in ["csv", "json", "jsonl"] {
+        let r = run(&[
+            "parse-registry",
+            "appcompat",
+            "-f",
+            hive.to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        assert!(r.stderr.contains("Layers"), "{}", r.stderr);
+        if format != "csv" {
+            assert_eq!(json_documents(&r.stdout).len(), 1);
+        }
+    }
 }

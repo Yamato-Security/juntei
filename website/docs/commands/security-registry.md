@@ -10,6 +10,7 @@ Usage:
 Commands:
   amcache             Parse Amcache inventories
   app-history         Parse third-party tools' traces
+  appcompat           Parse application compatibility data
   auditpol            Parse the audit policy
   bam                 Parse BAM and DAM last runs
   featureusage        Parse Explorer use counts and pins
@@ -506,6 +507,40 @@ policy in `Policy\PolAdtEv`: what it logs, its GUID and message ID, and its main
 [Audit Policy](../artifacts/auditpol.md).
 
 
+## `parse-registry appcompat`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry appcompat <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SOFTWARE and NTUSER.DAT hives
+  -f, --file <FILE>      File path to one SOFTWARE or NTUSER.DAT hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+Compatibility layers, the Program Compatibility Assistant's `Store` and `Persisted`, CIT and custom
+shim databases. The ShimCache is `parse-registry shimcache`'s. See
+[Application Compatibility](../artifacts/appcompat.md).
+
+
 ## `parse-registry persistence`
 
 ```text
@@ -881,3 +916,5 @@ See also [security-settings](../artifacts/security-settings.md).
 See also [office](../artifacts/office.md).
 
 See also [auditpol](../artifacts/auditpol.md).
+
+See also [appcompat](../artifacts/appcompat.md).

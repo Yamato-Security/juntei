@@ -66,8 +66,8 @@ fn artifact_category(artifact: &str) -> &'static str {
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
         "remote-access" => "lateral_movement",
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
-        "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline" | "srum"
-        | "userassist" => "process_execution",
+        "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
+        | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
         "defender-quarantine" | "security-settings" => "security_products",
         "system-info" => "system_information",
@@ -80,6 +80,7 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "appcompat" => "AppCompat",
         "auditpol" => "AuditPolicy",
         "app-history" => "AppHistory",
         "bam" => "BAM",
@@ -1177,6 +1178,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "appcompat",
+            &["parse-registry", "appcompat"],
+            OutputShape::File,
+            &[],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1274,6 +1281,8 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                    found.add_size("remote-access", size);
+                    found.add_size("opensavemru", size);
                     found.add_size("office", size);
                     found.add_size("featureusage", size);
                     found.add_size("app-history", size);
@@ -1284,11 +1293,10 @@ impl InputInventory {
                     Some("SYSTEM" | "SOFTWARE" | "SAM" | "SECURITY")
                 ) {
                     found.add_size("system-info", size);
-                    found.add_size("remote-access", size);
-                    found.add_size("opensavemru", size);
                 }
                 if matches!(kind.as_deref(), Some("SOFTWARE" | "NTUSER.DAT")) {
                     found.add_size("installed-programs", size);
+                    found.add_size("appcompat", size);
                 }
                 if matches!(kind.as_deref(), Some("NTUSER.DAT" | "USRCLASS.DAT")) {
                     found.add_size("muicache", size);
@@ -2340,6 +2348,45 @@ mod tests {
         assert_eq!(inputs.mfts, vec![dir.path().join("$MFT")]);
         assert_eq!(inputs.journals, vec![dir.path().join("$J")]);
         assert_eq!(inputs.logfiles, vec![dir.path().join("$LogFile")]);
+    }
+
+    #[test]
+    fn registry_progress_sizes_follow_each_readers_hive_types() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut hive = vec![0u8; 0x70];
+        hive[..4].copy_from_slice(b"regf");
+        fs::write(dir.path().join("SOFTWARE"), &hive).unwrap();
+        let only_machine = InputInventory::scan(dir.path());
+        assert_eq!(only_machine.sizes["appcompat"], 0x70);
+        assert_eq!(only_machine.sizes["system-info"], 0x70);
+        for user_reader in [
+            "office",
+            "featureusage",
+            "app-history",
+            "mru",
+            "remote-access",
+            "opensavemru",
+        ] {
+            assert!(
+                !only_machine.sizes.contains_key(user_reader),
+                "{user_reader}"
+            );
+        }
+        hive.resize(0x90, 0);
+        fs::write(dir.path().join("NTUSER.DAT"), &hive).unwrap();
+        let mixed = InputInventory::scan(dir.path());
+        assert_eq!(mixed.sizes["appcompat"], 0x100);
+        assert_eq!(mixed.sizes["system-info"], 0x70);
+        for user_reader in [
+            "office",
+            "featureusage",
+            "app-history",
+            "mru",
+            "remote-access",
+            "opensavemru",
+        ] {
+            assert_eq!(mixed.sizes[user_reader], 0x90, "{user_reader}");
+        }
     }
 
     #[test]

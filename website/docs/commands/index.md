@@ -42,6 +42,7 @@ and organizes results and logs by computer and investigative category.
 | Command | Input artifact | Detailed guide |
 |---|---|---|
 | `parse-registry amcache` | `Amcache.hve` | [Amcache](../artifacts/amcache.md) |
+| `parse-registry appcompat` | `SOFTWARE`, `NTUSER.DAT` | [Application Compatibility](../artifacts/appcompat.md) |
 | `parse-registry auditpol` | `SECURITY` | [Audit Policy](../artifacts/auditpol.md) |
 | `parse-registry office` | `NTUSER.DAT` | [Microsoft Office](../artifacts/office.md) |
 | `parse-registry featureusage` | `NTUSER.DAT` | [FeatureUsage, RecentApps and Taskbar Pins](../artifacts/featureusage.md) |
