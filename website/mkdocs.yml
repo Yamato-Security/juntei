@@ -132,6 +132,8 @@ nav:
           - LNK Shortcuts: artifacts/lnk.md
           - Jump Lists: artifacts/jump-lists.md
           - RecentDocs: artifacts/recentdocs.md
+      - External Devices:
+          - USB Devices: artifacts/usb.md
       - Security Products:
           - Defender Quarantine: artifacts/defender-quarantine.md
       - Registry and Persistence:
