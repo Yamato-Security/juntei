@@ -45,7 +45,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
         "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
-        "defender-quarantine" => "security_products",
+        "defender-quarantine" | "security-settings" => "security_products",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
     }
 }
@@ -67,6 +67,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "recentdocs" => "RecentDocs",
         "registry" => "Registry",
         "sam" => "SAM",
+        "security-settings" => "SecuritySettings",
         "services" => "Services",
         "shimcache" => "ShimCache",
         "srum" => "SRUM",
@@ -1036,6 +1037,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add(
+            "security-settings",
+            &["parse-registry", "security-settings"],
+            OutputShape::File,
+            &["--all-control-sets"],
+        );
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1138,6 +1145,9 @@ impl InputInventory {
                     Some("SOFTWARE" | "SYSTEM" | "NTUSER.DAT" | "USRCLASS.DAT")
                 ) {
                     found.add_size("persistence", size);
+                }
+                if matches!(kind.as_deref(), Some("SOFTWARE" | "SYSTEM" | "NTUSER.DAT")) {
+                    found.add_size("security-settings", size);
                 }
             }
             // Defender reads entry metadata, resource records, and encrypted content.

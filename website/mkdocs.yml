@@ -134,6 +134,7 @@ nav:
           - RecentDocs: artifacts/recentdocs.md
       - Security Products:
           - Defender Quarantine: artifacts/defender-quarantine.md
+          - Security Settings: artifacts/security-settings.md
       - Registry and Persistence:
           - Registry Hives: artifacts/registry.md
           - Windows Services: artifacts/services.md

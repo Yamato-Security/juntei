@@ -46,6 +46,7 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
 | `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
 | `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
+| `parse-registry security-settings` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT` | [Security Settings](../artifacts/security-settings.md) |
 | `parse-registry services` | `SYSTEM` | [Windows Services](../artifacts/services.md) |
 | `parse-registry shimcache` | `SYSTEM` or an exported AppCompatCache value | [ShimCache](../artifacts/shimcache.md) |
 | `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |

@@ -8,16 +8,17 @@ Usage:
   juntei parse-registry <COMMAND> [OPTIONS]
 
 Commands:
-  amcache      Parse Amcache inventories
-  help         Print this message or the help of the given subcommand(s)
-  persistence  Parse autostart locations
-  read         Read keys and values
-  recentdocs   Parse recent documents
-  sam          Parse local accounts
-  services     Parse services
-  shimcache    Parse ShimCache entries
-  taskcache    Parse scheduled tasks
-  userassist   Parse UserAssist entries
+  amcache            Parse Amcache inventories
+  help               Print this message or the help of the given subcommand(s)
+  persistence        Parse autostart locations
+  read               Read keys and values
+  recentdocs         Parse recent documents
+  sam                Parse local accounts
+  security-settings  Parse security settings: Defender, UAC, credentials, RDP, firewall, logging
+  services           Parse services
+  shimcache          Parse ShimCache entries
+  taskcache          Parse scheduled tasks
+  userassist         Parse UserAssist entries
 
 Options:
   -h, --help  Print help
@@ -207,6 +208,43 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
+## `parse-registry security-settings`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-registry security-settings <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for SOFTWARE, SYSTEM and NTUSER.DAT hives
+  -f, --file <FILE>      File path to one SOFTWARE, SYSTEM or NTUSER.DAT hive
+      --log1 <FILE>      The hive's first transaction log (.LOG1), for -f. With --log1 or --log2, only the logs given are replayed (default: <hive>.LOG, .LOG1 and .LOG2 next to it)
+      --log2 <FILE>      The hive's second transaction log (.LOG2), for -f
+      --no-logs          Read a dirty hive as it is, without its transaction logs
+
+Filtering:
+      --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
+      --weakened-only     Only settings whose value weakens what Windows does by default
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+Each setting found is a record with its value, its meaning and whether it weakens what Windows
+does by default; `--weakened-only` keeps those that do. See
+[Security Settings](../artifacts/security-settings.md).
+
 ## `parse-registry services`
 
 ```text
@@ -345,9 +383,11 @@ juntei parse-registry taskcache -f SOFTWARE --task ScheduledDefrag -t jsonl
 juntei parse-registry sam -f SAM --rid 500 -t jsonl
 juntei parse-registry persistence -d collection/ -o persistence.csv
 juntei parse-registry userassist -d collection/ -o userassist.csv
+juntei parse-registry security-settings -d collection/ --weakened-only -o weakened.csv
 ```
 
 The complete options and field semantics are on [Registry Hives](../artifacts/registry.md),
 [Windows Services](../artifacts/services.md), [RecentDocs](../artifacts/recentdocs.md),
 [Task Scheduler Cache](../artifacts/taskcache.md), [SAM Local Accounts](../artifacts/sam.md),
-[Registry Autostarts](../artifacts/persistence.md), and [UserAssist](../artifacts/userassist.md).
+[Registry Autostarts](../artifacts/persistence.md), [UserAssist](../artifacts/userassist.md), and
+[Security Settings](../artifacts/security-settings.md).

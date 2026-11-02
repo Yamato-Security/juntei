@@ -7,6 +7,7 @@ pub mod persistence;
 pub mod read;
 pub mod recentdocs;
 pub mod sam;
+pub mod security_settings;
 pub mod services;
 pub mod taskcache;
 pub mod userassist;

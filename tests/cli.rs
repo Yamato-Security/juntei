@@ -152,6 +152,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "sam",
                 "persistence",
                 "userassist",
+                "security-settings",
             ][..],
         ),
         ("parse-ese", "Parse ESE databases", &["srum"][..]),
@@ -315,7 +316,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
             "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
             "registry" => "registry",
-            "defender-quarantine" => "security_products",
+            "defender-quarantine" | "security-settings" => "security_products",
             _ => panic!("unexpected artifact: {artifact}"),
         };
         assert_eq!(task["category"], category);
@@ -620,7 +621,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["purpose"] == "json_timeline")
                     .count(),
-                20
+                21
             );
             assert!(
                 output
@@ -766,7 +767,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 40);
+    assert_eq!(tasks.len(), 42);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -5523,6 +5524,7 @@ fn registry_subcommands() {
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
     assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("security-settings "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -9486,4 +9488,387 @@ fn persistence_hunter_has_consistent_command_help() {
             .contains("juntei persistence-hunter -d <EVIDENCE>")
     );
     assert!(help.stdout.contains("--min-severity") && help.stdout.contains("--coverage"));
+}
+
+// --- parse-registry security-settings -----------------------------------------------------------
+
+/// `parse-registry security-settings`' CSV columns.
+const SECURITY_SETTINGS_COLUMNS: [&str; 20] = [
+    "Host",
+    "SourcePath",
+    "HiveType",
+    "ControlSet",
+    "IsCurrentControlSet",
+    "Username",
+    "UserSid",
+    "Area",
+    "Setting",
+    "Value",
+    "Meaning",
+    "WeakensDefault",
+    "Policy",
+    "KeyPath",
+    "ValueName",
+    "KeyLastWrittenUTC",
+    "DataRaw",
+    "TransactionLogStatus",
+    "LogsApplied",
+    "Problems",
+];
+
+/// One system (HOST1) with weakened settings in each hive: WDigest, Remote Desktop and a
+/// firewall profile in SYSTEM (and LSA protection on in its other control set); Defender's
+/// real-time protection turned off by policy, two exclusions, remote UAC off and a Bypass
+/// execution policy in SOFTWARE; and alice's NTUSER.DAT with AMSI off for scripts.
+fn security_settings_collection(root: &Path) {
+    let dword = |n: u32| n.to_le_bytes().to_vec();
+    let system = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, dword(1)),
+            (
+                r"ControlSet001\Control\ComputerName\ComputerName",
+                "ComputerName",
+                REG_SZ,
+                utf16z("HOST1"),
+            ),
+            (
+                r"ControlSet001\Control\SecurityProviders\WDigest",
+                "UseLogonCredential",
+                REG_DWORD,
+                dword(1),
+            ),
+            (
+                r"ControlSet001\Control\Terminal Server",
+                "fDenyTSConnections",
+                REG_DWORD,
+                dword(0),
+            ),
+            (
+                r"ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile",
+                "EnableFirewall",
+                REG_DWORD,
+                dword(0),
+            ),
+            (
+                r"ControlSet002\Control\Lsa",
+                "RunAsPPL",
+                REG_DWORD,
+                dword(1),
+            ),
+        ],
+    );
+    let software = reg_tree(
+        "ROOT",
+        &[
+            (
+                r"Microsoft\Windows Defender\Exclusions\Paths",
+                r"C:\Users\Public\Tools",
+                REG_DWORD,
+                dword(0),
+            ),
+            (
+                r"Microsoft\Windows Defender\Exclusions\Extensions",
+                ".ps1",
+                REG_DWORD,
+                dword(0),
+            ),
+            (
+                r"Microsoft\Windows NT\CurrentVersion\ProfileList\S-1-5-21-1-2-3-1001",
+                "ProfileImagePath",
+                REG_EXPAND_SZ,
+                utf16z(r"C:\Users\alice"),
+            ),
+            (
+                r"Microsoft\Windows\CurrentVersion\Policies\System",
+                "EnableLUA",
+                REG_DWORD,
+                dword(1),
+            ),
+            (
+                r"Microsoft\Windows\CurrentVersion\Policies\System",
+                "LocalAccountTokenFilterPolicy",
+                REG_DWORD,
+                dword(1),
+            ),
+            (
+                r"Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell",
+                "ExecutionPolicy",
+                REG_SZ,
+                utf16z("Bypass"),
+            ),
+            (
+                r"Policies\Microsoft\Windows Defender\Real-Time Protection",
+                "DisableRealtimeMonitoring",
+                REG_DWORD,
+                dword(1),
+            ),
+        ],
+    );
+    let alice = reg_tree(
+        "ROOT",
+        &[(
+            r"Software\Microsoft\Windows Script\Settings",
+            "AmsiEnable",
+            REG_DWORD,
+            dword(0),
+        )],
+    );
+    let config = root.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::create_dir_all(root.join("C/Users/alice")).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software).unwrap();
+    std::fs::write(config.join("SYSTEM"), system).unwrap();
+    std::fs::write(root.join("C/Users/alice/NTUSER.DAT"), alice).unwrap();
+}
+
+/// `parse-registry security-settings` with `args`, as JSON Lines.
+fn security_settings_read(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-registry", "security-settings"];
+    all.extend(args);
+    all.extend(["-t", "jsonl"]);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    jsonl_records(&r.stdout)
+}
+
+/// Each record as `hive area setting value weakened`.
+fn security_settings_lines(records: &[Value]) -> Vec<String> {
+    records
+        .iter()
+        .map(|r| {
+            format!(
+                "{} {} {} {} {}",
+                r["hive_type"].as_str().unwrap(),
+                r["area"].as_str().unwrap(),
+                r["setting"].as_str().unwrap(),
+                r["value"].as_str().unwrap_or("-"),
+                match r["weakens_default"].as_bool() {
+                    Some(true) => "weakened",
+                    Some(false) => "ok",
+                    None => "-",
+                }
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn registry_security_settings_of_a_collection() {
+    let dir = tempfile::tempdir().unwrap();
+    security_settings_collection(dir.path());
+    let records = security_settings_read(&["-d", dir.path().to_str().unwrap()]);
+    assert_eq!(
+        security_settings_lines(&records),
+        [
+            "NTUSER.DAT powershell wsh_amsi_enable 0 weakened",
+            "SOFTWARE defender defender_disable_realtime_monitoring 1 weakened",
+            "SOFTWARE uac uac_enable_lua 1 ok",
+            "SOFTWARE uac uac_local_account_token_filter_policy 1 weakened",
+            "SOFTWARE powershell powershell_execution_policy Bypass weakened",
+            r"SOFTWARE defender defender_exclusion_path C:\Users\Public\Tools weakened",
+            "SOFTWARE defender defender_exclusion_extension .ps1 weakened",
+            "SYSTEM credentials wdigest_use_logon_credential 1 weakened",
+            "SYSTEM remote_access rdp_deny_connections 0 weakened",
+            "SYSTEM network firewall_public_profile 0 weakened",
+        ]
+    );
+    for r in &records {
+        assert_eq!(r["host"], "HOST1");
+        assert_eq!(r["transaction_log_status"], "clean");
+        assert_eq!(r["key_last_written"], "2022-02-08T21:03:52Z");
+    }
+    // the user of NTUSER.DAT, from its folder and the system's ProfileList
+    assert_eq!(
+        (&records[0]["username"], &records[0]["user_sid"]),
+        (&json!("alice"), &json!("S-1-5-21-1-2-3-1001"))
+    );
+    assert_eq!(records[1]["username"], Value::Null);
+    // a policy, its meaning; the control set of SYSTEM's
+    assert_eq!(records[1]["policy"], true);
+    assert_eq!(
+        records[1]["key_path"],
+        r"Policies\Microsoft\Windows Defender\Real-Time Protection"
+    );
+    assert_eq!(records[1]["meaning"], "real-time protection turned off");
+    assert_eq!(records[4]["policy"], false);
+    assert_eq!(
+        records[5]["meaning"],
+        "Microsoft Defender doesn't scan files under this path"
+    );
+    assert_eq!(records[5]["value_name"], r"C:\Users\Public\Tools");
+    assert_eq!(
+        (
+            &records[7]["control_set"],
+            &records[7]["is_current_control_set"]
+        ),
+        (&json!("ControlSet001"), &json!(true))
+    );
+    assert_eq!(records[2]["control_set"], Value::Null);
+
+    // only what weakens the default; every control set
+    let weakened = security_settings_read(&[
+        "-d",
+        dir.path().to_str().unwrap(),
+        "--weakened-only",
+        "--all-control-sets",
+    ]);
+    assert_eq!(weakened.len(), 9);
+    assert!(weakened.iter().all(|r| r["weakens_default"] == true));
+    let all = security_settings_read(&["-d", dir.path().to_str().unwrap(), "--all-control-sets"]);
+    let other = all.last().unwrap();
+    assert_eq!(
+        (
+            &other["control_set"],
+            &other["is_current_control_set"],
+            &other["setting"]
+        ),
+        (
+            &json!("ControlSet002"),
+            &json!(false),
+            &json!("lsa_run_as_ppl")
+        )
+    );
+}
+
+#[test]
+fn registry_security_settings_csv_and_summary() {
+    let dir = tempfile::tempdir().unwrap();
+    security_settings_collection(dir.path());
+    let out = dir.path().join("settings.csv");
+    let r = run(&[
+        "parse-registry",
+        "security-settings",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for expected in [
+        "Hives parsed: 3 (NTUSER.DAT 1, SOFTWARE 1, SYSTEM 1)",
+        "Hosts: HOST1",
+        "Users: alice",
+        "SYSTEM control sets read: 1 (the one in use; --all-control-sets for every one)",
+        "Settings: 10 (credentials 1, defender 3, network 1, powershell 2, remote_access 1, uac 2)",
+        "Settings that weaken the default (exclusions below; not proof of compromise): 7",
+        r"HOST1  credentials  Control\SecurityProviders\WDigest\UseLogonCredential = 1: WDigest keeps cleartext passwords in LSASS memory",
+        r"HOST1  alice  powershell  Software\Microsoft\Windows Script\Settings\AmsiEnable = 0: AMSI for Windows Script Host (VBScript and JScript) turned off",
+        "Microsoft Defender exclusions: 2",
+        r"HOST1  path  C:\Users\Public\Tools",
+        "HOST1  extension  .ps1",
+        "Keys or values that could not be read: 0",
+    ] {
+        assert!(r.stdout.contains(expected), "{expected}\n{}", r.stdout);
+    }
+    let mut reader = csv::Reader::from_path(&out).unwrap();
+    let header: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(header, SECURITY_SETTINGS_COLUMNS);
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 10);
+    assert_eq!(&rows[7][2], "SYSTEM");
+    assert_eq!(&rows[7][3], "ControlSet001");
+    assert_eq!(&rows[7][4], "True");
+    assert_eq!(&rows[7][8], "wdigest_use_logon_credential");
+    assert_eq!(&rows[7][11], "True");
+    assert_eq!(&rows[2][11], "False");
+    assert_eq!(&rows[1][12], "True");
+    assert_eq!(&rows[0][5], "alice");
+}
+
+#[test]
+fn registry_security_settings_of_public_hives() {
+    // regipy's Windows 7 SYSTEM: WDigest keeping passwords, Remote Desktop without NLA, small
+    // event logs; what regipy's wdigest and disable_last_access give
+    let regipy = regipy_system();
+    let records =
+        security_settings_read(&["-d", regipy.path().to_str().unwrap(), "--weakened-only"]);
+    assert_eq!(
+        security_settings_lines(&records),
+        [
+            "SYSTEM credentials wdigest_use_logon_credential 1 weakened",
+            "SYSTEM remote_access rdp_deny_connections 0 weakened",
+            "SYSTEM remote_access rdp_network_level_authentication 0 weakened",
+            "SYSTEM evidence event_log_max_size 4194304 weakened",
+            "SYSTEM evidence event_log_max_size 4194304 weakened",
+            "SYSTEM evidence event_log_max_size 4194304 weakened",
+        ]
+    );
+    assert_eq!(
+        records[3]["meaning"],
+        "the Application log keeps up to 4 MiB, less than the default 20 MiB"
+    );
+    // the DFIR Artifact Museum's dirty Windows 11 SYSTEM with its logs: Windows' defaults
+    let w11 = system_hive();
+    let records = security_settings_read(&["-d", w11.path().to_str().unwrap()]);
+    assert_eq!(records.len(), 13);
+    assert!(records.iter().all(|r| r["weakens_default"] != true
+        && r["host"] == "GOLDPAPERW11"
+        && r["transaction_log_status"] == "unchanged"
+        && r["problems"] == json!([])));
+    let last_access = records
+        .iter()
+        .find(|r| r["setting"] == "ntfs_disable_last_access_update")
+        .unwrap();
+    assert_eq!(last_access["value"], "2147483650");
+    assert_eq!(
+        last_access["meaning"],
+        "last access times updated (system managed, the default since Windows 10 1803)"
+    );
+}
+
+#[test]
+fn registry_security_settings_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["SAM"], dir.path());
+    let sam = dir.path().join("SAM");
+    let r = run(&[
+        "parse-registry",
+        "security-settings",
+        "-f",
+        sam.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("a SAM hive, not a SOFTWARE, SYSTEM or NTUSER.DAT hive"),
+        "{said}"
+    );
+    let r = run(&[
+        "parse-registry",
+        "security-settings",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let said = format!("{}{}", r.stdout, r.stderr);
+    assert!(
+        said.contains("No SOFTWARE, SYSTEM or NTUSER.DAT hives were found"),
+        "{said}"
+    );
+    // the output is never one of the files read
+    let collection = tempfile::tempdir().unwrap();
+    security_settings_collection(collection.path());
+    let software = collection.path().join("C/Windows/System32/config/SOFTWARE");
+    let original = std::fs::read(&software).unwrap();
+    let r = run(&[
+        "parse-registry",
+        "security-settings",
+        "-f",
+        software.to_str().unwrap(),
+        "-o",
+        software.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&software).unwrap(), original);
 }
