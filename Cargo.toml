@@ -70,8 +70,9 @@ jumplist = { package = "ys-jump-lists-parser", git = "https://github.com/Yamato-
 # control set, and the findings.
 shimcache-forensic = { package = "ys-shimcache-parser", git = "https://github.com/Yamato-Security/ys-shimcache-parser" }
 # Registry hives for parse-registry: Yamato Security's ys-registry-parser (Apache-2.0): keys and
-# values, transaction log replay, deleted keys and values, registry autostart locations and UserAssist.
-registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Security/ys-registry-parser" }
+# values, transaction log replay, deleted keys and values, registry autostart locations, UserAssist
+# and application compatibility data.
+registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Security/ys-registry-parser", branch = "ys/appcompat" }
 # The order of parse-ese srum's JSON columns, and parse-ntfs mft's JSON entries (as ys-mft-parser writes them).
 serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
