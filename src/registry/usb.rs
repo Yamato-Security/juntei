@@ -264,8 +264,8 @@ struct Record<'a> {
     device_desc: Option<&'a str>,
     service: Option<&'a str>,
     container_id: Option<&'a str>,
-    first_install: Option<String>,
-    install: Option<String>,
+    device_first_install: Option<String>,
+    driver_last_installed: Option<String>,
     last_arrival: Option<String>,
     last_removal: Option<String>,
     drive_letters: Vec<String>,
@@ -300,8 +300,8 @@ const CSV_HEADER: [&str; 33] = [
     "DeviceDesc",
     "Service",
     "ContainerId",
-    "FirstInstallUTC",
-    "InstallUTC",
+    "DeviceFirstInstallUTC",
+    "DriverLastInstalledUTC",
     "LastArrivalUTC",
     "LastRemovalUTC",
     "DriveLetters",
@@ -454,8 +454,8 @@ impl<'a> Record<'a> {
             device_desc: d.and_then(|d| d.device_desc.as_deref()),
             service: d.and_then(|d| d.service.as_deref()),
             container_id: d.and_then(|d| d.container_id.as_deref()),
-            first_install: d.and_then(|d| d.first_install).and_then(filetime),
-            install: d.and_then(|d| d.install).and_then(filetime),
+            device_first_install: d.and_then(|d| d.device_first_install).and_then(filetime),
+            driver_last_installed: d.and_then(|d| d.driver_last_installed).and_then(filetime),
             last_arrival: d.and_then(|d| d.last_arrival).and_then(filetime),
             last_removal: d.and_then(|d| d.last_removal).and_then(filetime),
             drive_letters: h.drive_letters.iter().map(|l| format!("{l}:")).collect(),
@@ -494,8 +494,8 @@ impl<'a> Record<'a> {
             text(self.device_desc),
             text(self.service),
             text(self.container_id),
-            owned(&self.first_install),
-            owned(&self.install),
+            owned(&self.device_first_install),
+            owned(&self.driver_last_installed),
             owned(&self.last_arrival),
             owned(&self.last_removal),
             self.drive_letters.join("|"),
@@ -671,14 +671,14 @@ impl Stats {
         for problem in &h.problems {
             self.problem(&system.source, &where_, problem);
         }
-        // USB storage devices by their last arrival (else their install), each volume once
+        // USB storage devices by their last arrival (else their driver's last install), each volume once
         if let Some(d) = h
             .device
             .as_ref()
             .filter(|d| d.class == DeviceClass::UsbStorage)
             && let Some((when, at)) = d
                 .last_arrival
-                .or(d.install)
+                .or(d.driver_last_installed)
                 .and_then(|when| Some((when, filetime(when)?)))
         {
             let name = d

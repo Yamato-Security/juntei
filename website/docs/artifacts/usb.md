@@ -36,13 +36,16 @@ C:\Users\<user>\NTUSER.DAT
 
 | Device property | Field | Meaning (`devpkey.h`) |
 |---|---|---|
-| `0064` | `InstallUTC` | `DEVPKEY_Device_InstallDate`: when its driver was last installed |
-| `0065` | `FirstInstallUTC` | `DEVPKEY_Device_FirstInstallDate`: when it was first installed |
+| `0064` | `DriverLastInstalledUTC` | `DEVPKEY_Device_InstallDate`: when its driver was last installed |
+| `0065` | `DeviceFirstInstallUTC` | `DEVPKEY_Device_FirstInstallDate`: when the device was first installed |
 | `0066` | `LastArrivalUTC` | `DEVPKEY_Device_LastArrivalDate`: when it was last connected (Windows 8 and later) |
 | `0067` | `LastRemovalUTC` | `DEVPKEY_Device_LastRemovalDate`: when it was last removed (Windows 8 and later) |
 
 Windows 8 and later keep each time as the default value of the `0064` … `0067` key. Windows 7
 keeps it in `00000064\00000000\Data`. Juntei reads both.
+
+Many DFIR references label `0064` as the first install and `0065` as the install. Juntei follows
+Microsoft's `devpkey.h` definitions above, and names the columns after what each time records.
 
 Give `-f` or `-d` the `SYSTEM` hive. The system's `SOFTWARE` hive and its users' `NTUSER.DAT`
 hives are found next to it, as a collection keeps them (`Windows\System32\config\SOFTWARE`,
@@ -130,7 +133,7 @@ letters, and how many volumes belong to USB storage devices without a device key
 | `Vid`, `Pid` | The USB vendor and product IDs. |
 | `Serial`, `Instance` | The serial number, and the instance key's name as written. |
 | `FriendlyName`, `DeviceDesc`, `Service`, `ContainerId` | The device key's values, as written (`DeviceDesc` is often `@<inf>,%…%;<text>`). A portable device's `FriendlyName` is usually its volume's label or drive. |
-| `FirstInstallUTC`, `InstallUTC`, `LastArrivalUTC`, `LastRemovalUTC` | The device property times (see above). |
+| `DeviceFirstInstallUTC`, `DriverLastInstalledUTC`, `LastArrivalUTC`, `LastRemovalUTC` | The device property times (see above). |
 | `DriveLetters` | The drive letters whose `MountedDevices` data is the volume's. |
 | `VolumeGuid`, `VolumeData` | The volume's GUID, and what its `MountedDevices` data says it is on: a device path, an MBR disk signature and partition offset, or a GPT partition. |
 | `VolumeNames`, `VolumeSerials` | Names Explorer gave the device or its volume, ReadyBoost labels, and volume serial numbers (`1234-ABCD`). |
@@ -143,7 +146,7 @@ letters, and how many volumes belong to USB storage devices without a device key
 
 ## Investigation strategy
 
-1. Sort USB storage devices by `LastArrivalUTC` (else `InstallUTC`), and set aside the
+1. Sort USB storage devices by `LastArrivalUTC` (else `DriverLastInstalledUTC`), and set aside the
    computer's own readers and hubs.
 2. Note each device's vendor, product, serial number, volume GUID, drive letter and volume serial
    number, and look for them in LNK files, Jump Lists, ShellBags and the `$MFT` (paths on that

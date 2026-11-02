@@ -8953,8 +8953,8 @@ const USB_COLUMNS: [&str; 33] = [
     "DeviceDesc",
     "Service",
     "ContainerId",
-    "FirstInstallUTC",
-    "InstallUTC",
+    "DeviceFirstInstallUTC",
+    "DriverLastInstalledUTC",
     "LastArrivalUTC",
     "LastRemovalUTC",
     "DriveLetters",
@@ -9179,8 +9179,8 @@ fn registry_usb_of_a_collection() {
     assert_eq!(stick["control_set"], 1);
     assert_eq!(
         (
-            &stick["first_install"],
-            &stick["install"],
+            &stick["device_first_install"],
+            &stick["driver_last_installed"],
             &stick["last_arrival"],
             &stick["last_removal"]
         ),
@@ -9305,8 +9305,8 @@ fn registry_usb_of_public_hives() {
         )
     );
     // Windows 7 keeps the install times in 00000064\00000000 and 00000065\00000000
-    assert_eq!(hp["install"], "2011-04-01T04:52:38.686Z");
-    assert_eq!(hp["first_install"], "2011-04-01T04:52:38.686Z");
+    assert_eq!(hp["driver_last_installed"], "2011-04-01T04:52:38.686Z");
+    assert_eq!(hp["device_first_install"], "2011-04-01T04:52:38.686Z");
     assert_eq!(hp["drive_letters"], json!(["E:"]));
     assert_eq!(hp["volume_guid"], "{eba74da6-5bb2-11e0-95d1-000c2971073c}");
     let mounted: Vec<String> = records
