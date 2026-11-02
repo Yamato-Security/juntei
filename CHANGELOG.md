@@ -4,6 +4,8 @@
 
 **Bug Fixes:**
 
+- `parse-registry bam`: keep identical recent activity from separate hosts/users distinct, retain invalid last-run FILETIME bytes with a diagnostic, and reject incorrectly typed input hives. (@YamatoSecurity)
+
 - `persistence-hunter`: prefer domain- or host-qualified profile folders over a plain-name profile when resolving task COM handlers. Keep genuinely ambiguous mappings unresolved and explain unavailable per-user lookup in the finding as well as coverage. (@YamatoSecurity)
 
 

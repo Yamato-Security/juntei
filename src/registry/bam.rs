@@ -98,6 +98,9 @@ pub fn run(opts: &RegistryBamOptions) -> i32 {
             b.set_message(progress::message(path));
         }
         let parsed = open(path, logs).and_then(|mut opened| {
+            if !opened.hive_type.is_empty() && opened.hive_type != "SYSTEM" {
+                return Err(format!("a {} hive, not a SYSTEM hive", opened.hive_type));
+            }
             opened.host = hosts.of(path, &opened);
             let sets = ControlSets::read(&opened.hive);
             if sets.present.is_empty() {
@@ -411,7 +414,7 @@ struct Stats {
     /// Each user's SID (with its host), its name and how many entries it has.
     users: BTreeMap<(String, String), (Option<String>, usize)>,
     /// The programs run last: (last run, line), each once even when several control sets have it.
-    latest: BTreeSet<(u64, String)>,
+    latest: BTreeSet<(u64, String, String, String)>,
     problems: Vec<String>,
     problem_count: usize,
 }
@@ -448,14 +451,28 @@ impl Stats {
         };
         for set in read {
             self.control_sets += 1;
-            let Some((entries, problems)) = bam(&opened.hive, set) else {
+            let Some((mut entries, problems)) = bam(&opened.hive, set) else {
                 self.without_keys += 1;
                 continue;
             };
             for problem in &problems {
                 self.problem(&opened.source, problem);
             }
-            for entry in &entries {
+            for entry in &mut entries {
+                if let Some(when) = entry.last_run
+                    && when != 0
+                    && filetime(when).is_none()
+                {
+                    entry.problems.push(format!("last-run FILETIME {when} is outside the supported date range; original data retained"));
+                    if let Some(value) = opened
+                        .hive
+                        .key(&entry.key_path)
+                        .and_then(|k| k.value(&entry.program))
+                    {
+                        entry.data_raw = Some(value.read_data().0);
+                    }
+                    entry.last_run = None;
+                }
                 self.entry(opened, names, entry);
                 let record = Record::new(opened, set, sets.current == Some(set), names, entry);
                 match writer.as_deref_mut() {
@@ -497,8 +514,13 @@ impl Stats {
             } else {
                 ""
             };
-            self.latest
-                .insert((when, format!("{at}  {who}  {}{moderator}", entry.program)));
+            let host = opened.host.as_deref().unwrap_or(&opened.source);
+            self.latest.insert((
+                when,
+                opened.source.clone(),
+                entry.user_sid.clone(),
+                format!("{host}  {at}  {who}  {}{moderator}", entry.program),
+            ));
             // keep the most recent only
             while self.latest.len() > MAX_PRINTED {
                 self.latest.pop_first();
@@ -605,7 +627,7 @@ impl Stats {
         }
         if !self.latest.is_empty() {
             p_label(no_color, "Run last (UTC, user, program): ", "");
-            for (_, line) in self.latest.iter().rev() {
+            for (_, _, _, line) in self.latest.iter().rev() {
                 p(None, &format!("  {line}"), true);
             }
         }

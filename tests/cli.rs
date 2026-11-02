@@ -9827,3 +9827,100 @@ fn registry_bam_errors() {
     assert_eq!(r.code, 1);
     assert_eq!(std::fs::read(config.join("SAM")).unwrap(), original);
 }
+
+#[test]
+fn registry_bam_preserves_out_of_range_times_and_rejects_wrong_hive_types() {
+    let dir = tempfile::tempdir().unwrap();
+    let bytes = reg_tree(
+        "ROOT",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (
+                r"ControlSet001\Services\bam\State\UserSettings\S-1-5-18",
+                r"\Device\HarddiskVolume1\bad.exe",
+                REG_BINARY,
+                bam_data(u64::MAX),
+            ),
+        ],
+    );
+    let system = dir.path().join("SYSTEM");
+    std::fs::write(&system, &bytes).unwrap();
+    let rows = bam_read(&["-f", system.to_str().unwrap()]);
+    assert_eq!(rows.len(), 1);
+    assert!(rows[0]["last_run"].is_null());
+    assert_eq!(
+        rows[0]["data_raw"],
+        bam_data(u64::MAX)
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>()
+    );
+    assert!(
+        rows[0]["problems"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|v| v.as_str().unwrap().contains("FILETIME"))
+    );
+    let sam = dir.path().join("SAM");
+    std::fs::write(&sam, &bytes).unwrap();
+    let result = run(&[
+        "parse-registry",
+        "bam",
+        "-f",
+        sam.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(result.code, 1);
+    assert!(result.stderr.contains("not a SYSTEM hive"));
+}
+
+#[test]
+fn registry_bam_recent_summary_keeps_identical_activity_on_distinct_hosts() {
+    let dir = tempfile::tempdir().unwrap();
+    for host in ["HOST_A", "HOST_B"] {
+        let root = dir.path().join(host);
+        std::fs::create_dir(&root).unwrap();
+        let bytes = reg_tree(
+            "ROOT",
+            &[
+                ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+                (
+                    r"ControlSet001\Control\ComputerName\ComputerName",
+                    "ComputerName",
+                    REG_SZ,
+                    utf16z(host),
+                ),
+                (
+                    r"ControlSet001\Services\bam\State\UserSettings\S-1-5-18",
+                    r"\Device\HarddiskVolume1\same.exe",
+                    REG_BINARY,
+                    bam_data(LINKED),
+                ),
+            ],
+        );
+        std::fs::write(root.join("SYSTEM"), bytes).unwrap();
+    }
+    let result = run(&[
+        "parse-registry",
+        "bam",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(result.code, 0, "{}", result.stderr);
+    let recent = result
+        .stdout
+        .split("Run last (UTC, user, program):")
+        .nth(1)
+        .unwrap()
+        .split("Entries or keys")
+        .next()
+        .unwrap();
+    assert_eq!(recent.matches("same.exe").count(), 2, "{recent}");
+    assert!(
+        recent.contains("HOST_A") && recent.contains("HOST_B"),
+        "{recent}"
+    );
+}

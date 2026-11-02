@@ -114,3 +114,5 @@ The summary lists each user with its SID, name and number of entries, and the pr
 - [libyal winreg-kb: Background activity moderator (BAM)](https://github.com/libyal/winreg-kb/blob/main/docs/sources/system-keys/Background-activity-moderator.md)
 - [Microsoft: Security identifiers (well-known SIDs)](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+
+Out-of-range last-run FILETIMEs leave `LastRunUTC` empty and preserve the original value in `DataRaw`, with an explanation in `Problems`. The recent-activity summary identifies each host and keeps separate hive/user observations distinct.
