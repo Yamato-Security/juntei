@@ -42,7 +42,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "jump-lists" | "lnk" | "recentdocs" => "file_and_folder_opening",
         "amcache" | "shimcache" => "file_existence",
         "i30" | "logfile" | "mft" | "usn-journal" => "file_system",
-        "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
+        "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "persistence",
         "prefetch" | "prefetch-timeline" | "srum" | "userassist" => "process_execution",
         "registry" => "registry",
         "defender-quarantine" => "security_products",
@@ -54,6 +54,7 @@ fn artifact_category(artifact: &str) -> &'static str {
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Amcache",
+        "bcd" => "BCD",
         "defender-quarantine" => "DefenderQuarantine",
         "i30" => "I30",
         "jump-lists" => "JumpLists",
@@ -1036,6 +1037,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::File,
             &[],
         );
+        add("bcd", &["parse-registry", "bcd"], OutputShape::File, &[]);
         drop(add);
 
         let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
@@ -1132,6 +1134,9 @@ impl InputInventory {
                 }
                 if kind.as_deref() == Some("NTUSER.DAT") {
                     found.add_size("userassist", size);
+                }
+                if kind.as_deref() == Some("BCD") || name.eq_ignore_ascii_case("BCD-Template") {
+                    found.add_size("bcd", size);
                 }
                 if matches!(
                     kind.as_deref(),

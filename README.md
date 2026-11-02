@@ -74,6 +74,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Services** (`SYSTEM` hive) — Service and driver paths, startup settings, accounts, and failure actions. | Registry |
 | **Scheduled tasks** (`SOFTWARE` `TaskCache`) — Cached task names, actions, execution metadata, and indicators of hidden tasks. | Registry |
 | **Registry autostarts** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat`) — Run keys, Winlogon, Image File Execution Options, AppInit/AppCert DLLs, LSA packages, COM hijacks and other autostart locations, with their ATT&CK techniques. | Registry |
+| **Boot configuration** (`BCD`) — Boot entries and their settings: recovery turned off, failures ignored, test signing, integrity checks off and safe mode. | Registry |
 
 ### Account Usage
 
