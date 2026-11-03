@@ -2,9 +2,11 @@
   <img src="./art/Juntei_Goddess%20of%20Digital%20Forensics_small.png" alt="デジタルフォレンジックの女神 Juntei" width="65%">
 </p>
 
-# Juntei
+<h1 align="center">Juntei</h1>
 
-[English](README.md) | **日本語**
+<p align="center">
+  <a href="README.md">English</a> | <strong>日本語</strong>
+</p>
 
 Juntei は、[Yamato Security](https://github.com/Yamato-Security) が開発する Windows の
 フォレンジックアーティファクト解析ツールです。[Hayabusa](https://github.com/Yamato-Security/hayabusa)
@@ -20,6 +22,8 @@ Juntei という名前は、深い慈悲の心を持つ仏教の尊格「准胝�
 出力フィールドの解釈、フォレンジック調査で陥りやすい誤りについて解説しています。**
 
 ## 対応アーティファクト
+
+Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 38 種類に対応しており、今後も対応範囲を拡大していきます。
 
 `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` を実行すると、収集済みの複数の Windows システムを
 自動検出し、対応するすべてのアーティファクトを並列に解析します。結果はコンピュータと証拠のカテゴリ別に
