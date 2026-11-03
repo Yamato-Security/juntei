@@ -101,6 +101,7 @@ nav:
       - About Juntei: overview/index.md
       - Supported Evidence: overview/supported-evidence.md
       - Evidence and Interpretation: overview/evidence-model.md
+  - Screenshots: screenshots.md
   - Getting Started:
       - Install Juntei: getting-started/index.md
       - First Investigation: getting-started/first-investigation.md
