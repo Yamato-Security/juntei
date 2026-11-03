@@ -16,14 +16,14 @@ Click a screenshot to view it at full size.
 ## 2. Automatic parsing in under 20 seconds
 
 On a **MacBook Pro M4**, the run shown below parsed **8.7 GiB of collected Windows data**
-from **six systems** and saved **4.4 GiB of output in 19.685 seconds**—less than 20 seconds.
+from **six systems** and saved **4.4 GiB of output in less than 20 seconds**.
 The [auto-parse](commands/auto-parse.md) command ran 240 parser tasks using 16 parallel
 processes and produced 482 result files. There were **210 successful tasks, 30 skipped
 because the artifacts were not collected, and zero failures**.
 
 <figure markdown>
 
-[![Juntei auto-parse completing six systems, 8.7 GiB of input and 4.4 GiB of output in 19.685 seconds](assets/screenshots/02-AutoParse.png)](assets/screenshots/02-AutoParse.png)
+[![Juntei auto-parse completing six systems, 8.7 GiB of input and 4.4 GiB of output in less than 20 seconds](assets/screenshots/02-AutoParse.png)](assets/screenshots/02-AutoParse.png)
 
 <figcaption>Automatic host discovery, parallel parsing, and a completion summary showing the input size, output size, task results, and elapsed time.</figcaption>
 
