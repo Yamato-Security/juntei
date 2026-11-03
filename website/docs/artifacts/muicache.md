@@ -8,7 +8,7 @@ shell should show (the `FileDescription`, for example "Windows Command Processor
 (`CompanyName`). The cache is keyed by the program's full path:
 
 - **Windows 8 and later:** two values per program, `<path>.FriendlyAppName` and
-  `<path>.ApplicationCompany`.
+  `<path>.AppCompany`.
 - **Windows Vista and 7:** one value per program, `<path>`, holding the friendly name.
 - **Windows XP:** the same form, in `NTUSER.DAT`.
 
@@ -42,14 +42,14 @@ system's `SYSTEM` and `SOFTWARE` hives for the host and user names.
 
 - **Profile owner is not necessarily the process account.** A program started with another
   account can display a window in this user's session and leave metadata in this user's cache.
-  `Username` and `UserSid` identify the hive's owner, not the process security context.
+  `User` and `UserSid` identify the hive's owner, not the process security context.
 - **No time per program.** `KeyLastWrittenUTC` is the key's last write: the most recent change to
   any of its programs, not when a particular one ran. Prefetch, BAM, UserAssist and event logs give
   times.
 - **Not only programs the user started by hand.** A DLL or program the shell itself loaded (for
   `Open with`, a shell extension, an installer's child) can appear, such as `explorerframe.dll` or
   `shell32.dll`.
-- **The name comes from the file.** `FriendlyAppName` and `ApplicationCompany` are what the file's
+- **The name comes from the file.** `FriendlyAppName` and `AppCompany` are what the file's
   version resources said when it ran. Malware can claim any description and company; a renamed
   tool keeps its original description, which can reveal it (a file named `svchost.exe` whose
   friendly name is a remote access tool).
@@ -58,7 +58,7 @@ system's `SYSTEM` and `SOFTWARE` hives for the host and user names.
 - **Both forms for one path.** When a path has a friendly name in both forms (an upgraded
   profile), each gets its own record, so neither value is lost.
 - **Damaged values.** A value that isn't a string, isn't valid UTF-16 or can't be read whole keeps
-  its bytes (`FriendlyAppNameRaw`, `ApplicationCompanyRaw`) and is reported in `Problems`.
+  its bytes (`FriendlyAppNameRaw`, `AppCompanyRaw`) and is reported in `Problems`.
   Invalid UTF-16 can also produce replacement characters in the displayed text; use the raw
   column for the original bytes.
 
@@ -95,13 +95,13 @@ file system.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID (a `UsrClass.dat`'s root key names it; else the system's `ProfileList`), and the hive. |
+| `Host`, `User`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID (a `UsrClass.dat`'s root key names it; else the system's `ProfileList`), and the hive. |
 | `HiveType` | `UsrClass.dat` or `NTUSER.DAT`. |
-| `Path` | The program's path: the value's name without `.FriendlyAppName` or `.ApplicationCompany`. |
+| `Path` | The program's path: the value's name without `.FriendlyAppName` or `.AppCompany`. |
 | `FriendlyAppName` | The program's description, from `<path>.FriendlyAppName` or `<path>`. |
-| `ApplicationCompany` | The program's company, from `<path>.ApplicationCompany` (Windows 8 and later). |
+| `AppCompany` | The program's company, from `<path>.AppCompany` (Windows 8 and later). |
 | `KeyPath`, `KeyLastWrittenUTC` | The MuiCache key, and its last write: the most recent change to any of its programs. |
-| `FriendlyAppNameRaw`, `ApplicationCompanyRaw` | The value's bytes (hex), when they aren't text that decodes cleanly. |
+| `FriendlyAppNameRaw`, `AppCompanyRaw` | The value's bytes (hex), when they aren't text that decodes cleanly. |
 | `TransactionLogStatus`, `LogsApplied` | Registry recovery context: `replayed` when the logs wrote one of the program's values. |
 | `Problems` | Values that aren't strings, aren't valid UTF-16 or can't be read. |
 

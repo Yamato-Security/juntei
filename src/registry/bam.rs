@@ -315,9 +315,9 @@ struct Record<'a> {
     moderator: &'static str,
     #[serde(rename = "UserSID")]
     user_sid: &'a str,
-    #[serde(rename = "UserName")]
+    #[serde(rename = "User")]
     user_name: Option<String>,
-    #[serde(rename = "UserNameSource")]
+    #[serde(rename = "UserSource")]
     user_name_source: Option<&'static str>,
     #[serde(rename = "Program")]
     program: &'a str,

@@ -187,7 +187,7 @@ pub fn run(opts: &RegistryRecentDocsOptions) -> i32 {
 struct Record<'a> {
     #[serde(rename = "Host")]
     host: Option<&'a str>,
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: Option<&'a str>,
     #[serde(rename = "SourcePath")]
     source_path: &'a str,

@@ -277,7 +277,7 @@ struct Record<'a> {
     action_type: Option<&'static str>,
     #[serde(rename = "Executable")]
     executable: Option<&'a str>,
-    #[serde(rename = "Arguments")]
+    #[serde(rename = "Args")]
     arguments: Option<&'a str>,
     #[serde(rename = "WorkingDirectory")]
     working_directory: Option<&'a str>,

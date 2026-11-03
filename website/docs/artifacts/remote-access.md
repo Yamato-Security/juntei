@@ -104,7 +104,7 @@ newest first, and the sessions that keep a password.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList` (with the system's `SOFTWARE` hive), and the hive. |
+| `Host`, `User`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList` (with the system's `SOFTWARE` hive), and the hive. |
 | `Client` | `rdp`, `putty`, `winscp`, `mapped_drive` or `network_share`. |
 | `Kind` | Where the record comes from: `rdp_mru`, `rdp_server`, `rdp_local_devices`, `putty_session`, `putty_host_key`, `winscp_session`, `winscp_host_key`, `network_drive`, `map_network_drive_mru`, `mount_point`. |
 | `Target`, `Port` | The computer (host name or IP address) and port, or the share (`\\server\share`). A port is given only where Windows or the client wrote one. |

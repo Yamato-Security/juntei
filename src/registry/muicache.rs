@@ -273,7 +273,7 @@ struct User {
 struct Record<'a> {
     #[serde(rename = "Host")]
     host: Option<&'a str>,
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: Option<&'a str>,
     #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
@@ -285,7 +285,7 @@ struct Record<'a> {
     path: &'a str,
     #[serde(rename = "FriendlyAppName")]
     friendly_app_name: Option<&'a str>,
-    #[serde(rename = "ApplicationCompany")]
+    #[serde(rename = "AppCompany")]
     application_company: Option<&'a str>,
     #[serde(rename = "KeyPath")]
     key_path: &'a str,
@@ -293,7 +293,7 @@ struct Record<'a> {
     key_last_written: Option<String>,
     #[serde(rename = "FriendlyAppNameRaw")]
     friendly_app_name_raw: Option<String>,
-    #[serde(rename = "ApplicationCompanyRaw")]
+    #[serde(rename = "AppCompanyRaw")]
     application_company_raw: Option<String>,
     #[serde(rename = "TransactionLogStatus")]
     transaction_log_status: &'static str,

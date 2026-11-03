@@ -211,7 +211,7 @@ struct User {
 struct Record<'a> {
     #[serde(rename = "Host")]
     host: Option<&'a str>,
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: Option<&'a str>,
     #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
@@ -219,9 +219,9 @@ struct Record<'a> {
     source_path: &'a str,
     #[serde(rename = "Source")]
     source: &'a str,
-    #[serde(rename = "Application")]
+    #[serde(rename = "App")]
     application: Option<&'a str>,
-    #[serde(rename = "ApplicationPath")]
+    #[serde(rename = "AppPath")]
     application_path: Option<String>,
     #[serde(rename = "Count")]
     count: Option<u32>,

@@ -684,7 +684,7 @@ impl RecordWriter {
         Ok(match output_type {
             RegistryOutputType::Csv => {
                 let mut w = csv::Writer::from_writer(out);
-                w.write_record(header)?;
+                w.write_record(crate::output_schema::labels(header.iter().copied())?)?;
                 RecordWriter::Csv(Box::new(w))
             }
             RegistryOutputType::Json => RecordWriter::Json(out, true),

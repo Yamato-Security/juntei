@@ -429,7 +429,11 @@ impl RecordWriter {
             UsnOutputType::Csv => {
                 let mut csv = csv::Writer::from_writer(w);
                 // the header is written even when there are no records
-                let _ = csv.write_record(CSV_HEADER);
+                let _ = csv.write_record(
+                    CSV_HEADER
+                        .iter()
+                        .map(|name| crate::output_schema::field_name(name)),
+                );
                 RecordWriter::Csv(Box::new(csv))
             }
             UsnOutputType::Json => RecordWriter::Json(w),

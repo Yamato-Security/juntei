@@ -255,7 +255,7 @@ impl SystemOf {
 /// A user who had a record's volume mounted.
 #[derive(Serialize)]
 struct UserRecord<'a> {
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: &'a str,
     #[serde(rename = "MountPoints2LastWritten")]
     mount_points2_last_written: Option<String>,
@@ -312,7 +312,7 @@ struct Record<'a> {
     volume_names: &'a [String],
     #[serde(rename = "VolumeSerials")]
     volume_serials: Vec<String>,
-    #[serde(rename = "Users")]
+    #[serde(rename = "User")]
     users: Vec<UserRecord<'a>>,
     #[serde(rename = "FoundIn")]
     found_in: &'a [&'static str],

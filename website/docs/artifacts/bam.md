@@ -51,7 +51,7 @@ users.
 - **Control sets.** By default the control set Windows used last is read. `--all-control-sets`
   reads every one: an older control set can keep an entry the current one no longer has.
 - **User names.** A local account's name comes from the `SAM` (the computer's SID and the
-  account's RID); a domain account's from its profile folder in `ProfileList`. `UserNameSource`
+  account's RID); a domain account's from its profile folder in `ProfileList`. `UserSource`
   says which (`sam`, `profile_list`, `well_known`). Without them, only the SID is given. A RID
   the `SAM` no longer has (a deleted account) stays unnamed.
 
@@ -90,7 +90,7 @@ The summary lists each user with its SID, name and number of entries, and the pr
 | `Host`, `SourcePath` | Host, and the `SYSTEM` hive. |
 | `ControlSet`, `IsCurrentControlSet` | The control set the entry is in, and whether it is the one Windows used last. |
 | `Moderator` | `bam` or `dam`. |
-| `UserSID`, `UserName`, `UserNameSource` | The SID the key is named after, the user's name, and where it comes from (`sam`, `profile_list`, `well_known`). |
+| `UserSID`, `User`, `UserSource` | The SID the key is named after, the user's name, and where it comes from (`sam`, `profile_list`, `well_known`). |
 | `Program` | The value's name as Windows wrote it: a device path or a packaged app's ID. |
 | `DevicePath`, `Path` | For a device path, the device (`\Device\HarddiskVolume3`) and the path on it (`\Windows\System32\cmd.exe`); empty for a packaged app. |
 | `LastRunUTC` | When the program last ran (to the 100 ns). |

@@ -68,7 +68,8 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
             .filter(|t| t.get("Artifact").and_then(Value::as_str) == Some("srum"))
         {
             if !task
-                .get("Computer")
+                .get("Comp")
+                .or_else(|| task.get("Computer"))
                 .and_then(Value::as_str)
                 .is_some_and(|name| current.contains(name))
             {
@@ -77,10 +78,10 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
             let Some(hosts) = old.get("Hosts").and_then(Value::as_array) else {
                 continue;
             };
-            let Some(host) = hosts
-                .iter()
-                .find(|h| h.get("Computer") == task.get("Computer"))
-            else {
+            let Some(host) = hosts.iter().find(|h| {
+                crate::output_schema::field(h, "Computer")
+                    == crate::output_schema::field(task, "Computer")
+            }) else {
                 continue;
             };
             let Some(folder) = host.get("OutputDirectory").and_then(Value::as_str) else {

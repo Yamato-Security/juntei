@@ -102,7 +102,7 @@ themselves, and the WSL distributions.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath`, `HiveType` | Host, hive file, and `SOFTWARE` or `NTUSER.DAT`. |
-| `Username`, `UserSID` | A user hive's user (its profile folder and `ProfileList` SID), or the user a package is listed for. |
+| `User`, `UserSID` | A user hive's user (its profile folder and `ProfileList` SID), or the user a package is listed for. |
 | `Source`, `Scope` | The list (`uninstall`, `msi_product`, `app_path`, `wsl`, `package`), and `machine` or `user`. |
 | `Name`, `Version`, `Publisher` | `DisplayName`, `DisplayVersion`, `Publisher`; a product's `ProductName` and `Version`; an App Path's program file name; a distribution's name and WSL version; a package's name and version. |
 | `InstallDate`, `InstallDateRaw` | `InstallDate` as a date when written `YYYYMMDD`; otherwise as written. |
