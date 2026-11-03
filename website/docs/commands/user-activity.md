@@ -4,7 +4,7 @@
 the optional SOFTWARE hive enriches account and Wi-Fi names.
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -21,7 +21,7 @@ Options:
 ## `parse-ese srum`
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

@@ -1,6 +1,6 @@
 # Changes
 
-## 1.0.0 [xxxx/xx/xx]
+## 1.0.0 [xxxx/xx/xx] - CODE BLUE Release
 
 - Apply the requested abbreviated CSV and JSON/JSONL labels, including `Comp`, `Filename`, `Args`, `App`, `User`, `BytesReceived`, `HasADS`, `SI<FN` and `ZeroU-Secs`. Keep evidence values and raw registry dictionaries unchanged, accept legacy manifest host labels during safe output replacement, and update the field references and examples. Regenerate existing exports and update field-based queries. (@YamatoSecurity)
 

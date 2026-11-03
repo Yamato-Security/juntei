@@ -18,7 +18,9 @@ use clap::{ArgAction, ArgGroup, Args, Parser, Subcommand, ValueEnum};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
 
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+/// The version that the banner, every help screen and `--version` show: the version from
+/// Cargo.toml and the release name after it. Change the release name with each release.
+pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (CODE BLUE Release)");
 const AUTHOR: &str =
     "Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)";
 
@@ -26,7 +28,6 @@ const AUTHOR: &str =
 #[command(name = "juntei", next_display_order = None)]
 #[command(version = VERSION)]
 #[command(author = AUTHOR)]
-#[command(about = "Windows forensics artifact parser")]
 pub struct Cli {
     #[command(subcommand)]
     pub cmd: Commands,
