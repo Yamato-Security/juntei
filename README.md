@@ -23,6 +23,8 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
+Juntei currently supports 38 of the most popular Windows forensic artifacts and we continue to add more.
+
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
 with `<artifact>-logs.txt` files beside the results. Add a computer-labelled SIEM JSONL file with `-j <FILE>`
