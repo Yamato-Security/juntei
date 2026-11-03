@@ -195,6 +195,7 @@ fn hayabusa_string_details_and_correlations_merge_without_losing_events() {
 }
 fn manifest(root: &Path, files: &[(&str, &str)]) {
     fs::create_dir_all(root).unwrap();
+    let recorded = root.parent().unwrap().join("original").join("parsed");
     let tasks:Vec<_>=files.iter().map(|(name,artifact)|json!({"Computer":"HOST","Artifact":artifact,"Status":"succeeded","Purpose":"artifact","OutputType":"csv","OutputFiles":[recorded.join(name)]})).collect();
     fs::write(
         root.join("manifest.json"),
