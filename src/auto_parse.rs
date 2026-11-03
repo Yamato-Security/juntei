@@ -1174,7 +1174,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "recentdocs",
-            &["parse-registry", "recentdocs"],
+            &["parse-registry", "recent-docs"],
             OutputShape::File,
             &[],
         );
@@ -1219,7 +1219,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "userassist",
-            &["parse-registry", "userassist"],
+            &["parse-registry", "user-assist"],
             OutputShape::File,
             &[],
         );
@@ -1231,7 +1231,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "shellbags",
-            &["parse-registry", "shellbags"],
+            &["parse-registry", "shell-bags"],
             OutputShape::File,
             &[],
         );
@@ -1255,7 +1255,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "opensavemru",
-            &["parse-registry", "opensavemru"],
+            &["parse-registry", "open-save-mru"],
             OutputShape::File,
             &["--code-page", &code_page],
         );
@@ -1274,7 +1274,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "featureusage",
-            &["parse-registry", "featureusage"],
+            &["parse-registry", "feature-usage"],
             OutputShape::File,
             &[],
         );
@@ -1292,7 +1292,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "appcompat",
-            &["parse-registry", "appcompat"],
+            &["parse-registry", "app-compat"],
             OutputShape::File,
             &[],
         );

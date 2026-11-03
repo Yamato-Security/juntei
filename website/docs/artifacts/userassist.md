@@ -63,7 +63,7 @@ profile, and the system's `SOFTWARE` hive, which gives the user's SID.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-registry userassist <INPUT> [OPTIONS]
+Usage: juntei parse-registry user-assist <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find NTUSER.DAT hives
@@ -77,8 +77,8 @@ Output:
 ```
 
 ```bash
-juntei parse-registry userassist -d evidence/ -o userassist.csv
-juntei parse-registry userassist -f NTUSER.DAT -t jsonl \
+juntei parse-registry user-assist -d evidence/ -o userassist.csv
+juntei parse-registry user-assist -f NTUSER.DAT -t jsonl \
   | jq 'select(.Path? // "" | test("\\\\(Users|ProgramData|Temp)\\\\"; "i"))'
 ```
 

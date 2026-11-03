@@ -65,7 +65,7 @@ database's path names (usually `C:\Windows\AppPatch\Custom\`).
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-registry appcompat <INPUT> [OPTIONS]
+Usage: juntei parse-registry app-compat <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find SOFTWARE and NTUSER.DAT hives
@@ -79,8 +79,8 @@ Output:
 ```
 
 ```bash
-juntei parse-registry appcompat -d evidence/ -o appcompat.csv
-juntei parse-registry appcompat -d evidence/ -t jsonl \
+juntei parse-registry app-compat -d evidence/ -o appcompat.csv
+juntei parse-registry app-compat -d evidence/ -t jsonl \
   | jq 'select(.Source == "installed_sdb" or .Source == "custom_sdb")'
 ```
 

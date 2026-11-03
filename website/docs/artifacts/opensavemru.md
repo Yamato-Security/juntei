@@ -68,7 +68,7 @@ Collect `NTUSER.DAT` with its transaction logs for every profile.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-registry opensavemru <INPUT> [OPTIONS]
+Usage: juntei parse-registry open-save-mru <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find NTUSER.DAT hives
@@ -83,8 +83,8 @@ Output:
 ```
 
 ```bash
-juntei parse-registry opensavemru -d evidence/ -o opensavemru.csv
-juntei parse-registry opensavemru -f NTUSER.DAT -t jsonl \
+juntei parse-registry open-save-mru -d evidence/ -o opensavemru.csv
+juntei parse-registry open-save-mru -f NTUSER.DAT -t jsonl \
   | jq 'select(.List == "OpenSavePidlMRU" and .Extension != "*")'
 ```
 

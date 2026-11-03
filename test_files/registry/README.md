@@ -1,7 +1,7 @@
 # Registry test hives
 
-`NTUSER.DAT` hives for `parse-registry recentdocs`, `userassist`, `app-history` and `installed-programs`,
-`SECURITY` hives for `parse-registry auditpol` and `lsa-secrets`, `SAM` hives for `parse-registry sam`, and a `UsrClass.dat` for `parse-registry shellbags` and
+`NTUSER.DAT` hives for `parse-registry recent-docs`, `user-assist`, `app-history` and `installed-programs`,
+`SECURITY` hives for `parse-registry auditpol` and `lsa-secrets`, `SAM` hives for `parse-registry sam`, and a `UsrClass.dat` for `parse-registry shell-bags` and
 `parse-registry muicache`, and BCD stores for `parse-registry bcd`, gzipped; the tests unpack them. The `SYSTEM` hives the registry tests
 also use are in `../shimcache/`.
 

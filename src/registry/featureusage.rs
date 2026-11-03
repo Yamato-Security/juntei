@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-registry featureusage`: how users used applications in Explorer, from `NTUSER.DAT`
+//! `parse-registry feature-usage`: how users used applications in Explorer, from `NTUSER.DAT`
 //! hives, read by ys-registry-parser's `ntuser` module, with Hayabusa's input options, progress
 //! bar and results summary. One record per application, button or item of:
 //!
