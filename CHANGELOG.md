@@ -2,7 +2,9 @@
 
 ## 1.0.0 [xxxx/xx/xx] - CODE BLUE Release
 
-- Default console start times and automatic-parser run metadata to Windows event-log-style UTC (`...Z`). Add `auto-parse -Z, --timezone` for explicit signed `HH:MM` display offsets across CSV, JSON, JSONL and combined JSONL results, preserving fractional precision, raw values and unknown local clocks. Record `OutputTimeZone` in both manifests and show the selected timezone once in green directly above `Parser tasks`. (@YamatoSecurity)
+- Keep the `Timezone:` label green and its value in the default text color. Use the same human-readable size formatter for automatic-parser result totals and `Total filesize`, including GiB for larger results. (@YamatoSecurity)
+
+- Default console start times and automatic-parser run metadata to Windows event-log-style UTC (`...Z`). Add `auto-parse -Z, --timezone` for explicit signed `HH:MM` display offsets across CSV, JSON, JSONL and combined JSONL results, preserving fractional precision, raw values and unknown local clocks. Record `OutputTimeZone` in both manifests and show the selected timezone once directly above `Parser tasks`. (@YamatoSecurity)
 
 - Offset formatting includes LSA `CurrentSet`/`OldSet` and AppCompat `SdbInstalled` in native JSON and JSONL. Retain individual timestamps that exceed display limits, record a parser-log warning, and continue converting the remaining values. (@YamatoSecurity)
 

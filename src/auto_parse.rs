@@ -686,11 +686,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     } else {
         format!("UTC{}", opts.timezone)
     };
-    p(
-        JunteiColor::Green.rdg(no_color),
-        &format!("Timezone: {timezone}"),
-        true,
-    );
+    p_label(no_color, "Timezone: ", &timezone);
     p_label(no_color, "Parser tasks: ", &fmt_num(tasks.len()));
     p_label(no_color, "Parallel processes: ", &fmt_num(threads));
     p_label(
@@ -936,10 +932,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         no_color,
         "Results saved: ",
         &format!(
-            "{}/ ( {} files / {:.2} MB )",
+            "{}/ ( {} files / {} )",
             shown(&opts.output).trim_end_matches(['/', '\\']),
             fmt_num(file_count),
-            total_bytes as f64 / 1_000_000.0,
+            util::size_display(total_bytes),
         ),
     );
     if let Some(path) = combined {

@@ -670,7 +670,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "{summary}"
     );
     assert!(
-        summary.contains(" files / ") && summary.ends_with(" MB )"),
+        summary.contains(" files / ") && summary.ends_with(" MiB )"),
         "{summary}"
     );
 
