@@ -595,7 +595,6 @@ impl Stats {
     fn print(&mut self, no_color: bool) {
         self.trim_latest();
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(
             no_color,
             "UsrClass.dat and NTUSER.DAT hives parsed: ",

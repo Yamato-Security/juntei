@@ -918,7 +918,6 @@ impl Stats {
 
 fn print_summary(s: &Stats, no_color: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let mut parsed = fmt_num(s.databases);
     if s.failed > 0 {
         parsed.push_str(&format!(" (could not parse: {})", fmt_num(s.failed)));

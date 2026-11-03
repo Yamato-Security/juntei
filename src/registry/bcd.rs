@@ -574,7 +574,6 @@ impl Stats {
 
     fn print(&self, no_color: bool) {
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(no_color, "BCD hives parsed: ", &fmt_num(self.hives));
         if self.templates > 0 {
             p_label(

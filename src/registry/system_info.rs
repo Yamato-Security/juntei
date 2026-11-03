@@ -1150,7 +1150,6 @@ impl Stats {
 
     fn print(&self, no_color: bool) {
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(no_color, "Systems: ", &fmt_num(self.systems));
         let hives: Vec<String> = KINDS
             .iter()

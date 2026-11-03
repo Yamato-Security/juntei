@@ -601,7 +601,6 @@ impl Stats {
 
 fn print_summary(s: &Stats, no_color: bool, recover_slack: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let mut parsed = fmt_num(s.files_parsed);
     if s.files_failed > 0 {
         parsed.push_str(&format!(" (could not parse: {})", fmt_num(s.files_failed)));

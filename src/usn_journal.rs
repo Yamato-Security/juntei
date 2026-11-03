@@ -589,7 +589,6 @@ impl Stats {
 
 fn print_summary(s: &Stats, carve: bool, no_color: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let mut parsed = fmt_num(s.journals);
     if s.failed > 0 {
         parsed.push_str(&format!(" (could not parse: {})", fmt_num(s.failed)));

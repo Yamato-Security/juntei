@@ -1166,7 +1166,6 @@ fn print_summary(
     no_color: bool,
 ) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     p_label(no_color, "Quarantine folders: ", &fmt_num(folders.len()));
     p_label(no_color, "Quarantine entries parsed: ", &fmt_num(read));
     if failed > 0 {
