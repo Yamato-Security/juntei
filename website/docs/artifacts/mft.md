@@ -111,8 +111,8 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `Size` | Logical size associated with the row/stream. Sparse/compressed allocation can differ. |
 | `ReferenceCount` | NTFS hard-link reference count; compare with the number of surviving names cautiously. |
 | `ReparseTarget` | Decoded target for supported reparse points such as junctions/symlinks. Paths may redirect. |
-| `Dir?` | Record has the directory flag. |
-| `ADS?` | Record contains named alternate data streams. This does not make it malicious. |
+| `Dir` | Record has the directory flag. |
+| `ADS` | Record contains named alternate data streams. This does not make it malicious. |
 | `IsADS` | This row represents a named alternate data stream rather than the unnamed file data. |
 | `SI-BeforeFN` | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
 | `MicrosecondZeros` | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |

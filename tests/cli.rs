@@ -1476,7 +1476,7 @@ fn mft_csv_json_and_jsonl() {
     let ads = row("8", "$BadClus:$Bad");
     assert_eq!(ads["IsADS"], "True");
     assert_eq!(ads["Size"], "1261821952");
-    assert_eq!(row("8", "$BadClus")["ADS?"], "True");
+    assert_eq!(row("8", "$BadClus")["ADS"], "True");
 
     // The ys-ntfs-parser command's columns: one row per entry (`ys-mft-parser-csv`, the command's
     // former name, and `mft-dump-csv`, upstream's, still work)
