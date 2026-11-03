@@ -198,7 +198,7 @@ struct Record {
     volume_serial_number: String,
     #[serde(rename = "VolumeSerialNumber64")]
     volume_serial_number_64: String,
-    #[serde(rename = "OemId")]
+    #[serde(rename = "OEM-ID")]
     oem_id: String,
     #[serde(rename = "BytesPerSector")]
     bytes_per_sector: u16,
@@ -212,13 +212,13 @@ struct Record {
     volume_size: Option<u64>,
     #[serde(rename = "HiddenSectors")]
     hidden_sectors: u32,
-    #[serde(rename = "MftCluster")]
+    #[serde(rename = "MFT-Cluster")]
     mft_cluster: u64,
-    #[serde(rename = "MftOffset")]
+    #[serde(rename = "MFT-Offset")]
     mft_offset: Option<u64>,
-    #[serde(rename = "MftMirrorCluster")]
+    #[serde(rename = "MFT-MirrorCluster")]
     mft_mirror_cluster: u64,
-    #[serde(rename = "MftMirrorOffset")]
+    #[serde(rename = "MFT-MirrorOffset")]
     mft_mirror_offset: Option<u64>,
     #[serde(rename = "FileRecordSize")]
     file_record_size: Option<u64>,
@@ -240,17 +240,17 @@ const CSV_HEADER: [&str; 21] = [
     "SourcePath",
     "VolumeSerialNumber",
     "VolumeSerialNumber64",
-    "OemId",
+    "OEM-ID",
     "BytesPerSector",
     "SectorsPerCluster",
     "ClusterSize",
     "TotalSectors",
     "VolumeSize",
     "HiddenSectors",
-    "MftCluster",
-    "MftOffset",
-    "MftMirrorCluster",
-    "MftMirrorOffset",
+    "MFT-Cluster",
+    "MFT-Offset",
+    "MFT-MirrorCluster",
+    "MFT-MirrorOffset",
     "FileRecordSize",
     "IndexRecordSize",
     "MediaDescriptor",

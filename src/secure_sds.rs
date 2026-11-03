@@ -115,7 +115,11 @@ pub fn run(opts: &SecureSdsOptions) -> i32 {
         }
         stats.streams += 1;
         for problem in &stream.problems {
-            stats.stream_problem(format!("{source}: {problem}"));
+            let message = format!("{source}: {problem}");
+            if data_on_stdout && stats.stream_problems.len() < MAX_PRINTED_ERRORS {
+                report_error(&message);
+            }
+            stats.stream_problem(message);
         }
         for entry in &stream.entries {
             let record = Record::new(&source, entry);
@@ -130,6 +134,12 @@ pub fn run(opts: &SecureSdsOptions) -> i32 {
                 return 1;
             }
         }
+    }
+    if data_on_stdout && stats.stream_problems.len() > MAX_PRINTED_ERRORS {
+        report_error(&format!(
+            "{} more stream problems; inspect the input stream for full recovery context",
+            fmt_num(stats.stream_problems.len() - MAX_PRINTED_ERRORS)
+        ));
     }
     if stats.failed > MAX_PRINTED_ERRORS {
         report_error(&format!(
@@ -221,13 +231,13 @@ struct Record {
     group_name: Option<String>,
     #[serde(rename = "Control")]
     control: String,
-    #[serde(rename = "DaclAceCount")]
+    #[serde(rename = "DACL-ACE-Count")]
     dacl_ace_count: Option<usize>,
-    #[serde(rename = "Dacl")]
+    #[serde(rename = "DACL")]
     dacl: Option<String>,
-    #[serde(rename = "SaclAceCount")]
+    #[serde(rename = "SACL-ACE-Count")]
     sacl_ace_count: Option<usize>,
-    #[serde(rename = "Sacl")]
+    #[serde(rename = "SACL")]
     sacl: Option<String>,
     #[serde(rename = "SDDL")]
     sddl: Option<String>,
@@ -250,10 +260,10 @@ const CSV_HEADER: [&str; 17] = [
     "Group",
     "GroupName",
     "Control",
-    "DaclAceCount",
-    "Dacl",
-    "SaclAceCount",
-    "Sacl",
+    "DACL-ACE-Count",
+    "DACL",
+    "SACL-ACE-Count",
+    "SACL",
     "SDDL",
     "Problems",
 ];

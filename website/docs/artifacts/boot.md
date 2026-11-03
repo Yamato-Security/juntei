@@ -40,14 +40,13 @@ as input. A disk image starts with the partition table instead; give Juntei the 
 - The boot code is the same on volumes formatted by the same Windows: it is identical on the
   Windows 10, 11 and Server 2012 R2 `$Boot` files of the DFIR Artifact Museum. A volume boot record
   bootkit changes it, or the hidden sectors field, which the boot code uses to find the rest of
-  `$Boot`. Compare `BootCodeSHA256` and `HiddenSectors` with other hosts and with the partition
+  `$Boot`. Compare `BootCodeSHA256`, `JumpInstruction` and `HiddenSectors` with other hosts and with the partition
   table before concluding anything: a boot manager or encryption software can also change the boot
   code.
 - An image of a BitLocker-encrypted volume starts with BitLocker's own boot sector (OEM ID
   `-FVE-FS-`). Given with `-f`, Juntei reports it, and `Problems` says it is not NTFS; the NTFS boot
   sector is in the encrypted data. A `$Boot` collected from the unlocked volume is the NTFS one.
-- `Problems` lists what Windows would not mount. Use them to judge carved sectors and copies, not as
-  findings by themselves.
+- `Problems` lists recognized structural inconsistencies and truncation, rather than providing a complete Windows mountability test. Use it to assess carved sectors and copies, not as an attack finding by itself. The boot-code hash excludes the initial jump, BIOS parameter block and end signature; inspect those fields too.
 
 ## Parse with Juntei
 
@@ -80,12 +79,12 @@ groups them by boot code hash, so that a volume whose boot code differs from the
 | `SourcePath` | Input file. |
 | `VolumeSerialNumber` | The 32-bit serial number, as LNK, Jump List and Prefetch output show it (`180B1E67`). Windows shows it as `180B-1E67`. |
 | `VolumeSerialNumber64` | The whole 64-bit serial number. |
-| `OemId` | `NTFS` on an NTFS volume. |
+| `OEM-ID` | `NTFS` on an NTFS volume. |
 | `BytesPerSector`, `SectorsPerCluster`, `ClusterSize` | The volume's geometry. Sectors per cluster over 128 are recorded as a power of two, decoded here. Empty when not valid. |
 | `TotalSectors`, `VolumeSize` | Sectors in the volume and their size in bytes, without the copy of the boot sector at its end. |
 | `HiddenSectors` | Sectors on the disk before the volume: where its partition starts. |
-| `MftCluster`, `MftOffset` | Where the `$MFT` starts, in clusters and in bytes from the start of the volume. |
-| `MftMirrorCluster`, `MftMirrorOffset` | Where the `$MFTMirr` starts. |
+| `MFT-Cluster`, `MFT-Offset` | Where the `$MFT` starts, in clusters and in bytes from the start of the volume. |
+| `MFT-MirrorCluster`, `MFT-MirrorOffset` | Where the `$MFTMirr` starts. |
 | `FileRecordSize`, `IndexRecordSize` | Bytes per FILE record (usually 1,024) and per INDX record (usually 4,096). |
 | `MediaDescriptor` | `F8` for a hard disk. |
 | `JumpInstruction` | The first three bytes (`EB 52 90`): a jump over the BIOS parameter block to the boot code. |
@@ -105,7 +104,7 @@ JSON/JSONL have the same fields and names, with numbers as numbers, `null` for u
    serial numbers of mounted removable volumes.
 3. Compare `BootCodeSHA256` and `HiddenSectors` across hosts. Investigate a differing boot code
    with a disassembler and the disk's partition table, and look for boot-related event log entries.
-4. Use `MftOffset` and `ClusterSize` to find the `$MFT` in a volume image.
+4. Use `MFT-Offset` and `ClusterSize` to find the `$MFT` in a volume image.
 
 ## Further Details
 

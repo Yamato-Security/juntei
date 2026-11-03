@@ -141,17 +141,17 @@ fn boot_summary_and_fields() {
     for (field, value) in [
         ("VolumeSerialNumber", "180B1E67"),
         ("VolumeSerialNumber64", "EA180B53180B1E67"),
-        ("OemId", "NTFS"),
+        ("OEM-ID", "NTFS"),
         ("BytesPerSector", "512"),
         ("SectorsPerCluster", "8"),
         ("ClusterSize", "4096"),
         ("TotalSectors", "124370943"),
         ("VolumeSize", "63677922816"),
         ("HiddenSectors", "239616"),
-        ("MftCluster", "786432"),
-        ("MftOffset", "3221225472"),
-        ("MftMirrorCluster", "2"),
-        ("MftMirrorOffset", "8192"),
+        ("MFT-Cluster", "786432"),
+        ("MFT-Offset", "3221225472"),
+        ("MFT-MirrorCluster", "2"),
+        ("MFT-MirrorOffset", "8192"),
         ("FileRecordSize", "1024"),
         ("IndexRecordSize", "4096"),
         ("MediaDescriptor", "F8"),
@@ -324,10 +324,10 @@ fn secure_sds_summary_and_fields() {
             "Group",
             "GroupName",
             "Control",
-            "DaclAceCount",
-            "Dacl",
-            "SaclAceCount",
-            "Sacl",
+            "DACL-ACE-Count",
+            "DACL",
+            "SACL-ACE-Count",
+            "SACL",
             "SDDL",
             "Problems"
         ]
@@ -350,13 +350,13 @@ fn secure_sds_summary_and_fields() {
         ("Group", "S-1-5-32-544"),
         ("GroupName", "BUILTIN\\Administrators"),
         ("Control", "SE_DACL_PRESENT|SE_SELF_RELATIVE"),
-        ("DaclAceCount", "2"),
+        ("DACL-ACE-Count", "2"),
         (
-            "Dacl",
+            "DACL",
             "NT AUTHORITY\\SYSTEM:(R); BUILTIN\\Administrators:(R)",
         ),
-        ("SaclAceCount", ""),
-        ("Sacl", ""),
+        ("SACL-ACE-Count", ""),
+        ("SACL", ""),
         (
             "SDDL",
             "O:S-1-5-18G:S-1-5-32-544D:(A;;0x00120089;;;S-1-5-18)(A;;0x00120089;;;S-1-5-32-544)",
@@ -367,27 +367,27 @@ fn secure_sds_summary_and_fields() {
     // a mandatory label, inherited-only ACEs and generic rights
     let labelled = by_id["264"];
     assert_eq!(
-        labelled["Dacl"],
+        labelled["DACL"],
         "BUILTIN\\Administrators:(OI)(CI)(F); NT AUTHORITY\\SYSTEM:(OI)(CI)(F); \
          BUILTIN\\Users:(OI)(CI)(RX); NT AUTHORITY\\Authenticated Users:(OI)(CI)(IO)(DE,GE,GW,GR); \
          NT AUTHORITY\\Authenticated Users:(AD)"
     );
     assert_eq!(
-        labelled["Sacl"],
+        labelled["SACL"],
         "Mandatory Label\\High Mandatory Level:(OI)(IO)(NP)(NW)"
     );
     // an app container condition, a trust label and a resource attribute claim
     let callback = rows
         .iter()
-        .find(|r| r["Dacl"].contains("Microsoft.549981C3F5F10_8wekyb3d8bbwe"))
+        .find(|r| r["DACL"].contains("Microsoft.549981C3F5F10_8wekyb3d8bbwe"))
         .unwrap();
     assert!(
-        callback["Dacl"].contains(
+        callback["DACL"].contains(
             "BUILTIN\\Users:(ACCESS_ALLOWED_CALLBACK)(OI)(CI)(RX) \
              if (WIN://SYSAPPID Contains \"Microsoft.549981C3F5F10_8wekyb3d8bbwe\")"
         ),
         "{}",
-        callback["Dacl"]
+        callback["DACL"]
     );
     assert!(
         callback["SDDL"].contains(
@@ -399,12 +399,12 @@ fn secure_sds_summary_and_fields() {
     );
     let claim = by_id["1695"];
     assert_eq!(
-        claim["Sacl"],
+        claim["SACL"],
         "Everyone:(SYSTEM_RESOURCE_ATTRIBUTE)(OI)(CI)(IO)(0x00000000) (\"IMAGELOAD\",TU,0x0,1)"
     );
     assert!(
         rows.iter()
-            .any(|r| r["Sacl"].contains("S-1-19-512-4096:(SYSTEM_PROCESS_TRUST_LABEL)"))
+            .any(|r| r["SACL"].contains("S-1-19-512-4096:(SYSTEM_PROCESS_TRUST_LABEL)"))
     );
 }
 
@@ -468,7 +468,7 @@ fn secure_sds_in_a_collection_and_damage() {
         damaged[1]["Problems"],
         serde_json::json!(["the recorded hash is not the descriptor's"])
     );
-    assert_eq!(damaged[1]["Sacl"], Value::Null);
+    assert_eq!(damaged[1]["SACL"], Value::Null);
 
     // nothing to read
     let empty = tempfile::tempdir().unwrap();
@@ -543,4 +543,133 @@ fn auto_parse_reads_boot_and_sds() {
         assert_eq!(task["Status"], "succeeded", "{task}");
         assert_eq!(task["Category"], "FileSystem", "{task}");
     }
+}
+
+#[test]
+fn sds_stream_recovery_warnings_survive_structured_stdout() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("$Secure_$SDS");
+    let mut bytes = sds_bytes();
+    bytes[8] ^= 0xff;
+    std::fs::write(&path, bytes).unwrap();
+    for format in ["csv", "json", "jsonl"] {
+        let result = run(&[
+            "parse-ntfs",
+            "secure-sds",
+            "-f",
+            path.to_str().unwrap(),
+            "-t",
+            format,
+            "-q",
+            "-K",
+        ]);
+        assert_eq!(result.code, 0, "{}", result.stderr);
+        assert!(
+            result
+                .stderr
+                .contains("the entry is damaged; its mirror copy"),
+            "{}",
+            result.stderr
+        );
+        if format == "csv" {
+            assert_eq!(csv_rows(&result.stdout).1.len(), 1716);
+        } else {
+            assert_eq!(
+                serde_json::Deserializer::from_str(&result.stdout)
+                    .into_iter::<Value>()
+                    .map(Result::unwrap)
+                    .count(),
+                1716
+            );
+        }
+    }
+}
+
+#[test]
+fn metadata_commands_preserve_evidence_when_output_is_an_input_alias() {
+    for (command, bytes) in [
+        ("boot", std::fs::read(repo("test_files/boot/Boot")).unwrap()),
+        ("secure-sds", sds_bytes()),
+    ] {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source.bin");
+        let alias = dir.path().join("alias.bin");
+        std::fs::write(&source, &bytes).unwrap();
+        std::fs::hard_link(&source, &alias).unwrap();
+        let result = run(&[
+            "parse-ntfs",
+            command,
+            "-f",
+            source.to_str().unwrap(),
+            "-o",
+            alias.to_str().unwrap(),
+            "-C",
+            "-t",
+            "jsonl",
+            "-q",
+            "-K",
+        ]);
+        assert_ne!(result.code, 0);
+        assert_eq!(std::fs::read(&source).unwrap(), bytes);
+    }
+}
+
+#[test]
+fn new_ntfs_columns_preserve_uppercase_acronyms() {
+    let boot = repo("test_files/boot/Boot");
+    let result = run(&[
+        "parse-ntfs",
+        "boot",
+        "-f",
+        boot.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    let docs = json_lines(&result.stdout);
+    assert!(docs[0].get("OEM-ID").is_some());
+    assert!(docs[0].get("MFT-Cluster").is_some());
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("$Secure_$SDS");
+    std::fs::write(&path, sds_bytes()).unwrap();
+    let result = run(&[
+        "parse-ntfs",
+        "secure-sds",
+        "-f",
+        path.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    let docs = json_lines(&result.stdout);
+    assert_eq!(docs[0]["DACL-ACE-Count"], 2);
+    assert!(docs[0].get("DACL").is_some());
+    assert!(docs[0].get("SACL").is_some());
+}
+
+#[test]
+fn auto_parse_discovers_renamed_ntfs_metadata_by_content() {
+    let evidence = tempfile::tempdir().unwrap();
+    let volume = evidence.path().join("HOST1/C");
+    std::fs::create_dir_all(volume.join("Windows/System32")).unwrap();
+    std::fs::copy(
+        repo("test_files/boot/Boot"),
+        volume.join("volume-image.bin"),
+    )
+    .unwrap();
+    std::fs::write(volume.join("descriptors.bin"), sds_bytes()).unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let destination = output.path().join("parsed");
+    let result = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        destination.to_str().unwrap(),
+        "-T",
+        "2",
+        "-q",
+        "-K",
+    ]);
+    assert_eq!(result.code, 0, "{} {}", result.stdout, result.stderr);
+    assert!(destination.join("HOST1/FileSystem/Boot.csv").is_file());
+    assert!(destination.join("HOST1/FileSystem/SecureSDS.csv").is_file());
 }

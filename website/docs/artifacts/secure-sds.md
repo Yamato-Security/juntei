@@ -39,8 +39,7 @@ cannot be in a file name. Collect the same volume's `$MFT` with it.
   artifacts say who did. The SACL's audit entries describe configuration, not what was logged.
 - ACEs are listed in their order in the ACL. Juntei does not calculate effective access: deny
   entries, inheritance, group membership, privileges, and the owner's implicit rights all count.
-- `Dacl` and `Sacl` write each ACE as `icacls` does. `SDDL` is the exact descriptor, every mask in
-  hexadecimal and every account as a SID.
+- `DACL` and `SACL` write each ACE as `icacls` does. `SDDL` represents the supported permissions, with masks in hexadecimal and accounts as SIDs. It is not a byte-for-byte copy of the binary descriptor; unrepresentable conditional text leaves it empty and is diagnosed.
 
 ## Parse with Juntei
 
@@ -78,12 +77,12 @@ the descriptors with a NULL DACL (no restriction at all), and any damage.
 | `Owner`, `OwnerName` | The owner's SID, and its name if well known. |
 | `Group`, `GroupName` | The primary group's SID, and its name if well known. Windows does not use it for access checks. |
 | `Control` | The descriptor's control flags: `SE_DACL_PRESENT`, `SE_DACL_PROTECTED` (inheritance blocked), `SE_DACL_AUTO_INHERITED`, … joined by `|`. |
-| `DaclAceCount`, `Dacl` | The DACL's entries, separated by `; `. Empty if there is no DACL; `NULL DACL: no restriction` if the descriptor grants everyone everything. |
-| `SaclAceCount`, `Sacl` | The SACL's entries: audit entries, the mandatory integrity label, process trust labels, and resource attributes. |
+| `DACL-ACE-Count`, `DACL` | The DACL's entries, separated by `; `. Empty if there is no DACL; `NULL DACL: no restriction` if the descriptor grants everyone everything. |
+| `SACL-ACE-Count`, `SACL` | The SACL's entries: audit entries, the mandatory integrity label, process trust labels, and resource attributes. |
 | `SDDL` | The whole descriptor in SDDL. Empty only if something in it is not decoded. |
 | `Problems` | A hash that is not the descriptor's, parts that cannot be decoded, ACEs whose type is not known. |
 
-Each entry of `Dacl` and `Sacl` is written as `icacls` writes it: the account, the type if it is
+Each entry of `DACL` and `SACL` is written as `icacls` writes it: the account, the type if it is
 not an allow entry, the inheritance flags, and the rights.
 
 | Part | Meaning |
@@ -125,3 +124,5 @@ JSON/JSONL have the same fields and names, with numbers as numbers, `null` for e
 - [Microsoft: icacls](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/icacls)
 - [libfsntfs: NTFS format documentation](https://github.com/libyal/libfsntfs/blob/main/documentation/New%20Technologies%20File%20System%20(NTFS).asciidoc) (`$Secure`)
 - [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (its `secure` crate)
+
+With structured output on stdout (`-t` without `-o`), stream-level recovery warnings go to stderr, so pipes retain readable CSV/JSON/JSONL without concealing damaged or recovered regions.
