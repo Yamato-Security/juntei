@@ -289,7 +289,9 @@ the results or Juntei are on the analysis system:
   (`./HOST1/ProcessExecution/Prefetch.csv`, `../siem.jsonl` for a timeline beside it). `Command`
   starts with the program's name (`juntei`); its evidence paths are relative to the evidence
   directory and its output paths to the output directory.
-- `EvidenceDirectory` and `OutputDirectory` are the two directories' names.
+- `EvidenceDirectory` and `OutputDirectory` are the two directories' names. `ManifestVersion` 2
+  marks manifests that record result paths from the output directory; earlier manifests have no
+  `ManifestVersion` and record them as given to `-o`. A `-C` rerun reads both.
 - The terminal shows an output or timeline path as given when it is relative, and from the
   current directory when it is absolute (`../results/`).
 

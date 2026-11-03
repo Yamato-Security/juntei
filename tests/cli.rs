@@ -1109,6 +1109,139 @@ fn auto_parse_refuses_an_output_parent_of_the_evidence() {
     assert!(!container.path().join("manifest.json").exists());
 }
 
+/// `-o evidence/link/../results` names, through the file system, the directory beside the link's
+/// target, which the containment check approves. The parsers must write there, not to
+/// `evidence/results`, which removing `link/..` from the text would name.
+#[cfg(unix)]
+#[test]
+fn auto_parse_writes_where_a_symbolic_link_in_the_output_path_resolves() {
+    let root = tempfile::tempdir().unwrap();
+    let prefetch = root.path().join("evidence/HOST/C/Windows/Prefetch");
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-087B4001.pf"),
+        prefetch.join("CMD.EXE-087B4001.pf"),
+    )
+    .unwrap();
+    let outside = root.path().join("outside");
+    std::fs::create_dir_all(outside.join("child")).unwrap();
+    std::os::unix::fs::symlink(outside.join("child"), root.path().join("evidence/link")).unwrap();
+    let sentinel = root
+        .path()
+        .join("evidence/results/HOST/ProcessExecution/Prefetch.csv");
+    std::fs::create_dir_all(sentinel.parent().unwrap()).unwrap();
+    std::fs::write(&sentinel, "sentinel\n").unwrap();
+    let r = run_at(
+        root.path(),
+        &[
+            "auto-parse",
+            "-d",
+            "evidence",
+            "-o",
+            "evidence/link/../results",
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ],
+    );
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert_eq!(std::fs::read_to_string(&sentinel).unwrap(), "sentinel\n");
+    let (_, rows) = csv_rows(&outside.join("results/HOST/ProcessExecution/Prefetch.csv"));
+    assert_eq!(rows.len(), 1);
+    assert_no_absolute_paths(&outside.join("results"), &r.stdout, &[root.path()]);
+}
+
+/// A `-C` rerun removes the table files an earlier run recorded, from a manifest of this version
+/// (`ManifestVersion` 2, paths from the output directory) or of an earlier one (no version,
+/// paths as given to `-o`, which can also start with `./`).
+#[test]
+fn auto_parse_clobber_reruns_read_current_and_earlier_manifest_paths() {
+    let root = tempfile::tempdir().unwrap();
+    let programs = root
+        .path()
+        .join("evidence/HOST/C/Windows/AppCompat/Programs");
+    std::fs::create_dir_all(&programs).unwrap();
+    std::fs::copy(repo(WIN10), programs.join("Amcache.hve")).unwrap();
+    let args = [
+        "auto-parse",
+        "-d",
+        "./evidence",
+        "-o",
+        "./results",
+        "-C",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ];
+    let results = root.path().join("results");
+    let r = run_at(root.path(), &args);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    for earlier in [false, true] {
+        let manifest_path = results.join("manifest.json");
+        let mut manifest: Value =
+            serde_json::from_slice(&std::fs::read(&manifest_path).unwrap()).unwrap();
+        assert_eq!(manifest["ManifestVersion"], 2);
+        // As earlier versions recorded the paths: as given to `-o` (`./results/HOST/...`)
+        let recorded = |path: &str| -> String {
+            if earlier {
+                let path = Path::new(path).strip_prefix(".").unwrap();
+                Path::new(".")
+                    .join("results")
+                    .join(path)
+                    .to_string_lossy()
+                    .into_owned()
+            } else {
+                path.to_string()
+            }
+        };
+        if earlier {
+            manifest.as_object_mut().unwrap().remove("ManifestVersion");
+        }
+        let stale_name = Path::new(".")
+            .join("HOST")
+            .join("FileExistence")
+            .join("Registry-Amcache-Stale.csv");
+        for task in manifest["Tasks"].as_array_mut().unwrap() {
+            for field in ["Output", "Log"] {
+                if let Some(path) = task[field].as_str() {
+                    task[field] = Value::from(recorded(path));
+                }
+            }
+            let files: Vec<Value> = task["OutputFiles"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|path| Value::from(recorded(path.as_str().unwrap())))
+                .collect();
+            task["OutputFiles"] = Value::from(files);
+            if task["Artifact"] == "amcache" && task["Purpose"] == "artifact" {
+                task["OutputFiles"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(Value::from(recorded(&stale_name.to_string_lossy())));
+            }
+        }
+        std::fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+        let stale = results.join(&stale_name);
+        std::fs::write(&stale, "stale\n").unwrap();
+
+        let r = run_at(root.path(), &args);
+        assert_eq!(
+            r.code, 0,
+            "earlier: {earlier}\nstdout:\n{}\nstderr:\n{}",
+            r.stdout, r.stderr
+        );
+        assert!(!stale.exists(), "earlier: {earlier}");
+        assert!(
+            results
+                .join("HOST/FileExistence/Registry-Amcache-Files.csv")
+                .is_file()
+        );
+    }
+}
+
 #[test]
 fn auto_parse_can_extract_defender_quarantined_files() {
     let evidence = auto_triage();

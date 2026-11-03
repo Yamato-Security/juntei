@@ -128,6 +128,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
         Err(error) => return Err(error),
     };
+    let from_output = super::paths_from_output(&old);
     let Some(previous) = old.get("Tasks").and_then(Value::as_array) else {
         return Ok(());
     };
@@ -178,7 +179,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                     for path in files
                         .iter()
                         .filter_map(Value::as_str)
-                        .map(|path| super::recorded_path(root, path))
+                        .map(|path| super::recorded_path(root, path, from_output))
                     {
                         if !flat_table_path(&host, &path, task.artifact) {
                             return Err(io::Error::other(
@@ -191,7 +192,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                 if let Some(path) = previous
                     .get("Output")
                     .and_then(Value::as_str)
-                    .map(|path| super::recorded_path(root, path))
+                    .map(|path| super::recorded_path(root, path, from_output))
                 {
                     for name in [old_stem, stem] {
                         if matches!(task.artifact, "amcache" | "jump-lists")
@@ -210,7 +211,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
             if let Some(path) = previous
                 .get("Log")
                 .and_then(Value::as_str)
-                .map(|path| super::recorded_path(root, path))
+                .map(|path| super::recorded_path(root, path, from_output))
             {
                 for name in [old_stem, stem] {
                     for suffix in ["-logs.txt", "-json-timeline-logs.txt"] {

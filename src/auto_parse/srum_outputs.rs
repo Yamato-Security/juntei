@@ -62,6 +62,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
         Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(()),
         Err(e) => return Err(e),
     };
+    let from_output = super::paths_from_output(&old);
     if let Some(tasks) = old.get("Tasks").and_then(Value::as_array) {
         for task in tasks
             .iter()
@@ -100,7 +101,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                 for file in files
                     .iter()
                     .filter_map(Value::as_str)
-                    .map(|path| super::recorded_path(root, path))
+                    .map(|path| super::recorded_path(root, path, from_output))
                 {
                     if !valid_path(&host_root, &file) {
                         return Err(io::Error::other(
@@ -116,7 +117,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                 if task
                     .get("Log")
                     .and_then(Value::as_str)
-                    .is_some_and(|s| super::recorded_path(root, s) == log)
+                    .is_some_and(|s| super::recorded_path(root, s, from_output) == log)
                 {
                     ensure_category(&host_root, &host_root.join(category))?;
                     remove_generated_path(&log, root)?;
@@ -128,7 +129,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                 if task
                     .get("Output")
                     .and_then(Value::as_str)
-                    .is_some_and(|s| super::recorded_path(root, s) == legacy)
+                    .is_some_and(|s| super::recorded_path(root, s, from_output) == legacy)
                 {
                     ensure_category(&host_root, &host_root.join(category))?;
                     remove_generated_path(&legacy, root)?;

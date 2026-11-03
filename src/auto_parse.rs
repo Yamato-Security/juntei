@@ -132,13 +132,17 @@ fn artifact_filename(artifact: &str) -> &'static str {
 // evidence directory and are given paths relative to it (`./HOST/C`); the manifests and logs give
 // the results' paths relative to the output directory (`./HOST/FileSystem/MFT.csv`).
 
-/// `path` relative to `base`, both made absolute in the current directory: `HOST/C`, `.` for
-/// `base` itself, `../other` outside it, and only the name when they share no root (two Windows
-/// drives).
+/// `path` relative to `base`, both resolved through the file system as the containment checks
+/// resolve them (a symbolic link's `..` is beside its target): `HOST/C`, `.` for `base` itself,
+/// `../other` outside it, and only the name when they share no root (two Windows drives).
 fn relative_path(base: &Path, path: &Path) -> PathBuf {
-    let absolute = |p: &Path| std::path::absolute(p).unwrap_or_else(|_| p.to_path_buf());
-    let base = normalize_absolute(&absolute(base));
-    let path = normalize_absolute(&absolute(path));
+    let resolve = |p: &Path| {
+        absolute_candidate(p).unwrap_or_else(|_| {
+            normalize_absolute(&std::path::absolute(p).unwrap_or_else(|_| p.to_path_buf()))
+        })
+    };
+    let base = resolve(base);
+    let path = resolve(path);
     let base_parts: Vec<_> = base.components().collect();
     let path_parts: Vec<_> = path.components().collect();
     let common = base_parts
@@ -172,14 +176,27 @@ fn dot_relative(base: &Path, path: &Path) -> PathBuf {
     }
 }
 
-/// A path from an earlier run's manifest in the output directory `root`: from `root` when it
-/// starts with `.` (`./HOST1/...`), as the manifests now write them, else as an earlier version
-/// wrote it (as given to `-o`).
-fn recorded_path(root: &Path, recorded: &str) -> PathBuf {
+/// The `ManifestVersion` of manifests whose result paths are relative to the output directory.
+/// Earlier manifests have no version and record the paths as given to `-o`.
+const MANIFEST_VERSION: u64 = 2;
+
+/// Whether an earlier run's manifest records its result paths from the output directory.
+fn paths_from_output(manifest: &Value) -> bool {
+    manifest
+        .get("ManifestVersion")
+        .and_then(Value::as_u64)
+        .is_some_and(|version| version >= MANIFEST_VERSION)
+}
+
+/// A result path from an earlier run's manifest in the output directory `root`: from `root` in a
+/// manifest that records them so (`./HOST1/...`, see [`paths_from_output`]), else as given to
+/// `-o` (`./results/HOST1/...`).
+fn recorded_path(root: &Path, recorded: &str, from_output: bool) -> PathBuf {
     let path = Path::new(recorded);
-    match path.components().next() {
-        Some(Component::CurDir) => root.join(path),
-        _ => path.to_path_buf(),
+    if from_output && path.is_relative() {
+        root.join(path)
+    } else {
+        path.to_path_buf()
     }
 }
 
@@ -376,6 +393,8 @@ struct Manifest<'a> {
     generated_utc: String,
     #[serde(rename = "JunteiVersion")]
     juntei_version: &'static str,
+    #[serde(rename = "ManifestVersion")]
+    manifest_version: u64,
     #[serde(rename = "EvidenceDirectory")]
     evidence_directory: String,
     #[serde(rename = "OutputDirectory")]
@@ -501,8 +520,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         return 1;
     }
     let work = opts.output.clone();
+    // Not normalized: `link/..` is where the link points, as the containment check and the
+    // parsers resolve it (see `build_tasks`).
     let output_root = match std::path::absolute(&opts.output) {
-        Ok(path) => normalize_absolute(&path),
+        Ok(path) => path,
         Err(e) => {
             error_msg(
                 no_color,
@@ -828,6 +849,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     let manifest = Manifest {
         generated_utc: Utc::now().to_rfc3339(),
         juntei_version: env!("CARGO_PKG_VERSION"),
+        manifest_version: MANIFEST_VERSION,
         evidence_directory: name(&evidence),
         output_directory: name(&output_root),
         output_type: opts.output_type.as_str(),
@@ -1249,9 +1271,12 @@ fn build_tasks(
     evidence: &Path,
     work: &Path,
 ) -> io::Result<Vec<Task>> {
-    // As `TaskPaths` spells the output directory, so that the parsers' messages show it as `.`
-    let parser_work = normalize_absolute(&std::path::absolute(work)?);
-    let parser_output = normalize_absolute(&std::path::absolute(&opts.output)?);
+    // The output directory as given, made absolute but not normalized: the file system resolves
+    // `link/..` to where the link points, as the containment check does, while removing it from
+    // the text would name another directory, which can be inside the evidence. `TaskPaths`
+    // spells it the same way, so that the parsers' messages show it as `.`.
+    let parser_work = std::path::absolute(work)?;
+    let parser_output = std::path::absolute(&opts.output)?;
     let mut tasks = Vec::new();
     for (host, inputs) in hosts.iter().zip(inventories) {
         let data_dir = work.join(&host.folder);
