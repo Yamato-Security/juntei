@@ -2,9 +2,11 @@
   <img src="./art/Juntei_Goddess%20of%20Digital%20Forensics_small.png" alt="Juntei, Goddess of Digital Forensics" width="65%">
 </p>
 
-# Juntei
+<h1 align="center">Juntei</h1>
 
-**English** | [日本語](README-Japanese.md)
+<p align="center">
+  <strong>English</strong> | <a href="README-Japanese.md">日本語</a>
+</p>
 
 Juntei is a Windows forensics artifact parser by [Yamato Security](https://github.com/Yamato-Security),
 a sibling of [Hayabusa](https://github.com/Yamato-Security/hayabusa) for the artifacts that are
