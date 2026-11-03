@@ -68,6 +68,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - Prefetch records and a separate Prefetch execution timeline
 - USN Journal
 - `$I30` directory indexes
+- `$Boot` boot sectors and `$Secure:$SDS` security descriptors
 - SRUM
 - LNK shortcuts
 - Jump Lists
@@ -151,12 +152,16 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-ShimCache.csv
 │   │   └── Registry-ShimCache-logs.txt
 │   ├── FileSystem/
+│   │   ├── Boot.csv
+│   │   ├── Boot-logs.txt
 │   │   ├── I30.csv
 │   │   ├── I30-logs.txt
 │   │   ├── LogFile.csv
 │   │   ├── LogFile-logs.txt
 │   │   ├── MFT.csv
 │   │   ├── MFT-logs.txt
+│   │   ├── SecureSDS.csv
+│   │   ├── SecureSDS-logs.txt
 │   │   ├── UsnJournal.csv
 │   │   └── UsnJournal-logs.txt
 │   ├── NetworkActivity/
@@ -223,7 +228,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
-| `FileSystem` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
+| `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
 | `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
@@ -244,7 +249,7 @@ in `NetworkActivity`, `ProcessExecution` and `SystemInformation`, with a shared
 `SystemInformation/SRUM-logs.txt` file. No `logs/` subdirectories are created.
 
 Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
-`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
+`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Read.csv`, and
 `DefenderQuarantine.csv`. Registry-derived tables use the `Registry-` prefix, including
