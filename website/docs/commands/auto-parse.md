@@ -96,9 +96,10 @@ Names are made safe for use as directory names. Duplicate names receive a numeri
 their output directory and `Comp` value so separate systems remain distinguishable in JSON.
 The manifest keeps the hostname exactly as discovered in a separate `Hostname` field.
 
-After listing the systems, `auto-parse` prints one green `Timezone:` line directly above
+After listing the systems, `auto-parse` prints one `Timezone:` line directly above
 `Parser tasks`. It shows the selected output timezone: `UTC` by default, or a value such as
-`UTC+09:00` when `--timezone "+09:00"` is used. `-K, --no-color` keeps the line plain.
+`UTC+09:00` when `--timezone "+09:00"` is used. The label is green and the value uses the
+terminal's default text color, like the other summary values. `-K, --no-color` keeps the line plain.
 Collected systems' time-zone configuration is available in the
 [System Information](../artifacts/system-info.md) results.
 
@@ -364,10 +365,11 @@ may be empty, with the explanation in its `Log` file.
 
 The terminal summary includes the total number and size of regular files currently beneath the
 output directory, including both manifests, parser logs, and extracted files. Symbolic links are
-not followed. Sizes use decimal MB (1 MB = 1,000,000 bytes):
+not followed. Sizes scale automatically using the same formatter as `Total filesize`, with
+units such as `KiB`, `MiB`, and `GiB`:
 
 ```text
-Results saved: output/ ( 125 files / 42.50 MB )
+Results saved: output/ ( 125 files / 40.5 MiB )
 ```
 
 Amcache and SRUM tables use `-Source1`, `-Source2`, etc. when several source databases
