@@ -195,8 +195,15 @@ fn hayabusa_string_details_and_correlations_merge_without_losing_events() {
 }
 fn manifest(root: &Path, files: &[(&str, &str)]) {
     fs::create_dir_all(root).unwrap();
-    let tasks:Vec<_>=files.iter().map(|(name,artifact)|json!({"Computer":"HOST","Artifact":artifact,"Status":"succeeded","Purpose":"artifact","OutputType":"csv","OutputFiles":[format!("/original/parsed/{name}")]})).collect();
-    fs::write(root.join("manifest.json"),serde_json::to_vec(&json!({"OutputDirectory":"/original/parsed","Hosts":[{"Computer":"HOST"}],"Tasks":tasks})).unwrap()).unwrap();
+    let tasks:Vec<_>=files.iter().map(|(name,artifact)|json!({"Computer":"HOST","Artifact":artifact,"Status":"succeeded","Purpose":"artifact","OutputType":"csv","OutputFiles":[recorded.join(name)]})).collect();
+    fs::write(
+        root.join("manifest.json"),
+        serde_json::to_vec(
+            &json!({"OutputDirectory":recorded,"Hosts":[{"Computer":"HOST"}],"Tasks":tasks}),
+        )
+        .unwrap(),
+    )
+    .unwrap();
 }
 #[test]
 fn relocated_manifest_discovers_csv_by_artifact_and_reports_unresolved_sources() {

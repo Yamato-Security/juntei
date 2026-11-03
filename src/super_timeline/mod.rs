@@ -45,12 +45,14 @@ impl Scratch {
                 ".juntei-super-timeline-{}-{clock}-{index}",
                 std::process::id()
             ));
-            let mut builder = fs::DirBuilder::new();
+            let builder = fs::DirBuilder::new();
             #[cfg(unix)]
-            {
+            let builder = {
                 use std::os::unix::fs::DirBuilderExt;
-                builder.mode(0o700);
-            }
+                let mut private_builder = builder;
+                private_builder.mode(0o700);
+                private_builder
+            };
             match builder.create(&path) {
                 Ok(()) => return Ok(Self(path)),
                 Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
