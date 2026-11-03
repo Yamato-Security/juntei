@@ -43,7 +43,7 @@
 
 **New Features:**
 
-- Shorten the default MFT CSV headings to `EntryNum`, `Ext`, `Dir`, `ADS` and `Size`; label creation, data modification and MFT record change timestamps with `(SI)` / `(FN)`. These labels also appear in auto-parse's `MFT.csv`. (@YamatoSecurity)
+- Shorten the default MFT CSV headings to `EntryNum`, `Ext`, `Dir`, `ADS` and `Size`; label timestamps with `(SI)` / `(FN)` pairs ordered as Created, Access, DataModified and MFT-RecordChanged. These labels also appear in auto-parse's `MFT.csv`. (@YamatoSecurity)
 
 - Standardize CSV headers and JSON/JSONL field labels to PascalCase across parsers, Amcache tables, persistence findings and auto-parse manifests. Preserve acronym suffixes (`ProcessID`, `TimestampUTC`) and hyphenate words after acronyms (`IP-Address`, `MFT-Entry`). Evidence values and source-provided dictionary keys retain their original spelling. This changes export schemas; regenerate results and update field-based queries. (@YamatoSecurity)
 

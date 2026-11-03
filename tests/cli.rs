@@ -1451,6 +1451,19 @@ fn mft_csv_json_and_jsonl() {
         ]
     );
     assert_eq!(header.len(), 35);
+    assert_eq!(
+        &header[19..27],
+        [
+            "Created (SI)",
+            "Created (FN)",
+            "Access (SI)",
+            "Access (FN)",
+            "DataModified (SI)",
+            "DataModified (FN)",
+            "MFT-RecordChanged (SI)",
+            "MFT-RecordChanged (FN)",
+        ]
+    );
     assert_eq!(rows.len(), 1014);
     let row = |entry: &str, name: &str| {
         rows.iter()
@@ -1470,6 +1483,10 @@ fn mft_csv_json_and_jsonl() {
         ("NameType", "DosWindows"),
         ("Created (SI)", "2006-02-28T12:00:00.0000000Z"),
         ("Created (FN)", "2007-06-30T12:51:00.8147072Z"),
+        ("Access (SI)", "2007-06-30T22:32:20.5674272Z"),
+        ("Access (FN)", "2007-06-30T12:51:00.8147072Z"),
+        ("DataModified (SI)", "2006-02-28T12:00:00.0000000Z"),
+        ("MFT-RecordChanged (SI)", "2007-06-30T13:00:28.7156064Z"),
     ] {
         assert_eq!(bootvid[column], value, "{column}");
     }
@@ -1699,6 +1716,23 @@ fn mft_recover_slack() {
     );
     let slack: Vec<_> = rows.iter().filter(|r| r["FromSlack"] == "True").collect();
     assert_eq!(slack.len(), 117);
+    // Distinct FN times catch a header-only reorder or a missed reorder in the slack writer.
+    let driver = slack
+        .iter()
+        .find(|row| row["EntryNum"] == "2050" && row["FileName"] == "swenum.sys")
+        .unwrap();
+    for (column, expected) in [
+        ("Created (FN)", "2004-08-03T22:58:42.0000000Z"),
+        ("Access (FN)", "2007-06-30T12:58:47.1896192Z"),
+        ("DataModified (FN)", "2006-02-28T12:00:00.0000000Z"),
+        ("MFT-RecordChanged (FN)", "2007-06-30T13:00:28.8157504Z"),
+        ("Created (SI)", ""),
+        ("Access (SI)", ""),
+        ("DataModified (SI)", ""),
+        ("MFT-RecordChanged (SI)", ""),
+    ] {
+        assert_eq!(driver[column], expected, "{column}");
+    }
     assert_eq!(
         slack
             .iter()

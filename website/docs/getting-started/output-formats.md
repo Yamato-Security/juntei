@@ -25,7 +25,9 @@ CSV column headers and JSON/JSONL field names use PascalCase, including Amcache 
 
 The default MFT CSV uses shorter, readable headings such as `EntryNum`, `Ext`, `Dir`, `ADS`,
 `Size`, `Created (SI)` and `Created (FN)`. See the [MFT field reference](../artifacts/mft.md)
-for its full CSV schema. Quote headings containing spaces or punctuation in CSV tools.
+for its full CSV schema. Timestamp pairs appear in Created, Access, DataModified,
+MFT-RecordChanged order, with SI before FN. Quote headings containing spaces or punctuation
+in CSV tools.
 
 Evidence values keep their original spelling. Source-provided dictionary keys, such as registry
 value names under `Details`/`DataRaw` and `Zone.Identifier` names under `ZoneIdentifier`, also

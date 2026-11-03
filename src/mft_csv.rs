@@ -59,12 +59,12 @@ pub const CSV_HEADER: [&str; 35] = [
     "NameType",
     "Created (SI)",
     "Created (FN)",
+    "Access (SI)",
+    "Access (FN)",
     "DataModified (SI)",
     "DataModified (FN)",
     "MFT-RecordChanged (SI)",
     "MFT-RecordChanged (FN)",
-    "LastAccess0x10",
-    "LastAccess0x30",
     "UpdateSequenceNumber",
     "LogfileSequenceNumber",
     "SecurityID",
@@ -1379,12 +1379,12 @@ fn row(
         name_type(name.namespace),
         time(t.created),
         time(t.created_fn),
+        time(t.accessed),
+        time(t.accessed_fn),
         time(t.modified),
         time(t.modified_fn),
         time(t.changed),
         time(t.changed_fn),
-        time(t.accessed),
-        time(t.accessed_fn),
         t.usn.to_string(),
         record.lsn.to_string(),
         t.security_id.to_string(),
@@ -1469,7 +1469,7 @@ fn base64(bytes: &[u8]) -> String {
 
 /// The rows of the names found in a record's slack (and its extension records'), each with
 /// whether a file in use has that name: the file the slack kept the reference of (else none), the
-/// name's directory and path, the name, its `$FILE_NAME` times in the `0x30` columns, its size and
+/// name's directory and path, the name, its `$FILE_NAME` times in the `(FN)` columns, its size and
 /// namespace; `InUse` is `False`.
 fn slack_rows(
     record: &Record,
@@ -1519,11 +1519,11 @@ fn slack_rows(
             String::new(),
             self::time(time(found.created)),
             String::new(),
+            self::time(time(found.accessed)),
+            String::new(),
             self::time(time(found.modified)),
             String::new(),
             self::time(time(found.mft_modified)),
-            String::new(),
-            self::time(time(found.accessed)),
             String::new(),
             String::new(),
             String::new(),
