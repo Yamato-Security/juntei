@@ -90,6 +90,7 @@ plugins:
     fallback_to_default: true
     reconfigure_material: true
     reconfigure_search: true
+    # Publish English and Japanese for now; enable other locales as translations become ready.
     languages:
     - locale: en
       name: English
@@ -179,7 +180,7 @@ plugins:
         DFIR Glossary: DFIR 用語集
     - locale: zh-TW
       name: 繁體中文
-      build: true
+      build: false
       nav_translations:
         Home: 首頁
         Overview: 概觀
@@ -260,7 +261,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: ko
       name: 한국어
-      build: true
+      build: false
       nav_translations:
         Home: 홈
         Overview: 개요
@@ -341,7 +342,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: de
       name: Deutsch
-      build: true
+      build: false
       nav_translations:
         Home: Startseite
         Overview: Übersicht
@@ -422,7 +423,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: tr
       name: Türkçe
-      build: true
+      build: false
       nav_translations:
         Home: Ana Sayfa
         Overview: Genel Bakış
@@ -503,7 +504,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: fr
       name: Français
-      build: true
+      build: false
       nav_translations:
         Home: Accueil
         Overview: Vue d'ensemble
@@ -584,7 +585,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: es
       name: Español
-      build: true
+      build: false
       nav_translations:
         Home: Inicio
         Overview: Visión general
@@ -665,7 +666,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: pt-BR
       name: Português (Brasil)
-      build: true
+      build: false
       nav_translations:
         Home: Início
         Overview: Visão geral
@@ -746,7 +747,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: uk
       name: Українська
-      build: true
+      build: false
       nav_translations:
         Home: Головна
         Overview: Огляд
@@ -827,7 +828,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: hi
       name: हिन्दी
-      build: true
+      build: false
       nav_translations:
         Home: होम
         Overview: अवलोकन
@@ -908,7 +909,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: id
       name: Bahasa Indonesia
-      build: true
+      build: false
       nav_translations:
         Home: Beranda
         Overview: Ikhtisar
@@ -989,7 +990,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: my
       name: မြန်မာဘာသာ
-      build: true
+      build: false
       nav_translations:
         Home: ပင်မစာမျက်နှာ
         Overview: ခြုံငုံသုံးသပ်ချက်
@@ -1070,7 +1071,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: th
       name: ไทย
-      build: true
+      build: false
       nav_translations:
         Home: หน้าแรก
         Overview: ภาพรวม
@@ -1151,7 +1152,7 @@ plugins:
         Persistence Hunter: Persistence Hunter
     - locale: ar
       name: العربية
-      build: true
+      build: false
       nav_translations:
         Home: الرئيسية
         Overview: نظرة عامة

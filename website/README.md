@@ -10,13 +10,15 @@ documentation setup. English is the default language. Translated pages keep the 
 and add a locale suffix, such as `artifacts/prefetch.ja.md` or
 `commands/auto-parse.pt-BR.md`.
 
-The language menu contains English, Japanese, Traditional Chinese, Korean, German, Turkish,
-French, Spanish, Brazilian Portuguese, Ukrainian, Hindi, Indonesian, Burmese, Thai, and Arabic.
-Navigation labels are configured in `website/mkdocs.yml`.
+The published language menu currently contains only English and Japanese. Navigation labels
+are configured in `website/mkdocs.yml`.
 
-English and Japanese have page translations throughout the documentation. The other languages
-currently have localized navigation and use English content until translated pages are added.
-The language plugin keeps the same page available when switching languages.
+English and Japanese have page translations throughout the documentation. Traditional Chinese,
+Korean, German, Turkish, French, Spanish, Brazilian Portuguese, Ukrainian, Hindi, Indonesian,
+Burmese, Thai, and Arabic have localized navigation saved for later, with `build: false` so
+they are not published or listed in the language menu. Set a locale's `build` to `true` when
+its translations are ready. The language plugin keeps the same page available when switching
+between the published languages.
 
 When updating a page, update its translations too. Leave commands, code blocks, field names,
 registry paths, filenames, and link destinations unchanged. Translated headings retain explicit
