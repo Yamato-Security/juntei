@@ -67,6 +67,7 @@ pub const ARTIFACTS: &[&str] = &[
     "auditpol",
     "bam",
     "bcd",
+    "boot",
     "defender-quarantine",
     "featureusage",
     "hayabusa",
@@ -90,6 +91,7 @@ pub const ARTIFACTS: &[&str] = &[
     "registry",
     "remote-access",
     "sam",
+    "secure-sds",
     "security-settings",
     "services",
     "shellbags",
@@ -552,7 +554,9 @@ fn mft(b: &mut Builder<'_, '_>) {
     } else {
         b.path.clone()
     };
-    if let Some(attrs) = get(b.value, &["Attributes"]).and_then(Value::as_array) {
+    if let Some((attributes_field, attrs)) = field(b.value, "Attributes")
+        .and_then(|(key, value)| value.as_array().map(|attrs| (key, attrs)))
+    {
         for (index, attr) in attrs.iter().enumerate() {
             let h = get(attr, &["Header"]).unwrap_or(&Value::Null);
             let kind = text(h, &["TypeCode"]);
@@ -576,7 +580,7 @@ fn mft(b: &mut Builder<'_, '_>) {
                 if let Some((actual, value)) = field(data, timestamp_field) {
                     b.emit(
                         value,
-                        &format!("Attributes[{index}].Data.{actual}"),
+                        &format!("{attributes_field}[{index}].Data.{actual}"),
                         &format!("MFT {group} {label}"),
                         "file_metadata",
                         &path,

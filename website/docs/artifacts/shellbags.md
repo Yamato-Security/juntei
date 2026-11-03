@@ -102,7 +102,7 @@ with their users.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSID`, `SourcePath`, `HiveType` | Host, the profile folder's name, the user's SID (a `UsrClass.dat`'s root key names it; for `NTUSER.DAT`, the system's `ProfileList`), the hive and its type. |
+| `Host`, `User`, `UserSID`, `SourcePath`, `HiveType` | Host, the profile folder's name, the user's SID (a `UsrClass.dat`'s root key names it; for `NTUSER.DAT`, the system's `ProfileList`), the hive and its type. |
 | `BagKey` | The item's key, under the hive's root (`…\BagMRU\4\3\0`): its value is in the key above it. |
 | `MRU-Position`, `IsMostRecentInParent` | Its place in its parent key's `MRUListEx` (0: the most recently opened); empty when the list doesn't have it. |
 | `NodeSlot` | The number of its `Bags\<N>` key (the folder's view settings). |

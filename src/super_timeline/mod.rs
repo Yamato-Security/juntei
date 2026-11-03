@@ -202,7 +202,7 @@ fn process(
         }
         if ctx.artifact.is_empty() {
             return Err(io::Error::other(
-                "Untagged records need --input-artifact; use native auto-parse JSONL with Artifact/Computer metadata",
+                "Untagged records need --input-artifact; use native auto-parse JSONL with Artifact/Comp metadata",
             ));
         }
         if !adapters::ARTIFACTS.contains(&ctx.artifact.as_str()) {

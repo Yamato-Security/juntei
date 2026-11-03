@@ -16,6 +16,7 @@
 mod amcache;
 mod amcache_output;
 mod auto_parse;
+mod boot;
 mod cli;
 mod color;
 mod defender_quarantine;
@@ -32,6 +33,7 @@ mod persistence_hunter;
 mod prefetch;
 mod progress;
 mod registry;
+mod secure_sds;
 mod security_descriptor;
 mod shimcache;
 mod srum;
@@ -84,6 +86,28 @@ fn main() {
             code
         }
         Commands::ParseNtfs(source) => match &source.cmd {
+            NtfsCommands::Boot(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = boot::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            NtfsCommands::SecureSds(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = secure_sds::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
             NtfsCommands::Mft(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {

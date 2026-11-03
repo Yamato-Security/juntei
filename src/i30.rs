@@ -346,7 +346,7 @@ struct Record<'a> {
     from_slack: bool,
     #[serde(rename = "CopyOfEntryInUse")]
     copy_of_entry_in_use: bool,
-    #[serde(rename = "FileName")]
+    #[serde(rename = "Filename")]
     file_name: &'a str,
     #[serde(rename = "Namespace")]
     namespace: &'static str,

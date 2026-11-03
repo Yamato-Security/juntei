@@ -86,7 +86,7 @@ fn seed(dir: &Path) -> std::path::PathBuf {
     write_jsonl(
         &input,
         &[
-            json!({"Artifact":"prefetch","Computer":"HOST","SourceFile":"capture/first.pf","ExecutableName":"example.exe","LastRunTimes":["2026-10-20T08:46:38.200166800Z","1969-01-01T00:00:00Z"]}),
+            json!({"Artifact":"prefetch","Comp":"HOST","SourceFile":"capture/first.pf","ExecutableName":"example.exe","LastRunTimes":["2026-10-20T08:46:38.200166800Z","1969-01-01T00:00:00Z"]}),
             json!({"Artifact":"prefetch-timeline","Computer":"HOST","SourceFile":"capture/first.pf","ExecutableName":"example.exe","RunTime":"2026-10-20T08:46:38.200166800Z"}),
             json!({"Artifact":"mft","Computer":"HOST","SourceFile":"capture/$MFT","EntryNum":10,"SequenceNumber":3,"FileName":"example.exe","NameType":"Win32","Created (SI)":"2026-10-20T08:46:38.200166800Z","Created (FN)":"2026-10-20T08:46:38.200166800Z"}),
             json!({"Artifact":"registry","Computer":"HOST","SourcePath":"capture/SYSTEM","RecordType":"key","KeyPath":"ControlSet001\\Services\\example","KeyLastWritten":"2026-10-20T09:00:00Z"}),
@@ -227,7 +227,7 @@ fn relocated_manifest_discovers_csv_by_artifact_and_reports_unresolved_sources()
     ]));
     let rows = jsonl(&output);
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0]["Computer"], "HOST");
+    assert_eq!(rows[0]["Comp"], "HOST");
     assert_eq!(rows[0]["Details"]["RawSourceAvailable"], false);
     assert_eq!(
         rows[0]["SourceFile"],
@@ -526,7 +526,7 @@ fn standalone_input_needs_an_artifact_and_filter_names_are_validated() {
         "--computer",
         "TEST",
     ]));
-    assert_eq!(csv(&output)[0]["Computer"], "TEST");
+    assert_eq!(csv(&output)[0]["Comp"], "TEST");
 }
 
 #[test]

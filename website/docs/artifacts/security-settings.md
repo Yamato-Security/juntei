@@ -127,7 +127,7 @@ Defender exclusion.
 |---|---|
 | `Host`, `SourcePath`, `HiveType` | Host, the hive, and its type (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`). |
 | `ControlSet`, `IsCurrentControlSet` | For `SYSTEM`: the control set, and whether it is the one Windows used last; unknown when `Select\Current` is missing or invalid. |
-| `Username`, `UserSID` | For `NTUSER.DAT`: the profile folder's name, and the user's SID from the system's `ProfileList`. |
+| `User`, `UserSID` | For `NTUSER.DAT`: the profile folder's name, and the user's SID from the system's `ProfileList`. |
 | `Area` | `defender`, `uac`, `credentials`, `remote_access`, `network`, `powershell`, `evidence`. |
 | `Setting` | What it is: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | The value: a number in decimal, a string, or the exclusion itself. Empty when the value isn't of the setting's type. |

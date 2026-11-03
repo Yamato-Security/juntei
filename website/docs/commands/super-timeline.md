@@ -51,7 +51,7 @@ Time limits are inclusive and require an explicit UTC offset or `Z`.
 | Input | How it is identified |
 |---|---|
 | `-d DIR` | `manifest.json` supplies succeeded primary tasks, artifact IDs, computers and exact output files. Secondary `auto-parse -j` tasks are excluded to prevent importing both copies. |
-| `-f FILE` | Native JSON/JSONL uses embedded `Artifact` and `Computer` fields. Untagged exports need `--input-artifact`; standalone CSV always requires it. |
+| `-f FILE` | Native JSON/JSONL uses embedded `Artifact` and `Comp` fields. Untagged exports need `--input-artifact`; standalone CSV always requires it. |
 | `--computer NAME` | Fallback when the input record has no computer name; otherwise an unknown computer is explicitly `Unknown`. |
 | `--hayabusa FILE` | JSONL with Hayabusa timestamps, rule metadata, computer and, when present, `EvtxFile`. |
 
@@ -70,7 +70,7 @@ Do not mistake that fallback for a raw evidence path.
 | Field | Meaning |
 |---|---|
 | `Timestamp` | UTC RFC 3339, written with nine fractional digits for consistent ordering. Padding does not add precision. |
-| `Computer` | Computer associated with the input record. |
+| `Comp` | Computer associated with the input record. |
 | `Artifact` | Stable artifact identifier such as `mft`, `prefetch`, `srum` or `hayabusa`. |
 | `TimestampType` | Description of the timestamp's meaning, such as `MFT SI Data modified`. |
 | `User` | Recorded account or SID when the adapter has one; may be empty. |
@@ -209,3 +209,5 @@ basename for each run when retaining an earlier complete export matters.
 - [Plaso output and formatting](https://plaso.readthedocs.io/en/latest/sources/user/Output-and-formatting.html)
 - [Evidence and interpretation](../overview/evidence-model.md)
 - [Output formats](../getting-started/output-formats.md)
+
+Current Juntei inputs use abbreviated labels such as `Comp`, `Filename`, `Args` and `Attr`. Older exported labels remain accepted, and `SourceField` retains the spelling in the actual input. Hayabusa input retains its own `Computer` field. Boot-sector and security-descriptor metadata is retained in the untimed report because it does not supply an event timestamp.

@@ -131,6 +131,8 @@ nav:
           - NTFS Transaction Log ($LogFile): artifacts/logfile.md
           - USN Journal: artifacts/usn-journal.md
           - Directory Indexes ($I30): artifacts/i30.md
+          - Security Descriptors ($Secure:$SDS): artifacts/secure-sds.md
+          - Boot Sector ($Boot): artifacts/boot.md
           - Amcache: artifacts/amcache.md
           - ShimCache: artifacts/shimcache.md
       - File and Folder Opening:

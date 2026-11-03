@@ -663,7 +663,7 @@ struct Record<'a> {
     sam_path: Option<&'a str>,
     #[serde(rename = "SecurityPath")]
     security_path: Option<&'a str>,
-    #[serde(rename = "ComputerName")]
+    #[serde(rename = "CompName")]
     computer_name: Option<&'a str>,
     #[serde(rename = "Hostname")]
     hostname: Option<&'a str>,
@@ -755,7 +755,7 @@ struct Record<'a> {
     domain_sid: Option<&'a str>,
     #[serde(rename = "MachineAccountSID")]
     machine_account_sid: Option<&'a str>,
-    #[serde(rename = "ComputerNameLastWritten")]
+    #[serde(rename = "CompNameLastWritten")]
     computer_name_last_written: Option<String>,
     #[serde(rename = "PrimaryDomainLastWritten")]
     primary_domain_last_written: Option<String>,

@@ -17,10 +17,62 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::io::{self, Write};
 
+/// Requested public field names. Evidence values and raw source dictionary keys are unchanged.
+pub fn field_name(input: &str) -> &str {
+    match input {
+        "ADS" => "HasADS",
+        "Application" => "App",
+        "ApplicationCompany" => "AppCompany",
+        "ApplicationCompanyRaw" => "AppCompanyRaw",
+        "ApplicationPath" => "AppPath",
+        "Arguments" => "Args",
+        "Attributes" => "Attr",
+        "AttributeType" => "AttrType",
+        "BytesRecvd" => "BytesReceived",
+        "Computer" => "Comp",
+        "ComputerName" => "CompName",
+        "ComputerNameLastWrittenUTC" => "CompNameLastWrittenUTC",
+        "ComputerNameLastWritten" => "CompNameLastWritten",
+        "Directories" => "Dir",
+        "FileName" => "Filename",
+        "MicrosecondZeros" => "ZeroU-Secs",
+        "SI-BeforeFN" => "SI<FN",
+        "UserName" => "User",
+        "Username" => "User",
+        "UserNameSource" => "UserSource",
+        "Users" => "User",
+        _ => input,
+    }
+}
+
+/// Select a current public field, accepting a previous label in saved output.
+pub fn field<'a>(value: &'a Value, previous: &str) -> Option<&'a Value> {
+    value
+        .get(field_name(previous))
+        .or_else(|| value.get(previous))
+}
+
+/// Rename an existing CSV schema without altering readable labels such as `Created (SI)`.
+pub fn labels<'a>(labels: impl IntoIterator<Item = &'a str>) -> io::Result<Vec<&'a str>> {
+    let mut seen = HashSet::new();
+    labels
+        .into_iter()
+        .map(|old| {
+            let label = field_name(old);
+            if !seen.insert(label) {
+                return Err(io::Error::other(format!(
+                    "Output field collision: {old:?} becomes {label:?}"
+                )));
+            }
+            Ok(label)
+        })
+        .collect()
+}
+
 pub fn name(input: &str) -> String {
     match input {
-        "SI<FN" => return "SI-BeforeFN".into(),
-        "uSecZeros" => return "MicrosecondZeros".into(),
+        "SI<FN" => return "SI<FN".into(),
+        "uSecZeros" | "ZeroU-Secs" => return "ZeroU-Secs".into(),
         "_value_state" => return "ValueState".into(),
         "_raw" => return "Raw".into(),
         _ => (),
@@ -73,7 +125,7 @@ pub fn name(input: &str) -> String {
         }
         previous_acronym = is_acronym;
     }
-    out
+    field_name(&out).to_owned()
 }
 
 fn acronym(word: &str) -> bool {
@@ -206,6 +258,30 @@ pub fn normalize(value: &mut Value) -> io::Result<()> {
     }
 }
 
+/// Apply only the requested aliases to formatted JSON, preserving source-provided dictionaries.
+pub fn rename_fields(value: &mut Value) -> io::Result<()> {
+    match value {
+        Value::Array(values) => values.iter_mut().try_for_each(rename_fields),
+        Value::Object(fields) => {
+            let mut renamed = serde_json::Map::with_capacity(fields.len());
+            for (key, mut child) in std::mem::take(fields) {
+                let label = field_name(&key).to_owned();
+                if !matches!(label.as_str(), "Details" | "DataRaw" | "ZoneIdentifier") {
+                    rename_fields(&mut child)?;
+                }
+                if renamed.insert(label.clone(), child).is_some() {
+                    return Err(io::Error::other(format!(
+                        "Output field collision at {key:?}: {label:?}"
+                    )));
+                }
+            }
+            *fields = renamed;
+            Ok(())
+        }
+        _ => Ok(()),
+    }
+}
+
 pub fn to_value(value: &impl Serialize) -> io::Result<Value> {
     let mut value = serde_json::to_value(value)?;
     normalize(&mut value)?;
@@ -242,7 +318,7 @@ mod tests {
             ("sha256", "SHA256"),
             ("SHA1OfContent", "SHA1-OfContent"),
             ("Created0x10", "Created0x10"),
-            ("SI<FN", "SI-BeforeFN"),
+            ("SI<FN", "SI<FN"),
         ] {
             assert_eq!(name(before), after, "{before}");
             assert_eq!(name(after), after);
@@ -267,5 +343,53 @@ mod tests {
     fn collisions_fail_instead_of_discarding_data() {
         assert!(headers(["UserId", "UserID"]).is_err());
         assert!(normalize(&mut json!({"user_id":1,"UserID":2})).is_err());
+    }
+    #[test]
+    fn requested_abbreviations_are_exact_and_idempotent() {
+        for (before, after) in [
+            ("ADS", "HasADS"),
+            ("Application", "App"),
+            ("ApplicationCompany", "AppCompany"),
+            ("ApplicationCompanyRaw", "AppCompanyRaw"),
+            ("ApplicationPath", "AppPath"),
+            ("Arguments", "Args"),
+            ("Attributes", "Attr"),
+            ("AttributeType", "AttrType"),
+            ("BytesRecvd", "BytesReceived"),
+            ("Computer", "Comp"),
+            ("ComputerName", "CompName"),
+            ("ComputerNameLastWrittenUTC", "CompNameLastWrittenUTC"),
+            ("Directories", "Dir"),
+            ("FileName", "Filename"),
+            ("MicrosecondZeros", "ZeroU-Secs"),
+            ("SI-BeforeFN", "SI<FN"),
+            ("UserName", "User"),
+            ("Username", "User"),
+            ("UserNameSource", "UserSource"),
+            ("Users", "User"),
+        ] {
+            assert_eq!(field_name(before), after);
+            assert_eq!(name(before), after);
+            assert_eq!(name(after), after);
+        }
+        assert_eq!(
+            labels(["Created (SI)", "FileName", "SI-BeforeFN"]).unwrap(),
+            ["Created (SI)", "Filename", "SI<FN"]
+        );
+    }
+    #[test]
+    fn aliases_do_not_change_evidence_values_or_merge_distinct_fields() {
+        let mut value = json!({"FileName":"FileName", "Users":[{"Username":"Users"}],
+            "Arguments":"-Application FileName", "DataRaw":{"UserName":"original"},
+            "Details":{"FileName":"original"}, "ZoneIdentifier":{"Computer":"original"}});
+        rename_fields(&mut value).unwrap();
+        assert_eq!(value["Filename"], "FileName");
+        assert_eq!(value["User"][0]["User"], "Users");
+        assert_eq!(value["Args"], "-Application FileName");
+        assert_eq!(value["DataRaw"]["UserName"], "original");
+        assert_eq!(value["Details"]["FileName"], "original");
+        assert_eq!(value["ZoneIdentifier"]["Computer"], "original");
+        assert!(labels(["UserName", "Username"]).is_err());
+        assert!(rename_fields(&mut json!({"UserName":"a", "Users":["b"]})).is_err());
     }
 }

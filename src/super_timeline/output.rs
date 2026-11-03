@@ -19,7 +19,7 @@ use std::io::{self, BufWriter, Write};
 
 pub const HEADERS: [&str; 11] = [
     "Timestamp",
-    "Computer",
+    "Comp",
     "Artifact",
     "TimestampType",
     "User",

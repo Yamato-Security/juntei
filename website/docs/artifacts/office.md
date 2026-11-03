@@ -93,8 +93,8 @@ opened last.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
-| `OfficeVersion`, `Application` | The version's key (`16.0`) and the application (`Word`, `Excel`, …). |
+| `Host`, `User`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
+| `OfficeVersion`, `App` | The version's key (`16.0`) and the application (`Word`, `Excel`, …). |
 | `List` | `File MRU`, `Place MRU`, `TrustRecords`, `Security` or `Trusted Locations`. |
 | `Account` | The Microsoft 365 account of a `User MRU` list. |
 | `Policy` | Whether the setting or location is set by policy. |

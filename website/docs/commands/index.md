@@ -36,9 +36,11 @@ It expands and labels timestamp meanings; `auto-parse -j` continues to retain na
 
 | Command | Input artifact | Detailed guide |
 |---|---|---|
+| `parse-ntfs boot` | `$Boot`, or an NTFS volume image | [Boot Sector ($Boot)](../artifacts/boot.md) |
 | `parse-ntfs i30` | `$I30` (`$INDEX_ALLOCATION`), or a disk image | [Directory Indexes ($I30)](../artifacts/i30.md) |
 | `parse-ntfs logfile` | NTFS `$LogFile` | [NTFS Transaction Log](../artifacts/logfile.md) |
 | `parse-ntfs mft` | NTFS `$MFT` | [Master File Table](../artifacts/mft.md) |
+| `parse-ntfs secure-sds` | `$Secure:$SDS` (`$Secure_$SDS`) | [Security Descriptors ($Secure:$SDS)](../artifacts/secure-sds.md) |
 | `parse-ntfs usn-journal` | `$UsnJrnl:$J` | [USN Journal](../artifacts/usn-journal.md) |
 
 ## [Registry commands](security-registry.md)

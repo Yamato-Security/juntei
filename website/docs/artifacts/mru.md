@@ -84,7 +84,7 @@ list's most recent entry), newest first.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
+| `Host`, `User`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
 | `List` | `RunMRU`, `TypedPaths`, `WordWheelQuery`, `TypedURLs`, `Paint`, `Wordpad` or `ACMru`. |
 | `Subkey` | `ACMru`'s subkey: the kind of search (`5603`, `5604`, `5647`, `5001`). |
 | `MRU-Position`, `IsMostRecent` | The place in the list (0 is the most recent); empty when the list doesn't name the value. |

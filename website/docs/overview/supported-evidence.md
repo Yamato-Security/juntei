@@ -8,6 +8,8 @@
 | Prefetch | `parse-file prefetch` | Program execution, run count, recent run times, loaded files | Only a limited run-time history is retained |
 | USN Journal `$J` | `parse-ntfs usn-journal` | Creates, deletes, renames, writes, historical paths | Circular journal; records changes, not file contents |
 | Directory indexes `$I30` | `parse-ntfs i30` | Files in a directory; names, times, and sizes of possible deleted or renamed files left in index slack | Slack is partial and says nothing about when an entry was removed |
+| NTFS boot sector `$Boot` | `parse-ntfs boot` | The volume serial number LNK, Jump Lists and Prefetch record; geometry and `$MFT` location; boot code hash to compare across hosts | Serial numbers can be changed or repeated; a differing boot code is a lead, not proof of a bootkit |
+| NTFS security descriptors `$Secure:$SDS` | `parse-ntfs secure-sds` | Owners and ACLs of files, by the `$MFT`'s `SecurityID`; NULL DACLs and permissive ACLs | Owners can be changed; ACLs say who may access, not who did |
 | SRUM | `parse-ese srum` | Per-app/user network and resource use | Usually aggregated; not packet or destination-level proof |
 | LNK shortcuts | `parse-file lnk` | Opened targets, arguments, volumes, shares, source machine | A shortcut can be created without the target running |
 | Jump Lists | `parse-file jump-lists` | Application-opened items, pinning, usage and embedded LNK data | Application-specific behavior and retention |

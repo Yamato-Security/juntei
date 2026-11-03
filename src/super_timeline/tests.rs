@@ -352,3 +352,63 @@ fn native_mft_recovered_slack_is_separate_from_live_fn() {
         "134054235982001668"
     );
 }
+
+#[test]
+fn abbreviated_fields_keep_current_spelling_and_accept_legacy_inputs() {
+    use super::model::field;
+    for (legacy, current) in [
+        ("FileName", "Filename"),
+        ("Arguments", "Args"),
+        ("Computer", "Comp"),
+        ("BytesRecvd", "BytesReceived"),
+        ("ComputerNameLastWrittenUTC", "CompNameLastWritten"),
+    ] {
+        let mut value = json!({});
+        value[legacy] = json!("old");
+        assert_eq!(field(&value, legacy).unwrap(), (legacy, &json!("old")));
+        value[current] = json!("new");
+        let (actual, data) = field(&value, legacy).unwrap();
+        // A current UTC-less time is the fallback only when the explicit UTC field is absent.
+        if current == "CompNameLastWritten" {
+            value.as_object_mut().unwrap().remove(legacy);
+            assert_eq!(field(&value, legacy).unwrap(), (current, &json!("new")));
+        } else {
+            assert_eq!((actual, data), (current, &json!("new")));
+        }
+    }
+    let old = json!({"FullPath":"Windows\\x.exe","Header":{"RecordNumber":10,"Sequence":3},"Attributes":[
+        {"Header":{"TypeCode":"StandardInformation"},"Data":{"Created":DATE}}
+    ]});
+    let mut new = old.clone();
+    crate::output_schema::rename_fields(&mut new).unwrap();
+    let a = project(&old, &ctx("mft"), &policy());
+    let b = project(&new, &ctx("mft"), &policy());
+    assert_eq!(a.events.len(), 1);
+    assert_eq!(b.events.len(), 1);
+    assert_eq!(a.events[0].identity, b.events[0].identity);
+    assert_eq!(a.events[0].event.source_field, "Attributes[0].Data.Created");
+    assert_eq!(b.events[0].event.source_field, "Attr[0].Data.Created");
+    let exported = serde_json::to_value(&b.events[0].event).unwrap();
+    assert_eq!(exported["Comp"], "HOST");
+    assert!(exported.get("Computer").is_none());
+}
+
+#[test]
+fn ntfs_metadata_without_timestamps_is_untimed_and_supported() {
+    for artifact in ["boot", "secure-sds"] {
+        let result = project(
+            &json!({"SourcePath":"capture/$Boot","SecurityID":256}),
+            &ctx(artifact),
+            &policy(),
+        );
+        assert!(result.events.is_empty());
+        assert_eq!(result.counts.untimed_records, 1);
+        assert_eq!(result.counts.unsupported_records, 0);
+        assert!(
+            result
+                .diagnostics
+                .iter()
+                .any(|d| d.reason.contains("No usable mapped event timestamp"))
+        );
+    }
+}

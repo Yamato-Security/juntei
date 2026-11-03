@@ -79,7 +79,7 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `FileCount` | Number of loaded-file references recorded. |
 | `Findings` | Juntei observations such as relocated system binaries or suspicious execution paths. Review manually. |
 | `Files` | Loaded/referenced files with available NTFS references. Excellent DLL/path pivot, not proof of file intent. |
-| `Directories` | Directory strings associated with startup. Useful when individual loaded-file paths are incomplete. |
+| `Dir` | Directory strings associated with startup. Useful when individual loaded-file paths are incomplete. |
 
 ## Timeline CSV fields (`-T`)
 

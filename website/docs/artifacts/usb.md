@@ -137,7 +137,7 @@ letters, and how many volumes belong to USB storage devices without a device key
 | `DriveLetters` | The drive letters whose `MountedDevices` data is the volume's. |
 | `VolumeGUID`, `VolumeData` | The volume's GUID, and what its `MountedDevices` data says it is on: a device path, an MBR disk signature and partition offset, or a GPT partition. |
 | `VolumeNames`, `VolumeSerials` | Names Explorer gave the device or its volume, ReadyBoost labels, and volume serial numbers (`1234-ABCD`). |
-| `Users` | The users whose `MountPoints2` has the volume, with that key's last write (JSON: `Username`, `MountPoints2LastWritten`, `SourcePath`). |
+| `User` | The users whose `MountPoints2` has the volume, with that key's last write (JSON: `User`, `MountPoints2LastWritten`, `SourcePath`). |
 | `FoundIn`, `SourceKeys` | Where it was found (`Enum`, `MountedDevices`, `Windows Portable Devices`, `EMDMgmt`, `MountPoints2`), and every key and value it was joined from. |
 | `KeyPath`, `KeyLastWrittenUTC` | The device's instance key and its last write. |
 | `SourcePath`, `SoftwarePath` | The `SYSTEM` hive, and the `SOFTWARE` hive when it gave something. |
@@ -151,7 +151,7 @@ letters, and how many volumes belong to USB storage devices without a device key
 2. Note each device's vendor, product, serial number, volume GUID, drive letter and volume serial
    number, and look for them in LNK files, Jump Lists, ShellBags and the `$MFT` (paths on that
    drive letter or volume).
-3. Check `Users` for who had the volume mounted, and when (the `MountPoints2` key's last write).
+3. Check `User` for who had the volume mounted, and when (the `MountPoints2` key's last write).
 4. Look for `volume` records that name a USB storage device: devices whose keys were removed.
 5. Correlate with the event logs for every connection, not only the last.
 6. Use `parse-registry read --recover-deleted` for deleted device keys.

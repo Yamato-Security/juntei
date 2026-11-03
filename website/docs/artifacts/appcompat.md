@@ -92,7 +92,7 @@ uses.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath`, `HiveType` | Host, hive file, and `SOFTWARE` or `NTUSER.DAT`. |
-| `Username`, `UserSID` | A user hive's profile folder name, and its SID from the system's `ProfileList`. |
+| `User`, `UserSID` | A user hive's profile folder name, and its SID from the system's `ProfileList`. |
 | `Source`, `Scope` | `layers`, `pca_store`, `pca_persisted`, `cit_module`, `cit_system`, `installed_sdb`, `custom_sdb`; `machine` or `user`. |
 | `Path` | The program (the value's name), a path or command line in a CIT database, or the program a shim database applies to. |
 | `Layers` | The compatibility layers, as written (`~ RUNASADMIN`). |

@@ -451,12 +451,14 @@ fn write_records(
     if output_type == PrefetchOutputType::Csv {
         let mut csv = csv::Writer::from_writer(w);
         if timeline_mode {
-            csv.write_record(TIMELINE_CSV_HEADER)?;
+            csv.write_record(crate::output_schema::labels(
+                TIMELINE_CSV_HEADER.iter().copied(),
+            )?)?;
             for (t, r) in timeline(parsed) {
                 csv.write_record(timeline_csv_row(t, r))?;
             }
         } else {
-            csv.write_record(CSV_HEADER)?;
+            csv.write_record(crate::output_schema::labels(CSV_HEADER.iter().copied())?)?;
             for r in parsed {
                 csv.write_record(csv_row(r))?;
             }

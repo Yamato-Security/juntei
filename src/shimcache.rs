@@ -504,7 +504,7 @@ fn write_records(
     let records = records(parsed);
     if output_type == ShimcacheOutputType::Csv {
         let mut csv = csv::Writer::from_writer(w);
-        csv.write_record(CSV_HEADER)?;
+        csv.write_record(crate::output_schema::labels(CSV_HEADER.iter().copied())?)?;
         for r in &records {
             csv.write_record(csv_row(r))?;
         }

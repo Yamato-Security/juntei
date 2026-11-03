@@ -281,7 +281,7 @@ struct Record<'a> {
     control_set: Option<String>,
     #[serde(rename = "IsCurrentControlSet")]
     is_current_control_set: Option<bool>,
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: Option<&'a str>,
     #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,

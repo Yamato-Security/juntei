@@ -138,6 +138,7 @@ pub fn empty_time(value: &str) -> bool {
 #[serde(rename_all = "PascalCase")]
 pub struct Event {
     pub timestamp: String,
+    #[serde(rename = "Comp", alias = "Computer")]
     pub computer: String,
     pub artifact: String,
     pub timestamp_type: String,
@@ -192,6 +193,7 @@ pub struct Diagnostic {
     pub parsed_file: String,
     pub input_record: u64,
     pub location: String,
+    #[serde(rename = "Comp", alias = "Computer")]
     pub computer: String,
     pub artifact: String,
     pub source_file: String,
@@ -232,10 +234,14 @@ pub type ArtifactCounts = BTreeMap<String, Counts>;
 pub fn field<'a>(value: &'a Value, name: &str) -> Option<(&'a str, &'a Value)> {
     let object = value.as_object()?;
     object
-        .get_key_value(name)
+        .get_key_value(crate::output_schema::field_name(name))
+        .or_else(|| object.get_key_value(name))
         .or_else(|| {
-            name.strip_suffix("UTC")
-                .and_then(|key| object.get_key_value(key))
+            name.strip_suffix("UTC").and_then(|key| {
+                object
+                    .get_key_value(crate::output_schema::field_name(key))
+                    .or_else(|| object.get_key_value(key))
+            })
         })
         .map(|(key, value)| (key.as_str(), value))
 }

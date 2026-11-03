@@ -67,7 +67,7 @@ juntei parse-registry sam -d evidence/ -t jsonl \
 |---|---|
 | `Host`, `SourcePath` | Host context and exact SAM hive. |
 | `RID` | Relative Identifier. Strong account identity pivot; 500 is built-in Administrator. |
-| `Username` | Current local account name. Can be renamed; correlate by RID. |
+| `User` | Current local account name. Can be renamed; correlate by RID. |
 | `FullName`, `Comment`, `UserComment` | Descriptive text; attacker-controlled and useful for masquerading review. |
 | `AccountFlags` | Decoded states such as disabled, locked out, password not required, normal account, password never expires. |
 | `AccountFlagsValue` | Raw numeric flags for validation and unsupported bits. |

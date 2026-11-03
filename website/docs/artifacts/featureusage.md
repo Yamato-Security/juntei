@@ -56,7 +56,7 @@ Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage               Progr
   starts from the taskbar.
 - **Packaged apps and paths.** An application is named as Windows grouped its windows: a
   packaged app's ID, an ID a program set for itself (`Chrome`, `VMware.Workstation.vmui`), or a
-  path. `ApplicationPath` gives the path with a known folder's GUID replaced by the folder's
+  path. `AppPath` gives the path with a known folder's GUID replaced by the folder's
   default path.
 - **Default pins.** New profiles get default pins (File Explorer, Edge, the Store); on Windows 10
   and later they say `SystemPinned`. A `UserPinned` pin is the user's choice.
@@ -87,7 +87,7 @@ Output:
 ```bash
 juntei parse-registry featureusage -d evidence/ -o featureusage.csv
 juntei parse-registry featureusage -f NTUSER.DAT -t jsonl \
-  | jq 'select(.Source == "AppSwitched") | [.Count, .ApplicationPath // .Application]'
+  | jq 'select(.Source == "AppSwitched") | [.Count, .AppPath // .App]'
 ```
 
 The summary lists records by source, when each hive's FeatureUsage started counting, the
@@ -97,10 +97,10 @@ applications switched to most, the recent apps and items (newest first) and the 
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList`, and the hive. |
+| `Host`, `User`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList`, and the hive. |
 | `Source` | `AppSwitched`, `AppLaunch`, `ShowJumpView`, `AppBadgeUpdated`, `TrayButtonClicked` (FeatureUsage), `RecentApps`, `RecentItems`, `Taskband` or `ProgramsCache`. |
-| `Application` | A FeatureUsage value's name, a recent app's `AppId`, or a pin's application user model ID. |
-| `ApplicationPath` | `Application` as a path, a known folder's GUID replaced by its default path; empty for IDs. |
+| `App` | A FeatureUsage value's name, a recent app's `AppId`, or a pin's application user model ID. |
+| `AppPath` | `App` as a path, a known folder's GUID replaced by its default path; empty for IDs. |
 | `Count` | A FeatureUsage count, or a recent app's `LaunchCount`. |
 | `LastAccessedUTC` | A recent app's or item's `LastAccessedTime`. |
 | `ItemPath` | A recent item's `Path` (or a recent app's `AppPath`); a pin's or cached program's shell item path (`User Pinned\TaskBar\File Explorer.lnk`, `Applications\<app ID>`); a `FavoritesResolve` link's path. |

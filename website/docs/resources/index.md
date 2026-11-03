@@ -17,6 +17,8 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 - [Microsoft Open Specifications: NTFS](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-ntfs/)
 - [Microsoft: Change Journals](https://learn.microsoft.com/en-us/windows/win32/fileio/change-journals)
 - [Microsoft: USN_RECORD_V2](https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-usn_record_v2)
+- [Microsoft: Security descriptors](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-descriptors) and [SDDL](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format)
+- [Microsoft Open Specifications: MS-DTYP](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/) — security descriptors, ACEs and conditional expressions.
 - [libfsntfs format documentation](https://github.com/libyal/libfsntfs/tree/main/documentation)
 - [Omer Ben-Amram's mft parser](https://github.com/omerbenamram/mft)
 - [dfir_ntfs](https://github.com/msuhanov/dfir_ntfs) — NTFS parser with INDX record and index-slack carving.
@@ -64,7 +66,7 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 ## Juntei parser projects
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`$MFT`, `$I30`, USN Journal, `$LogFile`)
+- [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`$MFT`, `$I30`, USN Journal, `$LogFile`, `$Boot`, `$Secure:$SDS`)
 - [ys-prefetch-parser](https://github.com/Yamato-Security/ys-prefetch-parser)
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)

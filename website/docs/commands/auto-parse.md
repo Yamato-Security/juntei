@@ -48,7 +48,7 @@ For each discovered system, the computer name is chosen in this order:
    scaffolding skipped and a suffix such as `_F.…` removed.
 
 Names are made safe for use as directory names. Duplicate names receive a numeric suffix in both
-their output directory and `Computer` value so separate systems remain distinguishable in JSON.
+their output directory and `Comp` value so separate systems remain distinguishable in JSON.
 The manifest keeps the hostname exactly as discovered in a separate `Hostname` field.
 
 When it lists the systems it found, `auto-parse` also prints each one's time zone from its `SYSTEM`
@@ -68,6 +68,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - Prefetch records and a separate Prefetch execution timeline
 - USN Journal
 - `$I30` directory indexes
+- `$Boot` boot sectors and `$Secure:$SDS` security descriptors
 - SRUM
 - LNK shortcuts
 - Jump Lists
@@ -151,12 +152,16 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-ShimCache.csv
 │   │   └── Registry-ShimCache-logs.txt
 │   ├── FileSystem/
+│   │   ├── Boot.csv
+│   │   ├── Boot-logs.txt
 │   │   ├── I30.csv
 │   │   ├── I30-logs.txt
 │   │   ├── LogFile.csv
 │   │   ├── LogFile-logs.txt
 │   │   ├── MFT.csv
 │   │   ├── MFT-logs.txt
+│   │   ├── SecureSDS.csv
+│   │   ├── SecureSDS-logs.txt
 │   │   ├── UsnJournal.csv
 │   │   └── UsnJournal-logs.txt
 │   ├── NetworkActivity/
@@ -223,7 +228,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
-| `FileSystem` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
+| `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
 | `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
@@ -244,7 +249,7 @@ in `NetworkActivity`, `ProcessExecution` and `SystemInformation`, with a shared
 `SystemInformation/SRUM-logs.txt` file. No `logs/` subdirectories are created.
 
 Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
-`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
+`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Read.csv`, and
 `DefenderQuarantine.csv`. Registry-derived tables use the `Registry-` prefix, including
@@ -265,7 +270,7 @@ record's `Artifact` identifier is `mft` for queries. Multi-table outputs have
 in `SystemInformation`.
 
 
-`manifest.json` records the original discovered `Hostname`, the unique output/record `Computer`
+`manifest.json` records the original discovered `Hostname`, the unique output/record `Comp`
 identity, hostname provenance, evidence paths, artifact `Category`, command lines, duration, exit
 code, result path, log path, the requested JSONL timeline and any export error, whether Defender extraction was requested,
 and whether each task
@@ -277,7 +282,7 @@ MFT, LogFile or USN Journal task shows its individual input size. Estimates excl
 logs and enrichment files and do not predict the size of the parsed output.
 
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
-parser task. It includes `Computer`, original `Hostname`, `FQDN`, `HostnameSource`, `EvidenceRoot`,
+parser task. It includes `Comp`, original `Hostname`, `FQDN`, `HostnameSource`, `EvidenceRoot`,
 `Artifact`, `Category`, `OutputType`, `Purpose`, `Status`, `DurationMs`, `ExitCode`, `Output`, `OutputFiles`, `Log`,
 `Error`, and `Command`. `Purpose` is `artifact` for the categorized results or `json_timeline` for
 the additional native JSONL pass used with CSV. `OutputType` is the actual parser output format.
@@ -312,7 +317,7 @@ sibling files such as `FileSystem/MFT-2.csv` and `FileSystem/MFT-2-logs.txt`.
 
 Every JSON or JSONL record receives two top-level fields:
 
-- `Computer`: the source system.
+- `Comp`: the source system.
 - `Artifact`: the Juntei parser that produced the record, such as `mft` or `prefetch-timeline`.
 
 `-j, --json-timeline <FILE>` creates one additional JSONL file, regardless of the individual
@@ -348,7 +353,7 @@ All modes use the same SIEM record structure. The dataset keeps native timestamp
 fields; it does not invent a common event timestamp or globally sort heterogeneous artifacts.
 
 ```bash
-jq -c 'select(.Computer == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
+jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
 jq -r 'select(.Artifact == "mft") | .FullPath? // empty' parsed/timeline.jsonl
 ```
 

@@ -88,7 +88,7 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
         79
     );
     let quota = values.iter().find(|v| v["LSN"] == 1050704_u64).unwrap();
-    assert_eq!(quota["FileName"], "$Quota");
+    assert_eq!(quota["Filename"], "$Quota");
     assert_eq!(quota["MetadataSide"], "Undo");
     assert_eq!(quota["ParentPath"], ".");
     assert_eq!(quota["CreatedOn"], "2018-09-24T07:53:17.2748380Z");
@@ -111,7 +111,7 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
     );
     let data = values.iter().find(|v| v["LSN"] == 1052517_u64).unwrap();
     assert_eq!(data["FileSize"], 8);
-    assert_eq!(data["AttributeType"], 128);
+    assert_eq!(data["AttrType"], 128);
     for lsn in [1051174_u64, 1051191] {
         let update = values.iter().find(|v| v["LSN"] == lsn).unwrap();
         assert!(
@@ -121,7 +121,7 @@ fn real_log_all_formats_agree_and_preserve_redo_and_undo() {
     }
     let partial_times = values.iter().find(|v| v["LSN"] == 1053039_u64).unwrap();
     assert_eq!(partial_times["EntryNumber"], 0);
-    assert_eq!(partial_times["AttributeType"], 16);
+    assert_eq!(partial_times["AttrType"], 16);
     assert!(
         quota["UndoFileNames"][0]["Created"]["Filetime"]
             .as_u64()
@@ -616,7 +616,7 @@ fn auto_parse_outputs_and_jsonl_timeline_include_logfile_and_provenance() {
             assert!(
                 values
                     .iter()
-                    .all(|v| v["Computer"] == "HOST1" && v["Artifact"] == "logfile")
+                    .all(|v| v["Comp"] == "HOST1" && v["Artifact"] == "logfile")
             );
         }
     }

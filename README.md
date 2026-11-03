@@ -54,6 +54,8 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Transaction log** (`$LogFile`) — Redo and undo metadata that can preserve earlier filenames, timestamps, and directory entries. | NTFS |
 | **USN journal** (`$UsnJrnl:$J`) — Records of file creation, modification, renaming, and deletion. | NTFS |
 | **Directory indexes** (`$I30`) — Directory entries and possible deleted or renamed filenames left in index slack. | NTFS |
+| **Security descriptors** (`$Secure:$SDS`) — Owners, DACLs and SACLs of files by the `$MFT`'s security ID, readable and as SDDL. | NTFS |
+| **Boot sector** (`$Boot`) — Volume serial number (the one LNK and Prefetch files record), geometry, `$MFT` location, and a boot code hash to compare across hosts. | NTFS |
 | **Amcache** (`Amcache.hve`) — Inventory of executable paths, hashes, publisher metadata, and devices; an entry alone does not prove execution. | Registry |
 | **ShimCache / AppCompatCache** (`SYSTEM` hive) — Cached application paths, timestamps, and compatibility flags; an entry alone does not prove execution. | Registry |
 
