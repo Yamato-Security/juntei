@@ -884,7 +884,6 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         .count();
     p(None, "", true);
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     p_label(no_color, "Succeeded: ", &fmt_num(succeeded));
     p_label(no_color, "Not collected / skipped: ", &fmt_num(skipped));
     p_label(no_color, "Failed: ", &fmt_num(failed));
@@ -918,7 +917,6 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             );
         }
     }
-    p(None, "", true);
 
     i32::from(failed > 0 || succeeded == 0 || timeline_failed)
 }

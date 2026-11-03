@@ -342,6 +342,18 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         r.stdout
     );
     assert!(!r.stdout.contains("Per-parser messages are saved"));
+    // The summary has no blank line after its heading or before the elapsed time.
+    assert!(
+        r.stdout.contains("Results Summary:\nSucceeded: "),
+        "{}",
+        r.stdout
+    );
+    let lines: Vec<&str> = r.stdout.lines().collect();
+    let elapsed = lines
+        .iter()
+        .position(|line| line.starts_with("Elapsed time: "))
+        .unwrap();
+    assert!(!lines[elapsed - 1].is_empty(), "{}", r.stdout);
     assert!(
         csv.join("HOST1/Persistence/PersistenceHunter.csv")
             .is_file()
