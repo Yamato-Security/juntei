@@ -62,7 +62,7 @@ juntei persistence-hunter -d evidence/ -o PersistenceHunter.csv --coverage Cover
 
 The evidence can be a mounted Windows volume, a Velociraptor collection, or a directory containing
 several collected computers. Computers are kept separate during analysis, and every result includes
-`Computer`. Collected filename escaping is decoded when resolving Windows paths.
+`Comp`. Collected filename escaping is decoded when resolving Windows paths.
 
 For one hive:
 
@@ -232,7 +232,7 @@ warnings go to stderr. Without either option, Juntei prints a summary and up to 
 
 | Fields | How to interpret them |
 |---|---|
-| `Computer`, `CheckID`, `Technique`, `MitreID` | Which computer and persistence mechanism the row describes |
+| `Comp`, `CheckID`, `Technique`, `MitreID` | Which computer and persistence mechanism the row describes |
 | `Path`, `Value` | The registry location, file, task, or recovered record and its configured content |
 | `Description`, `References` | Why the mechanism matters and where to read more |
 | `AccessGained` | The mechanism's usual scope (`USER` or `SYSTEM`; BITS can also identify `LOCAL_SERVICE`/`NETWORK_SERVICE`); not proof that a specific command achieved that privilege |
@@ -259,7 +259,7 @@ Security 4698 or Task Scheduler 106, service installation with System 7045, and 
 configuration with original `$MFT` timestamps. The provenance appears in `ChangeSource`.
 An event can date a configuration change without proving that the configured payload ran.
 Local System event 6011 can prove an earlier computer name. The hunter follows verified rename
-chains anchored to the collected computer, preserving its current `Computer` value while recording
+chains anchored to the collected computer, preserving its current `Comp` value while recording
 the original event computer and rename-record proof in `ChangeSource`. Unproven foreign names,
 archived logs, forwarded logs, and another Windows installation are not accepted through this rule.
 

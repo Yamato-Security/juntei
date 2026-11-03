@@ -89,7 +89,7 @@ UserAssist is turned off.
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList` (with the system's `SOFTWARE` hive), and the hive. |
+| `Host`, `User`, `UserSID`, `SourcePath` | Host, the profile folder's name, the user's SID from the system's `ProfileList` (with the system's `SOFTWARE` hive), and the hive. |
 | `GUID`, `Kind` | The `{GUID}` key and what it holds (`executable`, `shortcut`, `active_desktop`, `internet_toolbar`, `other`). |
 | `NameRot13`, `Name` | The value's name as stored, and decoded. |
 | `Path` | The decoded name as a path, with a known folder's GUID replaced by its default path; empty for app IDs and shell items. |

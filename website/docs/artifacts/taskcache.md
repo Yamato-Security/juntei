@@ -74,7 +74,7 @@ juntei parse-registry taskcache -f SOFTWARE -t jsonl \
 | `TreeKeyLastWrittenUTC`, `TaskKeyLastWrittenUTC` | Key-level changes for each cache side; not exact creation/run times. |
 | `ActionIndex` | Zero-based action within the task. One task can produce multiple rows. |
 | `ActionType` | `exec`, `com_handler`, `send_email`, or `show_message`. |
-| `Executable`, `Arguments`, `WorkingDirectory` | Effective execution action. Interpret quoting, variables, relative paths, and LOLBins. |
+| `Executable`, `Args`, `WorkingDirectory` | Effective execution action. Interpret quoting, variables, relative paths, and LOLBins. |
 | `COM-ClassID`, `ActionData` | COM handler CLSID and data, or legacy email/message payload. Resolve CLSID separately. |
 | `Context` | Principal context encoded with actions (`LocalSystem`, `Author`, etc.); configured identity, not registrar. |
 | `Author`, `URI`, `Description` | Task metadata. Easily attacker-controlled and not trust evidence. |

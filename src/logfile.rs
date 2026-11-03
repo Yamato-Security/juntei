@@ -328,7 +328,7 @@ fn read_one(
             stats.checkpoints += 1;
         }
         if let Some(w) = writer.as_mut() {
-            let value = record_value(
+            let mut value = record_value(
                 record,
                 path,
                 mft.filter(|_| paths.is_some()),
@@ -337,11 +337,16 @@ fn read_one(
                 truncated.contains(&record.lsn),
                 opts.raw_data,
             );
+            crate::output_schema::rename_fields(&mut value)?;
             let result = if w.is_csv() {
                 w.csv(
                     &CSV_HEADER
                         .iter()
-                        .map(|key| csv_cell(&value[*key]))
+                        .map(|key| {
+                            csv_cell(
+                                crate::output_schema::field(&value, key).unwrap_or(&Value::Null),
+                            )
+                        })
                         .collect::<Vec<_>>(),
                 )
             } else {

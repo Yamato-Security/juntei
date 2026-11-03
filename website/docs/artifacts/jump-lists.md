@@ -73,7 +73,7 @@ single `JumpLists.json` or `JumpLists.jsonl` files; the record structure is unch
 | Host/path | `Hostname`, `MacAddress`, `Path`, `DisplayPath`: target location and tracking context. Host/MAC is not sole attribution. |
 | Tracking IDs | `FileBirthDroid`, `FileDroid`, `VolumeBirthDroid`, `VolumeDroid`: correlate moved targets and embedded LNK tracking. |
 | Notes | `Notes`: tells you about unattached streams, recovered leftovers, or other parser context. |
-| Embedded LNK | `TargetCreated`, `TargetModified`, `TargetAccessed`, `FileSize`, `RelativePath`, `WorkingDirectory`, `FileAttributes`, `HeaderFlags`, `DriveType`, `VolumeSerialNumber`, `VolumeLabel`, `LocalPath`, `CommonPath`, `TargetIDAbsolutePath`, `TargetMFTEntryNumber`, `TargetMFTSequenceNumber`, `MachineID`, `MachineMACAddress`, `TrackerCreatedOn`, `ExtraBlocksPresent`, `Arguments`: interpret as described on [LNK Shortcuts](lnk.md). |
+| Embedded LNK | `TargetCreated`, `TargetModified`, `TargetAccessed`, `FileSize`, `RelativePath`, `WorkingDirectory`, `FileAttributes`, `HeaderFlags`, `DriveType`, `VolumeSerialNumber`, `VolumeLabel`, `LocalPath`, `CommonPath`, `TargetIDAbsolutePath`, `TargetMFTEntryNumber`, `TargetMFTSequenceNumber`, `MachineID`, `MachineMACAddress`, `TrackerCreatedOn`, `ExtraBlocksPresent`, `Args`: interpret as described on [LNK Shortcuts](lnk.md). |
 | Additional LNK | `NetworkPath`, `Name`, `IconLocation`: network and presentation fields from the embedded shortcut. |
 | Validation | `Problems`: missing streams, truncation, count disagreement, or link damage. |
 

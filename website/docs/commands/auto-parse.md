@@ -48,7 +48,7 @@ For each discovered system, the computer name is chosen in this order:
    scaffolding skipped and a suffix such as `_F.…` removed.
 
 Names are made safe for use as directory names. Duplicate names receive a numeric suffix in both
-their output directory and `Computer` value so separate systems remain distinguishable in JSON.
+their output directory and `Comp` value so separate systems remain distinguishable in JSON.
 The manifest keeps the hostname exactly as discovered in a separate `Hostname` field.
 
 When it lists the systems it found, `auto-parse` also prints each one's time zone from its `SYSTEM`
@@ -270,7 +270,7 @@ record's `Artifact` identifier is `mft` for queries. Multi-table outputs have
 in `SystemInformation`.
 
 
-`manifest.json` records the original discovered `Hostname`, the unique output/record `Computer`
+`manifest.json` records the original discovered `Hostname`, the unique output/record `Comp`
 identity, hostname provenance, evidence paths, artifact `Category`, command lines, duration, exit
 code, result path, log path, the requested JSONL timeline and any export error, whether Defender extraction was requested,
 and whether each task
@@ -282,7 +282,7 @@ MFT, LogFile or USN Journal task shows its individual input size. Estimates excl
 logs and enrichment files and do not predict the size of the parsed output.
 
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
-parser task. It includes `Computer`, original `Hostname`, `FQDN`, `HostnameSource`, `EvidenceRoot`,
+parser task. It includes `Comp`, original `Hostname`, `FQDN`, `HostnameSource`, `EvidenceRoot`,
 `Artifact`, `Category`, `OutputType`, `Purpose`, `Status`, `DurationMs`, `ExitCode`, `Output`, `OutputFiles`, `Log`,
 `Error`, and `Command`. `Purpose` is `artifact` for the categorized results or `json_timeline` for
 the additional native JSONL pass used with CSV. `OutputType` is the actual parser output format.
@@ -317,7 +317,7 @@ sibling files such as `FileSystem/MFT-2.csv` and `FileSystem/MFT-2-logs.txt`.
 
 Every JSON or JSONL record receives two top-level fields:
 
-- `Computer`: the source system.
+- `Comp`: the source system.
 - `Artifact`: the Juntei parser that produced the record, such as `mft` or `prefetch-timeline`.
 
 `-j, --json-timeline <FILE>` creates one additional JSONL file, regardless of the individual
@@ -353,7 +353,7 @@ All modes use the same SIEM record structure. The dataset keeps native timestamp
 fields; it does not invent a common event timestamp or globally sort heterogeneous artifacts.
 
 ```bash
-jq -c 'select(.Computer == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
+jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
 jq -r 'select(.Artifact == "mft") | .FullPath? // empty' parsed/timeline.jsonl
 ```
 

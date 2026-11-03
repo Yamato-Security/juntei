@@ -123,7 +123,7 @@ count in the summary; they do not count as parse failures.
 | `LogVersion` | Version from the latest readable restart page, typically `1.1` or `2.0`; null if no readable restart page survives. |
 | `MFT-Source` | The MFT used for current path enrichment, if present. It must belong to the same volume. |
 
-In `auto-parse` JSON/JSONL, `Computer` and `Artifact` are added as for other parsers. The task's
+In `auto-parse` JSON/JSONL, `Comp` and `Artifact` are added as for other parsers. The task's
 `.txt` log holds diagnostics; the manifests say whether the task succeeded, failed, or was skipped.
 Salvageable damage can produce a successful task with a nonzero `Parse problems` count in its log.
 
@@ -158,11 +158,11 @@ They are a browsing aid; use the separate side fields for a complete before/afte
 |---|---|
 | `MetadataSide` | `Redo` or `Undo`, identifying the side supplying the convenient filename/timestamp columns. |
 | `EntryNumber`, `SequenceNumber` | File described by decoded filename/file-record/attribute metadata or a partial `$STANDARD_INFORMATION` timestamp update, with the sequence when known. Empty for a directory-entry update that does not identify the child, and raw size/run-list updates. Use `TargetEntryNumber` for the affected record. |
-| `FileName` | Preferred decoded name; all names remain in the side arrays, including DOS aliases and hard links. |
+| `Filename` | Preferred decoded name; all names remain in the side arrays, including DOS aliases and hard links. |
 | `ParentEntryNumber`, `ParentSequenceNumber`, `ParentPath` | Parent reference and current MFT path; not a historical-path reconstruction. |
 | `CreatedOn`, `ContentModifiedOn`, `RecordModifiedOn`, `LastAccessedOn` | UTC metadata times, to 100 ns. These are not transaction timestamps. Missing/invalid times remain empty/null. |
 | `FileSize`, `FileAttributes` | Size and numeric Windows flags from the selected metadata; directory-entry values can be stale. `$DATA` attributes and decoded file records can supply a more direct size. |
-| `AttributeType` | Numeric type of a decoded attribute record; 48 for a decoded directory-entry metadata update. Separate from the open attribute targeted by the operation. |
+| `AttrType` | Numeric type of a decoded attribute record; 48 for a decoded directory-entry metadata update. Separate from the open attribute targeted by the operation. |
 
 ### Complete redo/undo metadata and payloads
 
@@ -178,7 +178,7 @@ They are a browsing aid; use the separate side fields for a complete before/afte
 
 Each filename object includes the file and parent references (`Raw`, `EntryNumber`,
 `SequenceNumber`), `Name`, `NameEscaped`, `Namespace`, current `ParentPath`, four timestamps,
-`Size`, `AllocatedSize`, `Attributes` and `ReparseValue`. `NameEscaped` identifies invalid UTF-16
+`Size`, `AllocatedSize`, `Attr` and `ReparseValue`. `NameEscaped` identifies invalid UTF-16
 represented with escapes. A reparse value can be a reparse tag or extended-attribute size.
 
 Timestamp objects preserve both `Utc` and the integer `Filetime`; a sentinel or invalid value can

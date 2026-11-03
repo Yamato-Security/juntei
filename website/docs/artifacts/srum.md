@@ -109,7 +109,7 @@ is the computer directory and `Category` identifies its shared log/metadata loca
 
 With multiple databases, filenames gain `-Source1`, `-Source2`, etc., before the extension.
 The log preserves the original capture aliases, and JSON/JSONL rows retain their `SourceFile`,
-`Table`, `Provider`, `Computer` and `Artifact` provenance. No table is copied into several
+`Table`, `Provider`, `Comp` and `Artifact` provenance. No table is copied into several
 categories. The combined `-j` SIEM timeline includes every retained SRUM record once.
 
 Standalone `parse-ese srum` keeps its requested output location. Its CSV table files also have
@@ -129,7 +129,7 @@ the `SRUM-` prefix; explicit JSON/JSONL output filenames remain analyst-selected
 | `EXE-Timestamp` | Time embedded in a composite application identity where present; not the row's usage time. |
 | `AppType` | `NormalApp`, `Service`, `ModernApp`, or `Object`; controls how `EXE-Info` should be interpreted. |
 | `SID` | Resolved account SID from `UserID`. Strong user/service identity pivot. |
-| `UserName` | Friendly profile name enriched from `SOFTWARE`; may be null while `SID` remains valid. |
+| `User` | Friendly profile name enriched from `SOFTWARE`; may be null while `SID` remains valid. |
 | `UserID`, `AppID` | Raw numeric references into `SruDbIdMapTable`; preserve for unresolved or duplicate names. |
 | `IsLt` | `true` for the long-term EnergyUsage table, `false` for short-term. |
 | `InterfaceLUID` | Raw network interface LUID from provider rows. |
@@ -137,7 +137,7 @@ the `SRUM-` prefix; explicit JSON/JSONL output filenames remain analyst-selected
 | `L2ProfileID` | Numeric network profile reference. |
 | `ProfileName` | Wi-Fi/profile name enriched from `SOFTWARE`; potentially sensitive and not proof of current connection. |
 | `ConnectStartTime`, `EventTimestamp`, `EndTime`, `StartTime` | Known provider FILETIME columns decoded to UTC. Their exact meaning belongs to the provider, not a universal execution time. |
-| Provider-specific columns | Original catalog names such as `BytesSent`, `BytesRecvd`, CPU/disk counters, durations, counts, flags, or estimates. Interpret units according to the provider and compare rows within the same schema. |
+| Provider-specific columns | Exported provider columns such as `BytesSent`, `BytesReceived` (the database column `BytesRecvd`), CPU/disk counters, durations, counts, flags, or estimates. Interpret units according to the provider and compare rows within the same schema. |
 
 ## Diagnostic fields (`--include-value-state`)
 

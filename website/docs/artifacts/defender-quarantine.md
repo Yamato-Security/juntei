@@ -78,7 +78,7 @@ treated as malware.
 | `Path`, `PhysicalPath` | Original logical/physical location. Primary correlation pivot; preserve exact spelling. |
 | `FileSize` | Size recorded by the resource metadata. Compare with `ContentSize` and MFT. |
 | `CreationTime`, `LastAccessTime`, `LastWriteTime` | Metadata captured for the quarantined resource; separate from quarantine time and vulnerable to timestomping. |
-| `Attributes` | Recorded file attributes. Hidden/system status can be useful context. |
+| `Attr` | Recorded file attributes. Hidden/system status can be useful context. |
 | `Owner` | SID from the recovered security descriptor; ownership is not necessarily executing user. |
 | `ZoneID`, `ReferrerURL`, `HostURL` | Download-zone and URL values from `Zone.Identifier`. Strong origin leads when present; ADS can be absent/removed. |
 | `ContentSize` | Actual recovered primary content size. Compare with recorded `FileSize`. |

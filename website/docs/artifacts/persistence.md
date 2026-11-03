@@ -42,7 +42,7 @@ Collect each hive with its transaction logs. User hives are in `Users\<name>\NTU
   command is checked against it, and it is found the same way the host's `SYSTEM` hive is. An
   override is the COM hijacking pattern (T1546.015). OneDrive and other per-user installs also
   register classes of their own that override nothing.
-- **`ImagePath` and `Arguments` are split from the command line only where that can be told.**
+- **`ImagePath` and `Args` are split from the command line only where that can be told.**
   - A quoted program is split at its closing quote.
   - A first word without a folder is taken as the program (`cmd /c …`).
   - Otherwise the split is at the shortest start that ends with a program's extension.
@@ -97,7 +97,7 @@ by path, symbolic link or hard link. When it can't tell, it doesn't write.
 | `AttackTechnique` | MITRE ATT&CK technique, where one fits (`T1547.001`, `T1546.012`, …). |
 | `KeyPath`, `ValueName` | The key under the hive's root (names as written) and the value (empty: the default value). |
 | `Data` | The value's text, or one item of a list. Empty when it can't be read, or when only `StartupApproved` names the entry. |
-| `ImagePath`, `Arguments` | The program or DLL, and the arguments, where they can be told apart (see above). |
+| `ImagePath`, `Args` | The program or DLL, and the arguments, where they can be told apart (see above). |
 | `Enabled`, `DisabledAtUTC` | What `StartupApproved`, `LoadAppInit_DLLs`, `GlobalFlag` (with `ReportingMode`), `UseFilter`, `IsInstalled`, the time provider's `Enabled` or `ScreenSaveActive` says. Empty when nothing says. |
 | `Details` | More: what a pending rename does, the COM class's name, `ReportingMode`, `FilterFullPath`, an Active Setup `ShellComponent`, … |
 | `OverridesMachineRegistration` | For a user's COM class or command: whether the machine registers the same one. Empty without the system's `SOFTWARE` hive. |

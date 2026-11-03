@@ -31,7 +31,7 @@ and volume metadata when possible.
 - `SequenceNumber` distinguishes generations of the same entry number. Match entry **and** sequence.
 - `$STANDARD_INFORMATION` (`0x10`) and `$FILE_NAME` (`0x30`) timestamps have different update
   behavior. Neither is immune to manipulation.
-- `SI-BeforeFN`, `MicrosecondZeros`, and `Copied` are leads, not automatic timestomping verdicts.
+- `SI<FN`, `ZeroU-Secs`, and `Copied` are leads, not automatic timestomping verdicts.
 - Hard links produce multiple `$FILE_NAME` attributes and paths for one file record.
 - NTFS can store several names (including DOS 8.3), alternate data streams, and extension records.
 - Access-time updates may be disabled, delayed, or coalesced.
@@ -106,16 +106,16 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `InUse` | Allocation flag at collection. `false` means the record is free/deleted, not that all bytes are intact. |
 | `ParentEntryNumber`, `ParentSequenceNumber` | Parent directory reference from `$FILE_NAME`. Validate both parts. |
 | `ParentPath` | Reconstructed parent path. Unknown/orphan markers expose unresolved ancestry. |
-| `FileName` | Name from the current row's `$FILE_NAME` or stream. One record can have several rows. |
+| `Filename` | Name from the current row's `$FILE_NAME` or stream. One record can have several rows. |
 | `Ext` | Convenience extension parsed from the name; not a trusted file-type determination. |
 | `Size` | Logical size associated with the row/stream. Sparse/compressed allocation can differ. |
 | `ReferenceCount` | NTFS hard-link reference count; compare with the number of surviving names cautiously. |
 | `ReparseTarget` | Decoded target for supported reparse points such as junctions/symlinks. Paths may redirect. |
 | `Dir` | Record has the directory flag. |
-| `ADS` | Record contains named alternate data streams. This does not make it malicious. |
+| `HasADS` | Record contains named alternate data streams. This does not make it malicious. |
 | `IsADS` | This row represents a named alternate data stream rather than the unnamed file data. |
-| `SI-BeforeFN` | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
-| `MicrosecondZeros` | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
+| `SI<FN` | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
+| `ZeroU-Secs` | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
 | `Copied` | Modified time precedes created time. Often consistent with file copy; not proof of attacker action. |
 | `SI-Flags` | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
 | `NameType` | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |

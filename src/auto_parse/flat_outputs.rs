@@ -140,7 +140,10 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
         }
         let Some(folder) = hosts
             .iter()
-            .find(|h| h.get("Computer").and_then(Value::as_str) == Some(task.computer.as_str()))
+            .find(|h| {
+                crate::output_schema::field(h, "Computer").and_then(Value::as_str)
+                    == Some(task.computer.as_str())
+            })
             .and_then(|h| h.get("OutputDirectory"))
             .and_then(Value::as_str)
         else {
@@ -165,7 +168,8 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
             stem.strip_prefix("Registry-").unwrap_or(stem)
         };
         for previous in previous.iter().filter(|p| {
-            p.get("Computer").and_then(Value::as_str) == Some(task.computer.as_str())
+            crate::output_schema::field(p, "Computer").and_then(Value::as_str)
+                == Some(task.computer.as_str())
                 && p.get("Artifact").and_then(Value::as_str) == Some(task.artifact)
         }) {
             if previous.get("Purpose").and_then(Value::as_str) != Some("json_timeline") {

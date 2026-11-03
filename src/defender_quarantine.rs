@@ -1138,7 +1138,7 @@ fn write_records(
 ) -> io::Result<()> {
     if output_type == DefenderQuarantineOutputType::Csv {
         let mut csv = csv::Writer::from_writer(w);
-        csv.write_record(CSV_HEADER)?;
+        csv.write_record(crate::output_schema::labels(CSV_HEADER.iter().copied())?)?;
         for r in records {
             csv.write_record(csv_row(r))?;
         }

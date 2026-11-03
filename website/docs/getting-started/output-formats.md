@@ -23,7 +23,7 @@ CSV column headers and JSON/JSONL field names use PascalCase, including Amcache 
 `SHA256`. A word following an acronym is separated with a hyphen: `IP-Address`, `MFT-Entry`,
 `USN-Journal`. With `jq`, quote a hyphenated field: `.["IP-Address"]`.
 
-The default MFT CSV uses shorter, readable headings such as `EntryNum`, `Ext`, `Dir`, `ADS`,
+The default MFT CSV uses shorter, readable headings such as `EntryNum`, `Ext`, `Dir`, `HasADS`,
 `Size`, `Created (SI)` and `Created (FN)`. See the [MFT field reference](../artifacts/mft.md)
 for its full CSV schema. Timestamp pairs follow MACB order: DataModified, Accessed,
 MetadataChanged, Created, with SI before FN. Quote headings containing spaces or punctuation
@@ -37,6 +37,41 @@ columns. A normalization collision is reported rather than silently dropping a f
 This changes previous export schemas. Regenerate existing results and update saved queries
 (for example, `.record_type` becomes `.RecordType`, and Amcache `full_path` becomes `FullPath`).
 Human-readable text reports and input/configuration formats keep their existing conventions.
+
+## Abbreviated field names
+
+The following labels apply to CSV, JSON and JSONL exports, including automatic parsing and
+manifests. Update saved `jq`, `xsv` and spreadsheet filters when regenerating older results.
+Only output labels change; evidence values and raw registry-value names keep their original spelling.
+
+| Previous label | Current label |
+|---|---|
+| `ADS` | `HasADS` |
+| `Application` | `App` |
+| `ApplicationCompany` | `AppCompany` |
+| `ApplicationCompanyRaw` | `AppCompanyRaw` |
+| `ApplicationPath` | `AppPath` |
+| `Arguments` | `Args` |
+| `Attributes` | `Attr` |
+| `AttributeType` | `AttrType` |
+| `BytesRecvd` | `BytesReceived` |
+| `Computer` | `Comp` |
+| `ComputerName` | `CompName` |
+| `ComputerNameLastWrittenUTC` | `CompNameLastWrittenUTC` |
+| `Directories` | `Dir` |
+| `FileName` | `Filename` |
+| `MicrosecondZeros` | `ZeroU-Secs` |
+| `SI-BeforeFN` | `SI<FN` |
+| `UserName` | `User` |
+| `Username` | `User` |
+| `UserNameSource` | `UserSource` |
+| `Users` | `User` |
+
+The native system-information JSON time is `CompNameLastWritten` (CSV:
+`CompNameLastWrittenUTC`). `HasADS` is a Boolean indicator; `Dir` in Prefetch contains the
+recorded directory list. `User` retains its artifact-specific type: a string for an account name,
+or the list of associated users in USB output. It does not imply an executing identity.
+Quote punctuation in queries: `."SI<FN"` and `.["ZeroU-Secs"]`.
 
 ## JSON
 
@@ -61,7 +96,7 @@ error so a pipe receives data only.
 
 `auto-parse -j timeline.jsonl` creates an additional JSONL dataset for a complete multi-host
 collection while retaining the categorized CSV results. Add `-t json` or `-t jsonl` to change the
-individual result format. Each record has `Computer` and `Artifact` fields so its source remains clear
+individual result format. Each record has `Comp` and `Artifact` fields so its source remains clear
 after SIEM ingestion.
 
 ## UTC and precision
