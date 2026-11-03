@@ -275,7 +275,6 @@ impl Totals {
 
 fn print_summary(t: &Totals, no_color: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let mut parsed = fmt_num(t.parsed);
     if t.failed > 0 {
         parsed.push_str(&format!(" (could not parse: {})", fmt_num(t.failed)));
@@ -310,7 +309,6 @@ fn print_summary(t: &Totals, no_color: bool) {
         );
     }
     p(None, if first { "" } else { ")" }, true);
-    p(None, "", true);
 }
 
 /// Refuse to overwrite existing results without `-C`, and a CSV directory that is a file.

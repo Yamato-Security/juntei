@@ -458,7 +458,6 @@ impl Stats {
 
     fn print(&self, no_color: bool) {
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(
             no_color,
             "UsrClass.dat and NTUSER.DAT hives parsed: ",
@@ -538,7 +537,6 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }
 

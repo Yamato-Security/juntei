@@ -173,6 +173,51 @@ fn json_documents(text: &str) -> Vec<Value> {
 }
 
 #[test]
+fn summaries_have_no_blank_lines_from_their_heading_to_the_elapsed_time() {
+    let output = tempfile::tempdir().unwrap();
+    let saved = output.path().join("saved.csv");
+    let runs: [&[&str]; 6] = [
+        &["parse-ntfs", "boot", "-f", "test_files/boot/Boot"],
+        &["parse-ntfs", "mft", "-f", "test_files/mft/MFT"],
+        &["parse-file", "lnk", "-d", "test_files/lnk"],
+        &["parse-file", "prefetch", "-d", "test_files/prefetch"],
+        &["parse-registry", "amcache", "-f", WIN10],
+        &[
+            "parse-registry",
+            "amcache",
+            "-f",
+            WIN10,
+            "-o",
+            saved.to_str().unwrap(),
+            "-t",
+            "jsonl",
+        ],
+    ];
+    for args in runs {
+        let r = run(&[args, &["-K", "-q"]].concat());
+        assert_eq!(r.code, 0, "{args:?}\n{}\n{}", r.stdout, r.stderr);
+        let lines: Vec<&str> = r.stdout.lines().collect();
+        let heading = lines
+            .iter()
+            .position(|line| *line == "Results Summary:")
+            .unwrap();
+        assert!(!lines[heading + 1].is_empty(), "{args:?}\n{}", r.stdout);
+        let elapsed = lines
+            .iter()
+            .position(|line| line.starts_with("Elapsed time: "))
+            .unwrap();
+        assert!(!lines[elapsed - 1].is_empty(), "{args:?}\n{}", r.stdout);
+        // Where the records were saved, or how to save them, follows the summary directly.
+        if let Some(save) = lines
+            .iter()
+            .position(|line| line.starts_with("Results saved: ") || line.starts_with("To save "))
+        {
+            assert!(!lines[save - 1].is_empty(), "{args:?}\n{}", r.stdout);
+        }
+    }
+}
+
+#[test]
 fn banner_and_help() {
     let r = run(&[]);
     assert_eq!(r.code, 0);

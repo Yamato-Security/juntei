@@ -598,7 +598,6 @@ impl Stats {
 
     fn print(&self, no_color: bool, several: bool) {
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(no_color, "$SDS streams parsed: ", &fmt_num(self.streams));
         if self.failed > 0 {
             p_label(no_color, "Could not parse: ", &fmt_num(self.failed));
@@ -666,7 +665,6 @@ impl Stats {
                 p(None, &format!("  {problem}"), true);
             }
         }
-        p(None, "", true);
     }
 }
 
