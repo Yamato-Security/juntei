@@ -5,7 +5,7 @@ quarantine. Automatic Jump Lists use a compound-file container; custom Jump List
 binary layout. Both belong to the same artifact command.
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -25,7 +25,7 @@ Options:
 ## `parse-file defender-quarantine`
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -60,7 +60,7 @@ ownership, permissions and SDDL. See [Defender Quarantine](../artifacts/defender
 ## `parse-file jump-lists`
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -94,7 +94,7 @@ See [Jump Lists](../artifacts/jump-lists.md).
 ## `parse-file lnk`
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -128,7 +128,7 @@ See [LNK Shortcuts](../artifacts/lnk.md).
 ## `parse-file prefetch`
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

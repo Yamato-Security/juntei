@@ -16,7 +16,7 @@ PowerShell projects behind the catalogue.
 ## Usage
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

@@ -121,6 +121,14 @@ fn banner_and_help() {
     );
     assert!(r.stdout.contains("by Yamato Security"));
     assert!(r.stdout.contains("parse-registry"));
+    // The release name follows the version, and the usage follows them.
+    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
+    assert!(
+        r.stdout
+            .contains(&format!("{version}\n\nUsage: juntei <COMMAND>")),
+        "{}",
+        r.stdout
+    );
     let r = run(&["parse-registry", "amcache", "-h", "-K"]);
     assert_eq!(r.code, 0);
     assert!(
@@ -128,6 +136,12 @@ fn banner_and_help() {
             .contains("juntei parse-registry amcache <INPUT> [OPTIONS]"),
         "{}",
         r.stdout
+    );
+    assert!(r.stdout.contains(&version), "{}", r.stdout);
+    let r = run(&["--version"]);
+    assert_eq!(
+        r.stdout,
+        format!("juntei {} (CODE BLUE Release)\n", env!("CARGO_PKG_VERSION"))
     );
 }
 
