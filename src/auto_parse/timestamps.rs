@@ -77,6 +77,9 @@ fn timestamp_field(key: &str) -> bool {
                 | "LastSuccessfulRun"
                 | "DeviceFirstInstall"
                 | "DriverLastInstalled"
+                | "CurrentSet"
+                | "OldSet"
+                | "SdbInstalled"
         )
         || ["LastRun", "PreviousRun"].iter().any(|prefix| {
             key.strip_prefix(prefix)
@@ -108,10 +111,37 @@ fn raw_field(key: &str) -> bool {
     )
 }
 
+/// Keep formatting limitations local to the affected value. Bound the warning to one example
+/// per file, so crafted evidence cannot turn a streaming conversion into an unbounded report.
+#[derive(Default)]
+struct RetainedTimes {
+    count: u64,
+    first: Option<String>,
+}
+
+impl RetainedTimes {
+    fn timestamp(&mut self, value: &str, offset: OutputOffset) -> io::Result<Option<String>> {
+        match offset.timestamp(value) {
+            Err(error) if error.kind() == io::ErrorKind::InvalidData => {
+                self.count = self.count.saturating_add(1);
+                self.first.get_or_insert_with(|| {
+                    format!("{} ({error})", value.chars().take(128).collect::<String>())
+                });
+                Ok(None)
+            }
+            result => result,
+        }
+    }
+}
+
 /// A CSV can retain several volume-creation timestamps in one column. Convert individual
 /// timestamps only within timestamp columns; a filename that looks like a date stays intact.
-fn timestamp_text(text: &str, offset: OutputOffset) -> io::Result<String> {
-    if let Some(new) = offset.timestamp(text)? {
+fn timestamp_text(
+    text: &str,
+    offset: OutputOffset,
+    retained: &mut RetainedTimes,
+) -> io::Result<String> {
+    if let Some(new) = retained.timestamp(text, offset)? {
         return Ok(new);
     }
     if text.contains(", ") || text.contains('|') {
@@ -123,7 +153,7 @@ fn timestamp_text(text: &str, offset: OutputOffset) -> io::Result<String> {
                 (part, "")
             };
             let trimmed = value.trim();
-            if let Some(new) = offset.timestamp(trimmed)? {
+            if let Some(new) = retained.timestamp(trimmed, offset)? {
                 result.push_str(&value[..value.len() - value.trim_start().len()]);
                 result.push_str(&new);
                 result.push_str(&value[value.trim_end().len()..]);
@@ -137,28 +167,41 @@ fn timestamp_text(text: &str, offset: OutputOffset) -> io::Result<String> {
     Ok(text.to_owned())
 }
 
-fn value_times(value: &mut Value, key: &str, offset: OutputOffset) -> io::Result<()> {
+fn value_times(
+    value: &mut Value,
+    key: &str,
+    offset: OutputOffset,
+    retained: &mut RetainedTimes,
+) -> io::Result<()> {
     if raw_field(key) {
         return Ok(());
     }
     match value {
         Value::Object(fields) => {
             for (name, child) in fields {
-                value_times(child, name, offset)?;
+                value_times(child, name, offset, retained)?;
             }
         }
         Value::Array(values) => {
             for child in values {
-                value_times(child, key, offset)?;
+                value_times(child, key, offset, retained)?;
             }
         }
-        Value::String(text) if timestamp_field(key) => *text = timestamp_text(text, offset)?,
+        Value::String(text) if timestamp_field(key) => {
+            *text = timestamp_text(text, offset, retained)?
+        }
         _ => (),
     }
     Ok(())
 }
 
-fn csv_cell(value: &str, key: &str, artifact: &str, offset: OutputOffset) -> io::Result<String> {
+fn csv_cell(
+    value: &str,
+    key: &str,
+    artifact: &str,
+    offset: OutputOffset,
+    retained: &mut RetainedTimes,
+) -> io::Result<String> {
     if raw_field(key) {
         return Ok(value.to_owned());
     }
@@ -179,11 +222,11 @@ fn csv_cell(value: &str, key: &str, artifact: &str, offset: OutputOffset) -> io:
         && value.starts_with(['{', '['])
     {
         let mut json: Value = serde_json::from_str(value)?;
-        value_times(&mut json, "", offset)?;
+        value_times(&mut json, "", offset, retained)?;
         return serde_json::to_string(&json).map_err(io::Error::other);
     }
     if timestamp_field(key) {
-        return timestamp_text(value, offset);
+        return timestamp_text(value, offset, retained);
     }
     // USB's CSV renders a parsed user's MountPoints2 key time after the name in parentheses.
     if artifact == "usb" && key == "User" {
@@ -192,7 +235,7 @@ fn csv_cell(value: &str, key: &str, artifact: &str, offset: OutputOffset) -> io:
             .map(|user| {
                 if let Some((name, at)) = user.rsplit_once(" (")
                     && let Some(at) = at.strip_suffix(')')
-                    && let Some(new) = offset.timestamp(at)?
+                    && let Some(new) = retained.timestamp(at, offset)?
                 {
                     return Ok(format!("{name} ({new})"));
                 }
@@ -204,14 +247,21 @@ fn csv_cell(value: &str, key: &str, artifact: &str, offset: OutputOffset) -> io:
     Ok(value.to_owned())
 }
 
-pub(super) fn rewrite(task: &Task, offset: OutputOffset) -> io::Result<()> {
+pub(super) fn rewrite(task: &Task, offset: OutputOffset) -> io::Result<Vec<String>> {
+    let mut warnings = Vec::new();
     if offset.is_utc() {
-        return Ok(());
+        return Ok(warnings);
     }
     for path in json_files(&task.output, task.output_type) {
-        rewrite_file(&path, task.output_type, task.artifact, offset)?;
+        let retained = rewrite_file(&path, task.output_type, task.artifact, offset)?;
+        if let Some(first) = retained.first {
+            warnings.push(format!(
+                "Warning: retained {} timestamp(s) unchanged in {} because timezone {offset} cannot represent them without losing data. Other timestamps were converted. First retained value: {first}",
+                retained.count, path.display()
+            ));
+        }
     }
-    Ok(())
+    Ok(warnings)
 }
 
 fn rewrite_file(
@@ -219,12 +269,13 @@ fn rewrite_file(
     kind: AutoOutputType,
     artifact: &str,
     offset: OutputOffset,
-) -> io::Result<()> {
+) -> io::Result<RetainedTimes> {
     let temporary = unused_sibling(path, "timezone")?;
     let file = OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(&temporary)?;
+    let mut retained = RetainedTimes::default();
     let result = (|| {
         let input = BufReader::new(File::open(path)?);
         if kind == AutoOutputType::Csv {
@@ -237,7 +288,7 @@ fn rewrite_file(
                 let row = record
                     .iter()
                     .zip(header.iter())
-                    .map(|(value, key)| csv_cell(value, key, artifact, offset))
+                    .map(|(value, key)| csv_cell(value, key, artifact, offset, &mut retained))
                     .collect::<io::Result<Vec<_>>>()?;
                 writer.write_record(row)?;
             }
@@ -246,7 +297,7 @@ fn rewrite_file(
             let mut writer = BufWriter::new(file);
             for record in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
                 let mut record = record.map_err(io::Error::other)?;
-                value_times(&mut record, "", offset)?;
+                value_times(&mut record, "", offset, &mut retained)?;
                 if kind == AutoOutputType::Json {
                     serde_json::to_writer_pretty(&mut writer, &record)?;
                 } else {
@@ -261,7 +312,7 @@ fn rewrite_file(
     if result.is_err() {
         let _ = fs::remove_file(&temporary);
     }
-    result
+    result.map(|()| retained)
 }
 
 #[cfg(test)]
@@ -272,12 +323,13 @@ mod tests {
     #[test]
     fn shift_only_parsed_instants_preserving_precision_raw_data_and_local_clocks() {
         let offset = "+09:00".parse().unwrap();
+        let mut retained = RetainedTimes::default();
         let at = "2026-10-20T08:46:38.2001668Z";
         let mut value = json!({"LastRunTimes":[at],"Attr":[{"Data":{"Created":at}}],"KeyLastWritten":at,"LastShutdown":at,"Name":at,
             "ValueData":at,"DataRaw":{"Created":at},"RegistryValues":[{"Name":"Created","Decoded":at}],
             "FirstConnectedLocal":"2026-10-20T08:46:38.200", "ItemCreated":at, "TargetItems":[{"Created":at}], "Raw":{"Timestamp":at}, "ZoneIdentifier":{"LastRun":at},
             "Nested":{"UTC":at,"Filetime":134000000000000000u64}});
-        value_times(&mut value, "", offset).unwrap();
+        value_times(&mut value, "", offset, &mut retained).unwrap();
         assert_eq!(
             value["LastRunTimes"][0],
             "2026-10-20T17:46:38.2001668+09:00"
@@ -298,17 +350,27 @@ mod tests {
         assert_eq!(value["ZoneIdentifier"]["LastRun"], at);
         assert_eq!(value["FirstConnectedLocal"], "2026-10-20T08:46:38.200");
         assert_eq!(value["Nested"]["Filetime"], 134000000000000000u64);
-        assert_eq!(csv_cell(at, "Filename", "mft", offset).unwrap(), at);
         assert_eq!(
-            csv_cell(at, "ItemCreatedUTC", "shellbags", offset).unwrap(),
+            csv_cell(at, "Filename", "mft", offset, &mut retained).unwrap(),
             at
         );
         assert_eq!(
-            csv_cell(&format!("alice ({at})"), "User", "usb", offset).unwrap(),
+            csv_cell(at, "ItemCreatedUTC", "shellbags", offset, &mut retained).unwrap(),
+            at
+        );
+        assert_eq!(
+            csv_cell(
+                &format!("alice ({at})"),
+                "User",
+                "usb",
+                offset,
+                &mut retained
+            )
+            .unwrap(),
             "alice (2026-10-20T17:46:38.2001668+09:00)"
         );
         assert_eq!(
-            timestamp_text(&format!("{at}, {at}"), offset).unwrap(),
+            timestamp_text(&format!("{at}, {at}"), offset, &mut retained).unwrap(),
             "2026-10-20T17:46:38.2001668+09:00, 2026-10-20T17:46:38.2001668+09:00"
         );
     }
@@ -316,12 +378,81 @@ mod tests {
     #[test]
     fn failed_conversion_never_replaces_the_original_file() {
         let root = tempfile::tempdir().unwrap();
-        let csv = root.path().join("MFT.csv");
-        let original = "Filename,Created (SI)\nx.exe,9999-12-31T23:59:59Z\n";
-        fs::write(&csv, original).unwrap();
-        assert!(rewrite_file(&csv, AutoOutputType::Csv, "mft", "+09:00".parse().unwrap()).is_err());
-        assert_eq!(fs::read_to_string(&csv).unwrap(), original);
-        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1);
+        for (kind, original) in [
+            (
+                AutoOutputType::Csv,
+                "Filename,Created (SI)\nx.exe,2026-10-20T08:46:38Z\ny.exe,2026-10-20T08:46:38Z,unexpected column\n",
+            ),
+            (
+                AutoOutputType::Json,
+                "{\"Created\":\"2026-10-20T08:46:38Z\"}\n{malformed",
+            ),
+            (
+                AutoOutputType::Jsonl,
+                "{\"Created\":\"2026-10-20T08:46:38Z\"}\n{malformed",
+            ),
+        ] {
+            let path = root.path().join(format!("data.{}", kind.as_str()));
+            fs::write(&path, original).unwrap();
+            assert!(rewrite_file(&path, kind, "mft", "+09:00".parse().unwrap()).is_err());
+            assert_eq!(fs::read_to_string(&path).unwrap(), original);
+        }
+        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 3);
+    }
+
+    #[test]
+    fn display_limits_preserve_only_affected_values_in_all_formats() {
+        let root = tempfile::tempdir().unwrap();
+        let at = "2026-10-20T08:46:38.2001668Z";
+        let precise = "2026-10-20T08:46:38.1234567890Z";
+        for (offset, boundary, expected) in [
+            (
+                "+09:00",
+                "9999-12-31T23:00:00Z",
+                "2026-10-20T17:46:38.2001668+09:00",
+            ),
+            (
+                "-01:00",
+                "0000-01-01T00:00:00Z",
+                "2026-10-20T07:46:38.2001668-01:00",
+            ),
+        ] {
+            for kind in [
+                AutoOutputType::Csv,
+                AutoOutputType::Json,
+                AutoOutputType::Jsonl,
+            ] {
+                let path = root.path().join(format!("data.{}", kind.as_str()));
+                if kind == AutoOutputType::Csv {
+                    fs::write(
+                        &path,
+                        format!(
+                            "Created,Modified,Accessed,Filename\n{boundary},{at},{precise},{at}\n"
+                        ),
+                    )
+                    .unwrap();
+                } else {
+                    fs::write(&path, json!({"Created":boundary,"Modified":at,"Accessed":precise,"Filename":at,"Raw":{"Created":boundary}}).to_string()).unwrap();
+                }
+                let retained = rewrite_file(&path, kind, "mft", offset.parse().unwrap()).unwrap();
+                assert_eq!(retained.count, 2);
+                assert!(retained.first.unwrap().contains(boundary));
+                if kind == AutoOutputType::Csv {
+                    let mut reader = csv::Reader::from_path(&path).unwrap();
+                    assert_eq!(
+                        reader.records().next().unwrap().unwrap(),
+                        vec![boundary, expected, precise, at]
+                    );
+                } else {
+                    let after: Value = serde_json::from_reader(File::open(&path).unwrap()).unwrap();
+                    assert_eq!(after["Created"], boundary);
+                    assert_eq!(after["Modified"], expected);
+                    assert_eq!(after["Accessed"], precise);
+                    assert_eq!(after["Filename"], at);
+                    assert_eq!(after["Raw"]["Created"], boundary);
+                }
+            }
+        }
     }
 }
 

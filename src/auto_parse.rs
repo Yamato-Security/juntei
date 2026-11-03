@@ -1981,11 +1981,15 @@ fn run_task(
             (TaskStatus::Failed, None, String::new(), String::new())
         }
     };
-    if status == TaskStatus::Succeeded
-        && let Err(e) = timestamps::rewrite(task, offset)
-    {
-        status = TaskStatus::Failed;
-        error = Some(paths.text(&format!("could not format output timestamps: {e}")));
+    let mut formatting_warnings = Vec::new();
+    if status == TaskStatus::Succeeded {
+        match timestamps::rewrite(task, offset) {
+            Ok(warnings) => formatting_warnings = warnings,
+            Err(e) => {
+                status = TaskStatus::Failed;
+                error = Some(paths.text(&format!("could not format output timestamps: {e}")));
+            }
+        }
     }
     let mut log = format!("Command: {}\n", command.join(" "));
     log.push_str(&stdout);
@@ -1993,6 +1997,9 @@ fn run_task(
         log.push('\n');
     }
     log.push_str(&stderr);
+    for warning in formatting_warnings {
+        log.push_str(&format!("\n{}\n", paths.text(&warning)));
+    }
     if let Some(message) = &error {
         log.push_str(&format!("\nError: {message}\n"));
     }

@@ -60,6 +60,12 @@ their recorded text; JSON/JSONL preserves nested parsed timestamps as structured
 UTC uses the existing parser output directly. An explicit nonzero offset adds a streaming
 formatting pass within each parser worker; it changes display values without changing evidence.
 
+If an offset would move a timestamp outside years `0000–9999`, that value keeps its original
+explicit offset. Values with more than nine fractional digits also stay unchanged rather than
+being rounded. Juntei records a warning in the parser's `*-logs.txt` file and converts the other
+timestamps. Malformed CSV/JSON or an output error still fails the task and leaves the affected
+original result file unchanged.
+
 ## What it discovers
 
 Juntei searches recursively for directories named `Windows` that contain a `System32`, `Prefetch`,

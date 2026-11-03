@@ -4,6 +4,8 @@
 
 - Default console start times and automatic-parser run metadata to Windows event-log-style UTC (`...Z`). Add `auto-parse -Z, --timezone` for explicit signed `HH:MM` display offsets across CSV, JSON, JSONL and combined JSONL results, preserving fractional precision, raw values and unknown local clocks. Record `OutputTimeZone` in both manifests and show the selected timezone once in green directly above `Parser tasks`. (@YamatoSecurity)
 
+- Offset formatting includes LSA `CurrentSet`/`OldSet` and AppCompat `SdbInstalled` in native JSON and JSONL. Retain individual timestamps that exceed display limits, record a parser-log warning, and continue converting the remaining values. (@YamatoSecurity)
+
 - `auto-parse` writes no absolute path. Evidence paths in its host list, results, logs and manifests are relative to the evidence directory (`./HOST/C/...`): the parsers run in the evidence directory. Result paths in its manifests and logs, and Defender's `ExtractedFile`, are relative to the output directory; `Command` starts with `juntei`, and `EvidenceDirectory`/`OutputDirectory` are the directories' names; `ManifestVersion` 2 marks this convention. `persistence-hunter` shows its source paths starting with the input as given, as the other commands do. (@YamatoSecurity)
 
 - `auto-parse` shows the total size of the files of the Windows systems found (`Total filesize:`) after the number of parallel processes. (@YamatoSecurity)

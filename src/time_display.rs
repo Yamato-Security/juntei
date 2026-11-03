@@ -78,7 +78,8 @@ impl OutputOffset {
         };
         let displayed = parsed.with_timezone(&self.fixed());
         if !(0..=9999).contains(&displayed.year()) {
-            return Err(io::Error::other(
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
                 "Output timezone moves a timestamp outside years 0000–9999",
             ));
         }
@@ -90,7 +91,8 @@ impl OutputOffset {
                     .count();
             // Reject unsupported precision instead of silently truncating evidence.
             if end - 20 > 9 {
-                return Err(io::Error::other(
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
                     "Timestamp has more than nine fractional digits",
                 ));
             }
