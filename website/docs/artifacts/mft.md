@@ -119,8 +119,8 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `Copied` | Modified time precedes created time. Often consistent with file copy; not proof of attacker action. |
 | `SI-Flags` | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
 | `NameType` | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |
-| `Created (SI)`, `Access (SI)`, `DataModified (SI)`, `MFT-RecordChanged (SI)` | SI times. Common timeline fields, but user-mode tools can change several of them. |
-| `Created (FN)`, `Access (FN)`, `DataModified (FN)`, `MFT-RecordChanged (FN)` | FN times. Updated differently and generally harder for ordinary APIs to alter; still not immutable. |
+| `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI times. Common timeline fields, but user-mode tools can change several of them. |
+| `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN times. Updated differently and generally harder for ordinary APIs to alter; still not immutable. |
 | `UpdateSequenceNumber` | Last USN associated with the record's SI attribute. Pivot into `$J` if that USN survives. |
 | `LogfileSequenceNumber` | NTFS `$LogFile` sequence number from the FILE record header; useful in low-level transaction analysis. |
 | `SecurityID` | Index into NTFS `$Secure`; not a Windows SID by itself. |
@@ -134,13 +134,13 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `SlackRecord`, `SlackOffset` | With `-x`: the FILE record whose slack held the name, by its place in the `$MFT` rather than the record number written inside it (an extension record's own, even though its names are listed with its base record), and the name's byte offset in the `$MFT`. A slack row's `ParseErrors` are that record's problems, such as `fixup values do not match`: the recovered bytes may be affected. |
 | `CopyOfEntryInUse` | With `-x`: a file in use still has this name in the same directory (and is the same file, when the reference survived). Names that no file in use has are the interesting ones: deleted, renamed, or a reused record's previous occupant. |
 
-Timestamp columns are grouped in this order: Created SI/FN, Access SI/FN, DataModified SI/FN,
-then MFT-RecordChanged SI/FN.
+Timestamp columns follow MACB order (Modified, Accessed, Changed, Birth/creation):
+`DataModified` SI/FN, `Accessed` SI/FN, `MetadataChanged` SI/FN, then `Created` SI/FN.
 
 `(SI)` means `$STANDARD_INFORMATION`; `(FN)` means `$FILE_NAME`. These names describe the
 usual source for a complete record. For a normal filename row with no SI attribute, the
 existing fallback places FN creation in `Created (FN)` and FN modified/record-change/access
-values in `DataModified (SI)`, `MFT-RecordChanged (SI)` and `Access (SI)` respectively.
+values in `DataModified (SI)`, `MetadataChanged (SI)` and `Accessed (SI)` respectively.
 Recovered slack rows place all four times in the `(FN)` columns and leave the SI columns empty.
 The normal-row fallback values are **not** independent SI evidence. Use the original JSON attributes
 and slack provenance when determining the timestamp source.
