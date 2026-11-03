@@ -72,7 +72,7 @@ profile, and the system's `SOFTWARE` hive, which gives an `NTUSER.DAT` user's SI
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-registry shellbags <INPUT> [OPTIONS]
+Usage: juntei parse-registry shell-bags <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find UsrClass.dat and NTUSER.DAT hives
@@ -89,8 +89,8 @@ Output:
 ```
 
 ```bash
-juntei parse-registry shellbags -d evidence/ -o shellbags.csv
-juntei parse-registry shellbags -f UsrClass.dat -t jsonl \
+juntei parse-registry shell-bags -d evidence/ -o shellbags.csv
+juntei parse-registry shell-bags -f UsrClass.dat -t jsonl \
   | jq 'select(.ItemType == "volume" and .GUID == "{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}")'
 ```
 

@@ -9,12 +9,12 @@ Usage:
 
 Commands:
   amcache             Parse Amcache inventories
+  app-compat          Parse application compatibility data
   app-history         Parse third-party tools' traces
-  appcompat           Parse application compatibility data
   auditpol            Parse the audit policy
   bam                 Parse BAM and DAM last runs
   bcd                 Parse boot configuration
-  featureusage        Parse Explorer use counts and pins
+  feature-usage       Parse Explorer use counts and pins
   help                Print this message or the help of the given subcommand(s)
   installed-programs  Parse installed programs
   lsa-secrets         Parse LSA secrets' names and times
@@ -22,24 +22,30 @@ Commands:
   muicache            Parse MuiCache program names
   networks            Parse network profiles, interfaces, shares, port proxies and routes
   office              Parse Office recent files, trusted documents and macro settings
-  opensavemru         Parse Open and Save As dialog history
+  open-save-mru       Parse Open and Save As dialog history
   persistence         Parse autostart locations
   read                Read keys and values
-  recentdocs          Parse recent documents
+  recent-docs         Parse recent documents
   remote-access       Parse outbound RDP, PuTTY, WinSCP and mapped drive connections
   sam                 Parse local accounts
   security-settings   Parse security settings: Defender, UAC, credentials, RDP, firewall, logging
   services            Parse services
-  shellbags           Parse ShellBags (folders opened in Explorer)
+  shell-bags          Parse ShellBags (folders opened in Explorer)
   shimcache           Parse ShimCache entries
   system-info         Parse system information
   taskcache           Parse scheduled tasks
   usb                 Parse USB devices and volumes
-  userassist          Parse UserAssist entries
+  user-assist         Parse UserAssist entries
 
 Options:
   -h, --help  Print help
 ```
+
+The canonical commands are `app-compat`, `feature-usage`, `open-save-mru`, `recent-docs`,
+`user-assist` and `shell-bags`. Their former spellings (`appcompat`, `featureusage`,
+`opensavemru`, `recentdocs`, `userassist` and `shellbags`) remain accepted as hidden aliases
+for existing scripts. Automatic parsing uses the canonical names; its artifact identifiers,
+result schemas and output filenames are unchanged.
 
 Registry commands accept `-f <HIVE>` or `-d <COLLECTION>` and structured output options.
 `amcache` currently reads Amcache registry hives without transaction-log replay. `shimcache`
@@ -186,14 +192,14 @@ Display Settings:
 Users are named from the hive's place in the collection, and their SIDs from a `UsrClass.dat`'s
 root key or the system's `SOFTWARE` (`ProfileList`). See [MuiCache](../artifacts/muicache.md).
 
-## `parse-registry opensavemru`
+## `parse-registry open-save-mru`
 
 ```text
 Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei parse-registry opensavemru <INPUT> [OPTIONS]
+  juntei parse-registry open-save-mru <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
@@ -354,14 +360,14 @@ Sysinternals tools, WinRAR, 7-Zip and WinZip history, OneDrive accounts, Adobe r
 TeamViewer and CCleaner. See [Application History](../artifacts/app-history.md).
 
 
-## `parse-registry featureusage`
+## `parse-registry feature-usage`
 
 ```text
 Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei parse-registry featureusage <INPUT> [OPTIONS]
+  juntei parse-registry feature-usage <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
@@ -461,12 +467,12 @@ See [Microsoft Office](../artifacts/office.md).
 ```bash
 juntei parse-registry services -f SYSTEM -o services.csv
 juntei parse-registry services -f SYSTEM --service ExampleSvc -t jsonl
-juntei parse-registry recentdocs -f NTUSER.DAT -o recentdocs.csv
+juntei parse-registry recent-docs -f NTUSER.DAT -o recentdocs.csv
 juntei parse-registry office -d collection/ -o office.csv
 juntei parse-registry taskcache -f SOFTWARE --task ScheduledDefrag -t jsonl
 juntei parse-registry sam -f SAM --rid 500 -t jsonl
 juntei parse-registry persistence -d collection/ -o persistence.csv
-juntei parse-registry userassist -d collection/ -o userassist.csv
+juntei parse-registry user-assist -d collection/ -o userassist.csv
 ```
 
 The complete options and field semantics are on [Registry Hives](../artifacts/registry.md),
@@ -510,14 +516,14 @@ policy in `Policy\PolAdtEv`: what it logs, its GUID and message ID, and its main
 [Audit Policy](../artifacts/auditpol.md).
 
 
-## `parse-registry appcompat`
+## `parse-registry app-compat`
 
 ```text
 Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei parse-registry appcompat <INPUT> [OPTIONS]
+  juntei parse-registry app-compat <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Directory to search recursively for SOFTWARE and NTUSER.DAT hives
@@ -726,14 +732,14 @@ juntei parse-registry read -f SYSTEM --key 'CurrentControlSet\Services' -o servi
 juntei parse-registry read -f NTUSER.DAT --recover-deleted -t jsonl | jq .
 ```
 
-## `parse-registry recentdocs`
+## `parse-registry recent-docs`
 
 ```text
 Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei parse-registry recentdocs <INPUT> [OPTIONS]
+  juntei parse-registry recent-docs <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
@@ -820,14 +826,14 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## `parse-registry shellbags`
+## `parse-registry shell-bags`
 
 ```text
 Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei parse-registry shellbags <INPUT> [OPTIONS]
+  juntei parse-registry shell-bags <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Directory to search recursively for UsrClass.dat and NTUSER.DAT hives
@@ -950,14 +956,14 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## `parse-registry userassist`
+## `parse-registry user-assist`
 
 ```text
 Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
-  juntei parse-registry userassist <INPUT> [OPTIONS]
+  juntei parse-registry user-assist <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Directory to search recursively for NTUSER.DAT hives
@@ -984,17 +990,17 @@ Display Settings:
 ```bash
 juntei parse-registry services -f SYSTEM -o services.csv
 juntei parse-registry services -f SYSTEM --service ExampleSvc -t jsonl
-juntei parse-registry recentdocs -f NTUSER.DAT -o recentdocs.csv
+juntei parse-registry recent-docs -f NTUSER.DAT -o recentdocs.csv
 juntei parse-registry taskcache -f SOFTWARE --task ScheduledDefrag -t jsonl
 juntei parse-registry sam -f SAM --rid 500 -t jsonl
 juntei parse-registry persistence -d collection/ -o persistence.csv
 juntei parse-registry usb -d collection/ -o usb.csv
-juntei parse-registry userassist -d collection/ -o userassist.csv
-juntei parse-registry opensavemru -d collection/ -o opensavemru.csv
+juntei parse-registry user-assist -d collection/ -o userassist.csv
+juntei parse-registry open-save-mru -d collection/ -o opensavemru.csv
 juntei parse-registry bam -d collection/ --all-control-sets -o bam.csv
 juntei parse-registry installed-programs -d collection/ -o installed.csv
 juntei parse-registry muicache -d collection/ -o muicache.csv
-juntei parse-registry shellbags -d collection/ -o shellbags.csv
+juntei parse-registry shell-bags -d collection/ -o shellbags.csv
 ```
 
 The complete options and field semantics are on [Registry Hives](../artifacts/registry.md),

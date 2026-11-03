@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-registry shellbags`: the folders users opened in Explorer and in open and save
+//! `parse-registry shell-bags`: the folders users opened in Explorer and in open and save
 //! dialogs, from the `BagMRU` trees of `UsrClass.dat` and `NTUSER.DAT` hives, read by
 //! ys-registry-parser's `shellbags` module, each shell item decoded by ys-lnk-parser (a link's
 //! target ID list has the same items), with Hayabusa's input options, progress bar and results

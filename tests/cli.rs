@@ -174,26 +174,26 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "shimcache",
                 "read",
                 "services",
-                "shellbags",
-                "recentdocs",
+                "shell-bags",
+                "recent-docs",
                 "taskcache",
                 "sam",
                 "persistence",
                 "usb",
-                "userassist",
+                "user-assist",
                 "networks",
                 "lsa-secrets",
                 "bcd",
-                "appcompat",
+                "app-compat",
                 "auditpol",
                 "office",
                 "security-settings",
-                "featureusage",
+                "feature-usage",
                 "app-history",
                 "mru",
                 "system-info",
                 "remote-access",
-                "opensavemru",
+                "open-save-mru",
                 "bam",
                 "installed-programs",
                 "muicache",
@@ -421,6 +421,12 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "prefetch-timeline" => ("parse-file", "prefetch"),
             "prefetch" | "lnk" | "jump-lists" | "defender-quarantine" => ("parse-file", artifact),
             "registry" => ("parse-registry", "read"),
+            "appcompat" => ("parse-registry", "app-compat"),
+            "featureusage" => ("parse-registry", "feature-usage"),
+            "opensavemru" => ("parse-registry", "open-save-mru"),
+            "recentdocs" => ("parse-registry", "recent-docs"),
+            "userassist" => ("parse-registry", "user-assist"),
+            "shellbags" => ("parse-registry", "shell-bags"),
             _ => ("parse-registry", artifact),
         };
         assert_eq!(task["Command"][1], source, "{task}");
@@ -5655,6 +5661,65 @@ fn registry_read(args: &[&str]) -> Vec<Value> {
 }
 
 #[test]
+fn hyphenated_registry_names_keep_hidden_legacy_aliases() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack_registry("regipy", &["NTUSER.DAT"], dir.path());
+    let hive = dir.path().join("NTUSER.DAT");
+    let menu = run(&["parse-registry", "--help"]);
+    assert_eq!(menu.code, 0, "{}", menu.stderr);
+    for (current, previous) in [
+        ("app-compat", "appcompat"),
+        ("feature-usage", "featureusage"),
+        ("open-save-mru", "opensavemru"),
+        ("recent-docs", "recentdocs"),
+        ("user-assist", "userassist"),
+        ("shell-bags", "shellbags"),
+    ] {
+        assert!(
+            menu.stdout
+                .lines()
+                .any(|line| line.split_whitespace().next() == Some(current))
+        );
+        assert!(
+            !menu
+                .stdout
+                .lines()
+                .any(|line| line.split_whitespace().next() == Some(previous))
+        );
+        let help = run(&["parse-registry", current, "-h"]);
+        let legacy_help = run(&["parse-registry", previous, "-h"]);
+        assert_eq!(help.code, 0, "{current}: {}", help.stderr);
+        assert_eq!(legacy_help.code, 0, "{previous}: {}", legacy_help.stderr);
+        assert!(
+            help.stdout
+                .contains(&format!("juntei parse-registry {current} <INPUT>"))
+        );
+        assert_eq!(help.stdout, legacy_help.stdout);
+        let parse = |command| {
+            run(&[
+                "parse-registry",
+                command,
+                "-f",
+                hive.to_str().unwrap(),
+                "-t",
+                "jsonl",
+                "--no-logs",
+                "-K",
+                "-q",
+            ])
+        };
+        let new = parse(current);
+        let old = parse(previous);
+        assert_eq!(new.code, 0, "{current}: {}", new.stderr);
+        assert_eq!(old.code, 0, "{previous}: {}", old.stderr);
+        assert_eq!(
+            new.stdout, old.stdout,
+            "{current} and {previous} must parse the same records"
+        );
+    }
+}
+
+#[test]
 fn registry_subcommands() {
     // parse-registry alone lists its subcommands
     let r = run(&["parse-registry"]);
@@ -5663,28 +5728,28 @@ fn registry_subcommands() {
     assert!(help.contains("juntei parse-registry <COMMAND>"), "{help}");
     assert!(help.contains("read "), "{help}");
     assert!(help.contains("services "), "{help}");
-    assert!(help.contains("recentdocs "), "{help}");
+    assert!(help.contains("recent-docs "), "{help}");
     assert!(help.contains("taskcache "), "{help}");
     assert!(help.contains("sam "), "{help}");
     assert!(help.contains("persistence "), "{help}");
-    assert!(help.contains("userassist "), "{help}");
+    assert!(help.contains("user-assist "), "{help}");
     assert!(help.contains("networks "), "{help}");
     assert!(help.contains("lsa-secrets "), "{help}");
     assert!(help.contains("bcd "), "{help}");
-    assert!(help.contains("appcompat "), "{help}");
+    assert!(help.contains("app-compat "), "{help}");
     assert!(help.contains("auditpol "), "{help}");
     assert!(help.contains("office "), "{help}");
     assert!(help.contains("security-settings "), "{help}");
-    assert!(help.contains("featureusage "), "{help}");
+    assert!(help.contains("feature-usage "), "{help}");
     assert!(help.contains("app-history "), "{help}");
     assert!(help.contains("mru "), "{help}");
     assert!(help.contains("system-info "), "{help}");
     assert!(help.contains("remote-access "), "{help}");
-    assert!(help.contains("opensavemru "), "{help}");
+    assert!(help.contains("open-save-mru "), "{help}");
     assert!(help.contains("bam "), "{help}");
     assert!(help.contains("installed-programs "), "{help}");
     assert!(help.contains("muicache "), "{help}");
-    assert!(help.contains("shellbags "), "{help}");
+    assert!(help.contains("shell-bags "), "{help}");
     let r = run(&["parse-registry", "services", "-h"]);
     assert_eq!(r.code, 0);
     for option in [
@@ -6979,9 +7044,9 @@ fn registry_services_falls_back_when_select_current_is_unusable() {
     );
 }
 
-// --- parse-registry recentdocs ------------------------------------------------------------------
+// --- parse-registry recent-docs ------------------------------------------------------------------
 
-/// `parse-registry recentdocs`'s CSV columns.
+/// `parse-registry recent-docs`'s CSV columns.
 const RECENTDOCS_COLUMNS: [&str; 14] = [
     "Host",
     "User",
@@ -7014,9 +7079,9 @@ fn unpack_registry(dir: &str, names: &[&str], to: &Path) {
     }
 }
 
-/// `parse-registry recentdocs` with `args`, as JSON Lines.
+/// `parse-registry recent-docs` with `args`, as JSON Lines.
 fn recentdocs_read(args: &[&str]) -> Vec<Value> {
-    let mut all = vec!["parse-registry", "recentdocs"];
+    let mut all = vec!["parse-registry", "recent-docs"];
     all.extend(args);
     all.extend(["-t", "jsonl"]);
     let r = run(&all);
@@ -7035,7 +7100,7 @@ fn registry_recentdocs_in_a_collection() {
         &profile,
     );
     let dir = collection.path().to_str().unwrap();
-    let r = run(&["parse-registry", "recentdocs", "-d", dir, "-K"]);
+    let r = run(&["parse-registry", "recent-docs", "-d", dir, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stdout);
     for line in [
         "NTUSER.DAT hives: 1",
@@ -7121,7 +7186,7 @@ fn registry_recentdocs_of_an_exported_hive() {
     let out = dir.path().join("recentdocs.csv");
     let r = run(&[
         "parse-registry",
-        "recentdocs",
+        "recent-docs",
         "-f",
         hive.to_str().unwrap(),
         "-o",
@@ -7243,7 +7308,7 @@ fn registry_recentdocs_damage_and_errors() {
     assert!(records[3]["ValueDataRaw"].is_string());
     let r = run(&[
         "parse-registry",
-        "recentdocs",
+        "recent-docs",
         "-d",
         dir.path().to_str().unwrap(),
         "-K",
@@ -7260,7 +7325,7 @@ fn registry_recentdocs_damage_and_errors() {
     let system = hive.path().join("HOST/C/Windows/System32/config/SYSTEM");
     let r = run(&[
         "parse-registry",
-        "recentdocs",
+        "recent-docs",
         "-f",
         system.to_str().unwrap(),
         "-K",
@@ -7277,7 +7342,7 @@ fn registry_recentdocs_damage_and_errors() {
     .unwrap();
     let r = run(&[
         "parse-registry",
-        "recentdocs",
+        "recent-docs",
         "-d",
         empty.path().to_str().unwrap(),
         "-K",
@@ -7288,7 +7353,13 @@ fn registry_recentdocs_damage_and_errors() {
         "{}",
         r.stdout
     );
-    let r = run(&["parse-registry", "recentdocs", "-d", "test_files/lnk", "-K"]);
+    let r = run(&[
+        "parse-registry",
+        "recent-docs",
+        "-d",
+        "test_files/lnk",
+        "-K",
+    ]);
     assert_eq!(r.code, 1);
     assert!(
         r.stdout.contains("No NTUSER.DAT hives were found"),
@@ -9536,9 +9607,9 @@ fn registry_usb_errors() {
     assert_eq!(std::fs::read(&alice).unwrap(), original);
 }
 
-// --- parse-registry userassist ------------------------------------------------------------------
+// --- parse-registry user-assist ------------------------------------------------------------------
 
-/// `parse-registry userassist`'s CSV columns.
+/// `parse-registry user-assist`'s CSV columns.
 const USERASSIST_COLUMNS: [&str; 20] = [
     "Host",
     "User",
@@ -9687,9 +9758,9 @@ fn userassist_collection(root: &Path) {
     std::fs::write(root.join("C/Users/bob/NTUSER.DAT"), bob).unwrap();
 }
 
-/// `parse-registry userassist` with `args`, as JSON Lines.
+/// `parse-registry user-assist` with `args`, as JSON Lines.
 fn userassist_read(args: &[&str]) -> Vec<Value> {
-    let mut all = vec!["parse-registry", "userassist"];
+    let mut all = vec!["parse-registry", "user-assist"];
     all.extend(args);
     all.extend(["-t", "jsonl"]);
     let r = run(&all);
@@ -9756,7 +9827,7 @@ fn registry_userassist_csv_and_summary() {
     let out = dir.path().join("userassist.csv");
     let r = run(&[
         "parse-registry",
-        "userassist",
+        "user-assist",
         "-d",
         dir.path().to_str().unwrap(),
         "-o",
@@ -9868,7 +9939,7 @@ fn registry_userassist_errors() {
     let sam = dir.path().join("SAM");
     let r = run(&[
         "parse-registry",
-        "userassist",
+        "user-assist",
         "-f",
         sam.to_str().unwrap(),
         "-K",
@@ -9881,7 +9952,7 @@ fn registry_userassist_errors() {
     );
     let r = run(&[
         "parse-registry",
-        "userassist",
+        "user-assist",
         "-d",
         dir.path().to_str().unwrap(),
         "-K",
@@ -9893,7 +9964,7 @@ fn registry_userassist_errors() {
     let original = std::fs::read(&sam).unwrap();
     let r = run(&[
         "parse-registry",
-        "userassist",
+        "user-assist",
         "-f",
         sam.to_str().unwrap(),
         "-o",
@@ -9939,7 +10010,7 @@ fn registry_userassist_no_encrypt_and_corrupt_times() {
     let no_encrypt = r"UserAssist\Settings NoEncrypt is 1: a name written while it was set is not ROT13, and decodes wrongly";
     let r = run(&[
         "parse-registry",
-        "userassist",
+        "user-assist",
         "-f",
         hive.to_str().unwrap(),
         "-t",
@@ -9955,7 +10026,7 @@ fn registry_userassist_no_encrypt_and_corrupt_times() {
     let out = dir.path().join("plain.csv");
     let r = run(&[
         "parse-registry",
-        "userassist",
+        "user-assist",
         "-f",
         hive.to_str().unwrap(),
         "-o",
@@ -10002,7 +10073,7 @@ fn registry_userassist_no_encrypt_and_corrupt_times() {
     let out = dir.path().join("corrupt.csv");
     let r = run(&[
         "parse-registry",
-        "userassist",
+        "user-assist",
         "-f",
         hive.to_str().unwrap(),
         "-o",
@@ -10605,9 +10676,9 @@ fn registry_bam_recent_summary_keeps_identical_activity_on_distinct_hosts() {
     );
 }
 
-// --- parse-registry shellbags --------------------------------------------------------------------
+// --- parse-registry shell-bags --------------------------------------------------------------------
 
-/// `parse-registry shellbags`'s CSV columns.
+/// `parse-registry shell-bags`'s CSV columns.
 const SHELLBAGS_COLUMNS: [&str; 26] = [
     "Host",
     "User",
@@ -10637,9 +10708,9 @@ const SHELLBAGS_COLUMNS: [&str; 26] = [
     "Problems",
 ];
 
-/// `parse-registry shellbags` with `args`, as JSON Lines.
+/// `parse-registry shell-bags` with `args`, as JSON Lines.
 fn shellbags_read(args: &[&str]) -> Vec<Value> {
-    let mut all = vec!["parse-registry", "shellbags"];
+    let mut all = vec!["parse-registry", "shell-bags"];
     all.extend(args);
     all.extend(["-t", "jsonl"]);
     let r = run(&all);
@@ -10792,7 +10863,7 @@ fn registry_shellbags_csv_and_summary() {
     let out = dir.path().join("shellbags.csv");
     let r = run(&[
         "parse-registry",
-        "shellbags",
+        "shell-bags",
         "-d",
         dir.path().to_str().unwrap(),
         "-o",
@@ -10908,7 +10979,7 @@ fn registry_shellbags_of_windows_xp_and_damage() {
     unpack_registry("regipy", &["SAM"], dir.path());
     let r = run(&[
         "parse-registry",
-        "shellbags",
+        "shell-bags",
         "-f",
         dir.path().join("SAM").to_str().unwrap(),
         "-K",
@@ -11925,9 +11996,9 @@ fn registry_installed_programs_data_stdout_reports_hive_damage_on_stderr() {
     assert!(result.stderr.contains("Uninstall"), "{}", result.stderr);
 }
 
-// --- parse-registry opensavemru -----------------------------------------------------------------
+// --- parse-registry open-save-mru -----------------------------------------------------------------
 
-/// `parse-registry opensavemru`'s CSV columns.
+/// `parse-registry open-save-mru`'s CSV columns.
 const OPENSAVEMRU_COLUMNS: [&str; 24] = [
     "Host",
     "User",
@@ -12167,9 +12238,9 @@ fn opensavemru_collection(root: &Path) {
     std::fs::write(root.join("C/Users/bob/NTUSER.DAT"), bob).unwrap();
 }
 
-/// `parse-registry opensavemru` with `args`, as JSON Lines.
+/// `parse-registry open-save-mru` with `args`, as JSON Lines.
 fn opensavemru_read(args: &[&str]) -> Vec<Value> {
-    let mut all = vec!["parse-registry", "opensavemru"];
+    let mut all = vec!["parse-registry", "open-save-mru"];
     all.extend(args);
     all.extend(["-t", "jsonl"]);
     let r = run(&all);
@@ -12271,7 +12342,7 @@ fn registry_opensavemru_csv_and_summary() {
     let out = dir.path().join("opensavemru.csv");
     let r = run(&[
         "parse-registry",
-        "opensavemru",
+        "open-save-mru",
         "-d",
         dir.path().to_str().unwrap(),
         "-o",
@@ -12366,7 +12437,7 @@ fn registry_opensavemru_errors() {
     let sam = dir.path().join("SAM");
     let r = run(&[
         "parse-registry",
-        "opensavemru",
+        "open-save-mru",
         "-f",
         sam.to_str().unwrap(),
         "-K",
@@ -12381,7 +12452,7 @@ fn registry_opensavemru_errors() {
     let ntuser = dir.path().join("NTUSER.DAT");
     let r = run(&[
         "parse-registry",
-        "opensavemru",
+        "open-save-mru",
         "-f",
         ntuser.to_str().unwrap(),
         "-K",
@@ -12394,7 +12465,7 @@ fn registry_opensavemru_errors() {
     );
     let r = run(&[
         "parse-registry",
-        "opensavemru",
+        "open-save-mru",
         "-f",
         ntuser.to_str().unwrap(),
         "--code-page",
@@ -12407,7 +12478,7 @@ fn registry_opensavemru_errors() {
     let empty = tempfile::tempdir().unwrap();
     let r = run(&[
         "parse-registry",
-        "opensavemru",
+        "open-save-mru",
         "-d",
         empty.path().to_str().unwrap(),
         "-K",
@@ -12419,7 +12490,7 @@ fn registry_opensavemru_errors() {
     let original = std::fs::read(&ntuser).unwrap();
     let r = run(&[
         "parse-registry",
-        "opensavemru",
+        "open-save-mru",
         "-f",
         ntuser.to_str().unwrap(),
         "-o",
@@ -12448,7 +12519,7 @@ fn registry_opensavemru_keeps_key_warnings_on_stderr_for_stdout_formats() {
     for format in ["csv", "json", "jsonl"] {
         let r = run(&[
             "parse-registry",
-            "opensavemru",
+            "open-save-mru",
             "-f",
             hive.to_str().unwrap(),
             "-t",
@@ -12545,7 +12616,7 @@ fn registry_opensavemru_damaged_first_letter_does_not_date_the_next_file() {
     std::fs::write(&hive, bytes).unwrap();
     let r = run(&[
         "parse-registry",
-        "opensavemru",
+        "open-save-mru",
         "-f",
         hive.to_str().unwrap(),
         "-t",
@@ -14339,9 +14410,9 @@ fn registry_app_history_keeps_damaged_list_warnings_in_exports() {
     }
 }
 
-// --- parse-registry featureusage ----------------------------------------------------------------
+// --- parse-registry feature-usage ----------------------------------------------------------------
 
-/// `parse-registry featureusage`'s CSV columns.
+/// `parse-registry feature-usage`'s CSV columns.
 const FEATUREUSAGE_COLUMNS: [&str; 20] = [
     "Host",
     "User",
@@ -14470,9 +14541,9 @@ fn featureusage_collection(root: &Path) {
     std::fs::write(root.join("C/Users/bob/NTUSER.DAT"), bob).unwrap();
 }
 
-/// `parse-registry featureusage` with `args`, as JSON Lines.
+/// `parse-registry feature-usage` with `args`, as JSON Lines.
 fn featureusage_read(args: &[&str]) -> Vec<Value> {
-    let mut all = vec!["parse-registry", "featureusage"];
+    let mut all = vec!["parse-registry", "feature-usage"];
     all.extend(args);
     all.extend(["-t", "jsonl"]);
     let r = run(&all);
@@ -14535,7 +14606,7 @@ fn registry_featureusage_csv_and_summary() {
     let out = dir.path().join("featureusage.csv");
     let r = run(&[
         "parse-registry",
-        "featureusage",
+        "feature-usage",
         "-d",
         dir.path().to_str().unwrap(),
         "-o",
@@ -14665,7 +14736,7 @@ fn registry_featureusage_errors() {
     let sam = dir.path().join("SAM");
     let r = run(&[
         "parse-registry",
-        "featureusage",
+        "feature-usage",
         "-f",
         sam.to_str().unwrap(),
         "-K",
@@ -14678,7 +14749,7 @@ fn registry_featureusage_errors() {
     );
     let r = run(&[
         "parse-registry",
-        "featureusage",
+        "feature-usage",
         "-d",
         dir.path().to_str().unwrap(),
         "-K",
@@ -14690,7 +14761,7 @@ fn registry_featureusage_errors() {
     let original = std::fs::read(&sam).unwrap();
     let r = run(&[
         "parse-registry",
-        "featureusage",
+        "feature-usage",
         "-f",
         sam.to_str().unwrap(),
         "-o",
@@ -15968,9 +16039,9 @@ fn registry_auditpol_does_not_claim_unknown_flags_are_audited() {
     assert!(r.stdout.contains("1 (0 audited)"), "{}", r.stdout);
 }
 
-// --- parse-registry appcompat -------------------------------------------------------------------
+// --- parse-registry app-compat -------------------------------------------------------------------
 
-/// `parse-registry appcompat`'s CSV columns.
+/// `parse-registry app-compat`'s CSV columns.
 const APPCOMPAT_COLUMNS: [&str; 22] = [
     "Host",
     "SourcePath",
@@ -16101,9 +16172,9 @@ fn appcompat_collection(root: &Path) {
     std::fs::write(profile.join("NTUSER.DAT"), ntuser).unwrap();
 }
 
-/// `parse-registry appcompat` with `args`, as JSON Lines.
+/// `parse-registry app-compat` with `args`, as JSON Lines.
 fn appcompat_read(args: &[&str]) -> Vec<Value> {
-    let mut all = vec!["parse-registry", "appcompat"];
+    let mut all = vec!["parse-registry", "app-compat"];
     all.extend(args);
     all.extend(["-t", "jsonl"]);
     let r = run(&all);
@@ -16185,7 +16256,7 @@ fn registry_appcompat_csv_and_summary() {
     let out = dir.path().join("appcompat.csv");
     let r = run(&[
         "parse-registry",
-        "appcompat",
+        "app-compat",
         "-d",
         dir.path().to_str().unwrap(),
         "-o",
@@ -16266,7 +16337,7 @@ fn registry_appcompat_errors() {
     let sam = dir.path().join("SAM");
     let r = run(&[
         "parse-registry",
-        "appcompat",
+        "app-compat",
         "-f",
         sam.to_str().unwrap(),
         "-K",
@@ -16276,7 +16347,7 @@ fn registry_appcompat_errors() {
     assert!(said.contains("not a SOFTWARE or NTUSER.DAT hive"), "{said}");
     let r = run(&[
         "parse-registry",
-        "appcompat",
+        "app-compat",
         "-d",
         dir.path().to_str().unwrap(),
         "-K",
@@ -16294,7 +16365,7 @@ fn registry_appcompat_errors() {
     let original = std::fs::read(&software).unwrap();
     let r = run(&[
         "parse-registry",
-        "appcompat",
+        "app-compat",
         "-f",
         collection
             .path()
@@ -16358,7 +16429,7 @@ fn registry_appcompat_keeps_list_warnings_on_stderr() {
     for format in ["csv", "json", "jsonl"] {
         let r = run(&[
             "parse-registry",
-            "appcompat",
+            "app-compat",
             "-f",
             hive.to_str().unwrap(),
             "-t",

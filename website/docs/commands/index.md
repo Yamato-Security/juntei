@@ -47,19 +47,19 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry networks` | `SOFTWARE`, `SYSTEM` | [Networks](../artifacts/networks.md) |
 | `parse-registry lsa-secrets` | `SECURITY` | [LSA Secrets](../artifacts/lsa-secrets.md) |
 | `parse-registry bcd` | `BCD` (and `BCD-Template`) | [Boot Configuration Data (BCD)](../artifacts/bcd.md) |
-| `parse-registry appcompat` | `SOFTWARE`, `NTUSER.DAT` | [Application Compatibility](../artifacts/appcompat.md) |
+| `parse-registry app-compat` | `SOFTWARE`, `NTUSER.DAT` | [Application Compatibility](../artifacts/appcompat.md) |
 | `parse-registry auditpol` | `SECURITY` | [Audit Policy](../artifacts/auditpol.md) |
 | `parse-registry office` | `NTUSER.DAT` | [Microsoft Office](../artifacts/office.md) |
-| `parse-registry featureusage` | `NTUSER.DAT` | [FeatureUsage, RecentApps and Taskbar Pins](../artifacts/featureusage.md) |
+| `parse-registry feature-usage` | `NTUSER.DAT` | [FeatureUsage, RecentApps and Taskbar Pins](../artifacts/featureusage.md) |
 | `parse-registry app-history` | `NTUSER.DAT` | [Application History](../artifacts/app-history.md) |
 | `parse-registry mru` | `NTUSER.DAT` | [Most-Recently-Used Lists](../artifacts/mru.md) |
 | `parse-registry bam` | `SYSTEM` (with `SAM`, `SOFTWARE` for user names) | [BAM and DAM](../artifacts/bam.md) |
 | `parse-registry muicache` | `UsrClass.dat` (`NTUSER.DAT` on Windows XP) | [MuiCache](../artifacts/muicache.md) |
 | `parse-registry installed-programs` | `SOFTWARE`, `NTUSER.DAT` | [Installed Programs](../artifacts/installed-programs.md) |
-| `parse-registry opensavemru` | `NTUSER.DAT` | [Open and Save As Dialogs](../artifacts/opensavemru.md) |
+| `parse-registry open-save-mru` | `NTUSER.DAT` | [Open and Save As Dialogs](../artifacts/opensavemru.md) |
 | `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
 | `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
-| `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
+| `parse-registry recent-docs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
 | `parse-registry remote-access` | `NTUSER.DAT` (with `SOFTWARE` for user SIDs) | [Remote Access (User Side)](../artifacts/remote-access.md) |
 | `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
 | `parse-registry security-settings` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT` | [Security Settings](../artifacts/security-settings.md) |
@@ -68,8 +68,8 @@ and organizes results and logs by computer and investigative category.
 | `parse-registry system-info` | `SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` of one system | [System Information](../artifacts/system-info.md) |
 | `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
 | `parse-registry usb` | `SYSTEM`, with `SOFTWARE` and `NTUSER.DAT` | [USB Devices](../artifacts/usb.md) |
-| `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
-| `parse-registry shellbags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
+| `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
+| `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
 ## Source types and format changes
 

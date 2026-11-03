@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-registry opensavemru`: the files users opened and saved through the common Open and
+//! `parse-registry open-save-mru`: the files users opened and saved through the common Open and
 //! Save As dialogs, and the programs that showed the dialogs with the folders they used, from the
 //! `ComDlg32` key of `NTUSER.DAT` hives, read by ys-registry-parser's `comdlg32` module, each
 //! shell item list decoded by ys-lnk-parser (a link's target ID list has the same items), with

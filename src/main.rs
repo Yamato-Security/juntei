@@ -252,7 +252,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Recentdocs(opts) => {
+            RegistryCommands::RecentDocs(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -263,7 +263,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Shellbags(opts) => {
+            RegistryCommands::ShellBags(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -318,7 +318,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Userassist(opts) => {
+            RegistryCommands::UserAssist(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -329,7 +329,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Opensavemru(opts) => {
+            RegistryCommands::OpenSaveMru(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -417,7 +417,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Featureusage(opts) => {
+            RegistryCommands::FeatureUsage(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -461,7 +461,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Appcompat(opts) => {
+            RegistryCommands::AppCompat(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);

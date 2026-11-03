@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-registry recentdocs`: Explorer's recent documents in `NTUSER.DAT` hives, read by
+//! `parse-registry recent-docs`: Explorer's recent documents in `NTUSER.DAT` hives, read by
 //! ys-registry-parser's `ntuser` module, with Hayabusa's input options, progress bar and results
 //! summary. One record per item of `RecentDocs` and of each of its subkeys (one per extension,
 //! and `Folder`), in the order of the key's `MRUListEx`: the item's name, the name of its

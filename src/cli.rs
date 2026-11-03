@@ -1434,13 +1434,14 @@ pub enum RegistryCommands {
 
     /// Parse Open and Save As dialog history
     #[command(
+        alias = "opensavemru",
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry opensavemru <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry open-save-mru <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Opensavemru(RegistryOpenSaveMruOptions),
+    OpenSaveMru(RegistryOpenSaveMruOptions),
 
     /// Parse outbound RDP, PuTTY, WinSCP and mapped drive connections
     #[command(
@@ -1485,13 +1486,14 @@ pub enum RegistryCommands {
 
     /// Parse Explorer use counts and pins
     #[command(
+        alias = "featureusage",
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry featureusage <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry feature-usage <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Featureusage(RegistryFeatureUsageOptions),
+    FeatureUsage(RegistryFeatureUsageOptions),
 
     /// Parse security settings: Defender, UAC, credentials, RDP, firewall, logging
     #[command(
@@ -1526,13 +1528,14 @@ pub enum RegistryCommands {
 
     /// Parse application compatibility data
     #[command(
+        alias = "appcompat",
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry appcompat <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry app-compat <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Appcompat(RegistryAppCompatOptions),
+    AppCompat(RegistryAppCompatOptions),
 
     /// Parse boot configuration
     #[command(
@@ -1586,13 +1589,14 @@ pub enum RegistryCommands {
 
     /// Parse recent documents
     #[command(
+        alias = "recentdocs",
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry recentdocs <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry recent-docs <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Recentdocs(RegistryRecentDocsOptions),
+    RecentDocs(RegistryRecentDocsOptions),
 
     /// Parse local accounts
     #[command(
@@ -1616,13 +1620,14 @@ pub enum RegistryCommands {
 
     /// Parse ShellBags (folders opened in Explorer)
     #[command(
+        alias = "shellbags",
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry shellbags <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry shell-bags <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Shellbags(RegistryShellBagsOptions),
+    ShellBags(RegistryShellBagsOptions),
 
     /// Parse ShimCache entries
     #[command(
@@ -1656,13 +1661,14 @@ pub enum RegistryCommands {
 
     /// Parse UserAssist entries
     #[command(
+        alias = "userassist",
         author = AUTHOR,
         version = VERSION,
-        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry userassist <INPUT> [OPTIONS]\n\n{all-args}",
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-registry user-assist <INPUT> [OPTIONS]\n\n{all-args}",
         disable_help_flag = true,
         disable_version_flag = true
     )]
-    Userassist(RegistryUserAssistOptions),
+    UserAssist(RegistryUserAssistOptions),
 
     /// Parse BAM and DAM last runs
     #[command(

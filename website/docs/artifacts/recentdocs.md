@@ -37,7 +37,7 @@ LNK directory.
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-registry recentdocs <INPUT> [OPTIONS]
+Usage: juntei parse-registry recent-docs <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find NTUSER.DAT hives
@@ -51,8 +51,8 @@ Output:
 ```
 
 ```bash
-juntei parse-registry recentdocs -f NTUSER.DAT -o recentdocs.csv
-juntei parse-registry recentdocs -d evidence/ -t jsonl \
+juntei parse-registry recent-docs -f NTUSER.DAT -o recentdocs.csv
+juntei parse-registry recent-docs -d evidence/ -t jsonl \
   | jq 'select(.Extension == ".docx" or .Extension == ".pdf")'
 ```
 
