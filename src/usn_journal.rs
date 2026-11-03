@@ -676,7 +676,6 @@ fn print_summary(s: &Stats, carve: bool, no_color: bool) {
             ),
         );
     }
-    p(None, "", true);
 }
 
 fn file_len(path: &Path) -> u64 {

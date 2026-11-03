@@ -994,7 +994,6 @@ fn print_summary(s: &Stats, no_color: bool) {
         );
     }
     p_label(no_color, "Problems: ", &fmt_num(s.problems));
-    p(None, "", true);
 }
 
 /// Whether a file name is a SRUM database: `SRUDB.dat`, or a name ending in it

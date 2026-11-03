@@ -571,7 +571,6 @@ impl Stats {
                 p(None, &format!("  {problem}"), true);
             }
         }
-        p(None, "", true);
     }
 }
 

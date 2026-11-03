@@ -777,7 +777,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
             p(None, line.trim_end(), true);
         }
     }
-    p(None, "", true);
 }
 
 /// Whether a file name is a shortcut: `*.lnk`.

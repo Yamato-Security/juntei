@@ -569,6 +569,5 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }

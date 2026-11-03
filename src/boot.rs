@@ -444,7 +444,6 @@ impl Stats {
                 );
             }
         }
-        p(None, "", true);
     }
 }
 

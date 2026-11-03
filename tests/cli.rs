@@ -111,7 +111,7 @@ fn json_documents(text: &str) -> Vec<Value> {
 }
 
 #[test]
-fn summaries_have_no_blank_line_after_their_heading_or_before_the_elapsed_time() {
+fn summaries_have_no_blank_lines_from_their_heading_to_the_elapsed_time() {
     let output = tempfile::tempdir().unwrap();
     let saved = output.path().join("saved.csv");
     let runs: [&[&str]; 6] = [
@@ -145,6 +145,13 @@ fn summaries_have_no_blank_line_after_their_heading_or_before_the_elapsed_time()
             .position(|line| line.starts_with("Elapsed time: "))
             .unwrap();
         assert!(!lines[elapsed - 1].is_empty(), "{args:?}\n{}", r.stdout);
+        // Where the records were saved, or how to save them, follows the summary directly.
+        if let Some(save) = lines
+            .iter()
+            .position(|line| line.starts_with("Results saved: ") || line.starts_with("To save "))
+        {
+            assert!(!lines[save - 1].is_empty(), "{args:?}\n{}", r.stdout);
+        }
     }
 }
 

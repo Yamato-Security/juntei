@@ -220,7 +220,6 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
     if !data_on_stdout {
         print_summary(&totals, no_color);
         if let Some(out) = &opts.output {
-            p(None, "", true);
             if output_type == OutputType::Csv {
                 p_label(
                     no_color,

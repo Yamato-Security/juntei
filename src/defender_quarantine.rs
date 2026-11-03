@@ -1255,7 +1255,6 @@ fn print_summary(
             );
         }
     }
-    p(None, "", true);
 }
 
 #[cfg(test)]

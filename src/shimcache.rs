@@ -709,7 +709,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
             true,
         );
     }
-    p(None, "", true);
 }
 
 /// Whether a file name is a `SYSTEM` hive's (in any case; its logs are not hives).

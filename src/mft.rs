@@ -661,7 +661,6 @@ fn print_summary(s: &Stats, no_color: bool, recover_slack: bool) {
             &fmt_num(usize::try_from(s.csv_rows).unwrap_or(usize::MAX)),
         );
     }
-    p(None, "", true);
 }
 
 fn file_len(path: &Path) -> u64 {

@@ -867,7 +867,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
             p(None, l, true);
         }
     }
-    p(None, "", true);
 }
 
 /// Whether a file name is a jump list: `*.automaticDestinations-ms` or `*.customDestinations-ms`.
