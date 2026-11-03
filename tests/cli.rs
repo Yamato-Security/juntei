@@ -18300,32 +18300,42 @@ fn auto_parse_timezone_retains_boundary_registry_time_and_converts_remaining_rec
     std::fs::write(&input, &hive).unwrap();
     let target = tempfile::tempdir().unwrap();
     let mut expected_records = None;
-    for (kind, offset) in [
-        ("csv", "+00:00"),
-        ("csv", "+09:00"),
-        ("json", "+09:00"),
-        ("jsonl", "+09:00"),
+    for (kind, offset, relative) in [
+        ("csv", "+00:00", false),
+        ("csv", "+09:00", false),
+        ("json", "+09:00", false),
+        ("jsonl", "+09:00", false),
+        ("csv", "+09:00", true),
+        ("json", "+09:00", true),
+        ("jsonl", "+09:00", true),
     ] {
-        let output = target
-            .path()
-            .join(format!("{kind}-{offset}").replace(':', ""));
-        let result = run(&[
-            "auto-parse",
-            "-d",
-            evidence.path().to_str().unwrap(),
-            "-o",
-            output.to_str().unwrap(),
-            "-t",
-            kind,
-            "-j",
-            output.join("all.jsonl").to_str().unwrap(),
-            "-Z",
-            offset,
-            "-T",
-            "2",
-            "-K",
-            "-q",
-        ]);
+        let name = format!("{kind}-{offset}-{relative}").replace(':', "");
+        let output = target.path().join(&name);
+        let given = if relative {
+            Path::new(".").join(name)
+        } else {
+            output.clone()
+        };
+        let result = run_at(
+            target.path(),
+            &[
+                "auto-parse",
+                "-d",
+                evidence.path().to_str().unwrap(),
+                "-o",
+                given.to_str().unwrap(),
+                "-t",
+                kind,
+                "-j",
+                output.join("all.jsonl").to_str().unwrap(),
+                "-Z",
+                offset,
+                "-T",
+                "2",
+                "-K",
+                "-q",
+            ],
+        );
         assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
         let records = jsonl_records(&std::fs::read_to_string(output.join("all.jsonl")).unwrap());
         let records: Vec<_> = records
@@ -18361,6 +18371,13 @@ fn auto_parse_timezone_retains_boundary_registry_time_and_converts_remaining_rec
             assert!(text.contains("+09:00"));
             let log = std::fs::read_to_string(output.join(task["Log"].as_str().unwrap())).unwrap();
             assert!(log.contains("Warning: retained"), "{log}");
+            assert!(
+                log.contains(&format!(
+                    "unchanged in {} because",
+                    task["Output"].as_str().unwrap()
+                )),
+                "{log}"
+            );
             assert!(log.contains("9999-12-31T23:00:00Z"), "{log}");
             if kind == "csv" {
                 let (_, rows) = csv_rows(&output.join(task["Output"].as_str().unwrap()));

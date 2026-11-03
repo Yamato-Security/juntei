@@ -247,7 +247,7 @@ fn csv_cell(
     Ok(value.to_owned())
 }
 
-pub(super) fn rewrite(task: &Task, offset: OutputOffset) -> io::Result<Vec<String>> {
+pub(super) fn rewrite(task: &Task, offset: OutputOffset, output: &Path) -> io::Result<Vec<String>> {
     let mut warnings = Vec::new();
     if offset.is_utc() {
         return Ok(warnings);
@@ -257,7 +257,7 @@ pub(super) fn rewrite(task: &Task, offset: OutputOffset) -> io::Result<Vec<Strin
         if let Some(first) = retained.first {
             warnings.push(format!(
                 "Warning: retained {} timestamp(s) unchanged in {} because timezone {offset} cannot represent them without losing data. Other timestamps were converted. First retained value: {first}",
-                retained.count, path.display()
+                retained.count, super::dot_relative(output, &path).display()
             ));
         }
     }

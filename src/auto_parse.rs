@@ -220,6 +220,8 @@ struct TaskPaths {
     /// The evidence directory as given, made absolute: where the parsers run. A canonical Windows
     /// path is a verbatim one (`\\?\C:\...`), which not every API accepts.
     directory: PathBuf,
+    /// The output directory that generated paths in parser logs are relative to.
+    output_directory: PathBuf,
     /// Each directory's absolute spellings, longest first, so that none replaces part of another.
     roots: Vec<String>,
 }
@@ -239,7 +241,11 @@ impl TaskPaths {
             .collect();
         roots.sort_by_key(|root| std::cmp::Reverse(root.len()));
         roots.dedup();
-        Self { directory, roots }
+        Self {
+            directory,
+            output_directory: output.to_path_buf(),
+            roots,
+        }
     }
 
     /// `text` with each directory, where it ends a word or a path continues from it, as `.`.
@@ -1983,7 +1989,7 @@ fn run_task(
     };
     let mut formatting_warnings = Vec::new();
     if status == TaskStatus::Succeeded {
-        match timestamps::rewrite(task, offset) {
+        match timestamps::rewrite(task, offset, &paths.output_directory) {
             Ok(warnings) => formatting_warnings = warnings,
             Err(e) => {
                 status = TaskStatus::Failed;
