@@ -1,2 +1,3 @@
 # Used by GitHub Pages and local previews.
 mkdocs-material==9.7.6
+mkdocs-static-i18n==1.3.1
