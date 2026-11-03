@@ -42,7 +42,8 @@ fn table_name(artifact: &str, name: &str) -> Option<&'static str> {
     }
 }
 
-pub(super) fn distribute(task: &Task) -> io::Result<Vec<PathBuf>> {
+/// The log names the tables from `output`, the output directory, as the manifests do.
+pub(super) fn distribute(task: &Task, output: &Path) -> io::Result<Vec<PathBuf>> {
     let directory = task
         .output
         .parent()
@@ -99,8 +100,8 @@ pub(super) fn distribute(task: &Task) -> io::Result<Vec<PathBuf>> {
         writeln!(
             log,
             "Table: {} -> {}",
-            source.display(),
-            destination.display()
+            super::dot_relative(output, &source).display(),
+            super::dot_relative(output, &destination).display()
         )?;
     }
     log.flush()?;
@@ -174,7 +175,11 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
         }) {
             if previous.get("Purpose").and_then(Value::as_str) != Some("json_timeline") {
                 if let Some(files) = previous.get("OutputFiles").and_then(Value::as_array) {
-                    for path in files.iter().filter_map(Value::as_str).map(PathBuf::from) {
+                    for path in files
+                        .iter()
+                        .filter_map(Value::as_str)
+                        .map(|path| super::recorded_path(root, path))
+                    {
                         if !flat_table_path(&host, &path, task.artifact) {
                             return Err(io::Error::other(
                                 "Previous table manifest contains an invalid output path",
@@ -186,7 +191,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                 if let Some(path) = previous
                     .get("Output")
                     .and_then(Value::as_str)
-                    .map(PathBuf::from)
+                    .map(|path| super::recorded_path(root, path))
                 {
                     for name in [old_stem, stem] {
                         if matches!(task.artifact, "amcache" | "jump-lists")
@@ -205,7 +210,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
             if let Some(path) = previous
                 .get("Log")
                 .and_then(Value::as_str)
-                .map(PathBuf::from)
+                .map(|path| super::recorded_path(root, path))
             {
                 for name in [old_stem, stem] {
                     for suffix in ["-logs.txt", "-json-timeline-logs.txt"] {
@@ -262,7 +267,7 @@ mod tests {
                 vec!["AutomaticDestinations.csv", "CustomDestinations.csv"],
             ),
         ] {
-            let (_temp, task) = setup(artifact);
+            let (temp, task) = setup(artifact);
             for (index, capture) in ["a", "b"].iter().enumerate() {
                 let source = task.output.join(capture);
                 fs::create_dir(&source).unwrap();
@@ -274,7 +279,7 @@ mod tests {
                     .unwrap();
                 }
             }
-            let files = distribute(&task).unwrap();
+            let files = distribute(&task, temp.path()).unwrap();
             assert_eq!(files.len(), names.len() * 2);
             for source in [1, 2] {
                 for name in &names {
@@ -298,7 +303,7 @@ mod tests {
 
     #[test]
     fn unknown_tables_do_not_disappear_or_partially_replace_outputs() {
-        let (_temp, task) = setup("jump-lists");
+        let (temp, task) = setup("jump-lists");
         fs::write(task.output.join("AutomaticDestinations.csv"), b"new\n").unwrap();
         fs::write(task.output.join("Unexpected.csv"), b"retain\n").unwrap();
         let destination = task
@@ -307,7 +312,7 @@ mod tests {
             .unwrap()
             .join("JumpLists-AutomaticDestinations.csv");
         fs::write(&destination, b"previous\n").unwrap();
-        assert!(distribute(&task).is_err());
+        assert!(distribute(&task, temp.path()).is_err());
         assert_eq!(fs::read(destination).unwrap(), b"previous\n");
         assert!(task.output.join("AutomaticDestinations.csv").is_file());
         assert!(task.output.join("Unexpected.csv").is_file());
@@ -334,7 +339,7 @@ mod tests {
         assert!(!legacy.exists());
         assert_eq!(fs::read(notes).unwrap(), b"keep\n");
         fs::write(task.output.join("Amcache_files.csv"), b"same\n").unwrap();
-        let files = distribute(&task).unwrap();
+        let files = distribute(&task, temp.path()).unwrap();
         let manifest = json!({"Hosts":[{"Computer":"HOST1","OutputDirectory":"HOST1"}], "Tasks":[
             {"Computer":"HOST1","Artifact":"amcache","Purpose":"artifact","Output":category,"OutputFiles":files}
         ]});

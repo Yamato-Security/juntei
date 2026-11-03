@@ -97,7 +97,11 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
             }
             let host_root = root.join(folder);
             if let Some(files) = task.get("OutputFiles").and_then(Value::as_array) {
-                for file in files.iter().filter_map(Value::as_str).map(PathBuf::from) {
+                for file in files
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(|path| super::recorded_path(root, path))
+                {
                     if !valid_path(&host_root, &file) {
                         return Err(io::Error::other(
                             "Previous SRUM manifest contains a path outside its categories",
@@ -112,7 +116,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                 if task
                     .get("Log")
                     .and_then(Value::as_str)
-                    .is_some_and(|s| Path::new(s) == log)
+                    .is_some_and(|s| super::recorded_path(root, s) == log)
                 {
                     ensure_category(&host_root, &host_root.join(category))?;
                     remove_generated_path(&log, root)?;
@@ -124,7 +128,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                 if task
                     .get("Output")
                     .and_then(Value::as_str)
-                    .is_some_and(|s| Path::new(s) == legacy)
+                    .is_some_and(|s| super::recorded_path(root, s) == legacy)
                 {
                     ensure_category(&host_root, &host_root.join(category))?;
                     remove_generated_path(&legacy, root)?;
@@ -170,7 +174,8 @@ fn output_path(
     Ok(path)
 }
 
-pub(super) fn distribute(task: &Task) -> io::Result<Vec<PathBuf>> {
+/// The log names the tables from `output`, the output directory, as the manifests do.
+pub(super) fn distribute(task: &Task, output: &Path) -> io::Result<Vec<PathBuf>> {
     let root = task
         .output
         .parent()
@@ -299,8 +304,8 @@ pub(super) fn distribute(task: &Task) -> io::Result<Vec<PathBuf>> {
         writeln!(
             log,
             "SRUM table: {} -> {}",
-            source.display(),
-            destination.display()
+            super::dot_relative(output, &source).display(),
+            super::dot_relative(output, &destination).display()
         )?;
     }
     log.flush()?;
@@ -336,7 +341,7 @@ mod tests {
 
     #[test]
     fn csv_sources_are_flat_distinct_and_not_reencoded() {
-        let (_temp, task, root) = setup(AutoOutputType::Csv);
+        let (temp, task, root) = setup(AutoOutputType::Csv);
         for capture in ["capture-a", "capture-b"] {
             let source = task.output.join(capture);
             fs::create_dir(&source).unwrap();
@@ -348,7 +353,7 @@ mod tests {
             fs::write(source.join("SRUM-AppTimelineProvider.csv"), b"ID\n2\n").unwrap();
             fs::write(source.join("SRUM-IdentityMap.csv"), b"ID\n3\n").unwrap();
         }
-        let files = distribute(&task).unwrap();
+        let files = distribute(&task, temp.path()).unwrap();
         assert_eq!(files.len(), 6);
         assert_eq!(
             fs::read(root.join("NetworkActivity/SRUM-NetworkConnections-Source2.csv")).unwrap(),
@@ -368,7 +373,7 @@ mod tests {
     #[test]
     fn json_routes_known_and_unknown_providers_preserving_native_values() {
         for format in [AutoOutputType::Json, AutoOutputType::Jsonl] {
-            let (_temp, task, root) = setup(format);
+            let (temp, task, root) = setup(format);
             let records = [
                 json!({"Table":srum::Kind::NetworkUsage.table(),"Provider":"NetworkUsages","SourceFile":"a","BytesSent":u64::MAX,"Empty":null}),
                 json!({"Table":srum::Kind::ApplicationUsage.table(),"Provider":"AppResourceUseInfo","SourceFile":"a","Usage":[1,2]}),
@@ -383,7 +388,7 @@ mod tests {
                     writeln!(writer).unwrap();
                 }
             }
-            let files = distribute(&task).unwrap();
+            let files = distribute(&task, temp.path()).unwrap();
             assert_eq!(files.len(), 6);
             for suffix in [1, 2] {
                 let path = root.join(format!(
@@ -411,7 +416,7 @@ mod tests {
 
     #[test]
     fn failed_json_split_keeps_previous_outputs_and_source() {
-        let (_temp, task, root) = setup(AutoOutputType::Jsonl);
+        let (temp, task, root) = setup(AutoOutputType::Jsonl);
         let out = root.join("NetworkActivity/SRUM-NetworkUsages.jsonl");
         fs::write(&out, b"previous output\n").unwrap();
         let source = task.output.join("source.jsonl");
@@ -423,7 +428,7 @@ mod tests {
             ),
         )
         .unwrap();
-        assert!(distribute(&task).is_err());
+        assert!(distribute(&task, temp.path()).is_err());
         assert_eq!(fs::read(out).unwrap(), b"previous output\n");
         assert!(source.is_file());
     }
@@ -431,9 +436,9 @@ mod tests {
     #[test]
     fn empty_json_database_does_not_fabricate_timeline_records() {
         for format in [AutoOutputType::Json, AutoOutputType::Jsonl] {
-            let (_temp, task, root) = setup(format);
+            let (temp, task, root) = setup(format);
             fs::write(task.output.join(format!("empty.{}", format.as_str())), b"").unwrap();
-            let files = distribute(&task).unwrap();
+            let files = distribute(&task, temp.path()).unwrap();
             assert_eq!(
                 files,
                 vec![root.join(format!("SystemInformation/SRUM-Empty.{}", format.as_str()))]
@@ -458,7 +463,7 @@ mod tests {
             format!("{}\n", json!({"Table":srum::Kind::NetworkUsage.table()})),
         )
         .unwrap();
-        distribute(&task).unwrap();
+        distribute(&task, temp.path()).unwrap();
         assert_eq!(fs::read(evidence).unwrap(), b"original evidence");
     }
 
@@ -519,7 +524,7 @@ mod tests {
         fs::create_dir(&outside).unwrap();
         std::os::unix::fs::symlink(&outside, &network).unwrap();
         fs::write(task.output.join("SRUM-NetworkUsages.csv"), b"ID\n1\n").unwrap();
-        assert!(distribute(&task).is_err());
+        assert!(distribute(&task, temp.path()).is_err());
         assert_eq!(fs::read_dir(outside).unwrap().count(), 0);
     }
 }
