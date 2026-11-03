@@ -276,6 +276,14 @@ code, result path, log path, the requested JSONL timeline and any export error, 
 and whether each task
 succeeded, was skipped, or failed.
 
+Evidence paths are relative to the evidence directory. The terminal lists each computer with its
+directory in the evidence (`HOST1: ./HOST1_F`), and the parsers run in the evidence directory and
+are given such paths. The results' source path columns (`SourceFile`, `SourcePath`, …), the logs
+and the manifests' `EvidenceRoot` and `WindowsDirectories` therefore show where each file is in the
+evidence (`./HOST1_F/C/Windows/Prefetch/CMD.EXE-6D6290C5.pf`), not where the evidence is on the
+analysis system. Only the manifest's `EvidenceDirectory` records that; the output paths in
+`Command` are absolute.
+
 The progress message shows the active computer and artifact followed by an approximate input
 size, for example `HOST1 / prefetch (~2.0 MiB)`. A group of files uses their combined size; each
 MFT, LogFile or USN Journal task shows its individual input size. Estimates exclude auxiliary transaction

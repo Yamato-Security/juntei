@@ -348,6 +348,88 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert_eq!(manifest["Hosts"][0]["Comp"], "HOST1");
     assert_eq!(manifest["Hosts"][0]["Hostname"], "HOST1");
     assert_eq!(manifest["Hosts"][0]["HostnameSource"], "client_info.json");
+    // The parsers run in the evidence directory and are given paths relative to it, so the host
+    // list, the manifests and the results show where files are in the evidence.
+    let host_root = Path::new(".").join("HOST1_F.TEST");
+    assert!(
+        r.stdout.contains(&format!(": {}\n", host_root.display())),
+        "{}",
+        r.stdout
+    );
+    assert_eq!(
+        manifest["Hosts"][0]["EvidenceRoot"],
+        host_root.to_string_lossy().as_ref()
+    );
+    assert_eq!(
+        manifest["Hosts"][0]["WindowsDirectories"][0],
+        host_root
+            .join("uploads")
+            .join("auto")
+            .join("C%3A")
+            .join("Windows")
+            .to_string_lossy()
+            .as_ref()
+    );
+    let mft_task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|task| task["Artifact"] == "mft")
+        .unwrap();
+    let mft = host_root
+        .join("uploads")
+        .join("ntfs")
+        .join("C")
+        .join("$MFT");
+    assert!(
+        mft_task["Command"]
+            .as_array()
+            .unwrap()
+            .windows(2)
+            .any(|pair| pair[0] == "-f" && pair[1] == mft.to_string_lossy().as_ref()),
+        "{mft_task}"
+    );
+    let (_, prefetch) = csv_rows(&csv.join("HOST1/ProcessExecution/Prefetch.csv"));
+    assert!(!prefetch.is_empty());
+    assert!(
+        prefetch
+            .iter()
+            .all(|row| Path::new(&row["SourceFile"]).starts_with(&host_root)),
+        "{prefetch:?}"
+    );
+    let (_, hunter) = csv_rows(&csv.join("HOST1/Persistence/PersistenceHunter.csv"));
+    assert!(
+        hunter
+            .iter()
+            .all(|row| Path::new(&row["SourceFile"]).starts_with(&host_root)),
+        "{hunter:?}"
+    );
+    // Only the manifest's EvidenceDirectory says where the evidence is on this system.
+    let absolute = [
+        evidence.path().to_string_lossy().into_owned(),
+        std::fs::canonicalize(evidence.path())
+            .unwrap()
+            .to_string_lossy()
+            .into_owned(),
+    ];
+    let mut pending = vec![csv.clone()];
+    while let Some(dir) = pending.pop() {
+        for entry in std::fs::read_dir(dir).unwrap().flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                pending.push(path);
+            } else if path != csv.join("manifest.json") {
+                let text = String::from_utf8_lossy(&std::fs::read(&path).unwrap()).into_owned();
+                for prefix in &absolute {
+                    assert!(
+                        !text.contains(prefix.as_str()),
+                        "{} names {prefix}",
+                        path.display()
+                    );
+                }
+            }
+        }
+    }
     assert!(
         manifest["Tasks"]
             .as_array()
@@ -509,11 +591,16 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         serde_json::from_reader(std::fs::File::open(direct.join("manifest.json")).unwrap())
             .unwrap();
     assert_eq!(
-        direct_manifest["Hosts"][0]["EvidenceRoot"],
+        direct_manifest["EvidenceDirectory"],
         std::fs::canonicalize(&windows)
             .unwrap()
             .to_string_lossy()
             .as_ref()
+    );
+    assert_eq!(direct_manifest["Hosts"][0]["EvidenceRoot"], ".");
+    assert_eq!(
+        direct_manifest["Hosts"][0]["WindowsDirectories"],
+        json!(["."])
     );
     assert!(
         direct

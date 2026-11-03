@@ -127,6 +127,18 @@ fn artifact_filename(artifact: &str) -> &'static str {
     }
 }
 
+/// `path`, a host or file in the evidence directory, relative to that directory from `.`
+/// (`./HOST/C`, or `.` for the evidence directory itself). The parsers run in the evidence
+/// directory and are given these paths, so their source paths, the host list and the manifests
+/// show where a file is in the evidence, not where the evidence is on the analyst's system.
+fn evidence_relative(evidence: &Path, path: &Path) -> PathBuf {
+    match path.strip_prefix(evidence) {
+        Ok(relative) if relative.as_os_str().is_empty() => PathBuf::from("."),
+        Ok(relative) => Path::new(".").join(relative),
+        Err(_) => path.to_path_buf(),
+    }
+}
+
 fn defender_extraction_directory(output: &Path, computer_folder: &str) -> PathBuf {
     output
         .join(computer_folder)
@@ -290,6 +302,21 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             return 1;
         }
     };
+    // The parsers run in the evidence directory (see `evidence_relative`), spelled as given: a
+    // canonical Windows path is a verbatim one (`\\?\C:\...`), which not every API accepts.
+    let parser_directory = match std::path::absolute(&opts.directory) {
+        Ok(path) => path,
+        Err(e) => {
+            error_msg(
+                no_color,
+                &format!(
+                    "Could not resolve the evidence directory {}: {e}",
+                    opts.directory.display()
+                ),
+            );
+            return 1;
+        }
+    };
     if let Err(msg) = output_separate_from_evidence(&evidence, &opts.output) {
         error_msg(no_color, &msg);
         return 1;
@@ -359,7 +386,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             return 1;
         }
     };
-    let mut tasks = match build_tasks(&hosts, opts, &work) {
+    let mut tasks = match build_tasks(&hosts, opts, &evidence, &work) {
         Ok(tasks) => tasks,
         Err(e) => {
             error_msg(
@@ -381,7 +408,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             let mut json_opts = opts.clone();
             json_opts.output_type = AutoOutputType::Jsonl;
             json_opts.extract_defender_quarantined = false;
-            let mut extra = build_tasks(&hosts, &json_opts, &path)?;
+            let mut extra = build_tasks(&hosts, &json_opts, &evidence, &path)?;
             for task in &mut extra {
                 task.timeline_only = true;
                 let name = task.log.file_stem().unwrap_or_default().to_string_lossy();
@@ -469,7 +496,12 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             .map_or_else(String::new, |fqdn| format!(" ({fqdn})"));
         p(
             None,
-            &format!("  {}{}: {}", host.computer, fqdn, host.root.display()),
+            &format!(
+                "  {}{}: {}",
+                host.computer,
+                fqdn,
+                evidence_relative(&evidence, &host.root).display()
+            ),
             true,
         );
         // the local times the system kept
@@ -488,7 +520,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p(None, "", true);
 
     let bar = progress::progress_bar(tasks.len(), no_color);
-    let mut results = run_tasks(&tasks, &executable, threads, &bar);
+    let mut results = run_tasks(&tasks, &executable, &parser_directory, threads, &bar);
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
         if matches!(task.artifact, "amcache" | "jump-lists")
@@ -643,7 +675,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         extract_defender_quarantined: opts.extract_defender_quarantined,
         threads,
         max_depth: opts.max_depth,
-        hosts: hosts.iter().map(manifest_host).collect(),
+        hosts: hosts
+            .iter()
+            .map(|host| manifest_host(host, &evidence))
+            .collect(),
         tasks: &results,
     };
     let manifest_path = opts.output.join("manifest.json");
@@ -1042,12 +1077,23 @@ fn assign_output_folders(hosts: &mut [Host]) {
     }
 }
 
-fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Result<Vec<Task>> {
+/// The parser tasks for `hosts`. The parsers run in `evidence` (see [`evidence_relative`]), so
+/// their output paths are absolute.
+fn build_tasks(
+    hosts: &[Host],
+    opts: &AutoParseOptions,
+    evidence: &Path,
+    work: &Path,
+) -> io::Result<Vec<Task>> {
+    let parser_work = std::path::absolute(work)?;
+    let parser_output = std::path::absolute(&opts.output)?;
     let mut tasks = Vec::new();
     for host in hosts {
         let inputs = InputInventory::scan(&host.root);
         let data_dir = work.join(&host.folder);
+        let parser_data_dir = parser_work.join(&host.folder);
         let host_output_dir = opts.output.join(&host.folder);
+        let root = evidence_relative(evidence, &host.root);
         for directory in [&data_dir, &host_output_dir] {
             if fs::symlink_metadata(directory).is_ok_and(|m| m.file_type().is_symlink()) {
                 return Err(io::Error::other(
@@ -1064,39 +1110,43 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                 fs::create_dir_all(path)?;
             }
         }
-        let mut add =
-            |artifact: &'static str, command: &[&str], shape: OutputShape, extra: &[&str]| {
-                let output = task_output(&data_dir, artifact, opts.output_type, shape);
-                let mut args: Vec<OsString> = command.iter().map(OsString::from).collect();
-                args.push("-d".into());
-                args.push(host.root.as_os_str().to_owned());
-                args.push("-o".into());
-                args.push(output.as_os_str().to_owned());
-                args.push("-t".into());
-                args.push(opts.output_type.as_str().into());
-                args.extend(extra.iter().map(OsString::from));
-                if artifact == "defender-quarantine" && opts.extract_defender_quarantined {
-                    args.push("--extract".into());
-                    args.push(
-                        defender_extraction_directory(&opts.output, &host.folder).into_os_string(),
-                    );
-                }
-                args.push("-C".into());
-                args.push("-K".into());
-                args.push("-q".into());
-                tasks.push(Task {
-                    computer: host.computer.clone(),
-                    artifact,
-                    output_type: opts.output_type,
-                    timeline_only: false,
-                    input_bytes: inputs.sizes.get(artifact).copied().unwrap_or(0),
-                    args,
-                    output,
-                    log: host_output_dir
-                        .join(artifact_category(artifact))
-                        .join(format!("{}-logs.txt", artifact_filename(artifact))),
-                });
-            };
+        let mut add = |artifact: &'static str,
+                       command: &[&str],
+                       shape: OutputShape,
+                       extra: &[&str]| {
+            let output = task_output(&data_dir, artifact, opts.output_type, shape);
+            let mut args: Vec<OsString> = command.iter().map(OsString::from).collect();
+            args.push("-d".into());
+            args.push(root.clone().into_os_string());
+            args.push("-o".into());
+            args.push(
+                task_output(&parser_data_dir, artifact, opts.output_type, shape).into_os_string(),
+            );
+            args.push("-t".into());
+            args.push(opts.output_type.as_str().into());
+            args.extend(extra.iter().map(OsString::from));
+            if artifact == "defender-quarantine" && opts.extract_defender_quarantined {
+                args.push("--extract".into());
+                args.push(
+                    defender_extraction_directory(&parser_output, &host.folder).into_os_string(),
+                );
+            }
+            args.push("-C".into());
+            args.push("-K".into());
+            args.push("-q".into());
+            tasks.push(Task {
+                computer: host.computer.clone(),
+                artifact,
+                output_type: opts.output_type,
+                timeline_only: false,
+                input_bytes: inputs.sizes.get(artifact).copied().unwrap_or(0),
+                args,
+                output,
+                log: host_output_dir
+                    .join(artifact_category(artifact))
+                    .join(format!("{}-logs.txt", artifact_filename(artifact))),
+            });
+        };
 
         add(
             "amcache",
@@ -1314,7 +1364,9 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &mut tasks,
             host,
             opts,
+            evidence,
             &data_dir,
+            &parser_data_dir,
             &host_output_dir,
             "mft",
             &["parse-ntfs", "mft"],
@@ -1325,7 +1377,9 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &mut tasks,
             host,
             opts,
+            evidence,
             &data_dir,
+            &parser_data_dir,
             &host_output_dir,
             "usn-journal",
             &["parse-ntfs", "usn-journal"],
@@ -1336,7 +1390,9 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &mut tasks,
             host,
             opts,
+            evidence,
             &data_dir,
+            &parser_data_dir,
             &host_output_dir,
             "logfile",
             &["parse-ntfs", "logfile"],
@@ -1491,7 +1547,9 @@ fn add_file_artifact_tasks(
     tasks: &mut Vec<Task>,
     host: &Host,
     opts: &AutoParseOptions,
+    evidence: &Path,
     data_dir: &Path,
+    parser_data_dir: &Path,
     host_output_dir: &Path,
     artifact: &'static str,
     command: &[&str],
@@ -1515,14 +1573,18 @@ fn add_file_artifact_tasks(
             format!("{}-{}", artifact_filename(artifact), index + 1)
         };
         let category = artifact_category(artifact);
-        let output = data_dir
-            .join(category)
-            .join(format!("{stem}.{}", opts.output_type.as_str()));
+        let file_name = format!("{stem}.{}", opts.output_type.as_str());
+        let output = data_dir.join(category).join(&file_name);
         let mut args: Vec<OsString> = command.iter().map(OsString::from).collect();
         args.push(input_flag);
-        args.push(input.into_os_string());
+        args.push(evidence_relative(evidence, &input).into_os_string());
         args.push("-o".into());
-        args.push(output.as_os_str().to_owned());
+        args.push(
+            parser_data_dir
+                .join(category)
+                .join(file_name)
+                .into_os_string(),
+        );
         args.push("-t".into());
         args.push(opts.output_type.as_str().into());
         args.extend(extra.iter().map(OsString::from));
@@ -1634,6 +1696,7 @@ fn remove_generated_file(path: &Path) -> io::Result<()> {
 fn run_tasks(
     tasks: &[Task],
     executable: &Path,
+    directory: &Path,
     threads: usize,
     bar: &indicatif::ProgressBar,
 ) -> Vec<TaskResult> {
@@ -1648,7 +1711,7 @@ fn run_tasks(
                         break;
                     };
                     bar.set_message(task_progress_message(task));
-                    let result = run_task(task, executable);
+                    let result = run_task(task, executable, directory);
                     results.lock().unwrap().push((index, result));
                     bar.inc(1);
                 }
@@ -1669,13 +1732,17 @@ fn task_progress_message(task: &Task) -> String {
     )
 }
 
-fn run_task(task: &Task, executable: &Path) -> TaskResult {
+/// Run `task` in `directory`, the evidence directory, whose paths its arguments are relative to.
+fn run_task(task: &Task, executable: &Path, directory: &Path) -> TaskResult {
     let start = Instant::now();
     let command: Vec<String> =
         std::iter::once(executable.as_os_str().to_string_lossy().to_string())
             .chain(task.args.iter().map(|a| a.to_string_lossy().to_string()))
             .collect();
-    let output = Command::new(executable).args(&task.args).output();
+    let output = Command::new(executable)
+        .current_dir(directory)
+        .args(&task.args)
+        .output();
     let mut error = None;
     let (status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
@@ -1959,17 +2026,20 @@ fn replace_generated_file(path: &Path, replacement: &Path) -> io::Result<()> {
     fs::remove_file(backup)
 }
 
-fn manifest_host(host: &Host) -> ManifestHost {
+/// `host` in the manifests, its directories relative to `evidence`.
+fn manifest_host(host: &Host, evidence: &Path) -> ManifestHost {
     ManifestHost {
         computer: host.computer.clone(),
         hostname: host.hostname.clone(),
         fqdn: host.fqdn.clone(),
         hostname_source: host.source,
-        evidence_root: host.root.to_string_lossy().to_string(),
+        evidence_root: evidence_relative(evidence, &host.root)
+            .to_string_lossy()
+            .to_string(),
         windows_directories: host
             .windows
             .iter()
-            .map(|p| p.to_string_lossy().to_string())
+            .map(|p| evidence_relative(evidence, p).to_string_lossy().to_string())
             .collect(),
         output_directory: host.folder.clone(),
     }
@@ -2377,6 +2447,20 @@ mod tests {
     }
 
     #[test]
+    fn evidence_paths_are_relative_to_the_evidence_directory() {
+        let evidence = Path::new("/cases/evidence");
+        assert_eq!(evidence_relative(evidence, evidence), Path::new("."));
+        assert_eq!(
+            evidence_relative(evidence, &evidence.join("HOST_C").join("C")),
+            Path::new(".").join("HOST_C").join("C")
+        );
+        assert_eq!(
+            evidence_relative(evidence, Path::new("/elsewhere/HOST")),
+            Path::new("/elsewhere/HOST")
+        );
+    }
+
+    #[test]
     fn refuses_output_that_contains_or_is_inside_evidence() {
         let dir = tempfile::tempdir().unwrap();
         fs::create_dir_all(dir.path().join("case")).unwrap();
@@ -2573,7 +2657,7 @@ mod tests {
         assert_eq!(computers.len(), 3);
         assert_eq!(hosts[1].computer, "host_2");
         assert_eq!(hosts[1].hostname, "host");
-        let manifest = manifest_host(&hosts[1]);
+        let manifest = manifest_host(&hosts[1], Path::new(""));
         assert_eq!(manifest.computer, "host_2");
         assert_eq!(manifest.hostname, "host");
     }
