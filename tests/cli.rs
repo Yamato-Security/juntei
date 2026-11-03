@@ -258,14 +258,17 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         csv.join("HOST1/Persistence/PersistenceHunter-logs.txt")
             .is_file()
     );
-    assert!(csv.join("HOST1/FileExistence/Amcache").is_dir());
+    assert!(!csv.join("HOST1/FileExistence/Registry-Amcache").exists());
     assert!(
-        csv.join("HOST1/FileExistence/Amcache/Summary.csv")
+        csv.join("HOST1/FileExistence/Registry-Amcache-Summary.csv")
             .is_file()
     );
-    assert!(csv.join("HOST1/FileExistence/Amcache/Files.csv").is_file());
     assert!(
-        std::fs::read_dir(csv.join("HOST1/FileExistence/Amcache"))
+        csv.join("HOST1/FileExistence/Registry-Amcache-Files.csv")
+            .is_file()
+    );
+    assert!(
+        std::fs::read_dir(csv.join("HOST1/FileExistence"))
             .unwrap()
             .flatten()
             .all(|entry| entry.path().is_file())
@@ -530,7 +533,11 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .join("HOST1/ProcessExecution/Prefetch-logs.txt")
             .is_file()
     );
-    assert!(jsonl.join("HOST1/FileExistence/Amcache-logs.txt").is_file());
+    assert!(
+        jsonl
+            .join("HOST1/FileExistence/Registry-Amcache-logs.txt")
+            .is_file()
+    );
     assert!(
         jsonl
             .join("HOST1/ProcessExecution/Prefetch.jsonl")
@@ -566,7 +573,7 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
         assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
         let host = output.join("HOST1");
         assert!(
-            host.join(format!("FileExistence/Amcache.{format}"))
+            host.join(format!("FileExistence/Registry-Amcache.{format}"))
                 .is_file()
         );
         assert!(host.join(format!("FileSystem/MFT.{format}")).is_file());
@@ -721,7 +728,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
             );
             assert!(
                 output
-                    .join("HOST1/FileExistence/Amcache/Files.csv")
+                    .join("HOST1/FileExistence/Registry-Amcache-Files.csv")
                     .is_file()
             );
         } else {
@@ -1076,22 +1083,16 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
             .iter()
             .all(|host| host["HostnameSource"] == "directory name")
     );
-    let tables = output.join("HOST3/FileExistence/Amcache");
-    let sources: Vec<_> = std::fs::read_dir(tables)
-        .unwrap()
-        .map(|entry| entry.unwrap().path())
-        .collect();
-    assert_eq!(sources.len(), 2);
-    for source in sources {
-        let mut files: Vec<_> = std::fs::read_dir(source)
-            .unwrap()
-            .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
-            .collect();
-        files.sort();
-        assert_eq!(
-            files,
-            ["Devices.csv", "Files.csv", "Findings.csv", "Summary.csv"]
-        );
+    let category = output.join("HOST3/FileExistence");
+    assert!(!category.join("Registry-Amcache").exists());
+    for source in [1, 2] {
+        for table in ["Devices", "Files", "Findings", "Summary"] {
+            assert!(
+                category
+                    .join(format!("Registry-Amcache-{table}-Source{source}.csv"))
+                    .is_file()
+            );
+        }
     }
     let records: Vec<Value> = std::fs::read_to_string(combined)
         .unwrap()

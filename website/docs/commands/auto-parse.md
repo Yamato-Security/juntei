@@ -101,9 +101,9 @@ An artifact that was not collected is a normal `skipped` task, not a failure.
 
 ## Output layout
 
-Results are organized by computer, investigative category, and artifact. Generated category and
-artifact directories use PascalCase, such as `Accounts`, `FileAndFolderOpening`, `Amcache`,
-and `JumpLists`. Computer directory names retain their discovered spelling. Existing output
+Results are organized by computer and investigative category. Category directories use
+PascalCase, such as `Accounts` and `FileAndFolderOpening`. Amcache and Jump Lists tables sit
+directly in their categories with filename prefixes. Computer directory names retain their discovered spelling. Existing output
 directories are not migrated; choose a new output directory when switching from the older naming. Each parser writes an
 `<artifact>-logs.txt` file beside its results, including when the artifact was not collected.
 CSV keeps separate tables because each artifact has different columns:
@@ -114,38 +114,42 @@ CSV keeps separate tables because each artifact has different columns:
 ├── manifest.csv
 ├── HOST1/
 │   ├── Accounts/
-│   │   ├── LsaSecrets.csv
-│   │   ├── LsaSecrets-logs.txt
-│   │   ├── SAM.csv
-│   │   └── SAM-logs.txt
+│   │   ├── Registry-LsaSecrets.csv
+│   │   ├── Registry-LsaSecrets-logs.txt
+│   │   ├── Registry-SAM.csv
+│   │   └── Registry-SAM-logs.txt
 │   ├── Applications/
-│   │   ├── AppHistory.csv
-│   │   ├── AppHistory-logs.txt
-│   │   ├── InstalledPrograms.csv
-│   │   └── InstalledPrograms-logs.txt
+│   │   ├── Registry-AppHistory.csv
+│   │   ├── Registry-AppHistory-logs.txt
+│   │   ├── Registry-InstalledPrograms.csv
+│   │   └── Registry-InstalledPrograms-logs.txt
 │   ├── ExternalDevices/
-│   │   ├── USB.csv
-│   │   └── USB-logs.txt
+│   │   ├── Registry-USB.csv
+│   │   └── Registry-USB-logs.txt
 │   ├── FileAndFolderOpening/
-│   │   ├── JumpLists/
+│   │   ├── JumpLists-AutomaticDestinations.csv
+│   │   ├── JumpLists-CustomDestinations.csv
 │   │   ├── JumpLists-logs.txt
 │   │   ├── LNK.csv
 │   │   ├── LNK-logs.txt
-│   │   ├── Office.csv
-│   │   ├── Office-logs.txt
-│   │   ├── MRU.csv
-│   │   ├── MRU-logs.txt
-│   │   ├── OpenSaveMRU.csv
-│   │   ├── OpenSaveMRU-logs.txt
-│   │   ├── RecentDocs.csv
-│   │   ├── RecentDocs-logs.txt
-│   │   ├── ShellBags.csv
-│   │   └── ShellBags-logs.txt
+│   │   ├── Registry-Office.csv
+│   │   ├── Registry-Office-logs.txt
+│   │   ├── Registry-MRU.csv
+│   │   ├── Registry-MRU-logs.txt
+│   │   ├── Registry-OpenSaveMRU.csv
+│   │   ├── Registry-OpenSaveMRU-logs.txt
+│   │   ├── Registry-RecentDocs.csv
+│   │   ├── Registry-RecentDocs-logs.txt
+│   │   ├── Registry-ShellBags.csv
+│   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
-│   │   ├── Amcache/
-│   │   ├── Amcache-logs.txt
-│   │   ├── ShimCache.csv
-│   │   └── ShimCache-logs.txt
+│   │   ├── Registry-Amcache-Devices.csv
+│   │   ├── Registry-Amcache-Files.csv
+│   │   ├── Registry-Amcache-Findings.csv
+│   │   ├── Registry-Amcache-Summary.csv
+│   │   ├── Registry-Amcache-logs.txt
+│   │   ├── Registry-ShimCache.csv
+│   │   └── Registry-ShimCache-logs.txt
 │   ├── FileSystem/
 │   │   ├── I30.csv
 │   │   ├── I30-logs.txt
@@ -156,54 +160,54 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── UsnJournal.csv
 │   │   └── UsnJournal-logs.txt
 │   ├── NetworkActivity/
-│   │   ├── Networks.csv
-│   │   ├── Networks-logs.txt
+│   │   ├── Registry-Networks.csv
+│   │   ├── Registry-Networks-logs.txt
 │   │   ├── SRUM-NetworkConnections.csv
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
-│   │   ├── RemoteAccess.csv
-│   │   └── RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess.csv
+│   │   └── Registry-RemoteAccess-logs.txt
 │   ├── Persistence/
-│   │   ├── BCD.csv
-│   │   ├── BCD-logs.txt
-│   │   ├── Persistence.csv
-│   │   ├── Persistence-logs.txt
-│   │   ├── Services.csv
-│   │   ├── Services-logs.txt
-│   │   ├── TaskCache.csv
-│   │   └── TaskCache-logs.txt
+│   │   ├── Registry-BCD.csv
+│   │   ├── Registry-BCD-logs.txt
+│   │   ├── Registry-Persistence.csv
+│   │   ├── Registry-Persistence-logs.txt
+│   │   ├── Registry-Services.csv
+│   │   ├── Registry-Services-logs.txt
+│   │   ├── Registry-TaskCache.csv
+│   │   └── Registry-TaskCache-logs.txt
 │   ├── ProcessExecution/
-│   │   ├── AppCompat.csv
-│   │   ├── AppCompat-logs.txt
-│   │   ├── FeatureUsage.csv
-│   │   ├── FeatureUsage-logs.txt
-│   │   ├── BAM.csv
-│   │   ├── BAM-logs.txt
-│   │   ├── MuiCache.csv
-│   │   ├── MuiCache-logs.txt
+│   │   ├── Registry-AppCompat.csv
+│   │   ├── Registry-AppCompat-logs.txt
+│   │   ├── Registry-FeatureUsage.csv
+│   │   ├── Registry-FeatureUsage-logs.txt
+│   │   ├── Registry-BAM.csv
+│   │   ├── Registry-BAM-logs.txt
+│   │   ├── Registry-MuiCache.csv
+│   │   ├── Registry-MuiCache-logs.txt
 │   │   ├── Prefetch.csv
 │   │   ├── Prefetch-logs.txt
 │   │   ├── PrefetchTimeline.csv
 │   │   ├── PrefetchTimeline-logs.txt
 │   │   ├── SRUM-AppResourceUseInfo.csv
 │   │   ├── SRUM-AppTimelineProvider.csv
-│   │   ├── UserAssist.csv
-│   │   └── UserAssist-logs.txt
+│   │   ├── Registry-UserAssist.csv
+│   │   └── Registry-UserAssist-logs.txt
 │   ├── Registry/
-│   │   ├── Registry.csv
-│   │   └── Registry-logs.txt
+│   │   ├── Registry-Read.csv
+│   │   └── Registry-Read-logs.txt
 │   ├── SecurityProducts/
-│   │   ├── SecuritySettings.csv
-│   │   ├── SecuritySettings-logs.txt
+│   │   ├── Registry-SecuritySettings.csv
+│   │   ├── Registry-SecuritySettings-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
 │   └── SystemInformation/
-│       ├── AuditPolicy.csv
-│       ├── AuditPolicy-logs.txt
-│       ├── SystemInfo.csv
-│       ├── SystemInfo-logs.txt
+│       ├── Registry-AuditPolicy.csv
+│       ├── Registry-AuditPolicy-logs.txt
+│       ├── Registry-SystemInfo.csv
+│       ├── Registry-SystemInfo-logs.txt
 │       ├── SRUM-IdentityMap.csv
 │       ├── SRUM-VfuProvider.csv
 │       └── SRUM-logs.txt
@@ -232,28 +236,33 @@ Categories help organize investigations; they are not proof of a particular acti
 Amcache and ShimCache entries alone do not establish execution. SRUM records resource usage;
 consult the artifact guide before drawing conclusions about a program running.
 
-CSV, JSON, and JSONL use the same categories. Parsers that produce several tables retain their
-artifact subdirectory where needed. One `<artifact>-logs.txt` file per parser job contains its
+CSV, JSON, and JSONL use the same categories. One `<artifact>-logs.txt` file per parser job contains its
 exact command and messages; for example, `HOST1/FileSystem/MFT-logs.txt` and
 `HOST1/ProcessExecution/Prefetch-logs.txt`. JSON and JSONL use the same log filenames.
-Amcache has one log beside its artifact directory. SRUM provider tables are placed directly
+Amcache and Jump Lists each have one shared log beside their prefixed tables. SRUM provider tables are placed directly
 in `NetworkActivity`, `ProcessExecution` and `SystemInformation`, with a shared
 `SystemInformation/SRUM-logs.txt` file. No `logs/` subdirectories are created.
 
-Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
-`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Networks.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`, `BCD.csv`,
-`SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `AppCompat.csv`, `Office.csv`, `FeatureUsage.csv`, `AppHistory.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `SecuritySettings.csv`, `AuditPolicy.csv`, `Registry.csv`, and
-`DefenderQuarantine.csv`. Amcache's `Amcache/` directory contains `Devices.csv`, `Files.csv`,
-`Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
-separate source subdirectories, each with the same four table names. SRUM tables use `SRUM-`
-filenames directly under their category, for example `NetworkActivity/SRUM-NetworkConnections.csv`.
+Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+`I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
+`Registry-SecuritySettings.csv`,
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Read.csv`, and
+`DefenderQuarantine.csv`. Registry-derived tables use the `Registry-` prefix, including
+`Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` and `Registry-SystemInfo.csv`.
+General hive keys and values are in `Registry-Read.csv`. Amcache tables are
+`FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
+`Registry-Amcache-Findings.csv` and `Registry-Amcache-Summary.csv`. Jump Lists use
+`FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` and
+`JumpLists-CustomDestinations.csv`. There are no Amcache or Jump Lists subdirectories.
+SRUM tables use `SRUM-` filenames directly under their category, for example
+`NetworkActivity/SRUM-NetworkConnections.csv`.
 See the [complete SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output).
 
-Logs match the capitalized artifact name, such as `SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
-and `UserAssist-logs.txt`. JSON/JSONL files use the same stems, for example `MFT.jsonl`; the
-record's `Artifact` identifier is `mft` for queries. Multi-table outputs have `Amcache-logs.txt`,
-or `JumpLists-logs.txt` beside their directory. The shared SRUM log is in `SystemInformation`.
+Logs match the capitalized artifact name, such as `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
+and `Registry-UserAssist-logs.txt`. JSON/JSONL files use the same stems, for example `MFT.jsonl`; the
+record's `Artifact` identifier is `mft` for queries. Multi-table outputs have
+`Registry-Amcache-logs.txt` or `JumpLists-logs.txt` beside their tables. The shared SRUM log is
+in `SystemInformation`.
 
 
 `manifest.json` records the original discovered `Hostname`, the unique output/record `Computer`
@@ -288,11 +297,14 @@ not followed. Sizes use decimal MB (1 MB = 1,000,000 bytes):
 Results saved: output/ ( 125 files / 42.50 MB )
 ```
 
-A single Amcache hive writes its tables under `FileExistence/Amcache/`; several hives use
-separate source directories. SRUM provider tables go directly under their investigative category,
-with `-Source1`, `-Source2`, etc. added when several SRUM databases were collected. No SRUM
-provider directory is added. `--clobber` uses the preceding manifest to clear recorded SRUM
-outputs, including providers that disappeared; unrelated files are preserved. A normal single-volume collection writes `$MFT` and USN Journal records directly to
+Amcache and SRUM tables use `-Source1`, `-Source2`, etc. when several source databases
+were collected. The shared parser log records the original-to-final paths, and JSON/JSONL
+records retain source provenance. CSV Amcache/Jump Lists tasks list their exact table paths in
+manifest `OutputFiles`; their `Output` is the investigative category directory. JSON and JSONL
+Amcache and Jump Lists exports are already single files named `Registry-Amcache.json[l]` and
+`JumpLists.json[l]`. The combined `-j` timeline keeps the same record contents and `Artifact` values.
+`--clobber` uses the preceding manifest to clear recorded outputs, including earlier names,
+while preserving unrelated category files. A normal single-volume collection writes `$MFT` and USN Journal records directly to
 `FileSystem/MFT.csv` and `FileSystem/UsnJournal.csv`. Additional collected volumes use numbered
 sibling files such as `FileSystem/MFT-2.csv` and `FileSystem/MFT-2-logs.txt`.
 

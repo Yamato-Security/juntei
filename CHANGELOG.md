@@ -45,6 +45,8 @@
 
 **New Features:**
 
+- Flatten auto-parse Amcache and Jump Lists CSV tables into their investigative categories with `Registry-Amcache-` and `JumpLists-` filename prefixes. Prefix registry-derived results and matching logs with `Registry-`, including `Registry-BAM`, `Registry-SystemInfo` and `Registry-Read`; keep source captures distinct and record table paths in the manifests. CSV values and JSON/SIEM record schemas are unchanged. (@YamatoSecurity)
+
 - Prefix SRUM CSV tables with `SRUM-` and route auto-parse provider outputs directly to `NetworkActivity`, `ProcessExecution` or `SystemInformation` in CSV/JSON/JSONL modes. Record the exact paths in manifest `OutputFiles`, preserve multiple sources with filename suffixes and retain native records in the combined SIEM timeline. (@YamatoSecurity)
 
 - Shorten the default MFT CSV headings to `EntryNum`, `Ext`, `Dir`, `ADS` and `Size`; label timestamps with `(SI)` / `(FN)` pairs in MACB order: DataModified, Accessed, MetadataChanged and Created. These labels also appear in auto-parse's `MFT.csv`. (@YamatoSecurity)

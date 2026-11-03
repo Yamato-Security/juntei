@@ -33,6 +33,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
+mod flat_outputs;
 mod srum_outputs;
 mod timeline;
 
@@ -82,44 +83,44 @@ fn artifact_category(artifact: &str) -> &'static str {
 /// User-facing output names are independent of stable CLI and SIEM artifact identifiers.
 fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
-        "amcache" => "Amcache",
-        "bcd" => "BCD",
-        "appcompat" => "AppCompat",
-        "auditpol" => "AuditPolicy",
-        "app-history" => "AppHistory",
-        "bam" => "BAM",
+        "amcache" => "Registry-Amcache",
+        "bcd" => "Registry-BCD",
+        "appcompat" => "Registry-AppCompat",
+        "auditpol" => "Registry-AuditPolicy",
+        "app-history" => "Registry-AppHistory",
+        "bam" => "Registry-BAM",
         "defender-quarantine" => "DefenderQuarantine",
-        "featureusage" => "FeatureUsage",
+        "featureusage" => "Registry-FeatureUsage",
         "i30" => "I30",
-        "installed-programs" => "InstalledPrograms",
+        "installed-programs" => "Registry-InstalledPrograms",
         "jump-lists" => "JumpLists",
         "lnk" => "LNK",
         "logfile" => "LogFile",
-        "lsa-secrets" => "LsaSecrets",
+        "lsa-secrets" => "Registry-LsaSecrets",
         "mft" => "MFT",
-        "networks" => "Networks",
-        "office" => "Office",
-        "mru" => "MRU",
-        "muicache" => "MuiCache",
-        "opensavemru" => "OpenSaveMRU",
-        "persistence" => "Persistence",
+        "networks" => "Registry-Networks",
+        "office" => "Registry-Office",
+        "mru" => "Registry-MRU",
+        "muicache" => "Registry-MuiCache",
+        "opensavemru" => "Registry-OpenSaveMRU",
+        "persistence" => "Registry-Persistence",
         "persistence-hunter" => "PersistenceHunter",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
-        "recentdocs" => "RecentDocs",
-        "registry" => "Registry",
-        "remote-access" => "RemoteAccess",
-        "sam" => "SAM",
-        "security-settings" => "SecuritySettings",
-        "services" => "Services",
-        "shellbags" => "ShellBags",
-        "shimcache" => "ShimCache",
+        "recentdocs" => "Registry-RecentDocs",
+        "registry" => "Registry-Read",
+        "remote-access" => "Registry-RemoteAccess",
+        "sam" => "Registry-SAM",
+        "security-settings" => "Registry-SecuritySettings",
+        "services" => "Registry-Services",
+        "shellbags" => "Registry-ShellBags",
+        "shimcache" => "Registry-ShimCache",
         "srum" => "SRUM",
-        "system-info" => "SystemInfo",
-        "taskcache" => "TaskCache",
-        "usb" => "USB",
+        "system-info" => "Registry-SystemInfo",
+        "taskcache" => "Registry-TaskCache",
+        "usb" => "Registry-USB",
         "usn-journal" => "UsnJournal",
-        "userassist" => "UserAssist",
+        "userassist" => "Registry-UserAssist",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
     }
 }
@@ -488,13 +489,30 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     let mut results = run_tasks(&tasks, &executable, threads, &bar);
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
-        if task.artifact == "amcache"
+        if matches!(task.artifact, "amcache" | "jump-lists")
             && task.output_type == AutoOutputType::Csv
-            && let Err(e) = rename_amcache_tables(&task.output)
+            && result.status == TaskStatus::Succeeded
         {
-            result.status = TaskStatus::Failed;
-            result.output = None;
-            result.error = Some(format!("could not name Amcache CSV tables: {e}"));
+            match flat_outputs::distribute(task) {
+                Ok(files) => {
+                    result.output_files = files
+                        .iter()
+                        .map(|p| p.to_string_lossy().into_owned())
+                        .collect();
+                    result.output = task
+                        .output
+                        .parent()
+                        .map(|p| p.to_string_lossy().into_owned());
+                }
+                Err(error) => {
+                    result.status = TaskStatus::Failed;
+                    result.output = None;
+                    result.error = Some(format!(
+                        "could not organize {} tables: {error}",
+                        task.artifact
+                    ));
+                }
+            }
         }
     }
     for (task, result) in tasks.iter().zip(&mut results) {
@@ -1537,31 +1555,10 @@ fn task_output(
 
 /// The library retains its own native CSV names; auto-parse presents concise table names in
 /// each source directory, including collections that contain multiple Amcache hives.
-fn rename_amcache_tables(root: &Path) -> io::Result<()> {
-    for source in util::find_files(root, |name| {
-        matches!(
-            name,
-            "Amcache_devices.csv"
-                | "Amcache_files.csv"
-                | "Amcache_findings.csv"
-                | "Amcache_summary.csv"
-        )
-    }) {
-        let name = match source.file_name().and_then(|name| name.to_str()) {
-            Some("Amcache_devices.csv") => "Devices.csv",
-            Some("Amcache_files.csv") => "Files.csv",
-            Some("Amcache_findings.csv") => "Findings.csv",
-            Some("Amcache_summary.csv") => "Summary.csv",
-            _ => unreachable!(),
-        };
-        fs::rename(&source, source.with_file_name(name))?;
-    }
-    Ok(())
-}
-
 /// With explicit `--clobber`, remove only the exact task targets under this run's work directory.
 /// Otherwise a skipped parser could leave a stale artifact from an earlier run.
 fn clear_generated_outputs(tasks: &[Task], work: &Path) -> io::Result<()> {
+    flat_outputs::clear_previous(work, tasks)?;
     srum_outputs::clear_previous(work, tasks)?;
     for task in tasks {
         remove_generated_path(&task.output, work)?;
@@ -2255,7 +2252,7 @@ mod tests {
                 AutoOutputType::Csv,
                 OutputShape::CsvDirectory
             ),
-            root.join("FileExistence/Amcache")
+            root.join("FileExistence/Registry-Amcache")
         );
         assert_eq!(
             task_output(
@@ -2264,7 +2261,7 @@ mod tests {
                 AutoOutputType::Jsonl,
                 OutputShape::CsvDirectory
             ),
-            root.join("FileExistence/Amcache.jsonl")
+            root.join("FileExistence/Registry-Amcache.jsonl")
         );
         assert_eq!(
             task_output(root, "srum", AutoOutputType::Json, OutputShape::Directory),

@@ -54,6 +54,13 @@ juntei parse-file jump-lists -d evidence/ -o jump-list-csv
 juntei parse-file jump-lists -f sample.automaticDestinations-ms -t jsonl | jq .
 ```
 
+With `auto-parse`, the CSV tables are `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv`
+and `FileAndFolderOpening/JumpLists-CustomDestinations.csv`, directly under each computer.
+The shared log is `JumpLists-logs.txt` in that category. The manifests list the exact paths
+in `OutputFiles`. Standalone CSV exports retain `AutomaticDestinations.csv` and
+`CustomDestinations.csv` in the directory you choose. JSON and JSONL automatic exports are
+single `JumpLists.json` or `JumpLists.jsonl` files; the record structure is unchanged.
+
 ## AutomaticDestinations CSV fields
 
 | Field group | Fields and interpretation |
