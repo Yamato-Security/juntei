@@ -24,12 +24,14 @@ chrono = { version = "0.4", features = ["clock"] }
 clap = { version = "4.5", features = ["derive"] }
 csv = "1"
 indicatif = "0.18"
-# NTFS parsing ($MFT and $I30 indexes, the USN change journal, $LogFile): Yamato Security's
-# ys-ntfs-parser, whose mft, usn and logfile crates are forks of Omer Ben-Amram's mft, sootmark-usn
-# and sootmark-ntfslog (MIT OR Apache-2.0), without its ys-ntfs-parser command. Keep all four
-# artifacts on the main-branch workspace (including its shared byte/text/time helpers).
-# Cargo.lock records the exact commit used by locked builds; cargo update advances it.
-ys-ntfs-parser = { git = "https://github.com/Yamato-Security/ys-ntfs-parser", branch = "main", default-features = false }
+# NTFS parsing ($MFT and $I30 indexes, the USN change journal, $LogFile, $Boot, $Secure:$SDS):
+# Yamato Security's ys-ntfs-parser, whose mft, usn and logfile crates are forks of Omer Ben-Amram's
+# mft, sootmark-usn and sootmark-ntfslog (MIT OR Apache-2.0), and whose boot and secure crates are
+# its own, without its ys-ntfs-parser command. Keep every artifact on the main-branch workspace
+# (including its shared byte/text/time helpers). Cargo.lock records the exact commit used by
+# locked builds; cargo update advances it. From its ys/boot-secure branch until
+# Yamato-Security/ys-ntfs-parser#2 is merged.
+ys-ntfs-parser = { git = "https://github.com/Yamato-Security/ys-ntfs-parser", branch = "ys/boot-secure", default-features = false }
 # Prefetch parsing: Yamato Security's ys-prefetch-parser, a fork of Samuel Garcés Marín's
 # frnsc-prefetch crate (MIT).
 frnsc-prefetch = { package = "ys-prefetch-parser", git = "https://github.com/Yamato-Security/ys-prefetch-parser" }

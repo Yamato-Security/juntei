@@ -2024,22 +2024,29 @@ dependencies = [
 [[package]]
 name = "ys-ntfs-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=main#977fc978d5eae0b4988ec00aee4c54c000a4e1e0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fboot-secure#2aa1cfe40c96390d8e5e98d6266025618f620730"
 dependencies = [
+ "ys-ntfs-parser-boot",
  "ys-ntfs-parser-logfile",
  "ys-ntfs-parser-mft",
+ "ys-ntfs-parser-secure",
  "ys-ntfs-parser-usn",
 ]
 
 [[package]]
+name = "ys-ntfs-parser-boot"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fboot-secure#2aa1cfe40c96390d8e5e98d6266025618f620730"
+
+[[package]]
 name = "ys-ntfs-parser-common"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=main#977fc978d5eae0b4988ec00aee4c54c000a4e1e0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fboot-secure#2aa1cfe40c96390d8e5e98d6266025618f620730"
 
 [[package]]
 name = "ys-ntfs-parser-logfile"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=main#977fc978d5eae0b4988ec00aee4c54c000a4e1e0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fboot-secure#2aa1cfe40c96390d8e5e98d6266025618f620730"
 dependencies = [
  "ys-ntfs-parser-common",
 ]
@@ -2047,7 +2054,7 @@ dependencies = [
 [[package]]
 name = "ys-ntfs-parser-mft"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=main#977fc978d5eae0b4988ec00aee4c54c000a4e1e0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fboot-secure#2aa1cfe40c96390d8e5e98d6266025618f620730"
 dependencies = [
  "bitflags 2.13.2",
  "byteorder",
@@ -2066,9 +2073,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ys-ntfs-parser-secure"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fboot-secure#2aa1cfe40c96390d8e5e98d6266025618f620730"
+
+[[package]]
 name = "ys-ntfs-parser-usn"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=main#977fc978d5eae0b4988ec00aee4c54c000a4e1e0"
+source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=ys%2Fboot-secure#2aa1cfe40c96390d8e5e98d6266025618f620730"
 dependencies = [
  "ys-ntfs-parser-common",
  "ys-ntfs-parser-mft",

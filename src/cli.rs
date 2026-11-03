@@ -245,6 +245,16 @@ pub struct NtfsCommand {
 
 #[derive(Subcommand)]
 pub enum NtfsCommands {
+    /// Parse the NTFS boot sector
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs boot <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Boot(BootOptions),
+
     /// Parse directory indexes
     #[command(
         author = AUTHOR,
@@ -274,6 +284,16 @@ pub enum NtfsCommands {
         disable_version_flag = true
     )]
     Mft(MftOptions),
+
+    /// Parse the security descriptors ($Secure:$SDS)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ntfs secure-sds <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    SecureSds(SecureSdsOptions),
 
     /// Parse the USN journal
     #[command(
@@ -989,6 +1009,112 @@ impl I30Options {
     }
 
     /// Entries on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-ntfs boot` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BootOutputType {
+    /// One row per boot sector
+    Csv,
+    /// One pretty-printed JSON object per boot sector
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct BootOptions {
+    /// Directory to search recursively for $Boot files (named $Boot, or starting with an NTFS boot sector)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one $Boot file, or an NTFS volume image (its first sector)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every boot sector to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the boot sectors are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<BootOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl BootOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        match self.output_type {
+            None | Some(BootOutputType::Csv) => RegistryOutputType::Csv,
+            Some(BootOutputType::Json) => RegistryOutputType::Json,
+            Some(BootOutputType::Jsonl) => RegistryOutputType::Jsonl,
+        }
+    }
+
+    /// Boot sectors on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-ntfs secure-sds` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SecureSdsOutputType {
+    /// One row per security descriptor
+    Csv,
+    /// One pretty-printed JSON object per security descriptor
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct SecureSdsOptions {
+    /// Directory to search recursively for $SDS streams (with $SDS in their name, or starting with an $SDS entry)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one $Secure:$SDS stream (often exported as $Secure_$SDS)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every security descriptor to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. With -t and without -o, the security descriptors are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<SecureSdsOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl SecureSdsOptions {
+    pub fn output_type(&self) -> RegistryOutputType {
+        match self.output_type {
+            None | Some(SecureSdsOutputType::Csv) => RegistryOutputType::Csv,
+            Some(SecureSdsOutputType::Json) => RegistryOutputType::Json,
+            Some(SecureSdsOutputType::Jsonl) => RegistryOutputType::Jsonl,
+        }
+    }
+
+    /// Descriptors on stdout (`-t` without `-o`): nothing but the data may be printed there.
     pub fn data_on_stdout(&self) -> bool {
         self.output.is_none() && self.output_type.is_some()
     }
