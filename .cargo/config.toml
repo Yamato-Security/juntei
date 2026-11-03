@@ -1,0 +1,5 @@
+# Link the Microsoft C runtime statically, so juntei.exe runs on its own on any Windows system,
+# without the Visual C++ Redistributable. The release workflow checks that it imports no C runtime
+# DLL. A RUSTFLAGS environment variable replaces these flags.
+[target.'cfg(all(target_os = "windows", target_env = "msvc"))']
+rustflags = ["-C", "target-feature=+crt-static"]
