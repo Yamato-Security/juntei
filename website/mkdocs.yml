@@ -114,6 +114,7 @@ nav:
       - NTFS: commands/filesystem.md
       - Registry: commands/security-registry.md
       - Persistence Hunter: commands/persistence-hunter.md
+      - Super Timeline: commands/super-timeline.md
       - Common Output Patterns: commands/output.md
   - Artifacts:
       - Artifact Guide: artifacts/index.md

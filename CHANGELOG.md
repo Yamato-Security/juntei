@@ -2,6 +2,8 @@
 
 ## 1.0.0 [xxxx/xx/xx]
 
+- Add `super-timeline` to normalize parsed artifacts and optional Hayabusa JSONL into chronologically sorted CSV/JSONL, with native/Timesketch profiles, timestamp semantics and provenance, untimed/diagnostic reports, parallel input processing and memory-budgeted external sorting. Existing native parser and `auto-parse -j` exports are unchanged. (@YamatoSecurity)
+
 - Remote-access exports keep list-level warnings on stderr, and malformed stored passwords cannot leak through diagnostic fields. (@YamatoSecurity)
 
 - Open/Save MRU parsing preserves list-level warnings on stderr when exporting records to stdout, supports the current shell-item types, and decodes nested ZIP/FTP items using their parent context. (@YamatoSecurity)

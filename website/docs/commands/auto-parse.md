@@ -423,3 +423,16 @@ See [reading the recovered security descriptor](../artifacts/defender-quarantine
 for the report fields and their forensic limitations.
 
 Auto-parse also reads users' remote connections (RDP, PuTTY, WinSCP and mapped drives).
+
+## Build a chronological super timeline
+
+After parsing, use [`super-timeline`](super-timeline.md) to expand the recorded timestamps
+into labeled events and sort them across computers and artifacts:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+The existing `-j, --json-timeline` export remains a combined native-record JSONL file.
+It preserves parser schemas; it does not expand timestamp fields or sort events. Keep it and
+the individual parser results for evidence-level review.
