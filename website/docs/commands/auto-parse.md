@@ -90,10 +90,11 @@ Names are made safe for use as directory names. Duplicate names receive a numeri
 their output directory and `Comp` value so separate systems remain distinguishable in JSON.
 The manifest keeps the hostname exactly as discovered in a separate `Hostname` field.
 
-When it lists the systems it found, `auto-parse` also prints each one's time zone from its `SYSTEM`
-hive, labeled `Source time zone` (for example `Eastern Standard Time, UTC-05:00; daylight time UTC-04:00 from the second
-Sunday of March, 02:00 to the first Sunday of November, 02:00`): the local times the system kept.
-See [System Information](../artifacts/system-info.md).
+After listing the systems, `auto-parse` prints one green `Timezone:` line directly above
+`Parser tasks`. It shows the selected output timezone: `UTC` by default, or a value such as
+`UTC+09:00` when `--timezone "+09:00"` is used. `-K, --no-color` keeps the line plain.
+Collected systems' time-zone configuration is available in the
+[System Information](../artifacts/system-info.md) results.
 
 ## Parsers it runs
 

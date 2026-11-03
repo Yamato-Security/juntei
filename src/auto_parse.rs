@@ -463,15 +463,6 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         .max(1)
         .min(tasks.len().max(1));
 
-    p_label(
-        no_color,
-        "Output time zone: ",
-        &if opts.timezone.is_utc() {
-            "UTC".to_owned()
-        } else {
-            format!("UTC{}", opts.timezone)
-        },
-    );
     p_label(no_color, "Windows systems: ", &fmt_num(hosts.len()));
     for host in &hosts {
         let fqdn = host
@@ -484,11 +475,17 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             &format!("  {}{}: {}", host.computer, fqdn, host.root.display()),
             true,
         );
-        // the local times the system kept
-        if let Some(zone) = system_time_zone(&host.windows) {
-            p(None, &format!("    Source time zone: {zone}"), true);
-        }
     }
+    let timezone = if opts.timezone.is_utc() {
+        "UTC".to_owned()
+    } else {
+        format!("UTC{}", opts.timezone)
+    };
+    p(
+        JunteiColor::Green.rdg(no_color),
+        &format!("Timezone: {timezone}"),
+        true,
+    );
     p_label(no_color, "Parser tasks: ", &fmt_num(tasks.len()));
     p_label(no_color, "Parallel processes: ", &fmt_num(threads));
     p(None, "", true);
@@ -919,16 +916,6 @@ fn client_info(root: &Path) -> Option<(String, Option<String>)> {
 
 fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
     read_system_hive(windows, registry::system::computer_name)
-}
-
-/// The time zone of a collected system's `SYSTEM` hive, in words: the local times it kept.
-fn system_time_zone(windows: &[PathBuf]) -> Option<String> {
-    read_system_hive(windows, |hive| {
-        registry::system_info::system(hive)
-            .time_zone
-            .as_ref()
-            .map(crate::registry::system_info::describe_time_zone)
-    })
 }
 
 /// What `read` finds in the first `System32\config\SYSTEM` of `windows` that gives something.
