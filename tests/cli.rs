@@ -1442,7 +1442,7 @@ fn mft_csv_json_and_jsonl() {
     assert_eq!(
         header[..6],
         [
-            "EntryNumber",
+            "EntryNum",
             "SequenceNumber",
             "InUse",
             "ParentEntryNumber",
@@ -1451,32 +1451,49 @@ fn mft_csv_json_and_jsonl() {
         ]
     );
     assert_eq!(header.len(), 35);
+    assert_eq!(
+        &header[19..27],
+        [
+            "DataModified (SI)",
+            "DataModified (FN)",
+            "Accessed (SI)",
+            "Accessed (FN)",
+            "MetadataChanged (SI)",
+            "MetadataChanged (FN)",
+            "Created (SI)",
+            "Created (FN)",
+        ]
+    );
     assert_eq!(rows.len(), 1014);
     let row = |entry: &str, name: &str| {
         rows.iter()
-            .find(|r| r["EntryNumber"] == entry && r["FileName"] == name)
+            .find(|r| r["EntryNum"] == entry && r["FileName"] == name)
             .unwrap_or_else(|| panic!("{entry} {name}"))
     };
     assert_eq!(row("30", "config")["ParentPath"], r".\WINDOWS\system32");
     // $STANDARD_INFORMATION created before $FILE_NAME created, on a whole second
     let bootvid = row("178", "bootvid.dll");
     for (column, value) in [
-        ("Extension", ".dll"),
-        ("FileSize", "12288"),
+        ("Ext", ".dll"),
+        ("Size", "12288"),
         ("SI-BeforeFN", "True"),
         ("MicrosecondZeros", "True"),
         ("Copied", "False"),
         ("SI-Flags", "Archive"),
         ("NameType", "DosWindows"),
-        ("Created0x10", "2006-02-28T12:00:00.0000000Z"),
-        ("Created0x30", "2007-06-30T12:51:00.8147072Z"),
+        ("Created (SI)", "2006-02-28T12:00:00.0000000Z"),
+        ("Created (FN)", "2007-06-30T12:51:00.8147072Z"),
+        ("Accessed (SI)", "2007-06-30T22:32:20.5674272Z"),
+        ("Accessed (FN)", "2007-06-30T12:51:00.8147072Z"),
+        ("DataModified (SI)", "2006-02-28T12:00:00.0000000Z"),
+        ("MetadataChanged (SI)", "2007-06-30T13:00:28.7156064Z"),
     ] {
         assert_eq!(bootvid[column], value, "{column}");
     }
     let ads = row("8", "$BadClus:$Bad");
     assert_eq!(ads["IsADS"], "True");
-    assert_eq!(ads["FileSize"], "1261821952");
-    assert_eq!(row("8", "$BadClus")["HasADS"], "True");
+    assert_eq!(ads["Size"], "1261821952");
+    assert_eq!(row("8", "$BadClus")["ADS"], "True");
 
     // The ys-ntfs-parser command's columns: one row per entry (`ys-mft-parser-csv`, the command's
     // former name, and `mft-dump-csv`, upstream's, still work)
@@ -1603,9 +1620,9 @@ fn mft_csv_options() {
             .unwrap()
             .clone()
     };
-    assert_eq!(mft(&csv(&[]))["Created0x30"], "");
+    assert_eq!(mft(&csv(&[]))["Created (FN)"], "");
     assert_eq!(
-        mft(&csv(&["-a"]))["Created0x30"],
+        mft(&csv(&["-a"]))["Created (FN)"],
         "2007-06-30T12:50:52.2523952Z"
     );
     // DOS (8.3) names get rows of their own with -s/--short-names
@@ -1615,7 +1632,7 @@ fn mft_csv_options() {
     // only records created or modified on or after the cutoff (the reference gives the same 8 rows)
     let rows = csv(&["--cutoff", "2007-07-01"]);
     assert_eq!(rows.len(), 8);
-    assert_eq!(rows[0]["LastModified0x10"], "2009-01-19T04:17:44.7268320Z");
+    assert_eq!(rows[0]["DataModified (SI)"], "2009-01-19T04:17:44.7268320Z");
     assert_eq!(csv(&["--cutoff", "2007-07-01T09:00:00+09:00"]).len(), 8);
 
     let r = run(&[
@@ -1699,6 +1716,23 @@ fn mft_recover_slack() {
     );
     let slack: Vec<_> = rows.iter().filter(|r| r["FromSlack"] == "True").collect();
     assert_eq!(slack.len(), 117);
+    // Distinct FN times catch a header-only reorder or a missed reorder in the slack writer.
+    let driver = slack
+        .iter()
+        .find(|row| row["EntryNum"] == "2050" && row["FileName"] == "swenum.sys")
+        .unwrap();
+    for (column, expected) in [
+        ("Created (FN)", "2004-08-03T22:58:42.0000000Z"),
+        ("Accessed (FN)", "2007-06-30T12:58:47.1896192Z"),
+        ("DataModified (FN)", "2006-02-28T12:00:00.0000000Z"),
+        ("MetadataChanged (FN)", "2007-06-30T13:00:28.8157504Z"),
+        ("Created (SI)", ""),
+        ("Accessed (SI)", ""),
+        ("DataModified (SI)", ""),
+        ("MetadataChanged (SI)", ""),
+    ] {
+        assert_eq!(driver[column], expected, "{column}");
+    }
     assert_eq!(
         slack
             .iter()
@@ -1713,13 +1747,13 @@ fn mft_recover_slack() {
         .find(|r| r["FileName"] == "setuperr.log")
         .unwrap();
     for (column, value) in [
-        ("EntryNumber", "3522"),
+        ("EntryNum", "3522"),
         ("SequenceNumber", "1"),
         ("InUse", "False"),
         ("ParentEntryNumber", "28"),
         ("ParentPath", r".\WINDOWS"),
-        ("Created0x10", ""),
-        ("Created0x30", "2007-06-30T12:59:00.7391024Z"),
+        ("Created (SI)", ""),
+        ("Created (FN)", "2007-06-30T12:59:00.7391024Z"),
         ("SlackRecord", "28"),
         ("SlackOffset", "29208"),
         ("CopyOfEntryInUse", "False"),
@@ -2137,7 +2171,7 @@ fn mft_csv_reports_damaged_attributes() {
         rows[1]["ParseErrors"]
     );
     // without its $DATA, the size is the $FILE_NAME's (it was 231)
-    assert_eq!(rows[1]["FileSize"], "219");
+    assert_eq!(rows[1]["Size"], "219");
 }
 
 #[test]
@@ -2166,7 +2200,7 @@ fn mft_csv_reports_damaged_extension_records() {
     assert_eq!(r.code, 0, "{}", r.stdout);
     let (_, rows) = csv_rows(&out);
     // the extension record has no rows of its own; its name is a name of entry 209
-    assert!(rows.iter().all(|r| r["EntryNumber"] == "209"), "{rows:?}");
+    assert!(rows.iter().all(|r| r["EntryNum"] == "209"), "{rows:?}");
     assert_eq!(rows.len(), 2);
     for row in &rows {
         assert_eq!(
@@ -2176,7 +2210,7 @@ fn mft_csv_reports_damaged_extension_records() {
             row["FileName"]
         );
         // the base record's own $DATA gives the size
-        assert_eq!(row["FileSize"], "231");
+        assert_eq!(row["Size"], "231");
     }
 }
 
@@ -2217,10 +2251,7 @@ fn mft_resident_streams_and_directory_mode() {
     );
     for name in ["HOST1_C__MFT", "HOST2__MFT"] {
         let text = std::fs::read_to_string(csv_dir.join(format!("{name}.csv"))).unwrap();
-        assert!(
-            text.starts_with("EntryNumber,SequenceNumber,InUse,"),
-            "{name}"
-        );
+        assert!(text.starts_with("EntryNum,SequenceNumber,InUse,"), "{name}");
         assert_eq!(
             csv_rows(&csv_dir.join(format!("{name}.csv"))).1.len(),
             1014,
@@ -2338,7 +2369,7 @@ fn mft_damaged_inputs_do_not_stop_the_run() {
     let (_, rows) = csv_rows(&out);
     let looped: Vec<_> = rows
         .iter()
-        .filter(|r| r["EntryNumber"] == a.to_string() || r["EntryNumber"] == b.to_string())
+        .filter(|r| r["EntryNum"] == a.to_string() || r["EntryNum"] == b.to_string())
         .collect();
     assert_eq!(looped.len(), 2);
     assert!(
