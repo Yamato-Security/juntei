@@ -4,6 +4,8 @@
 
 # Juntei
 
+**English** | [日本語](README-Japanese.md)
+
 Juntei is a Windows forensics artifact parser by [Yamato Security](https://github.com/Yamato-Security),
 a sibling of [Hayabusa](https://github.com/Yamato-Security/hayabusa) for the artifacts that are
 not event logs.
@@ -140,6 +142,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Microsoft Defender quarantine** (`Quarantine\Entries`, `ResourceData`, `Resources`) — Threat records, original paths, hashes, download origins, and recoverable quarantined content. | File |
+| **Security settings** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`) — Defender and its exclusions, UAC, WDigest and LSA protection, RDP, the firewall, SMBv1, PowerShell logging and AMSI, and event log settings, flagged where they weaken the default. | Registry |
 
 ## License
 
@@ -148,4 +151,3 @@ Shirofune Security Co., Ltd. Its source code was published under the AGPLv3 befo
 of the crates and other third-party code and data that Juntei is built with are in
 [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES/), and the licenses of the test files are next to them
 in [`test_files`](test_files/).
-| **Security settings** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`) — Defender and its exclusions, UAC, WDigest and LSA protection, RDP, the firewall, SMBv1, PowerShell logging and AMSI, and event log settings, flagged where they weaken the default. | Registry |
