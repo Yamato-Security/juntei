@@ -1,0 +1,284 @@
+name: Juntei Release Automation
+
+# Builds the release packages for every platform. Run it from the Actions tab (or
+# `gh workflow run release.yml -f release_ver=1.0.0 -f branch_or_tag=main`), then attach the
+# zips from the `all-packages` artifact to the GitHub release.
+#
+# Juntei needs no other files at run time (the banner, the persistence-hunter catalogue and its
+# default profile are compiled in), so each zip holds just the binary, renamed with the version
+# and platform: juntei-1.0.0-win-x64.zip holds juntei-1.0.0-win-x64.exe.
+#
+# A pull request that changes this workflow, build.rs or .cargo/ runs it too, with the version in
+# Cargo.toml, so the change is tested before it is merged.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_ver:
+        required: true
+        description: "Exact Cargo package version (without a leading v)"
+      branch_or_tag:
+        required: true
+        default: "main"
+        description: "Branch or Tag to checkout"
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "build.rs"
+      - ".cargo/**"
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Stop before building anything when the version asked for is not the one in Cargo.toml.
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.branch_or_tag }}
+          persist-credentials: false
+
+      - name: Check the version
+        id: version
+        env:
+          RELEASE_VERSION: ${{ inputs.release_ver }}
+        run: |
+          version=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "juntei") | .version')
+          if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "$version" ]; then
+            echo "::error::release_ver is $RELEASE_VERSION but Cargo.toml's version is $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  upload:
+    needs: version
+    runs-on: ${{ matrix.info.os }}
+    strategy:
+      # One target failing should not cancel the others: `upload-all-platforms` needs them all,
+      # so a cancelled matrix means re-running every build to find out whether the rest were fine.
+      fail-fast: false
+      matrix:
+        # run: whether the runner can run the binary for the smoke test.
+        #
+        # There is no 32-bit Windows (i686) package; sonic-rs, which the evtx crate uses, does not
+        # compile for 32-bit x86 either (cloudwego/sonic-rs#228).
+        info:
+          - { os: "windows-latest", target: "x86_64-pc-windows-msvc", name: "win-x64", run: true }
+          - { os: "windows-latest", target: "aarch64-pc-windows-msvc", name: "win-aarch64", run: false }
+          - { os: "ubuntu-latest", target: "x86_64-unknown-linux-gnu", name: "lin-x64-gnu", run: true }
+          - { os: "ubuntu-latest", target: "x86_64-unknown-linux-musl", name: "lin-x64-musl", run: true }
+          # The aarch64 Linux builds run on Arm runners, so they need no cross toolchain and are
+          # smoke tested like the x64 ones.
+          - { os: "ubuntu-24.04-arm", target: "aarch64-unknown-linux-gnu", name: "lin-aarch64-gnu", run: true }
+          - { os: "ubuntu-24.04-arm", target: "aarch64-unknown-linux-musl", name: "lin-aarch64-musl", run: true }
+          - { os: "macos-latest", target: "aarch64-apple-darwin", name: "mac-aarch64", run: true }
+          # Run through Rosetta 2 when the runner has it.
+          - { os: "macos-latest", target: "x86_64-apple-darwin", name: "mac-x64", run: true }
+
+    env:
+      PACKAGE: juntei-${{ needs.version.outputs.version }}-${{ matrix.info.name }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.branch_or_tag }}
+          persist-credentials: false
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: ${{ matrix.info.target }}
+
+      # Juntei has no C dependencies, so the musl builds need only the musl tools.
+      - name: Install musl tools
+        if: contains(matrix.info.target, 'linux-musl')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      # No RUSTFLAGS here: it would replace .cargo/config.toml's static C runtime for Windows.
+      - name: Build Juntei binary
+        run: cargo build --release --locked --target ${{ matrix.info.target }}
+
+      - name: Verify Windows executable metadata
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          JUNTEI_TARGET: ${{ matrix.info.target }}
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $exe = (Resolve-Path "target/$($env:JUNTEI_TARGET)/release/juntei.exe").Path
+          $info = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe)
+          $info | Format-List ProductName, FileDescription, CompanyName, FileVersion, `
+            ProductVersion, InternalName, OriginalFilename, LegalCopyright, Comments, IsPreRelease
+
+          # Every value of [package.metadata.winresource] in Cargo.toml, and the version.
+          $package = (cargo metadata --format-version 1 --no-deps | ConvertFrom-Json).packages |
+            Where-Object name -eq 'juntei'
+          $expected = @{
+            FileVersion    = $env:RELEASE_VERSION
+            ProductVersion = $env:RELEASE_VERSION
+          }
+          foreach ($property in $package.metadata.winresource.PSObject.Properties) {
+            $expected[$property.Name] = $property.Value
+          }
+          foreach ($field in $expected.Keys) {
+            $actual = $info.$field
+            if ($actual -cne $expected[$field]) {
+              throw ("Metadata mismatch for {0}: expected '{1}', got '{2}'" -f `
+                $field, $expected[$field], $actual)
+            }
+          }
+
+          # A hyphen in build metadata (after '+') does not indicate a prerelease.
+          $isPreRelease = ($env:RELEASE_VERSION -split '\+', 2)[0].Contains('-')
+          if ($info.IsPreRelease -ne $isPreRelease) {
+            throw "Metadata mismatch for IsPreRelease: expected '$isPreRelease', got '$($info.IsPreRelease)'"
+          }
+
+          $version = [version](($env:RELEASE_VERSION -split '[-+]', 2)[0])
+          foreach ($prefix in @('File', 'Product')) {
+            $fixedParts = @{
+              MajorPart   = $version.Major
+              MinorPart   = $version.Minor
+              BuildPart   = $version.Build
+              PrivatePart = 0
+            }
+            foreach ($part in $fixedParts.Keys) {
+              $field = "$prefix$part"
+              if ($info.$field -ne $fixedParts[$part]) {
+                throw ("Metadata mismatch for {0}: expected '{1}', got '{2}'" -f `
+                  $field, $fixedParts[$part], $info.$field)
+              }
+            }
+          }
+
+          # The C runtime is linked in (.cargo/config.toml), so the executable runs without the
+          # Visual C++ Redistributable: it must import no C runtime DLL.
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" |
+            Select-Object -Last 1
+          if (-not $dumpbin) { throw "dumpbin.exe not found under $vs" }
+          $imports = & $dumpbin.FullName /nologo /dependents $exe |
+            ForEach-Object { $_.Trim() } | Where-Object { $_ -match '\.dll$' }
+          if (-not $imports) { throw "dumpbin listed no imported DLLs for $exe" }
+          Write-Host "Imported DLLs: $($imports -join ', ')"
+          $runtime = $imports | Where-Object { $_ -match '^(vcruntime|msvcp|msvcr|ucrtbase|api-ms-win-crt-)' }
+          if ($runtime) { throw "juntei.exe imports C runtime DLLs: $($runtime -join ', ')" }
+
+          Write-Host "Windows metadata verification passed: $exe"
+
+      # Any Authenticode signing and signature verification must happen here, before the package
+      # copies the executable. Do not change resources after signing.
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p release-binaries
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cp "target/${{ matrix.info.target }}/release/juntei.exe" "release-binaries/$PACKAGE.exe"
+          else
+            cp "target/${{ matrix.info.target }}/release/juntei" "release-binaries/$PACKAGE"
+          fi
+          ls -l release-binaries
+
+      - name: Check the musl binary is static
+        if: contains(matrix.info.target, 'linux-musl')
+        run: |
+          file "release-binaries/$PACKAGE"
+          file "release-binaries/$PACKAGE" | grep -Eq 'static(-pie)? linked|statically linked'
+
+      # Run the packaged binary alone, away from the repository: it shows the release version, and
+      # auto-parse (which starts the binary again for each parser) parses a Prefetch file.
+      - name: Smoke test the package
+        if: matrix.info.run
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          bin=$(ls "$GITHUB_WORKSPACE"/release-binaries/juntei-*)
+          launch=()
+          if [ "${{ matrix.info.target }}" = "x86_64-apple-darwin" ] && [ "$(uname -m)" = "arm64" ]; then
+            if ! /usr/bin/arch -x86_64 /usr/bin/true 2>/dev/null; then
+              echo "::warning::Rosetta 2 is not installed on this runner, so $PACKAGE was not smoke tested"
+              exit 0
+            fi
+            launch=(/usr/bin/arch -x86_64)
+          fi
+          smoke="$RUNNER_TEMP/smoke"
+          mkdir -p "$smoke/evidence/HOST1/C/Windows/Prefetch"
+          cp test_files/prefetch/CMD.EXE-087B4001.pf "$smoke/evidence/HOST1/C/Windows/Prefetch/"
+          cd "$smoke"
+
+          "${launch[@]}" "$bin" --version | tee version.txt
+          grep -q "^juntei $RELEASE_VERSION " version.txt
+
+          "${launch[@]}" "$bin" auto-parse -d evidence -o results -q -K | tee auto-parse.txt
+          grep -qx "Failed: 0" auto-parse.txt
+          grep -q "CMD.EXE" results/HOST1/ProcessExecution/Prefetch.csv
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ env.PACKAGE }}
+          path: release-binaries/*
+          if-no-files-found: error
+
+  upload-all-platforms:
+    needs: [version, upload]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: all-packages
+          pattern: juntei-*
+          merge-multiple: true
+
+      - name: Upload Artifacts(all-platforms)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: juntei-${{ needs.version.outputs.version }}-all-platforms
+          path: all-packages/*
+          if-no-files-found: error
+
+  all-packages-zip:
+    needs: upload-all-platforms
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: all-packages
+          pattern: juntei-*
+
+      - name: Zip each package
+        run: |
+          cd all-packages
+          for dir in */; do
+            # Restore the execute bit that artifact upload/download drops.
+            chmod +x "$dir"juntei-*
+            (cd "$dir" && zip -r "../${dir%/}.zip" .)
+          done
+          for package in *.zip; do
+            unzip -Z1 "$package" | sed "s|^|$package: |"
+          done
+
+      - name: Upload Zip Artifacts(all-packages)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: all-packages
+          path: all-packages/*.zip
+          if-no-files-found: error

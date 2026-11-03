@@ -7,7 +7,23 @@ description = "Windows forensics artifact parser"
 license = "RPL-1.5"
 edition = "2024"
 rust-version = "1.99"
-include = ["src/**/*", "art/**/*", "LICENSE", "THIRD_PARTY_NOTICES/**/*", "README.md", "CHANGELOG.md"]
+build = "build.rs"
+include = ["src/**/*", "art/**/*", "build.rs", "LICENSE", "THIRD_PARTY_NOTICES/**/*", "README.md", "CHANGELOG.md"]
+
+# The Windows file properties (Details tab) of juntei.exe, embedded by build.rs. FileVersion and
+# ProductVersion are the version above. The release workflow checks every value in the executable.
+[package.metadata.winresource]
+ProductName = "Juntei"
+FileDescription = "Juntei - Windows Forensics Artifact Parser"
+CompanyName = "Yamato Security"
+InternalName = "juntei"
+OriginalFilename = "juntei.exe"
+LegalCopyright = "Copyright (C) 2026 Shirofune Security Co., Ltd."
+Comments = "Windows artifact parsing for digital forensics and incident response"
+
+# Compiles the Windows file properties into juntei.exe (build.rs); unused for other targets.
+[build-dependencies]
+winresource = "0.1.34"
 
 # Every crates.io dependency has an explicit floor rather than "*": a wildcard accepts any future
 # release, including a breaking one, on the next `cargo update`. The parsers are Yamato Security's

@@ -2,6 +2,8 @@
 
 ## 1.0.0 [xxxx/xx/xx] - CODE BLUE Release
 
+- Release packages for Windows (x64, Arm64), Linux (x64, Arm64; glibc and static musl) and macOS (Apple silicon, Intel), built and smoke tested by a release workflow: each zip holds just the binary. `juntei.exe` shows its product name, description, version and copyright in its file properties, and runs without the Visual C++ Redistributable. (@YamatoSecurity)
+
 - Keep the `Timezone:` label green and its value in the default text color. Use the same human-readable size formatter for automatic-parser result totals and `Total filesize`, including GiB for larger results. (@YamatoSecurity)
 
 - Default console start times and automatic-parser run metadata to Windows event-log-style UTC (`...Z`). Add `auto-parse -Z, --timezone` for explicit signed `HH:MM` display offsets across CSV, JSON, JSONL and combined JSONL results, preserving fractional precision, raw values and unknown local clocks. Record `OutputTimeZone` in both manifests and show the selected timezone once directly above `Parser tasks`. (@YamatoSecurity)
