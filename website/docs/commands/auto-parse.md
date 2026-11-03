@@ -21,6 +21,42 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     prevents generated data from being rediscovered as evidence and prevents `--clobber` from
     touching files in the source collection.
 
+## Output time zone
+
+Parsed timestamps default to UTC, independent of the analyst computer's local time zone. UTC
+uses the Windows event-log form `2026-10-20T08:46:38.2001668Z`: an ISO 8601 date/time, `T`
+between the date and time, and `Z` for UTC. The available fractional digits are preserved.
+The console start time and `manifest.json`'s `GeneratedUTC` use this form too.
+
+Choose a fixed display offset with `-Z, --timezone`:
+
+```bash
+juntei auto-parse -d evidence/ -o parsed-jst/ --timezone "+09:00"
+juntei auto-parse -d evidence/ -o parsed-offset/ -Z "-01:00"
+juntei auto-parse -d evidence/ -o parsed-half-hour/ -Z "+02:30"
+```
+
+An offset is a signed, two-digit `HH:MM` value (hours `00–23`, minutes `00–59`). Names such as
+`JST`, shortened values such as `+9`, and invalid ranges produce an error with example syntax.
+Omit the option or use `--timezone "+00:00"` for UTC. A fixed offset does not apply daylight
+saving rules.
+
+The option applies to parsed timestamps in the per-artifact CSV, JSON and JSONL results and
+the additional `-j` JSONL export. For example, `2026-10-20T08:46:38.2001668Z` becomes
+`2026-10-20T17:46:38.2001668+09:00`; both describe the same instant.
+
+Field names stay stable, including existing names ending in `UTC`. Converted values explicitly
+carry the selected offset. `OutputTimeZone` in both manifests records the requested display
+offset, while `GeneratedUTC` remains UTC run metadata. Per-parser logs retain the parsers' native UTC summaries.
+
+Raw FILETIME/epoch numbers, registry-value dictionaries, source time-zone configuration, text
+metadata, date-only values and local clock values without a known offset are preserved. Juntei
+does not add `Z` to an unknown local time. CSV columns containing free-text summaries retain
+their recorded text; JSON/JSONL preserves nested parsed timestamps as structured fields.
+
+UTC uses the existing parser output directly. An explicit nonzero offset adds a streaming
+formatting pass within each parser worker; it changes display values without changing evidence.
+
 ## What it discovers
 
 Juntei searches recursively for directories named `Windows` that contain a `System32`, `Prefetch`,
@@ -52,7 +88,7 @@ their output directory and `Comp` value so separate systems remain distinguishab
 The manifest keeps the hostname exactly as discovered in a separate `Hostname` field.
 
 When it lists the systems it found, `auto-parse` also prints each one's time zone from its `SYSTEM`
-hive (for example `Eastern Standard Time, UTC-05:00; daylight time UTC-04:00 from the second
+hive, labeled `Source time zone` (for example `Eastern Standard Time, UTC-05:00; daylight time UTC-04:00 from the second
 Sunday of March, 02:00 to the first Sunday of November, 02:00`): the local times the system kept.
 See [System Information](../artifacts/system-info.md).
 

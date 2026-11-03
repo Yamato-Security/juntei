@@ -17728,3 +17728,138 @@ fn srum_exports_cannot_overwrite_inputs_even_with_new_table_names() {
     assert_ne!(result.code, 0);
     assert_eq!(std::fs::read(database).unwrap(), original);
 }
+
+#[test]
+fn auto_parse_timezone_is_utc_by_default_and_offset_is_shared_by_csv_json_and_timeline() {
+    let evidence = auto_triage();
+    let target = tempfile::tempdir().unwrap();
+    let parse = |output: &Path, kind: &str, offset: Option<&str>, tz: &str| {
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_juntei"));
+        cmd.args(["auto-parse", "-d"])
+            .arg(evidence.path())
+            .arg("-o")
+            .arg(output)
+            .args(["-t", kind, "-j"])
+            .arg(output.join("all.jsonl"))
+            .args(["-T", "2", "-K", "-q"])
+            .env("TZ", tz);
+        if let Some(offset) = offset {
+            cmd.args(["--timezone", offset]);
+        }
+        let result = cmd.output().unwrap();
+        assert!(
+            result.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&result.stdout),
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let stdout = String::from_utf8(result.stdout).unwrap();
+        let start = stdout
+            .lines()
+            .find_map(|line| line.strip_prefix("Start time: "))
+            .unwrap();
+        let parsed = chrono::DateTime::parse_from_rfc3339(start).unwrap();
+        if offset.is_none() {
+            assert!(start.ends_with('Z'));
+            assert_eq!(parsed.offset().local_minus_utc(), 0);
+        } else {
+            assert_eq!(parsed.offset().local_minus_utc(), 32400);
+        }
+        let manifest: Value =
+            serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+                .unwrap();
+        assert_eq!(manifest["OutputTimeZone"], offset.unwrap_or("+00:00"));
+        assert!(manifest["GeneratedUTC"].as_str().unwrap().ends_with('Z'));
+        assert!(
+            manifest["Tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|task| task["Status"] != "failed")
+        );
+        let (_, rows) = csv_rows(&output.join("manifest.csv"));
+        assert!(
+            rows.iter()
+                .all(|r| r["OutputTimeZone"] == offset.unwrap_or("+00:00"))
+        );
+    };
+    let utc = target.path().join("utc");
+    parse(&utc, "csv", None, "Asia/Tokyo");
+    let (_, before) = csv_rows(&utc.join("HOST1/ProcessExecution/Prefetch.csv"));
+    let original = &before[0]["LastRun"];
+    assert!(original.ends_with('Z'));
+    let time = chrono::DateTime::parse_from_rfc3339(original).unwrap();
+    for kind in ["csv", "json", "jsonl"] {
+        let output = target.path().join(kind);
+        parse(&output, kind, Some("+09:00"), "America/Los_Angeles");
+        let data: Vec<Value> = std::fs::read_to_string(output.join("all.jsonl"))
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        let prefetch = data.iter().find(|v| v["Artifact"] == "prefetch").unwrap();
+        let shown = prefetch["LastRunTimes"][0].as_str().unwrap();
+        let shown_time = chrono::DateTime::parse_from_rfc3339(shown).unwrap();
+        assert_eq!(shown_time, time);
+        assert!(shown.ends_with("+09:00"));
+        assert_eq!(shown_time.offset().local_minus_utc(), 32400);
+        assert_eq!(prefetch["Comp"], "HOST1");
+        if kind == "csv" {
+            let (_, rows) = csv_rows(&output.join("HOST1/ProcessExecution/Prefetch.csv"));
+            assert_eq!(rows[0]["LastRun"], shown);
+            for key in [
+                "PreviousRun1",
+                "PreviousRun2",
+                "PreviousRun3",
+                "PreviousRun4",
+                "PreviousRun5",
+                "PreviousRun6",
+                "PreviousRun7",
+            ] {
+                if !rows[0][key].is_empty() {
+                    assert!(rows[0][key].ends_with("+09:00"));
+                }
+            }
+        } else {
+            let text = std::fs::read_to_string(
+                output.join(format!("HOST1/ProcessExecution/Prefetch.{kind}")),
+            )
+            .unwrap();
+            let individual: Vec<Value> = serde_json::Deserializer::from_str(&text)
+                .into_iter::<Value>()
+                .map(Result::unwrap)
+                .collect();
+            assert_eq!(individual[0]["LastRunTimes"], prefetch["LastRunTimes"]);
+        }
+    }
+}
+
+#[test]
+fn auto_parse_timezone_errors_give_quoted_examples_and_negative_offsets_are_accepted() {
+    for offset in ["JST", "UTC", "+9", "+09", "09:00", "+24:00", "+00:60"] {
+        let result = run(&["auto-parse", "-d", "missing", "-o", "unused", "-Z", offset]);
+        assert_ne!(result.code, 0);
+        assert!(
+            result.stderr.contains("--timezone \"+09:00\""),
+            "{}",
+            result.stderr
+        );
+        assert!(result.stderr.contains("-Z \"-01:00\""), "{}", result.stderr);
+    }
+    let result = run(&[
+        "auto-parse",
+        "-d",
+        "missing",
+        "-o",
+        "unused",
+        "-Z",
+        "-01:00",
+    ]);
+    assert_eq!(result.code, 1);
+    assert!(
+        result.stdout.contains("evidence directory does not exist"),
+        "{}",
+        result.stdout
+    );
+    assert!(!result.stderr.contains("unexpected argument"));
+}

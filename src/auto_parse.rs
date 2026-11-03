@@ -36,6 +36,7 @@ use std::time::Instant;
 mod flat_outputs;
 mod srum_outputs;
 mod timeline;
+mod timestamps;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
@@ -242,6 +243,8 @@ struct Manifest<'a> {
     output_directory: String,
     #[serde(rename = "OutputType")]
     output_type: &'static str,
+    #[serde(rename = "OutputTimeZone")]
+    output_time_zone: String,
     #[serde(rename = "JSON-Timeline")]
     json_timeline: Option<String>,
     #[serde(rename = "JSON-TimelineError")]
@@ -460,6 +463,15 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         .max(1)
         .min(tasks.len().max(1));
 
+    p_label(
+        no_color,
+        "Output time zone: ",
+        &if opts.timezone.is_utc() {
+            "UTC".to_owned()
+        } else {
+            format!("UTC{}", opts.timezone)
+        },
+    );
     p_label(no_color, "Windows systems: ", &fmt_num(hosts.len()));
     for host in &hosts {
         let fqdn = host
@@ -474,7 +486,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         );
         // the local times the system kept
         if let Some(zone) = system_time_zone(&host.windows) {
-            p(None, &format!("    Time zone: {zone}"), true);
+            p(None, &format!("    Source time zone: {zone}"), true);
         }
     }
     p_label(no_color, "Parser tasks: ", &fmt_num(tasks.len()));
@@ -488,7 +500,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p(None, "", true);
 
     let bar = progress::progress_bar(tasks.len(), no_color);
-    let mut results = run_tasks(&tasks, &executable, threads, &bar);
+    let mut results = run_tasks(&tasks, &executable, threads, &bar, opts.timezone);
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
         if matches!(task.artifact, "amcache" | "jump-lists")
@@ -631,11 +643,12 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     let timeline_failed = json_timeline_error.is_some();
 
     let manifest = Manifest {
-        generated_utc: Utc::now().to_rfc3339(),
+        generated_utc: Utc::now().to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         juntei_version: env!("CARGO_PKG_VERSION"),
         evidence_directory: evidence.to_string_lossy().to_string(),
         output_directory: opts.output.to_string_lossy().to_string(),
         output_type: opts.output_type.as_str(),
+        output_time_zone: opts.timezone.to_string(),
         json_timeline: json_timeline
             .as_ref()
             .map(|p| p.to_string_lossy().to_string()),
@@ -1636,6 +1649,7 @@ fn run_tasks(
     executable: &Path,
     threads: usize,
     bar: &indicatif::ProgressBar,
+    offset: crate::time_display::OutputOffset,
 ) -> Vec<TaskResult> {
     let next = AtomicUsize::new(0);
     let results = Mutex::new(Vec::with_capacity(tasks.len()));
@@ -1648,7 +1662,7 @@ fn run_tasks(
                         break;
                     };
                     bar.set_message(task_progress_message(task));
-                    let result = run_task(task, executable);
+                    let result = run_task(task, executable, offset);
                     results.lock().unwrap().push((index, result));
                     bar.inc(1);
                 }
@@ -1669,7 +1683,11 @@ fn task_progress_message(task: &Task) -> String {
     )
 }
 
-fn run_task(task: &Task, executable: &Path) -> TaskResult {
+fn run_task(
+    task: &Task,
+    executable: &Path,
+    offset: crate::time_display::OutputOffset,
+) -> TaskResult {
     let start = Instant::now();
     let command: Vec<String> =
         std::iter::once(executable.as_os_str().to_string_lossy().to_string())
@@ -1677,7 +1695,7 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
             .collect();
     let output = Command::new(executable).args(&task.args).output();
     let mut error = None;
-    let (status, exit_code, stdout, stderr) = match output {
+    let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
             let mut combined = String::from_utf8_lossy(&output.stdout).to_string();
             combined.push_str(&String::from_utf8_lossy(&output.stderr));
@@ -1701,6 +1719,12 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
             (TaskStatus::Failed, None, Vec::new(), Vec::new())
         }
     };
+    if status == TaskStatus::Succeeded
+        && let Err(e) = timestamps::rewrite(task, offset)
+    {
+        status = TaskStatus::Failed;
+        error = Some(format!("could not format output timestamps: {e}"));
+    }
     let mut log = Vec::new();
     let _ = writeln!(log, "Command: {}", command.join(" "));
     log.extend_from_slice(&stdout);
@@ -1708,6 +1732,9 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
         log.push(b'\n');
     }
     log.extend_from_slice(&stderr);
+    if let Some(message) = &error {
+        let _ = writeln!(log, "\nError: {message}");
+    }
     if let Some(parent) = task.log.parent() {
         let _ = fs::create_dir_all(parent);
     }
@@ -1994,6 +2021,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "Artifact",
         "Category",
         "OutputType",
+        "OutputTimeZone",
         "Purpose",
         "Status",
         "DurationMs",
@@ -2018,6 +2046,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             task.artifact.clone(),
             task.category.to_string(),
             task.output_type.to_string(),
+            manifest.output_time_zone.clone(),
             task.purpose.to_string(),
             task.status.as_str().to_string(),
             task.duration_ms.to_string(),

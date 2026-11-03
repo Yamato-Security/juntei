@@ -2,6 +2,8 @@
 
 ## 1.0.0 [xxxx/xx/xx] - CODE BLUE Release
 
+- Default console start times and automatic-parser run metadata to Windows event-log-style UTC (`...Z`). Add `auto-parse -Z, --timezone` for explicit signed `HH:MM` display offsets across CSV, JSON, JSONL and combined JSONL results, preserving fractional precision, raw values and unknown local clocks. Record `OutputTimeZone` in both manifests and distinguish the source system's time-zone configuration in the summary. (@YamatoSecurity)
+
 - Rename registry subcommands to `app-compat`, `feature-usage`, `open-save-mru`, `recent-docs`, `user-assist` and `shell-bags`. Update automatic parsing, command help and documentation; retain the former spellings as hidden compatibility aliases. Artifact identifiers and output paths remain stable. (@YamatoSecurity)
 
 - Apply the requested abbreviated CSV and JSON/JSONL labels, including `Comp`, `Filename`, `Args`, `App`, `User`, `BytesReceived`, `HasADS`, `SI<FN` and `ZeroU-Secs`. Keep evidence values and raw registry dictionaries unchanged, accept legacy manifest host labels during safe output replacement, and update the field references and examples. Regenerate existing exports and update field-based queries. (@YamatoSecurity)
