@@ -38,33 +38,33 @@ use ys_ntfs_parser::mft;
 
 /// The columns, in order.
 pub const CSV_HEADER: [&str; 35] = [
-    "EntryNumber",
+    "EntryNum",
     "SequenceNumber",
     "InUse",
     "ParentEntryNumber",
     "ParentSequenceNumber",
     "ParentPath",
     "FileName",
-    "Extension",
-    "FileSize",
+    "Ext",
+    "Size",
     "ReferenceCount",
     "ReparseTarget",
-    "IsDirectory",
-    "HasADS",
+    "Dir",
+    "ADS",
     "IsADS",
     "SI-BeforeFN",
     "MicrosecondZeros",
     "Copied",
     "SI-Flags",
     "NameType",
-    "Created0x10",
-    "Created0x30",
-    "LastModified0x10",
-    "LastModified0x30",
-    "LastRecordChange0x10",
-    "LastRecordChange0x30",
-    "LastAccess0x10",
-    "LastAccess0x30",
+    "DataModified (SI)",
+    "DataModified (FN)",
+    "Accessed (SI)",
+    "Accessed (FN)",
+    "MetadataChanged (SI)",
+    "MetadataChanged (FN)",
+    "Created (SI)",
+    "Created (FN)",
     "UpdateSequenceNumber",
     "LogfileSequenceNumber",
     "SecurityID",
@@ -1270,7 +1270,7 @@ struct Times {
 /// `--all-times`); the timestomping indicators: `SI<FN` (`$STANDARD_INFORMATION` created before a
 /// different `$FILE_NAME` created), `uSecZeros` (created or modified on a whole millisecond) and
 /// `Copied` (modified before created). Without `$STANDARD_INFORMATION`, `$FILE_NAME`'s times go
-/// to `Created0x30` (created) and to the `0x10` columns (the others).
+/// to `Created (FN)` (created) and to the primary modified/changed/accessed columns (the others).
 fn times(si: Option<&StandardInfo>, name: &FileName, all: bool) -> Times {
     let Some(si) = si else {
         return Times {
@@ -1377,14 +1377,14 @@ fn row(
         flag(t.copied).to_string(),
         si_flags(t.flags),
         name_type(name.namespace),
-        time(t.created),
-        time(t.created_fn),
         time(t.modified),
         time(t.modified_fn),
-        time(t.changed),
-        time(t.changed_fn),
         time(t.accessed),
         time(t.accessed_fn),
+        time(t.changed),
+        time(t.changed_fn),
+        time(t.created),
+        time(t.created_fn),
         t.usn.to_string(),
         record.lsn.to_string(),
         t.security_id.to_string(),
@@ -1469,7 +1469,7 @@ fn base64(bytes: &[u8]) -> String {
 
 /// The rows of the names found in a record's slack (and its extension records'), each with
 /// whether a file in use has that name: the file the slack kept the reference of (else none), the
-/// name's directory and path, the name, its `$FILE_NAME` times in the `0x30` columns, its size and
+/// name's directory and path, the name, its `$FILE_NAME` times in the `(FN)` columns, its size and
 /// namespace; `InUse` is `False`.
 fn slack_rows(
     record: &Record,
@@ -1517,13 +1517,13 @@ fn slack_rows(
             String::new(),
             name_type(found.namespace as u8),
             String::new(),
-            self::time(time(found.created)),
-            String::new(),
             self::time(time(found.modified)),
+            String::new(),
+            self::time(time(found.accessed)),
             String::new(),
             self::time(time(found.mft_modified)),
             String::new(),
-            self::time(time(found.accessed)),
+            self::time(time(found.created)),
             String::new(),
             String::new(),
             String::new(),

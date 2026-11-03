@@ -270,21 +270,28 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .flatten()
             .all(|entry| entry.path().is_file())
     );
-    assert!(csv.join("HOST1/ProcessExecution/SRUM").is_dir());
+    assert!(!csv.join("HOST1/ProcessExecution/SRUM").exists());
     assert!(
-        csv.join("HOST1/ProcessExecution/SRUM/IdentityMap.csv")
+        csv.join("HOST1/SystemInformation/SRUM-IdentityMap.csv")
             .is_file()
     );
     assert!(
-        csv.join("HOST1/ProcessExecution/SRUM/VfuProvider.csv")
+        csv.join("HOST1/SystemInformation/SRUM-VfuProvider.csv")
             .is_file()
     );
     assert!(
-        std::fs::read_dir(csv.join("HOST1/ProcessExecution/SRUM"))
-            .unwrap()
-            .flatten()
-            .all(|entry| entry.path().is_file())
+        csv.join("HOST1/NetworkActivity/SRUM-NetworkConnections.csv")
+            .is_file()
     );
+    assert!(
+        csv.join("HOST1/NetworkActivity/SRUM-NetworkUsages.csv")
+            .is_file()
+    );
+    assert!(
+        csv.join("HOST1/ProcessExecution/SRUM-AppResourceUseInfo.csv")
+            .is_file()
+    );
+    assert!(!csv.join("HOST1/SystemInformation/SRUM").exists());
     assert!(csv.join("HOST1/FileSystem/MFT.csv").is_file());
     assert!(csv.join("HOST1/FileSystem/UsnJournal.csv").is_file());
     assert!(!csv.join("HOST1/FileSystem/mft").exists());
@@ -358,16 +365,20 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
                 "Persistence"
             }
             "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch"
-            | "prefetch-timeline" | "srum" | "userassist" => "ProcessExecution",
+            | "prefetch-timeline" | "userassist" => "ProcessExecution",
             "registry" => "Registry",
             "defender-quarantine" | "security-settings" => "SecurityProducts",
-            "system-info" => "SystemInformation",
+            "system-info" | "srum" => "SystemInformation",
             "auditpol" => "SystemInformation",
             _ => panic!("unexpected artifact: {artifact}"),
         };
         assert_eq!(task["Category"], category);
         if let Some(output) = task["Output"].as_str() {
-            assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
+            if artifact == "srum" {
+                assert_eq!(Path::new(output), csv.join("HOST1"));
+            } else {
+                assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
+            }
         }
         let (source, command) = match artifact {
             "persistence-hunter" => {
@@ -563,7 +574,16 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
             host.join(format!("FileSystem/UsnJournal.{format}"))
                 .is_file()
         );
-        assert!(host.join("ProcessExecution/SRUM").is_dir());
+        assert!(!host.join("ProcessExecution/SRUM").exists());
+        assert!(!host.join("SystemInformation/SRUM").exists());
+        assert!(
+            host.join(format!("NetworkActivity/SRUM-NetworkConnections.{format}"))
+                .is_file()
+        );
+        assert!(
+            host.join(format!("ProcessExecution/SRUM-AppResourceUseInfo.{format}"))
+                .is_file()
+        );
         let prefetch = host.join(format!("ProcessExecution/Prefetch.{format}"));
         let records = json_documents(&std::fs::read_to_string(prefetch).unwrap());
         assert!(!records.is_empty());
@@ -588,7 +608,16 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
             assert!(!host.join(category).join("logs").exists());
             assert!(log.is_file());
             if let Some(path) = task["Output"].as_str() {
-                assert!(Path::new(path).starts_with(host.join(category)));
+                if task["Artifact"] == "srum" {
+                    assert_eq!(Path::new(path), host);
+                    let files = task["OutputFiles"].as_array().unwrap();
+                    assert!(!files.is_empty());
+                    for file in files {
+                        assert!(Path::new(file.as_str().unwrap()).is_file());
+                    }
+                } else {
+                    assert!(Path::new(path).starts_with(host.join(category)));
+                }
                 assert!(Path::new(path).exists());
             }
         }
@@ -601,7 +630,7 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
 fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
     let evidence = auto_triage();
     let root = tempfile::tempdir().unwrap();
-    let mut previous = None;
+    let mut previous: Option<Vec<Value>> = None;
     for format in ["csv", "json", "jsonl"] {
         let output = root.path().join(format);
         // Include a space and a non-default destination outside the results directory.
@@ -622,7 +651,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
             "-q",
         ]);
         assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
-        let records: Vec<Value> = std::fs::read_to_string(&timeline)
+        let mut records: Vec<Value> = std::fs::read_to_string(&timeline)
             .unwrap()
             .lines()
             .map(|line| serde_json::from_str(line).unwrap())
@@ -635,9 +664,29 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                 .any(|record| record["Artifact"] == "amcache" && record["RecordType"] == "file")
         );
         assert!(records.iter().any(|record| record["Artifact"] == "srum"));
-        // Value equality ignores object key order but checks native types and nested fields.
+        fn canonical(value: &mut Value) {
+            match value {
+                Value::Object(fields) => {
+                    fields.sort_keys();
+                    for child in fields.values_mut() {
+                        canonical(child);
+                    }
+                }
+                Value::Array(values) => values.iter_mut().for_each(canonical),
+                _ => (),
+            }
+        }
+        records.iter_mut().for_each(canonical);
+        records.sort_by_cached_key(|record| serde_json::to_string(record).unwrap());
         if let Some(expected) = &previous {
-            assert_eq!(&records, expected, "{format} SIEM records changed");
+            assert_eq!(
+                records.len(),
+                expected.len(),
+                "{format} SIEM record count changed"
+            );
+            for (index, (actual, expected)) in records.iter().zip(expected).enumerate() {
+                assert_eq!(actual, expected, "{format} SIEM record {index} changed");
+            }
         }
         previous = Some(records);
         let manifest: Value =
@@ -1442,7 +1491,7 @@ fn mft_csv_json_and_jsonl() {
     assert_eq!(
         header[..6],
         [
-            "EntryNumber",
+            "EntryNum",
             "SequenceNumber",
             "InUse",
             "ParentEntryNumber",
@@ -1451,32 +1500,49 @@ fn mft_csv_json_and_jsonl() {
         ]
     );
     assert_eq!(header.len(), 35);
+    assert_eq!(
+        &header[19..27],
+        [
+            "DataModified (SI)",
+            "DataModified (FN)",
+            "Accessed (SI)",
+            "Accessed (FN)",
+            "MetadataChanged (SI)",
+            "MetadataChanged (FN)",
+            "Created (SI)",
+            "Created (FN)",
+        ]
+    );
     assert_eq!(rows.len(), 1014);
     let row = |entry: &str, name: &str| {
         rows.iter()
-            .find(|r| r["EntryNumber"] == entry && r["FileName"] == name)
+            .find(|r| r["EntryNum"] == entry && r["FileName"] == name)
             .unwrap_or_else(|| panic!("{entry} {name}"))
     };
     assert_eq!(row("30", "config")["ParentPath"], r".\WINDOWS\system32");
     // $STANDARD_INFORMATION created before $FILE_NAME created, on a whole second
     let bootvid = row("178", "bootvid.dll");
     for (column, value) in [
-        ("Extension", ".dll"),
-        ("FileSize", "12288"),
+        ("Ext", ".dll"),
+        ("Size", "12288"),
         ("SI-BeforeFN", "True"),
         ("MicrosecondZeros", "True"),
         ("Copied", "False"),
         ("SI-Flags", "Archive"),
         ("NameType", "DosWindows"),
-        ("Created0x10", "2006-02-28T12:00:00.0000000Z"),
-        ("Created0x30", "2007-06-30T12:51:00.8147072Z"),
+        ("Created (SI)", "2006-02-28T12:00:00.0000000Z"),
+        ("Created (FN)", "2007-06-30T12:51:00.8147072Z"),
+        ("Accessed (SI)", "2007-06-30T22:32:20.5674272Z"),
+        ("Accessed (FN)", "2007-06-30T12:51:00.8147072Z"),
+        ("DataModified (SI)", "2006-02-28T12:00:00.0000000Z"),
+        ("MetadataChanged (SI)", "2007-06-30T13:00:28.7156064Z"),
     ] {
         assert_eq!(bootvid[column], value, "{column}");
     }
     let ads = row("8", "$BadClus:$Bad");
     assert_eq!(ads["IsADS"], "True");
-    assert_eq!(ads["FileSize"], "1261821952");
-    assert_eq!(row("8", "$BadClus")["HasADS"], "True");
+    assert_eq!(ads["Size"], "1261821952");
+    assert_eq!(row("8", "$BadClus")["ADS"], "True");
 
     // The ys-ntfs-parser command's columns: one row per entry (`ys-mft-parser-csv`, the command's
     // former name, and `mft-dump-csv`, upstream's, still work)
@@ -1603,9 +1669,9 @@ fn mft_csv_options() {
             .unwrap()
             .clone()
     };
-    assert_eq!(mft(&csv(&[]))["Created0x30"], "");
+    assert_eq!(mft(&csv(&[]))["Created (FN)"], "");
     assert_eq!(
-        mft(&csv(&["-a"]))["Created0x30"],
+        mft(&csv(&["-a"]))["Created (FN)"],
         "2007-06-30T12:50:52.2523952Z"
     );
     // DOS (8.3) names get rows of their own with -s/--short-names
@@ -1615,7 +1681,7 @@ fn mft_csv_options() {
     // only records created or modified on or after the cutoff (the reference gives the same 8 rows)
     let rows = csv(&["--cutoff", "2007-07-01"]);
     assert_eq!(rows.len(), 8);
-    assert_eq!(rows[0]["LastModified0x10"], "2009-01-19T04:17:44.7268320Z");
+    assert_eq!(rows[0]["DataModified (SI)"], "2009-01-19T04:17:44.7268320Z");
     assert_eq!(csv(&["--cutoff", "2007-07-01T09:00:00+09:00"]).len(), 8);
 
     let r = run(&[
@@ -1699,6 +1765,23 @@ fn mft_recover_slack() {
     );
     let slack: Vec<_> = rows.iter().filter(|r| r["FromSlack"] == "True").collect();
     assert_eq!(slack.len(), 117);
+    // Distinct FN times catch a header-only reorder or a missed reorder in the slack writer.
+    let driver = slack
+        .iter()
+        .find(|row| row["EntryNum"] == "2050" && row["FileName"] == "swenum.sys")
+        .unwrap();
+    for (column, expected) in [
+        ("Created (FN)", "2004-08-03T22:58:42.0000000Z"),
+        ("Accessed (FN)", "2007-06-30T12:58:47.1896192Z"),
+        ("DataModified (FN)", "2006-02-28T12:00:00.0000000Z"),
+        ("MetadataChanged (FN)", "2007-06-30T13:00:28.8157504Z"),
+        ("Created (SI)", ""),
+        ("Accessed (SI)", ""),
+        ("DataModified (SI)", ""),
+        ("MetadataChanged (SI)", ""),
+    ] {
+        assert_eq!(driver[column], expected, "{column}");
+    }
     assert_eq!(
         slack
             .iter()
@@ -1713,13 +1796,13 @@ fn mft_recover_slack() {
         .find(|r| r["FileName"] == "setuperr.log")
         .unwrap();
     for (column, value) in [
-        ("EntryNumber", "3522"),
+        ("EntryNum", "3522"),
         ("SequenceNumber", "1"),
         ("InUse", "False"),
         ("ParentEntryNumber", "28"),
         ("ParentPath", r".\WINDOWS"),
-        ("Created0x10", ""),
-        ("Created0x30", "2007-06-30T12:59:00.7391024Z"),
+        ("Created (SI)", ""),
+        ("Created (FN)", "2007-06-30T12:59:00.7391024Z"),
         ("SlackRecord", "28"),
         ("SlackOffset", "29208"),
         ("CopyOfEntryInUse", "False"),
@@ -2137,7 +2220,7 @@ fn mft_csv_reports_damaged_attributes() {
         rows[1]["ParseErrors"]
     );
     // without its $DATA, the size is the $FILE_NAME's (it was 231)
-    assert_eq!(rows[1]["FileSize"], "219");
+    assert_eq!(rows[1]["Size"], "219");
 }
 
 #[test]
@@ -2166,7 +2249,7 @@ fn mft_csv_reports_damaged_extension_records() {
     assert_eq!(r.code, 0, "{}", r.stdout);
     let (_, rows) = csv_rows(&out);
     // the extension record has no rows of its own; its name is a name of entry 209
-    assert!(rows.iter().all(|r| r["EntryNumber"] == "209"), "{rows:?}");
+    assert!(rows.iter().all(|r| r["EntryNum"] == "209"), "{rows:?}");
     assert_eq!(rows.len(), 2);
     for row in &rows {
         assert_eq!(
@@ -2176,7 +2259,7 @@ fn mft_csv_reports_damaged_extension_records() {
             row["FileName"]
         );
         // the base record's own $DATA gives the size
-        assert_eq!(row["FileSize"], "231");
+        assert_eq!(row["Size"], "231");
     }
 }
 
@@ -2217,10 +2300,7 @@ fn mft_resident_streams_and_directory_mode() {
     );
     for name in ["HOST1_C__MFT", "HOST2__MFT"] {
         let text = std::fs::read_to_string(csv_dir.join(format!("{name}.csv"))).unwrap();
-        assert!(
-            text.starts_with("EntryNumber,SequenceNumber,InUse,"),
-            "{name}"
-        );
+        assert!(text.starts_with("EntryNum,SequenceNumber,InUse,"), "{name}");
         assert_eq!(
             csv_rows(&csv_dir.join(format!("{name}.csv"))).1.len(),
             1014,
@@ -2338,7 +2418,7 @@ fn mft_damaged_inputs_do_not_stop_the_run() {
     let (_, rows) = csv_rows(&out);
     let looped: Vec<_> = rows
         .iter()
-        .filter(|r| r["EntryNumber"] == a.to_string() || r["EntryNumber"] == b.to_string())
+        .filter(|r| r["EntryNum"] == a.to_string() || r["EntryNum"] == b.to_string())
         .collect();
     assert_eq!(looped.len(), 2);
     assert!(
@@ -3553,16 +3633,16 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     assert_eq!(
         files,
         [
-            "AppResourceUseInfo.csv",
-            "AppTimelineProvider.csv",
-            "IdentityMap.csv",
-            "NetworkConnections.csv",
-            "NetworkUsages.csv",
-            "VfuProvider.csv"
+            "SRUM-AppResourceUseInfo.csv",
+            "SRUM-AppTimelineProvider.csv",
+            "SRUM-IdentityMap.csv",
+            "SRUM-NetworkConnections.csv",
+            "SRUM-NetworkUsages.csv",
+            "SRUM-VfuProvider.csv"
         ]
     );
 
-    let (header, rows) = csv_rows(&out.join("NetworkUsages.csv"));
+    let (header, rows) = csv_rows(&out.join("SRUM-NetworkUsages.csv"));
     assert_eq!(
         header,
         [
@@ -3606,7 +3686,7 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     assert!(rathbun.iter().all(|r| r["UserName"] == "rathbun"));
 
     // `!!name!time!x!description` names split; FILETIME columns as times
-    let (_, timeline) = csv_rows(&out.join("AppTimelineProvider.csv"));
+    let (_, timeline) = csv_rows(&out.join("SRUM-AppTimelineProvider.csv"));
     let split = timeline
         .iter()
         .find(|r| r["EXE-InfoDescription"] == "[LocalService] [WdiServiceHost]")
@@ -3619,10 +3699,10 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
             .iter()
             .all(|r| r["EndTime"].starts_with("2022-02-"))
     );
-    let (_, ids) = csv_rows(&out.join("IdentityMap.csv"));
+    let (_, ids) = csv_rows(&out.join("SRUM-IdentityMap.csv"));
     assert_eq!(ids.len(), 288);
     assert_eq!(ids[3]["ID-Blob"], "S-1-5-19");
-    let (_, vfu) = csv_rows(&out.join("VfuProvider.csv"));
+    let (_, vfu) = csv_rows(&out.join("SRUM-VfuProvider.csv"));
     assert_eq!(vfu.len(), 4);
 
     // existing results are kept without -C
@@ -3811,21 +3891,21 @@ fn srum_triage_directory_with_server_tables() {
     assert_eq!(
         files,
         [
-            "AppResourceUseInfo.csv",
-            "IdentityMap.csv",
-            "NetworkBytes.csv",
-            "NetworkConnections.csv",
-            "ProcessorTime.csv",
-            "SizeInBytes.csv",
-            "TotalUsed.csv"
+            "SRUM-AppResourceUseInfo.csv",
+            "SRUM-IdentityMap.csv",
+            "SRUM-NetworkBytes.csv",
+            "SRUM-NetworkConnections.csv",
+            "SRUM-ProcessorTime.csv",
+            "SRUM-SizeInBytes.csv",
+            "SRUM-TotalUsed.csv"
         ]
     );
-    let (_, used) = csv_rows(&server.join("TotalUsed.csv"));
+    let (_, used) = csv_rows(&server.join("SRUM-TotalUsed.csv"));
     assert_eq!(used.len(), 4);
     assert!(used.iter().all(|r| r["AppType"] == "Object"));
     let (_, network) = csv_rows(
         &out.path()
-            .join("HOST1_C_Windows_System32_sru_SRUDB/NetworkUsages.csv"),
+            .join("HOST1_C_Windows_System32_sru_SRUDB/SRUM-NetworkUsages.csv"),
     );
     assert_eq!(network[0]["UserName"], "LocalService");
 
@@ -17470,4 +17550,100 @@ fn registry_networks_missing_select_remains_unknown_and_warns_on_stderr() {
             assert!(records[0]["IsCurrentControlSet"].is_null());
         }
     }
+}
+
+#[test]
+fn srum_category_reruns_remove_recorded_outputs_and_keep_unrelated_files() {
+    let root = tempfile::tempdir().unwrap();
+    let evidence = root.path().join("evidence");
+    let sru = evidence.join("HOST1/C/Windows/System32/sru");
+    std::fs::create_dir_all(&sru).unwrap();
+    let database = sru.join("SRUDB.dat");
+    std::fs::copy(repo(SRUM_WIN10), &database).unwrap();
+    let output = root.path().join("parsed");
+    let scan = |format: &str, clobber: bool| {
+        let mut args = vec![
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            format,
+            "-T",
+            "2",
+            "-q",
+            "-K",
+        ];
+        if clobber {
+            args.push("-C");
+        }
+        let result = run(&args);
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+    };
+    scan("csv", false);
+    let network = output.join("HOST1/NetworkActivity");
+    let previous = network.join("SRUM-NetworkUsages.csv");
+    assert!(previous.is_file());
+    let notes = network.join("SRUM-personal-notes.csv");
+    std::fs::write(&notes, b"keep").unwrap();
+    scan("jsonl", true);
+    assert!(!previous.exists());
+    assert!(network.join("SRUM-NetworkUsages.jsonl").is_file());
+    assert_eq!(std::fs::read(&notes).unwrap(), b"keep");
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["Artifact"] == "srum")
+        .unwrap();
+    let files = task["OutputFiles"].as_array().unwrap();
+    assert!(!files.is_empty());
+    for file in files {
+        assert!(Path::new(file.as_str().unwrap()).is_file());
+    }
+    std::fs::rename(&database, sru.join("not-collected.bin")).unwrap();
+    scan("jsonl", true);
+    assert!(!network.join("SRUM-NetworkUsages.jsonl").exists());
+    assert_eq!(std::fs::read(notes).unwrap(), b"keep");
+}
+
+#[test]
+fn srum_exports_cannot_overwrite_inputs_even_with_new_table_names() {
+    let root = tempfile::tempdir().unwrap();
+    let database = root.path().join("SRUM-NetworkUsages.csv");
+    let original = std::fs::read(repo(SRUM_WIN10)).unwrap();
+    std::fs::write(&database, &original).unwrap();
+    let result = run(&[
+        "parse-ese",
+        "srum",
+        "-f",
+        database.to_str().unwrap(),
+        "-o",
+        root.path().to_str().unwrap(),
+        "-C",
+        "-q",
+        "-K",
+    ]);
+    assert_ne!(result.code, 0);
+    assert_eq!(std::fs::read(&database).unwrap(), original);
+    let alias = root.path().join("output.jsonl");
+    std::fs::hard_link(&database, &alias).unwrap();
+    let result = run(&[
+        "parse-ese",
+        "srum",
+        "-f",
+        database.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-o",
+        alias.to_str().unwrap(),
+        "-C",
+        "-q",
+        "-K",
+    ]);
+    assert_ne!(result.code, 0);
+    assert_eq!(std::fs::read(database).unwrap(), original);
 }

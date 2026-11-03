@@ -23,6 +23,12 @@ CSV column headers and JSON/JSONL field names use PascalCase, including Amcache 
 `SHA256`. A word following an acronym is separated with a hyphen: `IP-Address`, `MFT-Entry`,
 `USN-Journal`. With `jq`, quote a hyphenated field: `.["IP-Address"]`.
 
+The default MFT CSV uses shorter, readable headings such as `EntryNum`, `Ext`, `Dir`, `ADS`,
+`Size`, `Created (SI)` and `Created (FN)`. See the [MFT field reference](../artifacts/mft.md)
+for its full CSV schema. Timestamp pairs follow MACB order: DataModified, Accessed,
+MetadataChanged, Created, with SI before FN. Quote headings containing spaces or punctuation
+in CSV tools.
+
 Evidence values keep their original spelling. Source-provided dictionary keys, such as registry
 value names under `Details`/`DataRaw` and `Zone.Identifier` names under `ZoneIdentifier`, also
 remain unchanged. SRUM's `ValueState` and `Raw` dictionaries use the same labels as their data

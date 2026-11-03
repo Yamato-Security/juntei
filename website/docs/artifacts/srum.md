@@ -68,7 +68,7 @@ juntei parse-ese srum -f SRUDB.dat -t jsonl --include-value-state \
 
 ## Output tables
 
-CSV creates `IdentityMap.csv` for `SruDbIdMapTable` and one table per provider. Known output names include:
+CSV creates `SRUM-IdentityMap.csv` for `SruDbIdMapTable` and one table per provider. Known output names include:
 
 | Provider/table | Investigative purpose |
 |---|---|
@@ -84,8 +84,36 @@ CSV creates `IdentityMap.csv` for `SruDbIdMapTable` and one table per provider. 
 | Unknown table name | Juntei preserves unknown providers under their GUID/table name and emits every catalog column. |
 
 Because SRUM is catalog-driven and Windows adds provider columns, there is intentionally no fixed
-finite list of provider-specific fields. Juntei emits **every column present in the database using
-its original name**. The following fields are the stable/common output contract.
+finite list of provider-specific fields. Juntei emits **every column present in the database with
+Juntei's PascalCase field labels**. The following fields are the stable/common output contract.
+
+## Categorized auto-parse output
+
+`auto-parse` places each SRUM table directly in its investigative category. CSV, JSON and JSONL
+use the same `SRUM-` filename prefix; there is no enclosing `SRUM/` directory.
+
+| Category | CSV files |
+|---|---|
+| `NetworkActivity` | `SRUM-NetworkConnections.csv`, `SRUM-NetworkUsages.csv`, `SRUM-NetworkBytes.csv`, `SRUM-PushNotifications.csv` |
+| `ProcessExecution` | `SRUM-AppResourceUseInfo.csv`, `SRUM-AppTimelineProvider.csv`, `SRUM-ProcessorTime.csv` |
+| `SystemInformation` | `SRUM-EnergyUsage.csv`, `SRUM-EnergyEstimation.csv`, `SRUM-TaggedEnergy.csv`, `SRUM-SizeInBytes.csv`, `SRUM-TotalUsed.csv`, `SRUM-IdentityMap.csv`, `SRUM-VfuProvider.csv`, and unknown-provider tables |
+
+Only tables present in the capture are exported. Network counters and notification records are
+placed by their main investigative use; this is not a claim that every row describes a remote
+connection. The identity map supports several categories. VFU and unknown providers stay in
+`SystemInformation` because their presence alone does not establish execution.
+
+`SystemInformation/SRUM-logs.txt` contains the parser diagnostics and original-to-final output
+mapping. Both manifests list the actual table paths in `OutputFiles`; the SRUM task's `Output`
+is the computer directory and `Category` identifies its shared log/metadata location.
+
+With multiple databases, filenames gain `-Source1`, `-Source2`, etc., before the extension.
+The log preserves the original capture aliases, and JSON/JSONL rows retain their `SourceFile`,
+`Table`, `Provider`, `Computer` and `Artifact` provenance. No table is copied into several
+categories. The combined `-j` SIEM timeline includes every retained SRUM record once.
+
+Standalone `parse-ese srum` keeps its requested output location. Its CSV table files also have
+the `SRUM-` prefix; explicit JSON/JSONL output filenames remain analyst-selected.
 
 ## Common output fields
 
@@ -118,7 +146,7 @@ its original name**. The following fields are the stable/common output contract.
 | `ValueState` | Map of database field to `parsed`, `null`, `absent`, `unsupported`, or `damaged`. This separates evidence absence from parser failure. |
 | `Raw` | Original bytes in hexadecimal for values that have bytes. Use for validation and future decoding. |
 
-`IdentityMap.csv` (from `SruDbIdMapTable`) contains `IdIndex`, `IdType`, and `IdBlob`: the raw index, identity category,
+`SRUM-IdentityMap.csv` (from `SruDbIdMapTable`) contains `IdIndex`, `IdType`, and `IdBlob`: the raw index, identity category,
 and decoded program/SID/object text used by provider rows.
 
 ## Investigation strategy
