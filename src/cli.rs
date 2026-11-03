@@ -1392,6 +1392,16 @@ pub struct DefenderQuarantineOptions {
     #[arg(help_heading = Some("Output"), long, value_name = "DIR", display_order = 302)]
     pub extract: Option<PathBuf>,
 
+    /// The directory as ExtractedFile shows it, in place of --extract's (auto-parse gives it from
+    /// its output directory, so that its results name no absolute path)
+    #[arg(
+        long = "extract-shown-as",
+        value_name = "DIR",
+        requires = "extract",
+        hide = true
+    )]
+    pub extract_shown_as: Option<PathBuf>,
+
     /// Overwrite files when saving or extracting
     #[arg(help_heading = Some("Output"), short = 'C', long, requires = "destination", display_order = 303)]
     pub clobber: bool,

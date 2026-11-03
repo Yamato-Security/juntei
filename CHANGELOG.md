@@ -2,6 +2,10 @@
 
 ## 1.0.0 [xxxx/xx/xx] - CODE BLUE Release
 
+- `auto-parse` writes no absolute path. Evidence paths in its host list, results, logs and manifests are relative to the evidence directory (`./HOST/C/...`): the parsers run in the evidence directory. Result paths in its manifests and logs, and Defender's `ExtractedFile`, are relative to the output directory; `Command` starts with `juntei`, and `EvidenceDirectory`/`OutputDirectory` are the directories' names; `ManifestVersion` 2 marks this convention. `persistence-hunter` shows its source paths starting with the input as given, as the other commands do. (@YamatoSecurity)
+
+- `auto-parse` shows the total size of the files of the Windows systems found (`Total filesize:`) after the number of parallel processes. (@YamatoSecurity)
+
 - Rename registry subcommands to `app-compat`, `feature-usage`, `open-save-mru`, `recent-docs`, `user-assist` and `shell-bags`. Update automatic parsing, command help and documentation; retain the former spellings as hidden compatibility aliases. Artifact identifiers and output paths remain stable. (@YamatoSecurity)
 
 - Apply the requested abbreviated CSV and JSON/JSONL labels, including `Comp`, `Filename`, `Args`, `App`, `User`, `BytesReceived`, `HasADS`, `SI<FN` and `ZeroU-Secs`. Keep evidence values and raw registry dictionaries unchanged, accept legacy manifest host labels during safe output replacement, and update the field references and examples. Regenerate existing exports and update field-based queries. (@YamatoSecurity)
