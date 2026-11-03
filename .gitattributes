@@ -5,3 +5,5 @@
 *.raw binary
 # Defender quarantine parts: encrypted bytes, whatever their name
 test_files/defender_quarantine/Quarantine/** binary
+# $Boot: a boot sector, whatever its name
+test_files/boot/Boot binary

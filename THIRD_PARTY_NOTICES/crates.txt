@@ -4,7 +4,7 @@ Third-party crates in Juntei
 Juntei is built with the Rust crates below. Each license text is given once, followed by the
 crates under it. Generated from Cargo.lock by cargo-about: see README.md in this directory.
 
-MIT License: 199
+MIT License: 201
 Apache License 2.0: 24
 Creative Commons Zero v1.0 Universal: 6
 BSD 3-Clause "New" or "Revised" License: 2
@@ -3675,6 +3675,8 @@ MIT License (MIT)
 Used by:
 - ys-defender-history-parser 1.0.0 (https://github.com/Yamato-Security/ys-defender-history-parser)
 - ys-jump-lists-parser 1.0.0 (https://github.com/Yamato-Security/ys-jump-lists-parser)
+- ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
+- ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
 - ys-ntfs-parser 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
 - ys-ntfs-parser-logfile 1.0.0 (https://github.com/Yamato-Security/ys-ntfs-parser)
 - ys-srum-parser 1.0.0 (https://github.com/Yamato-Security/ys-srum-parser)

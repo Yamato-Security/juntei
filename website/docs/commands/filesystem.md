@@ -1,7 +1,8 @@
 # NTFS Commands
 
-`parse-ntfs` handles NTFS metadata: file records, filesystem transactions, change journals, and
-directory indexes. Options and output fields remain specific to each artifact.
+`parse-ntfs` handles NTFS metadata: file records, filesystem transactions, change journals,
+directory indexes, the boot sector, and security descriptors. Options and output fields remain
+specific to each artifact.
 
 ```text
 Version: 1.0.0
@@ -11,15 +12,51 @@ Usage:
   juntei parse-ntfs <COMMAND> [OPTIONS]
 
 Commands:
+  boot         Parse the NTFS boot sector
   help         Print this message or the help of the given subcommand(s)
   i30          Parse directory indexes
   logfile      Parse the NTFS transaction log
   mft          Parse the Master File Table
+  secure-sds   Parse the security descriptors ($Secure:$SDS)
   usn-journal  Parse the USN journal
 
 Options:
   -h, --help  Print help
 ```
+
+## `parse-ntfs boot`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ntfs boot <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for $Boot files (named $Boot, or starting with an NTFS boot sector)
+  -f, --file <FILE>      File path to one $Boot file, or an NTFS volume image (its first sector)
+
+Output:
+  -o, --output <FILE>       Save every boot sector to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the boot sectors are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ntfs boot -f '$Boot'
+juntei parse-ntfs boot -d evidence/ -o boot.csv
+juntei parse-ntfs boot -f volume.dd -t json
+```
+
+See [Boot Sector ($Boot)](../artifacts/boot.md).
 
 ## `parse-ntfs i30`
 
@@ -162,6 +199,40 @@ juntei parse-ntfs mft -f '$MFT' -L '\Windows\System32'
 ```
 
 See [Master File Table](../artifacts/mft.md).
+
+## `parse-ntfs secure-sds`
+
+```text
+Version: 1.0.0
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ntfs secure-sds <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for $SDS streams (with $SDS in their name, or starting with an $SDS entry)
+  -f, --file <FILE>      File path to one $Secure:$SDS stream (often exported as $Secure_$SDS)
+
+Output:
+  -o, --output <FILE>       Save every security descriptor to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. With -t and without -o, the security descriptors are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ntfs secure-sds -f '$Secure_$SDS'
+juntei parse-ntfs secure-sds -d evidence/ -o sds.csv
+juntei parse-ntfs secure-sds -f '$Secure_$SDS' -t jsonl
+```
+
+See [Security Descriptors ($Secure:$SDS)](../artifacts/secure-sds.md).
 
 ## `parse-ntfs usn-journal`
 

@@ -66,7 +66,7 @@ fn artifact_category(artifact: &str) -> &'static str {
             "FileAndFolderOpening"
         }
         "amcache" | "shimcache" => "FileExistence",
-        "i30" | "logfile" | "mft" | "usn-journal" => "FileSystem",
+        "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
         "networks" => "NetworkActivity",
         "remote-access" => "LateralMovement",
         "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "Persistence",
@@ -85,6 +85,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
     match artifact {
         "amcache" => "Registry-Amcache",
         "bcd" => "Registry-BCD",
+        "boot" => "Boot",
         "appcompat" => "Registry-AppCompat",
         "auditpol" => "Registry-AuditPolicy",
         "app-history" => "Registry-AppHistory",
@@ -111,6 +112,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "registry" => "Registry-Read",
         "remote-access" => "Registry-RemoteAccess",
         "sam" => "Registry-SAM",
+        "secure-sds" => "SecureSDS",
         "security-settings" => "Registry-SecuritySettings",
         "services" => "Registry-Services",
         "shellbags" => "Registry-ShellBags",
@@ -1115,6 +1117,13 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             &["--timeline"],
         );
         add("i30", &["parse-ntfs", "i30"], OutputShape::File, &[]);
+        add("boot", &["parse-ntfs", "boot"], OutputShape::File, &[]);
+        add(
+            "secure-sds",
+            &["parse-ntfs", "secure-sds"],
+            OutputShape::File,
+            &[],
+        );
         let srum_extra: &[&str] = if opts.output_type.is_json() {
             &["--include-value-state"]
         } else {
@@ -1370,6 +1379,8 @@ impl InputInventory {
                 ("jump-lists", crate::jump_lists::is_jump_list_name(&name)),
                 ("shimcache", crate::shimcache::is_system_name(&name)),
                 ("i30", crate::i30::is_i30_file(&path)),
+                ("boot", crate::boot::is_boot_name(&name)),
+                ("secure-sds", crate::secure_sds::is_sds_name(&name)),
             ] {
                 if matches {
                     found.add_size(artifact, size);

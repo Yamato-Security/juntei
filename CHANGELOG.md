@@ -2,6 +2,8 @@
 
 ## 1.0.0 [xxxx/xx/xx]
 
+- NTFS metadata review: retain structured-output stream recovery warnings, preserve uppercase acronym field names, and use the reviewed NTFS descriptor parser's mirror recovery and conditional-SDDL fixes. (@YamatoSecurity)
+
 - Remote-access exports keep list-level warnings on stderr, and malformed stored passwords cannot leak through diagnostic fields. (@YamatoSecurity)
 
 - Open/Save MRU parsing preserves list-level warnings on stderr when exporting records to stdout, supports the current shell-item types, and decodes nested ZIP/FTP items using their parent context. (@YamatoSecurity)
@@ -44,6 +46,8 @@
 - `persistence-hunter`: prevent Unicode registry text from crashing or indefinitely expanding a scan; restrict hive selection to canonical capture locations; retain readable hives and file checks when the input budget is reached; handle captured/original drive labels and DNS/NetBIOS host aliases; bound PE resource traversal; retain accessibility replacement candidates with damaged metadata and recover malformed registry/BITS text; classify OS-directory targets after resolution. (@YamatoSecurity)
 
 **New Features:**
+
+- `parse-ntfs boot` and `parse-ntfs secure-sds` commands, with the new boot and secure crates of Yamato Security's ys-ntfs-parser. `boot` reads `$Boot` (or a volume image's first sector): the volume serial number as LNK, Jump List and Prefetch output show it and in full, the volume's geometry and hidden sectors, where the `$MFT` and `$MFTMirr` are, FILE and INDX record sizes, a SHA-256 of the boot code that the summary compares across hosts, and what about the sector Windows would not mount. `secure-sds` reads `$Secure:$SDS`: one row per security descriptor with its `SecurityID` (the `$MFT`'s), owner and group with well-known names, control flags, DACL and SACL written as icacls writes ACEs (callback ACE conditions, mandatory and trust labels and resource attributes included), SDDL, hash checks and mirror copies; the summary lists owners and NULL DACLs. CSV, JSON and JSONL; `-f` or `-d`; `auto-parse` writes `FileSystem/Boot.csv` and `FileSystem/SecureSDS.csv`. Includes artifact guides and tests on the DFIR Artifact Museum's Windows 11 files. (@YamatoSecurity)
 
 - Flatten auto-parse Amcache and Jump Lists CSV tables into their investigative categories with `Registry-Amcache-` and `JumpLists-` filename prefixes. Prefix registry-derived results and matching logs with `Registry-`, including `Registry-BAM`, `Registry-SystemInfo` and `Registry-Read`; keep source captures distinct and record table paths in the manifests. CSV values and JSON/SIEM record schemas are unchanged. (@YamatoSecurity)
 

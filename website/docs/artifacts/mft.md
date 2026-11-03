@@ -123,7 +123,7 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN times. Updated differently and generally harder for ordinary APIs to alter; still not immutable. |
 | `UpdateSequenceNumber` | Last USN associated with the record's SI attribute. Pivot into `$J` if that USN survives. |
 | `LogfileSequenceNumber` | NTFS `$LogFile` sequence number from the FILE record header; useful in low-level transaction analysis. |
-| `SecurityID` | Index into NTFS `$Secure`; not a Windows SID by itself. |
+| `SecurityID` | Index into NTFS `$Secure`; not a Windows SID by itself. Join it with the `SecurityID` of [`parse-ntfs secure-sds`](secure-sds.md) for the file's owner and ACLs. |
 | `ObjectID-FileDroid` | Object ID / distributed-link-tracking identifier where present; correlate with LNK/Jump List droids. |
 | `LoggedUtilStream` | Decoded `$LOGGED_UTILITY_STREAM` context where supported. Review unfamiliar values. |
 | `ZoneID-Contents` | Resident `Zone.Identifier` content, such as ZoneId and download URLs. It may be absent, removed, or non-resident. |

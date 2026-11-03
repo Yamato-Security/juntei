@@ -68,6 +68,25 @@ slack matched those of Maxim Suhanov's [dfir_ntfs](https://github.com/msuhanov/d
 same names and times. Where dfir_ntfs reports a parent reference past 32 bits (bytes written over
 the parent), Juntei leaves the parent empty.
 
+## Boot sector ($Boot)
+
+The boot crate of [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) is Yamato
+Security's own. On the five public `$Boot` files of the DFIR Artifact Museum (Windows 10, 11 and
+Server 2012 R2), every field matched a reference parser. On volumes made with `mkntfs` with 512-,
+1,024- and 4,096-byte sectors and 4 KiB to 64 KiB clusters, the sizes, the `$MFT` and `$MFTMirr`
+clusters and the serial numbers matched The Sleuth Kit's `fsstat`. The Museum's Windows 11 `$Boot`
+has the volume serial number that the same host's LNK file records, and the five files have the
+same boot code.
+
+## Security descriptors ($Secure:$SDS)
+
+The secure crate of [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) is Yamato
+Security's own. Across the Museum's five `$SDS` streams (7,808 descriptors, 60,781 ACEs), the
+security IDs, hashes, offsets, owners, groups, control flags and ACE counts matched a reference
+parser, and every ACE's type, flags, mask, SID and object types matched `dissect.ntfs`. Every
+recorded hash is its descriptor's, every mirror copy matches its entry, and every descriptor has
+SDDL, including the conditions of its 3,384 callback ACEs.
+
 ## SRUM
 
 [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) is based on Sootmark's

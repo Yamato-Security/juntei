@@ -15,6 +15,7 @@ embedded in Juntei; consult each project for its license.
 | USN Journal | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`usn` crate) | [Sootmark usn](https://github.com/Sootmark/usn) |
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`logfile` crate) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Directory indexes (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` crate, `i30` module) | Index-slack research credited below |
+| NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` and `secure` crates) | Microsoft's MS-DTYP and the NTFS research credited below |
 | SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) and [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell compound-file and Jump List work |
@@ -39,8 +40,10 @@ embedded in Juntei; consult each project for its license.
   `$LogFile` validation and interpretation; Velocidex's **go-ntfs** supplied public NTFS test evidence.
 - Joachim Metz / libyal projects **libregf**, **libfsntfs**, **libscca**, **libfwsi**, and
   **libesedb** provide detailed format research and independent parsing references.
-- Fox-IT's **dissect.esedb** and **dissect.target** provided independent SRUM, SAM, and Defender
-  interpretations used during validation.
+- Fox-IT's **dissect.esedb**, **dissect.ntfs** and **dissect.target** provided independent SRUM,
+  `$Secure:$SDS`, SAM, and Defender interpretations used during validation.
+- **The Sleuth Kit**'s `fsstat` was the reference for NTFS boot sectors of volumes made with
+  `mkntfs`.
 - Some of Eric Zimmerman's tools established field names and examiner expectations used for comparisons.
 - **regipy**, **python-registry**, **Notatin**, and **artemis** provided registry implementations,
   tests, or sample interpretations.

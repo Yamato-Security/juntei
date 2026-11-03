@@ -12,6 +12,8 @@ but the investigator must still interpret what each source means.
 | Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
 | When was a file created, renamed, or deleted? | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender quarantine |
 | What name or timestamp existed before a metadata change? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [$I30](i30.md) |
+| Who owns a file, and who may change it? | [$Secure:$SDS](secure-sds.md) with [$MFT](mft.md) | [SAM](sam.md), Security event logs |
+| Which volume was a shortcut's or Prefetch file's target on? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB devices](usb.md) |
 | What did a user open? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Did a program transfer a large amount of data? | [SRUM](srum.md) | Firewall, proxy, DNS, packet or EDR telemetry |
 | Was persistence configured? | [Services](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Event logs, Prefetch, `$MFT` |

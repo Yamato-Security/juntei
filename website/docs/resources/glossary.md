@@ -22,6 +22,8 @@
 | Registry key last-write | Time the key changed; Windows usually does not say which value changed. |
 | Resident data | File/stream bytes stored directly in an MFT attribute rather than external data runs. |
 | RID | Relative Identifier, the final account/group component under a Windows SID authority/domain. |
+| SDDL | Security Descriptor Definition Language: a security descriptor written as text, such as `O:S-1-5-18D:(A;;0x001f01ff;;;S-1-5-32-544)`. |
+| Security descriptor | A file's owner, primary group, DACL (who may do what) and SACL (auditing and integrity label). NTFS keeps each distinct one once in `$Secure:$SDS`, under a security ID. |
 | SID | Windows Security Identifier for an account, service, group, or security principal. |
 | Slack | Unused bytes inside/after an allocated structure that can retain older data. |
 | SRUM | System Resource Usage Monitor database of application/user resource use. |
@@ -29,3 +31,4 @@
 | Transaction log | Pending/committed changes used to recover a registry or database to a consistent state. |
 | USN | Update Sequence Number used by NTFS change-journal records and related metadata. |
 | UTC | Coordinated Universal Time; preferred common time basis for cross-system timelines. |
+| Volume serial number | Number NTFS gives a volume when it is formatted (`$Boot`); its low 32 bits are what LNK, Jump List and Prefetch files record of a file's volume. |
