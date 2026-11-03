@@ -302,7 +302,7 @@ struct Record<'a> {
     source_path: &'a str,
     #[serde(rename = "HiveType")]
     hive_type: &'a str,
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: Option<&'a str>,
     #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,

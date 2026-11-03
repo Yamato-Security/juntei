@@ -97,6 +97,9 @@ pub fn header(options: &Options) -> Vec<&'static str> {
         header.extend(SLACK_COLUMNS);
     }
     header
+        .into_iter()
+        .map(crate::output_schema::field_name)
+        .collect()
 }
 
 /// `--include-resident-data`: which files' resident `$DATA` the CSV includes.

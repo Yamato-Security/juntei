@@ -193,7 +193,7 @@ struct Record<'a> {
     source_path: &'a str,
     #[serde(rename = "RID")]
     rid: Option<u32>,
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: Option<&'a str>,
     #[serde(rename = "FullName")]
     full_name: Option<&'a str>,

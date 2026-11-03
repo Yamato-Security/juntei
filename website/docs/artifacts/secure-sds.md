@@ -110,7 +110,7 @@ JSON/JSONL have the same fields and names, with numbers as numbers, `null` for e
 2. Look at the owners that are user accounts (`S-1-5-21-…`): which files a suspicious account
    owns, and which accounts own files in system directories.
 3. Look for permissive ACLs on directories where programs run or load from: `Everyone`,
-   `Authenticated Users` or `Users` with `(F)`, `(M)` or `(W)`, and NULL DACLs.
+   `Authenticated Users` or `User` with `(F)`, `(M)` or `(W)`, and NULL DACLs.
 4. A descriptor used by one file only, or by an unusual set of files, can show files that were
    created or changed outside normal installation.
 5. Corroborate ownership and permission changes with Security event log entries (4670, 4663 with a

@@ -2,6 +2,8 @@
 
 ## 1.0.0 [xxxx/xx/xx]
 
+- Apply the requested abbreviated CSV and JSON/JSONL labels, including `Comp`, `Filename`, `Args`, `App`, `User`, `BytesReceived`, `HasADS`, `SI<FN` and `ZeroU-Secs`. Keep evidence values and raw registry dictionaries unchanged, accept legacy manifest host labels during safe output replacement, and update the field references and examples. Regenerate existing exports and update field-based queries. (@YamatoSecurity)
+
 - NTFS metadata review: retain structured-output stream recovery warnings, preserve uppercase acronym field names, and use the reviewed NTFS descriptor parser's mirror recovery and conditional-SDDL fixes. (@YamatoSecurity)
 
 - Remote-access exports keep list-level warnings on stderr, and malformed stored passwords cannot leak through diagnostic fields. (@YamatoSecurity)

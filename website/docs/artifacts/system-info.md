@@ -121,7 +121,7 @@ found.
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath`, `SoftwarePath`, `SamPath`, `SecurityPath` | Host, and the hives read (`SourcePath` is the `SYSTEM` hive, else the first one read). |
-| `ComputerName`, `Hostname`, `Domain` | The NetBIOS name (`SYSTEM`, else `SECURITY`'s `PolAcDmN`), the DNS host name and DNS domain (`Tcpip\Parameters`). |
+| `CompName`, `Hostname`, `Domain` | The NetBIOS name (`SYSTEM`, else `SECURITY`'s `PolAcDmN`), the DNS host name and DNS domain (`Tcpip\Parameters`). |
 | `PrimaryDomain`, `DNS-Domain` | The domain the computer is joined to, or its workgroup (`PolPrDmN`), and the domain's DNS name (`PolDnDDN`). |
 | `ProductName`, `Edition`, `DisplayVersion`, `Version`, `Build`, `Ubr`, `ServicePack`, `InstallationType` | `CurrentVersion`: the product name as written, `EditionID`, `DisplayVersion` (else `ReleaseId`), the major and minor version (else `CurrentVersion`), the build, the update build revision, `CSDVersion`, and `Client`, `Server` or `Server Core`. |
 | `InstallDateUTC`, `InstallTimeUTC` | `InstallDate` (to the second) and `InstallTime` (to the 100 ns, Windows 10 and later): installation or the last feature upgrade. |
@@ -137,7 +137,7 @@ found.
 | `CurrentControlSet`, `ProcessorArchitecture`, `AnsiCodePage`, `OemCodePage` | The control set read, `PROCESSOR_ARCHITECTURE`, `ACP` and `OEMCP`. |
 | `LastLoggedOnUser`, `LastLoggedOnSamUser`, `LastLoggedOnUserSID`, `LastLoggedOnDisplayName`, `LogonUiLastWrittenUTC` | The sign-in screen's last user, and its key's last write. |
 | `MachineSID`, `DomainSID`, `MachineAccountSID` | The computer's SID, its domain's SID (`PolPrDmS`) and the computer account's SID in the domain (`PolMachineAccountS`). |
-| `ComputerNameLastWrittenUTC`, `PrimaryDomainLastWrittenUTC`, `VersionLastWrittenUTC` | About when the computer was last named, last joined a domain or workgroup, and last updated (`CurrentVersion`'s key). |
+| `CompNameLastWrittenUTC`, `PrimaryDomainLastWrittenUTC`, `VersionLastWrittenUTC` | About when the computer was last named, last joined a domain or workgroup, and last updated (`CurrentVersion`'s key). |
 | `PreviousVersions` | Each `Source OS` key: the version, its install date, and the date in the key's name (JSON: one object each). |
 | `Profiles` | Each profile: SID, folder, key time, last load and unload (JSON: one object each). |
 | `TransactionLogStatus`, `LogsApplied` | Registry recovery context, over all four hives. |
@@ -153,7 +153,7 @@ found.
    loss or a live collection.
 4. Use `MachineSid` and `DomainSid` to tell local from domain accounts in SIDs elsewhere (BAM,
    `ProfileList`, event logs), and the profiles' load and unload times for the last sign-ins.
-5. Correlate the computer and domain names with event logs, and with `ComputerNameLastWrittenUTC`
+5. Correlate the computer and domain names with event logs, and with `CompNameLastWrittenUTC`
    and `PrimaryDomainLastWrittenUTC` for renames and domain joins.
 
 ## Further Details

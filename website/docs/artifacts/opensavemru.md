@@ -95,7 +95,7 @@ recent file (the first entry of `*`).
 
 | Field | Interpretation |
 |---|---|
-| `Host`, `Username`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
+| `Host`, `User`, `UserSID`, `SourcePath` | Host, the profile owner (from the path or the shell folders), the SID from the system's `ProfileList`, and the hive. |
 | `List` | `OpenSavePidlMRU`, `LastVisitedPidlMRU`, `LastVisitedPidlMRULegacy`, `CIDSizeMRU`, `FirstFolder`, `OpenSaveMRU` or `LastVisitedMRU`. |
 | `Extension` | The extension's subkey (`docx`, `*`); empty for the other lists. |
 | `MRU-Position`, `IsMostRecent` | The place in the key's list (0 is the most recent); empty when the list doesn't name the value. |

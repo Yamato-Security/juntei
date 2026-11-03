@@ -382,9 +382,9 @@ pub enum AutoOutputType {
     /// Separate CSV files and tables under each computer directory
     #[default]
     Csv,
-    /// Pretty JSON records with Computer and Artifact fields
+    /// Pretty JSON records with Comp and Artifact fields
     Json,
-    /// One JSON object per line, with Computer and Artifact fields
+    /// One JSON object per line, with Comp and Artifact fields
     Jsonl,
 }
 

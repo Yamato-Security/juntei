@@ -455,7 +455,7 @@ fn header(before: &[&str], after: &[&str]) -> Vec<String> {
         .iter()
         .chain(LINK_COLUMNS)
         .chain(after)
-        .map(|c| (*c).to_owned())
+        .map(|c| crate::output_schema::field_name(c).to_owned())
         .collect()
 }
 

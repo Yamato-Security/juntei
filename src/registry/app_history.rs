@@ -227,11 +227,11 @@ struct Record<'a> {
     host: Option<&'a str>,
     #[serde(rename = "SourcePath")]
     source_path: &'a str,
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: Option<&'a str>,
     #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,
-    #[serde(rename = "Application")]
+    #[serde(rename = "App")]
     application: &'static str,
     #[serde(rename = "Item")]
     item: &'a str,

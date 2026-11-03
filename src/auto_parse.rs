@@ -184,7 +184,7 @@ impl TaskStatus {
 
 #[derive(Serialize)]
 struct TaskResult {
-    #[serde(rename = "Computer")]
+    #[serde(rename = "Comp")]
     computer: String,
     #[serde(rename = "Artifact")]
     artifact: String,
@@ -214,7 +214,7 @@ struct TaskResult {
 
 #[derive(Serialize)]
 struct ManifestHost {
-    #[serde(rename = "Computer")]
+    #[serde(rename = "Comp")]
     computer: String,
     #[serde(rename = "Hostname")]
     hostname: String,
@@ -567,7 +567,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                     result.status = TaskStatus::Failed;
                     result.output = None;
                     result.error = Some(format!(
-                        "could not add Computer and Artifact to {}: {e}",
+                        "could not add Comp and Artifact to {}: {e}",
                         path.display()
                     ));
                     break;
@@ -1835,7 +1835,7 @@ fn annotate_jsonl(
     computer: &str,
     artifact: &str,
 ) -> io::Result<()> {
-    let mut prefix = b"{\"Computer\":".to_vec();
+    let mut prefix = b"{\"Comp\":".to_vec();
     serde_json::to_writer(&mut prefix, computer).map_err(io::Error::other)?;
     prefix.extend_from_slice(b",\"Artifact\":");
     serde_json::to_writer(&mut prefix, artifact).map_err(io::Error::other)?;
@@ -1859,9 +1859,13 @@ fn annotate_jsonl(
             continue;
         }
         serde_json::from_slice::<IgnoredAny>(value).map_err(io::Error::other)?;
-        let contains_provenance = [b"\"Computer\"".as_slice(), b"\"Artifact\"".as_slice()]
-            .iter()
-            .any(|key| value.windows(key.len()).any(|window| window == *key));
+        let contains_provenance = [
+            b"\"Comp\"".as_slice(),
+            b"\"Computer\"".as_slice(),
+            b"\"Artifact\"".as_slice(),
+        ]
+        .iter()
+        .any(|key| value.windows(key.len()).any(|window| window == *key));
         if value.first() == Some(&b'{') && value.last() == Some(&b'}') && !contains_provenance {
             writer.write_all(&prefix)?;
             let inner = &value[1..value.len() - 1];
@@ -1882,6 +1886,7 @@ fn annotate_jsonl(
 
 fn annotate_value(value: &mut Value, computer: &str, artifact: &str) {
     if let Value::Object(object) = value {
+        object.remove("Comp");
         object.remove("Computer");
         object.remove("Artifact");
         object.shift_insert(
@@ -1889,15 +1894,11 @@ fn annotate_value(value: &mut Value, computer: &str, artifact: &str) {
             "Artifact".to_string(),
             Value::String(artifact.to_string()),
         );
-        object.shift_insert(
-            0,
-            "Computer".to_string(),
-            Value::String(computer.to_string()),
-        );
+        object.shift_insert(0, "Comp".to_string(), Value::String(computer.to_string()));
     } else {
         let data = std::mem::take(value);
         let mut object = Map::new();
-        object.insert("Computer".to_string(), Value::String(computer.to_string()));
+        object.insert("Comp".to_string(), Value::String(computer.to_string()));
         object.insert("Artifact".to_string(), Value::String(artifact.to_string()));
         object.insert("Data".to_string(), data);
         *value = Value::Object(object);
@@ -1985,7 +1986,7 @@ fn write_pretty_json(path: &Path, value: &impl Serialize) -> io::Result<()> {
 fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
     let mut writer = csv::Writer::from_path(path)?;
     writer.write_record([
-        "Computer",
+        "Comp",
         "Hostname",
         "FQDN",
         "HostnameSource",
@@ -2294,13 +2295,13 @@ mod tests {
         annotate_json_file(&one, "HOST1", "mft", AutoOutputType::Jsonl).unwrap();
         annotate_json_file(&two, "HOST2", "usn-journal", AutoOutputType::Jsonl).unwrap();
         let first: Value = serde_json::from_str(&fs::read_to_string(&one).unwrap()).unwrap();
-        assert_eq!(first["Computer"], "HOST1");
+        assert_eq!(first["Comp"], "HOST1");
         assert_eq!(first["Artifact"], "mft");
         let text = fs::read_to_string(&one).unwrap();
-        assert_eq!(text.matches("\"Computer\"").count(), 1);
+        assert_eq!(text.matches("\"Comp\"").count(), 1);
         assert_eq!(text.matches("\"Artifact\"").count(), 1);
         let wrapped: Value = serde_json::from_str(&fs::read_to_string(&two).unwrap()).unwrap();
-        assert_eq!(wrapped["Computer"], "HOST2");
+        assert_eq!(wrapped["Comp"], "HOST2");
         assert_eq!(wrapped["Data"], serde_json::json!([1, 2]));
 
         let combined = dir.path().join("all.jsonl");
@@ -2327,8 +2328,8 @@ mod tests {
             .map(|line| serde_json::from_str(line).unwrap())
             .collect();
         assert_eq!(lines.len(), 2);
-        assert_eq!(lines[0]["Computer"], "HOST1");
-        assert_eq!(lines[1]["Computer"], "HOST2");
+        assert_eq!(lines[0]["Comp"], "HOST1");
+        assert_eq!(lines[1]["Comp"], "HOST2");
     }
 
     #[test]
@@ -2338,7 +2339,7 @@ mod tests {
         fs::write(&source, "{\n  \"z_field\": 7,\n  \"a_field\": 8\n}\n").unwrap();
         annotate_json_file(&source, "HOST1", "registry", AutoOutputType::Json).unwrap();
         let annotated = fs::read_to_string(&source).unwrap();
-        let positions: Vec<_> = ["Computer", "Artifact", "z_field", "a_field"]
+        let positions: Vec<_> = ["Comp", "Artifact", "z_field", "a_field"]
             .map(|field| annotated.find(field).unwrap())
             .into();
         assert!(positions.windows(2).all(|pair| pair[0] < pair[1]));
@@ -2359,7 +2360,7 @@ mod tests {
             .map(|line| serde_json::from_str(line).unwrap())
             .collect();
         assert_eq!(values.len(), 1);
-        assert_eq!(values[0]["Computer"], "HOST1");
+        assert_eq!(values[0]["Comp"], "HOST1");
         assert_eq!(values[0]["Artifact"], "registry");
         assert_eq!(values[0]["z_field"], 7);
         assert_eq!(values[0]["a_field"], 8);

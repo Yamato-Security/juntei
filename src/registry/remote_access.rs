@@ -210,7 +210,7 @@ impl Serialize for Details<'_> {
 struct Record<'a> {
     #[serde(rename = "Host")]
     host: Option<&'a str>,
-    #[serde(rename = "Username")]
+    #[serde(rename = "User")]
     username: Option<&'a str>,
     #[serde(rename = "UserSID")]
     user_sid: Option<&'a str>,

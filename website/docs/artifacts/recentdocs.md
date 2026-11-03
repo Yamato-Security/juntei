@@ -61,7 +61,7 @@ juntei parse-registry recentdocs -d evidence/ -t jsonl \
 | Field | Interpretation |
 |---|---|
 | `Host` | Host derived from collection/system context where available. |
-| `Username` | Profile owner inferred from path or shell-folder paths; preserve uncertainty when empty. |
+| `User` | Profile owner inferred from path or shell-folder paths; preserve uncertainty when empty. |
 | `SourcePath` | Input `NTUSER.DAT`. Essential when combining users. |
 | `Extension` | Sublist (`.docx`, `Folder`, etc.); null for root RecentDocs list. |
 | `MRU-Position` | Zero is most recent within this list. This is relative order, not elapsed time. |

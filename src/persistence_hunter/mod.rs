@@ -33,6 +33,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Finding {
+    #[serde(rename = "Comp", alias = "Computer")]
     pub computer: String,
     #[serde(rename(serialize = "CheckID"), alias = "CheckID")]
     pub check_id: String,
@@ -112,6 +113,7 @@ impl Finding {
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Coverage {
+    #[serde(rename = "Comp", alias = "Computer")]
     pub computer: String,
     #[serde(rename(serialize = "CheckID"), alias = "CheckID")]
     pub check_id: String,

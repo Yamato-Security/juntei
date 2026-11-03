@@ -363,7 +363,7 @@ struct Record<'a> {
     data: Option<&'a str>,
     #[serde(rename = "ImagePath")]
     image_path: Option<&'a str>,
-    #[serde(rename = "Arguments")]
+    #[serde(rename = "Args")]
     arguments: Option<&'a str>,
     #[serde(rename = "Enabled")]
     enabled: Option<bool>,

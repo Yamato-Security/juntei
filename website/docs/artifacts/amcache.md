@@ -102,14 +102,17 @@ exports retain their native table names and requested output location. JSONL rec
 
 | Field group | Fields and interpretation |
 |---|---|
-| Source | `key_name`, `source_key_path`, `key_last_written_utc`, `key_last_written_filetime`: exact device record and registry update time. |
-| Identity | `description`, `bus_description`, `manufacturer`, `model`: human-facing device descriptions; vendor strings can be generic. |
-| Hardware identifiers | `hwid`, `comp_id`, `class`, `class_guid`, `container_id`, `device_interface_classes`: strongest device-family and instance pivots. |
-| State | `device_state`, `problem_code`, `parent_id`, `matching_id`, `enumerator`: Windows enumeration and relationship context. |
-| Driver | `driver_id`, `driver_name`, `driver_package_strong_name`, `driver_ver_date`, `driver_ver_version`, `provider`, `service`, `inf`: driver package and service associations; correlate with installed files and services. |
-| Installation | `install_date`, `first_install_date`, `install_state`, `extended_infs`: recorded install lifecycle. A missing date is not proof the device was never attached. |
-| Filters and stack | `lower_class_filters`, `upper_class_filters`, `lower_filters`, `upper_filters`, `stack_id`, `location_paths`: advanced driver-stack context; unexpected filter drivers deserve review. |
-| Raw preservation | `registry_values`: complete typed/raw source values for validation and unsupported fields. |
+| Source | `KeyName`, `SourceKeyPath`, `KeyLastWrittenUTC`, `KeyLastWrittenFiletime`: exact device record and registry update time. |
+| Identity | `Description`, `BusDescription`, `Manufacturer`, `Model`: human-facing device descriptions; vendor strings can be generic. |
+| Hardware identifiers | `HWID`, `CompID`, `Class`, `ClassGUID`, `ContainerID`, `DeviceInterfaceClasses`: strongest device-family and instance pivots. |
+| State | `DeviceState`, `ProblemCode`, `ParentID`, `MatchingID`, `Enumerator`: Windows enumeration and relationship context. |
+| Driver | `DriverID`, `DriverName`, `DriverPackageStrongName`, `DriverVerDate`, `DriverVerVersion`, `Provider`, `Service`, `INF`: driver package and service associations; correlate with installed files and services. |
+| Installation | `InstallDate`, `FirstInstallDate`, `InstallState`, `ExtendedInfs`: recorded install lifecycle. A missing date is not proof the device was never attached. |
+| Filters and stack | `LowerClassFilters`, `UpperClassFilters`, `LowerFilters`, `UpperFilters`, `StackID`, `LocationPaths`: advanced driver-stack context; unexpected filter drivers deserve review. |
+| Raw preservation | `RegistryValues`: complete typed/raw source values for validation and unsupported fields. |
+
+Array and raw-value columns in CSV use a `JSON` suffix (for example, `HWID-JSON` and
+`RegistryValuesJSON`); their cells contain JSON, while JSON/JSONL retains native arrays.
 
 ## Investigation strategy
 
