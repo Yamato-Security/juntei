@@ -102,6 +102,68 @@ fn auto_triage() -> tempfile::TempDir {
     dir
 }
 
+/// Fail if a file under `output` names one of `directories` or Juntei's executable by its absolute
+/// path, or `stdout` names any absolute path: auto-parse shows paths relative to the evidence and
+/// output directories.
+fn assert_no_absolute_paths(output: &Path, stdout: &str, directories: &[&Path]) {
+    let mut absolute = vec![PathBuf::from(env!("CARGO_BIN_EXE_juntei"))];
+    for directory in directories {
+        absolute.push(directory.to_path_buf());
+        absolute.push(std::fs::canonicalize(directory).unwrap());
+    }
+    // As written, and as JSON writes them (with `\\` on Windows)
+    let needles: Vec<String> = absolute
+        .iter()
+        .map(|path| path.to_string_lossy().into_owned())
+        .flat_map(|path| {
+            let json = serde_json::to_string(&path).unwrap();
+            [path, json.trim_matches('"').to_string()]
+        })
+        .collect();
+    // The terminal shows a path given as absolute from the current directory (`../results`).
+    for token in stdout.split_whitespace() {
+        assert!(
+            token.len() == 1 || !Path::new(token).is_absolute(),
+            "stdout names {token}"
+        );
+    }
+    let mut pending = vec![output.to_path_buf()];
+    while let Some(dir) = pending.pop() {
+        for entry in std::fs::read_dir(dir).unwrap().flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                pending.push(path);
+                continue;
+            }
+            let text = String::from_utf8_lossy(&std::fs::read(&path).unwrap()).into_owned();
+            for needle in &needles {
+                assert!(
+                    !text.contains(needle.as_str()),
+                    "{} names {needle}",
+                    path.display()
+                );
+            }
+        }
+    }
+}
+
+/// Every regular file under `dir`.
+fn walk_files(dir: &Path) -> Vec<PathBuf> {
+    let mut files = Vec::new();
+    let mut pending = vec![dir.to_path_buf()];
+    while let Some(dir) = pending.pop() {
+        for entry in std::fs::read_dir(dir).unwrap().flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                pending.push(path);
+            } else {
+                files.push(path);
+            }
+        }
+    }
+    files
+}
+
 /// Every JSON document in a stream of newline-separated (pretty) documents.
 fn json_documents(text: &str) -> Vec<Value> {
     serde_json::Deserializer::from_str(text)
@@ -263,7 +325,35 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "{}",
         r.stdout
     );
+    // The size of every file of the computers found, after the number of processes
+    let total: u64 = walk_files(&evidence.path().join("HOST1_F.TEST"))
+        .iter()
+        .map(|path| path.metadata().unwrap().len())
+        .sum();
+    let processes = r
+        .stdout
+        .lines()
+        .position(|line| line.starts_with("Parallel processes: "))
+        .unwrap();
+    assert_eq!(
+        r.stdout.lines().nth(processes + 1).unwrap(),
+        format!("Total filesize: {}", bytesize::ByteSize::b(total).display()),
+        "{}",
+        r.stdout
+    );
     assert!(!r.stdout.contains("Per-parser messages are saved"));
+    // The summary has no blank line after its heading or before the elapsed time.
+    assert!(
+        r.stdout.contains("Results Summary:\nSucceeded: "),
+        "{}",
+        r.stdout
+    );
+    let lines: Vec<&str> = r.stdout.lines().collect();
+    let elapsed = lines
+        .iter()
+        .position(|line| line.starts_with("Elapsed time: "))
+        .unwrap();
+    assert!(!lines[elapsed - 1].is_empty(), "{}", r.stdout);
     assert!(
         csv.join("HOST1/Persistence/PersistenceHunter.csv")
             .is_file()
@@ -348,6 +438,83 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert_eq!(manifest["Hosts"][0]["Comp"], "HOST1");
     assert_eq!(manifest["Hosts"][0]["Hostname"], "HOST1");
     assert_eq!(manifest["Hosts"][0]["HostnameSource"], "client_info.json");
+    // The parsers run in the evidence directory and are given paths relative to it, so the host
+    // list, the manifests and the results show where files are in the evidence.
+    let host_root = Path::new(".").join("HOST1_F.TEST");
+    assert!(
+        r.stdout.contains(&format!(": {}\n", host_root.display())),
+        "{}",
+        r.stdout
+    );
+    assert_eq!(
+        manifest["Hosts"][0]["EvidenceRoot"],
+        host_root.to_string_lossy().as_ref()
+    );
+    assert_eq!(
+        manifest["Hosts"][0]["WindowsDirectories"][0],
+        host_root
+            .join("uploads")
+            .join("auto")
+            .join("C%3A")
+            .join("Windows")
+            .to_string_lossy()
+            .as_ref()
+    );
+    let mft_task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|task| task["Artifact"] == "mft")
+        .unwrap();
+    let mft = host_root
+        .join("uploads")
+        .join("ntfs")
+        .join("C")
+        .join("$MFT");
+    assert!(
+        mft_task["Command"]
+            .as_array()
+            .unwrap()
+            .windows(2)
+            .any(|pair| pair[0] == "-f" && pair[1] == mft.to_string_lossy().as_ref()),
+        "{mft_task}"
+    );
+    let (_, prefetch) = csv_rows(&csv.join("HOST1/ProcessExecution/Prefetch.csv"));
+    assert!(!prefetch.is_empty());
+    assert!(
+        prefetch
+            .iter()
+            .all(|row| Path::new(&row["SourceFile"]).starts_with(&host_root)),
+        "{prefetch:?}"
+    );
+    let (_, hunter) = csv_rows(&csv.join("HOST1/Persistence/PersistenceHunter.csv"));
+    assert!(
+        hunter
+            .iter()
+            .all(|row| Path::new(&row["SourceFile"]).starts_with(&host_root)),
+        "{hunter:?}"
+    );
+    // No output, log, manifest or terminal line says where the evidence, the results or Juntei
+    // are on this system.
+    assert_eq!(
+        manifest["EvidenceDirectory"],
+        evidence
+            .path()
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .as_ref()
+    );
+    assert_eq!(manifest["OutputDirectory"], "csv");
+    assert_eq!(
+        manifest["Tasks"][0]["Command"][0],
+        Path::new(env!("CARGO_BIN_EXE_juntei"))
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .as_ref()
+    );
+    assert_no_absolute_paths(&csv, &r.stdout, &[evidence.path(), output_root.path()]);
     assert!(
         manifest["Tasks"]
             .as_array()
@@ -358,9 +525,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert!(manifest["Tasks"].as_array().unwrap().iter().all(|task| {
         task["Log"].as_str().is_some_and(|path| {
             let category = task["Category"].as_str().unwrap();
-            Path::new(path).parent() == Some(csv.join("HOST1").join(category).as_path())
+            Path::new(path).parent() == Some(Path::new(".").join("HOST1").join(category).as_path())
                 && path.ends_with("-logs.txt")
-                && Path::new(path).is_file()
+                && csv.join(path).is_file()
         })
     }));
     assert_eq!(manifest["Tasks"][0]["Artifact"], "mft");
@@ -391,10 +558,11 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         };
         assert_eq!(task["Category"], category);
         if let Some(output) = task["Output"].as_str() {
+            let host = Path::new(".").join("HOST1");
             if artifact == "srum" {
-                assert_eq!(Path::new(output), csv.join("HOST1"));
+                assert_eq!(Path::new(output), host);
             } else {
-                assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
+                assert!(Path::new(output).starts_with(host.join(category)));
             }
         }
         let (source, command) = match artifact {
@@ -451,8 +619,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         .lines()
         .find(|line| line.starts_with("Results saved: "))
         .unwrap();
+    // An output directory given as absolute is shown from the current directory.
     assert!(
-        summary.starts_with(&format!("Results saved: {}/ ( ", csv.display())),
+        summary.starts_with("Results saved: ") && summary.contains("csv/ ( "),
         "{summary}"
     );
     assert!(
@@ -508,12 +677,11 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     let direct_manifest: Value =
         serde_json::from_reader(std::fs::File::open(direct.join("manifest.json")).unwrap())
             .unwrap();
+    assert_eq!(direct_manifest["EvidenceDirectory"], "Windows");
+    assert_eq!(direct_manifest["Hosts"][0]["EvidenceRoot"], ".");
     assert_eq!(
-        direct_manifest["Hosts"][0]["EvidenceRoot"],
-        std::fs::canonicalize(&windows)
-            .unwrap()
-            .to_string_lossy()
-            .as_ref()
+        direct_manifest["Hosts"][0]["WindowsDirectories"],
+        json!(["."])
     );
     assert!(
         direct
@@ -626,7 +794,8 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
                 .unwrap();
         for task in manifest["Tasks"].as_array().unwrap() {
             let category = task["Category"].as_str().unwrap();
-            let log = Path::new(task["Log"].as_str().unwrap());
+            // The manifest's paths are relative to the output directory.
+            let log = output.join(task["Log"].as_str().unwrap());
             assert_eq!(log.parent(), Some(host.join(category).as_path()));
             assert!(
                 log.file_name()
@@ -637,17 +806,18 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
             assert!(!host.join(category).join("logs").exists());
             assert!(log.is_file());
             if let Some(path) = task["Output"].as_str() {
+                let path = output.join(path);
                 if task["Artifact"] == "srum" {
-                    assert_eq!(Path::new(path), host);
+                    assert_eq!(path, host);
                     let files = task["OutputFiles"].as_array().unwrap();
                     assert!(!files.is_empty());
                     for file in files {
-                        assert!(Path::new(file.as_str().unwrap()).is_file());
+                        assert!(output.join(file.as_str().unwrap()).is_file());
                     }
                 } else {
-                    assert!(Path::new(path).starts_with(host.join(category)));
+                    assert!(path.starts_with(host.join(category)));
                 }
-                assert!(Path::new(path).exists());
+                assert!(path.exists());
             }
         }
         assert!(!host.join("logs").exists());
@@ -722,9 +892,13 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
             serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
                 .unwrap();
         let canonical_timeline = std::fs::canonicalize(&timeline).unwrap();
+        // From the output directory, like the manifest's other paths
         assert_eq!(
             manifest["JSON-Timeline"],
-            canonical_timeline.to_string_lossy().as_ref()
+            Path::new("..")
+                .join(format!("SIEM export {format}.jsonl"))
+                .to_string_lossy()
+                .as_ref()
         );
         assert!(manifest["JSON-TimelineError"].is_null());
         assert!(
@@ -757,10 +931,10 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
             assert!(tasks.iter().all(|task| task["Purpose"] == "artifact"));
         }
         for task in tasks.iter().filter(|task| task["Status"] == "succeeded") {
-            let path = Path::new(task["Output"].as_str().unwrap());
+            let path = output.join(task["Output"].as_str().unwrap());
             assert!(path.exists(), "{task}");
             if task["Purpose"] == "json_timeline" {
-                assert_eq!(path, canonical_timeline);
+                assert_eq!(std::fs::canonicalize(path).unwrap(), canonical_timeline);
             }
         }
         assert!(std::fs::read_dir(&output).unwrap().flatten().all(|entry| {
@@ -897,7 +1071,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     assert_eq!(failed["Category"], "ProcessExecution");
     assert_eq!(failed["ExitCode"], "1");
     assert!(!failed["Error"].is_empty());
-    assert!(Path::new(&failed["Log"]).is_file());
+    assert!(output.join(&failed["Log"]).is_file());
     let records = json_documents(&std::fs::read_to_string(timeline).unwrap());
     assert!(records.iter().any(|record| record["Artifact"] == "amcache"));
     assert!(std::fs::read_dir(&output).unwrap().flatten().any(|entry| {
@@ -933,6 +1107,139 @@ fn auto_parse_refuses_an_output_parent_of_the_evidence() {
     );
     assert_eq!(std::fs::read(&marker).unwrap(), b"must remain\n");
     assert!(!container.path().join("manifest.json").exists());
+}
+
+/// `-o evidence/link/../results` names, through the file system, the directory beside the link's
+/// target, which the containment check approves. The parsers must write there, not to
+/// `evidence/results`, which removing `link/..` from the text would name.
+#[cfg(unix)]
+#[test]
+fn auto_parse_writes_where_a_symbolic_link_in_the_output_path_resolves() {
+    let root = tempfile::tempdir().unwrap();
+    let prefetch = root.path().join("evidence/HOST/C/Windows/Prefetch");
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-087B4001.pf"),
+        prefetch.join("CMD.EXE-087B4001.pf"),
+    )
+    .unwrap();
+    let outside = root.path().join("outside");
+    std::fs::create_dir_all(outside.join("child")).unwrap();
+    std::os::unix::fs::symlink(outside.join("child"), root.path().join("evidence/link")).unwrap();
+    let sentinel = root
+        .path()
+        .join("evidence/results/HOST/ProcessExecution/Prefetch.csv");
+    std::fs::create_dir_all(sentinel.parent().unwrap()).unwrap();
+    std::fs::write(&sentinel, "sentinel\n").unwrap();
+    let r = run_at(
+        root.path(),
+        &[
+            "auto-parse",
+            "-d",
+            "evidence",
+            "-o",
+            "evidence/link/../results",
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ],
+    );
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    assert_eq!(std::fs::read_to_string(&sentinel).unwrap(), "sentinel\n");
+    let (_, rows) = csv_rows(&outside.join("results/HOST/ProcessExecution/Prefetch.csv"));
+    assert_eq!(rows.len(), 1);
+    assert_no_absolute_paths(&outside.join("results"), &r.stdout, &[root.path()]);
+}
+
+/// A `-C` rerun removes the table files an earlier run recorded, from a manifest of this version
+/// (`ManifestVersion` 2, paths from the output directory) or of an earlier one (no version,
+/// paths as given to `-o`, which can also start with `./`).
+#[test]
+fn auto_parse_clobber_reruns_read_current_and_earlier_manifest_paths() {
+    let root = tempfile::tempdir().unwrap();
+    let programs = root
+        .path()
+        .join("evidence/HOST/C/Windows/AppCompat/Programs");
+    std::fs::create_dir_all(&programs).unwrap();
+    std::fs::copy(repo(WIN10), programs.join("Amcache.hve")).unwrap();
+    let args = [
+        "auto-parse",
+        "-d",
+        "./evidence",
+        "-o",
+        "./results",
+        "-C",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ];
+    let results = root.path().join("results");
+    let r = run_at(root.path(), &args);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    for earlier in [false, true] {
+        let manifest_path = results.join("manifest.json");
+        let mut manifest: Value =
+            serde_json::from_slice(&std::fs::read(&manifest_path).unwrap()).unwrap();
+        assert_eq!(manifest["ManifestVersion"], 2);
+        // As earlier versions recorded the paths: as given to `-o` (`./results/HOST/...`)
+        let recorded = |path: &str| -> String {
+            if earlier {
+                let path = Path::new(path).strip_prefix(".").unwrap();
+                Path::new(".")
+                    .join("results")
+                    .join(path)
+                    .to_string_lossy()
+                    .into_owned()
+            } else {
+                path.to_string()
+            }
+        };
+        if earlier {
+            manifest.as_object_mut().unwrap().remove("ManifestVersion");
+        }
+        let stale_name = Path::new(".")
+            .join("HOST")
+            .join("FileExistence")
+            .join("Registry-Amcache-Stale.csv");
+        for task in manifest["Tasks"].as_array_mut().unwrap() {
+            for field in ["Output", "Log"] {
+                if let Some(path) = task[field].as_str() {
+                    task[field] = Value::from(recorded(path));
+                }
+            }
+            let files: Vec<Value> = task["OutputFiles"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|path| Value::from(recorded(path.as_str().unwrap())))
+                .collect();
+            task["OutputFiles"] = Value::from(files);
+            if task["Artifact"] == "amcache" && task["Purpose"] == "artifact" {
+                task["OutputFiles"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(Value::from(recorded(&stale_name.to_string_lossy())));
+            }
+        }
+        std::fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+        let stale = results.join(&stale_name);
+        std::fs::write(&stale, "stale\n").unwrap();
+
+        let r = run_at(root.path(), &args);
+        assert_eq!(
+            r.code, 0,
+            "earlier: {earlier}\nstdout:\n{}\nstderr:\n{}",
+            r.stdout, r.stderr
+        );
+        assert!(!stale.exists(), "earlier: {earlier}");
+        assert!(
+            results
+                .join("HOST/FileExistence/Registry-Amcache-Files.csv")
+                .is_file()
+        );
+    }
 }
 
 #[test]
@@ -991,6 +1298,19 @@ fn auto_parse_can_extract_defender_quarantined_files() {
             .iter()
             .any(|argument| argument == "--extract")
     );
+    // ExtractedFile is from the output directory, as the manifest's paths are.
+    let (_, rows) = csv_rows(&output.join("HOST1/SecurityProducts/DefenderQuarantine.csv"));
+    let shown = Path::new(".")
+        .join("HOST1")
+        .join("SecurityProducts")
+        .join("DefenderQuarantined")
+        .join("tool.exe.quarantined");
+    assert!(
+        rows.iter()
+            .any(|row| row["ExtractedFile"] == shown.to_string_lossy()),
+        "{rows:?}"
+    );
+    assert_no_absolute_paths(&output, &r.stdout, &[evidence.path(), output_root.path()]);
 
     let timeline_defender = manifest["Tasks"]
         .as_array()
@@ -17683,7 +18003,7 @@ fn srum_category_reruns_remove_recorded_outputs_and_keep_unrelated_files() {
     let files = task["OutputFiles"].as_array().unwrap();
     assert!(!files.is_empty());
     for file in files {
-        assert!(Path::new(file.as_str().unwrap()).is_file());
+        assert!(output.join(file.as_str().unwrap()).is_file());
     }
     std::fs::rename(&database, sru.join("not-collected.bin")).unwrap();
     scan("jsonl", true);
@@ -17769,6 +18089,19 @@ fn auto_parse_timezone_is_utc_by_default_and_offset_is_shared_by_csv_json_and_ti
             serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
                 .unwrap();
         assert_eq!(manifest["OutputTimeZone"], offset.unwrap_or("+00:00"));
+        assert_eq!(manifest["ManifestVersion"], 2);
+        assert_eq!(
+            std::fs::canonicalize(output.join(manifest["JSON-Timeline"].as_str().unwrap()))
+                .unwrap(),
+            std::fs::canonicalize(output.join("all.jsonl")).unwrap()
+        );
+        for task in manifest["Tasks"].as_array().unwrap() {
+            assert!(output.join(task["Log"].as_str().unwrap()).is_file());
+            if task["Status"] == "succeeded" {
+                assert!(output.join(task["Output"].as_str().unwrap()).exists());
+            }
+        }
+        assert_no_absolute_paths(output, &stdout, &[evidence.path(), target.path()]);
         assert!(manifest["GeneratedUTC"].as_str().unwrap().ends_with('Z'));
         assert!(
             manifest["Tasks"]

@@ -89,7 +89,7 @@ treated as malware.
 | `ScanID` | Defender scan identifier for grouping resources/actions. |
 | `QuarantineFolder` | Root source folder/host distinction. |
 | `EntryFile`, `ContentFile`, `ResourceRecordFile` | Exact source files used to build the row. Essential for validation. |
-| `ExtractedFile` | Primary quarantined file written by `--extract`; empty when no primary extraction occurred. Auxiliary streams are written beside it. |
+| `ExtractedFile` | Primary quarantined file written by `--extract`; empty when no primary extraction occurred. Auxiliary streams are written beside it. `auto-parse -x` gives it from its output directory (`./HOST1/SecurityProducts/DefenderQuarantined/…`). |
 | `Problems` | Integrity mismatch, missing content, ID disagreement, damage, or orphan context. Do not suppress. |
 
 JSON/JSONL preserves the structured resource, stream list, record entries, and all relationship

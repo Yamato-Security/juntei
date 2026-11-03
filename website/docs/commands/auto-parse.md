@@ -316,6 +316,28 @@ code, result path, log path, the requested JSONL timeline and any export error, 
 and whether each task
 succeeded, was skipped, or failed.
 
+Auto-parse writes no absolute path, so results can be shared without showing where the evidence,
+the results or Juntei are on the analysis system:
+
+- Evidence paths are relative to the evidence directory. The terminal lists each computer with its
+  directory in the evidence (`HOST1: ./HOST1_F`), and the parsers run in the evidence directory and
+  are given such paths. The results' source path columns (`SourceFile`, `SourcePath`, …), the logs
+  and the manifests' `EvidenceRoot` and `WindowsDirectories` show where each file is in the
+  evidence (`./HOST1_F/C/Windows/Prefetch/CMD.EXE-6D6290C5.pf`).
+- The manifests' and logs' result paths (`Output`, `OutputFiles`, `Log`, `JSON-Timeline`, the
+  output paths in `Command`) and Defender's `ExtractedFile` are relative to the output directory
+  (`./HOST1/ProcessExecution/Prefetch.csv`, `../siem.jsonl` for a timeline beside it). `Command`
+  starts with the program's name (`juntei`); its evidence paths are relative to the evidence
+  directory and its output paths to the output directory.
+- `EvidenceDirectory` and `OutputDirectory` are the two directories' names. `ManifestVersion` 2
+  marks manifests that record result paths from the output directory; earlier manifests have no
+  `ManifestVersion` and record them as given to `-o`. A `-C` rerun reads both.
+- The terminal shows an output or timeline path as given when it is relative, and from the
+  current directory when it is absolute (`../results/`).
+
+After the number of parallel processes, the terminal shows the total size of the files of the
+Windows systems found (`Total filesize: 26.1 MiB`).
+
 The progress message shows the active computer and artifact followed by an approximate input
 size, for example `HOST1 / prefetch (~2.0 MiB)`. A group of files uses their combined size; each
 MFT, LogFile or USN Journal task shows its individual input size. Estimates exclude auxiliary transaction
