@@ -440,6 +440,10 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, default_value_t = AutoOutputType::Csv, hide_possible_values = true, display_order = 201)]
     pub output_type: AutoOutputType,
 
+    /// Display parsed timestamps using a fixed UTC offset (UTC by default)
+    #[arg(help_heading = Some("Output"), short = 'Z', long = "timezone", value_name = "OFFSET", default_value = "+00:00", allow_hyphen_values = true, display_order = 202)]
+    pub timezone: crate::time_display::OutputOffset,
+
     /// Create a single JSONL timeline to import into a SIEM
     #[arg(help_heading = Some("Output"), short = 'j', long, value_name = "FILE", display_order = 202)]
     pub json_timeline: Option<PathBuf>,

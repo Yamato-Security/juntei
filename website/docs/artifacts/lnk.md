@@ -81,6 +81,9 @@ juntei parse-file lnk -f suspicious.lnk -t jsonl | jq .
 JSON/JSONL additionally preserves every target-ID item (kind, name, GUID, FAT times and MFT
 reference), all extra-data blocks, property-store properties, console settings, and raw structural
 relationships. Use it for a suspicious shortcut rather than relying only on the flat CSV row.
+The nested `TargetItems` times come from FAT shell-item clocks without a stored offset.
+Their legacy `Z` rendering does not prove UTC; `auto-parse --timezone` preserves them.
+The LNK header's target FILETIMEs and tracker times remain convertible absolute timestamps.
 
 ## Investigation strategy
 

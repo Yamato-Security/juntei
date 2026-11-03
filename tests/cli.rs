@@ -18093,3 +18093,379 @@ fn srum_exports_cannot_overwrite_inputs_even_with_new_table_names() {
     assert_ne!(result.code, 0);
     assert_eq!(std::fs::read(database).unwrap(), original);
 }
+
+#[test]
+fn auto_parse_timezone_is_utc_by_default_and_offset_is_shared_by_csv_json_and_timeline() {
+    let evidence = auto_triage();
+    let target = tempfile::tempdir().unwrap();
+    let parse = |output: &Path, kind: &str, offset: Option<&str>, tz: &str| {
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_juntei"));
+        cmd.args(["auto-parse", "-d"])
+            .arg(evidence.path())
+            .arg("-o")
+            .arg(output)
+            .args(["-t", kind, "-j"])
+            .arg(output.join("all.jsonl"))
+            .args(["-T", "2", "-K", "-q"])
+            .env("TZ", tz);
+        if let Some(offset) = offset {
+            cmd.args(["--timezone", offset]);
+        }
+        let result = cmd.output().unwrap();
+        assert!(
+            result.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&result.stdout),
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let stdout = String::from_utf8(result.stdout).unwrap();
+        let start = stdout
+            .lines()
+            .find_map(|line| line.strip_prefix("Start time: "))
+            .unwrap();
+        let parsed = chrono::DateTime::parse_from_rfc3339(start).unwrap();
+        if offset.is_none() {
+            assert!(start.ends_with('Z'));
+            assert_eq!(parsed.offset().local_minus_utc(), 0);
+        } else {
+            assert_eq!(parsed.offset().local_minus_utc(), 32400);
+        }
+        let manifest: Value =
+            serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
+                .unwrap();
+        assert_eq!(manifest["OutputTimeZone"], offset.unwrap_or("+00:00"));
+        assert_eq!(manifest["ManifestVersion"], 2);
+        assert_eq!(
+            std::fs::canonicalize(output.join(manifest["JSON-Timeline"].as_str().unwrap()))
+                .unwrap(),
+            std::fs::canonicalize(output.join("all.jsonl")).unwrap()
+        );
+        for task in manifest["Tasks"].as_array().unwrap() {
+            assert!(output.join(task["Log"].as_str().unwrap()).is_file());
+            if task["Status"] == "succeeded" {
+                assert!(output.join(task["Output"].as_str().unwrap()).exists());
+            }
+        }
+        assert_no_absolute_paths(output, &stdout, &[evidence.path(), target.path()]);
+        assert!(manifest["GeneratedUTC"].as_str().unwrap().ends_with('Z'));
+        assert!(
+            manifest["Tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|task| task["Status"] != "failed")
+        );
+        let (_, rows) = csv_rows(&output.join("manifest.csv"));
+        assert!(
+            rows.iter()
+                .all(|r| r["OutputTimeZone"] == offset.unwrap_or("+00:00"))
+        );
+    };
+    let utc = target.path().join("utc");
+    parse(&utc, "csv", None, "Asia/Tokyo");
+    let (_, before) = csv_rows(&utc.join("HOST1/ProcessExecution/Prefetch.csv"));
+    let original = &before[0]["LastRun"];
+    assert!(original.ends_with('Z'));
+    let time = chrono::DateTime::parse_from_rfc3339(original).unwrap();
+    for kind in ["csv", "json", "jsonl"] {
+        let output = target.path().join(kind);
+        parse(&output, kind, Some("+09:00"), "America/Los_Angeles");
+        let data: Vec<Value> = std::fs::read_to_string(output.join("all.jsonl"))
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        let prefetch = data.iter().find(|v| v["Artifact"] == "prefetch").unwrap();
+        let shown = prefetch["LastRunTimes"][0].as_str().unwrap();
+        let shown_time = chrono::DateTime::parse_from_rfc3339(shown).unwrap();
+        assert_eq!(shown_time, time);
+        assert!(shown.ends_with("+09:00"));
+        assert_eq!(shown_time.offset().local_minus_utc(), 32400);
+        assert_eq!(prefetch["Comp"], "HOST1");
+        if kind == "csv" {
+            let (_, rows) = csv_rows(&output.join("HOST1/ProcessExecution/Prefetch.csv"));
+            assert_eq!(rows[0]["LastRun"], shown);
+            for key in [
+                "PreviousRun1",
+                "PreviousRun2",
+                "PreviousRun3",
+                "PreviousRun4",
+                "PreviousRun5",
+                "PreviousRun6",
+                "PreviousRun7",
+            ] {
+                if !rows[0][key].is_empty() {
+                    assert!(rows[0][key].ends_with("+09:00"));
+                }
+            }
+        } else {
+            let text = std::fs::read_to_string(
+                output.join(format!("HOST1/ProcessExecution/Prefetch.{kind}")),
+            )
+            .unwrap();
+            let individual: Vec<Value> = serde_json::Deserializer::from_str(&text)
+                .into_iter::<Value>()
+                .map(Result::unwrap)
+                .collect();
+            assert_eq!(individual[0]["LastRunTimes"], prefetch["LastRunTimes"]);
+        }
+    }
+}
+
+#[test]
+fn auto_parse_timezone_converts_lsa_and_sdb_timestamps_in_all_exports() {
+    let evidence = tempfile::tempdir().unwrap();
+    let host = evidence.path().join("HOST");
+    appcompat_collection(&host);
+    lsa_secrets_hive(&host.join("C/Windows/System32/config"));
+    unpack_registry(
+        "rathbun_w11",
+        &["SECURITY", "SECURITY.LOG1", "SECURITY.LOG2"],
+        &evidence.path().join("PUBLIC/C/Windows/System32/config"),
+    );
+    let target = tempfile::tempdir().unwrap();
+    for kind in ["csv", "json", "jsonl"] {
+        let output = target.path().join(kind);
+        let result = run(&[
+            "auto-parse",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            kind,
+            "-j",
+            output.join("all.jsonl").to_str().unwrap(),
+            "-Z",
+            "+09:00",
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+        let timeline = jsonl_records(&std::fs::read_to_string(output.join("all.jsonl")).unwrap());
+        let secret = timeline
+            .iter()
+            .find(|r| r["Artifact"] == "lsa-secrets" && r["Secret"] == "_SC_ExampleSvc")
+            .unwrap();
+        assert_eq!(secret["CurrentSet"], "2022-02-09T06:03:52+09:00");
+        assert_eq!(secret["OldSet"], "2022-02-08T06:03:52+09:00");
+        let public_secret = timeline
+            .iter()
+            .find(|r| {
+                r["Artifact"] == "lsa-secrets"
+                    && r["Secret"] == "DefaultPassword"
+                    && r["Comp"] == "PUBLIC"
+            })
+            .unwrap();
+        assert_eq!(
+            public_secret["CurrentSet"],
+            "2022-02-06T04:00:06.835826800+09:00"
+        );
+        assert_eq!(
+            public_secret["OldSet"],
+            "2022-02-06T04:00:06.070794800+09:00"
+        );
+        let sdb = timeline
+            .iter()
+            .find(|r| r["Artifact"] == "appcompat" && r["Source"] == "installed_sdb")
+            .unwrap();
+        assert_eq!(sdb["SdbInstalled"], "2022-02-08T06:03:52+09:00");
+        let manifest: Value =
+            serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+        for (artifact, selector, value, fields) in [
+            (
+                "lsa-secrets",
+                "Secret",
+                "_SC_ExampleSvc",
+                vec![
+                    ("CurrentSet", "2022-02-09T06:03:52+09:00"),
+                    ("OldSet", "2022-02-08T06:03:52+09:00"),
+                ],
+            ),
+            (
+                "appcompat",
+                "Source",
+                "installed_sdb",
+                vec![("SdbInstalled", "2022-02-08T06:03:52+09:00")],
+            ),
+        ] {
+            let task = manifest["Tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|t| t["Artifact"] == artifact && t["Purpose"] == "artifact")
+                .unwrap();
+            assert_eq!(task["Status"], "succeeded");
+            let path = output.join(task["Output"].as_str().unwrap());
+            if kind == "csv" {
+                let (_, rows) = csv_rows(&path);
+                let row = rows.iter().find(|r| r[selector] == value).unwrap();
+                for (field, expected) in fields {
+                    assert_eq!(row[&format!("{field}UTC")], expected);
+                }
+            } else {
+                let records = json_documents(&std::fs::read_to_string(path).unwrap());
+                let row = records.iter().find(|r| r[selector] == value).unwrap();
+                for (field, expected) in fields {
+                    assert_eq!(row[field], expected);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn auto_parse_timezone_retains_boundary_registry_time_and_converts_remaining_records() {
+    let evidence = tempfile::tempdir().unwrap();
+    let config = evidence.path().join("HOST/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    let instant = chrono::DateTime::parse_from_rfc3339("9999-12-31T23:00:00Z").unwrap();
+    let filetime = (instant.timestamp() + 11_644_473_600) as u64 * 10_000_000;
+    let hive = regf(&reg_key(
+        "SOFTWARE",
+        vec![],
+        vec![
+            reg_key(
+                "Boundary",
+                vec![("Example", REG_SZ, utf16z("unchanged data"))],
+                vec![],
+            )
+            .written(filetime),
+            reg_key(
+                "Ordinary",
+                vec![("Example", REG_SZ, utf16z("unchanged data"))],
+                vec![],
+            )
+            .written(LINKED),
+        ],
+    ));
+    let input = config.join("SOFTWARE");
+    std::fs::write(&input, &hive).unwrap();
+    let target = tempfile::tempdir().unwrap();
+    let mut expected_records = None;
+    for (kind, offset, relative) in [
+        ("csv", "+00:00", false),
+        ("csv", "+09:00", false),
+        ("json", "+09:00", false),
+        ("jsonl", "+09:00", false),
+        ("csv", "+09:00", true),
+        ("json", "+09:00", true),
+        ("jsonl", "+09:00", true),
+    ] {
+        let name = format!("{kind}-{offset}-{relative}").replace(':', "");
+        let output = target.path().join(&name);
+        let given = if relative {
+            Path::new(".").join(name)
+        } else {
+            output.clone()
+        };
+        let result = run_at(
+            target.path(),
+            &[
+                "auto-parse",
+                "-d",
+                evidence.path().to_str().unwrap(),
+                "-o",
+                given.to_str().unwrap(),
+                "-t",
+                kind,
+                "-j",
+                output.join("all.jsonl").to_str().unwrap(),
+                "-Z",
+                offset,
+                "-T",
+                "2",
+                "-K",
+                "-q",
+            ],
+        );
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+        let records = jsonl_records(&std::fs::read_to_string(output.join("all.jsonl")).unwrap());
+        let records: Vec<_> = records
+            .iter()
+            .filter(|r| r["Artifact"] == "registry")
+            .collect();
+        assert_eq!(
+            records.len(),
+            *expected_records.get_or_insert(records.len())
+        );
+        let text = serde_json::to_string(&records).unwrap();
+        assert!(
+            text.contains("9999-12-31T23:00:00Z"),
+            "{kind}: boundary value lost"
+        );
+        let manifest: Value =
+            serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+        assert!(
+            manifest["Tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|t| t["Status"] != "failed")
+        );
+        let task = manifest["Tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["Artifact"] == "registry" && t["Purpose"] == "artifact")
+            .unwrap();
+        assert_eq!(task["Status"], "succeeded");
+        if offset != "+00:00" {
+            assert!(text.contains("+09:00"));
+            let log = std::fs::read_to_string(output.join(task["Log"].as_str().unwrap())).unwrap();
+            assert!(log.contains("Warning: retained"), "{log}");
+            assert!(
+                log.contains(&format!(
+                    "unchanged in {} because",
+                    task["Output"].as_str().unwrap()
+                )),
+                "{log}"
+            );
+            assert!(log.contains("9999-12-31T23:00:00Z"), "{log}");
+            if kind == "csv" {
+                let (_, rows) = csv_rows(&output.join(task["Output"].as_str().unwrap()));
+                assert!(
+                    rows.iter()
+                        .any(|r| r["KeyLastWrittenUTC"] == "9999-12-31T23:00:00Z")
+                );
+                assert!(
+                    rows.iter()
+                        .any(|r| r["KeyLastWrittenUTC"].ends_with("+09:00"))
+                );
+            }
+        }
+        assert_eq!(std::fs::read(&input).unwrap(), hive);
+    }
+}
+
+#[test]
+fn auto_parse_timezone_errors_give_quoted_examples_and_negative_offsets_are_accepted() {
+    for offset in ["JST", "UTC", "+9", "+09", "09:00", "+24:00", "+00:60"] {
+        let result = run(&["auto-parse", "-d", "missing", "-o", "unused", "-Z", offset]);
+        assert_ne!(result.code, 0);
+        assert!(
+            result.stderr.contains("--timezone \"+09:00\""),
+            "{}",
+            result.stderr
+        );
+        assert!(result.stderr.contains("-Z \"-01:00\""), "{}", result.stderr);
+    }
+    let result = run(&[
+        "auto-parse",
+        "-d",
+        "missing",
+        "-o",
+        "unused",
+        "-Z",
+        "-01:00",
+    ]);
+    assert_eq!(result.code, 1);
+    assert!(
+        result.stdout.contains("evidence directory does not exist"),
+        "{}",
+        result.stdout
+    );
+    assert!(!result.stderr.contains("unexpected argument"));
+}

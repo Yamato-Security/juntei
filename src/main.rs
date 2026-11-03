@@ -37,10 +37,10 @@ mod secure_sds;
 mod security_descriptor;
 mod shimcache;
 mod srum;
+mod time_display;
 mod usn_journal;
 mod util;
 
-use chrono::Local;
 use clap::{CommandFactory, Parser};
 use cli::{Cli, Commands, EseCommands, FileCommands, NtfsCommands, RegistryCommands, VERSION};
 use color::JunteiColor::Green;
@@ -73,7 +73,13 @@ fn main() {
             code
         }
         Commands::AutoParse(opts) => {
-            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            display_logo_with_offset(
+                opts.common.quiet,
+                opts.common.no_color,
+                true,
+                false,
+                opts.timezone,
+            );
             let code = auto_parse::run(opts);
             print_elapsed(start, opts.common.no_color);
             code
@@ -525,12 +531,28 @@ fn print_elapsed(start: Instant, no_color: bool) {
 }
 
 fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
+    display_logo_with_offset(
+        quiet,
+        no_color,
+        time,
+        help,
+        time_display::OutputOffset::default(),
+    );
+}
+
+fn display_logo_with_offset(
+    quiet: bool,
+    no_color: bool,
+    time: bool,
+    help: bool,
+    offset: time_display::OutputOffset,
+) {
     if !quiet {
         p(Green.rdg(no_color), LOGO, true);
         p(None, "", true);
     }
     if time {
-        let msg = Local::now().format("%Y/%m/%d %H:%M").to_string();
+        let msg = offset.now();
         p(Green.rdg(no_color), "Start time: ", false);
         p(None, &msg, true);
     }

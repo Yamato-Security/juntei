@@ -36,6 +36,7 @@ use std::time::Instant;
 mod flat_outputs;
 mod srum_outputs;
 mod timeline;
+mod timestamps;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
@@ -219,6 +220,8 @@ struct TaskPaths {
     /// The evidence directory as given, made absolute: where the parsers run. A canonical Windows
     /// path is a verbatim one (`\\?\C:\...`), which not every API accepts.
     directory: PathBuf,
+    /// The output directory that generated paths in parser logs are relative to.
+    output_directory: PathBuf,
     /// Each directory's absolute spellings, longest first, so that none replaces part of another.
     roots: Vec<String>,
 }
@@ -238,7 +241,11 @@ impl TaskPaths {
             .collect();
         roots.sort_by_key(|root| std::cmp::Reverse(root.len()));
         roots.dedup();
-        Self { directory, roots }
+        Self {
+            directory,
+            output_directory: output.to_path_buf(),
+            roots,
+        }
     }
 
     /// `text` with each directory, where it ends a word or a path continues from it, as `.`.
@@ -401,6 +408,8 @@ struct Manifest<'a> {
     output_directory: String,
     #[serde(rename = "OutputType")]
     output_type: &'static str,
+    #[serde(rename = "OutputTimeZone")]
+    output_time_zone: String,
     #[serde(rename = "JSON-Timeline")]
     json_timeline: Option<String>,
     #[serde(rename = "JSON-TimelineError")]
@@ -671,11 +680,17 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             ),
             true,
         );
-        // the local times the system kept
-        if let Some(zone) = system_time_zone(&host.windows) {
-            p(None, &format!("    Time zone: {zone}"), true);
-        }
     }
+    let timezone = if opts.timezone.is_utc() {
+        "UTC".to_owned()
+    } else {
+        format!("UTC{}", opts.timezone)
+    };
+    p(
+        JunteiColor::Green.rdg(no_color),
+        &format!("Timezone: {timezone}"),
+        true,
+    );
     p_label(no_color, "Parser tasks: ", &fmt_num(tasks.len()));
     p_label(no_color, "Parallel processes: ", &fmt_num(threads));
     p_label(
@@ -692,7 +707,14 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p(None, "", true);
 
     let bar = progress::progress_bar(tasks.len(), no_color);
-    let mut results = run_tasks(&tasks, &executable, &task_paths, threads, &bar);
+    let mut results = run_tasks(
+        &tasks,
+        &executable,
+        &task_paths,
+        threads,
+        &bar,
+        opts.timezone,
+    );
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
         if matches!(task.artifact, "amcache" | "jump-lists")
@@ -847,12 +869,13 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         .map(|result| result.recorded(&output_root))
         .collect();
     let manifest = Manifest {
-        generated_utc: Utc::now().to_rfc3339(),
+        generated_utc: Utc::now().to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         juntei_version: env!("CARGO_PKG_VERSION"),
         manifest_version: MANIFEST_VERSION,
         evidence_directory: name(&evidence),
         output_directory: name(&output_root),
         output_type: opts.output_type.as_str(),
+        output_time_zone: opts.timezone.to_string(),
         json_timeline: opts
             .json_timeline
             .as_ref()
@@ -1126,16 +1149,6 @@ fn client_info(root: &Path) -> Option<(String, Option<String>)> {
 
 fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
     read_system_hive(windows, registry::system::computer_name)
-}
-
-/// The time zone of a collected system's `SYSTEM` hive, in words: the local times it kept.
-fn system_time_zone(windows: &[PathBuf]) -> Option<String> {
-    read_system_hive(windows, |hive| {
-        registry::system_info::system(hive)
-            .time_zone
-            .as_ref()
-            .map(crate::registry::system_info::describe_time_zone)
-    })
 }
 
 /// What `read` finds in the first `System32\config\SYSTEM` of `windows` that gives something.
@@ -1892,6 +1905,7 @@ fn run_tasks(
     paths: &TaskPaths,
     threads: usize,
     bar: &indicatif::ProgressBar,
+    offset: crate::time_display::OutputOffset,
 ) -> Vec<TaskResult> {
     let next = AtomicUsize::new(0);
     let results = Mutex::new(Vec::with_capacity(tasks.len()));
@@ -1904,7 +1918,7 @@ fn run_tasks(
                         break;
                     };
                     bar.set_message(task_progress_message(task));
-                    let result = run_task(task, executable, paths);
+                    let result = run_task(task, executable, paths, offset);
                     results.lock().unwrap().push((index, result));
                     bar.inc(1);
                 }
@@ -1927,7 +1941,12 @@ fn task_progress_message(task: &Task) -> String {
 
 /// Run `task` in the evidence directory, whose paths its arguments are relative to. Its command,
 /// log and error show the program's name and the output paths from `.` (see [`TaskPaths`]).
-fn run_task(task: &Task, executable: &Path, paths: &TaskPaths) -> TaskResult {
+fn run_task(
+    task: &Task,
+    executable: &Path,
+    paths: &TaskPaths,
+    offset: crate::time_display::OutputOffset,
+) -> TaskResult {
     let start = Instant::now();
     let command: Vec<String> = std::iter::once(
         executable
@@ -1943,7 +1962,7 @@ fn run_task(task: &Task, executable: &Path, paths: &TaskPaths) -> TaskResult {
         .args(&task.args)
         .output();
     let mut error = None;
-    let (status, exit_code, stdout, stderr) = match output {
+    let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
             let stdout = paths.text(&String::from_utf8_lossy(&output.stdout));
             let stderr = paths.text(&String::from_utf8_lossy(&output.stderr));
@@ -1968,12 +1987,28 @@ fn run_task(task: &Task, executable: &Path, paths: &TaskPaths) -> TaskResult {
             (TaskStatus::Failed, None, String::new(), String::new())
         }
     };
+    let mut formatting_warnings = Vec::new();
+    if status == TaskStatus::Succeeded {
+        match timestamps::rewrite(task, offset, &paths.output_directory) {
+            Ok(warnings) => formatting_warnings = warnings,
+            Err(e) => {
+                status = TaskStatus::Failed;
+                error = Some(paths.text(&format!("could not format output timestamps: {e}")));
+            }
+        }
+    }
     let mut log = format!("Command: {}\n", command.join(" "));
     log.push_str(&stdout);
     if !stdout.is_empty() && !stdout.ends_with('\n') {
         log.push('\n');
     }
     log.push_str(&stderr);
+    for warning in formatting_warnings {
+        log.push_str(&format!("\n{}\n", paths.text(&warning)));
+    }
+    if let Some(message) = &error {
+        log.push_str(&format!("\nError: {message}\n"));
+    }
     if let Some(parent) = task.log.parent() {
         let _ = fs::create_dir_all(parent);
     }
@@ -2263,6 +2298,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "Artifact",
         "Category",
         "OutputType",
+        "OutputTimeZone",
         "Purpose",
         "Status",
         "DurationMs",
@@ -2287,6 +2323,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             task.artifact.clone(),
             task.category.to_string(),
             task.output_type.to_string(),
+            manifest.output_time_zone.clone(),
             task.purpose.to_string(),
             task.status.as_str().to_string(),
             task.duration_ms.to_string(),
