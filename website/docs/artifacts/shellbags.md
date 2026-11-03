@@ -40,6 +40,9 @@ profile, and the system's `SOFTWARE` hive, which gives an `NTUSER.DAT` user's SI
 - **The shell item's times** (`ItemModifiedUTC`, `ItemCreatedUTC`, `ItemAccessedUTC`) are the
   folder's own file system times (FAT precision: 2 seconds) when Explorer wrote the item. They
   date the folder, not the visit, and are not updated on later visits.
+  FAT clocks have no stored UTC offset. The legacy `UTC` headings and rendered `Z` suffix are
+  display conventions, not proof of the source time zone. `auto-parse --timezone` preserves
+  these fields; interpret them with source-system context.
 - **A key's last-write time** changes when its `MRUListEx` is rewritten, that is when one of its
   items is opened and moved to the front. So the time of the key an item's value is in
   (`ParentKeyLastWrittenUTC`) is when the item was last opened **only when it is the most recent

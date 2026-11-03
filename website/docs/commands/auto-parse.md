@@ -51,7 +51,10 @@ offset, while `GeneratedUTC` remains UTC run metadata. Per-parser logs retain th
 
 Raw FILETIME/epoch numbers, registry-value dictionaries, source time-zone configuration, text
 metadata, date-only values and local clock values without a known offset are preserved. Juntei
-does not add `Z` to an unknown local time. CSV columns containing free-text summaries retain
+does not add `Z` to an unknown local time. FAT-derived shell-item clocks (`Item*UTC` in
+ShellBags/OpenSaveMRU and LNK/Jump List `TargetItems`) have no recorded offset; their legacy
+UTC labels or rendered `Z` suffix do not prove UTC, so the offset option preserves them.
+CSV columns containing free-text summaries retain
 their recorded text; JSON/JSONL preserves nested parsed timestamps as structured fields.
 
 UTC uses the existing parser output directly. An explicit nonzero offset adds a streaming

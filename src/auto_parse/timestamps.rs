@@ -96,6 +96,15 @@ fn raw_field(key: &str) -> bool {
             | "RegistryValuesJSON"
             | "ValueData"
             | "ValueDataRaw"
+            // FAT shell-item clocks carry no UTC offset. Their legacy UTC labels/Z suffix
+            // are rendering conventions; don't turn them into inferred absolute instants.
+            | "ItemCreated"
+            | "ItemCreatedUTC"
+            | "ItemModified"
+            | "ItemModifiedUTC"
+            | "ItemAccessed"
+            | "ItemAccessedUTC"
+            | "TargetItems"
     )
 }
 
@@ -266,7 +275,7 @@ mod tests {
         let at = "2026-10-20T08:46:38.2001668Z";
         let mut value = json!({"LastRunTimes":[at],"Attr":[{"Data":{"Created":at}}],"KeyLastWritten":at,"LastShutdown":at,"Name":at,
             "ValueData":at,"DataRaw":{"Created":at},"RegistryValues":[{"Name":"Created","Decoded":at}],
-            "FirstConnectedLocal":"2026-10-20T08:46:38.200", "Raw":{"Timestamp":at}, "ZoneIdentifier":{"LastRun":at},
+            "FirstConnectedLocal":"2026-10-20T08:46:38.200", "ItemCreated":at, "TargetItems":[{"Created":at}], "Raw":{"Timestamp":at}, "ZoneIdentifier":{"LastRun":at},
             "Nested":{"UTC":at,"Filetime":134000000000000000u64}});
         value_times(&mut value, "", offset).unwrap();
         assert_eq!(
@@ -279,6 +288,8 @@ mod tests {
         );
         assert_eq!(value["KeyLastWritten"], value["LastRunTimes"][0]);
         assert_eq!(value["LastShutdown"], value["LastRunTimes"][0]);
+        assert_eq!(value["ItemCreated"], at);
+        assert_eq!(value["TargetItems"][0]["Created"], at);
         assert_eq!(value["Name"], at);
         assert_eq!(value["ValueData"], at);
         assert_eq!(value["DataRaw"]["Created"], at);
@@ -288,6 +299,10 @@ mod tests {
         assert_eq!(value["FirstConnectedLocal"], "2026-10-20T08:46:38.200");
         assert_eq!(value["Nested"]["Filetime"], 134000000000000000u64);
         assert_eq!(csv_cell(at, "Filename", "mft", offset).unwrap(), at);
+        assert_eq!(
+            csv_cell(at, "ItemCreatedUTC", "shellbags", offset).unwrap(),
+            at
+        );
         assert_eq!(
             csv_cell(&format!("alice ({at})"), "User", "usb", offset).unwrap(),
             "alice (2026-10-20T17:46:38.2001668+09:00)"
