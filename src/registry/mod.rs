@@ -602,7 +602,10 @@ fn identity(path: &Path) -> io::Result<Identity> {
 
 /// An error when the output file `path` is one of the files `reads` gives, or when that can't be
 /// told (fail closed: it is not overwritten). A file that isn't there can't be one of them.
-fn check_not_read(path: &Path, reads: impl FnOnce() -> Vec<PathBuf>) -> Result<(), String> {
+pub(crate) fn check_not_read(
+    path: &Path,
+    reads: impl FnOnce() -> Vec<PathBuf>,
+) -> Result<(), String> {
     let unsure = |of: &Path, e: &io::Error| {
         format!(
             "Could not tell whether the output file {} is the input file {}, so it is not overwritten: {e}",

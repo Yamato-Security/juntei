@@ -114,6 +114,15 @@ pub fn run(opts: &SrumOptions) -> i32 {
         );
         return 1;
     }
+    let mut protected = databases.clone();
+    if let Some(software) = &opts.software {
+        protected.push(software.clone());
+    }
+    protected.extend(
+        databases
+            .iter()
+            .filter_map(|database| software_hive(database)),
+    );
     // CSV tables always go to a directory; JSON / JSONL with -d too (one file per database).
     let out_is_dir = output_type == SrumOutputType::Csv || root.is_some();
     if let Some(out) = &opts.output
@@ -211,7 +220,7 @@ pub fn run(opts: &SrumOptions) -> i32 {
                     } else {
                         out.clone()
                     };
-                    write_csv_tables(&dir, &srum).map(|files| saved += files)
+                    write_csv_tables(&dir, &srum, &protected).map(|files| saved += files)
                 }
                 SrumOutputType::Json | SrumOutputType::Jsonl => {
                     let name = root.map(|r| util::unique_name(r, database, &mut used_names));
@@ -220,7 +229,11 @@ pub fn run(opts: &SrumOptions) -> i32 {
                         |n| out.join(format!("{n}.{}", output_type.extension())),
                     );
                     let value_states = opts.include_value_state;
-                    write_entries_to(&path, &srum, &source, output_type, value_states)
+                    crate::registry::check_not_read(&path, || protected.clone())
+                        .map_err(io::Error::other)
+                        .and_then(|()| {
+                            write_entries_to(&path, &srum, &source, output_type, value_states)
+                        })
                         .map(|()| saved += 1)
                 }
             },
@@ -627,28 +640,41 @@ fn hex(bytes: &[u8]) -> String {
 
 // --- writers ------------------------------------------------------------------------------------
 
-/// One CSV file per provider in `dir` (`NetworkUsages.csv`,
-/// `AppResourceUseInfo.csv`, …), with the columns of every entry it holds, and
-/// `IdentityMap.csv`; returns the number of files written.
-fn write_csv_tables(dir: &Path, srum: &Srum) -> io::Result<usize> {
+/// One CSV file per provider in `dir` (`SRUM-NetworkUsages.csv`,
+/// `SRUM-AppResourceUseInfo.csv`, …), with the columns of every entry it holds, and
+/// `SRUM-IdentityMap.csv`; returns the number of files written.
+fn write_csv_tables(dir: &Path, srum: &Srum, protected: &[PathBuf]) -> io::Result<usize> {
     std::fs::create_dir_all(dir)?;
-    let mut tables: BTreeMap<String, CsvTable> = BTreeMap::new();
+    let mut tables: BTreeMap<(bool, String), CsvTable> = BTreeMap::new();
     for e in &srum.entries {
-        tables.entry(output_name(e)).or_default().push(row(e));
+        tables
+            .entry((e.kind.is_none(), output_name(e)))
+            .or_default()
+            .push(row(e));
     }
     // Reserve the fixed identity-map name and the friendly VFU name before writing provider
     // tables, so even a crafted/unknown provider cannot overwrite either output.
     let mut used = HashSet::from(["identitymap".to_string(), "vfuprovider".to_string()]);
-    for (name, table) in &tables {
-        let filename = if name == "vfuprov" {
-            "VfuProvider".to_string()
-        } else {
-            safe_file_name(name, &mut used)
-        };
-        let path = dir.join(format!("{filename}.csv"));
+    let mut exports = Vec::new();
+    for ((unknown, name), table) in &tables {
+        let kind = (!unknown)
+            .then(|| Kind::all().find(|k| k.output_name() == name))
+            .flatten();
+        let filename = table_filename(kind, name, &mut used);
+        let path = dir.join(format!("SRUM-{filename}.csv"));
+        exports.push((path, table));
+    }
+    for path in exports
+        .iter()
+        .map(|(path, _)| path.clone())
+        .chain(std::iter::once(dir.join("SRUM-IdentityMap.csv")))
+    {
+        crate::registry::check_not_read(&path, || protected.to_vec()).map_err(io::Error::other)?;
+    }
+    for (path, table) in exports {
         table.write(&path)?;
     }
-    let mut ids = csv::Writer::from_path(dir.join("IdentityMap.csv"))?;
+    let mut ids = csv::Writer::from_path(dir.join("SRUM-IdentityMap.csv"))?;
     ids.write_record(crate::output_schema::headers([
         "IdIndex", "IdType", "IdBlob",
     ])?)?;
@@ -698,6 +724,26 @@ impl CsvTable {
         w.flush()?;
         Ok(())
     }
+}
+
+/// A stable filename for known providers; unknown tables cannot impersonate a known output.
+pub(crate) fn table_filename(kind: Option<Kind>, raw: &str, used: &mut HashSet<String>) -> String {
+    if let Some(kind) = kind {
+        return if kind == Kind::VfuProvider {
+            "VfuProvider".into()
+        } else {
+            kind.output_name().into()
+        };
+    }
+    let reserved = raw.eq_ignore_ascii_case("IdentityMap")
+        || raw.eq_ignore_ascii_case("VfuProvider")
+        || Kind::all().any(|kind| kind.output_name().eq_ignore_ascii_case(raw));
+    let raw = if reserved {
+        format!("Unknown-{raw}")
+    } else {
+        raw.into()
+    };
+    safe_file_name(&raw, used)
 }
 
 /// A table name as a file name: only letters, digits and `-_{}` (a crafted table name can't

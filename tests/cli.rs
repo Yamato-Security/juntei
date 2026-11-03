@@ -270,21 +270,28 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .flatten()
             .all(|entry| entry.path().is_file())
     );
-    assert!(csv.join("HOST1/ProcessExecution/SRUM").is_dir());
+    assert!(!csv.join("HOST1/ProcessExecution/SRUM").exists());
     assert!(
-        csv.join("HOST1/ProcessExecution/SRUM/IdentityMap.csv")
+        csv.join("HOST1/SystemInformation/SRUM-IdentityMap.csv")
             .is_file()
     );
     assert!(
-        csv.join("HOST1/ProcessExecution/SRUM/VfuProvider.csv")
+        csv.join("HOST1/SystemInformation/SRUM-VfuProvider.csv")
             .is_file()
     );
     assert!(
-        std::fs::read_dir(csv.join("HOST1/ProcessExecution/SRUM"))
-            .unwrap()
-            .flatten()
-            .all(|entry| entry.path().is_file())
+        csv.join("HOST1/NetworkActivity/SRUM-NetworkConnections.csv")
+            .is_file()
     );
+    assert!(
+        csv.join("HOST1/NetworkActivity/SRUM-NetworkUsages.csv")
+            .is_file()
+    );
+    assert!(
+        csv.join("HOST1/ProcessExecution/SRUM-AppResourceUseInfo.csv")
+            .is_file()
+    );
+    assert!(!csv.join("HOST1/SystemInformation/SRUM").exists());
     assert!(csv.join("HOST1/FileSystem/MFT.csv").is_file());
     assert!(csv.join("HOST1/FileSystem/UsnJournal.csv").is_file());
     assert!(!csv.join("HOST1/FileSystem/mft").exists());
@@ -358,16 +365,20 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
                 "Persistence"
             }
             "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch"
-            | "prefetch-timeline" | "srum" | "userassist" => "ProcessExecution",
+            | "prefetch-timeline" | "userassist" => "ProcessExecution",
             "registry" => "Registry",
             "defender-quarantine" | "security-settings" => "SecurityProducts",
-            "system-info" => "SystemInformation",
+            "system-info" | "srum" => "SystemInformation",
             "auditpol" => "SystemInformation",
             _ => panic!("unexpected artifact: {artifact}"),
         };
         assert_eq!(task["Category"], category);
         if let Some(output) = task["Output"].as_str() {
-            assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
+            if artifact == "srum" {
+                assert_eq!(Path::new(output), csv.join("HOST1"));
+            } else {
+                assert!(Path::new(output).starts_with(csv.join("HOST1").join(category)));
+            }
         }
         let (source, command) = match artifact {
             "persistence-hunter" => {
@@ -563,7 +574,16 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
             host.join(format!("FileSystem/UsnJournal.{format}"))
                 .is_file()
         );
-        assert!(host.join("ProcessExecution/SRUM").is_dir());
+        assert!(!host.join("ProcessExecution/SRUM").exists());
+        assert!(!host.join("SystemInformation/SRUM").exists());
+        assert!(
+            host.join(format!("NetworkActivity/SRUM-NetworkConnections.{format}"))
+                .is_file()
+        );
+        assert!(
+            host.join(format!("ProcessExecution/SRUM-AppResourceUseInfo.{format}"))
+                .is_file()
+        );
         let prefetch = host.join(format!("ProcessExecution/Prefetch.{format}"));
         let records = json_documents(&std::fs::read_to_string(prefetch).unwrap());
         assert!(!records.is_empty());
@@ -588,7 +608,16 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
             assert!(!host.join(category).join("logs").exists());
             assert!(log.is_file());
             if let Some(path) = task["Output"].as_str() {
-                assert!(Path::new(path).starts_with(host.join(category)));
+                if task["Artifact"] == "srum" {
+                    assert_eq!(Path::new(path), host);
+                    let files = task["OutputFiles"].as_array().unwrap();
+                    assert!(!files.is_empty());
+                    for file in files {
+                        assert!(Path::new(file.as_str().unwrap()).is_file());
+                    }
+                } else {
+                    assert!(Path::new(path).starts_with(host.join(category)));
+                }
                 assert!(Path::new(path).exists());
             }
         }
@@ -601,7 +630,7 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
 fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
     let evidence = auto_triage();
     let root = tempfile::tempdir().unwrap();
-    let mut previous = None;
+    let mut previous: Option<Vec<Value>> = None;
     for format in ["csv", "json", "jsonl"] {
         let output = root.path().join(format);
         // Include a space and a non-default destination outside the results directory.
@@ -622,7 +651,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
             "-q",
         ]);
         assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
-        let records: Vec<Value> = std::fs::read_to_string(&timeline)
+        let mut records: Vec<Value> = std::fs::read_to_string(&timeline)
             .unwrap()
             .lines()
             .map(|line| serde_json::from_str(line).unwrap())
@@ -635,9 +664,29 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                 .any(|record| record["Artifact"] == "amcache" && record["RecordType"] == "file")
         );
         assert!(records.iter().any(|record| record["Artifact"] == "srum"));
-        // Value equality ignores object key order but checks native types and nested fields.
+        fn canonical(value: &mut Value) {
+            match value {
+                Value::Object(fields) => {
+                    fields.sort_keys();
+                    for child in fields.values_mut() {
+                        canonical(child);
+                    }
+                }
+                Value::Array(values) => values.iter_mut().for_each(canonical),
+                _ => (),
+            }
+        }
+        records.iter_mut().for_each(canonical);
+        records.sort_by_cached_key(|record| serde_json::to_string(record).unwrap());
         if let Some(expected) = &previous {
-            assert_eq!(&records, expected, "{format} SIEM records changed");
+            assert_eq!(
+                records.len(),
+                expected.len(),
+                "{format} SIEM record count changed"
+            );
+            for (index, (actual, expected)) in records.iter().zip(expected).enumerate() {
+                assert_eq!(actual, expected, "{format} SIEM record {index} changed");
+            }
         }
         previous = Some(records);
         let manifest: Value =
@@ -3584,16 +3633,16 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     assert_eq!(
         files,
         [
-            "AppResourceUseInfo.csv",
-            "AppTimelineProvider.csv",
-            "IdentityMap.csv",
-            "NetworkConnections.csv",
-            "NetworkUsages.csv",
-            "VfuProvider.csv"
+            "SRUM-AppResourceUseInfo.csv",
+            "SRUM-AppTimelineProvider.csv",
+            "SRUM-IdentityMap.csv",
+            "SRUM-NetworkConnections.csv",
+            "SRUM-NetworkUsages.csv",
+            "SRUM-VfuProvider.csv"
         ]
     );
 
-    let (header, rows) = csv_rows(&out.join("NetworkUsages.csv"));
+    let (header, rows) = csv_rows(&out.join("SRUM-NetworkUsages.csv"));
     assert_eq!(
         header,
         [
@@ -3637,7 +3686,7 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
     assert!(rathbun.iter().all(|r| r["UserName"] == "rathbun"));
 
     // `!!name!time!x!description` names split; FILETIME columns as times
-    let (_, timeline) = csv_rows(&out.join("AppTimelineProvider.csv"));
+    let (_, timeline) = csv_rows(&out.join("SRUM-AppTimelineProvider.csv"));
     let split = timeline
         .iter()
         .find(|r| r["EXE-InfoDescription"] == "[LocalService] [WdiServiceHost]")
@@ -3650,10 +3699,10 @@ fn srum_csv_tables_with_names_from_the_software_hive() {
             .iter()
             .all(|r| r["EndTime"].starts_with("2022-02-"))
     );
-    let (_, ids) = csv_rows(&out.join("IdentityMap.csv"));
+    let (_, ids) = csv_rows(&out.join("SRUM-IdentityMap.csv"));
     assert_eq!(ids.len(), 288);
     assert_eq!(ids[3]["ID-Blob"], "S-1-5-19");
-    let (_, vfu) = csv_rows(&out.join("VfuProvider.csv"));
+    let (_, vfu) = csv_rows(&out.join("SRUM-VfuProvider.csv"));
     assert_eq!(vfu.len(), 4);
 
     // existing results are kept without -C
@@ -3842,21 +3891,21 @@ fn srum_triage_directory_with_server_tables() {
     assert_eq!(
         files,
         [
-            "AppResourceUseInfo.csv",
-            "IdentityMap.csv",
-            "NetworkBytes.csv",
-            "NetworkConnections.csv",
-            "ProcessorTime.csv",
-            "SizeInBytes.csv",
-            "TotalUsed.csv"
+            "SRUM-AppResourceUseInfo.csv",
+            "SRUM-IdentityMap.csv",
+            "SRUM-NetworkBytes.csv",
+            "SRUM-NetworkConnections.csv",
+            "SRUM-ProcessorTime.csv",
+            "SRUM-SizeInBytes.csv",
+            "SRUM-TotalUsed.csv"
         ]
     );
-    let (_, used) = csv_rows(&server.join("TotalUsed.csv"));
+    let (_, used) = csv_rows(&server.join("SRUM-TotalUsed.csv"));
     assert_eq!(used.len(), 4);
     assert!(used.iter().all(|r| r["AppType"] == "Object"));
     let (_, network) = csv_rows(
         &out.path()
-            .join("HOST1_C_Windows_System32_sru_SRUDB/NetworkUsages.csv"),
+            .join("HOST1_C_Windows_System32_sru_SRUDB/SRUM-NetworkUsages.csv"),
     );
     assert_eq!(network[0]["UserName"], "LocalService");
 
@@ -17501,4 +17550,100 @@ fn registry_networks_missing_select_remains_unknown_and_warns_on_stderr() {
             assert!(records[0]["IsCurrentControlSet"].is_null());
         }
     }
+}
+
+#[test]
+fn srum_category_reruns_remove_recorded_outputs_and_keep_unrelated_files() {
+    let root = tempfile::tempdir().unwrap();
+    let evidence = root.path().join("evidence");
+    let sru = evidence.join("HOST1/C/Windows/System32/sru");
+    std::fs::create_dir_all(&sru).unwrap();
+    let database = sru.join("SRUDB.dat");
+    std::fs::copy(repo(SRUM_WIN10), &database).unwrap();
+    let output = root.path().join("parsed");
+    let scan = |format: &str, clobber: bool| {
+        let mut args = vec![
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            format,
+            "-T",
+            "2",
+            "-q",
+            "-K",
+        ];
+        if clobber {
+            args.push("-C");
+        }
+        let result = run(&args);
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+    };
+    scan("csv", false);
+    let network = output.join("HOST1/NetworkActivity");
+    let previous = network.join("SRUM-NetworkUsages.csv");
+    assert!(previous.is_file());
+    let notes = network.join("SRUM-personal-notes.csv");
+    std::fs::write(&notes, b"keep").unwrap();
+    scan("jsonl", true);
+    assert!(!previous.exists());
+    assert!(network.join("SRUM-NetworkUsages.jsonl").is_file());
+    assert_eq!(std::fs::read(&notes).unwrap(), b"keep");
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["Artifact"] == "srum")
+        .unwrap();
+    let files = task["OutputFiles"].as_array().unwrap();
+    assert!(!files.is_empty());
+    for file in files {
+        assert!(Path::new(file.as_str().unwrap()).is_file());
+    }
+    std::fs::rename(&database, sru.join("not-collected.bin")).unwrap();
+    scan("jsonl", true);
+    assert!(!network.join("SRUM-NetworkUsages.jsonl").exists());
+    assert_eq!(std::fs::read(notes).unwrap(), b"keep");
+}
+
+#[test]
+fn srum_exports_cannot_overwrite_inputs_even_with_new_table_names() {
+    let root = tempfile::tempdir().unwrap();
+    let database = root.path().join("SRUM-NetworkUsages.csv");
+    let original = std::fs::read(repo(SRUM_WIN10)).unwrap();
+    std::fs::write(&database, &original).unwrap();
+    let result = run(&[
+        "parse-ese",
+        "srum",
+        "-f",
+        database.to_str().unwrap(),
+        "-o",
+        root.path().to_str().unwrap(),
+        "-C",
+        "-q",
+        "-K",
+    ]);
+    assert_ne!(result.code, 0);
+    assert_eq!(std::fs::read(&database).unwrap(), original);
+    let alias = root.path().join("output.jsonl");
+    std::fs::hard_link(&database, &alias).unwrap();
+    let result = run(&[
+        "parse-ese",
+        "srum",
+        "-f",
+        database.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-o",
+        alias.to_str().unwrap(),
+        "-C",
+        "-q",
+        "-K",
+    ]);
+    assert_ne!(result.code, 0);
+    assert_eq!(std::fs::read(database).unwrap(), original);
 }

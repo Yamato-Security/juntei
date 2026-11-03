@@ -33,6 +33,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
+mod srum_outputs;
 mod timeline;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
@@ -69,10 +70,10 @@ fn artifact_category(artifact: &str) -> &'static str {
         "remote-access" => "LateralMovement",
         "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "Persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
-        | "srum" | "userassist" => "ProcessExecution",
+        | "userassist" => "ProcessExecution",
         "registry" => "Registry",
         "defender-quarantine" | "security-settings" => "SecurityProducts",
-        "system-info" => "SystemInformation",
+        "system-info" | "srum" => "SystemInformation",
         "auditpol" => "SystemInformation",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
     }
@@ -200,6 +201,8 @@ struct TaskResult {
     command: Vec<String>,
     #[serde(rename = "Output")]
     output: Option<String>,
+    #[serde(rename = "OutputFiles")]
+    output_files: Vec<String>,
     #[serde(rename = "Log")]
     log: String,
     #[serde(rename = "Error")]
@@ -494,13 +497,40 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             result.error = Some(format!("could not name Amcache CSV tables: {e}"));
         }
     }
+    for (task, result) in tasks.iter().zip(&mut results) {
+        if task.artifact == "srum" && !task.timeline_only && result.status == TaskStatus::Succeeded
+        {
+            match srum_outputs::distribute(task) {
+                Ok(files) => {
+                    result.output_files = files
+                        .iter()
+                        .map(|p| p.to_string_lossy().into_owned())
+                        .collect();
+                    result.output = task
+                        .output
+                        .parent()
+                        .and_then(Path::parent)
+                        .map(|p| p.to_string_lossy().into_owned());
+                }
+                Err(error) => {
+                    result.status = TaskStatus::Failed;
+                    result.output = None;
+                    result.error = Some(format!("could not organize SRUM tables: {error}"));
+                }
+            }
+        }
+    }
     let mut data_files = Vec::new();
     {
         for (task, result) in tasks.iter().zip(&mut results) {
             if !task.output_type.is_json() || result.status != TaskStatus::Succeeded {
                 continue;
             }
-            let files = json_files(&task.output, task.output_type);
+            let files = if task.artifact == "srum" && !task.timeline_only {
+                result.output_files.iter().map(PathBuf::from).collect()
+            } else {
+                json_files(&task.output, task.output_type)
+            };
             if files.is_empty() {
                 result.status = TaskStatus::Failed;
                 result.error = Some("the parser succeeded but produced no JSON data file".into());
@@ -508,9 +538,12 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             }
             let mut annotated = Vec::new();
             for path in files {
-                if let Err(e) =
+                let annotation = if task.artifact == "srum" && !task.timeline_only {
+                    Ok(())
+                } else {
                     annotate_json_file(&path, &task.computer, task.artifact, task.output_type)
-                {
+                };
+                if let Err(e) = annotation {
                     result.status = TaskStatus::Failed;
                     result.output = None;
                     result.error = Some(format!(
@@ -995,9 +1028,21 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         let inputs = InputInventory::scan(&host.root);
         let data_dir = work.join(&host.folder);
         let host_output_dir = opts.output.join(&host.folder);
-        for category in CATEGORIES {
-            fs::create_dir_all(data_dir.join(category))?;
-            fs::create_dir_all(host_output_dir.join(category))?;
+        for directory in [&data_dir, &host_output_dir] {
+            if fs::symlink_metadata(directory).is_ok_and(|m| m.file_type().is_symlink()) {
+                return Err(io::Error::other(
+                    "Computer output directories must not be symbolic links",
+                ));
+            }
+            for category in CATEGORIES {
+                let path = directory.join(category);
+                if fs::symlink_metadata(&path).is_ok_and(|m| m.file_type().is_symlink()) {
+                    return Err(io::Error::other(
+                        "Category output directories must not be symbolic links",
+                    ));
+                }
+                fs::create_dir_all(path)?;
+            }
         }
         let mut add =
             |artifact: &'static str, command: &[&str], shape: OutputShape, extra: &[&str]| {
@@ -1517,6 +1562,7 @@ fn rename_amcache_tables(root: &Path) -> io::Result<()> {
 /// With explicit `--clobber`, remove only the exact task targets under this run's work directory.
 /// Otherwise a skipped parser could leave a stale artifact from an earlier run.
 fn clear_generated_outputs(tasks: &[Task], work: &Path) -> io::Result<()> {
+    srum_outputs::clear_previous(work, tasks)?;
     for task in tasks {
         remove_generated_path(&task.output, work)?;
     }
@@ -1680,6 +1726,7 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
         command,
         output: (status == TaskStatus::Succeeded)
             .then(|| task.output.to_string_lossy().to_string()),
+        output_files: Vec::new(),
         log: task.log.to_string_lossy().to_string(),
         error,
     }
@@ -1943,6 +1990,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "DurationMs",
         "ExitCode",
         "Output",
+        "OutputFiles",
         "Log",
         "Error",
         "Command",
@@ -1967,6 +2015,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             task.exit_code
                 .map_or_else(String::new, |code| code.to_string()),
             task.output.clone().unwrap_or_default(),
+            serde_json::to_string(&task.output_files).map_err(io::Error::other)?,
             task.log.clone(),
             task.error.clone().unwrap_or_default(),
             serde_json::to_string(&task.command).map_err(io::Error::other)?,
@@ -2219,7 +2268,7 @@ mod tests {
         );
         assert_eq!(
             task_output(root, "srum", AutoOutputType::Json, OutputShape::Directory),
-            root.join("ProcessExecution/SRUM")
+            root.join("SystemInformation/SRUM")
         );
     }
 

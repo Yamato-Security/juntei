@@ -103,7 +103,7 @@ An artifact that was not collected is a normal `skipped` task, not a failure.
 
 Results are organized by computer, investigative category, and artifact. Generated category and
 artifact directories use PascalCase, such as `Accounts`, `FileAndFolderOpening`, `Amcache`,
-and `SRUM`. Computer directory names retain their discovered spelling. Existing output
+and `JumpLists`. Computer directory names retain their discovered spelling. Existing output
 directories are not migrated; choose a new output directory when switching from the older naming. Each parser writes an
 `<artifact>-logs.txt` file beside its results, including when the artifact was not collected.
 CSV keeps separate tables because each artifact has different columns:
@@ -157,7 +157,10 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   └── UsnJournal-logs.txt
 │   ├── NetworkActivity/
 │   │   ├── Networks.csv
-│   │   └── Networks-logs.txt
+│   │   ├── Networks-logs.txt
+│   │   ├── SRUM-NetworkConnections.csv
+│   │   ├── SRUM-NetworkUsages.csv
+│   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── RemoteAccess.csv
 │   │   └── RemoteAccess-logs.txt
@@ -183,8 +186,8 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Prefetch-logs.txt
 │   │   ├── PrefetchTimeline.csv
 │   │   ├── PrefetchTimeline-logs.txt
-│   │   ├── SRUM/
-│   │   ├── SRUM-logs.txt
+│   │   ├── SRUM-AppResourceUseInfo.csv
+│   │   ├── SRUM-AppTimelineProvider.csv
 │   │   ├── UserAssist.csv
 │   │   └── UserAssist-logs.txt
 │   ├── Registry/
@@ -200,7 +203,10 @@ CSV keeps separate tables because each artifact has different columns:
 │       ├── AuditPolicy.csv
 │       ├── AuditPolicy-logs.txt
 │       ├── SystemInfo.csv
-│       └── SystemInfo-logs.txt
+│       ├── SystemInfo-logs.txt
+│       ├── SRUM-IdentityMap.csv
+│       ├── SRUM-VfuProvider.csv
+│       └── SRUM-logs.txt
 └── HOST2/
     └── …
 ```
@@ -214,14 +220,13 @@ CSV keeps separate tables because each artifact has different columns:
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$I30`, `$LogFile`, `$MFT`, USN Journal |
-| `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes |
+| `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
 | `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
-| `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM, UserAssist |
+| `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU activity, UserAssist |
 | `Registry` | General hive keys and values, including recovered records |
 | `SecurityProducts` | Defender quarantine metadata and optional extracted content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
-| `SystemInformation` | Names, Windows version, time zone, last shutdown, profiles and SIDs of the system |
-| `SystemInformation` | The audit policy: which security events the system was set to log |
+| `SystemInformation` | Names, Windows version, time zone, last shutdown, profiles, SIDs and audit policy; SRUM energy/capacity, identity maps and unknown providers |
 
 Categories help organize investigations; they are not proof of a particular activity. For example,
 Amcache and ShimCache entries alone do not establish execution. SRUM records resource usage;
@@ -231,8 +236,9 @@ CSV, JSON, and JSONL use the same categories. Parsers that produce several table
 artifact subdirectory where needed. One `<artifact>-logs.txt` file per parser job contains its
 exact command and messages; for example, `HOST1/FileSystem/MFT-logs.txt` and
 `HOST1/ProcessExecution/Prefetch-logs.txt`. JSON and JSONL use the same log filenames.
-Multi-table outputs such as `Amcache/` and `SRUM/` have one log beside the artifact directory,
-covering all its tables. No `logs/` subdirectories are created.
+Amcache has one log beside its artifact directory. SRUM provider tables are placed directly
+in `NetworkActivity`, `ProcessExecution` and `SystemInformation`, with a shared
+`SystemInformation/SRUM-logs.txt` file. No `logs/` subdirectories are created.
 
 Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Networks.csv`, `Persistence.csv`, `Services.csv`, `TaskCache.csv`, `BCD.csv`,
@@ -240,13 +246,14 @@ Default CSV filenames are `SAM.csv`, `LNK.csv`, `RecentDocs.csv`, `ShimCache.csv
 `PrefetchTimeline.csv`, `Prefetch.csv`, `UserAssist.csv`, `AppCompat.csv`, `Office.csv`, `FeatureUsage.csv`, `AppHistory.csv`, `MRU.csv`, `SystemInfo.csv`, `RemoteAccess.csv`, `OpenSaveMRU.csv`, `InstalledPrograms.csv`, `BAM.csv`, `MuiCache.csv`, `ShellBags.csv`, `USB.csv`, `SecuritySettings.csv`, `AuditPolicy.csv`, `Registry.csv`, and
 `DefenderQuarantine.csv`. Amcache's `Amcache/` directory contains `Devices.csv`, `Files.csv`,
 `Findings.csv`, and `Summary.csv`, without the library's `Amcache_` prefix. Multiple hives retain
-separate source subdirectories, each with the same four table names. SRUM retains separate provider
-tables in `SRUM/`, with its parser messages in `SRUM-logs.txt`.
+separate source subdirectories, each with the same four table names. SRUM tables use `SRUM-`
+filenames directly under their category, for example `NetworkActivity/SRUM-NetworkConnections.csv`.
+See the [complete SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output).
 
 Logs match the capitalized artifact name, such as `SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
 and `UserAssist-logs.txt`. JSON/JSONL files use the same stems, for example `MFT.jsonl`; the
 record's `Artifact` identifier is `mft` for queries. Multi-table outputs have `Amcache-logs.txt`,
-`JumpLists-logs.txt`, or `SRUM-logs.txt` beside their directory.
+or `JumpLists-logs.txt` beside their directory. The shared SRUM log is in `SystemInformation`.
 
 
 `manifest.json` records the original discovered `Hostname`, the unique output/record `Computer`
@@ -262,10 +269,14 @@ logs and enrichment files and do not predict the size of the parsed output.
 
 `manifest.csv` provides the same task index as a spreadsheet-friendly table, with one row per
 parser task. It includes `Computer`, original `Hostname`, `FQDN`, `HostnameSource`, `EvidenceRoot`,
-`Artifact`, `Category`, `OutputType`, `Purpose`, `Status`, `DurationMs`, `ExitCode`, `Output`, `Log`,
+`Artifact`, `Category`, `OutputType`, `Purpose`, `Status`, `DurationMs`, `ExitCode`, `Output`, `OutputFiles`, `Log`,
 `Error`, and `Command`. `Purpose` is `artifact` for the categorized results or `json_timeline` for
 the additional native JSONL pass used with CSV. `OutputType` is the actual parser output format.
 `Command` is a JSON array of the executable and its arguments, preserving spaces and quoting.
+For SRUM, `Output` is the computer directory, `OutputFiles` is a JSON array of its exact
+provider output paths, and `Category` names the shared log location (`SystemInformation`).
+Files are categorized individually; `OutputFiles` also appears in the JSON manifest.
+
 Filter `Status` to `skipped` or `failed` to find tasks requiring review; a skipped task's `Error`
 may be empty, with the explanation in its `Log` file.
 
@@ -277,10 +288,11 @@ not followed. Sizes use decimal MB (1 MB = 1,000,000 bytes):
 Results saved: output/ ( 125 files / 42.50 MB )
 ```
 
-When a host has one Amcache hive or SRUM database, its CSV tables are written directly under
-`FileExistence/Amcache/` or `ProcessExecution/SRUM/`. If a collection contains several databases
-of either kind, each source receives a collision-safe subdirectory so that tables with the same names cannot overwrite one
-another. A normal single-volume collection writes `$MFT` and USN Journal records directly to
+A single Amcache hive writes its tables under `FileExistence/Amcache/`; several hives use
+separate source directories. SRUM provider tables go directly under their investigative category,
+with `-Source1`, `-Source2`, etc. added when several SRUM databases were collected. No SRUM
+provider directory is added. `--clobber` uses the preceding manifest to clear recorded SRUM
+outputs, including providers that disappeared; unrelated files are preserved. A normal single-volume collection writes `$MFT` and USN Journal records directly to
 `FileSystem/MFT.csv` and `FileSystem/UsnJournal.csv`. Additional collected volumes use numbered
 sibling files such as `FileSystem/MFT-2.csv` and `FileSystem/MFT-2-logs.txt`.
 
