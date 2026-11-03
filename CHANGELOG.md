@@ -8,6 +8,8 @@
 
 **Bug Fixes:**
 
+- Track the consolidated `ys-ntfs-parser` workspace's `main` branch, retaining one source for MFT, I30, USN and LogFile parsing and the exact build commit in `Cargo.lock`. It includes standalone-command input protection and export-error fixes; no legacy NTFS parser repositories are used. (@YamatoSecurity)
+
 - AppCompat exports retain list warnings and joined shim-path provenance; malformed compressed data, invalid times and Unicode paths are handled safely. (@YamatoSecurity)
 
 - Audit-policy exports leave unknown flags unknown and exclude them from audited-setting counts; malformed policy values retain diagnostics and bytes. (@YamatoSecurity)
@@ -49,7 +51,7 @@
 
 - Standardize CSV headers and JSON/JSONL field labels to PascalCase across parsers, Amcache tables, persistence findings and auto-parse manifests. Preserve acronym suffixes (`ProcessID`, `TimestampUTC`) and hyphenate words after acronyms (`IP-Address`, `MFT-Entry`). Evidence values and source-provided dictionary keys retain their original spelling. This changes export schemas; regenerate results and update field-based queries. (@YamatoSecurity)
 
-- Use the shared `ys-ntfs-parser` workspace for MFT, I30, USN and LogFile parsing, pinned to the reviewed import revision. The `ys-ntfs-parser-csv` format keeps `ys-mft-parser-csv` and `mft-dump-csv` as compatible aliases. (@YamatoSecurity)
+- Use the shared `ys-ntfs-parser` workspace for MFT, I30, USN and LogFile parsing, tracking `main` with its exact commit recorded in `Cargo.lock`. The `ys-ntfs-parser-csv` format keeps `ys-mft-parser-csv` and `mft-dump-csv` as compatible aliases. (@YamatoSecurity)
 
 - `auto-parse` uses PascalCase output categories (`Accounts`, `FileAndFolderOpening`, `FileSystem`, `ProcessExecution`, etc.) and generated artifact folders (`Amcache`, `JumpLists`, `SRUM`, `DefenderQuarantined`). Result/log paths and manifest categories follow this naming; `Computer` and SIEM `Artifact` identifiers keep their existing values. Use a new output directory when switching from the previous layout. (@YamatoSecurity)
 
