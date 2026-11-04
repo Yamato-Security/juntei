@@ -544,12 +544,11 @@ fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
         p(Green.rdg(no_color), "Version: ", false);
         p(None, VERSION, true);
     }
-    p(None, "", true);
-    // The command's own output follows the start time directly.
     if time {
         p(Green.rdg(no_color), "Start time: ", false);
         p(None, &local_time(), true);
     }
+    p(None, "", true);
 }
 
 #[cfg(test)]

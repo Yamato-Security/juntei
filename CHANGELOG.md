@@ -6,7 +6,7 @@
 
 - `Start time` shows the computer's local time as `YYYY-MM-DD HH:MM:SS`, and a new `End time` in the same format comes before `Elapsed time` at the end of every command. `Elapsed time` is rounded to the nearest second (`HH:MM:SS`). `auto-parse -Z` changes only the timestamps of the results. (@YamatoSecurity)
 
-- The banner shows the logo, a blank line, the version, a blank line and the start time, and the command's output follows the start time directly (the logo was followed by two blank lines, and the start time came before the version). (@YamatoSecurity)
+- The banner shows the logo, a blank line, the version and the start time, then a blank line before the command's output (the logo was followed by two blank lines, and the start time came before the version). (@YamatoSecurity)
 
 ## 1.0.0 [2026/11/04] - CODE BLUE Release
 
