@@ -4,7 +4,7 @@
 
 **Enhancements:**
 
-- `Start time` shows the computer's local time as `YYYY-MM-DD HH:MM:SS`, and a new `End time` in the same format comes before `Elapsed time` at the end of every command. `auto-parse -Z` changes only the timestamps of the results. (@YamatoSecurity)
+- `Start time` shows the computer's local time as `YYYY-MM-DD HH:MM:SS`, and a new `End time` in the same format comes before `Elapsed time` at the end of every command. `Elapsed time` is rounded to the nearest second (`HH:MM:SS`). `auto-parse -Z` changes only the timestamps of the results. (@YamatoSecurity)
 
 - One blank line, not two, separates the logo from the start time or version. (@YamatoSecurity)
 

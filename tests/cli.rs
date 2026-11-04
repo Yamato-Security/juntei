@@ -282,7 +282,7 @@ fn one_blank_line_follows_the_logo() {
 }
 
 #[test]
-fn start_and_end_times_are_local_and_the_end_time_precedes_the_elapsed_time() {
+fn start_and_end_times_are_local_and_the_elapsed_time_is_in_whole_seconds() {
     let r = run(&["parse-registry", "amcache", "-f", WIN10, "-K", "-q"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let lines: Vec<&str> = r.stdout.lines().collect();
@@ -299,8 +299,12 @@ fn start_and_end_times_are_local_and_the_end_time_precedes_the_elapsed_time() {
     let (_, start) = time("Start time: ");
     let (end_line, end) = time("End time: ");
     assert!(start <= end, "{}", r.stdout);
+    // The elapsed time follows, in whole seconds.
+    let elapsed = lines[end_line + 1]
+        .strip_prefix("Elapsed time: ")
+        .unwrap_or_else(|| panic!("{}", r.stdout));
     assert!(
-        lines[end_line + 1].starts_with("Elapsed time: "),
+        chrono::NaiveTime::parse_from_str(elapsed, "%H:%M:%S").is_ok() && elapsed.len() == 8,
         "{}",
         r.stdout
     );

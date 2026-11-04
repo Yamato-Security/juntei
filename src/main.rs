@@ -516,19 +516,21 @@ fn local_time() -> String {
 }
 
 fn print_elapsed(start: Instant, no_color: bool) {
-    let duration = start.elapsed();
-    let hours = duration.as_secs() / 3600;
-    let minutes = (duration.as_secs() % 3600) / 60;
-    let seconds = duration.as_secs() % 60;
-    let millis = duration.subsec_millis();
     p(Green.rdg(no_color), "End time: ", false);
     p(None, &local_time(), true);
     p(Green.rdg(no_color), "Elapsed time: ", false);
-    p(
-        None,
-        &format!("{hours:02}:{minutes:02}:{seconds:02}.{millis:03}\n"),
-        true,
-    );
+    p(None, &format!("{}\n", elapsed_text(start.elapsed())), true);
+}
+
+/// `HH:MM:SS`, rounded to the nearest second.
+fn elapsed_text(duration: std::time::Duration) -> String {
+    let total = (duration.as_millis() + 500) / 1000;
+    format!(
+        "{:02}:{:02}:{:02}",
+        total / 3600,
+        (total % 3600) / 60,
+        total % 60
+    )
 }
 
 fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
@@ -547,4 +549,30 @@ fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
         p(None, VERSION, true);
     }
     p(None, "", true);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::elapsed_text;
+    use std::time::Duration;
+
+    #[test]
+    fn elapsed_time_is_rounded_to_the_nearest_second() {
+        for (millis, text) in [
+            (0, "00:00:00"),
+            (499, "00:00:00"),
+            (500, "00:00:01"),
+            (1_499, "00:00:01"),
+            (59_500, "00:01:00"),
+            (3_599_499, "00:59:59"),
+            (3_599_500, "01:00:00"),
+            (90_061_000, "25:01:01"),
+        ] {
+            assert_eq!(
+                elapsed_text(Duration::from_millis(millis)),
+                text,
+                "{millis}"
+            );
+        }
+    }
 }
