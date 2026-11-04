@@ -10,3 +10,4 @@
 /website/site/
 /.venv-docs/
 /website/scripts/__pycache__/
+output*

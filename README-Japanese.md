@@ -151,6 +151,6 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 ## ライセンス
 
 Juntei は [Reciprocal Public License 1.5](LICENSE)（RPL-1.5）で公開されており、著作権は
-Shirofune Security Co., Ltd. が保有しています。バージョン 1.0.0 より前のソースコードは AGPLv3 で公開されていました。
+Shirofune Security Co., Ltd. が保有しています。
 使用するクレート、サードパーティのコードとデータのライセンスは [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES/) を、
 テストファイルのライセンスは [`test_files`](test_files/) 内の各ファイルに付属する文書を参照してください。
