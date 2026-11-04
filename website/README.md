@@ -10,21 +10,18 @@ documentation setup. English is the default language. Translated pages keep the 
 and add a locale suffix, such as `artifacts/prefetch.ja.md` or
 `commands/auto-parse.pt-BR.md`.
 
-The published language menu currently contains only English and Japanese. Navigation labels
-are configured in `website/mkdocs.yml`.
-
-English and Japanese have page translations throughout the documentation. Traditional Chinese,
-Korean, German, Turkish, French, Spanish, Brazilian Portuguese, Ukrainian, Hindi, Indonesian,
-Burmese, Thai, and Arabic have localized navigation saved for later, with `build: false` so
-they are not published or listed in the language menu. Set a locale's `build` to `true` when
-its translations are ready. The language plugin keeps the same page available when switching
-between the published languages.
+The site is published in the same fifteen languages as the Hayabusa documentation: English,
+Japanese, Traditional Chinese, Korean, German, Turkish, French, Spanish, Brazilian Portuguese,
+Ukrainian, Hindi, Indonesian, Burmese, Thai, and Arabic. Every page has a translation in every
+language, and navigation labels for each language are configured in `website/mkdocs.yml`. The
+language plugin keeps the same page open when switching languages. Arabic pages render right to
+left; code blocks stay left to right.
 
 When updating a page, update its translations too. Leave commands, code blocks, field names,
 registry paths, filenames, and link destinations unchanged. Translated headings retain explicit
 English anchor IDs so cross-page section links continue to work. English remains the reference
-when reviewing a translation. The initial website translations were machine-assisted; corrections
-from speakers of each language are welcome.
+when reviewing a translation, and a new page needs a translation in every language. The website
+translations were machine-assisted; corrections from speakers of each language are welcome.
 
 `README-Japanese.md` is the Japanese version of the repository README. Its language links point
 back to the English README and to the Japanese documentation.
@@ -44,7 +41,8 @@ Open <http://127.0.0.1:8000>. Build the same strict production site as CI with:
 mkdocs build --strict --config-file website/mkdocs.yml
 ```
 
-Check that translated pages preserve literal examples, field names, and link destinations with:
+Check that translated pages preserve literal examples, field names, link destinations, and heading
+anchor IDs with:
 
 ```bash
 python website/scripts/check_translations.py

@@ -1,0 +1,51 @@
+# Sumber bukti yang didukung { #supported-evidence }
+
+| Sumber bukti | Perintah Juntei | Paling berguna untuk | Keterbatasan penting |
+|---|---|---|---|
+| Amcache | `parse-registry amcache` | Inventaris berkas, path, SHA-1, metadata PE, perangkat | Keberadaan bukan eksekusi; penerbit bukan validasi tanda tangan |
+| NTFS `$MFT` | `parse-ntfs mft` | Berkas, catatan yang terhapus, path, timestamp, ADS | Catatan yang digunakan ulang dan timestomping dapat menyesatkan |
+| NTFS `$LogFile` | `parse-ntfs logfile` | Metadata redo/undo, nama dan timestamp lama, penulisan ke Jurnal USN | Retensi sirkular yang singkat; waktu metadata bukan waktu transaksi; tidak ada pemutaran ulang |
+| Prefetch | `parse-file prefetch` | Eksekusi program, jumlah eksekusi, waktu eksekusi terbaru, berkas yang dimuat | Hanya riwayat waktu eksekusi yang terbatas yang disimpan |
+| Jurnal USN `$J` | `parse-ntfs usn-journal` | Pembuatan, penghapusan, penggantian nama, penulisan, path historis | Jurnal sirkular; mencatat perubahan, bukan konten berkas |
+| Indeks direktori `$I30` | `parse-ntfs i30` | Berkas dalam sebuah direktori; nama, waktu, dan ukuran berkas yang mungkin telah dihapus atau diganti namanya yang tertinggal di slack indeks | Slack bersifat parsial dan tidak menyatakan apa pun tentang kapan sebuah entri dihapus |
+| Sektor boot NTFS `$Boot` | `parse-ntfs boot` | Nomor seri volume yang dicatat oleh LNK, Jump Lists, dan Prefetch; geometri dan lokasi `$MFT`; hash boot code untuk dibandingkan antar-host | Nomor seri dapat diubah atau berulang; boot code yang berbeda adalah petunjuk, bukan bukti adanya bootkit |
+| Deskriptor keamanan NTFS `$Secure:$SDS` | `parse-ntfs secure-sds` | Pemilik dan ACL berkas, berdasarkan `SecurityID` milik `$MFT`; NULL DACL dan ACL yang permisif | Pemilik dapat diubah; ACL menyatakan siapa yang boleh mengakses, bukan siapa yang benar-benar mengakses |
+| SRUM | `parse-ese srum` | Penggunaan jaringan dan sumber daya per aplikasi/pengguna | Biasanya teragregasi; bukan bukti tingkat paket atau tujuan |
+| Pintasan LNK | `parse-file lnk` | Target yang dibuka, argumen, volume, share, mesin sumber | Pintasan dapat dibuat tanpa targetnya dijalankan |
+| Jump Lists | `parse-file jump-lists` | Item yang dibuka aplikasi, penyematan, penggunaan, dan data LNK yang tertanam | Perilaku dan retensi bergantung pada aplikasi |
+| ShimCache | `parse-registry shimcache` | Path executable historis dan pemeriksaan kompatibilitas | Cache mungkin belum di-flush hingga shutdown; entri saja bukan eksekusi |
+| Karantina Defender | `parse-file defender-quarantine` | Deteksi, path asli, hash, asal unduhan, byte yang dipulihkan | Nama deteksi adalah putusan produk; ekstraksi berbahaya |
+| Hive registry | `parse-registry read` | Konfigurasi, persistensi, nilai yang terhapus/diputar ulang | Waktu kunci bukan waktu nilai; hive live memerlukan log transaksi |
+| Layanan | `parse-registry services` | Persistensi layanan/driver dan tindakan saat kegagalan | Konfigurasi tidak membuktikan bahwa layanan dijalankan |
+| RecentDocs | `parse-registry recent-docs` | Berkas dan folder yang baru dibuka per pengguna | Hanya item terbaru di setiap daftar yang mendapatkan waktu pembukaan yang dapat dipertanggungjawabkan |
+| Microsoft Office | `parse-registry office` | Dokumen dan folder yang dibuka setiap aplikasi Office, beserta waktunya; dokumen yang makronya diaktifkan pengguna; pengaturan makro dan trusted location | Mengaktifkan makro bukan bukti bahwa makro dijalankan; path trust-record disimpan sebagaimana ditulis oleh Office |
+| Dialog Buka dan Simpan Sebagai | `parse-registry open-save-mru` | Berkas yang dibuka atau disimpan melalui dialog umum, per ekstensi, serta program dan folder yang menggunakannya | Hanya entri terbaru di setiap daftar yang memiliki waktu; dibuka dan disimpan tidak dibedakan |
+| TaskCache | `parse-registry taskcache` | Tindakan tugas terjadwal, metadata, tugas tersembunyi | Korelasikan dengan XML tugas dan log peristiwa untuk bukti runtime |
+| Konfigurasi boot (BCD) | `parse-registry bcd` | Entri boot; pemulihan dimatikan, kegagalan diabaikan, test signing, pemeriksaan integritas dimatikan, safe mode, beserta kapan masing-masing ditetapkan | Store ini sering tidak dikumpulkan (EFI system partition, `\Boot`); pengaturan bersifat diwariskan |
+| Autostart registry | `parse-registry persistence` | Kunci Run, Winlogon, IFEO, DLL AppInit/AppCert, paket LSA, COM hijack, dan lokasi autostart lainnya | Konfigurasi, bukan bukti eksekusi; sebagian besar entri adalah default Windows |
+| Kompatibilitas aplikasi | `parse-registry app-compat` | Lapisan kompatibilitas, program yang terlihat berjalan oleh Program Compatibility Assistant, penggunaan program dan modul CIT, database shim kustom | Entri Program Compatibility Assistant tidak membawa waktu eksekusi; data CIT sebagian besar berasal dari Windows 7 dan 8 |
+| FeatureUsage, RecentApps, pin | `parse-registry feature-usage` | Seberapa sering pengguna beralih ke, meluncurkan, atau mengklik setiap aplikasi; aplikasi terbaru dan berkasnya; pin taskbar dan program Start menu | Hitungan tidak memiliki waktu; peralihan jendela, bukan start |
+| ShellBags | `parse-registry shell-bags` | Folder yang dibuka pengguna di Explorer dan dialog, termasuk folder lepas pasang, jaringan, perangkat portabel, ZIP, dan yang terhapus, sebagai path lengkap | Hanya item terbaru di setiap kunci yang mendapatkan waktu pembukaan yang dapat dipertanggungjawabkan; waktu item adalah milik folder, bukan waktu kunjungan |
+| BAM dan DAM | `parse-registry bam` | Waktu terakhir setiap pengguna menjalankan setiap program, termasuk dari perangkat lepas pasang dan jaringan | Satu waktu per program dan pengguna, hanya aktivitas terbaru; path perangkat, bukan huruf drive |
+| Perangkat USB | `parse-registry usb` | Penyimpanan USB dan perangkat lain, nomor seri, waktu instalasi/kedatangan/pelepasan, huruf drive, nama dan nomor seri volume, pengguna yang me-mount-nya | Hanya kedatangan dan pelepasan terakhir yang disimpan; huruf drive digunakan ulang |
+| MuiCache | `parse-registry muicache` | Path program yang di-cache, deskripsi, dan perusahaan yang terkait dengan profil shell pengguna | Tidak ada waktu per program; profil belum tentu akun proses, dan metadata dapat dipalsukan |
+| UserAssist | `parse-registry user-assist` | Program dan pintasan yang dijalankan pengguna dari Explorer, dengan jumlah eksekusi, waktu fokus, dan eksekusi terakhir | Hanya start dari Explorer yang dihitung; profil baru diisi dengan item default |
+| Jaringan | `parse-registry networks` | Jaringan yang pernah diikuti beserta waktu koneksi pertama/terakhir, MAC gateway, antarmuka dan lease DHCP, share, port proxy, rute | Waktu profil adalah waktu lokal, dikonversi dengan zona waktu saat ini; nama seperti "Network 2" berulang |
+| Pengaturan keamanan | `parse-registry security-settings` | Defender (dan pengecualiannya), UAC, proteksi WDigest/LSA, RDP, firewall, SMBv1, logging PowerShell dan AMSI, pengaturan log peristiwa dan bukti, ditandai bila melemahkan default | Pengaturan yang dilemahkan bukan bukti kompromi; nilai yang tidak ada (default Windows) tidak dilaporkan |
+| Riwayat aplikasi | `parse-registry app-history` | Alat Sysinternals yang dijalankan pengguna, riwayat arsip dan folder (WinRAR, 7-Zip, WinZip), akun OneDrive, berkas terbaru Adobe, nilai TeamViewer dan CCleaner | Sebagian besar entri daftar tidak memiliki waktu; hanya entri terbaru di setiap daftar yang memiliki waktu |
+| Daftar MRU | `parse-registry mru` | Perintah dialog Run, path Explorer yang diketik, pencarian Explorer, alamat Internet Explorer yang diketik (beserta waktunya), berkas Paint dan WordPad, istilah pencarian XP | Hanya entri terbaru di setiap daftar yang memiliki waktu, kecuali alamat yang diketik; diketik bukan berarti dieksekusi |
+| Akses jarak jauh (sisi pengguna) | `parse-registry remote-access` | Komputer yang dijangkau pengguna dengan Remote Desktop, PuTTY, dan WinSCP, host key SSH yang diterima, drive yang dipetakan, dan share | Target yang disimpan atau diketik bukan koneksi yang berhasil; kunci daftar memiliki satu waktu untuk semua itemnya |
+| Program terinstal | `parse-registry installed-programs` | Program terinstal (untuk seluruh mesin dan per pengguna), produk Windows Installer, App Paths, distribusi WSL, dan aplikasi terpaket | Tanggal instalasi adalah milik installer; program yang di-uninstall secara bersih tidak meninggalkan entri |
+| SAM | `parse-registry sam` | Akun lokal, flag, RID, metadata logon/kata sandi | Hanya akun lokal; nilai last-logon bukan riwayat logon yang lengkap |
+| Rahasia LSA | `parse-registry lsa-secrets` | Rahasia apa yang disimpan LSA (autologon, akun layanan, akun mesin) dan kapan ditetapkan; logon domain yang di-cache yang sedang digunakan | Hanya nama dan waktu, tidak ada yang didekripsi; `DefaultPassword` ada meskipun tanpa autologon |
+| Kebijakan audit | `parse-registry auditpol` | Peristiwa keamanan mana yang diatur untuk dicatat oleh sistem, dan dengan demikian ketiadaan peristiwa mana yang tidak bermakna apa-apa | Kebijakan pada saat hive terakhir ditulis; perubahan dicatat oleh event 4719 |
+| Informasi sistem | `parse-registry system-info` | Nama komputer dan domain, versi Windows dan tanggal instalasi, zona waktu, shutdown terakhir, pengguna terakhir, profil, SID | Konfigurasi pada saat pengumpulan; `InstallDate` bergeser dengan feature upgrade, dan Windows 11 menyebut dirinya Windows 10 |
+
+## Jenis hasil pengumpulan { #collection-types }
+
+Juntei menerima satu artefak dengan `-f` atau menelusuri hasil pengumpulan secara rekursif dengan `-d`.
+Mode direktori dirancang untuk tata letak triage umum di mana setiap host berisi path seperti
+`C/Windows/System32/config/SYSTEM` atau `C/Users/alice/NTUSER.DAT`.
+
+Lihat [Pengumpulan bukti](../getting-started/collection.md) sebelum menganalisis registry atau database ESE
+yang disalin: log transaksi terkait dapat menjadi kunci untuk merekonstruksi status yang dilihat Windows.

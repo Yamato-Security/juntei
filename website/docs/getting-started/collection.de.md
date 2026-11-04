@@ -1,0 +1,46 @@
+# Beweise sichern { #collecting-evidence }
+
+Juntei parst Dateien, die bereits von Windows-Systemen gesichert wurden. Verwenden Sie ein vertrauenswürdiges Akquisitionswerkzeug und bewahren Sie
+die ursprünglichen Metadaten nach Möglichkeit.
+
+## Gängige Speicherorte { #common-locations }
+
+| Artefakt | Typischer Speicherort |
+|---|---|
+| Amcache | `C:\Windows\AppCompat\Programs\Amcache.hve` |
+| `$MFT` | NTFS-Metadatendatei des Volumes `C:\$MFT` |
+| `$LogFile` | NTFS-Metadatendatei des Volumes `C:\$LogFile` |
+| Prefetch | `C:\Windows\Prefetch\*.pf` |
+| USN-Journal | NTFS-Metadaten-Stream `C:\$Extend\$UsnJrnl:$J` |
+| SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` und weitere Benutzer-/Systemspeicherorte |
+| Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` und `CustomDestinations` |
+| ShimCache | `SYSTEM`-Hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
+| Defender-Quarantäne | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
+| Maschinen-Registry | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |
+| Benutzer-Registry | `%USERPROFILE%\NTUSER.DAT`, `%LOCALAPPDATA%\Microsoft\Windows\UsrClass.dat` |
+
+## Dateien, die zusammen gesichert werden müssen { #files-that-must-travel-together }
+
+- Sichern Sie Registry-Hives zusammen mit den benachbarten Dateien `.LOG`, `.LOG1` und `.LOG2`. Juntei kann bei „dirty“ Hives
+  die Protokolle für Registry-Befehle und ShimCache einspielen.
+- Sichern Sie `SRUDB.dat` von SRUM konsistent. Juntei meldet derzeit eine „dirty“ ESE-Datenbank, spielt aber
+  `SRU*.log` nicht ein; Datensätze, die nur in diesen Protokollen existieren, sind nicht verfügbar.
+- Sichern Sie `$MFT` nach Möglichkeit zusammen mit `$Extend/$J`. Der USN-Datensatz speichert Dateireferenzen auf das übergeordnete Verzeichnis,
+  keinen vollständigen Pfad; die MFT verbessert die Pfadauflösung.
+- Sichern Sie `$LogFile` zeitlich möglichst nah zusammen mit der `$MFT` desselben Volumes. `$LogFile` wird
+  schnell überschrieben; bei einer späteren Sicherung können die früheren Redo/Undo-Datensätze vollständig verloren gehen.
+- Sichern Sie SRUM zusammen mit dem passenden `SOFTWARE`-Hive, um Konto- und WLAN-Profilnamen aufzulösen.
+- Sichern Sie den gesamten Defender-Verzeichnisbaum `Quarantine`, damit Entries, ResourceData und Resources einander zugeordnet werden können.
+
+## Hinweise zu Live-Systemen { #live-system-cautions }
+
+Geöffnete Dateien können sich während eines Kopiervorgangs ändern. Registry-Hives und ESE-Datenbanken können intern „dirty“ sein.
+ShimCache schreibt seine neuesten Einträge aus dem Arbeitsspeicher möglicherweise erst beim Herunterfahren. Ein forensisches Sicherungswerkzeug,
+das Volume-Snapshots oder Rohzugriff verwendet, ist einer gewöhnlichen Dateikopie vorzuziehen.
+
+## Sicherheit { #safety }
+
+Beweise können Malware, Exploit-Samples, bösartige LNK-Dateien und Tabellenkalkulationsformeln als Text enthalten.
+Analysieren Sie auf einem isolierten System, führen Sie wiederhergestellte Streams nicht aus und verwenden Sie `--extract` nur, wenn Sie
+bewusst mit gefährlichen Inhalten umgehen wollen. Bewahren Sie die unveränderte Quelle separat auf.
