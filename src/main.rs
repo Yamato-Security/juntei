@@ -73,13 +73,7 @@ fn main() {
             code
         }
         Commands::AutoParse(opts) => {
-            display_logo_with_offset(
-                opts.common.quiet,
-                opts.common.no_color,
-                true,
-                false,
-                opts.timezone,
-            );
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
             let code = auto_parse::run(opts);
             print_elapsed(start, opts.common.no_color);
             code
@@ -516,12 +510,19 @@ fn main() {
     std::process::exit(code);
 }
 
+/// The analyst computer's local time, as `Start time` and `End time` show it.
+fn local_time() -> String {
+    chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
+}
+
 fn print_elapsed(start: Instant, no_color: bool) {
     let duration = start.elapsed();
     let hours = duration.as_secs() / 3600;
     let minutes = (duration.as_secs() % 3600) / 60;
     let seconds = duration.as_secs() % 60;
     let millis = duration.subsec_millis();
+    p(Green.rdg(no_color), "End time: ", false);
+    p(None, &local_time(), true);
     p(Green.rdg(no_color), "Elapsed time: ", false);
     p(
         None,
@@ -531,30 +532,13 @@ fn print_elapsed(start: Instant, no_color: bool) {
 }
 
 fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
-    display_logo_with_offset(
-        quiet,
-        no_color,
-        time,
-        help,
-        time_display::OutputOffset::default(),
-    );
-}
-
-fn display_logo_with_offset(
-    quiet: bool,
-    no_color: bool,
-    time: bool,
-    help: bool,
-    offset: time_display::OutputOffset,
-) {
+    // The logo ends with a newline, so printing it with one leaves a single blank line after it.
     if !quiet {
         p(Green.rdg(no_color), LOGO, true);
-        p(None, "", true);
     }
     if time {
-        let msg = offset.now();
         p(Green.rdg(no_color), "Start time: ", false);
-        p(None, &msg, true);
+        p(None, &local_time(), true);
     }
     if help {
         p(None, &format!("Version: {VERSION}"), true);

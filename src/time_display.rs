@@ -12,7 +12,7 @@
 // and limitations under the RPL.
 
 //! Fixed-offset output formatting. Evidence without a known UTC offset is never relabeled.
-use chrono::{DateTime, Datelike, FixedOffset, SecondsFormat, Utc};
+use chrono::{DateTime, Datelike, FixedOffset};
 use std::fmt;
 use std::io;
 use std::str::FromStr;
@@ -58,12 +58,6 @@ impl OutputOffset {
 
     fn fixed(self) -> FixedOffset {
         FixedOffset::east_opt(self.0).expect("validated output offset")
-    }
-
-    pub fn now(self) -> String {
-        Utc::now()
-            .with_timezone(&self.fixed())
-            .to_rfc3339_opts(SecondsFormat::Millis, self.is_utc())
     }
 
     /// Change only an explicit, valid RFC 3339 instant. Keep the original fractional digits;
