@@ -26,7 +26,9 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 Parsed timestamps default to UTC, independent of the analyst computer's local time zone. UTC
 uses the Windows event-log form `2026-10-20T08:46:38.2001668Z`: an ISO 8601 date/time, `T`
 between the date and time, and `Z` for UTC. The available fractional digits are preserved.
-The console start time and `manifest.json`'s `GeneratedUTC` use this form too.
+`manifest.json`'s `GeneratedUTC` uses this form too. The console's `Start time` and `End time`
+are the analyst computer's local time, such as `2026-11-04 09:15:02`, whatever the output time
+zone.
 
 Choose a fixed display offset with `-Z, --timezone`:
 

@@ -1,6 +1,6 @@
 # Changes
 
-## 1.0.0 [xxxx/xx/xx] - CODE BLUE Release
+## 1.0.0 [2026/11/04] - CODE BLUE Release
 
 - Release packages for Windows (x64, Arm64), Linux (x64, Arm64; glibc and static musl) and macOS (Apple silicon, Intel), built and smoke tested by a release workflow: each zip holds just the binary. `juntei.exe` shows its product name, description, version and copyright in its file properties, and runs without the Visual C++ Redistributable. (@YamatoSecurity)
 

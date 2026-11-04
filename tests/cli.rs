@@ -253,6 +253,85 @@ fn banner_and_help() {
 }
 
 #[test]
+fn banner_is_logo_blank_version_and_start_time_then_blank() {
+    // The help screen is always in color: drop the escape sequences.
+    let plain = |text: &str| {
+        let mut out = String::new();
+        let mut chars = text.chars();
+        while let Some(c) = chars.next() {
+            if c == '\u{1b}' {
+                chars.by_ref().find(|c| c.is_ascii_alphabetic());
+            } else {
+                out.push(c);
+            }
+        }
+        out
+    };
+    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
+    // The help screen: the logo, a blank line, the version, a blank line and the usage.
+    let help = plain(&run(&[]).stdout);
+    assert!(
+        help.contains(&format!("   by Yamato Security\n\n{version}\n\nUsage: ")),
+        "{help}"
+    );
+    // A command: the logo, a blank line, the version and the start time, then a blank line
+    // before the command's own output.
+    for (args, next) in [
+        (
+            vec!["parse-registry", "amcache", "-f", WIN10, "-K"],
+            "Amcache hives: ",
+        ),
+        (
+            vec!["parse-file", "prefetch", "-f", PREFETCH_CMD10, "-K"],
+            "Prefetch files: ",
+        ),
+    ] {
+        let r = run(&args);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        let banner = format!("   by Yamato Security\n\n{version}\nStart time: ");
+        let start = r
+            .stdout
+            .find(&banner)
+            .unwrap_or_else(|| panic!("{}", r.stdout));
+        let after: Vec<&str> = r.stdout[start + banner.len()..].lines().collect();
+        assert!(after[1].is_empty(), "{args:?}\n{}", r.stdout);
+        assert!(after[2].starts_with(next), "{args:?}\n{}", r.stdout);
+    }
+}
+
+#[test]
+fn start_and_end_times_are_local_and_the_elapsed_time_is_in_whole_seconds() {
+    let r = run(&["parse-registry", "amcache", "-f", WIN10, "-K", "-q"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let lines: Vec<&str> = r.stdout.lines().collect();
+    let time = |label: &str| {
+        let line = lines
+            .iter()
+            .position(|line| line.starts_with(label))
+            .unwrap_or_else(|| panic!("{label}\n{}", r.stdout));
+        let value = &lines[line][label.len()..];
+        let parsed = chrono::NaiveDateTime::parse_from_str(value, "%Y-%m-%d %H:%M:%S")
+            .unwrap_or_else(|e| panic!("{label}{value}: {e}"));
+        (line, parsed)
+    };
+    let (_, start) = time("Start time: ");
+    let (end_line, end) = time("End time: ");
+    assert!(start <= end, "{}", r.stdout);
+    // The elapsed time follows, in whole seconds.
+    let elapsed = lines[end_line + 1]
+        .strip_prefix("Elapsed time: ")
+        .unwrap_or_else(|| panic!("{}", r.stdout));
+    assert!(
+        chrono::NaiveTime::parse_from_str(elapsed, "%H:%M:%S").is_ok() && elapsed.len() == 8,
+        "{}",
+        r.stdout
+    );
+    // Local time, as the computer's clock shows it.
+    let local = chrono::Local::now().naive_local();
+    assert!((local - end).num_seconds().abs() < 120, "{}", r.stdout);
+}
+
+#[test]
 fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
     let assert_alphabetical = |help: &str| {
         let commands: Vec<_> = help
@@ -2487,7 +2566,11 @@ fn mft_dump_entry_and_list_directory() {
     let shown = |stdout: &str| {
         stdout
             .lines()
-            .filter(|l| !l.starts_with("Start time") && !l.starts_with("Elapsed time"))
+            .filter(|l| {
+                !l.starts_with("Start time")
+                    && !l.starts_with("End time")
+                    && !l.starts_with("Elapsed time")
+            })
             .collect::<Vec<_>>()
             .join("\n")
     };
@@ -18119,16 +18202,20 @@ fn auto_parse_timezone_is_utc_by_default_and_offset_is_shared_by_csv_json_and_ti
             String::from_utf8_lossy(&result.stderr)
         );
         let stdout = String::from_utf8(result.stdout).unwrap();
+        // The console start time is the computer's local time whatever --timezone says.
         let start = stdout
             .lines()
             .find_map(|line| line.strip_prefix("Start time: "))
             .unwrap();
-        let parsed = chrono::DateTime::parse_from_rfc3339(start).unwrap();
-        if offset.is_none() {
-            assert!(start.ends_with('Z'));
-            assert_eq!(parsed.offset().local_minus_utc(), 0);
-        } else {
-            assert_eq!(parsed.offset().local_minus_utc(), 32400);
+        let start = chrono::NaiveDateTime::parse_from_str(start, "%Y-%m-%d %H:%M:%S").unwrap();
+        // Windows takes its time zone from the system, not from TZ.
+        if cfg!(unix) {
+            let hours = ((start - chrono::Utc::now().naive_utc()).num_seconds() as f64 / 3600.0)
+                .round() as i64;
+            match tz {
+                "Asia/Tokyo" => assert_eq!(hours, 9, "{stdout}"),
+                _ => assert!(hours == -7 || hours == -8, "{stdout}"),
+            }
         }
         let manifest: Value =
             serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
