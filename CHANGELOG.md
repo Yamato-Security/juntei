@@ -1,13 +1,5 @@
 # Changes
 
-## x.x.x [xxxx/xx/xx]
-
-**Enhancements:**
-
-- `Start time` shows the computer's local time as `YYYY-MM-DD HH:MM:SS`, and a new `End time` in the same format comes before `Elapsed time` at the end of every command. `Elapsed time` is rounded to the nearest second (`HH:MM:SS`). `auto-parse -Z` changes only the timestamps of the results. (@YamatoSecurity)
-
-- The banner shows the logo, a blank line, the version and the start time, then a blank line before the command's output (the logo was followed by two blank lines, and the start time came before the version). (@YamatoSecurity)
-
 ## 1.0.0 [2026/11/04] - CODE BLUE Release
 
 - Release packages for Windows (x64, Arm64), Linux (x64, Arm64; glibc and static musl) and macOS (Apple silicon, Intel), built and smoke tested by a release workflow: each zip holds just the binary. `juntei.exe` shows its product name, description, version and copyright in its file properties, and runs without the Visual C++ Redistributable. (@YamatoSecurity)
