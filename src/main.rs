@@ -538,10 +538,6 @@ fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
     if !quiet {
         p(Green.rdg(no_color), LOGO, true);
     }
-    if time {
-        p(Green.rdg(no_color), "Start time: ", false);
-        p(None, &local_time(), true);
-    }
     if help {
         p(None, &format!("Version: {VERSION}"), true);
     } else {
@@ -549,6 +545,11 @@ fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
         p(None, VERSION, true);
     }
     p(None, "", true);
+    // The command's own output follows the start time directly.
+    if time {
+        p(Green.rdg(no_color), "Start time: ", false);
+        p(None, &local_time(), true);
+    }
 }
 
 #[cfg(test)]

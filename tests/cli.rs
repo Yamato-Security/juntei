@@ -253,7 +253,7 @@ fn banner_and_help() {
 }
 
 #[test]
-fn one_blank_line_follows_the_logo() {
+fn banner_is_logo_blank_version_blank_start_time() {
     // The help screen is always in color: drop the escape sequences.
     let plain = |text: &str| {
         let mut out = String::new();
@@ -267,18 +267,35 @@ fn one_blank_line_follows_the_logo() {
         }
         out
     };
+    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
+    // The help screen: the logo, a blank line, the version, a blank line and the usage.
     let help = plain(&run(&[]).stdout);
     assert!(
-        help.contains("   by Yamato Security\n\nVersion: "),
+        help.contains(&format!("   by Yamato Security\n\n{version}\n\nUsage: ")),
         "{help}"
     );
-    let r = run(&["parse-registry", "amcache", "-f", WIN10, "-K"]);
-    assert_eq!(r.code, 0, "{}", r.stderr);
-    assert!(
-        r.stdout.contains("   by Yamato Security\n\nStart time: "),
-        "{}",
-        r.stdout
-    );
+    // A command: the logo, a blank line, the version, a blank line, the start time, and then
+    // the command's own output with no blank line before it.
+    for (args, next) in [
+        (
+            vec!["parse-registry", "amcache", "-f", WIN10, "-K"],
+            "Amcache hives: ",
+        ),
+        (
+            vec!["parse-file", "prefetch", "-f", PREFETCH_CMD10, "-K"],
+            "Prefetch files: ",
+        ),
+    ] {
+        let r = run(&args);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        let banner = format!("   by Yamato Security\n\n{version}\n\nStart time: ");
+        let start = r
+            .stdout
+            .find(&banner)
+            .unwrap_or_else(|| panic!("{}", r.stdout));
+        let after: Vec<&str> = r.stdout[start + banner.len()..].lines().collect();
+        assert!(after[1].starts_with(next), "{args:?}\n{}", r.stdout);
+    }
 }
 
 #[test]
