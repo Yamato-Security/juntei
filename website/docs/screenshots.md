@@ -33,7 +33,7 @@ because the artifacts were not collected, and zero failures**.
 
 <figure markdown>
 
-[![AZUCHI output folders grouped into DFIR categories, with account CSVs and their parser logs](assets/screenshots/03-OutputFolders.png)](assets/screenshots/03-OutputFolders.png)
+[![One system's output folders grouped into DFIR categories, with account CSVs and their parser logs](assets/screenshots/03-OutputFolders.png)](assets/screenshots/03-OutputFolders.png)
 
 <figcaption>Each computer's results are grouped by DFIR category. Artifact CSVs and their matching <code>-logs.txt</code> files stay together, making it easy to find both the records and parsing details.</figcaption>
 

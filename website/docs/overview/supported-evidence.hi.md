@@ -1,0 +1,51 @@
+# समर्थित साक्ष्य स्रोत { #supported-evidence }
+
+| साक्ष्य स्रोत | Juntei command | सबसे अधिक उपयोगी | महत्वपूर्ण सीमा |
+|---|---|---|---|
+| Amcache | `parse-registry amcache` | फ़ाइल inventory, paths, SHA-1, PE metadata, devices | उपस्थिति निष्पादन नहीं है; publisher signature सत्यापन नहीं है |
+| NTFS `$MFT` | `parse-ntfs mft` | फ़ाइलें, हटाए गए records, paths, timestamps, ADS | पुनः उपयोग किए गए records और timestomping भ्रामक हो सकते हैं |
+| NTFS `$LogFile` | `parse-ntfs logfile` | Redo/undo metadata, पुराने नाम और timestamps, USN Journal में writes | छोटा circular retention; metadata समय transaction समय नहीं हैं; कोई replay नहीं |
+| Prefetch | `parse-file prefetch` | Program निष्पादन, run count, हाल के run समय, load की गई फ़ाइलें | केवल सीमित run-time इतिहास रखा जाता है |
+| USN जर्नल `$J` | `parse-ntfs usn-journal` | निर्माण, deletion, rename, writes, ऐतिहासिक paths | Circular journal; बदलाव दर्ज करता है, फ़ाइल contents नहीं |
+| डायरेक्टरी इंडेक्स `$I30` | `parse-ntfs i30` | किसी directory में फ़ाइलें; index slack में छूटी संभावित हटाई गई या rename की गई फ़ाइलों के नाम, समय और आकार | Slack आंशिक होता है और यह कुछ नहीं बताता कि entry कब हटाई गई |
+| NTFS बूट सेक्टर `$Boot` | `parse-ntfs boot` | LNK, Jump Lists और Prefetch द्वारा दर्ज volume serial number; geometry और `$MFT` का स्थान; hosts के बीच तुलना के लिए boot code hash | Serial numbers बदले या दोहराए जा सकते हैं; भिन्न boot code एक सुराग है, bootkit का प्रमाण नहीं |
+| NTFS सुरक्षा विवरणक `$Secure:$SDS` | `parse-ntfs secure-sds` | `$MFT` के `SecurityID` के अनुसार फ़ाइलों के owners और ACLs; NULL DACLs और permissive ACLs | Owners बदले जा सकते हैं; ACLs बताते हैं कि कौन access कर सकता है, न कि किसने किया |
+| SRUM | `parse-ese srum` | प्रति-app/उपयोगकर्ता network और resource उपयोग | आमतौर पर aggregated; packet या destination-स्तर का प्रमाण नहीं |
+| LNK शॉर्टकट | `parse-file lnk` | खोले गए targets, arguments, volumes, shares, स्रोत machine | Target चले बिना भी shortcut बनाया जा सकता है |
+| Jump Lists | `parse-file jump-lists` | Application द्वारा खोले गए items, pinning, उपयोग और अंतर्निहित LNK data | Application-विशिष्ट व्यवहार और retention |
+| ShimCache | `parse-registry shimcache` | ऐतिहासिक executable paths और compatibility checks | Cache शायद shutdown तक flush न हो; केवल entry निष्पादन नहीं है |
+| Defender क्वारंटीन | `parse-file defender-quarantine` | Detection, मूल path, hashes, download origin, recover किए गए bytes | Detection नाम product का निर्णय है; extraction ख़तरनाक है |
+| रेजिस्ट्री हाइव | `parse-registry read` | Configuration, persistence, हटाए गए/replay किए गए values | Key का समय value का समय नहीं है; live hives को transaction logs चाहिए |
+| Services | `parse-registry services` | Service/driver persistence और failure actions | Configuration यह सिद्ध नहीं करता कि service शुरू हुई |
+| RecentDocs | `parse-registry recent-docs` | प्रति उपयोगकर्ता हाल ही में खोली गई फ़ाइलें और folders | हर सूची में केवल सबसे हाल के item को बचाव-योग्य open समय मिलता है |
+| Microsoft Office | `parse-registry office` | हर Office application द्वारा खोले गए documents और folders, समय के साथ; वे documents जिनके macros उपयोगकर्ता ने enable किए; macro settings और trusted locations | Macros enable करना इस बात का प्रमाण नहीं कि कोई macro चला; trust-record paths वैसे ही संग्रहीत होते हैं जैसे Office उन्हें लिखता है |
+| खोलें और इस रूप में सहेजें संवाद | `parse-registry open-save-mru` | Common dialogs के माध्यम से खोली या सहेजी गई फ़ाइलें, extension के अनुसार, और उनका उपयोग करने वाले programs और folders | हर सूची की केवल सबसे हाल की entry का समय होता है; खोलना और सहेजना अलग नहीं पहचाने जाते |
+| TaskCache | `parse-registry taskcache` | Scheduled-task actions, metadata, hidden tasks | Runtime प्रमाण के लिए task XML और event logs से correlate करें |
+| बूट कॉन्फ़िगरेशन (BCD) | `parse-registry bcd` | Boot entries; बंद किया गया recovery, अनदेखी की गई failures, test signing, बंद integrity checks, safe mode, और हर एक कब सेट किया गया | Store अक्सर एकत्र नहीं किया जाता (EFI system partition, `\Boot`); settings inherited होती हैं |
+| रेजिस्ट्री ऑटोस्टार्ट | `parse-registry persistence` | Run keys, Winlogon, IFEO, AppInit/AppCert DLLs, LSA packages, COM hijacks और अन्य autostart स्थान | Configuration, निष्पादन का प्रमाण नहीं; अधिकांश entries Windows defaults हैं |
+| ऐप्लिकेशन संगतता | `parse-registry app-compat` | Compatibility layers, Program Compatibility Assistant द्वारा चलते देखे गए programs, CIT program और module उपयोग, custom shim databases | Program Compatibility Assistant entries में कोई run समय नहीं होता; CIT data अधिकतर Windows 7 और 8 से होता है |
+| FeatureUsage, RecentApps, pins | `parse-registry feature-usage` | उपयोगकर्ता कितनी बार हर application पर switch हुआ, उसे launch किया या click किया; हाल के apps और उनकी फ़ाइलें; taskbar pins और Start menu programs | Counts का कोई समय नहीं होता; window switches, starts नहीं |
+| ShellBags | `parse-registry shell-bags` | Explorer और dialogs में उपयोगकर्ता द्वारा खोले गए folders, जिनमें removable, network, portable-device, ZIP और हटाए गए folders शामिल हैं, पूरे paths के रूप में | हर key में केवल सबसे हाल के item को बचाव-योग्य open समय मिलता है; item के समय folder के हैं, visit के नहीं |
+| BAM / DAM | `parse-registry bam` | हर उपयोगकर्ता ने हर program आख़िरी बार कब चलाया, removable और network devices से भी | प्रति program और उपयोगकर्ता एक समय, केवल हाल की गतिविधि; device paths, drive letters नहीं |
+| USB डिवाइस | `parse-registry usb` | USB storage और अन्य devices, serial numbers, install/arrival/removal समय, drive letters, volume नाम और serials, उन्हें mount करने वाले उपयोगकर्ता | केवल अंतिम arrival और removal रखे जाते हैं; drive letters का पुनः उपयोग होता है |
+| MuiCache | `parse-registry muicache` | उपयोगकर्ता के shell profile से जुड़े cache किए गए program paths, विवरण और companies | प्रति program कोई समय नहीं; profile ज़रूरी नहीं कि process account हो, और metadata जाली हो सकता है |
+| UserAssist | `parse-registry user-assist` | उपयोगकर्ता द्वारा Explorer से शुरू किए गए programs और shortcuts, run counts, focus समय और अंतिम run के साथ | केवल Explorer starts गिने जाते हैं; नए profiles में default items पहले से डाले होते हैं |
+| नेटवर्क | `parse-registry networks` | जुड़े गए networks, पहले/अंतिम connection समय, gateway MACs, interfaces और DHCP leases, shares, port proxies, routes | Profile समय local होते हैं, वर्तमान time zone से convert किए गए; "Network 2" जैसे नाम दोहराए जाते हैं |
+| सुरक्षा सेटिंग | `parse-registry security-settings` | Defender (और उसकी exclusions), UAC, WDigest/LSA protection, RDP, firewall, SMBv1, PowerShell logging और AMSI, event log और साक्ष्य settings, जहाँ वे default को कमज़ोर करती हैं वहाँ flag की गई | कमज़ोर की गई setting compromise का प्रमाण नहीं; लापता values (Windows के defaults) report नहीं की जातीं |
+| ऐप्लिकेशन इतिहास | `parse-registry app-history` | उपयोगकर्ता द्वारा चलाए गए Sysinternals tools, archive और folder इतिहास (WinRAR, 7-Zip, WinZip), OneDrive accounts, Adobe की हाल की फ़ाइलें, TeamViewer और CCleaner values | अधिकांश सूची entries का कोई समय नहीं होता; हर सूची की केवल सबसे हाल की entry का समय होता है |
+| MRU सूचियाँ | `parse-registry mru` | Run dialog commands, Explorer में type किए गए paths, Explorer searches, Internet Explorer में type किए गए addresses (उनके समय के साथ), Paint और WordPad फ़ाइलें, XP search terms | Type किए गए addresses को छोड़कर, हर सूची की केवल सबसे हाल की entry का समय होता है; type करना निष्पादन नहीं है |
+| रिमोट एक्सेस (उपयोगकर्ता पक्ष) | `parse-registry remote-access` | वे computers जिन तक उपयोगकर्ता Remote Desktop, PuTTY और WinSCP से पहुँचा, स्वीकार की गई SSH host keys, mapped drives और shares | सहेजा गया या type किया गया target सफल connection नहीं है; सूची keys में उनके सभी items के लिए एक ही समय होता है |
+| इंस्टॉल किए गए प्रोग्राम | `parse-registry installed-programs` | Install किए गए programs (पूरे machine के लिए और प्रति उपयोगकर्ता), Windows Installer products, App Paths, WSL distributions और packaged apps | Install तिथि installer की होती है; साफ़ तरीके से uninstall किए गए programs कोई entry नहीं छोड़ते |
+| SAM | `parse-registry sam` | Local accounts, flags, RIDs, logon/password metadata | केवल local accounts; last-logon values पूर्ण logon इतिहास नहीं हैं |
+| LSA सीक्रेट | `parse-registry lsa-secrets` | LSA कौन-से secrets रखता है (autologon, service accounts, machine account) और वे कब सेट किए गए; उपयोग में cached domain logons | केवल नाम और समय, कुछ भी decrypt नहीं; `DefaultPassword` autologon के बिना भी मौजूद होता है |
+| ऑडिट नीति | `parse-registry auditpol` | सिस्टम किन security events को log करने के लिए सेट था, और इसलिए कौन-से लापता events कुछ नहीं बताते | Hive के आख़िरी बार लिखे जाने के समय की policy; बदलाव event 4719 द्वारा log किए जाते हैं |
+| सिस्टम जानकारी | `parse-registry system-info` | Computer और domain नाम, Windows version और install तिथि, time zone, अंतिम shutdown, अंतिम उपयोगकर्ता, profiles, SIDs | Collection के समय का configuration; `InstallDate` feature upgrades के साथ बदलता है, और Windows 11 स्वयं को Windows 10 कहता है |
+
+## Collection के प्रकार { #collection-types }
+
+Juntei `-f` के साथ एक artifact स्वीकार करता है या `-d` के साथ किसी collection में recursively खोज करता है।
+Directory mode आम triage layouts के लिए बनाया गया है, जहाँ हर host में
+`C/Windows/System32/config/SYSTEM` या `C/Users/alice/NTUSER.DAT` जैसे paths होते हैं।
+
+Copy की गई registry या ESE databases का विश्लेषण करने से पहले [साक्ष्य संग्रह](../getting-started/collection.md) देखें:
+संबंधित transaction logs उस स्थिति के पुनर्निर्माण के लिए आवश्यक हो सकते हैं जो Windows ने देखी थी।

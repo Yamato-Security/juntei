@@ -1,0 +1,46 @@
+# การเก็บรวบรวมหลักฐาน { #collecting-evidence }
+
+Juntei พาร์สไฟล์ที่ถูกเก็บรวบรวมมาจาก Windows แล้ว ให้ใช้เครื่องมือเก็บข้อมูลที่เชื่อถือได้และเก็บรักษา
+เมทาดาทาดั้งเดิมไว้ให้มากที่สุดเท่าที่ทำได้
+
+## ตำแหน่งทั่วไป { #common-locations }
+
+| อาร์ติแฟกต์ | ตำแหน่งทั่วไป |
+|---|---|
+| Amcache | `C:\Windows\AppCompat\Programs\Amcache.hve` |
+| `$MFT` | ไฟล์เมทาดาทาของวอลุ่ม NTFS `C:\$MFT` |
+| `$LogFile` | ไฟล์เมทาดาทาของวอลุ่ม NTFS `C:\$LogFile` |
+| Prefetch | `C:\Windows\Prefetch\*.pf` |
+| USN Journal | สตรีมเมทาดาทาของ NTFS `C:\$Extend\$UsnJrnl:$J` |
+| SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` และตำแหน่งอื่นของผู้ใช้/ระบบ |
+| Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` และ `CustomDestinations` |
+| ShimCache | ไฮฟ์ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
+| การกักกันของ Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
+| รีจิสทรีระดับเครื่อง | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |
+| รีจิสทรีของผู้ใช้ | `%USERPROFILE%\NTUSER.DAT`, `%LOCALAPPDATA%\Microsoft\Windows\UsrClass.dat` |
+
+## ไฟล์ที่ต้องเก็บรวบรวมไปด้วยกัน { #files-that-must-travel-together }
+
+- เก็บรวบรวมไฮฟ์รีจิสทรีพร้อมไฟล์ `.LOG`, `.LOG1` และ `.LOG2` ที่อยู่ข้างกัน Juntei สามารถเล่นซ้ำบันทึก
+  สำหรับคำสั่งรีจิสทรีและ ShimCache ได้เมื่อไฮฟ์อยู่ในสถานะ dirty
+- เก็บรวบรวม `SRUDB.dat` ของ SRUM ในสถานะที่สอดคล้องกัน ปัจจุบัน Juntei รายงานฐานข้อมูล ESE ที่อยู่ในสถานะ dirty แต่
+  ไม่ได้เล่นซ้ำ `SRU*.log` เรคคอร์ดที่มีอยู่เฉพาะในบันทึกเหล่านั้นจึงไม่สามารถใช้ได้
+- เก็บรวบรวม `$MFT` ไปพร้อมกับ `$Extend/$J` เมื่อทำได้ เรคคอร์ด USN จัดเก็บ parent file reference
+  ไม่ใช่พาธที่สมบูรณ์ MFT จะช่วยให้ resolve พาธได้ดีขึ้น
+- เก็บรวบรวม `$LogFile` พร้อมกับ `$MFT` ของวอลุ่มเดียวกันในเวลาที่ใกล้เคียงกันที่สุด `$LogFile` วนทับ
+  อย่างรวดเร็ว การเก็บรวบรวมที่ล่าช้าอาจทำให้เรคคอร์ด redo/undo ก่อนหน้าสูญหายไปทั้งหมด
+- เก็บรวบรวม SRUM พร้อมไฮฟ์ `SOFTWARE` ที่ตรงกันเพื่อ resolve ชื่อบัญชีและชื่อโปรไฟล์ Wi-Fi
+- เก็บรวบรวมโครงสร้าง `Quarantine` ของ Defender ทั้งหมด เพื่อให้จับคู่ Entries, ResourceData และ Resources ได้
+
+## ข้อควรระวังสำหรับระบบที่กำลังทำงาน { #live-system-cautions }
+
+ไฟล์ที่เปิดอยู่อาจเปลี่ยนแปลงระหว่างการคัดลอก ไฮฟ์รีจิสทรีและฐานข้อมูล ESE อาจอยู่ในสถานะ dirty ภายใน
+ShimCache อาจยังไม่ flush รายการล่าสุดในหน่วยความจำจนกว่าจะปิดเครื่อง เครื่องมือเก็บรวบรวมทางนิติวิทยาศาสตร์
+ที่ใช้ volume snapshot หรือการเข้าถึงข้อมูลดิบดีกว่าการคัดลอกไฟล์ตามปกติ
+
+## ความปลอดภัย { #safety }
+
+หลักฐานอาจมีมัลแวร์ ตัวอย่าง exploit ไฟล์ LNK ที่เป็นอันตราย และข้อความที่เป็นสูตรสเปรดชีต
+ให้วิเคราะห์บนระบบที่แยกออกจากเครือข่าย อย่าเรียกใช้สตรีมที่กู้คืนมา และใช้ `--extract` เฉพาะเมื่อคุณ
+ตั้งใจจะจัดการกับเนื้อหาที่เป็นอันตราย ให้เก็บรักษาต้นฉบับที่ไม่ได้แตะต้องแยกไว้ต่างหาก

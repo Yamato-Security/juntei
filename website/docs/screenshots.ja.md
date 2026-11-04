@@ -32,7 +32,7 @@ Juntei のコマンドライン、自動解析、調査結果のフォルダ構�
 
 <figure markdown>
 
-[![AZUCHI の結果フォルダ。DFIR カテゴリ別に整理され、アカウントの CSV と解析ログが並ぶ](assets/screenshots/03-OutputFolders.png)](assets/screenshots/03-OutputFolders.png)
+[![1 台のシステムの結果フォルダ。DFIR カテゴリ別に整理され、アカウントの CSV と解析ログが並ぶ](assets/screenshots/03-OutputFolders.png)](assets/screenshots/03-OutputFolders.png)
 
 <figcaption>結果はコンピュータごとに DFIR カテゴリ別に整理されます。アーティファクトの CSV と対応する <code>-logs.txt</code> が並んでいるので、レコードと解析の詳細をすぐに確認できます。</figcaption>
 
