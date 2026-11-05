@@ -2,6 +2,8 @@
 
 ## 1.0.0 [2026/11/04] - CODE BLUE Release
 
+- Shorten the MFT CSV headers to `SN`, `ParentEntryNum`, `ParentSN`, `File`, `USN`, `LogfileSN`, `SID`, `Type` and `RefCnt`, including automatic parsing. Values and column order are unchanged. (@YamatoSecurity)
+
 - Release packages for Windows (x64, Arm64), Linux (x64, Arm64; glibc and static musl) and macOS (Apple silicon, Intel), built and smoke tested by a release workflow: each zip holds just the binary. `juntei.exe` shows its product name, description, version and copyright in its file properties, and runs without the Visual C++ Redistributable. (@YamatoSecurity)
 
 - Keep the `Timezone:` label green and its value in the default text color. Use the same human-readable size formatter for automatic-parser result totals and `Total filesize`, including GiB for larger results. (@YamatoSecurity)

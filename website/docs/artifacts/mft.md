@@ -28,7 +28,7 @@ and volume metadata when possible.
 ## Analyst cautions
 
 - A deleted record can be partially overwritten or its record number can be reused.
-- `SequenceNumber` distinguishes generations of the same entry number. Match entry **and** sequence.
+- `SN` distinguishes generations of the same entry number. Match entry **and** sequence.
 - `$STANDARD_INFORMATION` (`0x10`) and `$FILE_NAME` (`0x30`) timestamps have different update
   behavior. Neither is immune to manipulation.
 - `SI<FN`, `ZeroU-Secs`, and `Copied` are leads, not automatic timestomping verdicts.
@@ -101,15 +101,15 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 
 | Field | Interpretation |
 |---|---|
-| `EntryNum` | MFT record number. Combine with `SequenceNumber`; record numbers are reused. |
-| `SequenceNumber` | Generation counter used by NTFS references. A mismatch can reveal stale/deleted relationships. |
+| `EntryNum` | MFT record number. Combine with `SN`; record numbers are reused. |
+| `SN` | Generation counter used by NTFS references. A mismatch can reveal stale/deleted relationships. |
 | `InUse` | Allocation flag at collection. `false` means the record is free/deleted, not that all bytes are intact. |
-| `ParentEntryNumber`, `ParentSequenceNumber` | Parent directory reference from `$FILE_NAME`. Validate both parts. |
+| `ParentEntryNum`, `ParentSN` | Parent directory reference from `$FILE_NAME`. Validate both parts. |
 | `ParentPath` | Reconstructed parent path. Unknown/orphan markers expose unresolved ancestry. |
-| `Filename` | Name from the current row's `$FILE_NAME` or stream. One record can have several rows. |
+| `File` | Name from the current row's `$FILE_NAME` or stream. One record can have several rows. |
 | `Ext` | Convenience extension parsed from the name; not a trusted file-type determination. |
 | `Size` | Logical size associated with the row/stream. Sparse/compressed allocation can differ. |
-| `ReferenceCount` | NTFS hard-link reference count; compare with the number of surviving names cautiously. |
+| `RefCnt` | NTFS hard-link reference count; compare with the number of surviving names cautiously. |
 | `ReparseTarget` | Decoded target for supported reparse points such as junctions/symlinks. Paths may redirect. |
 | `Dir` | Record has the directory flag. |
 | `HasADS` | Record contains named alternate data streams. This does not make it malicious. |
@@ -118,19 +118,19 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `ZeroU-Secs` | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
 | `Copied` | Modified time precedes created time. Often consistent with file copy; not proof of attacker action. |
 | `SI-Flags` | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
-| `NameType` | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |
+| `Type` | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI times. Common timeline fields, but user-mode tools can change several of them. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN times. Updated differently and generally harder for ordinary APIs to alter; still not immutable. |
-| `UpdateSequenceNumber` | Last USN associated with the record's SI attribute. Pivot into `$J` if that USN survives. |
-| `LogfileSequenceNumber` | NTFS `$LogFile` sequence number from the FILE record header; useful in low-level transaction analysis. |
-| `SecurityID` | Index into NTFS `$Secure`; not a Windows SID by itself. Join it with the `SecurityID` of [`parse-ntfs secure-sds`](secure-sds.md) for the file's owner and ACLs. |
+| `USN` | Last USN associated with the record's SI attribute. Pivot into `$J` if that USN survives. |
+| `LogfileSN` | NTFS `$LogFile` sequence number from the FILE record header; useful in low-level transaction analysis. |
+| `SID` | Index into NTFS `$Secure`; not a Windows SID by itself. Join it with the `SecurityID` of [`parse-ntfs secure-sds`](secure-sds.md) for the file's owner and ACLs. |
 | `ObjectID-FileDroid` | Object ID / distributed-link-tracking identifier where present; correlate with LNK/Jump List droids. |
 | `LoggedUtilStream` | Decoded `$LOGGED_UTILITY_STREAM` context where supported. Review unfamiliar values. |
 | `ZoneID-Contents` | Resident `Zone.Identifier` content, such as ZoneId and download URLs. It may be absent, removed, or non-resident. |
 | `SourceFile` | The input `$MFT`, essential when combining hosts or volumes. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | With `-i`: the content of the row's resident `$DATA` (the file's, or the alternate data stream's), as Base64, as bytes (`41-42`), and as text when it is printable ASCII. Empty when the data is non-resident or filtered out by `-E`/`-M`. |
 | `ParseErrors` | Damage or unsupported relationships affecting this row. Never discard this column during filtering. |
-| `FromSlack` | With `-x`: `True` for a name recovered from the slack of a FILE record. Its `EntryNum` and `SequenceNumber` are the file the name pointed to (empty when its entry header was written over), its recovered timestamps are in the `(FN)` columns, and `InUse` is `False`. |
+| `FromSlack` | With `-x`: `True` for a name recovered from the slack of a FILE record. Its `EntryNum` and `SN` are the file the name pointed to (empty when its entry header was written over), its recovered timestamps are in the `(FN)` columns, and `InUse` is `False`. |
 | `SlackRecord`, `SlackOffset` | With `-x`: the FILE record whose slack held the name, by its place in the `$MFT` rather than the record number written inside it (an extension record's own, even though its names are listed with its base record), and the name's byte offset in the `$MFT`. A slack row's `ParseErrors` are that record's problems, such as `fixup values do not match`: the recovered bytes may be affected. |
 | `CopyOfEntryInUse` | With `-x`: a file in use still has this name in the same directory (and is the same file, when the reference survived). Names that no file in use has are the interesting ones: deleted, renamed, or a reused record's previous occupant. |
 
@@ -158,7 +158,7 @@ investigative CSV omits low-level structure. With `-x`, each JSON entry also has
 2. Search full paths, suspicious double extensions, ADS, staging directories, and known hashes/names.
    With `-x`, include the slack names that no file in use has (`CopyOfEntryInUse` `False`); with
    `-i -E ps1,bat,vbs,js`, read small scripts straight from the CSV.
-3. Pivot entry/sequence and `UpdateSequenceNumber` into the USN Journal.
+3. Pivot entry/sequence and `USN` into the USN Journal.
 4. Compare Prefetch/LNK/Jump List MFT references with the target record.
 5. Correlate deletion with Defender quarantine or USN `FILE_DELETE`/rename activity.
 

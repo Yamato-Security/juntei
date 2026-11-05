@@ -6,13 +6,13 @@ Todo arquivo e diretório no NTFS tem um **descritor de segurança**: seu propri
 **DACL** (quem pode fazer o quê com ele) e uma **SACL** (quais acessos são auditados e seu rótulo de integridade).
 O NTFS mantém cada descritor distinto uma única vez, no fluxo `$SDS` do arquivo `$Secure` (entrada 9 da MFT),
 e lhe atribui um **ID de segurança**. O `$STANDARD_INFORMATION` de um arquivo registra apenas esse ID de segurança: a
-coluna `SecurityID` de [`parse-ntfs mft`](mft.md). O `$SDS` o converte em um proprietário e ACLs.
+coluna `SID` de [`parse-ntfs mft`](mft.md). O `$SDS` o converte em um proprietário e ACLs.
 
 O `$SDS` é organizado em blocos de 256 KiB, cada um seguido de uma cópia de si mesmo (seu espelho). Cada entrada tem um hash do
 seu descritor, que o NTFS usa para encontrar um descritor já existente (`$SDH`), e o
 ID de segurança (indexado pelo `$SII`).
 
-<span class="evidence-strength">Melhor conclusão:</span> os arquivos cujo `SecurityID` nomeia um
+<span class="evidence-strength">Melhor conclusão:</span> os arquivos cujo `SID` nomeia um
 descritor tinham, quando seu registro no `$MFT` foi gravado pela última vez, esse proprietário e essas ACLs. O proprietário
 de um arquivo geralmente é a conta que o criou, mas um administrador, um instalador ou um programa
 que assuma a propriedade pode alterá-lo.
@@ -69,7 +69,7 @@ os descritores com DACL NULL (nenhuma restrição) e quaisquer danos.
 | Campo | Interpretação |
 |---|---|
 | `SourcePath` | Arquivo de entrada. |
-| `SecurityID` | O ID de segurança: faça a junção com o `SecurityID` de [`parse-ntfs mft`](mft.md) do mesmo volume. |
+| `SecurityID` | O ID de segurança: faça a junção com o `SID` de [`parse-ntfs mft`](mft.md) do mesmo volume. |
 | `Hash` | O hash registrado com o descritor. |
 | `EntryOffset` | Onde a entrada está no fluxo. |
 | `FromMirror` | `True` para uma cópia lida do bloco espelho: uma que difere de sua entrada (listada depois dela) ou a cópia de uma entrada danificada. |
@@ -105,7 +105,7 @@ JSON/JSONL têm os mesmos campos e nomes, com números como números, `null` par
 
 ## Estratégia de investigação { #investigation-strategy }
 
-1. Analise o `$MFT` do mesmo volume e faça a junção do seu `SecurityID` com o desta saída: cada arquivo recebe seu
+1. Analise o `$MFT` do mesmo volume e faça a junção do seu `SID` com o desta saída: cada arquivo recebe seu
    proprietário e suas ACLs.
 2. Examine os proprietários que são contas de usuário (`S-1-5-21-…`): quais arquivos uma conta suspeita
    possui e quais contas possuem arquivos em diretórios do sistema.

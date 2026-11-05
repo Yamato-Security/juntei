@@ -67,6 +67,8 @@ Hanya label keluaran yang berubah; nilai bukti dan nama nilai registry mentah me
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+Output CSV MFT memakai nama kolom khusus: `File`, `SN`, `ParentEntryNum`, `ParentSN`, `USN`, `LogfileSN`, `SID`, `Type`, dan `RefCnt`. Nama ini juga berlaku untuk CSV MFT dari `auto-parse`; lihat [kolom output MFT](../artifacts/mft.md#csv-output-fields).
+
 Waktu JSON native untuk informasi sistem adalah `CompNameLastWritten` (CSV:
 `CompNameLastWrittenUTC`). `HasADS` adalah indikator Boolean; `Dir` di Prefetch berisi daftar
 direktori yang tercatat. `User` mempertahankan tipe yang spesifik untuk artefaknya: string untuk nama akun,

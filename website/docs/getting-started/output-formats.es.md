@@ -74,6 +74,8 @@ evidencia y los nombres de valores del Registro sin procesar conservan su grafí
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+La salida CSV de MFT utiliza columnas específicas: `File`, `SN`, `ParentEntryNum`, `ParentSN`, `USN`, `LogfileSN`, `SID`, `Type` y `RefCnt`. También se aplican a los CSV de MFT de `auto-parse`; consulta los [campos de salida de MFT](../artifacts/mft.md#csv-output-fields).
+
 La hora del JSON nativo de información del sistema es `CompNameLastWritten` (CSV:
 `CompNameLastWrittenUTC`). `HasADS` es un indicador booleano; `Dir` en Prefetch contiene la lista
 de directorios registrada. `User` conserva el tipo propio de cada artefacto: una cadena para un

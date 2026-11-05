@@ -9,7 +9,7 @@
 | Jurnal USN `$J` | `parse-ntfs usn-journal` | Pembuatan, penghapusan, penggantian nama, penulisan, path historis | Jurnal sirkular; mencatat perubahan, bukan konten berkas |
 | Indeks direktori `$I30` | `parse-ntfs i30` | Berkas dalam sebuah direktori; nama, waktu, dan ukuran berkas yang mungkin telah dihapus atau diganti namanya yang tertinggal di slack indeks | Slack bersifat parsial dan tidak menyatakan apa pun tentang kapan sebuah entri dihapus |
 | Sektor boot NTFS `$Boot` | `parse-ntfs boot` | Nomor seri volume yang dicatat oleh LNK, Jump Lists, dan Prefetch; geometri dan lokasi `$MFT`; hash boot code untuk dibandingkan antar-host | Nomor seri dapat diubah atau berulang; boot code yang berbeda adalah petunjuk, bukan bukti adanya bootkit |
-| Deskriptor keamanan NTFS `$Secure:$SDS` | `parse-ntfs secure-sds` | Pemilik dan ACL berkas, berdasarkan `SecurityID` milik `$MFT`; NULL DACL dan ACL yang permisif | Pemilik dapat diubah; ACL menyatakan siapa yang boleh mengakses, bukan siapa yang benar-benar mengakses |
+| Deskriptor keamanan NTFS `$Secure:$SDS` | `parse-ntfs secure-sds` | Pemilik dan ACL berkas, berdasarkan `SID` milik `$MFT`; NULL DACL dan ACL yang permisif | Pemilik dapat diubah; ACL menyatakan siapa yang boleh mengakses, bukan siapa yang benar-benar mengakses |
 | SRUM | `parse-ese srum` | Penggunaan jaringan dan sumber daya per aplikasi/pengguna | Biasanya teragregasi; bukan bukti tingkat paket atau tujuan |
 | Pintasan LNK | `parse-file lnk` | Target yang dibuka, argumen, volume, share, mesin sumber | Pintasan dapat dibuat tanpa targetnya dijalankan |
 | Jump Lists | `parse-file jump-lists` | Item yang dibuka aplikasi, penyematan, penggunaan, dan data LNK yang tertanam | Perilaku dan retensi bergantung pada aplikasi |

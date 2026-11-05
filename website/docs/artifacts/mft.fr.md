@@ -28,7 +28,7 @@ et aux métadonnées du volume lorsque c'est possible.
 ## Précautions d'analyse { #analyst-cautions }
 
 - Un enregistrement supprimé peut être partiellement écrasé, ou son numéro d'enregistrement peut être réutilisé.
-- `SequenceNumber` distingue les générations d'un même numéro d'entrée. Faites correspondre l'entrée **et** la séquence.
+- `SN` distingue les générations d'un même numéro d'entrée. Faites correspondre l'entrée **et** la séquence.
 - Les horodatages de `$STANDARD_INFORMATION` (`0x10`) et de `$FILE_NAME` (`0x30`) sont mis à jour selon des
   comportements différents. Aucun des deux n'est à l'abri d'une manipulation.
 - `SI<FN`, `ZeroU-Secs` et `Copied` sont des pistes, et non des verdicts automatiques de timestomping.
@@ -101,15 +101,15 @@ son entrée (`30`, `0x1E`, `30-1`) ou par son chemin (`\Windows\System32`, `C:/W
 
 | Champ | Interprétation |
 |---|---|
-| `EntryNum` | Numéro d'enregistrement MFT. À combiner avec `SequenceNumber` ; les numéros d'enregistrement sont réutilisés. |
-| `SequenceNumber` | Compteur de génération utilisé par les références NTFS. Une non-correspondance peut révéler des relations obsolètes/supprimées. |
+| `EntryNum` | Numéro d'enregistrement MFT. À combiner avec `SN` ; les numéros d'enregistrement sont réutilisés. |
+| `SN` | Compteur de génération utilisé par les références NTFS. Une non-correspondance peut révéler des relations obsolètes/supprimées. |
 | `InUse` | Indicateur d'allocation au moment de la collecte. `false` signifie que l'enregistrement est libre/supprimé, et non que tous les octets sont intacts. |
-| `ParentEntryNumber`, `ParentSequenceNumber` | Référence du répertoire parent provenant de `$FILE_NAME`. Validez les deux parties. |
+| `ParentEntryNum`, `ParentSN` | Référence du répertoire parent provenant de `$FILE_NAME`. Validez les deux parties. |
 | `ParentPath` | Chemin parent reconstruit. Les marqueurs inconnu/orphelin révèlent une ascendance non résolue. |
-| `Filename` | Nom provenant du `$FILE_NAME` ou du flux de la ligne courante. Un enregistrement peut comporter plusieurs lignes. |
+| `File` | Nom provenant du `$FILE_NAME` ou du flux de la ligne courante. Un enregistrement peut comporter plusieurs lignes. |
 | `Ext` | Extension extraite du nom à titre pratique ; ne constitue pas une détermination fiable du type de fichier. |
 | `Size` | Taille logique associée à la ligne/au flux. L'allocation éparse/compressée peut différer. |
-| `ReferenceCount` | Nombre de références de liens physiques NTFS ; comparez-le avec prudence au nombre de noms subsistants. |
+| `RefCnt` | Nombre de références de liens physiques NTFS ; comparez-le avec prudence au nombre de noms subsistants. |
 | `ReparseTarget` | Cible décodée des points d'analyse pris en charge, tels que les jonctions/liens symboliques. Les chemins peuvent rediriger. |
 | `Dir` | L'enregistrement porte l'indicateur de répertoire. |
 | `HasADS` | L'enregistrement contient des flux de données alternatifs nommés. Cela ne le rend pas malveillant. |
@@ -118,19 +118,19 @@ son entrée (`30`, `0x1E`, `30-1`) ou par son chemin (`\Windows\System32`, `C:/W
 | `ZeroU-Secs` | L'heure de création/modification SI tombe exactement sur une limite de milliseconde. Simple heuristique faible de timestomping. |
 | `Copied` | L'heure de modification précède l'heure de création. Souvent cohérent avec une copie de fichier ; ne prouve pas une action de l'attaquant. |
 | `SI-Flags` | Attributs/indicateurs de fichier de `$STANDARD_INFORMATION`. Les indicateurs caché/système peuvent être des pivots utiles. |
-| `NameType` | Espace de noms de `$FILE_NAME` (Win32, DOS, POSIX ou combiné). À utiliser pour éviter de compter deux fois les noms. |
+| `Type` | Espace de noms de `$FILE_NAME` (Win32, DOS, POSIX ou combiné). À utiliser pour éviter de compter deux fois les noms. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | Heures SI. Champs courants des chronologies, mais les outils en mode utilisateur peuvent en modifier plusieurs. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | Heures FN. Mises à jour différemment et généralement plus difficiles à modifier par les API ordinaires ; elles ne sont pas pour autant immuables. |
-| `UpdateSequenceNumber` | Dernier USN associé à l'attribut SI de l'enregistrement. Pivotez vers `$J` si cet USN subsiste. |
-| `LogfileSequenceNumber` | Numéro de séquence `$LogFile` NTFS provenant de l'en-tête de l'enregistrement FILE ; utile pour l'analyse des transactions de bas niveau. |
-| `SecurityID` | Index dans `$Secure` de NTFS ; ce n'est pas en soi un SID Windows. Joignez-le au `SecurityID` de [`parse-ntfs secure-sds`](secure-sds.md) pour obtenir le propriétaire et les ACL du fichier. |
+| `USN` | Dernier USN associé à l'attribut SI de l'enregistrement. Pivotez vers `$J` si cet USN subsiste. |
+| `LogfileSN` | Numéro de séquence `$LogFile` NTFS provenant de l'en-tête de l'enregistrement FILE ; utile pour l'analyse des transactions de bas niveau. |
+| `SID` | Index dans `$Secure` de NTFS ; ce n'est pas en soi un SID Windows. Joignez-le au `SecurityID` de [`parse-ntfs secure-sds`](secure-sds.md) pour obtenir le propriétaire et les ACL du fichier. |
 | `ObjectID-FileDroid` | Identifiant d'objet / identifiant de suivi des liens distribués, s'il est présent ; à corréler avec les droids des LNK/Jump Lists. |
 | `LoggedUtilStream` | Contexte décodé de `$LOGGED_UTILITY_STREAM`, lorsqu'il est pris en charge. Examinez les valeurs inhabituelles. |
 | `ZoneID-Contents` | Contenu résident de `Zone.Identifier`, tel que ZoneId et les URL de téléchargement. Il peut être absent, supprimé ou non résident. |
 | `SourceFile` | Le `$MFT` d'entrée, indispensable lorsque l'on combine des hôtes ou des volumes. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | Avec `-i` : le contenu du `$DATA` résident de la ligne (celui du fichier ou du flux de données alternatif), en Base64, sous forme d'octets (`41-42`) et sous forme de texte lorsqu'il s'agit d'ASCII imprimable. Vide lorsque les données sont non résidentes ou filtrées par `-E`/`-M`. |
 | `ParseErrors` | Dommages ou relations non prises en charge affectant cette ligne. N'écartez jamais cette colonne lors du filtrage. |
-| `FromSlack` | Avec `-x` : `True` pour un nom récupéré dans le slack d'un enregistrement FILE. Ses `EntryNum` et `SequenceNumber` désignent le fichier vers lequel pointait le nom (vides lorsque son en-tête d'entrée a été écrasé), ses horodatages récupérés figurent dans les colonnes `(FN)`, et `InUse` vaut `False`. |
+| `FromSlack` | Avec `-x` : `True` pour un nom récupéré dans le slack d'un enregistrement FILE. Ses `EntryNum` et `SN` désignent le fichier vers lequel pointait le nom (vides lorsque son en-tête d'entrée a été écrasé), ses horodatages récupérés figurent dans les colonnes `(FN)`, et `InUse` vaut `False`. |
 | `SlackRecord`, `SlackOffset` | Avec `-x` : l'enregistrement FILE dont le slack contenait le nom, identifié par sa place dans le `$MFT` plutôt que par le numéro d'enregistrement écrit à l'intérieur (celui propre à un enregistrement d'extension, même si ses noms sont listés avec son enregistrement de base), et le décalage en octets du nom dans le `$MFT`. Les `ParseErrors` d'une ligne de slack sont les problèmes de cet enregistrement, comme `fixup values do not match` : les octets récupérés peuvent en être affectés. |
 | `CopyOfEntryInUse` | Avec `-x` : un fichier utilisé porte encore ce nom dans le même répertoire (et il s'agit du même fichier, lorsque la référence a subsisté). Les noms qu'aucun fichier utilisé ne porte sont les plus intéressants : supprimés, renommés, ou occupant précédent d'un enregistrement réutilisé. |
 
@@ -158,7 +158,7 @@ d'investigation aplati omet la structure de bas niveau. Avec `-x`, chaque entré
 2. Recherchez les chemins complets, les doubles extensions suspectes, les ADS, les répertoires de préparation (staging) et les empreintes/noms connus.
    Avec `-x`, incluez les noms du slack qu'aucun fichier utilisé ne porte (`CopyOfEntryInUse` `False`) ; avec
    `-i -E ps1,bat,vbs,js`, lisez les petits scripts directement dans le CSV.
-3. Pivotez sur l'entrée/la séquence et sur `UpdateSequenceNumber` vers le journal USN.
+3. Pivotez sur l'entrée/la séquence et sur `USN` vers le journal USN.
 4. Comparez les références MFT des Prefetch/LNK/Jump Lists avec l'enregistrement cible.
 5. Corrélez la suppression avec la quarantaine Defender ou avec l'activité USN `FILE_DELETE`/de renommage.
 

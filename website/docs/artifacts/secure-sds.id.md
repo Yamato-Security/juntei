@@ -6,13 +6,13 @@ Setiap berkas dan direktori pada NTFS memiliki **security descriptor**: pemilikn
 **DACL** (siapa yang boleh melakukan apa terhadapnya), dan **SACL** (akses apa yang diaudit, serta label integritasnya).
 NTFS menyimpan setiap descriptor yang berbeda satu kali, di stream `$SDS` milik berkas `$Secure` (entri MFT 9),
 dan memberinya **security ID**. `$STANDARD_INFORMATION` sebuah berkas hanya mencatat security ID tersebut: kolom
-`SecurityID` dari [`parse-ntfs mft`](mft.md). `$SDS` mengubahnya menjadi pemilik dan ACL.
+`SID` dari [`parse-ntfs mft`](mft.md). `$SDS` mengubahnya menjadi pemilik dan ACL.
 
 `$SDS` tersusun dalam blok 256 KiB, masing-masing diikuti oleh salinannya (mirror). Setiap entri memiliki hash
 descriptor-nya, yang digunakan NTFS untuk menemukan descriptor yang sudah ada (`$SDH`), serta
 security ID (diindeks oleh `$SII`).
 
-<span class="evidence-strength">Kesimpulan terbaik:</span> berkas-berkas yang `SecurityID`-nya menunjuk sebuah
+<span class="evidence-strength">Kesimpulan terbaik:</span> berkas-berkas yang `SID`-nya menunjuk sebuah
 descriptor memiliki pemilik dan ACL tersebut pada saat catatan `$MFT`-nya terakhir ditulis. Pemilik sebuah berkas
 biasanya adalah akun yang membuatnya, tetapi administrator, installer, atau program
 yang mengambil alih kepemilikan dapat mengubahnya.
@@ -69,7 +69,7 @@ descriptor dengan NULL DACL (tanpa pembatasan sama sekali), dan kerusakan apa pu
 | Field | Interpretasi |
 |---|---|
 | `SourcePath` | Berkas masukan. |
-| `SecurityID` | Security ID: gabungkan dengan `SecurityID` dari [`parse-ntfs mft`](mft.md) untuk volume yang sama. |
+| `SecurityID` | Security ID: gabungkan dengan `SID` dari [`parse-ntfs mft`](mft.md) untuk volume yang sama. |
 | `Hash` | Hash yang dicatat bersama descriptor. |
 | `EntryOffset` | Lokasi entri di dalam stream. |
 | `FromMirror` | `True` untuk salinan yang dibaca dari blok mirror: salinan yang berbeda dari entrinya (dicantumkan setelahnya), atau salinan dari entri yang rusak. |
@@ -105,7 +105,7 @@ JSON/JSONL memiliki field dan nama yang sama, dengan angka sebagai angka, `null`
 
 ## Strategi investigasi { #investigation-strategy }
 
-1. Uraikan `$MFT` dari volume yang sama dan gabungkan `SecurityID`-nya dengan keluaran ini: setiap berkas mendapatkan
+1. Uraikan `$MFT` dari volume yang sama dan gabungkan `SID`-nya dengan keluaran ini: setiap berkas mendapatkan
    pemilik dan ACL-nya.
 2. Perhatikan pemilik yang berupa akun pengguna (`S-1-5-21-…`): berkas mana yang dimiliki akun mencurigakan,
    dan akun mana yang memiliki berkas di direktori sistem.

@@ -6,13 +6,13 @@ NTFS 上的每個檔案與目錄都有一個**安全性描述元**：其擁有�
 **DACL**（誰可以對它做什麼）以及 **SACL**（哪些存取會被稽核，以及其完整性標籤）。
 NTFS 將每個不同的描述元只保存一次，放在 `$Secure` 檔案（MFT 項目 9）的 `$SDS` 資料流中，
 並賦予它一個**安全性 ID**。檔案的 `$STANDARD_INFORMATION` 只記錄該安全性 ID：即
-[`parse-ntfs mft`](mft.md) 的 `SecurityID` 欄位。`$SDS` 則將它轉換為擁有者與 ACL。
+[`parse-ntfs mft`](mft.md) 的 `SID` 欄位。`$SDS` 則將它轉換為擁有者與 ACL。
 
 `$SDS` 以 256 KiB 的區塊組成，每個區塊後面接著一份其複本（鏡像）。每個項目都有
 其描述元的雜湊值，NTFS 用它來尋找已存在的描述元（`$SDH`），另外還有
 安全性 ID（由 `$SII` 建立索引）。
 
-<span class="evidence-strength">最佳結論：</span>`SecurityID` 指向某描述元的檔案，在其
+<span class="evidence-strength">最佳結論：</span>`SID` 指向某描述元的檔案，在其
 `$MFT` 記錄最後一次寫入時，具有該擁有者與這些 ACL。檔案的
 擁有者通常是建立它的帳戶，但系統管理員、安裝程式或取得擁有權的程式
 都可以變更它。
@@ -69,7 +69,7 @@ juntei parse-ntfs secure-sds -f '$Secure_$SDS' -t jsonl
 | 欄位 | 判讀 |
 |---|---|
 | `SourcePath` | 輸入檔案。 |
-| `SecurityID` | 安全性 ID：與同一磁碟區之 [`parse-ntfs mft`](mft.md) 的 `SecurityID` 結合。 |
+| `SecurityID` | 安全性 ID：與同一磁碟區之 [`parse-ntfs mft`](mft.md) 的 `SID` 結合。 |
 | `Hash` | 與描述元一同記錄的雜湊值。 |
 | `EntryOffset` | 項目在資料流中的位置。 |
 | `FromMirror` | 若為從鏡像區塊讀取的複本則為 `True`：與其項目不同的複本（列在該項目之後），或損毀項目的複本。 |
@@ -105,7 +105,7 @@ JSON／JSONL 具有相同的欄位與名稱，數字以數字表示，空值為 
 
 ## 調查策略 { #investigation-strategy }
 
-1. 剖析同一磁碟區的 `$MFT`，並將其 `SecurityID` 與此輸出中的同名欄位結合：每個檔案都能取得其
+1. 剖析同一磁碟區的 `$MFT`，並將其 `SID` 與此輸出中的同名欄位結合：每個檔案都能取得其
    擁有者與 ACL。
 2. 檢視屬於使用者帳戶（`S-1-5-21-…`）的擁有者：可疑帳戶擁有哪些檔案，
    以及哪些帳戶擁有系統目錄中的檔案。

@@ -28,7 +28,7 @@ auch `$J`, `$LogFile` und Volume-Metadaten.
 ## Hinweise für die Analyse { #analyst-cautions }
 
 - Ein gelöschter Datensatz kann teilweise überschrieben sein, oder seine Datensatznummer kann wiederverwendet werden.
-- `SequenceNumber` unterscheidet Generationen derselben Eintragsnummer. Gleichen Sie Eintrag **und** Sequenz ab.
+- `SN` unterscheidet Generationen derselben Eintragsnummer. Gleichen Sie Eintrag **und** Sequenz ab.
 - Zeitstempel von `$STANDARD_INFORMATION` (`0x10`) und `$FILE_NAME` (`0x30`) werden unterschiedlich
   aktualisiert. Keiner ist gegen Manipulation gefeit.
 - `SI<FN`, `ZeroU-Secs` und `Copied` sind Ansatzpunkte, keine automatischen Urteile über Timestomping.
@@ -101,15 +101,15 @@ Eintrag (`30`, `0x1E`, `30-1`) oder über den Pfad (`\Windows\System32`, `C:/Win
 
 | Feld | Interpretation |
 |---|---|
-| `EntryNum` | MFT-Datensatznummer. Mit `SequenceNumber` kombinieren; Datensatznummern werden wiederverwendet. |
-| `SequenceNumber` | Generationszähler, der von NTFS-Referenzen verwendet wird. Eine Abweichung kann veraltete/gelöschte Beziehungen aufdecken. |
+| `EntryNum` | MFT-Datensatznummer. Mit `SN` kombinieren; Datensatznummern werden wiederverwendet. |
+| `SN` | Generationszähler, der von NTFS-Referenzen verwendet wird. Eine Abweichung kann veraltete/gelöschte Beziehungen aufdecken. |
 | `InUse` | Zuordnungsflag zum Zeitpunkt der Sicherung. `false` bedeutet, dass der Datensatz frei/gelöscht ist, nicht dass alle Bytes intakt sind. |
-| `ParentEntryNumber`, `ParentSequenceNumber` | Referenz auf das übergeordnete Verzeichnis aus `$FILE_NAME`. Beide Teile validieren. |
+| `ParentEntryNum`, `ParentSN` | Referenz auf das übergeordnete Verzeichnis aus `$FILE_NAME`. Beide Teile validieren. |
 | `ParentPath` | Rekonstruierter übergeordneter Pfad. Markierungen für unbekannt/verwaist zeigen ungeklärte Abstammung. |
-| `Filename` | Name aus `$FILE_NAME` oder dem Stream der aktuellen Zeile. Ein Datensatz kann mehrere Zeilen haben. |
+| `File` | Name aus `$FILE_NAME` oder dem Stream der aktuellen Zeile. Ein Datensatz kann mehrere Zeilen haben. |
 | `Ext` | Aus dem Namen abgeleitete Erweiterung zur Vereinfachung; keine verlässliche Bestimmung des Dateityps. |
 | `Size` | Der Zeile/dem Stream zugeordnete logische Größe. Die Zuordnung bei Sparse-/komprimierten Dateien kann abweichen. |
-| `ReferenceCount` | NTFS-Referenzzähler der Hardlinks; vorsichtig mit der Anzahl der erhaltenen Namen vergleichen. |
+| `RefCnt` | NTFS-Referenzzähler der Hardlinks; vorsichtig mit der Anzahl der erhaltenen Namen vergleichen. |
 | `ReparseTarget` | Dekodiertes Ziel unterstützter Reparse-Punkte wie Junctions/Symlinks. Pfade können umleiten. |
 | `Dir` | Datensatz trägt das Verzeichnisflag. |
 | `HasADS` | Datensatz enthält benannte alternative Datenströme. Das macht ihn nicht bösartig. |
@@ -118,19 +118,19 @@ Eintrag (`30`, `0x1E`, `30-1`) oder über den Pfad (`\Windows\System32`, `C:/Win
 | `ZeroU-Secs` | SI-Erstellungs-/Änderungszeit liegt exakt auf einer Millisekundengrenze. Nur eine schwache Timestomping-Heuristik. |
 | `Copied` | Änderungszeit liegt vor der Erstellungszeit. Oft mit einem Kopiervorgang vereinbar; kein Beweis für eine Handlung des Angreifers. |
 | `SI-Flags` | Dateiattribute/Flags von `$STANDARD_INFORMATION`. Hidden-/System-Flags können nützliche Ansatzpunkte sein. |
-| `NameType` | Namensraum von `$FILE_NAME` (Win32, DOS, POSIX oder kombiniert). Verwenden, um Namen nicht doppelt zu zählen. |
+| `Type` | Namensraum von `$FILE_NAME` (Win32, DOS, POSIX oder kombiniert). Verwenden, um Namen nicht doppelt zu zählen. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI-Zeiten. Übliche Zeitleistenfelder, aber Tools im Benutzermodus können mehrere davon ändern. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN-Zeiten. Werden anders aktualisiert und sind mit gewöhnlichen APIs im Allgemeinen schwerer zu ändern; dennoch nicht unveränderlich. |
-| `UpdateSequenceNumber` | Letzte USN, die dem SI-Attribut des Datensatzes zugeordnet ist. Ansatzpunkt in `$J`, falls diese USN erhalten ist. |
-| `LogfileSequenceNumber` | NTFS-`$LogFile`-Sequenznummer aus dem Header des FILE-Datensatzes; nützlich für die Transaktionsanalyse auf niedriger Ebene. |
-| `SecurityID` | Index in NTFS-`$Secure`; für sich genommen keine Windows-SID. Mit der `SecurityID` von [`parse-ntfs secure-sds`](secure-sds.md) verknüpfen, um Besitzer und ACLs der Datei zu erhalten. |
+| `USN` | Letzte USN, die dem SI-Attribut des Datensatzes zugeordnet ist. Ansatzpunkt in `$J`, falls diese USN erhalten ist. |
+| `LogfileSN` | NTFS-`$LogFile`-Sequenznummer aus dem Header des FILE-Datensatzes; nützlich für die Transaktionsanalyse auf niedriger Ebene. |
+| `SID` | Index in NTFS-`$Secure`; für sich genommen keine Windows-SID. Mit der `SecurityID` von [`parse-ntfs secure-sds`](secure-sds.md) verknüpfen, um Besitzer und ACLs der Datei zu erhalten. |
 | `ObjectID-FileDroid` | Objekt-ID / Kennung der verteilten Linkverfolgung, sofern vorhanden; mit Droids aus LNK/Jump List korrelieren. |
 | `LoggedUtilStream` | Dekodierter Kontext von `$LOGGED_UTILITY_STREAM`, sofern unterstützt. Unbekannte Werte prüfen. |
 | `ZoneID-Contents` | Residenter Inhalt von `Zone.Identifier`, etwa ZoneId und Download-URLs. Er kann fehlen, entfernt oder nicht resident sein. |
 | `SourceFile` | Die Eingabe-`$MFT`; unerlässlich beim Zusammenführen von Hosts oder Volumes. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | Mit `-i`: der Inhalt des residenten `$DATA` der Zeile (der Datei oder des alternativen Datenstroms) als Base64, als Bytes (`41-42`) und als Text, wenn es druckbares ASCII ist. Leer, wenn die Daten nicht resident sind oder durch `-E`/`-M` herausgefiltert wurden. |
 | `ParseErrors` | Beschädigungen oder nicht unterstützte Beziehungen, die diese Zeile betreffen. Diese Spalte beim Filtern niemals verwerfen. |
-| `FromSlack` | Mit `-x`: `True` für einen aus dem Slack eines FILE-Datensatzes wiederhergestellten Namen. `EntryNum` und `SequenceNumber` bezeichnen die Datei, auf die der Name verwies (leer, wenn sein Eintragsheader überschrieben wurde), die wiederhergestellten Zeitstempel stehen in den `(FN)`-Spalten, und `InUse` ist `False`. |
+| `FromSlack` | Mit `-x`: `True` für einen aus dem Slack eines FILE-Datensatzes wiederhergestellten Namen. `EntryNum` und `SN` bezeichnen die Datei, auf die der Name verwies (leer, wenn sein Eintragsheader überschrieben wurde), die wiederhergestellten Zeitstempel stehen in den `(FN)`-Spalten, und `InUse` ist `False`. |
 | `SlackRecord`, `SlackOffset` | Mit `-x`: der FILE-Datensatz, dessen Slack den Namen enthielt, bezeichnet nach seiner Position in der `$MFT` statt nach der darin geschriebenen Datensatznummer (bei einem Erweiterungsdatensatz dessen eigene, obwohl seine Namen beim Basisdatensatz aufgeführt werden), sowie der Byte-Offset des Namens in der `$MFT`. `ParseErrors` einer Slack-Zeile sind die Probleme dieses Datensatzes, etwa `fixup values do not match`: Die wiederhergestellten Bytes können betroffen sein. |
 | `CopyOfEntryInUse` | Mit `-x`: Eine verwendete Datei hat diesen Namen noch im selben Verzeichnis (und ist dieselbe Datei, sofern die Referenz erhalten ist). Interessant sind die Namen, die keine verwendete Datei trägt: gelöscht, umbenannt oder der vorherige Inhaber eines wiederverwendeten Datensatzes. |
 
@@ -158,7 +158,7 @@ Untersuchungs-CSV Strukturen auf niedriger Ebene auslässt. Mit `-x` hat jeder J
 2. Durchsuchen Sie vollständige Pfade, verdächtige doppelte Erweiterungen, ADS, Staging-Verzeichnisse und bekannte Hashes/Namen.
    Beziehen Sie mit `-x` die Slack-Namen ein, die keine verwendete Datei trägt (`CopyOfEntryInUse` `False`); mit
    `-i -E ps1,bat,vbs,js` lesen Sie kleine Skripte direkt aus der CSV.
-3. Verwenden Sie Eintrag/Sequenz und `UpdateSequenceNumber` als Ansatzpunkt im USN-Journal.
+3. Verwenden Sie Eintrag/Sequenz und `USN` als Ansatzpunkt im USN-Journal.
 4. Vergleichen Sie MFT-Referenzen aus Prefetch/LNK/Jump List mit dem Zieldatensatz.
 5. Korrelieren Sie Löschungen mit der Defender-Quarantäne oder USN-Aktivität zu `FILE_DELETE`/Umbenennung.
 

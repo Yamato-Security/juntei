@@ -6,13 +6,13 @@ NTFS पर हर फ़ाइल और directory का एक **security des
 **DACL** (कौन उसके साथ क्या कर सकता है) और एक **SACL** (किस access का audit होता है, और उसका integrity label)।
 NTFS हर विशिष्ट descriptor को एक बार, `$Secure` फ़ाइल (MFT entry 9) की `$SDS` stream में रखता है,
 और उसे एक **security ID** देता है। किसी फ़ाइल का `$STANDARD_INFORMATION` केवल वह security ID दर्ज करता है:
-[`parse-ntfs mft`](mft.md) का `SecurityID` column। `$SDS` इसे एक owner और ACLs में बदलता है।
+[`parse-ntfs mft`](mft.md) का `SID` column। `$SDS` इसे एक owner और ACLs में बदलता है।
 
 `$SDS` 256 KiB blocks में होता है, जिनमें से हर एक के बाद उसकी एक copy (उसका mirror) होती है। हर entry में
 उसके descriptor का एक hash होता है, जिसका उपयोग NTFS पहले से मौजूद descriptor खोजने के लिए करता है (`$SDH`), और
 security ID होता है (`$SII` इसे index करता है)।
 
-<span class="evidence-strength">सर्वोत्तम निष्कर्ष:</span> जिन फ़ाइलों का `SecurityID` किसी
+<span class="evidence-strength">सर्वोत्तम निष्कर्ष:</span> जिन फ़ाइलों का `SID` किसी
 descriptor का नाम देता है, उनके पास, जब उनका `$MFT` record आख़िरी बार लिखा गया था, वही owner और वे ACLs थे। किसी फ़ाइल का
 owner आमतौर पर वह account होता है जिसने उसे बनाया, लेकिन कोई administrator, installer, या ownership लेने वाला
 program इसे बदल सकता है।
@@ -68,7 +68,7 @@ NULL DACL वाले descriptors (कोई प्रतिबंध नही
 | फ़ील्ड | व्याख्या |
 |---|---|
 | `SourcePath` | Input फ़ाइल। |
-| `SecurityID` | Security ID: इसे उसी volume के लिए [`parse-ntfs mft`](mft.md) के `SecurityID` से join करें। |
+| `SecurityID` | Security ID: इसे उसी volume के लिए [`parse-ntfs mft`](mft.md) के `SID` से join करें। |
 | `Hash` | Descriptor के साथ दर्ज hash। |
 | `EntryOffset` | Stream में entry कहाँ है। |
 | `FromMirror` | Mirror block से पढ़ी गई copy के लिए `True`: ऐसी copy जो अपनी entry से भिन्न है (उसके बाद सूचीबद्ध), या किसी क्षतिग्रस्त entry की copy। |
@@ -104,7 +104,7 @@ JSON/JSONL में वही fields और नाम होते हैं, n
 
 ## जाँच की रणनीति { #investigation-strategy }
 
-1. उसी volume के `$MFT` को पार्स करें और उसके `SecurityID` को इस output के security ID से join करें: हर फ़ाइल को उसका
+1. उसी volume के `$MFT` को पार्स करें और उसके `SID` को इस output के security ID से join करें: हर फ़ाइल को उसका
    owner और ACLs मिलते हैं।
 2. उन owners को देखें जो user accounts हैं (`S-1-5-21-…`): कोई संदिग्ध account किन फ़ाइलों का
    स्वामी है, और कौन-से accounts system directories में फ़ाइलों के स्वामी हैं।

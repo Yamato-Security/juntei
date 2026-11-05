@@ -25,7 +25,7 @@ C:\$MFT
 ## 分析注意事項 { #analyst-cautions }
 
 - 已刪除的記錄可能已被部分覆寫，或其記錄編號可能已被重複使用。
-- `SequenceNumber` 用於區分相同項目編號的不同世代。請同時比對項目編號**與**序號。
+- `SN` 用於區分相同項目編號的不同世代。請同時比對項目編號**與**序號。
 - `$STANDARD_INFORMATION`（`0x10`）與 `$FILE_NAME`（`0x30`）的時間戳記具有不同的更新行為。
   兩者都無法免於竄改。
 - `SI<FN`、`ZeroU-Secs` 與 `Copied` 只是線索，並非自動的時間戳記竄改判定。
@@ -97,15 +97,15 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 
 | 欄位 | 判讀 |
 |---|---|
-| `EntryNum` | MFT 記錄編號。請與 `SequenceNumber` 合併使用；記錄編號會被重複使用。 |
-| `SequenceNumber` | NTFS 參照所使用的世代計數器。不相符可能揭露過時／已刪除的關係。 |
+| `EntryNum` | MFT 記錄編號。請與 `SN` 合併使用；記錄編號會被重複使用。 |
+| `SN` | NTFS 參照所使用的世代計數器。不相符可能揭露過時／已刪除的關係。 |
 | `InUse` | 收集時的配置旗標。`false` 代表記錄為可用／已刪除，並不代表所有位元組都完整無缺。 |
-| `ParentEntryNumber`、`ParentSequenceNumber` | 取自 `$FILE_NAME` 的父目錄參照。請驗證這兩個部分。 |
+| `ParentEntryNum`、`ParentSN` | 取自 `$FILE_NAME` 的父目錄參照。請驗證這兩個部分。 |
 | `ParentPath` | 重建的父項路徑。未知／孤立標記會揭露無法解析的祖系資訊。 |
-| `Filename` | 取自目前這一列之 `$FILE_NAME` 或資料流的名稱。一筆記錄可以有多列。 |
+| `File` | 取自目前這一列之 `$FILE_NAME` 或資料流的名稱。一筆記錄可以有多列。 |
 | `Ext` | 為方便起見從名稱剖析出的副檔名；並非可信任的檔案類型判定。 |
 | `Size` | 與該列／資料流相關的邏輯大小。疏鬆／壓縮的配置可能不同。 |
-| `ReferenceCount` | NTFS 硬連結參照計數；請審慎地與殘存名稱的數量進行比較。 |
+| `RefCnt` | NTFS 硬連結參照計數；請審慎地與殘存名稱的數量進行比較。 |
 | `ReparseTarget` | 對支援之重新剖析點（例如連接點／符號連結）解碼後的目標。路徑可能被重新導向。 |
 | `Dir` | 記錄具有目錄旗標。 |
 | `HasADS` | 記錄包含具名的替代資料流。這並不代表它是惡意的。 |
@@ -114,19 +114,19 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 | `ZeroU-Secs` | SI 建立／修改時間剛好落在毫秒邊界上。僅為薄弱的時間戳記竄改啟發式判斷。 |
 | `Copied` | 修改時間早於建立時間。通常與檔案複製一致；並非攻擊者行為的證明。 |
 | `SI-Flags` | `$STANDARD_INFORMATION` 的檔案屬性／旗標。隱藏／系統旗標可作為有用的樞紐。 |
-| `NameType` | `$FILE_NAME` 命名空間（Win32、DOS、POSIX 或合併）。用於避免重複計算名稱。 |
+| `Type` | `$FILE_NAME` 命名空間（Win32、DOS、POSIX 或合併）。用於避免重複計算名稱。 |
 | `DataModified (SI)`、`Accessed (SI)`、`MetadataChanged (SI)`、`Created (SI)` | SI 時間。常用的時間軸欄位，但使用者模式工具可以變更其中數個。 |
 | `DataModified (FN)`、`Accessed (FN)`、`MetadataChanged (FN)`、`Created (FN)` | FN 時間。更新方式不同，一般 API 通常較難變更；但仍非不可變更。 |
-| `UpdateSequenceNumber` | 與該記錄之 SI 屬性相關的最後一個 USN。若該 USN 仍殘存，可用來樞紐至 `$J`。 |
-| `LogfileSequenceNumber` | 取自 FILE 記錄標頭的 NTFS `$LogFile` 序號；可用於底層的交易分析。 |
-| `SecurityID` | NTFS `$Secure` 的索引；本身並非 Windows SID。請將它與 [`parse-ntfs secure-sds`](secure-sds.md) 的 `SecurityID` 結合，以取得檔案的擁有者與 ACL。 |
+| `USN` | 與該記錄之 SI 屬性相關的最後一個 USN。若該 USN 仍殘存，可用來樞紐至 `$J`。 |
+| `LogfileSN` | 取自 FILE 記錄標頭的 NTFS `$LogFile` 序號；可用於底層的交易分析。 |
+| `SID` | NTFS `$Secure` 的索引；本身並非 Windows SID。請將它與 [`parse-ntfs secure-sds`](secure-sds.md) 的 `SecurityID` 結合，以取得檔案的擁有者與 ACL。 |
 | `ObjectID-FileDroid` | 若存在，為物件 ID／分散式連結追蹤識別碼；可與 LNK／Jump List 的 droid 進行關聯。 |
 | `LoggedUtilStream` | 在支援的情況下，解碼後的 `$LOGGED_UTILITY_STREAM` 脈絡。請檢視不熟悉的值。 |
 | `ZoneID-Contents` | 常駐的 `Zone.Identifier` 內容，例如 ZoneId 與下載 URL。它可能不存在、已被移除或為非常駐。 |
 | `SourceFile` | 輸入的 `$MFT`，在合併多台主機或多個磁碟區時不可或缺。 |
 | `ResidentDataBase64`、`ResidentDataHex`、`ResidentDataASCII` | 使用 `-i` 時：該列常駐 `$DATA`（檔案本身的，或替代資料流的）的內容，分別以 Base64、位元組（`41-42`）表示，以及在其為可列印 ASCII 時以文字表示。資料為非常駐或被 `-E`／`-M` 篩除時為空。 |
 | `ParseErrors` | 影響這一列的損毀或不支援的關係。篩選時絕對不要捨棄此欄位。 |
-| `FromSlack` | 使用 `-x` 時：對於從 FILE 記錄 slack 中復原的名稱為 `True`。其 `EntryNum` 與 `SequenceNumber` 是該名稱所指向的檔案（其項目標頭已被覆寫時為空），其復原的時間戳記位於 `(FN)` 欄位中，且 `InUse` 為 `False`。 |
+| `FromSlack` | 使用 `-x` 時：對於從 FILE 記錄 slack 中復原的名稱為 `True`。其 `EntryNum` 與 `SN` 是該名稱所指向的檔案（其項目標頭已被覆寫時為空），其復原的時間戳記位於 `(FN)` 欄位中，且 `InUse` 為 `False`。 |
 | `SlackRecord`、`SlackOffset` | 使用 `-x` 時：其 slack 保存該名稱的 FILE 記錄，以其在 `$MFT` 中的位置表示，而非寫在記錄內部的記錄編號（擴充記錄則為其自身的位置，即使其名稱是與其基底記錄一起列出），以及該名稱在 `$MFT` 中的位元組位移。slack 列的 `ParseErrors` 是該記錄的問題，例如 `fixup values do not match`：復原的位元組可能受到影響。 |
 | `CopyOfEntryInUse` | 使用 `-x` 時：某個使用中的檔案在同一目錄中仍具有此名稱（且在參照殘存時為同一個檔案）。沒有任何使用中檔案具有的名稱才是值得關注的：已刪除、已重新命名，或被重複使用之記錄的前一個佔用者。 |
 
@@ -151,7 +151,7 @@ CSV 省略了底層結構時，請使用它。使用 `-x` 時，每個 JSON 項�
 2. 搜尋完整路徑、可疑的雙重副檔名、ADS、資料整備目錄，以及已知的雜湊／名稱。
    使用 `-x` 時，請納入沒有任何使用中檔案具有的 slack 名稱（`CopyOfEntryInUse` 為 `False`）；
    使用 `-i -E ps1,bat,vbs,js` 時，可直接從 CSV 讀取小型指令碼。
-3. 以項目／序號與 `UpdateSequenceNumber` 樞紐至 USN Journal。
+3. 以項目／序號與 `USN` 樞紐至 USN Journal。
 4. 將 Prefetch／LNK／Jump List 的 MFT 參照與目標記錄進行比較。
 5. 將刪除行為與 Defender 隔離資料或 USN `FILE_DELETE`／重新命名活動進行關聯分析。
 

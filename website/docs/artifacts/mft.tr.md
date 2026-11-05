@@ -28,7 +28,7 @@ birim meta verileriyle birlikte toplayın.
 ## Analist için uyarılar { #analyst-cautions }
 
 - Silinmiş bir kaydın üzerine kısmen yazılmış olabilir veya kayıt numarası yeniden kullanılmış olabilir.
-- `SequenceNumber`, aynı girdi numarasının nesillerini birbirinden ayırır. Girdiyi **ve** sıra numarasını
+- `SN`, aynı girdi numarasının nesillerini birbirinden ayırır. Girdiyi **ve** sıra numarasını
   eşleştirin.
 - `$STANDARD_INFORMATION` (`0x10`) ve `$FILE_NAME` (`0x30`) zaman damgalarının güncellenme davranışları
   farklıdır. Hiçbiri manipülasyona karşı bağışık değildir.
@@ -105,15 +105,15 @@ duyarsız) verilir.
 
 | Alan | Yorumlama |
 |---|---|
-| `EntryNum` | MFT kayıt numarası. `SequenceNumber` ile birleştirin; kayıt numaraları yeniden kullanılır. |
-| `SequenceNumber` | NTFS referanslarının kullandığı nesil sayacı. Bir uyuşmazlık, güncelliğini yitirmiş/silinmiş ilişkileri ortaya çıkarabilir. |
+| `EntryNum` | MFT kayıt numarası. `SN` ile birleştirin; kayıt numaraları yeniden kullanılır. |
+| `SN` | NTFS referanslarının kullandığı nesil sayacı. Bir uyuşmazlık, güncelliğini yitirmiş/silinmiş ilişkileri ortaya çıkarabilir. |
 | `InUse` | Toplama anındaki ayrılma bayrağı. `false`, kaydın boş/silinmiş olduğu anlamına gelir; tüm baytların sağlam olduğu anlamına gelmez. |
-| `ParentEntryNumber`, `ParentSequenceNumber` | `$FILE_NAME` özniteliğinden gelen üst dizin referansı. Her iki parçayı da doğrulayın. |
+| `ParentEntryNum`, `ParentSN` | `$FILE_NAME` özniteliğinden gelen üst dizin referansı. Her iki parçayı da doğrulayın. |
 | `ParentPath` | Yeniden oluşturulan üst yol. Bilinmeyen/sahipsiz işaretleri, çözümlenemeyen soy zincirini gösterir. |
-| `Filename` | Geçerli satırın `$FILE_NAME` özniteliğinden veya akışından gelen ad. Bir kaydın birkaç satırı olabilir. |
+| `File` | Geçerli satırın `$FILE_NAME` özniteliğinden veya akışından gelen ad. Bir kaydın birkaç satırı olabilir. |
 | `Ext` | Addan ayrıştırılan, kolaylık amaçlı uzantı; güvenilir bir dosya türü tespiti değildir. |
 | `Size` | Satır/akışla ilişkili mantıksal boyut. Seyrek/sıkıştırılmış ayırma farklı olabilir. |
-| `ReferenceCount` | NTFS sabit bağlantı referans sayısı; varlığını sürdüren adların sayısıyla dikkatle karşılaştırın. |
+| `RefCnt` | NTFS sabit bağlantı referans sayısı; varlığını sürdüren adların sayısıyla dikkatle karşılaştırın. |
 | `ReparseTarget` | Bağlantı noktaları (junction)/sembolik bağlantılar gibi desteklenen yeniden ayrıştırma noktaları için kodu çözülmüş hedef. Yollar yönlendirme yapabilir. |
 | `Dir` | Kayıt dizin bayrağına sahiptir. |
 | `HasADS` | Kayıt adlandırılmış alternatif veri akışları içerir. Bu onu kötü amaçlı yapmaz. |
@@ -122,19 +122,19 @@ duyarsız) verilir.
 | `ZeroU-Secs` | SI oluşturma/değiştirme zamanı tam olarak bir milisaniye sınırına denk gelir. Yalnızca zayıf bir zaman damgası manipülasyonu buluşsal yöntemidir. |
 | `Copied` | Değiştirilme zamanı oluşturulma zamanından öncedir. Çoğunlukla dosya kopyalamayla tutarlıdır; saldırgan eyleminin kanıtı değildir. |
 | `SI-Flags` | `$STANDARD_INFORMATION` dosya öznitelikleri/bayrakları. Gizli/sistem bayrakları faydalı pivot noktaları olabilir. |
-| `NameType` | `$FILE_NAME` ad alanı (Win32, DOS, POSIX veya birleşik). Adları iki kez saymamak için kullanın. |
+| `Type` | `$FILE_NAME` ad alanı (Win32, DOS, POSIX veya birleşik). Adları iki kez saymamak için kullanın. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI zamanları. Yaygın zaman çizelgesi alanlarıdır, ancak kullanıcı modu araçları bunların birçoğunu değiştirebilir. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN zamanları. Farklı biçimde güncellenir ve sıradan API'lerle değiştirilmeleri genellikle daha zordur; yine de değiştirilemez değildir. |
-| `UpdateSequenceNumber` | Kaydın SI özniteliğiyle ilişkili son USN. Bu USN varlığını sürdürüyorsa `$J` içine pivot yapın. |
-| `LogfileSequenceNumber` | FILE kaydı başlığındaki NTFS `$LogFile` sıra numarası; düşük seviyeli işlem analizinde faydalıdır. |
-| `SecurityID` | NTFS `$Secure` yapısına bir indeks; kendi başına bir Windows SID'si değildir. Dosyanın sahibi ve ACL'leri için [`parse-ntfs secure-sds`](secure-sds.md) çıktısının `SecurityID` alanıyla birleştirin. |
+| `USN` | Kaydın SI özniteliğiyle ilişkili son USN. Bu USN varlığını sürdürüyorsa `$J` içine pivot yapın. |
+| `LogfileSN` | FILE kaydı başlığındaki NTFS `$LogFile` sıra numarası; düşük seviyeli işlem analizinde faydalıdır. |
+| `SID` | NTFS `$Secure` yapısına bir indeks; kendi başına bir Windows SID'si değildir. Dosyanın sahibi ve ACL'leri için [`parse-ntfs secure-sds`](secure-sds.md) çıktısının `SecurityID` alanıyla birleştirin. |
 | `ObjectID-FileDroid` | Mevcutsa nesne kimliği / dağıtılmış bağlantı izleme tanımlayıcısı; LNK/Jump List droid'leriyle ilişkilendirin. |
 | `LoggedUtilStream` | Desteklendiği yerde kodu çözülmüş `$LOGGED_UTILITY_STREAM` bağlamı. Alışılmadık değerleri gözden geçirin. |
 | `ZoneID-Contents` | ZoneId ve indirme URL'leri gibi yerleşik `Zone.Identifier` içeriği. Bulunmayabilir, kaldırılmış olabilir veya yerleşik olmayabilir. |
 | `SourceFile` | Girdi `$MFT` dosyası; ana bilgisayarları veya birimleri birleştirirken vazgeçilmezdir. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | `-i` ile: satırın yerleşik `$DATA` içeriği (dosyanın veya alternatif veri akışının); Base64 olarak, bayt olarak (`41-42`) ve yazdırılabilir ASCII ise metin olarak. Veri yerleşik değilse veya `-E`/`-M` ile filtrelenmişse boştur. |
 | `ParseErrors` | Bu satırı etkileyen hasar veya desteklenmeyen ilişkiler. Filtreleme sırasında bu sütunu asla atmayın. |
-| `FromSlack` | `-x` ile: bir FILE kaydının slack alanından kurtarılan bir ad için `True`. `EntryNum` ve `SequenceNumber` değerleri adın işaret ettiği dosyadır (girdi başlığının üzerine yazılmışsa boştur), kurtarılan zaman damgaları `(FN)` sütunlarındadır ve `InUse` değeri `False` olur. |
+| `FromSlack` | `-x` ile: bir FILE kaydının slack alanından kurtarılan bir ad için `True`. `EntryNum` ve `SN` değerleri adın işaret ettiği dosyadır (girdi başlığının üzerine yazılmışsa boştur), kurtarılan zaman damgaları `(FN)` sütunlarındadır ve `InUse` değeri `False` olur. |
 | `SlackRecord`, `SlackOffset` | `-x` ile: slack alanı adı tutan FILE kaydı; içine yazılmış kayıt numarasıyla değil `$MFT` içindeki yeriyle belirtilir (adları temel kaydıyla birlikte listelense bile uzantı kaydının kendisi) ve adın `$MFT` içindeki bayt ofseti. Bir slack satırının `ParseErrors` değeri, `fixup values do not match` gibi o kaydın sorunlarıdır: kurtarılan baytlar bundan etkilenmiş olabilir. |
 | `CopyOfEntryInUse` | `-x` ile: kullanımdaki bir dosya aynı dizinde hâlâ bu ada sahiptir (referans varlığını sürdürmüşse aynı dosyadır). İlginç olanlar, kullanımdaki hiçbir dosyanın sahip olmadığı adlardır: silinmiş, yeniden adlandırılmış veya yeniden kullanılmış bir kaydın önceki sahibine ait. |
 
@@ -161,7 +161,7 @@ bunu kullanın. `-x` ile her JSON girdisinde ayrıca `SlackFileNames` bulunur.
 2. Tam yolları, şüpheli çift uzantıları, ADS'leri, hazırlık dizinlerini ve bilinen karmaları/adları arayın.
    `-x` ile, kullanımdaki hiçbir dosyanın sahip olmadığı slack adlarını (`CopyOfEntryInUse` `False`)
    dahil edin; `-i -E ps1,bat,vbs,js` ile küçük betikleri doğrudan CSV'den okuyun.
-3. Girdi/sıra numarası ve `UpdateSequenceNumber` üzerinden USN Journal'a pivot yapın.
+3. Girdi/sıra numarası ve `USN` üzerinden USN Journal'a pivot yapın.
 4. Prefetch/LNK/Jump List MFT referanslarını hedef kayıtla karşılaştırın.
 5. Silmeyi Defender karantinası veya USN `FILE_DELETE`/yeniden adlandırma etkinliğiyle ilişkilendirin.
 

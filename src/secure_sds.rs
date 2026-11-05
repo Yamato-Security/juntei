@@ -13,7 +13,7 @@
 
 //! `parse-ntfs secure-sds`: the security descriptors of an NTFS volume (`$Secure:$SDS`), read by
 //! the secure crate of ys-ntfs-parser. One record per descriptor: its security ID (the
-//! `SecurityID` of `parse-ntfs mft`), owner, group, control flags, DACL and SACL (readable, as
+//! `SID` of `parse-ntfs mft`), owner, group, control flags, DACL and SACL (readable, as
 //! icacls writes ACEs, and as SDDL), and what in it could not be decoded.
 
 use crate::cli::SecureSdsOptions;

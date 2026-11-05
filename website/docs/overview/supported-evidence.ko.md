@@ -9,7 +9,7 @@
 | USN 저널 `$J` | `parse-ntfs usn-journal` | 생성, 삭제, 이름 변경, 쓰기, 과거 경로 | 순환 저널이며, 파일 내용이 아니라 변경 사항을 기록함 |
 | 디렉터리 인덱스 `$I30` | `parse-ntfs i30` | 디렉터리 내 파일, 인덱스 슬랙에 남아 있는 삭제되었거나 이름이 변경되었을 수 있는 파일의 이름, 시간, 크기 | 슬랙은 부분적이며 엔트리가 언제 제거되었는지 알려 주지 않음 |
 | NTFS 부트 섹터 `$Boot` | `parse-ntfs boot` | LNK, Jump Lists, Prefetch가 기록하는 볼륨 일련 번호, 지오메트리와 `$MFT` 위치, 호스트 간 비교를 위한 부트 코드 해시 | 일련 번호는 변경되거나 중복될 수 있음, 부트 코드가 다른 것은 단서이지 부트킷의 증명이 아님 |
-| NTFS 보안 설명자 `$Secure:$SDS` | `parse-ntfs secure-sds` | `$MFT`의 `SecurityID`에 따른 파일의 소유자와 ACL, NULL DACL과 허용 범위가 넓은 ACL | 소유자는 변경될 수 있음, ACL은 누가 액세스할 수 있는지를 나타낼 뿐 누가 액세스했는지가 아님 |
+| NTFS 보안 설명자 `$Secure:$SDS` | `parse-ntfs secure-sds` | `$MFT`의 `SID`에 따른 파일의 소유자와 ACL, NULL DACL과 허용 범위가 넓은 ACL | 소유자는 변경될 수 있음, ACL은 누가 액세스할 수 있는지를 나타낼 뿐 누가 액세스했는지가 아님 |
 | SRUM | `parse-ese srum` | 앱/사용자별 네트워크 및 리소스 사용량 | 보통 집계된 값이며, 패킷이나 목적지 수준의 증명이 아님 |
 | LNK 바로 가기 | `parse-file lnk` | 열린 대상, 인수, 볼륨, 공유, 원본 머신 | 대상이 실행되지 않아도 바로 가기가 생성될 수 있음 |
 | Jump Lists | `parse-file jump-lists` | 애플리케이션이 연 항목, 고정, 사용 내역 및 포함된 LNK 데이터 | 애플리케이션별로 동작과 보존 방식이 다름 |

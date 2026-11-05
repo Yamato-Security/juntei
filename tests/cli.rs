@@ -1989,10 +1989,10 @@ fn mft_csv_json_and_jsonl() {
         header[..6],
         [
             "EntryNum",
-            "SequenceNumber",
+            "SN",
             "InUse",
-            "ParentEntryNumber",
-            "ParentSequenceNumber",
+            "ParentEntryNum",
+            "ParentSN",
             "ParentPath"
         ]
     );
@@ -2013,7 +2013,7 @@ fn mft_csv_json_and_jsonl() {
     assert_eq!(rows.len(), 1014);
     let row = |entry: &str, name: &str| {
         rows.iter()
-            .find(|r| r["EntryNum"] == entry && r["Filename"] == name)
+            .find(|r| r["EntryNum"] == entry && r["File"] == name)
             .unwrap_or_else(|| panic!("{entry} {name}"))
     };
     assert_eq!(row("30", "config")["ParentPath"], r".\WINDOWS\system32");
@@ -2026,7 +2026,7 @@ fn mft_csv_json_and_jsonl() {
         ("ZeroU-Secs", "True"),
         ("Copied", "False"),
         ("SI-Flags", "Archive"),
-        ("NameType", "DosWindows"),
+        ("Type", "DosWindows"),
         ("Created (SI)", "2006-02-28T12:00:00.0000000Z"),
         ("Created (FN)", "2007-06-30T12:51:00.8147072Z"),
         ("Accessed (SI)", "2007-06-30T22:32:20.5674272Z"),
@@ -2161,10 +2161,7 @@ fn mft_csv_options() {
     };
     // $FILE_NAME times only where they differ from $STANDARD_INFORMATION, unless -a/--all-times
     let mft = |rows: &[std::collections::HashMap<String, String>]| {
-        rows.iter()
-            .find(|r| r["Filename"] == "$MFT")
-            .unwrap()
-            .clone()
+        rows.iter().find(|r| r["File"] == "$MFT").unwrap().clone()
     };
     assert_eq!(mft(&csv(&[]))["Created (FN)"], "");
     assert_eq!(
@@ -2174,7 +2171,7 @@ fn mft_csv_options() {
     // DOS (8.3) names get rows of their own with -s/--short-names
     let rows = csv(&["-s"]);
     assert_eq!(rows.len(), 1041);
-    assert_eq!(rows.iter().filter(|r| r["NameType"] == "Dos").count(), 27);
+    assert_eq!(rows.iter().filter(|r| r["Type"] == "Dos").count(), 27);
     // only records created or modified on or after the cutoff (the reference gives the same 8 rows)
     let rows = csv(&["--cutoff", "2007-07-01"]);
     assert_eq!(rows.len(), 8);
@@ -2265,7 +2262,7 @@ fn mft_recover_slack() {
     // Distinct FN times catch a header-only reorder or a missed reorder in the slack writer.
     let driver = slack
         .iter()
-        .find(|row| row["EntryNum"] == "2050" && row["Filename"] == "swenum.sys")
+        .find(|row| row["EntryNum"] == "2050" && row["File"] == "swenum.sys")
         .unwrap();
     for (column, expected) in [
         ("Created (FN)", "2004-08-03T22:58:42.0000000Z"),
@@ -2288,15 +2285,12 @@ fn mft_recover_slack() {
     );
     // An entry of the index root of WINDOWS (entry 28), left in its record's slack: the file it
     // pointed to, the directory, the name and its $FILE_NAME times.
-    let found = slack
-        .iter()
-        .find(|r| r["Filename"] == "setuperr.log")
-        .unwrap();
+    let found = slack.iter().find(|r| r["File"] == "setuperr.log").unwrap();
     for (column, value) in [
         ("EntryNum", "3522"),
-        ("SequenceNumber", "1"),
+        ("SN", "1"),
         ("InUse", "False"),
-        ("ParentEntryNumber", "28"),
+        ("ParentEntryNum", "28"),
         ("ParentPath", r".\WINDOWS"),
         ("Created (SI)", ""),
         ("Created (FN)", "2007-06-30T12:59:00.7391024Z"),
@@ -2306,7 +2300,7 @@ fn mft_recover_slack() {
     ] {
         assert_eq!(found[column], value, "{column}");
     }
-    let normal = rows.iter().find(|r| r["Filename"] == "$MFT").unwrap();
+    let normal = rows.iter().find(|r| r["File"] == "$MFT").unwrap();
     assert_eq!(
         (normal["FromSlack"].as_str(), normal["SlackRecord"].as_str()),
         ("False", "")
@@ -2397,7 +2391,7 @@ fn mft_slack_provenance_and_damage() {
     };
     let slack = |rows: &[std::collections::HashMap<String, String>], name: &str| {
         rows.iter()
-            .find(|r| r["FromSlack"] == "True" && r["Filename"] == name)
+            .find(|r| r["FromSlack"] == "True" && r["File"] == name)
             .cloned()
             .unwrap()
     };
@@ -2447,10 +2441,7 @@ fn mft_slack_provenance_and_damage() {
         d[209 * 1024 + 0x18..209 * 1024 + 0x1C].copy_from_slice(&0u32.to_le_bytes());
     });
     let rows = export(&zeroed, &["-r", "209"]);
-    let ini: Vec<_> = rows
-        .iter()
-        .filter(|r| r["Filename"] == "system.ini")
-        .collect();
+    let ini: Vec<_> = rows.iter().filter(|r| r["File"] == "system.ini").collect();
     assert_eq!(ini.len(), 1, "no recovered copy of the live name");
     assert_eq!(ini[0]["FromSlack"], "False");
     assert!(
@@ -2546,7 +2537,7 @@ fn mft_resident_data() {
     assert_eq!(with_data.len(), 22);
     let ini = with_data
         .iter()
-        .find(|r| r["Filename"] == "system.ini")
+        .find(|r| r["File"] == "system.ini")
         .unwrap();
     assert!(ini["ResidentDataASCII"].starts_with("; for 16-bit app support\r\n"));
     assert!(ini["ResidentDataHex"].starts_with("3B-20-66-6F-72-20"));
@@ -2554,7 +2545,7 @@ fn mft_resident_data() {
     // Binary content: no text.
     let pif = with_data
         .iter()
-        .find(|r| r["Filename"] == "_default.pif")
+        .find(|r| r["File"] == "_default.pif")
         .unwrap();
     assert_eq!(pif["ResidentDataASCII"], "");
     assert!(pif["ResidentDataHex"].starts_with("00-C9"));
@@ -2563,7 +2554,7 @@ fn mft_resident_data() {
     let names: Vec<&str> = rows
         .iter()
         .filter(|r| !r["ResidentDataBase64"].is_empty())
-        .map(|r| r["Filename"].as_str())
+        .map(|r| r["File"].as_str())
         .collect();
     assert_eq!(names, ["system.ini", "desktop.ini"]);
 
@@ -2705,7 +2696,7 @@ fn mft_csv_reports_damaged_attributes() {
     assert_eq!(r.code, 0, "{}", r.stdout);
     let (_, rows) = csv_rows(&out);
     // the damaged attributes are left out and said so
-    let names: Vec<&str> = rows.iter().map(|r| r["Filename"].as_str()).collect();
+    let names: Vec<&str> = rows.iter().map(|r| r["File"].as_str()).collect();
     assert_eq!(
         names,
         ["Repository", "system.ini"],
@@ -2757,7 +2748,7 @@ fn mft_csv_reports_damaged_extension_records() {
             row["ParseErrors"],
             "extension record 226: $DATA attribute at 0x100 left out: its value (0x1DD bytes at 0x3F0) runs past the end of the attribute",
             "{}",
-            row["Filename"]
+            row["File"]
         );
         // the base record's own $DATA gives the size
         assert_eq!(row["Size"], "231");
@@ -2801,7 +2792,7 @@ fn mft_resident_streams_and_directory_mode() {
     );
     for name in ["HOST1_C__MFT", "HOST2__MFT"] {
         let text = std::fs::read_to_string(csv_dir.join(format!("{name}.csv"))).unwrap();
-        assert!(text.starts_with("EntryNum,SequenceNumber,InUse,"), "{name}");
+        assert!(text.starts_with("EntryNum,SN,InUse,"), "{name}");
         assert_eq!(
             csv_rows(&csv_dir.join(format!("{name}.csv"))).1.len(),
             1014,

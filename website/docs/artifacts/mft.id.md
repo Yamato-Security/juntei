@@ -28,7 +28,7 @@ dan metadata volume bila memungkinkan.
 ## Peringatan bagi analis { #analyst-cautions }
 
 - Record yang dihapus dapat tertimpa sebagian atau nomor record-nya dapat digunakan kembali.
-- `SequenceNumber` membedakan generasi dari nomor entri yang sama. Cocokkan entri **dan** sequence.
+- `SN` membedakan generasi dari nomor entri yang sama. Cocokkan entri **dan** sequence.
 - Timestamp `$STANDARD_INFORMATION` (`0x10`) dan `$FILE_NAME` (`0x30`) memiliki perilaku pembaruan
   yang berbeda. Tidak ada satu pun yang kebal terhadap manipulasi.
 - `SI<FN`, `ZeroU-Secs`, dan `Copied` adalah petunjuk, bukan vonis timestomping otomatis.
@@ -101,15 +101,15 @@ entri (`30`, `0x1E`, `30-1`) atau dengan path (`\Windows\System32`, `C:/Windows`
 
 | Field | Interpretasi |
 |---|---|
-| `EntryNum` | Nomor record MFT. Gabungkan dengan `SequenceNumber`; nomor record digunakan kembali. |
-| `SequenceNumber` | Penghitung generasi yang digunakan oleh referensi NTFS. Ketidakcocokan dapat mengungkap hubungan yang usang/dihapus. |
+| `EntryNum` | Nomor record MFT. Gabungkan dengan `SN`; nomor record digunakan kembali. |
+| `SN` | Penghitung generasi yang digunakan oleh referensi NTFS. Ketidakcocokan dapat mengungkap hubungan yang usang/dihapus. |
 | `InUse` | Flag alokasi pada saat pengumpulan. `false` berarti record bebas/dihapus, bukan berarti semua byte masih utuh. |
-| `ParentEntryNumber`, `ParentSequenceNumber` | Referensi direktori parent dari `$FILE_NAME`. Validasi kedua bagian. |
+| `ParentEntryNum`, `ParentSN` | Referensi direktori parent dari `$FILE_NAME`. Validasi kedua bagian. |
 | `ParentPath` | Path parent yang direkonstruksi. Penanda unknown/orphan memperlihatkan hierarki induk yang tidak terselesaikan. |
-| `Filename` | Nama dari `$FILE_NAME` atau stream pada baris ini. Satu record dapat memiliki beberapa baris. |
+| `File` | Nama dari `$FILE_NAME` atau stream pada baris ini. Satu record dapat memiliki beberapa baris. |
 | `Ext` | Ekstensi yang diurai dari nama demi kemudahan; bukan penentuan tipe berkas yang tepercaya. |
 | `Size` | Ukuran logis yang terkait dengan baris/stream. Alokasi sparse/terkompresi dapat berbeda. |
-| `ReferenceCount` | Jumlah referensi hard link NTFS; bandingkan dengan jumlah nama yang tersisa secara hati-hati. |
+| `RefCnt` | Jumlah referensi hard link NTFS; bandingkan dengan jumlah nama yang tersisa secara hati-hati. |
 | `ReparseTarget` | Target yang didekode untuk reparse point yang didukung seperti junction/symlink. Path dapat mengalihkan. |
 | `Dir` | Record memiliki flag direktori. |
 | `HasADS` | Record berisi alternate data stream bernama. Hal ini tidak membuatnya berbahaya. |
@@ -118,19 +118,19 @@ entri (`30`, `0x1E`, `30-1`) atau dengan path (`\Windows\System32`, `C:/Windows`
 | `ZeroU-Secs` | Waktu pembuatan/modifikasi SI jatuh tepat pada batas milidetik. Hanya heuristik timestomping yang lemah. |
 | `Copied` | Waktu modifikasi mendahului waktu pembuatan. Sering konsisten dengan penyalinan berkas; bukan bukti tindakan penyerang. |
 | `SI-Flags` | Atribut/flag berkas `$STANDARD_INFORMATION`. Flag hidden/system dapat menjadi titik pivot yang berguna. |
-| `NameType` | Namespace `$FILE_NAME` (Win32, DOS, POSIX, atau gabungan). Gunakan untuk menghindari penghitungan nama ganda. |
+| `Type` | Namespace `$FILE_NAME` (Win32, DOS, POSIX, atau gabungan). Gunakan untuk menghindari penghitungan nama ganda. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | Waktu SI. Field timeline yang umum, tetapi alat user mode dapat mengubah beberapa di antaranya. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | Waktu FN. Diperbarui secara berbeda dan umumnya lebih sulit diubah oleh API biasa; tetap tidak kebal perubahan. |
-| `UpdateSequenceNumber` | USN terakhir yang terkait dengan atribut SI record. Lakukan pivot ke `$J` jika USN tersebut masih ada. |
-| `LogfileSequenceNumber` | Nomor urut `$LogFile` NTFS dari header record FILE; berguna dalam analisis transaksi tingkat rendah. |
-| `SecurityID` | Indeks ke `$Secure` NTFS; bukan SID Windows dengan sendirinya. Gabungkan dengan `SecurityID` dari [`parse-ntfs secure-sds`](secure-sds.md) untuk pemilik dan ACL berkas. |
+| `USN` | USN terakhir yang terkait dengan atribut SI record. Lakukan pivot ke `$J` jika USN tersebut masih ada. |
+| `LogfileSN` | Nomor urut `$LogFile` NTFS dari header record FILE; berguna dalam analisis transaksi tingkat rendah. |
+| `SID` | Indeks ke `$Secure` NTFS; bukan SID Windows dengan sendirinya. Gabungkan dengan `SecurityID` dari [`parse-ntfs secure-sds`](secure-sds.md) untuk pemilik dan ACL berkas. |
 | `ObjectID-FileDroid` | Object ID / pengenal distributed-link-tracking bila ada; korelasikan dengan droid LNK/Jump List. |
 | `LoggedUtilStream` | Konteks `$LOGGED_UTILITY_STREAM` yang didekode bila didukung. Tinjau nilai yang tidak lazim. |
 | `ZoneID-Contents` | Konten `Zone.Identifier` resident, seperti ZoneId dan URL unduhan. Konten ini mungkin tidak ada, telah dihapus, atau non-resident. |
 | `SourceFile` | `$MFT` input, penting saat menggabungkan beberapa host atau volume. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | Dengan `-i`: konten `$DATA` resident pada baris (milik berkas, atau milik alternate data stream), sebagai Base64, sebagai byte (`41-42`), dan sebagai teks bila berupa ASCII yang dapat dicetak. Kosong bila data non-resident atau tersaring oleh `-E`/`-M`. |
 | `ParseErrors` | Kerusakan atau hubungan yang tidak didukung yang memengaruhi baris ini. Jangan pernah membuang kolom ini saat memfilter. |
-| `FromSlack` | Dengan `-x`: `True` untuk nama yang dipulihkan dari slack sebuah record FILE. `EntryNum` dan `SequenceNumber`-nya adalah berkas yang ditunjuk oleh nama tersebut (kosong bila header entrinya tertimpa), timestamp yang dipulihkan berada di kolom `(FN)`, dan `InUse` bernilai `False`. |
+| `FromSlack` | Dengan `-x`: `True` untuk nama yang dipulihkan dari slack sebuah record FILE. `EntryNum` dan `SN`-nya adalah berkas yang ditunjuk oleh nama tersebut (kosong bila header entrinya tertimpa), timestamp yang dipulihkan berada di kolom `(FN)`, dan `InUse` bernilai `False`. |
 | `SlackRecord`, `SlackOffset` | Dengan `-x`: record FILE yang slack-nya menyimpan nama tersebut, berdasarkan posisinya di `$MFT` dan bukan nomor record yang tertulis di dalamnya (milik extension record itu sendiri, meskipun nama-namanya dicantumkan bersama base record-nya), serta offset byte nama tersebut di `$MFT`. `ParseErrors` pada baris slack adalah masalah record tersebut, seperti `fixup values do not match`: byte yang dipulihkan mungkin terpengaruh. |
 | `CopyOfEntryInUse` | Dengan `-x`: berkas yang sedang digunakan masih memiliki nama ini di direktori yang sama (dan merupakan berkas yang sama, bila referensinya masih ada). Nama yang tidak dimiliki oleh berkas mana pun yang sedang digunakan adalah yang menarik: dihapus, diubah namanya, atau penghuni sebelumnya dari record yang digunakan kembali. |
 
@@ -158,7 +158,7 @@ investigatif yang datar menghilangkan struktur tingkat rendah. Dengan `-x`, seti
 2. Cari path lengkap, ekstensi ganda yang mencurigakan, ADS, direktori staging, dan hash/nama yang dikenal.
    Dengan `-x`, sertakan nama slack yang tidak dimiliki oleh berkas mana pun yang sedang digunakan (`CopyOfEntryInUse` `False`); dengan
    `-i -E ps1,bat,vbs,js`, baca skrip kecil langsung dari CSV.
-3. Lakukan pivot entri/sequence dan `UpdateSequenceNumber` ke Jurnal USN.
+3. Lakukan pivot entri/sequence dan `USN` ke Jurnal USN.
 4. Bandingkan referensi MFT dari Prefetch/LNK/Jump List dengan record target.
 5. Korelasikan penghapusan dengan karantina Defender atau aktivitas USN `FILE_DELETE`/rename.
 

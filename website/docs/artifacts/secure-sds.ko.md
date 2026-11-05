@@ -6,13 +6,13 @@ NTFS의 모든 파일과 디렉터리에는 **보안 설명자**가 있습니다
 무엇을 할 수 있는지), **SACL**(어떤 액세스를 감사하는지와 무결성 레이블)로 구성됩니다. NTFS는 서로 다른
 설명자를 `$Secure` 파일(MFT 엔트리 9)의 `$SDS` 스트림에 한 번씩만 보관하고, 각 설명자에 **보안 ID**를
 부여합니다. 파일의 `$STANDARD_INFORMATION`에는 이 보안 ID만 기록되며, 이는
-[`parse-ntfs mft`](mft.md)의 `SecurityID` 열입니다. `$SDS`는 이를 소유자와 ACL로 변환해 줍니다.
+[`parse-ntfs mft`](mft.md)의 `SID` 열입니다. `$SDS`는 이를 소유자와 ACL로 변환해 줍니다.
 
 `$SDS`는 256 KiB 블록으로 구성되며, 각 블록 뒤에는 그 사본(미러)이 이어집니다. 각 엔트리에는 설명자의
 해시가 있으며, NTFS는 이를 사용하여 이미 존재하는 설명자를 찾습니다(`$SDH`). 또한 보안 ID도 있습니다
 (`$SII`가 이를 인덱싱합니다).
 
-<span class="evidence-strength">가장 타당한 결론:</span> `SecurityID`가 해당 설명자를 가리키는 파일들은
+<span class="evidence-strength">가장 타당한 결론:</span> `SID`가 해당 설명자를 가리키는 파일들은
 `$MFT` 레코드가 마지막으로 기록되었을 때 그 소유자와 ACL을 가지고 있었습니다. 파일의 소유자는 일반적으로
 파일을 생성한 계정이지만, 관리자, 설치 프로그램 또는 소유권을 가져오는 프로그램이 이를 변경할 수 있습니다.
 
@@ -70,7 +70,7 @@ juntei parse-ntfs secure-sds -f '$Secure_$SDS' -t jsonl
 | 필드 | 해석 |
 |---|---|
 | `SourcePath` | 입력 파일입니다. |
-| `SecurityID` | 보안 ID입니다. 같은 볼륨에 대한 [`parse-ntfs mft`](mft.md)의 `SecurityID`와 조인하십시오. |
+| `SecurityID` | 보안 ID입니다. 같은 볼륨에 대한 [`parse-ntfs mft`](mft.md)의 `SID`와 조인하십시오. |
 | `Hash` | 설명자와 함께 기록된 해시입니다. |
 | `EntryOffset` | 스트림 내에서 엔트리의 위치입니다. |
 | `FromMirror` | 미러 블록에서 읽은 사본이면 `True`입니다. 해당 엔트리와 내용이 다른 사본(엔트리 다음에 나열됨) 또는 손상된 엔트리의 사본입니다. |
@@ -106,7 +106,7 @@ JSON/JSONL은 같은 필드와 이름을 사용하며, 숫자는 숫자로, 빈 
 
 ## 조사 전략 { #investigation-strategy }
 
-1. 같은 볼륨의 `$MFT`를 파싱하고 그 `SecurityID`를 이 출력의 보안 ID와 조인하십시오. 그러면 각
+1. 같은 볼륨의 `$MFT`를 파싱하고 그 `SID`를 이 출력의 보안 ID와 조인하십시오. 그러면 각
    파일의 소유자와 ACL을 얻을 수 있습니다.
 2. 사용자 계정(`S-1-5-21-…`)인 소유자를 살펴보십시오. 의심스러운 계정이 어떤 파일을 소유하는지, 어떤 계정이
    시스템 디렉터리의 파일을 소유하는지 확인하십시오.

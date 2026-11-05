@@ -9,7 +9,7 @@
 | USN 日誌 `$J` | `parse-ntfs usn-journal` | 建立、刪除、重新命名、寫入、歷史路徑 | 循環日誌；記錄的是變更，而非檔案內容 |
 | 目錄索引 `$I30` | `parse-ntfs i30` | 目錄中的檔案；殘留於索引 slack 中、可能已刪除或已重新命名之檔案的名稱、時間與大小 | slack 並不完整，也無法說明項目何時被移除 |
 | NTFS 開機磁區 `$Boot` | `parse-ntfs boot` | LNK、Jump Lists 與 Prefetch 所記錄的磁碟區序號；幾何資訊與 `$MFT` 位置；可跨主機比較的開機程式碼雜湊值 | 序號可能被變更或重複；開機程式碼不同只是線索，並非 bootkit 的證明 |
-| NTFS 安全性描述元 `$Secure:$SDS` | `parse-ntfs secure-sds` | 依 `$MFT` 的 `SecurityID` 取得檔案的擁有者與 ACL；NULL DACL 與寬鬆的 ACL | 擁有者可被變更；ACL 說明誰可以存取，而非誰實際存取過 |
+| NTFS 安全性描述元 `$Secure:$SDS` | `parse-ntfs secure-sds` | 依 `$MFT` 的 `SID` 取得檔案的擁有者與 ACL；NULL DACL 與寬鬆的 ACL | 擁有者可被變更；ACL 說明誰可以存取，而非誰實際存取過 |
 | SRUM | `parse-ese srum` | 各應用程式／使用者的網路與資源使用情形 | 通常為彙總資料；無法作為封包或目的地層級的證明 |
 | LNK 捷徑 | `parse-file lnk` | 開啟過的目標、參數、磁碟區、共用資料夾、來源機器 | 即使目標從未執行，也可以建立捷徑 |
 | Jump Lists | `parse-file jump-lists` | 應用程式開啟過的項目、釘選、使用情形與內嵌的 LNK 資料 | 行為與保留方式因應用程式而異 |

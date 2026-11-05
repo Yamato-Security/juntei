@@ -67,6 +67,8 @@ Only output labels change; evidence values and raw registry-value names keep the
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+MFT CSV output uses artifact-specific labels: `File`, `SN`, `ParentEntryNum`, `ParentSN`, `USN`, `LogfileSN`, `SID`, `Type`, and `RefCnt`. These labels also apply to `auto-parse` MFT CSVs; see [MFT output fields](../artifacts/mft.md#csv-output-fields).
+
 The native system-information JSON time is `CompNameLastWritten` (CSV:
 `CompNameLastWrittenUTC`). `HasADS` is a Boolean indicator; `Dir` in Prefetch contains the
 recorded directory list. `User` retains its artifact-specific type: a string for an account name,

@@ -29,7 +29,7 @@ triage tool ဖြင့် စုဆောင်းပါ။ သာမန် us
 ## စိစစ်သူများ သတိပြုရန် { #analyst-cautions }
 
 - ဖျက်ပစ်ထားသော record တစ်ခုကို တစ်စိတ်တစ်ပိုင်း ထပ်ရေးခံရနိုင်သည် သို့မဟုတ် ၎င်း၏ record နံပါတ်ကို ပြန်လည်အသုံးပြုနိုင်သည်။
-- `SequenceNumber` သည် တူညီသော entry နံပါတ်၏ မျိုးဆက်များကို ခွဲခြားပေးသည်။ Entry **နှင့်** sequence နှစ်ခုစလုံးကို
+- `SN` သည် တူညီသော entry နံပါတ်၏ မျိုးဆက်များကို ခွဲခြားပေးသည်။ Entry **နှင့်** sequence နှစ်ခုစလုံးကို
   တိုက်ဆိုင်ပါ။
 - `$STANDARD_INFORMATION` (`0x10`) နှင့် `$FILE_NAME` (`0x30`) timestamp များသည် မတူညီသော အပ်ဒိတ်အပြုအမူ ရှိသည်။
   မည်သည့်တစ်ခုမျှ ခြယ်လှယ်ခြင်းမှ ကင်းလွတ်ခြင်း မရှိပါ။
@@ -106,15 +106,15 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 
 | Field | အဓိပ္ပာယ်ဖော်ပုံ |
 |---|---|
-| `EntryNum` | MFT record နံပါတ်။ `SequenceNumber` နှင့် ပေါင်းစပ်ပါ- record နံပါတ်များကို ပြန်လည်အသုံးပြုသည်။ |
-| `SequenceNumber` | NTFS reference များက အသုံးပြုသော မျိုးဆက် counter။ မကိုက်ညီမှုသည် ခေတ်မမီတော့သော/ဖျက်ပစ်ထားသော ဆက်နွယ်မှုများကို ဖော်ပြနိုင်သည်။ |
+| `EntryNum` | MFT record နံပါတ်။ `SN` နှင့် ပေါင်းစပ်ပါ- record နံပါတ်များကို ပြန်လည်အသုံးပြုသည်။ |
+| `SN` | NTFS reference များက အသုံးပြုသော မျိုးဆက် counter။ မကိုက်ညီမှုသည် ခေတ်မမီတော့သော/ဖျက်ပစ်ထားသော ဆက်နွယ်မှုများကို ဖော်ပြနိုင်သည်။ |
 | `InUse` | စုဆောင်းချိန်က allocation flag။ `false` ဆိုသည်မှာ record သည် free/ဖျက်ပစ်ထားခြင်း ဖြစ်ပြီး byte အားလုံး မပျက်မစီး ရှိသည်ဟု မဆိုလိုပါ။ |
-| `ParentEntryNumber`, `ParentSequenceNumber` | `$FILE_NAME` မှ parent directory reference။ အပိုင်းနှစ်ခုစလုံးကို အတည်ပြုပါ။ |
+| `ParentEntryNum`, `ParentSN` | `$FILE_NAME` မှ parent directory reference။ အပိုင်းနှစ်ခုစလုံးကို အတည်ပြုပါ။ |
 | `ParentPath` | ပြန်လည်တည်ဆောက်ထားသော parent path။ Unknown/orphan အမှတ်အသားများက မဖြေရှင်းနိုင်သေးသော ဘိုးဘွားဆက်နွယ်မှုကို ဖော်ပြသည်။ |
-| `Filename` | လက်ရှိ row ၏ `$FILE_NAME` သို့မဟုတ် stream မှ အမည်။ Record တစ်ခုတွင် row များစွာ ရှိနိုင်သည်။ |
+| `File` | လက်ရှိ row ၏ `$FILE_NAME` သို့မဟုတ် stream မှ အမည်။ Record တစ်ခုတွင် row များစွာ ရှိနိုင်သည်။ |
 | `Ext` | အမည်မှ ခွဲထုတ်ထားသော အဆင်ပြေစေရန် extension။ ယုံကြည်ရသော ဖိုင်အမျိုးအစား ဆုံးဖြတ်ချက် မဟုတ်ပါ။ |
 | `Size` | Row/stream နှင့် ဆက်စပ်သော logical အရွယ်အစား။ Sparse/compressed allocation သည် ကွဲပြားနိုင်သည်။ |
-| `ReferenceCount` | NTFS hard-link reference အရေအတွက်။ ကျန်ရှိနေသော အမည်အရေအတွက်နှင့် သတိထား၍ နှိုင်းယှဉ်ပါ။ |
+| `RefCnt` | NTFS hard-link reference အရေအတွက်။ ကျန်ရှိနေသော အမည်အရေအတွက်နှင့် သတိထား၍ နှိုင်းယှဉ်ပါ။ |
 | `ReparseTarget` | Junction/symlink ကဲ့သို့ ပံ့ပိုးထားသော reparse point များအတွက် decode လုပ်ထားသော ပစ်မှတ်။ Path များ လမ်းကြောင်းလွှဲနိုင်သည်။ |
 | `Dir` | Record တွင် directory flag ရှိသည်။ |
 | `HasADS` | Record တွင် အမည်ပါသော alternate data stream များ ပါဝင်သည်။ ၎င်းက အန္တရာယ်ရှိစေသည် မဟုတ်ပါ။ |
@@ -123,19 +123,19 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 | `ZeroU-Secs` | SI ဖန်တီးချိန်/ပြင်ဆင်ချိန်သည် millisecond နယ်နိမိတ်ပေါ်တွင် အတိအကျ ကျရောက်သည်။ အားနည်းသော timestomping heuristic သာ ဖြစ်သည်။ |
 | `Copied` | ပြင်ဆင်ချိန်သည် ဖန်တီးချိန်ထက် စောသည်။ ဖိုင်ကူးယူခြင်းနှင့် ကိုက်ညီလေ့ရှိသည်။ တိုက်ခိုက်သူ၏ လုပ်ဆောင်ချက် သက်သေ မဟုတ်ပါ။ |
 | `SI-Flags` | `$STANDARD_INFORMATION` ဖိုင် attribute/flag များ။ Hidden/system flag များသည် အသုံးဝင်သော pivot များ ဖြစ်နိုင်သည်။ |
-| `NameType` | `$FILE_NAME` namespace (Win32၊ DOS၊ POSIX သို့မဟုတ် ပေါင်းစပ်)။ အမည်များကို နှစ်ကြိမ်ရေတွက်ခြင်းမှ ရှောင်ရန် အသုံးပြုပါ။ |
+| `Type` | `$FILE_NAME` namespace (Win32၊ DOS၊ POSIX သို့မဟုတ် ပေါင်းစပ်)။ အမည်များကို နှစ်ကြိမ်ရေတွက်ခြင်းမှ ရှောင်ရန် အသုံးပြုပါ။ |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI အချိန်များ။ အသုံးများသော timeline field များဖြစ်သော်လည်း user-mode tool များက ၎င်းတို့အနက် အများအပြားကို ပြောင်းလဲနိုင်သည်။ |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN အချိန်များ။ ကွဲပြားစွာ အပ်ဒိတ်လုပ်ပြီး ပုံမှန် API များဖြင့် ပြောင်းလဲရန် ယေဘုယျအားဖြင့် ပိုခက်သည်။ သို့သော် ပြောင်းလဲ၍မရသည် မဟုတ်ပါ။ |
-| `UpdateSequenceNumber` | Record ၏ SI attribute နှင့် ဆက်စပ်သော နောက်ဆုံး USN။ ထို USN ကျန်ရှိနေပါက `$J` သို့ pivot လုပ်ပါ။ |
-| `LogfileSequenceNumber` | FILE record header မှ NTFS `$LogFile` sequence number။ အနိမ့်ပိုင်းအဆင့် transaction ခွဲခြမ်းစိတ်ဖြာမှုတွင် အသုံးဝင်သည်။ |
-| `SecurityID` | NTFS `$Secure` သို့ index။ ၎င်းကိုယ်တိုင် Windows SID မဟုတ်ပါ။ ဖိုင်၏ ပိုင်ရှင်နှင့် ACL များအတွက် ၎င်းကို [`parse-ntfs secure-sds`](secure-sds.md) ၏ `SecurityID` နှင့် ပေါင်းစပ်ပါ။ |
+| `USN` | Record ၏ SI attribute နှင့် ဆက်စပ်သော နောက်ဆုံး USN။ ထို USN ကျန်ရှိနေပါက `$J` သို့ pivot လုပ်ပါ။ |
+| `LogfileSN` | FILE record header မှ NTFS `$LogFile` sequence number။ အနိမ့်ပိုင်းအဆင့် transaction ခွဲခြမ်းစိတ်ဖြာမှုတွင် အသုံးဝင်သည်။ |
+| `SID` | NTFS `$Secure` သို့ index။ ၎င်းကိုယ်တိုင် Windows SID မဟုတ်ပါ။ ဖိုင်၏ ပိုင်ရှင်နှင့် ACL များအတွက် ၎င်းကို [`parse-ntfs secure-sds`](secure-sds.md) ၏ `SecurityID` နှင့် ပေါင်းစပ်ပါ။ |
 | `ObjectID-FileDroid` | ရှိပါက Object ID / distributed-link-tracking identifier။ LNK/Jump List droid များနှင့် ချိတ်ဆက်စစ်ဆေးပါ။ |
 | `LoggedUtilStream` | ပံ့ပိုးထားသည့်နေရာတွင် decode လုပ်ထားသော `$LOGGED_UTILITY_STREAM` အခြေအနေ။ မရင်းနှီးသော တန်ဖိုးများကို ပြန်လည်သုံးသပ်ပါ။ |
 | `ZoneID-Contents` | ZoneId နှင့် download URL များကဲ့သို့ resident `Zone.Identifier` အကြောင်းအရာ။ မရှိခြင်း၊ ဖယ်ရှားထားခြင်း သို့မဟုတ် non-resident ဖြစ်နိုင်သည်။ |
 | `SourceFile` | Input `$MFT`၊ host များ သို့မဟုတ် volume များကို ပေါင်းစပ်သည့်အခါ မရှိမဖြစ် လိုအပ်သည်။ |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | `-i` ဖြင့်- row ၏ resident `$DATA` (ဖိုင်၏ သို့မဟုတ် alternate data stream ၏) အကြောင်းအရာကို Base64 အဖြစ်၊ byte များ (`41-42`) အဖြစ်နှင့် ပုံနှိပ်နိုင်သော ASCII ဖြစ်ပါက စာသားအဖြစ်။ ဒေတာသည် non-resident ဖြစ်သည့်အခါ သို့မဟုတ် `-E`/`-M` က စစ်ထုတ်လိုက်သည့်အခါ ဗလာ။ |
 | `ParseErrors` | ဤ row ကို သက်ရောက်သော ပျက်စီးမှု သို့မဟုတ် ပံ့ပိုးမထားသော ဆက်နွယ်မှုများ။ စစ်ထုတ်စဉ် ဤ column ကို ဘယ်သောအခါမျှ မပယ်ပါနှင့်။ |
-| `FromSlack` | `-x` ဖြင့်- FILE record ၏ slack မှ ပြန်လည်ရယူထားသော အမည်အတွက် `True`။ ၎င်း၏ `EntryNum` နှင့် `SequenceNumber` သည် အမည်က ညွှန်ပြခဲ့သော ဖိုင် ဖြစ်သည် (၎င်း၏ entry header ကို ထပ်ရေးခံရပါက ဗလာ)၊ ပြန်လည်ရယူထားသော timestamp များသည် `(FN)` column များတွင် ရှိပြီး `InUse` သည် `False` ဖြစ်သည်။ |
+| `FromSlack` | `-x` ဖြင့်- FILE record ၏ slack မှ ပြန်လည်ရယူထားသော အမည်အတွက် `True`။ ၎င်း၏ `EntryNum` နှင့် `SN` သည် အမည်က ညွှန်ပြခဲ့သော ဖိုင် ဖြစ်သည် (၎င်း၏ entry header ကို ထပ်ရေးခံရပါက ဗလာ)၊ ပြန်လည်ရယူထားသော timestamp များသည် `(FN)` column များတွင် ရှိပြီး `InUse` သည် `False` ဖြစ်သည်။ |
 | `SlackRecord`, `SlackOffset` | `-x` ဖြင့်- အမည်ကို ၎င်း၏ slack တွင် ထိန်းသိမ်းထားသော FILE record (၎င်းအတွင်း ရေးထားသော record နံပါတ်ဖြင့် မဟုတ်ဘဲ `$MFT` ရှိ ၎င်း၏ နေရာဖြင့်၊ ၎င်း၏ အမည်များကို base record နှင့်အတူ ဖော်ပြထားသော်လည်း extension record ၏ ကိုယ်ပိုင်) နှင့် `$MFT` ရှိ အမည်၏ byte offset။ Slack row ၏ `ParseErrors` သည် ထို record ၏ ပြဿနာများ ဖြစ်သည်၊ ဥပမာ `fixup values do not match`- ပြန်လည်ရယူထားသော byte များ ထိခိုက်နိုင်သည်။ |
 | `CopyOfEntryInUse` | `-x` ဖြင့်- အသုံးပြုဆဲ ဖိုင်တစ်ခုတွင် တူညီသော directory ၌ ဤအမည် ရှိနေဆဲ ဖြစ်သည် (reference ကျန်ရှိပါက တူညီသော ဖိုင် ဖြစ်သည်)။ အသုံးပြုဆဲ ဖိုင်တစ်ခုမျှ မပိုင်ဆိုင်သော အမည်များသည် စိတ်ဝင်စားဖွယ်ရာများ ဖြစ်သည်- ဖျက်ပစ်ထားသော၊ အမည်ပြောင်းထားသော သို့မဟုတ် ပြန်လည်အသုံးပြုထားသော record ၏ ယခင်ပိုင်ရှင်။ |
 
@@ -162,7 +162,7 @@ output နှင့် သက်ဆိုင်သည်။ JSON/JSONL သည်
 2. Path အပြည့်အစုံ၊ သံသယဖြစ်ဖွယ် double extension များ၊ ADS၊ staging directory များနှင့် သိရှိထားသော hash/အမည်များကို
    ရှာဖွေပါ။ `-x` ဖြင့် အသုံးပြုဆဲ ဖိုင်တစ်ခုမျှ မပိုင်ဆိုင်သော slack အမည်များ (`CopyOfEntryInUse` `False`) ကို
    ထည့်သွင်းပါ။ `-i -E ps1,bat,vbs,js` ဖြင့် script အသေးများကို CSV မှ တိုက်ရိုက် ဖတ်ပါ။
-3. Entry/sequence နှင့် `UpdateSequenceNumber` ကို USN Journal သို့ pivot လုပ်ပါ။
+3. Entry/sequence နှင့် `USN` ကို USN Journal သို့ pivot လုပ်ပါ။
 4. Prefetch/LNK/Jump List MFT reference များကို ပစ်မှတ် record နှင့် နှိုင်းယှဉ်ပါ။
 5. ဖျက်ပစ်ခြင်းကို Defender quarantine သို့မဟုတ် USN `FILE_DELETE`/အမည်ပြောင်းခြင်း လှုပ်ရှားမှုနှင့် ချိတ်ဆက်စစ်ဆေးပါ။
 

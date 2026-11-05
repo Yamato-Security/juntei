@@ -67,6 +67,8 @@ Nur die Ausgabebezeichnungen ändern sich; Beweiswerte und rohe Namen von Regist
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+MFT-CSV-Ausgaben verwenden eigene Spaltennamen: `File`, `SN`, `ParentEntryNum`, `ParentSN`, `USN`, `LogfileSN`, `SID`, `Type` und `RefCnt`. Dies gilt auch für MFT-CSV-Dateien aus `auto-parse`; siehe [MFT-Ausgabefelder](../artifacts/mft.md#csv-output-fields).
+
 Der native JSON-Zeitwert der Systeminformationen ist `CompNameLastWritten` (CSV:
 `CompNameLastWrittenUTC`). `HasADS` ist ein boolescher Indikator; `Dir` in Prefetch enthält die
 aufgezeichnete Verzeichnisliste. `User` behält seinen artefaktspezifischen Typ: eine Zeichenfolge für einen Kontonamen
