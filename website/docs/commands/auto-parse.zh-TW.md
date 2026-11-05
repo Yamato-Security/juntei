@@ -246,8 +246,8 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── Registry-UserAssist.csv
 │   │   └── Registry-UserAssist-logs.txt
 │   ├── Registry/
-│   │   ├── Registry-Read.csv
-│   │   └── Registry-Read-logs.txt
+│   │   ├── Registry-Dump.csv
+│   │   └── Registry-Dump-logs.txt
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
@@ -297,10 +297,10 @@ Amcache 與 Jump Lists 各有一個共用的記錄檔，放在其帶前綴的資
 預設的 CSV 檔名為 `Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、
 `I30.csv`、`MFT.csv`、`UsnJournal.csv`、`Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、
 `Registry-SecuritySettings.csv`、
-`PrefetchTimeline.csv`、`Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、`Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Read.csv` 以及
+`PrefetchTimeline.csv`、`Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、`Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv` 以及
 `DefenderQuarantine.csv`。從登錄檔衍生的資料表使用 `Registry-` 前綴，包括
 `Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv` 與 `Registry-SystemInfo.csv`。
-一般的登錄區機碼與值位於 `Registry-Read.csv`。Amcache 資料表為
+一般的登錄區機碼與值位於 `Registry-Dump.csv`。Amcache 資料表為
 `FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、
 `Registry-Amcache-Findings.csv` 與 `Registry-Amcache-Summary.csv`。Jump Lists 使用
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` 與

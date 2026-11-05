@@ -524,6 +524,10 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     );
     assert!(!csv.join("HOST1/SystemInformation/SRUM").exists());
     assert!(csv.join("HOST1/FileSystem/MFT.csv").is_file());
+    assert!(csv.join("HOST1/Registry/Registry-Dump.csv").is_file());
+    assert!(csv.join("HOST1/Registry/Registry-Dump-logs.txt").is_file());
+    assert!(!csv.join("HOST1/Registry/Registry-Read.csv").exists());
+    assert!(!csv.join("HOST1/Registry/Registry-Read-logs.txt").exists());
     assert!(csv.join("HOST1/FileSystem/UsnJournal.csv").is_file());
     assert!(!csv.join("HOST1/FileSystem/mft").exists());
     assert!(!csv.join("HOST1/FileSystem/usn-journal").exists());
@@ -658,6 +662,16 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
     assert_eq!(manifest["Tasks"][1]["Artifact"], "usn-journal");
     for task in manifest["Tasks"].as_array().unwrap() {
         let artifact = task["Artifact"].as_str().unwrap();
+        if artifact == "registry" {
+            assert_eq!(
+                csv.join(task["Output"].as_str().unwrap()),
+                csv.join("HOST1/Registry/Registry-Dump.csv")
+            );
+            assert_eq!(
+                csv.join(task["Log"].as_str().unwrap()),
+                csv.join("HOST1/Registry/Registry-Dump-logs.txt")
+            );
+        }
         let category = match artifact {
             "lsa-secrets" | "sam" => "Accounts",
             "app-history" => "Applications",
@@ -886,6 +900,15 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
         ]);
         assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
         let host = output.join("HOST1");
+        let registry_dump = host.join(format!("Registry/Registry-Dump.{format}"));
+        assert!(registry_dump.is_file());
+        assert!(host.join("Registry/Registry-Dump-logs.txt").is_file());
+        assert!(
+            !host
+                .join(format!("Registry/Registry-Read.{format}"))
+                .exists()
+        );
+        assert!(!host.join("Registry/Registry-Read-logs.txt").exists());
         assert!(
             host.join(format!("FileExistence/Registry-Amcache.{format}"))
                 .is_file()
@@ -917,6 +940,13 @@ fn auto_parse_json_and_jsonl_keep_category_outputs_and_logs() {
             serde_json::from_reader(std::fs::File::open(output.join("manifest.json")).unwrap())
                 .unwrap();
         for task in manifest["Tasks"].as_array().unwrap() {
+            if task["Artifact"] == "registry" {
+                assert_eq!(output.join(task["Output"].as_str().unwrap()), registry_dump);
+                assert_eq!(
+                    output.join(task["Log"].as_str().unwrap()),
+                    host.join("Registry/Registry-Dump-logs.txt")
+                );
+            }
             let category = task["Category"].as_str().unwrap();
             // The manifest's paths are relative to the output directory.
             let log = output.join(task["Log"].as_str().unwrap());
