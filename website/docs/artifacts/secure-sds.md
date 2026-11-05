@@ -6,13 +6,13 @@ Every file and directory on NTFS has a **security descriptor**: its owner, its p
 **DACL** (who may do what with it) and a **SACL** (what access is audited, and its integrity label).
 NTFS keeps each distinct descriptor once, in the `$SDS` stream of the `$Secure` file (MFT entry 9),
 and gives it a **security ID**. A file's `$STANDARD_INFORMATION` records only that security ID: the
-`SecurityID` column of [`parse-ntfs mft`](mft.md). `$SDS` turns it into an owner and ACLs.
+`SID` column of [`parse-ntfs mft`](mft.md). `$SDS` turns it into an owner and ACLs.
 
 `$SDS` is in 256 KiB blocks, each followed by a copy of it (its mirror). Each entry has a hash of
 its descriptor, which NTFS uses to find a descriptor that already exists (`$SDH`), and the
 security ID (`$SII` indexes it).
 
-<span class="evidence-strength">Best conclusion:</span> the files whose `SecurityID` names a
+<span class="evidence-strength">Best conclusion:</span> the files whose `SID` names a
 descriptor had, when their `$MFT` record was last written, that owner and those ACLs. A file's
 owner is usually the account that created it, but an administrator, an installer, or a program
 taking ownership can change it.
@@ -69,7 +69,7 @@ the descriptors with a NULL DACL (no restriction at all), and any damage.
 | Field | Interpretation |
 |---|---|
 | `SourcePath` | Input file. |
-| `SecurityID` | The security ID: join it with the `SecurityID` of [`parse-ntfs mft`](mft.md) for the same volume. |
+| `SecurityID` | The security ID: join it with the `SID` of [`parse-ntfs mft`](mft.md) for the same volume. |
 | `Hash` | The hash recorded with the descriptor. |
 | `EntryOffset` | Where the entry is in the stream. |
 | `FromMirror` | `True` for a copy read from the mirror block: one that differs from its entry (listed after it), or the copy of a damaged entry. |
@@ -105,7 +105,7 @@ JSON/JSONL have the same fields and names, with numbers as numbers, `null` for e
 
 ## Investigation strategy
 
-1. Parse the same volume's `$MFT` and join its `SecurityID` with this output's: each file gets its
+1. Parse the same volume's `$MFT` and join its `SID` with this output's: each file gets its
    owner and ACLs.
 2. Look at the owners that are user accounts (`S-1-5-21-…`): which files a suspicious account
    owns, and which accounts own files in system directories.

@@ -9,7 +9,7 @@
 | USN जर्नल `$J` | `parse-ntfs usn-journal` | निर्माण, deletion, rename, writes, ऐतिहासिक paths | Circular journal; बदलाव दर्ज करता है, फ़ाइल contents नहीं |
 | डायरेक्टरी इंडेक्स `$I30` | `parse-ntfs i30` | किसी directory में फ़ाइलें; index slack में छूटी संभावित हटाई गई या rename की गई फ़ाइलों के नाम, समय और आकार | Slack आंशिक होता है और यह कुछ नहीं बताता कि entry कब हटाई गई |
 | NTFS बूट सेक्टर `$Boot` | `parse-ntfs boot` | LNK, Jump Lists और Prefetch द्वारा दर्ज volume serial number; geometry और `$MFT` का स्थान; hosts के बीच तुलना के लिए boot code hash | Serial numbers बदले या दोहराए जा सकते हैं; भिन्न boot code एक सुराग है, bootkit का प्रमाण नहीं |
-| NTFS सुरक्षा विवरणक `$Secure:$SDS` | `parse-ntfs secure-sds` | `$MFT` के `SecurityID` के अनुसार फ़ाइलों के owners और ACLs; NULL DACLs और permissive ACLs | Owners बदले जा सकते हैं; ACLs बताते हैं कि कौन access कर सकता है, न कि किसने किया |
+| NTFS सुरक्षा विवरणक `$Secure:$SDS` | `parse-ntfs secure-sds` | `$MFT` के `SID` के अनुसार फ़ाइलों के owners और ACLs; NULL DACLs और permissive ACLs | Owners बदले जा सकते हैं; ACLs बताते हैं कि कौन access कर सकता है, न कि किसने किया |
 | SRUM | `parse-ese srum` | प्रति-app/उपयोगकर्ता network और resource उपयोग | आमतौर पर aggregated; packet या destination-स्तर का प्रमाण नहीं |
 | LNK शॉर्टकट | `parse-file lnk` | खोले गए targets, arguments, volumes, shares, स्रोत machine | Target चले बिना भी shortcut बनाया जा सकता है |
 | Jump Lists | `parse-file jump-lists` | Application द्वारा खोले गए items, pinning, उपयोग और अंतर्निहित LNK data | Application-विशिष्ट व्यवहार और retention |

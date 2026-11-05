@@ -28,7 +28,7 @@ C:\$MFT
 ## ข้อควรระวังสำหรับนักวิเคราะห์ { #analyst-cautions }
 
 - เรคคอร์ดที่ถูกลบอาจถูกเขียนทับบางส่วน หรือหมายเลขเรคคอร์ดอาจถูกนำกลับมาใช้ใหม่
-- `SequenceNumber` ใช้แยกแยะรุ่น (generation) ของหมายเลข entry เดียวกัน ให้จับคู่ทั้ง entry **และ** sequence
+- `SN` ใช้แยกแยะรุ่น (generation) ของหมายเลข entry เดียวกัน ให้จับคู่ทั้ง entry **และ** sequence
 - timestamp ของ `$STANDARD_INFORMATION` (`0x10`) และ `$FILE_NAME` (`0x30`) มีพฤติกรรมการอัปเดต
   ที่ต่างกัน และไม่มีชุดใดที่ปลอดภัยจากการปลอมแปลง
 - `SI<FN`, `ZeroU-Secs` และ `Copied` เป็นเบาะแส ไม่ใช่คำตัดสินอัตโนมัติว่ามีการทำ timestomping
@@ -101,36 +101,36 @@ entry (`30`, `0x1E`, `30-1`) หรือพาธ (`\Windows\System32`, `C:/Win
 
 | ฟิลด์ | การตีความ |
 |---|---|
-| `EntryNum` | หมายเลขเรคคอร์ด MFT ให้ใช้ร่วมกับ `SequenceNumber` เพราะหมายเลขเรคคอร์ดถูกนำกลับมาใช้ใหม่ |
-| `SequenceNumber` | ตัวนับรุ่นที่ NTFS reference ใช้ ค่าที่ไม่ตรงกันอาจเผยความสัมพันธ์ที่ล้าสมัย/ถูกลบ |
+| `EntryNum` (Entry Number) | หมายเลขเรคคอร์ด MFT ให้ใช้ร่วมกับ `SN` เพราะหมายเลขเรคคอร์ดถูกนำกลับมาใช้ใหม่ |
+| `SN` (Sequence Number) | ตัวนับรุ่นที่ NTFS reference ใช้ ค่าที่ไม่ตรงกันอาจเผยความสัมพันธ์ที่ล้าสมัย/ถูกลบ |
 | `InUse` | แฟล็กการจัดสรร ณ เวลาที่เก็บรวบรวม `false` หมายถึงเรคคอร์ดว่าง/ถูกลบ ไม่ได้หมายความว่าไบต์ทั้งหมดยังสมบูรณ์ |
-| `ParentEntryNumber`, `ParentSequenceNumber` | reference ของไดเรกทอรีแม่จาก `$FILE_NAME` ให้ตรวจสอบทั้งสองส่วน |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | reference ของไดเรกทอรีแม่จาก `$FILE_NAME` ให้ตรวจสอบทั้งสองส่วน |
 | `ParentPath` | พาธแม่ที่สร้างขึ้นใหม่ เครื่องหมาย unknown/orphan แสดงลำดับบรรพบุรุษที่ระบุไม่ได้ |
-| `Filename` | ชื่อจาก `$FILE_NAME` หรือ stream ของแถวปัจจุบัน เรคคอร์ดเดียวอาจมีหลายแถว |
-| `Ext` | นามสกุลที่แยกจากชื่อเพื่อความสะดวก ไม่ใช่การระบุชนิดไฟล์ที่เชื่อถือได้ |
-| `Size` | ขนาดเชิงตรรกะของแถว/stream การจัดสรรแบบ sparse/compressed อาจแตกต่างออกไป |
-| `ReferenceCount` | จำนวน hard-link reference ของ NTFS ให้เปรียบเทียบกับจำนวนชื่อที่หลงเหลืออยู่อย่างระมัดระวัง |
+| `File` (Filename) | ชื่อจาก `$FILE_NAME` หรือ stream ของแถวปัจจุบัน เรคคอร์ดเดียวอาจมีหลายแถว |
+| `Ext` (Extension) | นามสกุลที่แยกจากชื่อเพื่อความสะดวก ไม่ใช่การระบุชนิดไฟล์ที่เชื่อถือได้ |
+| `Size` (File Size) | ขนาดเชิงตรรกะของแถว/stream การจัดสรรแบบ sparse/compressed อาจแตกต่างออกไป |
+| `RefCnt` (Reference Count) | จำนวน hard-link reference ของ NTFS ให้เปรียบเทียบกับจำนวนชื่อที่หลงเหลืออยู่อย่างระมัดระวัง |
 | `ReparseTarget` | เป้าหมายที่ถอดรหัสแล้วของ reparse point ที่รองรับ เช่น junction/symlink พาธอาจถูกเปลี่ยนทิศทาง |
-| `Dir` | เรคคอร์ดมีแฟล็กไดเรกทอรี |
-| `HasADS` | เรคคอร์ดมี alternate data stream ที่มีชื่อ ซึ่งไม่ได้ทำให้เป็นอันตราย |
-| `IsADS` | แถวนี้แทน alternate data stream ที่มีชื่อ แทนที่จะเป็นข้อมูลไฟล์ที่ไม่มีชื่อ |
-| `SI<FN` | เวลาสร้างของ SI มาก่อนเวลาสร้างของ FN ที่ต่างกัน ให้ตรวจสอบการคัดลอก/timestomping และสาเหตุที่ถูกต้องตามกฎหมาย |
-| `ZeroU-Secs` | เวลาสร้าง/แก้ไขของ SI ตรงกับขอบเขตมิลลิวินาทีพอดี เป็นเพียงฮิวริสติกที่อ่อนสำหรับ timestomping |
+| `Dir` (Directory) | เรคคอร์ดมีแฟล็กไดเรกทอรี |
+| `HasADS` (Has Alternate Data Streams) | เรคคอร์ดมี alternate data stream ที่มีชื่อ ซึ่งไม่ได้ทำให้เป็นอันตราย |
+| `IsADS` (Is Alternate Data Stream) | แถวนี้แทน alternate data stream ที่มีชื่อ แทนที่จะเป็นข้อมูลไฟล์ที่ไม่มีชื่อ |
+| `SI<FN` (Standard Information Before File Name) | เวลาสร้างของ SI มาก่อนเวลาสร้างของ FN ที่ต่างกัน ให้ตรวจสอบการคัดลอก/timestomping และสาเหตุที่ถูกต้องตามกฎหมาย |
+| `ZeroU-Secs` (Microsecond Zeros) | เวลาสร้าง/แก้ไขของ SI ตรงกับขอบเขตมิลลิวินาทีพอดี เป็นเพียงฮิวริสติกที่อ่อนสำหรับ timestomping |
 | `Copied` | เวลาแก้ไขมาก่อนเวลาสร้าง มักสอดคล้องกับการคัดลอกไฟล์ ไม่ใช่หลักฐานของการกระทำของผู้โจมตี |
-| `SI-Flags` | แอตทริบิวต์/แฟล็กของไฟล์ใน `$STANDARD_INFORMATION` แฟล็ก hidden/system อาจเป็นจุดเชื่อมโยง (pivot) ที่มีประโยชน์ |
-| `NameType` | namespace ของ `$FILE_NAME` (Win32, DOS, POSIX หรือแบบรวม) ใช้เพื่อหลีกเลี่ยงการนับชื่อซ้ำ |
+| `SI-Flags` (Standard Information Flags) | แอตทริบิวต์/แฟล็กของไฟล์ใน `$STANDARD_INFORMATION` แฟล็ก hidden/system อาจเป็นจุดเชื่อมโยง (pivot) ที่มีประโยชน์ |
+| `Type` (Name Type) | namespace ของ `$FILE_NAME` (Win32, DOS, POSIX หรือแบบรวม) ใช้เพื่อหลีกเลี่ยงการนับชื่อซ้ำ |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | เวลาของ SI เป็นฟิลด์ไทม์ไลน์ทั่วไป แต่เครื่องมือ user-mode สามารถเปลี่ยนแปลงได้หลายค่า |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | เวลาของ FN อัปเดตต่างกันและโดยทั่วไป API ทั่วไปเปลี่ยนแปลงได้ยากกว่า แต่ก็ยังไม่ใช่ค่าที่เปลี่ยนแปลงไม่ได้ |
-| `UpdateSequenceNumber` | USN ล่าสุดที่เกี่ยวข้องกับแอตทริบิวต์ SI ของเรคคอร์ด ใช้เชื่อมโยงไปยัง `$J` หาก USN นั้นยังหลงเหลืออยู่ |
-| `LogfileSequenceNumber` | sequence number ของ NTFS `$LogFile` จากส่วนหัวของ FILE record มีประโยชน์ในการวิเคราะห์ธุรกรรมระดับต่ำ |
-| `SecurityID` | ดัชนีไปยัง NTFS `$Secure` ไม่ใช่ Windows SID ในตัวเอง ให้เชื่อมกับ `SecurityID` ของ [`parse-ntfs secure-sds`](secure-sds.md) เพื่อดูเจ้าของและ ACL ของไฟล์ |
+| `USN` (Update Sequence Number) | USN ล่าสุดที่เกี่ยวข้องกับแอตทริบิวต์ SI ของเรคคอร์ด ใช้เชื่อมโยงไปยัง `$J` หาก USN นั้นยังหลงเหลืออยู่ |
+| `LogfileSN` (Logfile Sequence Number) | sequence number ของ NTFS `$LogFile` จากส่วนหัวของ FILE record มีประโยชน์ในการวิเคราะห์ธุรกรรมระดับต่ำ |
+| `SID` (Security ID) | ดัชนีไปยัง NTFS `$Secure` ไม่ใช่ Windows SID ในตัวเอง ให้เชื่อมกับ `SecurityID` ของ [`parse-ntfs secure-sds`](secure-sds.md) เพื่อดูเจ้าของและ ACL ของไฟล์ |
 | `ObjectID-FileDroid` | Object ID / ตัวระบุ distributed-link-tracking (ถ้ามี) ให้เชื่อมโยงกับ droid ของ LNK/Jump List |
 | `LoggedUtilStream` | บริบทของ `$LOGGED_UTILITY_STREAM` ที่ถอดรหัสแล้ว (ถ้ารองรับ) ให้ตรวจทานค่าที่ไม่คุ้นเคย |
 | `ZoneID-Contents` | เนื้อหา `Zone.Identifier` แบบ resident เช่น ZoneId และ URL ที่ดาวน์โหลด อาจไม่มีอยู่ ถูกลบ หรือเป็นแบบ non-resident |
 | `SourceFile` | `$MFT` อินพุต จำเป็นอย่างยิ่งเมื่อรวมข้อมูลหลายโฮสต์หรือหลายวอลุ่ม |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | เมื่อใช้ `-i`: เนื้อหาของ resident `$DATA` ของแถว (ของไฟล์ หรือของ alternate data stream) ในรูป Base64 ไบต์ (`41-42`) และข้อความเมื่อเป็น ASCII ที่พิมพ์ได้ จะว่างเมื่อข้อมูลเป็นแบบ non-resident หรือถูกกรองออกโดย `-E`/`-M` |
 | `ParseErrors` | ความเสียหายหรือความสัมพันธ์ที่ไม่รองรับซึ่งส่งผลต่อแถวนี้ ห้ามทิ้งคอลัมน์นี้ระหว่างการกรอง |
-| `FromSlack` | เมื่อใช้ `-x`: `True` สำหรับชื่อที่กู้คืนจาก slack ของ FILE record โดย `EntryNum` และ `SequenceNumber` คือไฟล์ที่ชื่อนั้นชี้ไป (จะว่างเมื่อส่วนหัว entry ถูกเขียนทับ) timestamp ที่กู้คืนได้อยู่ในคอลัมน์ `(FN)` และ `InUse` เป็น `False` |
+| `FromSlack` | เมื่อใช้ `-x`: `True` สำหรับชื่อที่กู้คืนจาก slack ของ FILE record โดย `EntryNum` และ `SN` คือไฟล์ที่ชื่อนั้นชี้ไป (จะว่างเมื่อส่วนหัว entry ถูกเขียนทับ) timestamp ที่กู้คืนได้อยู่ในคอลัมน์ `(FN)` และ `InUse` เป็น `False` |
 | `SlackRecord`, `SlackOffset` | เมื่อใช้ `-x`: FILE record ที่ slack เก็บชื่อนั้นไว้ โดยระบุตามตำแหน่งใน `$MFT` แทนที่จะเป็นหมายเลขเรคคอร์ดที่เขียนอยู่ภายใน (เป็นของ extension record เอง แม้ว่าชื่อจะแสดงพร้อมกับ base record) และ byte offset ของชื่อใน `$MFT` `ParseErrors` ของแถว slack คือปัญหาของเรคคอร์ดนั้น เช่น `fixup values do not match` ซึ่งไบต์ที่กู้คืนได้อาจได้รับผลกระทบ |
 | `CopyOfEntryInUse` | เมื่อใช้ `-x`: ไฟล์ที่ใช้งานอยู่ยังมีชื่อนี้ในไดเรกทอรีเดียวกัน (และเป็นไฟล์เดียวกัน เมื่อ reference ยังหลงเหลืออยู่) ชื่อที่ไม่มีไฟล์ที่ใช้งานอยู่ใดมีคือชื่อที่น่าสนใจ: ถูกลบ ถูกเปลี่ยนชื่อ หรือเป็นผู้ครอบครองเดิมของเรคคอร์ดที่ถูกนำกลับมาใช้ใหม่ |
 
@@ -158,7 +158,7 @@ fallback ที่มีอยู่จะใส่เวลาสร้าง�
 2. ค้นหาพาธเต็ม นามสกุลซ้อนที่น่าสงสัย ADS ไดเรกทอรีสำหรับพักไฟล์ และแฮช/ชื่อที่รู้จัก
    เมื่อใช้ `-x` ให้รวมชื่อใน slack ที่ไม่มีไฟล์ที่ใช้งานอยู่ใดมี (`CopyOfEntryInUse` `False`) และเมื่อใช้
    `-i -E ps1,bat,vbs,js` ให้อ่านสคริปต์ขนาดเล็กได้โดยตรงจาก CSV
-3. ใช้ entry/sequence และ `UpdateSequenceNumber` เชื่อมโยงไปยัง USN Journal
+3. ใช้ entry/sequence และ `USN` เชื่อมโยงไปยัง USN Journal
 4. เปรียบเทียบ MFT reference ของ Prefetch/LNK/Jump List กับเรคคอร์ดเป้าหมาย
 5. เชื่อมโยงการลบกับการกักกันของ Defender หรือกิจกรรม `FILE_DELETE`/การเปลี่ยนชื่อใน USN
 

@@ -48,6 +48,8 @@ CSV 列ヘッダーと JSON/JSONL フィールド名は、Amcache および `aut
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+MFT の CSV 出力には専用の列名 `File` (Filename)、`SN` (Sequence Number)、`ParentEntryNum` (ParentEntryNumber)、`ParentSN` (Parent Sequence Number)、`USN` (Update Sequence Number)、`LogfileSN` (Logfile Sequence Number)、`SID` (Security ID)、`Type` (Name Type)、`RefCnt` (Reference Count) を使用します。`auto-parse` の MFT CSV も同じ列名です。[MFT の出力フィールド](../artifacts/mft.md#csv-output-fields)を参照してください。
+
 ネイティブ システム情報 JSON 時間は `CompNameLastWritten` (CSV: `CompNameLastWrittenUTC`) です。 `HasADS` はブール指標です。 Prefetch の `Dir` には、記録されたディレクトリのリストが含まれます。 `User` は、アーティファクト固有のタイプ (アカウント名の文字列、または USB 出力内の関連ユーザーのリスト) を保持します。実行中のアイデンティティを意味するものではありません。クエリ内の句読点を引用符で囲みます: `."SI<FN"` および `.["ZeroU-Secs"]`。
 
 ## JSON { #json }

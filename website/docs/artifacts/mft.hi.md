@@ -28,7 +28,7 @@ C:\$MFT
 ## विश्लेषक के लिए सावधानियाँ { #analyst-cautions }
 
 - हटाया गया record आंशिक रूप से overwrite हो सकता है या उसका record number फिर से उपयोग हो सकता है।
-- `SequenceNumber` एक ही entry number की पीढ़ियों में अंतर करता है। Entry **और** sequence दोनों का मिलान करें।
+- `SN` एक ही entry number की पीढ़ियों में अंतर करता है। Entry **और** sequence दोनों का मिलान करें।
 - `$STANDARD_INFORMATION` (`0x10`) और `$FILE_NAME` (`0x30`) timestamps का update
   व्यवहार अलग होता है। कोई भी manipulation से अछूता नहीं है।
 - `SI<FN`, `ZeroU-Secs` और `Copied` सुराग हैं, timestomping के स्वचालित निर्णय नहीं।
@@ -101,36 +101,36 @@ entry (`30`, `0x1E`, `30-1`) या path (`\Windows\System32`, `C:/Windows`; cas
 
 | Field | व्याख्या |
 |---|---|
-| `EntryNum` | MFT record number। `SequenceNumber` के साथ जोड़ें; record numbers फिर से उपयोग होते हैं। |
-| `SequenceNumber` | NTFS references द्वारा उपयोग किया जाने वाला generation counter। Mismatch पुराने/हटाए गए संबंधों को प्रकट कर सकता है। |
+| `EntryNum` (Entry Number) | MFT record number। `SN` के साथ जोड़ें; record numbers फिर से उपयोग होते हैं। |
+| `SN` (Sequence Number) | NTFS references द्वारा उपयोग किया जाने वाला generation counter। Mismatch पुराने/हटाए गए संबंधों को प्रकट कर सकता है। |
 | `InUse` | संग्रह के समय allocation flag। `false` का अर्थ है record free/हटाया गया है, न कि सभी bytes अक्षुण्ण हैं। |
-| `ParentEntryNumber`, `ParentSequenceNumber` | `$FILE_NAME` से parent directory reference। दोनों भागों को सत्यापित करें। |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | `$FILE_NAME` से parent directory reference। दोनों भागों को सत्यापित करें। |
 | `ParentPath` | पुनर्निर्मित parent path। Unknown/orphan markers अनसुलझी ancestry उजागर करते हैं। |
-| `Filename` | वर्तमान row के `$FILE_NAME` या stream से नाम। एक record की कई rows हो सकती हैं। |
-| `Ext` | नाम से parse किया गया सुविधाजनक extension; file type का भरोसेमंद निर्धारण नहीं। |
-| `Size` | Row/stream से जुड़ा logical आकार। Sparse/compressed allocation अलग हो सकता है। |
-| `ReferenceCount` | NTFS hard-link reference count; बचे हुए names की संख्या से सावधानी से तुलना करें। |
+| `File` (Filename) | वर्तमान row के `$FILE_NAME` या stream से नाम। एक record की कई rows हो सकती हैं। |
+| `Ext` (Extension) | नाम से parse किया गया सुविधाजनक extension; file type का भरोसेमंद निर्धारण नहीं। |
+| `Size` (File Size) | Row/stream से जुड़ा logical आकार। Sparse/compressed allocation अलग हो सकता है। |
+| `RefCnt` (Reference Count) | NTFS hard-link reference count; बचे हुए names की संख्या से सावधानी से तुलना करें। |
 | `ReparseTarget` | Junctions/symlinks जैसे समर्थित reparse points के लिए decode किया गया target। Paths redirect कर सकते हैं। |
-| `Dir` | Record में directory flag है। |
-| `HasADS` | Record में named alternate data streams हैं। इससे वह दुर्भावनापूर्ण नहीं हो जाता। |
-| `IsADS` | यह row unnamed file data के बजाय किसी named alternate data stream को दर्शाती है। |
-| `SI<FN` | SI creation किसी अलग FN creation समय से पहले है। Copying/timestomping और वैध कारणों की जाँच करें। |
-| `ZeroU-Secs` | SI created/modified समय ठीक millisecond सीमा पर पड़ता है। केवल कमज़ोर timestomping heuristic। |
+| `Dir` (Directory) | Record में directory flag है। |
+| `HasADS` (Has Alternate Data Streams) | Record में named alternate data streams हैं। इससे वह दुर्भावनापूर्ण नहीं हो जाता। |
+| `IsADS` (Is Alternate Data Stream) | यह row unnamed file data के बजाय किसी named alternate data stream को दर्शाती है। |
+| `SI<FN` (Standard Information Before File Name) | SI creation किसी अलग FN creation समय से पहले है। Copying/timestomping और वैध कारणों की जाँच करें। |
+| `ZeroU-Secs` (Microsecond Zeros) | SI created/modified समय ठीक millisecond सीमा पर पड़ता है। केवल कमज़ोर timestomping heuristic। |
 | `Copied` | Modified समय created समय से पहले है। अक्सर file copy के अनुरूप; हमलावर की कार्रवाई का प्रमाण नहीं। |
-| `SI-Flags` | `$STANDARD_INFORMATION` file attributes/flags। Hidden/system flags उपयोगी pivots हो सकते हैं। |
-| `NameType` | `$FILE_NAME` namespace (Win32, DOS, POSIX या संयुक्त)। Names की दोहरी गिनती से बचने के लिए उपयोग करें। |
+| `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` file attributes/flags। Hidden/system flags उपयोगी pivots हो सकते हैं। |
+| `Type` (Name Type) | `$FILE_NAME` namespace (Win32, DOS, POSIX या संयुक्त)। Names की दोहरी गिनती से बचने के लिए उपयोग करें। |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI times। सामान्य timeline fields, लेकिन user-mode टूल इनमें से कई को बदल सकते हैं। |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN times। अलग तरीके से update होते हैं और सामान्य APIs के लिए बदलना आमतौर पर कठिन होता है; फिर भी अपरिवर्तनीय नहीं। |
-| `UpdateSequenceNumber` | Record के SI attribute से जुड़ा अंतिम USN। यदि वह USN बचा है तो `$J` में pivot करें। |
-| `LogfileSequenceNumber` | FILE record header से NTFS `$LogFile` sequence number; low-level transaction विश्लेषण में उपयोगी। |
-| `SecurityID` | NTFS `$Secure` में index; अपने-आप में Windows SID नहीं। फ़ाइल के owner और ACLs के लिए इसे [`parse-ntfs secure-sds`](secure-sds.md) के `SecurityID` से join करें। |
+| `USN` (Update Sequence Number) | Record के SI attribute से जुड़ा अंतिम USN। यदि वह USN बचा है तो `$J` में pivot करें। |
+| `LogfileSN` (Logfile Sequence Number) | FILE record header से NTFS `$LogFile` sequence number; low-level transaction विश्लेषण में उपयोगी। |
+| `SID` (Security ID) | NTFS `$Secure` में index; अपने-आप में Windows SID नहीं। फ़ाइल के owner और ACLs के लिए इसे [`parse-ntfs secure-sds`](secure-sds.md) के `SecurityID` से join करें। |
 | `ObjectID-FileDroid` | जहाँ मौजूद हो, Object ID / distributed-link-tracking identifier; LNK/Jump List droids से correlate करें। |
 | `LoggedUtilStream` | जहाँ समर्थित हो, decode किया गया `$LOGGED_UTILITY_STREAM` context। अपरिचित values की समीक्षा करें। |
 | `ZoneID-Contents` | Resident `Zone.Identifier` सामग्री, जैसे ZoneId और download URLs। यह अनुपस्थित, हटाई गई या non-resident हो सकती है। |
 | `SourceFile` | Input `$MFT`, hosts या volumes को जोड़ते समय आवश्यक। |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | `-i` के साथ: row के resident `$DATA` (फ़ाइल का, या alternate data stream का) की सामग्री, Base64 के रूप में, bytes (`41-42`) के रूप में, और printable ASCII होने पर text के रूप में। Data non-resident होने या `-E`/`-M` द्वारा filter होने पर खाली। |
 | `ParseErrors` | इस row को प्रभावित करने वाली क्षति या असमर्थित संबंध। Filtering के दौरान इस column को कभी न हटाएँ। |
-| `FromSlack` | `-x` के साथ: FILE record के slack से recover किए गए नाम के लिए `True`। इसके `EntryNum` और `SequenceNumber` वह फ़ाइल हैं जिसकी ओर नाम संकेत करता था (entry header overwrite होने पर खाली), इसके recover किए गए timestamps `(FN)` columns में हैं, और `InUse` `False` है। |
+| `FromSlack` | `-x` के साथ: FILE record के slack से recover किए गए नाम के लिए `True`। इसके `EntryNum` और `SN` वह फ़ाइल हैं जिसकी ओर नाम संकेत करता था (entry header overwrite होने पर खाली), इसके recover किए गए timestamps `(FN)` columns में हैं, और `InUse` `False` है। |
 | `SlackRecord`, `SlackOffset` | `-x` के साथ: वह FILE record जिसके slack में नाम था, उसके भीतर लिखे record number के बजाय `$MFT` में उसके स्थान से (extension record का अपना, भले ही उसके names उसके base record के साथ सूचीबद्ध हों), और `$MFT` में नाम का byte offset। Slack row के `ParseErrors` उस record की समस्याएँ हैं, जैसे `fixup values do not match`: recover किए गए bytes प्रभावित हो सकते हैं। |
 | `CopyOfEntryInUse` | `-x` के साथ: उपयोग में मौजूद कोई फ़ाइल अभी भी उसी directory में यह नाम रखती है (और वही फ़ाइल है, जब reference बचा हो)। ऐसे names जो उपयोग में किसी फ़ाइल के पास नहीं हैं, वही रोचक हैं: हटाए गए, rename किए गए, या reuse किए गए record का पिछला occupant। |
 
@@ -158,7 +158,7 @@ investigative CSV low-level structure छोड़ देता है तब �
 2. पूरे paths, संदिग्ध double extensions, ADS, staging directories और ज्ञात hashes/names खोजें।
    `-x` के साथ, वे slack names शामिल करें जो उपयोग में किसी फ़ाइल के पास नहीं हैं (`CopyOfEntryInUse` `False`);
    `-i -E ps1,bat,vbs,js` के साथ, छोटे scripts सीधे CSV से पढ़ें।
-3. Entry/sequence और `UpdateSequenceNumber` को USN Journal में pivot करें।
+3. Entry/sequence और `USN` को USN Journal में pivot करें।
 4. Prefetch/LNK/Jump List MFT references की तुलना target record से करें।
 5. Deletion को Defender क्वारंटीन या USN `FILE_DELETE`/rename गतिविधि से correlate करें।
 

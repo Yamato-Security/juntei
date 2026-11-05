@@ -6,13 +6,13 @@ Jede Datei und jedes Verzeichnis auf NTFS hat eine **Sicherheitsbeschreibung** (
 **DACL** (wer was damit tun darf) und eine **SACL** (welche Zugriffe überwacht werden, sowie ihr Integritätslabel).
 NTFS speichert jede eindeutige Sicherheitsbeschreibung einmal im Stream `$SDS` der Datei `$Secure` (MFT-Eintrag 9)
 und vergibt dafür eine **Sicherheits-ID**. Das `$STANDARD_INFORMATION` einer Datei zeichnet nur diese Sicherheits-ID auf: die
-Spalte `SecurityID` von [`parse-ntfs mft`](mft.md). `$SDS` macht daraus einen Besitzer und ACLs.
+Spalte `SID` von [`parse-ntfs mft`](mft.md). `$SDS` macht daraus einen Besitzer und ACLs.
 
 `$SDS` ist in Blöcke von 256 KiB unterteilt, auf die jeweils eine Kopie folgt (ihre Spiegelung). Jeder Eintrag enthält einen Hash
 seiner Sicherheitsbeschreibung, mit dem NTFS eine bereits vorhandene Sicherheitsbeschreibung findet (`$SDH`), sowie die
 Sicherheits-ID (die `$SII` indiziert).
 
-<span class="evidence-strength">Bestmögliche Schlussfolgerung:</span> Die Dateien, deren `SecurityID` eine
+<span class="evidence-strength">Bestmögliche Schlussfolgerung:</span> Die Dateien, deren `SID` eine
 Sicherheitsbeschreibung benennt, hatten zum Zeitpunkt des letzten Schreibens ihres `$MFT`-Datensatzes diesen Besitzer und diese ACLs. Der Besitzer
 einer Datei ist in der Regel das Konto, das sie erstellt hat, doch ein Administrator, ein Installationsprogramm oder ein Programm,
 das den Besitz übernimmt, kann ihn ändern.
@@ -69,7 +69,7 @@ dazu die Sicherheitsbeschreibungen mit einer NULL-DACL (überhaupt keine Einschr
 | Feld | Interpretation |
 |---|---|
 | `SourcePath` | Eingabedatei. |
-| `SecurityID` | Die Sicherheits-ID: mit der `SecurityID` von [`parse-ntfs mft`](mft.md) für dasselbe Volume verknüpfen. |
+| `SecurityID` | Die Sicherheits-ID: mit der `SID` von [`parse-ntfs mft`](mft.md) für dasselbe Volume verknüpfen. |
 | `Hash` | Der mit der Sicherheitsbeschreibung aufgezeichnete Hash. |
 | `EntryOffset` | Position des Eintrags im Stream. |
 | `FromMirror` | `True` für eine aus dem Spiegelblock gelesene Kopie: eine, die von ihrem Eintrag abweicht (nach diesem aufgeführt), oder die Kopie eines beschädigten Eintrags. |
@@ -105,7 +105,7 @@ JSON/JSONL haben dieselben Felder und Namen, mit Zahlen als Zahlen, `null` für 
 
 ## Untersuchungsstrategie { #investigation-strategy }
 
-1. Parsen Sie die `$MFT` desselben Volumes und verknüpfen Sie deren `SecurityID` mit der dieser Ausgabe: Jede Datei erhält ihren
+1. Parsen Sie die `$MFT` desselben Volumes und verknüpfen Sie deren `SID` mit der dieser Ausgabe: Jede Datei erhält ihren
    Besitzer und ihre ACLs.
 2. Betrachten Sie die Besitzer, die Benutzerkonten sind (`S-1-5-21-…`): welche Dateien einem verdächtigen Konto
    gehören und welche Konten Dateien in Systemverzeichnissen besitzen.

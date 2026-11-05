@@ -28,7 +28,7 @@ C:\$MFT
 ## 분석 시 주의 사항 { #analyst-cautions }
 
 - 삭제된 레코드는 부분적으로 덮어써졌거나 레코드 번호가 재사용되었을 수 있습니다.
-- `SequenceNumber`는 같은 엔트리 번호의 세대를 구별합니다. 엔트리와 시퀀스를 **모두** 대조하십시오.
+- `SN`는 같은 엔트리 번호의 세대를 구별합니다. 엔트리와 시퀀스를 **모두** 대조하십시오.
 - `$STANDARD_INFORMATION`(`0x10`)과 `$FILE_NAME`(`0x30`) 타임스탬프는 업데이트 동작이 다릅니다. 어느
   쪽도 조작으로부터 안전하지 않습니다.
 - `SI<FN`, `ZeroU-Secs` 및 `Copied`는 단서일 뿐이며, 자동으로 타임스톰핑(timestomping)이라고 판정하는
@@ -102,36 +102,36 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 
 | 필드 | 해석 |
 |---|---|
-| `EntryNum` | MFT 레코드 번호입니다. 레코드 번호는 재사용되므로 `SequenceNumber`와 함께 사용하십시오. |
-| `SequenceNumber` | NTFS 참조에서 사용하는 세대 카운터입니다. 불일치는 오래되었거나 삭제된 관계를 드러낼 수 있습니다. |
+| `EntryNum` (Entry Number) | MFT 레코드 번호입니다. 레코드 번호는 재사용되므로 `SN`와 함께 사용하십시오. |
+| `SN` (Sequence Number) | NTFS 참조에서 사용하는 세대 카운터입니다. 불일치는 오래되었거나 삭제된 관계를 드러낼 수 있습니다. |
 | `InUse` | 수집 시점의 할당 플래그입니다. `false`는 레코드가 비어 있거나 삭제되었다는 뜻이며, 모든 바이트가 온전하다는 뜻은 아닙니다. |
-| `ParentEntryNumber`, `ParentSequenceNumber` | `$FILE_NAME`의 상위 디렉터리 참조입니다. 두 부분을 모두 검증하십시오. |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | `$FILE_NAME`의 상위 디렉터리 참조입니다. 두 부분을 모두 검증하십시오. |
 | `ParentPath` | 재구성된 상위 경로입니다. 알 수 없음/고아 표시는 해결되지 않은 상위 계층을 나타냅니다. |
-| `Filename` | 현재 행의 `$FILE_NAME` 또는 스트림의 이름입니다. 하나의 레코드에 여러 행이 있을 수 있습니다. |
-| `Ext` | 이름에서 파싱한 편의상의 확장자이며, 신뢰할 수 있는 파일 유형 판정이 아닙니다. |
-| `Size` | 행/스트림에 연결된 논리적 크기입니다. 스파스/압축 할당 크기와 다를 수 있습니다. |
-| `ReferenceCount` | NTFS 하드 링크 참조 수입니다. 남아 있는 이름 수와는 신중하게 비교하십시오. |
+| `File` (Filename) | 현재 행의 `$FILE_NAME` 또는 스트림의 이름입니다. 하나의 레코드에 여러 행이 있을 수 있습니다. |
+| `Ext` (Extension) | 이름에서 파싱한 편의상의 확장자이며, 신뢰할 수 있는 파일 유형 판정이 아닙니다. |
+| `Size` (File Size) | 행/스트림에 연결된 논리적 크기입니다. 스파스/압축 할당 크기와 다를 수 있습니다. |
+| `RefCnt` (Reference Count) | NTFS 하드 링크 참조 수입니다. 남아 있는 이름 수와는 신중하게 비교하십시오. |
 | `ReparseTarget` | 정션/심볼릭 링크 같은 지원되는 리파스 포인트의 디코딩된 대상입니다. 경로가 리디렉션될 수 있습니다. |
-| `Dir` | 레코드에 디렉터리 플래그가 있습니다. |
-| `HasADS` | 레코드에 이름이 있는 대체 데이터 스트림이 포함되어 있습니다. 이것만으로 악성이 되지는 않습니다. |
-| `IsADS` | 이 행이 이름 없는 파일 데이터가 아니라 이름이 있는 대체 데이터 스트림을 나타냅니다. |
-| `SI<FN` | SI 생성 시간이 다른 FN 생성 시간보다 앞섭니다. 복사/타임스톰핑과 정당한 원인을 조사하십시오. |
-| `ZeroU-Secs` | SI 생성/수정 시간이 정확히 밀리초 경계에 위치합니다. 약한 타임스톰핑 휴리스틱일 뿐입니다. |
+| `Dir` (Directory) | 레코드에 디렉터리 플래그가 있습니다. |
+| `HasADS` (Has Alternate Data Streams) | 레코드에 이름이 있는 대체 데이터 스트림이 포함되어 있습니다. 이것만으로 악성이 되지는 않습니다. |
+| `IsADS` (Is Alternate Data Stream) | 이 행이 이름 없는 파일 데이터가 아니라 이름이 있는 대체 데이터 스트림을 나타냅니다. |
+| `SI<FN` (Standard Information Before File Name) | SI 생성 시간이 다른 FN 생성 시간보다 앞섭니다. 복사/타임스톰핑과 정당한 원인을 조사하십시오. |
+| `ZeroU-Secs` (Microsecond Zeros) | SI 생성/수정 시간이 정확히 밀리초 경계에 위치합니다. 약한 타임스톰핑 휴리스틱일 뿐입니다. |
 | `Copied` | 수정 시간이 생성 시간보다 앞섭니다. 파일 복사와 일치하는 경우가 많으며, 공격자 행위의 증거가 아닙니다. |
-| `SI-Flags` | `$STANDARD_INFORMATION` 파일 속성/플래그입니다. 숨김/시스템 플래그는 유용한 피벗이 될 수 있습니다. |
-| `NameType` | `$FILE_NAME` 네임스페이스(Win32, DOS, POSIX 또는 조합)입니다. 이름을 중복 집계하지 않도록 사용하십시오. |
+| `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` 파일 속성/플래그입니다. 숨김/시스템 플래그는 유용한 피벗이 될 수 있습니다. |
+| `Type` (Name Type) | `$FILE_NAME` 네임스페이스(Win32, DOS, POSIX 또는 조합)입니다. 이름을 중복 집계하지 않도록 사용하십시오. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI 시간입니다. 일반적인 타임라인 필드이지만, 사용자 모드 도구로 그중 여러 개를 변경할 수 있습니다. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN 시간입니다. 업데이트 방식이 다르며 일반적인 API로 변경하기가 대체로 더 어렵지만, 여전히 변경 불가능한 것은 아닙니다. |
-| `UpdateSequenceNumber` | 레코드의 SI 속성과 연결된 마지막 USN입니다. 해당 USN이 남아 있으면 `$J`로 피벗하십시오. |
-| `LogfileSequenceNumber` | FILE 레코드 헤더의 NTFS `$LogFile` 시퀀스 번호로, 저수준 트랜잭션 분석에 유용합니다. |
-| `SecurityID` | NTFS `$Secure`에 대한 인덱스이며, 그 자체로 Windows SID는 아닙니다. 파일의 소유자와 ACL을 확인하려면 [`parse-ntfs secure-sds`](secure-sds.md)의 `SecurityID`와 결합하십시오. |
+| `USN` (Update Sequence Number) | 레코드의 SI 속성과 연결된 마지막 USN입니다. 해당 USN이 남아 있으면 `$J`로 피벗하십시오. |
+| `LogfileSN` (Logfile Sequence Number) | FILE 레코드 헤더의 NTFS `$LogFile` 시퀀스 번호로, 저수준 트랜잭션 분석에 유용합니다. |
+| `SID` (Security ID) | NTFS `$Secure`에 대한 인덱스이며, 그 자체로 Windows SID는 아닙니다. 파일의 소유자와 ACL을 확인하려면 [`parse-ntfs secure-sds`](secure-sds.md)의 `SecurityID`와 결합하십시오. |
 | `ObjectID-FileDroid` | 존재하는 경우 객체 ID / 분산 링크 추적 식별자입니다. LNK/Jump List의 droid와 상관 분석하십시오. |
 | `LoggedUtilStream` | 지원되는 경우 디코딩된 `$LOGGED_UTILITY_STREAM` 컨텍스트입니다. 익숙하지 않은 값은 검토하십시오. |
 | `ZoneID-Contents` | ZoneId와 다운로드 URL 같은 상주 `Zone.Identifier` 콘텐츠입니다. 없거나 제거되었거나 비상주일 수 있습니다. |
 | `SourceFile` | 입력 `$MFT`로, 여러 호스트나 볼륨을 결합할 때 필수적입니다. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | `-i` 사용 시: 행의 상주 `$DATA`(파일 또는 대체 데이터 스트림의 데이터) 콘텐츠를 Base64, 바이트(`41-42`), 그리고 출력 가능한 ASCII인 경우 텍스트로 나타냅니다. 데이터가 비상주이거나 `-E`/`-M`으로 필터링된 경우 비어 있습니다. |
 | `ParseErrors` | 이 행에 영향을 주는 손상 또는 지원되지 않는 관계입니다. 필터링 중에 이 열을 절대 버리지 마십시오. |
-| `FromSlack` | `-x` 사용 시: FILE 레코드의 슬랙에서 복구된 이름이면 `True`입니다. 해당 `EntryNum`과 `SequenceNumber`는 그 이름이 가리키던 파일이며(엔트리 헤더가 덮어써진 경우 비어 있음), 복구된 타임스탬프는 `(FN)` 열에 있고 `InUse`는 `False`입니다. |
+| `FromSlack` | `-x` 사용 시: FILE 레코드의 슬랙에서 복구된 이름이면 `True`입니다. 해당 `EntryNum`과 `SN`는 그 이름이 가리키던 파일이며(엔트리 헤더가 덮어써진 경우 비어 있음), 복구된 타임스탬프는 `(FN)` 열에 있고 `InUse`는 `False`입니다. |
 | `SlackRecord`, `SlackOffset` | `-x` 사용 시: 이름이 들어 있던 슬랙을 가진 FILE 레코드(레코드 내부에 기록된 레코드 번호가 아니라 `$MFT` 내 위치 기준이며, 확장 레코드의 이름이 기본 레코드와 함께 나열되더라도 확장 레코드 자체의 위치)와, `$MFT` 내 이름의 바이트 오프셋입니다. 슬랙 행의 `ParseErrors`는 `fixup values do not match` 같은 해당 레코드의 문제이며, 복구된 바이트가 영향을 받았을 수 있습니다. |
 | `CopyOfEntryInUse` | `-x` 사용 시: 사용 중인 파일이 같은 디렉터리에 여전히 이 이름을 가지고 있습니다(참조가 남아 있는 경우 같은 파일임). 사용 중인 어떤 파일도 가지고 있지 않은 이름이 주목할 만한 대상입니다. 삭제되었거나 이름이 변경되었거나 재사용된 레코드의 이전 점유자입니다. |
 
@@ -157,7 +157,7 @@ CSV에서 저수준 구조가 생략되는 경우 이를 사용하십시오. `-x
 2. 전체 경로, 의심스러운 이중 확장자, ADS, 스테이징 디렉터리 및 알려진 해시/이름을 검색하십시오.
    `-x`를 사용할 때는 사용 중인 어떤 파일도 가지고 있지 않은 슬랙 이름(`CopyOfEntryInUse` `False`)을
    포함하고, `-i -E ps1,bat,vbs,js`를 사용하면 작은 스크립트를 CSV에서 바로 읽을 수 있습니다.
-3. 엔트리/시퀀스와 `UpdateSequenceNumber`를 USN 저널로 피벗하십시오.
+3. 엔트리/시퀀스와 `USN`를 USN 저널로 피벗하십시오.
 4. Prefetch/LNK/Jump List의 MFT 참조를 대상 레코드와 비교하십시오.
 5. 삭제를 Defender 격리 데이터 또는 USN `FILE_DELETE`/이름 변경 활동과 상관 분석하십시오.
 

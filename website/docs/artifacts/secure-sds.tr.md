@@ -6,13 +6,13 @@ NTFS üzerindeki her dosya ve dizinin bir **güvenlik tanımlayıcısı** vardı
 **DACL** (onunla kimin ne yapabileceği) ve bir **SACL** (hangi erişimin denetlendiği ve bütünlük etiketi).
 NTFS her farklı tanımlayıcıyı `$Secure` dosyasının (MFT girdisi 9) `$SDS` akışında bir kez saklar
 ve ona bir **güvenlik kimliği** (security ID) verir. Bir dosyanın `$STANDARD_INFORMATION` özniteliği yalnızca bu güvenlik kimliğini kaydeder:
-[`parse-ntfs mft`](mft.md) çıktısındaki `SecurityID` sütunu. `$SDS` bunu bir sahibe ve ACL'lere dönüştürür.
+[`parse-ntfs mft`](mft.md) çıktısındaki `SID` sütunu. `$SDS` bunu bir sahibe ve ACL'lere dönüştürür.
 
 `$SDS`, her birinin ardından bir kopyası (aynası) gelen 256 KiB'lık bloklardan oluşur. Her girdi, NTFS'in
 zaten var olan bir tanımlayıcıyı bulmak için kullandığı tanımlayıcı karmasını (`$SDH`) ve
 güvenlik kimliğini (`$SII` bunu indeksler) içerir.
 
-<span class="evidence-strength">En iyi sonuç:</span> `SecurityID` değeri bir tanımlayıcıyı adlandıran
+<span class="evidence-strength">En iyi sonuç:</span> `SID` değeri bir tanımlayıcıyı adlandıran
 dosyalar, `$MFT` kayıtları en son yazıldığında o sahibe ve o ACL'lere sahipti. Bir dosyanın
 sahibi genellikle onu oluşturan hesaptır; ancak bir yönetici, bir yükleyici veya sahipliği alan bir program
 bunu değiştirebilir.
@@ -69,7 +69,7 @@ NULL DACL'ye sahip (hiçbir kısıtlama içermeyen) tanımlayıcıları ve varsa
 | Alan | Yorumlama |
 |---|---|
 | `SourcePath` | Girdi dosyası. |
-| `SecurityID` | Güvenlik kimliği: aynı birim için [`parse-ntfs mft`](mft.md) çıktısındaki `SecurityID` ile birleştirin. |
+| `SecurityID` | Güvenlik kimliği: aynı birim için [`parse-ntfs mft`](mft.md) çıktısındaki `SID` ile birleştirin. |
 | `Hash` | Tanımlayıcıyla birlikte kaydedilen karma. |
 | `EntryOffset` | Girdinin akış içindeki konumu. |
 | `FromMirror` | Ayna bloğundan okunan bir kopya için `True`: girdisinden farklı olan (ondan sonra listelenen) bir kopya veya hasarlı bir girdinin kopyası. |
@@ -105,7 +105,7 @@ JSON/JSONL aynı alanlara ve adlara sahiptir; sayılar sayı olarak, boş değer
 
 ## İnceleme stratejisi { #investigation-strategy }
 
-1. Aynı birimin `$MFT` dosyasını ayrıştırın ve `SecurityID` değerini bu çıktınınkiyle birleştirin: her dosya
+1. Aynı birimin `$MFT` dosyasını ayrıştırın ve `SID` değerini bu çıktınınkiyle birleştirin: her dosya
    sahibini ve ACL'lerini alır.
 2. Kullanıcı hesabı olan sahiplere (`S-1-5-21-…`) bakın: şüpheli bir hesabın hangi dosyalara sahip
    olduğuna ve sistem dizinlerindeki dosyalara hangi hesapların sahip olduğuna.

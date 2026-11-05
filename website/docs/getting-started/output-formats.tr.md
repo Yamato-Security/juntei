@@ -69,6 +69,8 @@ defteri değer adları özgün yazımlarını korur.
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+MFT CSV çıktısı özel sütun adlarını kullanır: `File` (Filename), `SN` (Sequence Number), `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number), `USN` (Update Sequence Number), `LogfileSN` (Logfile Sequence Number), `SID` (Security ID), `Type` (Name Type) ve `RefCnt` (Reference Count). Bunlar `auto-parse` MFT CSV dosyaları için de geçerlidir; bkz. [MFT çıktı alanları](../artifacts/mft.md#csv-output-fields).
+
 Yerel sistem bilgileri JSON zamanı `CompNameLastWritten` alanıdır (CSV:
 `CompNameLastWrittenUTC`). `HasADS` bir Boole göstergesidir; Prefetch'teki `Dir` kaydedilmiş dizin
 listesini içerir. `User` artefakta özgü türünü korur: bir hesap adı için bir dize veya USB çıktısında

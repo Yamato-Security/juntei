@@ -6,13 +6,13 @@ Chaque fichier et répertoire sur NTFS possède un **descripteur de sécurité**
 **DACL** (qui peut faire quoi avec lui) et une **SACL** (quels accès sont audités, et son étiquette d'intégrité).
 NTFS conserve chaque descripteur distinct une seule fois, dans le flux `$SDS` du fichier `$Secure` (entrée MFT 9),
 et lui attribue un **ID de sécurité**. Le `$STANDARD_INFORMATION` d'un fichier n'enregistre que cet ID de sécurité : la
-colonne `SecurityID` de [`parse-ntfs mft`](mft.md). `$SDS` le convertit en propriétaire et en ACL.
+colonne `SID` de [`parse-ntfs mft`](mft.md). `$SDS` le convertit en propriétaire et en ACL.
 
 `$SDS` est organisé en blocs de 256 Kio, chacun suivi d'une copie de lui-même (son miroir). Chaque entrée comporte une empreinte de
 son descripteur, que NTFS utilise pour retrouver un descripteur déjà existant (`$SDH`), ainsi que
 l'ID de sécurité (indexé par `$SII`).
 
-<span class="evidence-strength">Meilleure conclusion :</span> les fichiers dont le `SecurityID` désigne un
+<span class="evidence-strength">Meilleure conclusion :</span> les fichiers dont le `SID` désigne un
 descripteur avaient, lors de la dernière écriture de leur enregistrement `$MFT`, ce propriétaire et ces ACL. Le propriétaire d'un fichier
 est généralement le compte qui l'a créé, mais un administrateur, un programme d'installation ou un programme
 qui s'en approprie la propriété peut le modifier.
@@ -69,7 +69,7 @@ les descripteurs dotés d'une DACL NULL (aucune restriction) et les éventuels d
 | Champ | Interprétation |
 |---|---|
 | `SourcePath` | Fichier d'entrée. |
-| `SecurityID` | L'ID de sécurité : joignez-le au `SecurityID` de [`parse-ntfs mft`](mft.md) pour le même volume. |
+| `SecurityID` | L'ID de sécurité : joignez-le au `SID` de [`parse-ntfs mft`](mft.md) pour le même volume. |
 | `Hash` | Empreinte enregistrée avec le descripteur. |
 | `EntryOffset` | Position de l'entrée dans le flux. |
 | `FromMirror` | `True` pour une copie lue dans le bloc miroir : une copie qui diffère de son entrée (listée après celle-ci), ou la copie d'une entrée endommagée. |
@@ -105,7 +105,7 @@ JSON/JSONL comportent les mêmes champs et noms, avec les nombres sous forme de 
 
 ## Stratégie d'investigation { #investigation-strategy }
 
-1. Analysez la `$MFT` du même volume et joignez son `SecurityID` à celui de cette sortie : chaque fichier obtient son
+1. Analysez la `$MFT` du même volume et joignez son `SID` à celui de cette sortie : chaque fichier obtient son
    propriétaire et ses ACL.
 2. Examinez les propriétaires qui sont des comptes utilisateur (`S-1-5-21-…`) : quels fichiers possède un compte suspect,
    et quels comptes possèdent des fichiers dans les répertoires système.

@@ -63,6 +63,8 @@ MetadataChanged、Created，且 SI 在 FN 之前。在 CSV 工具中，含有空
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+MFT CSV 輸出使用專用欄位名稱：`File` (Filename)、`SN` (Sequence Number)、`ParentEntryNum` (ParentEntryNumber)、`ParentSN` (Parent Sequence Number)、`USN` (Update Sequence Number)、`LogfileSN` (Logfile Sequence Number)、`SID` (Security ID)、`Type` (Name Type) 和 `RefCnt` (Reference Count)。`auto-parse` 的 MFT CSV 也使用相同名稱；請參閱 [MFT 輸出欄位](../artifacts/mft.md#csv-output-fields)。
+
 原生系統資訊 JSON 的時間欄位為 `CompNameLastWritten`（CSV：
 `CompNameLastWrittenUTC`）。`HasADS` 是布林指標；Prefetch 中的 `Dir` 包含所記錄的目錄清單。
 `User` 保留各跡證特有的型別：帳戶名稱時為字串，USB 輸出中則為相關使用者的清單。

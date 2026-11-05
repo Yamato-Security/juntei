@@ -67,6 +67,8 @@ manifest ให้อัปเดตตัวกรอง `jq`, `xsv` และ�
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+เอาต์พุต MFT CSV ใช้ชื่อคอลัมน์เฉพาะ: `File` (Filename), `SN` (Sequence Number), `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number), `USN` (Update Sequence Number), `LogfileSN` (Logfile Sequence Number), `SID` (Security ID), `Type` (Name Type) และ `RefCnt` (Reference Count) ซึ่งใช้กับ MFT CSV จาก `auto-parse` ด้วย ดู [ฟิลด์เอาต์พุต MFT](../artifacts/mft.md#csv-output-fields)
+
 เวลาใน JSON แบบเนทีฟของข้อมูลระบบคือ `CompNameLastWritten` (CSV:
 `CompNameLastWrittenUTC`) `HasADS` เป็นตัวบ่งชี้แบบบูลีน `Dir` ใน Prefetch มีรายการ
 ไดเรกทอรีที่บันทึกไว้ `User` คงชนิดเฉพาะของแต่ละอาร์ติแฟกต์: เป็นสตริงสำหรับชื่อบัญชี

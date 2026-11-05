@@ -28,7 +28,7 @@ y los metadatos del volumen siempre que sea posible.
 ## Precauciones para el analista { #analyst-cautions }
 
 - Un registro eliminado puede estar parcialmente sobrescrito o su número de registro puede haberse reutilizado.
-- `SequenceNumber` distingue las generaciones de un mismo número de entrada. Haga coincidir la entrada **y** la secuencia.
+- `SN` distingue las generaciones de un mismo número de entrada. Haga coincidir la entrada **y** la secuencia.
 - Las marcas de tiempo de `$STANDARD_INFORMATION` (`0x10`) y `$FILE_NAME` (`0x30`) se actualizan de forma
   diferente. Ninguna es inmune a la manipulación.
 - `SI<FN`, `ZeroU-Secs` y `Copied` son pistas, no veredictos automáticos de timestomping.
@@ -101,36 +101,36 @@ entrada (`30`, `0x1E`, `30-1`) o por ruta (`\Windows\System32`, `C:/Windows`; si
 
 | Campo | Interpretación |
 |---|---|
-| `EntryNum` | Número de registro de la MFT. Combínelo con `SequenceNumber`; los números de registro se reutilizan. |
-| `SequenceNumber` | Contador de generaciones utilizado por las referencias de NTFS. Una discrepancia puede revelar relaciones obsoletas o eliminadas. |
+| `EntryNum` (Entry Number) | Número de registro de la MFT. Combínelo con `SN`; los números de registro se reutilizan. |
+| `SN` (Sequence Number) | Contador de generaciones utilizado por las referencias de NTFS. Una discrepancia puede revelar relaciones obsoletas o eliminadas. |
 | `InUse` | Indicador de asignación en el momento de la recopilación. `false` significa que el registro está libre o eliminado, no que todos sus bytes estén intactos. |
-| `ParentEntryNumber`, `ParentSequenceNumber` | Referencia al directorio principal procedente de `$FILE_NAME`. Valide ambas partes. |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | Referencia al directorio principal procedente de `$FILE_NAME`. Valide ambas partes. |
 | `ParentPath` | Ruta reconstruida del directorio principal. Los marcadores de desconocido o huérfano ponen de manifiesto una ascendencia sin resolver. |
-| `Filename` | Nombre procedente del `$FILE_NAME` o del flujo de la fila actual. Un registro puede tener varias filas. |
-| `Ext` | Extensión obtenida del nombre por comodidad; no es una determinación fiable del tipo de archivo. |
-| `Size` | Tamaño lógico asociado a la fila o al flujo. La asignación dispersa o comprimida puede diferir. |
-| `ReferenceCount` | Recuento de referencias de vínculos físicos de NTFS; compárelo con cautela con el número de nombres que sobreviven. |
+| `File` (Filename) | Nombre procedente del `$FILE_NAME` o del flujo de la fila actual. Un registro puede tener varias filas. |
+| `Ext` (Extension) | Extensión obtenida del nombre por comodidad; no es una determinación fiable del tipo de archivo. |
+| `Size` (File Size) | Tamaño lógico asociado a la fila o al flujo. La asignación dispersa o comprimida puede diferir. |
+| `RefCnt` (Reference Count) | Recuento de referencias de vínculos físicos de NTFS; compárelo con cautela con el número de nombres que sobreviven. |
 | `ReparseTarget` | Destino decodificado de los puntos de reanálisis compatibles, como uniones o vínculos simbólicos. Las rutas pueden redirigir. |
-| `Dir` | El registro tiene el indicador de directorio. |
-| `HasADS` | El registro contiene flujos de datos alternativos con nombre. Esto no lo convierte en malicioso. |
-| `IsADS` | Esta fila representa un flujo de datos alternativo con nombre y no los datos sin nombre del archivo. |
-| `SI<FN` | La creación de SI es anterior a una hora de creación de FN distinta. Investigue la copia, el timestomping y las causas legítimas. |
-| `ZeroU-Secs` | La hora de creación o modificación de SI cae exactamente en un límite de milisegundo. Solo es una heurística débil de timestomping. |
+| `Dir` (Directory) | El registro tiene el indicador de directorio. |
+| `HasADS` (Has Alternate Data Streams) | El registro contiene flujos de datos alternativos con nombre. Esto no lo convierte en malicioso. |
+| `IsADS` (Is Alternate Data Stream) | Esta fila representa un flujo de datos alternativo con nombre y no los datos sin nombre del archivo. |
+| `SI<FN` (Standard Information Before File Name) | La creación de SI es anterior a una hora de creación de FN distinta. Investigue la copia, el timestomping y las causas legítimas. |
+| `ZeroU-Secs` (Microsecond Zeros) | La hora de creación o modificación de SI cae exactamente en un límite de milisegundo. Solo es una heurística débil de timestomping. |
 | `Copied` | La hora de modificación es anterior a la hora de creación. Suele ser coherente con una copia de archivo; no demuestra la acción de un atacante. |
-| `SI-Flags` | Atributos e indicadores de archivo de `$STANDARD_INFORMATION`. Los indicadores de oculto o de sistema pueden ser pivotes útiles. |
-| `NameType` | Espacio de nombres de `$FILE_NAME` (Win32, DOS, POSIX o combinado). Utilícelo para no contar dos veces los nombres. |
+| `SI-Flags` (Standard Information Flags) | Atributos e indicadores de archivo de `$STANDARD_INFORMATION`. Los indicadores de oculto o de sistema pueden ser pivotes útiles. |
+| `Type` (Name Type) | Espacio de nombres de `$FILE_NAME` (Win32, DOS, POSIX o combinado). Utilícelo para no contar dos veces los nombres. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | Horas de SI. Campos habituales de la línea de tiempo, pero las herramientas en modo de usuario pueden modificar varios de ellos. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | Horas de FN. Se actualizan de forma distinta y, en general, son más difíciles de alterar con las API normales; aun así, no son inmutables. |
-| `UpdateSequenceNumber` | Último USN asociado al atributo SI del registro. Pivote hacia `$J` si ese USN sobrevive. |
-| `LogfileSequenceNumber` | Número de secuencia de `$LogFile` de NTFS procedente del encabezado del registro FILE; útil en el análisis de transacciones a bajo nivel. |
-| `SecurityID` | Índice en `$Secure` de NTFS; no es un SID de Windows por sí mismo. Combínelo con el `SecurityID` de [`parse-ntfs secure-sds`](secure-sds.md) para obtener el propietario y las ACL del archivo. |
+| `USN` (Update Sequence Number) | Último USN asociado al atributo SI del registro. Pivote hacia `$J` si ese USN sobrevive. |
+| `LogfileSN` (Logfile Sequence Number) | Número de secuencia de `$LogFile` de NTFS procedente del encabezado del registro FILE; útil en el análisis de transacciones a bajo nivel. |
+| `SID` (Security ID) | Índice en `$Secure` de NTFS; no es un SID de Windows por sí mismo. Combínelo con el `SecurityID` de [`parse-ntfs secure-sds`](secure-sds.md) para obtener el propietario y las ACL del archivo. |
 | `ObjectID-FileDroid` | Identificador de objeto o de seguimiento de vínculos distribuidos, si existe; correlaciónelo con los droids de LNK y Jump List. |
 | `LoggedUtilStream` | Contexto decodificado de `$LOGGED_UTILITY_STREAM`, si es compatible. Revise los valores desconocidos. |
 | `ZoneID-Contents` | Contenido residente de `Zone.Identifier`, como ZoneId y las URL de descarga. Puede estar ausente, haberse eliminado o no ser residente. |
 | `SourceFile` | La `$MFT` de entrada, esencial al combinar hosts o volúmenes. |
 | `ResidentDataBase64`, `ResidentDataHex`, `ResidentDataASCII` | Con `-i`: el contenido del `$DATA` residente de la fila (el del archivo o el del flujo de datos alternativo), en Base64, como bytes (`41-42`) y como texto cuando es ASCII imprimible. Vacío cuando los datos no son residentes o se han filtrado con `-E`/`-M`. |
 | `ParseErrors` | Daños o relaciones no compatibles que afectan a esta fila. No descarte nunca esta columna al filtrar. |
-| `FromSlack` | Con `-x`: `True` para un nombre recuperado del espacio residual de un registro FILE. Su `EntryNum` y su `SequenceNumber` son los del archivo al que apuntaba el nombre (vacíos cuando se sobrescribió el encabezado de su entrada), sus marcas de tiempo recuperadas están en las columnas `(FN)`, e `InUse` es `False`. |
+| `FromSlack` | Con `-x`: `True` para un nombre recuperado del espacio residual de un registro FILE. Su `EntryNum` y su `SN` son los del archivo al que apuntaba el nombre (vacíos cuando se sobrescribió el encabezado de su entrada), sus marcas de tiempo recuperadas están en las columnas `(FN)`, e `InUse` es `False`. |
 | `SlackRecord`, `SlackOffset` | Con `-x`: el registro FILE en cuyo espacio residual estaba el nombre, según su posición en la `$MFT` y no según el número de registro escrito en su interior (el propio de un registro de extensión, aunque sus nombres se enumeren con su registro base), y el desplazamiento en bytes del nombre en la `$MFT`. Los `ParseErrors` de una fila del espacio residual son los problemas de ese registro, como `fixup values do not match`: los bytes recuperados pueden estar afectados. |
 | `CopyOfEntryInUse` | Con `-x`: un archivo en uso sigue teniendo este nombre en el mismo directorio (y es el mismo archivo, cuando la referencia ha sobrevivido). Los nombres que no tiene ningún archivo en uso son los interesantes: eliminados, renombrados o el ocupante previo de un registro reutilizado. |
 
@@ -158,7 +158,7 @@ de investigación plano omita la estructura de bajo nivel. Con `-x`, cada entrad
 2. Busque rutas completas, dobles extensiones sospechosas, ADS, directorios de preparación y hashes o nombres conocidos.
    Con `-x`, incluya los nombres del espacio residual que no tiene ningún archivo en uso (`CopyOfEntryInUse` `False`); con
    `-i -E ps1,bat,vbs,js`, lea los scripts pequeños directamente desde el CSV.
-3. Pivote la entrada y la secuencia y el `UpdateSequenceNumber` hacia el Diario USN.
+3. Pivote la entrada y la secuencia y el `USN` hacia el Diario USN.
 4. Compare las referencias MFT de Prefetch, LNK y Jump List con el registro de destino.
 5. Correlacione la eliminación con la cuarentena de Defender o con la actividad `FILE_DELETE` o de cambio de nombre del USN.
 

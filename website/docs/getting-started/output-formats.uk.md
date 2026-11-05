@@ -66,6 +66,8 @@ MetadataChanged, Created, причому SI перед FN. У засобах р�
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+Вивід MFT CSV використовує спеціальні назви стовпців: `File` (Filename), `SN` (Sequence Number), `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number), `USN` (Update Sequence Number), `LogfileSN` (Logfile Sequence Number), `SID` (Security ID), `Type` (Name Type) і `RefCnt` (Reference Count). Вони також застосовуються до MFT CSV із `auto-parse`; див. [поля виводу MFT](../artifacts/mft.md#csv-output-fields).
+
 Нативний час у JSON відомостей про систему — `CompNameLastWritten` (CSV:
 `CompNameLastWrittenUTC`). `HasADS` — логічний індикатор; `Dir` у Prefetch містить
 записаний список каталогів. `User` зберігає свій специфічний для артефакту тип: рядок для імені облікового запису
