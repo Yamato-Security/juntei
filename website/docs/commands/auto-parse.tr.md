@@ -254,8 +254,8 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── Registry-UserAssist.csv
 │   │   └── Registry-UserAssist-logs.txt
 │   ├── Registry/
-│   │   ├── Registry-Read.csv
-│   │   └── Registry-Read-logs.txt
+│   │   ├── Registry-Dump.csv
+│   │   └── Registry-Dump-logs.txt
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
@@ -306,10 +306,10 @@ dizini oluşturulmaz.
 Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Read.csv` ve
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` ve
 `DefenderQuarantine.csv`. Kayıt defterinden türetilen tablolar `Registry-` önekini kullanır; buna
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` ve `Registry-SystemInfo.csv`
-dahildir. Genel kovan anahtarları ve değerleri `Registry-Read.csv` içindedir. Amcache tabloları
+dahildir. Genel kovan anahtarları ve değerleri `Registry-Dump.csv` içindedir. Amcache tabloları
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
 `Registry-Amcache-Findings.csv` ve `Registry-Amcache-Summary.csv` dosyalarıdır. Jump Lists,
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` ve

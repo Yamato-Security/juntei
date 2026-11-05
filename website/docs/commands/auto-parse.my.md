@@ -248,8 +248,8 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── Registry-UserAssist.csv
 │   │   └── Registry-UserAssist-logs.txt
 │   ├── Registry/
-│   │   ├── Registry-Read.csv
-│   │   └── Registry-Read-logs.txt
+│   │   ├── Registry-Dump.csv
+│   │   └── Registry-Dump-logs.txt
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
@@ -299,10 +299,10 @@ Amcache နှင့် Jump Lists တို့တွင် ၎င်းတိ�
 မူလ CSV ဖိုင်အမည်များမှာ `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Read.csv` နှင့်
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` နှင့်
 `DefenderQuarantine.csv` တို့ ဖြစ်ပါသည်။ Registry မှ ဆင်းသက်လာသော table များသည်
 `Registry-ShimCache.csv`၊ `Registry-UserAssist.csv`၊ `Registry-BAM.csv` နှင့် `Registry-SystemInfo.csv` အပါအဝင် `Registry-` prefix ကို အသုံးပြုပါသည်။
-ယေဘုယျ hive key များနှင့် value များသည် `Registry-Read.csv` တွင် ရှိပါသည်။ Amcache table များမှာ
+ယေဘုယျ hive key များနှင့် value များသည် `Registry-Dump.csv` တွင် ရှိပါသည်။ Amcache table များမှာ
 `FileExistence/Registry-Amcache-Devices.csv`၊ `Registry-Amcache-Files.csv`၊
 `Registry-Amcache-Findings.csv` နှင့် `Registry-Amcache-Summary.csv` ဖြစ်ပါသည်။ Jump Lists သည်
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` နှင့်

@@ -249,8 +249,8 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   ├── Registry-UserAssist.csv
 │   │   └── Registry-UserAssist-logs.txt
 │   ├── Registry/
-│   │   ├── Registry-Read.csv
-│   │   └── Registry-Read-logs.txt
+│   │   ├── Registry-Dump.csv
+│   │   └── Registry-Dump-logs.txt
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
@@ -301,10 +301,10 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 ชื่อไฟล์ CSV เริ่มต้นได้แก่ `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Read.csv` และ
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` และ
 `DefenderQuarantine.csv` ตารางที่ได้จากรีจิสทรีใช้คำนำหน้า `Registry-` รวมถึง
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` และ `Registry-SystemInfo.csv`
-คีย์และค่าของไฮฟ์ทั่วไปอยู่ใน `Registry-Read.csv` ตาราง Amcache ได้แก่
+คีย์และค่าของไฮฟ์ทั่วไปอยู่ใน `Registry-Dump.csv` ตาราง Amcache ได้แก่
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
 `Registry-Amcache-Findings.csv` และ `Registry-Amcache-Summary.csv` Jump Lists ใช้
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` และ

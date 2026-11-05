@@ -263,8 +263,8 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 │   │   ├── Registry-UserAssist.csv
 │   │   └── Registry-UserAssist-logs.txt
 │   ├── Registry/
-│   │   ├── Registry-Read.csv
-│   │   └── Registry-Read-logs.txt
+│   │   ├── Registry-Dump.csv
+│   │   └── Registry-Dump-logs.txt
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
@@ -315,10 +315,10 @@ en `NetworkActivity`, `ProcessExecution` y `SystemInformation`, con un archivo c
 Los nombres de archivo CSV predeterminados son `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Read.csv` y
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` y
 `DefenderQuarantine.csv`. Las tablas derivadas del Registro usan el prefijo `Registry-`, incluidas
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` y `Registry-SystemInfo.csv`.
-Las claves y valores generales de los hives están en `Registry-Read.csv`. Las tablas de Amcache son
+Las claves y valores generales de los hives están en `Registry-Dump.csv`. Las tablas de Amcache son
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
 `Registry-Amcache-Findings.csv` y `Registry-Amcache-Summary.csv`. Las Jump Lists usan
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` y

@@ -110,7 +110,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "Registry-RecentDocs",
-        "registry" => "Registry-Read",
+        "registry" => "Registry-Dump",
         "remote-access" => "Registry-RemoteAccess",
         "sam" => "Registry-SAM",
         "secure-sds" => "SecureSDS",

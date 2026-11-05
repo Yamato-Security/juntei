@@ -248,8 +248,8 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── Registry-UserAssist.csv
 │   │   └── Registry-UserAssist-logs.txt
 │   ├── Registry/
-│   │   ├── Registry-Read.csv
-│   │   └── Registry-Read-logs.txt
+│   │   ├── Registry-Dump.csv
+│   │   └── Registry-Dump-logs.txt
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
@@ -299,10 +299,10 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 أسماء ملفات CSV الافتراضية هي `Registry-SAM.csv`، `LNK.csv`، `Registry-RecentDocs.csv`، `Registry-ShimCache.csv`، `LogFile.csv`،
 `I30.csv`، `MFT.csv`، `UsnJournal.csv`، `Boot.csv`، `SecureSDS.csv`، `Registry-Networks.csv`، `Registry-Persistence.csv`، `Registry-Services.csv`، `Registry-TaskCache.csv`، `Registry-BCD.csv`،
 `Registry-SecuritySettings.csv`،
-`PrefetchTimeline.csv`، `Prefetch.csv`، `Registry-UserAssist.csv`، `Registry-AppCompat.csv`، `Registry-Office.csv`، `Registry-FeatureUsage.csv`، `Registry-AppHistory.csv`، `Registry-MRU.csv`، `Registry-SystemInfo.csv`، `Registry-RemoteAccess.csv`، `Registry-OpenSaveMRU.csv`، `Registry-InstalledPrograms.csv`، `Registry-BAM.csv`، `Registry-MuiCache.csv`، `Registry-ShellBags.csv`، `Registry-USB.csv`، `Registry-SecuritySettings.csv`، `Registry-AuditPolicy.csv`، `Registry-Read.csv`، و
+`PrefetchTimeline.csv`، `Prefetch.csv`، `Registry-UserAssist.csv`، `Registry-AppCompat.csv`، `Registry-Office.csv`، `Registry-FeatureUsage.csv`، `Registry-AppHistory.csv`، `Registry-MRU.csv`، `Registry-SystemInfo.csv`، `Registry-RemoteAccess.csv`، `Registry-OpenSaveMRU.csv`، `Registry-InstalledPrograms.csv`، `Registry-BAM.csv`، `Registry-MuiCache.csv`، `Registry-ShellBags.csv`، `Registry-USB.csv`، `Registry-SecuritySettings.csv`، `Registry-AuditPolicy.csv`، `Registry-Dump.csv`، و
 `DefenderQuarantine.csv`. وتستخدم الجداول المستمدة من سجل Windows البادئة `Registry-`، بما في ذلك
 `Registry-ShimCache.csv` و`Registry-UserAssist.csv` و`Registry-BAM.csv` و`Registry-SystemInfo.csv`.
-وتوجد مفاتيح الخلايا وقيمها العامة في `Registry-Read.csv`. وجداول Amcache هي
+وتوجد مفاتيح الخلايا وقيمها العامة في `Registry-Dump.csv`. وجداول Amcache هي
 `FileExistence/Registry-Amcache-Devices.csv` و`Registry-Amcache-Files.csv`
 و`Registry-Amcache-Findings.csv` و`Registry-Amcache-Summary.csv`. وتستخدم Jump Lists
 ‏`FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` و
