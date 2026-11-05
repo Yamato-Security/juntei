@@ -67,7 +67,7 @@ CSV هو التنسيق الافتراضي للحفظ. وهو ملائم لأد�
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
-تستخدم ملفات MFT CSV أسماء أعمدة خاصة: `File` و`SN` و`ParentEntryNum` و`ParentSN` و`USN` و`LogfileSN` و`SID` و`Type` و`RefCnt`. وتنطبق أيضًا على ملفات MFT CSV الناتجة عن `auto-parse`؛ راجع [حقول مخرجات MFT](../artifacts/mft.md#csv-output-fields).
+تستخدم ملفات MFT CSV أسماء أعمدة خاصة: `File` (Filename) و`SN` (Sequence Number) و`ParentEntryNum` (ParentEntryNumber) و`ParentSN` (Parent Sequence Number) و`USN` (Update Sequence Number) و`LogfileSN` (Logfile Sequence Number) و`SID` (Security ID) و`Type` (Name Type) و`RefCnt` (Reference Count). وتنطبق أيضًا على ملفات MFT CSV الناتجة عن `auto-parse`؛ راجع [حقول مخرجات MFT](../artifacts/mft.md#csv-output-fields).
 
 وقت JSON الأصلي لمعلومات النظام هو `CompNameLastWritten` (في CSV:
 `CompNameLastWrittenUTC`). و`HasADS` مؤشر منطقي (Boolean)؛ و`Dir` في Prefetch يحتوي على

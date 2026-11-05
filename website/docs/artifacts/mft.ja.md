@@ -81,29 +81,29 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 
 | フィールド | 解釈 |
 |---|---|
-| `EntryNum` | MFT レコード番号。 `SN`と組み合わせてください。レコード番号は再利用されます。 |
-| `SN` | NTFS 参照によって使用される生成カウンター。不一致があると、関係が古くなったり削除されたりする可能性があります。 |
+| `EntryNum` (Entry Number) | MFT レコード番号。 `SN`と組み合わせてください。レコード番号は再利用されます。 |
+| `SN` (Sequence Number) | NTFS 参照によって使用される生成カウンター。不一致があると、関係が古くなったり削除されたりする可能性があります。 |
 | `InUse` | 収集時の割り当てフラグ。 `false` は、レコードが解放/削除されていることを意味しますが、すべてのバイトがそのままであることを意味するわけではありません。 |
-| `ParentEntryNum`, `ParentSN` | `$FILE_NAME` からの親ディレクトリ参照。両方の部分を検証します。 |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | `$FILE_NAME` からの親ディレクトリ参照。両方の部分を検証します。 |
 | `ParentPath` | 親パスを再構築しました。不明または孤立したマーカーは、未解決の祖先を明らかにします。 |
-| `File` | 現在の行の `$FILE_NAME` またはストリームからの名前。 1 つのレコードに複数の行を含めることができます。 |
-| `Ext` | 名前から解析された便利な拡張子。信頼できるファイルタイプの決定ではありません。 |
-| `Size` | 行/ストリームに関連付けられた論理サイズ。スパース/圧縮された割り当ては異なる場合があります。 |
-| `RefCnt` | NTFS ハードリンク参照カウント。生き残っている名前の数と慎重に比較してください。 |
+| `File` (Filename) | 現在の行の `$FILE_NAME` またはストリームからの名前。 1 つのレコードに複数の行を含めることができます。 |
+| `Ext` (Extension) | 名前から解析された便利な拡張子。信頼できるファイルタイプの決定ではありません。 |
+| `Size` (File Size) | 行/ストリームに関連付けられた論理サイズ。スパース/圧縮された割り当ては異なる場合があります。 |
+| `RefCnt` (Reference Count) | NTFS ハードリンク参照カウント。生き残っている名前の数と慎重に比較してください。 |
 | `ReparseTarget` | ジャンクション/シンボリックリンクなど、サポートされている再解析ポイントのデコードされたターゲット。パスはリダイレクトされる場合があります。 |
-| `Dir` | レコードにはディレクトリフラグがあります。 |
-| `HasADS` | レコードには名前付きの代替データ ストリームが含まれています。これは悪意のあるものではありません。 |
-| `IsADS` | この行は、名前のないファイル データではなく、名前付きの代替データ ストリームを表します。 |
-| `SI<FN` | SI の作成は、別の FN 作成時間よりも前に行われます。コピー/タイムスタンプと正当な原因を調査します。 |
-| `ZeroU-Secs` | SI の作成/変更時刻は、正確にミリ秒境界に達します。弱いタイムストンピング ヒューリスティックのみ。 |
+| `Dir` (Directory) | レコードにはディレクトリフラグがあります。 |
+| `HasADS` (Has Alternate Data Streams) | レコードには名前付きの代替データ ストリームが含まれています。これは悪意のあるものではありません。 |
+| `IsADS` (Is Alternate Data Stream) | この行は、名前のないファイル データではなく、名前付きの代替データ ストリームを表します。 |
+| `SI<FN` (Standard Information Before File Name) | SI の作成は、別の FN 作成時間よりも前に行われます。コピー/タイムスタンプと正当な原因を調査します。 |
+| `ZeroU-Secs` (Microsecond Zeros) | SI の作成/変更時刻は、正確にミリ秒境界に達します。弱いタイムストンピング ヒューリスティックのみ。 |
 | `Copied` | 変更された時刻は作成された時刻より前になります。多くの場合、ファイル コピーと一致します。攻撃者の行動の証拠ではありません。 |
-| `SI-Flags` | `$STANDARD_INFORMATION` ファイルの属性/フラグ。非表示/システム フラグは便利なピボットになります。 |
-| `Type` | `$FILE_NAME` 名前空間 (Win32、DOS、POSIX、またはその組み合わせ)。名前の二重カウントを避けるために使用します。 |
+| `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` ファイルの属性/フラグ。非表示/システム フラグは便利なピボットになります。 |
+| `Type` (Name Type) | `$FILE_NAME` 名前空間 (Win32、DOS、POSIX、またはその組み合わせ)。名前の二重カウントを避けるために使用します。 |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI 回。一般的なタイムライン フィールドですが、ユーザー モード ツールはそれらのいくつかを変更できます。 |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN 回。更新方法が異なり、通常の API では変更が困難です。まだ不変ではありません。 |
-| `USN` | レコードの SI 属性に関連付けられた最後の USN。 USN が残っている場合は、`$J` にピボットします。 |
-| `LogfileSN` | NTFS `$LogFile` FILE レコード ヘッダーのシーケンス番号。低レベルのトランザクション分析に役立ちます。 |
-| `SID` | NTFS `$Secure` へのインデックス。それ自体は Windows SID ではありません。ファイルの所有者および ACL として、[`parse-ntfs secure-sds`](secure-sds.md) の `SecurityID` と結合します。 |
+| `USN` (Update Sequence Number) | レコードの SI 属性に関連付けられた最後の USN。 USN が残っている場合は、`$J` にピボットします。 |
+| `LogfileSN` (Logfile Sequence Number) | NTFS `$LogFile` FILE レコード ヘッダーのシーケンス番号。低レベルのトランザクション分析に役立ちます。 |
+| `SID` (Security ID) | NTFS `$Secure` へのインデックス。それ自体は Windows SID ではありません。ファイルの所有者および ACL として、[`parse-ntfs secure-sds`](secure-sds.md) の `SecurityID` と結合します。 |
 | `ObjectID-FileDroid` | オブジェクト ID / 分散リンク追跡識別子 (存在する場合)。 LNK/ジャンプ リスト ドロイドと相関します。 |
 | `LoggedUtilStream` | サポートされている場合は、デコードされた `$LOGGED_UTILITY_STREAM` コンテキスト。馴染みのない価値観を見直してみましょう。 |
 | `ZoneID-Contents` | ZoneId やダウンロード URL などの常駐 `Zone.Identifier` コンテンツ。不在、削除、または非居住の可能性があります。 |

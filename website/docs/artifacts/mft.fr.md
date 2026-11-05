@@ -101,29 +101,29 @@ son entrée (`30`, `0x1E`, `30-1`) ou par son chemin (`\Windows\System32`, `C:/W
 
 | Champ | Interprétation |
 |---|---|
-| `EntryNum` | Numéro d'enregistrement MFT. À combiner avec `SN` ; les numéros d'enregistrement sont réutilisés. |
-| `SN` | Compteur de génération utilisé par les références NTFS. Une non-correspondance peut révéler des relations obsolètes/supprimées. |
+| `EntryNum` (Entry Number) | Numéro d'enregistrement MFT. À combiner avec `SN` ; les numéros d'enregistrement sont réutilisés. |
+| `SN` (Sequence Number) | Compteur de génération utilisé par les références NTFS. Une non-correspondance peut révéler des relations obsolètes/supprimées. |
 | `InUse` | Indicateur d'allocation au moment de la collecte. `false` signifie que l'enregistrement est libre/supprimé, et non que tous les octets sont intacts. |
-| `ParentEntryNum`, `ParentSN` | Référence du répertoire parent provenant de `$FILE_NAME`. Validez les deux parties. |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | Référence du répertoire parent provenant de `$FILE_NAME`. Validez les deux parties. |
 | `ParentPath` | Chemin parent reconstruit. Les marqueurs inconnu/orphelin révèlent une ascendance non résolue. |
-| `File` | Nom provenant du `$FILE_NAME` ou du flux de la ligne courante. Un enregistrement peut comporter plusieurs lignes. |
-| `Ext` | Extension extraite du nom à titre pratique ; ne constitue pas une détermination fiable du type de fichier. |
-| `Size` | Taille logique associée à la ligne/au flux. L'allocation éparse/compressée peut différer. |
-| `RefCnt` | Nombre de références de liens physiques NTFS ; comparez-le avec prudence au nombre de noms subsistants. |
+| `File` (Filename) | Nom provenant du `$FILE_NAME` ou du flux de la ligne courante. Un enregistrement peut comporter plusieurs lignes. |
+| `Ext` (Extension) | Extension extraite du nom à titre pratique ; ne constitue pas une détermination fiable du type de fichier. |
+| `Size` (File Size) | Taille logique associée à la ligne/au flux. L'allocation éparse/compressée peut différer. |
+| `RefCnt` (Reference Count) | Nombre de références de liens physiques NTFS ; comparez-le avec prudence au nombre de noms subsistants. |
 | `ReparseTarget` | Cible décodée des points d'analyse pris en charge, tels que les jonctions/liens symboliques. Les chemins peuvent rediriger. |
-| `Dir` | L'enregistrement porte l'indicateur de répertoire. |
-| `HasADS` | L'enregistrement contient des flux de données alternatifs nommés. Cela ne le rend pas malveillant. |
-| `IsADS` | Cette ligne représente un flux de données alternatif nommé plutôt que les données sans nom du fichier. |
-| `SI<FN` | La création SI précède une heure de création FN différente. Examinez la copie/le timestomping et les causes légitimes. |
-| `ZeroU-Secs` | L'heure de création/modification SI tombe exactement sur une limite de milliseconde. Simple heuristique faible de timestomping. |
+| `Dir` (Directory) | L'enregistrement porte l'indicateur de répertoire. |
+| `HasADS` (Has Alternate Data Streams) | L'enregistrement contient des flux de données alternatifs nommés. Cela ne le rend pas malveillant. |
+| `IsADS` (Is Alternate Data Stream) | Cette ligne représente un flux de données alternatif nommé plutôt que les données sans nom du fichier. |
+| `SI<FN` (Standard Information Before File Name) | La création SI précède une heure de création FN différente. Examinez la copie/le timestomping et les causes légitimes. |
+| `ZeroU-Secs` (Microsecond Zeros) | L'heure de création/modification SI tombe exactement sur une limite de milliseconde. Simple heuristique faible de timestomping. |
 | `Copied` | L'heure de modification précède l'heure de création. Souvent cohérent avec une copie de fichier ; ne prouve pas une action de l'attaquant. |
-| `SI-Flags` | Attributs/indicateurs de fichier de `$STANDARD_INFORMATION`. Les indicateurs caché/système peuvent être des pivots utiles. |
-| `Type` | Espace de noms de `$FILE_NAME` (Win32, DOS, POSIX ou combiné). À utiliser pour éviter de compter deux fois les noms. |
+| `SI-Flags` (Standard Information Flags) | Attributs/indicateurs de fichier de `$STANDARD_INFORMATION`. Les indicateurs caché/système peuvent être des pivots utiles. |
+| `Type` (Name Type) | Espace de noms de `$FILE_NAME` (Win32, DOS, POSIX ou combiné). À utiliser pour éviter de compter deux fois les noms. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | Heures SI. Champs courants des chronologies, mais les outils en mode utilisateur peuvent en modifier plusieurs. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | Heures FN. Mises à jour différemment et généralement plus difficiles à modifier par les API ordinaires ; elles ne sont pas pour autant immuables. |
-| `USN` | Dernier USN associé à l'attribut SI de l'enregistrement. Pivotez vers `$J` si cet USN subsiste. |
-| `LogfileSN` | Numéro de séquence `$LogFile` NTFS provenant de l'en-tête de l'enregistrement FILE ; utile pour l'analyse des transactions de bas niveau. |
-| `SID` | Index dans `$Secure` de NTFS ; ce n'est pas en soi un SID Windows. Joignez-le au `SecurityID` de [`parse-ntfs secure-sds`](secure-sds.md) pour obtenir le propriétaire et les ACL du fichier. |
+| `USN` (Update Sequence Number) | Dernier USN associé à l'attribut SI de l'enregistrement. Pivotez vers `$J` si cet USN subsiste. |
+| `LogfileSN` (Logfile Sequence Number) | Numéro de séquence `$LogFile` NTFS provenant de l'en-tête de l'enregistrement FILE ; utile pour l'analyse des transactions de bas niveau. |
+| `SID` (Security ID) | Index dans `$Secure` de NTFS ; ce n'est pas en soi un SID Windows. Joignez-le au `SecurityID` de [`parse-ntfs secure-sds`](secure-sds.md) pour obtenir le propriétaire et les ACL du fichier. |
 | `ObjectID-FileDroid` | Identifiant d'objet / identifiant de suivi des liens distribués, s'il est présent ; à corréler avec les droids des LNK/Jump Lists. |
 | `LoggedUtilStream` | Contexte décodé de `$LOGGED_UTILITY_STREAM`, lorsqu'il est pris en charge. Examinez les valeurs inhabituelles. |
 | `ZoneID-Contents` | Contenu résident de `Zone.Identifier`, tel que ZoneId et les URL de téléchargement. Il peut être absent, supprimé ou non résident. |

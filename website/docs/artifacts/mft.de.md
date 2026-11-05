@@ -101,29 +101,29 @@ Eintrag (`30`, `0x1E`, `30-1`) oder über den Pfad (`\Windows\System32`, `C:/Win
 
 | Feld | Interpretation |
 |---|---|
-| `EntryNum` | MFT-Datensatznummer. Mit `SN` kombinieren; Datensatznummern werden wiederverwendet. |
-| `SN` | Generationszähler, der von NTFS-Referenzen verwendet wird. Eine Abweichung kann veraltete/gelöschte Beziehungen aufdecken. |
+| `EntryNum` (Entry Number) | MFT-Datensatznummer. Mit `SN` kombinieren; Datensatznummern werden wiederverwendet. |
+| `SN` (Sequence Number) | Generationszähler, der von NTFS-Referenzen verwendet wird. Eine Abweichung kann veraltete/gelöschte Beziehungen aufdecken. |
 | `InUse` | Zuordnungsflag zum Zeitpunkt der Sicherung. `false` bedeutet, dass der Datensatz frei/gelöscht ist, nicht dass alle Bytes intakt sind. |
-| `ParentEntryNum`, `ParentSN` | Referenz auf das übergeordnete Verzeichnis aus `$FILE_NAME`. Beide Teile validieren. |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | Referenz auf das übergeordnete Verzeichnis aus `$FILE_NAME`. Beide Teile validieren. |
 | `ParentPath` | Rekonstruierter übergeordneter Pfad. Markierungen für unbekannt/verwaist zeigen ungeklärte Abstammung. |
-| `File` | Name aus `$FILE_NAME` oder dem Stream der aktuellen Zeile. Ein Datensatz kann mehrere Zeilen haben. |
-| `Ext` | Aus dem Namen abgeleitete Erweiterung zur Vereinfachung; keine verlässliche Bestimmung des Dateityps. |
-| `Size` | Der Zeile/dem Stream zugeordnete logische Größe. Die Zuordnung bei Sparse-/komprimierten Dateien kann abweichen. |
-| `RefCnt` | NTFS-Referenzzähler der Hardlinks; vorsichtig mit der Anzahl der erhaltenen Namen vergleichen. |
+| `File` (Filename) | Name aus `$FILE_NAME` oder dem Stream der aktuellen Zeile. Ein Datensatz kann mehrere Zeilen haben. |
+| `Ext` (Extension) | Aus dem Namen abgeleitete Erweiterung zur Vereinfachung; keine verlässliche Bestimmung des Dateityps. |
+| `Size` (File Size) | Der Zeile/dem Stream zugeordnete logische Größe. Die Zuordnung bei Sparse-/komprimierten Dateien kann abweichen. |
+| `RefCnt` (Reference Count) | NTFS-Referenzzähler der Hardlinks; vorsichtig mit der Anzahl der erhaltenen Namen vergleichen. |
 | `ReparseTarget` | Dekodiertes Ziel unterstützter Reparse-Punkte wie Junctions/Symlinks. Pfade können umleiten. |
-| `Dir` | Datensatz trägt das Verzeichnisflag. |
-| `HasADS` | Datensatz enthält benannte alternative Datenströme. Das macht ihn nicht bösartig. |
-| `IsADS` | Diese Zeile stellt einen benannten alternativen Datenstrom statt der unbenannten Dateidaten dar. |
-| `SI<FN` | Die SI-Erstellungszeit liegt vor einer abweichenden FN-Erstellungszeit. Kopieren/Timestomping und legitime Ursachen untersuchen. |
-| `ZeroU-Secs` | SI-Erstellungs-/Änderungszeit liegt exakt auf einer Millisekundengrenze. Nur eine schwache Timestomping-Heuristik. |
+| `Dir` (Directory) | Datensatz trägt das Verzeichnisflag. |
+| `HasADS` (Has Alternate Data Streams) | Datensatz enthält benannte alternative Datenströme. Das macht ihn nicht bösartig. |
+| `IsADS` (Is Alternate Data Stream) | Diese Zeile stellt einen benannten alternativen Datenstrom statt der unbenannten Dateidaten dar. |
+| `SI<FN` (Standard Information Before File Name) | Die SI-Erstellungszeit liegt vor einer abweichenden FN-Erstellungszeit. Kopieren/Timestomping und legitime Ursachen untersuchen. |
+| `ZeroU-Secs` (Microsecond Zeros) | SI-Erstellungs-/Änderungszeit liegt exakt auf einer Millisekundengrenze. Nur eine schwache Timestomping-Heuristik. |
 | `Copied` | Änderungszeit liegt vor der Erstellungszeit. Oft mit einem Kopiervorgang vereinbar; kein Beweis für eine Handlung des Angreifers. |
-| `SI-Flags` | Dateiattribute/Flags von `$STANDARD_INFORMATION`. Hidden-/System-Flags können nützliche Ansatzpunkte sein. |
-| `Type` | Namensraum von `$FILE_NAME` (Win32, DOS, POSIX oder kombiniert). Verwenden, um Namen nicht doppelt zu zählen. |
+| `SI-Flags` (Standard Information Flags) | Dateiattribute/Flags von `$STANDARD_INFORMATION`. Hidden-/System-Flags können nützliche Ansatzpunkte sein. |
+| `Type` (Name Type) | Namensraum von `$FILE_NAME` (Win32, DOS, POSIX oder kombiniert). Verwenden, um Namen nicht doppelt zu zählen. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI-Zeiten. Übliche Zeitleistenfelder, aber Tools im Benutzermodus können mehrere davon ändern. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN-Zeiten. Werden anders aktualisiert und sind mit gewöhnlichen APIs im Allgemeinen schwerer zu ändern; dennoch nicht unveränderlich. |
-| `USN` | Letzte USN, die dem SI-Attribut des Datensatzes zugeordnet ist. Ansatzpunkt in `$J`, falls diese USN erhalten ist. |
-| `LogfileSN` | NTFS-`$LogFile`-Sequenznummer aus dem Header des FILE-Datensatzes; nützlich für die Transaktionsanalyse auf niedriger Ebene. |
-| `SID` | Index in NTFS-`$Secure`; für sich genommen keine Windows-SID. Mit der `SecurityID` von [`parse-ntfs secure-sds`](secure-sds.md) verknüpfen, um Besitzer und ACLs der Datei zu erhalten. |
+| `USN` (Update Sequence Number) | Letzte USN, die dem SI-Attribut des Datensatzes zugeordnet ist. Ansatzpunkt in `$J`, falls diese USN erhalten ist. |
+| `LogfileSN` (Logfile Sequence Number) | NTFS-`$LogFile`-Sequenznummer aus dem Header des FILE-Datensatzes; nützlich für die Transaktionsanalyse auf niedriger Ebene. |
+| `SID` (Security ID) | Index in NTFS-`$Secure`; für sich genommen keine Windows-SID. Mit der `SecurityID` von [`parse-ntfs secure-sds`](secure-sds.md) verknüpfen, um Besitzer und ACLs der Datei zu erhalten. |
 | `ObjectID-FileDroid` | Objekt-ID / Kennung der verteilten Linkverfolgung, sofern vorhanden; mit Droids aus LNK/Jump List korrelieren. |
 | `LoggedUtilStream` | Dekodierter Kontext von `$LOGGED_UTILITY_STREAM`, sofern unterstützt. Unbekannte Werte prüfen. |
 | `ZoneID-Contents` | Residenter Inhalt von `Zone.Identifier`, etwa ZoneId und Download-URLs. Er kann fehlen, entfernt oder nicht resident sein. |

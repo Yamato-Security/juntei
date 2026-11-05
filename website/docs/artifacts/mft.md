@@ -101,29 +101,29 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 
 | Field | Interpretation |
 |---|---|
-| `EntryNum` | MFT record number. Combine with `SN`; record numbers are reused. |
-| `SN` | Generation counter used by NTFS references. A mismatch can reveal stale/deleted relationships. |
+| `EntryNum` (Entry Number) | MFT record number. Combine with `SN`; record numbers are reused. |
+| `SN` (Sequence Number) | Generation counter used by NTFS references. A mismatch can reveal stale/deleted relationships. |
 | `InUse` | Allocation flag at collection. `false` means the record is free/deleted, not that all bytes are intact. |
-| `ParentEntryNum`, `ParentSN` | Parent directory reference from `$FILE_NAME`. Validate both parts. |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | Parent directory reference from `$FILE_NAME`. Validate both parts. |
 | `ParentPath` | Reconstructed parent path. Unknown/orphan markers expose unresolved ancestry. |
-| `File` | Name from the current row's `$FILE_NAME` or stream. One record can have several rows. |
-| `Ext` | Convenience extension parsed from the name; not a trusted file-type determination. |
-| `Size` | Logical size associated with the row/stream. Sparse/compressed allocation can differ. |
-| `RefCnt` | NTFS hard-link reference count; compare with the number of surviving names cautiously. |
+| `File` (Filename) | Name from the current row's `$FILE_NAME` or stream. One record can have several rows. |
+| `Ext` (Extension) | Convenience extension parsed from the name; not a trusted file-type determination. |
+| `Size` (File Size) | Logical size associated with the row/stream. Sparse/compressed allocation can differ. |
+| `RefCnt` (Reference Count) | NTFS hard-link reference count; compare with the number of surviving names cautiously. |
 | `ReparseTarget` | Decoded target for supported reparse points such as junctions/symlinks. Paths may redirect. |
-| `Dir` | Record has the directory flag. |
-| `HasADS` | Record contains named alternate data streams. This does not make it malicious. |
-| `IsADS` | This row represents a named alternate data stream rather than the unnamed file data. |
-| `SI<FN` | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
-| `ZeroU-Secs` | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
+| `Dir` (Directory) | Record has the directory flag. |
+| `HasADS` (Has Alternate Data Streams) | Record contains named alternate data streams. This does not make it malicious. |
+| `IsADS` (Is Alternate Data Stream) | This row represents a named alternate data stream rather than the unnamed file data. |
+| `SI<FN` (Standard Information Before File Name) | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
+| `ZeroU-Secs` (Microsecond Zeros) | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
 | `Copied` | Modified time precedes created time. Often consistent with file copy; not proof of attacker action. |
-| `SI-Flags` | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
-| `Type` | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |
+| `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
+| `Type` (Name Type) | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI times. Common timeline fields, but user-mode tools can change several of them. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN times. Updated differently and generally harder for ordinary APIs to alter; still not immutable. |
-| `USN` | Last USN associated with the record's SI attribute. Pivot into `$J` if that USN survives. |
-| `LogfileSN` | NTFS `$LogFile` sequence number from the FILE record header; useful in low-level transaction analysis. |
-| `SID` | Index into NTFS `$Secure`; not a Windows SID by itself. Join it with the `SecurityID` of [`parse-ntfs secure-sds`](secure-sds.md) for the file's owner and ACLs. |
+| `USN` (Update Sequence Number) | Last USN associated with the record's SI attribute. Pivot into `$J` if that USN survives. |
+| `LogfileSN` (Logfile Sequence Number) | NTFS `$LogFile` sequence number from the FILE record header; useful in low-level transaction analysis. |
+| `SID` (Security ID) | Index into NTFS `$Secure`; not a Windows SID by itself. Join it with the `SecurityID` of [`parse-ntfs secure-sds`](secure-sds.md) for the file's owner and ACLs. |
 | `ObjectID-FileDroid` | Object ID / distributed-link-tracking identifier where present; correlate with LNK/Jump List droids. |
 | `LoggedUtilStream` | Decoded `$LOGGED_UTILITY_STREAM` context where supported. Review unfamiliar values. |
 | `ZoneID-Contents` | Resident `Zone.Identifier` content, such as ZoneId and download URLs. It may be absent, removed, or non-resident. |

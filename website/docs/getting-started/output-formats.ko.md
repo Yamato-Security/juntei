@@ -64,7 +64,7 @@ CSV 열 머리글과 JSON/JSONL 필드 이름은 Amcache 및 `auto-parse` 매니
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
-MFT CSV 출력은 전용 열 이름 `File`, `SN`, `ParentEntryNum`, `ParentSN`, `USN`, `LogfileSN`, `SID`, `Type`, `RefCnt`를 사용합니다. `auto-parse`의 MFT CSV에도 적용됩니다. [MFT 출력 필드](../artifacts/mft.md#csv-output-fields)를 참조하세요.
+MFT CSV 출력은 전용 열 이름 `File` (Filename), `SN` (Sequence Number), `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number), `USN` (Update Sequence Number), `LogfileSN` (Logfile Sequence Number), `SID` (Security ID), `Type` (Name Type), `RefCnt` (Reference Count)를 사용합니다. `auto-parse`의 MFT CSV에도 적용됩니다. [MFT 출력 필드](../artifacts/mft.md#csv-output-fields)를 참조하세요.
 
 네이티브 시스템 정보 JSON 시간은 `CompNameLastWritten`(CSV: `CompNameLastWrittenUTC`)입니다. `HasADS`는 부울
 표시기이며, Prefetch의 `Dir`에는 기록된 디렉터리 목록이 들어 있습니다. `User`는 아티팩트별 유형을 유지합니다.

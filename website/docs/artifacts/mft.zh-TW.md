@@ -97,29 +97,29 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 
 | 欄位 | 判讀 |
 |---|---|
-| `EntryNum` | MFT 記錄編號。請與 `SN` 合併使用；記錄編號會被重複使用。 |
-| `SN` | NTFS 參照所使用的世代計數器。不相符可能揭露過時／已刪除的關係。 |
+| `EntryNum` (Entry Number) | MFT 記錄編號。請與 `SN` 合併使用；記錄編號會被重複使用。 |
+| `SN` (Sequence Number) | NTFS 參照所使用的世代計數器。不相符可能揭露過時／已刪除的關係。 |
 | `InUse` | 收集時的配置旗標。`false` 代表記錄為可用／已刪除，並不代表所有位元組都完整無缺。 |
-| `ParentEntryNum`、`ParentSN` | 取自 `$FILE_NAME` 的父目錄參照。請驗證這兩個部分。 |
+| `ParentEntryNum` (ParentEntryNumber)、`ParentSN` (Parent Sequence Number) | 取自 `$FILE_NAME` 的父目錄參照。請驗證這兩個部分。 |
 | `ParentPath` | 重建的父項路徑。未知／孤立標記會揭露無法解析的祖系資訊。 |
-| `File` | 取自目前這一列之 `$FILE_NAME` 或資料流的名稱。一筆記錄可以有多列。 |
-| `Ext` | 為方便起見從名稱剖析出的副檔名；並非可信任的檔案類型判定。 |
-| `Size` | 與該列／資料流相關的邏輯大小。疏鬆／壓縮的配置可能不同。 |
-| `RefCnt` | NTFS 硬連結參照計數；請審慎地與殘存名稱的數量進行比較。 |
+| `File` (Filename) | 取自目前這一列之 `$FILE_NAME` 或資料流的名稱。一筆記錄可以有多列。 |
+| `Ext` (Extension) | 為方便起見從名稱剖析出的副檔名；並非可信任的檔案類型判定。 |
+| `Size` (File Size) | 與該列／資料流相關的邏輯大小。疏鬆／壓縮的配置可能不同。 |
+| `RefCnt` (Reference Count) | NTFS 硬連結參照計數；請審慎地與殘存名稱的數量進行比較。 |
 | `ReparseTarget` | 對支援之重新剖析點（例如連接點／符號連結）解碼後的目標。路徑可能被重新導向。 |
-| `Dir` | 記錄具有目錄旗標。 |
-| `HasADS` | 記錄包含具名的替代資料流。這並不代表它是惡意的。 |
-| `IsADS` | 這一列代表具名的替代資料流，而非未命名的檔案資料。 |
-| `SI<FN` | SI 建立時間早於不同的 FN 建立時間。請調查複製／時間戳記竄改以及合法的原因。 |
-| `ZeroU-Secs` | SI 建立／修改時間剛好落在毫秒邊界上。僅為薄弱的時間戳記竄改啟發式判斷。 |
+| `Dir` (Directory) | 記錄具有目錄旗標。 |
+| `HasADS` (Has Alternate Data Streams) | 記錄包含具名的替代資料流。這並不代表它是惡意的。 |
+| `IsADS` (Is Alternate Data Stream) | 這一列代表具名的替代資料流，而非未命名的檔案資料。 |
+| `SI<FN` (Standard Information Before File Name) | SI 建立時間早於不同的 FN 建立時間。請調查複製／時間戳記竄改以及合法的原因。 |
+| `ZeroU-Secs` (Microsecond Zeros) | SI 建立／修改時間剛好落在毫秒邊界上。僅為薄弱的時間戳記竄改啟發式判斷。 |
 | `Copied` | 修改時間早於建立時間。通常與檔案複製一致；並非攻擊者行為的證明。 |
-| `SI-Flags` | `$STANDARD_INFORMATION` 的檔案屬性／旗標。隱藏／系統旗標可作為有用的樞紐。 |
-| `Type` | `$FILE_NAME` 命名空間（Win32、DOS、POSIX 或合併）。用於避免重複計算名稱。 |
+| `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` 的檔案屬性／旗標。隱藏／系統旗標可作為有用的樞紐。 |
+| `Type` (Name Type) | `$FILE_NAME` 命名空間（Win32、DOS、POSIX 或合併）。用於避免重複計算名稱。 |
 | `DataModified (SI)`、`Accessed (SI)`、`MetadataChanged (SI)`、`Created (SI)` | SI 時間。常用的時間軸欄位，但使用者模式工具可以變更其中數個。 |
 | `DataModified (FN)`、`Accessed (FN)`、`MetadataChanged (FN)`、`Created (FN)` | FN 時間。更新方式不同，一般 API 通常較難變更；但仍非不可變更。 |
-| `USN` | 與該記錄之 SI 屬性相關的最後一個 USN。若該 USN 仍殘存，可用來樞紐至 `$J`。 |
-| `LogfileSN` | 取自 FILE 記錄標頭的 NTFS `$LogFile` 序號；可用於底層的交易分析。 |
-| `SID` | NTFS `$Secure` 的索引；本身並非 Windows SID。請將它與 [`parse-ntfs secure-sds`](secure-sds.md) 的 `SecurityID` 結合，以取得檔案的擁有者與 ACL。 |
+| `USN` (Update Sequence Number) | 與該記錄之 SI 屬性相關的最後一個 USN。若該 USN 仍殘存，可用來樞紐至 `$J`。 |
+| `LogfileSN` (Logfile Sequence Number) | 取自 FILE 記錄標頭的 NTFS `$LogFile` 序號；可用於底層的交易分析。 |
+| `SID` (Security ID) | NTFS `$Secure` 的索引；本身並非 Windows SID。請將它與 [`parse-ntfs secure-sds`](secure-sds.md) 的 `SecurityID` 結合，以取得檔案的擁有者與 ACL。 |
 | `ObjectID-FileDroid` | 若存在，為物件 ID／分散式連結追蹤識別碼；可與 LNK／Jump List 的 droid 進行關聯。 |
 | `LoggedUtilStream` | 在支援的情況下，解碼後的 `$LOGGED_UTILITY_STREAM` 脈絡。請檢視不熟悉的值。 |
 | `ZoneID-Contents` | 常駐的 `Zone.Identifier` 內容，例如 ZoneId 與下載 URL。它可能不存在、已被移除或為非常駐。 |

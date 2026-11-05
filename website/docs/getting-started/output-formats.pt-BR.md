@@ -66,7 +66,7 @@ Apenas os rótulos de saída mudam; os valores das evidências e os nomes brutos
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
-A saída CSV da MFT usa colunas específicas: `File`, `SN`, `ParentEntryNum`, `ParentSN`, `USN`, `LogfileSN`, `SID`, `Type` e `RefCnt`. Isso também se aplica aos CSVs da MFT de `auto-parse`; consulte os [campos de saída da MFT](../artifacts/mft.md#csv-output-fields).
+A saída CSV da MFT usa colunas específicas: `File` (Filename), `SN` (Sequence Number), `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number), `USN` (Update Sequence Number), `LogfileSN` (Logfile Sequence Number), `SID` (Security ID), `Type` (Name Type) e `RefCnt` (Reference Count). Isso também se aplica aos CSVs da MFT de `auto-parse`; consulte os [campos de saída da MFT](../artifacts/mft.md#csv-output-fields).
 
 O horário nativo no JSON de informações do sistema é `CompNameLastWritten` (CSV:
 `CompNameLastWrittenUTC`). `HasADS` é um indicador booleano; `Dir` no Prefetch contém a

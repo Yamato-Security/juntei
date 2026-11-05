@@ -101,29 +101,29 @@ entri (`30`, `0x1E`, `30-1`) atau dengan path (`\Windows\System32`, `C:/Windows`
 
 | Field | Interpretasi |
 |---|---|
-| `EntryNum` | Nomor record MFT. Gabungkan dengan `SN`; nomor record digunakan kembali. |
-| `SN` | Penghitung generasi yang digunakan oleh referensi NTFS. Ketidakcocokan dapat mengungkap hubungan yang usang/dihapus. |
+| `EntryNum` (Entry Number) | Nomor record MFT. Gabungkan dengan `SN`; nomor record digunakan kembali. |
+| `SN` (Sequence Number) | Penghitung generasi yang digunakan oleh referensi NTFS. Ketidakcocokan dapat mengungkap hubungan yang usang/dihapus. |
 | `InUse` | Flag alokasi pada saat pengumpulan. `false` berarti record bebas/dihapus, bukan berarti semua byte masih utuh. |
-| `ParentEntryNum`, `ParentSN` | Referensi direktori parent dari `$FILE_NAME`. Validasi kedua bagian. |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | Referensi direktori parent dari `$FILE_NAME`. Validasi kedua bagian. |
 | `ParentPath` | Path parent yang direkonstruksi. Penanda unknown/orphan memperlihatkan hierarki induk yang tidak terselesaikan. |
-| `File` | Nama dari `$FILE_NAME` atau stream pada baris ini. Satu record dapat memiliki beberapa baris. |
-| `Ext` | Ekstensi yang diurai dari nama demi kemudahan; bukan penentuan tipe berkas yang tepercaya. |
-| `Size` | Ukuran logis yang terkait dengan baris/stream. Alokasi sparse/terkompresi dapat berbeda. |
-| `RefCnt` | Jumlah referensi hard link NTFS; bandingkan dengan jumlah nama yang tersisa secara hati-hati. |
+| `File` (Filename) | Nama dari `$FILE_NAME` atau stream pada baris ini. Satu record dapat memiliki beberapa baris. |
+| `Ext` (Extension) | Ekstensi yang diurai dari nama demi kemudahan; bukan penentuan tipe berkas yang tepercaya. |
+| `Size` (File Size) | Ukuran logis yang terkait dengan baris/stream. Alokasi sparse/terkompresi dapat berbeda. |
+| `RefCnt` (Reference Count) | Jumlah referensi hard link NTFS; bandingkan dengan jumlah nama yang tersisa secara hati-hati. |
 | `ReparseTarget` | Target yang didekode untuk reparse point yang didukung seperti junction/symlink. Path dapat mengalihkan. |
-| `Dir` | Record memiliki flag direktori. |
-| `HasADS` | Record berisi alternate data stream bernama. Hal ini tidak membuatnya berbahaya. |
-| `IsADS` | Baris ini merepresentasikan alternate data stream bernama, bukan data berkas tanpa nama. |
-| `SI<FN` | Waktu pembuatan SI mendahului waktu pembuatan FN yang berbeda. Investigasi penyalinan/timestomping dan penyebab yang sah. |
-| `ZeroU-Secs` | Waktu pembuatan/modifikasi SI jatuh tepat pada batas milidetik. Hanya heuristik timestomping yang lemah. |
+| `Dir` (Directory) | Record memiliki flag direktori. |
+| `HasADS` (Has Alternate Data Streams) | Record berisi alternate data stream bernama. Hal ini tidak membuatnya berbahaya. |
+| `IsADS` (Is Alternate Data Stream) | Baris ini merepresentasikan alternate data stream bernama, bukan data berkas tanpa nama. |
+| `SI<FN` (Standard Information Before File Name) | Waktu pembuatan SI mendahului waktu pembuatan FN yang berbeda. Investigasi penyalinan/timestomping dan penyebab yang sah. |
+| `ZeroU-Secs` (Microsecond Zeros) | Waktu pembuatan/modifikasi SI jatuh tepat pada batas milidetik. Hanya heuristik timestomping yang lemah. |
 | `Copied` | Waktu modifikasi mendahului waktu pembuatan. Sering konsisten dengan penyalinan berkas; bukan bukti tindakan penyerang. |
-| `SI-Flags` | Atribut/flag berkas `$STANDARD_INFORMATION`. Flag hidden/system dapat menjadi titik pivot yang berguna. |
-| `Type` | Namespace `$FILE_NAME` (Win32, DOS, POSIX, atau gabungan). Gunakan untuk menghindari penghitungan nama ganda. |
+| `SI-Flags` (Standard Information Flags) | Atribut/flag berkas `$STANDARD_INFORMATION`. Flag hidden/system dapat menjadi titik pivot yang berguna. |
+| `Type` (Name Type) | Namespace `$FILE_NAME` (Win32, DOS, POSIX, atau gabungan). Gunakan untuk menghindari penghitungan nama ganda. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | Waktu SI. Field timeline yang umum, tetapi alat user mode dapat mengubah beberapa di antaranya. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | Waktu FN. Diperbarui secara berbeda dan umumnya lebih sulit diubah oleh API biasa; tetap tidak kebal perubahan. |
-| `USN` | USN terakhir yang terkait dengan atribut SI record. Lakukan pivot ke `$J` jika USN tersebut masih ada. |
-| `LogfileSN` | Nomor urut `$LogFile` NTFS dari header record FILE; berguna dalam analisis transaksi tingkat rendah. |
-| `SID` | Indeks ke `$Secure` NTFS; bukan SID Windows dengan sendirinya. Gabungkan dengan `SecurityID` dari [`parse-ntfs secure-sds`](secure-sds.md) untuk pemilik dan ACL berkas. |
+| `USN` (Update Sequence Number) | USN terakhir yang terkait dengan atribut SI record. Lakukan pivot ke `$J` jika USN tersebut masih ada. |
+| `LogfileSN` (Logfile Sequence Number) | Nomor urut `$LogFile` NTFS dari header record FILE; berguna dalam analisis transaksi tingkat rendah. |
+| `SID` (Security ID) | Indeks ke `$Secure` NTFS; bukan SID Windows dengan sendirinya. Gabungkan dengan `SecurityID` dari [`parse-ntfs secure-sds`](secure-sds.md) untuk pemilik dan ACL berkas. |
 | `ObjectID-FileDroid` | Object ID / pengenal distributed-link-tracking bila ada; korelasikan dengan droid LNK/Jump List. |
 | `LoggedUtilStream` | Konteks `$LOGGED_UTILITY_STREAM` yang didekode bila didukung. Tinjau nilai yang tidak lazim. |
 | `ZoneID-Contents` | Konten `Zone.Identifier` resident, seperti ZoneId dan URL unduhan. Konten ini mungkin tidak ada, telah dihapus, atau non-resident. |

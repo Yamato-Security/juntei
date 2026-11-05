@@ -67,7 +67,7 @@ manifests भी शामिल हैं। पुराने परिणा
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
-MFT CSV आउटपुट में विशेष कॉलम नाम हैं: `File`, `SN`, `ParentEntryNum`, `ParentSN`, `USN`, `LogfileSN`, `SID`, `Type` और `RefCnt`। ये `auto-parse` के MFT CSV पर भी लागू होते हैं; [MFT आउटपुट फ़ील्ड](../artifacts/mft.md#csv-output-fields) देखें।
+MFT CSV आउटपुट में विशेष कॉलम नाम हैं: `File` (Filename), `SN` (Sequence Number), `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number), `USN` (Update Sequence Number), `LogfileSN` (Logfile Sequence Number), `SID` (Security ID), `Type` (Name Type) और `RefCnt` (Reference Count)। ये `auto-parse` के MFT CSV पर भी लागू होते हैं; [MFT आउटपुट फ़ील्ड](../artifacts/mft.md#csv-output-fields) देखें।
 
 Native system-information JSON time `CompNameLastWritten` है (CSV:
 `CompNameLastWrittenUTC`)। `HasADS` एक Boolean संकेतक है; Prefetch में `Dir` में

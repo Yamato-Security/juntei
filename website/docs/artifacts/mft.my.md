@@ -106,29 +106,29 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 
 | Field | အဓိပ္ပာယ်ဖော်ပုံ |
 |---|---|
-| `EntryNum` | MFT record နံပါတ်။ `SN` နှင့် ပေါင်းစပ်ပါ- record နံပါတ်များကို ပြန်လည်အသုံးပြုသည်။ |
-| `SN` | NTFS reference များက အသုံးပြုသော မျိုးဆက် counter။ မကိုက်ညီမှုသည် ခေတ်မမီတော့သော/ဖျက်ပစ်ထားသော ဆက်နွယ်မှုများကို ဖော်ပြနိုင်သည်။ |
+| `EntryNum` (Entry Number) | MFT record နံပါတ်။ `SN` နှင့် ပေါင်းစပ်ပါ- record နံပါတ်များကို ပြန်လည်အသုံးပြုသည်။ |
+| `SN` (Sequence Number) | NTFS reference များက အသုံးပြုသော မျိုးဆက် counter။ မကိုက်ညီမှုသည် ခေတ်မမီတော့သော/ဖျက်ပစ်ထားသော ဆက်နွယ်မှုများကို ဖော်ပြနိုင်သည်။ |
 | `InUse` | စုဆောင်းချိန်က allocation flag။ `false` ဆိုသည်မှာ record သည် free/ဖျက်ပစ်ထားခြင်း ဖြစ်ပြီး byte အားလုံး မပျက်မစီး ရှိသည်ဟု မဆိုလိုပါ။ |
-| `ParentEntryNum`, `ParentSN` | `$FILE_NAME` မှ parent directory reference။ အပိုင်းနှစ်ခုစလုံးကို အတည်ပြုပါ။ |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | `$FILE_NAME` မှ parent directory reference။ အပိုင်းနှစ်ခုစလုံးကို အတည်ပြုပါ။ |
 | `ParentPath` | ပြန်လည်တည်ဆောက်ထားသော parent path။ Unknown/orphan အမှတ်အသားများက မဖြေရှင်းနိုင်သေးသော ဘိုးဘွားဆက်နွယ်မှုကို ဖော်ပြသည်။ |
-| `File` | လက်ရှိ row ၏ `$FILE_NAME` သို့မဟုတ် stream မှ အမည်။ Record တစ်ခုတွင် row များစွာ ရှိနိုင်သည်။ |
-| `Ext` | အမည်မှ ခွဲထုတ်ထားသော အဆင်ပြေစေရန် extension။ ယုံကြည်ရသော ဖိုင်အမျိုးအစား ဆုံးဖြတ်ချက် မဟုတ်ပါ။ |
-| `Size` | Row/stream နှင့် ဆက်စပ်သော logical အရွယ်အစား။ Sparse/compressed allocation သည် ကွဲပြားနိုင်သည်။ |
-| `RefCnt` | NTFS hard-link reference အရေအတွက်။ ကျန်ရှိနေသော အမည်အရေအတွက်နှင့် သတိထား၍ နှိုင်းယှဉ်ပါ။ |
+| `File` (Filename) | လက်ရှိ row ၏ `$FILE_NAME` သို့မဟုတ် stream မှ အမည်။ Record တစ်ခုတွင် row များစွာ ရှိနိုင်သည်။ |
+| `Ext` (Extension) | အမည်မှ ခွဲထုတ်ထားသော အဆင်ပြေစေရန် extension။ ယုံကြည်ရသော ဖိုင်အမျိုးအစား ဆုံးဖြတ်ချက် မဟုတ်ပါ။ |
+| `Size` (File Size) | Row/stream နှင့် ဆက်စပ်သော logical အရွယ်အစား။ Sparse/compressed allocation သည် ကွဲပြားနိုင်သည်။ |
+| `RefCnt` (Reference Count) | NTFS hard-link reference အရေအတွက်။ ကျန်ရှိနေသော အမည်အရေအတွက်နှင့် သတိထား၍ နှိုင်းယှဉ်ပါ။ |
 | `ReparseTarget` | Junction/symlink ကဲ့သို့ ပံ့ပိုးထားသော reparse point များအတွက် decode လုပ်ထားသော ပစ်မှတ်။ Path များ လမ်းကြောင်းလွှဲနိုင်သည်။ |
-| `Dir` | Record တွင် directory flag ရှိသည်။ |
-| `HasADS` | Record တွင် အမည်ပါသော alternate data stream များ ပါဝင်သည်။ ၎င်းက အန္တရာယ်ရှိစေသည် မဟုတ်ပါ။ |
-| `IsADS` | ဤ row သည် အမည်မဲ့ ဖိုင်ဒေတာ မဟုတ်ဘဲ အမည်ပါသော alternate data stream ကို ကိုယ်စားပြုသည်။ |
-| `SI<FN` | SI ဖန်တီးချိန်သည် ကွဲပြားသော FN ဖန်တီးချိန်ထက် စောသည်။ ကူးယူခြင်း/timestomping နှင့် တရားဝင်အကြောင်းရင်းများကို စုံစမ်းပါ။ |
-| `ZeroU-Secs` | SI ဖန်တီးချိန်/ပြင်ဆင်ချိန်သည် millisecond နယ်နိမိတ်ပေါ်တွင် အတိအကျ ကျရောက်သည်။ အားနည်းသော timestomping heuristic သာ ဖြစ်သည်။ |
+| `Dir` (Directory) | Record တွင် directory flag ရှိသည်။ |
+| `HasADS` (Has Alternate Data Streams) | Record တွင် အမည်ပါသော alternate data stream များ ပါဝင်သည်။ ၎င်းက အန္တရာယ်ရှိစေသည် မဟုတ်ပါ။ |
+| `IsADS` (Is Alternate Data Stream) | ဤ row သည် အမည်မဲ့ ဖိုင်ဒေတာ မဟုတ်ဘဲ အမည်ပါသော alternate data stream ကို ကိုယ်စားပြုသည်။ |
+| `SI<FN` (Standard Information Before File Name) | SI ဖန်တီးချိန်သည် ကွဲပြားသော FN ဖန်တီးချိန်ထက် စောသည်။ ကူးယူခြင်း/timestomping နှင့် တရားဝင်အကြောင်းရင်းများကို စုံစမ်းပါ။ |
+| `ZeroU-Secs` (Microsecond Zeros) | SI ဖန်တီးချိန်/ပြင်ဆင်ချိန်သည် millisecond နယ်နိမိတ်ပေါ်တွင် အတိအကျ ကျရောက်သည်။ အားနည်းသော timestomping heuristic သာ ဖြစ်သည်။ |
 | `Copied` | ပြင်ဆင်ချိန်သည် ဖန်တီးချိန်ထက် စောသည်။ ဖိုင်ကူးယူခြင်းနှင့် ကိုက်ညီလေ့ရှိသည်။ တိုက်ခိုက်သူ၏ လုပ်ဆောင်ချက် သက်သေ မဟုတ်ပါ။ |
-| `SI-Flags` | `$STANDARD_INFORMATION` ဖိုင် attribute/flag များ။ Hidden/system flag များသည် အသုံးဝင်သော pivot များ ဖြစ်နိုင်သည်။ |
-| `Type` | `$FILE_NAME` namespace (Win32၊ DOS၊ POSIX သို့မဟုတ် ပေါင်းစပ်)။ အမည်များကို နှစ်ကြိမ်ရေတွက်ခြင်းမှ ရှောင်ရန် အသုံးပြုပါ။ |
+| `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` ဖိုင် attribute/flag များ။ Hidden/system flag များသည် အသုံးဝင်သော pivot များ ဖြစ်နိုင်သည်။ |
+| `Type` (Name Type) | `$FILE_NAME` namespace (Win32၊ DOS၊ POSIX သို့မဟုတ် ပေါင်းစပ်)။ အမည်များကို နှစ်ကြိမ်ရေတွက်ခြင်းမှ ရှောင်ရန် အသုံးပြုပါ။ |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI အချိန်များ။ အသုံးများသော timeline field များဖြစ်သော်လည်း user-mode tool များက ၎င်းတို့အနက် အများအပြားကို ပြောင်းလဲနိုင်သည်။ |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN အချိန်များ။ ကွဲပြားစွာ အပ်ဒိတ်လုပ်ပြီး ပုံမှန် API များဖြင့် ပြောင်းလဲရန် ယေဘုယျအားဖြင့် ပိုခက်သည်။ သို့သော် ပြောင်းလဲ၍မရသည် မဟုတ်ပါ။ |
-| `USN` | Record ၏ SI attribute နှင့် ဆက်စပ်သော နောက်ဆုံး USN။ ထို USN ကျန်ရှိနေပါက `$J` သို့ pivot လုပ်ပါ။ |
-| `LogfileSN` | FILE record header မှ NTFS `$LogFile` sequence number။ အနိမ့်ပိုင်းအဆင့် transaction ခွဲခြမ်းစိတ်ဖြာမှုတွင် အသုံးဝင်သည်။ |
-| `SID` | NTFS `$Secure` သို့ index။ ၎င်းကိုယ်တိုင် Windows SID မဟုတ်ပါ။ ဖိုင်၏ ပိုင်ရှင်နှင့် ACL များအတွက် ၎င်းကို [`parse-ntfs secure-sds`](secure-sds.md) ၏ `SecurityID` နှင့် ပေါင်းစပ်ပါ။ |
+| `USN` (Update Sequence Number) | Record ၏ SI attribute နှင့် ဆက်စပ်သော နောက်ဆုံး USN။ ထို USN ကျန်ရှိနေပါက `$J` သို့ pivot လုပ်ပါ။ |
+| `LogfileSN` (Logfile Sequence Number) | FILE record header မှ NTFS `$LogFile` sequence number။ အနိမ့်ပိုင်းအဆင့် transaction ခွဲခြမ်းစိတ်ဖြာမှုတွင် အသုံးဝင်သည်။ |
+| `SID` (Security ID) | NTFS `$Secure` သို့ index။ ၎င်းကိုယ်တိုင် Windows SID မဟုတ်ပါ။ ဖိုင်၏ ပိုင်ရှင်နှင့် ACL များအတွက် ၎င်းကို [`parse-ntfs secure-sds`](secure-sds.md) ၏ `SecurityID` နှင့် ပေါင်းစပ်ပါ။ |
 | `ObjectID-FileDroid` | ရှိပါက Object ID / distributed-link-tracking identifier။ LNK/Jump List droid များနှင့် ချိတ်ဆက်စစ်ဆေးပါ။ |
 | `LoggedUtilStream` | ပံ့ပိုးထားသည့်နေရာတွင် decode လုပ်ထားသော `$LOGGED_UTILITY_STREAM` အခြေအနေ။ မရင်းနှီးသော တန်ဖိုးများကို ပြန်လည်သုံးသပ်ပါ။ |
 | `ZoneID-Contents` | ZoneId နှင့် download URL များကဲ့သို့ resident `Zone.Identifier` အကြောင်းအရာ။ မရှိခြင်း၊ ဖယ်ရှားထားခြင်း သို့မဟုတ် non-resident ဖြစ်နိုင်သည်။ |

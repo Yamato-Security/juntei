@@ -101,29 +101,29 @@ entrada (`30`, `0x1E`, `30-1`) ou por caminho (`\Windows\System32`, `C:/Windows`
 
 | Campo | Interpretação |
 |---|---|
-| `EntryNum` | Número do registro da MFT. Combine com `SN`; números de registro são reutilizados. |
-| `SN` | Contador de geração usado pelas referências do NTFS. Uma divergência pode revelar relações obsoletas/excluídas. |
+| `EntryNum` (Entry Number) | Número do registro da MFT. Combine com `SN`; números de registro são reutilizados. |
+| `SN` (Sequence Number) | Contador de geração usado pelas referências do NTFS. Uma divergência pode revelar relações obsoletas/excluídas. |
 | `InUse` | Flag de alocação no momento da coleta. `false` significa que o registro está livre/excluído, não que todos os bytes estão intactos. |
-| `ParentEntryNum`, `ParentSN` | Referência ao diretório pai a partir de `$FILE_NAME`. Valide ambas as partes. |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | Referência ao diretório pai a partir de `$FILE_NAME`. Valide ambas as partes. |
 | `ParentPath` | Caminho do pai reconstruído. Marcadores de desconhecido/órfão expõem ascendência não resolvida. |
-| `File` | Nome a partir do `$FILE_NAME` ou do fluxo da linha atual. Um registro pode ter várias linhas. |
-| `Ext` | Extensão extraída do nome por conveniência; não é uma determinação confiável do tipo de arquivo. |
-| `Size` | Tamanho lógico associado à linha/ao fluxo. A alocação esparsa/compactada pode ser diferente. |
-| `RefCnt` | Contagem de referências de hard links do NTFS; compare com cautela com o número de nomes sobreviventes. |
+| `File` (Filename) | Nome a partir do `$FILE_NAME` ou do fluxo da linha atual. Um registro pode ter várias linhas. |
+| `Ext` (Extension) | Extensão extraída do nome por conveniência; não é uma determinação confiável do tipo de arquivo. |
+| `Size` (File Size) | Tamanho lógico associado à linha/ao fluxo. A alocação esparsa/compactada pode ser diferente. |
+| `RefCnt` (Reference Count) | Contagem de referências de hard links do NTFS; compare com cautela com o número de nomes sobreviventes. |
 | `ReparseTarget` | Destino decodificado de pontos de reparse compatíveis, como junções/links simbólicos. Os caminhos podem redirecionar. |
-| `Dir` | O registro tem a flag de diretório. |
-| `HasADS` | O registro contém fluxos de dados alternativos nomeados. Isso não o torna malicioso. |
-| `IsADS` | Esta linha representa um fluxo de dados alternativo nomeado em vez dos dados sem nome do arquivo. |
-| `SI<FN` | A criação SI é anterior a um horário de criação FN diferente. Investigue cópia/timestomping e causas legítimas. |
-| `ZeroU-Secs` | O horário de criação/modificação SI cai exatamente em um limite de milissegundo. Apenas uma heurística fraca de timestomping. |
+| `Dir` (Directory) | O registro tem a flag de diretório. |
+| `HasADS` (Has Alternate Data Streams) | O registro contém fluxos de dados alternativos nomeados. Isso não o torna malicioso. |
+| `IsADS` (Is Alternate Data Stream) | Esta linha representa um fluxo de dados alternativo nomeado em vez dos dados sem nome do arquivo. |
+| `SI<FN` (Standard Information Before File Name) | A criação SI é anterior a um horário de criação FN diferente. Investigue cópia/timestomping e causas legítimas. |
+| `ZeroU-Secs` (Microsecond Zeros) | O horário de criação/modificação SI cai exatamente em um limite de milissegundo. Apenas uma heurística fraca de timestomping. |
 | `Copied` | O horário de modificação é anterior ao de criação. Frequentemente consistente com cópia de arquivo; não prova ação de atacante. |
-| `SI-Flags` | Atributos/flags de arquivo de `$STANDARD_INFORMATION`. As flags de oculto/sistema podem ser pivôs úteis. |
-| `Type` | Namespace do `$FILE_NAME` (Win32, DOS, POSIX ou combinado). Use para evitar contar nomes em duplicidade. |
+| `SI-Flags` (Standard Information Flags) | Atributos/flags de arquivo de `$STANDARD_INFORMATION`. As flags de oculto/sistema podem ser pivôs úteis. |
+| `Type` (Name Type) | Namespace do `$FILE_NAME` (Win32, DOS, POSIX ou combinado). Use para evitar contar nomes em duplicidade. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | Horários SI. Campos comuns de linha do tempo, mas ferramentas em modo de usuário podem alterar vários deles. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | Horários FN. São atualizados de forma diferente e geralmente mais difíceis de alterar com APIs comuns; ainda assim não são imutáveis. |
-| `USN` | Último USN associado ao atributo SI do registro. Pivô para o `$J` se esse USN sobreviver. |
-| `LogfileSN` | Número de sequência do `$LogFile` do NTFS a partir do cabeçalho do registro FILE; útil na análise de transações de baixo nível. |
-| `SID` | Índice no `$Secure` do NTFS; não é um SID do Windows por si só. Una-o ao `SecurityID` de [`parse-ntfs secure-sds`](secure-sds.md) para obter o proprietário e as ACLs do arquivo. |
+| `USN` (Update Sequence Number) | Último USN associado ao atributo SI do registro. Pivô para o `$J` se esse USN sobreviver. |
+| `LogfileSN` (Logfile Sequence Number) | Número de sequência do `$LogFile` do NTFS a partir do cabeçalho do registro FILE; útil na análise de transações de baixo nível. |
+| `SID` (Security ID) | Índice no `$Secure` do NTFS; não é um SID do Windows por si só. Una-o ao `SecurityID` de [`parse-ntfs secure-sds`](secure-sds.md) para obter o proprietário e as ACLs do arquivo. |
 | `ObjectID-FileDroid` | Object ID / identificador de rastreamento de links distribuídos, quando presente; correlacione com os droids de LNK/Jump List. |
 | `LoggedUtilStream` | Contexto decodificado de `$LOGGED_UTILITY_STREAM`, quando compatível. Revise valores desconhecidos. |
 | `ZoneID-Contents` | Conteúdo residente de `Zone.Identifier`, como ZoneId e URLs de download. Pode estar ausente, ter sido removido ou ser não residente. |

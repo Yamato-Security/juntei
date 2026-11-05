@@ -105,29 +105,29 @@ duyarsız) verilir.
 
 | Alan | Yorumlama |
 |---|---|
-| `EntryNum` | MFT kayıt numarası. `SN` ile birleştirin; kayıt numaraları yeniden kullanılır. |
-| `SN` | NTFS referanslarının kullandığı nesil sayacı. Bir uyuşmazlık, güncelliğini yitirmiş/silinmiş ilişkileri ortaya çıkarabilir. |
+| `EntryNum` (Entry Number) | MFT kayıt numarası. `SN` ile birleştirin; kayıt numaraları yeniden kullanılır. |
+| `SN` (Sequence Number) | NTFS referanslarının kullandığı nesil sayacı. Bir uyuşmazlık, güncelliğini yitirmiş/silinmiş ilişkileri ortaya çıkarabilir. |
 | `InUse` | Toplama anındaki ayrılma bayrağı. `false`, kaydın boş/silinmiş olduğu anlamına gelir; tüm baytların sağlam olduğu anlamına gelmez. |
-| `ParentEntryNum`, `ParentSN` | `$FILE_NAME` özniteliğinden gelen üst dizin referansı. Her iki parçayı da doğrulayın. |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | `$FILE_NAME` özniteliğinden gelen üst dizin referansı. Her iki parçayı da doğrulayın. |
 | `ParentPath` | Yeniden oluşturulan üst yol. Bilinmeyen/sahipsiz işaretleri, çözümlenemeyen soy zincirini gösterir. |
-| `File` | Geçerli satırın `$FILE_NAME` özniteliğinden veya akışından gelen ad. Bir kaydın birkaç satırı olabilir. |
-| `Ext` | Addan ayrıştırılan, kolaylık amaçlı uzantı; güvenilir bir dosya türü tespiti değildir. |
-| `Size` | Satır/akışla ilişkili mantıksal boyut. Seyrek/sıkıştırılmış ayırma farklı olabilir. |
-| `RefCnt` | NTFS sabit bağlantı referans sayısı; varlığını sürdüren adların sayısıyla dikkatle karşılaştırın. |
+| `File` (Filename) | Geçerli satırın `$FILE_NAME` özniteliğinden veya akışından gelen ad. Bir kaydın birkaç satırı olabilir. |
+| `Ext` (Extension) | Addan ayrıştırılan, kolaylık amaçlı uzantı; güvenilir bir dosya türü tespiti değildir. |
+| `Size` (File Size) | Satır/akışla ilişkili mantıksal boyut. Seyrek/sıkıştırılmış ayırma farklı olabilir. |
+| `RefCnt` (Reference Count) | NTFS sabit bağlantı referans sayısı; varlığını sürdüren adların sayısıyla dikkatle karşılaştırın. |
 | `ReparseTarget` | Bağlantı noktaları (junction)/sembolik bağlantılar gibi desteklenen yeniden ayrıştırma noktaları için kodu çözülmüş hedef. Yollar yönlendirme yapabilir. |
-| `Dir` | Kayıt dizin bayrağına sahiptir. |
-| `HasADS` | Kayıt adlandırılmış alternatif veri akışları içerir. Bu onu kötü amaçlı yapmaz. |
-| `IsADS` | Bu satır, adsız dosya verisi yerine adlandırılmış bir alternatif veri akışını temsil eder. |
-| `SI<FN` | SI oluşturma zamanı, farklı bir FN oluşturma zamanından öncedir. Kopyalamayı/zaman damgası manipülasyonunu ve meşru nedenleri araştırın. |
-| `ZeroU-Secs` | SI oluşturma/değiştirme zamanı tam olarak bir milisaniye sınırına denk gelir. Yalnızca zayıf bir zaman damgası manipülasyonu buluşsal yöntemidir. |
+| `Dir` (Directory) | Kayıt dizin bayrağına sahiptir. |
+| `HasADS` (Has Alternate Data Streams) | Kayıt adlandırılmış alternatif veri akışları içerir. Bu onu kötü amaçlı yapmaz. |
+| `IsADS` (Is Alternate Data Stream) | Bu satır, adsız dosya verisi yerine adlandırılmış bir alternatif veri akışını temsil eder. |
+| `SI<FN` (Standard Information Before File Name) | SI oluşturma zamanı, farklı bir FN oluşturma zamanından öncedir. Kopyalamayı/zaman damgası manipülasyonunu ve meşru nedenleri araştırın. |
+| `ZeroU-Secs` (Microsecond Zeros) | SI oluşturma/değiştirme zamanı tam olarak bir milisaniye sınırına denk gelir. Yalnızca zayıf bir zaman damgası manipülasyonu buluşsal yöntemidir. |
 | `Copied` | Değiştirilme zamanı oluşturulma zamanından öncedir. Çoğunlukla dosya kopyalamayla tutarlıdır; saldırgan eyleminin kanıtı değildir. |
-| `SI-Flags` | `$STANDARD_INFORMATION` dosya öznitelikleri/bayrakları. Gizli/sistem bayrakları faydalı pivot noktaları olabilir. |
-| `Type` | `$FILE_NAME` ad alanı (Win32, DOS, POSIX veya birleşik). Adları iki kez saymamak için kullanın. |
+| `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` dosya öznitelikleri/bayrakları. Gizli/sistem bayrakları faydalı pivot noktaları olabilir. |
+| `Type` (Name Type) | `$FILE_NAME` ad alanı (Win32, DOS, POSIX veya birleşik). Adları iki kez saymamak için kullanın. |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI zamanları. Yaygın zaman çizelgesi alanlarıdır, ancak kullanıcı modu araçları bunların birçoğunu değiştirebilir. |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN zamanları. Farklı biçimde güncellenir ve sıradan API'lerle değiştirilmeleri genellikle daha zordur; yine de değiştirilemez değildir. |
-| `USN` | Kaydın SI özniteliğiyle ilişkili son USN. Bu USN varlığını sürdürüyorsa `$J` içine pivot yapın. |
-| `LogfileSN` | FILE kaydı başlığındaki NTFS `$LogFile` sıra numarası; düşük seviyeli işlem analizinde faydalıdır. |
-| `SID` | NTFS `$Secure` yapısına bir indeks; kendi başına bir Windows SID'si değildir. Dosyanın sahibi ve ACL'leri için [`parse-ntfs secure-sds`](secure-sds.md) çıktısının `SecurityID` alanıyla birleştirin. |
+| `USN` (Update Sequence Number) | Kaydın SI özniteliğiyle ilişkili son USN. Bu USN varlığını sürdürüyorsa `$J` içine pivot yapın. |
+| `LogfileSN` (Logfile Sequence Number) | FILE kaydı başlığındaki NTFS `$LogFile` sıra numarası; düşük seviyeli işlem analizinde faydalıdır. |
+| `SID` (Security ID) | NTFS `$Secure` yapısına bir indeks; kendi başına bir Windows SID'si değildir. Dosyanın sahibi ve ACL'leri için [`parse-ntfs secure-sds`](secure-sds.md) çıktısının `SecurityID` alanıyla birleştirin. |
 | `ObjectID-FileDroid` | Mevcutsa nesne kimliği / dağıtılmış bağlantı izleme tanımlayıcısı; LNK/Jump List droid'leriyle ilişkilendirin. |
 | `LoggedUtilStream` | Desteklendiği yerde kodu çözülmüş `$LOGGED_UTILITY_STREAM` bağlamı. Alışılmadık değerleri gözden geçirin. |
 | `ZoneID-Contents` | ZoneId ve indirme URL'leri gibi yerleşik `Zone.Identifier` içeriği. Bulunmayabilir, kaldırılmış olabilir veya yerleşik olmayabilir. |

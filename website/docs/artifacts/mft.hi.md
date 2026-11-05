@@ -101,29 +101,29 @@ entry (`30`, `0x1E`, `30-1`) या path (`\Windows\System32`, `C:/Windows`; cas
 
 | Field | व्याख्या |
 |---|---|
-| `EntryNum` | MFT record number। `SN` के साथ जोड़ें; record numbers फिर से उपयोग होते हैं। |
-| `SN` | NTFS references द्वारा उपयोग किया जाने वाला generation counter। Mismatch पुराने/हटाए गए संबंधों को प्रकट कर सकता है। |
+| `EntryNum` (Entry Number) | MFT record number। `SN` के साथ जोड़ें; record numbers फिर से उपयोग होते हैं। |
+| `SN` (Sequence Number) | NTFS references द्वारा उपयोग किया जाने वाला generation counter। Mismatch पुराने/हटाए गए संबंधों को प्रकट कर सकता है। |
 | `InUse` | संग्रह के समय allocation flag। `false` का अर्थ है record free/हटाया गया है, न कि सभी bytes अक्षुण्ण हैं। |
-| `ParentEntryNum`, `ParentSN` | `$FILE_NAME` से parent directory reference। दोनों भागों को सत्यापित करें। |
+| `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number) | `$FILE_NAME` से parent directory reference। दोनों भागों को सत्यापित करें। |
 | `ParentPath` | पुनर्निर्मित parent path। Unknown/orphan markers अनसुलझी ancestry उजागर करते हैं। |
-| `File` | वर्तमान row के `$FILE_NAME` या stream से नाम। एक record की कई rows हो सकती हैं। |
-| `Ext` | नाम से parse किया गया सुविधाजनक extension; file type का भरोसेमंद निर्धारण नहीं। |
-| `Size` | Row/stream से जुड़ा logical आकार। Sparse/compressed allocation अलग हो सकता है। |
-| `RefCnt` | NTFS hard-link reference count; बचे हुए names की संख्या से सावधानी से तुलना करें। |
+| `File` (Filename) | वर्तमान row के `$FILE_NAME` या stream से नाम। एक record की कई rows हो सकती हैं। |
+| `Ext` (Extension) | नाम से parse किया गया सुविधाजनक extension; file type का भरोसेमंद निर्धारण नहीं। |
+| `Size` (File Size) | Row/stream से जुड़ा logical आकार। Sparse/compressed allocation अलग हो सकता है। |
+| `RefCnt` (Reference Count) | NTFS hard-link reference count; बचे हुए names की संख्या से सावधानी से तुलना करें। |
 | `ReparseTarget` | Junctions/symlinks जैसे समर्थित reparse points के लिए decode किया गया target। Paths redirect कर सकते हैं। |
-| `Dir` | Record में directory flag है। |
-| `HasADS` | Record में named alternate data streams हैं। इससे वह दुर्भावनापूर्ण नहीं हो जाता। |
-| `IsADS` | यह row unnamed file data के बजाय किसी named alternate data stream को दर्शाती है। |
-| `SI<FN` | SI creation किसी अलग FN creation समय से पहले है। Copying/timestomping और वैध कारणों की जाँच करें। |
-| `ZeroU-Secs` | SI created/modified समय ठीक millisecond सीमा पर पड़ता है। केवल कमज़ोर timestomping heuristic। |
+| `Dir` (Directory) | Record में directory flag है। |
+| `HasADS` (Has Alternate Data Streams) | Record में named alternate data streams हैं। इससे वह दुर्भावनापूर्ण नहीं हो जाता। |
+| `IsADS` (Is Alternate Data Stream) | यह row unnamed file data के बजाय किसी named alternate data stream को दर्शाती है। |
+| `SI<FN` (Standard Information Before File Name) | SI creation किसी अलग FN creation समय से पहले है। Copying/timestomping और वैध कारणों की जाँच करें। |
+| `ZeroU-Secs` (Microsecond Zeros) | SI created/modified समय ठीक millisecond सीमा पर पड़ता है। केवल कमज़ोर timestomping heuristic। |
 | `Copied` | Modified समय created समय से पहले है। अक्सर file copy के अनुरूप; हमलावर की कार्रवाई का प्रमाण नहीं। |
-| `SI-Flags` | `$STANDARD_INFORMATION` file attributes/flags। Hidden/system flags उपयोगी pivots हो सकते हैं। |
-| `Type` | `$FILE_NAME` namespace (Win32, DOS, POSIX या संयुक्त)। Names की दोहरी गिनती से बचने के लिए उपयोग करें। |
+| `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` file attributes/flags। Hidden/system flags उपयोगी pivots हो सकते हैं। |
+| `Type` (Name Type) | `$FILE_NAME` namespace (Win32, DOS, POSIX या संयुक्त)। Names की दोहरी गिनती से बचने के लिए उपयोग करें। |
 | `DataModified (SI)`, `Accessed (SI)`, `MetadataChanged (SI)`, `Created (SI)` | SI times। सामान्य timeline fields, लेकिन user-mode टूल इनमें से कई को बदल सकते हैं। |
 | `DataModified (FN)`, `Accessed (FN)`, `MetadataChanged (FN)`, `Created (FN)` | FN times। अलग तरीके से update होते हैं और सामान्य APIs के लिए बदलना आमतौर पर कठिन होता है; फिर भी अपरिवर्तनीय नहीं। |
-| `USN` | Record के SI attribute से जुड़ा अंतिम USN। यदि वह USN बचा है तो `$J` में pivot करें। |
-| `LogfileSN` | FILE record header से NTFS `$LogFile` sequence number; low-level transaction विश्लेषण में उपयोगी। |
-| `SID` | NTFS `$Secure` में index; अपने-आप में Windows SID नहीं। फ़ाइल के owner और ACLs के लिए इसे [`parse-ntfs secure-sds`](secure-sds.md) के `SecurityID` से join करें। |
+| `USN` (Update Sequence Number) | Record के SI attribute से जुड़ा अंतिम USN। यदि वह USN बचा है तो `$J` में pivot करें। |
+| `LogfileSN` (Logfile Sequence Number) | FILE record header से NTFS `$LogFile` sequence number; low-level transaction विश्लेषण में उपयोगी। |
+| `SID` (Security ID) | NTFS `$Secure` में index; अपने-आप में Windows SID नहीं। फ़ाइल के owner और ACLs के लिए इसे [`parse-ntfs secure-sds`](secure-sds.md) के `SecurityID` से join करें। |
 | `ObjectID-FileDroid` | जहाँ मौजूद हो, Object ID / distributed-link-tracking identifier; LNK/Jump List droids से correlate करें। |
 | `LoggedUtilStream` | जहाँ समर्थित हो, decode किया गया `$LOGGED_UTILITY_STREAM` context। अपरिचित values की समीक्षा करें। |
 | `ZoneID-Contents` | Resident `Zone.Identifier` सामग्री, जैसे ZoneId और download URLs। यह अनुपस्थित, हटाई गई या non-resident हो सकती है। |

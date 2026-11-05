@@ -67,7 +67,7 @@ Output label များသာ ပြောင်းလဲပြီး အထ�
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
-MFT CSV တွင် သီးသန့်ကော်လံအမည်များဖြစ်သော `File`, `SN`, `ParentEntryNum`, `ParentSN`, `USN`, `LogfileSN`, `SID`, `Type` နှင့် `RefCnt` ကို သုံးပါသည်။ `auto-parse` ၏ MFT CSV များလည်း ထိုအမည်များကို သုံးပါသည်။ [MFT output fields](../artifacts/mft.md#csv-output-fields) ကို ကြည့်ပါ။
+MFT CSV တွင် သီးသန့်ကော်လံအမည်များဖြစ်သော `File` (Filename), `SN` (Sequence Number), `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number), `USN` (Update Sequence Number), `LogfileSN` (Logfile Sequence Number), `SID` (Security ID), `Type` (Name Type) နှင့် `RefCnt` (Reference Count) ကို သုံးပါသည်။ `auto-parse` ၏ MFT CSV များလည်း ထိုအမည်များကို သုံးပါသည်။ [MFT output fields](../artifacts/mft.md#csv-output-fields) ကို ကြည့်ပါ။
 
 Native system-information JSON အချိန်သည် `CompNameLastWritten` ဖြစ်ပါသည် (CSV:
 `CompNameLastWrittenUTC`)။ `HasADS` သည် Boolean indicator ဖြစ်ပြီး Prefetch ရှိ `Dir` တွင် မှတ်တမ်းတင်ထားသော
