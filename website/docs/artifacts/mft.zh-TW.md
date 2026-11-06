@@ -28,7 +28,7 @@ C:\$MFT
 - `SN` 用於區分相同項目編號的不同世代。請同時比對項目編號**與**序號。
 - `$STANDARD_INFORMATION`（`0x10`）與 `$FILE_NAME`（`0x30`）的時間戳記具有不同的更新行為。
   兩者都無法免於竄改。
-- `SI<FN`、`ZeroU-Secs` 與 `Copied` 只是線索，並非自動的時間戳記竄改判定。
+- `SI<FN`、`uSecZeros` 與 `Copied` 只是線索，並非自動的時間戳記竄改判定。
 - 硬連結會讓一筆檔案記錄產生多個 `$FILE_NAME` 屬性與路徑。
 - NTFS 可以儲存多個名稱（包括 DOS 8.3）、替代資料流與擴充記錄。
 - 存取時間的更新可能被停用、延遲或合併。
@@ -111,7 +111,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 | `HasADS` (Has Alternate Data Streams) | 記錄包含具名的替代資料流。這並不代表它是惡意的。 |
 | `IsADS` (Is Alternate Data Stream) | 這一列代表具名的替代資料流，而非未命名的檔案資料。 |
 | `SI<FN` (Standard Information Before File Name) | SI 建立時間早於不同的 FN 建立時間。請調查複製／時間戳記竄改以及合法的原因。 |
-| `ZeroU-Secs` (Microsecond Zeros) | SI 建立／修改時間剛好落在毫秒邊界上。僅為薄弱的時間戳記竄改啟發式判斷。 |
+| `uSecZeros` (Microsecond Zeros) | SI 建立／修改時間剛好落在毫秒邊界上。僅為薄弱的時間戳記竄改啟發式判斷。 |
 | `Copied` | 修改時間早於建立時間。通常與檔案複製一致；並非攻擊者行為的證明。 |
 | `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` 的檔案屬性／旗標。隱藏／系統旗標可作為有用的樞紐。 |
 | `Type` (Name Type) | `$FILE_NAME` 命名空間（Win32、DOS、POSIX 或合併）。用於避免重複計算名稱。 |

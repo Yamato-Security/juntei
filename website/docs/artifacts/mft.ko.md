@@ -31,7 +31,7 @@ C:\$MFT
 - `SN`는 같은 엔트리 번호의 세대를 구별합니다. 엔트리와 시퀀스를 **모두** 대조하십시오.
 - `$STANDARD_INFORMATION`(`0x10`)과 `$FILE_NAME`(`0x30`) 타임스탬프는 업데이트 동작이 다릅니다. 어느
   쪽도 조작으로부터 안전하지 않습니다.
-- `SI<FN`, `ZeroU-Secs` 및 `Copied`는 단서일 뿐이며, 자동으로 타임스톰핑(timestomping)이라고 판정하는
+- `SI<FN`, `uSecZeros` 및 `Copied`는 단서일 뿐이며, 자동으로 타임스톰핑(timestomping)이라고 판정하는
   것이 아닙니다.
 - 하드 링크는 하나의 파일 레코드에 대해 여러 `$FILE_NAME` 속성과 경로를 만듭니다.
 - NTFS는 여러 이름(DOS 8.3 포함), 대체 데이터 스트림 및 확장 레코드를 저장할 수 있습니다.
@@ -116,7 +116,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 | `HasADS` (Has Alternate Data Streams) | 레코드에 이름이 있는 대체 데이터 스트림이 포함되어 있습니다. 이것만으로 악성이 되지는 않습니다. |
 | `IsADS` (Is Alternate Data Stream) | 이 행이 이름 없는 파일 데이터가 아니라 이름이 있는 대체 데이터 스트림을 나타냅니다. |
 | `SI<FN` (Standard Information Before File Name) | SI 생성 시간이 다른 FN 생성 시간보다 앞섭니다. 복사/타임스톰핑과 정당한 원인을 조사하십시오. |
-| `ZeroU-Secs` (Microsecond Zeros) | SI 생성/수정 시간이 정확히 밀리초 경계에 위치합니다. 약한 타임스톰핑 휴리스틱일 뿐입니다. |
+| `uSecZeros` (Microsecond Zeros) | SI 생성/수정 시간이 정확히 밀리초 경계에 위치합니다. 약한 타임스톰핑 휴리스틱일 뿐입니다. |
 | `Copied` | 수정 시간이 생성 시간보다 앞섭니다. 파일 복사와 일치하는 경우가 많으며, 공격자 행위의 증거가 아닙니다. |
 | `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` 파일 속성/플래그입니다. 숨김/시스템 플래그는 유용한 피벗이 될 수 있습니다. |
 | `Type` (Name Type) | `$FILE_NAME` 네임스페이스(Win32, DOS, POSIX 또는 조합)입니다. 이름을 중복 집계하지 않도록 사용하십시오. |

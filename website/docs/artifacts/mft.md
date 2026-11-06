@@ -31,7 +31,7 @@ and volume metadata when possible.
 - `SN` distinguishes generations of the same entry number. Match entry **and** sequence.
 - `$STANDARD_INFORMATION` (`0x10`) and `$FILE_NAME` (`0x30`) timestamps have different update
   behavior. Neither is immune to manipulation.
-- `SI<FN`, `ZeroU-Secs`, and `Copied` are leads, not automatic timestomping verdicts.
+- `SI<FN`, `uSecZeros`, and `Copied` are leads, not automatic timestomping verdicts.
 - Hard links produce multiple `$FILE_NAME` attributes and paths for one file record.
 - NTFS can store several names (including DOS 8.3), alternate data streams, and extension records.
 - Access-time updates may be disabled, delayed, or coalesced.
@@ -115,7 +115,7 @@ entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case
 | `HasADS` (Has Alternate Data Streams) | Record contains named alternate data streams. This does not make it malicious. |
 | `IsADS` (Is Alternate Data Stream) | This row represents a named alternate data stream rather than the unnamed file data. |
 | `SI<FN` (Standard Information Before File Name) | SI creation precedes a different FN creation time. Investigate copying/timestomping and legitimate causes. |
-| `ZeroU-Secs` (Microsecond Zeros) | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
+| `uSecZeros` (Microsecond Zeros) | SI created/modified time lands exactly on a millisecond boundary. Weak timestomping heuristic only. |
 | `Copied` | Modified time precedes created time. Often consistent with file copy; not proof of attacker action. |
 | `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` file attributes/flags. Hidden/system flags can be useful pivots. |
 | `Type` (Name Type) | `$FILE_NAME` namespace (Win32, DOS, POSIX, or combined). Use to avoid double-counting names. |

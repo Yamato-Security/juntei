@@ -32,7 +32,7 @@ birim meta verileriyle birlikte toplayın.
   eşleştirin.
 - `$STANDARD_INFORMATION` (`0x10`) ve `$FILE_NAME` (`0x30`) zaman damgalarının güncellenme davranışları
   farklıdır. Hiçbiri manipülasyona karşı bağışık değildir.
-- `SI<FN`, `ZeroU-Secs` ve `Copied` ipuçlarıdır; otomatik zaman damgası manipülasyonu (timestomping)
+- `SI<FN`, `uSecZeros` ve `Copied` ipuçlarıdır; otomatik zaman damgası manipülasyonu (timestomping)
   hükümleri değildir.
 - Sabit bağlantılar (hard link), tek bir dosya kaydı için birden fazla `$FILE_NAME` özniteliği ve yol üretir.
 - NTFS birden fazla ad (DOS 8.3 dahil), alternatif veri akışları ve uzantı kayıtları saklayabilir.
@@ -119,7 +119,7 @@ duyarsız) verilir.
 | `HasADS` (Has Alternate Data Streams) | Kayıt adlandırılmış alternatif veri akışları içerir. Bu onu kötü amaçlı yapmaz. |
 | `IsADS` (Is Alternate Data Stream) | Bu satır, adsız dosya verisi yerine adlandırılmış bir alternatif veri akışını temsil eder. |
 | `SI<FN` (Standard Information Before File Name) | SI oluşturma zamanı, farklı bir FN oluşturma zamanından öncedir. Kopyalamayı/zaman damgası manipülasyonunu ve meşru nedenleri araştırın. |
-| `ZeroU-Secs` (Microsecond Zeros) | SI oluşturma/değiştirme zamanı tam olarak bir milisaniye sınırına denk gelir. Yalnızca zayıf bir zaman damgası manipülasyonu buluşsal yöntemidir. |
+| `uSecZeros` (Microsecond Zeros) | SI oluşturma/değiştirme zamanı tam olarak bir milisaniye sınırına denk gelir. Yalnızca zayıf bir zaman damgası manipülasyonu buluşsal yöntemidir. |
 | `Copied` | Değiştirilme zamanı oluşturulma zamanından öncedir. Çoğunlukla dosya kopyalamayla tutarlıdır; saldırgan eyleminin kanıtı değildir. |
 | `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` dosya öznitelikleri/bayrakları. Gizli/sistem bayrakları faydalı pivot noktaları olabilir. |
 | `Type` (Name Type) | `$FILE_NAME` ad alanı (Win32, DOS, POSIX veya birleşik). Adları iki kez saymamak için kullanın. |

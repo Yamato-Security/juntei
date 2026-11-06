@@ -2023,7 +2023,7 @@ fn mft_csv_json_and_jsonl() {
         ("Ext", ".dll"),
         ("Size", "12288"),
         ("SI<FN", "True"),
-        ("ZeroU-Secs", "True"),
+        ("uSecZeros", "True"),
         ("Copied", "False"),
         ("SI-Flags", "Archive"),
         ("Type", "DosWindows"),

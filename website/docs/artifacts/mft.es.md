@@ -31,7 +31,7 @@ y los metadatos del volumen siempre que sea posible.
 - `SN` distingue las generaciones de un mismo número de entrada. Haga coincidir la entrada **y** la secuencia.
 - Las marcas de tiempo de `$STANDARD_INFORMATION` (`0x10`) y `$FILE_NAME` (`0x30`) se actualizan de forma
   diferente. Ninguna es inmune a la manipulación.
-- `SI<FN`, `ZeroU-Secs` y `Copied` son pistas, no veredictos automáticos de timestomping.
+- `SI<FN`, `uSecZeros` y `Copied` son pistas, no veredictos automáticos de timestomping.
 - Los vínculos físicos generan varios atributos `$FILE_NAME` y varias rutas para un mismo registro de archivo.
 - NTFS puede almacenar varios nombres (incluido el DOS 8.3), flujos de datos alternativos y registros de extensión.
 - Las actualizaciones de la hora de acceso pueden estar deshabilitadas, retrasarse o agruparse.
@@ -115,7 +115,7 @@ entrada (`30`, `0x1E`, `30-1`) o por ruta (`\Windows\System32`, `C:/Windows`; si
 | `HasADS` (Has Alternate Data Streams) | El registro contiene flujos de datos alternativos con nombre. Esto no lo convierte en malicioso. |
 | `IsADS` (Is Alternate Data Stream) | Esta fila representa un flujo de datos alternativo con nombre y no los datos sin nombre del archivo. |
 | `SI<FN` (Standard Information Before File Name) | La creación de SI es anterior a una hora de creación de FN distinta. Investigue la copia, el timestomping y las causas legítimas. |
-| `ZeroU-Secs` (Microsecond Zeros) | La hora de creación o modificación de SI cae exactamente en un límite de milisegundo. Solo es una heurística débil de timestomping. |
+| `uSecZeros` (Microsecond Zeros) | La hora de creación o modificación de SI cae exactamente en un límite de milisegundo. Solo es una heurística débil de timestomping. |
 | `Copied` | La hora de modificación es anterior a la hora de creación. Suele ser coherente con una copia de archivo; no demuestra la acción de un atacante. |
 | `SI-Flags` (Standard Information Flags) | Atributos e indicadores de archivo de `$STANDARD_INFORMATION`. Los indicadores de oculto o de sistema pueden ser pivotes útiles. |
 | `Type` (Name Type) | Espacio de nombres de `$FILE_NAME` (Win32, DOS, POSIX o combinado). Utilícelo para no contar dos veces los nombres. |

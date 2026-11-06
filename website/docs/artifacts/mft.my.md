@@ -33,7 +33,7 @@ triage tool ဖြင့် စုဆောင်းပါ။ သာမန် us
   တိုက်ဆိုင်ပါ။
 - `$STANDARD_INFORMATION` (`0x10`) နှင့် `$FILE_NAME` (`0x30`) timestamp များသည် မတူညီသော အပ်ဒိတ်အပြုအမူ ရှိသည်။
   မည်သည့်တစ်ခုမျှ ခြယ်လှယ်ခြင်းမှ ကင်းလွတ်ခြင်း မရှိပါ။
-- `SI<FN`, `ZeroU-Secs` နှင့် `Copied` တို့သည် သဲလွန်စများဖြစ်ပြီး အလိုအလျောက် timestomping ဆုံးဖြတ်ချက်များ မဟုတ်ပါ။
+- `SI<FN`, `uSecZeros` နှင့် `Copied` တို့သည် သဲလွန်စများဖြစ်ပြီး အလိုအလျောက် timestomping ဆုံးဖြတ်ချက်များ မဟုတ်ပါ။
 - Hard link များသည် ဖိုင် record တစ်ခုအတွက် `$FILE_NAME` attribute နှင့် path များစွာကို ထုတ်ပေးသည်။
 - NTFS သည် အမည်များစွာ (DOS 8.3 အပါအဝင်)၊ alternate data stream များနှင့် extension record များကို သိမ်းဆည်းနိုင်သည်။
 - Access-time အပ်ဒိတ်များကို ပိတ်ထားခြင်း၊ နှောင့်နှေးခြင်း သို့မဟုတ် ပေါင်းစည်းခြင်း ဖြစ်နိုင်သည်။
@@ -120,7 +120,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 | `HasADS` (Has Alternate Data Streams) | Record တွင် အမည်ပါသော alternate data stream များ ပါဝင်သည်။ ၎င်းက အန္တရာယ်ရှိစေသည် မဟုတ်ပါ။ |
 | `IsADS` (Is Alternate Data Stream) | ဤ row သည် အမည်မဲ့ ဖိုင်ဒေတာ မဟုတ်ဘဲ အမည်ပါသော alternate data stream ကို ကိုယ်စားပြုသည်။ |
 | `SI<FN` (Standard Information Before File Name) | SI ဖန်တီးချိန်သည် ကွဲပြားသော FN ဖန်တီးချိန်ထက် စောသည်။ ကူးယူခြင်း/timestomping နှင့် တရားဝင်အကြောင်းရင်းများကို စုံစမ်းပါ။ |
-| `ZeroU-Secs` (Microsecond Zeros) | SI ဖန်တီးချိန်/ပြင်ဆင်ချိန်သည် millisecond နယ်နိမိတ်ပေါ်တွင် အတိအကျ ကျရောက်သည်။ အားနည်းသော timestomping heuristic သာ ဖြစ်သည်။ |
+| `uSecZeros` (Microsecond Zeros) | SI ဖန်တီးချိန်/ပြင်ဆင်ချိန်သည် millisecond နယ်နိမိတ်ပေါ်တွင် အတိအကျ ကျရောက်သည်။ အားနည်းသော timestomping heuristic သာ ဖြစ်သည်။ |
 | `Copied` | ပြင်ဆင်ချိန်သည် ဖန်တီးချိန်ထက် စောသည်။ ဖိုင်ကူးယူခြင်းနှင့် ကိုက်ညီလေ့ရှိသည်။ တိုက်ခိုက်သူ၏ လုပ်ဆောင်ချက် သက်သေ မဟုတ်ပါ။ |
 | `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` ဖိုင် attribute/flag များ။ Hidden/system flag များသည် အသုံးဝင်သော pivot များ ဖြစ်နိုင်သည်။ |
 | `Type` (Name Type) | `$FILE_NAME` namespace (Win32၊ DOS၊ POSIX သို့မဟုတ် ပေါင်းစပ်)။ အမည်များကို နှစ်ကြိမ်ရေတွက်ခြင်းမှ ရှောင်ရန် အသုံးပြုပါ။ |

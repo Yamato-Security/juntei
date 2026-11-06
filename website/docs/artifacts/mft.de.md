@@ -31,7 +31,7 @@ auch `$J`, `$LogFile` und Volume-Metadaten.
 - `SN` unterscheidet Generationen derselben Eintragsnummer. Gleichen Sie Eintrag **und** Sequenz ab.
 - Zeitstempel von `$STANDARD_INFORMATION` (`0x10`) und `$FILE_NAME` (`0x30`) werden unterschiedlich
   aktualisiert. Keiner ist gegen Manipulation gefeit.
-- `SI<FN`, `ZeroU-Secs` und `Copied` sind Ansatzpunkte, keine automatischen Urteile über Timestomping.
+- `SI<FN`, `uSecZeros` und `Copied` sind Ansatzpunkte, keine automatischen Urteile über Timestomping.
 - Hardlinks erzeugen mehrere `$FILE_NAME`-Attribute und Pfade für einen einzigen Dateidatensatz.
 - NTFS kann mehrere Namen (einschließlich DOS 8.3), alternative Datenströme und Erweiterungsdatensätze speichern.
 - Aktualisierungen der Zugriffszeit können deaktiviert, verzögert oder zusammengefasst sein.
@@ -115,7 +115,7 @@ Eintrag (`30`, `0x1E`, `30-1`) oder über den Pfad (`\Windows\System32`, `C:/Win
 | `HasADS` (Has Alternate Data Streams) | Datensatz enthält benannte alternative Datenströme. Das macht ihn nicht bösartig. |
 | `IsADS` (Is Alternate Data Stream) | Diese Zeile stellt einen benannten alternativen Datenstrom statt der unbenannten Dateidaten dar. |
 | `SI<FN` (Standard Information Before File Name) | Die SI-Erstellungszeit liegt vor einer abweichenden FN-Erstellungszeit. Kopieren/Timestomping und legitime Ursachen untersuchen. |
-| `ZeroU-Secs` (Microsecond Zeros) | SI-Erstellungs-/Änderungszeit liegt exakt auf einer Millisekundengrenze. Nur eine schwache Timestomping-Heuristik. |
+| `uSecZeros` (Microsecond Zeros) | SI-Erstellungs-/Änderungszeit liegt exakt auf einer Millisekundengrenze. Nur eine schwache Timestomping-Heuristik. |
 | `Copied` | Änderungszeit liegt vor der Erstellungszeit. Oft mit einem Kopiervorgang vereinbar; kein Beweis für eine Handlung des Angreifers. |
 | `SI-Flags` (Standard Information Flags) | Dateiattribute/Flags von `$STANDARD_INFORMATION`. Hidden-/System-Flags können nützliche Ansatzpunkte sein. |
 | `Type` (Name Type) | Namensraum von `$FILE_NAME` (Win32, DOS, POSIX oder kombiniert). Verwenden, um Namen nicht doppelt zu zählen. |

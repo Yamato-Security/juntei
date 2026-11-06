@@ -21,7 +21,7 @@ C:\$MFT
 - 削除されたレコードは部分的に上書きしたり、レコード番号を再利用したりできます。
 - `SN`は、同じエントリ番号の世代を区別します。エントリ **および** シーケンスと一致します。
 - `$STANDARD_INFORMATION` (`0x10`) および `$FILE_NAME` (`0x30`) タイムスタンプの更新動作は異なります。どちらも操作の影響を受けないわけではありません。
-- `SI<FN`、`ZeroU-Secs`、および `Copied` はリードであり、自動タイムスタンプ判定ではありません。
+- `SI<FN`、`uSecZeros`、および `Copied` はリードであり、自動タイムスタンプ判定ではありません。
 - ハード リンクは、1 つのファイル レコードに対して複数の `$FILE_NAME` 属性とパスを生成します。
 - NTFS は、複数の名前 (DOS 8.3 を含む)、代替データ ストリーム、および拡張レコードを保存できます。
 - アクセス時の更新は無効になったり、遅延したり、統合されたりする場合があります。
@@ -95,7 +95,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 | `HasADS` (Has Alternate Data Streams) | レコードには名前付きの代替データ ストリームが含まれています。これは悪意のあるものではありません。 |
 | `IsADS` (Is Alternate Data Stream) | この行は、名前のないファイル データではなく、名前付きの代替データ ストリームを表します。 |
 | `SI<FN` (Standard Information Before File Name) | SI の作成は、別の FN 作成時間よりも前に行われます。コピー/タイムスタンプと正当な原因を調査します。 |
-| `ZeroU-Secs` (Microsecond Zeros) | SI の作成/変更時刻は、正確にミリ秒境界に達します。弱いタイムストンピング ヒューリスティックのみ。 |
+| `uSecZeros` (Microsecond Zeros) | SI の作成/変更時刻は、正確にミリ秒境界に達します。弱いタイムストンピング ヒューリスティックのみ。 |
 | `Copied` | 変更された時刻は作成された時刻より前になります。多くの場合、ファイル コピーと一致します。攻撃者の行動の証拠ではありません。 |
 | `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` ファイルの属性/フラグ。非表示/システム フラグは便利なピボットになります。 |
 | `Type` (Name Type) | `$FILE_NAME` 名前空間 (Win32、DOS、POSIX、またはその組み合わせ)。名前の二重カウントを避けるために使用します。 |

@@ -35,7 +35,7 @@ pub fn field_name(input: &str) -> &str {
         "ComputerNameLastWritten" => "CompNameLastWritten",
         "Directories" => "Dir",
         "FileName" => "Filename",
-        "MicrosecondZeros" => "ZeroU-Secs",
+        "MicrosecondZeros" | "ZeroU-Secs" => "uSecZeros",
         "SI-BeforeFN" => "SI<FN",
         "UserName" => "User",
         "Username" => "User",
@@ -72,7 +72,7 @@ pub fn labels<'a>(labels: impl IntoIterator<Item = &'a str>) -> io::Result<Vec<&
 pub fn name(input: &str) -> String {
     match input {
         "SI<FN" => return "SI<FN".into(),
-        "uSecZeros" | "ZeroU-Secs" => return "ZeroU-Secs".into(),
+        "uSecZeros" | "ZeroU-Secs" => return "uSecZeros".into(),
         "_value_state" => return "ValueState".into(),
         "_raw" => return "Raw".into(),
         _ => (),
@@ -361,7 +361,9 @@ mod tests {
             ("ComputerNameLastWrittenUTC", "CompNameLastWrittenUTC"),
             ("Directories", "Dir"),
             ("FileName", "Filename"),
-            ("MicrosecondZeros", "ZeroU-Secs"),
+            ("MicrosecondZeros", "uSecZeros"),
+            ("ZeroU-Secs", "uSecZeros"),
+            ("uSecZeros", "uSecZeros"),
             ("SI-BeforeFN", "SI<FN"),
             ("UserName", "User"),
             ("Username", "User"),
