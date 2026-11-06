@@ -146,6 +146,8 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 تفسيرًا بصيغة FILETIME لقيم `REG_QWORD`. ويتضمن إخراج SRUM بصيغتي JSON وJSONL البيانات الوصفية
 لحالة القيم. ولا **تُستخرج** ملفات Defender ودفقات `$MFT` المقيمة تلقائيًا.
 
+مع `--mft-slack`، يتضمن إخراج `$MFT` أيضًا أسماء الملفات المتبقية في المساحة الراكدة (slack) لسجلات FILE، كما يكتبها [`parse-ntfs mft -x`](../artifacts/mft.md): صفوف معلَّمة بـ `FromSlack` في CSV، و`SlackFileNames` في JSON وJSONL. ويُطبَّق `--code-page` على ملفات LNK وJump Lists وShellBags وOpenSaveMRU.
+
 الأثر الرقمي الذي لم يُجمع هو مهمة `skipped` عادية، وليس فشلًا.
 
 ## تخطيط الإخراج { #output-layout }
@@ -462,6 +464,7 @@ Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -469,7 +472,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu

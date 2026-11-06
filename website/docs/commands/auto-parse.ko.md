@@ -138,6 +138,8 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 값의 FILETIME 해석이 포함됩니다. JSON 및 JSONL SRUM 출력에는 값 상태 메타데이터가 포함됩니다. Defender 파일과
 상주 `$MFT` 스트림은 자동으로 **추출되지 않습니다**.
 
+`--mft-slack`를 사용하면 `$MFT` 출력에 FILE 레코드의 슬랙에 남은 파일 이름도 [`parse-ntfs mft -x`](../artifacts/mft.md)와 같은 형식으로 포함됩니다. CSV에서는 `FromSlack`로 표시된 행, JSON 및 JSONL에서는 `SlackFileNames`입니다. `--code-page`는 LNK 파일, Jump List, ShellBags 및 OpenSaveMRU에 적용됩니다.
+
 수집되지 않은 아티팩트는 실패가 아니라 정상적인 `skipped` 작업입니다.
 
 ## 출력 레이아웃 { #output-layout }
@@ -441,6 +443,7 @@ Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -448,7 +451,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu

@@ -146,6 +146,8 @@ CSV `$MFT` output တွင် timestamp အားလုံးနှင့် sh
 `REG_QWORD` value များ၏ FILETIME အဓိပ္ပာယ်ဖော်ချက် ပါဝင်ပါသည်။ JSON နှင့် JSONL SRUM output တွင် value-state
 metadata ပါဝင်ပါသည်။ Defender ဖိုင်များနှင့် resident `$MFT` stream များကို အလိုအလျောက် **မထုတ်ယူပါ**။
 
+`--mft-slack` ဖြင့် `$MFT` output တွင် FILE record များ၏ slack ၌ ကျန်ရှိနေသော file name များကိုလည်း [`parse-ntfs mft -x`](../artifacts/mft.md) ရေးသည့်အတိုင်း ထည့်သွင်းပါသည်- CSV တွင် `FromSlack` အမှတ်အသားပါ row များ၊ JSON နှင့် JSONL တွင် `SlackFileNames` ဖြစ်ပါသည်။ `--code-page` ကို LNK ဖိုင်များ၊ Jump List များ၊ ShellBags နှင့် OpenSaveMRU တို့တွင် အသုံးပြုပါသည်။
+
 စုဆောင်းမထားသော artifact သည် ပုံမှန် `skipped` task ဖြစ်ပြီး မအောင်မြင်မှု မဟုတ်ပါ။
 
 ## Output layout { #output-layout }
@@ -461,6 +463,7 @@ Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -468,7 +471,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu

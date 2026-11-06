@@ -152,6 +152,8 @@ CSV `$MFT` çıktısı tüm zaman damgalarını ve kısa adları içerir. Kayıt
 verilerini içerir. Defender dosyaları ve yerleşik (resident) `$MFT` akışları otomatik olarak
 **çıkarılmaz**.
 
+`--mft-slack` ile `$MFT` çıktısı, FILE kayıtlarının slack alanında kalan dosya adlarını da [`parse-ntfs mft -x`](../artifacts/mft.md) ile aynı biçimde içerir: CSV'de `FromSlack` ile işaretlenmiş satırlar, JSON ve JSONL'de `SlackFileNames`. `--code-page`, LNK dosyalarına, Jump List'lere, ShellBags ve OpenSaveMRU'ya uygulanır.
+
 Toplanmamış bir artefakt, başarısızlık değil, normal bir `skipped` görevidir.
 
 ## Çıktı düzeni { #output-layout }
@@ -475,6 +477,7 @@ Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -482,7 +485,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu

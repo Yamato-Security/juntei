@@ -147,6 +147,8 @@ Hunter використовує один робочий потік у кожно
 інтерпретацію значень `REG_QWORD` як FILETIME. Вивід SRUM у JSON і JSONL включає метадані стану
 значень. Файли Defender і резидентні потоки `$MFT` автоматично **не вилучаються**.
 
+З `--mft-slack` вивід `$MFT` також містить імена файлів, що залишилися в slack записів FILE, у тому ж вигляді, що й у [`parse-ntfs mft -x`](../artifacts/mft.md): рядки з позначкою `FromSlack` у CSV і `SlackFileNames` у JSON та JSONL. `--code-page` застосовується до файлів LNK, Jump List, ShellBags і OpenSaveMRU.
+
 Артефакт, який не було зібрано, — це звичайне завдання зі станом `skipped`, а не збій.
 
 ## Структура виводу { #output-layout }
@@ -463,6 +465,7 @@ Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -470,7 +473,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu

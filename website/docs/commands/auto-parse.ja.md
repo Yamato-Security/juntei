@@ -95,6 +95,8 @@ Persistence Hunter は、部分的な許可一致を含むすべての重大度 
 
 CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含まれます。レジストリの出力には、生データと `REG_QWORD` 値の FILETIME としての解釈が含まれます。SRUM の JSON・JSONL 出力には、値の状態を示すメタデータが含まれます。Defender のファイルや `$MFT` のレジデントストリームは、**自動では抽出されません**。
 
+`--mft-slack` を指定すると、`$MFT` の出力には FILE レコードのスラックに残ったファイル名も、[`parse-ntfs mft -x`](../artifacts/mft.md) と同じ形で含まれます。CSV では `FromSlack` が付いた行、JSON・JSONL では `SlackFileNames` です。`--code-page` は LNK ファイル、ジャンプ リスト、ShellBags、OpenSaveMRU に適用されます。
+
 収集されなかったアーティファクトは通常の `skipped` タスクであり、失敗ではありません。
 
 ## 出力レイアウト { #output-layout }
@@ -321,6 +323,7 @@ Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -328,7 +331,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu
