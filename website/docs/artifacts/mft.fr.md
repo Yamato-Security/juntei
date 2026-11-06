@@ -31,7 +31,7 @@ et aux métadonnées du volume lorsque c'est possible.
 - `SN` distingue les générations d'un même numéro d'entrée. Faites correspondre l'entrée **et** la séquence.
 - Les horodatages de `$STANDARD_INFORMATION` (`0x10`) et de `$FILE_NAME` (`0x30`) sont mis à jour selon des
   comportements différents. Aucun des deux n'est à l'abri d'une manipulation.
-- `SI<FN`, `ZeroU-Secs` et `Copied` sont des pistes, et non des verdicts automatiques de timestomping.
+- `SI<FN`, `uSecZeros` et `Copied` sont des pistes, et non des verdicts automatiques de timestomping.
 - Les liens physiques (hard links) produisent plusieurs attributs `$FILE_NAME` et plusieurs chemins pour un même enregistrement de fichier.
 - NTFS peut stocker plusieurs noms (y compris DOS 8.3), des flux de données alternatifs et des enregistrements d'extension.
 - Les mises à jour de l'heure d'accès peuvent être désactivées, différées ou regroupées.
@@ -115,7 +115,7 @@ son entrée (`30`, `0x1E`, `30-1`) ou par son chemin (`\Windows\System32`, `C:/W
 | `HasADS` (Has Alternate Data Streams) | L'enregistrement contient des flux de données alternatifs nommés. Cela ne le rend pas malveillant. |
 | `IsADS` (Is Alternate Data Stream) | Cette ligne représente un flux de données alternatif nommé plutôt que les données sans nom du fichier. |
 | `SI<FN` (Standard Information Before File Name) | La création SI précède une heure de création FN différente. Examinez la copie/le timestomping et les causes légitimes. |
-| `ZeroU-Secs` (Microsecond Zeros) | L'heure de création/modification SI tombe exactement sur une limite de milliseconde. Simple heuristique faible de timestomping. |
+| `uSecZeros` (Microsecond Zeros) | L'heure de création/modification SI tombe exactement sur une limite de milliseconde. Simple heuristique faible de timestomping. |
 | `Copied` | L'heure de modification précède l'heure de création. Souvent cohérent avec une copie de fichier ; ne prouve pas une action de l'attaquant. |
 | `SI-Flags` (Standard Information Flags) | Attributs/indicateurs de fichier de `$STANDARD_INFORMATION`. Les indicateurs caché/système peuvent être des pivots utiles. |
 | `Type` (Name Type) | Espace de noms de `$FILE_NAME` (Win32, DOS, POSIX ou combiné). À utiliser pour éviter de compter deux fois les noms. |

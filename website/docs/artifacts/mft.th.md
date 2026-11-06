@@ -31,7 +31,7 @@ C:\$MFT
 - `SN` ใช้แยกแยะรุ่น (generation) ของหมายเลข entry เดียวกัน ให้จับคู่ทั้ง entry **และ** sequence
 - timestamp ของ `$STANDARD_INFORMATION` (`0x10`) และ `$FILE_NAME` (`0x30`) มีพฤติกรรมการอัปเดต
   ที่ต่างกัน และไม่มีชุดใดที่ปลอดภัยจากการปลอมแปลง
-- `SI<FN`, `ZeroU-Secs` และ `Copied` เป็นเบาะแส ไม่ใช่คำตัดสินอัตโนมัติว่ามีการทำ timestomping
+- `SI<FN`, `uSecZeros` และ `Copied` เป็นเบาะแส ไม่ใช่คำตัดสินอัตโนมัติว่ามีการทำ timestomping
 - hard link ทำให้ไฟล์เรคคอร์ดเดียวมีแอตทริบิวต์ `$FILE_NAME` และพาธหลายรายการ
 - NTFS สามารถเก็บชื่อได้หลายชื่อ (รวมถึง DOS 8.3) alternate data stream และ extension record
 - การอัปเดตเวลาเข้าถึงอาจถูกปิดใช้งาน หน่วงเวลา หรือรวมเข้าด้วยกัน
@@ -115,7 +115,7 @@ entry (`30`, `0x1E`, `30-1`) หรือพาธ (`\Windows\System32`, `C:/Win
 | `HasADS` (Has Alternate Data Streams) | เรคคอร์ดมี alternate data stream ที่มีชื่อ ซึ่งไม่ได้ทำให้เป็นอันตราย |
 | `IsADS` (Is Alternate Data Stream) | แถวนี้แทน alternate data stream ที่มีชื่อ แทนที่จะเป็นข้อมูลไฟล์ที่ไม่มีชื่อ |
 | `SI<FN` (Standard Information Before File Name) | เวลาสร้างของ SI มาก่อนเวลาสร้างของ FN ที่ต่างกัน ให้ตรวจสอบการคัดลอก/timestomping และสาเหตุที่ถูกต้องตามกฎหมาย |
-| `ZeroU-Secs` (Microsecond Zeros) | เวลาสร้าง/แก้ไขของ SI ตรงกับขอบเขตมิลลิวินาทีพอดี เป็นเพียงฮิวริสติกที่อ่อนสำหรับ timestomping |
+| `uSecZeros` (Microsecond Zeros) | เวลาสร้าง/แก้ไขของ SI ตรงกับขอบเขตมิลลิวินาทีพอดี เป็นเพียงฮิวริสติกที่อ่อนสำหรับ timestomping |
 | `Copied` | เวลาแก้ไขมาก่อนเวลาสร้าง มักสอดคล้องกับการคัดลอกไฟล์ ไม่ใช่หลักฐานของการกระทำของผู้โจมตี |
 | `SI-Flags` (Standard Information Flags) | แอตทริบิวต์/แฟล็กของไฟล์ใน `$STANDARD_INFORMATION` แฟล็ก hidden/system อาจเป็นจุดเชื่อมโยง (pivot) ที่มีประโยชน์ |
 | `Type` (Name Type) | namespace ของ `$FILE_NAME` (Win32, DOS, POSIX หรือแบบรวม) ใช้เพื่อหลีกเลี่ยงการนับชื่อซ้ำ |

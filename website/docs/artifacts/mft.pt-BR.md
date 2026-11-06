@@ -31,7 +31,7 @@ e os metadados do volume sempre que possível.
 - `SN` distingue gerações do mesmo número de entrada. Associe a entrada **e** a sequência.
 - Os carimbos de data/hora de `$STANDARD_INFORMATION` (`0x10`) e de `$FILE_NAME` (`0x30`) têm comportamentos de
   atualização diferentes. Nenhum dos dois é imune a manipulação.
-- `SI<FN`, `ZeroU-Secs` e `Copied` são pistas, não veredictos automáticos de timestomping.
+- `SI<FN`, `uSecZeros` e `Copied` são pistas, não veredictos automáticos de timestomping.
 - Hard links produzem vários atributos `$FILE_NAME` e caminhos para um único registro de arquivo.
 - O NTFS pode armazenar vários nomes (incluindo DOS 8.3), fluxos de dados alternativos e registros de extensão.
 - As atualizações do horário de acesso podem estar desativadas, atrasadas ou agrupadas.
@@ -115,7 +115,7 @@ entrada (`30`, `0x1E`, `30-1`) ou por caminho (`\Windows\System32`, `C:/Windows`
 | `HasADS` (Has Alternate Data Streams) | O registro contém fluxos de dados alternativos nomeados. Isso não o torna malicioso. |
 | `IsADS` (Is Alternate Data Stream) | Esta linha representa um fluxo de dados alternativo nomeado em vez dos dados sem nome do arquivo. |
 | `SI<FN` (Standard Information Before File Name) | A criação SI é anterior a um horário de criação FN diferente. Investigue cópia/timestomping e causas legítimas. |
-| `ZeroU-Secs` (Microsecond Zeros) | O horário de criação/modificação SI cai exatamente em um limite de milissegundo. Apenas uma heurística fraca de timestomping. |
+| `uSecZeros` (Microsecond Zeros) | O horário de criação/modificação SI cai exatamente em um limite de milissegundo. Apenas uma heurística fraca de timestomping. |
 | `Copied` | O horário de modificação é anterior ao de criação. Frequentemente consistente com cópia de arquivo; não prova ação de atacante. |
 | `SI-Flags` (Standard Information Flags) | Atributos/flags de arquivo de `$STANDARD_INFORMATION`. As flags de oculto/sistema podem ser pivôs úteis. |
 | `Type` (Name Type) | Namespace do `$FILE_NAME` (Win32, DOS, POSIX ou combinado). Use para evitar contar nomes em duplicidade. |

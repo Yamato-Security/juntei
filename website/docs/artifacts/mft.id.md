@@ -31,7 +31,7 @@ dan metadata volume bila memungkinkan.
 - `SN` membedakan generasi dari nomor entri yang sama. Cocokkan entri **dan** sequence.
 - Timestamp `$STANDARD_INFORMATION` (`0x10`) dan `$FILE_NAME` (`0x30`) memiliki perilaku pembaruan
   yang berbeda. Tidak ada satu pun yang kebal terhadap manipulasi.
-- `SI<FN`, `ZeroU-Secs`, dan `Copied` adalah petunjuk, bukan vonis timestomping otomatis.
+- `SI<FN`, `uSecZeros`, dan `Copied` adalah petunjuk, bukan vonis timestomping otomatis.
 - Hard link menghasilkan beberapa atribut `$FILE_NAME` dan path untuk satu record berkas.
 - NTFS dapat menyimpan beberapa nama (termasuk DOS 8.3), alternate data stream, dan extension record.
 - Pembaruan waktu akses dapat dinonaktifkan, ditunda, atau digabungkan.
@@ -115,7 +115,7 @@ entri (`30`, `0x1E`, `30-1`) atau dengan path (`\Windows\System32`, `C:/Windows`
 | `HasADS` (Has Alternate Data Streams) | Record berisi alternate data stream bernama. Hal ini tidak membuatnya berbahaya. |
 | `IsADS` (Is Alternate Data Stream) | Baris ini merepresentasikan alternate data stream bernama, bukan data berkas tanpa nama. |
 | `SI<FN` (Standard Information Before File Name) | Waktu pembuatan SI mendahului waktu pembuatan FN yang berbeda. Investigasi penyalinan/timestomping dan penyebab yang sah. |
-| `ZeroU-Secs` (Microsecond Zeros) | Waktu pembuatan/modifikasi SI jatuh tepat pada batas milidetik. Hanya heuristik timestomping yang lemah. |
+| `uSecZeros` (Microsecond Zeros) | Waktu pembuatan/modifikasi SI jatuh tepat pada batas milidetik. Hanya heuristik timestomping yang lemah. |
 | `Copied` | Waktu modifikasi mendahului waktu pembuatan. Sering konsisten dengan penyalinan berkas; bukan bukti tindakan penyerang. |
 | `SI-Flags` (Standard Information Flags) | Atribut/flag berkas `$STANDARD_INFORMATION`. Flag hidden/system dapat menjadi titik pivot yang berguna. |
 | `Type` (Name Type) | Namespace `$FILE_NAME` (Win32, DOS, POSIX, atau gabungan). Gunakan untuk menghindari penghitungan nama ganda. |

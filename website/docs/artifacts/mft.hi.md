@@ -31,7 +31,7 @@ C:\$MFT
 - `SN` एक ही entry number की पीढ़ियों में अंतर करता है। Entry **और** sequence दोनों का मिलान करें।
 - `$STANDARD_INFORMATION` (`0x10`) और `$FILE_NAME` (`0x30`) timestamps का update
   व्यवहार अलग होता है। कोई भी manipulation से अछूता नहीं है।
-- `SI<FN`, `ZeroU-Secs` और `Copied` सुराग हैं, timestomping के स्वचालित निर्णय नहीं।
+- `SI<FN`, `uSecZeros` और `Copied` सुराग हैं, timestomping के स्वचालित निर्णय नहीं।
 - Hard links एक file record के लिए कई `$FILE_NAME` attributes और paths बनाते हैं।
 - NTFS कई names (DOS 8.3 सहित), alternate data streams और extension records संग्रहीत कर सकता है।
 - Access-time updates disabled, विलंबित या एकत्रित (coalesced) हो सकते हैं।
@@ -115,7 +115,7 @@ entry (`30`, `0x1E`, `30-1`) या path (`\Windows\System32`, `C:/Windows`; cas
 | `HasADS` (Has Alternate Data Streams) | Record में named alternate data streams हैं। इससे वह दुर्भावनापूर्ण नहीं हो जाता। |
 | `IsADS` (Is Alternate Data Stream) | यह row unnamed file data के बजाय किसी named alternate data stream को दर्शाती है। |
 | `SI<FN` (Standard Information Before File Name) | SI creation किसी अलग FN creation समय से पहले है। Copying/timestomping और वैध कारणों की जाँच करें। |
-| `ZeroU-Secs` (Microsecond Zeros) | SI created/modified समय ठीक millisecond सीमा पर पड़ता है। केवल कमज़ोर timestomping heuristic। |
+| `uSecZeros` (Microsecond Zeros) | SI created/modified समय ठीक millisecond सीमा पर पड़ता है। केवल कमज़ोर timestomping heuristic। |
 | `Copied` | Modified समय created समय से पहले है। अक्सर file copy के अनुरूप; हमलावर की कार्रवाई का प्रमाण नहीं। |
 | `SI-Flags` (Standard Information Flags) | `$STANDARD_INFORMATION` file attributes/flags। Hidden/system flags उपयोगी pivots हो सकते हैं। |
 | `Type` (Name Type) | `$FILE_NAME` namespace (Win32, DOS, POSIX या संयुक्त)। Names की दोहरी गिनती से बचने के लिए उपयोग करें। |
