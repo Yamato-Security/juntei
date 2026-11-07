@@ -22,6 +22,7 @@ kendisine başvurun.
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell'in bileşik dosya ve Jump List çalışmaları |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| VHDX disk imajları (`mount`) | [vhdx-core](https://github.com/SecurityRonin/vhdx-forensic) ve [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), [fuser](https://github.com/cberner/fuser) ile sunulur | Microsoft'un MS-VHDX belgesi |
 | Kayıt Defteri | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Aşağıda teşekkür edilen kayıt defteri biçimi ve kurtarma araştırmaları |
 
 ## Referans araçlar ve bağımsız doğrulama { #reference-tools-and-independent-validation }

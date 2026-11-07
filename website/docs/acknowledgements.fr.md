@@ -21,6 +21,7 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Travaux de Sootmark shell sur les fichiers composés et les Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| Images disque VHDX (`mount`) | [vhdx-core](https://github.com/SecurityRonin/vhdx-forensic) et [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), exposés via [fuser](https://github.com/cberner/fuser) | MS-VHDX de Microsoft |
 | Registre | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Recherches sur le format du Registre et la récupération citées ci-dessous |
 
 ## Outils de référence et validation indépendante { #reference-tools-and-independent-validation }

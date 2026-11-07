@@ -22,6 +22,7 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell ၏ compound-file နှင့် Jump List လုပ်ငန်း |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| VHDX disk image များ (`mount`) | [vhdx-core](https://github.com/SecurityRonin/vhdx-forensic) နှင့် [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)၊ [fuser](https://github.com/cberner/fuser) ဖြင့် serve လုပ်သည် | Microsoft ၏ MS-VHDX |
 | Registry | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | အောက်တွင် ဖော်ပြထားသော registry ဖိုင်ပုံစံနှင့် ပြန်လည်ရယူခြင်း သုတေသန |
 
 ## ကိုးကားသည့် tool များနှင့် လွတ်လပ်သော မှန်ကန်မှု စစ်ဆေးခြင်း { #reference-tools-and-independent-validation }

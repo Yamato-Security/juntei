@@ -22,12 +22,17 @@ mod color;
 mod defender_quarantine;
 mod hive;
 mod i30;
+#[cfg(unix)]
+mod image;
+#[cfg(unix)]
+mod image_mount;
 mod jump_lists;
 mod lnk;
 mod logfile;
 mod mft;
 mod mft_csv;
 mod mft_inspect;
+mod mount;
 mod output_schema;
 mod persistence_hunter;
 mod prefetch;
@@ -76,6 +81,12 @@ fn main() {
         Commands::AutoParse(opts) => {
             display_logo(opts.common.quiet, opts.common.no_color, true, false);
             let code = auto_parse::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
+        Commands::Mount(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = mount::run(opts);
             print_elapsed(start, opts.common.no_color);
             code
         }

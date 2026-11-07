@@ -2,6 +2,8 @@
 
 Juntei उन files को parse करता है जो Windows से पहले ही संग्रहित की जा चुकी हैं। किसी विश्वसनीय acquisition tool का उपयोग करें और जहाँ संभव हो
 मूल metadata सुरक्षित रखें।
+KAPE के `--vhdx` output को extract किए बिना parse किया जा सकता है:
+[डिस्क इमेज माउंट करना](../commands/mount.md) देखें।
 
 ## सामान्य स्थान { #common-locations }
 

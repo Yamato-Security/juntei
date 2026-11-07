@@ -13,6 +13,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) ကို အသုံးပြုပါ။ ၎င်းသည် အုပ်စုဖွဲ့ထားသော တူညီသည့်
 ညွှန်ကြားချက်များကို ခေါ်ယူပြီး ရလဒ်များနှင့် log များကို ကွန်ပျူတာနှင့် စုံစမ်းစစ်ဆေးရေး category အလိုက် စီစဉ်ပေးသည်။
 
+## [Disk image များ](mount.md) { #disk-images }
+
+| ညွှန်ကြားချက် | Input | အသေးစိတ် လမ်းညွှန် |
+|---|---|---|
+| `mount` | VHDX disk image (KAPE `--vhdx`, Hyper-V) | [Disk image များကို mount လုပ်ခြင်း](mount.md) |
+
 ## [ESE ညွှန်ကြားချက်များ](user-activity.md) { #ese-commands }
 
 | ညွှန်ကြားချက် | Input အထောက်အထား | အသေးစိတ် လမ်းညွှန် |
@@ -94,13 +100,14 @@ allow/block အမျိုးအစားခွဲခြင်း၊ payload me
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

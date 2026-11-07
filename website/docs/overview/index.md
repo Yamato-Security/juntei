@@ -25,8 +25,9 @@ of a separate program for every artifact.
 
 ## What Juntei does not do
 
-Juntei does not acquire a live disk, mount a forensic image, or replace evidence preservation. It
-does not automatically combine every artifact into a single incident narrative. It parses the
+Juntei does not acquire a live disk or replace evidence preservation, and the only disk images it
+mounts are VHDX images, read-only. It does not automatically combine every artifact into a single
+incident narrative. It parses the
 evidence you provide and produces records suitable for investigation and correlation.
 
 Juntei will also not do the analysis for you. A DFIR specialist is required to perform the analysis on the evidence.

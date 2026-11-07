@@ -15,6 +15,14 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 !!! warning "出力ツリーと証拠ツリーを分離しておきます。"
     Juntei は、`<EVIDENCE>` 内にある出力ディレクトリ、または `<EVIDENCE>` を含む出力ディレクトリを拒否します。これにより、生成されたデータが証拠として再発見されるのを防ぎ、`--clobber` がソース コレクション内のファイルにアクセスするのを防ぎます。
 
+## VHDX ディスクイメージ { #vhdx-disk-images }
+
+`--vhdx` を指定すると、`auto-parse` は、KAPE の `--vhdx` コレクションなど、証拠ディレクトリ内のすべての VHDX ディスクイメージに含まれるシステムを解析します。各イメージは解析されている間だけ FUSE で読み取り専用でマウントされるため、何も抽出されません。[ディスクイメージのマウント](mount.md)を参照してください。
+
+```bash
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+```
+
 ## 出力タイムゾーン { #output-time-zone }
 
 解析されたタイムスタンプは、アナリスト コンピュータのローカル タイム ゾーンに関係なく、デフォルトで UTC になります。 UTC は、`2026-10-20T08:46:38.2001668Z` 形式の Windows イベント ログを使用します。ISO 8601 日付/時刻、日付と時刻の間の `T`、および UTC の `Z`。使用可能な小数桁は保持されます。`manifest.json` の `GeneratedUTC` もこの形式を使用します。コンソールの `Start time` と `End time` は、出力タイム ゾーンに関係なく、アナリスト コンピュータのローカル時刻 (例: `2026-11-04 09:15:02`) です。
@@ -314,7 +322,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## 使用法 { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -323,6 +331,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

@@ -267,6 +267,8 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
         for finding in &mut findings {
             paths.apply(&mut finding.source_file);
             paths.apply(&mut finding.change_source);
+            // a COM handler's registration names the hive it is in
+            paths.apply(&mut finding.description);
         }
         for row in &mut coverage {
             paths.apply(&mut row.detail);

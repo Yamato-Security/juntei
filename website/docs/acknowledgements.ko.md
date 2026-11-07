@@ -21,6 +21,7 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell의 복합 파일 및 Jump List 관련 작업 |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| VHDX 디스크 이미지 (`mount`) | [vhdx-core](https://github.com/SecurityRonin/vhdx-forensic) 및 [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), [fuser](https://github.com/cberner/fuser)로 제공 | Microsoft의 MS-VHDX |
 | 레지스트리 | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | 아래에 기재된 레지스트리 형식 및 복구 연구 |
 
 ## 참조 도구와 독립 검증 { #reference-tools-and-independent-validation }

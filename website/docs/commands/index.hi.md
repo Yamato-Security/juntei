@@ -13,6 +13,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) का उपयोग करें। यह वही समूहित commands चलाता है
 और परिणामों तथा logs को computer और जाँच की category के अनुसार व्यवस्थित करता है।
 
+## [डिस्क इमेज](mount.md) { #disk-images }
+
+| Command | Input | विस्तृत मार्गदर्शिका |
+|---|---|---|
+| `mount` | VHDX disk image (KAPE `--vhdx`, Hyper-V) | [डिस्क इमेज माउंट करना](mount.md) |
+
 ## [ESE कमांड](user-activity.md) { #ese-commands }
 
 | Command | Input आर्टिफ़ैक्ट | विस्तृत मार्गदर्शिका |
@@ -94,13 +100,14 @@ command है। यह `parse-registry persistence` की पूर्ण con
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

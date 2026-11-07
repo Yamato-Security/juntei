@@ -25,7 +25,8 @@ eines separaten Programms für jedes Artefakt wünscht.
 
 ## Was Juntei nicht tut { #what-juntei-does-not-do }
 
-Juntei erfasst keinen Live-Datenträger, bindet kein forensisches Image ein und ersetzt nicht die Beweissicherung. Es
+Juntei erfasst keinen Live-Datenträger und ersetzt nicht die Beweissicherung; als Disk-Images bindet es nur
+VHDX-Images ein, und zwar schreibgeschützt. Es
 fasst nicht automatisch alle Artefakte zu einer einzigen Darstellung des Vorfalls zusammen. Es parst die
 von Ihnen bereitgestellten Beweise und erzeugt Datensätze, die sich für Untersuchung und Korrelation eignen.
 

@@ -21,6 +21,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     prevents generated data from being rediscovered as evidence and prevents `--clobber` from
     touching files in the source collection.
 
+## VHDX disk images
+
+With `--vhdx`, `auto-parse` parses the systems inside every VHDX disk image in the evidence
+directory, such as KAPE's `--vhdx` collections. Each image is mounted read-only with FUSE while it
+is parsed, so nothing is extracted. See [Mounting Disk Images](mount.md).
+
+```bash
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+```
+
 ## Output time zone
 
 Parsed timestamps default to UTC, independent of the analyst computer's local time zone. UTC
@@ -462,7 +472,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Usage
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -471,6 +481,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

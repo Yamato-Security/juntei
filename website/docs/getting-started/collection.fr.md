@@ -2,6 +2,8 @@
 
 Juntei analyse des fichiers déjà collectés sur Windows. Utilisez un outil d'acquisition fiable et préservez
 les métadonnées d'origine dans la mesure du possible.
+La sortie `--vhdx` de KAPE peut être analysée sans être extraite : voir
+[Monter des images disque](../commands/mount.md).
 
 ## Emplacements courants { #common-locations }
 

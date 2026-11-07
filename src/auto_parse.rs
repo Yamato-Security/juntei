@@ -37,6 +37,8 @@ mod flat_outputs;
 mod srum_outputs;
 mod timeline;
 mod timestamps;
+#[cfg(unix)]
+mod vhdx_images;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
@@ -393,6 +395,9 @@ struct ManifestHost {
     windows_directories: Vec<String>,
     #[serde(rename = "OutputDirectory")]
     output_directory: String,
+    /// With `--vhdx`: the disk image the system's files are in, from the evidence directory.
+    #[serde(rename = "Image", skip_serializing_if = "Option::is_none")]
+    image: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -433,8 +438,44 @@ struct DataFile {
     artifact: &'static str,
 }
 
+/// The disk images `--vhdx` mounted for a run: the name of the directory they were found in, and
+/// each mount folder (in the directory the parsers read) with its image, from that directory
+/// (`./host1-triage.vhdx`).
+// Only `--vhdx` makes them, where FUSE is.
+#[cfg_attr(not(unix), allow(dead_code))]
+pub(crate) struct Images {
+    directory_name: String,
+    mounts: Vec<(PathBuf, String)>,
+}
+
+#[cfg_attr(not(unix), allow(dead_code))]
+impl Images {
+    /// The image a host's files are in.
+    fn of(&self, root: &Path) -> Option<&str> {
+        self.mounts
+            .iter()
+            .find(|(folder, _)| root.starts_with(folder))
+            .map(|(_, image)| image.as_str())
+    }
+}
+
 /// Run the command; returns the exit status.
 pub fn run(opts: &AutoParseOptions) -> i32 {
+    if opts.vhdx {
+        #[cfg(unix)]
+        return vhdx_images::run(opts);
+        #[cfg(not(unix))]
+        {
+            error_msg(opts.common.no_color, crate::mount::NO_FUSE);
+            return 1;
+        }
+    }
+    run_evidence(opts, None)
+}
+
+/// Parse the systems found in `opts.directory`; `images`, the disk images its folders are
+/// mounted from.
+fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
     let no_color = opts.common.no_color;
     if !opts.directory.is_dir() {
         error_msg(
@@ -671,10 +712,13 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             .as_deref()
             .filter(|fqdn| *fqdn != host.computer)
             .map_or_else(String::new, |fqdn| format!(" ({fqdn})"));
+        let image = images
+            .and_then(|images| images.of(&host.root))
+            .map_or_else(String::new, |image| format!(" ({image})"));
         p(
             None,
             &format!(
-                "  {}{}: {}",
+                "  {}{}: {}{image}",
                 host.computer,
                 fqdn,
                 dot_relative(&evidence, &host.root).display()
@@ -869,7 +913,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         generated_utc: Utc::now().to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         juntei_version: env!("CARGO_PKG_VERSION"),
         manifest_version: MANIFEST_VERSION,
-        evidence_directory: name(&evidence),
+        evidence_directory: images.map_or_else(|| name(&evidence), |i| i.directory_name.clone()),
         output_directory: name(&output_root),
         output_type: opts.output_type.as_str(),
         output_time_zone: opts.timezone.to_string(),
@@ -884,7 +928,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         max_depth: opts.max_depth,
         hosts: hosts
             .iter()
-            .map(|host| manifest_host(host, &evidence))
+            .map(|host| manifest_host(host, &evidence, images))
             .collect(),
         tasks: &recorded,
     };
@@ -2262,8 +2306,9 @@ fn replace_generated_file(path: &Path, replacement: &Path) -> io::Result<()> {
 }
 
 /// `host` in the manifests, its directories relative to `evidence`.
-fn manifest_host(host: &Host, evidence: &Path) -> ManifestHost {
+fn manifest_host(host: &Host, evidence: &Path, images: Option<&Images>) -> ManifestHost {
     ManifestHost {
+        image: images.and_then(|i| i.of(&host.root)).map(str::to_string),
         computer: host.computer.clone(),
         hostname: host.hostname.clone(),
         fqdn: host.fqdn.clone(),
@@ -2918,7 +2963,7 @@ mod tests {
         assert_eq!(computers.len(), 3);
         assert_eq!(hosts[1].computer, "host_2");
         assert_eq!(hosts[1].hostname, "host");
-        let manifest = manifest_host(&hosts[1], Path::new(""));
+        let manifest = manifest_host(&hosts[1], Path::new(""), None);
         assert_eq!(manifest.computer, "host_2");
         assert_eq!(manifest.hostname, "host");
     }

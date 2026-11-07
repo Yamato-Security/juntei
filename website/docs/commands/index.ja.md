@@ -10,6 +10,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 マルチコンピューター Windows 証拠収集の場合は、[`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) を使用します。同じグループ化されたコマンドを呼び出し、結果とログをコンピュータおよび調査カテゴリごとに整理します。
 
+## [ディスクイメージ](mount.md) { #disk-images }
+
+| コマンド | 入力 | 詳細ガイド |
+|---|---|---|
+| `mount` | VHDX ディスクイメージ (KAPE `--vhdx`、Hyper-V) | [ディスクイメージのマウント](mount.md) |
+
 ## [ESE コマンド](user-activity.md) { #ese-commands }
 
 | コマンド | 入力アーティファクト | 詳細ガイド |
@@ -85,13 +91,14 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

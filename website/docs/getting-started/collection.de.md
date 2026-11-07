@@ -1,7 +1,8 @@
 # Beweise sichern { #collecting-evidence }
 
 Juntei parst Dateien, die bereits von Windows-Systemen gesichert wurden. Verwenden Sie ein vertrauenswürdiges Akquisitionswerkzeug und bewahren Sie
-die ursprünglichen Metadaten nach Möglichkeit.
+die ursprünglichen Metadaten nach Möglichkeit. Die `--vhdx`-Ausgabe von KAPE lässt sich parsen, ohne sie zu extrahieren:
+siehe [Disk-Images einbinden](../commands/mount.md).
 
 ## Gängige Speicherorte { #common-locations }
 

@@ -1,0 +1,93 @@
+# 디스크 이미지 마운트 { #mounting-disk-images }
+
+`juntei mount`는 실행되는 동안 VHDX 디스크 이미지 안의 파일을 디렉터리에서 읽기 전용으로 읽을 수 있게
+합니다. 이를 통해 KAPE의 `--vhdx` 수집물과 Hyper-V 디스크를 Hayabusa나 Juntei 자체 명령어 같은 어떤
+도구로든 스캔할 수 있으며, 아무것도 추출할 필요가 없고, root 권한도 필요 없으며, 운영 체제가 VHDX나 NTFS를
+지원하지 않아도 됩니다. FUSE를 사용하므로 Linux 또는 macFUSE가 설치된 macOS에서 동작합니다.
+
+```bash
+mkdir /mnt/host1
+juntei mount host1-triage.vhdx /mnt/host1
+```
+
+다른 터미널에서 다음을 실행합니다.
+
+```bash
+hayabusa dfir-timeline -d /mnt/host1 -o host1-hayabusa.csv
+juntei auto-parse -d /mnt/host1 -o host1-juntei
+```
+
+마운트를 해제하려면 첫 번째 터미널에서 Ctrl+C를 누르거나 `fusermount3 -u /mnt/host1`를 실행하십시오.
+
+## 마운트에 표시되는 내용 { #what-the-mount-shows }
+
+- 마운트 지점에는 NTFS 볼륨의 파일이 표시됩니다. KAPE 수집물의 경우 수집된 파일이 들어 있는 `C` 폴더,
+  KAPE의 `LongFileNames` 폴더, 그리고 `$MFT` 같은 볼륨 자체의 메타데이터 파일입니다. NTFS 볼륨이 여러 개인
+  이미지는 각 볼륨을 `Volume1`, `Volume2` 등으로 표시합니다.
+- 모든 파일은 읽기 전용이며 마운트 지점의 소유자에게 속합니다. 파일 시간은 NTFS
+  `$STANDARD_INFORMATION` 시간입니다.
+- 이름은 NTFS에 저장된 그대로 나열되며, 정확히 일치하는 이름으로 조회됩니다. DOS 8.3 이름과 대체 데이터
+  스트림은 표시되지 않습니다.
+- 압축된 파일은 압축이 해제됩니다(파일당 최대 1 GiB). EFS로 암호화된 파일은 읽을 수 없습니다.
+
+## 증거는 변경되지 않음 { #the-evidence-is-not-changed }
+
+이미지는 읽기 전용으로 열리며, 마운트는 쓰기를 거부합니다. 정상적으로 닫히지 않은 VHDX는 보류 중인 로그를
+메모리에서 적용한 상태로 읽히며, 이미지에 다시 기록되는 일은 없습니다. KAPE는 VHDX 파일을 DiscUtils로
+기록하는데, DiscUtils가 기록한 NTFS 부트 섹터에는 점프 명령어와 `55 AA` 시그니처가 없습니다. Juntei는 이러한
+볼륨을 있는 그대로 읽습니다.
+
+## 사용법 { #usage }
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
+
+Input:
+  <IMAGE>       The disk image (VHDX)
+  <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+## auto-parse로 모든 이미지 파싱 { #parsing-every-image-with-auto-parse }
+
+`auto-parse --vhdx`는 별도로 마운트하지 않고도 증거 디렉터리에 있는 모든 VHDX 디스크 이미지(또는 `-d`로
+지정한 단일 이미지) 안의 Windows 시스템을 파싱합니다.
+
+```bash
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+```
+
+- 각 이미지는 새 임시 디렉터리 안에 이미지 이름을 딴 폴더(`host1-triage`)로 읽기 전용 마운트되며, 그곳에서
+  발견된 시스템은 디스크에 있는 수집물과 마찬가지로 파싱됩니다. 이미지는 실행이 끝날 때와 Ctrl+C를 눌렀을 때
+  마운트 해제됩니다.
+- 터미널에는 이미지 목록과 각 시스템의 이미지가 표시됩니다:
+  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
+- 매니페스트에서 `EvidenceDirectory`는 지정된 디렉터리이며, 각 시스템의 `Image`는 해당 시스템의 이미지를
+  나타냅니다. `EvidenceRoot`와 파서 명령어는 마운트 폴더(`./host1-triage/C`)를 사용합니다.
+- KAPE는 Volume Shadow Copies에서 복사한 파일을 `VSS32` 같은 폴더에 저장합니다. 이러한 폴더도 각각 발견되어
+  별도의 시스템(`HOST1_2`, …)으로 파싱됩니다.
+- 마운트할 수 없는 이미지는 보고됩니다. 나머지 이미지는 계속 파싱되며, 실행은 종료 상태 1로 끝납니다.
+
+## 요구 사항 { #requirements }
+
+- Linux: FUSE 3(`fusermount3`, `fuse3` 패키지)과 `/dev/fuse`에 대한 액세스 권한. 일반 사용자는 보통 이
+  권한을 가지고 있습니다. root 권한은 필요하지 않습니다.
+- macOS: macFUSE.
+- Windows에는 FUSE가 없습니다. 대신 관리자 권한으로 실행한 PowerShell에서 이미지를 읽기 전용으로 연결하고,
+  해당 드라이브 문자를 도구에 지정하십시오.
+
+```powershell
+Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
+juntei auto-parse -d E:\ -o host1-juntei
+Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+```

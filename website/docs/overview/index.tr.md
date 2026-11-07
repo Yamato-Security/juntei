@@ -25,7 +25,8 @@ yerine tek ve tutarlı bir arayüz istediğinde faydalıdır.
 
 ## Juntei'nin yapmadıkları { #what-juntei-does-not-do }
 
-Juntei canlı bir diskin imajını almaz, adli bir imajı bağlamaz veya kanıt korumanın yerini almaz.
+Juntei canlı bir diskin imajını almaz veya kanıt korumanın yerini almaz; bağladığı tek disk imajları VHDX
+imajlarıdır ve bunları yalnızca salt okunur olarak bağlar.
 Tüm artefaktları otomatik olarak tek bir olay anlatısında birleştirmez. Sağladığınız
 kanıtları ayrıştırır ve inceleme ile ilişkilendirmeye uygun kayıtlar üretir.
 

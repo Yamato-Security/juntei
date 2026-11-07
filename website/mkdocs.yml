@@ -116,6 +116,7 @@ plugins:
         Output Formats: 出力形式
         Collecting Evidence: 証拠の収集
         Automatic Collection Parsing: 収集データの自動解析
+        Mounting Disk Images: ディスクイメージのマウント
         ESE: ESE
         Files: ファイル
         NTFS: NTFS
@@ -198,6 +199,7 @@ plugins:
         Output Formats: 輸出格式
         Collecting Evidence: 收集證據
         Automatic Collection Parsing: 自動解析收集資料
+        Mounting Disk Images: 掛載磁碟映像
         Files: 檔案
         Registry: 登錄
         Common Output Patterns: 常見輸出方式
@@ -280,6 +282,7 @@ plugins:
         Output Formats: 출력 형식
         Collecting Evidence: 증거 수집
         Automatic Collection Parsing: 수집 데이터 자동 분석
+        Mounting Disk Images: 디스크 이미지 마운트
         Files: 파일
         Registry: 레지스트리
         Common Output Patterns: 일반적인 출력 방식
@@ -362,6 +365,7 @@ plugins:
         Output Formats: Ausgabeformate
         Collecting Evidence: Beweise sichern
         Automatic Collection Parsing: Sammlungen automatisch analysieren
+        Mounting Disk Images: Disk-Images einbinden
         Files: Dateien
         Registry: Registry
         Common Output Patterns: Gemeinsame Ausgabemuster
@@ -444,6 +448,7 @@ plugins:
         Output Formats: Çıktı Biçimleri
         Collecting Evidence: Kanıt Toplama
         Automatic Collection Parsing: Toplanan Verilerin Otomatik Ayrıştırılması
+        Mounting Disk Images: Disk İmajlarını Bağlama
         Files: Dosyalar
         Registry: Kayıt Defteri
         Common Output Patterns: Ortak Çıktı Yöntemleri
@@ -526,6 +531,7 @@ plugins:
         Output Formats: Formats de sortie
         Collecting Evidence: Collecte des preuves
         Automatic Collection Parsing: Analyse automatique des collectes
+        Mounting Disk Images: Monter des images disque
         Files: Fichiers
         Registry: Registre
         Common Output Patterns: Méthodes de sortie communes
@@ -608,6 +614,7 @@ plugins:
         Output Formats: Formatos de salida
         Collecting Evidence: Recopilación de evidencias
         Automatic Collection Parsing: Análisis automático de recopilaciones
+        Mounting Disk Images: Montar imágenes de disco
         Files: Archivos
         Registry: Registro
         Common Output Patterns: Métodos comunes de salida
@@ -690,6 +697,7 @@ plugins:
         Output Formats: Formatos de saída
         Collecting Evidence: Coleta de evidências
         Automatic Collection Parsing: Análise automática de coletas
+        Mounting Disk Images: Montar imagens de disco
         Files: Arquivos
         Registry: Registro
         Common Output Patterns: Métodos comuns de saída
@@ -772,6 +780,7 @@ plugins:
         Output Formats: Формати виводу
         Collecting Evidence: Збирання доказів
         Automatic Collection Parsing: Автоматичний аналіз зібраних даних
+        Mounting Disk Images: Монтування образів дисків
         Files: Файли
         Registry: Реєстр
         Common Output Patterns: Спільні способи виводу
@@ -854,6 +863,7 @@ plugins:
         Output Formats: आउटपुट प्रारूप
         Collecting Evidence: साक्ष्य संग्रह
         Automatic Collection Parsing: संग्रहीत डेटा का स्वचालित विश्लेषण
+        Mounting Disk Images: डिस्क इमेज माउंट करना
         Files: फ़ाइलें
         Registry: रेजिस्ट्री
         Common Output Patterns: सामान्य आउटपुट विधियाँ
@@ -936,6 +946,7 @@ plugins:
         Output Formats: Format keluaran
         Collecting Evidence: Pengumpulan bukti
         Automatic Collection Parsing: Analisis otomatis hasil pengumpulan
+        Mounting Disk Images: Memasang Image Disk
         Files: Berkas
         Registry: Registry
         Common Output Patterns: Metode keluaran umum
@@ -1018,6 +1029,7 @@ plugins:
         Output Formats: ထုတ်ယူမှု ပုံစံများ
         Collecting Evidence: အထောက်အထား စုဆောင်းခြင်း
         Automatic Collection Parsing: စုဆောင်းထားသော ဒေတာကို အလိုအလျောက် ခွဲခြမ်းခြင်း
+        Mounting Disk Images: Disk image များကို mount လုပ်ခြင်း
         Files: ဖိုင်များ
         Registry: Registry
         Common Output Patterns: ဘုံထုတ်ယူမှု နည်းလမ်းများ
@@ -1100,6 +1112,7 @@ plugins:
         Output Formats: รูปแบบเอาต์พุต
         Collecting Evidence: การเก็บรวบรวมหลักฐาน
         Automatic Collection Parsing: วิเคราะห์ข้อมูลที่รวบรวมโดยอัตโนมัติ
+        Mounting Disk Images: การเมานต์อิมเมจดิสก์
         Files: ไฟล์
         Registry: รีจิสทรี
         Common Output Patterns: วิธีส่งออกข้อมูลทั่วไป
@@ -1182,6 +1195,7 @@ plugins:
         Output Formats: تنسيقات الإخراج
         Collecting Evidence: جمع الأدلة
         Automatic Collection Parsing: تحليل البيانات المجمعة تلقائيًا
+        Mounting Disk Images: تحميل صور الأقراص
         Files: الملفات
         Registry: سجل Windows
         Common Output Patterns: أساليب الإخراج الشائعة
@@ -1270,6 +1284,7 @@ nav:
   - Commands:
       - Command List: commands/index.md
       - Automatic Collection Parsing: commands/auto-parse.md
+      - Mounting Disk Images: commands/mount.md
       - ESE: commands/user-activity.md
       - Files: commands/execution.md
       - NTFS: commands/filesystem.md

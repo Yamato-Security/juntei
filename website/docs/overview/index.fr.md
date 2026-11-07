@@ -25,7 +25,8 @@ que d'un programme distinct pour chaque artefact.
 
 ## Ce que Juntei ne fait pas { #what-juntei-does-not-do }
 
-Juntei n'acquiert pas de disque en direct, ne monte pas d'image forensique et ne remplace pas la préservation des preuves. Il
+Juntei n'acquiert pas de disque en direct et ne remplace pas la préservation des preuves ; les seules images disque qu'il
+monte sont des images VHDX, en lecture seule. Il
 ne combine pas automatiquement tous les artefacts en un récit d'incident unique. Il analyse les
 preuves que vous fournissez et produit des enregistrements adaptés à l'investigation et à la corrélation.
 
