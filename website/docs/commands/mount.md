@@ -79,6 +79,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - An image that can't be mounted is reported; the others are still parsed, and the run ends with
   exit status 1.
 
+If an NTFS volume cannot be opened, Juntei reports it and keeps the readable volumes. Partial images cause `auto-parse --vhdx` to return exit status 1; `mount` also returns 1 after unmounting.
+
 ## Requirements
 
 - Linux: FUSE 3 (`fusermount3`, the `fuse3` package) and access to `/dev/fuse`, which normal users

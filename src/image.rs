@@ -19,7 +19,7 @@
 //! written to the image: `juntei mount` and `auto-parse --vhdx` serve these files through FUSE.
 
 use ntfs_core::{AttributeBody, Filetime, MftRecordHeader, NtfsFs, Run, StandardInformation};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{self, Read, Seek, SeekFrom};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -42,6 +42,9 @@ const ATTR_ENCRYPTED: u16 = 0x4000;
 const MAX_DECOMPRESSED: u64 = 1 << 30;
 /// File layouts kept for repeated reads of the same files.
 const LAYOUT_CACHE: usize = 4096;
+/// Keep ordinary compressed reads warm without retaining thousands of decompressed files.
+/// A single larger file may occupy the cache alone, up to MAX_DECOMPRESSED.
+const COMPRESSED_CACHE_BYTES: u64 = 64 << 20;
 
 /// The disk of an image, shared by its volumes.
 type Disk = Arc<Mutex<vhdx::VhdxReader>>;
@@ -101,6 +104,8 @@ pub struct Image {
     /// The virtual disk's size in bytes.
     pub size: u64,
     pub volumes: Vec<Volume>,
+    /// Unreadable NTFS partitions must remain visible even when another volume opens.
+    pub problems: Vec<String>,
 }
 
 impl Image {
@@ -133,7 +138,11 @@ impl Image {
             };
             return Err(io::Error::new(io::ErrorKind::InvalidData, why));
         }
-        Ok(Image { size, volumes })
+        Ok(Image {
+            size,
+            volumes,
+            problems,
+        })
     }
 }
 
@@ -171,8 +180,8 @@ enum Layout {
         size: u64,
         initialized: u64,
     },
-    /// LZNT1-compressed, decompressed whole.
-    Whole(Vec<u8>),
+    /// Compressed data is materialized only when read, never for getattr/stat.
+    Compressed { size: u64, initialized: u64 },
     /// Content that can't be read (EFS-encrypted, or compressed and too large), and its size.
     Unreadable(u64, &'static str),
 }
@@ -181,10 +190,18 @@ impl Layout {
     fn size(&self) -> u64 {
         match self {
             Layout::Empty => 0,
-            Layout::Resident(bytes) | Layout::Whole(bytes) => bytes.len() as u64,
-            Layout::Runs { size, .. } | Layout::Unreadable(size, _) => *size,
+            Layout::Resident(bytes) => bytes.len() as u64,
+            Layout::Runs { size, .. }
+            | Layout::Compressed { size, .. }
+            | Layout::Unreadable(size, _) => *size,
         }
     }
+}
+
+#[derive(Default)]
+struct CompressedCache {
+    files: HashMap<u64, Arc<Vec<u8>>>,
+    bytes: u64,
 }
 
 /// One NTFS volume of an image.
@@ -199,6 +216,7 @@ pub struct Volume {
     cluster_size: u64,
     layouts: Mutex<HashMap<u64, Arc<Layout>>>,
     directories: Mutex<HashMap<u64, Arc<Vec<Entry>>>>,
+    compressed: Mutex<CompressedCache>,
 }
 
 impl Volume {
@@ -213,6 +231,7 @@ impl Volume {
             cluster_size,
             layouts: Mutex::new(HashMap::new()),
             directories: Mutex::new(HashMap::new()),
+            compressed: Mutex::new(CompressedCache::default()),
         })
     }
 
@@ -308,7 +327,11 @@ impl Volume {
         let (from, to) = (offset as usize, end as usize);
         match &*layout {
             Layout::Empty => Ok(Vec::new()),
-            Layout::Resident(bytes) | Layout::Whole(bytes) => Ok(bytes[from..to].to_vec()),
+            Layout::Resident(bytes) => Ok(bytes[from..to].to_vec()),
+            Layout::Compressed { size, initialized } => {
+                let bytes = self.compressed_content(record, *size, *initialized)?;
+                Ok(bytes[from..to].to_vec())
+            }
             Layout::Unreadable(_, why) => Err(io::Error::other(*why)),
             Layout::Runs {
                 runs, initialized, ..
@@ -324,6 +347,41 @@ impl Volume {
                 Ok(out)
             }
         }
+    }
+
+    fn compressed_content(
+        &self,
+        record: u64,
+        size: u64,
+        initialized: u64,
+    ) -> io::Result<Arc<Vec<u8>>> {
+        let mut cache = lock(&self.compressed)?;
+        if let Some(bytes) = cache.files.get(&record) {
+            return Ok(bytes.clone());
+        }
+        if cache.files.len() >= LAYOUT_CACHE
+            || cache.bytes.saturating_add(size) > COMPRESSED_CACHE_BYTES
+        {
+            cache.files.clear();
+            cache.bytes = 0;
+        }
+        // Serialize materialization: concurrent reads of one large file must not each
+        // allocate a separate decompressed copy.
+        let mut bytes = self
+            .fs
+            .read_data_by_record(record, None, size)
+            .map_err(other)?;
+        if bytes.len() as u64 != size {
+            return Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "compressed stream is shorter than its size",
+            ));
+        }
+        bytes[initialized.min(size) as usize..].fill(0);
+        let bytes = Arc::new(bytes);
+        cache.bytes += size;
+        cache.files.insert(record, bytes.clone());
+        Ok(bytes)
     }
 
     /// Where file `record`'s content is, from its records (an attribute list's included).
@@ -387,11 +445,10 @@ impl Volume {
                     if real_size > MAX_DECOMPRESSED {
                         Layout::Unreadable(real_size, "compressed content too large to read")
                     } else {
-                        let whole = self
-                            .fs
-                            .read_data_by_record(record, None, real_size)
-                            .map_err(other)?;
-                        Layout::Whole(whole)
+                        Layout::Compressed {
+                            size: real_size,
+                            initialized: initialized_size.min(real_size),
+                        }
                     }
                 } else {
                     Layout::Runs {
@@ -529,15 +586,26 @@ fn mbr_entries(mbr: &[u8]) -> Vec<(u8, u64, u64)> {
 
 /// The logical partitions of the extended partition at LBA `base`, following its chain of EBRs
 /// (at most 128).
-fn extended_partitions(reader: &mut Window, base: u64, sector: u64) -> io::Result<Vec<(u64, u64)>> {
+fn extended_partitions<R: Read + Seek>(
+    reader: &mut R,
+    base: u64,
+    sector: u64,
+) -> io::Result<Vec<(u64, u64)>> {
     let mut out = Vec::new();
     let mut ebr = base;
+    let mut visited = HashSet::new();
     for _ in 0..128 {
+        if !visited.insert(ebr) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "cyclic extended partition chain",
+            ));
+        }
         let Ok(bytes) = read_at(reader, ebr * sector, 512) else {
-            break;
+            return Ok(out);
         };
         if bytes.get(510..512) != Some(&[0x55, 0xAA]) {
-            break;
+            return Ok(out);
         }
         let entries = mbr_entries(&bytes);
         let (kind, lba, sectors) = entries[0];
@@ -546,15 +614,18 @@ fn extended_partitions(reader: &mut Window, base: u64, sector: u64) -> io::Resul
         }
         let (next_kind, next_lba, _) = entries[1];
         if next_kind == 0 || next_lba == 0 {
-            break;
+            return Ok(out);
         }
         ebr = base + next_lba;
     }
-    Ok(out)
+    Err(io::Error::new(
+        io::ErrorKind::InvalidData,
+        "extended partition chain exceeds 128 entries",
+    ))
 }
 
 /// The partitions of a GPT: (start, length) in bytes.
-fn gpt_partitions(reader: &mut Window, sector: u64) -> io::Result<Vec<(u64, u64)>> {
+fn gpt_partitions<R: Read + Seek>(reader: &mut R, sector: u64) -> io::Result<Vec<(u64, u64)>> {
     let header = read_at(reader, sector, 92)?;
     if header.get(..8) != Some(b"EFI PART") {
         return Ok(Vec::new());
@@ -565,9 +636,18 @@ fn gpt_partitions(reader: &mut Window, sector: u64) -> io::Result<Vec<(u64, u64)
     if !(128..=4096).contains(&entry_size) {
         return Ok(Vec::new());
     }
+    let table_offset = table
+        .checked_mul(sector)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "GPT table offset overflows"))?;
     let mut out = Vec::new();
     for i in 0..u64::from(count) {
-        let Ok(entry) = read_at(reader, table * sector + i * entry_size, 128) else {
+        let offset = i
+            .checked_mul(entry_size)
+            .and_then(|n| table_offset.checked_add(n))
+            .ok_or_else(|| {
+                io::Error::new(io::ErrorKind::InvalidData, "GPT entry offset overflows")
+            })?;
+        let Ok(entry) = read_at(reader, offset, 128) else {
             break;
         };
         if entry[..16].iter().all(|&b| b == 0) {
@@ -576,13 +656,22 @@ fn gpt_partitions(reader: &mut Window, sector: u64) -> io::Result<Vec<(u64, u64)
         let first = u64::from_le_bytes(entry[32..40].try_into().unwrap_or_default());
         let last = u64::from_le_bytes(entry[40..48].try_into().unwrap_or_default());
         if last >= first {
-            out.push((first * sector, (last - first + 1) * sector));
+            let start = first.checked_mul(sector).ok_or_else(|| {
+                io::Error::new(io::ErrorKind::InvalidData, "GPT partition offset overflows")
+            })?;
+            let len = (last - first)
+                .checked_add(1)
+                .and_then(|n| n.checked_mul(sector))
+                .ok_or_else(|| {
+                    io::Error::new(io::ErrorKind::InvalidData, "GPT partition length overflows")
+                })?;
+            out.push((start, len));
         }
     }
     Ok(out)
 }
 
-fn read_at(reader: &mut Window, at: u64, len: usize) -> io::Result<Vec<u8>> {
+fn read_at<R: Read + Seek>(reader: &mut R, at: u64, len: usize) -> io::Result<Vec<u8>> {
     let mut buf = vec![0u8; len];
     reader.seek(SeekFrom::Start(at))?;
     reader.read_exact(&mut buf)?;
@@ -641,6 +730,113 @@ mod tests {
         let mut out = std::fs::File::create(&path).unwrap();
         io::copy(&mut flate2::read::GzDecoder::new(gz), &mut out).unwrap();
         (dir, path)
+    }
+
+    /// Change logical bytes in a private copy of the bundled fixture. Its BAT is at 3 MiB
+    /// and its fully present payload blocks are 1 MiB (see make_kape_sample.py).
+    fn patch_sample(path: &Path, offset: u64, replacement: &[u8]) {
+        use std::io::Write;
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(path)
+            .unwrap();
+        let block = offset / (1 << 20);
+        file.seek(SeekFrom::Start((3 << 20) + block * 8)).unwrap();
+        let mut entry = [0; 8];
+        file.read_exact(&mut entry).unwrap();
+        let entry = u64::from_le_bytes(entry);
+        assert_eq!(entry & 7, 6);
+        let physical = (entry & !((1 << 20) - 1)) + offset % (1 << 20);
+        assert!(offset % (1 << 20) + replacement.len() as u64 <= 1 << 20);
+        file.seek(SeekFrom::Start(physical)).unwrap();
+        file.write_all(replacement).unwrap();
+    }
+
+    #[test]
+    fn compressed_file_metadata_survives_damaged_content() {
+        let (_dir, path) = kape_sample();
+        let image = Image::open(&path).unwrap();
+        let volume = &image.volumes[0];
+        let record = record_of(volume, "C/Users/sample/Data/compressed/text.log");
+        let runs = volume.fs.runs_by_record(record, None).unwrap();
+        let first_cluster = runs.iter().find_map(|run| run.lcn).unwrap();
+        let at = volume.start + first_cluster * volume.cluster_size;
+        drop(image);
+        patch_sample(&path, at, &[0xFF, 0xFF]);
+        let image = Image::open(&path).unwrap();
+        let volume = &image.volumes[0];
+        // getattr must report the readable record's attributes without decompressing content.
+        let stat = volume.stat(record).unwrap();
+        assert_eq!(stat.size, 680_000);
+        assert!(volume.read(record, 0, 20).is_err());
+    }
+
+    #[test]
+    fn a_damaged_ntfs_partition_is_reported_without_hiding_the_readable_volume() {
+        let (_dir, path) = kape_sample();
+        // Add an NTFS-looking but unreadable second partition. Sector 64 is in the
+        // fixture's unused boot-loader area, so the original NTFS volume stays readable.
+        let mut entry = [0; 16];
+        entry[4] = 0x07;
+        entry[8..12].copy_from_slice(&64u32.to_le_bytes());
+        entry[12..16].copy_from_slice(&1u32.to_le_bytes());
+        patch_sample(&path, 446 + 16, &entry);
+        let mut boot = [0; 512];
+        boot[3..11].copy_from_slice(b"NTFS    ");
+        patch_sample(&path, 64 * 512, &boot);
+        let image = Image::open(&path).unwrap();
+        assert_eq!(image.volumes.len(), 1);
+        assert_eq!(image.problems.len(), 1);
+        assert!(image.problems[0].starts_with("volume 2 at byte 32768:"));
+        let volume = &image.volumes[0];
+        let record = record_of(volume, "C/Users/sample/Data/small.txt");
+        assert_eq!(volume.read(record, 0, 100).unwrap(), b"resident content\n");
+    }
+
+    fn gpt(table: u64, first: u64, last: u64) -> io::Cursor<Vec<u8>> {
+        let mut bytes = vec![0; 4 * 512];
+        let header = &mut bytes[512..512 + 92];
+        header[..8].copy_from_slice(b"EFI PART");
+        header[72..80].copy_from_slice(&table.to_le_bytes());
+        header[80..84].copy_from_slice(&1u32.to_le_bytes());
+        header[84..88].copy_from_slice(&128u32.to_le_bytes());
+        bytes[1024] = 1;
+        bytes[1056..1064].copy_from_slice(&first.to_le_bytes());
+        bytes[1064..1072].copy_from_slice(&last.to_le_bytes());
+        io::Cursor::new(bytes)
+    }
+
+    #[test]
+    fn gpt_offsets_and_lengths_do_not_wrap() {
+        assert_eq!(
+            gpt_partitions(&mut gpt(2, 3, 4), 512).unwrap(),
+            [(1536, 1024)]
+        );
+        assert!(gpt_partitions(&mut gpt(u64::MAX, 3, 4), 512).is_err());
+        assert!(gpt_partitions(&mut gpt(2, u64::MAX, u64::MAX), 512).is_err());
+        assert!(gpt_partitions(&mut gpt(2, 0, u64::MAX), 512).is_err());
+    }
+
+    #[test]
+    fn extended_partition_cycles_are_not_duplicate_volumes() {
+        let mut bytes = vec![0u8; 5 * 512];
+        for lba in [1, 2] {
+            let ebr = &mut bytes[lba * 512..(lba + 1) * 512];
+            ebr[510..].copy_from_slice(&[0x55, 0xAA]);
+            ebr[446 + 4] = 0x07;
+            ebr[446 + 8..446 + 12].copy_from_slice(&1u32.to_le_bytes());
+            ebr[446 + 12..446 + 16].copy_from_slice(&1u32.to_le_bytes());
+            ebr[462 + 4] = 0x0F;
+            ebr[462 + 8..462 + 12].copy_from_slice(&1u32.to_le_bytes());
+        }
+        assert!(extended_partitions(&mut io::Cursor::new(&bytes), 1, 512).is_err());
+        // A properly terminated chain has two distinct logical partitions.
+        bytes[2 * 512 + 462 + 4] = 0;
+        assert_eq!(
+            extended_partitions(&mut io::Cursor::new(&bytes), 1, 512).unwrap(),
+            [(1024, 512), (1536, 512)]
+        );
     }
 
     /// The record of `path` (`/`-separated, from the root) on `volume`.
@@ -772,7 +968,7 @@ mod tests {
         ));
         assert!(matches!(
             &*layout("C/Users/sample/Data/compressed/text.log"),
-            Layout::Whole(_)
+            Layout::Compressed { .. }
         ));
         assert!(
             matches!(&*layout("C/Users/sample/Data/fragmented.bin"), Layout::Runs { runs, .. } if runs.iter().filter(|r| r.lcn.is_some()).count() > 1)

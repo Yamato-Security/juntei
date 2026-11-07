@@ -34,7 +34,11 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
     let no_color = opts.common.no_color;
     let given = &opts.directory;
     let (images, root) = if given.is_file() {
-        let root = given.parent().unwrap_or(Path::new(".")).to_path_buf();
+        let root = given
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or(Path::new("."))
+            .to_path_buf();
         (vec![given.clone()], root)
     } else if given.is_dir() {
         (util::find_files(given, is_vhdx_name), given.clone())
@@ -92,6 +96,15 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
             .and_then(|()| image_mount::mount(image, &point, &unmounters));
         match result {
             Ok(mount) => {
+                if !mount.problems.is_empty() {
+                    failed += 1;
+                    for problem in &mount.problems {
+                        error_msg(
+                            no_color,
+                            &format!("Could not read {shown_image}: {problem}"),
+                        );
+                    }
+                }
                 p(
                     None,
                     &format!(

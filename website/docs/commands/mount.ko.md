@@ -78,6 +78,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
   별도의 시스템(`HOST1_2`, …)으로 파싱됩니다.
 - 마운트할 수 없는 이미지는 보고됩니다. 나머지 이미지는 계속 파싱되며, 실행은 종료 상태 1로 끝납니다.
 
+NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`는 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.
+
 ## 요구 사항 { #requirements }
 
 - Linux: FUSE 3(`fusermount3`, `fuse3` 패키지)과 `/dev/fuse`에 대한 액세스 권한. 일반 사용자는 보통 이

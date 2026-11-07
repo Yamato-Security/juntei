@@ -12,6 +12,8 @@
 
 **Bug Fixes:**
 
+- Disk-image mounting checks GPT offset and length arithmetic, rejects cyclic extended-partition chains, preserves valid FILETIMEs beyond 2554, and reads compressed-file metadata without decompressing content. Bound the decompression cache, report unreadable NTFS partitions while retaining readable volumes, and preserve the original evidence directory when `auto-parse --vhdx` receives a bare image filename. (@YamatoSecurity)
+
 - Preserve UAL daily dates when `LastAccess` is zero or invalid but `InsertDate` is usable. Report damage in adjacent `SystemIdentity.mdb` lookup tables while retaining readable access records, and distinguish built-in role-name fallback in the summary. (@YamatoSecurity)
 
 - `persistence-hunter` names the hive of a task's COM handler registration from the evidence directory as given, as its other paths, instead of by its absolute path. (@YamatoSecurity)

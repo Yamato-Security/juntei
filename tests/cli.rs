@@ -5123,6 +5123,22 @@ fn kape_sample_vhdx(path: &Path) {
     std::io::copy(&mut flate2::read::GzDecoder::new(gz), &mut out).unwrap();
 }
 
+#[cfg(target_os = "linux")]
+fn add_unreadable_partition_to_kape_sample(path: &Path) {
+    let mut bytes = std::fs::read(path).unwrap();
+    // The first logical MiB is fully present. Resolve its BAT entry in this fixture only.
+    let bat = u64::from_le_bytes(bytes[3 << 20..(3 << 20) + 8].try_into().unwrap());
+    assert_eq!(bat & 7, 6);
+    let payload = (bat & !((1 << 20) - 1)) as usize;
+    let entry = payload + 446 + 16;
+    bytes[entry + 4] = 0x07;
+    bytes[entry + 8..entry + 12].copy_from_slice(&64u32.to_le_bytes());
+    bytes[entry + 12..entry + 16].copy_from_slice(&1u32.to_le_bytes());
+    bytes[payload + 64 * 512..payload + 65 * 512].fill(0);
+    bytes[payload + 64 * 512 + 3..payload + 64 * 512 + 11].copy_from_slice(b"NTFS    ");
+    std::fs::write(path, bytes).unwrap();
+}
+
 /// Whether this user can mount with FUSE here (Linux with /dev/fuse and fusermount3). Without it
 /// the tests that mount say so and stop.
 #[cfg(target_os = "linux")]
@@ -5321,6 +5337,9 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     std::fs::create_dir(evidence.path().join("sub")).unwrap();
     kape_sample_vhdx(&evidence.path().join("sub/second-auto.vhdx"));
     std::fs::write(evidence.path().join("broken-auto.vhdx"), b"not a VHDX").unwrap();
+    let partial = evidence.path().join("partial-auto.vhdx");
+    kape_sample_vhdx(&partial);
+    add_unreadable_partition_to_kape_sample(&partial);
     let root = tempfile::tempdir().unwrap();
     let output = root.path().join("results");
     let timeline = root.path().join("timeline.jsonl");
@@ -5341,11 +5360,12 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     // the broken image is a failure; the others are parsed
     assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
     for line in [
-        "VHDX images: 3\n",
+        "VHDX images: 4\n",
         "Could not mount ./broken-auto.vhdx: ",
+        "Could not read ./partial-auto.vhdx: volume 2 at byte 32768: ",
         "  ./kape-auto.vhdx: mounted read-only (1 NTFS volume)\n",
         "  ./sub/second-auto.vhdx: mounted read-only (1 NTFS volume)\n",
-        "Windows systems: 2\n",
+        "Windows systems: 3\n",
         "  kape-auto: ./kape-auto/C (./kape-auto.vhdx)\n",
         "  sub_second-auto: ./sub_second-auto/C (./sub/second-auto.vhdx)\n",
         "Failed: 0\n",
@@ -5357,12 +5377,13 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     let evidence_name = evidence.path().file_name().unwrap().to_str().unwrap();
     assert_eq!(manifest["EvidenceDirectory"], evidence_name);
     let hosts = manifest["Hosts"].as_array().unwrap();
-    assert_eq!(hosts.len(), 2);
+    assert_eq!(hosts.len(), 3);
     assert_eq!(hosts[0]["Image"], "./kape-auto.vhdx");
     assert_eq!(hosts[0]["EvidenceRoot"], "./kape-auto/C");
-    assert_eq!(hosts[1]["Image"], "./sub/second-auto.vhdx");
+    assert_eq!(hosts[1]["Image"], "./partial-auto.vhdx");
+    assert_eq!(hosts[2]["Image"], "./sub/second-auto.vhdx");
     // the files inside were parsed
-    for host in ["kape-auto", "sub_second-auto"] {
+    for host in ["kape-auto", "partial-auto", "sub_second-auto"] {
         let (_, rows) = csv_rows(&output.join(host).join("ProcessExecution/Prefetch.csv"));
         assert_eq!(rows.len(), 1, "{host}");
         assert!(
@@ -5386,6 +5407,49 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     }
     assert!(!mounted_from("kape-auto.vhdx"));
     assert!(!mounted_from("second-auto.vhdx"));
+    assert!(!mounted_from("partial-auto.vhdx"));
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
+    if !fuse_available() {
+        return;
+    }
+    let evidence = tempfile::tempdir().unwrap();
+    kape_sample_vhdx(&evidence.path().join("single.vhdx"));
+    let output_root = tempfile::tempdir().unwrap();
+    let output = output_root.path().join("parsed");
+    let result = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args([
+            "auto-parse",
+            "--vhdx",
+            "-d",
+            "single.vhdx",
+            "-o",
+            output.to_str().unwrap(),
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ])
+        .current_dir(evidence.path())
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&result.stdout),
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(
+        manifest["EvidenceDirectory"],
+        evidence.path().file_name().unwrap().to_str().unwrap()
+    );
+    assert_eq!(manifest["Hosts"][0]["Image"], "./single.vhdx");
+    assert!(!mounted_from("single.vhdx"));
 }
 
 // --- parse-file lnk ---------------------------------------------------------------------------------

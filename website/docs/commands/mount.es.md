@@ -81,6 +81,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - Si una imagen no se puede montar, se informa de ello; las demás se siguen analizando y la ejecución termina
   con el código de salida 1.
 
+Si no se puede abrir un volumen NTFS, Juntei informa del problema y conserva los volúmenes legibles. Con imágenes parcialmente legibles, `auto-parse --vhdx` devuelve el código 1; `mount` también devuelve 1 después de desmontar.
+
 ## Requisitos { #requirements }
 
 - Linux: FUSE 3 (`fusermount3`, el paquete `fuse3`) y acceso a `/dev/fuse`, que los usuarios normales suelen

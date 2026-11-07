@@ -30,6 +30,8 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+यदि कोई NTFS वॉल्यूम नहीं खुलता, तो Juntei समस्या बताता है और पढ़ने योग्य वॉल्यूम को बनाए रखता है। आंशिक रूप से पढ़ी जा सकने वाली इमेज के लिए `auto-parse --vhdx` निकास कोड 1 लौटाता है; `mount` भी अनमाउंट करने के बाद 1 लौटाता है।
+
 ## आउटपुट time zone { #output-time-zone }
 
 Parse किए गए timestamps default रूप से UTC में होते हैं, विश्लेषक के computer के local time zone से स्वतंत्र। UTC

@@ -23,6 +23,8 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+開けない NTFS ボリュームがある場合、その問題を報告し、読み取り可能なボリュームの処理を続けます。画像の一部を読み取れなかった場合、`auto-parse --vhdx` は終了コード 1 を返し、`mount` もアンマウント後に 1 を返します。
+
 ## 出力タイムゾーン { #output-time-zone }
 
 解析されたタイムスタンプは、アナリスト コンピュータのローカル タイム ゾーンに関係なく、デフォルトで UTC になります。 UTC は、`2026-10-20T08:46:38.2001668Z` 形式の Windows イベント ログを使用します。ISO 8601 日付/時刻、日付と時刻の間の `T`、および UTC の `Z`。使用可能な小数桁は保持されます。`manifest.json` の `GeneratedUTC` もこの形式を使用します。コンソールの `Start time` と `End time` は、出力タイム ゾーンに関係なく、アナリスト コンピュータのローカル時刻 (例: `2026-11-04 09:15:02`) です。

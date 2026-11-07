@@ -286,8 +286,11 @@ fn system_time(filetime: u64) -> SystemTime {
         return UNIX_EPOCH;
     }
     let ticks = i128::from(filetime) - i128::from(UNIX_IN_FILETIME);
-    let duration =
-        Duration::from_nanos((ticks.unsigned_abs() * 100).min(u128::from(u64::MAX)) as u64);
+    let magnitude = ticks.unsigned_abs();
+    let duration = Duration::new(
+        (magnitude / 10_000_000) as u64,
+        ((magnitude % 10_000_000) * 100) as u32,
+    );
     if ticks >= 0 {
         UNIX_EPOCH.checked_add(duration).unwrap_or(UNIX_EPOCH)
     } else {
@@ -307,6 +310,7 @@ pub struct Mounted {
     pub mount_point: PathBuf,
     /// The volumes: (start on the disk, length) in bytes.
     pub volumes: Vec<(u64, u64)>,
+    pub problems: Vec<String>,
     session: Option<fuser::BackgroundSession>,
 }
 
@@ -343,6 +347,7 @@ pub fn mount(
 ) -> io::Result<Mounted> {
     let opened = Image::open(image)?;
     let volumes = opened.volumes.iter().map(|v| (v.start, v.len)).collect();
+    let problems = opened.problems.clone();
     let session = new_session(opened, image, mount_point)?;
     let mut session = session;
     if let Ok(mut list) = unmounters.lock() {
@@ -352,6 +357,7 @@ pub fn mount(
     Ok(Mounted {
         mount_point: mount_point.to_path_buf(),
         volumes,
+        problems,
         session: Some(session),
     })
 }
@@ -445,6 +451,11 @@ mod tests {
         assert_eq!(
             system_time(1),
             UNIX_EPOCH - Duration::from_nanos(11_644_473_599_999_999_900)
+        );
+        // Valid NTFS times beyond 2554 must not be clamped to u64::MAX nanoseconds.
+        assert_eq!(
+            system_time(441_481_536_000_000_001),
+            UNIX_EPOCH + Duration::new(32_503_680_000, 100)
         );
     }
 }

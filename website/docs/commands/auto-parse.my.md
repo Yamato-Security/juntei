@@ -31,6 +31,8 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
+
 ## Output time zone { #output-time-zone }
 
 Parse လုပ်ထားသော timestamp များသည် analyst ကွန်ပျူတာ၏ local time zone နှင့် မသက်ဆိုင်ဘဲ မူလအားဖြင့် UTC ဖြစ်ပါသည်။ UTC

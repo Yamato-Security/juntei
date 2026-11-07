@@ -30,6 +30,8 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`는 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.
+
 ## 출력 표준 시간대 { #output-time-zone }
 
 파싱된 타임스탬프는 분석용 컴퓨터의 로컬 표준 시간대와 관계없이 기본적으로 UTC입니다. UTC는 Windows 이벤트

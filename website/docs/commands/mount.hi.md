@@ -79,6 +79,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - जो image mount नहीं हो पाती, उसकी सूचना दी जाती है; बाकी images फिर भी parse की जाती हैं, और run exit
   status 1 के साथ समाप्त होता है।
 
+यदि कोई NTFS वॉल्यूम नहीं खुलता, तो Juntei समस्या बताता है और पढ़ने योग्य वॉल्यूम को बनाए रखता है। आंशिक रूप से पढ़ी जा सकने वाली इमेज के लिए `auto-parse --vhdx` निकास कोड 1 लौटाता है; `mount` भी अनमाउंट करने के बाद 1 लौटाता है।
+
 ## आवश्यकताएँ { #requirements }
 
 - Linux: FUSE 3 (`fusermount3`, `fuse3` package) और `/dev/fuse` तक access, जो सामान्य users के पास आमतौर पर

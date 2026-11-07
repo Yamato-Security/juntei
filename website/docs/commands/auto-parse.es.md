@@ -31,6 +31,8 @@ mientras se analiza, así que no se extrae nada. Consulte [Montar imágenes de d
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+Si no se puede abrir un volumen NTFS, Juntei informa del problema y conserva los volúmenes legibles. Con imágenes parcialmente legibles, `auto-parse --vhdx` devuelve el código 1; `mount` también devuelve 1 después de desmontar.
+
 ## Zona horaria de salida { #output-time-zone }
 
 Las marcas de tiempo analizadas están en UTC de forma predeterminada, independientemente de la zona

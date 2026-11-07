@@ -31,6 +31,8 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+หากเปิดโวลุ่ม NTFS ไม่ได้ Juntei จะรายงานปัญหาและคงโวลุ่มที่อ่านได้ไว้ สำหรับอิมเมจที่อ่านได้เพียงบางส่วน `auto-parse --vhdx` จะคืนรหัสจบการทำงาน 1 และ `mount` จะคืนค่า 1 หลังยกเลิกการเมานต์เช่นกัน
+
 ## เขตเวลาของเอาต์พุต { #output-time-zone }
 
 timestamp ที่พาร์สแล้วใช้ UTC เป็นค่าเริ่มต้น โดยไม่ขึ้นกับเขตเวลาท้องถิ่นของคอมพิวเตอร์ของนักวิเคราะห์ UTC

@@ -31,6 +31,8 @@ diurai, sehingga tidak ada yang diekstrak. Lihat [Memasang Image Disk](mount.md)
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+Jika sebuah volume NTFS tidak dapat dibuka, Juntei melaporkan masalahnya dan mempertahankan volume yang dapat dibaca. Untuk citra yang hanya terbaca sebagian, `auto-parse --vhdx` mengembalikan kode keluar 1; `mount` juga mengembalikan 1 setelah pelepasan.
+
 ## Zona waktu keluaran { #output-time-zone }
 
 Timestamp yang diurai secara default menggunakan UTC, terlepas dari zona waktu lokal komputer analis. UTC

@@ -31,6 +31,8 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+إذا تعذر فتح وحدة NTFS، يبلغ Juntei عن المشكلة ويحتفظ بالوحدات القابلة للقراءة. تعيد الصور القابلة للقراءة جزئيًا رمز الخروج 1 مع `auto-parse --vhdx`، ويعيد `mount` أيضًا الرمز 1 بعد إلغاء التركيب.
+
 ## المنطقة الزمنية للإخراج { #output-time-zone }
 
 تكون الطوابع الزمنية المحللة افتراضيًا بتوقيت UTC، بصرف النظر عن المنطقة الزمنية المحلية لحاسوب المحلل. ويستخدم UTC

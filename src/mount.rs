@@ -59,6 +59,10 @@ pub fn run(opts: &MountOptions) -> i32 {
             return 1;
         }
     };
+    let partial = !image.problems.is_empty();
+    for problem in &image.problems {
+        error_msg(no_color, &format!("Could not read {problem}"));
+    }
     p_label(no_color, "Image: ", &opts.image.display().to_string());
     p_label(
         no_color,
@@ -128,7 +132,7 @@ pub fn run(opts: &MountOptions) -> i32 {
         "Unmounted: ",
         &opts.mount_point.display().to_string(),
     );
-    0
+    i32::from(partial)
 }
 
 /// Run the command; returns the exit status.

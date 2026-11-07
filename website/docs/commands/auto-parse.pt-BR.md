@@ -31,6 +31,8 @@ analisada, portanto nada é extraído. Consulte [Montar imagens de disco](mount.
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+Se um volume NTFS não puder ser aberto, o Juntei informa o problema e mantém os volumes legíveis. Para imagens parcialmente legíveis, `auto-parse --vhdx` retorna o código 1; `mount` também retorna 1 após desmontar.
+
 ## Fuso horário da saída { #output-time-zone }
 
 Por padrão, os carimbos de data/hora analisados ficam em UTC, independentemente do fuso horário local do computador do analista. O UTC

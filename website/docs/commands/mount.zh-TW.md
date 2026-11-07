@@ -76,6 +76,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
   被找到，並作為另一個系統（`HOST1_2`、…）進行剖析。
 - 無法掛載的映像檔會被回報；其他映像檔仍會被剖析，而這次執行會以結束狀態 1 結束。
 
+若無法開啟某個 NTFS 磁碟區，Juntei 會回報問題並保留可讀取的磁碟區。映像檔僅部分可讀取時，`auto-parse --vhdx` 會傳回結束代碼 1；`mount` 也會在卸載後傳回 1。
+
 ## 需求 { #requirements }
 
 - Linux：FUSE 3（`fusermount3`，即 `fuse3` 套件），以及對 `/dev/fuse` 的存取權限，一般使用者

@@ -31,6 +31,8 @@ eingebunden, sodass nichts extrahiert wird. Siehe [Disk-Images einbinden](mount.
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+Kann ein NTFS-Volume nicht geöffnet werden, meldet Juntei dies und behält die lesbaren Volumes bei. Bei teilweise lesbaren Images liefert `auto-parse --vhdx` den Exitstatus 1; `mount` liefert nach dem Aushängen ebenfalls 1.
+
 ## Ausgabezeitzone { #output-time-zone }
 
 Geparste Zeitstempel werden standardmäßig in UTC ausgegeben, unabhängig von der lokalen Zeitzone des Analysecomputers. UTC

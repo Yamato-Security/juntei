@@ -29,6 +29,8 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+若無法開啟某個 NTFS 磁碟區，Juntei 會回報問題並保留可讀取的磁碟區。映像檔僅部分可讀取時，`auto-parse --vhdx` 會傳回結束代碼 1；`mount` 也會在卸載後傳回 1。
+
 ## 輸出時區 { #output-time-zone }
 
 剖析出的時間戳記預設為 UTC，與分析人員電腦的當地時區無關。UTC

@@ -83,6 +83,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - Bağlanamayan bir imaj raporlanır; diğerleri yine de ayrıştırılır ve çalıştırma 1 çıkış durumuyla
   sona erer.
 
+Bir NTFS birimi açılamazsa Juntei sorunu bildirir ve okunabilen birimleri korur. Kısmen okunabilen imajlarda `auto-parse --vhdx` çıkış kodu 1 döndürür; `mount` da ayırma işleminden sonra 1 döndürür.
+
 ## Gereksinimler { #requirements }
 
 - Linux: FUSE 3 (`fusermount3`, `fuse3` paketi) ve normal kullanıcıların genellikle sahip olduğu

@@ -31,6 +31,8 @@ is parsed, so nothing is extracted. See [Mounting Disk Images](mount.md).
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+If an NTFS volume cannot be opened, Juntei reports it and keeps the readable volumes. Partial images cause `auto-parse --vhdx` to return exit status 1; `mount` also returns 1 after unmounting.
+
 ## Output time zone
 
 Parsed timestamps default to UTC, independent of the analyst computer's local time zone. UTC

@@ -32,6 +32,8 @@ sayfasına bakın.
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+Bir NTFS birimi açılamazsa Juntei sorunu bildirir ve okunabilen birimleri korur. Kısmen okunabilen imajlarda `auto-parse --vhdx` çıkış kodu 1 döndürür; `mount` da ayırma işleminden sonra 1 döndürür.
+
 ## Çıktı saat dilimi { #output-time-zone }
 
 Ayrıştırılan zaman damgaları, analistin bilgisayarının yerel saat diliminden bağımsız olarak varsayılan

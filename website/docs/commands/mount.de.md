@@ -83,6 +83,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - Ein Image, das sich nicht einbinden lässt, wird gemeldet; die übrigen werden trotzdem geparst, und der Lauf
   endet mit dem Exit-Status 1.
 
+Kann ein NTFS-Volume nicht geöffnet werden, meldet Juntei dies und behält die lesbaren Volumes bei. Bei teilweise lesbaren Images liefert `auto-parse --vhdx` den Exitstatus 1; `mount` liefert nach dem Aushängen ebenfalls 1.
+
 ## Voraussetzungen { #requirements }
 
 - Linux: FUSE 3 (`fusermount3`, das Paket `fuse3`) und Zugriff auf `/dev/fuse`, den normale Benutzer in der

@@ -31,6 +31,8 @@ n'est donc extrait. Voir [Monter des images disque](mount.md).
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ```
 
+Si un volume NTFS ne peut pas être ouvert, Juntei le signale et conserve les volumes lisibles. Pour une image partiellement lisible, `auto-parse --vhdx` renvoie le code 1 ; `mount` renvoie également 1 après le démontage.
+
 ## Fuseau horaire de sortie { #output-time-zone }
 
 Les horodatages analysés sont par défaut en UTC, indépendamment du fuseau horaire local de l'ordinateur de l'analyste. L'UTC

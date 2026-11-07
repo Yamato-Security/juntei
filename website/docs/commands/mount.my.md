@@ -82,6 +82,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - Mount မလုပ်နိုင်သော image ကို report လုပ်ပါသည်။ ကျန် image များကို ဆက်လက် parse လုပ်ပြီး run သည်
   exit status 1 ဖြင့် ပြီးဆုံးပါသည်။
 
+NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
+
 ## လိုအပ်ချက်များ { #requirements }
 
 - Linux- FUSE 3 (`fusermount3`၊ `fuse3` package) နှင့် `/dev/fuse` သို့ ဝင်ရောက်ခွင့်။ ပုံမှန်အသုံးပြုသူများတွင်
