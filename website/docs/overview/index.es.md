@@ -5,9 +5,7 @@ Juntei es un analizador de artefactos forenses de Windows escrito en Rust, un le
 mientras que Juntei analiza artefactos persistentes del sistema de archivos, del Registro, de ejecución, de actividad del usuario, de uso de recursos
 y de productos de seguridad.
 
-El mismo binario se ejecuta en Windows, macOS y Linux. Esto resulta útil cuando un analista recibe una recopilación de KAPE,
-de Velociraptor, una imagen de disco u otra recopilación offline y desea una única interfaz coherente en lugar
-de un programa distinto para cada artefacto.
+El mismo binario funciona en Windows, macOS y Linux. Los analistas pueden examinar pruebas de Windows recopiladas e imágenes de disco con una interfaz coherente, en lugar de usar un programa distinto para cada artefacto.
 
 ## Objetivos de diseño { #design-goals }
 
@@ -25,7 +23,8 @@ de un programa distinto para cada artefacto.
 
 ## Lo que Juntei no hace { #what-juntei-does-not-do }
 
-Juntei no adquiere un disco en vivo, no monta una imagen forense ni sustituye la preservación de evidencias. No
+Juntei no adquiere un disco en vivo ni sustituye la preservación de evidencias, y las únicas imágenes de disco que
+monta son imágenes VHDX, en modo de solo lectura. No
 combina automáticamente todos los artefactos en una única narrativa del incidente. Analiza las
 evidencias que se le proporcionan y produce registros adecuados para la investigación y la correlación.
 

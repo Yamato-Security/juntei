@@ -1,7 +1,6 @@
 # အထောက်အထား စုဆောင်းခြင်း { #collecting-evidence }
 
-Juntei သည် Windows မှ စုဆောင်းပြီးသား ဖိုင်များကို parse လုပ်ပါသည်။ ယုံကြည်ရသော acquisition tool ကို အသုံးပြုပြီး
-ဖြစ်နိုင်သမျှ မူလ metadata ကို ထိန်းသိမ်းပါ။
+Juntei သည် Windows မှ စုဆောင်းထားပြီးသော ဖိုင်များကို parse လုပ်သည်။ ယုံကြည်ရသော acquisition tool ကို အသုံးပြုပြီး မူလ metadata ကို ဖြစ်နိုင်သမျှ ထိန်းသိမ်းပါ။ VHDX disk image များကို ထုတ်ယူစရာမလိုဘဲ parse လုပ်နိုင်သည်။ [Disk image များကို mount လုပ်ခြင်း](../commands/mount.md) ကို ကြည့်ပါ။
 
 ## အသုံးများသော တည်နေရာများ { #common-locations }
 

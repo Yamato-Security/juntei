@@ -1,7 +1,6 @@
 # Recopilación de evidencias { #collecting-evidence }
 
-Juntei analiza archivos ya recopilados de Windows. Utilice una herramienta de adquisición de
-confianza y conserve los metadatos originales siempre que sea posible.
+Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquisición fiable y preserve los metadatos originales cuando sea posible. Las imágenes de disco VHDX pueden analizarse sin extraerlas: consulte [Montar imágenes de disco](../commands/mount.md).
 
 ## Ubicaciones habituales { #common-locations }
 

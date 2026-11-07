@@ -13,6 +13,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md)를 사용하십시오. 이 명령은 같은 그룹화된
 명령어를 호출하고, 결과와 로그를 컴퓨터 및 조사 범주별로 정리합니다.
 
+## [디스크 이미지](mount.md) { #disk-images }
+
+| 명령어 | 입력 | 상세 가이드 |
+|---|---|---|
+| `mount` | VHDX 디스크 이미지 | [디스크 이미지 마운트](mount.md) |
+
 ## [ESE 명령어](user-activity.md) { #ese-commands }
 
 | 명령어 | 입력 아티팩트 | 상세 가이드 |
@@ -93,13 +99,14 @@ SQLite Amcache 인벤토리 데이터베이스를 지원한다는 의미는 아�
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

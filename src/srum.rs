@@ -400,7 +400,7 @@ fn file_name(path: &str) -> &str {
 }
 
 /// The SOFTWARE hive of the Windows a database comes from, in a collection that keeps the
-/// layout (KAPE: `Windows/System32/sru/SRUDB.dat` and `Windows/System32/config/SOFTWARE`), or
+/// layout (`Windows/System32/sru/SRUDB.dat` and `Windows/System32/config/SOFTWARE`), or
 /// copied next to the database. Names are matched ignoring case.
 fn software_hive(database: &Path) -> Option<PathBuf> {
     let directory = database.parent()?;
@@ -1172,7 +1172,7 @@ mod tests {
         // next to the database
         std::fs::write(sru.join("SOFTWARE"), b"").unwrap();
         assert_eq!(software_hive(&database), Some(sru.join("SOFTWARE")));
-        // KAPE's layout first, names in any case
+        // the collection's layout first, names in any case
         let config = dir.path().join("C/Windows/System32/Config");
         std::fs::create_dir_all(&config).unwrap();
         std::fs::write(config.join("software"), b"").unwrap();

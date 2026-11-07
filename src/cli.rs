@@ -47,6 +47,16 @@ pub enum Commands {
     )]
     AutoParse(AutoParseOptions),
 
+    /// Mount a VHDX disk image read-only (FUSE)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Mount(MountOptions),
+
     /// Parse ESE databases
     #[command(
         author = AUTHOR,
@@ -441,6 +451,10 @@ pub struct AutoParseOptions {
     /// Maximum directory depth at which to discover a Windows directory
     #[arg(help_heading = Some("Input"), long, value_name = "DEPTH", default_value_t = 10, value_parser = parse_auto_depth, display_order = 101)]
     pub max_depth: usize,
+
+    /// Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+    #[arg(help_heading = Some("Input"), long, display_order = 102)]
+    pub vhdx: bool,
 
     /// New directory in which to create per-computer results
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "DIR", display_order = 200)]
@@ -1209,6 +1223,20 @@ impl SrumOptions {
                 Some(SrumOutputType::Json | SrumOutputType::Jsonl)
             )
     }
+}
+
+#[derive(Args, Clone, Debug, Default)]
+pub struct MountOptions {
+    /// The disk image (VHDX)
+    #[arg(help_heading = Some("Input"), value_name = "IMAGE", display_order = 100)]
+    pub image: PathBuf,
+
+    /// An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
+    #[arg(help_heading = Some("Input"), value_name = "MOUNTPOINT", display_order = 101)]
+    pub mount_point: PathBuf,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
 }
 
 /// What `parse-ese ual` writes.

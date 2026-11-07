@@ -96,6 +96,10 @@ termcolor = "1"
 # sootmark-defender (MIT OR Apache-2.0).
 defender = { package = "ys-defender-history-parser", git = "https://github.com/Yamato-Security/ys-defender-history-parser" }
 
+# Read-only VHDX/NTFS mounting through Yamato Security's reusable FUSE SDK (Linux only).
+[target.'cfg(target_os = "linux")'.dependencies]
+vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
+
 [dev-dependencies]
 # The SYSTEM hive of test_files/shimcache/ is kept gzipped.
 flate2 = "1"

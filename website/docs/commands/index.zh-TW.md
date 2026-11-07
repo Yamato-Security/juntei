@@ -13,6 +13,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md)。它會呼叫相同的分組命令，
 並依電腦與調查類別整理結果與記錄。
 
+## [磁碟映像檔](mount.md) { #disk-images }
+
+| 命令 | 輸入 | 詳細指南 |
+|---|---|---|
+| `mount` | VHDX 磁碟映像檔 | [掛載磁碟映像](mount.md) |
+
 ## [ESE 命令](user-activity.md) { #ese-commands }
 
 | 命令 | 輸入跡證 | 詳細指南 |
@@ -93,13 +99,14 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

@@ -21,6 +21,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     запобігає повторному виявленню згенерованих даних як доказів і не дає `--clobber`
     торкатися файлів у вихідній колекції.
 
+## Образи дисків VHDX { #vhdx-disk-images }
+
+З параметром `--vhdx` команда `auto-parse` аналізує системи в кожному образі диска VHDX у каталозі доказів. Під час аналізу кожен образ монтується через FUSE лише для читання; файли не розпаковуються. Див. [Монтування образів дисків](mount.md).
+
+```bash
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+```
+
+Якщо том NTFS не відкривається, Juntei повідомляє про проблему та зберігає доступ до читабельних томів. Для частково читабельного образу `auto-parse --vhdx` повертає код завершення 1; `mount` також повертає 1 після відмонтування.
+
 ## Часовий пояс виводу { #output-time-zone }
 
 Позначки часу після аналізу за замовчуванням подаються в UTC, незалежно від місцевого часового поясу комп'ютера аналітика. UTC
@@ -459,7 +469,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Використання { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -468,6 +478,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

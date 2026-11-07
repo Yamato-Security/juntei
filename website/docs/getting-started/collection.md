@@ -1,7 +1,6 @@
 # Collecting Evidence
 
-Juntei parses files already collected from Windows. Use a trusted acquisition tool and preserve
-original metadata where possible.
+Juntei parses files already collected from Windows. Use a trusted acquisition tool and preserve original metadata where possible. VHDX disk images can be parsed without extracting them: see [Mounting Disk Images](../commands/mount.md).
 
 ## Common locations
 

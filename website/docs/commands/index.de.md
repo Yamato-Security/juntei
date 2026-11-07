@@ -13,6 +13,12 @@ Für eine Windows-Beweissammlung von mehreren Computern verwenden Sie
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Der Befehl ruft dieselben gruppierten Befehle auf
 und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategorie.
 
+## [Disk-Images](mount.md) { #disk-images }
+
+| Befehl | Eingabe | Ausführlicher Leitfaden |
+|---|---|---|
+| `mount` | VHDX-Disk-Image | [Disk-Images einbinden](mount.md) |
+
 ## [ESE-Befehle](user-activity.md) { #ese-commands }
 
 | Befehl | Eingabeartefakt | Ausführlicher Leitfaden |
@@ -94,13 +100,14 @@ der obersten Ebene. Er ergänzt das vollständige Konfigurationsinventar aus `pa
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

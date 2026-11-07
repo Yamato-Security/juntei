@@ -13,6 +13,12 @@ Birden fazla bilgisayarı kapsayan bir Windows kanıt toplaması için
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) komutunu kullanın. Bu komut aynı gruplanmış
 komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme kategorisine göre düzenler.
 
+## [Disk İmajları](mount.md) { #disk-images }
+
+| Komut | Girdi | Ayrıntılı kılavuz |
+|---|---|---|
+| `mount` | VHDX disk imajı | [Disk İmajlarını Bağlama](mount.md) |
+
 ## [ESE Komutları](user-activity.md) { #ese-commands }
 
 | Komut | Girdi artefaktı | Ayrıntılı kılavuz |
@@ -95,13 +101,14 @@ sınıflandırması, yük (payload) meta verileri, kapsam ve zaman damgası ili�
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

@@ -13,6 +13,12 @@ Para una recopilación de evidencias de Windows de varios equipos, utilice
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Invoca los mismos comandos agrupados
 y organiza los resultados y los registros por equipo y por categoría de investigación.
 
+## [Imágenes de disco](mount.md) { #disk-images }
+
+| Comando | Entrada | Guía detallada |
+|---|---|---|
+| `mount` | Imagen de disco VHDX | [Montar imágenes de disco](mount.md) |
+
 ## [Comandos ESE](user-activity.md) { #ese-commands }
 
 | Comando | Artefacto de entrada | Guía detallada |
@@ -94,13 +100,14 @@ de nivel superior. Complementa el inventario completo de la configuración de `p
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

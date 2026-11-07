@@ -13,6 +13,12 @@ For a multi-computer Windows evidence collection, use
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). It invokes the same grouped commands
 and organizes results and logs by computer and investigative category.
 
+## [Disk images](mount.md)
+
+| Command | Input | Detailed guide |
+|---|---|---|
+| `mount` | VHDX disk image | [Mounting Disk Images](mount.md) |
+
 ## [ESE commands](user-activity.md)
 
 | Command | Input artifact | Detailed guide |
@@ -94,13 +100,14 @@ command. It complements the full configuration inventory from `parse-registry pe
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

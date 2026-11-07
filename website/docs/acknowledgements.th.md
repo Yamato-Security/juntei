@@ -21,6 +21,7 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | งานด้าน compound file และ Jump List ของ Sootmark shell |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| อิมเมจดิสก์ VHDX (`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) และ [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic) ให้บริการไฟล์ผ่าน [fuser](https://github.com/cberner/fuser) | MS-VHDX ของ Microsoft |
 | รีจิสทรี | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | งานวิจัยด้านรูปแบบรีจิสทรีและการกู้คืนข้อมูลที่ระบุไว้ด้านล่าง |
 
 ## เครื่องมืออ้างอิงและการตรวจสอบโดยอิสระ { #reference-tools-and-independent-validation }

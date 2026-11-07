@@ -33,6 +33,11 @@ while keeping the CSV or JSON results.
 For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, or `parse-registry`.
 For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
 
+Use `juntei mount <IMAGE> <MOUNTPOINT>` to mount a VHDX disk image
+read-only for other tools such as Hayabusa (FUSE, Linux only), or add `--vhdx` to `auto-parse` to
+parse the systems inside every VHDX image of a directory. The VHDX reader and mounting library live in
+[Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+
 Use [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/commands/persistence-hunter/)
 to hunt for persistence across registry hives, scheduled tasks, startup files, WMI, and BITS.
 This native Rust port of [PyrsistenceSniper](https://github.com/hexastrike/PyrsistenceSniper)

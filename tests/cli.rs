@@ -3404,7 +3404,7 @@ fn usn_journal() -> Vec<u8> {
     j
 }
 
-/// A KAPE-like collection: the journal at `HOST1/C/$Extend/$J`, the volume's `$MFT` at `HOST1/C/$MFT`.
+/// A triage collection that keeps the volume's layout: the journal at `HOST1/C/$Extend/$J`, the volume's `$MFT` at `HOST1/C/$MFT`.
 fn usn_triage() -> tempfile::TempDir {
     let dir = tempfile::tempdir().unwrap();
     let extend = dir.path().join("HOST1/C/$Extend");
@@ -3724,6 +3724,68 @@ fn persistence_hunter_selected_check_has_csv_json_and_jsonl_parity() {
     let f: Value = serde_json::from_str(&r.stdout).unwrap();
     assert_eq!(f["CheckID"], "run_keys");
     assert!(!r.stdout.contains("JUNTEI"));
+}
+
+#[test]
+fn persistence_hunter_names_com_registrations_as_the_input_was_given() {
+    // a task's COM handler registered in the machine's SOFTWARE hive: the finding names the hive,
+    // from the evidence directory as given, not where it is on the analyst's system
+    let evidence = tempfile::tempdir().unwrap();
+    let windows = evidence.path().join("HOST/C/Windows");
+    let config = windows.join("System32/config");
+    let tasks = windows.join("System32/Tasks");
+    for dir in [&config, &tasks] {
+        std::fs::create_dir_all(dir).unwrap();
+    }
+    let clsid = "{00112233-4455-6677-8899-AABBCCDDEEFF}";
+    std::fs::write(
+        config.join("SOFTWARE"),
+        reg_tree(
+            "ROOT",
+            &[(
+                &format!(r"Classes\CLSID\{clsid}\InprocServer32"),
+                "",
+                REG_SZ,
+                utf16z(r"C:\Example\handler.dll"),
+            )],
+        ),
+    )
+    .unwrap();
+    std::fs::write(tasks.join("ExampleTask"), format!(r#"<Task xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Principals><Principal id="Author"><UserId>S-1-5-18</UserId></Principal></Principals><Actions Context="Author"><ComHandler><ClassId>{clsid}</ClassId></ComHandler></Actions></Task>"#)).unwrap();
+    let r = run_at(
+        evidence.path(),
+        &[
+            "persistence-hunter",
+            "-d",
+            "./HOST/C",
+            "--min-severity",
+            "info",
+            "--no-timeline",
+            "-t",
+            "jsonl",
+        ],
+    );
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let findings = jsonl_records(&r.stdout);
+    let registration = findings
+        .iter()
+        .filter_map(|f| f["Description"].as_str())
+        .find(|d| d.contains("Registration: "))
+        .unwrap_or_else(|| panic!("{}", r.stdout));
+    let hive = [
+        ".", "HOST", "C", "Windows", "System32", "config", "SOFTWARE",
+    ]
+    .join(std::path::MAIN_SEPARATOR_STR);
+    assert!(
+        registration.contains(&format!("Registration: {hive}")),
+        "{registration}"
+    );
+    let canonical = std::fs::canonicalize(evidence.path()).unwrap();
+    assert!(
+        !r.stdout.contains(canonical.to_str().unwrap()),
+        "{}",
+        r.stdout
+    );
 }
 
 #[test]
@@ -5049,6 +5111,345 @@ fn auto_parse_puts_ual_tables_in_lateral_movement_with_their_times_in_the_offset
         assert_eq!(access["LastSeen"], "2023-01-11T12:54:53.611605300+09:00");
         assert_eq!(access["RoleName"], "Print and Document Services");
     }
+}
+
+// --- mount and auto-parse --vhdx ------------------------------------------------------------------
+
+/// The sample VHDX (test_files/vhdx), decompressed to `path`.
+#[cfg(target_os = "linux")]
+fn sample_vhdx(path: &Path) {
+    let gz = std::fs::File::open(repo("test_files/vhdx/sample.vhdx.gz")).unwrap();
+    let mut out = std::fs::File::create(path).unwrap();
+    std::io::copy(&mut flate2::read::GzDecoder::new(gz), &mut out).unwrap();
+}
+
+#[cfg(target_os = "linux")]
+fn add_unreadable_partition_to_sample(path: &Path) {
+    let mut bytes = std::fs::read(path).unwrap();
+    // The first logical MiB is fully present. Resolve its BAT entry in this fixture only.
+    let bat = u64::from_le_bytes(bytes[3 << 20..(3 << 20) + 8].try_into().unwrap());
+    assert_eq!(bat & 7, 6);
+    let payload = (bat & !((1 << 20) - 1)) as usize;
+    let entry = payload + 446 + 16;
+    bytes[entry + 4] = 0x07;
+    bytes[entry + 8..entry + 12].copy_from_slice(&64u32.to_le_bytes());
+    bytes[entry + 12..entry + 16].copy_from_slice(&1u32.to_le_bytes());
+    bytes[payload + 64 * 512..payload + 65 * 512].fill(0);
+    bytes[payload + 64 * 512 + 3..payload + 64 * 512 + 11].copy_from_slice(b"NTFS    ");
+    std::fs::write(path, bytes).unwrap();
+}
+
+/// Whether this user can mount with FUSE here (Linux with /dev/fuse and fusermount3). Without it
+/// the tests that mount say so and stop.
+#[cfg(target_os = "linux")]
+fn fuse_available() -> bool {
+    let usable = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open("/dev/fuse")
+        .is_ok()
+        && Command::new("fusermount3")
+            .arg("-V")
+            .output()
+            .is_ok_and(|o| o.status.success());
+    if !usable {
+        // CI sets this where the mount must be tested
+        assert!(
+            std::env::var("JUNTEI_REQUIRE_FUSE").as_deref() != Ok("1"),
+            "FUSE is not available, and JUNTEI_REQUIRE_FUSE is 1"
+        );
+        eprintln!("FUSE is not available: the mount is not tested");
+    }
+    usable
+}
+
+/// Whether anything is mounted from an image named `name`.
+#[cfg(target_os = "linux")]
+fn mounted_from(name: &str) -> bool {
+    std::fs::read_to_string("/proc/mounts")
+        .unwrap_or_default()
+        .lines()
+        .any(|line| line.starts_with(&format!("juntei:{name} ")))
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn mount_serves_a_vhdx_read_only_until_interrupted() {
+    if !fuse_available() {
+        return;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let image = dir.path().join("mount-test.vhdx");
+    sample_vhdx(&image);
+    let point = dir.path().join("mnt");
+    std::fs::create_dir(&point).unwrap();
+    let child = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args([
+            "mount",
+            image.to_str().unwrap(),
+            point.to_str().unwrap(),
+            "-K",
+            "-q",
+        ])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    let data = point.join("C/Users/sample/Data");
+    for _ in 0..100 {
+        if data.is_dir() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    assert!(data.is_dir(), "not mounted");
+    assert!(mounted_from("mount-test.vhdx"));
+    let sha256 = |path: &Path| {
+        use sha2::{Digest, Sha256};
+        format!("{:x}", Sha256::digest(std::fs::read(path).unwrap()))
+    };
+    assert_eq!(
+        std::fs::read(data.join("small.txt")).unwrap(),
+        b"resident content\n"
+    );
+    assert_eq!(
+        sha256(&data.join("fragmented.bin")),
+        "dad53fd22d62e1acbf48ababc172c8eb3ffb45486b261fb960a2990199a8e459"
+    );
+    assert_eq!(
+        sha256(&data.join("compressed/text.log")),
+        "cc3c52b090233f44ecfc2dbd90adc6c787e071872ca488fa96eae24af8162f98"
+    );
+    assert!(data.join("日本語のファイル.txt").is_file());
+    // read-only: no new file, no writing to a file, no deleting
+    assert!(std::fs::write(data.join("new.txt"), b"x").is_err());
+    assert!(
+        std::fs::OpenOptions::new()
+            .write(true)
+            .open(data.join("small.txt"))
+            .is_err()
+    );
+    assert!(std::fs::remove_file(data.join("small.txt")).is_err());
+    assert!(
+        std::fs::metadata(data.join("small.txt"))
+            .unwrap()
+            .permissions()
+            .readonly()
+    );
+    // Ctrl+C unmounts
+    let killed = Command::new("kill")
+        .args(["-INT", &child.id().to_string()])
+        .status()
+        .unwrap();
+    assert!(killed.success());
+    let output = child.wait_with_output().unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "{stdout}");
+    assert!(stdout.contains("NTFS volumes: 1 ("), "{stdout}");
+    assert!(stdout.contains("Mounted read-only at "), "{stdout}");
+    assert!(stdout.contains("Unmounted: "), "{stdout}");
+    assert!(!mounted_from("mount-test.vhdx"));
+    assert!(!data.exists());
+}
+
+/// Without FUSE support (Windows, macOS), mounting says what to do instead.
+#[cfg(not(target_os = "linux"))]
+#[test]
+fn mount_and_auto_parse_vhdx_need_fuse() {
+    let dir = tempfile::tempdir().unwrap();
+    let r = run(&["mount", "image.vhdx", dir.path().to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("Mount-DiskImage"), "{}", r.stdout);
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "--vhdx",
+        "-o",
+        dir.path().join("out").to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("Mount-DiskImage"), "{}", r.stdout);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn mount_input_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    let image = dir.path().join("errors.vhdx");
+    sample_vhdx(&image);
+    let point = dir.path().join("mnt");
+    std::fs::create_dir(&point).unwrap();
+    let r = run(&["mount", "missing.vhdx", point.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("The image does not exist"),
+        "{}",
+        r.stdout
+    );
+    let r = run(&["mount", image.to_str().unwrap(), "missing-dir", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("The mount point is not a directory"),
+        "{}",
+        r.stdout
+    );
+    let r = run(&[
+        "mount",
+        "test_files/ual/README.md",
+        point.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("Could not open test_files/ual/README.md"),
+        "{}",
+        r.stdout
+    );
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
+    let evidence = tempfile::tempdir().unwrap();
+    // no image: nothing to do
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--vhdx",
+        "-o",
+        evidence.path().join("unused").to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout
+            .contains("No VHDX disk images (*.vhdx) were found in"),
+        "{}",
+        r.stdout
+    );
+    if !fuse_available() {
+        return;
+    }
+    sample_vhdx(&evidence.path().join("first-auto.vhdx"));
+    std::fs::create_dir(evidence.path().join("sub")).unwrap();
+    sample_vhdx(&evidence.path().join("sub/second-auto.vhdx"));
+    std::fs::write(evidence.path().join("broken-auto.vhdx"), b"not a VHDX").unwrap();
+    let partial = evidence.path().join("partial-auto.vhdx");
+    sample_vhdx(&partial);
+    add_unreadable_partition_to_sample(&partial);
+    let root = tempfile::tempdir().unwrap();
+    let output = root.path().join("results");
+    let timeline = root.path().join("timeline.jsonl");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--vhdx",
+        "-o",
+        output.to_str().unwrap(),
+        "-j",
+        timeline.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    // the broken image is a failure; the others are parsed
+    assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+    for line in [
+        "VHDX images: 4\n",
+        "Could not mount ./broken-auto.vhdx: ",
+        "Could not read ./partial-auto.vhdx: volume 2 at byte 32768: ",
+        "  ./first-auto.vhdx: mounted read-only (1 NTFS volume)\n",
+        "  ./sub/second-auto.vhdx: mounted read-only (1 NTFS volume)\n",
+        "Windows systems: 3\n",
+        "  first-auto: ./first-auto/C (./first-auto.vhdx)\n",
+        "  sub_second-auto: ./sub_second-auto/C (./sub/second-auto.vhdx)\n",
+        "Failed: 0\n",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let evidence_name = evidence.path().file_name().unwrap().to_str().unwrap();
+    assert_eq!(manifest["EvidenceDirectory"], evidence_name);
+    let hosts = manifest["Hosts"].as_array().unwrap();
+    assert_eq!(hosts.len(), 3);
+    assert_eq!(hosts[0]["Image"], "./first-auto.vhdx");
+    assert_eq!(hosts[0]["EvidenceRoot"], "./first-auto/C");
+    assert_eq!(hosts[1]["Image"], "./partial-auto.vhdx");
+    assert_eq!(hosts[2]["Image"], "./sub/second-auto.vhdx");
+    // the files inside were parsed
+    for host in ["first-auto", "partial-auto", "sub_second-auto"] {
+        let (_, rows) = csv_rows(&output.join(host).join("ProcessExecution/Prefetch.csv"));
+        assert_eq!(rows.len(), 1, "{host}");
+        assert!(
+            output
+                .join(host)
+                .join("LateralMovement/UAL-Roles.csv")
+                .is_file()
+        );
+    }
+    let records = jsonl_records(&std::fs::read_to_string(&timeline).unwrap());
+    assert!(
+        records
+            .iter()
+            .any(|r| r["Artifact"] == "prefetch" && r["Comp"] == "first-auto")
+    );
+    // nothing names the mount points, and nothing stays mounted
+    assert_no_absolute_paths(&output, &r.stdout, &[evidence.path(), root.path()]);
+    for file in walk_files(&output) {
+        let text = String::from_utf8_lossy(&std::fs::read(&file).unwrap()).into_owned();
+        assert!(!text.contains("juntei-vhdx-"), "{}", file.display());
+    }
+    assert!(!mounted_from("first-auto.vhdx"));
+    assert!(!mounted_from("second-auto.vhdx"));
+    assert!(!mounted_from("partial-auto.vhdx"));
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
+    if !fuse_available() {
+        return;
+    }
+    let evidence = tempfile::tempdir().unwrap();
+    sample_vhdx(&evidence.path().join("single.vhdx"));
+    let output_root = tempfile::tempdir().unwrap();
+    let output = output_root.path().join("parsed");
+    let result = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args([
+            "auto-parse",
+            "--vhdx",
+            "-d",
+            "single.vhdx",
+            "-o",
+            output.to_str().unwrap(),
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ])
+        .current_dir(evidence.path())
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&result.stdout),
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(
+        manifest["EvidenceDirectory"],
+        evidence.path().file_name().unwrap().to_str().unwrap()
+    );
+    assert_eq!(manifest["Hosts"][0]["Image"], "./single.vhdx");
+    assert!(!mounted_from("single.vhdx"));
 }
 
 // --- parse-file lnk ---------------------------------------------------------------------------------

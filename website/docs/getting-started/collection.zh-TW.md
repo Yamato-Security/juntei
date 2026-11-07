@@ -1,6 +1,6 @@
 # 收集證據 { #collecting-evidence }
 
-Juntei 剖析的是已從 Windows 收集而來的檔案。請使用可信任的取證工具，並盡可能保留原始中繼資料。
+Juntei 剖析已從 Windows 收集的檔案。請使用可信任的擷取工具，並盡可能保留原始中繼資料。VHDX 磁碟映像不必擷取即可剖析：請參閱[掛載磁碟映像](../commands/mount.md)。
 
 ## 常見位置 { #common-locations }
 

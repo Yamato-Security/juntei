@@ -13,6 +13,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). فهو يستدعي الأوامر المجمعة نفسها،
 وينظّم النتائج والسجلات حسب الحاسوب وفئة التحقيق.
 
+## [صور الأقراص](mount.md) { #disk-images }
+
+| الأمر | المُدخل | الدليل التفصيلي |
+|---|---|---|
+| `mount` | صورة قرص VHDX ‏ | [تحميل صور الأقراص](mount.md) |
+
 ## [أوامر ESE](user-activity.md) { #ese-commands }
 
 | الأمر | الأثر الرقمي المُدخل | الدليل التفصيلي |
@@ -94,13 +100,14 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

@@ -13,6 +13,12 @@ Untuk hasil pengumpulan bukti Windows dari banyak komputer, gunakan
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Perintah ini memanggil perintah-perintah berkelompok yang sama
 dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 
+## [Image disk](mount.md) { #disk-images }
+
+| Perintah | Input | Panduan terperinci |
+|---|---|---|
+| `mount` | Image disk VHDX | [Memasang Image Disk](mount.md) |
+
 ## [Perintah ESE](user-activity.md) { #ese-commands }
 
 | Perintah | Artefak input | Panduan terperinci |
@@ -94,13 +100,14 @@ tingkat atas. Perintah ini melengkapi inventaris konfigurasi lengkap dari `parse
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help
