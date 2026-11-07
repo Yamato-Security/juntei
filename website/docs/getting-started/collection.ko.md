@@ -13,6 +13,7 @@ Juntei는 Windows에서 이미 수집된 파일을 파싱합니다. 신뢰할 �
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN 저널 | NTFS 메타데이터 스트림 `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| 사용자 액세스 로깅(Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 및 기타 사용자/시스템 위치 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 및 `CustomDestinations` |
 | ShimCache | `SYSTEM` 하이브: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,8 @@ Juntei는 Windows에서 이미 수집된 파일을 파싱합니다. 신뢰할 �
 - `$LogFile`은 같은 볼륨의 `$MFT`와 최대한 가까운 시점에 수집하십시오. `$LogFile`은 빠르게 순환하므로, 나중에
   수집하면 이전의 재실행/실행 취소(redo/undo) 레코드를 완전히 잃을 수 있습니다.
 - 계정 및 Wi-Fi 프로필 이름을 해석하려면 SRUM을 일치하는 `SOFTWARE` 하이브와 함께 수집하십시오.
+- 사용자 액세스 로깅의 `Sum` 디렉터리 전체를 수집하십시오. `SystemIdentity.mdb`가 역할의 이름과 연도별
+  `{GUID}.mdb` 데이터베이스를 알려 줍니다. Juntei는 UAL의 `Svc*.log` 트랜잭션 로그도 재생하지 않습니다.
 - Entries, ResourceData, Resources를 대응시킬 수 있도록 Defender `Quarantine` 트리 전체를 수집하십시오.
 
 ## 라이브 시스템에 관한 주의 사항 { #live-system-cautions }

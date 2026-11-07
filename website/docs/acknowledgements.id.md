@@ -16,7 +16,7 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Indeks direktori (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, modul `i30`) | Riset index slack yang disebutkan di bawah |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `boot` dan `secure`) | MS-DTYP dari Microsoft dan riset NTFS yang disebutkan di bawah |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) dan [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) dan [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Karya compound file dan Jump List dari Sootmark shell |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -40,7 +40,7 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   validasi dan interpretasi `$LogFile`; **go-ntfs** dari Velocidex menyediakan bukti uji NTFS publik.
 - Proyek Joachim Metz / libyal **libregf**, **libfsntfs**, **libscca**, **libfwsi**, dan
   **libesedb** menyediakan riset format yang terperinci dan referensi parsing independen.
-- **dissect.esedb**, **dissect.ntfs**, dan **dissect.target** dari Fox-IT menyediakan interpretasi independen atas SRUM,
+- **dissect.esedb**, **dissect.ntfs**, dan **dissect.target** dari Fox-IT menyediakan interpretasi independen atas SRUM, UAL,
   `$Secure:$SDS`, SAM, dan Defender yang digunakan selama validasi.
 - `fsstat` dari **The Sleuth Kit** menjadi referensi untuk sektor boot NTFS pada volume yang dibuat dengan
   `mkntfs`.

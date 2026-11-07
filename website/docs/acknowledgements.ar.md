@@ -15,7 +15,7 @@
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (حزمة `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | فهارس المجلدات (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (حزمة `mft`، الوحدة `i30`) | أبحاث المساحة الراكدة (slack) في الفهارس المذكورة أدناه |
 | NTFS `$Boot`، `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (الحزمتان `boot` و`secure`) | مواصفة MS-DTYP من Microsoft وأبحاث NTFS المذكورة أدناه |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) و[ese](https://github.com/Sootmark/ese) |
+| SRUM، UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) و[ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | أعمال Sootmark shell حول الملفات المركبة وJump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -39,7 +39,7 @@
   في التحقق من `$LogFile` وتفسيره؛ وقدّمت مكتبة **go-ntfs** من Velocidex أدلة اختبار NTFS عامة.
 - توفر مشاريع Joachim Metz / libyal ‏**libregf** و**libfsntfs** و**libscca** و**libfwsi**
   و**libesedb** أبحاثًا تفصيلية حول التنسيقات ومراجع تحليل مستقلة.
-- قدّمت **dissect.esedb** و**dissect.ntfs** و**dissect.target** من Fox-IT تفسيرات مستقلة لـ SRUM
+- قدّمت **dissect.esedb** و**dissect.ntfs** و**dissect.target** من Fox-IT تفسيرات مستقلة لـ SRUM وUAL
   و`$Secure:$SDS` وSAM وDefender استُخدمت أثناء التحقق.
 - كانت أداة `fsstat` من **The Sleuth Kit** المرجعَ لقطاعات الإقلاع في NTFS لوحدات التخزين المنشأة باستخدام
   `mkntfs`.

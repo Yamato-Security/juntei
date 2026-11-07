@@ -119,6 +119,7 @@ manifest จะเก็บชื่อโฮสต์ตามที่ค้�
 - ดัชนีไดเรกทอรี `$I30`
 - บูตเซกเตอร์ `$Boot` และตัวบอกความปลอดภัย `$Secure:$SDS`
 - SRUM
+- การบันทึกการเข้าถึงของผู้ใช้ (UAL)
 - ทางลัด LNK
 - Jump Lists
 - ShimCache
@@ -223,7 +224,11 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -282,7 +287,7 @@ CSV แยกตารางออกจากกันเพราะแต่�
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | โปรไฟล์เครือข่าย อินเทอร์เฟซ แชร์ port proxy และเส้นทาง; การเชื่อมต่อ ปริมาณการรับส่งข้อมูล และ push notification ของ SRUM |
-| `LateralMovement` | การเชื่อมต่อขาออกของผู้ใช้ผ่าน Remote Desktop, PuTTY และ WinSCP, ไดรฟ์ที่แมปและแชร์ |
+| `LateralMovement` | การเชื่อมต่อขาออกของผู้ใช้ผ่าน Remote Desktop, PuTTY และ WinSCP, ไดรฟ์ที่แมปและแชร์ รวมถึงการบันทึกการเข้าถึงของผู้ใช้ (ไคลเอนต์ของบทบาทต่าง ๆ บนเซิร์ฟเวอร์) |
 | `Persistence` | การกำหนดค่าบูต (BCD), การเริ่มอัตโนมัติผ่านรีจิสทรี, บริการ, TaskCache |
 | `ProcessExecution` | ความเข้ากันได้ของแอปพลิเคชัน, BAM และ DAM, FeatureUsage และรายการที่ปักหมุด, MuiCache, Prefetch, ไทม์ไลน์ Prefetch, กิจกรรมแอปพลิเคชัน/CPU ของ SRUM, UserAssist |
 | `Registry` | คีย์และค่าของไฮฟ์ทั่วไป รวมถึงเรคคอร์ดที่กู้คืน |
@@ -313,6 +318,9 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 `JumpLists-CustomDestinations.csv` ไม่มีไดเรกทอรีย่อยสำหรับ Amcache หรือ Jump Lists
 ตาราง SRUM ใช้ชื่อไฟล์ `SRUM-` ไว้ใต้หมวดหมู่ของตนโดยตรง เช่น
 `NetworkActivity/SRUM-NetworkConnections.csv`
+ตารางของการบันทึกการเข้าถึงของผู้ใช้อยู่ใน `LateralMovement` โดยแยกหนึ่งไฟล์ต่อหนึ่งตาราง เช่น
+`UAL-Clients.csv` และ `UAL-SystemIdentity.csv` พร้อม `UAL-logs.txt` ดู
+[การบันทึกการเข้าถึงของผู้ใช้ (UAL)](../artifacts/ual.md#automatic-parsing)
 ดู[ตารางการจัดวาง SRUM ทั้งหมด](../artifacts/srum.md#categorized-auto-parse-output)
 
 บันทึกใช้ชื่อตามชื่ออาร์ติแฟกต์ที่ขึ้นต้นด้วยตัวพิมพ์ใหญ่ เช่น `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

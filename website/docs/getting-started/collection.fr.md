@@ -13,6 +13,7 @@ les métadonnées d'origine dans la mesure du possible.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | Journal USN | Flux de métadonnées NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| Journalisation des accès utilisateur (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` et d'autres emplacements utilisateur/système |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` et `CustomDestinations` |
 | ShimCache | Ruche `SYSTEM` : `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,9 @@ les métadonnées d'origine dans la mesure du possible.
 - Collectez `$LogFile` avec le `$MFT` du même volume, à des moments aussi proches que possible. `$LogFile` boucle
   rapidement ; une collecte plus tardive peut faire perdre entièrement les enregistrements redo/undo antérieurs.
 - Collectez SRUM avec la ruche `SOFTWARE` correspondante pour résoudre les noms de comptes et de profils Wi-Fi.
+- Collectez l'intégralité du répertoire `Sum` de la journalisation des accès utilisateur : `SystemIdentity.mdb` fournit
+  les noms des rôles et liste les bases de données annuelles `{GUID}.mdb`. Comme pour SRUM, Juntei ne rejoue pas les
+  journaux de transactions `Svc*.log` de l'UAL.
 - Collectez l'intégralité de l'arborescence `Quarantine` de Defender afin que Entries, ResourceData et Resources puissent être mis en correspondance.
 
 ## Précautions sur un système actif { #live-system-cautions }

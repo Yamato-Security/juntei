@@ -118,6 +118,7 @@ Computer diese Jobs aus. Die Jobs verwenden dieselben nach Quelle gruppierten Be
 - `$I30`-Verzeichnisindizes
 - `$Boot`-Bootsektoren und `$Secure:$SDS`-Sicherheitsbeschreibungen
 - SRUM
+- Benutzerzugriffsprotokollierung (UAL)
 - LNK-Verknüpfungen
 - Jump Lists
 - ShimCache
@@ -222,7 +223,11 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -280,7 +285,7 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN-Journal |
 | `NetworkActivity` | Netzwerkprofile, Schnittstellen, Freigaben, Portproxys und Routen; SRUM-Verbindungen, -Datenverkehr und -Push-Benachrichtigungen |
-| `LateralMovement` | Ausgehende Remotedesktop-, PuTTY- und WinSCP-Verbindungen der Benutzer, zugeordnete Laufwerke und Freigaben |
+| `LateralMovement` | Ausgehende Remotedesktop-, PuTTY- und WinSCP-Verbindungen der Benutzer, zugeordnete Laufwerke und Freigaben; Benutzerzugriffsprotokollierung (die Clients der Rollen eines Servers) |
 | `Persistence` | Startkonfiguration (BCD), Registry-Autostarts, Dienste, TaskCache |
 | `ProcessExecution` | Anwendungskompatibilität, BAM und DAM, FeatureUsage und angeheftete Elemente, MuiCache, Prefetch, Prefetch-Zeitleiste, SRUM-Anwendungs-/CPU-Aktivität, UserAssist |
 | `Registry` | Allgemeine Hive-Schlüssel und -Werte, einschließlich wiederhergestellter Datensätze |
@@ -311,6 +316,9 @@ Allgemeine Hive-Schlüssel und -Werte stehen in `Registry-Dump.csv`. Die Amcache
 `JumpLists-CustomDestinations.csv`. Es gibt keine Unterverzeichnisse für Amcache oder Jump Lists.
 SRUM-Tabellen verwenden `SRUM-`-Dateinamen direkt unter ihrer Kategorie, zum Beispiel
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Die Tabellen der Benutzerzugriffsprotokollierung liegen in `LateralMovement`, eine Datei pro Tabelle, etwa
+`UAL-Clients.csv` und `UAL-SystemIdentity.csv`, zusammen mit `UAL-logs.txt`; siehe
+[Benutzerzugriffsprotokollierung (UAL)](../artifacts/ual.md#automatic-parsing).
 Siehe die [vollständige Tabelle zur Ablage der SRUM-Tabellen](../artifacts/srum.md#categorized-auto-parse-output).
 
 Protokolle entsprechen dem großgeschriebenen Artefaktnamen, etwa `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

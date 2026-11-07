@@ -18,6 +18,7 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 | Befehl | Eingabeartefakt | Ausführlicher Leitfaden |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Benutzerzugriffsprotokollierung (UAL)](../artifacts/ual.md) |
 
 ## [Dateibefehle](execution.md) { #file-commands }
 

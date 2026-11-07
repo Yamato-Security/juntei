@@ -104,6 +104,14 @@ tiene SDDL, incluidas las condiciones de sus 3384 ACE de devolución de llamada 
 11 bases de datos reales, todas las columnas de las 45 255 entradas generadas coincidieron con una
 decodificación independiente de los valores que expone `dissect.esedb`.
 
+## Registro de acceso de usuarios { #user-access-logging }
+
+`parse-ese ual` lee las bases de datos de UAL con el mismo lector ESE. En 16 bases de datos reales
+(308 filas, 145 de ellas filas de clientes), todos los valores coincidieron con una decodificación
+independiente de los valores que expone `dissect.esedb`. En cada fila de cliente, el primer día con
+recuento fue el día UTC de `InsertDate`, el último, el día UTC de `LastAccess`, y los recuentos sumaban
+`TotalAccesses`.
+
 ## Accesos directos LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) es una bifurcación mantenida del

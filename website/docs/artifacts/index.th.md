@@ -16,6 +16,7 @@ Windows เก็บรักษาร่องรอยที่ซ้อนท
 | เป้าหมายของทางลัดหรือไฟล์ Prefetch อยู่บนวอลุ่มใด | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [อุปกรณ์ USB](usb.md) |
 | ผู้ใช้เปิดอะไรบ้าง | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | โปรแกรมถ่ายโอนข้อมูลปริมาณมากหรือไม่ | [SRUM](srum.md) | telemetry จากไฟร์วอลล์ พร็อกซี DNS แพ็กเก็ต หรือ EDR |
+| ไคลเอนต์และบัญชีใดใช้งานเซิร์ฟเวอร์นี้ และในวันใดบ้าง | [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](ual.md) | Security event log, บันทึกของ SMB และ RDP, บันทึกของไฟร์วอลล์ |
 | มีการกำหนดค่าการคงอยู่ (persistence) หรือไม่ | [บริการ](services.md), [TaskCache](taskcache.md), [รีจิสทรี](registry.md) | Event log, Prefetch, `$MFT` |
 | Defender ลบอะไรออกไปบ้าง | [ข้อมูลที่ Defender กักกัน](defender-quarantine.md) | Event log, `$MFT`, USN Journal |
 | มีการเพิ่มหรือเปลี่ยนแปลงบัญชีภายในเครื่องหรือไม่ | [SAM](sam.md) | Security event log และประวัติ transaction ของรีจิสทรี |

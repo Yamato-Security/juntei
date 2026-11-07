@@ -920,7 +920,7 @@ dependencies = [
 
 [[package]]
 name = "juntei"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "bytesize",
  "chrono",
@@ -955,6 +955,7 @@ dependencies = [
  "ys-registry-parser",
  "ys-shimcache-parser",
  "ys-srum-parser",
+ "ys-srum-parser-ese",
 ]
 
 [[package]]

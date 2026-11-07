@@ -13,7 +13,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`logfile` クレート) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | ディレクトリインデックス (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` クレート、`i30` モジュール) | 指数スラックに関する研究のクレジットは以下の通り |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` および `secure` クレート) | Microsoft の MS-DTYP および NTFS の研究は以下にクレジットされています |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) および [ese](https://github.com/Sootmark/ese) |
+| SRUM、UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) および [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark シェル](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-ジャンプリスト-パーサー](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark シェル複合ファイルとジャンプ リストが機能する |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [セキュリティ Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -28,7 +28,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 - Harel Segev の **INDXRipper** は、インデックス スラックからファイル名を切り出すためのさらなる参考資料です。
 - **dfir_ntfs**、Joakim Schicht の **LogFileParser**、および Stroz Friedberg の **ntfs-linker** が通知`$LogFile` の検証と解釈。 Velocidex の **go-ntfs** は、公開された NTFS テスト証拠を提供しました。
 - ヨアヒム・メッツ / リビア プロジェクト **libregf**、**libfsntfs**、**libscca**、 **libfwsi** および **libesedb** は、詳細な形式調査と独立した解析リファレンスを提供します。
-- Fox-IT の **dissect.esedb**、**dissect.ntfs**、および **dissect.target** は独立した SRUM を提供し、検証中に使用される `$Secure:$SDS`、SAM、および Defender 解釈。
+- Fox-IT の **dissect.esedb**、**dissect.ntfs**、**dissect.target** は、検証で使用した SRUM、UAL、`$Secure:$SDS`、SAM、Defender の独立した解釈を提供しました。
 - **Sleuth Kit** の `fsstat` は、`mkntfs` で作成されたボリュームの NTFS ブート セクターのリファレンスでした。
 - Eric Zimmerman のツールの一部は、比較に使用されるフィールド名と検査者の期待値を確立しました。
 - **regipy**、**python-registry**、**Notatin**、および **artemis** が提供するレジストリ実装、テスト、またはサンプル解釈。

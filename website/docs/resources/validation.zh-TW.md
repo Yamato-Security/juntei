@@ -92,6 +92,13 @@ SDDL，包括其 3,384 個回呼 ACE 的條件。
 11 個真實資料庫中，所輸出之 45,255 筆項目的每個欄位，都與對 `dissect.esedb` 所提供之值
 進行的獨立解碼結果一致。
 
+## 使用者存取記錄 { #user-access-logging }
+
+`parse-ese ual` 使用相同的 ESE 讀取器讀取 UAL 資料庫。在 16 個真實資料庫（308 筆資料列，
+其中 145 筆為用戶端資料列）中，每個值都與對 `dissect.esedb` 所提供之值進行的獨立解碼結果一致。
+在每一筆用戶端資料列中，有計數的日子都從 `InsertDate` 的 UTC 日期開始、到 `LastAccess` 的
+UTC 日期為止，且其總和等於 `TotalAccesses`。
+
 ## LNK 捷徑 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) 是

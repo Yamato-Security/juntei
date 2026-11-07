@@ -11,6 +11,7 @@
 | NTFS 부트 섹터 `$Boot` | `parse-ntfs boot` | LNK, Jump Lists, Prefetch가 기록하는 볼륨 일련 번호, 지오메트리와 `$MFT` 위치, 호스트 간 비교를 위한 부트 코드 해시 | 일련 번호는 변경되거나 중복될 수 있음, 부트 코드가 다른 것은 단서이지 부트킷의 증명이 아님 |
 | NTFS 보안 설명자 `$Secure:$SDS` | `parse-ntfs secure-sds` | `$MFT`의 `SID`에 따른 파일의 소유자와 ACL, NULL DACL과 허용 범위가 넓은 ACL | 소유자는 변경될 수 있음, ACL은 누가 액세스할 수 있는지를 나타낼 뿐 누가 액세스했는지가 아님 |
 | SRUM | `parse-ese srum` | 앱/사용자별 네트워크 및 리소스 사용량 | 보통 집계된 값이며, 패킷이나 목적지 수준의 증명이 아님 |
+| 사용자 액세스 로깅 (UAL) | `parse-ese ual` | 어떤 클라이언트 주소와 계정이 Windows Server의 역할(파일 공유, Active Directory, DHCP, IIS)을 어느 날에 사용했는지 | 요청은 하나씩 기록되지 않고 날짜별로 집계됨, 주소가 NAT나 프록시일 수 있음, 더티 상태의 `Current.mdb`에는 최신 변경 사항이 빠져 있음 |
 | LNK 바로 가기 | `parse-file lnk` | 열린 대상, 인수, 볼륨, 공유, 원본 머신 | 대상이 실행되지 않아도 바로 가기가 생성될 수 있음 |
 | Jump Lists | `parse-file jump-lists` | 애플리케이션이 연 항목, 고정, 사용 내역 및 포함된 LNK 데이터 | 애플리케이션별로 동작과 보존 방식이 다름 |
 | ShimCache | `parse-registry shimcache` | 과거 실행 파일 경로와 호환성 검사 | 종료될 때까지 캐시가 플러시되지 않을 수 있음, 엔트리만으로는 실행이 아님 |

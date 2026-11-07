@@ -93,6 +93,13 @@ callback ACE 3,384 ခု၏ condition များ အပါအဝင် SDDL �
 database 11 ခုတွင် ထုတ်ပေးခဲ့သော entry 45,255 ခုရှိ column တိုင်းသည် `dissect.esedb` က ဖော်ပြသော တန်ဖိုးများ၏
 လွတ်လပ်သော decoding နှင့် ကိုက်ညီခဲ့ပါသည်။
 
+## အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း { #user-access-logging }
+
+`parse-ese ual` သည် UAL database များကို တူညီသော ESE reader ဖြင့် ဖတ်ပါသည်။ တကယ့် database 16 ခု (row 308 ခု၊
+၎င်းတို့အနက် 145 ခုသည် client row များ) တွင် value တိုင်းသည် `dissect.esedb` က ဖော်ပြသော တန်ဖိုးများ၏
+လွတ်လပ်သော decoding နှင့် ကိုက်ညီခဲ့ပါသည်။ Client row တိုင်းတွင် အရေအတွက်ရှိသော နေ့များသည် `InsertDate` ၏ UTC နေ့မှ
+`LastAccess` ၏ UTC နေ့အထိ ရှိခဲ့ပြီး ၎င်းတို့၏ ပေါင်းလဒ်သည် `TotalAccesses` နှင့် ညီခဲ့ပါသည်။
+
 ## LNK ဖြတ်လမ်းများ { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) သည်

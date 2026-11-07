@@ -13,6 +13,7 @@ Juntei उन files को parse करता है जो Windows से प�
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` और अन्य उपयोगकर्ता/system स्थान |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` और `CustomDestinations` |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,9 @@ Juntei उन files को parse करता है जो Windows से प�
 - `$LogFile` को उसी volume के `$MFT` के साथ, समय में यथासंभव निकट, संग्रहित करें। `$LogFile` तेज़ी से
   wrap होता है; बाद में संग्रह करने पर पहले के redo/undo records पूरी तरह खो सकते हैं।
 - Account और Wi-Fi profile नामों को resolve करने के लिए SRUM को मेल खाने वाले `SOFTWARE` hive के साथ संग्रहित करें।
+- पूरी User Access Logging `Sum` directory संग्रहित करें: `SystemIdentity.mdb` roles के नाम देता है और वार्षिक
+  `{GUID}.mdb` databases को सूचीबद्ध करता है। SRUM की तरह, Juntei UAL के `Svc*.log` transaction logs को replay
+  नहीं करता।
 - पूरा Defender `Quarantine` tree संग्रहित करें ताकि Entries, ResourceData और Resources का मिलान किया जा सके।
 
 ## Live system के लिए सावधानियाँ { #live-system-cautions }

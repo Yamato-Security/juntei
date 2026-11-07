@@ -16,6 +16,7 @@ Windows зберігає сліди, що перетинаються, у фай�
 | На якому томі була ціль ярлика або файлу Prefetch? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [пристрої USB](usb.md) |
 | Що відкривав користувач? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Чи передавала програма великий обсяг даних? | [SRUM](srum.md) | Телеметрія брандмауера, проксі, DNS, пакетів або EDR |
+| Які клієнти й облікові записи використовували цей сервер і в які дні? | [Журналювання доступу користувачів (UAL)](ual.md) | Журнали подій Security, журнали SMB і RDP, журнали брандмауера |
 | Чи було налаштовано закріплення? | [Служби](services.md), [TaskCache](taskcache.md), [Реєстр](registry.md) | Журнали подій, Prefetch, `$MFT` |
 | Що видалив Defender? | [Карантин Defender](defender-quarantine.md) | Журнали подій, `$MFT`, журнал USN |
 | Чи додавалися або змінювалися локальні облікові записи? | [SAM](sam.md) | Журнали подій Security та історія транзакцій реєстру |

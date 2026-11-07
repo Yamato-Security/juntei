@@ -18,6 +18,7 @@ and organizes results and logs by computer and investigative category.
 | Command | Input artifact | Detailed guide |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [User Access Logging (UAL)](../artifacts/ual.md) |
 
 ## [File commands](execution.md)
 

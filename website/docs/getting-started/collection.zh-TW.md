@@ -12,6 +12,7 @@ Juntei 剖析的是已從 Windows 收集而來的檔案。請使用可信任的�
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS 中繼資料資料流 `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| 使用者存取記錄（Windows Server） | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 以及其他使用者／系統位置 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 與 `CustomDestinations` |
 | ShimCache | `SYSTEM` 登錄區：`...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -30,6 +31,8 @@ Juntei 剖析的是已從 Windows 收集而來的檔案。請使用可信任的�
 - 請在盡可能接近的時間點，將 `$LogFile` 與同一磁碟區的 `$MFT` 一併收集。`$LogFile` 循環覆寫的速度很快；
   較晚收集可能會完全失去先前的 redo/undo 記錄。
 - 收集 SRUM 時請一併收集對應的 `SOFTWARE` 登錄區，以解析帳戶與 Wi-Fi 設定檔名稱。
+- 請收集完整的使用者存取記錄 `Sum` 目錄：`SystemIdentity.mdb` 提供角色名稱，並列出各年度的
+  `{GUID}.mdb` 資料庫。Juntei 同樣不會重播其 `Svc*.log` 交易記錄檔。
 - 請收集完整的 Defender `Quarantine` 樹狀結構，以便比對 Entries、ResourceData 與 Resources。
 
 ## 執行中系統的注意事項 { #live-system-cautions }

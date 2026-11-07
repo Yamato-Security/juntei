@@ -94,6 +94,13 @@ O [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) se baseia 
 11 bancos de dados reais, todas as colunas das 45.255 entradas emitidas coincidiram com uma decodificação independente dos
 valores expostos pelo `dissect.esedb`.
 
+## Registro de acesso do usuário { #user-access-logging }
+
+O `parse-ese ual` lê os bancos de dados do UAL com o mesmo leitor ESE. Em 16 bancos de dados reais (308 linhas,
+145 delas linhas de clientes), todos os valores coincidiram com uma decodificação independente dos valores expostos
+pelo `dissect.esedb`. Em todas as linhas de clientes, o primeiro dia com contagem foi o dia UTC de `InsertDate`,
+o último, o dia UTC de `LastAccess`, e as contagens somavam `TotalAccesses`.
+
 ## Atalhos LNK { #lnk-shortcuts }
 
 O [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) é um fork mantido do crate

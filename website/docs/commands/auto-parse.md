@@ -119,6 +119,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - `$I30` directory indexes
 - `$Boot` boot sectors and `$Secure:$SDS` security descriptors
 - SRUM
+- User Access Logging (UAL)
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -226,7 +227,11 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -284,7 +289,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
-| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
+| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; User Access Logging (the clients of a server's roles) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU activity, UserAssist |
 | `Registry` | General hive keys and values, including recovered records |
@@ -315,6 +320,9 @@ General hive keys and values are in `Registry-Dump.csv`. Amcache tables are
 `JumpLists-CustomDestinations.csv`. There are no Amcache or Jump Lists subdirectories.
 SRUM tables use `SRUM-` filenames directly under their category, for example
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+User Access Logging tables are in `LateralMovement`, one file per table, such as
+`UAL-Clients.csv` and `UAL-SystemIdentity.csv`, with `UAL-logs.txt`; see
+[User Access Logging (UAL)](../artifacts/ual.md#automatic-parsing).
 See the [complete SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output).
 
 Logs match the capitalized artifact name, such as `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,

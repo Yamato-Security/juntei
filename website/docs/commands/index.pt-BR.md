@@ -18,6 +18,7 @@ e organiza os resultados e os logs por computador e por categoria investigativa.
 | Comando | Artefato de entrada | Guia detalhado |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Registro de acesso do usuário (UAL)](../artifacts/ual.md) |
 
 ## [Comandos de arquivos](execution.md) { #file-commands }
 

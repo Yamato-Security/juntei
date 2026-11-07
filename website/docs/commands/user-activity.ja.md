@@ -1,9 +1,9 @@
 # ESE コマンド { #ese-commands }
 
-`parse-ese` は、Extensible Storage Engine データベースを処理します。 SRUM の `SRUDB.dat` は ESE データベースです。オプションの SOFTWARE ハイブにより、アカウント名と Wi-Fi 名が強化されます。
+`parse-ese` は、Extensible Storage Engine データベースを処理します。 SRUM の `SRUDB.dat` は ESE データベースです。オプションの SOFTWARE ハイブにより、アカウント名と Wi-Fi 名が強化されます。Windows Server のユーザーアクセスログのデータベース (`Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb`) も ESE データベースです。
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -12,6 +12,7 @@ Usage:
 Commands:
   help  Print this message or the help of the given subcommand(s)
   srum  Parse SRUM databases
+  ual   Parse User Access Logging (UAL) databases
 
 Options:
   -h, --help  Print help
@@ -20,7 +21,7 @@ Options:
 ## `parse-ese srum` { #parse-ese-srum }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -51,3 +52,36 @@ juntei parse-ese srum -f SRUDB.dat -t jsonl | jq 'select(.Provider == "NetworkUs
 ```
 
 [SRUM](../artifacts/srum.md)を参照してください。
+
+## `parse-ese ual` { #parse-ese-ual }
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ese ual <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for UAL databases (Current.mdb, {GUID}.mdb, SystemIdentity.mdb)
+  -f, --file <FILE>      File path to one UAL database (role names come from the SystemIdentity.mdb next to it)
+
+Output:
+  -o, --output <PATH>       Save every row: a directory of CSV tables, or a file (json, jsonl)
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese ual -d Sum -o ual-csv
+juntei parse-ese ual -d Sum -t jsonl | jq 'select(.Table == "CLIENTS")'
+```
+
+[ユーザーアクセスログ (UAL)](../artifacts/ual.md)を参照してください。

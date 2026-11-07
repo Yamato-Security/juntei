@@ -13,6 +13,7 @@
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | دفتر يومية USN | دفق البيانات الوصفية لـ NTFS ‏`C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| تسجيل وصول المستخدمين (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ومواقع أخرى للمستخدم/النظام |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` و`CustomDestinations` |
 | ShimCache | خلية `SYSTEM`: ‏`...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,8 @@
 - اجمع `$LogFile` مع `$MFT` لوحدة التخزين نفسها في أقرب وقت ممكن. فـ `$LogFile` يلتف
   بسرعة؛ وقد يؤدي الجمع اللاحق إلى فقدان سجلات الإعادة/التراجع (redo/undo) الأقدم بالكامل.
 - اجمع SRUM مع خلية `SOFTWARE` المطابقة لحل أسماء الحسابات وملفات تعريف Wi-Fi.
+- اجمع مجلد `Sum` الخاص بتسجيل وصول المستخدمين بأكمله: فـ `SystemIdentity.mdb` يسمّي الأدوار
+  وقواعد بيانات `{GUID}.mdb` السنوية. ولا يعيد Juntei كذلك تشغيل سجلات المعاملات `Svc*.log` الخاصة به.
 - اجمع شجرة `Quarantine` الخاصة بـ Defender بأكملها حتى يمكن مطابقة Entries وResourceData وResources.
 
 ## تحذيرات للأنظمة الحية { #live-system-cautions }

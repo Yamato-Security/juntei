@@ -94,6 +94,13 @@ SDDL, including the conditions of its 3,384 callback ACEs.
 11 real databases, every column in the 45,255 emitted entries matched an independent decoding of
 the values exposed by `dissect.esedb`.
 
+## User Access Logging
+
+`parse-ese ual` reads UAL databases with the same ESE reader. Across 16 real databases (308 rows,
+145 of them client rows), every value matched an independent decoding of the values exposed by
+`dissect.esedb`. In every client row, the first day with a count was the UTC day of `InsertDate`,
+the last one the UTC day of `LastAccess`, and the counts added up to `TotalAccesses`.
+
 ## LNK shortcuts
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) is a maintained fork of

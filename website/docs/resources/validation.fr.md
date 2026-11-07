@@ -94,6 +94,13 @@ SDDL, y compris les conditions de ses 3 384 ACE de rappel (callback).
 11 bases de données réelles, chaque colonne des 45 255 entrées émises correspondait à un décodage indépendant des
 valeurs exposées par `dissect.esedb`.
 
+## Journalisation des accès utilisateur { #user-access-logging }
+
+`parse-ese ual` lit les bases de données UAL avec le même lecteur ESE. Sur 16 bases de données réelles (308 lignes,
+dont 145 lignes de clients), chaque valeur correspondait à un décodage indépendant des valeurs exposées par
+`dissect.esedb`. Dans chaque ligne de client, le premier jour comportant un décompte était le jour UTC de
+`InsertDate`, le dernier le jour UTC de `LastAccess`, et la somme des décomptes était égale à `TotalAccesses`.
+
 ## Raccourcis LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) est un fork maintenu de la crate

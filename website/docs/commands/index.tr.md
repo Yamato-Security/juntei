@@ -18,6 +18,7 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 | Komut | Girdi artefaktı | Ayrıntılı kılavuz |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md) |
 
 ## [Dosya Komutları](execution.md) { #file-commands }
 

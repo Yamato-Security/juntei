@@ -11,6 +11,7 @@
 | Sektor boot NTFS `$Boot` | `parse-ntfs boot` | Nomor seri volume yang dicatat oleh LNK, Jump Lists, dan Prefetch; geometri dan lokasi `$MFT`; hash boot code untuk dibandingkan antar-host | Nomor seri dapat diubah atau berulang; boot code yang berbeda adalah petunjuk, bukan bukti adanya bootkit |
 | Deskriptor keamanan NTFS `$Secure:$SDS` | `parse-ntfs secure-sds` | Pemilik dan ACL berkas, berdasarkan `SID` milik `$MFT`; NULL DACL dan ACL yang permisif | Pemilik dapat diubah; ACL menyatakan siapa yang boleh mengakses, bukan siapa yang benar-benar mengakses |
 | SRUM | `parse-ese srum` | Penggunaan jaringan dan sumber daya per aplikasi/pengguna | Biasanya teragregasi; bukan bukti tingkat paket atau tujuan |
+| Pencatatan Akses Pengguna (UAL) | `parse-ese ual` | Alamat klien dan akun mana yang menggunakan role Windows Server (share berkas, Active Directory, DHCP, IIS), dan pada hari apa saja | Permintaan dihitung per hari, tidak dicatat satu per satu; alamatnya bisa berupa NAT atau proxy; `Current.mdb` yang dirty kehilangan perubahan terbarunya |
 | Pintasan LNK | `parse-file lnk` | Target yang dibuka, argumen, volume, share, mesin sumber | Pintasan dapat dibuat tanpa targetnya dijalankan |
 | Jump Lists | `parse-file jump-lists` | Item yang dibuka aplikasi, penyematan, penggunaan, dan data LNK yang tertanam | Perilaku dan retensi bergantung pada aplikasi |
 | ShimCache | `parse-registry shimcache` | Path executable historis dan pemeriksaan kompatibilitas | Cache mungkin belum di-flush hingga shutdown; entri saja bukan eksekusi |

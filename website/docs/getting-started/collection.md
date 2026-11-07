@@ -13,6 +13,7 @@ original metadata where possible.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` and other user/system locations |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` and `CustomDestinations` |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,9 @@ original metadata where possible.
 - Collect `$LogFile` with the same volume's `$MFT` as close in time as possible. `$LogFile` wraps
   rapidly; later collection can lose the earlier redo/undo records entirely.
 - Collect SRUM with the matching `SOFTWARE` hive to resolve account and Wi-Fi profile names.
+- Collect the whole User Access Logging `Sum` directory: `SystemIdentity.mdb` gives the role names
+  and lists the yearly `{GUID}.mdb` databases. As with SRUM, Juntei does not replay its `Svc*.log`
+  transaction logs.
 - Collect the whole Defender `Quarantine` tree so Entries, ResourceData, and Resources can be matched.
 
 ## Live-system cautions

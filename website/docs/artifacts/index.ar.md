@@ -16,6 +16,7 @@
 | على أي وحدة تخزين كان هدف اختصار أو ملف Prefetch؟ | [$Boot](boot.md) | [LNK](lnk.md)، [Prefetch](prefetch.md)، [أجهزة USB](usb.md) |
 | ماذا فتح المستخدم؟ | [Jump Lists](jump-lists.md)، [LNK](lnk.md)، [RecentDocs](recentdocs.md) | SRUM، Prefetch |
 | هل نقل برنامج ما كمية كبيرة من البيانات؟ | [SRUM](srum.md) | الجدار الناري، أو الوكيل (proxy)، أو DNS، أو الحزم، أو بيانات EDR |
+| ما العملاء والحسابات التي استخدمت هذا الخادم، وفي أي أيام؟ | [تسجيل وصول المستخدمين (UAL)](ual.md) | سجلات أحداث Security، وسجلات SMB وRDP، وسجلات الجدار الناري |
 | هل جرى تكوين آلية استمرارية؟ | [الخدمات](services.md)، [TaskCache](taskcache.md)، [سجل Windows](registry.md) | سجلات الأحداث، Prefetch، `$MFT` |
 | ما الذي أزاله Defender؟ | [حجر Defender](defender-quarantine.md) | سجلات الأحداث، `$MFT`، دفتر يومية USN |
 | هل أُضيفت حسابات محلية أو غُيّرت؟ | [SAM](sam.md) | سجلات أحداث Security وسجل معاملات سجل Windows |

@@ -93,6 +93,13 @@ SDDL, einschließlich der Bedingungen ihrer 3.384 Callback-ACEs.
 11 echte Datenbanken hinweg stimmte jede Spalte der 45.255 ausgegebenen Einträge mit einer unabhängigen Dekodierung
 der von `dissect.esedb` bereitgestellten Werte überein.
 
+## Benutzerzugriffsprotokollierung { #user-access-logging }
+
+`parse-ese ual` liest UAL-Datenbanken mit demselben ESE-Leser. Über 16 echte Datenbanken hinweg (308 Zeilen, davon
+145 Client-Zeilen) stimmte jeder Wert mit einer unabhängigen Dekodierung der von `dissect.esedb` bereitgestellten
+Werte überein. In jeder Client-Zeile reichten die Tage mit Anzahlen vom UTC-Tag von `InsertDate` bis zum UTC-Tag von
+`LastAccess` und ergaben in der Summe `TotalAccesses`.
+
 ## LNK-Verknüpfungen { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) ist ein gepflegter Fork des Crates

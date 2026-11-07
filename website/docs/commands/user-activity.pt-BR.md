@@ -1,10 +1,12 @@
 # Comandos ESE { #ese-commands }
 
 `parse-ese` trata bancos de dados do Extensible Storage Engine. O `SRUDB.dat` do SRUM é um banco de dados ESE;
-o hive SOFTWARE opcional enriquece os nomes de contas e de redes Wi-Fi.
+o hive SOFTWARE opcional enriquece os nomes de contas e de redes Wi-Fi. Os bancos de dados do Registro de
+acesso do usuário do Windows Server (`Current.mdb`, `{GUID}.mdb` e `SystemIdentity.mdb`) também são bancos
+de dados ESE.
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -13,6 +15,7 @@ Usage:
 Commands:
   help  Print this message or the help of the given subcommand(s)
   srum  Parse SRUM databases
+  ual   Parse User Access Logging (UAL) databases
 
 Options:
   -h, --help  Print help
@@ -21,7 +24,7 @@ Options:
 ## `parse-ese srum` { #parse-ese-srum }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -52,3 +55,36 @@ juntei parse-ese srum -f SRUDB.dat -t jsonl | jq 'select(.Provider == "NetworkUs
 ```
 
 Consulte [SRUM](../artifacts/srum.md).
+
+## `parse-ese ual` { #parse-ese-ual }
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ese ual <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for UAL databases (Current.mdb, {GUID}.mdb, SystemIdentity.mdb)
+  -f, --file <FILE>      File path to one UAL database (role names come from the SystemIdentity.mdb next to it)
+
+Output:
+  -o, --output <PATH>       Save every row: a directory of CSV tables, or a file (json, jsonl)
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese ual -d Sum -o ual-csv
+juntei parse-ese ual -d Sum -t jsonl | jq 'select(.Table == "CLIENTS")'
+```
+
+Consulte [Registro de acesso do usuário (UAL)](../artifacts/ual.md).

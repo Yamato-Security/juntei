@@ -122,6 +122,7 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
 - `$I30` dizin indeksleri
 - `$Boot` önyükleme sektörleri ve `$Secure:$SDS` güvenlik tanımlayıcıları
 - SRUM
+- Kullanıcı Erişim Günlüğü (UAL)
 - LNK kısayolları
 - Jump Lists
 - ShimCache
@@ -228,7 +229,11 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -286,7 +291,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Ağ profilleri, arabirimler, paylaşımlar, bağlantı noktası proxy'leri ve yollar; SRUM bağlantıları, trafik ve anında iletme bildirimleri |
-| `LateralMovement` | Kullanıcıların giden Uzak Masaüstü, PuTTY ve WinSCP bağlantıları, eşlenmiş sürücüler ve paylaşımlar |
+| `LateralMovement` | Kullanıcıların giden Uzak Masaüstü, PuTTY ve WinSCP bağlantıları, eşlenmiş sürücüler ve paylaşımlar; Kullanıcı Erişim Günlüğü (bir sunucunun rollerinin istemcileri) |
 | `Persistence` | Önyükleme yapılandırması (BCD), kayıt defteri otomatik başlatmaları, hizmetler, TaskCache |
 | `ProcessExecution` | Uygulama uyumluluğu, BAM ve DAM, FeatureUsage ve sabitlenmiş öğeler, MuiCache, Prefetch, Prefetch zaman çizelgesi, SRUM uygulama/CPU etkinliği, UserAssist |
 | `Registry` | Kurtarılmış kayıtlar dahil genel kovan anahtarları ve değerleri |
@@ -318,6 +323,9 @@ dahildir. Genel kovan anahtarları ve değerleri `Registry-Dump.csv` içindedir.
 `JumpLists-CustomDestinations.csv` dosyalarını kullanır. Amcache veya Jump Lists alt dizini yoktur.
 SRUM tabloları, kategorilerinin hemen altında `SRUM-` dosya adlarını kullanır; örneğin
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Kullanıcı Erişim Günlüğü tabloları `LateralMovement` içindedir; her tablo için bir dosya vardır, örneğin
+`UAL-Clients.csv` ve `UAL-SystemIdentity.csv`, bunlarla birlikte `UAL-logs.txt` bulunur; bkz.
+[Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md#automatic-parsing).
 [SRUM yerleşiminin tam tablosuna](../artifacts/srum.md#categorized-auto-parse-output) bakın.
 
 Günlükler, büyük harfle başlayan artefakt adıyla eşleşir; örneğin `Registry-SAM-logs.txt`,

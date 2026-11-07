@@ -18,6 +18,7 @@ et organise les résultats et les journaux par ordinateur et par catégorie d'in
 | Commande | Artefact d'entrée | Guide détaillé |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Journalisation des accès utilisateur (UAL)](../artifacts/ual.md) |
 
 ## [Commandes de fichiers](execution.md) { #file-commands }
 

@@ -16,6 +16,7 @@ mais l'enquêteur doit toujours interpréter ce que signifie chacune d'elles.
 | Sur quel volume se trouvait la cible d'un raccourci ou d'un fichier Prefetch ? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [Périphériques USB](usb.md) |
 | Qu'a ouvert un utilisateur ? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Un programme a-t-il transféré une grande quantité de données ? | [SRUM](srum.md) | Télémétrie du pare-feu, du proxy, DNS, des paquets ou de l'EDR |
+| Quels clients et quels comptes ont utilisé ce serveur, et quels jours ? | [Journalisation des accès utilisateur (UAL)](ual.md) | Journaux d'événements Security, journaux SMB et RDP, journaux du pare-feu |
 | Une persistance a-t-elle été configurée ? | [Services](services.md), [TaskCache](taskcache.md), [Registre](registry.md) | Journaux d'événements, Prefetch, `$MFT` |
 | Qu'a supprimé Defender ? | [Quarantaine Defender](defender-quarantine.md) | Journaux d'événements, `$MFT`, journal USN |
 | Des comptes locaux ont-ils été ajoutés ou modifiés ? | [SAM](sam.md) | Journaux d'événements Security et historique des transactions du Registre |

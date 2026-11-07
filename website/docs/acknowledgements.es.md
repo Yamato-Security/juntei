@@ -17,7 +17,7 @@ que su código esté incluido en Juntei; consulte la licencia de cada proyecto.
 | `$LogFile` de NTFS | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Índices de directorios (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, módulo `i30`) | Investigación sobre el espacio residual de índices citada más abajo |
 | `$Boot`, `$Secure:$SDS` de NTFS | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crates `boot` y `secure`) | MS-DTYP de Microsoft y la investigación sobre NTFS citada más abajo |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) y [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) y [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Trabajo de Sootmark shell sobre archivos compuestos y Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -48,7 +48,7 @@ que su código esté incluido en Juntei; consulte la licencia de cada proyecto.
   **libesedb** ofrecen una investigación detallada de los formatos y referencias de análisis
   independientes.
 - **dissect.esedb**, **dissect.ntfs** y **dissect.target** de Fox-IT aportaron interpretaciones
-  independientes de SRUM, `$Secure:$SDS`, SAM y Defender que se utilizaron durante la validación.
+  independientes de SRUM, UAL, `$Secure:$SDS`, SAM y Defender que se utilizaron durante la validación.
 - `fsstat` de **The Sleuth Kit** fue la referencia para los sectores de arranque NTFS de volúmenes
   creados con `mkntfs`.
 - Algunas de las herramientas de Eric Zimmerman establecieron los nombres de campo y las

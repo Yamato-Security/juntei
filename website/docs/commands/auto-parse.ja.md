@@ -75,6 +75,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - `$I30` ディレクトリ インデックス
 - `$Boot` ブート セクターと `$Secure:$SDS` セキュリティ記述子
 - SRUM
+- ユーザーアクセスログ (UAL)
 - LNK のショートカット
 - Jump Lists
 - ShimCache
@@ -166,7 +167,11 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -224,7 +229,7 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`、`$I30`、`$LogFile`、`$MFT`、`$Secure:$SDS`、USN ジャーナル |
 | `NetworkActivity` | ネットワーク プロファイル、インターフェイス、共有、ポート プロキシ、およびルート。 SRUM 接続、トラフィック、プッシュ通知 |
-| `LateralMovement` | ユーザーの送信リモート デスクトップ、PuTTY および WinSCP 接続、マップされたドライブと共有 |
+| `LateralMovement` | ユーザーの送信リモート デスクトップ、PuTTY および WinSCP 接続、マップされたドライブと共有。ユーザーアクセスログ (サーバーの役割のクライアント) |
 | `Persistence` | ブート構成 (BCD)、レジストリ自動起動、サービス、TaskCache |
 | `ProcessExecution` | アプリケーションの互換性、BAM および DAM、FeatureUsage とピン、MuiCache、Prefetch、Prefetch タイムライン、SRUM アプリケーション/CPU アクティビティ、UserAssist |
 | `Registry` | 一般的なハイブキーと値 (回復されたレコードを含む) |
@@ -235,7 +240,7 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 
 CSV、JSON、および JSONL は同じカテゴリを使用します。パーサー ジョブごとに 1 つの `<artifact>-logs.txt` ファイルには、その正確なコマンドとメッセージが含まれます。たとえば、`HOST1/FileSystem/MFT-logs.txt` や `HOST1/ProcessExecution/Prefetch-logs.txt` などです。 JSON と JSONL は同じログ ファイル名を使用します。 Amcache と Jump Lists にはそれぞれ、プレフィックス付きテーブルの横に 1 つの共有ログがあります。 SRUM プロバイダー テーブルは、共有 `SystemInformation/SRUM-logs.txt` ファイルを使用して、`NetworkActivity`、`ProcessExecution`、および `SystemInformation` に直接配置されます。 `logs/` サブディレクトリは作成されません。
 
-デフォルトの CSV ファイル名は、`Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、`I30.csv`、`MFT.csv`、`UsnJournal.csv`、 `Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、`Registry-SecuritySettings.csv`、`PrefetchTimeline.csv`、 `Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、 `Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、および`DefenderQuarantine.csv`。レジストリ派生テーブルでは、`Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv`、`Registry-SystemInfo.csv` など、`Registry-` プレフィックスが使用されます。一般的なハイブのキーと値は `Registry-Dump.csv` にあります。 Amcache テーブルは、`FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、`Registry-Amcache-Findings.csv`、および `Registry-Amcache-Summary.csv` です。 Jump Lists は `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` と `JumpLists-CustomDestinations.csv` を使用します。 Amcache または Jump Lists サブディレクトリはありません。 SRUM テーブルは、そのカテゴリの直下で `SRUM-` ファイル名を使用します (例: `NetworkActivity/SRUM-NetworkConnections.csv`)。 [完全な SRUM 配置テーブル](../artifacts/srum.md#categorized-auto-parse-output) を参照してください。
+デフォルトの CSV ファイル名は、`Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、`I30.csv`、`MFT.csv`、`UsnJournal.csv`、 `Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、`Registry-SecuritySettings.csv`、`PrefetchTimeline.csv`、 `Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、 `Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、および`DefenderQuarantine.csv`。レジストリ派生テーブルでは、`Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv`、`Registry-SystemInfo.csv` など、`Registry-` プレフィックスが使用されます。一般的なハイブのキーと値は `Registry-Dump.csv` にあります。 Amcache テーブルは、`FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、`Registry-Amcache-Findings.csv`、および `Registry-Amcache-Summary.csv` です。 Jump Lists は `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` と `JumpLists-CustomDestinations.csv` を使用します。 Amcache または Jump Lists サブディレクトリはありません。 SRUM テーブルは、そのカテゴリの直下で `SRUM-` ファイル名を使用します (例: `NetworkActivity/SRUM-NetworkConnections.csv`)。ユーザーアクセスログのテーブルは `LateralMovement` にあり、`UAL-Clients.csv` や `UAL-SystemIdentity.csv` のようにテーブルごとに 1 つのファイルとなり、`UAL-logs.txt` も作成されます。[ユーザーアクセスログ (UAL)](../artifacts/ual.md#automatic-parsing) を参照してください。 [完全な SRUM 配置テーブル](../artifacts/srum.md#categorized-auto-parse-output) を参照してください。
 
 ログは、`Registry-SAM-logs.txt`、`PrefetchTimeline-logs.txt`、`Registry-UserAssist-logs.txt` などの大文字のアーティファクト名と一致します。 JSON/JSONL ファイルは同じステムを使用します (例: `MFT.jsonl`)。レコードの `Artifact` 識別子は、クエリの場合は `mft` です。マルチテーブル出力では、テーブルの横に `Registry-Amcache-logs.txt` または `JumpLists-logs.txt` が表示されます。共有 SRUM ログは `SystemInformation` にあります。
 

@@ -94,6 +94,13 @@ SDDL, termasuk kondisi dari 3.384 callback ACE-nya.
 11 database nyata, setiap kolom dalam 45.255 entri yang dikeluarkan cocok dengan dekode independen atas
 nilai-nilai yang diekspos oleh `dissect.esedb`.
 
+## Pencatatan Akses Pengguna { #user-access-logging }
+
+`parse-ese ual` membaca database UAL dengan pembaca ESE yang sama. Pada 16 database nyata (308 baris,
+145 di antaranya baris klien), setiap nilai cocok dengan dekode independen atas nilai-nilai yang diekspos oleh
+`dissect.esedb`. Pada setiap baris klien, hari-hari yang memiliki hitungan berlangsung dari hari UTC `InsertDate`
+hingga hari UTC `LastAccess`, dan jumlah hitungannya sama dengan `TotalAccesses`.
+
 ## Pintasan LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) adalah fork yang dikelola dari crate

@@ -101,6 +101,13 @@ SDDL'si vardır.
 dayanır. 11 gerçek veritabanında, çıktıya yazılan 45.255 girdideki her sütun, `dissect.esedb`
 tarafından sunulan değerlerin bağımsız bir kod çözümüyle eşleşti.
 
+## Kullanıcı Erişim Günlüğü { #user-access-logging }
+
+`parse-ese ual`, UAL veritabanlarını aynı ESE okuyucusuyla okur. 16 gerçek veritabanında (308 satır,
+bunların 145'i istemci satırı), her değer `dissect.esedb` tarafından sunulan değerlerin bağımsız bir kod
+çözümüyle eşleşti. Her istemci satırında, sayı bulunan günler `InsertDate` değerinin UTC gününden
+`LastAccess` değerinin UTC gününe kadar uzandı ve toplamları `TotalAccesses` değerine eşit oldu.
+
 ## LNK kısayolları { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser), Sootmark'ın

@@ -38,6 +38,7 @@ mod security_descriptor;
 mod shimcache;
 mod srum;
 mod time_display;
+mod ual;
 mod usn_journal;
 mod util;
 
@@ -153,6 +154,17 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = srum::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            EseCommands::Ual(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = ual::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }

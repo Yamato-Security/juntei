@@ -16,7 +16,7 @@ in Juntei eingebettet ist; die jeweilige Lizenz entnehmen Sie bitte dem einzelne
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (Crate `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Verzeichnisindizes (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (Crate `mft`, Modul `i30`) | Unten genannte Forschung zu Index-Slack |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (Crates `boot` und `secure`) | Microsofts MS-DTYP und die unten genannte NTFS-Forschung |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) und [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) und [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Arbeiten von Sootmark shell zu Compound Files und Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -40,7 +40,7 @@ in Juntei eingebettet ist; die jeweilige Lizenz entnehmen Sie bitte dem einzelne
   Validierung und Interpretation von `$LogFile`; Velocidex' **go-ntfs** lieferte öffentliches NTFS-Testbeweismaterial.
 - Die Projekte von Joachim Metz / libyal – **libregf**, **libfsntfs**, **libscca**, **libfwsi** und
   **libesedb** – bieten detaillierte Formatforschung und unabhängige Parsing-Referenzen.
-- Fox-ITs **dissect.esedb**, **dissect.ntfs** und **dissect.target** lieferten unabhängige Interpretationen von SRUM,
+- Fox-ITs **dissect.esedb**, **dissect.ntfs** und **dissect.target** lieferten unabhängige Interpretationen von SRUM, UAL,
   `$Secure:$SDS`, SAM und Defender, die während der Validierung verwendet wurden.
 - `fsstat` aus **The Sleuth Kit** war die Referenz für NTFS-Bootsektoren von Volumes, die mit
   `mkntfs` erstellt wurden.

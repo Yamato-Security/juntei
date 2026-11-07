@@ -119,6 +119,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - فهارس المجلدات `$I30`
 - قطاعات الإقلاع `$Boot` وواصفات الأمان `$Secure:$SDS`
 - SRUM
+- تسجيل وصول المستخدمين (UAL)
 - اختصارات LNK
 - Jump Lists
 - ShimCache
@@ -222,7 +223,11 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -280,7 +285,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 | `FileExistence` | Amcache، ShimCache |
 | `FileSystem` | `$Boot`، `$I30`، `$LogFile`، `$MFT`، `$Secure:$SDS`، دفتر يومية USN |
 | `NetworkActivity` | ملفات تعريف الشبكات، والواجهات، والمشاركات، ووكلاء المنافذ، والمسارات؛ واتصالات SRUM وحركة المرور والإشعارات الفورية |
-| `LateralMovement` | اتصالات المستخدمين الصادرة عبر سطح المكتب البعيد وPuTTY وWinSCP، ومحركات الأقراص المعيّنة والمشاركات |
+| `LateralMovement` | اتصالات المستخدمين الصادرة عبر سطح المكتب البعيد وPuTTY وWinSCP، ومحركات الأقراص المعيّنة والمشاركات؛ وتسجيل وصول المستخدمين (عملاء أدوار الخادم) |
 | `Persistence` | تكوين الإقلاع (BCD)، والتشغيل التلقائي عبر سجل Windows، والخدمات، وTaskCache |
 | `ProcessExecution` | توافق التطبيقات، وBAM وDAM، وFeatureUsage والعناصر المثبتة، وMuiCache، وPrefetch، والجدول الزمني لـ Prefetch، ونشاط التطبيقات/CPU في SRUM، وUserAssist |
 | `Registry` | مفاتيح الخلايا وقيمها العامة، بما في ذلك السجلات المستعادة |
@@ -311,6 +316,9 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 `JumpLists-CustomDestinations.csv`. ولا توجد مجلدات فرعية لـ Amcache أو Jump Lists.
 وتستخدم جداول SRUM أسماء ملفات تبدأ بـ `SRUM-` مباشرة تحت فئتها، مثل
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+وتوجد جداول تسجيل وصول المستخدمين في `LateralMovement`، بملف واحد لكل جدول، مثل
+`UAL-Clients.csv` و`UAL-SystemIdentity.csv`، مع `UAL-logs.txt`؛ راجع
+[تسجيل وصول المستخدمين (UAL)](../artifacts/ual.md#automatic-parsing).
 راجع [جدول توزيع SRUM الكامل](../artifacts/srum.md#categorized-auto-parse-output).
 
 تطابق السجلات اسم الأثر الرقمي بأحرفه الكبيرة، مثل `Registry-SAM-logs.txt` و`PrefetchTimeline-logs.txt`
