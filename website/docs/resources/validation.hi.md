@@ -93,6 +93,13 @@ SDDL है, जिसमें उसके 3,384 callback ACEs की conditio
 11 वास्तविक databases में, उत्पन्न 45,255 entries का हर column
 `dissect.esedb` द्वारा उजागर values की स्वतंत्र decoding से मेल खाया।
 
+## उपयोगकर्ता एक्सेस लॉगिंग { #user-access-logging }
+
+`parse-ese ual` उसी ESE reader से UAL databases पढ़ता है। 16 वास्तविक databases (308 rows, जिनमें से 145
+client rows) में, हर value `dissect.esedb` द्वारा उजागर values की स्वतंत्र decoding से मेल खाई। हर client row में,
+गिनती वाला पहला दिन `InsertDate` का UTC दिन था, आखिरी दिन `LastAccess` का UTC दिन, और गिनतियों का योग
+`TotalAccesses` के बराबर था।
+
 ## LNK शॉर्टकट { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)

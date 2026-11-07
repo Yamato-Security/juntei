@@ -119,6 +119,7 @@ découvert. Les tâches utilisent les mêmes commandes regroupées par source qu
 - Index de répertoires `$I30`
 - Secteurs de démarrage `$Boot` et descripteurs de sécurité `$Secure:$SDS`
 - SRUM
+- Journalisation des accès utilisateur (UAL)
 - Raccourcis LNK
 - Jump Lists
 - ShimCache
@@ -223,7 +224,11 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -281,7 +286,7 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Journal USN |
 | `NetworkActivity` | Profils réseau, interfaces, partages, proxys de ports et routes ; connexions, trafic et notifications push SRUM |
-| `LateralMovement` | Connexions sortantes Bureau à distance, PuTTY et WinSCP des utilisateurs, lecteurs mappés et partages |
+| `LateralMovement` | Connexions sortantes Bureau à distance, PuTTY et WinSCP des utilisateurs, lecteurs mappés et partages ; journalisation des accès utilisateur (les clients des rôles d'un serveur) |
 | `Persistence` | Configuration de démarrage (BCD), démarrages automatiques du Registre, services, TaskCache |
 | `ProcessExecution` | Compatibilité des applications, BAM et DAM, FeatureUsage et éléments épinglés, MuiCache, Prefetch, chronologie Prefetch, activité des applications/du CPU SRUM, UserAssist |
 | `Registry` | Clés et valeurs générales des ruches, y compris les enregistrements récupérés |
@@ -312,6 +317,9 @@ Les clés et valeurs générales des ruches se trouvent dans `Registry-Dump.csv`
 `JumpLists-CustomDestinations.csv`. Il n'existe pas de sous-répertoires Amcache ou Jump Lists.
 Les tables SRUM utilisent des noms de fichiers `SRUM-` directement sous leur catégorie, par exemple
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Les tables de la journalisation des accès utilisateur se trouvent dans `LateralMovement`, à raison d'un fichier par
+table, par exemple `UAL-Clients.csv` et `UAL-SystemIdentity.csv`, avec `UAL-logs.txt` ; consultez
+[Journalisation des accès utilisateur (UAL)](../artifacts/ual.md#automatic-parsing).
 Consultez le [tableau complet de placement des tables SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Les journaux reprennent le nom de l'artefact avec ses majuscules, par exemple `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

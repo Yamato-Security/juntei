@@ -18,6 +18,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | ညွှန်ကြားချက် | Input အထောက်အထား | အသေးစိတ် လမ်းညွှန် |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](../artifacts/ual.md) |
 
 ## [ဖိုင် ညွှန်ကြားချက်များ](execution.md) { #file-commands }
 

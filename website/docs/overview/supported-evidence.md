@@ -11,6 +11,7 @@
 | NTFS boot sector `$Boot` | `parse-ntfs boot` | The volume serial number LNK, Jump Lists and Prefetch record; geometry and `$MFT` location; boot code hash to compare across hosts | Serial numbers can be changed or repeated; a differing boot code is a lead, not proof of a bootkit |
 | NTFS security descriptors `$Secure:$SDS` | `parse-ntfs secure-sds` | Owners and ACLs of files, by the `$MFT`'s `SID`; NULL DACLs and permissive ACLs | Owners can be changed; ACLs say who may access, not who did |
 | SRUM | `parse-ese srum` | Per-app/user network and resource use | Usually aggregated; not packet or destination-level proof |
+| User Access Logging (UAL) | `parse-ese ual` | Which client addresses and accounts used a Windows Server's roles (file shares, Active Directory, DHCP, IIS), and on which days | Requests are counted per day, not logged one by one; the address can be a NAT or proxy; a dirty `Current.mdb` misses its newest changes |
 | LNK shortcuts | `parse-file lnk` | Opened targets, arguments, volumes, shares, source machine | A shortcut can be created without the target running |
 | Jump Lists | `parse-file jump-lists` | Application-opened items, pinning, usage and embedded LNK data | Application-specific behavior and retention |
 | ShimCache | `parse-registry shimcache` | Historical executable paths and compatibility checks | Cache may not be flushed until shutdown; entry alone is not execution |

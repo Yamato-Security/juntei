@@ -16,7 +16,7 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | ดัชนีไดเรกทอรี (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, โมดูล `i30`) | งานวิจัยด้าน index slack ที่ระบุไว้ด้านล่าง |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `boot` และ `secure`) | MS-DTYP ของ Microsoft และงานวิจัย NTFS ที่ระบุไว้ด้านล่าง |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) และ [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) และ [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | งานด้าน compound file และ Jump List ของ Sootmark shell |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -39,7 +39,7 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
   และการตีความ `$LogFile` ส่วน **go-ntfs** ของ Velocidex เป็นแหล่งหลักฐาน NTFS สาธารณะสำหรับการทดสอบ
 - โปรเจกต์ของ Joachim Metz / libyal ได้แก่ **libregf**, **libfsntfs**, **libscca**, **libfwsi** และ
   **libesedb** ให้ข้อมูลวิจัยด้านรูปแบบไฟล์อย่างละเอียดและเป็นข้อมูลอ้างอิงการพาร์สโดยอิสระ
-- **dissect.esedb**, **dissect.ntfs** และ **dissect.target** ของ Fox-IT ให้การตีความ SRUM,
+- **dissect.esedb**, **dissect.ntfs** และ **dissect.target** ของ Fox-IT ให้การตีความ SRUM, UAL,
   `$Secure:$SDS`, SAM และ Defender โดยอิสระ ซึ่งใช้ระหว่างการตรวจสอบความถูกต้อง
 - `fsstat` ของ **The Sleuth Kit** เป็นข้อมูลอ้างอิงสำหรับบูตเซกเตอร์ NTFS ของวอลุ่มที่สร้างด้วย
   `mkntfs`

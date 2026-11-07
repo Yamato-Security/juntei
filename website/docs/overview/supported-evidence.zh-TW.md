@@ -11,6 +11,7 @@
 | NTFS 開機磁區 `$Boot` | `parse-ntfs boot` | LNK、Jump Lists 與 Prefetch 所記錄的磁碟區序號；幾何資訊與 `$MFT` 位置；可跨主機比較的開機程式碼雜湊值 | 序號可能被變更或重複；開機程式碼不同只是線索，並非 bootkit 的證明 |
 | NTFS 安全性描述元 `$Secure:$SDS` | `parse-ntfs secure-sds` | 依 `$MFT` 的 `SID` 取得檔案的擁有者與 ACL；NULL DACL 與寬鬆的 ACL | 擁有者可被變更；ACL 說明誰可以存取，而非誰實際存取過 |
 | SRUM | `parse-ese srum` | 各應用程式／使用者的網路與資源使用情形 | 通常為彙總資料；無法作為封包或目的地層級的證明 |
+| 使用者存取記錄 (UAL) | `parse-ese ual` | 哪些用戶端位址與帳戶在哪幾天使用了 Windows Server 的角色（檔案共用、Active Directory、DHCP、IIS） | 要求以天為單位計數，而非逐筆記錄；位址可能是 NAT 或 Proxy；dirty 的 `Current.mdb` 會缺少最新的變更 |
 | LNK 捷徑 | `parse-file lnk` | 開啟過的目標、參數、磁碟區、共用資料夾、來源機器 | 即使目標從未執行，也可以建立捷徑 |
 | Jump Lists | `parse-file jump-lists` | 應用程式開啟過的項目、釘選、使用情形與內嵌的 LNK 資料 | 行為與保留方式因應用程式而異 |
 | ShimCache | `parse-registry shimcache` | 歷史執行檔路徑與相容性檢查 | 快取可能要到關機時才寫出；單一項目不等於執行 |

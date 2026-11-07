@@ -20,7 +20,7 @@ use std::path::PathBuf;
 
 /// The version that the banner, every help screen and `--version` show: the version from
 /// Cargo.toml and the release name after it. Change the release name with each release.
-pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (CODE BLUE Release)");
+pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (Dev Build)");
 const AUTHOR: &str =
     "Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)";
 
@@ -325,6 +325,16 @@ pub enum EseCommands {
         disable_version_flag = true
     )]
     Srum(SrumOptions),
+
+    /// Parse User Access Logging (UAL) databases
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ese ual <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Ual(UalOptions),
 }
 
 #[derive(Args)]
@@ -1197,6 +1207,60 @@ impl SrumOptions {
             && matches!(
                 self.output_type,
                 Some(SrumOutputType::Json | SrumOutputType::Jsonl)
+            )
+    }
+}
+
+/// What `parse-ese ual` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UalOutputType {
+    /// One CSV table per UAL table in a directory
+    Csv,
+    /// One pretty-printed JSON object per row
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct UalOptions {
+    /// Directory to search recursively for UAL databases (Current.mdb, {GUID}.mdb, SystemIdentity.mdb)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one UAL database (role names come from the SystemIdentity.mdb next to it)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every row: a directory of CSV tables, or a file (json, jsonl)
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "PATH", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<UalOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl UalOptions {
+    pub fn output_type(&self) -> UalOutputType {
+        self.output_type.unwrap_or(UalOutputType::Csv)
+    }
+
+    /// Rows on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there. CSV tables need a directory.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(UalOutputType::Json | UalOutputType::Jsonl)
             )
     }
 }

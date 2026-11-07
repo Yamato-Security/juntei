@@ -117,6 +117,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - `$I30` 目錄索引
 - `$Boot` 開機磁區與 `$Secure:$SDS` 安全性描述元
 - SRUM
+- 使用者存取記錄 (UAL)
 - LNK 捷徑
 - Jump Lists
 - ShimCache
@@ -220,7 +221,11 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -278,7 +283,7 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 | `FileExistence` | Amcache、ShimCache |
 | `FileSystem` | `$Boot`、`$I30`、`$LogFile`、`$MFT`、`$Secure:$SDS`、USN Journal |
 | `NetworkActivity` | 網路設定檔、介面、共用、連接埠 Proxy 與路由；SRUM 連線、流量與推播通知 |
-| `LateralMovement` | 使用者對外的遠端桌面、PuTTY 與 WinSCP 連線、對應的磁碟機與共用 |
+| `LateralMovement` | 使用者對外的遠端桌面、PuTTY 與 WinSCP 連線、對應的磁碟機與共用；使用者存取記錄（伺服器角色的用戶端） |
 | `Persistence` | 開機設定（BCD）、登錄自動啟動項目、服務、TaskCache |
 | `ProcessExecution` | 應用程式相容性、BAM 與 DAM、FeatureUsage 與釘選項目、MuiCache、Prefetch、Prefetch 時間軸、SRUM 應用程式／CPU 活動、UserAssist |
 | `Registry` | 一般的登錄區機碼與值，包括復原的記錄 |
@@ -309,6 +314,9 @@ Amcache 與 Jump Lists 各有一個共用的記錄檔，放在其帶前綴的資
 `JumpLists-CustomDestinations.csv`。不會有 Amcache 或 Jump Lists 子目錄。
 SRUM 資料表以 `SRUM-` 檔名直接放在其類別之下，例如
 `NetworkActivity/SRUM-NetworkConnections.csv`。
+使用者存取記錄的資料表位於 `LateralMovement`，每個資料表一個檔案，例如
+`UAL-Clients.csv` 與 `UAL-SystemIdentity.csv`，並附有 `UAL-logs.txt`；請參閱
+[使用者存取記錄 (UAL)](../artifacts/ual.md#automatic-parsing)。
 請參閱 [SRUM 完整配置表](../artifacts/srum.md#categorized-auto-parse-output)。
 
 記錄檔名與首字母大寫的跡證名稱一致，例如 `Registry-SAM-logs.txt`、`PrefetchTimeline-logs.txt`

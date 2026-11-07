@@ -16,7 +16,7 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
 | `$LogFile` NTFS | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Index de répertoires (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, module `i30`) | Recherches sur l'index slack citées ci-dessous |
 | `$Boot`, `$Secure:$SDS` NTFS | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crates `boot` et `secure`) | MS-DTYP de Microsoft et les recherches NTFS citées ci-dessous |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) et [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) et [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Travaux de Sootmark shell sur les fichiers composés et les Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -41,7 +41,7 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
 - Les projets libyal de Joachim Metz **libregf**, **libfsntfs**, **libscca**, **libfwsi** et
   **libesedb** offrent des recherches détaillées sur les formats ainsi que des références d'analyse indépendantes.
 - **dissect.esedb**, **dissect.ntfs** et **dissect.target** de Fox-IT ont fourni des interprétations indépendantes de SRUM,
-  de `$Secure:$SDS`, de SAM et de Defender utilisées lors de la validation.
+  de l'UAL, de `$Secure:$SDS`, de SAM et de Defender utilisées lors de la validation.
 - `fsstat` de **The Sleuth Kit** a servi de référence pour les secteurs de démarrage NTFS des volumes créés avec
   `mkntfs`.
 - Certains outils d'Eric Zimmerman ont établi les noms de champs et les attentes des examinateurs utilisés pour les comparaisons.

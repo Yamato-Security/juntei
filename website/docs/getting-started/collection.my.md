@@ -13,6 +13,7 @@ Juntei သည် Windows မှ စုဆောင်းပြီးသား �
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` နှင့် အခြား အသုံးပြုသူ/စနစ် တည်နေရာများ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` နှင့် `CustomDestinations` |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,8 @@ Juntei သည် Windows မှ စုဆောင်းပြီးသား �
 - `$LogFile` ကို တူညီသော volume ၏ `$MFT` နှင့်အတူ အချိန်အနီးဆုံးတွင် စုဆောင်းပါ။ `$LogFile` သည် အလျင်အမြန်
   လည်ပတ်ထပ်ရေးသောကြောင့် နောက်ကျမှ စုဆောင်းလျှင် အစောပိုင်း redo/undo record များကို လုံးဝ ဆုံးရှုံးနိုင်ပါသည်။
 - Account နှင့် Wi-Fi profile အမည်များကို ဖြေရှင်းရန် SRUM ကို ကိုက်ညီသော `SOFTWARE` hive နှင့်အတူ စုဆောင်းပါ။
+- User Access Logging ၏ `Sum` ဖိုင်တွဲတစ်ခုလုံးကို စုဆောင်းပါ။ `SystemIdentity.mdb` သည် role များနှင့် နှစ်စဉ်
+  `{GUID}.mdb` database များကို အမည်ဖော်ပြပါသည်။ Juntei သည် ၎င်း၏ `Svc*.log` transaction log များကိုလည်း replay မလုပ်ပါ။
 - Entries၊ ResourceData နှင့် Resources တို့ကို ကိုက်ညီစေနိုင်ရန် Defender `Quarantine` tree တစ်ခုလုံးကို စုဆောင်းပါ။
 
 ## Live စနစ်တွင် သတိပြုရန် { #live-system-cautions }

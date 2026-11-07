@@ -151,6 +151,7 @@ plugins:
         Networks: ネットワーク
         Lateral Movement: 横展開
         Remote Access (User Side): リモートアクセス (ユーザー側)
+        User Access Logging (UAL): ユーザーアクセスログ (UAL)
         Open and Save As Dialogs: ファイルを開く・名前を付けて保存
         ShellBags: ShellBags
         External Devices: 外部デバイス
@@ -220,6 +221,7 @@ plugins:
         Networks: 網路
         Lateral Movement: 橫向移動
         Remote Access (User Side): 遠端存取（使用者端）
+        User Access Logging (UAL): 使用者存取記錄 (UAL)
         Open and Save As Dialogs: 開啟與另存新檔對話方塊
         External Devices: 外部裝置
         USB Devices: USB 裝置
@@ -301,6 +303,7 @@ plugins:
         Networks: 네트워크
         Lateral Movement: 측면 이동
         Remote Access (User Side): 원격 액세스 (사용자 측)
+        User Access Logging (UAL): 사용자 액세스 로깅 (UAL)
         Open and Save As Dialogs: 열기 및 다른 이름으로 저장 대화 상자
         External Devices: 외부 장치
         USB Devices: USB 장치
@@ -382,6 +385,7 @@ plugins:
         Networks: Netzwerke
         Lateral Movement: Laterale Bewegung
         Remote Access (User Side): Fernzugriff (Benutzerseite)
+        User Access Logging (UAL): Benutzerzugriffsprotokollierung (UAL)
         Open and Save As Dialogs: Dialoge zum Öffnen und Speichern unter
         External Devices: Externe Geräte
         USB Devices: USB-Geräte
@@ -463,6 +467,7 @@ plugins:
         Networks: Ağlar
         Lateral Movement: Yanal Hareket
         Remote Access (User Side): Uzaktan Erişim (Kullanıcı Tarafı)
+        User Access Logging (UAL): Kullanıcı Erişim Günlüğü (UAL)
         Open and Save As Dialogs: Aç ve Farklı Kaydet İletişim Kutuları
         External Devices: Harici Aygıtlar
         USB Devices: USB Aygıtları
@@ -544,6 +549,7 @@ plugins:
         Networks: Réseaux
         Lateral Movement: Déplacement latéral
         Remote Access (User Side): Accès à distance (côté utilisateur)
+        User Access Logging (UAL): Journalisation des accès utilisateur (UAL)
         Open and Save As Dialogs: Boîtes de dialogue Ouvrir et Enregistrer sous
         External Devices: Périphériques externes
         USB Devices: Périphériques USB
@@ -625,6 +631,7 @@ plugins:
         Networks: Redes
         Lateral Movement: Movimiento lateral
         Remote Access (User Side): Acceso remoto (lado del usuario)
+        User Access Logging (UAL): Registro de acceso de usuarios (UAL)
         Open and Save As Dialogs: Cuadros de diálogo Abrir y Guardar como
         External Devices: Dispositivos externos
         USB Devices: Dispositivos USB
@@ -706,6 +713,7 @@ plugins:
         Networks: Redes
         Lateral Movement: Movimentação lateral
         Remote Access (User Side): Acesso remoto (lado do usuário)
+        User Access Logging (UAL): Registro de acesso do usuário (UAL)
         Open and Save As Dialogs: Caixas de diálogo Abrir e Salvar como
         External Devices: Dispositivos externos
         USB Devices: Dispositivos USB
@@ -787,6 +795,7 @@ plugins:
         Networks: Мережі
         Lateral Movement: Латеральне переміщення
         Remote Access (User Side): Віддалений доступ (з боку користувача)
+        User Access Logging (UAL): Журналювання доступу користувачів (UAL)
         Open and Save As Dialogs: Діалоги відкриття та збереження файлів
         External Devices: Зовнішні пристрої
         USB Devices: Пристрої USB
@@ -868,6 +877,7 @@ plugins:
         Networks: नेटवर्क
         Lateral Movement: लैटरल मूवमेंट
         Remote Access (User Side): रिमोट एक्सेस (उपयोगकर्ता पक्ष)
+        User Access Logging (UAL): उपयोगकर्ता एक्सेस लॉगिंग (UAL)
         Open and Save As Dialogs: खोलें और इस रूप में सहेजें संवाद
         External Devices: बाहरी डिवाइस
         USB Devices: USB डिवाइस
@@ -949,6 +959,7 @@ plugins:
         Networks: Jaringan
         Lateral Movement: Pergerakan lateral
         Remote Access (User Side): Akses jarak jauh (sisi pengguna)
+        User Access Logging (UAL): Pencatatan Akses Pengguna (UAL)
         Open and Save As Dialogs: Dialog Buka dan Simpan Sebagai
         External Devices: Perangkat eksternal
         USB Devices: Perangkat USB
@@ -1030,6 +1041,7 @@ plugins:
         Networks: ကွန်ရက်များ
         Lateral Movement: ကွန်ရက်အတွင်း ဘေးတိုက်ရွေ့လျားမှု
         Remote Access (User Side): အဝေးမှ ဝင်ရောက်မှု (အသုံးပြုသူဘက်)
+        User Access Logging (UAL): အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
         Open and Save As Dialogs: ဖွင့်ရန်နှင့် အမည်သစ်ဖြင့် သိမ်းရန် dialog များ
         External Devices: ပြင်ပစက်ပစ္စည်းများ
         USB Devices: USB စက်ပစ္စည်းများ
@@ -1111,6 +1123,7 @@ plugins:
         Networks: เครือข่าย
         Lateral Movement: การเคลื่อนย้ายภายในเครือข่าย
         Remote Access (User Side): การเข้าถึงระยะไกล (ฝั่งผู้ใช้)
+        User Access Logging (UAL): การบันทึกการเข้าถึงของผู้ใช้ (UAL)
         Open and Save As Dialogs: กล่องโต้ตอบเปิดและบันทึกเป็น
         External Devices: อุปกรณ์ภายนอก
         USB Devices: อุปกรณ์ USB
@@ -1192,6 +1205,7 @@ plugins:
         Networks: الشبكات
         Lateral Movement: الحركة الجانبية
         Remote Access (User Side): الوصول عن بُعد (جهة المستخدم)
+        User Access Logging (UAL): تسجيل وصول المستخدمين (UAL)
         Open and Save As Dialogs: مربعات حوار الفتح والحفظ باسم
         External Devices: الأجهزة الخارجية
         USB Devices: أجهزة USB
@@ -1291,6 +1305,7 @@ nav:
           - Networks: artifacts/networks.md
       - Lateral Movement:
           - Remote Access (User Side): artifacts/remote-access.md
+          - User Access Logging (UAL): artifacts/ual.md
           - Open and Save As Dialogs: artifacts/opensavemru.md
           - ShellBags: artifacts/shellbags.md
       - External Devices:

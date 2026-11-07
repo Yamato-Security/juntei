@@ -13,6 +13,7 @@ metadata asli jika memungkinkan.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | Jurnal USN | Stream metadata NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| Pencatatan Akses Pengguna (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` dan lokasi pengguna/sistem lainnya |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` dan `CustomDestinations` |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,8 @@ metadata asli jika memungkinkan.
 - Kumpulkan `$LogFile` bersama `$MFT` dari volume yang sama dengan waktu yang sedekat mungkin. `$LogFile` berputar
   dengan cepat; pengumpulan yang lebih lambat dapat kehilangan record redo/undo sebelumnya sepenuhnya.
 - Kumpulkan SRUM bersama hive `SOFTWARE` yang bersesuaian untuk me-resolve nama akun dan nama profil Wi-Fi.
+- Kumpulkan seluruh direktori `Sum` milik Pencatatan Akses Pengguna: `SystemIdentity.mdb` menamai role-role dan
+  database `{GUID}.mdb` tahunan. Juntei juga tidak memutar ulang log transaksi `Svc*.log` miliknya.
 - Kumpulkan seluruh pohon `Quarantine` Defender agar Entries, ResourceData, dan Resources dapat dicocokkan.
 
 ## Peringatan untuk sistem live { #live-system-cautions }

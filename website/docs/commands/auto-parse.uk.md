@@ -119,6 +119,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - індекси каталогів `$I30`
 - завантажувальні сектори `$Boot` і дескриптори безпеки `$Secure:$SDS`
 - SRUM
+- журналювання доступу користувачів (UAL)
 - ярлики LNK
 - Jump Lists
 - ShimCache
@@ -223,7 +224,11 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -281,7 +286,7 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, журнал USN |
 | `NetworkActivity` | Мережеві профілі, інтерфейси, спільні ресурси, проксі портів і маршрути; підключення, трафік і push-сповіщення SRUM |
-| `LateralMovement` | Вихідні підключення користувачів через віддалений робочий стіл, PuTTY і WinSCP, підключені диски та спільні ресурси |
+| `LateralMovement` | Вихідні підключення користувачів через віддалений робочий стіл, PuTTY і WinSCP, підключені диски та спільні ресурси; журналювання доступу користувачів (клієнти ролей сервера) |
 | `Persistence` | Конфігурація завантаження (BCD), автозапуск через реєстр, служби, TaskCache |
 | `ProcessExecution` | Сумісність програм, BAM і DAM, FeatureUsage і закріплені елементи, MuiCache, Prefetch, хронологія Prefetch, активність програм/CPU у SRUM, UserAssist |
 | `Registry` | Загальні ключі та значення кущів, включно з відновленими записами |
@@ -312,6 +317,9 @@ Amcache і Jump Lists мають по одному спільному журна
 `JumpLists-CustomDestinations.csv`. Підкаталогів Amcache або Jump Lists немає.
 Таблиці SRUM використовують імена файлів `SRUM-` безпосередньо у своїй категорії, наприклад
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Таблиці журналювання доступу користувачів розміщуються в `LateralMovement`, по одному файлу на таблицю, наприклад
+`UAL-Clients.csv` і `UAL-SystemIdentity.csv`, разом із `UAL-logs.txt`; див.
+[Журналювання доступу користувачів (UAL)](../artifacts/ual.md#automatic-parsing).
 Див. [повну таблицю розміщення SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Імена журналів відповідають назві артефакту з великої літери, як-от `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

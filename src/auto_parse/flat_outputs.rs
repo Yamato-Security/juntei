@@ -30,7 +30,7 @@ fn check_category(root: &Path, directory: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn table_name(artifact: &str, name: &str) -> Option<&'static str> {
+fn table_name<'a>(artifact: &str, name: &'a str) -> Option<&'a str> {
     match (artifact, name) {
         ("amcache", "Amcache_devices.csv") => Some("Devices"),
         ("amcache", "Amcache_files.csv") => Some("Files"),
@@ -38,6 +38,17 @@ fn table_name(artifact: &str, name: &str) -> Option<&'static str> {
         ("amcache", "Amcache_summary.csv") => Some("Summary"),
         ("jump-lists", "AutomaticDestinations.csv") => Some("AutomaticDestinations"),
         ("jump-lists", "CustomDestinations.csv") => Some("CustomDestinations"),
+        // `parse-ese ual` names each table's file `UAL-<table>.csv`, a table it doesn't know
+        // under its own name, in letters, digits and `-_{}` only
+        ("ual", name) => name
+            .strip_prefix("UAL-")
+            .and_then(|table| table.strip_suffix(".csv"))
+            .filter(|table| {
+                !table.is_empty()
+                    && table
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || "-_{}".contains(c))
+            }),
         _ => None,
     }
 }
@@ -137,7 +148,9 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
     };
     for task in tasks.iter().filter(|task| !task.timeline_only) {
         let stem = artifact_filename(task.artifact);
-        if !matches!(task.artifact, "amcache" | "jump-lists") && !stem.starts_with("Registry-") {
+        if !matches!(task.artifact, "amcache" | "jump-lists" | "ual")
+            && !stem.starts_with("Registry-")
+        {
             continue;
         }
         let Some(folder) = hosts
@@ -195,7 +208,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                     .map(|path| super::recorded_path(root, path, from_output))
                 {
                     for name in [old_stem, stem] {
-                        if matches!(task.artifact, "amcache" | "jump-lists")
+                        if matches!(task.artifact, "amcache" | "jump-lists" | "ual")
                             && path == category.join(name)
                         {
                             remove_generated_path(&path, root)?;

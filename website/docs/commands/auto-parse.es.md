@@ -127,6 +127,7 @@ manual, como `parse-ntfs mft`, `parse-registry amcache`, `parse-ese srum` y `par
 - Índices de directorios `$I30`
 - Sectores de arranque `$Boot` y descriptores de seguridad `$Secure:$SDS`
 - SRUM
+- Registro de acceso de usuarios (UAL)
 - Accesos directos LNK
 - Jump Lists
 - ShimCache
@@ -237,7 +238,11 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -295,7 +300,7 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Diario USN |
 | `NetworkActivity` | Perfiles de red, interfaces, recursos compartidos, proxies de puertos y rutas; conexiones, tráfico y notificaciones push de SRUM |
-| `LateralMovement` | Conexiones salientes de Escritorio remoto, PuTTY y WinSCP de los usuarios, unidades asignadas y recursos compartidos |
+| `LateralMovement` | Conexiones salientes de Escritorio remoto, PuTTY y WinSCP de los usuarios, unidades asignadas y recursos compartidos; registro de acceso de usuarios (los clientes de los roles de un servidor) |
 | `Persistence` | Configuración de arranque (BCD), inicios automáticos del Registro, servicios, TaskCache |
 | `ProcessExecution` | Compatibilidad de aplicaciones, BAM y DAM, FeatureUsage y elementos anclados, MuiCache, Prefetch, línea de tiempo de Prefetch, actividad de aplicaciones/CPU de SRUM, UserAssist |
 | `Registry` | Claves y valores generales de los hives, incluidos los registros recuperados |
@@ -327,6 +332,9 @@ Las claves y valores generales de los hives están en `Registry-Dump.csv`. Las t
 `JumpLists-CustomDestinations.csv`. No hay subdirectorios de Amcache ni de Jump Lists.
 Las tablas de SRUM usan nombres de archivo `SRUM-` directamente bajo su categoría, por ejemplo
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Las tablas del registro de acceso de usuarios están en `LateralMovement`, un archivo por tabla, como
+`UAL-Clients.csv` y `UAL-SystemIdentity.csv`, junto con `UAL-logs.txt`; consulte
+[Registro de acceso de usuarios (UAL)](../artifacts/ual.md#automatic-parsing).
 Consulte la [tabla completa de ubicación de SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Los registros coinciden con el nombre del artefacto en mayúsculas, como `Registry-SAM-logs.txt`,

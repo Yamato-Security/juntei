@@ -12,6 +12,7 @@ Juntei は、Windows からすでに収集されたファイルを解析しま�
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN ジャーナル | NTFS メタデータ ストリーム `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| ユーザーアクセスログ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / 最近 | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` およびその他のユーザー/システムの場所 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` および `CustomDestinations` |
 | ShimCache | `SYSTEM` ハイブ: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -26,6 +27,7 @@ Juntei は、Windows からすでに収集されたファイルを解析しま�
 - 可能な場合は、`$Extend/$J` の隣に `$MFT` を収集します。 USN レコードには、完全なパスではなく、親ファイルの参照が保存されます。 MFT はパスの解像度を向上させます。
 - `$LogFile` を、同じボリュームの `$MFT` とできるだけ近いタイミングで収集します。 `$LogFile` は急速にラップします。後の収集では、以前の REDO/UNDO レコードが完全に失われる可能性があります。
 - 一致する `SOFTWARE` ハイブを含む SRUM を収集し、アカウントと Wi-Fi プロファイル名を解決します。
+- ユーザーアクセスログの `Sum` ディレクトリ全体を収集します。`SystemIdentity.mdb` が役割の名前を定め、年ごとの `{GUID}.mdb` データベースを列挙しています。Juntei は、UAL のトランザクション ログ `Svc*.log` も再生しません。
 - Defender `Quarantine` ツリー全体を収集して、エントリ、ResourceData、およびリソースを照合できるようにします。
 
 ## ライブシステムに関する注意事項 { #live-system-cautions }

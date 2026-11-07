@@ -69,7 +69,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "amcache" | "shimcache" => "FileExistence",
         "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
         "networks" => "NetworkActivity",
-        "remote-access" => "LateralMovement",
+        "remote-access" | "ual" => "LateralMovement",
         "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "Persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
         | "userassist" => "ProcessExecution",
@@ -122,6 +122,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "system-info" => "Registry-SystemInfo",
         "taskcache" => "Registry-TaskCache",
         "usb" => "Registry-USB",
+        "ual" => "UAL",
         "usn-journal" => "UsnJournal",
         "userassist" => "Registry-UserAssist",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
@@ -713,7 +714,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     );
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
-        if matches!(task.artifact, "amcache" | "jump-lists")
+        if matches!(task.artifact, "amcache" | "jump-lists" | "ual")
             && task.output_type == AutoOutputType::Csv
             && result.status == TaskStatus::Succeeded
         {
@@ -1384,6 +1385,7 @@ fn build_tasks(
             OutputShape::Directory,
             srum_extra,
         );
+        add("ual", &["parse-ese", "ual"], OutputShape::CsvDirectory, &[]);
         let code_page = opts.code_page.to_string();
         add(
             "lnk",
@@ -1635,6 +1637,7 @@ impl InputInventory {
                     crate::prefetch::is_prefetch_name(&name),
                 ),
                 ("srum", crate::srum::is_database_name(&name)),
+                ("ual", crate::ual::is_database_name(&name)),
                 ("lnk", crate::lnk::is_lnk_name(&name)),
                 ("jump-lists", crate::jump_lists::is_jump_list_name(&name)),
                 ("shimcache", crate::shimcache::is_system_name(&name)),

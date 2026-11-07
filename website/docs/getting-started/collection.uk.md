@@ -13,6 +13,7 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | Журнал USN | Потік метаданих NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| Журналювання доступу користувачів (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` та інші розташування користувача/системи |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` і `CustomDestinations` |
 | ShimCache | Кущ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,9 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 - Збирайте `$LogFile` разом із `$MFT` того самого тому якомога ближче в часі. `$LogFile` швидко
   перезаписується по колу; при пізнішому збиранні попередні записи redo/undo можуть бути повністю втрачені.
 - Збирайте SRUM разом із відповідним кущем `SOFTWARE`, щоб розв'язувати імена облікових записів і профілів Wi-Fi.
+- Збирайте весь каталог `Sum` журналювання доступу користувачів: `SystemIdentity.mdb` містить назви ролей
+  і перелічує щорічні бази даних `{GUID}.mdb`. Як і у випадку SRUM, Juntei не відтворює журнали транзакцій
+  UAL `Svc*.log`.
 - Збирайте все дерево `Quarantine` Defender, щоб можна було зіставити Entries, ResourceData і Resources.
 
 ## Застереження щодо працюючих систем { #live-system-cautions }

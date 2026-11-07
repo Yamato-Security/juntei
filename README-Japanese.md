@@ -116,6 +116,7 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 | アーティファクト | 種類 |
 | --- | --- |
 | **リモートアクセス（ユーザー側）** (`NTUSER.DAT`) — ユーザーが Remote Desktop、PuTTY、WinSCP で接続したコンピュータ、使用アカウント、承認した SSH ホスト鍵とフィンガープリント、割り当てたドライブと共有。 | Registry |
+| **ユーザーアクセスログ (UAL)** (`Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb`) — Windows Server の役割（ファイル共有、Active Directory、DHCP、IIS など）を使用したクライアントのアドレスとアカウント、日ごとの要求回数。 | ESE |
 
 ### システム情報
 

@@ -119,6 +119,7 @@ yang ditemukan. Tugas-tugas ini menggunakan perintah yang dikelompokkan berdasar
 - Indeks direktori `$I30`
 - Sektor boot `$Boot` dan deskriptor keamanan `$Secure:$SDS`
 - SRUM
+- Pencatatan Akses Pengguna (UAL)
 - Pintasan LNK
 - Jump Lists
 - ShimCache
@@ -223,7 +224,11 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -281,7 +286,7 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Jurnal USN |
 | `NetworkActivity` | Profil jaringan, antarmuka, share, port proxy, dan route; koneksi, lalu lintas, dan push notification SRUM |
-| `LateralMovement` | Koneksi keluar Remote Desktop, PuTTY, dan WinSCP milik pengguna, mapped drive, dan share |
+| `LateralMovement` | Koneksi keluar Remote Desktop, PuTTY, dan WinSCP milik pengguna, mapped drive, dan share; Pencatatan Akses Pengguna (klien dari role-role sebuah server) |
 | `Persistence` | Konfigurasi boot (BCD), autostart registry, layanan, TaskCache |
 | `ProcessExecution` | Kompatibilitas aplikasi, BAM dan DAM, FeatureUsage dan item yang disematkan, MuiCache, Prefetch, timeline Prefetch, aktivitas aplikasi/CPU SRUM, UserAssist |
 | `Registry` | Key dan nilai hive umum, termasuk record yang dipulihkan |
@@ -312,6 +317,9 @@ Key dan nilai hive umum ada di `Registry-Dump.csv`. Tabel Amcache adalah
 `JumpLists-CustomDestinations.csv`. Tidak ada subdirektori Amcache atau Jump Lists.
 Tabel SRUM menggunakan nama berkas `SRUM-` langsung di bawah kategorinya, misalnya
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Tabel Pencatatan Akses Pengguna berada di `LateralMovement`, satu berkas per tabel, seperti
+`UAL-Clients.csv` dan `UAL-SystemIdentity.csv`, beserta `UAL-logs.txt`; lihat
+[Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md#automatic-parsing).
 Lihat [tabel penempatan SRUM selengkapnya](../artifacts/srum.md#categorized-auto-parse-output).
 
 Log sesuai dengan nama artefak yang ditulis dengan huruf kapital, seperti `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,

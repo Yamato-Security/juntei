@@ -13,6 +13,7 @@ Juntei พาร์สไฟล์ที่ถูกเก็บรวบรว�
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | สตรีมเมทาดาทาของ NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| การบันทึกการเข้าถึงของผู้ใช้ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` และตำแหน่งอื่นของผู้ใช้/ระบบ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` และ `CustomDestinations` |
 | ShimCache | ไฮฟ์ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,8 @@ Juntei พาร์สไฟล์ที่ถูกเก็บรวบรว�
 - เก็บรวบรวม `$LogFile` พร้อมกับ `$MFT` ของวอลุ่มเดียวกันในเวลาที่ใกล้เคียงกันที่สุด `$LogFile` วนทับ
   อย่างรวดเร็ว การเก็บรวบรวมที่ล่าช้าอาจทำให้เรคคอร์ด redo/undo ก่อนหน้าสูญหายไปทั้งหมด
 - เก็บรวบรวม SRUM พร้อมไฮฟ์ `SOFTWARE` ที่ตรงกันเพื่อ resolve ชื่อบัญชีและชื่อโปรไฟล์ Wi-Fi
+- เก็บรวบรวมไดเรกทอรี `Sum` ของการบันทึกการเข้าถึงของผู้ใช้ทั้งหมด เพราะ `SystemIdentity.mdb` ระบุชื่อบทบาทและ
+  ฐานข้อมูล `{GUID}.mdb` รายปี นอกจากนี้ Juntei ก็ไม่ได้เล่นซ้ำบันทึกธุรกรรม `Svc*.log` ของ UAL เช่นกัน
 - เก็บรวบรวมโครงสร้าง `Quarantine` ของ Defender ทั้งหมด เพื่อให้จับคู่ Entries, ResourceData และ Resources ได้
 
 ## ข้อควรระวังสำหรับระบบที่กำลังทำงาน { #live-system-cautions }

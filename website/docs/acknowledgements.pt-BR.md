@@ -17,7 +17,7 @@ cada projeto para conhecer sua licença.
 | `$LogFile` do NTFS | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Índices de diretórios (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, módulo `i30`) | Pesquisa sobre slack de índice creditada abaixo |
 | `$Boot`, `$Secure:$SDS` do NTFS | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crates `boot` e `secure`) | MS-DTYP da Microsoft e a pesquisa sobre NTFS creditada abaixo |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) e [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) e [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Trabalho do Sootmark shell sobre arquivos compostos e Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -45,7 +45,7 @@ cada projeto para conhecer sua licença.
 - Os projetos libyal de Joachim Metz — **libregf**, **libfsntfs**, **libscca**, **libfwsi** e
   **libesedb** — oferecem pesquisa detalhada sobre formatos e referências de análise independentes.
 - O **dissect.esedb**, o **dissect.ntfs** e o **dissect.target** da Fox-IT forneceram interpretações
-  independentes de SRUM, `$Secure:$SDS`, SAM e Defender usadas durante a validação.
+  independentes de SRUM, UAL, `$Secure:$SDS`, SAM e Defender usadas durante a validação.
 - O `fsstat` do **The Sleuth Kit** foi a referência para os setores de inicialização NTFS de volumes
   criados com `mkntfs`.
 - Algumas das ferramentas de Eric Zimmerman estabeleceram nomes de campos e expectativas dos

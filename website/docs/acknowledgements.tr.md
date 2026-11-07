@@ -17,7 +17,7 @@ kendisine başvurun.
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`logfile` crate'i) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Dizin indeksleri (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` crate'i, `i30` modülü) | Aşağıda teşekkür edilen index slack araştırmaları |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` ve `secure` crate'leri) | Microsoft'un MS-DTYP belgesi ve aşağıda teşekkür edilen NTFS araştırmaları |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) ve [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) ve [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell'in bileşik dosya ve Jump List çalışmaları |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -43,7 +43,7 @@ kendisine başvurun.
 - Joachim Metz / libyal projeleri **libregf**, **libfsntfs**, **libscca**, **libfwsi** ve
   **libesedb**, ayrıntılı biçim araştırmaları ve bağımsız ayrıştırma referansları sunar.
 - Fox-IT'in **dissect.esedb**, **dissect.ntfs** ve **dissect.target** projeleri, doğrulama sırasında
-  kullanılan bağımsız SRUM, `$Secure:$SDS`, SAM ve Defender yorumlarını sağlamıştır.
+  kullanılan bağımsız SRUM, UAL, `$Secure:$SDS`, SAM ve Defender yorumlarını sağlamıştır.
 - **The Sleuth Kit**'in `fsstat` aracı, `mkntfs` ile oluşturulan birimlerin NTFS önyükleme sektörleri
   için referans olmuştur.
 - Eric Zimmerman'ın bazı araçları, karşılaştırmalarda kullanılan alan adlarını ve inceleyici

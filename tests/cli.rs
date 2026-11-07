@@ -99,7 +99,16 @@ fn auto_triage() -> tempfile::TempDir {
         srum.join("SRUDB.dat"),
     )
     .unwrap();
+    copy_ual(&windows.join("System32/LogFiles/Sum"));
     dir
+}
+
+/// The UAL databases of test_files/ual/server2019 copied to `sum` (a `Sum` directory).
+fn copy_ual(sum: &Path) {
+    std::fs::create_dir_all(sum).unwrap();
+    for entry in std::fs::read_dir(repo(UAL_SERVER)).unwrap().flatten() {
+        std::fs::copy(entry.path(), sum.join(entry.file_name())).unwrap();
+    }
 }
 
 /// Fail if a file under `output` names one of `directories` or Juntei's executable by its absolute
@@ -229,7 +238,7 @@ fn banner_and_help() {
     assert!(r.stdout.contains("by Yamato Security"));
     assert!(r.stdout.contains("parse-registry"));
     // The release name follows the version, and the usage follows them.
-    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
+    let version = format!("Version: {} (Dev Build)", env!("CARGO_PKG_VERSION"));
     assert!(
         r.stdout
             .contains(&format!("{version}\n\nUsage: juntei <COMMAND>")),
@@ -248,7 +257,7 @@ fn banner_and_help() {
     let r = run(&["--version"]);
     assert_eq!(
         r.stdout,
-        format!("juntei {} (CODE BLUE Release)\n", env!("CARGO_PKG_VERSION"))
+        format!("juntei {} (Dev Build)\n", env!("CARGO_PKG_VERSION"))
     );
 }
 
@@ -267,7 +276,7 @@ fn banner_is_logo_blank_version_and_start_time_then_blank() {
         }
         out
     };
-    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
+    let version = format!("Version: {} (Dev Build)", env!("CARGO_PKG_VERSION"));
     // The help screen: the logo, a blank line, the version, a blank line and the usage.
     let help = plain(&run(&[]).stdout);
     assert!(
@@ -385,7 +394,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "muicache",
             ][..],
         ),
-        ("parse-ese", "Parse ESE databases", &["srum"][..]),
+        ("parse-ese", "Parse ESE databases", &["srum", "ual"][..]),
         (
             "parse-file",
             "Parse file artifacts",
@@ -523,6 +532,24 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .is_file()
     );
     assert!(!csv.join("HOST1/SystemInformation/SRUM").exists());
+    // UAL: one file per table, in LateralMovement, no directory left
+    for table in [
+        "Clients",
+        "RoleAccess",
+        "DNS",
+        "VirtualMachines",
+        "SystemIdentity",
+        "ChainedDatabases",
+        "Roles",
+    ] {
+        assert!(
+            csv.join(format!("HOST1/LateralMovement/UAL-{table}.csv"))
+                .is_file(),
+            "{table}"
+        );
+    }
+    assert!(!csv.join("HOST1/LateralMovement/UAL").exists());
+    assert!(csv.join("HOST1/LateralMovement/UAL-logs.txt").is_file());
     assert!(csv.join("HOST1/FileSystem/MFT.csv").is_file());
     assert!(csv.join("HOST1/Registry/Registry-Dump.csv").is_file());
     assert!(csv.join("HOST1/Registry/Registry-Dump-logs.txt").is_file());
@@ -710,7 +737,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "amcache" | "shimcache" => "FileExistence",
             "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
             "networks" => "NetworkActivity",
-            "remote-access" => "LateralMovement",
+            "remote-access" | "ual" => "LateralMovement",
             "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => {
                 "Persistence"
             }
@@ -751,7 +778,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "mft" | "usn-journal" | "logfile" | "i30" | "boot" | "secure-sds" => {
                 ("parse-ntfs", artifact)
             }
-            "srum" => ("parse-ese", artifact),
+            "srum" | "ual" => ("parse-ese", artifact),
             "prefetch-timeline" => ("parse-file", "prefetch"),
             "prefetch" | "lnk" | "jump-lists" | "defender-quarantine" => ("parse-file", artifact),
             "registry" => ("parse-registry", "read"),
@@ -1045,6 +1072,13 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                 .any(|record| record["Artifact"] == "amcache" && record["RecordType"] == "file")
         );
         assert!(records.iter().any(|record| record["Artifact"] == "srum"));
+        assert_eq!(
+            records
+                .iter()
+                .filter(|record| record["Artifact"] == "ual")
+                .count(),
+            17
+        );
         fn canonical(value: &mut Value) {
             match value {
                 Value::Object(fields) => {
@@ -1097,7 +1131,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["Purpose"] == "json_timeline")
                     .count(),
-                40
+                41
             );
             assert!(
                 output
@@ -1243,7 +1277,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 80);
+    assert_eq!(tasks.len(), 82);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -4595,6 +4629,371 @@ fn srum_input_and_output_errors() {
         r.stdout
     );
     assert!(r.stdout.contains("Entries: 309"), "{}", r.stdout);
+}
+
+// --- parse-ese ual ---------------------------------------------------------------------------------
+
+const UAL_SERVER: &str = "test_files/ual/server2019";
+const UAL_CURRENT: &str = "test_files/ual/server2019/Current.mdb";
+
+#[test]
+fn ual_summary_on_the_terminal() {
+    let r = run(&["parse-ese", "ual", "-d", UAL_SERVER, "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    for line in [
+        "UAL databases: 3\n",
+        "UAL databases parsed: 3\n",
+        "Rows: 17\n",
+        "  RoleAccess: 1\n  SystemIdentity: 1\n  ChainedDatabases: 2\n  Roles: 13\n",
+        "Client addresses / accounts: 0 / 0\n",
+        "Role names: from SystemIdentity.mdb\n",
+        "Problems: 0\n",
+        "To save every row, add -o <DIR>",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    assert!(!r.stdout.contains("Left dirty"));
+    assert!(!r.stdout.contains("Client access:"));
+}
+
+#[test]
+fn ual_csv_tables() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("ual");
+    let args = [
+        "parse-ese",
+        "ual",
+        "-d",
+        UAL_SERVER,
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ];
+    let r = run(&args);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(r.stdout.contains("(7 CSV files)"), "{}", r.stdout);
+    let mut files: Vec<String> = std::fs::read_dir(&out)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().to_string())
+        .collect();
+    files.sort();
+    assert_eq!(
+        files,
+        [
+            "UAL-ChainedDatabases.csv",
+            "UAL-Clients.csv",
+            "UAL-DNS.csv",
+            "UAL-RoleAccess.csv",
+            "UAL-Roles.csv",
+            "UAL-SystemIdentity.csv",
+            "UAL-VirtualMachines.csv"
+        ]
+    );
+    // a table without rows has its header
+    let (header, rows) = csv_rows(&out.join("UAL-Clients.csv"));
+    assert_eq!(
+        header,
+        [
+            "SourceFile",
+            "RoleGUID",
+            "RoleName",
+            "TenantID",
+            "TotalAccesses",
+            "InsertDate",
+            "LastAccess",
+            "Address",
+            "AuthenticatedUserName",
+            "ClientName",
+            "DailyAccesses"
+        ]
+    );
+    assert!(rows.is_empty());
+    let (header, _) = csv_rows(&out.join("UAL-VirtualMachines.csv"));
+    assert_eq!(
+        header,
+        [
+            "SourceFile",
+            "VmGUID",
+            "BIOS-GUID",
+            "CreationTime",
+            "LastSeenActive",
+            "SerialNumber"
+        ]
+    );
+    let (header, rows) = csv_rows(&out.join("UAL-RoleAccess.csv"));
+    assert_eq!(
+        header,
+        [
+            "SourceFile",
+            "RoleGUID",
+            "RoleName",
+            "FirstSeen",
+            "LastSeen"
+        ]
+    );
+    assert_eq!(rows.len(), 1);
+    // as found under -d: Windows separates the names found with `\`
+    assert_eq!(Path::new(&rows[0]["SourceFile"]), Path::new(UAL_CURRENT));
+    assert_eq!(
+        rows[0]["RoleGUID"],
+        "{7FB09BD3-7FE6-435E-8348-7D8AEFB6CEA3}"
+    );
+    assert_eq!(rows[0]["RoleName"], "Print and Document Services");
+    assert_eq!(rows[0]["FirstSeen"], "2023-01-11T03:54:53.611605300Z");
+    assert_eq!(rows[0]["LastSeen"], "2023-01-11T03:54:53.611605300Z");
+
+    let (header, rows) = csv_rows(&out.join("UAL-SystemIdentity.csv"));
+    assert_eq!(header.len(), 26);
+    let system = &rows[0];
+    for (field, value) in [
+        ("CreationTime", "2022-11-23T02:38:33.374Z"),
+        ("OS-BuildNumber", "17763"),
+        ("OS-ProductType", "3"),
+        ("OS-ProductTypeName", "Server"),
+        ("OS-CurrentTimeZone", "0"),
+        ("OS-DaylightInEffect", "false"),
+        ("SystemDNS-HostName", "researcher-vm"),
+        ("SystemDomainName", "WORKGROUP"),
+        ("OS-LastBootUpTime", "2023-01-11T03:54:11.500000Z"),
+    ] {
+        assert_eq!(system[field], value, "{field}");
+    }
+    let (_, years) = csv_rows(&out.join("UAL-ChainedDatabases.csv"));
+    assert_eq!(years[1]["Year"], "2023");
+    assert_eq!(
+        years[1]["Filename"],
+        "{32D77B8F-140E-4668-8289-F964D6E7C2F3}.mdb"
+    );
+    let (header, roles) = csv_rows(&out.join("UAL-Roles.csv"));
+    assert_eq!(
+        header,
+        ["SourceFile", "RoleGUID", "ProductName", "RoleName"]
+    );
+    assert_eq!(roles.len(), 13);
+    assert!(roles.iter().any(|r| r["RoleName"] == "File Server"));
+
+    // an existing directory needs -C
+    let r = run(&args);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("already exists"), "{}", r.stdout);
+}
+
+#[test]
+fn ual_json_and_jsonl() {
+    let r = run(&["parse-ese", "ual", "-f", UAL_CURRENT, "-t", "jsonl"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    assert!(!r.stdout.contains("Results Summary"));
+    assert_eq!(
+        r.stdout,
+        concat!(
+            r#"{"SourceFile":"test_files/ual/server2019/Current.mdb","Table":"ROLE_ACCESS","#,
+            r#""RoleGUID":"{7FB09BD3-7FE6-435E-8348-7D8AEFB6CEA3}","#,
+            r#""RoleName":"Print and Document Services","#,
+            r#""FirstSeen":"2023-01-11T03:54:53.611605300Z","#,
+            r#""LastSeen":"2023-01-11T03:54:53.611605300Z"}"#,
+            "\n"
+        )
+    );
+    // every database of a directory on stdout: the rows say where they come from
+    let r = run(&["parse-ese", "ual", "-d", UAL_SERVER, "-t", "jsonl"]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let rows = jsonl_records(&r.stdout);
+    assert_eq!(rows.len(), 17);
+    assert!(
+        rows.iter()
+            .all(|row| row["SourceFile"] != UAL_SERVER && row["Table"].is_string())
+    );
+    let identity = rows
+        .iter()
+        .find(|row| row["Table"] == "SYSTEM_IDENTITY")
+        .unwrap();
+    assert_eq!(identity["OS-LastBootUpTime"], "2023-01-11T03:54:11.500000Z");
+    assert_eq!(identity["MaximumMemory"], 4_294_967_296u64);
+
+    let dir = tempfile::tempdir().unwrap();
+    let file = dir.path().join("ual.json");
+    let r = run(&[
+        "parse-ese",
+        "ual",
+        "-d",
+        UAL_SERVER,
+        "-t",
+        "json",
+        "-o",
+        file.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(r.stdout.contains("Results saved: "), "{}", r.stdout);
+    let documents = json_documents(&std::fs::read_to_string(&file).unwrap());
+    assert_eq!(documents, rows);
+}
+
+#[test]
+fn ual_role_names_without_system_identity() {
+    // Current.mdb alone: the roles Windows Server defines are still named
+    let dir = tempfile::tempdir().unwrap();
+    let current = dir.path().join("Current.mdb");
+    std::fs::copy(repo(UAL_CURRENT), &current).unwrap();
+    let r = run(&["parse-ese", "ual", "-f", current.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(
+        r.stdout
+            .contains("Role names: built in (no SystemIdentity.mdb found)"),
+        "{}",
+        r.stdout
+    );
+    let r = run(&[
+        "parse-ese",
+        "ual",
+        "-f",
+        current.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(
+        jsonl_records(&r.stdout)[0]["RoleName"],
+        "Print and Document Services"
+    );
+    // a SystemIdentity.mdb that can't be read: the rows are still written
+    std::fs::write(dir.path().join("systemidentity.MDB"), b"not ESE").unwrap();
+    let r = run(&["parse-ese", "ual", "-f", current.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 0, "{}", r.stdout);
+    assert!(
+        r.stdout.contains("(built-in role names are used)"),
+        "{}",
+        r.stdout
+    );
+    assert!(r.stdout.contains("Rows: 1\n"), "{}", r.stdout);
+}
+
+#[test]
+fn ual_input_and_output_errors() {
+    let r = run(&["parse-ese", "ual", "-f", "test_files/ual/missing.mdb", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("The file does not exist"), "{}", r.stdout);
+
+    let r = run(&["parse-ese", "ual", "-f", "test_files/ual/README.md", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("Could not parse"), "{}", r.stdout);
+
+    let r = run(&["parse-ese", "ual", "-d", "test_files/amcache", "-K"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains(
+            "No UAL databases (Current.mdb, {GUID}.mdb, SystemIdentity.mdb) were found in"
+        ),
+        "{}",
+        r.stdout
+    );
+
+    let r = run(&["parse-ese", "ual", "-f", UAL_CURRENT, "-t", "csv"]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("CSV output needs -o <DIR>"),
+        "{}",
+        r.stdout
+    );
+
+    // the output is never one of the databases read, even with -C
+    let dir = tempfile::tempdir().unwrap();
+    let sum = dir.path().join("Sum");
+    copy_ual(&sum);
+    let identity = sum.join("SystemIdentity.mdb");
+    let before = std::fs::read(&identity).unwrap();
+    let r = run(&[
+        "parse-ese",
+        "ual",
+        "-f",
+        sum.join("Current.mdb").to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-o",
+        identity.to_str().unwrap(),
+        "-C",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1, "{}", r.stdout);
+    assert!(
+        r.stdout.contains("The output file is also an input file"),
+        "{}",
+        r.stdout
+    );
+    assert_eq!(std::fs::read(&identity).unwrap(), before);
+}
+
+#[test]
+fn auto_parse_puts_ual_tables_in_lateral_movement_with_their_times_in_the_offset() {
+    let evidence = tempfile::tempdir().unwrap();
+    copy_ual(&evidence.path().join("HOST/C/Windows/System32/LogFiles/Sum"));
+    let target = tempfile::tempdir().unwrap();
+    for kind in ["csv", "json", "jsonl"] {
+        let output = target.path().join(kind);
+        let result = run(&[
+            "auto-parse",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            kind,
+            "-j",
+            output.join("all.jsonl").to_str().unwrap(),
+            "-Z",
+            "+09:00",
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+        let manifest: Value =
+            serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+        let task = manifest["Tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["Artifact"] == "ual" && t["Purpose"] == "artifact")
+            .unwrap();
+        assert_eq!(task["Status"], "succeeded", "{task}");
+        assert_eq!(task["Category"], "LateralMovement");
+        assert_eq!(task["Command"][1], "parse-ese");
+        assert_eq!(task["Command"][2], "ual");
+        let lateral = output.join("HOST/LateralMovement");
+        assert!(lateral.join("UAL-logs.txt").is_file());
+        if kind == "csv" {
+            assert!(!lateral.join("UAL").exists());
+            let files = task["OutputFiles"].as_array().unwrap();
+            assert_eq!(files.len(), 7, "{task}");
+            let (_, access) = csv_rows(&lateral.join("UAL-RoleAccess.csv"));
+            assert_eq!(
+                access[0]["FirstSeen"],
+                "2023-01-11T12:54:53.611605300+09:00"
+            );
+            let (_, identity) = csv_rows(&lateral.join("UAL-SystemIdentity.csv"));
+            assert_eq!(
+                identity[0]["OS-LastBootUpTime"],
+                "2023-01-11T12:54:11.500000+09:00"
+            );
+            assert_eq!(identity[0]["CreationTime"], "2022-11-23T11:38:33.374+09:00");
+        } else {
+            let rows = json_documents(
+                &std::fs::read_to_string(lateral.join(format!("UAL.{kind}"))).unwrap(),
+            );
+            assert_eq!(rows.len(), 17);
+            assert!(
+                rows.iter()
+                    .all(|r| r["Comp"] == "HOST" && r["Artifact"] == "ual")
+            );
+        }
+        let timeline = jsonl_records(&std::fs::read_to_string(output.join("all.jsonl")).unwrap());
+        let ual: Vec<&Value> = timeline.iter().filter(|r| r["Artifact"] == "ual").collect();
+        assert_eq!(ual.len(), 17);
+        let access = ual.iter().find(|r| r["Table"] == "ROLE_ACCESS").unwrap();
+        assert_eq!(access["FirstSeen"], "2023-01-11T12:54:53.611605300+09:00");
+        assert_eq!(access["LastSeen"], "2023-01-11T12:54:53.611605300+09:00");
+        assert_eq!(access["RoleName"], "Print and Document Services");
+    }
 }
 
 // --- parse-file lnk ---------------------------------------------------------------------------------

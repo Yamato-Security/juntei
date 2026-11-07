@@ -18,6 +18,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | Команда | Вхідний артефакт | Докладний посібник |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Журналювання доступу користувачів (UAL)](../artifacts/ual.md) |
 
 ## [Команди для файлів](execution.md) { #file-commands }
 

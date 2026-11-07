@@ -16,7 +16,7 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (крейт `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Індекси каталогів (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (крейт `mft`, модуль `i30`) | Дослідження index slack, згадані нижче |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (крейти `boot` і `secure`) | MS-DTYP від Microsoft і дослідження NTFS, згадані нижче |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) і [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) і [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Робота Sootmark shell щодо складених файлів і Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -41,7 +41,7 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
 - Проєкти Йоахима Метца / libyal — **libregf**, **libfsntfs**, **libscca**, **libfwsi** і
   **libesedb** — містять докладні дослідження форматів і є незалежними еталонами парсингу.
 - **dissect.esedb**, **dissect.ntfs** і **dissect.target** від Fox-IT надали незалежні інтерпретації SRUM,
-  `$Secure:$SDS`, SAM і Defender, використані під час перевірки.
+  UAL, `$Secure:$SDS`, SAM і Defender, використані під час перевірки.
 - `fsstat` з **The Sleuth Kit** був еталоном для завантажувальних секторів NTFS томів, створених за допомогою
   `mkntfs`.
 - Деякі інструменти Еріка Ціммермана встановили назви полів і очікування експертів, використані для порівнянь.

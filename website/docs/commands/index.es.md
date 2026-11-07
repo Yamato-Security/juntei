@@ -18,6 +18,7 @@ y organiza los resultados y los registros por equipo y por categoría de investi
 | Comando | Artefacto de entrada | Guía detallada |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Registro de acceso de usuarios (UAL)](../artifacts/ual.md) |
 
 ## [Comandos de archivos](execution.md) { #file-commands }
 

@@ -89,6 +89,13 @@ Windows 11 `$Boot`는 같은 호스트의 LNK 파일이 기록한 볼륨 일련 
 실제 데이터베이스 11개에 걸쳐, 출력된 45,255개 항목의 모든 열이 `dissect.esedb`가 제공하는 값을 독립적으로
 디코딩한 결과와 일치했습니다.
 
+## 사용자 액세스 로깅 { #user-access-logging }
+
+`parse-ese ual`은 같은 ESE 리더로 UAL 데이터베이스를 읽습니다. 실제 데이터베이스 16개(308개 행, 그중 클라이언트
+행 145개)에 걸쳐 모든 값이 `dissect.esedb`가 제공하는 값을 독립적으로 디코딩한 결과와 일치했습니다. 모든
+클라이언트 행에서 요청 수가 있는 날짜는 `InsertDate`의 UTC 날짜에서 시작하여 `LastAccess`의 UTC 날짜에서
+끝났으며, 그 합계는 `TotalAccesses`와 일치했습니다.
+
 ## LNK 바로 가기 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)는 Sootmark의

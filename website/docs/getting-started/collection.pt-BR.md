@@ -13,6 +13,7 @@ os metadados originais sempre que possível.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | Diário USN | Fluxo de metadados do NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| Registro de acesso do usuário (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` e outros locais do usuário/do sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` e `CustomDestinations` |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +32,9 @@ os metadados originais sempre que possível.
 - Colete o `$LogFile` com o `$MFT` do mesmo volume, no momento mais próximo possível. O `$LogFile` se sobrescreve
   rapidamente; uma coleta posterior pode perder totalmente os registros de redo/undo anteriores.
 - Colete o SRUM com o hive `SOFTWARE` correspondente para resolver os nomes de contas e de perfis Wi-Fi.
+- Colete o diretório `Sum` inteiro do Registro de acesso do usuário: o `SystemIdentity.mdb` fornece os nomes das
+  funções e lista os bancos de dados anuais `{GUID}.mdb`. Assim como no SRUM, o Juntei não reproduz os logs de
+  transação `Svc*.log` do UAL.
 - Colete a árvore `Quarantine` inteira do Defender para que Entries, ResourceData e Resources possam ser associados.
 
 ## Cuidados com sistemas ativos { #live-system-cautions }

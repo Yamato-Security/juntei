@@ -116,6 +116,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Remote access, user side** (`NTUSER.DAT`) — Computers a user reached with Remote Desktop, PuTTY and WinSCP, the accounts used, accepted SSH host keys with their fingerprints, mapped drives and shares. | Registry |
+| **User Access Logging** (`Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb`) — The client addresses and accounts that used a Windows Server's roles (file shares, Active Directory, DHCP, IIS and more), with daily request counts. | ESE |
 
 ### System Information
 

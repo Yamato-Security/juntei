@@ -44,6 +44,10 @@ Juntei は、パブリック go-ntfs テスト ボリューム (2,129 レコー�
 
 [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) は、Sootmark の [ese](https://github.com/Sootmark/ese) および [srum](https://github.com/Sootmark/srum) クレートに基づいています。 11 の実データベース全体で、45,255 が出力したエントリのすべての列は、`dissect.esedb` によって公開された値の独立したデコードと一致しました。
 
+## ユーザーアクセスログ { #user-access-logging }
+
+`parse-ese ual` は、同じ ESE リーダーで UAL データベースを読み取ります。16 の実データベース (308 行、うちクライアント行 145 行) 全体で、すべての値が `dissect.esedb` によって公開された値の独立したデコードと一致しました。すべてのクライアント行で、要求数のある日は `InsertDate` の UTC 日に始まって `LastAccess` の UTC 日に終わり、その合計は `TotalAccesses` と一致しました。
+
 ## LNK のショートカット { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) は、Sootmark の [shell](https://github.com/Sootmark/shell) クレートの保守フォークです。 1,118 パブリック ショートカット間で比較されました。参照パーサーと共有される 30 CSV 列のうち、16 の個々の値は異なります。破損した、切り捨てられた、プレースホルダー、MTP、またはコントロール パネル項目を含む 13 ターゲット パス。不明なブロックまたは切り捨てられたブロックを含む 2 つの追加データ ブロック リスト。もう 1 つは、参照パーサーが異なるバイトから読み取った MFT 参照です。 Juntei は、構造をサイレントに正規化するのではなく、損傷した構造を報告します。

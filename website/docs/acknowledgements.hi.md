@@ -16,7 +16,7 @@ Juntei इसलिए अस्तित्व में है क्यों
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`logfile` crate) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | डायरेक्टरी इंडेक्स (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` crate, `i30` module) | नीचे श्रेय दिया गया index-slack शोध |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` और `secure` crates) | Microsoft का MS-DTYP और नीचे श्रेय दिया गया NTFS शोध |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) और [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) और [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell का compound-file और Jump List कार्य |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -41,7 +41,7 @@ Juntei इसलिए अस्तित्व में है क्यों
 - Joachim Metz / libyal projects **libregf**, **libfsntfs**, **libscca**, **libfwsi** और
   **libesedb** विस्तृत फ़ॉर्मैट शोध और स्वतंत्र parsing संदर्भ प्रदान करते हैं।
 - Fox-IT के **dissect.esedb**, **dissect.ntfs** और **dissect.target** ने सत्यापन के दौरान उपयोग की गई
-  SRUM, `$Secure:$SDS`, SAM और Defender की स्वतंत्र व्याख्याएँ प्रदान कीं।
+  SRUM, UAL, `$Secure:$SDS`, SAM और Defender की स्वतंत्र व्याख्याएँ प्रदान कीं।
 - **The Sleuth Kit** का `fsstat` उन volumes के NTFS boot sectors के लिए संदर्भ था जो
   `mkntfs` से बनाए गए थे।
 - Eric Zimmerman के कुछ tools ने तुलना में उपयोग किए गए field नाम और परीक्षक की अपेक्षाएँ स्थापित कीं।

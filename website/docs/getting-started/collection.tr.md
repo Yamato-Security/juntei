@@ -13,6 +13,7 @@ mümkün olduğunda özgün meta verileri koruyun.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS meta veri akışı `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| Kullanıcı Erişim Günlüğü (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ve diğer kullanıcı/sistem konumları |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` ve `CustomDestinations` |
 | ShimCache | `SYSTEM` kovanı: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -34,6 +35,8 @@ mümkün olduğunda özgün meta verileri koruyun.
   `$LogFile` hızla başa sarar; daha sonra yapılan toplama, önceki redo/undo kayıtlarını tamamen
   kaybedebilir.
 - Hesap ve Wi-Fi profil adlarını çözümlemek için SRUM'u eşleşen `SOFTWARE` kovanıyla birlikte toplayın.
+- Kullanıcı Erişim Günlüğü'nün `Sum` dizininin tamamını toplayın: `SystemIdentity.mdb` rolleri ve yıllık
+  `{GUID}.mdb` veritabanlarını adlandırır. Juntei bunun `Svc*.log` işlem günlüklerini de yeniden oynatmaz.
 - Entries, ResourceData ve Resources'ın eşleştirilebilmesi için Defender `Quarantine` ağacının
   tamamını toplayın.
 

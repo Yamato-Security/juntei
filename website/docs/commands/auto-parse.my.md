@@ -118,6 +118,7 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
 - `$I30` directory index များ
 - `$Boot` boot sector များနှင့် `$Secure:$SDS` security descriptor များ
 - SRUM
+- အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
 - LNK shortcut များ
 - Jump Lists
 - ShimCache
@@ -222,7 +223,11 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -280,7 +285,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | ကွန်ရက် profile များ၊ interface များ၊ share များ၊ port proxy များနှင့် route များ၊ SRUM ချိတ်ဆက်မှုများ၊ traffic နှင့် push notification များ |
-| `LateralMovement` | အသုံးပြုသူများ၏ အပြင်ဘက်သို့ Remote Desktop၊ PuTTY နှင့် WinSCP ချိတ်ဆက်မှုများ၊ map လုပ်ထားသော drive များနှင့် share များ |
+| `LateralMovement` | အသုံးပြုသူများ၏ အပြင်ဘက်သို့ Remote Desktop၊ PuTTY နှင့် WinSCP ချိတ်ဆက်မှုများ၊ map လုပ်ထားသော drive များနှင့် share များ။ အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (server တစ်ခု၏ role များကို အသုံးပြုသော client များ) |
 | `Persistence` | Boot ပြင်ဆင်မှု (BCD)၊ registry autostart များ၊ service များ၊ TaskCache |
 | `ProcessExecution` | Application compatibility၊ BAM နှင့် DAM၊ FeatureUsage နှင့် pin များ၊ MuiCache၊ Prefetch၊ Prefetch timeline၊ SRUM application/CPU လှုပ်ရှားမှု၊ UserAssist |
 | `Registry` | ပြန်လည်ရယူထားသော record များ အပါအဝင် ယေဘုယျ hive key များနှင့် value များ |
@@ -311,6 +316,9 @@ Amcache နှင့် Jump Lists တို့တွင် ၎င်းတိ�
 `JumpLists-CustomDestinations.csv` ကို အသုံးပြုပါသည်။ Amcache သို့မဟုတ် Jump Lists subdirectory များ မရှိပါ။
 SRUM table များသည် ၎င်းတို့၏ အမျိုးအစားအောက်တွင် တိုက်ရိုက် `SRUM-` ဖိုင်အမည်များကို အသုံးပြုပါသည်၊ ဥပမာ
 `NetworkActivity/SRUM-NetworkConnections.csv`။
+အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း table များသည် `LateralMovement` တွင် table တစ်ခုလျှင် ဖိုင်တစ်ခုစီ ရှိပါသည်၊ ဥပမာ
+`UAL-Clients.csv` နှင့် `UAL-SystemIdentity.csv` တို့ကို `UAL-logs.txt` နှင့်အတူ ထားပါသည်။
+[အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](../artifacts/ual.md#automatic-parsing) ကို ကြည့်ပါ။
 [SRUM နေရာချထားမှု table အပြည့်အစုံ](../artifacts/srum.md#categorized-auto-parse-output) ကို ကြည့်ပါ။
 
 Log များသည် `Registry-SAM-logs.txt`၊ `PrefetchTimeline-logs.txt`

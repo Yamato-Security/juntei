@@ -111,6 +111,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - `$I30` 디렉터리 인덱스
 - `$Boot` 부트 섹터와 `$Secure:$SDS` 보안 설명자
 - SRUM
+- 사용자 액세스 로깅 (UAL)
 - LNK 바로 가기
 - Jump Lists
 - ShimCache
@@ -213,7 +214,11 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -271,7 +276,7 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN 저널 |
 | `NetworkActivity` | 네트워크 프로필, 인터페이스, 공유, 포트 프록시 및 경로. SRUM 연결, 트래픽 및 푸시 알림 |
-| `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유 |
+| `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유. 사용자 액세스 로깅(서버 역할의 클라이언트) |
 | `Persistence` | 부팅 구성(BCD), 레지스트리 자동 실행, 서비스, TaskCache |
 | `ProcessExecution` | 애플리케이션 호환성, BAM 및 DAM, FeatureUsage 및 고정 항목, MuiCache, Prefetch, Prefetch 타임라인, SRUM 애플리케이션/CPU 활동, UserAssist |
 | `Registry` | 복구된 레코드를 포함한 일반 하이브 키와 값 |
@@ -300,6 +305,9 @@ Jump Lists는 각각 접두사가 붙은 테이블 옆에 하나의 공유 로�
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv`와 `JumpLists-CustomDestinations.csv`를 사용합니다.
 Amcache나 Jump Lists의 하위 디렉터리는 없습니다. SRUM 테이블은 범주 바로 아래에 `SRUM-` 파일 이름을 사용합니다.
 예를 들어 `NetworkActivity/SRUM-NetworkConnections.csv`입니다.
+사용자 액세스 로깅 테이블은 `LateralMovement`에 테이블마다 하나의 파일로 있으며(예: `UAL-Clients.csv`,
+`UAL-SystemIdentity.csv`), `UAL-logs.txt`도 함께 있습니다.
+[사용자 액세스 로깅 (UAL)](../artifacts/ual.md#automatic-parsing)을 참조하십시오.
 [SRUM 배치 표 전체](../artifacts/srum.md#categorized-auto-parse-output)를 참조하십시오.
 
 로그는 `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`, `Registry-UserAssist-logs.txt`처럼 대문자로 시작하는

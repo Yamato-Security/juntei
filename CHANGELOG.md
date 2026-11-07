@@ -1,5 +1,11 @@
 # Changes
 
+## 1.1.0 [xxxx/xx/xx]
+
+**New Features:**
+
+- `parse-ese ual` parses the User Access Logging (UAL) databases of Windows Server (`Current.mdb`, the yearly `{GUID}.mdb` databases and `SystemIdentity.mdb`): the client addresses and accounts that used each server role, with their first and last access times and request counts per day, and the role, DNS, virtual machine and server identity tables. Results are CSV tables, JSON or JSONL. `auto-parse` saves them in `LateralMovement` and adds them to the `-j` timeline. (#133) (@YamatoSecurity)
+
 ## 1.0.0 [2026/11/04] - CODE BLUE Release
 
 - Rename the MFT `ZeroU-Secs` column to `uSecZeros`, including automatic parsing, and update all translated field references. Refresh Rust dependencies and third-party notices. (@YamatoSecurity)

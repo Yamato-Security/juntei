@@ -11,6 +11,7 @@
 | NTFS बूट सेक्टर `$Boot` | `parse-ntfs boot` | LNK, Jump Lists और Prefetch द्वारा दर्ज volume serial number; geometry और `$MFT` का स्थान; hosts के बीच तुलना के लिए boot code hash | Serial numbers बदले या दोहराए जा सकते हैं; भिन्न boot code एक सुराग है, bootkit का प्रमाण नहीं |
 | NTFS सुरक्षा विवरणक `$Secure:$SDS` | `parse-ntfs secure-sds` | `$MFT` के `SID` के अनुसार फ़ाइलों के owners और ACLs; NULL DACLs और permissive ACLs | Owners बदले जा सकते हैं; ACLs बताते हैं कि कौन access कर सकता है, न कि किसने किया |
 | SRUM | `parse-ese srum` | प्रति-app/उपयोगकर्ता network और resource उपयोग | आमतौर पर aggregated; packet या destination-स्तर का प्रमाण नहीं |
+| उपयोगकर्ता एक्सेस लॉगिंग (UAL) | `parse-ese ual` | किन client addresses और accounts ने किसी Windows Server के roles (file shares, Active Directory, DHCP, IIS) का उपयोग किया, और किन दिनों में | Requests प्रति दिन गिने जाते हैं, एक-एक करके log नहीं किए जाते; address किसी NAT या proxy का हो सकता है; dirty `Current.mdb` में उसके सबसे नए बदलाव नहीं होते |
 | LNK शॉर्टकट | `parse-file lnk` | खोले गए targets, arguments, volumes, shares, स्रोत machine | Target चले बिना भी shortcut बनाया जा सकता है |
 | Jump Lists | `parse-file jump-lists` | Application द्वारा खोले गए items, pinning, उपयोग और अंतर्निहित LNK data | Application-विशिष्ट व्यवहार और retention |
 | ShimCache | `parse-registry shimcache` | ऐतिहासिक executable paths और compatibility checks | Cache शायद shutdown तक flush न हो; केवल entry निष्पादन नहीं है |

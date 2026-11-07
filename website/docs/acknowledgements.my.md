@@ -17,7 +17,7 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`logfile` crate) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Directory index များ (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` crate၊ `i30` module) | အောက်တွင် ဖော်ပြထားသော index-slack သုတေသန |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` နှင့် `secure` crate များ) | Microsoft ၏ MS-DTYP နှင့် အောက်တွင် ဖော်ပြထားသော NTFS သုတေသန |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) နှင့် [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) နှင့် [ese](https://github.com/Sootmark/ese) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell ၏ compound-file နှင့် Jump List လုပ်ငန်း |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -43,7 +43,7 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
 - Joachim Metz / libyal project များဖြစ်သော **libregf**၊ **libfsntfs**၊ **libscca**၊ **libfwsi** နှင့်
   **libesedb** တို့သည် အသေးစိတ် ဖိုင်ပုံစံ သုတေသနနှင့် လွတ်လပ်သော parsing ကိုးကားချက်များကို ပေးပါသည်။
 - Fox-IT ၏ **dissect.esedb**၊ **dissect.ntfs** နှင့် **dissect.target** တို့သည် မှန်ကန်မှု စစ်ဆေးစဉ်
-  အသုံးပြုခဲ့သော SRUM၊ `$Secure:$SDS`၊ SAM နှင့် Defender တို့၏ လွတ်လပ်သော အဓိပ္ပာယ်ဖော်ချက်များကို ပေးခဲ့ပါသည်။
+  အသုံးပြုခဲ့သော SRUM၊ UAL၊ `$Secure:$SDS`၊ SAM နှင့် Defender တို့၏ လွတ်လပ်သော အဓိပ္ပာယ်ဖော်ချက်များကို ပေးခဲ့ပါသည်။
 - `mkntfs` ဖြင့် ပြုလုပ်ထားသော volume များ၏ NTFS boot sector များအတွက် **The Sleuth Kit** ၏ `fsstat` သည်
   ကိုးကားချက် ဖြစ်ခဲ့ပါသည်။
 - Eric Zimmerman ၏ tool အချို့သည် နှိုင်းယှဉ်ရာတွင် အသုံးပြုခဲ့သော field အမည်များနှင့် စစ်ဆေးသူများ၏ မျှော်လင့်ချက်များကို

@@ -118,6 +118,7 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
 - `$I30` directory indexes
 - `$Boot` boot sectors और `$Secure:$SDS` security descriptors
 - SRUM
+- User Access Logging (UAL)
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -222,7 +223,11 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -280,7 +285,7 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies और routes; SRUM connections, traffic और push notifications |
-| `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares |
+| `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares; User Access Logging (किसी server के roles के clients) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM और DAM, FeatureUsage और pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU गतिविधि, UserAssist |
 | `Registry` | सामान्य hive keys और values, recover किए गए records सहित |
@@ -311,6 +316,9 @@ Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, 
 `JumpLists-CustomDestinations.csv` का उपयोग करती हैं। Amcache या Jump Lists की कोई subdirectories नहीं होतीं।
 SRUM tables अपनी श्रेणी के ठीक अंतर्गत `SRUM-` filenames का उपयोग करती हैं, उदाहरण के लिए
 `NetworkActivity/SRUM-NetworkConnections.csv`।
+User Access Logging tables `LateralMovement` में होती हैं, हर table के लिए एक file, जैसे
+`UAL-Clients.csv` और `UAL-SystemIdentity.csv`, साथ में `UAL-logs.txt`;
+[उपयोगकर्ता एक्सेस लॉगिंग (UAL)](../artifacts/ual.md#automatic-parsing) देखें।
 [पूरी SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output) देखें।
 
 Logs capitalized आर्टिफ़ैक्ट नाम से मेल खाते हैं, जैसे `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

@@ -18,6 +18,7 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 | Perintah | Artefak input | Panduan terperinci |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md) |
 
 ## [Perintah berkas](execution.md) { #file-commands }
 

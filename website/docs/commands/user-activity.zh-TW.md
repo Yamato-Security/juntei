@@ -1,10 +1,11 @@
 # ESE 命令 { #ese-commands }
 
 `parse-ese` 處理 Extensible Storage Engine（ESE）資料庫。SRUM 的 `SRUDB.dat` 即為 ESE 資料庫；
-選用的 SOFTWARE 登錄區可用來補充帳戶與 Wi-Fi 名稱。
+選用的 SOFTWARE 登錄區可用來補充帳戶與 Wi-Fi 名稱。Windows Server 的使用者存取記錄資料庫
+（`Current.mdb`、`{GUID}.mdb` 與 `SystemIdentity.mdb`）同樣是 ESE 資料庫。
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -13,6 +14,7 @@ Usage:
 Commands:
   help  Print this message or the help of the given subcommand(s)
   srum  Parse SRUM databases
+  ual   Parse User Access Logging (UAL) databases
 
 Options:
   -h, --help  Print help
@@ -21,7 +23,7 @@ Options:
 ## `parse-ese srum` { #parse-ese-srum }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -52,3 +54,36 @@ juntei parse-ese srum -f SRUDB.dat -t jsonl | jq 'select(.Provider == "NetworkUs
 ```
 
 請參閱 [SRUM](../artifacts/srum.md)。
+
+## `parse-ese ual` { #parse-ese-ual }
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ese ual <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for UAL databases (Current.mdb, {GUID}.mdb, SystemIdentity.mdb)
+  -f, --file <FILE>      File path to one UAL database (role names come from the SystemIdentity.mdb next to it)
+
+Output:
+  -o, --output <PATH>       Save every row: a directory of CSV tables, or a file (json, jsonl)
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese ual -d Sum -o ual-csv
+juntei parse-ese ual -d Sum -t jsonl | jq 'select(.Table == "CLIENTS")'
+```
+
+請參閱 [使用者存取記錄 (UAL)](../artifacts/ual.md)。
