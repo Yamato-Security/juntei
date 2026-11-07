@@ -879,10 +879,12 @@ fn cookie_row(context: &Context, cookie: &Cookie) -> Row {
     row.push("Created", time(cookie.created));
     row.push("LastAccessed", time(cookie.last_accessed));
     row.push("Expires", time(cookie.expires));
-    row.push("Host", text(&cookie.host));
-    row.push("Name", text(&cookie.name));
+    // A cookie's name can be empty, as set: kept as stored, as its host and path. An empty
+    // value is most often one Chromium encrypted: nothing.
+    row.push("Host", json!(cookie.host));
+    row.push("Name", json!(cookie.name));
     row.push("Value", text(&cookie.value));
-    row.push("Path", text(&cookie.path));
+    row.push("Path", json!(cookie.path));
     row.push("Secure", json!(cookie.secure));
     row.push("HttpOnly", json!(cookie.http_only));
     row.push("Persistent", json!(cookie.persistent));
