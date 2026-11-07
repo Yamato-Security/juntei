@@ -21,7 +21,7 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Karya compound file dan Jump List dari Sootmark shell |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
-| Image disk VHDX (`mount`) | [vhdx-core](https://github.com/SecurityRonin/vhdx-forensic) dan [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), disajikan melalui [fuser](https://github.com/cberner/fuser) | MS-VHDX dari Microsoft |
+| Image disk VHDX (`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) dan [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), disajikan melalui [fuser](https://github.com/cberner/fuser) | MS-VHDX dari Microsoft |
 | Registry | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Riset format dan pemulihan registry yang disebutkan di bawah |
 
 ## Alat referensi dan validasi independen { #reference-tools-and-independent-validation }

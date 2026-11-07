@@ -22,10 +22,6 @@ mod color;
 mod defender_quarantine;
 mod hive;
 mod i30;
-#[cfg(target_os = "linux")]
-mod image;
-#[cfg(target_os = "linux")]
-mod image_mount;
 mod jump_lists;
 mod lnk;
 mod logfile;

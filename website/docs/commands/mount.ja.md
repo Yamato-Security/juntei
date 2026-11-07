@@ -1,6 +1,6 @@
 # ディスクイメージのマウント { #mounting-disk-images }
 
-`juntei mount` は、VHDX ディスクイメージ内のファイルを、実行している間、あるディレクトリから読み取り専用で読めるようにします。これにより、KAPE の `--vhdx` コレクションや Hyper-V のディスクを、Hayabusa や Juntei 自身のコマンドなど任意のツールでスキャンできます。何かを抽出する必要はなく、root 権限も不要で、オペレーティングシステムが VHDX や NTFS に対応している必要もありません。FUSE を使用し、Linux で動作します。
+`juntei mount` は、VHDX ディスクイメージ内のファイルを、実行している間、あるディレクトリから読み取り専用で読めるようにします。これにより、KAPE の `--vhdx` コレクションや Hyper-V のディスクを、Hayabusa や Juntei 自身のコマンドなど任意のツールでスキャンできます。何かを抽出する必要はなく、root 権限も不要で、オペレーティングシステムが VHDX や NTFS に対応している必要もありません。FUSE を使用し、Linux で動作します。リーダーとマウントライブラリは [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) で管理しています。
 
 ```bash
 mkdir /mnt/host1

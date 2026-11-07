@@ -96,16 +96,9 @@ termcolor = "1"
 # sootmark-defender (MIT OR Apache-2.0).
 defender = { package = "ys-defender-history-parser", git = "https://github.com/Yamato-Security/ys-defender-history-parser" }
 
-# `mount` and `auto-parse --vhdx`: VHDX disk images (vhdx-core: dynamic, fixed and differencing
-# disks, a pending log replayed in memory) and the files of their NTFS volumes (ntfs-core, which
-# accepts the boot sectors KAPE's DiscUtils writes), served read-only through FUSE (fuser, without
-# libfuse: fusermount3 mounts it). ctrlc unmounts on Ctrl+C and SIGTERM. Linux only: on macOS
-# fuser needs macFUSE's library to build and to run.
+# Read-only VHDX/NTFS mounting through Yamato Security's reusable FUSE SDK (Linux only).
 [target.'cfg(target_os = "linux")'.dependencies]
-vhdx = { package = "vhdx-core", version = "0.4.1" }
-ntfs-core = "0.9.8"
-fuser = "0.18"
-ctrlc = { version = "3.4", features = ["termination"] }
+vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
 
 [dev-dependencies]
 # The SYSTEM hive of test_files/shimcache/ is kept gzipped.

@@ -985,15 +985,12 @@ dependencies = [
  "clap",
  "cms",
  "csv",
- "ctrlc",
  "der",
  "evtx",
  "flate2",
  "forensicnomicon",
- "fuser",
  "goblin",
  "indicatif",
- "ntfs-core",
  "quick-xml",
  "rayon",
  "regex",
@@ -1005,7 +1002,6 @@ dependencies = [
  "sha2",
  "tempfile",
  "termcolor",
- "vhdx-core",
  "winresource",
  "x509-cert",
  "ys-amcache-parser",
@@ -1018,6 +1014,7 @@ dependencies = [
  "ys-shimcache-parser",
  "ys-srum-parser",
  "ys-srum-parser-ese",
+ "ys-vhdx-mount",
 ]
 
 [[package]]
@@ -2048,15 +2045,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
-name = "vhdx-core"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4c7136e2f91e025a113cebc69a67a22852f77091f630f5b8c8d9595bb985122"
-dependencies = [
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "walkdir"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2459,6 +2447,25 @@ dependencies = [
 name = "ys-srum-parser-ese"
 version = "1.0.0"
 source = "git+https://github.com/Yamato-Security/ys-srum-parser#5be24a59a619c0169b2dfe1dde6c9ee3af776fcc"
+
+[[package]]
+name = "ys-vhdx-mount"
+version = "0.1.0"
+source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#4247bcb0fa90280970ea4ce5f26ac512bc96949d"
+dependencies = [
+ "ctrlc",
+ "fuser",
+ "ntfs-core",
+ "ys-vhdx-parser",
+]
+
+[[package]]
+name = "ys-vhdx-parser"
+version = "0.4.1"
+source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#4247bcb0fa90280970ea4ce5f26ac512bc96949d"
+dependencies = [
+ "thiserror 2.0.21",
+]
 
 [[package]]
 name = "zerocopy"

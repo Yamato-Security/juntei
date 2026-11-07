@@ -19,11 +19,11 @@
 
 use super::{Images, run_evidence, shown};
 use crate::cli::AutoParseOptions;
-use crate::image_mount::{self, Mounted};
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use vhdx_mount::image_mount::{self, Mounted};
 
 /// Whether a file name is a VHDX disk image's.
 pub(super) fn is_vhdx_name(name: &str) -> bool {

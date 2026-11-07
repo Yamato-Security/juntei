@@ -3,7 +3,8 @@
 `juntei mount` makes the files inside a VHDX disk image readable at a directory, read-only, for as
 long as it runs. KAPE's `--vhdx` collections and Hyper-V disks can then be scanned by any tool,
 such as Hayabusa or Juntei's own commands, without extracting anything, without root, and without
-the operating system supporting VHDX or NTFS. It uses FUSE and works on Linux.
+the operating system supporting VHDX or NTFS. It uses FUSE and works on Linux. The reader and
+mounting library are maintained in [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1

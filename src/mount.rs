@@ -26,10 +26,10 @@ pub const NO_FUSE: &str = "Mounting needs FUSE and works on Linux. On Windows, a
 #[cfg(target_os = "linux")]
 pub fn run(opts: &MountOptions) -> i32 {
     use crate::color::JunteiColor;
-    use crate::image::Image;
-    use crate::image_mount;
     use crate::util::{self, fmt_num, p, p_label};
     use std::sync::{Arc, Mutex};
+    use vhdx_mount::image::Image;
+    use vhdx_mount::image_mount;
 
     let no_color = opts.common.no_color;
     if !opts.image.is_file() {

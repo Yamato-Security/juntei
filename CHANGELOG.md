@@ -4,6 +4,8 @@
 
 **New Features:**
 
+- Use Yamato Security’s [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) workspace for the VHDX reader and reusable NTFS/FUSE mounting library, retaining the original reader’s license and attribution. (@YamatoSecurity)
+
 - `parse-ese ual` parses the User Access Logging (UAL) databases of Windows Server (`Current.mdb`, the yearly `{GUID}.mdb` databases and `SystemIdentity.mdb`): the client addresses and accounts that used each server role, with their first and last access times and request counts per day, and the role, DNS, virtual machine and server identity tables. Results are CSV tables, JSON or JSONL. `auto-parse` saves them in `LateralMovement` and adds them to the `-j` timeline. (#133) (@YamatoSecurity)
 
 - `mount` mounts the NTFS volumes of a VHDX disk image read-only at a directory through FUSE (Linux), without root and without the system supporting the image or the file system, so other tools such as Hayabusa can read the files. KAPE's `--vhdx` collections, whose boot sectors DiscUtils writes without a jump instruction and signature, mount as they are. Ctrl+C unmounts. (@YamatoSecurity)

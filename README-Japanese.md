@@ -35,7 +35,8 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 
 `juntei mount <IMAGE> <MOUNTPOINT>` は、KAPE の `--vhdx` 出力などの VHDX ディスクイメージを読み取り専用で
 マウントし、Hayabusa などの他のツールから読めるようにします（FUSE、Linux のみ）。`auto-parse` に `--vhdx`
-を付けると、ディレクトリ内のすべての VHDX イメージの中にあるシステムを解析します。
+を付けると、ディレクトリ内のすべての VHDX イメージの中にあるシステムを解析します。VHDX リーダーとマウントライブラリは
+[Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) で管理しています。
 
 [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/ja/commands/persistence-hunter/)
 では、レジストリハイブ、スケジュールタスク、スタートアップファイル、WMI、BITS を横断して永続化の痕跡を調べます。
