@@ -3,8 +3,8 @@
 `juntei mount`, bir VHDX disk imajının içindeki dosyaları, çalıştığı sürece bir dizinde salt okunur
 olarak okunabilir hâle getirir. Böylece KAPE'nin `--vhdx` koleksiyonları ve Hyper-V diskleri, Hayabusa
 veya Juntei'nin kendi komutları gibi herhangi bir araçla taranabilir; bunun için hiçbir şeyi dışarı
-çıkarmak, root yetkisi veya işletim sisteminin VHDX ya da NTFS desteklemesi gerekmez. FUSE kullanır:
-Linux'ta ya da macFUSE yüklü macOS'ta çalışır.
+çıkarmak, root yetkisi veya işletim sisteminin VHDX ya da NTFS desteklemesi gerekmez. FUSE kullanır
+ve Linux'ta çalışır.
 
 ```bash
 mkdir /mnt/host1
@@ -87,9 +87,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 
 - Linux: FUSE 3 (`fusermount3`, `fuse3` paketi) ve normal kullanıcıların genellikle sahip olduğu
   `/dev/fuse` erişimi. Root gerekmez.
-- macOS: macFUSE.
-- Windows'ta FUSE yoktur. Bunun yerine imajı yönetici olarak çalıştırılan bir PowerShell'de salt okunur
-  olarak ekleyin ve araçlara sürücü harfini verin:
+- Windows ve macOS desteklenmez. Windows'ta bunun yerine imajı yönetici olarak çalıştırılan bir
+  PowerShell'de salt okunur olarak ekleyin ve araçlara sürücü harfini verin:
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

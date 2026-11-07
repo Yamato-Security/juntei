@@ -3,7 +3,7 @@
 `juntei mount` किसी VHDX disk image के अंदर की files को, जब तक यह चलता रहता है, एक directory पर read-only
 रूप में पढ़ने योग्य बनाता है। इसके बाद KAPE के `--vhdx` संग्रह और Hyper-V disks को किसी भी tool से scan
 किया जा सकता है, जैसे Hayabusa या Juntei के अपने commands से, कुछ भी extract किए बिना, root के बिना, और
-operating system में VHDX या NTFS support के बिना। यह FUSE का उपयोग करता है: Linux, या macFUSE के साथ macOS।
+operating system में VHDX या NTFS support के बिना। यह FUSE का उपयोग करता है और Linux पर काम करता है।
 
 ```bash
 mkdir /mnt/host1
@@ -83,9 +83,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 
 - Linux: FUSE 3 (`fusermount3`, `fuse3` package) और `/dev/fuse` तक access, जो सामान्य users के पास आमतौर पर
   होता है। Root की आवश्यकता नहीं है।
-- macOS: macFUSE।
-- Windows में FUSE नहीं है। इसके बजाय image को elevated PowerShell में read-only attach करें, और tools को उसका
-  drive letter दें:
+- Windows और macOS समर्थित नहीं हैं। Windows पर, इसके बजाय image को elevated PowerShell में read-only attach
+  करें, और tools को उसका drive letter दें:
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

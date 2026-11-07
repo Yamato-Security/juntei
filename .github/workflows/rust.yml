@@ -42,6 +42,9 @@ jobs:
         run: cargo test --no-run --locked --target=${{ matrix.info.target }}
       - name: Run tests
         run: cargo test --locked --target=${{ matrix.info.target }}
+        env:
+          # the VHDX mount tests need FUSE: fail rather than skip them on Linux
+          JUNTEI_REQUIRE_FUSE: ${{ runner.os == 'Linux' && '1' || '' }}
 
   # Juntei is under the RPL 1.5, which needs its License Notice in every source file, and the
   # crates it is built with need their licenses shipped with it (THIRD_PARTY_NOTICES/crates.txt).

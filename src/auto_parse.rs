@@ -37,7 +37,7 @@ mod flat_outputs;
 mod srum_outputs;
 mod timeline;
 mod timestamps;
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 mod vhdx_images;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
@@ -442,13 +442,13 @@ struct DataFile {
 /// each mount folder (in the directory the parsers read) with its image, from that directory
 /// (`./host1-triage.vhdx`).
 // Only `--vhdx` makes them, where FUSE is.
-#[cfg_attr(not(unix), allow(dead_code))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) struct Images {
     directory_name: String,
     mounts: Vec<(PathBuf, String)>,
 }
 
-#[cfg_attr(not(unix), allow(dead_code))]
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 impl Images {
     /// The image a host's files are in.
     fn of(&self, root: &Path) -> Option<&str> {
@@ -462,9 +462,9 @@ impl Images {
 /// Run the command; returns the exit status.
 pub fn run(opts: &AutoParseOptions) -> i32 {
     if opts.vhdx {
-        #[cfg(unix)]
+        #[cfg(target_os = "linux")]
         return vhdx_images::run(opts);
-        #[cfg(not(unix))]
+        #[cfg(not(target_os = "linux"))]
         {
             error_msg(opts.common.no_color, crate::mount::NO_FUSE);
             return 1;

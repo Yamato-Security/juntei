@@ -1,6 +1,6 @@
 # ディスクイメージのマウント { #mounting-disk-images }
 
-`juntei mount` は、VHDX ディスクイメージ内のファイルを、実行している間、あるディレクトリから読み取り専用で読めるようにします。これにより、KAPE の `--vhdx` コレクションや Hyper-V のディスクを、Hayabusa や Juntei 自身のコマンドなど任意のツールでスキャンできます。何かを抽出する必要はなく、root 権限も不要で、オペレーティングシステムが VHDX や NTFS に対応している必要もありません。FUSE を使用するため、Linux、または macFUSE を導入した macOS で動作します。
+`juntei mount` は、VHDX ディスクイメージ内のファイルを、実行している間、あるディレクトリから読み取り専用で読めるようにします。これにより、KAPE の `--vhdx` コレクションや Hyper-V のディスクを、Hayabusa や Juntei 自身のコマンドなど任意のツールでスキャンできます。何かを抽出する必要はなく、root 権限も不要で、オペレーティングシステムが VHDX や NTFS に対応している必要もありません。FUSE を使用し、Linux で動作します。
 
 ```bash
 mkdir /mnt/host1
@@ -65,8 +65,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 ## 要件 { #requirements }
 
 - Linux: FUSE 3 (`fusermount3`、`fuse3` パッケージ) と `/dev/fuse` へのアクセス権。通常のユーザーは、たいていこのアクセス権を持っています。root 権限は不要です。
-- macOS: macFUSE。
-- Windows には FUSE がありません。代わりに、管理者として実行した PowerShell でイメージを読み取り専用でアタッチし、そのドライブ文字をツールに指定します。
+- Windows と macOS はサポートされていません。Windows では代わりに、管理者として実行した PowerShell でイメージを読み取り専用でアタッチし、そのドライブ文字をツールに指定します。
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

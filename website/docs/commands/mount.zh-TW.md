@@ -2,8 +2,8 @@
 
 `juntei mount` 會在執行期間，讓 VHDX 磁碟映像檔內的檔案能在某個目錄下以唯讀方式讀取。如此一來，
 KAPE 的 `--vhdx` 收集資料與 Hyper-V 磁碟就能以任何工具掃描，例如 Hayabusa 或 Juntei 本身的命令，
-完全不需要擷取任何內容、不需要 root 權限，作業系統也不必支援 VHDX 或 NTFS。它使用 FUSE：
-適用於 Linux，或安裝了 macFUSE 的 macOS。
+完全不需要擷取任何內容、不需要 root 權限，作業系統也不必支援 VHDX 或 NTFS。它使用 FUSE，
+可在 Linux 上運作。
 
 ```bash
 mkdir /mnt/host1
@@ -80,9 +80,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 
 - Linux：FUSE 3（`fusermount3`，即 `fuse3` 套件），以及對 `/dev/fuse` 的存取權限，一般使用者
   通常都具備。不需要 root。
-- macOS：macFUSE。
-- Windows 沒有 FUSE。請改為在以系統管理員身分執行的 PowerShell 中，以唯讀方式連結映像檔，
-  並將其磁碟機代號提供給工具：
+- 不支援 Windows 與 macOS。在 Windows 上，請改為在以系統管理員身分執行的 PowerShell 中，以唯讀方式
+  連結映像檔，並將其磁碟機代號提供給工具：
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

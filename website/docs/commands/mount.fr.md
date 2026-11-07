@@ -3,8 +3,8 @@
 `juntei mount` rend les fichiers contenus dans une image disque VHDX lisibles dans un répertoire, en lecture
 seule, pendant toute son exécution. Les collectes `--vhdx` de KAPE et les disques Hyper-V peuvent alors être
 analysés par n'importe quel outil, comme Hayabusa ou les propres commandes de Juntei, sans rien extraire, sans
-root et sans que le système d'exploitation prenne en charge VHDX ou NTFS. La commande utilise FUSE : Linux, ou
-macOS avec macFUSE.
+root et sans que le système d'exploitation prenne en charge VHDX ou NTFS. La commande utilise FUSE et
+fonctionne sous Linux.
 
 ```bash
 mkdir /mnt/host1
@@ -87,9 +87,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 
 - Linux : FUSE 3 (`fusermount3`, le paquet `fuse3`) et l'accès à `/dev/fuse`, dont disposent généralement les
   utilisateurs ordinaires. Les droits root ne sont pas nécessaires.
-- macOS : macFUSE.
-- Windows ne dispose pas de FUSE. Attachez plutôt l'image en lecture seule dans un PowerShell avec privilèges
-  élevés, puis indiquez sa lettre de lecteur aux outils :
+- Windows et macOS ne sont pas pris en charge. Sous Windows, attachez plutôt l'image en lecture seule dans un
+  PowerShell avec privilèges élevés, puis indiquez sa lettre de lecteur aux outils :
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

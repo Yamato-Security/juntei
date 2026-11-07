@@ -34,7 +34,7 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 例: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`。
 
 `juntei mount <IMAGE> <MOUNTPOINT>` は、KAPE の `--vhdx` 出力などの VHDX ディスクイメージを読み取り専用で
-マウントし、Hayabusa などの他のツールから読めるようにします（FUSE: Linux、macOS）。`auto-parse` に `--vhdx`
+マウントし、Hayabusa などの他のツールから読めるようにします（FUSE、Linux のみ）。`auto-parse` に `--vhdx`
 を付けると、ディレクトリ内のすべての VHDX イメージの中にあるシステムを解析します。
 
 [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/ja/commands/persistence-hunter/)

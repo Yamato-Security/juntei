@@ -3,7 +3,7 @@
 يتيح `juntei mount` قراءة الملفات الموجودة داخل صورة قرص VHDX من مجلد، للقراءة فقط، طوال مدة
 تشغيله. ويمكن عندئذ فحص مجموعات KAPE المأخوذة بالخيار `--vhdx` وأقراص Hyper-V بأي أداة، مثل Hayabusa
 أو أوامر Juntei نفسها، دون استخراج أي شيء، ودون صلاحيات root، ودون الحاجة إلى أن يدعم نظام التشغيل VHDX
-أو NTFS. ويستخدم الأمر FUSE: على Linux، أو على macOS مع macFUSE.
+أو NTFS. ويستخدم الأمر FUSE ويعمل على Linux.
 
 ```bash
 mkdir /mnt/host1
@@ -82,9 +82,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 
 - Linux: يلزم FUSE 3 ‏(`fusermount3`، والحزمة `fuse3`) وإمكانية الوصول إلى `/dev/fuse`، وهي متاحة
   عادةً للمستخدمين العاديين. ولا حاجة إلى صلاحيات root.
-- macOS: يلزم macFUSE.
-- لا يتوفر FUSE في Windows. لذا أرفق الصورة للقراءة فقط بدلًا من ذلك في جلسة PowerShell بصلاحيات المسؤول
-  (elevated)، ثم أعطِ الأدوات حرف محرك الأقراص الخاص بها:
+- لا يُدعم Windows ولا macOS. وعلى Windows، أرفق الصورة للقراءة فقط بدلًا من ذلك في جلسة PowerShell بصلاحيات
+  المسؤول (elevated)، ثم أعطِ الأدوات حرف محرك الأقراص الخاص بها:
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

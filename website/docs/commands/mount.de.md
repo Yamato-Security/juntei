@@ -4,7 +4,7 @@
 solange der Befehl läuft. Die mit `--vhdx` erstellten Sammlungen von KAPE und Hyper-V-Datenträger lassen sich
 dann mit jedem beliebigen Werkzeug durchsuchen, etwa mit Hayabusa oder den eigenen Befehlen von Juntei, ohne
 etwas zu extrahieren, ohne Root-Rechte und ohne dass das Betriebssystem VHDX oder NTFS unterstützen muss. Der
-Befehl verwendet FUSE: unter Linux oder unter macOS mit macFUSE.
+Befehl verwendet FUSE und funktioniert unter Linux.
 
 ```bash
 mkdir /mnt/host1
@@ -87,9 +87,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 
 - Linux: FUSE 3 (`fusermount3`, das Paket `fuse3`) und Zugriff auf `/dev/fuse`, den normale Benutzer in der
   Regel haben. Root-Rechte sind nicht erforderlich.
-- macOS: macFUSE.
-- Windows hat kein FUSE. Fügen Sie das Image stattdessen in einer PowerShell mit erhöhten Rechten
-  schreibgeschützt an, und übergeben Sie den Werkzeugen seinen Laufwerksbuchstaben:
+- Windows und macOS werden nicht unterstützt. Fügen Sie das Image unter Windows stattdessen in einer PowerShell
+  mit erhöhten Rechten schreibgeschützt an, und übergeben Sie den Werkzeugen seinen Laufwerksbuchstaben:
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

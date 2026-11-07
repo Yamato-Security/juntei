@@ -3772,8 +3772,12 @@ fn persistence_hunter_names_com_registrations_as_the_input_was_given() {
         .filter_map(|f| f["Description"].as_str())
         .find(|d| d.contains("Registration: "))
         .unwrap_or_else(|| panic!("{}", r.stdout));
+    let hive = [
+        ".", "HOST", "C", "Windows", "System32", "config", "SOFTWARE",
+    ]
+    .join(std::path::MAIN_SEPARATOR_STR);
     assert!(
-        registration.contains("Registration: ./HOST/C/Windows/System32/config/SOFTWARE"),
+        registration.contains(&format!("Registration: {hive}")),
         "{registration}"
     );
     let canonical = std::fs::canonicalize(evidence.path()).unwrap();
@@ -5112,7 +5116,7 @@ fn auto_parse_puts_ual_tables_in_lateral_movement_with_their_times_in_the_offset
 // --- mount and auto-parse --vhdx ------------------------------------------------------------------
 
 /// The sample KAPE VHDX (test_files/vhdx), decompressed to `path`.
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 fn kape_sample_vhdx(path: &Path) {
     let gz = std::fs::File::open(repo("test_files/vhdx/kape-sample.vhdx.gz")).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
@@ -5121,7 +5125,7 @@ fn kape_sample_vhdx(path: &Path) {
 
 /// Whether this user can mount with FUSE here (Linux with /dev/fuse and fusermount3). Without it
 /// the tests that mount say so and stop.
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 fn fuse_available() -> bool {
     let usable = std::fs::OpenOptions::new()
         .read(true)
@@ -5133,13 +5137,18 @@ fn fuse_available() -> bool {
             .output()
             .is_ok_and(|o| o.status.success());
     if !usable {
+        // CI sets this where the mount must be tested
+        assert!(
+            std::env::var("JUNTEI_REQUIRE_FUSE").as_deref() != Ok("1"),
+            "FUSE is not available, and JUNTEI_REQUIRE_FUSE is 1"
+        );
         eprintln!("FUSE is not available: the mount is not tested");
     }
     usable
 }
 
 /// Whether anything is mounted from an image named `name`.
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 fn mounted_from(name: &str) -> bool {
     std::fs::read_to_string("/proc/mounts")
         .unwrap_or_default()
@@ -5147,7 +5156,7 @@ fn mounted_from(name: &str) -> bool {
         .any(|line| line.starts_with(&format!("juntei:{name} ")))
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 #[test]
 fn mount_serves_a_kape_vhdx_read_only_until_interrupted() {
     if !fuse_available() {
@@ -5227,8 +5236,8 @@ fn mount_serves_a_kape_vhdx_read_only_until_interrupted() {
     assert!(!data.exists());
 }
 
-/// Without FUSE (Windows), mounting says what to do instead.
-#[cfg(not(unix))]
+/// Without FUSE support (Windows, macOS), mounting says what to do instead.
+#[cfg(not(target_os = "linux"))]
 #[test]
 fn mount_and_auto_parse_vhdx_need_fuse() {
     let dir = tempfile::tempdir().unwrap();
@@ -5248,7 +5257,7 @@ fn mount_and_auto_parse_vhdx_need_fuse() {
     assert!(r.stdout.contains("Mount-DiskImage"), "{}", r.stdout);
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 #[test]
 fn mount_input_errors() {
     let dir = tempfile::tempdir().unwrap();
@@ -5284,7 +5293,7 @@ fn mount_input_errors() {
     );
 }
 
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 #[test]
 fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     let evidence = tempfile::tempdir().unwrap();

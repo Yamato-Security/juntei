@@ -3,7 +3,7 @@
 `juntei mount` membuat berkas-berkas di dalam image disk VHDX dapat dibaca di sebuah direktori, dalam mode baca saja,
 selama perintah ini berjalan. Hasil pengumpulan `--vhdx` KAPE dan disk Hyper-V kemudian dapat dipindai oleh alat apa pun,
 seperti Hayabusa atau perintah Juntei sendiri, tanpa mengekstrak apa pun, tanpa root, dan tanpa memerlukan sistem operasi
-yang mendukung VHDX atau NTFS. Perintah ini menggunakan FUSE: Linux, atau macOS dengan macFUSE.
+yang mendukung VHDX atau NTFS. Perintah ini menggunakan FUSE dan berjalan di Linux.
 
 ```bash
 mkdir /mnt/host1
@@ -83,9 +83,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 
 - Linux: FUSE 3 (`fusermount3`, paket `fuse3`) dan akses ke `/dev/fuse`, yang biasanya dimiliki oleh pengguna
   biasa. Root tidak diperlukan.
-- macOS: macFUSE.
-- Windows tidak memiliki FUSE. Sebagai gantinya, pasang image dalam mode baca saja di PowerShell yang dijalankan
-  dengan hak administrator (elevated), lalu berikan huruf drive-nya ke alat-alat tersebut:
+- Windows dan macOS tidak didukung. Di Windows, sebagai gantinya, pasang image dalam mode baca saja di PowerShell
+  yang dijalankan dengan hak administrator (elevated), lalu berikan huruf drive-nya ke alat-alat tersebut:
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

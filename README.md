@@ -34,7 +34,7 @@ For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, or `pa
 For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
 
 Use `juntei mount <IMAGE> <MOUNTPOINT>` to mount a VHDX disk image, such as KAPE's `--vhdx` output,
-read-only for other tools such as Hayabusa (FUSE: Linux, macOS), or add `--vhdx` to `auto-parse` to
+read-only for other tools such as Hayabusa (FUSE, Linux only), or add `--vhdx` to `auto-parse` to
 parse the systems inside every VHDX image of a directory.
 
 Use [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/commands/persistence-hunter/)

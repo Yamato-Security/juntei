@@ -19,11 +19,11 @@ use crate::cli::MountOptions;
 use crate::util::error_msg;
 
 /// What to use where FUSE isn't available.
-#[cfg(not(unix))]
-pub const NO_FUSE: &str = "Mounting needs FUSE: Linux, or macOS with macFUSE. On Windows, attach the image read-only instead: Mount-DiskImage -ImagePath <IMAGE> -Access ReadOnly";
+#[cfg(not(target_os = "linux"))]
+pub const NO_FUSE: &str = "Mounting needs FUSE and works on Linux. On Windows, attach the image read-only instead: Mount-DiskImage -ImagePath <IMAGE> -Access ReadOnly";
 
 /// Run the command; returns the exit status.
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 pub fn run(opts: &MountOptions) -> i32 {
     use crate::color::JunteiColor;
     use crate::image::Image;
@@ -132,7 +132,7 @@ pub fn run(opts: &MountOptions) -> i32 {
 }
 
 /// Run the command; returns the exit status.
-#[cfg(not(unix))]
+#[cfg(not(target_os = "linux"))]
 pub fn run(opts: &MountOptions) -> i32 {
     error_msg(opts.common.no_color, NO_FUSE);
     1

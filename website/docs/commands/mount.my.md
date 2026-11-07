@@ -4,7 +4,7 @@
 ဖတ်နိုင်အောင် ပြုလုပ်ပေးပါသည်။ ထို့နောက် KAPE ၏ `--vhdx` collection များနှင့် Hyper-V disk များကို Hayabusa
 သို့မဟုတ် Juntei ၏ ကိုယ်ပိုင် ညွှန်ကြားချက်များကဲ့သို့ မည်သည့် tool ဖြင့်မဆို scan လုပ်နိုင်ပါသည်။ မည်သည့်အရာကိုမျှ
 ထုတ်ယူရန် မလိုသလို root လည်း မလိုဘဲ operating system က VHDX သို့မဟုတ် NTFS ကို ပံ့ပိုးရန်လည်း မလိုပါ။ ၎င်းသည်
-FUSE ကို အသုံးပြုပါသည်- Linux သို့မဟုတ် macFUSE ပါသော macOS။
+FUSE ကို အသုံးပြုပြီး Linux ပေါ်တွင် အလုပ်လုပ်ပါသည်။
 
 ```bash
 mkdir /mnt/host1
@@ -86,8 +86,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 
 - Linux- FUSE 3 (`fusermount3`၊ `fuse3` package) နှင့် `/dev/fuse` သို့ ဝင်ရောက်ခွင့်။ ပုံမှန်အသုံးပြုသူများတွင်
   ထိုခွင့် အများအားဖြင့် ရှိပါသည်။ Root မလိုအပ်ပါ။
-- macOS- macFUSE။
-- Windows တွင် FUSE မရှိပါ။ ယင်းအစား administrator အခွင့်အရေးဖြင့် run ထားသော (elevated) PowerShell တွင် image ကို
+- Windows နှင့် macOS ကို မပံ့ပိုးပါ။ Windows တွင် ယင်းအစား administrator အခွင့်အရေးဖြင့် run ထားသော (elevated) PowerShell တွင် image ကို
   read-only အဖြစ် attach လုပ်ပြီး ၎င်း၏ drive letter ကို tool များအား ပေးပါ-
 
 ```powershell
