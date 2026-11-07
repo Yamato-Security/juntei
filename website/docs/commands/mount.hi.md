@@ -1,9 +1,6 @@
 # डिस्क इमेज माउंट करना { #mounting-disk-images }
 
-`juntei mount` किसी VHDX disk image के अंदर की files को, जब तक यह चलता रहता है, एक directory पर read-only
-रूप में पढ़ने योग्य बनाता है। इसके बाद KAPE के `--vhdx` संग्रह और Hyper-V disks को किसी भी tool से scan
-किया जा सकता है, जैसे Hayabusa या Juntei के अपने commands से, कुछ भी extract किए बिना, root के बिना, और
-operating system में VHDX या NTFS support के बिना। यह FUSE का उपयोग करता है और Linux पर काम करता है। रीडर और माउंटिंग लाइब्रेरी का रखरखाव [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) में किया जाता है।
+`juntei mount` चलते समय VHDX disk image की files को एक directory में read-only रूप में उपलब्ध करता है। Hayabusa और Juntei जैसे tools बिना files extract किए या root अधिकारों के उनकी जाँच कर सकते हैं। यह FUSE का उपयोग करता है और Linux पर चलता है। Reader और mounting library का रखरखाव [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) में किया जाता है।
 
 ```bash
 mkdir /mnt/host1
@@ -21,9 +18,7 @@ Unmount करने के लिए पहले terminal में Ctrl+C द
 
 ## Mount क्या दिखाता है { #what-the-mount-shows }
 
-- Mount point पर NTFS volume की files: KAPE संग्रह के लिए, संग्रहीत files वाला `C` फ़ोल्डर, KAPE का
-  `LongFileNames` फ़ोल्डर, और volume की अपनी metadata files, जैसे `$MFT`। कई NTFS volumes वाली image उन्हें
-  `Volume1`, `Volume2` आदि के रूप में दिखाती है।
+- Mount point पर NTFS volume की files दिखती हैं। एकत्र की गई image में `C` और `LongFileNames` जैसी directories तथा `$MFT` जैसे volume metadata हो सकते हैं। कई NTFS volumes `Volume1`, `Volume2` आदि के रूप में दिखते हैं।
 - हर file read-only होती है और उसका owner वही होता है जो mount point का owner है। File times NTFS के
   `$STANDARD_INFORMATION` times होते हैं।
 - नाम वैसे ही सूचीबद्ध होते हैं जैसे NTFS उन्हें संग्रहीत करता है, और उन्हें exact match से खोजा जाता है।
@@ -32,10 +27,7 @@ Unmount करने के लिए पहले terminal में Ctrl+C द
 
 ## साक्ष्य नहीं बदला जाता { #the-evidence-is-not-changed }
 
-Image read-only खोली जाती है और mount writes को अस्वीकार करता है। जो VHDX ठीक से बंद नहीं हुई थी, उसे
-उसके pending log को memory में लागू करके पढ़ा जाता है; image में कुछ भी वापस नहीं लिखा जाता। KAPE अपनी
-VHDX files DiscUtils से लिखता है, जो NTFS boot sector को उसके jump instruction और `55 AA` signature के बिना
-छोड़ देता है; Juntei इन volumes को जैसे हैं वैसे ही पढ़ता है।
+Image read-only खोली जाती है और mount लिखने से मना करता है। ठीक से बंद न की गई VHDX का pending log memory में लागू होता है और image में वापस नहीं लिखा जाता। कुछ DiscUtils writers NTFS boot sector की jump instruction और `55 AA` signature को शून्य छोड़ते हैं; Juntei ऐसे volumes को सीधे पढ़ता है।
 
 ## उपयोग { #usage }
 
@@ -74,8 +66,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
   `HOST1: ./host1-triage/C (./host1-triage.vhdx)`।
 - Manifest में, `EvidenceDirectory` दी गई directory होती है और हर system का `Image` उसकी image का नाम बताता
   है। `EvidenceRoot` और parser commands mount फ़ोल्डर (`./host1-triage/C`) का उपयोग करते हैं।
-- KAPE, Volume Shadow Copies से copy की गई files को `VSS32` जैसे फ़ोल्डरों में रखता है। इनमें से हर फ़ोल्डर
-  खोजा जाता है और एक अतिरिक्त system (`HOST1_2`, …) के रूप में parse किया जाता है।
+- यदि image में Volume Shadow Copies की files `VSS32` जैसे folders में हैं, तो हर folder को दूसरे system (`HOST1_2`, …) के रूप में खोजकर parse किया जाता है।
 - जो image mount नहीं हो पाती, उसकी सूचना दी जाती है; बाकी images फिर भी parse की जाती हैं, और run exit
   status 1 के साथ समाप्त होता है।
 

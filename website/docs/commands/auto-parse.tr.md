@@ -23,10 +23,7 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX disk imajları { #vhdx-disk-images }
 
-`--vhdx` ile `auto-parse`, kanıt dizinindeki her VHDX disk imajının (örneğin KAPE'nin `--vhdx`
-koleksiyonlarının) içindeki sistemleri ayrıştırır. Her imaj, ayrıştırıldığı süre boyunca FUSE ile salt
-okunur olarak bağlanır; böylece hiçbir şey dışarı çıkarılmaz. [Disk İmajlarını Bağlama](mount.md)
-sayfasına bakın.
+`--vhdx` ile `auto-parse`, kanıt dizinindeki her VHDX disk imajının içindeki sistemleri ayrıştırır. Her imaj ayrıştırılırken FUSE ile salt okunur bağlanır; dosyalar dışarı çıkarılmaz. Bkz. [Disk İmajlarını Bağlama](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed

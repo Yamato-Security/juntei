@@ -17,7 +17,7 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 
 | Perintah | Input | Panduan terperinci |
 |---|---|---|
-| `mount` | Image disk VHDX (KAPE `--vhdx`, Hyper-V) | [Memasang Image Disk](mount.md) |
+| `mount` | Image disk VHDX | [Memasang Image Disk](mount.md) |
 
 ## [Perintah ESE](user-activity.md) { #ese-commands }
 

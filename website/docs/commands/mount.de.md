@@ -1,10 +1,6 @@
 # Disk-Images einbinden { #mounting-disk-images }
 
-`juntei mount` macht die Dateien in einem VHDX-Disk-Image in einem Verzeichnis schreibgeschützt lesbar,
-solange der Befehl läuft. Die mit `--vhdx` erstellten Sammlungen von KAPE und Hyper-V-Datenträger lassen sich
-dann mit jedem beliebigen Werkzeug durchsuchen, etwa mit Hayabusa oder den eigenen Befehlen von Juntei, ohne
-etwas zu extrahieren, ohne Root-Rechte und ohne dass das Betriebssystem VHDX oder NTFS unterstützen muss. Der
-Befehl verwendet FUSE und funktioniert unter Linux. Reader und Mount-Bibliothek werden in [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) gepflegt.
+`juntei mount` stellt die Dateien eines VHDX-Disk-Images während seiner Laufzeit schreibgeschützt in einem Verzeichnis bereit. Werkzeuge wie Hayabusa und Juntei können sie ohne Extraktion und ohne root-Rechte untersuchen. Die Funktion verwendet FUSE und läuft unter Linux. Reader und Mount-Bibliothek werden in [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) gepflegt.
 
 ```bash
 mkdir /mnt/host1
@@ -23,9 +19,7 @@ Drücken Sie im ersten Terminal Strg+C, um die Einbindung aufzuheben, oder führ
 
 ## Was die Einbindung zeigt { #what-the-mount-shows }
 
-- Am Einhängepunkt die Dateien des NTFS-Volumes: bei einer KAPE-Sammlung der Ordner `C` mit den gesicherten
-  Dateien, KAPEs Ordner `LongFileNames` und die eigenen Metadatendateien des Volumes wie `$MFT`. Ein Image mit
-  mehreren NTFS-Volumes zeigt diese als `Volume1`, `Volume2` usw.
+- Am Einhängepunkt erscheinen die Dateien des NTFS-Volumes. Ein gesichertes Image kann Verzeichnisse wie `C` und `LongFileNames` sowie Volume-Metadaten wie `$MFT` enthalten. Mehrere NTFS-Volumes erscheinen als `Volume1`, `Volume2` usw.
 - Jede Datei ist schreibgeschützt und gehört dem Besitzer des Einhängepunkts. Die Dateizeiten sind die
   NTFS-Zeiten aus `$STANDARD_INFORMATION`.
 - Namen werden so aufgelistet, wie NTFS sie speichert, und exakt nachgeschlagen. DOS-8.3-Namen und
@@ -35,11 +29,7 @@ Drücken Sie im ersten Terminal Strg+C, um die Einbindung aufzuheben, oder führ
 
 ## Die Beweise werden nicht verändert { #the-evidence-is-not-changed }
 
-Das Image wird schreibgeschützt geöffnet, und die Einbindung lehnt Schreibzugriffe ab. Eine VHDX-Datei, die
-nicht sauber geschlossen wurde, wird gelesen, wobei ihr ausstehendes Protokoll im Arbeitsspeicher angewendet
-wird; zurückgeschrieben wird es nie. KAPE schreibt seine VHDX-Dateien mit DiscUtils, das den
-NTFS-Bootsektor ohne Sprungbefehl und ohne `55 AA`-Signatur hinterlässt; Juntei liest diese Volumes so, wie
-sie sind.
+Das Image wird schreibgeschützt geöffnet; der Mount verweigert Schreibzugriffe. Bei einem nicht sauber geschlossenen VHDX wird das ausstehende Protokoll nur im Arbeitsspeicher angewendet und nie zurückgeschrieben. Manche DiscUtils-Writer lassen die Sprunganweisung und die Signatur `55 AA` im NTFS-Bootsektor auf null; Juntei liest solche Volumes unverändert.
 
 ## Verwendung { #usage }
 
@@ -78,8 +68,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
   `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
 - Im Manifest ist `EvidenceDirectory` das angegebene Verzeichnis, und `Image` nennt für jedes System sein
   Image. `EvidenceRoot` und die Parser-Befehle verwenden den Einbindungsordner (`./host1-triage/C`).
-- KAPE legt die Dateien, die es aus Volume Shadow Copies kopiert, in Ordnern wie `VSS32` ab. Jeder dieser
-  Ordner wird gefunden und als weiteres System geparst (`HOST1_2`, …).
+- Enthält das Image Dateien aus Volume Shadow Copies in Ordnern wie `VSS32`, wird jeder Ordner als weiteres System (`HOST1_2`, …) erkannt und geparst.
 - Ein Image, das sich nicht einbinden lässt, wird gemeldet; die übrigen werden trotzdem geparst, und der Lauf
   endet mit dem Exit-Status 1.
 

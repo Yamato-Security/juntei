@@ -1,10 +1,6 @@
 # Disk İmajlarını Bağlama { #mounting-disk-images }
 
-`juntei mount`, bir VHDX disk imajının içindeki dosyaları, çalıştığı sürece bir dizinde salt okunur
-olarak okunabilir hâle getirir. Böylece KAPE'nin `--vhdx` koleksiyonları ve Hyper-V diskleri, Hayabusa
-veya Juntei'nin kendi komutları gibi herhangi bir araçla taranabilir; bunun için hiçbir şeyi dışarı
-çıkarmak, root yetkisi veya işletim sisteminin VHDX ya da NTFS desteklemesi gerekmez. FUSE kullanır
-ve Linux'ta çalışır. Okuyucu ve bağlama kitaplığı [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) deposunda geliştirilmektedir.
+`juntei mount`, çalıştığı sürece VHDX disk imajındaki dosyaları bir dizinde salt okunur olarak sunar. Hayabusa ve Juntei gibi araçlar dosyaları çıkarmadan veya root yetkisi gerektirmeden inceleyebilir. FUSE kullanır ve Linux'ta çalışır. Okuyucu ve bağlama kitaplığı [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) deposunda geliştirilmektedir.
 
 ```bash
 mkdir /mnt/host1
@@ -23,9 +19,7 @@ komutunu çalıştırın.
 
 ## Bağlamanın gösterdikleri { #what-the-mount-shows }
 
-- Bağlama noktasında NTFS biriminin dosyaları: bir KAPE koleksiyonu için toplanan dosyaları barındıran
-  `C` klasörü, KAPE'nin `LongFileNames` klasörü ve birimin `$MFT` gibi kendi meta veri dosyaları. Birden
-  fazla NTFS birimi içeren bir imaj, bunları `Volume1`, `Volume2` vb. olarak gösterir.
+- Bağlama noktasında NTFS biriminin dosyaları görünür. Toplanmış bir imajda `C` ve `LongFileNames` gibi dizinler ile `$MFT` gibi birim meta verileri bulunabilir. Birden çok NTFS birimi `Volume1`, `Volume2` vb. olarak gösterilir.
 - Her dosya salt okunurdur ve bağlama noktasının sahibine aittir. Dosya zamanları, NTFS
   `$STANDARD_INFORMATION` zamanlarıdır.
 - Adlar NTFS'in sakladığı şekliyle listelenir ve birebir eşleşmeyle aranır. DOS 8.3 adları ve
@@ -35,10 +29,7 @@ komutunu çalıştırın.
 
 ## Kanıt değiştirilmez { #the-evidence-is-not-changed }
 
-İmaj salt okunur olarak açılır ve bağlama, yazma işlemlerini reddeder. Düzgün kapatılmamış bir VHDX,
-bekleyen günlüğü bellekte uygulanarak okunur ve imaja asla geri yazılmaz. KAPE, VHDX dosyalarını
-DiscUtils ile yazar; DiscUtils, NTFS önyükleme sektörünü atlama komutu ve `55 AA` imzası olmadan
-bırakır. Juntei bu birimleri oldukları gibi okur.
+İmaj salt okunur açılır ve bağlama yazma işlemlerini reddeder. Düzgün kapatılmamış bir VHDX'in bekleyen günlüğü bellekte uygulanır, imaja geri yazılmaz. Bazı DiscUtils yazıcıları NTFS önyükleme sektörünün atlama komutunu ve `55 AA` imzasını sıfır bırakır; Juntei bu birimleri olduğu gibi okur.
 
 ## Kullanım { #usage }
 
@@ -78,8 +69,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - Bildirim dosyasında `EvidenceDirectory` verilen dizindir ve her sistemin `Image` değeri o sistemin
   imajını belirtir. `EvidenceRoot` ve ayrıştırıcı komutları bağlama klasörünü (`./host1-triage/C`)
   kullanır.
-- KAPE, Volume Shadow Copies'ten kopyaladığı dosyaları `VSS32` gibi klasörlerde saklar. Bunların her
-  biri bulunur ve ayrı bir sistem (`HOST1_2`, …) olarak ayrıştırılır.
+- İmaj, Volume Shadow Copies dosyalarını `VSS32` gibi klasörlerde içeriyorsa her klasör başka bir sistem (`HOST1_2`, …) olarak bulunur ve ayrıştırılır.
 - Bağlanamayan bir imaj raporlanır; diğerleri yine de ayrıştırılır ve çalıştırma 1 çıkış durumuyla
   sona erer.
 

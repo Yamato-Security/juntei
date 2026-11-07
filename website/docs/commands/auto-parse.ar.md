@@ -23,9 +23,7 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## صور أقراص VHDX { #vhdx-disk-images }
 
-مع الخيار `--vhdx`، يحلل `auto-parse` الأنظمة الموجودة داخل كل صورة قرص VHDX في مجلد الأدلة، مثل
-مجموعات KAPE المأخوذة بالخيار `--vhdx`. وتُحمَّل كل صورة للقراءة فقط باستخدام FUSE أثناء تحليلها، فلا
-يُستخرج أي شيء. راجع [تحميل صور الأقراص](mount.md).
+عند استخدام `--vhdx`، يحلل `auto-parse` الأنظمة داخل كل صورة قرص VHDX في مجلد الأدلة. تُركّب كل صورة للقراءة فقط باستخدام FUSE أثناء تحليلها، دون استخراج الملفات. راجع [تحميل صور الأقراص](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed

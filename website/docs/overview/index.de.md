@@ -5,9 +5,7 @@ Juntei ist ein Parser für forensische Windows-Artefakte, geschrieben in speiche
 während Juntei persistente Artefakte aus Dateisystem, Registry, Ausführung, Benutzeraktivität, Ressourcennutzung
 und Sicherheitsprodukten parst.
 
-Dieselbe Binärdatei läuft unter Windows, macOS und Linux. Das ist nützlich, wenn eine Analystin oder ein Analyst eine KAPE-,
-Velociraptor-, Disk-Image- oder andere Offline-Sammlung erhält und eine einheitliche Oberfläche statt
-eines separaten Programms für jedes Artefakt wünscht.
+Dieselbe Binärdatei läuft unter Windows, macOS und Linux. Analysten können gesicherte Windows-Beweise und Disk-Images über eine einheitliche Oberfläche untersuchen, statt für jedes Artefakt ein eigenes Programm zu verwenden.
 
 ## Designziele { #design-goals }
 

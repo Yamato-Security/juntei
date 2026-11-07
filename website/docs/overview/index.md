@@ -5,9 +5,7 @@ Juntei is a Windows forensic artifact parser written in memory-safe Rust. It com
 while Juntei parses persistent file-system, registry, execution, user-activity, resource-usage,
 and security-product artifacts.
 
-The same binary runs on Windows, macOS, and Linux. This is useful when an analyst receives a KAPE,
-Velociraptor, disk-image, or other offline collection and wants one consistent interface instead
-of a separate program for every artifact.
+The same binary runs on Windows, macOS, and Linux. Analysts can use one consistent interface to examine collected Windows evidence and disk images instead of a separate program for every artifact.
 
 ## Design goals
 

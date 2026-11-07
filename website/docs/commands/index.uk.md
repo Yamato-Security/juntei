@@ -17,7 +17,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | Команда | Вхідні дані | Докладний посібник |
 |---|---|---|
-| `mount` | Образ диска VHDX (KAPE `--vhdx`, Hyper-V) | [Монтування образів дисків](mount.md) |
+| `mount` | Образ диска VHDX | [Монтування образів дисків](mount.md) |
 
 ## [Команди для ESE](user-activity.md) { #ese-commands }
 

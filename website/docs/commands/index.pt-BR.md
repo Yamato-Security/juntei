@@ -17,7 +17,7 @@ e organiza os resultados e os logs por computador e por categoria investigativa.
 
 | Comando | Entrada | Guia detalhado |
 |---|---|---|
-| `mount` | Imagem de disco VHDX (KAPE `--vhdx`, Hyper-V) | [Montar imagens de disco](mount.md) |
+| `mount` | Imagem de disco VHDX | [Montar imagens de disco](mount.md) |
 
 ## [Comandos ESE](user-activity.md) { #ese-commands }
 

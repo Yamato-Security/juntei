@@ -1,9 +1,6 @@
 # Memasang Image Disk { #mounting-disk-images }
 
-`juntei mount` membuat berkas-berkas di dalam image disk VHDX dapat dibaca di sebuah direktori, dalam mode baca saja,
-selama perintah ini berjalan. Hasil pengumpulan `--vhdx` KAPE dan disk Hyper-V kemudian dapat dipindai oleh alat apa pun,
-seperti Hayabusa atau perintah Juntei sendiri, tanpa mengekstrak apa pun, tanpa root, dan tanpa memerlukan sistem operasi
-yang mendukung VHDX atau NTFS. Perintah ini menggunakan FUSE dan berjalan di Linux. Pembaca dan pustaka mount dipelihara di [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+`juntei mount` menyediakan berkas di dalam image disk VHDX melalui direktori hanya-baca selama perintah berjalan. Alat seperti Hayabusa dan Juntei dapat memeriksanya tanpa ekstraksi atau hak root. Fitur ini menggunakan FUSE dan berjalan di Linux. Pembaca dan pustaka mount dipelihara di [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
@@ -21,9 +18,7 @@ Tekan Ctrl+C di terminal pertama untuk melepas mount, atau jalankan `fusermount3
 
 ## Apa yang ditampilkan mount { #what-the-mount-shows }
 
-- Berkas-berkas volume NTFS di titik mount: untuk hasil pengumpulan KAPE, folder `C` yang berisi
-  berkas-berkas yang dikumpulkan, folder `LongFileNames` milik KAPE, dan berkas metadata milik volume itu sendiri
-  seperti `$MFT`. Image yang berisi beberapa volume NTFS menampilkannya sebagai `Volume1`, `Volume2`, dan seterusnya.
+- Berkas volume NTFS tampil di titik mount. Image hasil pengumpulan dapat berisi direktori seperti `C` dan `LongFileNames`, serta metadata volume seperti `$MFT`. Beberapa volume NTFS tampil sebagai `Volume1`, `Volume2`, dan seterusnya.
 - Setiap berkas bersifat baca saja dan dimiliki oleh pemilik titik mount. Waktu berkas adalah waktu
   `$STANDARD_INFORMATION` NTFS.
 - Nama dicantumkan sebagaimana NTFS menyimpannya dan dicari secara persis. Nama DOS 8.3 dan alternate
@@ -32,10 +27,7 @@ Tekan Ctrl+C di terminal pertama untuk melepas mount, atau jalankan `fusermount3
 
 ## Bukti tidak diubah { #the-evidence-is-not-changed }
 
-Image dibuka dalam mode baca saja dan mount menolak setiap penulisan. VHDX yang tidak ditutup dengan bersih dibaca
-dengan log tertundanya diterapkan di memori, dan tidak pernah ditulis kembali. KAPE menulis berkas VHDX-nya dengan
-DiscUtils, yang membuat sektor boot NTFS tidak memiliki instruksi jump dan signature `55 AA`; Juntei membaca
-volume-volume tersebut apa adanya.
+Image dibuka hanya-baca dan mount menolak penulisan. Log tertunda dari VHDX yang tidak ditutup dengan benar diterapkan di memori, tanpa pernah ditulis kembali. Beberapa writer DiscUtils membiarkan instruksi lompat dan signature `55 AA` pada boot sector NTFS bernilai nol; Juntei membaca volume tersebut apa adanya.
 
 ## Penggunaan { #usage }
 
@@ -74,8 +66,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
   `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
 - Di manifest, `EvidenceDirectory` adalah direktori yang diberikan dan `Image` milik setiap sistem menyebutkan
   image-nya. `EvidenceRoot` dan perintah parser menggunakan folder mount (`./host1-triage/C`).
-- KAPE menyimpan berkas yang disalinnya dari Volume Shadow Copies di folder seperti `VSS32`. Masing-masing folder
-  tersebut ditemukan dan diurai sebagai sistem tersendiri (`HOST1_2`, …).
+- Jika image berisi berkas dari Volume Shadow Copies dalam folder seperti `VSS32`, setiap folder ditemukan dan diurai sebagai sistem lain (`HOST1_2`, …).
 - Image yang tidak dapat di-mount dilaporkan; image lainnya tetap diurai, dan eksekusi berakhir dengan
   exit status 1.
 

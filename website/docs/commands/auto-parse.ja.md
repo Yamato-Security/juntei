@@ -17,7 +17,7 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX ディスクイメージ { #vhdx-disk-images }
 
-`--vhdx` を指定すると、`auto-parse` は、KAPE の `--vhdx` コレクションなど、証拠ディレクトリ内のすべての VHDX ディスクイメージに含まれるシステムを解析します。各イメージは解析されている間だけ FUSE で読み取り専用でマウントされるため、何も抽出されません。[ディスクイメージのマウント](mount.md)を参照してください。
+`--vhdx` を指定すると、`auto-parse` は証拠ディレクトリ内のすべての VHDX ディスクイメージに含まれるシステムを解析します。各イメージは解析中だけ FUSE で読み取り専用でマウントされ、ファイルは抽出されません。[ディスクイメージのマウント](mount.md)を参照してください。
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed

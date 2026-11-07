@@ -21,9 +21,7 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX 磁碟映像檔 { #vhdx-disk-images }
 
-使用 `--vhdx` 時，`auto-parse` 會剖析證據目錄中每個 VHDX 磁碟映像檔內的系統，例如 KAPE 的
-`--vhdx` 收集資料。每個映像檔在剖析期間會透過 FUSE 以唯讀方式掛載，因此不會擷取任何內容。
-請參閱[掛載磁碟映像](mount.md)。
+使用 `--vhdx` 時，`auto-parse` 會剖析證據目錄中每個 VHDX 磁碟映像內的系統。每個映像在剖析期間透過 FUSE 以唯讀方式掛載，不會擷取檔案。請參閱[掛載磁碟映像](mount.md)。
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed

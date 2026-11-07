@@ -23,9 +23,7 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## Image disk VHDX { #vhdx-disk-images }
 
-Dengan `--vhdx`, `auto-parse` mengurai sistem-sistem di dalam setiap image disk VHDX di direktori bukti,
-seperti hasil pengumpulan `--vhdx` KAPE. Setiap image di-mount dalam mode baca saja dengan FUSE selama
-diurai, sehingga tidak ada yang diekstrak. Lihat [Memasang Image Disk](mount.md).
+Dengan `--vhdx`, `auto-parse` mengurai sistem di dalam setiap image disk VHDX pada direktori bukti. Setiap image di-mount hanya-baca melalui FUSE selama penguraian, tanpa mengekstrak berkas. Lihat [Memasang Image Disk](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed

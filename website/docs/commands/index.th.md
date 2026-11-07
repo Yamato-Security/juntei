@@ -17,7 +17,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | คำสั่ง | อินพุต | คู่มือโดยละเอียด |
 |---|---|---|
-| `mount` | อิมเมจดิสก์ VHDX (KAPE `--vhdx`, Hyper-V) | [การเมานต์อิมเมจดิสก์](mount.md) |
+| `mount` | อิมเมจดิสก์ VHDX | [การเมานต์อิมเมจดิสก์](mount.md) |
 
 ## [คำสั่ง ESE](user-activity.md) { #ese-commands }
 

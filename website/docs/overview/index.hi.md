@@ -5,9 +5,7 @@ Juntei memory-safe Rust में लिखा गया एक Windows फ़�
 जबकि Juntei स्थायी file-system, registry, निष्पादन, उपयोगकर्ता-गतिविधि, resource-उपयोग
 और security-product आर्टिफ़ैक्ट को पार्स करता है।
 
-वही binary Windows, macOS और Linux पर चलता है। यह तब उपयोगी है जब किसी विश्लेषक को KAPE,
-Velociraptor, disk-image या कोई अन्य offline collection मिलता है और वह हर आर्टिफ़ैक्ट के लिए अलग प्रोग्राम
-के बजाय एक सुसंगत interface चाहता है।
+एक ही binary Windows, macOS और Linux पर चलता है। विश्लेषक हर artifact के लिए अलग प्रोग्राम के बजाय एक समान इंटरफ़ेस से एकत्र किए गए Windows evidence और disk images की जाँच कर सकते हैं।
 
 ## डिज़ाइन लक्ष्य { #design-goals }
 

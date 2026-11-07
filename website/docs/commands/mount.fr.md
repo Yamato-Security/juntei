@@ -1,10 +1,6 @@
 # Monter des images disque { #mounting-disk-images }
 
-`juntei mount` rend les fichiers contenus dans une image disque VHDX lisibles dans un répertoire, en lecture
-seule, pendant toute son exécution. Les collectes `--vhdx` de KAPE et les disques Hyper-V peuvent alors être
-analysés par n'importe quel outil, comme Hayabusa ou les propres commandes de Juntei, sans rien extraire, sans
-root et sans que le système d'exploitation prenne en charge VHDX ou NTFS. La commande utilise FUSE et
-fonctionne sous Linux. Le lecteur et la bibliothèque de montage sont maintenus dans [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+`juntei mount` rend les fichiers d'une image disque VHDX accessibles en lecture seule dans un répertoire pendant son exécution. Hayabusa, Juntei et d'autres outils peuvent les analyser sans extraction ni droits root. La fonction utilise FUSE et fonctionne sous Linux. Le lecteur et la bibliothèque de montage sont maintenus dans [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
@@ -22,9 +18,7 @@ Appuyez sur Ctrl+C dans le premier terminal pour démonter, ou exécutez `fuserm
 
 ## Ce que montre le montage { #what-the-mount-shows }
 
-- Les fichiers du volume NTFS au point de montage : pour une collecte KAPE, le dossier `C` qui contient les
-  fichiers collectés, le dossier `LongFileNames` de KAPE et les fichiers de métadonnées propres au volume, comme
-  la `$MFT`. Une image comportant plusieurs volumes NTFS les présente sous les noms `Volume1`, `Volume2`, etc.
+- Les fichiers du volume NTFS apparaissent au point de montage. Une image collectée peut contenir des répertoires tels que `C` et `LongFileNames`, ainsi que des métadonnées du volume comme `$MFT`. Plusieurs volumes NTFS apparaissent sous `Volume1`, `Volume2`, etc.
 - Chaque fichier est en lecture seule et appartient au propriétaire du point de montage. Les horodatages des
   fichiers sont les horodatages NTFS `$STANDARD_INFORMATION`.
 - Les noms sont listés tels que NTFS les stocke et sont recherchés à l'identique. Les noms courts DOS 8.3 et les
@@ -34,10 +28,7 @@ Appuyez sur Ctrl+C dans le premier terminal pour démonter, ou exécutez `fuserm
 
 ## Les preuves ne sont pas modifiées { #the-evidence-is-not-changed }
 
-L'image est ouverte en lecture seule et le montage refuse les écritures. Un VHDX qui n'a pas été fermé
-proprement est lu en appliquant en mémoire son journal en attente, sans jamais rien réécrire dans l'image. KAPE
-écrit ses fichiers VHDX avec DiscUtils, qui laisse le secteur de démarrage NTFS sans son instruction de saut ni
-sa signature `55 AA` ; Juntei lit ces volumes tels quels.
+L'image est ouverte en lecture seule et le montage refuse les écritures. Pour un VHDX mal fermé, le journal en attente est appliqué en mémoire, sans jamais être réécrit dans l'image. Certains composants DiscUtils laissent à zéro l'instruction de saut et la signature `55 AA` du secteur de démarrage NTFS ; Juntei lit ces volumes tels quels.
 
 ## Utilisation { #usage }
 
@@ -77,9 +68,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - Dans le manifeste, `EvidenceDirectory` est le répertoire indiqué et le champ `Image` de chaque système nomme
   son image. `EvidenceRoot` et les commandes des parseurs utilisent le dossier de montage
   (`./host1-triage/C`).
-- KAPE stocke les fichiers qu'il copie depuis les clichés instantanés de volume (Volume Shadow Copies) dans des
-  dossiers tels que `VSS32`. Chacun d'eux est découvert et analysé comme un système supplémentaire
-  (`HOST1_2`, …).
+- Si l'image contient des fichiers issus de Volume Shadow Copies dans des dossiers comme `VSS32`, chacun est détecté et analysé comme un autre système (`HOST1_2`, …).
 - Une image qui ne peut pas être montée est signalée ; les autres sont tout de même analysées, et l'exécution se
   termine avec le code de sortie 1.
 

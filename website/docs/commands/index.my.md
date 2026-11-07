@@ -17,7 +17,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | ညွှန်ကြားချက် | Input | အသေးစိတ် လမ်းညွှန် |
 |---|---|---|
-| `mount` | VHDX disk image (KAPE `--vhdx`, Hyper-V) | [Disk image များကို mount လုပ်ခြင်း](mount.md) |
+| `mount` | VHDX disk image | [Disk image များကို mount လုပ်ခြင်း](mount.md) |
 
 ## [ESE ညွှန်ကြားချက်များ](user-activity.md) { #ese-commands }
 

@@ -17,7 +17,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | 命令 | 輸入 | 詳細指南 |
 |---|---|---|
-| `mount` | VHDX 磁碟映像檔（KAPE `--vhdx`、Hyper-V） | [掛載磁碟映像](mount.md) |
+| `mount` | VHDX 磁碟映像檔 | [掛載磁碟映像](mount.md) |
 
 ## [ESE 命令](user-activity.md) { #ese-commands }
 

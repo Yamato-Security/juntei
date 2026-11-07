@@ -10,7 +10,7 @@
 | Directory indexes `$I30` | `parse-ntfs i30` | Files in a directory; names, times, and sizes of possible deleted or renamed files left in index slack | Slack is partial and says nothing about when an entry was removed |
 | NTFS boot sector `$Boot` | `parse-ntfs boot` | The volume serial number LNK, Jump Lists and Prefetch record; geometry and `$MFT` location; boot code hash to compare across hosts | Serial numbers can be changed or repeated; a differing boot code is a lead, not proof of a bootkit |
 | NTFS security descriptors `$Secure:$SDS` | `parse-ntfs secure-sds` | Owners and ACLs of files, by the `$MFT`'s `SID`; NULL DACLs and permissive ACLs | Owners can be changed; ACLs say who may access, not who did |
-| VHDX disk images (KAPE `--vhdx`, Hyper-V) | `mount`, `auto-parse --vhdx` | The files of their NTFS volumes, read in place, read-only, by Juntei or other tools | Needs FUSE (Linux only); alternate data streams are not shown |
+| VHDX disk images | `mount`, `auto-parse --vhdx` | The files of their NTFS volumes, read in place, read-only, by Juntei or other tools | Needs FUSE (Linux only); alternate data streams are not shown |
 | SRUM | `parse-ese srum` | Per-app/user network and resource use | Usually aggregated; not packet or destination-level proof |
 | User Access Logging (UAL) | `parse-ese ual` | Which client addresses and accounts used a Windows Server's roles (file shares, Active Directory, DHCP, IIS), and on which days | Requests are counted per day, not logged one by one; the address can be a NAT or proxy; a dirty `Current.mdb` misses its newest changes |
 | LNK shortcuts | `parse-file lnk` | Opened targets, arguments, volumes, shares, source machine | A shortcut can be created without the target running |

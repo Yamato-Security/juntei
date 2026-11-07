@@ -23,9 +23,7 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX disk image များ { #vhdx-disk-images }
 
-`--vhdx` ဖြင့် `auto-parse` သည် KAPE ၏ `--vhdx` collection များကဲ့သို့ အထောက်အထား ဖိုင်တွဲရှိ VHDX disk image
-တိုင်းအတွင်းရှိ စနစ်များကို parse လုပ်ပါသည်။ Image တစ်ခုစီကို parse လုပ်နေစဉ် FUSE ဖြင့် read-only အဖြစ် mount
-လုပ်ထားသောကြောင့် မည်သည့်အရာကိုမျှ ထုတ်ယူခြင်း မရှိပါ။ [Disk image များကို mount လုပ်ခြင်း](mount.md) ကို ကြည့်ပါ။
+`--vhdx` ဖြင့် `auto-parse` သည် အထောက်အထား directory ရှိ VHDX disk image တစ်ခုစီအတွင်းမှ system များကို parse လုပ်သည်။ Parsing လုပ်နေစဉ် image ကို FUSE ဖြင့် read-only mount လုပ်သဖြင့် ဖိုင်များကို ထုတ်ယူခြင်းမရှိပါ။ [Disk image များကို mount လုပ်ခြင်း](mount.md) ကို ကြည့်ပါ။
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed

@@ -17,7 +17,7 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 
 | Befehl | Eingabe | Ausführlicher Leitfaden |
 |---|---|---|
-| `mount` | VHDX-Disk-Image (KAPE `--vhdx`, Hyper-V) | [Disk-Images einbinden](mount.md) |
+| `mount` | VHDX-Disk-Image | [Disk-Images einbinden](mount.md) |
 
 ## [ESE-Befehle](user-activity.md) { #ese-commands }
 

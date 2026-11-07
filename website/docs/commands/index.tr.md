@@ -17,7 +17,7 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 
 | Komut | Girdi | Ayrıntılı kılavuz |
 |---|---|---|
-| `mount` | VHDX disk imajı (KAPE `--vhdx`, Hyper-V) | [Disk İmajlarını Bağlama](mount.md) |
+| `mount` | VHDX disk imajı | [Disk İmajlarını Bağlama](mount.md) |
 
 ## [ESE Komutları](user-activity.md) { #ese-commands }
 

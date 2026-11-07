@@ -23,9 +23,7 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## Imagens de disco VHDX { #vhdx-disk-images }
 
-Com `--vhdx`, o `auto-parse` analisa os sistemas contidos em cada imagem de disco VHDX do diretório de
-evidências, como as coletas `--vhdx` do KAPE. Cada imagem é montada somente leitura com FUSE enquanto é
-analisada, portanto nada é extraído. Consulte [Montar imagens de disco](mount.md).
+Com `--vhdx`, `auto-parse` analisa os sistemas em cada imagem de disco VHDX do diretório de evidências. Cada imagem é montada somente para leitura com FUSE durante a análise, sem extrair arquivos. Consulte [Montar imagens de disco](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed

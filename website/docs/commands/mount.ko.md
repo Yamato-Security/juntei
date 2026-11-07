@@ -1,9 +1,6 @@
 # 디스크 이미지 마운트 { #mounting-disk-images }
 
-`juntei mount`는 실행되는 동안 VHDX 디스크 이미지 안의 파일을 디렉터리에서 읽기 전용으로 읽을 수 있게
-합니다. 이를 통해 KAPE의 `--vhdx` 수집물과 Hyper-V 디스크를 Hayabusa나 Juntei 자체 명령어 같은 어떤
-도구로든 스캔할 수 있으며, 아무것도 추출할 필요가 없고, root 권한도 필요 없으며, 운영 체제가 VHDX나 NTFS를
-지원하지 않아도 됩니다. FUSE를 사용하며 Linux에서 동작합니다. 리더와 마운트 라이브러리는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)에서 관리합니다.
+`juntei mount`는 실행 중 VHDX 디스크 이미지 내부 파일을 디렉터리에서 읽기 전용으로 제공합니다. Hayabusa와 Juntei 같은 도구로 파일 추출이나 root 권한 없이 스캔할 수 있습니다. FUSE를 사용하며 Linux에서 작동합니다. 리더와 마운트 라이브러리는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)에서 관리합니다.
 
 ```bash
 mkdir /mnt/host1
@@ -21,9 +18,7 @@ juntei auto-parse -d /mnt/host1 -o host1-juntei
 
 ## 마운트에 표시되는 내용 { #what-the-mount-shows }
 
-- 마운트 지점에는 NTFS 볼륨의 파일이 표시됩니다. KAPE 수집물의 경우 수집된 파일이 들어 있는 `C` 폴더,
-  KAPE의 `LongFileNames` 폴더, 그리고 `$MFT` 같은 볼륨 자체의 메타데이터 파일입니다. NTFS 볼륨이 여러 개인
-  이미지는 각 볼륨을 `Volume1`, `Volume2` 등으로 표시합니다.
+- 마운트 지점에 NTFS 볼륨 파일이 표시됩니다. 수집된 이미지에는 `C`, `LongFileNames` 같은 디렉터리와 `$MFT` 같은 볼륨 메타데이터가 포함될 수 있습니다. 여러 NTFS 볼륨은 `Volume1`, `Volume2` 등으로 표시됩니다.
 - 모든 파일은 읽기 전용이며 마운트 지점의 소유자에게 속합니다. 파일 시간은 NTFS
   `$STANDARD_INFORMATION` 시간입니다.
 - 이름은 NTFS에 저장된 그대로 나열되며, 정확히 일치하는 이름으로 조회됩니다. DOS 8.3 이름과 대체 데이터
@@ -32,10 +27,7 @@ juntei auto-parse -d /mnt/host1 -o host1-juntei
 
 ## 증거는 변경되지 않음 { #the-evidence-is-not-changed }
 
-이미지는 읽기 전용으로 열리며, 마운트는 쓰기를 거부합니다. 정상적으로 닫히지 않은 VHDX는 보류 중인 로그를
-메모리에서 적용한 상태로 읽히며, 이미지에 다시 기록되는 일은 없습니다. KAPE는 VHDX 파일을 DiscUtils로
-기록하는데, DiscUtils가 기록한 NTFS 부트 섹터에는 점프 명령어와 `55 AA` 시그니처가 없습니다. Juntei는 이러한
-볼륨을 있는 그대로 읽습니다.
+이미지는 읽기 전용으로 열리며 마운트는 쓰기를 거부합니다. 정상적으로 닫히지 않은 VHDX의 보류 중인 로그는 메모리에서 적용되고 이미지에 기록되지 않습니다. 일부 DiscUtils 기록기는 NTFS 부트 섹터의 점프 명령과 `55 AA` 서명을 0으로 남깁니다. Juntei는 이러한 볼륨을 그대로 읽습니다.
 
 ## 사용법 { #usage }
 
@@ -74,8 +66,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
   `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
 - 매니페스트에서 `EvidenceDirectory`는 지정된 디렉터리이며, 각 시스템의 `Image`는 해당 시스템의 이미지를
   나타냅니다. `EvidenceRoot`와 파서 명령어는 마운트 폴더(`./host1-triage/C`)를 사용합니다.
-- KAPE는 Volume Shadow Copies에서 복사한 파일을 `VSS32` 같은 폴더에 저장합니다. 이러한 폴더도 각각 발견되어
-  별도의 시스템(`HOST1_2`, …)으로 파싱됩니다.
+- 이미지에 Volume Shadow Copies의 파일이 `VSS32` 같은 폴더에 들어 있으면 각 폴더를 별도 시스템 (`HOST1_2`, …)으로 찾아 파싱합니다.
 - 마운트할 수 없는 이미지는 보고됩니다. 나머지 이미지는 계속 파싱되며, 실행은 종료 상태 1로 끝납니다.
 
 NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`는 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.

@@ -33,7 +33,7 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 個別に解析する場合は、`parse-ese`、`parse-file`、`parse-ntfs`、`parse-registry` を使用します。
 例: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`。
 
-`juntei mount <IMAGE> <MOUNTPOINT>` は、KAPE の `--vhdx` 出力などの VHDX ディスクイメージを読み取り専用で
+`juntei mount <IMAGE> <MOUNTPOINT>` は、VHDX ディスクイメージを読み取り専用で
 マウントし、Hayabusa などの他のツールから読めるようにします（FUSE、Linux のみ）。`auto-parse` に `--vhdx`
 を付けると、ディレクトリ内のすべての VHDX イメージの中にあるシステムを解析します。VHDX リーダーとマウントライブラリは
 [Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) で管理しています。

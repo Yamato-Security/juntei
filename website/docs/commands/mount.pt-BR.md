@@ -1,9 +1,6 @@
 # Montar imagens de disco { #mounting-disk-images }
 
-O `juntei mount` torna os arquivos de uma imagem de disco VHDX legíveis em um diretório, somente leitura,
-enquanto estiver em execução. Assim, as coletas `--vhdx` do KAPE e os discos do Hyper-V podem ser examinados
-por qualquer ferramenta, como o Hayabusa ou os próprios comandos do Juntei, sem extrair nada, sem root e sem que
-o sistema operacional ofereça suporte a VHDX ou NTFS. Ele usa FUSE e funciona no Linux. O leitor e a biblioteca de montagem são mantidos em [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+`juntei mount` disponibiliza os arquivos de uma imagem de disco VHDX em um diretório, somente para leitura, durante sua execução. Ferramentas como Hayabusa e Juntei podem analisá-los sem extração nem privilégios de root. Usa FUSE e funciona no Linux. O leitor e a biblioteca de montagem são mantidos em [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
@@ -21,9 +18,7 @@ Pressione Ctrl+C no primeiro terminal para desmontar ou execute `fusermount3 -u 
 
 ## O que a montagem mostra { #what-the-mount-shows }
 
-- Os arquivos do volume NTFS no ponto de montagem: em uma coleta do KAPE, a pasta `C` que contém os arquivos
-  coletados, a pasta `LongFileNames` do KAPE e os próprios arquivos de metadados do volume, como o `$MFT`. Uma
-  imagem com vários volumes NTFS os mostra como `Volume1`, `Volume2` e assim por diante.
+- Os arquivos do volume NTFS aparecem no ponto de montagem. Uma imagem coletada pode conter diretórios como `C` e `LongFileNames`, além de metadados do volume como `$MFT`. Vários volumes NTFS aparecem como `Volume1`, `Volume2` etc.
 - Todo arquivo é somente leitura e pertence ao proprietário do ponto de montagem. Os carimbos de data/hora dos
   arquivos são os de `$STANDARD_INFORMATION` do NTFS.
 - Os nomes são listados como o NTFS os armazena e são procurados de forma exata. Nomes DOS 8.3 e fluxos de dados
@@ -32,10 +27,7 @@ Pressione Ctrl+C no primeiro terminal para desmontar ou execute `fusermount3 -u 
 
 ## As evidências não são alteradas { #the-evidence-is-not-changed }
 
-A imagem é aberta somente para leitura e a montagem recusa gravações. Um VHDX que não foi fechado corretamente é
-lido com seu log pendente aplicado na memória, sem que nada jamais seja gravado de volta. O KAPE grava seus
-arquivos VHDX com o DiscUtils, que deixa o setor de inicialização NTFS sem a instrução de salto e sem a
-assinatura `55 AA`; o Juntei lê esses volumes como estão.
+A imagem é aberta somente para leitura e a montagem recusa gravações. Em um VHDX que não foi fechado corretamente, o log pendente é aplicado na memória, sem gravá-lo na imagem. Alguns componentes DiscUtils deixam zeradas a instrução de salto e a assinatura `55 AA` do setor de inicialização NTFS; Juntei lê esses volumes como estão.
 
 ## Uso { #usage }
 
@@ -74,8 +66,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
   `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
 - No manifesto, `EvidenceDirectory` é o diretório informado e o campo `Image` de cada sistema indica sua imagem.
   O `EvidenceRoot` e os comandos dos analisadores usam a pasta de montagem (`./host1-triage/C`).
-- O KAPE armazena os arquivos que copia das Cópias de Sombra de Volume (Volume Shadow Copies) em pastas como
-  `VSS32`. Cada uma delas é encontrada e analisada como mais um sistema (`HOST1_2`, …).
+- Se a imagem contiver arquivos de Volume Shadow Copies em pastas como `VSS32`, cada pasta será detectada e analisada como outro sistema (`HOST1_2`, …).
 - Uma imagem que não pode ser montada é relatada; as demais ainda são analisadas, e a execução termina com
   status de saída 1.
 

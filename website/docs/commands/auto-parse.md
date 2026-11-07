@@ -23,9 +23,7 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX disk images
 
-With `--vhdx`, `auto-parse` parses the systems inside every VHDX disk image in the evidence
-directory, such as KAPE's `--vhdx` collections. Each image is mounted read-only with FUSE while it
-is parsed, so nothing is extracted. See [Mounting Disk Images](mount.md).
+With `--vhdx`, `auto-parse` parses the systems inside every VHDX disk image in the evidence directory. Each image is mounted read-only with FUSE while it is parsed, so nothing is extracted. See [Mounting Disk Images](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
