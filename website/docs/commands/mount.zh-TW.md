@@ -3,7 +3,7 @@
 `juntei mount` 會在執行期間，讓 VHDX 磁碟映像檔內的檔案能在某個目錄下以唯讀方式讀取。如此一來，
 KAPE 的 `--vhdx` 收集資料與 Hyper-V 磁碟就能以任何工具掃描，例如 Hayabusa 或 Juntei 本身的命令，
 完全不需要擷取任何內容、不需要 root 權限，作業系統也不必支援 VHDX 或 NTFS。它使用 FUSE，
-可在 Linux 上運作。
+可在 Linux 上運作。 讀取器與掛載函式庫由 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) 維護。
 
 ```bash
 mkdir /mnt/host1

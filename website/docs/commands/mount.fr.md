@@ -4,7 +4,7 @@
 seule, pendant toute son exécution. Les collectes `--vhdx` de KAPE et les disques Hyper-V peuvent alors être
 analysés par n'importe quel outil, comme Hayabusa ou les propres commandes de Juntei, sans rien extraire, sans
 root et sans que le système d'exploitation prenne en charge VHDX ou NTFS. La commande utilise FUSE et
-fonctionne sous Linux.
+fonctionne sous Linux. Le lecteur et la bibliothèque de montage sont maintenus dans [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1

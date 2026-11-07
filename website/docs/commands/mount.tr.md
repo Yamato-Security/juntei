@@ -4,7 +4,7 @@
 olarak okunabilir hâle getirir. Böylece KAPE'nin `--vhdx` koleksiyonları ve Hyper-V diskleri, Hayabusa
 veya Juntei'nin kendi komutları gibi herhangi bir araçla taranabilir; bunun için hiçbir şeyi dışarı
 çıkarmak, root yetkisi veya işletim sisteminin VHDX ya da NTFS desteklemesi gerekmez. FUSE kullanır
-ve Linux'ta çalışır.
+ve Linux'ta çalışır. Okuyucu ve bağlama kitaplığı [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) deposunda geliştirilmektedir.
 
 ```bash
 mkdir /mnt/host1

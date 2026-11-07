@@ -4,7 +4,7 @@
 solange der Befehl läuft. Die mit `--vhdx` erstellten Sammlungen von KAPE und Hyper-V-Datenträger lassen sich
 dann mit jedem beliebigen Werkzeug durchsuchen, etwa mit Hayabusa oder den eigenen Befehlen von Juntei, ohne
 etwas zu extrahieren, ohne Root-Rechte und ohne dass das Betriebssystem VHDX oder NTFS unterstützen muss. Der
-Befehl verwendet FUSE und funktioniert unter Linux.
+Befehl verwendet FUSE und funktioniert unter Linux. Reader und Mount-Bibliothek werden in [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) gepflegt.
 
 ```bash
 mkdir /mnt/host1

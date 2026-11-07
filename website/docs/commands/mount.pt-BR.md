@@ -3,7 +3,7 @@
 O `juntei mount` torna os arquivos de uma imagem de disco VHDX legíveis em um diretório, somente leitura,
 enquanto estiver em execução. Assim, as coletas `--vhdx` do KAPE e os discos do Hyper-V podem ser examinados
 por qualquer ferramenta, como o Hayabusa ou os próprios comandos do Juntei, sem extrair nada, sem root e sem que
-o sistema operacional ofereça suporte a VHDX ou NTFS. Ele usa FUSE e funciona no Linux.
+o sistema operacional ofereça suporte a VHDX ou NTFS. Ele usa FUSE e funciona no Linux. O leitor e a biblioteca de montagem são mantidos em [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1

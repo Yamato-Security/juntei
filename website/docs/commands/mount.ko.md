@@ -3,7 +3,7 @@
 `juntei mount`는 실행되는 동안 VHDX 디스크 이미지 안의 파일을 디렉터리에서 읽기 전용으로 읽을 수 있게
 합니다. 이를 통해 KAPE의 `--vhdx` 수집물과 Hyper-V 디스크를 Hayabusa나 Juntei 자체 명령어 같은 어떤
 도구로든 스캔할 수 있으며, 아무것도 추출할 필요가 없고, root 권한도 필요 없으며, 운영 체제가 VHDX나 NTFS를
-지원하지 않아도 됩니다. FUSE를 사용하며 Linux에서 동작합니다.
+지원하지 않아도 됩니다. FUSE를 사용하며 Linux에서 동작합니다. 리더와 마운트 라이브러리는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)에서 관리합니다.
 
 ```bash
 mkdir /mnt/host1

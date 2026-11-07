@@ -3,7 +3,7 @@
 يتيح `juntei mount` قراءة الملفات الموجودة داخل صورة قرص VHDX من مجلد، للقراءة فقط، طوال مدة
 تشغيله. ويمكن عندئذ فحص مجموعات KAPE المأخوذة بالخيار `--vhdx` وأقراص Hyper-V بأي أداة، مثل Hayabusa
 أو أوامر Juntei نفسها، دون استخراج أي شيء، ودون صلاحيات root، ودون الحاجة إلى أن يدعم نظام التشغيل VHDX
-أو NTFS. ويستخدم الأمر FUSE ويعمل على Linux.
+أو NTFS. ويستخدم الأمر FUSE ويعمل على Linux. تُصان مكتبة القراءة ومكتبة التركيب في [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1

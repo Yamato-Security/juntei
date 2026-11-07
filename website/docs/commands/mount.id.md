@@ -3,7 +3,7 @@
 `juntei mount` membuat berkas-berkas di dalam image disk VHDX dapat dibaca di sebuah direktori, dalam mode baca saja,
 selama perintah ini berjalan. Hasil pengumpulan `--vhdx` KAPE dan disk Hyper-V kemudian dapat dipindai oleh alat apa pun,
 seperti Hayabusa atau perintah Juntei sendiri, tanpa mengekstrak apa pun, tanpa root, dan tanpa memerlukan sistem operasi
-yang mendukung VHDX atau NTFS. Perintah ini menggunakan FUSE dan berjalan di Linux.
+yang mendukung VHDX atau NTFS. Perintah ini menggunakan FUSE dan berjalan di Linux. Pembaca dan pustaka mount dipelihara di [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
