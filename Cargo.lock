@@ -1000,11 +1000,13 @@ dependencies = [
  "serde_yaml_ng",
  "sha1",
  "sha2",
+ "sootmark-common",
  "tempfile",
  "termcolor",
  "winresource",
  "x509-cert",
  "ys-amcache-parser",
+ "ys-browser-parser",
  "ys-defender-history-parser",
  "ys-jump-lists-parser",
  "ys-lnk-parser",
@@ -2316,6 +2318,30 @@ source = "git+https://github.com/Yamato-Security/ys-amcache-parser#32964097ef2ae
 dependencies = [
  "winreg-core",
 ]
+
+[[package]]
+name = "ys-browser-parser"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-browser-parser#a8ed19d4a920fab19bf0fd96d1687dd4d5a39fcf"
+dependencies = [
+ "sootmark-common",
+ "ys-browser-parser-plist",
+ "ys-browser-parser-sqlite",
+ "ys-srum-parser-ese",
+]
+
+[[package]]
+name = "ys-browser-parser-plist"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-browser-parser#a8ed19d4a920fab19bf0fd96d1687dd4d5a39fcf"
+dependencies = [
+ "sootmark-common",
+]
+
+[[package]]
+name = "ys-browser-parser-sqlite"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-browser-parser#a8ed19d4a920fab19bf0fd96d1687dd4d5a39fcf"
 
 [[package]]
 name = "ys-defender-history-parser"

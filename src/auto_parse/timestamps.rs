@@ -54,6 +54,7 @@ fn timestamp_field(key: &str) -> bool {
                 | "FirstSeen"
                 | "LastSeenActive"
                 | "LastAccess"
+                | "Expires"
                 | "LastChange"
                 | "LastShutdown"
                 | "FirstUsed"
