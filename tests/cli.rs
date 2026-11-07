@@ -607,6 +607,34 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             .any(|pair| pair[0] == "-f" && pair[1] == mft.to_string_lossy().as_ref()),
         "{mft_task}"
     );
+    // Names in the slack of FILE records are recovered only with --mft-slack.
+    assert!(
+        !mft_task["Command"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|arg| arg == "--recover-slack"),
+        "{mft_task}"
+    );
+    let (mft_header, _) = csv_rows(&csv.join("HOST1/FileSystem/MFT.csv"));
+    assert!(!mft_header.iter().any(|column| column == "FromSlack"));
+    // Every parser that reads ANSI text gets the code page, here the default.
+    for artifact in ["lnk", "jump-lists", "opensavemru", "shellbags"] {
+        let task = manifest["Tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|task| task["Artifact"] == artifact)
+            .unwrap();
+        assert!(
+            task["Command"]
+                .as_array()
+                .unwrap()
+                .windows(2)
+                .any(|pair| pair[0] == "--code-page" && pair[1] == "1252"),
+            "{task}"
+        );
+    }
     let (_, prefetch) = csv_rows(&csv.join("HOST1/ProcessExecution/Prefetch.csv"));
     assert!(!prefetch.is_empty());
     assert!(
@@ -1394,6 +1422,97 @@ fn auto_parse_clobber_reruns_read_current_and_earlier_manifest_paths() {
                 .is_file()
         );
     }
+}
+
+#[test]
+fn auto_parse_passes_mft_slack_and_the_code_page_to_their_parsers() {
+    let evidence = auto_triage();
+    let output_root = tempfile::tempdir().unwrap();
+    let csv = output_root.path().join("csv");
+    let timeline = output_root.path().join("timeline.jsonl");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        csv.to_str().unwrap(),
+        "-j",
+        timeline.to_str().unwrap(),
+        "--mft-slack",
+        "--code-page",
+        "932",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let manifest: Value =
+        serde_json::from_reader(std::fs::File::open(csv.join("manifest.json")).unwrap()).unwrap();
+    let command = |artifact: &str| -> Vec<String> {
+        manifest["Tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|task| task["Artifact"] == artifact)
+            .unwrap()["Command"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|arg| arg.as_str().unwrap().to_string())
+            .collect()
+    };
+    let mft = command("mft");
+    assert!(mft.iter().any(|arg| arg == "--recover-slack"), "{mft:?}");
+    for artifact in ["lnk", "jump-lists", "opensavemru", "shellbags"] {
+        let args = command(artifact);
+        assert!(
+            args.windows(2)
+                .any(|pair| pair[0] == "--code-page" && pair[1] == "932"),
+            "{artifact}: {args:?}"
+        );
+    }
+    // MFT.csv gets the slack rows that parse-ntfs mft -x writes for the same $MFT.
+    let (header, rows) = csv_rows(&csv.join("HOST1/FileSystem/MFT.csv"));
+    assert_eq!(
+        header[header.len() - 4..],
+        [
+            "FromSlack",
+            "SlackRecord",
+            "SlackOffset",
+            "CopyOfEntryInUse"
+        ]
+    );
+    let slack = |rows: &[std::collections::HashMap<String, String>]| {
+        rows.iter().filter(|row| row["FromSlack"] == "True").count()
+    };
+    let direct = output_root.path().join("direct.csv");
+    let r = run(&[
+        "parse-ntfs",
+        "mft",
+        "-f",
+        repo("test_files/mft/MFT").to_str().unwrap(),
+        "-x",
+        "-a",
+        "-s",
+        "-o",
+        direct.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let (_, direct_rows) = csv_rows(&direct);
+    assert!(slack(&rows) > 0);
+    assert_eq!(slack(&rows), slack(&direct_rows));
+    // The JSONL timeline comes from separate JSONL runs of the parsers, with the same options.
+    let slack_names = std::fs::read_to_string(&timeline)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .filter(|record| record["Artifact"] == "mft")
+        .filter_map(|record| record["SlackFileNames"].as_array().map(Vec::len))
+        .sum::<usize>();
+    assert!(slack_names > 0);
 }
 
 #[test]

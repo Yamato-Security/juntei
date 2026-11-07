@@ -144,6 +144,8 @@ CSV 的 `$MFT` 輸出包含所有時間戳記與短檔名。登錄檔輸出包�
 `REG_QWORD` 值的 FILETIME 解讀。JSON 與 JSONL 的 SRUM 輸出包含值狀態
 中繼資料。Defender 檔案與常駐的 `$MFT` 資料流**不會**自動**擷取**。
 
+使用 `--mft-slack` 時，`$MFT` 輸出也會包含殘留在 FILE 記錄 slack 中的檔名，形式與 [`parse-ntfs mft -x`](../artifacts/mft.md) 相同：CSV 中標記為 `FromSlack` 的列，以及 JSON 與 JSONL 中的 `SlackFileNames`。`--code-page` 適用於 LNK 檔案、Jump List、ShellBags 與 OpenSaveMRU。
+
 未被收集的跡證屬於正常的 `skipped` 工作，而非失敗。
 
 ## 輸出配置 { #output-layout }
@@ -460,6 +462,7 @@ Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -467,7 +470,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu

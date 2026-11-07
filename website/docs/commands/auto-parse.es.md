@@ -161,6 +161,8 @@ Registro incluye los datos sin procesar y una interpretación FILETIME de los va
 La salida JSON y JSONL de SRUM incluye metadatos del estado de los valores. Los archivos de
 Defender y los flujos residentes de `$MFT` **no se extraen** automáticamente.
 
+Con `--mft-slack`, la salida de `$MFT` también incluye los nombres de archivo que quedan en el slack de los registros FILE, tal como los escribe [`parse-ntfs mft -x`](../artifacts/mft.md): filas marcadas con `FromSlack` en CSV y `SlackFileNames` en JSON y JSONL. `--code-page` se aplica a los archivos LNK, las Jump Lists, ShellBags y OpenSaveMRU.
+
 Un artefacto que no se recopiló es una tarea `skipped` normal, no un fallo.
 
 ## Estructura de la salida { #output-layout }
@@ -497,6 +499,7 @@ Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -504,7 +507,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu

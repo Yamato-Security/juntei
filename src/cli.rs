@@ -460,9 +460,13 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Performance"), short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 300)]
     pub threads: Option<usize>,
 
-    /// Windows code page for ANSI strings in LNK and Jump List files
+    /// Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU
     #[arg(help_heading = Some("Parsing"), long, value_name = "NUMBER", default_value_t = 1252, display_order = 400)]
     pub code_page: u16,
+
+    /// Recover the file names left in the slack of $MFT records
+    #[arg(help_heading = Some("Parsing"), long, display_order = 401)]
+    pub mft_slack: bool,
 
     #[clap(flatten)]
     pub common: CommonOptions,

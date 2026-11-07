@@ -1482,7 +1482,7 @@ fn build_tasks(
             "shellbags",
             &["parse-registry", "shell-bags"],
             OutputShape::File,
-            &[],
+            &["--code-page", &code_page],
         );
         add(
             "usb",
@@ -1554,11 +1554,13 @@ fn build_tasks(
         );
         drop(add);
 
-        let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
-            &["--all-times", "--short-names"]
-        } else {
-            &[]
-        };
+        let mut mft_extra: Vec<&str> = Vec::new();
+        if opts.output_type == AutoOutputType::Csv {
+            mft_extra.extend(["--all-times", "--short-names"]);
+        }
+        if opts.mft_slack {
+            mft_extra.push("--recover-slack");
+        }
         add_file_artifact_tasks(
             &mut tasks,
             host,
@@ -1570,7 +1572,7 @@ fn build_tasks(
             "mft",
             &["parse-ntfs", "mft"],
             inputs.mfts.clone(),
-            mft_extra,
+            &mft_extra,
         );
         add_file_artifact_tasks(
             &mut tasks,
