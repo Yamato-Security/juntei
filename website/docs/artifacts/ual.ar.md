@@ -45,6 +45,8 @@ C:\Windows\System32\LogFiles\Sum\Svc*.log, Svc.chk   (transaction logs)
 - لا يثبت غياب الصفوف أن أحدًا لم يتصل: إذ يمكن إيقاف UAL (عبر `Disable-Ual`، أو بإيقاف
   خدمة User Access Logging Service)، كما تفتقد قاعدة البيانات غير المتسقة أحدث تغييراتها.
 - من دون `SystemIdentity.mdb`، يأتي `RoleName` من الأسماء التي يعطيها Windows Server لأدواره.
+- لا يحدد `LastAccess` الصفري أو غير الصالح السنة. يستخدم Juntei بعد ذلك `InsertDate` صالحًا، ثم بيانات قاعدة السنة الوصفية؛ وإذا تعذر تحديد سنة صالحة، يحتفظ بـ `DayOfYear`.
+- تجمع إجماليات الملخص جميع صفوف المصادر. قد تتداخل بيانات `Current.mdb` وقواعد السنوات واللقطات؛ لذلك لا تمثل هذه الإجماليات أعداد اتصالات أو عمليات تسجيل دخول بعد إزالة التكرارات.
 
 ## التحليل باستخدام Juntei { #parse-with-juntei }
 
@@ -110,3 +112,10 @@ juntei parse-ese ual -d Sum -t jsonl \
 `LateralMovement/UAL-logs.txt`. ويتضمن الجدول الزمني المدمج `-j` كل صف، مع `Comp` ومعرّف
 `Artifact` ذي القيمة `ual`. ويحوّل `-Z` الحقول `InsertDate` و`LastAccess` و`FirstSeen` و`LastSeen`
 و`CreationTime` و`LastSeenActive` و`OS-LastBootUpTime`.
+
+## مزيد من التفاصيل { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)

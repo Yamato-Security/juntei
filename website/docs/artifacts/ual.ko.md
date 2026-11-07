@@ -47,6 +47,8 @@ C:\Windows\System32\LogFiles\Sum\Svc*.log, Svc.chk   (transaction logs)
   (`Disable-Ual` 또는 User Access Logging Service 중지), 더티 데이터베이스에는 최신 변경 사항이 빠져
   있습니다.
 - `SystemIdentity.mdb`가 없으면 `RoleName`에는 Windows Server가 역할에 부여한 이름이 사용됩니다.
+- `LastAccess`가 0이거나 유효하지 않으면 연도를 판단하는 데 사용하지 않습니다. Juntei는 유효한 `InsertDate`, 그다음 연간 데이터베이스의 메타데이터를 사용하며, 유효한 연도가 없으면 `DayOfYear`를 유지합니다.
+- 요약 합계는 모든 원본 행을 합산합니다. `Current.mdb`, 연간 데이터베이스 및 스냅샷이 겹칠 수 있으므로 중복을 제거한 연결 또는 로그온 횟수로 해석하면 안 됩니다.
 
 ## Juntei로 파싱하기 { #parse-with-juntei }
 
@@ -112,3 +114,10 @@ CSV는 테이블마다 하나의 파일을 생성하며, 테이블이 비어 있
 생성합니다. 결합된 `-j` 타임라인에는 모든 행이 `Comp`와 `Artifact` 식별자 `ual`과 함께 포함됩니다. `-Z`는
 `InsertDate`, `LastAccess`, `FirstSeen`, `LastSeen`, `CreationTime`, `LastSeenActive`, `OS-LastBootUpTime`을
 변환합니다.
+
+## 추가 정보 { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)

@@ -30,6 +30,8 @@ C:\Windows\System32\LogFiles\Sum\Svc*.log, Svc.chk   (transaction logs)
 - `Sum` ディレクトリのすべてのデータベースを解析してください。同じクライアントが `Current.mdb` と、その年の `{GUID}.mdb` の両方に行を持つことがあります。
 - 行がないことは、何も接続しなかったことの証明にはなりません。UAL は無効にできます (`Disable-Ual`、または User Access Logging Service の停止による)。また、ダーティなデータベースには最新の変更が含まれていません。
 - `SystemIdentity.mdb` がない場合、`RoleName` には Windows Server が各役割に付けている名前が使われます。
+- `LastAccess` がゼロまたは不正な場合、その値から年を判断しません。有効な `InsertDate`、次に年別データベースのメタデータを使用し、年が不明な場合は `DayOfYear` を保持します。
+- 集計値はすべての収集元の行を合算した値です。`Current.mdb`、年別データベース、スナップショットには重複があり得るため、重複を除いた接続数やログオン数として扱わないでください。
 
 ## Juntei で解析する { #parse-with-juntei }
 
@@ -90,3 +92,10 @@ CSV では、テーブルごとに 1 つのファイルが作成されます。�
 ## 自動解析 { #automatic-parsing }
 
 `auto-parse` は、テーブルを `LateralMovement` に `UAL-Clients.csv`、`UAL-RoleAccess.csv` などとして書き出し (`-t json` または `-t jsonl` の場合は 1 つの `UAL.json` または `UAL.jsonl` ファイル)、あわせて `LateralMovement/UAL-logs.txt` を作成します。結合された `-j` タイムラインにはすべての行が含まれ、`Comp` と `Artifact` 識別子 `ual` が付きます。`-Z` は `InsertDate`、`LastAccess`、`FirstSeen`、`LastSeen`、`CreationTime`、`LastSeenActive`、`OS-LastBootUpTime` を変換します。
+
+## さらに詳しい情報 { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)

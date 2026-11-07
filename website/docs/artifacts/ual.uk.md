@@ -45,6 +45,8 @@ C:\Windows\System32\LogFiles\Sum\Svc*.log, Svc.chk   (transaction logs)
 - Відсутність рядків не доводить, що ніхто не підключався: UAL можна вимкнути (`Disable-Ual` або зупинивши
   службу User Access Logging), а в «брудній» базі даних бракує її найновіших змін.
 - Без `SystemIdentity.mdb` значення `RoleName` береться з назв, які Windows Server дає своїм ролям.
+- Нульовий або некоректний `LastAccess` не визначає рік. Juntei тоді використовує коректний `InsertDate`, а далі метадані річної бази; без коректного року зберігається `DayOfYear`.
+- Підсумки додають усі вихідні рядки. `Current.mdb`, річні бази та знімки можуть містити ту саму активність; це не кількість з’єднань чи входів після усунення дублікатів.
 
 ## Аналіз за допомогою Juntei { #parse-with-juntei }
 
@@ -110,3 +112,10 @@ CSV створює по одному файлу на таблицю; якщо т
 хронологія `-j` містить кожен рядок, із `Comp` та ідентифікатором `Artifact` `ual`. `-Z` перетворює
 `InsertDate`, `LastAccess`, `FirstSeen`, `LastSeen`, `CreationTime`, `LastSeenActive` і
 `OS-LastBootUpTime`.
+
+## Додаткові відомості { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)

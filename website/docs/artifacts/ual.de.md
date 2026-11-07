@@ -47,6 +47,8 @@ einem Volume-Snapshot.
 - Fehlende Zeilen beweisen nicht, dass sich nichts verbunden hat: UAL kann abgeschaltet werden (`Disable-Ual` oder
   durch Beenden des User Access Logging Service), und einer „dirty“ Datenbank fehlen ihre neuesten Änderungen.
 - Ohne `SystemIdentity.mdb` stammt `RoleName` aus den Namen, die Windows Server seinen Rollen gibt.
+- Ein `LastAccess` mit dem Wert null oder einem ungültigen Zeitstempel bestimmt das Jahr nicht. Juntei verwendet dann einen gültigen `InsertDate`, danach die Metadaten der Jahresdatenbank; ohne gültiges Jahr bleibt `DayOfYear` erhalten.
+- Die Summen der Zusammenfassung addieren alle Quellzeilen. `Current.mdb`, Jahresdatenbanken und Snapshots können sich überschneiden; dies sind keine deduplizierten Verbindungs- oder Anmeldezahlen.
 
 ## Mit Juntei parsen { #parse-with-juntei }
 
@@ -112,3 +114,10 @@ einzige Datei `UAL.json` bzw. `UAL.jsonl` mit `-t json` bzw. `-t jsonl`), zusamm
 `LateralMovement/UAL-logs.txt`. Die kombinierte Zeitleiste `-j` enthält jede Zeile, mit `Comp` und dem
 `Artifact`-Bezeichner `ual`. `-Z` konvertiert `InsertDate`, `LastAccess`, `FirstSeen`, `LastSeen`,
 `CreationTime`, `LastSeenActive` und `OS-LastBootUpTime`.
+
+## Weitere Informationen { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)

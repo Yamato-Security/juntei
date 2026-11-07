@@ -4646,7 +4646,7 @@ fn ual_summary_on_the_terminal() {
         "Rows: 17\n",
         "  RoleAccess: 1\n  SystemIdentity: 1\n  ChainedDatabases: 2\n  Roles: 13\n",
         "Client addresses / accounts: 0 / 0\n",
-        "Role names: from SystemIdentity.mdb\n",
+        "Role names: from SystemIdentity.mdb where available; otherwise built in\n",
         "Problems: 0\n",
         "To save every row, add -o <DIR>",
     ] {
@@ -4839,7 +4839,7 @@ fn ual_role_names_without_system_identity() {
     assert_eq!(r.code, 0, "{}", r.stdout);
     assert!(
         r.stdout
-            .contains("Role names: built in (no SystemIdentity.mdb found)"),
+            .contains("Role names: built in (no readable SystemIdentity.mdb role names)"),
         "{}",
         r.stdout
     );
@@ -4865,6 +4865,13 @@ fn ual_role_names_without_system_identity() {
         r.stdout
     );
     assert!(r.stdout.contains("Rows: 1\n"), "{}", r.stdout);
+    assert!(
+        r.stdout
+            .contains("Role names: built in (no readable SystemIdentity.mdb role names)"),
+        "{}",
+        r.stdout
+    );
+    assert!(r.stdout.contains("Problems: 1\n"), "{}", r.stdout);
 }
 
 #[test]
@@ -4920,6 +4927,54 @@ fn ual_input_and_output_errors() {
         r.stdout
     );
     assert_eq!(std::fs::read(&identity).unwrap(), before);
+}
+
+#[test]
+fn ual_reports_damaged_identity_lookup_and_keeps_access_rows() {
+    let dir = tempfile::tempdir().unwrap();
+    copy_ual(dir.path());
+    let identity = dir.path().join("SystemIdentity.mdb");
+    let mut bytes = std::fs::read(&identity).unwrap();
+    let database = ese::Database::open(&bytes).unwrap();
+    let role_page = database.table("ROLE_IDS").unwrap().root_page as usize;
+    let page_size = database.header.page_size as usize;
+    // Keep the catalog and other tables intact, but make the role-name lookup unreadable.
+    let at = (role_page + 1) * page_size;
+    bytes[at..at + page_size].fill(0);
+    std::fs::write(&identity, bytes).unwrap();
+    let current = dir.path().join("Current.mdb");
+    let r = run(&["parse-ese", "ual", "-f", current.to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(r.stdout.contains("ROLE_IDS: page"), "{}", r.stdout);
+    assert!(r.stdout.contains("is blank"), "{}", r.stdout);
+    assert!(r.stdout.contains("Problems: 1\n"), "{}", r.stdout);
+    assert!(r.stdout.contains("Rows: 1\n"), "{}", r.stdout);
+    let r = run(&[
+        "parse-ese",
+        "ual",
+        "-f",
+        current.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.stderr);
+    let rows = jsonl_records(&r.stdout);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["RoleName"], "Print and Document Services");
+    assert!(r.stderr.contains("ROLE_IDS: page"), "{}", r.stderr);
+
+    // With directory input, the metadata file is also parsed directly. Report its damage
+    // once, and retain its other tables as well as Current.mdb's access row.
+    let r = run(&["parse-ese", "ual", "-d", dir.path().to_str().unwrap(), "-K"]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert_eq!(
+        r.stdout.matches("ROLE_IDS: page").count(),
+        1,
+        "{}",
+        r.stdout
+    );
+    assert!(r.stdout.contains("Rows: 4\n"), "{}", r.stdout);
+    assert!(r.stdout.contains("Problems: 1\n"), "{}", r.stdout);
 }
 
 #[test]

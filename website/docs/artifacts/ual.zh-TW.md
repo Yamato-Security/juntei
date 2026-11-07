@@ -44,6 +44,8 @@ C:\Windows\System32\LogFiles\Sum\Svc*.log, Svc.chk   (transaction logs)
 - 沒有資料列並不能證明沒有任何連線：UAL 可以被關閉（`Disable-Ual`，或停止 User Access Logging
   Service），而 dirty 資料庫會缺少最新的變更。
 - 若沒有 `SystemIdentity.mdb`，`RoleName` 會採用 Windows Server 為其角色所定的名稱。
+- 若 `LastAccess` 為零或無效，Juntei 不會以此判定年份，而會依序使用有效的 `InsertDate` 和年度資料庫中繼資料；若仍無法判定年份，則保留 `DayOfYear`。
+- 摘要總數會加總所有來源資料列。`Current.mdb`、年度資料庫及快照可能重疊，因此這些總數不是去除重複後的連線或登入次數。
 
 ## 使用 Juntei 剖析 { #parse-with-juntei }
 
@@ -109,3 +111,10 @@ CSV 會為每個資料表各建立一個檔案；資料表為空時，檔案只�
 `LateralMovement/UAL-logs.txt`。合併的 `-j` 時間軸包含每一筆資料列，並帶有 `Comp` 以及 `Artifact`
 識別碼 `ual`。`-Z` 會轉換 `InsertDate`、`LastAccess`、`FirstSeen`、`LastSeen`、
 `CreationTime`、`LastSeenActive` 與 `OS-LastBootUpTime`。
+
+## 延伸資訊 { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)

@@ -46,6 +46,8 @@ yılın verilerini tutan `{GUID}.mdb` dosyasını listeler (`CHAINED_DATABASES`)
 - Satırların bulunmaması hiçbir şeyin bağlanmadığını kanıtlamaz: UAL kapatılabilir (`Disable-Ual` ile veya
   User Access Logging Service durdurularak) ve kirli bir veritabanında en yeni değişiklikler eksiktir.
 - `SystemIdentity.mdb` olmadığında `RoleName`, Windows Server'ın rollerine verdiği adlardan gelir.
+- Sıfır veya geçersiz `LastAccess` yılı belirlemez. Juntei önce geçerli bir `InsertDate`, ardından yıllık veritabanının meta verilerini kullanır; geçerli yıl yoksa `DayOfYear` korunur.
+- Özet toplamları tüm kaynak satırlarını toplar. `Current.mdb`, yıllık veritabanları ve anlık görüntüler örtüşebilir; bunlar yinelenenleri çıkarılmış bağlantı veya oturum açma sayıları değildir.
 
 ## Juntei ile ayrıştırma { #parse-with-juntei }
 
@@ -111,3 +113,10 @@ satırları `SourceFile` (veritabanı) ve `Table` (tablonun veritabanındaki ad�
 `LateralMovement/UAL-logs.txt` ile birlikte yazar. Birleştirilmiş `-j` zaman çizelgesi her satırı
 `Comp` ve `Artifact` tanımlayıcısı `ual` ile birlikte içerir. `-Z`; `InsertDate`, `LastAccess`,
 `FirstSeen`, `LastSeen`, `CreationTime`, `LastSeenActive` ve `OS-LastBootUpTime` değerlerini dönüştürür.
+
+## Daha fazla ayrıntı { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)

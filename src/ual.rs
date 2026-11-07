@@ -161,6 +161,8 @@ struct Identity {
     roles: HashMap<String, String>,
     /// The year of each yearly database, by lower-case file name (`CHAINED_DATABASES`).
     years: HashMap<String, i32>,
+    /// Damage in lookup metadata must not disappear when only Current.mdb was requested.
+    problems: Vec<String>,
 }
 
 /// One row of a database table, as written.
@@ -288,8 +290,21 @@ pub fn run(opts: &UalOptions) -> i32 {
                 .map_err(|e| e.to_string())
                 .and_then(|data| read_identity(&data))
             {
-                Ok(identity) => Some(identity),
+                Ok(identity) => {
+                    // Directory input will report these problems when parsing this same database
+                    // below. A sidecar read for -f must report its diagnostics here instead.
+                    if !databases.contains(&path) {
+                        stats.problems += identity.problems.len();
+                        for problem in identity.problems.iter().take(MAX_PRINTED_PROBLEMS) {
+                            report_error(bar.as_ref(), &format!("{}: {problem}", path.display()));
+                        }
+                    }
+                    Some(identity)
+                }
                 Err(e) => {
+                    if !databases.contains(&path) {
+                        stats.problems += 1;
+                    }
                     report_error(
                         bar.as_ref(),
                         &format!(
@@ -313,7 +328,10 @@ pub fn run(opts: &UalOptions) -> i32 {
                 for problem in database.problems.iter().take(MAX_PRINTED_PROBLEMS) {
                     report_error(bar.as_ref(), &format!("{source}: {problem}"));
                 }
-                stats.add(&database, identity.is_some());
+                stats.add(
+                    &database,
+                    identity.as_ref().is_some_and(|i| !i.roles.is_empty()),
+                );
                 parsed.push((source, database));
             }
             Err(e) => {
@@ -437,18 +455,28 @@ fn identity_database(database: &Path) -> Option<PathBuf> {
 /// The role names and the years of the yearly databases in a `SystemIdentity.mdb`.
 fn read_identity(data: &[u8]) -> Result<Identity, String> {
     let db = Database::open(data).map_err(|e| e.to_string())?;
-    let mut identity = Identity::default();
-    if let (Some(table), Ok(rows)) = (db.table("ROLE_IDS"), db.rows("ROLE_IDS")) {
-        for row in rows {
+    let mut identity = Identity {
+        problems: db.problems.clone(),
+        ..Identity::default()
+    };
+    if let (Some(table), Ok(mut rows)) = (db.table("ROLE_IDS"), db.rows("ROLE_IDS")) {
+        for row in &mut rows {
             if let (Some(Value::Guid(g)), Some(Value::Text(name))) =
                 (row.get(table, "RoleGuid"), row.get(table, "RoleName"))
             {
                 identity.roles.insert(guid(g), name.clone());
             }
         }
+        identity.problems.extend(
+            rows.problems()
+                .iter()
+                .map(|problem| format!("ROLE_IDS: {problem}")),
+        );
     }
-    if let (Some(table), Ok(rows)) = (db.table("CHAINED_DATABASES"), db.rows("CHAINED_DATABASES")) {
-        for row in rows {
+    if let (Some(table), Ok(mut rows)) =
+        (db.table("CHAINED_DATABASES"), db.rows("CHAINED_DATABASES"))
+    {
+        for row in &mut rows {
             if let (Some(year), Some(Value::Text(file))) = (
                 row.get(table, "Year").and_then(Value::as_i64),
                 row.get(table, "FileName"),
@@ -457,6 +485,11 @@ fn read_identity(data: &[u8]) -> Result<Identity, String> {
                 identity.years.insert(file.to_ascii_lowercase(), year);
             }
         }
+        identity.problems.extend(
+            rows.problems()
+                .iter()
+                .map(|problem| format!("CHAINED_DATABASES: {problem}")),
+        );
     }
     Ok(identity)
 }
@@ -592,9 +625,12 @@ fn columns(
         }
     }
     if has_days {
-        // the counters are for the year of the client's last access (UTC), the year of the
-        // database for a client without one
-        let year = last_access.or(inserted).and_then(filetime_year).or(year);
+        // Prefer a valid access timestamp over database metadata. A present but unusable
+        // LastAccess must not hide a valid InsertDate.
+        let year = last_access
+            .and_then(filetime_year)
+            .or_else(|| inserted.and_then(filetime_year))
+            .or(year);
         out.push(("DailyAccesses".to_string(), daily_accesses(&days, year)));
     }
     out
@@ -913,7 +949,7 @@ fn print_summary(s: &Stats, no_color: bool) {
     if !roles.is_empty() {
         p(
             JunteiColor::Green.rdg(no_color),
-            "Client accesses by role:",
+            "Client accesses by role (sum of source rows; not deduplicated):",
             true,
         );
         for (role, accesses) in roles {
@@ -928,10 +964,10 @@ fn print_summary(s: &Stats, no_color: bool) {
         }
     }
     let names = match (s.with_identity, s.without_identity) {
-        (_, 0) => "from SystemIdentity.mdb".to_string(),
-        (0, _) => "built in (no SystemIdentity.mdb found)".to_string(),
+        (_, 0) => "from SystemIdentity.mdb where available; otherwise built in".to_string(),
+        (0, _) => "built in (no readable SystemIdentity.mdb role names)".to_string(),
         (_, n) => format!(
-            "from SystemIdentity.mdb ({} databases without one: built in)",
+            "from SystemIdentity.mdb where available ({} databases without readable role names: built in)",
             fmt_num(n)
         ),
     };
@@ -1051,6 +1087,7 @@ mod tests {
         let identity = Identity {
             roles: HashMap::from([(file_server.to_string(), "Files".to_string())]),
             years: HashMap::new(),
+            problems: Vec::new(),
         };
         assert_eq!(
             role_name(file_server, Some(&identity)).as_deref(),
@@ -1194,6 +1231,37 @@ mod tests {
     }
 
     #[test]
+    fn daily_accesses_use_insert_date_when_last_access_is_unusable() {
+        use ese::ColumnType::{DateTime, UnsignedShort};
+        let clients = table(
+            "CLIENTS",
+            &[
+                ("InsertDate", DateTime),
+                ("LastAccess", DateTime),
+                ("Day60", UnsignedShort),
+            ],
+        );
+        for last in [date(0), date(u64::MAX), Value::Null] {
+            let values = [
+                date(133_536_383_999_999_999), // 2024-02-28 UTC
+                last,
+                Value::U16(2),
+            ];
+            // Even without SystemIdentity.mdb, the valid InsertDate establishes the year.
+            for database_year in [None, Some(2023)] {
+                let row = columns_of(&clients, &values, None, database_year);
+                assert_eq!(row[1].1, Json::Null);
+                assert_eq!(
+                    row.last().unwrap().1,
+                    json!([{"Date": "2024-02-29", "Accesses": 2}]),
+                    "LastAccess {:?}, database year {database_year:?}",
+                    values[1]
+                );
+            }
+        }
+    }
+
+    #[test]
     fn identity_and_other_tables() {
         use ese::ColumnType::{Bit, DateTime, Guid, LongText, UnsignedByte, UnsignedShort};
         let identity = table(
@@ -1262,6 +1330,7 @@ mod tests {
                 "Custom Role".to_string(),
             )]),
             years: HashMap::new(),
+            problems: Vec::new(),
         };
         let mut role = [0u8; 16];
         role[15] = 1;

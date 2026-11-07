@@ -47,6 +47,8 @@ snapshot volume.
 - Tidak adanya baris tidak membuktikan bahwa tidak ada yang terhubung: UAL dapat dimatikan (`Disable-Ual`, atau dengan
   menghentikan User Access Logging Service), dan database yang dirty kehilangan perubahan terbarunya.
 - Tanpa `SystemIdentity.mdb`, `RoleName` berasal dari nama yang diberikan Windows Server untuk role-rolenya.
+- `LastAccess` bernilai nol atau tidak valid tidak menentukan tahun. Juntei kemudian memakai `InsertDate` yang valid, lalu metadata basis data tahunan; tanpa tahun yang valid, `DayOfYear` dipertahankan.
+- Total ringkasan menjumlahkan semua baris sumber. `Current.mdb`, basis data tahunan, dan snapshot dapat tumpang tindih; ini bukan jumlah koneksi atau logon yang telah dideduplikasi.
 
 ## Mengurai dengan Juntei { #parse-with-juntei }
 
@@ -112,3 +114,10 @@ seterusnya (satu berkas `UAL.json` atau `UAL.jsonl` dengan `-t json` atau `-t js
 `LateralMovement/UAL-logs.txt`. Timeline gabungan `-j` menyertakan setiap baris, dengan `Comp` dan
 pengenal `Artifact` `ual`. `-Z` mengonversi `InsertDate`, `LastAccess`, `FirstSeen`, `LastSeen`,
 `CreationTime`, `LastSeenActive`, dan `OS-LastBootUpTime`.
+
+## Detail lebih lanjut { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)

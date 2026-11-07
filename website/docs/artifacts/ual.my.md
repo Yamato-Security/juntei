@@ -48,6 +48,8 @@ database များကို ဖွင့်ထားဆဲ ဖြစ်သေ
 - Row များ မရှိခြင်းသည် မည်သူမျှ မချိတ်ဆက်ခဲ့ကြောင်း သက်သေမပြပါ။ UAL ကို ပိတ်ထားနိုင်ပြီး (`Disable-Ual` ဖြင့် သို့မဟုတ်
   User Access Logging Service ကို ရပ်တန့်ခြင်းဖြင့်) dirty database တွင် ၎င်း၏ နောက်ဆုံး ပြောင်းလဲမှုများ ပျောက်နေပါသည်။
 - `SystemIdentity.mdb` မရှိလျှင် `RoleName` သည် Windows Server က ၎င်း၏ role များကို ပေးထားသော အမည်များမှ လာပါသည်။
+- `LastAccess` သည် သုည သို့မဟုတ် မမှန်ကန်ပါက နှစ်ကို သတ်မှတ်ရန် မသုံးပါ။ Juntei သည် မှန်ကန်သော `InsertDate`၊ ထို့နောက် နှစ်အလိုက် database ၏ metadata ကို သုံးပြီး နှစ်ကို မသိနိုင်ပါက `DayOfYear` ကို ထိန်းသိမ်းထားသည်။
+- အနှစ်ချုပ် စုစုပေါင်းသည် source row အားလုံးကို ပေါင်းထားခြင်းဖြစ်သည်။ `Current.mdb`၊ နှစ်အလိုက် database များနှင့် snapshot များတွင် အချက်အလက် ထပ်နေနိုင်သဖြင့် ထပ်နေမှုဖယ်ရှားထားသော connection သို့မဟုတ် logon အရေအတွက်ဟု မယူဆသင့်ပါ။
 
 ## Juntei ဖြင့် ခွဲခြမ်းစိတ်ဖြာခြင်း { #parse-with-juntei }
 
@@ -113,3 +115,10 @@ CSV သည် table တစ်ခုလျှင် ဖိုင်တစ်ခ�
 `LateralMovement/UAL-logs.txt` နှင့်အတူ ရေးသားပါသည်။ ပေါင်းစပ်ထားသော `-j` timeline တွင် row တိုင်းကို `Comp` နှင့်
 `Artifact` identifier `ual` တို့နှင့်အတူ ထည့်သွင်းပါသည်။ `-Z` သည် `InsertDate`၊ `LastAccess`၊ `FirstSeen`၊ `LastSeen`၊
 `CreationTime`၊ `LastSeenActive` နှင့် `OS-LastBootUpTime` တို့ကို ပြောင်းလဲပေးပါသည်။
+
+## နောက်ထပ် အသေးစိတ်များ { #further-details }
+
+- [Microsoft — User Access Logging](https://learn.microsoft.com/en-us/windows-server/administration/user-access-logging/get-started-with-user-access-logging)
+- [Plaso — User Access Logging parser](https://github.com/log2timeline/plaso/blob/main/plaso/parsers/esedb_plugins/user_access_logging.py)
+- [Velociraptor — Windows.Forensics.UserAccessLogs](https://docs.velociraptor.app/artifact_references/pages/windows.forensics.useraccesslogs/)
+- [CrowdStrike — How to Leverage User Access Logging for Forensic Investigations](https://www.crowdstrike.com/en-us/blog/user-access-logging-ual-overview/)
