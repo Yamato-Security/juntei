@@ -3404,7 +3404,7 @@ fn usn_journal() -> Vec<u8> {
     j
 }
 
-/// A KAPE-like collection: the journal at `HOST1/C/$Extend/$J`, the volume's `$MFT` at `HOST1/C/$MFT`.
+/// A triage collection that keeps the volume's layout: the journal at `HOST1/C/$Extend/$J`, the volume's `$MFT` at `HOST1/C/$MFT`.
 fn usn_triage() -> tempfile::TempDir {
     let dir = tempfile::tempdir().unwrap();
     let extend = dir.path().join("HOST1/C/$Extend");
@@ -5115,16 +5115,16 @@ fn auto_parse_puts_ual_tables_in_lateral_movement_with_their_times_in_the_offset
 
 // --- mount and auto-parse --vhdx ------------------------------------------------------------------
 
-/// The sample KAPE VHDX (test_files/vhdx), decompressed to `path`.
+/// The sample VHDX (test_files/vhdx), decompressed to `path`.
 #[cfg(target_os = "linux")]
-fn kape_sample_vhdx(path: &Path) {
-    let gz = std::fs::File::open(repo("test_files/vhdx/kape-sample.vhdx.gz")).unwrap();
+fn sample_vhdx(path: &Path) {
+    let gz = std::fs::File::open(repo("test_files/vhdx/sample.vhdx.gz")).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
     std::io::copy(&mut flate2::read::GzDecoder::new(gz), &mut out).unwrap();
 }
 
 #[cfg(target_os = "linux")]
-fn add_unreadable_partition_to_kape_sample(path: &Path) {
+fn add_unreadable_partition_to_sample(path: &Path) {
     let mut bytes = std::fs::read(path).unwrap();
     // The first logical MiB is fully present. Resolve its BAT entry in this fixture only.
     let bat = u64::from_le_bytes(bytes[3 << 20..(3 << 20) + 8].try_into().unwrap());
@@ -5174,13 +5174,13 @@ fn mounted_from(name: &str) -> bool {
 
 #[cfg(target_os = "linux")]
 #[test]
-fn mount_serves_a_kape_vhdx_read_only_until_interrupted() {
+fn mount_serves_a_vhdx_read_only_until_interrupted() {
     if !fuse_available() {
         return;
     }
     let dir = tempfile::tempdir().unwrap();
     let image = dir.path().join("mount-test.vhdx");
-    kape_sample_vhdx(&image);
+    sample_vhdx(&image);
     let point = dir.path().join("mnt");
     std::fs::create_dir(&point).unwrap();
     let child = Command::new(env!("CARGO_BIN_EXE_juntei"))
@@ -5278,7 +5278,7 @@ fn mount_and_auto_parse_vhdx_need_fuse() {
 fn mount_input_errors() {
     let dir = tempfile::tempdir().unwrap();
     let image = dir.path().join("errors.vhdx");
-    kape_sample_vhdx(&image);
+    sample_vhdx(&image);
     let point = dir.path().join("mnt");
     std::fs::create_dir(&point).unwrap();
     let r = run(&["mount", "missing.vhdx", point.to_str().unwrap(), "-K"]);
@@ -5333,13 +5333,13 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     if !fuse_available() {
         return;
     }
-    kape_sample_vhdx(&evidence.path().join("kape-auto.vhdx"));
+    sample_vhdx(&evidence.path().join("first-auto.vhdx"));
     std::fs::create_dir(evidence.path().join("sub")).unwrap();
-    kape_sample_vhdx(&evidence.path().join("sub/second-auto.vhdx"));
+    sample_vhdx(&evidence.path().join("sub/second-auto.vhdx"));
     std::fs::write(evidence.path().join("broken-auto.vhdx"), b"not a VHDX").unwrap();
     let partial = evidence.path().join("partial-auto.vhdx");
-    kape_sample_vhdx(&partial);
-    add_unreadable_partition_to_kape_sample(&partial);
+    sample_vhdx(&partial);
+    add_unreadable_partition_to_sample(&partial);
     let root = tempfile::tempdir().unwrap();
     let output = root.path().join("results");
     let timeline = root.path().join("timeline.jsonl");
@@ -5363,10 +5363,10 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
         "VHDX images: 4\n",
         "Could not mount ./broken-auto.vhdx: ",
         "Could not read ./partial-auto.vhdx: volume 2 at byte 32768: ",
-        "  ./kape-auto.vhdx: mounted read-only (1 NTFS volume)\n",
+        "  ./first-auto.vhdx: mounted read-only (1 NTFS volume)\n",
         "  ./sub/second-auto.vhdx: mounted read-only (1 NTFS volume)\n",
         "Windows systems: 3\n",
-        "  kape-auto: ./kape-auto/C (./kape-auto.vhdx)\n",
+        "  first-auto: ./first-auto/C (./first-auto.vhdx)\n",
         "  sub_second-auto: ./sub_second-auto/C (./sub/second-auto.vhdx)\n",
         "Failed: 0\n",
     ] {
@@ -5378,12 +5378,12 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     assert_eq!(manifest["EvidenceDirectory"], evidence_name);
     let hosts = manifest["Hosts"].as_array().unwrap();
     assert_eq!(hosts.len(), 3);
-    assert_eq!(hosts[0]["Image"], "./kape-auto.vhdx");
-    assert_eq!(hosts[0]["EvidenceRoot"], "./kape-auto/C");
+    assert_eq!(hosts[0]["Image"], "./first-auto.vhdx");
+    assert_eq!(hosts[0]["EvidenceRoot"], "./first-auto/C");
     assert_eq!(hosts[1]["Image"], "./partial-auto.vhdx");
     assert_eq!(hosts[2]["Image"], "./sub/second-auto.vhdx");
     // the files inside were parsed
-    for host in ["kape-auto", "partial-auto", "sub_second-auto"] {
+    for host in ["first-auto", "partial-auto", "sub_second-auto"] {
         let (_, rows) = csv_rows(&output.join(host).join("ProcessExecution/Prefetch.csv"));
         assert_eq!(rows.len(), 1, "{host}");
         assert!(
@@ -5397,7 +5397,7 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     assert!(
         records
             .iter()
-            .any(|r| r["Artifact"] == "prefetch" && r["Comp"] == "kape-auto")
+            .any(|r| r["Artifact"] == "prefetch" && r["Comp"] == "first-auto")
     );
     // nothing names the mount points, and nothing stays mounted
     assert_no_absolute_paths(&output, &r.stdout, &[evidence.path(), root.path()]);
@@ -5405,7 +5405,7 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
         let text = String::from_utf8_lossy(&std::fs::read(&file).unwrap()).into_owned();
         assert!(!text.contains("juntei-vhdx-"), "{}", file.display());
     }
-    assert!(!mounted_from("kape-auto.vhdx"));
+    assert!(!mounted_from("first-auto.vhdx"));
     assert!(!mounted_from("second-auto.vhdx"));
     assert!(!mounted_from("partial-auto.vhdx"));
 }
@@ -5417,7 +5417,7 @@ fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
         return;
     }
     let evidence = tempfile::tempdir().unwrap();
-    kape_sample_vhdx(&evidence.path().join("single.vhdx"));
+    sample_vhdx(&evidence.path().join("single.vhdx"));
     let output_root = tempfile::tempdir().unwrap();
     let output = output_root.path().join("parsed");
     let result = Command::new(env!("CARGO_BIN_EXE_juntei"))

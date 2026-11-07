@@ -11,17 +11,17 @@
 # PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 # and limitations under the RPL.
 
-"""Make kape-sample.vhdx.gz: a small dynamic VHDX laid out like KAPE's --vhdx output.
+"""Make sample.vhdx.gz: a small dynamic VHDX laid out like the VHDX files of triage collectors.
 
 An MBR with one NTFS partition at sector 63 whose boot sector has its jump instruction and 55 AA
-signature zeroed, as .NET DiscUtils writes them for KAPE, holding a `C` folder with files from
+signature zeroed, as .NET DiscUtils writes them, holding a `C` folder with files from
 Juntei's own test data and files made to exercise the reader: a fragmented file, a sparse one, a
 compressed one, a resident one, an empty one and a non-ASCII name.
 
 Needs mkntfs and ntfs-3g (ntfs-3g mounts the volume to fill it; it must be setuid root or run as
 root). Run from the repository's root:
 
-    python3 test_files/vhdx/make_kape_sample.py
+    python3 test_files/vhdx/make_sample.py
 
 It prints the SHA-256 of every file, as the tests expect them.
 """
@@ -29,11 +29,11 @@ It prints the SHA-256 of every file, as the tests expect them.
 import gzip, hashlib, os, shutil, struct, subprocess, sys, tempfile, uuid, zlib
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(REPO, "test_files", "vhdx", "kape-sample.vhdx.gz")
+OUT = os.path.join(REPO, "test_files", "vhdx", "sample.vhdx.gz")
 SECTOR = 512
 MIB = 1 << 20
 DISK = 32 * MIB
-START = 63                       # the partition's first sector, as KAPE's
+START = 63                       # the partition's first sector, as DiscUtils puts it
 VOLUME = DISK - START * SECTOR - MIB
 BLOCK = MIB                      # the VHDX block size
 
@@ -174,7 +174,7 @@ def main():
         with open(volume, "wb") as f:
             f.truncate(VOLUME)
         run("mkntfs", "-F", "-Q", "-q", "-s", str(SECTOR), "-c", "4096", "-p", str(START),
-            "-H", "255", "-S", "63", "-L", "KAPE", volume)
+            "-H", "255", "-S", "63", "-L", "TEST", volume)
         mount = os.path.join(work, "mnt")
         os.makedirs(mount)
         run("ntfs-3g", "-o", "compression,big_writes", volume, mount)
@@ -184,7 +184,7 @@ def main():
             run("fusermount3", "-u", mount)
         with open(volume, "rb") as f:
             vol = bytearray(f.read())
-        # DiscUtils (KAPE) leaves the jump instruction and the signature zeroed
+        # DiscUtils leaves the jump instruction and the signature zeroed
         vol[0:3] = b"\0\0\0"
         vol[510:512] = b"\0\0"
         disk = bytearray(DISK)
