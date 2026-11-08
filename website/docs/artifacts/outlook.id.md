@@ -303,7 +303,7 @@ Setiap tabel diawali dengan field berikut:
 | `PropertyTag` | ID dan tipe properti, dalam bentuk `0x0037001F` (`PidTagSubject`, sebuah string). |
 | `PropertyName` | Untuk named property (ID mulai dari `0x8000`), property set dan namanya: `PSETID_Address:0x8083`, `PS_PUBLIC_STRINGS:Keywords`, atau GUID set tersebut jika bukan set yang umum dikenal. |
 | `Type` | Tipe properti: `PtypString`, `PtypInteger32`, `PtypTime`, `PtypBinary`, `PtypMultipleString`, …. |
-| `Value` | Nilainya: teks untuk string, ISO 8601 UTC untuk waktu (yang tidak dikonversi oleh `-Z`), heksadesimal untuk nilai biner (4.096 byte pertama, lalu `…(N bytes)`), nilai-nilai properti bernilai ganda sebagai daftar (dipisahkan `, ` dalam CSV), `(object)` untuk item tertanam atau data lampiran, dan byte dalam heksadesimal disertai catatan untuk nilai yang rusak atau bertipe yang tidak didekode. |
+| `Value` | Nilainya: teks untuk string, ISO 8601 UTC untuk waktu (yang tidak dikonversi oleh `-Z`), heksadesimal untuk nilai biner (4.096 byte pertama, lalu `…(N bytes)`), nilai-nilai properti bernilai ganda sebagai daftar (dipisahkan `, ` dalam CSV), `(object)` untuk item tertanam atau data lampiran, byte dalam heksadesimal disertai catatan untuk nilai bertipe yang tidak didekode, dan untuk nilai yang rusak, apa yang dapat dipulihkan darinya diikuti catatan beserta byte-nya dalam heksadesimal (hanya byte dan catatan bila tidak ada yang dapat dipulihkan). |
 
 ## Penguraian otomatis { #automatic-parsing }
 

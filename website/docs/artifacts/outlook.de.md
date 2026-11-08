@@ -302,7 +302,7 @@ Jede Tabelle beginnt mit diesen Feldern:
 | `PropertyTag` | ID und Typ der Eigenschaft, in der Form `0x0037001F` (`PidTagSubject`, eine Zeichenfolge). |
 | `PropertyName` | Bei einer benannten Eigenschaft (IDs ab `0x8000`) ihr Eigenschaftensatz und ihr Name: `PSETID_Address:0x8083`, `PS_PUBLIC_STRINGS:Keywords` oder die GUID des Eigenschaftensatzes, wenn es kein bekannter ist. |
 | `Type` | Der Eigenschaftstyp: `PtypString`, `PtypInteger32`, `PtypTime`, `PtypBinary`, `PtypMultipleString`, …. |
-| `Value` | Der Wert: Text bei Zeichenfolgen, ISO 8601 in UTC bei Zeiten (die `-Z` nicht konvertiert), hex bei Binärwerten (die ersten 4.096 Bytes, dann `…(N bytes)`), die Werte einer mehrwertigen Eigenschaft als Liste (in CSV durch `, ` getrennt), `(object)` bei einem eingebetteten Element oder den Daten eines Anhangs, und die Bytes in hex mit einem Hinweis bei einem beschädigten Wert oder einem Typ, der nicht dekodiert wird. |
+| `Value` | Der Wert: Text bei Zeichenfolgen, ISO 8601 in UTC bei Zeiten (die `-Z` nicht konvertiert), hex bei Binärwerten (die ersten 4.096 Bytes, dann `…(N bytes)`), die Werte einer mehrwertigen Eigenschaft als Liste (in CSV durch `, ` getrennt), `(object)` bei einem eingebetteten Element oder den Daten eines Anhangs, die Bytes in hex mit einem Hinweis bei einem Typ, der nicht dekodiert wird, und bei einem beschädigten Wert das, was sich davon wiederherstellen ließ, gefolgt von einem Hinweis mit den Bytes in hex (nur die Bytes und der Hinweis, wenn sich nichts wiederherstellen ließ). |
 
 ## Automatisches Parsen { #automatic-parsing }
 

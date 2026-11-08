@@ -299,7 +299,7 @@ Todas las tablas empiezan con estos campos:
 | `PropertyTag` | El identificador y el tipo de la propiedad, como `0x0037001F` (`PidTagSubject`, una cadena). |
 | `PropertyName` | Para una propiedad con nombre (identificadores a partir de `0x8000`), su conjunto de propiedades y su nombre: `PSETID_Address:0x8083`, `PS_PUBLIC_STRINGS:Keywords`, o el GUID del conjunto cuando no es uno conocido. |
 | `Type` | El tipo de propiedad: `PtypString`, `PtypInteger32`, `PtypTime`, `PtypBinary`, `PtypMultipleString`, …. |
-| `Value` | El valor: texto para las cadenas, ISO 8601 en UTC para las horas (que `-Z` no convierte), hexadecimal para los valores binarios (los primeros 4096 bytes y, después, `…(N bytes)`), los valores de una propiedad multivalor como una lista (separados por `, ` en CSV), `(object)` para un elemento incrustado o los datos de un adjunto, y los bytes en hexadecimal con una nota para un valor dañado o de un tipo que no se decodifica. |
+| `Value` | El valor: texto para las cadenas, ISO 8601 en UTC para las horas (que `-Z` no convierte), hexadecimal para los valores binarios (los primeros 4096 bytes y, después, `…(N bytes)`), los valores de una propiedad multivalor como una lista (separados por `, ` en CSV), `(object)` para un elemento incrustado o los datos de un adjunto, los bytes en hexadecimal con una nota para un valor de un tipo que no se decodifica y, para un valor dañado, lo que se pudo recuperar de él seguido de una nota con sus bytes en hexadecimal (solo los bytes y la nota si no se pudo recuperar nada). |
 
 ## Análisis automático { #automatic-parsing }
 

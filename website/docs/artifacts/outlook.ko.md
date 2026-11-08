@@ -292,7 +292,7 @@ CSV는 여덟 개의 파일을 생성하며, `--properties`를 사용하면 아�
 | `PropertyTag` | 속성의 ID와 유형. `0x0037001F` 형식입니다(`PidTagSubject`, 문자열). |
 | `PropertyName` | 명명된 속성(ID가 `0x8000` 이상)의 속성 집합과 이름: `PSETID_Address:0x8083`, `PS_PUBLIC_STRINGS:Keywords`, 또는 잘 알려진 집합이 아니면 집합의 GUID. |
 | `Type` | 속성 유형: `PtypString`, `PtypInteger32`, `PtypTime`, `PtypBinary`, `PtypMultipleString` 등. |
-| `Value` | 값: 문자열은 텍스트, 시각은 ISO 8601 UTC(`-Z`는 변환하지 않음), 이진 값은 16진수(처음 4,096바이트, 그 뒤에 `…(N bytes)`), 다중 값 속성은 값의 목록(CSV에서는 `, `로 구분), 포함된 항목이나 첨부 파일의 데이터는 `(object)`, 손상된 값이나 디코딩하지 않는 유형의 값은 설명이 붙은 16진수 바이트. |
+| `Value` | 값: 문자열은 텍스트, 시각은 ISO 8601 UTC(`-Z`는 변환하지 않음), 이진 값은 16진수(처음 4,096바이트, 그 뒤에 `…(N bytes)`), 다중 값 속성은 값의 목록(CSV에서는 `, `로 구분), 포함된 항목이나 첨부 파일의 데이터는 `(object)`, 디코딩하지 않는 유형의 값은 설명이 붙은 16진수 바이트, 손상된 값은 복구할 수 있었던 값 뒤에 16진수 바이트를 포함한 설명(아무것도 복구하지 못한 경우에는 바이트와 설명만). |
 
 ## 자동 분석 { #automatic-parsing }
 

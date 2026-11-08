@@ -302,7 +302,7 @@ Table တိုင်းသည် ဤ field များဖြင့် စတ�
 | `PropertyTag` | Property ၏ id နှင့် type၊ `0x0037001F` ပုံစံဖြင့် (`PidTagSubject`၊ string တစ်ခု)။ |
 | `PropertyName` | Named property (`0x8000` မှစသော id များ) အတွက် ၎င်း၏ property set နှင့် အမည်: `PSETID_Address:0x8083`၊ `PS_PUBLIC_STRINGS:Keywords` သို့မဟုတ် လူသိများသော set မဟုတ်လျှင် set ၏ GUID။ |
 | `Type` | Property type: `PtypString`၊ `PtypInteger32`၊ `PtypTime`၊ `PtypBinary`၊ `PtypMultipleString`၊ …။ |
-| `Value` | Value: string များအတွက် စာသား၊ အချိန်များအတွက် ISO 8601 UTC (`-Z` က ပြောင်းလဲခြင်း မပြုပါ)၊ binary value များအတွက် hex (ပထမ 4,096 byte၊ ထို့နောက် `…(N bytes)`)၊ multi-valued property ၏ value များကို စာရင်းအဖြစ် (CSV တွင် ၎င်းတို့ကြား `, `)၊ ထည့်သွင်းထားသော item သို့မဟုတ် ပူးတွဲဖိုင်၏ data အတွက် `(object)` နှင့် ပျက်စီးနေသော value သို့မဟုတ် decode မလုပ်သော type ၏ value အတွက် မှတ်ချက်တစ်ခုနှင့်အတူ byte များကို hex ဖြင့်။ |
+| `Value` | Value: string များအတွက် စာသား၊ အချိန်များအတွက် ISO 8601 UTC (`-Z` က ပြောင်းလဲခြင်း မပြုပါ)၊ binary value များအတွက် hex (ပထမ 4,096 byte၊ ထို့နောက် `…(N bytes)`)၊ multi-valued property ၏ value များကို စာရင်းအဖြစ် (CSV တွင် ၎င်းတို့ကြား `, `)၊ ထည့်သွင်းထားသော item သို့မဟုတ် ပူးတွဲဖိုင်၏ data အတွက် `(object)`၊ decode မလုပ်သော type ၏ value အတွက် မှတ်ချက်တစ်ခုနှင့်အတူ byte များကို hex ဖြင့် နှင့် ပျက်စီးနေသော value အတွက် ၎င်းမှ ပြန်လည်ရယူနိုင်ခဲ့သည့်အရာ၊ ထို့နောက် ၎င်း၏ byte များကို hex ဖြင့် ပါဝင်သော မှတ်ချက် (ဘာမျှ ပြန်လည်မရယူနိုင်ပါက byte များနှင့် မှတ်ချက်သာ)။ |
 
 ## အလိုအလျောက် ခွဲခြမ်းစိတ်ဖြာခြင်း { #automatic-parsing }
 

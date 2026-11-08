@@ -301,7 +301,7 @@ Every table starts with these fields:
 | `PropertyTag` | The property's id and type, as `0x0037001F` (`PidTagSubject`, a string). |
 | `PropertyName` | For a named property (ids from `0x8000`), its property set and name: `PSETID_Address:0x8083`, `PS_PUBLIC_STRINGS:Keywords`, or the set's GUID when it isn't a well-known one. |
 | `Type` | The property type: `PtypString`, `PtypInteger32`, `PtypTime`, `PtypBinary`, `PtypMultipleString`, …. |
-| `Value` | The value: text for strings, ISO 8601 UTC for times (which `-Z` does not convert), hex for binary values (the first 4,096 bytes, then `…(N bytes)`), the values of a multi-valued property as a list (a `, ` between them in CSV), `(object)` for an embedded item or an attachment's data, and the bytes in hex with a note for a value that is damaged or of a type that isn't decoded. |
+| `Value` | The value: text for strings, ISO 8601 UTC for times (which `-Z` does not convert), hex for binary values (the first 4,096 bytes, then `…(N bytes)`), the values of a multi-valued property as a list (a `, ` between them in CSV), `(object)` for an embedded item or an attachment's data, the bytes in hex with a note for a value of a type that isn't decoded, and, for a damaged value, what could be recovered of it followed by a note with its bytes in hex (only the bytes and the note when nothing could be recovered). |
 
 ## Automatic parsing
 

@@ -304,7 +304,7 @@ Her tablo şu alanlarla başlar:
 | `PropertyTag` | Özelliğin kimliği ve türü, `0x0037001F` biçiminde (`PidTagSubject`, bir dize). |
 | `PropertyName` | Adlandırılmış bir özellik için (`0x8000` ve üzerindeki kimlikler) özellik kümesi ve adı: `PSETID_Address:0x8083`, `PS_PUBLIC_STRINGS:Keywords` ya da iyi bilinen bir küme değilse kümenin GUID'si. |
 | `Type` | Özellik türü: `PtypString`, `PtypInteger32`, `PtypTime`, `PtypBinary`, `PtypMultipleString`, …. |
-| `Value` | Değer: dizeler için metin, zamanlar için ISO 8601 UTC (`-Z` bunları dönüştürmez), ikili değerler için onaltılık (ilk 4.096 bayt, ardından `…(N bytes)`), çok değerli bir özelliğin değerleri için bir liste (CSV'de aralarında `, ` bulunur), gömülü bir öğe veya bir ekin verisi için `(object)`, hasarlı ya da kodu çözülmeyen türde bir değer için ise bir notla birlikte onaltılık baytlar. |
+| `Value` | Değer: dizeler için metin, zamanlar için ISO 8601 UTC (`-Z` bunları dönüştürmez), ikili değerler için onaltılık (ilk 4.096 bayt, ardından `…(N bytes)`), çok değerli bir özelliğin değerleri için bir liste (CSV'de aralarında `, ` bulunur), gömülü bir öğe veya bir ekin verisi için `(object)`, kodu çözülmeyen türde bir değer için bir notla birlikte onaltılık baytlar, hasarlı bir değer için ise kurtarılabilen kısmı ve ardından onaltılık baytlarını içeren bir not (hiçbir şey kurtarılamadıysa yalnızca baytlar ve not). |
 
 ## Otomatik ayrıştırma { #automatic-parsing }
 

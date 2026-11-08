@@ -302,7 +302,7 @@ Chaque table commence par ces champs :
 | `PropertyTag` | L'identifiant et le type de la propriété, sous la forme `0x0037001F` (`PidTagSubject`, une chaîne). |
 | `PropertyName` | Pour une propriété nommée (identifiants à partir de `0x8000`), son jeu de propriétés et son nom : `PSETID_Address:0x8083`, `PS_PUBLIC_STRINGS:Keywords`, ou le GUID du jeu lorsqu'il n'est pas un jeu bien connu. |
 | `Type` | Le type de propriété : `PtypString`, `PtypInteger32`, `PtypTime`, `PtypBinary`, `PtypMultipleString`, …. |
-| `Value` | La valeur : du texte pour les chaînes, ISO 8601 en UTC pour les heures (que `-Z` ne convertit pas), de l'hexadécimal pour les valeurs binaires (les 4 096 premiers octets, puis `…(N bytes)`), les valeurs d'une propriété à valeurs multiples sous forme de liste (séparées par `, ` en CSV), `(object)` pour un élément incorporé ou les données d'une pièce jointe, et les octets en hexadécimal accompagnés d'une note pour une valeur endommagée ou d'un type qui n'est pas décodé. |
+| `Value` | La valeur : du texte pour les chaînes, ISO 8601 en UTC pour les heures (que `-Z` ne convertit pas), de l'hexadécimal pour les valeurs binaires (les 4 096 premiers octets, puis `…(N bytes)`), les valeurs d'une propriété à valeurs multiples sous forme de liste (séparées par `, ` en CSV), `(object)` pour un élément incorporé ou les données d'une pièce jointe, les octets en hexadécimal accompagnés d'une note pour une valeur d'un type qui n'est pas décodé, et, pour une valeur endommagée, ce qui a pu en être récupéré, suivi d'une note avec ses octets en hexadécimal (seulement les octets et la note si rien n'a pu être récupéré). |
 
 ## Analyse automatique { #automatic-parsing }
 

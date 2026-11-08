@@ -1441,7 +1441,8 @@ fn property_name(name: &PropertyName) -> String {
 }
 
 /// A property's value: strings as text, times in UTC, binary values in hex (capped), the values
-/// of a multi-valued property as a list, and a damaged or undecoded value's bytes with a note.
+/// of a multi-valued property as a list, a damaged value as what could be recovered of it with a
+/// note and its bytes, and an undecoded value's bytes with a note.
 fn property_value(value: &Value) -> Json {
     match value {
         Value::Null => Json::Null,
@@ -1466,8 +1467,19 @@ fn property_value(value: &Value) -> Json {
         Value::Object => json!("(object)"),
         Value::Multiple(values) => Json::Array(values.iter().map(property_value).collect()),
         Value::Unsupported(raw) => json!(format!("{} (unsupported type)", hex_capped(raw))),
-        Value::Damaged { raw, reason, .. } => {
-            json!(format!("{} (damaged: {reason})", hex_capped(raw)))
+        Value::Damaged {
+            recovered,
+            raw,
+            reason,
+        } => {
+            let bytes = hex_capped(raw);
+            match recovered.as_deref().map(property_value) {
+                None | Some(Json::Null) => json!(format!("{bytes} (damaged: {reason})")),
+                Some(value) => json!(format!(
+                    "{} (damaged: {reason}; stored as {bytes})",
+                    cell(&value)
+                )),
+            }
         }
     }
 }
@@ -1903,6 +1915,14 @@ mod tests {
                 reason: "short".into()
             }),
             json!("0102 (damaged: short)")
+        );
+        assert_eq!(
+            property_value(&Value::Damaged {
+                recovered: Some(Box::new(Value::String("A\u{FFFD}B".into()))),
+                raw: vec![0x41, 0, 0, 0xD8, 0x42, 0],
+                reason: "text is not valid UTF-16LE".into()
+            }),
+            json!("A\u{FFFD}B (damaged: text is not valid UTF-16LE; stored as 410000D84200)")
         );
         assert_eq!(type_name(types::STRING), "PtypString");
         assert_eq!(

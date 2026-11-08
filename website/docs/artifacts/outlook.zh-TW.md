@@ -282,7 +282,7 @@ CSV 會建立八個檔案，使用 `--properties` 時為九個；沒有資料列
 | `PropertyTag` | 屬性的 ID 與類型，格式如 `0x0037001F`（`PidTagSubject`，字串）。 |
 | `PropertyName` | 具名屬性（ID 自 `0x8000` 起）的屬性集與名稱：`PSETID_Address:0x8083`、`PS_PUBLIC_STRINGS:Keywords`，若非知名的屬性集則為該屬性集的 GUID。 |
 | `Type` | 屬性類型：`PtypString`、`PtypInteger32`、`PtypTime`、`PtypBinary`、`PtypMultipleString` 等。 |
-| `Value` | 值：字串為文字；時間為 ISO 8601 UTC（`-Z` 不會轉換）；二進位值為十六進位（前 4,096 個位元組，其後為 `…(N bytes)`）；多值屬性的各值以清單呈現（在 CSV 中以 `, ` 分隔）；內嵌項目或附件的資料為 `(object)`；損毀的值或未解碼類型的值，則為附註說明的十六進位位元組。 |
+| `Value` | 值：字串為文字；時間為 ISO 8601 UTC（`-Z` 不會轉換）；二進位值為十六進位（前 4,096 個位元組，其後為 `…(N bytes)`）；多值屬性的各值以清單呈現（在 CSV 中以 `, ` 分隔）；內嵌項目或附件的資料為 `(object)`；未解碼類型的值為附註說明的十六進位位元組；損毀的值為可復原的內容，其後接含有十六進位位元組的附註（無法復原任何內容時，僅有位元組與附註）。 |
 
 ## 自動剖析 { #automatic-parsing }
 

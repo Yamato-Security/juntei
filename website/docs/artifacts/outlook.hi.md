@@ -297,7 +297,7 @@ items की rows उनके बाद; किसी file की Files row उ
 | `PropertyTag` | Property का id और type, `0x0037001F` के रूप में (`PidTagSubject`, एक string)। |
 | `PropertyName` | किसी named property के लिए (`0x8000` से आगे के ids), उसका property set और नाम: `PSETID_Address:0x8083`, `PS_PUBLIC_STRINGS:Keywords`, या set का GUID जब वह कोई well-known set न हो। |
 | `Type` | Property type: `PtypString`, `PtypInteger32`, `PtypTime`, `PtypBinary`, `PtypMultipleString`, …। |
-| `Value` | Value: strings के लिए text, समयों के लिए ISO 8601 UTC (जिसे `-Z` convert नहीं करता), binary values के लिए hex (पहले 4,096 bytes, फिर `…(N bytes)`), multi-valued property की values एक सूची के रूप में (CSV में उनके बीच `, `), embedded item या attachment के data के लिए `(object)`, और क्षतिग्रस्त value या ऐसे type की value के लिए जिसे decode नहीं किया जाता, bytes hex में एक note के साथ। |
+| `Value` | Value: strings के लिए text, समयों के लिए ISO 8601 UTC (जिसे `-Z` convert नहीं करता), binary values के लिए hex (पहले 4,096 bytes, फिर `…(N bytes)`), multi-valued property की values एक सूची के रूप में (CSV में उनके बीच `, `), embedded item या attachment के data के लिए `(object)`, ऐसे type की value के लिए जिसे decode नहीं किया जाता, bytes hex में एक note के साथ, और क्षतिग्रस्त value के लिए उसमें से जितना recover हो सका, उसके बाद एक note जिसमें उसके bytes hex में हों (कुछ भी recover न हो पाने पर केवल bytes और note)। |
 
 ## स्वचालित विश्लेषण { #automatic-parsing }
 
