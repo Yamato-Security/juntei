@@ -731,7 +731,7 @@ fn browser_input_and_output_errors() {
     assert_eq!(r.code, 1);
     assert!(
         r.all()
-            .contains("is a WebCache file, which parse-sqlite browser does not read"),
+            .contains("is a WebCache database, which parse-ese webcache reads."),
         "{}",
         r.all()
     );

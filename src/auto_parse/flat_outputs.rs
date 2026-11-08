@@ -42,6 +42,11 @@ fn table_name<'a>(artifact: &str, name: &'a str) -> Option<&'a str> {
         ("browser", "Browser-Downloads.csv") => Some("Downloads"),
         ("browser", "Browser-Cookies.csv") => Some("Cookies"),
         ("browser", "Browser-FormHistory.csv") => Some("FormHistory"),
+        ("webcache", "WebCache-History.csv") => Some("History"),
+        ("webcache", "WebCache-Downloads.csv") => Some("Downloads"),
+        ("webcache", "WebCache-Cookies.csv") => Some("Cookies"),
+        ("webcache", "WebCache-Entries.csv") => Some("Entries"),
+        ("webcache", "WebCache-Containers.csv") => Some("Containers"),
         // `parse-ese ual` names each table's file `UAL-<table>.csv`, a table it doesn't know
         // under its own name, in letters, digits and `-_{}` only
         ("ual", name) => name
@@ -152,8 +157,10 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
     };
     for task in tasks.iter().filter(|task| !task.timeline_only) {
         let stem = artifact_filename(task.artifact);
-        if !matches!(task.artifact, "amcache" | "browser" | "jump-lists" | "ual")
-            && !stem.starts_with("Registry-")
+        if !matches!(
+            task.artifact,
+            "amcache" | "browser" | "jump-lists" | "ual" | "webcache"
+        ) && !stem.starts_with("Registry-")
         {
             continue;
         }
@@ -212,8 +219,10 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                     .map(|path| super::recorded_path(root, path, from_output))
                 {
                     for name in [old_stem, stem] {
-                        if matches!(task.artifact, "amcache" | "browser" | "jump-lists" | "ual")
-                            && path == category.join(name)
+                        if matches!(
+                            task.artifact,
+                            "amcache" | "browser" | "jump-lists" | "ual" | "webcache"
+                        ) && path == category.join(name)
                         {
                             remove_generated_path(&path, root)?;
                         }
