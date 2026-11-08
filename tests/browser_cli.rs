@@ -584,6 +584,20 @@ fn browser_input_and_output_errors() {
     assert_eq!(r.code, 1);
     assert!(r.all().contains("Could not parse"), "{}", r.all());
     assert!(r.all().contains("(could not parse: 1)"), "{}", r.all());
+    // nothing is written when no database could be read
+    let out = dir.path().join("nothing");
+    let r = run(&[
+        "parse-sqlite",
+        "browser",
+        "-d",
+        damaged.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.all().contains("Nothing was saved"), "{}", r.all());
+    assert!(!out.exists());
     // another kind of browser file: an ESE database named as a WebCache
     let mut ese = vec![0u8; 4096];
     ese[4..8].copy_from_slice(&[0xef, 0xcd, 0xab, 0x89]);

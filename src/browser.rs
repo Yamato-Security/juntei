@@ -405,7 +405,7 @@ pub fn run(opts: &BrowserOptions) -> i32 {
         report_error(None, &message);
         return 1;
     }
-    let saved = match sink.finish() {
+    let saved = match sink.finish(stats.databases > 0) {
         Ok(saved) => saved,
         Err(e) => {
             report_error(None, &format!("Could not write the rows: {e}"));
@@ -417,16 +417,17 @@ pub fn run(opts: &BrowserOptions) -> i32 {
     if !data_on_stdout {
         print_summary(&stats, no_color);
         match (&opts.output, saved) {
-            (Some(out), Some(files)) => p_label(
+            (Some(out), Some(Saved::Tables(files))) => p_label(
                 no_color,
                 "Results saved: ",
                 &format!("{} ({} CSV files)", out.display(), fmt_num(files)),
             ),
-            (Some(out), None) => p_label(
+            (Some(out), Some(Saved::File)) => p_label(
                 no_color,
                 "Results saved: ",
                 &format!("{} ({})", out.display(), util::file_size_display(out)),
             ),
+            (Some(_), None) => p(None, "Nothing was saved: no database could be read.", true),
             (None, _) => p(
                 None,
                 "To save every row, add -o <DIR> (CSV tables) or -o <FILE> -t json or jsonl.",
@@ -1083,6 +1084,13 @@ fn csv_cell(name: &str, value: &Json) -> String {
 
 // --- writers --------------------------------------------------------------------------------
 
+/// What was saved with `-o`.
+enum Saved {
+    /// The number of CSV files.
+    Tables(usize),
+    File,
+}
+
 /// Where the rows go, opened when the first database has been read: four CSV files (each with
 /// its header, rows or not), one JSON or JSONL file, stdout, or nowhere (the summary only).
 struct Sink {
@@ -1163,19 +1171,23 @@ impl Sink {
     }
 
     /// Finish the files; the number of CSV files written, if any.
-    fn finish(mut self) -> io::Result<Option<usize>> {
-        // A database without rows still makes its tables' headers.
-        if self.output.is_some() {
+    /// `parsed`: whether any database was read. One without rows still makes its tables'
+    /// headers; when none could be read, nothing is written.
+    fn finish(mut self, parsed: bool) -> io::Result<Option<Saved>> {
+        if self.output.is_some() && parsed {
             self.open()?;
         }
         if let Some(writers) = &mut self.csv {
             for writer in writers.iter_mut() {
                 writer.flush()?;
             }
-            return Ok(Some(writers.len()));
+            return Ok(Some(Saved::Tables(writers.len())));
         }
         if let Some(out) = &mut self.json {
             out.flush()?;
+            if self.output.is_some() {
+                return Ok(Some(Saved::File));
+            }
         }
         Ok(None)
     }
