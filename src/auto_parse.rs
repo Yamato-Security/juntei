@@ -46,6 +46,7 @@ const CATEGORIES: &[&str] = &[
     "Accounts",
     "Applications",
     "BrowserActivity",
+    "Communication",
     "ExternalDevices",
     "FileAndFolderOpening",
     "FileExistence",
@@ -66,6 +67,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "app-history" => "Applications",
         "installed-programs" => "Applications",
         "browser" | "webcache" => "BrowserActivity",
+        "outlook" => "Communication",
         "usb" => "ExternalDevices",
         "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
             "FileAndFolderOpening"
@@ -107,6 +109,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "mft" => "MFT",
         "networks" => "Registry-Networks",
         "office" => "Registry-Office",
+        "outlook" => "Outlook",
         "mru" => "Registry-MRU",
         "muicache" => "Registry-MuiCache",
         "opensavemru" => "Registry-OpenSaveMRU",
@@ -764,7 +767,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
     for (task, result) in tasks.iter().zip(&mut results) {
         if matches!(
             task.artifact,
-            "amcache" | "browser" | "jump-lists" | "ual" | "webcache"
+            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
         ) && task.output_type == AutoOutputType::Csv
             && result.status == TaskStatus::Succeeded
         {
@@ -1462,6 +1465,12 @@ fn build_tasks(
             &["--code-page", &code_page],
         );
         add(
+            "outlook",
+            &["parse-file", "outlook"],
+            OutputShape::CsvDirectory,
+            &["--code-page", &code_page],
+        );
+        add(
             "shimcache",
             &["parse-registry", "shimcache"],
             OutputShape::File,
@@ -1702,6 +1711,7 @@ impl InputInventory {
                 ("ual", crate::ual::is_database_name(&name)),
                 ("browser", crate::browser::is_database_name(&name)),
                 ("webcache", crate::webcache::is_database_name(&name)),
+                ("outlook", crate::outlook::is_outlook_name(&name)),
                 ("lnk", crate::lnk::is_lnk_name(&name)),
                 ("jump-lists", crate::jump_lists::is_jump_list_name(&name)),
                 ("shimcache", crate::shimcache::is_system_name(&name)),

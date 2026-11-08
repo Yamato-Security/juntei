@@ -11,9 +11,9 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-file outlook` on the public PST, OST, `.msg` and `.oft` files of test_files/outlook:
-//! libyal's `outlook.pst`, java-libpst's `dist-list.pst` and Outlook 2013 OST, and `.msg` and
-//! `.oft` files of msgreader, Apache POI and Aspose.Email.
+//! `parse-file outlook` and its `auto-parse` task, on the public PST, OST, `.msg` and `.oft` files
+//! of test_files/outlook: libyal's `outlook.pst`, java-libpst's `dist-list.pst` and Outlook 2013
+//! OST, and `.msg` and `.oft` files of msgreader, Apache POI and Aspose.Email.
 
 use flate2::read::GzDecoder;
 use serde_json::Value;
@@ -1032,4 +1032,98 @@ fn outlook_input_and_output_errors() {
         "{}",
         r.all()
     );
+}
+
+#[test]
+fn auto_parse_puts_outlook_tables_in_communication_with_their_times_in_the_offset() {
+    let evidence = tempfile::tempdir().unwrap();
+    collection(evidence.path());
+    let target = tempfile::tempdir().unwrap();
+    for kind in ["csv", "jsonl"] {
+        let output = target.path().join(kind);
+        let r = run(&[
+            "auto-parse",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            kind,
+            "-j",
+            output.join("all.jsonl").to_str().unwrap(),
+            "-Z",
+            "+09:00",
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+        let manifest: Value =
+            serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+        let task = manifest["Tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|t| t["Artifact"] == "outlook" && t["Purpose"] == "artifact")
+            .unwrap();
+        assert_eq!(task["Status"], "succeeded", "{task}");
+        assert_eq!(task["Category"], "Communication");
+        assert_eq!(task["Command"][1], "parse-file");
+        assert_eq!(task["Command"][2], "outlook");
+        let communication = output.join("HOST1/Communication");
+        assert!(communication.join("Outlook-logs.txt").is_file());
+        if kind == "csv" {
+            assert!(!communication.join("Outlook").exists());
+            assert_eq!(task["OutputFiles"].as_array().unwrap().len(), 8, "{task}");
+            for (table, count) in expected_counts() {
+                let (_, rows) = csv_rows(&communication.join(format!("Outlook-{table}.csv")));
+                assert_eq!(rows.len(), count, "{table}");
+            }
+            let (_, items) = csv_rows(&communication.join("Outlook-Items.csv"));
+            // the parser runs in the evidence directory: paths are relative to it
+            assert!(
+                items
+                    .iter()
+                    .all(|i| Path::new(&i["SourceFile"]).starts_with(Path::new(".").join("HOST1"))),
+                "{}",
+                items[0]["SourceFile"]
+            );
+            let welcome = items
+                .iter()
+                .find(|i| i["FolderPath"] == "/Top of Personal Folders/Inbox")
+                .unwrap();
+            assert_eq!(welcome["SubmitTime"], "2007-04-30T07:27:33.593+09:00");
+            assert_eq!(welcome["User"], "bob");
+            let (_, calendar) = csv_rows(&communication.join("Outlook-Calendar.csv"));
+            let fox = calendar
+                .iter()
+                .find(|c| c["Subject"] == "Quick brown fox")
+                .unwrap();
+            assert_eq!(fox["StartTime"], "2017-03-01T03:30:00+09:00");
+            // a task's dates are the user's wall clock: left as they are
+            let (_, tasks) = csv_rows(&communication.join("Outlook-Tasks.csv"));
+            assert_eq!(tasks[0]["StartTime"], "2017-02-19T00:00:00");
+            assert_eq!(tasks[0]["CreationTime"], "2017-03-01T03:44:08.031+09:00");
+        } else {
+            let rows =
+                jsonl(&std::fs::read_to_string(communication.join("Outlook.jsonl")).unwrap());
+            assert_eq!(table_counts(&rows), expected_counts());
+            assert!(
+                rows.iter()
+                    .all(|r| r["Comp"] == "HOST1" && r["Artifact"] == "outlook")
+            );
+        }
+        let timeline = jsonl(&std::fs::read_to_string(output.join("all.jsonl")).unwrap());
+        let rows: Vec<&Value> = timeline
+            .iter()
+            .filter(|r| r["Artifact"] == "outlook")
+            .collect();
+        assert_eq!(rows.len(), 177);
+        let test2 = rows
+            .iter()
+            .find(|r| r["Table"] == "Items" && r["Subject"] == "Test 2")
+            .unwrap();
+        assert_eq!(test2["DeliveryTime"], "2014-04-10T01:38:32+09:00");
+    }
 }
