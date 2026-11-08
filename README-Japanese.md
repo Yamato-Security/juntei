@@ -146,7 +146,7 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 | アーティファクト | 種類 |
 | --- | --- |
 | **Web ブラウザ** (`History`、`Cookies`、`Web Data`、`places.sqlite`、`cookies.sqlite`、`formhistory.sqlite`) — Chrome、Edge、Brave、Opera、Vivaldi、Firefox など Chromium 系・Firefox 系ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴。ライトアヘッドログ（`-wal`）も含めて読み、削除された閲覧履歴、ページ、ダウンロード、フォーム入力を復元します。 | SQLite |
-| **Internet Explorer と従来の Edge** (`WebCacheV01.dat`) — Internet Explorer 10・11、従来の Edge、Windows のインターネット機能 (WinINet) を使うその他のプログラムの閲覧履歴（エクスプローラーで開いたローカルファイルを含む）、ダウンロード、Cookie、キャッシュファイル。キャッシュファイルごとにディスク上のパスと HTTP ヘッダーも示します。 | ESE |
+| **Internet Explorer と従来の Edge** (`WebCacheV01.dat`) — Internet Explorer 10・11、従来の Edge、Windows のインターネット機能 (WinINet) を使うその他のプログラムの閲覧履歴（ページタイトル付き。エクスプローラーで開いたローカルファイルを含む）、ダウンロード、Cookie、キャッシュファイル。キャッシュファイルごとにディスク上のパスと HTTP ヘッダーも示します。 | ESE |
 
 ### ネットワークの活動
 

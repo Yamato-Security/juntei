@@ -7,8 +7,8 @@ una base de datos ESE. Internet Explorer 10 y 11 guardan en ella su historial, s
 también el Edge heredado, el Edge de Windows 10 anterior a que Edge pasara a basarse en Chromium. Cada tipo de registro
 es un contenedor, una tabla propia:
 
-- **Historial** (`History`, y `MSHist01…` para un día o una semana): las URL visitadas, cada una con la cuenta para la
-  que se registró, cuándo se visitó por última vez y cuántas veces. El Explorador de archivos también registra allí los
+- **Historial** (`History`, y `MSHist01…` para un día o una semana): las URL visitadas, cada una con el título de la
+  página, la cuenta para la que se registró, cuándo se visitó por última vez y cuántas veces. El Explorador de archivos también registra allí los
   archivos locales que abre, como URL `file:///`.
 - **Descargas** (`iedownload`): la URL de la que procede un archivo, dónde se guardó y dónde se escribió durante la
   descarga, su tamaño, cuándo empezó la descarga, la página de referencia y el tipo MIME.
@@ -133,6 +133,7 @@ Todas las tablas empiezan con estos campos:
 | `ExpiryTime`, `SyncTime` | Cuándo debe salir la entrada del historial y cuándo se sincronizó por última vez (UTC). |
 | `Account` | La cuenta para la que se registró la entrada. |
 | `URL` | La página o el archivo, sin el prefijo `Visited: account@`. |
+| `Title` | El título de la página, tal como lo registró la entrada; vacío en el contenedor de un día o de una semana. |
 | `AccessCount`, `SyncCount` | Cuántas veces se visitó la URL y cuántas se sincronizó la entrada. |
 | `EntryType`, `Flags` | El tipo y los indicadores de la entrada, tal como están almacenados. |
 | `EntryID`, `ContainerID` | El id de la entrada en su contenedor y el id del contenedor. |

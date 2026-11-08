@@ -8,7 +8,7 @@ pula Edge lama (legacy), yaitu Edge di Windows 10 sebelum Edge menjadi berbasis 
 adalah sebuah kontainer (container), yaitu tabel tersendiri:
 
 - **Riwayat** (`History`, dan `MSHist01…` untuk satu hari atau satu minggu): URL yang dikunjungi, masing-masing
-  beserta akun yang tercatat untuknya, kapan terakhir dikunjungi, dan seberapa sering. File Explorer juga
+  beserta judul halaman, akun yang tercatat untuknya, kapan terakhir dikunjungi, dan seberapa sering. File Explorer juga
   mencatat berkas lokal yang dibukanya di sana, sebagai URL `file:///`.
 - **Unduhan** (`iedownload`): URL asal sebuah berkas, tempat berkas itu disimpan dan ditulis selama diunduh,
   ukurannya, kapan unduhan dimulai, halaman perujuk, dan tipe MIME.
@@ -136,6 +136,7 @@ Setiap tabel diawali dengan field berikut:
 | `ExpiryTime`, `SyncTime` | Kapan entri dijadwalkan keluar dari riwayat, dan kapan terakhir disinkronkan (UTC). |
 | `Account` | Akun yang tercatat untuk entri tersebut. |
 | `URL` | Halaman atau berkas, tanpa awalan `Visited: account@`. |
+| `Title` | Judul halaman, sebagaimana dicatat oleh entri; kosong di kontainer satu hari atau satu minggu. |
 | `AccessCount`, `SyncCount` | Berapa kali URL tersebut dikunjungi, dan entri tersebut disinkronkan. |
 | `EntryType`, `Flags` | Tipe dan flag entri, sebagaimana tersimpan. |
 | `EntryID`, `ContainerID` | ID entri di kontainernya, dan ID kontainer. |

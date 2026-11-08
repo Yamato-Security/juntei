@@ -7,8 +7,8 @@ utilisateur, une base de données ESE. Internet Explorer 10 et 11 y conservent l
 leur cache et leurs cookies, tout comme l'ancien Edge, l'Edge de Windows 10 d'avant le passage d'Edge à Chromium. Chaque
 type d'enregistrement est un conteneur, une table à part entière :
 
-- **Historique** (`History`, et `MSHist01…` pour un jour ou une semaine) : les URL visitées, chacune avec le compte pour
-  lequel elle a été enregistrée, la date de sa dernière visite et le nombre de visites. L'Explorateur de fichiers y
+- **Historique** (`History`, et `MSHist01…` pour un jour ou une semaine) : les URL visitées, chacune avec le titre de la
+  page, le compte pour lequel elle a été enregistrée, la date de sa dernière visite et le nombre de visites. L'Explorateur de fichiers y
   enregistre aussi les fichiers locaux qu'il ouvre, sous forme d'URL `file:///`.
 - **Téléchargements** (`iedownload`) : l'URL d'où provient un fichier, l'emplacement où il a été enregistré et celui où
   il a été écrit pendant le téléchargement, sa taille, le début du téléchargement, la page référente et le type MIME.
@@ -136,6 +136,7 @@ Chaque table commence par ces champs :
 | `ExpiryTime`, `SyncTime` | Le moment où l'entrée doit quitter l'historique, et celui de sa dernière synchronisation (UTC). |
 | `Account` | Le compte pour lequel l'entrée a été enregistrée. |
 | `URL` | La page ou le fichier, sans le préfixe `Visited: account@`. |
+| `Title` | Le titre de la page, tel que l'entrée l'a enregistré ; vide dans le conteneur d'un jour ou d'une semaine. |
 | `AccessCount`, `SyncCount` | Le nombre de visites de l'URL, et de synchronisations de l'entrée. |
 | `EntryType`, `Flags` | Le type et les indicateurs de l'entrée, tels qu'ils sont stockés. |
 | `EntryID`, `ContainerID` | L'identifiant de l'entrée dans son conteneur, et celui du conteneur. |

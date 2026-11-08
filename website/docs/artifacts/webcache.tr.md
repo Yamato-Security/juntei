@@ -8,7 +8,7 @@ ve çerezlerini bu veritabanında tutar; eski Edge, yani Edge Chromium tabanlı 
 Edge'i de öyle. Her kayıt türü bir kapsayıcıdır (container), yani kendine ait bir tablodur:
 
 - **Geçmiş** (`History` ve bir gün ya da bir hafta için `MSHist01…`): ziyaret edilen URL'ler; her biri
-  kaydedildiği hesap, en son ne zaman ziyaret edildiği ve kaç kez ziyaret edildiğiyle birlikte. Dosya
+  sayfanın başlığı, kaydedildiği hesap, en son ne zaman ziyaret edildiği ve kaç kez ziyaret edildiğiyle birlikte. Dosya
   Gezgini de açtığı yerel dosyaları buraya `file:///` URL'leri olarak kaydeder.
 - **İndirmeler** (`iedownload`): bir dosyanın geldiği URL, dosyanın kaydedildiği ve indirme sırasında
   yazıldığı yer, boyutu, indirmenin başladığı zaman, yönlendiren sayfa ve MIME türü.
@@ -138,6 +138,7 @@ Her tablo şu alanlarla başlar:
 | `ExpiryTime`, `SyncTime` | Girdinin geçmişten çıkmasının öngörüldüğü zaman ve en son eşitlendiği zaman (UTC). |
 | `Account` | Girdinin kaydedildiği hesap. |
 | `URL` | `Visited: account@` öneki olmadan sayfa veya dosya. |
+| `Title` | Girdinin kaydettiği haliyle sayfanın başlığı; bir günün veya bir haftanın kapsayıcısında boştur. |
 | `AccessCount`, `SyncCount` | URL'nin kaç kez ziyaret edildiği ve girdinin kaç kez eşitlendiği. |
 | `EntryType`, `Flags` | Saklandığı haliyle girdinin türü ve bayrakları. |
 | `EntryID`, `ContainerID` | Girdinin kapsayıcısındaki kimliği ve kapsayıcının kimliği. |

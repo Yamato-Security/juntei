@@ -147,7 +147,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Web browsers** (`History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite`) — The visits, downloads, cookies and form entries of Chrome, Edge, Brave, Opera, Vivaldi, Firefox and other Chromium- and Firefox-based browsers, read with their write-ahead logs, with deleted visits, pages, downloads and form entries recovered. | SQLite |
-| **Internet Explorer and legacy Edge** (`WebCacheV01.dat`) — The history (with the local files File Explorer opened), downloads, cookies and cached files of Internet Explorer 10 and 11, legacy Edge and other programs that use the Windows Internet functions, with each cached file's path and HTTP headers. | ESE |
+| **Internet Explorer and legacy Edge** (`WebCacheV01.dat`) — The history (with page titles, and the local files File Explorer opened), downloads, cookies and cached files of Internet Explorer 10 and 11, legacy Edge and other programs that use the Windows Internet functions, with each cached file's path and HTTP headers. | ESE |
 
 ### Network Activity
 

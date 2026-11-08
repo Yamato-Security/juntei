@@ -98,6 +98,7 @@ impl Table {
                 "SyncTime",
                 "Account",
                 "URL",
+                "Title",
                 "AccessCount",
                 "SyncCount",
                 "EntryType",
@@ -457,6 +458,7 @@ fn history_row(
     row.push("SyncTime", time(entry.synced));
     row.push("Account", optional(visit.user.as_deref()));
     row.push("URL", text(&visit.url));
+    row.push("Title", text(&visit.title));
     row.push("AccessCount", json!(visit.visit_count));
     row.push("SyncCount", json!(entry.sync_count));
     row.push("EntryType", json!(entry.entry_type));

@@ -8,7 +8,7 @@ cookies in it, and so does legacy Edge, the Edge of Windows 10 before Edge becam
 Each kind of record is a container, a table of its own:
 
 - **History** (`History`, and `MSHist01…` for a day or a week): the URLs visited, each with the
-  account it was recorded for, when it was last visited and how often. File Explorer records the
+  page's title, the account it was recorded for, when it was last visited and how often. File Explorer records the
   local files it opens there too, as `file:///` URLs.
 - **Downloads** (`iedownload`): the URL a file came from, where it was saved and written while
   downloading, its size, when the download started, the referring page and the MIME type.
@@ -135,6 +135,7 @@ Every table starts with these fields:
 | `ExpiryTime`, `SyncTime` | When the entry is due to leave the history, and when it was last synchronized (UTC). |
 | `Account` | The account the entry was recorded for. |
 | `URL` | The page or file, without the `Visited: account@` prefix. |
+| `Title` | The page's title, as the entry recorded it; empty in a day's or a week's container. |
 | `AccessCount`, `SyncCount` | How many times the URL was visited, and the entry synchronized. |
 | `EntryType`, `Flags` | The entry's type and flags, as stored. |
 | `EntryID`, `ContainerID` | The entry's id in its container, and the container's id. |

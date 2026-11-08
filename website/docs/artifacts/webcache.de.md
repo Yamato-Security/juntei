@@ -7,8 +7,8 @@ ESE-Datenbank. Internet Explorer 10 und 11 speichern darin ihren Verlauf, ihre D
 ebenso der alte Edge (Edge Legacy), der Edge von Windows 10, bevor Edge auf Chromium umgestellt wurde. Jede Art von Datensatz ist ein
 Container, eine eigene Tabelle:
 
-- **Verlauf** (`History` sowie `MSHist01…` für einen Tag oder eine Woche): die besuchten URLs, jede mit dem Konto, für
-  das sie aufgezeichnet wurde, dem Zeitpunkt des letzten Besuchs und der Anzahl der Besuche. Auch der Datei-Explorer
+- **Verlauf** (`History` sowie `MSHist01…` für einen Tag oder eine Woche): die besuchten URLs, jede mit dem Titel der
+  Seite, dem Konto, für das sie aufgezeichnet wurde, dem Zeitpunkt des letzten Besuchs und der Anzahl der Besuche. Auch der Datei-Explorer
   zeichnet dort die lokalen Dateien auf, die er öffnet, als `file:///`-URLs.
 - **Downloads** (`iedownload`): die URL, von der eine Datei stammt, wo sie gespeichert und wohin sie während des
   Downloads geschrieben wurde, ihre Größe, wann der Download begann, die verweisende Seite und der MIME-Typ.
@@ -135,6 +135,7 @@ Jede Tabelle beginnt mit diesen Feldern:
 | `ExpiryTime`, `SyncTime` | Wann der Eintrag aus dem Verlauf entfernt werden soll und wann er zuletzt synchronisiert wurde (UTC). |
 | `Account` | Das Konto, für das der Eintrag aufgezeichnet wurde. |
 | `URL` | Die Seite oder Datei, ohne das Präfix `Visited: account@`. |
+| `Title` | Der Titel der Seite, wie der Eintrag ihn aufgezeichnet hat; im Container eines Tages oder einer Woche leer. |
 | `AccessCount`, `SyncCount` | Wie oft die URL besucht und wie oft der Eintrag synchronisiert wurde. |
 | `EntryType`, `Flags` | Typ und Flags des Eintrags, wie gespeichert. |
 | `EntryID`, `ContainerID` | Die ID des Eintrags in seinem Container und die ID des Containers. |

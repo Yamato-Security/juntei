@@ -7,8 +7,8 @@ ESE database है। Internet Explorer 10 और 11 अपना history, down
 legacy Edge भी, यानी Windows 10 का वह Edge जो Edge के Chromium-based होने से पहले था। हर प्रकार का record एक
 container है, जो अपनी अलग table है:
 
-- **History** (`History`, और किसी एक दिन या एक सप्ताह के लिए `MSHist01…`): देखे गए URLs, हर एक उस account
-  के साथ जिसके लिए वह दर्ज हुआ, और यह कि उसका आखिरी visit कब हुआ और कितनी बार हुआ। फ़ाइल एक्सप्लोरर जिन
+- **History** (`History`, और किसी एक दिन या एक सप्ताह के लिए `MSHist01…`): देखे गए URLs, हर एक page के title और उस
+  account के साथ जिसके लिए वह दर्ज हुआ, और यह कि उसका आखिरी visit कब हुआ और कितनी बार हुआ। फ़ाइल एक्सप्लोरर जिन
   local files को खोलता है, उन्हें भी यहीं `file:///` URLs के रूप में दर्ज करता है।
 - **Downloads** (`iedownload`): वह URL जहाँ से file आई, उसे कहाँ save किया गया और download के दौरान कहाँ लिखा
   गया, उसका size, download कब शुरू हुआ, referring page और MIME type।
@@ -132,6 +132,7 @@ CSV पाँच files बनाता है; rows न होने पर ह�
 | `ExpiryTime`, `SyncTime` | Entry का history से हटना कब तय है, और आखिरी बार कब synchronize हुई (UTC)। |
 | `Account` | वह account जिसके लिए entry दर्ज की गई। |
 | `URL` | Page या file, `Visited: account@` prefix के बिना। |
+| `Title` | Page का title, जैसा entry ने दर्ज किया; किसी दिन या सप्ताह के container में खाली। |
 | `AccessCount`, `SyncCount` | URL कितनी बार visit किया गया, और entry कितनी बार synchronize हुई। |
 | `EntryType`, `Flags` | Entry का type और flags, जैसे stored हैं। |
 | `EntryID`, `ContainerID` | उसके container में entry का id, और container का id। |

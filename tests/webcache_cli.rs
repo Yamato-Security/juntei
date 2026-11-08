@@ -174,6 +174,7 @@ fn webcache_csv_tables() {
             "SyncTime",
             "Account",
             "URL",
+            "Title",
             "AccessCount",
             "SyncCount",
             "EntryType",
@@ -211,10 +212,21 @@ fn webcache_csv_tables() {
     assert_eq!(main["AccessedTime"], "2014-05-12T07:32:17.646662500Z");
     assert_eq!(main["ModifiedTime"], "2014-05-12T07:31:38.359991100Z");
     assert_eq!(main["CreationTime"], "");
+    // the page's title, from the entry's property store; a day's container keeps none
+    assert_eq!(main["Title"], "Windows SuperFetch Format - Forensics Wiki");
+    assert_eq!(daily["Title"], "");
     // legacy Edge's history is its package's
     let edge: Vec<_> = history.iter().filter(|h| h["User"] == "John Doe").collect();
     assert_eq!(edge.len(), 69);
     assert!(edge.iter().all(|h| h["Package"] == EDGE_PACKAGE));
+    assert!(
+        edge.iter()
+            .any(|h| h["URL"].contains("search?q=putty") && h["Title"] == "putty - Bing")
+    );
+    assert_eq!(
+        history.iter().filter(|h| !h["Title"].is_empty()).count(),
+        62
+    );
     assert!(
         history.iter().any(|h| h["Package"] == "windows_ie_ac_001"),
         "Internet Explorer's app container"
