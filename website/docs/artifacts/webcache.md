@@ -122,7 +122,7 @@ Every table starts with these fields:
 |---|---|
 | `SourceFile` | The database the row was read from. |
 | `User` | The Windows user whose profile the path is in (the folder after `Users`). |
-| `Package` | The app whose data the row is: the folder under `Packages` of its container's directory (or its cookie table's). Empty for the user's own. |
+| `Package` | The app whose data the row is: the folder under `AppData\Local\Packages` of its container's directory (or its cookie table's). Empty for the user's own. |
 
 ### History
 

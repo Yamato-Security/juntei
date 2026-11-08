@@ -123,7 +123,7 @@ Setiap tabel diawali dengan field berikut:
 |---|---|
 | `SourceFile` | Database tempat baris tersebut dibaca. |
 | `User` | Pengguna Windows yang profilnya memuat path tersebut (folder setelah `Users`). |
-| `Package` | Aplikasi pemilik data baris tersebut: folder di bawah `Packages` pada direktori kontainernya (atau direktori tabel cookie-nya). Kosong untuk data milik pengguna sendiri. |
+| `Package` | Aplikasi pemilik data baris tersebut: folder di bawah `AppData\Local\Packages` pada direktori kontainernya (atau direktori tabel cookie-nya). Kosong untuk data milik pengguna sendiri. |
 
 ### Riwayat { #history }
 

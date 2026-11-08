@@ -30,7 +30,7 @@ use browser::{
     Area, AutofillEntry, Confidence, Cookie, CookieStore, Download, DownloadState, Evidence,
     FormStore, GoogleAnalytics, Kind, Page, PageSource, PageState, Provenance, Visit,
 };
-use chrono::{DateTime, SecondsFormat, Utc};
+use chrono::{DateTime, Datelike, SecondsFormat, Utc};
 use common::time::Ts;
 use indicatif::ProgressBar;
 use serde_json::{Value as Json, json};
@@ -1049,7 +1049,7 @@ fn form_row(
 // --- values ---------------------------------------------------------------------------------
 
 /// A UTC time as RFC 3339, like the timestamps of the other commands; nothing for a time not
-/// set (zero) or out of range.
+/// set (zero) or outside RFC 3339's years 0000–9999.
 pub(crate) fn time(t: Option<Ts>) -> Json {
     t.and_then(|t| t.ticks())
         .and_then(|ticks| {
@@ -1058,6 +1058,7 @@ pub(crate) fn time(t: Option<Ts>) -> Json {
                 (ticks.rem_euclid(10_000_000) * 100) as u32,
             )
         })
+        .filter(|t| (0..=9999).contains(&t.year()))
         .map_or(Json::Null, |t| {
             json!(t.to_rfc3339_opts(SecondsFormat::AutoSi, true))
         })

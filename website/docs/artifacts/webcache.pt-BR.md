@@ -120,7 +120,7 @@ Todas as tabelas começam com estes campos:
 |---|---|
 | `SourceFile` | O banco de dados do qual a linha foi lida. |
 | `User` | O usuário do Windows em cujo perfil está o caminho (a pasta depois de `Users`). |
-| `Package` | O aplicativo a que pertencem os dados da linha: a pasta sob `Packages` do diretório de seu contêiner (ou de sua tabela de cookies). Vazio para os dados do próprio usuário. |
+| `Package` | O aplicativo a que pertencem os dados da linha: a pasta sob `AppData\Local\Packages` do diretório de seu contêiner (ou de sua tabela de cookies). Vazio para os dados do próprio usuário. |
 
 ### Histórico { #history }
 

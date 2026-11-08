@@ -29,7 +29,7 @@ use crate::util::{self, check_output, error_msg, fmt_num, p, p_label};
 use browser::{
     WebCache, WebCacheContainer, WebCacheCookie, WebCacheDownload, WebCacheEntry, WebCacheVisit,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use common::time::{Precision, Semantic, Ts};
 use indicatif::ProgressBar;
 use serde_json::{Value as Json, json};
@@ -430,13 +430,26 @@ fn rows(context: &Context, cache: &WebCache) -> Vec<Row> {
     rows
 }
 
-/// The app package whose data a directory holds: the folder after `Packages` (legacy Edge's
+/// The app package whose data a directory holds: the folder after `AppData\Local\Packages`
+/// (legacy Edge's
 /// `…\Packages\microsoft.microsoftedge_8wekyb3d8bbwe\AC\…`, Internet Explorer's app container
 /// `windows_ie_ac_001`, another app's); none for the user's own folders.
 fn package(directory: Option<&str>) -> Option<&str> {
     let mut parts = directory?.split(['\\', '/']).filter(|p| !p.is_empty());
-    parts.find(|p| p.eq_ignore_ascii_case("Packages"))?;
-    parts.next()
+    while let Some(part) = parts.next() {
+        if !part.eq_ignore_ascii_case("AppData") {
+            continue;
+        }
+        let mut next = parts.clone();
+        if next.next().is_some_and(|p| p.eq_ignore_ascii_case("Local"))
+            && next
+                .next()
+                .is_some_and(|p| p.eq_ignore_ascii_case("Packages"))
+        {
+            return next.next();
+        }
+    }
+    None
 }
 
 // --- rows -----------------------------------------------------------------------------------
@@ -480,6 +493,7 @@ fn any_time(t: Option<Ts>) -> Json {
                     (ticks.rem_euclid(10_000_000) * 100) as u32,
                 )
             })
+            .filter(|t| (0..=9999).contains(&t.year()))
             .map_or(Json::Null, |t| {
                 json!(t.naive_utc().format("%Y-%m-%dT%H:%M:%S%.f").to_string())
             }),
@@ -819,6 +833,44 @@ mod tests {
         );
         assert_eq!(package(Some(r"C:\Packages\")), None);
         assert_eq!(package(None), None);
+    }
+
+    #[test]
+    fn packages_ignore_unrelated_folders_and_profile_names() {
+        for directory in [
+            r"C:\Users\Packages\AppData\Local\Microsoft\Windows\INetCache\IE\",
+            r"C:\Temp\Packages\example.app\cache\",
+            r"C:\Users\alice\Downloads\Packages\example.app\cache\",
+        ] {
+            assert_eq!(package(Some(directory)), None, "{directory}");
+        }
+        assert_eq!(
+            package(Some(
+                r"C:\Users\Packages\AppData\Local\Packages\example.app_123\AC\History\"
+            )),
+            Some("example.app_123")
+        );
+    }
+
+    #[test]
+    fn times_reject_years_outside_rfc3339_without_losing_valid_boundaries() {
+        let first = Ts::parse_iso8601_utc("0000-01-01T00:00:00Z").unwrap();
+        let last = Ts::parse_iso8601_utc("9999-12-31T23:59:59.9999999Z").unwrap();
+        for valid in [first, last] {
+            assert!(!time(Some(valid)).is_null());
+            let local = Ts::from_local_ticks(valid.ticks().unwrap(), valid.precision());
+            assert!(!any_time(Some(local)).is_null());
+        }
+        for ticks in [first.ticks().unwrap() - 1, last.ticks().unwrap() + 1] {
+            assert_eq!(
+                time(Some(Ts::from_ticks(ticks, Precision::Tick))),
+                Json::Null
+            );
+            assert_eq!(
+                any_time(Some(Ts::from_local_ticks(ticks, Precision::Tick))),
+                Json::Null
+            );
+        }
     }
 
     #[test]

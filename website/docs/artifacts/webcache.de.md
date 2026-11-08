@@ -122,7 +122,7 @@ Jede Tabelle beginnt mit diesen Feldern:
 |---|---|
 | `SourceFile` | Die Datenbank, aus der die Zeile gelesen wurde. |
 | `User` | Der Windows-Benutzer, in dessen Profil der Pfad liegt (der Ordner nach `Users`). |
-| `Package` | Die App, deren Daten die Zeile enthält: der Ordner unter `Packages` im Verzeichnis ihres Containers (bzw. ihrer Cookie-Tabelle). Leer für die eigenen Daten des Benutzers. |
+| `Package` | Die App, deren Daten die Zeile enthält: der Ordner unter `AppData\Local\Packages` im Verzeichnis ihres Containers (bzw. ihrer Cookie-Tabelle). Leer für die eigenen Daten des Benutzers. |
 
 ### Verlauf { #history }
 

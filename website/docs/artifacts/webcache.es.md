@@ -120,7 +120,7 @@ Todas las tablas empiezan con estos campos:
 |---|---|
 | `SourceFile` | La base de datos de la que se leyó la fila. |
 | `User` | El usuario de Windows en cuyo perfil está la ruta (la carpeta que sigue a `Users`). |
-| `Package` | La aplicación a la que pertenecen los datos de la fila: la carpeta bajo `Packages` del directorio de su contenedor (o de su tabla de cookies). Vacío para los datos propios del usuario. |
+| `Package` | La aplicación a la que pertenecen los datos de la fila: la carpeta bajo `AppData\Local\Packages` del directorio de su contenedor (o de su tabla de cookies). Vacío para los datos propios del usuario. |
 
 ### Historial { #history }
 

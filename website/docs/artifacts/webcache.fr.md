@@ -123,7 +123,7 @@ Chaque table commence par ces champs :
 |---|---|
 | `SourceFile` | La base de données dans laquelle la ligne a été lue. |
 | `User` | L'utilisateur Windows dans le profil duquel se trouve le chemin (le dossier qui suit `Users`). |
-| `Package` | L'application à laquelle appartiennent les données de la ligne : le dossier sous `Packages` du répertoire de son conteneur (ou de sa table de cookies). Vide pour les données propres de l'utilisateur. |
+| `Package` | L'application à laquelle appartiennent les données de la ligne : le dossier sous `AppData\Local\Packages` du répertoire de son conteneur (ou de sa table de cookies). Vide pour les données propres de l'utilisateur. |
 
 ### Historique { #history }
 

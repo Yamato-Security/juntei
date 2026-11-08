@@ -125,7 +125,7 @@ Her tablo şu alanlarla başlar:
 |---|---|
 | `SourceFile` | Satırın okunduğu veritabanı. |
 | `User` | Yolun içinde bulunduğu profilin sahibi olan Windows kullanıcısı (`Users` sonrasındaki klasör). |
-| `Package` | Satırdaki verilerin ait olduğu uygulama: kapsayıcısının (veya çerez tablosunun) dizininde `Packages` altındaki klasör. Kullanıcının kendisine ait olanlarda boştur. |
+| `Package` | Satırdaki verilerin ait olduğu uygulama: kapsayıcısının (veya çerez tablosunun) dizininde `AppData\Local\Packages` altındaki klasör. Kullanıcının kendisine ait olanlarda boştur. |
 
 ### Geçmiş { #history }
 

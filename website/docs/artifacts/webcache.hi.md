@@ -119,7 +119,7 @@ CSV पाँच files बनाता है; rows न होने पर ह�
 |---|---|
 | `SourceFile` | वह database जिससे row पढ़ी गई। |
 | `User` | वह Windows उपयोगकर्ता जिसकी profile में path है (`Users` के बाद वाला folder)। |
-| `Package` | वह app जिसका data यह row है: row के container की directory (या उसकी cookie table की directory) में `Packages` के अंतर्गत वाला folder। उपयोगकर्ता के अपने data के लिए खाली। |
+| `Package` | वह app जिसका data यह row है: row के container की directory (या उसकी cookie table की directory) में `AppData\Local\Packages` के अंतर्गत वाला folder। उपयोगकर्ता के अपने data के लिए खाली। |
 
 ### History { #history }
 

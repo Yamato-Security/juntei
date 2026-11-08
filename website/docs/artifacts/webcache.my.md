@@ -124,7 +124,7 @@ Table တိုင်းသည် ဤ field များဖြင့် စတ�
 |---|---|
 | `SourceFile` | Row ကို ဖတ်ယူခဲ့သော database။ |
 | `User` | Path ပါဝင်သည့် profile ၏ Windows အသုံးပြုသူ (`Users` ၏ နောက်ရှိ ဖိုင်တွဲ)။ |
-| `Package` | Row ၏ data ပိုင်ရှင် app: ၎င်း၏ container ၏ directory (သို့မဟုတ် ၎င်း၏ cookie table ၏ directory) ရှိ `Packages` အောက်ရှိ ဖိုင်တွဲ။ အသုံးပြုသူ၏ ကိုယ်ပိုင်အတွက် ဗလာ။ |
+| `Package` | Row ၏ data ပိုင်ရှင် app: ၎င်း၏ container ၏ directory (သို့မဟုတ် ၎င်း၏ cookie table ၏ directory) ရှိ `AppData\Local\Packages` အောက်ရှိ ဖိုင်တွဲ။ အသုံးပြုသူ၏ ကိုယ်ပိုင်အတွက် ဗလာ။ |
 
 ### History { #history }
 
