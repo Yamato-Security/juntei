@@ -431,9 +431,9 @@ fn rows(context: &Context, cache: &WebCache) -> Vec<Row> {
 }
 
 /// The app package whose data a directory holds: the folder after `AppData\Local\Packages`
-/// (legacy Edge's
-/// `…\Packages\microsoft.microsoftedge_8wekyb3d8bbwe\AC\…`, Internet Explorer's app container
-/// `windows_ie_ac_001`, another app's); none for the user's own folders.
+/// (legacy Edge's `…\Packages\microsoft.microsoftedge_8wekyb3d8bbwe\AC\…`, Internet
+/// Explorer's app container `windows_ie_ac_001`, another app's); none for the user's own
+/// folders.
 fn package(directory: Option<&str>) -> Option<&str> {
     let mut parts = directory?.split(['\\', '/']).filter(|p| !p.is_empty());
     while let Some(part) = parts.next() {
