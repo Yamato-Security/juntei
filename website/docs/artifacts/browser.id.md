@@ -81,9 +81,7 @@ berikutnya. Salin berkas `-wal` bersama database-nya, dan lakukan sebelum browse
   dan bukti lainnya.
 - Tidak adanya baris terhapus tidak berarti tidak ada yang dihapus: ruang yang diisi nol dan checkpoint tidak
   menyisakan apa pun untuk dipulihkan. Cookie yang terhapus belum dipulihkan.
-- `Browser`, `User`, dan `Profile` berasal dari path database: profil yang disalin ke tempat lain hanya
-  mempertahankan apa yang dinyatakan oleh path-nya. Tanpa folder browser yang dikenal, `Browser` bernilai
-  `Chromium-based` atau `Firefox-based`.
+- Isi database menentukan keluarga browser. Path profil yang sesuai memperinci `Browser` menjadi Chrome atau Firefox; path yang bertentangan tidak mengubah keluarga. Selain itu labelnya `Chromium-based`, `Firefox-based`, atau `Safari` (`Unknown` jika tidak diketahui). `User` dan `Profile` berasal dari path dan dapat hilang saat file disalin.
 - Rollback journal (`-journal`) tidak dibaca, begitu pula `WebCacheV01.dat` milik Internet Explorer dan Edge
   lama (legacy).
 
@@ -130,7 +128,7 @@ Setiap tabel diawali dengan field berikut:
 |---|---|
 | `SourceFile` | Database tempat baris tersebut dibaca. |
 | `User` | Pengguna Windows yang profilnya memuat path tersebut (folder setelah `Users`). |
-| `Browser` | Browser yang disebut oleh path: `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | Keluarga browser dari isi, diperinci oleh path profil yang sesuai. |
 | `Profile` | Profil browser: folder database. |
 | `Status` | `Live`, `Deleted` (dipulihkan), atau `Removed` (record penghapusan Firefox). |
 
@@ -189,7 +187,7 @@ Setiap tabel diawali dengan field berikut:
 | `Count` | Berapa kali nilai tersebut dimasukkan. |
 | `GUID` | Pengenal entri milik Firefox, yang dirujuk oleh record penghapusan. |
 | `Sources` | Dari mana Firefox menyimpan entri tersebut, pada versi yang menyimpannya (dipisahkan dengan garis vertikal dalam CSV). |
-| `RowID` | Row id entri. |
+| `RowID` | ID baris entri; kosong/null jika hilang saat pemulihan. Nol yang benar-benar tercatat tetap `0`. |
 
 ## Penguraian otomatis { #automatic-parsing }
 

@@ -86,8 +86,7 @@ que le navigateur ne soit relancé.
   actives et aux autres preuves.
 - L'absence de ligne supprimée ne signifie pas que rien n'a été supprimé : un espace mis à zéro et un point de contrôle
   ne laissent rien à récupérer. Les cookies supprimés ne sont pas encore récupérés.
-- `Browser`, `User` et `Profile` proviennent du chemin de la base de données : un profil copié ailleurs ne conserve que
-  ce que dit son chemin. Sans dossier de navigateur connu, `Browser` vaut `Chromium-based` ou `Firefox-based`.
+- Le contenu détermine la famille du navigateur. Un chemin de profil compatible précise `Browser` (Chrome, Firefox, etc.) ; un chemin contradictoire ne remplace pas la famille. Sinon, le libellé est `Chromium-based`, `Firefox-based` ou `Safari` (`Unknown` si indéterminé). `User` et `Profile` proviennent du chemin et peuvent être perdus lors de la copie.
 - Les journaux de rollback (`-journal`) ne sont pas lus, pas plus que le `WebCacheV01.dat` d'Internet Explorer et de
   l'ancien Edge.
 
@@ -134,7 +133,7 @@ Chaque table commence par ces champs :
 |---|---|
 | `SourceFile` | La base de données dans laquelle la ligne a été lue. |
 | `User` | L'utilisateur Windows dans le profil duquel se trouve le chemin (le dossier qui suit `Users`). |
-| `Browser` | Le navigateur que nomme le chemin : `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | Famille déterminée par le contenu, précisée par un chemin de profil compatible. |
 | `Profile` | Le profil du navigateur : le dossier de la base de données. |
 | `Status` | `Live`, `Deleted` (récupéré) ou `Removed` (un enregistrement de suppression de Firefox). |
 
@@ -193,7 +192,7 @@ Chaque table commence par ces champs :
 | `Count` | Le nombre de fois où la valeur a été saisie. |
 | `GUID` | L'identifiant de l'entrée chez Firefox, que nomment les enregistrements de suppression. |
 | `Sources` | La provenance à partir de laquelle Firefox a enregistré l'entrée, dans les versions qui la conservent (séparées par une barre verticale en CSV). |
-| `RowID` | L'identifiant de ligne de l'entrée. |
+| `RowID` | Identifiant de ligne ; vide/null si perdu lors de la récupération. Un zéro réellement enregistré reste `0`. |
 
 ## Analyse automatique { #automatic-parsing }
 

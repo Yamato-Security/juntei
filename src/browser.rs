@@ -505,10 +505,6 @@ fn parse(database: &Path, wal: Option<&Path>, stats: &mut Stats) -> Result<Outco
         .file_name()
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_default();
-    let kind = browser::detect(&name, &data);
-    let Some(group) = kind.and_then(Group::of) else {
-        return Ok(Outcome::NotRead(kind));
-    };
     let mut problems = Vec::new();
     let log = match wal {
         Some(path) => match std::fs::read(path) {
@@ -523,19 +519,42 @@ fn parse(database: &Path, wal: Option<&Path>, stats: &mut Stats) -> Result<Outco
         },
         None => Vec::new(),
     };
+    // Identify the same committed view that the record readers use. Looking at
+    // the primary first misses schemas in the WAL and can use an obsolete one.
+    // Keep the filename fallback for incomplete databases, and the detection
+    // of non-SQLite formats so the unsupported-format error stays informative.
+    let (kind, cookie_store) = match browser_sqlite::Database::open_with_wal(&data, &log) {
+        Ok(db) => {
+            let kind = if db.tables.is_empty() {
+                Kind::from_name(&name)
+            } else {
+                Kind::of(&db)
+            };
+            let store = if db.table("cookies").is_some() {
+                Some(CookieStore::Chromium)
+            } else if db.table("moz_cookies").is_some() {
+                Some(CookieStore::Firefox)
+            } else {
+                None
+            };
+            (kind, store)
+        }
+        Err(_) => (browser::detect(&name, &data), None),
+    };
+    let Some(group) = kind.and_then(Group::of) else {
+        return Ok(Outcome::NotRead(kind));
+    };
     let mut context = context(database);
     let mut rows = Vec::new();
     match group {
         Group::History => {
             let history = browser::read(&data, &log).map_err(|e| e.to_string())?;
-            context.browser = browser_name(database).unwrap_or_else(|| {
-                match history.kind {
-                    Kind::FirefoxPlaces | Kind::FirefoxDownloads => "Firefox-based",
-                    Kind::SafariHistory => "Safari",
-                    _ => "Chromium-based",
-                }
-                .to_string()
-            });
+            let family = match history.kind {
+                Kind::FirefoxPlaces | Kind::FirefoxDownloads => Family::Firefox,
+                Kind::SafariHistory => Family::Safari,
+                _ => Family::Chromium,
+            };
+            context.browser = browser_label(database, family);
             for visit in &history.visits {
                 stats.visit(visit);
                 rows.push(visit_row(&context, "Live", visit, None, None));
@@ -571,20 +590,14 @@ fn parse(database: &Path, wal: Option<&Path>, stats: &mut Stats) -> Result<Outco
         }
         Group::Cookies => {
             let cookies = browser::read_cookies(&data, &log).map_err(|e| e.to_string())?;
-            let firefox = cookies
-                .rows
-                .first()
-                .map_or(name.to_ascii_lowercase().ends_with(".sqlite"), |c| {
-                    c.store == CookieStore::Firefox
-                });
-            context.browser = browser_name(database).unwrap_or_else(|| {
-                if firefox {
-                    "Firefox-based"
-                } else {
-                    "Chromium-based"
-                }
-                .to_string()
-            });
+            let store = cookies.rows.first().map(|c| c.store).or(cookie_store);
+            let family = match store {
+                Some(CookieStore::Firefox) => Family::Firefox,
+                Some(CookieStore::Chromium) => Family::Chromium,
+                Some(CookieStore::Safari) => Family::Safari,
+                None => Family::Unknown,
+            };
+            context.browser = browser_label(database, family);
             for cookie in &cookies.rows {
                 stats.cookies += 1;
                 rows.push(cookie_row(&context, cookie));
@@ -593,13 +606,11 @@ fn parse(database: &Path, wal: Option<&Path>, stats: &mut Stats) -> Result<Outco
         }
         Group::FormHistory => {
             let history = browser::read_form_history(&data, &log).map_err(|e| e.to_string())?;
-            context.browser = browser_name(database).unwrap_or_else(|| {
-                match history.store {
-                    FormStore::Chromium => "Chromium-based",
-                    FormStore::Firefox => "Firefox-based",
-                }
-                .to_string()
-            });
+            let family = match history.store {
+                FormStore::Chromium => Family::Chromium,
+                FormStore::Firefox => Family::Firefox,
+            };
+            context.browser = browser_label(database, family);
             for entry in &history.entries {
                 stats.form_entries += 1;
                 rows.push(form_row(&context, "Live", entry, None));
@@ -639,6 +650,41 @@ fn parse(database: &Path, wal: Option<&Path>, stats: &mut Stats) -> Result<Outco
 }
 
 // --- where a database is --------------------------------------------------------------------
+
+/// Content establishes the family; a compatible profile path can refine the vendor.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Family {
+    Chromium,
+    Firefox,
+    Safari,
+    Unknown,
+}
+
+impl Family {
+    fn label(self) -> &'static str {
+        match self {
+            Self::Chromium => "Chromium-based",
+            Self::Firefox => "Firefox-based",
+            Self::Safari => "Safari",
+            Self::Unknown => "Unknown",
+        }
+    }
+}
+
+fn browser_label(database: &Path, family: Family) -> String {
+    browser_name(database)
+        .filter(|name| {
+            let named_family = match name.as_str() {
+                "Tor Browser" | "Waterfox" | "LibreWolf" | "Thunderbird" | "Firefox" => {
+                    Family::Firefox
+                }
+                "Safari" => Family::Safari,
+                _ => Family::Chromium,
+            };
+            named_family == family
+        })
+        .unwrap_or_else(|| family.label().to_string())
+}
 
 /// Browsers by a folder of their profiles' path (lower case, `/`-separated), the more specific
 /// first. Windows, then the macOS and Linux spellings where they differ.
@@ -980,7 +1026,12 @@ fn form_row(
             json!(entry.sources)
         },
     );
-    row.push("RowID", json!(entry.rowid));
+    row.push(
+        "RowID",
+        provenance
+            .map_or(Some(entry.rowid), |p| p.rowid)
+            .map_or(Json::Null, |id| json!(id)),
+    );
     row.recovery(provenance);
     row
 }
@@ -1613,6 +1664,28 @@ mod tests {
         let row = form_row(&context, "Live", &entry, None);
         let names: Vec<&str> = row.columns.iter().map(|(n, _)| n.as_str()).collect();
         assert_eq!(names, Table::FormHistory.columns());
+        let row_id = |row: Row| {
+            row.columns
+                .into_iter()
+                .find(|(name, _)| name == "RowID")
+                .unwrap()
+                .1
+        };
+        // A recovered freeblock can lose its rowid. The parser's zero placeholder
+        // is not an observed SQLite rowid; an actual rowid of zero remains valid.
+        let mut zero = entry.clone();
+        zero.rowid = 0;
+        assert_eq!(row_id(form_row(&context, "Live", &zero, None)), json!(0));
+        assert_eq!(
+            row_id(form_row(&context, "Deleted", &zero, Some(&provenance))),
+            Json::Null
+        );
+        let mut known_zero = provenance.clone();
+        known_zero.rowid = Some(0);
+        assert_eq!(
+            row_id(form_row(&context, "Deleted", &zero, Some(&known_zero))),
+            json!(0)
+        );
         // the CSV headers are the column names as written
         for table in Table::ALL {
             assert_eq!(

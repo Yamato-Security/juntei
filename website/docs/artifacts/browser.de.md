@@ -83,8 +83,7 @@ erneut läuft.
   den aktiven Zeilen und den übrigen Beweisen ab.
 - Keine gelöschte Zeile bedeutet nicht, dass nichts gelöscht wurde: Mit Nullen überschriebener Speicherplatz und ein
   Checkpoint lassen nichts Wiederherstellbares zurück. Gelöschte Cookies werden noch nicht wiederhergestellt.
-- `Browser`, `User` und `Profile` stammen aus dem Pfad der Datenbank: Ein an einen anderen Ort kopiertes Profil behält
-  nur, was sein Pfad aussagt. Ohne bekannten Browserordner ist `Browser` `Chromium-based` oder `Firefox-based`.
+- Der Datenbankinhalt bestimmt die Browserfamilie. Ein kompatibler Profilpfad präzisiert `Browser` zu Chrome oder Firefox; ein widersprüchlicher Pfad ändert die Familie nicht. Sonst lautet die Bezeichnung `Chromium-based`, `Firefox-based` oder `Safari` (unbestimmt: `Unknown`). `User` und `Profile` stammen aus dem Pfad und können beim Kopieren verloren gehen.
 - Rollback-Journale (`-journal`) werden nicht gelesen, ebenso wenig `WebCacheV01.dat` von Internet Explorer und dem
   alten Edge.
 
@@ -131,7 +130,7 @@ Jede Tabelle beginnt mit diesen Feldern:
 |---|---|
 | `SourceFile` | Die Datenbank, aus der die Zeile gelesen wurde. |
 | `User` | Der Windows-Benutzer, in dessen Profil der Pfad liegt (der Ordner nach `Users`). |
-| `Browser` | Der Browser, den der Pfad nennt: `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | Browserfamilie aus dem Inhalt, durch einen kompatiblen Profilpfad präzisiert. |
 | `Profile` | Das Browserprofil: der Ordner der Datenbank. |
 | `Status` | `Live`, `Deleted` (wiederhergestellt) oder `Removed` (ein Entfernungsdatensatz von Firefox). |
 
@@ -190,7 +189,7 @@ Jede Tabelle beginnt mit diesen Feldern:
 | `Count` | Wie oft der Wert eingegeben wurde. |
 | `GUID` | Der Bezeichner des Eintrags bei Firefox, den Entfernungsdatensätze nennen. |
 | `Sources` | Woher Firefox den Eintrag gespeichert hat, in den Versionen, die dies festhalten (in CSV durch einen senkrechten Strich getrennt). |
-| `RowID` | Die Zeilen-ID des Eintrags. |
+| `RowID` | Zeilen-ID des Eintrags; leer/null, wenn sie bei der Wiederherstellung fehlt. Eine tatsächlich gespeicherte Null bleibt `0`. |
 
 ## Automatisches Parsen { #automatic-parsing }
 

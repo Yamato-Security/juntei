@@ -80,8 +80,7 @@ Copie o arquivo `-wal` com seu banco de dados, e faça isso antes que o navegado
   as demais evidências.
 - A ausência de linhas excluídas não significa que nada foi excluído: espaço zerado e um checkpoint não deixam nada para
   recuperar. Cookies excluídos ainda não são recuperados.
-- `Browser`, `User` e `Profile` vêm do caminho do banco de dados: um perfil copiado para outro lugar mantém apenas o que
-  seu caminho diz. Sem uma pasta de navegador conhecida, `Browser` é `Chromium-based` ou `Firefox-based`.
+- O conteúdo determina a família do navegador. Um caminho de perfil compatível especifica `Browser` como Chrome ou Firefox; um caminho conflitante não altera a família. Caso contrário, usa-se `Chromium-based`, `Firefox-based` ou `Safari` (`Unknown` se indeterminado). `User` e `Profile` vêm do caminho e podem ser perdidos ao copiar arquivos.
 - Journals de rollback (`-journal`) não são lidos, nem o `WebCacheV01.dat` do Internet Explorer e do Edge legado.
 
 ## Analisar com o Juntei { #parse-with-juntei }
@@ -127,7 +126,7 @@ Todas as tabelas começam com estes campos:
 |---|---|
 | `SourceFile` | O banco de dados do qual a linha foi lida. |
 | `User` | O usuário do Windows em cujo perfil está o caminho (a pasta depois de `Users`). |
-| `Browser` | O navegador que o caminho indica: `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | Família pelo conteúdo, refinada por um caminho de perfil compatível. |
 | `Profile` | O perfil do navegador: a pasta do banco de dados. |
 | `Status` | `Live`, `Deleted` (recuperado) ou `Removed` (um registro de remoção do Firefox). |
 
@@ -186,7 +185,7 @@ Todas as tabelas começam com estes campos:
 | `Count` | Quantas vezes o valor foi inserido. |
 | `GUID` | O identificador da entrada no Firefox, que os registros de remoção citam. |
 | `Sources` | De onde o Firefox salvou a entrada, nas versões que guardam essa informação (separadas por uma barra vertical no CSV). |
-| `RowID` | O ID de linha da entrada. |
+| `RowID` | ID da linha; vazio/null quando perdido na recuperação. Um zero realmente registrado permanece `0`. |
 
 ## Análise automática { #automatic-parsing }
 

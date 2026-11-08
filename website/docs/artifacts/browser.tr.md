@@ -87,9 +87,7 @@ bunu tarayıcı yeniden çalışmadan önce yapın.
   diğer kanıtlarla karşılaştırın.
 - Silinmiş satır bulunmaması hiçbir şeyin silinmediği anlamına gelmez: sıfırlanmış alan ve bir denetim
   noktası, kurtarılacak hiçbir şey bırakmaz. Silinmiş çerezler henüz kurtarılmamaktadır.
-- `Browser`, `User` ve `Profile`, veritabanının yolundan gelir: başka bir yere kopyalanmış bir profil,
-  yalnızca yolunun söylediği bilgiyi korur. Bilinen bir tarayıcı klasörü yoksa `Browser`,
-  `Chromium-based` veya `Firefox-based` olur.
+- Veritabanı içeriği tarayıcı ailesini belirler. Uyumlu profil yolu `Browser` değerini Chrome veya Firefox olarak özelleştirir; çelişen yol aileyi değiştirmez. Aksi halde etiket `Chromium-based`, `Firefox-based` veya `Safari` olur (belirlenemiyorsa `Unknown`). `User` ve `Profile` yoldan gelir ve dosyalar kopyalanırken kaybolabilir.
 - Geri alma günlükleri (`-journal`) okunmaz; Internet Explorer'ın ve eski Edge'in `WebCacheV01.dat`
   dosyası da okunmaz.
 
@@ -136,7 +134,7 @@ Her tablo şu alanlarla başlar:
 |---|---|
 | `SourceFile` | Satırın okunduğu veritabanı. |
 | `User` | Yolun içinde bulunduğu profilin sahibi olan Windows kullanıcısı (`Users` sonrasındaki klasör). |
-| `Browser` | Yolun adlandırdığı tarayıcı: `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | İçerikten belirlenen, uyumlu profil yoluyla özelleştirilen tarayıcı ailesi. |
 | `Profile` | Tarayıcı profili: veritabanının klasörü. |
 | `Status` | `Live`, `Deleted` (kurtarılmış) veya `Removed` (bir Firefox kaldırma kaydı). |
 
@@ -195,7 +193,7 @@ Her tablo şu alanlarla başlar:
 | `Count` | Değerin kaç kez girildiği. |
 | `GUID` | Firefox'un girdiye verdiği ve kaldırma kayıtlarının andığı tanımlayıcı. |
 | `Sources` | Firefox'un girdiyi nereden kaydettiği; bunu tutan sürümlerde (CSV'de dikey çizgiyle ayrılır). |
-| `RowID` | Girdinin satır kimliği. |
+| `RowID` | Kaydın satır kimliği; kurtarma sırasında kaybolmuşsa boş/null. Gerçekten kaydedilmiş sıfır `0` olarak kalır. |
 
 ## Otomatik ayrıştırma { #automatic-parsing }
 

@@ -79,9 +79,7 @@ Browsers SQLite के `secure_delete` के साथ delete करते ह�
   मिलाकर जाँचें।
 - कोई deleted row न मिलने का अर्थ यह नहीं कि कुछ भी delete नहीं हुआ: शून्य से भरा गया space और checkpoint
   recover करने के लिए कुछ नहीं छोड़ते। Deleted cookies अभी recover नहीं की जातीं।
-- `Browser`, `User` और `Profile` database के path से आते हैं: कहीं और copy की गई profile में केवल वही
-  जानकारी रहती है जो उसका path बताता है। किसी ज्ञात browser folder के बिना `Browser` का मान `Chromium-based`
-  या `Firefox-based` होता है।
+- डेटाबेस की सामग्री ब्राउज़र परिवार निर्धारित करती है। संगत प्रोफ़ाइल पथ `Browser` को Chrome या Firefox जैसे उत्पाद तक सीमित करता है; विरोधी पथ परिवार नहीं बदलता। अन्यथा नाम `Chromium-based`, `Firefox-based` या `Safari` है (अनिश्चित होने पर `Unknown`)। `User` और `Profile` पथ से आते हैं और फ़ाइल कॉपी करने पर खो सकते हैं।
 - Rollback journals (`-journal`) नहीं पढ़े जाते, और न ही Internet Explorer तथा legacy Edge का `WebCacheV01.dat`।
 
 ## Juntei से parse करें { #parse-with-juntei }
@@ -127,7 +125,7 @@ CSV चार files बनाता है; rows न होने पर हर 
 |---|---|
 | `SourceFile` | वह database जिससे row पढ़ी गई। |
 | `User` | वह Windows उपयोगकर्ता जिसकी profile में path है (`Users` के बाद वाला folder)। |
-| `Browser` | वह browser जिसका नाम path में है: `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | सामग्री से निर्धारित ब्राउज़र परिवार, संगत प्रोफ़ाइल पथ से अधिक विशिष्ट नाम। |
 | `Profile` | Browser profile: database का folder। |
 | `Status` | `Live`, `Deleted` (recover किया गया), या `Removed` (Firefox का removal record)। |
 
@@ -186,7 +184,7 @@ CSV चार files बनाता है; rows न होने पर हर 
 | `Count` | Value कितनी बार दर्ज की गई। |
 | `GUID` | Entry का Firefox identifier, जिसका उल्लेख removal records करते हैं। |
 | `Sources` | Firefox ने entry कहाँ से save की, उन versions में जो इसे रखते हैं (CSV में vertical bar से अलग)। |
-| `RowID` | Entry का row id। |
+| `RowID` | प्रविष्टि की पंक्ति ID; पुनर्प्राप्ति में खोने पर खाली/null। वास्तव में दर्ज शून्य `0` रहता है। |
 
 ## स्वचालित विश्लेषण { #automatic-parsing }
 

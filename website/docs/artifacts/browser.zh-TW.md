@@ -75,9 +75,7 @@ Chromium 系列瀏覽器（Chrome、Edge、Brave、Opera、Vivaldi）與 Firefox
 - 信賴度為 `Low` 的已刪除項目可能是其他記錄的片段：請將其與現存的資料列及其他證據相互比對。
 - 沒有已刪除的資料列，並不代表沒有任何內容被刪除：清零的空間與檢查點不會留下任何可復原的
   內容。目前尚不會復原已刪除的 Cookie。
-- `Browser`、`User` 與 `Profile` 取自資料庫的路徑：被複製到其他位置的設定檔，只會保有其路徑
-  所呈現的資訊。若路徑中沒有已知的瀏覽器資料夾，`Browser` 會是 `Chromium-based` 或
-  `Firefox-based`。
+- 資料庫內容決定瀏覽器系列。相符的設定檔路徑可將 `Browser` 細分為 Chrome 或 Firefox 等；衝突的路徑不會覆蓋系列。否則標示為 `Chromium-based`、`Firefox-based` 或 `Safari`（無法判定時為 `Unknown`）。`User` 和 `Profile` 來自路徑，複製檔案時可能遺失資訊。
 - 不會讀取回復日誌（`-journal`），也不會讀取 Internet Explorer 與舊版 Edge 的
   `WebCacheV01.dat`。
 
@@ -124,7 +122,7 @@ CSV 會建立四個檔案；沒有資料列的檔案只含標題列。JSON 與 J
 |---|---|
 | `SourceFile` | 讀取該資料列的資料庫。 |
 | `User` | 路徑所在設定檔的 Windows 使用者（`Users` 之後的資料夾）。 |
-| `Browser` | 路徑所指出的瀏覽器：`Chrome`、`Edge`、`Brave`、`Opera`、`Vivaldi`、`Firefox` … |
+| `Browser` | 從內容判定的瀏覽器系列，以相符的設定檔路徑細分產品名稱。 |
 | `Profile` | 瀏覽器設定檔：即資料庫所在的資料夾。 |
 | `Status` | `Live`、`Deleted`（復原所得）或 `Removed`（Firefox 的移除記錄）。 |
 
@@ -183,7 +181,7 @@ CSV 會建立四個檔案；沒有資料列的檔案只含標題列。JSON 與 J
 | `Count` | 該值被輸入的次數。 |
 | `GUID` | Firefox 對該項目的識別碼，移除記錄即以此識別碼指名項目。 |
 | `Sources` | Firefox 儲存該項目時的來源，僅見於保存此資訊的版本（在 CSV 中以垂直線分隔）。 |
-| `RowID` | 該項目的資料列 ID。 |
+| `RowID` | 項目的列 ID；復原時若已遺失則留空/null。實際記錄的零仍保留為 `0`。 |
 
 ## 自動剖析 { #automatic-parsing }
 

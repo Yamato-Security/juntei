@@ -28,3 +28,18 @@ then deleted as Firefox deletes, with `secure_delete` on, in the write-ahead log
 [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser)'s tests
 (`browser/tests/fixtures/formhistory/`), written by its `gen.sh` with the `sqlite3` shell in
 Firefox 140's schema from synthetic values.
+
+`wal-schema/evidence.db` and `evidence.db-wal` are synthetic regression inputs: the primary
+has no schema, and the committed WAL holds one Firefox form entry. The arbitrary filename
+requires content detection. They were made with Python's `sqlite3`, using this SQL, then
+copied before closing the connection (gzip uses `mtime=0`):
+
+```sql
+PRAGMA page_size=1024;
+PRAGMA journal_mode=WAL;
+PRAGMA wal_autocheckpoint=0;
+CREATE TABLE moz_formhistory (id INTEGER PRIMARY KEY, fieldname TEXT, value TEXT,
+  timesUsed INTEGER, firstUsed INTEGER, lastUsed INTEGER, guid TEXT);
+INSERT INTO moz_formhistory VALUES
+  (1,'q','schema-in-wal',2,1793520000000000,1793520001000000,'wal-guid');
+```

@@ -80,9 +80,7 @@ database file's own copies of the pages a `-wal` replaced, until the next checkp
   live rows and the other evidence.
 - No deleted row does not mean nothing was deleted: zeroed space and a checkpoint leave nothing
   to recover. Deleted cookies are not recovered yet.
-- `Browser`, `User` and `Profile` come from the database's path: a profile copied elsewhere keeps
-  only what its path says. Without a known browser folder, `Browser` is `Chromium-based` or
-  `Firefox-based`.
+- The database contents establish the browser family. A compatible profile path refines `Browser` to a vendor such as Chrome or Firefox; a conflicting path cannot override the family. Otherwise the label is `Chromium-based`, `Firefox-based`, or `Safari` (`Unknown` if undetermined). `User` and `Profile` come from the path and may be lost when files are copied.
 - Rollback journals (`-journal`) are not read, nor Internet Explorer and legacy Edge's
   `WebCacheV01.dat`.
 
@@ -129,7 +127,7 @@ Every table starts with these fields:
 |---|---|
 | `SourceFile` | The database the row was read from. |
 | `User` | The Windows user whose profile the path is in (the folder after `Users`). |
-| `Browser` | The browser the path names: `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | Browser family from the contents, refined by a compatible profile path. |
 | `Profile` | The browser profile: the database's folder. |
 | `Status` | `Live`, `Deleted` (recovered), or `Removed` (a Firefox removal record). |
 
@@ -188,7 +186,7 @@ Every table starts with these fields:
 | `Count` | How many times the value was entered. |
 | `GUID` | Firefox's identifier of the entry, which removal records name. |
 | `Sources` | Where Firefox saved the entry from, in the versions that keep it (separated by a vertical bar in CSV). |
-| `RowID` | The entry's row id. |
+| `RowID` | The entry’s row id; blank/null when recovery lost it. An observed row id of zero remains `0`. |
 
 ## Automatic parsing
 

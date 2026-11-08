@@ -76,9 +76,7 @@ Chromium 기반 브라우저(Chrome, Edge, Brave, Opera, Vivaldi)와 Firefox 기
 - 신뢰도가 `Low`인 삭제된 항목은 다른 레코드의 조각일 수 있습니다. 활성 행 및 다른 증거와 대조하십시오.
 - 삭제된 행이 없다고 해서 아무것도 삭제되지 않았다는 뜻은 아닙니다. 0으로 덮어쓴 공간과 체크포인트 이후에는
   복구할 것이 남지 않습니다. 삭제된 쿠키는 아직 복구되지 않습니다.
-- `Browser`, `User`, `Profile`은 데이터베이스의 경로에서 가져옵니다. 다른 곳으로 복사된 프로필은 그 경로가
-  나타내는 정보만 유지합니다. 알려진 브라우저 폴더가 없으면 `Browser`는 `Chromium-based` 또는
-  `Firefox-based`입니다.
+- 데이터베이스 내용으로 브라우저 계열을 판별합니다. 호환되는 프로필 경로가 있으면 `Browser`를 Chrome이나 Firefox 등으로 구체화하지만, 모순되는 경로가 계열을 바꾸지는 않습니다. 그 외에는 `Chromium-based`, `Firefox-based`, `Safari`이며 판별 불가 시 `Unknown`입니다. `User`와 `Profile`은 경로에서 가져오므로 복사 시 정보가 사라질 수 있습니다.
 - 롤백 저널(`-journal`)은 읽지 않으며, Internet Explorer와 레거시 Edge의 `WebCacheV01.dat`도 읽지 않습니다.
 
 ## Juntei로 파싱하기 { #parse-with-juntei }
@@ -124,7 +122,7 @@ CSV는 네 개의 파일을 생성하며, 행이 없으면 헤더만 있는 파�
 |---|---|
 | `SourceFile` | 행을 읽어 온 데이터베이스. |
 | `User` | 경로상의 프로필 소유자인 Windows 사용자(`Users` 다음 폴더). |
-| `Browser` | 경로가 나타내는 브라우저: `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | 내용으로 판별한 브라우저 계열. 호환되는 프로필 경로로 제품명을 구체화합니다. |
 | `Profile` | 브라우저 프로필. 즉, 데이터베이스가 있는 폴더. |
 | `Status` | `Live`, `Deleted`(복구됨) 또는 `Removed`(Firefox의 제거 레코드). |
 
@@ -183,7 +181,7 @@ CSV는 네 개의 파일을 생성하며, 행이 없으면 헤더만 있는 파�
 | `Count` | 값이 입력된 횟수. |
 | `GUID` | 제거 레코드가 가리키는, Firefox의 항목 식별자. |
 | `Sources` | Firefox가 항목을 저장한 출처(이를 보관하는 버전의 경우. CSV에서는 세로 막대로 구분). |
-| `RowID` | 항목의 행 ID. |
+| `RowID` | 항목의 행 ID. 복구 중 소실되면 빈 값/null입니다. 실제 기록된 0은 `0`으로 유지됩니다. |
 
 ## 자동 분석 { #automatic-parsing }
 

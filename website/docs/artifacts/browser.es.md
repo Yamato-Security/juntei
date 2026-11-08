@@ -82,8 +82,7 @@ navegador vuelva a ejecutarse.
   con el resto de la evidencia.
 - Que no haya filas eliminadas no significa que no se eliminara nada: el espacio rellenado con ceros y un punto de
   control no dejan nada que recuperar. Las cookies eliminadas todavía no se recuperan.
-- `Browser`, `User` y `Profile` proceden de la ruta de la base de datos: un perfil copiado a otra ubicación solo conserva
-  lo que indica su ruta. Sin una carpeta de navegador conocida, `Browser` es `Chromium-based` o `Firefox-based`.
+- El contenido determina la familia del navegador. Una ruta de perfil compatible precisa `Browser` como Chrome o Firefox; una ruta contradictoria no cambia la familia. En otro caso se usa `Chromium-based`, `Firefox-based` o `Safari` (`Unknown` si no se puede determinar). `User` y `Profile` proceden de la ruta y pueden perderse al copiar archivos.
 - No se leen los diarios de reversión (`-journal`), ni el `WebCacheV01.dat` de Internet Explorer y del Edge heredado.
 
 ## Análisis con Juntei { #parse-with-juntei }
@@ -129,7 +128,7 @@ Todas las tablas empiezan con estos campos:
 |---|---|
 | `SourceFile` | La base de datos de la que se leyó la fila. |
 | `User` | El usuario de Windows en cuyo perfil está la ruta (la carpeta que sigue a `Users`). |
-| `Browser` | El navegador que nombra la ruta: `Chrome`, `Edge`, `Brave`, `Opera`, `Vivaldi`, `Firefox` … |
+| `Browser` | Familia según el contenido, precisada por una ruta de perfil compatible. |
 | `Profile` | El perfil del navegador: la carpeta de la base de datos. |
 | `Status` | `Live`, `Deleted` (recuperada) o `Removed` (un registro de eliminación de Firefox). |
 
@@ -188,7 +187,7 @@ Todas las tablas empiezan con estos campos:
 | `Count` | Cuántas veces se introdujo el valor. |
 | `GUID` | El identificador de la entrada en Firefox, que nombran los registros de eliminación. |
 | `Sources` | Desde dónde guardó Firefox la entrada, en las versiones que lo conservan (separados por una barra vertical en CSV). |
-| `RowID` | El id de fila de la entrada. |
+| `RowID` | ID de fila; vacío/null si se perdió durante la recuperación. Un cero realmente registrado permanece como `0`. |
 
 ## Análisis automático { #automatic-parsing }
 

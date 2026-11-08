@@ -108,6 +108,124 @@ fn jsonl(text: &str) -> Vec<Value> {
 }
 
 #[test]
+fn a_renamed_database_is_identified_using_its_committed_wal_schema() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack("wal-schema", dir.path());
+    let database = dir.path().join("evidence.db");
+    let wal = dir.path().join("evidence.db-wal");
+    let before = [
+        std::fs::read(&database).unwrap(),
+        std::fs::read(&wal).unwrap(),
+    ];
+    let r = run(&[
+        "parse-sqlite",
+        "browser",
+        "-f",
+        database.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-q",
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.all());
+    let rows = jsonl(&r.stdout);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["Value"], "schema-in-wal");
+    assert_eq!(rows[0]["Browser"], "Firefox-based");
+    assert_eq!(
+        before,
+        [
+            std::fs::read(&database).unwrap(),
+            std::fs::read(&wal).unwrap()
+        ]
+    );
+
+    // The same committed page 1 can restore an unreadable primary header.
+    let mut damaged = before[0].clone();
+    damaged[..16].fill(0);
+    std::fs::write(&database, &damaged).unwrap();
+    let r = run(&[
+        "parse-sqlite",
+        "browser",
+        "-f",
+        database.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-q",
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.all());
+    assert_eq!(jsonl(&r.stdout), rows);
+    assert_eq!(std::fs::read(&database).unwrap(), damaged);
+    assert_eq!(std::fs::read(&wal).unwrap(), before[1]);
+}
+
+#[test]
+fn copied_databases_keep_the_family_of_their_contents() {
+    let dir = tempfile::tempdir().unwrap();
+    // A copied Firefox database must not become Edge because of its destination folder,
+    // and a copied Chromium database must not become Firefox.
+    for (fixture, folder, filename, expected) in [
+        ("firefox140", EDGE, "places.sqlite", "Firefox-based"),
+        ("chromium150", FIREFOX, "History", "Chromium-based"),
+    ] {
+        let profile = dir.path().join(folder);
+        unpack(fixture, &profile);
+        for name in [
+            filename,
+            if fixture == "firefox140" {
+                "cookies.sqlite"
+            } else {
+                "Cookies"
+            },
+            if fixture == "firefox140" {
+                "formhistory.sqlite"
+            } else {
+                "Web Data"
+            },
+        ] {
+            let r = run(&[
+                "parse-sqlite",
+                "browser",
+                "-f",
+                profile.join(name).to_str().unwrap(),
+                "-t",
+                "jsonl",
+                "-q",
+                "-K",
+            ]);
+            assert_eq!(r.code, 0, "{}", r.all());
+            let rows = jsonl(&r.stdout);
+            assert!(!rows.is_empty());
+            assert!(
+                rows.iter().all(|row| row["Browser"] == expected),
+                "{rows:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn empty_cookie_databases_are_not_attributed_by_their_extension() {
+    let dir = tempfile::tempdir().unwrap();
+    unpack("firefox140", dir.path());
+    // All six cookies are still in the WAL; the primary is an empty Firefox schema.
+    let copied = dir.path().join("renamed.db");
+    std::fs::copy(dir.path().join("cookies.sqlite"), &copied).unwrap();
+    let r = run(&[
+        "parse-sqlite",
+        "browser",
+        "-f",
+        copied.to_str().unwrap(),
+        "-q",
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.all());
+    assert!(r.stdout.contains("Firefox-based:"), "{}", r.all());
+    assert!(r.stdout.contains("Cookies: 0"), "{}", r.all());
+}
+
+#[test]
 fn browser_summary_on_the_terminal() {
     let dir = tempfile::tempdir().unwrap();
     let host = collection(dir.path());

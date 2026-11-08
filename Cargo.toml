@@ -95,6 +95,8 @@ ese = { package = "ys-srum-parser-ese", git = "https://github.com/Yamato-Securit
 # fork of Sootmark's browser, sqlite and plist crates (MIT OR Apache-2.0); its timestamps are
 # sootmark-common's.
 browser = { package = "ys-browser-parser", git = "https://github.com/Yamato-Security/ys-browser-parser" }
+# Use the same reader for detection: the committed schema may exist only in the WAL.
+browser-sqlite = { package = "ys-browser-parser-sqlite", git = "https://github.com/Yamato-Security/ys-browser-parser" }
 common = { package = "sootmark-common", version = "0.3.7" }
 termcolor = "1"
 # Defender quarantine parsing: Yamato Security's ys-defender-history-parser, a fork of

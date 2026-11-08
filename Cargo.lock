@@ -1007,6 +1007,7 @@ dependencies = [
  "x509-cert",
  "ys-amcache-parser",
  "ys-browser-parser",
+ "ys-browser-parser-sqlite",
  "ys-defender-history-parser",
  "ys-jump-lists-parser",
  "ys-lnk-parser",

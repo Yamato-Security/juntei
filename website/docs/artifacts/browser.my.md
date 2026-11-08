@@ -89,9 +89,7 @@ free space တွင်၊ ၎င်း၏ freelist ပေါ်တွင် သ
   row များနှင့် အခြား အထောက်အထားများနှင့် တိုက်ဆိုင်စစ်ဆေးပါ။
 - ဖျက်ထားသော row မရှိခြင်းသည် ဘာမျှ မဖျက်ခဲ့ဟု မဆိုလိုပါ။ သုညဖြင့် ဖြည့်ထားသော space နှင့် checkpoint တို့သည်
   ပြန်လည်ရယူစရာ ဘာမျှ မချန်ထားပါ။ ဖျက်ထားသော cookie များကို ယခုထိ ပြန်လည်မရယူသေးပါ။
-- `Browser`၊ `User` နှင့် `Profile` တို့သည် database ၏ path မှ လာပါသည်။ အခြားနေရာသို့ ကူးယူထားသော profile သည် ၎င်း၏
-  path က ဖော်ပြသည့်အရာကိုသာ ထိန်းထားပါသည်။ သိရှိထားသော ဘရောက်ဇာ ဖိုင်တွဲ မရှိလျှင် `Browser` သည် `Chromium-based`
-  သို့မဟုတ် `Firefox-based` ဖြစ်ပါသည်။
+- Database အကြောင်းအရာက browser မျိုးစုကို သတ်မှတ်သည်။ ကိုက်ညီသော profile path ရှိလျှင် `Browser` ကို Chrome သို့မဟုတ် Firefox ကဲ့သို့ ဖော်ပြသည်။ မကိုက်ညီသော path ကြောင့် မျိုးစု မပြောင်းပါ။ အခြားအခြေအနေတွင် `Chromium-based`၊ `Firefox-based` သို့မဟုတ် `Safari` ဖြစ်ပြီး မသိလျှင် `Unknown` ဖြစ်သည်။ `User` နှင့် `Profile` သည် path မှ ရရှိပြီး ဖိုင်ကူးယူသည့်အခါ ပျောက်ဆုံးနိုင်သည်။
 - Rollback journal များ (`-journal`) ကို မဖတ်ပါ။ Internet Explorer နှင့် legacy Edge ၏ `WebCacheV01.dat` ကိုလည်း
   မဖတ်ပါ။
 
@@ -138,7 +136,7 @@ Table တိုင်းသည် ဤ field များဖြင့် စတ�
 |---|---|
 | `SourceFile` | Row ကို ဖတ်ယူခဲ့သော database။ |
 | `User` | Path ပါဝင်သည့် profile ၏ Windows အသုံးပြုသူ (`Users` ၏ နောက်ရှိ ဖိုင်တွဲ)။ |
-| `Browser` | Path တွင် အမည်ပါသော ဘရောက်ဇာ: `Chrome`၊ `Edge`၊ `Brave`၊ `Opera`၊ `Vivaldi`၊ `Firefox` … |
+| `Browser` | အကြောင်းအရာမှ သတ်မှတ်သော browser မျိုးစု၊ ကိုက်ညီသော profile path ဖြင့် ထပ်မံခွဲခြားသည်။ |
 | `Profile` | ဘရောက်ဇာ profile: database ၏ ဖိုင်တွဲ။ |
 | `Status` | `Live`၊ `Deleted` (ပြန်လည်ရယူထားသည်) သို့မဟုတ် `Removed` (Firefox removal record)။ |
 
@@ -197,7 +195,7 @@ Table တိုင်းသည် ဤ field များဖြင့် စတ�
 | `Count` | Value ကို ထည့်သွင်းခဲ့သည့် အကြိမ်အရေအတွက်။ |
 | `GUID` | Removal record များက ညွှန်းဆိုသော entry ၏ Firefox identifier။ |
 | `Sources` | Firefox က entry ကို သိမ်းဆည်းခဲ့သည့် ရင်းမြစ်၊ ၎င်းကို ထိန်းသိမ်းသော ဗားရှင်းများတွင် (CSV တွင် ဒေါင်လိုက်မျဉ်းဖြင့် ခွဲထားသည်)။ |
-| `RowID` | Entry ၏ row id။ |
+| `RowID` | Entry ၏ row ID။ ပြန်လည်ရယူရာတွင် ပျောက်ဆုံးလျှင် ဗလာ/null ဖြစ်သည်။ အမှန်တကယ် မှတ်တမ်းတင်ထားသော သုညကို `0` အဖြစ် ထားသည်။ |
 
 ## အလိုအလျောက် ခွဲခြမ်းစိတ်ဖြာခြင်း { #automatic-parsing }
 
