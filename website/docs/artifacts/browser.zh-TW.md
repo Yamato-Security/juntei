@@ -76,8 +76,8 @@ Chromium 系列瀏覽器（Chrome、Edge、Brave、Opera、Vivaldi）與 Firefox
 - 沒有已刪除的資料列，並不代表沒有任何內容被刪除：清零的空間與檢查點不會留下任何可復原的
   內容。目前尚不會復原已刪除的 Cookie。
 - 資料庫內容決定瀏覽器系列。相符的設定檔路徑可將 `Browser` 細分為 Chrome 或 Firefox 等；衝突的路徑不會覆蓋系列。否則標示為 `Chromium-based`、`Firefox-based` 或 `Safari`（無法判定時為 `Unknown`）。`User` 和 `Profile` 來自路徑，複製檔案時可能遺失資訊。
-- 不會讀取回復日誌（`-journal`），也不會讀取 Internet Explorer 與舊版 Edge 的
-  `WebCacheV01.dat`。
+- 不會讀取回復日誌（`-journal`）。Internet Explorer 與舊版 Edge 的 `WebCacheV01.dat` 則由
+  `parse-ese webcache` 讀取：請參閱 [Internet Explorer 與舊版 Edge](webcache.md)。
 
 ## 使用 Juntei 剖析 { #parse-with-juntei }
 

@@ -80,7 +80,8 @@ Browsers SQLite के `secure_delete` के साथ delete करते ह�
 - कोई deleted row न मिलने का अर्थ यह नहीं कि कुछ भी delete नहीं हुआ: शून्य से भरा गया space और checkpoint
   recover करने के लिए कुछ नहीं छोड़ते। Deleted cookies अभी recover नहीं की जातीं।
 - डेटाबेस की सामग्री ब्राउज़र परिवार निर्धारित करती है। संगत प्रोफ़ाइल पथ `Browser` को Chrome या Firefox जैसे उत्पाद तक सीमित करता है; विरोधी पथ परिवार नहीं बदलता। अन्यथा नाम `Chromium-based`, `Firefox-based` या `Safari` है (अनिश्चित होने पर `Unknown`)। `User` और `Profile` पथ से आते हैं और फ़ाइल कॉपी करने पर खो सकते हैं।
-- Rollback journals (`-journal`) नहीं पढ़े जाते, और न ही Internet Explorer तथा legacy Edge का `WebCacheV01.dat`।
+- Rollback journals (`-journal`) नहीं पढ़े जाते। Internet Explorer तथा legacy Edge का `WebCacheV01.dat`
+  `parse-ese webcache` पढ़ता है: [Internet Explorer और लेगेसी Edge](webcache.md) देखें।
 
 ## Juntei से parse करें { #parse-with-juntei }
 

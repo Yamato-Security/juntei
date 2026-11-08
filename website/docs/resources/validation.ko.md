@@ -108,6 +108,15 @@ ys-browser-parser의 양식 기록 테스트 데이터베이스를 대상으로,
 삭제된 페이지 2개와 방문 2건이 그 시각, URL, 제목과 함께 복구되었고, 테스트 데이터베이스의 삭제된 양식 항목도
 복구되었습니다.
 
+## Internet Explorer와 레거시 Edge(WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache`는 [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser)로
+`WebCacheV01.dat`를 읽습니다. Plaso의 공개 WebCache 데이터베이스 2개, 즉 Internet Explorer 11의 데이터베이스와
+레거시 Edge의 방문 기록, 다운로드, 쿠키가 담긴 더티 상태의 Windows 10 데이터베이스를 대상으로
+`dissect.database`의 ESE 리더와 비교되었습니다. 4,156개 행 모두가 값 단위로 일치했습니다. 컨테이너 44개,
+방문 기록 항목 182개, 다운로드 6건, 쿠키 170개, 기타 항목 3,754개입니다. 비교 과정에서는 다운로드 레코드를
+독자적으로 디코딩했습니다. 데이터베이스가 삭제됨으로 표시한 레코드는 양쪽 모두에서 제외했습니다.
+
 ## LNK 바로 가기 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)는 Sootmark의

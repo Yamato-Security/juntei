@@ -13,6 +13,7 @@ Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisis
 | Jurnal USN | Stream metadata NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Pencatatan Akses Pengguna (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer dan Edge lama (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Browser web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\`, dan folder profil browser lainnya |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` dan lokasi pengguna/sistem lainnya |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` dan `CustomDestinations` |
@@ -37,6 +38,8 @@ Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisis
 - Kumpulkan database browser beserta berkas `-wal` di sampingnya (`places.sqlite-wal`,
   `cookies.sqlite-wal`): perubahan terbaru, serta versi halaman lama yang menjadi sumber pemulihan entri
   terhapus, hanya ada di sana sampai browser melakukan checkpoint.
+- Kumpulkan seluruh folder `WebCache`: Windows terus membuka `WebCacheV01.dat` selama pengguna masuk (log on),
+  dan perubahan terbarunya hanya ada di log transaksi `V01*.log`, yang tidak diputar ulang oleh Juntei.
 - Kumpulkan seluruh pohon `Quarantine` Defender agar Entries, ResourceData, dan Resources dapat dicocokkan.
 
 ## Peringatan untuk sistem live { #live-system-cautions }

@@ -25,6 +25,7 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Benutzerzugriffsprotokollierung (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer und Edge Legacy](../artifacts/webcache.md) |
 
 ## [Dateibefehle](execution.md) { #file-commands }
 

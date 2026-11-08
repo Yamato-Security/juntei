@@ -124,6 +124,16 @@ y las bases de datos de prueba de historial de formularios de ys-browser-parser.
 habían eliminado entradas: las dos páginas y las dos visitas eliminadas del historial de Firefox 140, con sus horas,
 URL y títulos, y las entradas de formularios eliminadas de las bases de datos de prueba.
 
+## Internet Explorer y Edge heredado (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` lee `WebCacheV01.dat` con
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). Se comparó con el lector ESE de
+`dissect.database` en las dos bases de datos WebCache públicas de Plaso: una de Internet Explorer 11 y otra sucia de
+Windows 10 con el historial, las descargas y las cookies del Edge heredado. Coincidieron las 4156 filas, valor por
+valor: 44 contenedores, 182 entradas del historial, 6 descargas, 170 cookies y 3754 entradas más. La comparación
+decodificó por su cuenta los registros de descarga. Los registros que las bases de datos marcan como eliminados se
+excluyeron de ambos lados.
+
 ## Accesos directos LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) es una bifurcación mantenida del

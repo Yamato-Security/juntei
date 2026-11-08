@@ -13,6 +13,7 @@ Juntei は Windows から収集済みのファイルを解析します。信頼�
 | USN ジャーナル | NTFS メタデータ ストリーム `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | ユーザーアクセスログ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer と従来の Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Web ブラウザ | `%LOCALAPPDATA%\Google\Chrome\User Data\`、`%LOCALAPPDATA%\Microsoft\Edge\User Data\`、`%APPDATA%\Mozilla\Firefox\Profiles\`、およびその他のブラウザのプロファイル フォルダー |
 | LNK / 最近 | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` およびその他のユーザー/システムの場所 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` および `CustomDestinations` |
@@ -30,6 +31,7 @@ Juntei は Windows から収集済みのファイルを解析します。信頼�
 - 一致する `SOFTWARE` ハイブを含む SRUM を収集し、アカウントと Wi-Fi プロファイル名を解決します。
 - ユーザーアクセスログの `Sum` ディレクトリ全体を収集します。`SystemIdentity.mdb` が役割の名前を定め、年ごとの `{GUID}.mdb` データベースを列挙しています。Juntei は、UAL のトランザクション ログ `Svc*.log` も再生しません。
 - ブラウザのデータベースは、隣にある `-wal` ファイル (`places.sqlite-wal`、`cookies.sqlite-wal`) と一緒に収集します。最新の変更と、削除済みエントリの復元元となる古いバージョンのページは、ブラウザがチェックポイントを行うまでそこにしか存在しません。
+- `WebCache` フォルダー全体を収集します。Windows はユーザーがログオンしている間 `WebCacheV01.dat` を開いたままにしており、その最新の変更は `V01*.log` トランザクション ログにしか存在しません。Juntei はこのログを再生しません。
 - Defender `Quarantine` ツリー全体を収集して、エントリ、ResourceData、およびリソースを照合できるようにします。
 
 ## ライブシステムに関する注意事項 { #live-system-cautions }

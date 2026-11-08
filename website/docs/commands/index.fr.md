@@ -25,6 +25,7 @@ et organise les résultats et les journaux par ordinateur et par catégorie d'in
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Journalisation des accès utilisateur (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer et l'ancien Edge](../artifacts/webcache.md) |
 
 ## [Commandes de fichiers](execution.md) { #file-commands }
 

@@ -88,8 +88,9 @@ bunu tarayıcı yeniden çalışmadan önce yapın.
 - Silinmiş satır bulunmaması hiçbir şeyin silinmediği anlamına gelmez: sıfırlanmış alan ve bir denetim
   noktası, kurtarılacak hiçbir şey bırakmaz. Silinmiş çerezler henüz kurtarılmamaktadır.
 - Veritabanı içeriği tarayıcı ailesini belirler. Uyumlu profil yolu `Browser` değerini Chrome veya Firefox olarak özelleştirir; çelişen yol aileyi değiştirmez. Aksi halde etiket `Chromium-based`, `Firefox-based` veya `Safari` olur (belirlenemiyorsa `Unknown`). `User` ve `Profile` yoldan gelir ve dosyalar kopyalanırken kaybolabilir.
-- Geri alma günlükleri (`-journal`) okunmaz; Internet Explorer'ın ve eski Edge'in `WebCacheV01.dat`
-  dosyası da okunmaz.
+- Geri alma günlükleri (`-journal`) okunmaz. Internet Explorer'ın ve eski Edge'in `WebCacheV01.dat`
+  dosyasını `parse-ese webcache` okur: bkz.
+  [Internet Explorer ve Eski Edge](webcache.md).
 
 ## Juntei ile ayrıştırma { #parse-with-juntei }
 

@@ -16,7 +16,7 @@ Windows သည် ဖိုင်စနစ်၊ registry၊ compatibility ဒ�
 | ဖြတ်လမ်း သို့မဟုတ် Prefetch ဖိုင်၏ ပစ်မှတ်သည် မည်သည့် volume ပေါ်တွင် ရှိခဲ့သနည်း။ | [$Boot](boot.md) | [LNK](lnk.md)၊ [Prefetch](prefetch.md)၊ [USB စက်ပစ္စည်းများ](usb.md) |
 | အသုံးပြုသူက မည်သည့်အရာကို ဖွင့်ခဲ့သနည်း။ | [Jump Lists](jump-lists.md)၊ [LNK](lnk.md)၊ [RecentDocs](recentdocs.md) | SRUM၊ Prefetch |
 | ပရိုဂရမ်တစ်ခုက ဒေတာ ပမာဏများစွာ လွှဲပြောင်းခဲ့သလား။ | [SRUM](srum.md) | Firewall၊ proxy၊ DNS၊ packet သို့မဟုတ် EDR telemetry |
-| အသုံးပြုသူက မည်သည့် website များကို ကြည့်ရှုခဲ့ပြီး မည်သည့်အရာများကို download လုပ်ခဲ့သနည်း။ | [ဝဘ် ဘရောက်ဇာများ](browser.md) | Proxy နှင့် DNS log များ၊ `$MFT` နှင့် USN Journal၊ Defender၊ SRUM |
+| အသုံးပြုသူက မည်သည့် website များကို ကြည့်ရှုခဲ့ပြီး မည်သည့်အရာများကို download လုပ်ခဲ့သနည်း။ | [ဝဘ် ဘရောက်ဇာများ](browser.md)၊ [Internet Explorer နှင့် legacy Edge](webcache.md) | Proxy နှင့် DNS log များ၊ `$MFT` နှင့် USN Journal၊ Defender၊ SRUM |
 | ဤ server ကို မည်သည့် client များနှင့် account များက မည်သည့်နေ့များတွင် အသုံးပြုခဲ့သနည်း။ | [အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](ual.md) | Security event log များ၊ SMB နှင့် RDP log များ၊ firewall log များ |
 | အမြဲတမ်းဝင်ရောက်နိုင်မှု (persistence) ကို ပြင်ဆင်ထားခဲ့သလား။ | [ဝန်ဆောင်မှုများ](services.md)၊ [TaskCache](taskcache.md)၊ [Registry](registry.md) | Event log များ၊ Prefetch၊ `$MFT` |
 | Defender က မည်သည့်အရာကို ဖယ်ရှားခဲ့သနည်း။ | [Defender သီးခြားခွဲထားသော ဒေတာ](defender-quarantine.md) | Event log များ၊ `$MFT`၊ USN Journal |

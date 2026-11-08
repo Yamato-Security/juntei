@@ -13,6 +13,7 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 | USN Journal | NTFS meta veri akışı `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Kullanıcı Erişim Günlüğü (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer ve eski Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Web tarayıcıları | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` ve diğer tarayıcıların profil klasörleri |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ve diğer kullanıcı/sistem konumları |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` ve `CustomDestinations` |
@@ -40,6 +41,9 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 - Tarayıcı veritabanlarını yanlarındaki `-wal` dosyalarıyla birlikte toplayın (`places.sqlite-wal`,
   `cookies.sqlite-wal`): en yeni değişiklikler ve silinmiş girdilerin kurtarıldığı eski sayfa sürümleri
   yalnızca tarayıcı bir denetim noktası (checkpoint) uygulayana kadar orada bulunur.
+- `WebCache` klasörünün tamamını toplayın: Windows, kullanıcı oturum açtığı sürece `WebCacheV01.dat`
+  dosyasını açık tutar ve en yeni değişiklikleri yalnızca `V01*.log` işlem günlüklerinde bulunur; Juntei
+  bu günlükleri yeniden oynatmaz.
 - Entries, ResourceData ve Resources'ın eşleştirilebilmesi için Defender `Quarantine` ağacının
   tamamını toplayın.
 

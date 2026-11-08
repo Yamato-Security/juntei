@@ -114,6 +114,16 @@ récupérées que là où des entrées avaient été supprimées : les deux pag
 l'historique de Firefox 140, avec leurs heures, URL et titres, et les entrées de formulaires supprimées des bases de
 données de test.
 
+## Internet Explorer et l'ancien Edge (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` lit `WebCacheV01.dat` avec
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). Il a été comparé au lecteur ESE de
+`dissect.database` sur les deux bases de données WebCache publiques de Plaso : l'une d'Internet Explorer 11, et une
+base « dirty » de Windows 10 contenant l'historique, les téléchargements et les cookies de l'ancien Edge. Les
+4 156 lignes correspondaient toutes, valeur par valeur : 44 conteneurs, 182 entrées d'historique, 6 téléchargements,
+170 cookies et 3 754 autres entrées. La comparaison a décodé elle-même les enregistrements de téléchargement. Les
+enregistrements que les bases de données marquent comme supprimés ont été exclus des deux côtés.
+
 ## Raccourcis LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) est un fork maintenu de la crate

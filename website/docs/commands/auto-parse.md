@@ -131,6 +131,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - SRUM
 - User Access Logging (UAL)
 - Web browser history, downloads, cookies and form history (Chromium- and Firefox-based browsers)
+- Internet Explorer and legacy Edge's WebCache: history, downloads, cookies and cache entries
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -195,7 +196,13 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -301,7 +308,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `Accounts` | SAM local accounts, LSA secrets' names and times |
 | `Applications` | Application history (third-party tools' traces) |
 | `Applications` | Installed programs |
-| `BrowserActivity` | Web browser history, downloads, cookies and form history, with recovered deleted entries |
+| `BrowserActivity` | Web browser history, downloads, cookies and form history, with recovered deleted entries; Internet Explorer and legacy Edge's WebCache |
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -343,7 +350,10 @@ User Access Logging tables are in `LateralMovement`, one file per table, such as
 [User Access Logging (UAL)](../artifacts/ual.md#automatic-parsing).
 Web browser tables are in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` and `Browser-FormHistory.csv`, with `Browser-logs.txt`; see
-[Web Browsers](../artifacts/browser.md#automatic-parsing).
+[Web Browsers](../artifacts/browser.md#automatic-parsing). Internet Explorer and legacy Edge's
+WebCache tables are there too: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` and `WebCache-Containers.csv`, with
+`WebCache-logs.txt`; see [Internet Explorer and Legacy Edge](../artifacts/webcache.md#automatic-parsing).
 See the [complete SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output).
 
 Logs match the capitalized artifact name, such as `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,

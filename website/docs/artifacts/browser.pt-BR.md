@@ -81,7 +81,8 @@ Copie o arquivo `-wal` com seu banco de dados, e faça isso antes que o navegado
 - A ausência de linhas excluídas não significa que nada foi excluído: espaço zerado e um checkpoint não deixam nada para
   recuperar. Cookies excluídos ainda não são recuperados.
 - O conteúdo determina a família do navegador. Um caminho de perfil compatível especifica `Browser` como Chrome ou Firefox; um caminho conflitante não altera a família. Caso contrário, usa-se `Chromium-based`, `Firefox-based` ou `Safari` (`Unknown` se indeterminado). `User` e `Profile` vêm do caminho e podem ser perdidos ao copiar arquivos.
-- Journals de rollback (`-journal`) não são lidos, nem o `WebCacheV01.dat` do Internet Explorer e do Edge legado.
+- Journals de rollback (`-journal`) não são lidos. O `WebCacheV01.dat` do Internet Explorer e do Edge legado é lido
+  pelo `parse-ese webcache`: consulte [Internet Explorer e Edge legado](webcache.md).
 
 ## Analisar com o Juntei { #parse-with-juntei }
 

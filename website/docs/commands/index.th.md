@@ -25,6 +25,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer และ Edge รุ่นเก่า](../artifacts/webcache.md) |
 
 ## [คำสั่งสำหรับไฟล์](execution.md) { #file-commands }
 

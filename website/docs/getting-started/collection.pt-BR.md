@@ -13,6 +13,7 @@ Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisiç
 | Diário USN | Fluxo de metadados do NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Registro de acesso do usuário (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer e Edge legado (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` e as pastas de perfil dos outros navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` e outros locais do usuário/do sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` e `CustomDestinations` |
@@ -38,6 +39,8 @@ Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisiç
 - Colete os bancos de dados dos navegadores com os arquivos `-wal` ao lado deles (`places.sqlite-wal`,
   `cookies.sqlite-wal`): as alterações mais recentes, e as versões mais antigas das páginas das quais as entradas
   excluídas são recuperadas, só ficam ali até o navegador fazer um checkpoint.
+- Colete a pasta `WebCache` inteira: o Windows mantém o `WebCacheV01.dat` aberto enquanto o usuário está conectado,
+  e suas alterações mais recentes ficam apenas nos logs de transação `V01*.log`, que o Juntei não reproduz.
 - Colete a árvore `Quarantine` inteira do Defender para que Entries, ResourceData e Resources possam ser associados.
 
 ## Cuidados com sistemas ativos { #live-system-cautions }

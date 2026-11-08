@@ -25,6 +25,7 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer ve Eski Edge](../artifacts/webcache.md) |
 
 ## [Dosya Komutları](execution.md) { #file-commands }
 

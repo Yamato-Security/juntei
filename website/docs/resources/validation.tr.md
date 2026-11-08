@@ -121,6 +121,16 @@ form girdisinin tamamı eşleşti. Silinmiş girdiler yalnızca girdilerin silin
 Firefox 140 geçmişinden silinen iki sayfa ve iki ziyaret, zamanları, URL'leri ve başlıklarıyla birlikte,
 ve test veritabanlarının silinmiş form girdileri.
 
+## Internet Explorer ve eski Edge (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache`, `WebCacheV01.dat` dosyasını
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) ile okur. Plaso'nun herkese
+açık iki WebCache veritabanında `dissect.database` kütüphanesinin ESE okuyucusuyla karşılaştırıldı: biri
+Internet Explorer 11'e ait, diğeri ise eski Edge'in geçmişini, indirmelerini ve çerezlerini içeren, Windows
+10'a ait kirli bir veritabanı. 4.156 satırın tamamı değer değer eşleşti: 44 kapsayıcı, 182 geçmiş girdisi,
+6 indirme, 170 çerez ve 3.754 diğer girdi. Karşılaştırma, indirme kayıtlarının kodunu kendi başına çözdü.
+Veritabanlarının silinmiş olarak işaretlediği kayıtlar her iki taraftan da çıkarıldı.
+
 ## LNK kısayolları { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser), Sootmark'ın

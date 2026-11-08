@@ -113,6 +113,16 @@ Firefox 140, serta database uji riwayat formulir milik ys-browser-parser. Seluru
 dua halaman dan dua kunjungan yang dihapus dari riwayat Firefox 140, beserta waktu, URL, dan judulnya, serta
 entri formulir terhapus pada database uji.
 
+## Internet Explorer dan Edge lama (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` membaca `WebCacheV01.dat` dengan
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). Perintah ini dibandingkan dengan
+pembaca ESE milik `dissect.database` pada dua database WebCache publik milik Plaso: satu dari Internet
+Explorer 11, dan satu database dirty dari Windows 10 yang berisi riwayat, unduhan, dan cookie Edge lama.
+Seluruh 4.156 baris cocok, nilai demi nilai: 44 kontainer, 182 entri riwayat, 6 unduhan, 170 cookie, dan
+3.754 entri lainnya. Perbandingan tersebut mendekode record unduhan secara mandiri. Record yang ditandai
+terhapus oleh database dikecualikan dari keduanya.
+
 ## Pintasan LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) adalah fork yang dikelola dari crate

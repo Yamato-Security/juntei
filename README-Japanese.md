@@ -23,7 +23,7 @@ Juntei という名前は、深い慈悲の心を持つ仏教の尊格「准胝�
 
 ## 対応アーティファクト
 
-Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 40 種類に対応しており、今後も対応範囲を拡大していきます。
+Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 41 種類に対応しており、今後も対応範囲を拡大していきます。
 
 `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` を実行すると、収集済みの複数の Windows システムを
 自動検出し、対応するすべてのアーティファクトを並列に解析します。結果はコンピュータと証拠のカテゴリ別に
@@ -146,6 +146,7 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 | アーティファクト | 種類 |
 | --- | --- |
 | **Web ブラウザ** (`History`、`Cookies`、`Web Data`、`places.sqlite`、`cookies.sqlite`、`formhistory.sqlite`) — Chrome、Edge、Brave、Opera、Vivaldi、Firefox など Chromium 系・Firefox 系ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴。ライトアヘッドログ（`-wal`）も含めて読み、削除された閲覧履歴、ページ、ダウンロード、フォーム入力を復元します。 | SQLite |
+| **Internet Explorer と従来の Edge** (`WebCacheV01.dat`) — Internet Explorer 10・11、従来の Edge、Windows のインターネット機能 (WinINet) を使うその他のプログラムの閲覧履歴（エクスプローラーで開いたローカルファイルを含む）、ダウンロード、Cookie、キャッシュファイル。キャッシュファイルごとにディスク上のパスと HTTP ヘッダーも示します。 | ESE |
 
 ### ネットワークの活動
 

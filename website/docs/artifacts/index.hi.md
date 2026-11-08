@@ -16,7 +16,7 @@ user-interface history, resource accounting और सुरक्षा उत�
 | किसी शॉर्टकट या Prefetch फ़ाइल का target किस volume पर था? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB डिवाइस](usb.md) |
 | उपयोगकर्ता ने क्या खोला? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | क्या किसी प्रोग्राम ने बड़ी मात्रा में data transfer किया? | [SRUM](srum.md) | Firewall, proxy, DNS, packet या EDR telemetry |
-| उपयोगकर्ता ने किन websites पर visit किया, और क्या download किया? | [वेब ब्राउज़र](browser.md) | Proxy और DNS logs, `$MFT` और USN Journal, Defender, SRUM |
+| उपयोगकर्ता ने किन websites पर visit किया, और क्या download किया? | [वेब ब्राउज़र](browser.md), [Internet Explorer और लेगेसी Edge](webcache.md) | Proxy और DNS logs, `$MFT` और USN Journal, Defender, SRUM |
 | किन clients और accounts ने इस server का उपयोग किया, और किन दिनों में? | [उपयोगकर्ता एक्सेस लॉगिंग (UAL)](ual.md) | Security event logs, SMB और RDP logs, firewall logs |
 | क्या persistence configure किया गया था? | [सेवाएँ](services.md), [TaskCache](taskcache.md), [रेजिस्ट्री](registry.md) | Event logs, Prefetch, `$MFT` |
 | Defender ने क्या हटाया? | [Defender क्वारंटीन](defender-quarantine.md) | Event logs, `$MFT`, USN Journal |

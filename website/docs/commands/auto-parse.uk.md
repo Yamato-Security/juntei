@@ -131,6 +131,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - SRUM
 - журналювання доступу користувачів (UAL)
 - історія, завантаження, файли cookie та історія форм веб-браузерів (браузери на основі Chromium і Firefox)
+- WebCache Internet Explorer і застарілого Edge: історія, завантаження, файли cookie та записи кешу
 - ярлики LNK
 - Jump Lists
 - ShimCache
@@ -192,7 +193,13 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -298,7 +305,7 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `Accounts` | Локальні облікові записи SAM, імена та час секретів LSA |
 | `Applications` | Історія програм (сліди сторонніх інструментів) |
 | `Applications` | Встановлені програми |
-| `BrowserActivity` | Історія, завантаження, файли cookie та історія форм веб-браузерів разом із відновленими видаленими записами |
+| `BrowserActivity` | Історія, завантаження, файли cookie та історія форм веб-браузерів разом із відновленими видаленими записами; WebCache Internet Explorer і застарілого Edge |
 | `ExternalDevices` | Пристрої та томи USB |
 | `FileAndFolderOpening` | Jump Lists, ярлики LNK, Microsoft Office, списки MRU, діалоги відкриття та збереження файлів, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -340,7 +347,10 @@ Amcache і Jump Lists мають по одному спільному журна
 [Журналювання доступу користувачів (UAL)](../artifacts/ual.md#automatic-parsing).
 Таблиці веб-браузерів розміщуються в `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` і `Browser-FormHistory.csv`, разом із `Browser-logs.txt`; див.
-[Веб-браузери](../artifacts/browser.md#automatic-parsing).
+[Веб-браузери](../artifacts/browser.md#automatic-parsing). Там само розміщуються й таблиці WebCache
+Internet Explorer і застарілого Edge: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` і `WebCache-Containers.csv`, разом із
+`WebCache-logs.txt`; див. [Internet Explorer і застарілий Edge](../artifacts/webcache.md#automatic-parsing).
 Див. [повну таблицю розміщення SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Імена журналів відповідають назві артефакту з великої літери, як-от `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

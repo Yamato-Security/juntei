@@ -87,8 +87,8 @@ que le navigateur ne soit relancé.
 - L'absence de ligne supprimée ne signifie pas que rien n'a été supprimé : un espace mis à zéro et un point de contrôle
   ne laissent rien à récupérer. Les cookies supprimés ne sont pas encore récupérés.
 - Le contenu détermine la famille du navigateur. Un chemin de profil compatible précise `Browser` (Chrome, Firefox, etc.) ; un chemin contradictoire ne remplace pas la famille. Sinon, le libellé est `Chromium-based`, `Firefox-based` ou `Safari` (`Unknown` si indéterminé). `User` et `Profile` proviennent du chemin et peuvent être perdus lors de la copie.
-- Les journaux de rollback (`-journal`) ne sont pas lus, pas plus que le `WebCacheV01.dat` d'Internet Explorer et de
-  l'ancien Edge.
+- Les journaux de rollback (`-journal`) ne sont pas lus. Le `WebCacheV01.dat` d'Internet Explorer et de l'ancien Edge
+  est lu par `parse-ese webcache` : voir [Internet Explorer et l'ancien Edge](webcache.md).
 
 ## Analyser avec Juntei { #parse-with-juntei }
 

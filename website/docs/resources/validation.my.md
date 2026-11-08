@@ -113,6 +113,17 @@ Chromium 150 နှင့် Firefox 140 တို့က ဖန်တီးထ�
 စာမျက်နှာ နှစ်ခုနှင့် visit နှစ်ခု (၎င်းတို့၏ အချိန်၊ URL နှင့် title များနှင့်အတူ) နှင့် test database များ၏ ဖျက်ထားသော
 form entry များ ဖြစ်ပါသည်။
 
+## Internet Explorer နှင့် legacy Edge (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` သည် `WebCacheV01.dat` ကို
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) ဖြင့် ဖတ်ပါသည်။ ၎င်းကို Plaso ၏ အများသုံး
+WebCache database နှစ်ခုပေါ်တွင် `dissect.database` ၏ ESE reader နှင့် နှိုင်းယှဉ်ခဲ့ပါသည်: Internet Explorer 11 ၏
+database တစ်ခုနှင့် legacy Edge ၏ history၊ download များနှင့် cookie များ ပါဝင်သော Windows 10 ၏ dirty database
+တစ်ခု ဖြစ်ပါသည်။ Row 4,156 ခု အားလုံးသည် value တစ်ခုချင်းစီအထိ ကိုက်ညီခဲ့ပါသည်: container 44 ခု၊ history entry
+182 ခု၊ download 6 ခု၊ cookie 170 ခုနှင့် အခြား entry 3,754 ခု။ နှိုင်းယှဉ်မှုသည် download record များကို ကိုယ်ပိုင်နည်းဖြင့်
+သီးခြား decode လုပ်ခဲ့ပါသည်။ Database များက ဖျက်ထားသည်ဟု အမှတ်အသားပြုထားသော record များကို နှစ်ဖက်စလုံးမှ
+ချန်လှပ်ထားခဲ့ပါသည်။
+
 ## LNK ဖြတ်လမ်းများ { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) သည်

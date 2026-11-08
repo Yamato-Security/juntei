@@ -84,8 +84,8 @@ erneut läuft.
 - Keine gelöschte Zeile bedeutet nicht, dass nichts gelöscht wurde: Mit Nullen überschriebener Speicherplatz und ein
   Checkpoint lassen nichts Wiederherstellbares zurück. Gelöschte Cookies werden noch nicht wiederhergestellt.
 - Der Datenbankinhalt bestimmt die Browserfamilie. Ein kompatibler Profilpfad präzisiert `Browser` zu Chrome oder Firefox; ein widersprüchlicher Pfad ändert die Familie nicht. Sonst lautet die Bezeichnung `Chromium-based`, `Firefox-based` oder `Safari` (unbestimmt: `Unknown`). `User` und `Profile` stammen aus dem Pfad und können beim Kopieren verloren gehen.
-- Rollback-Journale (`-journal`) werden nicht gelesen, ebenso wenig `WebCacheV01.dat` von Internet Explorer und dem
-  alten Edge.
+- Rollback-Journale (`-journal`) werden nicht gelesen. Die Datei `WebCacheV01.dat` von Internet Explorer und dem alten
+  Edge wird von `parse-ese webcache` gelesen: siehe [Internet Explorer und Edge Legacy](webcache.md).
 
 ## Mit Juntei parsen { #parse-with-juntei }
 

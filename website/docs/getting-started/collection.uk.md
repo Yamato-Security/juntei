@@ -13,6 +13,7 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 | Журнал USN | Потік метаданих NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Журналювання доступу користувачів (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer і застарілий Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Веб-браузери | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` та папки профілів інших браузерів |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` та інші розташування користувача/системи |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` і `CustomDestinations` |
@@ -38,6 +39,8 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 - Збирайте бази даних браузерів разом із файлами `-wal` поруч із ними (`places.sqlite-wal`,
   `cookies.sqlite-wal`): найновіші зміни, а також старіші версії сторінок, з яких відновлюються видалені
   записи, зберігаються там лише до контрольної точки браузера.
+- Збирайте всю папку `WebCache`: Windows тримає `WebCacheV01.dat` відкритим, поки користувач у системі,
+  а його найновіші зміни є лише в журналах транзакцій `V01*.log`, які Juntei не відтворює.
 - Збирайте все дерево `Quarantine` Defender, щоб можна було зіставити Entries, ResourceData і Resources.
 
 ## Застереження щодо працюючих систем { #live-system-cautions }

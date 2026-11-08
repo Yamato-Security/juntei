@@ -130,6 +130,7 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
 - SRUM
 - User Access Logging (UAL)
 - Web browser का history, downloads, cookies और form history (Chromium- और Firefox-based browsers)
+- Internet Explorer और legacy Edge का WebCache: history, downloads, cookies और cache entries
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -191,7 +192,13 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -297,7 +304,7 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `Accounts` | SAM स्थानीय खाते, LSA secrets के नाम और times |
 | `Applications` | ऐप्लिकेशन इतिहास (third-party tools के निशान) |
 | `Applications` | इंस्टॉल किए गए प्रोग्राम |
-| `BrowserActivity` | Web browser का history, downloads, cookies और form history, recover की गई deleted entries सहित |
+| `BrowserActivity` | Web browser का history, downloads, cookies और form history, recover की गई deleted entries सहित; Internet Explorer और legacy Edge का WebCache |
 | `ExternalDevices` | USB devices और volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open और Save As संवाद, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -340,6 +347,9 @@ User Access Logging tables `LateralMovement` में होती हैं, �
 Web browser tables `BrowserActivity` में होती हैं: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` और `Browser-FormHistory.csv`, साथ में `Browser-logs.txt`;
 [वेब ब्राउज़र](../artifacts/browser.md#automatic-parsing) देखें।
+Internet Explorer और legacy Edge की WebCache tables भी वहीं होती हैं: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` और `WebCache-Containers.csv`, साथ में `WebCache-logs.txt`;
+[Internet Explorer और लेगेसी Edge](../artifacts/webcache.md#automatic-parsing) देखें।
 [पूरी SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output) देखें।
 
 Logs capitalized आर्टिफ़ैक्ट नाम से मेल खाते हैं, जैसे `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

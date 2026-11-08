@@ -131,6 +131,7 @@ yang ditemukan. Tugas-tugas ini menggunakan perintah yang dikelompokkan berdasar
 - SRUM
 - Pencatatan Akses Pengguna (UAL)
 - Riwayat, unduhan, cookie, dan riwayat formulir browser web (browser berbasis Chromium dan Firefox)
+- WebCache milik Internet Explorer dan Edge lama: riwayat, unduhan, cookie, dan entri cache
 - Pintasan LNK
 - Jump Lists
 - ShimCache
@@ -192,7 +193,13 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -298,7 +305,7 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 | `Accounts` | Akun lokal SAM, nama dan waktu LSA secrets |
 | `Applications` | Riwayat aplikasi (jejak alat pihak ketiga) |
 | `Applications` | Program terinstal |
-| `BrowserActivity` | Riwayat, unduhan, cookie, dan riwayat formulir browser web, termasuk entri terhapus yang dipulihkan |
+| `BrowserActivity` | Riwayat, unduhan, cookie, dan riwayat formulir browser web, termasuk entri terhapus yang dipulihkan; WebCache milik Internet Explorer dan Edge lama |
 | `ExternalDevices` | Perangkat dan volume USB |
 | `FileAndFolderOpening` | Jump Lists, pintasan LNK, Microsoft Office, daftar MRU, dialog Open dan Save As, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -340,7 +347,10 @@ Tabel Pencatatan Akses Pengguna berada di `LateralMovement`, satu berkas per tab
 [Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md#automatic-parsing).
 Tabel browser web berada di `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv`, dan `Browser-FormHistory.csv`, beserta `Browser-logs.txt`; lihat
-[Browser web](../artifacts/browser.md#automatic-parsing).
+[Browser web](../artifacts/browser.md#automatic-parsing). Tabel WebCache milik Internet Explorer dan Edge
+lama juga berada di sana: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv`, dan `WebCache-Containers.csv`, beserta
+`WebCache-logs.txt`; lihat [Internet Explorer dan Edge lama](../artifacts/webcache.md#automatic-parsing).
 Lihat [tabel penempatan SRUM selengkapnya](../artifacts/srum.md#categorized-auto-parse-output).
 
 Log sesuai dengan nama artefak yang ditulis dengan huruf kapital, seperti `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,

@@ -13,6 +13,7 @@ Juntei Windows से पहले ही एकत्र की गई files �
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer और लेगेसी Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | वेब ब्राउज़र | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` और अन्य browsers के profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` और अन्य उपयोगकर्ता/system स्थान |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` और `CustomDestinations` |
@@ -38,6 +39,8 @@ Juntei Windows से पहले ही एकत्र की गई files �
 - Browser databases को उनके बगल वाली `-wal` files (`places.sqlite-wal`, `cookies.sqlite-wal`) के साथ
   संग्रहित करें: सबसे नए बदलाव, और वे पुराने page versions जिनसे deleted entries recover की जाती हैं, केवल
   तब तक वहाँ रहते हैं जब तक browser checkpoint नहीं करता।
+- पूरा `WebCache` folder संग्रहित करें: उपयोगकर्ता के logged on रहते Windows `WebCacheV01.dat` को खुला
+  रखता है, और उसके सबसे नए बदलाव केवल `V01*.log` transaction logs में होते हैं, जिन्हें Juntei replay नहीं करता।
 - पूरा Defender `Quarantine` tree संग्रहित करें ताकि Entries, ResourceData और Resources का मिलान किया जा सके।
 
 ## Live system के लिए सावधानियाँ { #live-system-cautions }

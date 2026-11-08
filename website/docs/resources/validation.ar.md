@@ -113,6 +113,16 @@ browser وsqlite وplist الخاصة بـ Sootmark، وقد اختير بعد �
 إلا حيث حُذفت إدخالات فعلًا: ما حُذف من سجل Firefox 140 (صفحتان وزيارتان) بأوقاته وعناوين URL
 وعناوين الصفحات، وإدخالات النماذج المحذوفة في قواعد بيانات الاختبار.
 
+## Internet Explorer وEdge القديم (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+يقرأ `parse-ese webcache` الملف `WebCacheV01.dat` باستخدام
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). وقورن بقارئ ESE في
+`dissect.database` على قاعدتي بيانات WebCache العامتين في Plaso: إحداهما من Internet Explorer 11،
+والأخرى قاعدة غير متسقة من Windows 10 تضم سجل التصفح والتنزيلات وملفات تعريف الارتباط الخاصة بـ Edge
+القديم. وتطابقت جميع الصفوف البالغة 4,156، قيمةً بقيمة: 44 حاوية، و182 إدخالًا من سجل التصفح، و6
+تنزيلات، و170 ملف تعريف ارتباط، و3,754 إدخالًا آخر. وفكّت المقارنة ترميز سجلات التنزيل بنفسها. واستُبعدت
+من الجانبين السجلات التي تعلّمها قواعد البيانات على أنها محذوفة.
+
 ## اختصارات LNK { #lnk-shortcuts }
 
 يُعد [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) تفرّعًا مُصانًا من حزمة

@@ -25,6 +25,7 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer dan Edge lama](../artifacts/webcache.md) |
 
 ## [Perintah berkas](execution.md) { #file-commands }
 

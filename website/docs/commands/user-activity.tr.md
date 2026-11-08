@@ -2,7 +2,8 @@
 
 `parse-ese`, Extensible Storage Engine veritabanlarını işler. SRUM'un `SRUDB.dat` dosyası bir ESE veritabanıdır;
 isteğe bağlı SOFTWARE kovanı hesap ve Wi-Fi adlarını zenginleştirir. Windows Server'ın Kullanıcı Erişim Günlüğü
-veritabanları (`Current.mdb`, `{GUID}.mdb` ve `SystemIdentity.mdb`) da ESE veritabanlarıdır.
+veritabanları (`Current.mdb`, `{GUID}.mdb` ve `SystemIdentity.mdb`) da ESE veritabanlarıdır; Internet Explorer
+ile eski Edge'in geçmişlerini, indirmelerini, çerezlerini ve önbelleklerini tuttuğu `WebCacheV01.dat` dosyası da öyledir.
 
 ```text
 Version: 1.1.0 (Dev Build)
@@ -12,9 +13,10 @@ Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  help  Print this message or the help of the given subcommand(s)
-  srum  Parse SRUM databases
-  ual   Parse User Access Logging (UAL) databases
+  help      Print this message or the help of the given subcommand(s)
+  srum      Parse SRUM databases
+  ual       Parse User Access Logging (UAL) databases
+  webcache  Parse Internet Explorer and legacy Edge's WebCache databases
 
 Options:
   -h, --help  Print help
@@ -87,3 +89,36 @@ juntei parse-ese ual -d Sum -t jsonl | jq 'select(.Table == "CLIENTS")'
 ```
 
 Bkz. [Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md).
+
+## `parse-ese webcache` { #parse-ese-webcache }
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ese webcache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for WebCache databases (WebCacheV01.dat)
+  -f, --file <FILE>      File path to one WebCache database (its transaction logs are not read)
+
+Output:
+  -o, --output <PATH>       Save every row: a directory of CSV tables, or a file (json, jsonl)
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese webcache -d Users -o webcache-csv
+juntei parse-ese webcache -f WebCacheV01.dat -t jsonl | jq 'select(.Table == "History")'
+```
+
+Bkz. [Internet Explorer ve Eski Edge](../artifacts/webcache.md).

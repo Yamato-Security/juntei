@@ -131,6 +131,7 @@ découvert. Les tâches utilisent les mêmes commandes regroupées par source qu
 - SRUM
 - Journalisation des accès utilisateur (UAL)
 - Historique, téléchargements, cookies et historique des formulaires des navigateurs web (navigateurs basés sur Chromium et sur Firefox)
+- WebCache d'Internet Explorer et de l'ancien Edge : historique, téléchargements, cookies et entrées du cache
 - Raccourcis LNK
 - Jump Lists
 - ShimCache
@@ -192,7 +193,13 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -298,7 +305,7 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `Accounts` | Comptes locaux SAM, noms et horodatages des secrets LSA |
 | `Applications` | Historique des applications (traces d'outils tiers) |
 | `Applications` | Programmes installés |
-| `BrowserActivity` | Historique, téléchargements, cookies et historique des formulaires des navigateurs web, avec les entrées supprimées récupérées |
+| `BrowserActivity` | Historique, téléchargements, cookies et historique des formulaires des navigateurs web, avec les entrées supprimées récupérées ; WebCache d'Internet Explorer et de l'ancien Edge |
 | `ExternalDevices` | Périphériques et volumes USB |
 | `FileAndFolderOpening` | Jump Lists, raccourcis LNK, Microsoft Office, listes MRU, boîtes de dialogue Ouvrir et Enregistrer sous, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -340,7 +347,10 @@ table, par exemple `UAL-Clients.csv` et `UAL-SystemIdentity.csv`, avec `UAL-logs
 [Journalisation des accès utilisateur (UAL)](../artifacts/ual.md#automatic-parsing).
 Les tables des navigateurs web se trouvent dans `BrowserActivity` : `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` et `Browser-FormHistory.csv`, avec `Browser-logs.txt` ; consultez
-[Navigateurs web](../artifacts/browser.md#automatic-parsing).
+[Navigateurs web](../artifacts/browser.md#automatic-parsing). Les tables WebCache d'Internet Explorer et de
+l'ancien Edge s'y trouvent aussi : `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` et `WebCache-Containers.csv`, avec
+`WebCache-logs.txt` ; consultez [Internet Explorer et l'ancien Edge](../artifacts/webcache.md#automatic-parsing).
 Consultez le [tableau complet de placement des tables SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Les journaux reprennent le nom de l'artefact avec ses majuscules, par exemple `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

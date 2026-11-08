@@ -13,6 +13,7 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
 | Diario USN | Flujo de metadatos NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Registro de acceso de usuarios (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer y Edge heredado (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` y las carpetas de perfil de los demás navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` y otras ubicaciones de usuario/sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` y `CustomDestinations` |
@@ -43,6 +44,9 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
   (`places.sqlite-wal`, `cookies.sqlite-wal`): los cambios más recientes, y las versiones anteriores de las páginas
   de las que se recuperan las entradas eliminadas, solo están ahí hasta que el navegador ejecuta un punto de
   control.
+- Recopile toda la carpeta `WebCache`: Windows mantiene abierto `WebCacheV01.dat` mientras el usuario tiene la
+  sesión iniciada, y sus cambios más recientes solo están en los registros de transacciones `V01*.log`, que Juntei
+  no reproduce.
 - Recopile todo el árbol `Quarantine` de Defender para poder relacionar Entries, ResourceData y
   Resources.
 
