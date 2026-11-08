@@ -129,6 +129,7 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
 - `$Boot` boot sector များနှင့် `$Secure:$SDS` security descriptor များ
 - SRUM
 - အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
+- ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history (Chromium-based နှင့် Firefox-based ဘရောက်ဇာများ)
 - LNK shortcut များ
 - Jump Lists
 - ShimCache
@@ -185,6 +186,12 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -290,6 +297,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `Accounts` | SAM စက်တွင်း account များ၊ LSA secret များ၏ အမည်များနှင့် အချိန်များ |
 | `Applications` | Application မှတ်တမ်း (third-party tool များ၏ ခြေရာများ) |
 | `Applications` | ထည့်သွင်းထားသော ပရိုဂရမ်များ |
+| `BrowserActivity` | ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history၊ ပြန်လည်ရယူထားသော ဖျက်ထားသည့် entry များ အပါအဝင် |
 | `ExternalDevices` | USB device များနှင့် volume များ |
 | `FileAndFolderOpening` | Jump Lists၊ LNK shortcut များ၊ Microsoft Office၊ MRU စာရင်းများ၊ Open နှင့် Save As dialog များ၊ RecentDocs၊ ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -329,6 +337,9 @@ SRUM table များသည် ၎င်းတို့၏ အမျိုး�
 အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း table များသည် `LateralMovement` တွင် table တစ်ခုလျှင် ဖိုင်တစ်ခုစီ ရှိပါသည်၊ ဥပမာ
 `UAL-Clients.csv` နှင့် `UAL-SystemIdentity.csv` တို့ကို `UAL-logs.txt` နှင့်အတူ ထားပါသည်။
 [အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](../artifacts/ual.md#automatic-parsing) ကို ကြည့်ပါ။
+ဝဘ် ဘရောက်ဇာ table များသည် `BrowserActivity` တွင် ရှိပါသည်: `Browser-History.csv`၊ `Browser-Downloads.csv`၊
+`Browser-Cookies.csv` နှင့် `Browser-FormHistory.csv` တို့ကို `Browser-logs.txt` နှင့်အတူ ထားပါသည်။
+[ဝဘ် ဘရောက်ဇာများ](../artifacts/browser.md#automatic-parsing) ကို ကြည့်ပါ။
 [SRUM နေရာချထားမှု table အပြည့်အစုံ](../artifacts/srum.md#categorized-auto-parse-output) ကို ကြည့်ပါ။
 
 Log များသည် `Registry-SAM-logs.txt`၊ `PrefetchTimeline-logs.txt`

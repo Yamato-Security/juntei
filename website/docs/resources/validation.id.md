@@ -101,6 +101,18 @@ nilai-nilai yang diekspos oleh `dissect.esedb`.
 `dissect.esedb`. Pada setiap baris klien, hari-hari yang memiliki hitungan berlangsung dari hari UTC `InsertDate`
 hingga hari UTC `LastAccess`, dan jumlah hitungannya sama dengan `TotalAccesses`.
 
+## Browser web { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) adalah fork yang dikelola dari crate
+browser, sqlite, dan plist milik Sootmark, yang dipilih setelah dibandingkan dengan pustaka Rust lain serta dengan
+Plaso, Velociraptor (SQLiteHunter), dan Hindsight pada database yang sama. `parse-sqlite browser` dibandingkan
+dengan pustaka `sqlite3` yang membaca salinan setiap database beserta berkas `-wal`-nya, pada 38 database
+publik: berkas uji Plaso (Chrome 8 hingga 68, Firefox 2 hingga 118), profil yang dibuat oleh Chromium 150 dan
+Firefox 140, serta database uji riwayat formulir milik ys-browser-parser. Seluruh 293 kunjungan, 21 unduhan,
+692 cookie, dan 41 entri formulir cocok. Entri terhapus hanya dipulihkan di tempat entri memang telah dihapus:
+dua halaman dan dua kunjungan yang dihapus dari riwayat Firefox 140, beserta waktu, URL, dan judulnya, serta
+entri formulir terhapus pada database uji.
+
 ## Pintasan LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) adalah fork yang dikelola dari crate

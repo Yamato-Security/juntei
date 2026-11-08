@@ -13,6 +13,7 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
 | Diario USN | Flujo de metadatos NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Registro de acceso de usuarios (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` y las carpetas de perfil de los demás navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` y otras ubicaciones de usuario/sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` y `CustomDestinations` |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -38,6 +39,10 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
 - Recopile todo el directorio `Sum` del registro de acceso de usuarios: `SystemIdentity.mdb` proporciona
   los nombres de los roles y enumera las bases de datos anuales `{GUID}.mdb`. Al igual que con SRUM,
   Juntei no reproduce los registros de transacciones `Svc*.log` de UAL.
+- Recopile las bases de datos de los navegadores con los archivos `-wal` que están junto a ellas
+  (`places.sqlite-wal`, `cookies.sqlite-wal`): los cambios más recientes, y las versiones anteriores de las páginas
+  de las que se recuperan las entradas eliminadas, solo están ahí hasta que el navegador ejecuta un punto de
+  control.
 - Recopile todo el árbol `Quarantine` de Defender para poder relacionar Entries, ResourceData y
   Resources.
 

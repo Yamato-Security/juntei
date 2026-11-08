@@ -17,6 +17,7 @@ mod amcache;
 mod amcache_output;
 mod auto_parse;
 mod boot;
+mod browser;
 mod cli;
 mod color;
 mod defender_quarantine;
@@ -44,7 +45,10 @@ mod usn_journal;
 mod util;
 
 use clap::{CommandFactory, Parser};
-use cli::{Cli, Commands, EseCommands, FileCommands, NtfsCommands, RegistryCommands, VERSION};
+use cli::{
+    Cli, Commands, EseCommands, FileCommands, NtfsCommands, RegistryCommands, SqliteCommands,
+    VERSION,
+};
 use color::JunteiColor::Green;
 use std::env;
 use std::time::Instant;
@@ -148,6 +152,19 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = i30::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+        },
+        Commands::ParseSqlite(source) => match &source.cmd {
+            SqliteCommands::Browser(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = browser::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }

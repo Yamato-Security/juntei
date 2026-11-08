@@ -101,6 +101,17 @@ pub enum Commands {
     )]
     ParseRegistry(RegistryCommand),
 
+    /// Parse SQLite databases
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-sqlite <COMMAND> [OPTIONS]\n\n{all-args}",
+        subcommand_required = true,
+        arg_required_else_help = true,
+        disable_version_flag = true
+    )]
+    ParseSqlite(SqliteCommand),
+
     /// Hunt offline Windows persistence
     #[command(
         author = AUTHOR,
@@ -315,6 +326,26 @@ pub enum NtfsCommands {
         disable_version_flag = true
     )]
     UsnJournal(UsnJournalOptions),
+}
+
+#[derive(Args)]
+#[command(next_display_order = None)]
+pub struct SqliteCommand {
+    #[command(subcommand)]
+    pub cmd: SqliteCommands,
+}
+
+#[derive(Subcommand)]
+pub enum SqliteCommands {
+    /// Parse browser history, downloads, cookies and form history
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-sqlite browser <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Browser(BrowserOptions),
 }
 
 #[derive(Args)]
@@ -1289,6 +1320,60 @@ impl UalOptions {
             && matches!(
                 self.output_type,
                 Some(UalOutputType::Json | UalOutputType::Jsonl)
+            )
+    }
+}
+
+/// What `parse-sqlite browser` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BrowserOutputType {
+    /// One CSV table each for history, downloads, cookies and form history, in a directory
+    Csv,
+    /// One pretty-printed JSON object per row
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct BrowserOptions {
+    /// Directory to search recursively for browser databases (History, Cookies, Web Data, places.sqlite, cookies.sqlite, formhistory.sqlite, ...)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one browser database (its -wal file next to it is read too)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every row: a directory of CSV tables, or a file (json, jsonl)
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "PATH", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<BrowserOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl BrowserOptions {
+    pub fn output_type(&self) -> BrowserOutputType {
+        self.output_type.unwrap_or(BrowserOutputType::Csv)
+    }
+
+    /// Rows on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there. CSV tables need a directory.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(BrowserOutputType::Json | BrowserOutputType::Jsonl)
             )
     }
 }

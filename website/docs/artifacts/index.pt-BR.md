@@ -16,6 +16,7 @@ mas o investigador ainda precisa interpretar o que cada fonte significa.
 | Em qual volume estava o destino de um atalho ou de um arquivo Prefetch? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [dispositivos USB](usb.md) |
 | O que um usuário abriu? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Um programa transferiu uma grande quantidade de dados? | [SRUM](srum.md) | Telemetria de firewall, proxy, DNS, pacotes ou EDR |
+| Quais sites um usuário visitou, e o que ele baixou? | [Navegadores web](browser.md) | Logs de proxy e DNS, `$MFT` e Diário USN, Defender, SRUM |
 | Quais clientes e contas usaram este servidor, e em quais dias? | [Registro de acesso do usuário (UAL)](ual.md) | Logs de eventos Security, logs de SMB e RDP, logs de firewall |
 | Foi configurada persistência? | [Serviços](services.md), [TaskCache](taskcache.md), [Registro](registry.md) | Logs de eventos, Prefetch, `$MFT` |
 | O que o Defender removeu? | [Quarentena do Defender](defender-quarantine.md) | Logs de eventos, `$MFT`, Diário USN |

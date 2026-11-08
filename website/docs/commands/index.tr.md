@@ -78,6 +78,12 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite Komutları](sqlite.md) { #sqlite-commands }
+
+| Komut | Girdi artefaktı | Ayrıntılı kılavuz |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Web Tarayıcıları](../artifacts/browser.md) |
+
 ## Kaynak türleri ve biçim değişiklikleri { #source-types-and-format-changes }
 
 Gruplar, Juntei'nin şu anda desteklediği biçimleri tanımlar. `parse-registry amcache`, `Amcache.hve`
@@ -108,6 +114,7 @@ Commands:
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts
   parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
 
 Options:

@@ -78,6 +78,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [คำสั่ง SQLite](sqlite.md) { #sqlite-commands }
+
+| คำสั่ง | อาร์ติแฟกต์อินพุต | คู่มือโดยละเอียด |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [เว็บเบราว์เซอร์](../artifacts/browser.md) |
+
 ## ชนิดของแหล่งข้อมูลและการเปลี่ยนแปลงรูปแบบ { #source-types-and-format-changes }
 
 กลุ่มต่าง ๆ อธิบายรูปแบบที่ Juntei รองรับในปัจจุบัน `parse-registry amcache` อ่าน
@@ -107,6 +113,7 @@ Commands:
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts
   parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
 
 Options:

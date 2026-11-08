@@ -78,6 +78,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [Команди для SQLite](sqlite.md) { #sqlite-commands }
+
+| Команда | Вхідний артефакт | Докладний посібник |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Веб-браузери](../artifacts/browser.md) |
+
 ## Типи джерел і зміни форматів { #source-types-and-format-changes }
 
 Групи описують формати, які Juntei наразі підтримує. `parse-registry amcache` зчитує
@@ -107,6 +113,7 @@ Commands:
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts
   parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
 
 Options:

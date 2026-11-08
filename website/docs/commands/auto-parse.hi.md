@@ -129,6 +129,7 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
 - `$Boot` boot sectors और `$Secure:$SDS` security descriptors
 - SRUM
 - User Access Logging (UAL)
+- Web browser का history, downloads, cookies और form history (Chromium- और Firefox-based browsers)
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -185,6 +186,12 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -290,6 +297,7 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `Accounts` | SAM स्थानीय खाते, LSA secrets के नाम और times |
 | `Applications` | ऐप्लिकेशन इतिहास (third-party tools के निशान) |
 | `Applications` | इंस्टॉल किए गए प्रोग्राम |
+| `BrowserActivity` | Web browser का history, downloads, cookies और form history, recover की गई deleted entries सहित |
 | `ExternalDevices` | USB devices और volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open और Save As संवाद, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -329,6 +337,9 @@ SRUM tables अपनी श्रेणी के ठीक अंतर्ग�
 User Access Logging tables `LateralMovement` में होती हैं, हर table के लिए एक file, जैसे
 `UAL-Clients.csv` और `UAL-SystemIdentity.csv`, साथ में `UAL-logs.txt`;
 [उपयोगकर्ता एक्सेस लॉगिंग (UAL)](../artifacts/ual.md#automatic-parsing) देखें।
+Web browser tables `BrowserActivity` में होती हैं: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` और `Browser-FormHistory.csv`, साथ में `Browser-logs.txt`;
+[वेब ब्राउज़र](../artifacts/browser.md#automatic-parsing) देखें।
 [पूरी SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output) देखें।
 
 Logs capitalized आर्टिफ़ैक्ट नाम से मेल खाते हैं, जैसे `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

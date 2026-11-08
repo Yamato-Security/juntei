@@ -78,6 +78,12 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite-Befehle](sqlite.md) { #sqlite-commands }
+
+| Befehl | Eingabeartefakt | Ausführlicher Leitfaden |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Webbrowser](../artifacts/browser.md) |
+
 ## Quelltypen und Formatänderungen { #source-types-and-format-changes }
 
 Die Gruppen beschreiben die Formate, die Juntei derzeit unterstützt. `parse-registry amcache` liest
@@ -107,6 +113,7 @@ Commands:
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts
   parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
 
 Options:

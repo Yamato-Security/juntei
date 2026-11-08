@@ -130,6 +130,7 @@ manifest จะเก็บชื่อโฮสต์ตามที่ค้�
 - บูตเซกเตอร์ `$Boot` และตัวบอกความปลอดภัย `$Secure:$SDS`
 - SRUM
 - การบันทึกการเข้าถึงของผู้ใช้ (UAL)
+- ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเว็บเบราว์เซอร์ (เบราว์เซอร์ที่ใช้ Chromium และ Firefox เป็นพื้นฐาน)
 - ทางลัด LNK
 - Jump Lists
 - ShimCache
@@ -186,6 +187,12 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -292,6 +299,7 @@ CSV แยกตารางออกจากกันเพราะแต่�
 | `Accounts` | บัญชีภายในเครื่อง SAM, ชื่อและเวลาของ LSA secrets |
 | `Applications` | ประวัติแอปพลิเคชัน (ร่องรอยของเครื่องมือจากบุคคลที่สาม) |
 | `Applications` | โปรแกรมที่ติดตั้ง |
+| `BrowserActivity` | ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเว็บเบราว์เซอร์ พร้อมรายการที่ถูกลบซึ่งกู้คืนได้ |
 | `ExternalDevices` | อุปกรณ์และวอลุ่ม USB |
 | `FileAndFolderOpening` | Jump Lists, ทางลัด LNK, Microsoft Office, รายการ MRU, กล่องโต้ตอบ Open และ Save As, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -331,6 +339,9 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 ตารางของการบันทึกการเข้าถึงของผู้ใช้อยู่ใน `LateralMovement` โดยแยกหนึ่งไฟล์ต่อหนึ่งตาราง เช่น
 `UAL-Clients.csv` และ `UAL-SystemIdentity.csv` พร้อม `UAL-logs.txt` ดู
 [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](../artifacts/ual.md#automatic-parsing)
+ตารางของเว็บเบราว์เซอร์อยู่ใน `BrowserActivity` ได้แก่ `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` และ `Browser-FormHistory.csv` พร้อม `Browser-logs.txt` ดู
+[เว็บเบราว์เซอร์](../artifacts/browser.md#automatic-parsing)
 ดู[ตารางการจัดวาง SRUM ทั้งหมด](../artifacts/srum.md#categorized-auto-parse-output)
 
 บันทึกใช้ชื่อตามชื่ออาร์ติแฟกต์ที่ขึ้นต้นด้วยตัวพิมพ์ใหญ่ เช่น `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

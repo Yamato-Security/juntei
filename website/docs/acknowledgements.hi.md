@@ -17,6 +17,7 @@ Juntei इसलिए अस्तित्व में है क्यों
 | डायरेक्टरी इंडेक्स (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` crate, `i30` module) | नीचे श्रेय दिया गया index-slack शोध |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` और `secure` crates) | Microsoft का MS-DTYP और नीचे श्रेय दिया गया NTFS शोध |
 | SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) और [ese](https://github.com/Sootmark/ese) |
+| वेब ब्राउज़र / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite) और [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell का compound-file और Jump List कार्य |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -56,6 +57,8 @@ Juntei इसलिए अस्तित्व में है क्यों
   समझने के लिए अलग implementations प्रदान करते हैं।
 - **Plaso**, **Chainsaw** और **Velociraptor** ने कई आर्टिफ़ैक्ट में parser तुलना, परीक्षण साक्ष्य या
   संग्रह-केंद्रित संदर्भ व्यवहार प्रदान किया।
+- Obsidian Forensics का **Hindsight** और Velocidex की **SQLiteHunter** definitions browser history,
+  downloads, cookies और form history के लिए संदर्भ रहीं।
 
 ## Specification और शोध { #specifications-and-research }
 

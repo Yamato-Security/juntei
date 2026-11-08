@@ -78,6 +78,12 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [Perintah SQLite](sqlite.md) { #sqlite-commands }
+
+| Perintah | Artefak input | Panduan terperinci |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Browser web](../artifacts/browser.md) |
+
 ## Tipe sumber dan perubahan format { #source-types-and-format-changes }
 
 Kelompok-kelompok tersebut mendeskripsikan format yang saat ini didukung Juntei. `parse-registry amcache` membaca
@@ -107,6 +113,7 @@ Commands:
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts
   parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
 
 Options:

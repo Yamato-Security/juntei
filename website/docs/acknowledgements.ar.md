@@ -16,6 +16,7 @@
 | فهارس المجلدات (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (حزمة `mft`، الوحدة `i30`) | أبحاث المساحة الراكدة (slack) في الفهارس المذكورة أدناه |
 | NTFS `$Boot`، `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (الحزمتان `boot` و`secure`) | مواصفة MS-DTYP من Microsoft وأبحاث NTFS المذكورة أدناه |
 | SRUM، UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) و[ese](https://github.com/Sootmark/ese) |
+| متصفحات الويب / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser) و[sqlite](https://github.com/Sootmark/sqlite) و[plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | أعمال Sootmark shell حول الملفات المركبة وJump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -55,6 +56,8 @@
   وسلوك الاستخراج الآمن.
 - قدّمت **Plaso** و**Chainsaw** و**Velociraptor** مقارنات للمحللات، أو أدلة اختبار، أو سلوكًا
   مرجعيًا موجهًا نحو الجمع عبر عدة آثار رقمية.
+- كانت أداة **Hindsight** من Obsidian Forensics وتعريفات **SQLiteHunter** من Velocidex مرجعين لسجل
+  التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج.
 
 ## المواصفات والأبحاث { #specifications-and-research }
 

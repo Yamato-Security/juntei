@@ -130,6 +130,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - завантажувальні сектори `$Boot` і дескриптори безпеки `$Secure:$SDS`
 - SRUM
 - журналювання доступу користувачів (UAL)
+- історія, завантаження, файли cookie та історія форм веб-браузерів (браузери на основі Chromium і Firefox)
 - ярлики LNK
 - Jump Lists
 - ShimCache
@@ -186,6 +187,12 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -291,6 +298,7 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `Accounts` | Локальні облікові записи SAM, імена та час секретів LSA |
 | `Applications` | Історія програм (сліди сторонніх інструментів) |
 | `Applications` | Встановлені програми |
+| `BrowserActivity` | Історія, завантаження, файли cookie та історія форм веб-браузерів разом із відновленими видаленими записами |
 | `ExternalDevices` | Пристрої та томи USB |
 | `FileAndFolderOpening` | Jump Lists, ярлики LNK, Microsoft Office, списки MRU, діалоги відкриття та збереження файлів, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -330,6 +338,9 @@ Amcache і Jump Lists мають по одному спільному журна
 Таблиці журналювання доступу користувачів розміщуються в `LateralMovement`, по одному файлу на таблицю, наприклад
 `UAL-Clients.csv` і `UAL-SystemIdentity.csv`, разом із `UAL-logs.txt`; див.
 [Журналювання доступу користувачів (UAL)](../artifacts/ual.md#automatic-parsing).
+Таблиці веб-браузерів розміщуються в `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` і `Browser-FormHistory.csv`, разом із `Browser-logs.txt`; див.
+[Веб-браузери](../artifacts/browser.md#automatic-parsing).
 Див. [повну таблицю розміщення SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Імена журналів відповідають назві артефакту з великої літери, як-от `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

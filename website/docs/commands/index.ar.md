@@ -78,6 +78,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`، `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [أوامر SQLite](sqlite.md) { #sqlite-commands }
+
+| الأمر | الأثر الرقمي المُدخل | الدليل التفصيلي |
+|---|---|---|
+| `parse-sqlite browser` | `History`، `Cookies`، `Web Data`، `places.sqlite`، `cookies.sqlite`، `formhistory.sqlite` | [متصفحات الويب](../artifacts/browser.md) |
+
 ## أنواع المصادر وتغييرات التنسيق { #source-types-and-format-changes }
 
 تصف المجموعات التنسيقات التي يدعمها Juntei حاليًا. يقرأ `parse-registry amcache` الملف
@@ -107,6 +113,7 @@ Commands:
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts
   parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
 
 Options:

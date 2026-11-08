@@ -38,6 +38,10 @@ fn table_name<'a>(artifact: &str, name: &'a str) -> Option<&'a str> {
         ("amcache", "Amcache_summary.csv") => Some("Summary"),
         ("jump-lists", "AutomaticDestinations.csv") => Some("AutomaticDestinations"),
         ("jump-lists", "CustomDestinations.csv") => Some("CustomDestinations"),
+        ("browser", "Browser-History.csv") => Some("History"),
+        ("browser", "Browser-Downloads.csv") => Some("Downloads"),
+        ("browser", "Browser-Cookies.csv") => Some("Cookies"),
+        ("browser", "Browser-FormHistory.csv") => Some("FormHistory"),
         // `parse-ese ual` names each table's file `UAL-<table>.csv`, a table it doesn't know
         // under its own name, in letters, digits and `-_{}` only
         ("ual", name) => name
@@ -148,7 +152,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
     };
     for task in tasks.iter().filter(|task| !task.timeline_only) {
         let stem = artifact_filename(task.artifact);
-        if !matches!(task.artifact, "amcache" | "jump-lists" | "ual")
+        if !matches!(task.artifact, "amcache" | "browser" | "jump-lists" | "ual")
             && !stem.starts_with("Registry-")
         {
             continue;
@@ -208,7 +212,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                     .map(|path| super::recorded_path(root, path, from_output))
                 {
                     for name in [old_stem, stem] {
-                        if matches!(task.artifact, "amcache" | "jump-lists" | "ual")
+                        if matches!(task.artifact, "amcache" | "browser" | "jump-lists" | "ual")
                             && path == category.join(name)
                         {
                             remove_generated_path(&path, root)?;

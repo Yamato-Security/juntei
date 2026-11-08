@@ -13,6 +13,7 @@ Juntei သည် Windows မှ စုဆောင်းထားပြီးသ
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| ဝဘ် ဘရောက်ဇာများ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` နှင့် အခြား ဘရောက်ဇာများ၏ profile ဖိုင်တွဲများ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` နှင့် အခြား အသုံးပြုသူ/စနစ် တည်နေရာများ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` နှင့် `CustomDestinations` |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -33,6 +34,9 @@ Juntei သည် Windows မှ စုဆောင်းထားပြီးသ
 - Account နှင့် Wi-Fi profile အမည်များကို ဖြေရှင်းရန် SRUM ကို ကိုက်ညီသော `SOFTWARE` hive နှင့်အတူ စုဆောင်းပါ။
 - User Access Logging ၏ `Sum` ဖိုင်တွဲတစ်ခုလုံးကို စုဆောင်းပါ။ `SystemIdentity.mdb` သည် role များနှင့် နှစ်စဉ်
   `{GUID}.mdb` database များကို အမည်ဖော်ပြပါသည်။ Juntei သည် ၎င်း၏ `Svc*.log` transaction log များကိုလည်း replay မလုပ်ပါ။
+- ဘရောက်ဇာ database များကို ၎င်းတို့ဘေးရှိ `-wal` ဖိုင်များ (`places.sqlite-wal`၊ `cookies.sqlite-wal`) နှင့်အတူ
+  စုဆောင်းပါ။ နောက်ဆုံး ပြောင်းလဲမှုများနှင့် ဖျက်ထားသော entry များကို ပြန်လည်ရယူရာ page ဗားရှင်းဟောင်းများသည်
+  ဘရောက်ဇာ checkpoint မလုပ်မီအထိသာ ထိုနေရာတွင် ရှိပါသည်။
 - Entries၊ ResourceData နှင့် Resources တို့ကို ကိုက်ညီစေနိုင်ရန် Defender `Quarantine` tree တစ်ခုလုံးကို စုဆောင်းပါ။
 
 ## Live စနစ်တွင် သတိပြုရန် { #live-system-cautions }

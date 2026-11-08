@@ -13,6 +13,7 @@ Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisiç
 | Diário USN | Fluxo de metadados do NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Registro de acesso do usuário (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` e as pastas de perfil dos outros navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` e outros locais do usuário/do sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` e `CustomDestinations` |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -34,6 +35,9 @@ Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisiç
 - Colete o diretório `Sum` inteiro do Registro de acesso do usuário: o `SystemIdentity.mdb` fornece os nomes das
   funções e lista os bancos de dados anuais `{GUID}.mdb`. Assim como no SRUM, o Juntei não reproduz os logs de
   transação `Svc*.log` do UAL.
+- Colete os bancos de dados dos navegadores com os arquivos `-wal` ao lado deles (`places.sqlite-wal`,
+  `cookies.sqlite-wal`): as alterações mais recentes, e as versões mais antigas das páginas das quais as entradas
+  excluídas são recuperadas, só ficam ali até o navegador fazer um checkpoint.
 - Colete a árvore `Quarantine` inteira do Defender para que Entries, ResourceData e Resources possam ser associados.
 
 ## Cuidados com sistemas ativos { #live-system-cautions }

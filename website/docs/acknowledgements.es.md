@@ -18,6 +18,7 @@ que su código esté incluido en Juntei; consulte la licencia de cada proyecto.
 | Índices de directorios (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, módulo `i30`) | Investigación sobre el espacio residual de índices citada más abajo |
 | `$Boot`, `$Secure:$SDS` de NTFS | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crates `boot` y `secure`) | MS-DTYP de Microsoft y la investigación sobre NTFS citada más abajo |
 | SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) y [ese](https://github.com/Sootmark/ese) |
+| Navegadores web / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite) y [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Trabajo de Sootmark shell sobre archivos compuestos y Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -64,6 +65,8 @@ que su código esté incluido en Juntei; consulte la licencia de cada proyecto.
   estructuras de cuarentena de Defender y un comportamiento de extracción seguro.
 - **Plaso**, **Chainsaw** y **Velociraptor** aportaron comparaciones de analizadores, evidencias de
   prueba o comportamientos de referencia orientados a la recopilación en varios artefactos.
+- **Hindsight** de Obsidian Forensics y las definiciones de **SQLiteHunter** de Velocidex sirvieron de referencia
+  para el historial, las descargas, las cookies y el historial de formularios de los navegadores.
 
 ## Especificaciones e investigación { #specifications-and-research }
 

@@ -45,6 +45,7 @@ const WORK_DIR_PREFIX: &str = ".juntei-work-";
 const CATEGORIES: &[&str] = &[
     "Accounts",
     "Applications",
+    "BrowserActivity",
     "ExternalDevices",
     "FileAndFolderOpening",
     "FileExistence",
@@ -64,6 +65,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "lsa-secrets" | "sam" => "Accounts",
         "app-history" => "Applications",
         "installed-programs" => "Applications",
+        "browser" => "BrowserActivity",
         "usb" => "ExternalDevices",
         "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
             "FileAndFolderOpening"
@@ -89,6 +91,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "amcache" => "Registry-Amcache",
         "bcd" => "Registry-BCD",
         "boot" => "Boot",
+        "browser" => "Browser",
         "appcompat" => "Registry-AppCompat",
         "auditpol" => "Registry-AuditPolicy",
         "app-history" => "Registry-AppHistory",
@@ -758,7 +761,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
     );
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
-        if matches!(task.artifact, "amcache" | "jump-lists" | "ual")
+        if matches!(task.artifact, "amcache" | "browser" | "jump-lists" | "ual")
             && task.output_type == AutoOutputType::Csv
             && result.status == TaskStatus::Succeeded
         {
@@ -1430,6 +1433,12 @@ fn build_tasks(
             srum_extra,
         );
         add("ual", &["parse-ese", "ual"], OutputShape::CsvDirectory, &[]);
+        add(
+            "browser",
+            &["parse-sqlite", "browser"],
+            OutputShape::CsvDirectory,
+            &[],
+        );
         let code_page = opts.code_page.to_string();
         add(
             "lnk",
@@ -1682,6 +1691,7 @@ impl InputInventory {
                 ),
                 ("srum", crate::srum::is_database_name(&name)),
                 ("ual", crate::ual::is_database_name(&name)),
+                ("browser", crate::browser::is_database_name(&name)),
                 ("lnk", crate::lnk::is_lnk_name(&name)),
                 ("jump-lists", crate::jump_lists::is_jump_list_name(&name)),
                 ("shimcache", crate::shimcache::is_system_name(&name)),

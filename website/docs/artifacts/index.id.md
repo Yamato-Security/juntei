@@ -16,6 +16,7 @@ tetapi investigator tetap harus menginterpretasikan makna dari setiap sumber.
 | Di volume mana target sebuah pintasan atau berkas Prefetch berada? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [perangkat USB](usb.md) |
 | Apa yang dibuka oleh pengguna? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Apakah sebuah program mentransfer data dalam jumlah besar? | [SRUM](srum.md) | Telemetri firewall, proxy, DNS, paket, atau EDR |
+| Situs web mana yang dikunjungi pengguna, dan apa yang diunduhnya? | [Browser web](browser.md) | Log proxy dan DNS, `$MFT` dan Jurnal USN, Defender, SRUM |
 | Klien dan akun mana yang menggunakan server ini, dan pada hari apa saja? | [Pencatatan Akses Pengguna (UAL)](ual.md) | Log peristiwa Security, log SMB dan RDP, log firewall |
 | Apakah persistensi dikonfigurasi? | [Layanan](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Log peristiwa, Prefetch, `$MFT` |
 | Apa yang dihapus oleh Defender? | [Karantina Defender](defender-quarantine.md) | Log peristiwa, `$MFT`, Jurnal USN |

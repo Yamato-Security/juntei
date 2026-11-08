@@ -99,6 +99,17 @@ SDDL，包括其 3,384 個回呼 ACE 的條件。
 在每一筆用戶端資料列中，有計數的日子都從 `InsertDate` 的 UTC 日期開始、到 `LastAccess` 的
 UTC 日期為止，且其總和等於 `TotalAccesses`。
 
+## 網頁瀏覽器 { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) 是 Sootmark 的 browser、
+sqlite 與 plist crate 之維護分支，是在相同的資料庫上與另一個 Rust 函式庫以及 Plaso、
+Velociraptor（SQLiteHunter）與 Hindsight 比較後選定的。`parse-sqlite browser` 曾在 38 個公開資料庫上，
+與以 `sqlite3` 函式庫讀取各資料庫連同其 `-wal` 檔案之複本的結果進行比較：這些資料庫包括 Plaso 的
+測試檔案（Chrome 8 至 68、Firefox 2 至 118）、由 Chromium 150 與 Firefox 140 建立的設定檔，以及
+ys-browser-parser 的表單歷程測試資料庫。全部 293 筆造訪、21 筆下載、692 個 Cookie 與 41 筆表單項目
+皆一致。已刪除的項目只在確實有項目被刪除之處才被復原：即從 Firefox 140 歷程中刪除的兩個網頁與兩筆
+造訪（連同其時間、URL 與標題），以及測試資料庫中已刪除的表單項目。
+
 ## LNK 捷徑 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) 是

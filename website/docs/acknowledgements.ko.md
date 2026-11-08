@@ -17,6 +17,7 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
 | 디렉터리 인덱스 (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` 크레이트, `i30` 모듈) | 아래에 기재된 인덱스 슬랙 연구 |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` 및 `secure` 크레이트) | Microsoft의 MS-DTYP 및 아래에 기재된 NTFS 연구 |
 | SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) 및 [ese](https://github.com/Sootmark/ese) |
+| 웹 브라우저 / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite) 및 [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell의 복합 파일 및 Jump List 관련 작업 |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -54,6 +55,8 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
   제공합니다.
 - **Plaso**, **Chainsaw**, **Velociraptor**는 여러 아티팩트에 걸쳐 파서 비교, 테스트 증거 또는 수집 중심의
   참조 동작을 제공했습니다.
+- Obsidian Forensics의 **Hindsight**와 Velocidex의 **SQLiteHunter** 정의는 브라우저 방문 기록, 다운로드, 쿠키 및
+  양식 기록에 대한 참고 자료가 되었습니다.
 
 ## 사양과 연구 { #specifications-and-research }
 

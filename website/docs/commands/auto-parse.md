@@ -130,6 +130,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - `$Boot` boot sectors and `$Secure:$SDS` security descriptors
 - SRUM
 - User Access Logging (UAL)
+- Web browser history, downloads, cookies and form history (Chromium- and Firefox-based browsers)
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -189,6 +190,12 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -294,6 +301,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `Accounts` | SAM local accounts, LSA secrets' names and times |
 | `Applications` | Application history (third-party tools' traces) |
 | `Applications` | Installed programs |
+| `BrowserActivity` | Web browser history, downloads, cookies and form history, with recovered deleted entries |
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -333,6 +341,9 @@ SRUM tables use `SRUM-` filenames directly under their category, for example
 User Access Logging tables are in `LateralMovement`, one file per table, such as
 `UAL-Clients.csv` and `UAL-SystemIdentity.csv`, with `UAL-logs.txt`; see
 [User Access Logging (UAL)](../artifacts/ual.md#automatic-parsing).
+Web browser tables are in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` and `Browser-FormHistory.csv`, with `Browser-logs.txt`; see
+[Web Browsers](../artifacts/browser.md#automatic-parsing).
 See the [complete SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output).
 
 Logs match the capitalized artifact name, such as `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,

@@ -120,6 +120,7 @@ plugins:
         ESE: ESE
         Files: ファイル
         NTFS: NTFS
+        SQLite: SQLite
         Registry: レジストリ
         Persistence Hunter: Persistence Hunter
         Common Output Patterns: 共通の出力方法
@@ -148,6 +149,8 @@ plugins:
         Jump Lists: Jump Lists
         MRU Lists: MRU リスト
         RecentDocs: RecentDocs
+        Browser Activity: ブラウザの活動
+        Web Browsers: Web ブラウザ
         Network Activity: ネットワークの活動
         Networks: ネットワーク
         Lateral Movement: 横展開
@@ -219,6 +222,8 @@ plugins:
         File and Folder Opening: 檔案與資料夾開啟
         LNK Shortcuts: LNK 捷徑
         MRU Lists: MRU 清單
+        Browser Activity: 瀏覽器活動
+        Web Browsers: 網頁瀏覽器
         Network Activity: 網路活動
         Networks: 網路
         Lateral Movement: 橫向移動
@@ -252,6 +257,7 @@ plugins:
         DFIR Glossary: DFIR 詞彙表
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -302,6 +308,8 @@ plugins:
         File and Folder Opening: 파일 및 폴더 열기
         LNK Shortcuts: LNK 바로 가기
         MRU Lists: MRU 목록
+        Browser Activity: 브라우저 활동
+        Web Browsers: 웹 브라우저
         Network Activity: 네트워크 활동
         Networks: 네트워크
         Lateral Movement: 측면 이동
@@ -335,6 +343,7 @@ plugins:
         DFIR Glossary: DFIR 용어집
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -385,6 +394,8 @@ plugins:
         File and Folder Opening: Öffnen von Dateien und Ordnern
         LNK Shortcuts: LNK-Verknüpfungen
         MRU Lists: MRU-Listen
+        Browser Activity: Browseraktivität
+        Web Browsers: Webbrowser
         Network Activity: Netzwerkaktivität
         Networks: Netzwerke
         Lateral Movement: Laterale Bewegung
@@ -418,6 +429,7 @@ plugins:
         DFIR Glossary: DFIR-Glossar
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -468,6 +480,8 @@ plugins:
         File and Folder Opening: Dosya ve Klasör Açma
         LNK Shortcuts: LNK Kısayolları
         MRU Lists: MRU Listeleri
+        Browser Activity: Tarayıcı Etkinliği
+        Web Browsers: Web Tarayıcıları
         Network Activity: Ağ Etkinliği
         Networks: Ağlar
         Lateral Movement: Yanal Hareket
@@ -501,6 +515,7 @@ plugins:
         DFIR Glossary: DFIR Sözlüğü
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -551,6 +566,8 @@ plugins:
         File and Folder Opening: Ouverture de fichiers et dossiers
         LNK Shortcuts: Raccourcis LNK
         MRU Lists: Listes MRU
+        Browser Activity: Activité du navigateur
+        Web Browsers: Navigateurs web
         Network Activity: Activité réseau
         Networks: Réseaux
         Lateral Movement: Déplacement latéral
@@ -584,6 +601,7 @@ plugins:
         DFIR Glossary: Glossaire DFIR
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -634,6 +652,8 @@ plugins:
         File and Folder Opening: Apertura de archivos y carpetas
         LNK Shortcuts: Accesos directos LNK
         MRU Lists: Listas MRU
+        Browser Activity: Actividad del navegador
+        Web Browsers: Navegadores web
         Network Activity: Actividad de red
         Networks: Redes
         Lateral Movement: Movimiento lateral
@@ -667,6 +687,7 @@ plugins:
         DFIR Glossary: Glosario DFIR
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -717,6 +738,8 @@ plugins:
         File and Folder Opening: Abertura de arquivos e pastas
         LNK Shortcuts: Atalhos LNK
         MRU Lists: Listas MRU
+        Browser Activity: Atividade do navegador
+        Web Browsers: Navegadores web
         Network Activity: Atividade de rede
         Networks: Redes
         Lateral Movement: Movimentação lateral
@@ -750,6 +773,7 @@ plugins:
         DFIR Glossary: Glossário DFIR
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -800,6 +824,8 @@ plugins:
         File and Folder Opening: Відкриття файлів і папок
         LNK Shortcuts: Ярлики LNK
         MRU Lists: Списки MRU
+        Browser Activity: Активність браузера
+        Web Browsers: Веб-браузери
         Network Activity: Мережева активність
         Networks: Мережі
         Lateral Movement: Латеральне переміщення
@@ -833,6 +859,7 @@ plugins:
         DFIR Glossary: Глосарій DFIR
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -883,6 +910,8 @@ plugins:
         File and Folder Opening: फ़ाइल और फ़ोल्डर खोलना
         LNK Shortcuts: LNK शॉर्टकट
         MRU Lists: MRU सूचियाँ
+        Browser Activity: ब्राउज़र गतिविधि
+        Web Browsers: वेब ब्राउज़र
         Network Activity: नेटवर्क गतिविधि
         Networks: नेटवर्क
         Lateral Movement: लैटरल मूवमेंट
@@ -916,6 +945,7 @@ plugins:
         DFIR Glossary: DFIR शब्दावली
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -966,6 +996,8 @@ plugins:
         File and Folder Opening: Pembukaan berkas dan folder
         LNK Shortcuts: Pintasan LNK
         MRU Lists: Daftar MRU
+        Browser Activity: Aktivitas browser
+        Web Browsers: Browser web
         Network Activity: Aktivitas jaringan
         Networks: Jaringan
         Lateral Movement: Pergerakan lateral
@@ -999,6 +1031,7 @@ plugins:
         DFIR Glossary: Glosarium DFIR
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -1049,6 +1082,8 @@ plugins:
         File and Folder Opening: ဖိုင်နှင့် ဖိုင်တွဲ ဖွင့်ခြင်း
         LNK Shortcuts: LNK ဖြတ်လမ်းများ
         MRU Lists: MRU စာရင်းများ
+        Browser Activity: ဘရောက်ဇာ လှုပ်ရှားမှု
+        Web Browsers: ဝဘ် ဘရောက်ဇာများ
         Network Activity: ကွန်ရက် လှုပ်ရှားမှု
         Networks: ကွန်ရက်များ
         Lateral Movement: ကွန်ရက်အတွင်း ဘေးတိုက်ရွေ့လျားမှု
@@ -1082,6 +1117,7 @@ plugins:
         DFIR Glossary: DFIR ဝေါဟာရစာရင်း
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -1132,6 +1168,8 @@ plugins:
         File and Folder Opening: การเปิดไฟล์และโฟลเดอร์
         LNK Shortcuts: ทางลัด LNK
         MRU Lists: รายการ MRU
+        Browser Activity: กิจกรรมเบราว์เซอร์
+        Web Browsers: เว็บเบราว์เซอร์
         Network Activity: กิจกรรมเครือข่าย
         Networks: เครือข่าย
         Lateral Movement: การเคลื่อนย้ายภายในเครือข่าย
@@ -1165,6 +1203,7 @@ plugins:
         DFIR Glossary: อภิธานศัพท์ DFIR
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -1215,6 +1254,8 @@ plugins:
         File and Folder Opening: فتح الملفات والمجلدات
         LNK Shortcuts: اختصارات LNK
         MRU Lists: قوائم MRU
+        Browser Activity: نشاط المتصفح
+        Web Browsers: متصفحات الويب
         Network Activity: نشاط الشبكة
         Networks: الشبكات
         Lateral Movement: الحركة الجانبية
@@ -1248,6 +1289,7 @@ plugins:
         DFIR Glossary: مسرد DFIR
         ESE: ESE
         NTFS: NTFS
+        SQLite: SQLite
         Prefetch: Prefetch
         SRUM: SRUM
         UserAssist: UserAssist
@@ -1289,6 +1331,7 @@ nav:
       - Files: commands/execution.md
       - NTFS: commands/filesystem.md
       - Registry: commands/security-registry.md
+      - SQLite: commands/sqlite.md
       - Persistence Hunter: commands/persistence-hunter.md
       - Common Output Patterns: commands/output.md
   - Artifacts:
@@ -1316,6 +1359,8 @@ nav:
           - Jump Lists: artifacts/jump-lists.md
           - MRU Lists: artifacts/mru.md
           - RecentDocs: artifacts/recentdocs.md
+      - Browser Activity:
+          - Web Browsers: artifacts/browser.md
       - Network Activity:
           - Networks: artifacts/networks.md
       - Lateral Movement:

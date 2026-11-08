@@ -101,6 +101,18 @@ the values exposed by `dissect.esedb`.
 `dissect.esedb`. In every client row, the first day with a count was the UTC day of `InsertDate`,
 the last one the UTC day of `LastAccess`, and the counts added up to `TotalAccesses`.
 
+## Web browsers
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) is a maintained fork of
+Sootmark's browser, sqlite and plist crates, chosen after comparing it with another Rust library
+and with Plaso, Velociraptor (SQLiteHunter) and Hindsight on the same databases. `parse-sqlite
+browser` was compared with the `sqlite3` library reading a copy of each database with its `-wal`
+file, on 38 public databases: Plaso's test files (Chrome 8 to 68, Firefox 2 to 118), profiles made
+by Chromium 150 and Firefox 140, and ys-browser-parser's form history test databases. All 293
+visits, 21 downloads, 692 cookies and 41 form entries matched. Deleted entries were recovered only
+where entries had been deleted: the two pages and two visits deleted from the Firefox 140 history,
+with their times, URLs and titles, and the deleted form entries of the test databases.
+
 ## LNK shortcuts
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) is a maintained fork of

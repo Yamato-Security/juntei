@@ -16,6 +16,7 @@ Windows는 파일 시스템, 레지스트리, 호환성 데이터베이스, 사�
 | 바로 가기 또는 Prefetch 파일의 대상은 어느 볼륨에 있었는가? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB 장치](usb.md) |
 | 사용자가 무엇을 열었는가? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | 프로그램이 대량의 데이터를 전송했는가? | [SRUM](srum.md) | 방화벽, 프록시, DNS, 패킷 또는 EDR 텔레메트리 |
+| 사용자가 어떤 웹사이트를 방문했고, 무엇을 다운로드했는가? | [웹 브라우저](browser.md) | 프록시 및 DNS 로그, `$MFT` 및 USN 저널, Defender, SRUM |
 | 어떤 클라이언트와 계정이 어느 날에 이 서버를 사용했는가? | [사용자 액세스 로깅 (UAL)](ual.md) | Security 이벤트 로그, SMB 및 RDP 로그, 방화벽 로그 |
 | 지속성이 구성되었는가? | [서비스](services.md), [TaskCache](taskcache.md), [레지스트리](registry.md) | 이벤트 로그, Prefetch, `$MFT` |
 | Defender가 무엇을 제거했는가? | [Defender 격리 데이터](defender-quarantine.md) | 이벤트 로그, `$MFT`, USN 저널 |
