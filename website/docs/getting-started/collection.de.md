@@ -13,6 +13,7 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 | USN-Journal | NTFS-Metadaten-Stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Benutzerzugriffsprotokollierung (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer und Edge Legacy (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Webbrowser | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` und die Profilordner der anderen Browser |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` und weitere Benutzer-/Systemspeicherorte |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` und `CustomDestinations` |
@@ -37,6 +38,9 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 - Sichern Sie Browserdatenbanken zusammen mit den `-wal`-Dateien daneben (`places.sqlite-wal`,
   `cookies.sqlite-wal`): Die neuesten Änderungen und die älteren Seitenversionen, aus denen gelöschte Einträge
   wiederhergestellt werden, sind nur dort vorhanden, bis der Browser einen Checkpoint ausführt.
+- Sichern Sie den gesamten Ordner `WebCache`: Windows hält `WebCacheV01.dat` geöffnet, solange der Benutzer
+  angemeldet ist, und die neuesten Änderungen stehen nur in den Transaktionsprotokollen `V01*.log`, die Juntei nicht
+  einspielt.
 - Sichern Sie den gesamten Defender-Verzeichnisbaum `Quarantine`, damit Entries, ResourceData und Resources einander zugeordnet werden können.
 
 ## Hinweise zu Live-Systemen { #live-system-cautions }

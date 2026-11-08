@@ -134,6 +134,7 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
 - SRUM
 - Kullanıcı Erişim Günlüğü (UAL)
 - Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi (Chromium ve Firefox tabanlı tarayıcılar)
+- Internet Explorer'ın ve eski Edge'in WebCache verileri: geçmiş, indirmeler, çerezler ve önbellek girdileri
 - LNK kısayolları
 - Jump Lists
 - ShimCache
@@ -197,7 +198,13 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -303,7 +310,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `Accounts` | SAM yerel hesapları, LSA sırlarının adları ve zamanları |
 | `Applications` | Uygulama geçmişi (üçüncü taraf araçların izleri) |
 | `Applications` | Yüklü programlar |
-| `BrowserActivity` | Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi; kurtarılan silinmiş girdilerle birlikte |
+| `BrowserActivity` | Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi; kurtarılan silinmiş girdilerle birlikte; Internet Explorer'ın ve eski Edge'in WebCache verileri |
 | `ExternalDevices` | USB aygıtları ve birimleri |
 | `FileAndFolderOpening` | Jump Lists, LNK kısayolları, Microsoft Office, MRU listeleri, Aç ve Farklı Kaydet iletişim kutuları, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -346,7 +353,10 @@ Kullanıcı Erişim Günlüğü tabloları `LateralMovement` içindedir; her tab
 [Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md#automatic-parsing).
 Web tarayıcısı tabloları `BrowserActivity` içindedir: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` ve `Browser-FormHistory.csv`, bunlarla birlikte `Browser-logs.txt` bulunur; bkz.
-[Web Tarayıcıları](../artifacts/browser.md#automatic-parsing).
+[Web Tarayıcıları](../artifacts/browser.md#automatic-parsing). Internet Explorer'ın ve eski Edge'in
+WebCache tabloları da oradadır: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` ve `WebCache-Containers.csv`, bunlarla birlikte
+`WebCache-logs.txt` bulunur; bkz. [Internet Explorer ve Eski Edge](../artifacts/webcache.md#automatic-parsing).
 [SRUM yerleşiminin tam tablosuna](../artifacts/srum.md#categorized-auto-parse-output) bakın.
 
 Günlükler, büyük harfle başlayan artefakt adıyla eşleşir; örneğin `Registry-SAM-logs.txt`,

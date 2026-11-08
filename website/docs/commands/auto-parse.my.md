@@ -130,6 +130,7 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
 - SRUM
 - အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
 - ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history (Chromium-based နှင့် Firefox-based ဘရောက်ဇာများ)
+- Internet Explorer နှင့် legacy Edge ၏ WebCache: history၊ download များ၊ cookie များနှင့် cache entry များ
 - LNK shortcut များ
 - Jump Lists
 - ShimCache
@@ -191,7 +192,13 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -297,7 +304,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `Accounts` | SAM စက်တွင်း account များ၊ LSA secret များ၏ အမည်များနှင့် အချိန်များ |
 | `Applications` | Application မှတ်တမ်း (third-party tool များ၏ ခြေရာများ) |
 | `Applications` | ထည့်သွင်းထားသော ပရိုဂရမ်များ |
-| `BrowserActivity` | ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history၊ ပြန်လည်ရယူထားသော ဖျက်ထားသည့် entry များ အပါအဝင် |
+| `BrowserActivity` | ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history၊ ပြန်လည်ရယူထားသော ဖျက်ထားသည့် entry များ အပါအဝင်။ Internet Explorer နှင့် legacy Edge ၏ WebCache |
 | `ExternalDevices` | USB device များနှင့် volume များ |
 | `FileAndFolderOpening` | Jump Lists၊ LNK shortcut များ၊ Microsoft Office၊ MRU စာရင်းများ၊ Open နှင့် Save As dialog များ၊ RecentDocs၊ ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -340,6 +347,9 @@ SRUM table များသည် ၎င်းတို့၏ အမျိုး�
 ဝဘ် ဘရောက်ဇာ table များသည် `BrowserActivity` တွင် ရှိပါသည်: `Browser-History.csv`၊ `Browser-Downloads.csv`၊
 `Browser-Cookies.csv` နှင့် `Browser-FormHistory.csv` တို့ကို `Browser-logs.txt` နှင့်အတူ ထားပါသည်။
 [ဝဘ် ဘရောက်ဇာများ](../artifacts/browser.md#automatic-parsing) ကို ကြည့်ပါ။
+Internet Explorer နှင့် legacy Edge ၏ WebCache table များလည်း ထိုနေရာတွင် ရှိပါသည်: `WebCache-History.csv`၊ `WebCache-Downloads.csv`၊
+`WebCache-Cookies.csv`၊ `WebCache-Entries.csv` နှင့် `WebCache-Containers.csv` တို့ကို `WebCache-logs.txt` နှင့်အတူ ထားပါသည်။
+[Internet Explorer နှင့် legacy Edge](../artifacts/webcache.md#automatic-parsing) ကို ကြည့်ပါ။
 [SRUM နေရာချထားမှု table အပြည့်အစုံ](../artifacts/srum.md#categorized-auto-parse-output) ကို ကြည့်ပါ။
 
 Log များသည် `Registry-SAM-logs.txt`၊ `PrefetchTimeline-logs.txt`

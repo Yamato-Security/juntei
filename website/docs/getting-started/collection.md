@@ -13,6 +13,7 @@ Juntei parses files already collected from Windows. Use a trusted acquisition to
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer and legacy Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Web browsers | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` and the other browsers' profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` and other user/system locations |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` and `CustomDestinations` |
@@ -38,6 +39,9 @@ Juntei parses files already collected from Windows. Use a trusted acquisition to
 - Collect browser databases with the `-wal` files beside them (`places.sqlite-wal`,
   `cookies.sqlite-wal`): the newest changes, and the older page versions deleted entries are
   recovered from, are only there until the browser checkpoints.
+- Collect the whole `WebCache` folder: Windows keeps `WebCacheV01.dat` open while the user is
+  logged on, and its newest changes are only in the `V01*.log` transaction logs, which Juntei does
+  not replay.
 - Collect the whole Defender `Quarantine` tree so Entries, ResourceData, and Resources can be matched.
 
 ## Live-system cautions

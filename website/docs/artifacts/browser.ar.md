@@ -78,7 +78,8 @@ SQLite داخل ملف التعريف (profile) الخاص بكل مستخدم. 
 - لا يعني غياب الصفوف المحذوفة أنه لم يُحذف شيء: فالمساحة المصفَّرة ونقطة التحقق لا تتركان شيئًا
   للاستعادة. ولا تُستعاد ملفات تعريف الارتباط المحذوفة بعد.
 - يحدد محتوى قاعدة البيانات عائلة المتصفح. يخصص مسار ملف تعريف متوافق قيمة `Browser` إلى Chrome أو Firefox؛ ولا يغير المسار المتعارض العائلة. وإلا فالتسمية هي `Chromium-based` أو `Firefox-based` أو `Safari` (`Unknown` إن تعذر التحديد). تأتي `User` و`Profile` من المسار وقد تضيع معلوماتهما عند نسخ الملفات.
-- لا تُقرأ سجلات التراجع (`-journal`)، ولا الملف `WebCacheV01.dat` الخاص بـ Internet Explorer وEdge القديم.
+- لا تُقرأ سجلات التراجع (`-journal`). أما الملف `WebCacheV01.dat` الخاص بـ Internet Explorer وEdge القديم
+  فيقرأه `parse-ese webcache`: راجع [Internet Explorer وEdge القديم](webcache.md).
 
 ## التحليل باستخدام Juntei { #parse-with-juntei }
 

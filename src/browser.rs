@@ -30,7 +30,7 @@ use browser::{
     Area, AutofillEntry, Confidence, Cookie, CookieStore, Download, DownloadState, Evidence,
     FormStore, GoogleAnalytics, Kind, Page, PageSource, PageState, Provenance, Visit,
 };
-use chrono::{DateTime, SecondsFormat, Utc};
+use chrono::{DateTime, Datelike, SecondsFormat, Utc};
 use common::time::Ts;
 use indicatif::ProgressBar;
 use serde_json::{Value as Json, json};
@@ -392,6 +392,10 @@ pub fn run(opts: &BrowserOptions) -> i32 {
         let message = match &searched {
             Some(d) => not_found(d),
             None => match not_read {
+                Some(Kind::WebCache) => format!(
+                    "{} is a WebCache database, which parse-ese webcache reads.",
+                    candidates[0].display()
+                ),
                 Some(kind) => format!(
                     "{} is a {kind:?} file, which parse-sqlite browser does not read ({NAMES_SHOWN}).",
                     candidates[0].display()
@@ -741,25 +745,31 @@ fn browser_name(database: &Path) -> Option<String> {
     })
 }
 
-/// The user and profile a database's path names. The user is the folder after the last `Users`
-/// (or `Documents and Settings`) of the path as given, never of the analyst's own directories;
-/// the profile is the database's folder (the one above `Network`, where Chromium keeps its
-/// cookies since version 96).
-fn context(database: &Path) -> Context {
-    let names: Vec<String> = database
+/// The Windows user whose profile a file's path is in: the folder after the last `Users` (or
+/// `Documents and Settings`) of the path as given, never of the analyst's own directories, with
+/// the file below it.
+pub(crate) fn path_user(file: &Path) -> Option<String> {
+    let names: Vec<String> = file
         .components()
         .filter_map(|c| match c {
             Component::Normal(name) => Some(name.to_string_lossy().to_string()),
             _ => None,
         })
         .collect();
-    let user = names
+    names
         .iter()
         .rposition(|n| {
             n.eq_ignore_ascii_case("Users") || n.eq_ignore_ascii_case("Documents and Settings")
         })
         .filter(|&at| at + 2 < names.len())
-        .map(|at| names[at + 1].clone());
+        .map(|at| names[at + 1].clone())
+}
+
+/// The user and profile a database's path names: the user as [`path_user`] says; the profile is
+/// the database's folder (the one above `Network`, where Chromium keeps its cookies since
+/// version 96).
+fn context(database: &Path) -> Context {
+    let user = path_user(database);
     let folders = |path: &Path| -> Vec<String> {
         path.parent()
             .map(|parent| {
@@ -1039,8 +1049,8 @@ fn form_row(
 // --- values ---------------------------------------------------------------------------------
 
 /// A UTC time as RFC 3339, like the timestamps of the other commands; nothing for a time not
-/// set (zero) or out of range.
-fn time(t: Option<Ts>) -> Json {
+/// set (zero) or outside RFC 3339's years 0000–9999.
+pub(crate) fn time(t: Option<Ts>) -> Json {
     t.and_then(|t| t.ticks())
         .and_then(|ticks| {
             DateTime::<Utc>::from_timestamp(
@@ -1048,12 +1058,13 @@ fn time(t: Option<Ts>) -> Json {
                 (ticks.rem_euclid(10_000_000) * 100) as u32,
             )
         })
+        .filter(|t| (0..=9999).contains(&t.year()))
         .map_or(Json::Null, |t| {
             json!(t.to_rfc3339_opts(SecondsFormat::AutoSi, true))
         })
 }
 
-fn text(value: &str) -> Json {
+pub(crate) fn text(value: &str) -> Json {
     if value.is_empty() {
         Json::Null
     } else {
@@ -1061,7 +1072,7 @@ fn text(value: &str) -> Json {
     }
 }
 
-fn optional(value: Option<&str>) -> Json {
+pub(crate) fn optional(value: Option<&str>) -> Json {
     value.map_or(Json::Null, text)
 }
 
@@ -1299,7 +1310,7 @@ impl Stats {
 }
 
 /// A URL's host (and port): between `scheme://` (and any `user@`) and the path.
-fn host(url: &str) -> Option<&str> {
+pub(crate) fn host(url: &str) -> Option<&str> {
     let (_, rest) = url.split_once("://")?;
     let end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
     let authority = &rest[..end];

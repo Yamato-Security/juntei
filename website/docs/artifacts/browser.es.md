@@ -83,7 +83,8 @@ navegador vuelva a ejecutarse.
 - Que no haya filas eliminadas no significa que no se eliminara nada: el espacio rellenado con ceros y un punto de
   control no dejan nada que recuperar. Las cookies eliminadas todavía no se recuperan.
 - El contenido determina la familia del navegador. Una ruta de perfil compatible precisa `Browser` como Chrome o Firefox; una ruta contradictoria no cambia la familia. En otro caso se usa `Chromium-based`, `Firefox-based` o `Safari` (`Unknown` si no se puede determinar). `User` y `Profile` proceden de la ruta y pueden perderse al copiar archivos.
-- No se leen los diarios de reversión (`-journal`), ni el `WebCacheV01.dat` de Internet Explorer y del Edge heredado.
+- No se leen los diarios de reversión (`-journal`). El `WebCacheV01.dat` de Internet Explorer y del Edge heredado lo
+  lee `parse-ese webcache`: consulte [Internet Explorer y Edge heredado](webcache.md).
 
 ## Análisis con Juntei { #parse-with-juntei }
 

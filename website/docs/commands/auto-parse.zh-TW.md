@@ -129,6 +129,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - SRUM
 - 使用者存取記錄 (UAL)
 - 網頁瀏覽器的瀏覽歷程、下載、Cookie 與表單歷程（Chromium 與 Firefox 系列瀏覽器）
+- Internet Explorer 與舊版 Edge 的 WebCache：瀏覽歷程記錄、下載、Cookie 與快取項目
 - LNK 捷徑
 - Jump Lists
 - ShimCache
@@ -189,7 +190,13 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -295,7 +302,7 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 | `Accounts` | SAM 本機帳戶、LSA 機密資訊的名稱與時間 |
 | `Applications` | 應用程式歷程（第三方工具的痕跡） |
 | `Applications` | 已安裝程式 |
-| `BrowserActivity` | 網頁瀏覽器的瀏覽歷程、下載、Cookie 與表單歷程，以及復原的已刪除項目 |
+| `BrowserActivity` | 網頁瀏覽器的瀏覽歷程、下載、Cookie 與表單歷程，以及復原的已刪除項目；Internet Explorer 與舊版 Edge 的 WebCache |
 | `ExternalDevices` | USB 裝置與磁碟區 |
 | `FileAndFolderOpening` | Jump Lists、LNK 捷徑、Microsoft Office、MRU 清單、開啟與另存新檔對話方塊、RecentDocs、ShellBags |
 | `FileExistence` | Amcache、ShimCache |
@@ -338,6 +345,9 @@ SRUM 資料表以 `SRUM-` 檔名直接放在其類別之下，例如
 網頁瀏覽器的資料表位於 `BrowserActivity`：`Browser-History.csv`、`Browser-Downloads.csv`、
 `Browser-Cookies.csv` 與 `Browser-FormHistory.csv`，並附有 `Browser-logs.txt`；請參閱
 [網頁瀏覽器](../artifacts/browser.md#automatic-parsing)。
+Internet Explorer 與舊版 Edge 的 WebCache 資料表也位於此處：`WebCache-History.csv`、
+`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv` 與 `WebCache-Containers.csv`，
+並附有 `WebCache-logs.txt`；請參閱 [Internet Explorer 與舊版 Edge](../artifacts/webcache.md#automatic-parsing)。
 請參閱 [SRUM 完整配置表](../artifacts/srum.md#categorized-auto-parse-output)。
 
 記錄檔名與首字母大寫的跡證名稱一致，例如 `Registry-SAM-logs.txt`、`PrefetchTimeline-logs.txt`

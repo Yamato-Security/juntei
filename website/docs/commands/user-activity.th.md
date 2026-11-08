@@ -3,6 +3,7 @@
 `parse-ese` จัดการฐานข้อมูล Extensible Storage Engine โดย `SRUDB.dat` ของ SRUM เป็นฐานข้อมูล ESE
 และไฮฟ์ SOFTWARE (ไม่บังคับ) ช่วยเติมชื่อบัญชีและชื่อ Wi-Fi ให้สมบูรณ์ขึ้น ฐานข้อมูลการบันทึกการเข้าถึงของผู้ใช้
 (User Access Logging) ของ Windows Server (`Current.mdb`, `{GUID}.mdb` และ `SystemIdentity.mdb`) ก็เป็นฐานข้อมูล ESE เช่นกัน
+เช่นเดียวกับ `WebCacheV01.dat` ซึ่ง Internet Explorer และ Edge รุ่นเก่าใช้เก็บประวัติ การดาวน์โหลด คุกกี้ และแคช
 
 ```text
 Version: 1.1.0 (Dev Build)
@@ -12,9 +13,10 @@ Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  help  Print this message or the help of the given subcommand(s)
-  srum  Parse SRUM databases
-  ual   Parse User Access Logging (UAL) databases
+  help      Print this message or the help of the given subcommand(s)
+  srum      Parse SRUM databases
+  ual       Parse User Access Logging (UAL) databases
+  webcache  Parse Internet Explorer and legacy Edge's WebCache databases
 
 Options:
   -h, --help  Print help
@@ -87,3 +89,36 @@ juntei parse-ese ual -d Sum -t jsonl | jq 'select(.Table == "CLIENTS")'
 ```
 
 ดู [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](../artifacts/ual.md)
+
+## `parse-ese webcache` { #parse-ese-webcache }
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ese webcache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for WebCache databases (WebCacheV01.dat)
+  -f, --file <FILE>      File path to one WebCache database (its transaction logs are not read)
+
+Output:
+  -o, --output <PATH>       Save every row: a directory of CSV tables, or a file (json, jsonl)
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese webcache -d Users -o webcache-csv
+juntei parse-ese webcache -f WebCacheV01.dat -t jsonl | jq 'select(.Table == "History")'
+```
+
+ดู [Internet Explorer และ Edge รุ่นเก่า](../artifacts/webcache.md)

@@ -2323,7 +2323,7 @@ dependencies = [
 [[package]]
 name = "ys-browser-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-browser-parser#a8ed19d4a920fab19bf0fd96d1687dd4d5a39fcf"
+source = "git+https://github.com/Yamato-Security/ys-browser-parser#b96574d3a1ace2bf03461993ce4dcca9619cc016"
 dependencies = [
  "sootmark-common",
  "ys-browser-parser-plist",
@@ -2334,7 +2334,7 @@ dependencies = [
 [[package]]
 name = "ys-browser-parser-plist"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-browser-parser#a8ed19d4a920fab19bf0fd96d1687dd4d5a39fcf"
+source = "git+https://github.com/Yamato-Security/ys-browser-parser#b96574d3a1ace2bf03461993ce4dcca9619cc016"
 dependencies = [
  "sootmark-common",
 ]
@@ -2342,7 +2342,7 @@ dependencies = [
 [[package]]
 name = "ys-browser-parser-sqlite"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-browser-parser#a8ed19d4a920fab19bf0fd96d1687dd4d5a39fcf"
+source = "git+https://github.com/Yamato-Security/ys-browser-parser#b96574d3a1ace2bf03461993ce4dcca9619cc016"
 
 [[package]]
 name = "ys-defender-history-parser"

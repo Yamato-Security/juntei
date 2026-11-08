@@ -113,6 +113,16 @@ visits, 21 downloads, 692 cookies and 41 form entries matched. Deleted entries w
 where entries had been deleted: the two pages and two visits deleted from the Firefox 140 history,
 with their times, URLs and titles, and the deleted form entries of the test databases.
 
+## Internet Explorer and legacy Edge (WebCache)
+
+`parse-ese webcache` reads `WebCacheV01.dat` with
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). It was compared with
+`dissect.database`'s ESE reader on Plaso's two public WebCache databases: one of Internet
+Explorer 11, and a dirty one of Windows 10 with legacy Edge's history, downloads and cookies. All
+4,156 rows matched, value by value: 44 containers, 182 history entries, 6 downloads, 170 cookies
+and 3,754 other entries. The comparison decoded the download records on its own. Records the
+databases flag as deleted were left out of both.
+
 ## LNK shortcuts
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) is a maintained fork of

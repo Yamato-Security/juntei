@@ -113,6 +113,16 @@ browser, sqlite และ plist ของ Sootmark ซึ่งได้รั�
 ถูกกู้คืนเฉพาะในกรณีที่มีการลบรายการจริงเท่านั้น ได้แก่ หน้าเว็บสองหน้าและการเข้าชมสองรายการที่ถูกลบจาก
 ประวัติของ Firefox 140 พร้อมเวลา URL และชื่อเรื่อง และรายการฟอร์มที่ถูกลบในฐานข้อมูลทดสอบ
 
+## Internet Explorer และ Edge รุ่นเก่า (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` อ่าน `WebCacheV01.dat` ด้วย
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) และได้รับการเปรียบเทียบกับตัวอ่าน ESE
+ของ `dissect.database` บนฐานข้อมูล WebCache สาธารณะสองชุดของ Plaso ได้แก่ ชุดหนึ่งของ Internet Explorer 11
+และอีกชุดหนึ่งของ Windows 10 ที่อยู่ในสถานะ dirty ซึ่งมีประวัติ การดาวน์โหลด และคุกกี้ของ Edge รุ่นเก่า
+แถวทั้ง 4,156 แถวตรงกันทุกค่า ได้แก่ คอนเทนเนอร์ 44 รายการ รายการประวัติ 182 รายการ การดาวน์โหลด 6 รายการ
+คุกกี้ 170 รายการ และรายการอื่น 3,754 รายการ การเปรียบเทียบนี้ถอดรหัสเรคคอร์ดการดาวน์โหลดด้วยวิธีของตนเอง
+โดยอิสระ เรคคอร์ดที่ฐานข้อมูลทำเครื่องหมายว่าถูกลบไม่ได้ถูกนำมารวมทั้งสองฝั่ง
+
 ## ทางลัด LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) เป็น fork ที่ดูแลต่อจาก crate

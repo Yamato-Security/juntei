@@ -25,6 +25,7 @@ y organiza los resultados y los registros por equipo y por categoría de investi
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Registro de acceso de usuarios (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer y Edge heredado](../artifacts/webcache.md) |
 
 ## [Comandos de archivos](execution.md) { #file-commands }
 

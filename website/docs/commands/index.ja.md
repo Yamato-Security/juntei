@@ -22,6 +22,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb` | [ユーザーアクセスログ (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer と従来の Edge](../artifacts/webcache.md) |
 
 ## [ファイルコマンド](execution.md) { #file-commands }
 

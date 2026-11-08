@@ -13,6 +13,7 @@ Juntei analyse des fichiers déjà collectés sur Windows. Utilisez un outil d'a
 | Journal USN | Flux de métadonnées NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Journalisation des accès utilisateur (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer et l'ancien Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | Navigateurs web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` et les dossiers de profil des autres navigateurs |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` et d'autres emplacements utilisateur/système |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` et `CustomDestinations` |
@@ -39,6 +40,9 @@ Juntei analyse des fichiers déjà collectés sur Windows. Utilisez un outil d'a
   `cookies.sqlite-wal`) : les modifications les plus récentes, ainsi que les versions antérieures des pages à partir
   desquelles les entrées supprimées sont récupérées, ne s'y trouvent que jusqu'au prochain point de contrôle du
   navigateur.
+- Collectez l'intégralité du dossier `WebCache` : Windows garde `WebCacheV01.dat` ouvert tant que l'utilisateur a
+  une session ouverte, et ses modifications les plus récentes ne se trouvent que dans les journaux de transactions
+  `V01*.log`, que Juntei ne rejoue pas.
 - Collectez l'intégralité de l'arborescence `Quarantine` de Defender afin que Entries, ResourceData et Resources puissent être mis en correspondance.
 
 ## Précautions sur un système actif { #live-system-cautions }

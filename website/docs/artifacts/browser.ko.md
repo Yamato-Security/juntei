@@ -77,7 +77,8 @@ Chromium 기반 브라우저(Chrome, Edge, Brave, Opera, Vivaldi)와 Firefox 기
 - 삭제된 행이 없다고 해서 아무것도 삭제되지 않았다는 뜻은 아닙니다. 0으로 덮어쓴 공간과 체크포인트 이후에는
   복구할 것이 남지 않습니다. 삭제된 쿠키는 아직 복구되지 않습니다.
 - 데이터베이스 내용으로 브라우저 계열을 판별합니다. 호환되는 프로필 경로가 있으면 `Browser`를 Chrome이나 Firefox 등으로 구체화하지만, 모순되는 경로가 계열을 바꾸지는 않습니다. 그 외에는 `Chromium-based`, `Firefox-based`, `Safari`이며 판별 불가 시 `Unknown`입니다. `User`와 `Profile`은 경로에서 가져오므로 복사 시 정보가 사라질 수 있습니다.
-- 롤백 저널(`-journal`)은 읽지 않으며, Internet Explorer와 레거시 Edge의 `WebCacheV01.dat`도 읽지 않습니다.
+- 롤백 저널(`-journal`)은 읽지 않습니다. Internet Explorer와 레거시 Edge의 `WebCacheV01.dat`는
+  `parse-ese webcache`가 읽습니다. [Internet Explorer와 레거시 Edge](webcache.md)를 참조하십시오.
 
 ## Juntei로 파싱하기 { #parse-with-juntei }
 

@@ -13,6 +13,7 @@ Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 �
 | USN 저널 | NTFS 메타데이터 스트림 `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | 사용자 액세스 로깅(Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer와 레거시 Edge(WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | 웹 브라우저 | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` 및 기타 브라우저의 프로필 폴더 |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 및 기타 사용자/시스템 위치 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 및 `CustomDestinations` |
@@ -37,6 +38,8 @@ Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 �
 - 브라우저 데이터베이스는 옆에 있는 `-wal` 파일(`places.sqlite-wal`,
   `cookies.sqlite-wal`)과 함께 수집하십시오. 최신 변경 사항과, 삭제된 항목을 복구하는 데 쓰이는 이전 페이지
   버전은 브라우저가 체크포인트를 수행할 때까지만 그곳에 있습니다.
+- `WebCache` 폴더 전체를 수집하십시오. Windows는 사용자가 로그온해 있는 동안 `WebCacheV01.dat`를 열어 두며,
+  최신 변경 사항은 Juntei가 재생하지 않는 `V01*.log` 트랜잭션 로그에만 있습니다.
 - Entries, ResourceData, Resources를 대응시킬 수 있도록 Defender `Quarantine` 트리 전체를 수집하십시오.
 
 ## 라이브 시스템에 관한 주의 사항 { #live-system-cautions }

@@ -131,6 +131,7 @@ manifest จะเก็บชื่อโฮสต์ตามที่ค้�
 - SRUM
 - การบันทึกการเข้าถึงของผู้ใช้ (UAL)
 - ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเว็บเบราว์เซอร์ (เบราว์เซอร์ที่ใช้ Chromium และ Firefox เป็นพื้นฐาน)
+- WebCache ของ Internet Explorer และ Edge รุ่นเก่า: ประวัติ การดาวน์โหลด คุกกี้ และรายการแคช
 - ทางลัด LNK
 - Jump Lists
 - ShimCache
@@ -192,7 +193,13 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -299,7 +306,7 @@ CSV แยกตารางออกจากกันเพราะแต่�
 | `Accounts` | บัญชีภายในเครื่อง SAM, ชื่อและเวลาของ LSA secrets |
 | `Applications` | ประวัติแอปพลิเคชัน (ร่องรอยของเครื่องมือจากบุคคลที่สาม) |
 | `Applications` | โปรแกรมที่ติดตั้ง |
-| `BrowserActivity` | ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเว็บเบราว์เซอร์ พร้อมรายการที่ถูกลบซึ่งกู้คืนได้ |
+| `BrowserActivity` | ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเว็บเบราว์เซอร์ พร้อมรายการที่ถูกลบซึ่งกู้คืนได้ รวมถึง WebCache ของ Internet Explorer และ Edge รุ่นเก่า |
 | `ExternalDevices` | อุปกรณ์และวอลุ่ม USB |
 | `FileAndFolderOpening` | Jump Lists, ทางลัด LNK, Microsoft Office, รายการ MRU, กล่องโต้ตอบ Open และ Save As, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -342,6 +349,9 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 ตารางของเว็บเบราว์เซอร์อยู่ใน `BrowserActivity` ได้แก่ `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` และ `Browser-FormHistory.csv` พร้อม `Browser-logs.txt` ดู
 [เว็บเบราว์เซอร์](../artifacts/browser.md#automatic-parsing)
+ตาราง WebCache ของ Internet Explorer และ Edge รุ่นเก่าก็อยู่ที่นี่เช่นกัน ได้แก่ `WebCache-History.csv`,
+`WebCache-Downloads.csv`, `WebCache-Cookies.csv`, `WebCache-Entries.csv` และ `WebCache-Containers.csv`
+พร้อม `WebCache-logs.txt` ดู [Internet Explorer และ Edge รุ่นเก่า](../artifacts/webcache.md#automatic-parsing)
 ดู[ตารางการจัดวาง SRUM ทั้งหมด](../artifacts/srum.md#categorized-auto-parse-output)
 
 บันทึกใช้ชื่อตามชื่ออาร์ติแฟกต์ที่ขึ้นต้นด้วยตัวพิมพ์ใหญ่ เช่น `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

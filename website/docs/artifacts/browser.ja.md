@@ -53,7 +53,7 @@
 - 信頼度が `Low` の削除済みエントリは、別のレコードの断片である可能性があります。現存する行や他の証拠と照合してください。
 - 削除済みの行がないことは、何も削除されなかったことを意味しません。ゼロで埋められた領域やチェックポイントの後には、復元できるものは残りません。削除された Cookie は、現時点では復元されません。
 - データベースの内容からブラウザの系統を判定します。対応するプロファイルのパスがあれば `Browser` を Chrome や Firefox などに絞り込みますが、内容と矛盾するパスでは系統を変更しません。それ以外は `Chromium-based`、`Firefox-based`、`Safari`（判定不能なら `Unknown`）です。`User` と `Profile` はパスから取得するため、コピーすると情報が失われる場合があります。
-- ロールバック ジャーナル (`-journal`) は読み取りません。Internet Explorer と従来の Edge の `WebCacheV01.dat` も読み取りません。
+- ロールバック ジャーナル (`-journal`) は読み取りません。Internet Explorer と従来の Edge の `WebCacheV01.dat` は `parse-ese webcache` で読み取ります。[Internet Explorer と従来の Edge](webcache.md)を参照してください。
 
 ## Juntei で解析する { #parse-with-juntei }
 

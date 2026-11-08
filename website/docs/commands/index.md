@@ -25,6 +25,7 @@ and organizes results and logs by computer and investigative category.
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [User Access Logging (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer and Legacy Edge](../artifacts/webcache.md) |
 
 ## [File commands](execution.md)
 

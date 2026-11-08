@@ -13,6 +13,7 @@
 | دفتر يومية USN | دفق البيانات الوصفية لـ NTFS ‏`C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | تسجيل وصول المستخدمين (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer وEdge القديم (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | متصفحات الويب | `%LOCALAPPDATA%\Google\Chrome\User Data\`، و`%LOCALAPPDATA%\Microsoft\Edge\User Data\`، و`%APPDATA%\Mozilla\Firefox\Profiles\`، ومجلدات ملفات التعريف الخاصة بالمتصفحات الأخرى |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ومواقع أخرى للمستخدم/النظام |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` و`CustomDestinations` |
@@ -37,6 +38,8 @@
 - اجمع قواعد بيانات المتصفحات مع ملفات `-wal` المجاورة لها (`places.sqlite-wal`،
   `cookies.sqlite-wal`): فأحدث التغييرات، وإصدارات الصفحات الأقدم التي تُستعاد منها الإدخالات المحذوفة،
   لا توجد هناك إلا إلى أن ينفذ المتصفح نقطة تحقق (checkpoint).
+- اجمع مجلد `WebCache` بأكمله: فـ Windows يُبقي `WebCacheV01.dat` مفتوحًا ما دام المستخدم مسجلًا دخوله،
+  ولا توجد أحدث تغييراته إلا في سجلات المعاملات `V01*.log`، التي لا يعيد Juntei تشغيلها.
 - اجمع شجرة `Quarantine` الخاصة بـ Defender بأكملها حتى يمكن مطابقة Entries وResourceData وResources.
 
 ## تحذيرات للأنظمة الحية { #live-system-cautions }

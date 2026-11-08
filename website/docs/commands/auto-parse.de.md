@@ -130,6 +130,7 @@ Computer diese Jobs aus. Die Jobs verwenden dieselben nach Quelle gruppierten Be
 - SRUM
 - Benutzerzugriffsprotokollierung (UAL)
 - Webbrowser-Verlauf, Downloads, Cookies und Formularverlauf (Chromium- und Firefox-basierte Browser)
+- WebCache von Internet Explorer und dem alten Edge: Verlauf, Downloads, Cookies und Cache-Einträge
 - LNK-Verknüpfungen
 - Jump Lists
 - ShimCache
@@ -191,7 +192,13 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 │   │   ├── Browser-Downloads.csv
 │   │   ├── Browser-FormHistory.csv
 │   │   ├── Browser-History.csv
-│   │   └── Browser-logs.txt
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -297,7 +304,7 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 | `Accounts` | Lokale SAM-Konten, Namen und Zeitstempel der LSA-Secrets |
 | `Applications` | Anwendungsverlauf (Spuren von Drittanbieterwerkzeugen) |
 | `Applications` | Installierte Programme |
-| `BrowserActivity` | Webbrowser-Verlauf, Downloads, Cookies und Formularverlauf, mit wiederhergestellten gelöschten Einträgen |
+| `BrowserActivity` | Webbrowser-Verlauf, Downloads, Cookies und Formularverlauf, mit wiederhergestellten gelöschten Einträgen; WebCache von Internet Explorer und dem alten Edge |
 | `ExternalDevices` | USB-Geräte und -Volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK-Verknüpfungen, Microsoft Office, MRU-Listen, Dialoge zum Öffnen und Speichern unter, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -339,7 +346,10 @@ Die Tabellen der Benutzerzugriffsprotokollierung liegen in `LateralMovement`, ei
 [Benutzerzugriffsprotokollierung (UAL)](../artifacts/ual.md#automatic-parsing).
 Die Tabellen der Webbrowser liegen in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` und `Browser-FormHistory.csv`, zusammen mit `Browser-logs.txt`; siehe
-[Webbrowser](../artifacts/browser.md#automatic-parsing).
+[Webbrowser](../artifacts/browser.md#automatic-parsing). Die WebCache-Tabellen von Internet Explorer und dem alten
+Edge liegen ebenfalls dort: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` und `WebCache-Containers.csv`, zusammen mit
+`WebCache-logs.txt`; siehe [Internet Explorer und Edge Legacy](../artifacts/webcache.md#automatic-parsing).
 Siehe die [vollständige Tabelle zur Ablage der SRUM-Tabellen](../artifacts/srum.md#categorized-auto-parse-output).
 
 Protokolle entsprechen dem großgeschriebenen Artefaktnamen, etwa `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

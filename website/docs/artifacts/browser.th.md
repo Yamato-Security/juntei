@@ -80,8 +80,8 @@
 - การไม่มีแถวที่ถูกลบไม่ได้หมายความว่าไม่มีสิ่งใดถูกลบ พื้นที่ที่ถูกเขียนศูนย์ทับและ checkpoint จะไม่เหลือ
   สิ่งใดให้กู้คืน และปัจจุบันยังไม่กู้คืนคุกกี้ที่ถูกลบ
 - เนื้อหาฐานข้อมูลกำหนดตระกูลเบราว์เซอร์ พาธโปรไฟล์ที่สอดคล้องกันช่วยระบุ `Browser` เป็น Chrome หรือ Firefox แต่พาธที่ขัดแย้งกันจะไม่เปลี่ยนตระกูล มิฉะนั้นใช้ `Chromium-based`, `Firefox-based` หรือ `Safari` (`Unknown` หากระบุไม่ได้) ส่วน `User` และ `Profile` มาจากพาธและอาจสูญหายเมื่อคัดลอกไฟล์
-- ไม่อ่าน rollback journal (`-journal`) รวมถึง `WebCacheV01.dat` ของ Internet Explorer และ Edge
-  รุ่นเก่า (legacy Edge)
+- ไม่อ่าน rollback journal (`-journal`) ส่วน `WebCacheV01.dat` ของ Internet Explorer และ Edge
+  รุ่นเก่า (legacy Edge) อ่านด้วย `parse-ese webcache` ดู [Internet Explorer และ Edge รุ่นเก่า](webcache.md)
 
 ## วิเคราะห์ด้วย Juntei { #parse-with-juntei }
 

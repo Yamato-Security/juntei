@@ -113,6 +113,16 @@ SDDL, включно з умовами його 3 384 ACE зворотного �
 відновлено лише там, де записи справді видаляли: дві сторінки та два відвідування, видалені з історії
 Firefox 140, з їхнім часом, URL і заголовками, а також видалені записи форм тестових баз даних.
 
+## Internet Explorer і застарілий Edge (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` читає `WebCacheV01.dat` за допомогою
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). Його порівнювали з
+читачем ESE з `dissect.database` на двох публічних базах даних WebCache із Plaso: одній з Internet
+Explorer 11 та одній «брудній» з Windows 10, що містить історію, завантаження та файли cookie застарілого
+Edge. Усі 4 156 рядків збіглися значення в значення: 44 контейнери, 182 записи історії, 6 завантажень, 170
+файлів cookie і 3 754 інші записи. Під час порівняння записи завантажень декодувалися незалежно. Записи,
+які бази даних позначають як видалені, було виключено з обох сторін.
+
 ## Ярлики LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) — це підтримуваний форк крейта

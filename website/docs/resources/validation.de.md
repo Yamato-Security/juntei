@@ -113,6 +113,16 @@ wiederhergestellt, wo Einträge gelöscht worden waren: die zwei Seiten und zwei
 Firefox 140 gelöscht worden waren, mit ihren Zeiten, URLs und Titeln, sowie die gelöschten Formulareinträge der
 Testdatenbanken.
 
+## Internet Explorer und Edge Legacy (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` liest `WebCacheV01.dat` mit
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). Es wurde anhand der zwei öffentlichen
+WebCache-Datenbanken von Plaso mit dem ESE-Leser von `dissect.database` verglichen: einer von Internet Explorer 11
+und einer „dirty“ Datenbank von Windows 10 mit Verlauf, Downloads und Cookies des alten Edge. Alle 4.156 Zeilen
+stimmten Wert für Wert überein: 44 Container, 182 Verlaufseinträge, 6 Downloads, 170 Cookies und 3.754 weitere
+Einträge. Der Vergleich dekodierte die Download-Datensätze eigenständig. Datensätze, die die Datenbanken als gelöscht
+kennzeichnen, wurden bei beiden ausgelassen.
+
 ## LNK-Verknüpfungen { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) ist ein gepflegter Fork des Crates

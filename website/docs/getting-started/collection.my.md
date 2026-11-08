@@ -13,6 +13,7 @@ Juntei သည် Windows မှ စုဆောင်းထားပြီးသ
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer နှင့် legacy Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | ဝဘ် ဘရောက်ဇာများ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` နှင့် အခြား ဘရောက်ဇာများ၏ profile ဖိုင်တွဲများ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` နှင့် အခြား အသုံးပြုသူ/စနစ် တည်နေရာများ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` နှင့် `CustomDestinations` |
@@ -37,6 +38,9 @@ Juntei သည် Windows မှ စုဆောင်းထားပြီးသ
 - ဘရောက်ဇာ database များကို ၎င်းတို့ဘေးရှိ `-wal` ဖိုင်များ (`places.sqlite-wal`၊ `cookies.sqlite-wal`) နှင့်အတူ
   စုဆောင်းပါ။ နောက်ဆုံး ပြောင်းလဲမှုများနှင့် ဖျက်ထားသော entry များကို ပြန်လည်ရယူရာ page ဗားရှင်းဟောင်းများသည်
   ဘရောက်ဇာ checkpoint မလုပ်မီအထိသာ ထိုနေရာတွင် ရှိပါသည်။
+- `WebCache` ဖိုင်တွဲတစ်ခုလုံးကို စုဆောင်းပါ။ အသုံးပြုသူ logon ဝင်ထားစဉ် Windows သည် `WebCacheV01.dat` ကို
+  ဖွင့်ထားပြီး ၎င်း၏ နောက်ဆုံး ပြောင်းလဲမှုများသည် Juntei က replay မလုပ်သော `V01*.log` transaction log များတွင်သာ
+  ရှိပါသည်။
 - Entries၊ ResourceData နှင့် Resources တို့ကို ကိုက်ညီစေနိုင်ရန် Defender `Quarantine` tree တစ်ခုလုံးကို စုဆောင်းပါ။
 
 ## Live စနစ်တွင် သတိပြုရန် { #live-system-cautions }

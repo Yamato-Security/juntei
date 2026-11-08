@@ -82,8 +82,8 @@ berikutnya. Salin berkas `-wal` bersama database-nya, dan lakukan sebelum browse
 - Tidak adanya baris terhapus tidak berarti tidak ada yang dihapus: ruang yang diisi nol dan checkpoint tidak
   menyisakan apa pun untuk dipulihkan. Cookie yang terhapus belum dipulihkan.
 - Isi database menentukan keluarga browser. Path profil yang sesuai memperinci `Browser` menjadi Chrome atau Firefox; path yang bertentangan tidak mengubah keluarga. Selain itu labelnya `Chromium-based`, `Firefox-based`, atau `Safari` (`Unknown` jika tidak diketahui). `User` dan `Profile` berasal dari path dan dapat hilang saat file disalin.
-- Rollback journal (`-journal`) tidak dibaca, begitu pula `WebCacheV01.dat` milik Internet Explorer dan Edge
-  lama (legacy).
+- Rollback journal (`-journal`) tidak dibaca. `WebCacheV01.dat` milik Internet Explorer dan Edge lama
+  (legacy) dibaca oleh `parse-ese webcache`: lihat [Internet Explorer dan Edge lama](webcache.md).
 
 ## Mengurai dengan Juntei { #parse-with-juntei }
 

@@ -151,6 +151,7 @@ plugins:
         RecentDocs: RecentDocs
         Browser Activity: ブラウザの活動
         Web Browsers: Web ブラウザ
+        Internet Explorer and Legacy Edge: Internet Explorer と従来の Edge
         Network Activity: ネットワークの活動
         Networks: ネットワーク
         Lateral Movement: 横展開
@@ -224,6 +225,7 @@ plugins:
         MRU Lists: MRU 清單
         Browser Activity: 瀏覽器活動
         Web Browsers: 網頁瀏覽器
+        Internet Explorer and Legacy Edge: Internet Explorer 與舊版 Edge
         Network Activity: 網路活動
         Networks: 網路
         Lateral Movement: 橫向移動
@@ -310,6 +312,7 @@ plugins:
         MRU Lists: MRU 목록
         Browser Activity: 브라우저 활동
         Web Browsers: 웹 브라우저
+        Internet Explorer and Legacy Edge: Internet Explorer와 레거시 Edge
         Network Activity: 네트워크 활동
         Networks: 네트워크
         Lateral Movement: 측면 이동
@@ -396,6 +399,7 @@ plugins:
         MRU Lists: MRU-Listen
         Browser Activity: Browseraktivität
         Web Browsers: Webbrowser
+        Internet Explorer and Legacy Edge: Internet Explorer und Edge Legacy
         Network Activity: Netzwerkaktivität
         Networks: Netzwerke
         Lateral Movement: Laterale Bewegung
@@ -482,6 +486,7 @@ plugins:
         MRU Lists: MRU Listeleri
         Browser Activity: Tarayıcı Etkinliği
         Web Browsers: Web Tarayıcıları
+        Internet Explorer and Legacy Edge: Internet Explorer ve Eski Edge
         Network Activity: Ağ Etkinliği
         Networks: Ağlar
         Lateral Movement: Yanal Hareket
@@ -568,6 +573,7 @@ plugins:
         MRU Lists: Listes MRU
         Browser Activity: Activité du navigateur
         Web Browsers: Navigateurs web
+        Internet Explorer and Legacy Edge: Internet Explorer et l'ancien Edge
         Network Activity: Activité réseau
         Networks: Réseaux
         Lateral Movement: Déplacement latéral
@@ -654,6 +660,7 @@ plugins:
         MRU Lists: Listas MRU
         Browser Activity: Actividad del navegador
         Web Browsers: Navegadores web
+        Internet Explorer and Legacy Edge: Internet Explorer y Edge heredado
         Network Activity: Actividad de red
         Networks: Redes
         Lateral Movement: Movimiento lateral
@@ -740,6 +747,7 @@ plugins:
         MRU Lists: Listas MRU
         Browser Activity: Atividade do navegador
         Web Browsers: Navegadores web
+        Internet Explorer and Legacy Edge: Internet Explorer e Edge legado
         Network Activity: Atividade de rede
         Networks: Redes
         Lateral Movement: Movimentação lateral
@@ -826,6 +834,7 @@ plugins:
         MRU Lists: Списки MRU
         Browser Activity: Активність браузера
         Web Browsers: Веб-браузери
+        Internet Explorer and Legacy Edge: Internet Explorer і застарілий Edge
         Network Activity: Мережева активність
         Networks: Мережі
         Lateral Movement: Латеральне переміщення
@@ -912,6 +921,7 @@ plugins:
         MRU Lists: MRU सूचियाँ
         Browser Activity: ब्राउज़र गतिविधि
         Web Browsers: वेब ब्राउज़र
+        Internet Explorer and Legacy Edge: Internet Explorer और लेगेसी Edge
         Network Activity: नेटवर्क गतिविधि
         Networks: नेटवर्क
         Lateral Movement: लैटरल मूवमेंट
@@ -998,6 +1008,7 @@ plugins:
         MRU Lists: Daftar MRU
         Browser Activity: Aktivitas browser
         Web Browsers: Browser web
+        Internet Explorer and Legacy Edge: Internet Explorer dan Edge lama
         Network Activity: Aktivitas jaringan
         Networks: Jaringan
         Lateral Movement: Pergerakan lateral
@@ -1084,6 +1095,7 @@ plugins:
         MRU Lists: MRU စာရင်းများ
         Browser Activity: ဘရောက်ဇာ လှုပ်ရှားမှု
         Web Browsers: ဝဘ် ဘရောက်ဇာများ
+        Internet Explorer and Legacy Edge: Internet Explorer နှင့် legacy Edge
         Network Activity: ကွန်ရက် လှုပ်ရှားမှု
         Networks: ကွန်ရက်များ
         Lateral Movement: ကွန်ရက်အတွင်း ဘေးတိုက်ရွေ့လျားမှု
@@ -1170,6 +1182,7 @@ plugins:
         MRU Lists: รายการ MRU
         Browser Activity: กิจกรรมเบราว์เซอร์
         Web Browsers: เว็บเบราว์เซอร์
+        Internet Explorer and Legacy Edge: Internet Explorer และ Edge รุ่นเก่า
         Network Activity: กิจกรรมเครือข่าย
         Networks: เครือข่าย
         Lateral Movement: การเคลื่อนย้ายภายในเครือข่าย
@@ -1256,6 +1269,7 @@ plugins:
         MRU Lists: قوائم MRU
         Browser Activity: نشاط المتصفح
         Web Browsers: متصفحات الويب
+        Internet Explorer and Legacy Edge: Internet Explorer وEdge القديم
         Network Activity: نشاط الشبكة
         Networks: الشبكات
         Lateral Movement: الحركة الجانبية
@@ -1361,6 +1375,7 @@ nav:
           - RecentDocs: artifacts/recentdocs.md
       - Browser Activity:
           - Web Browsers: artifacts/browser.md
+          - Internet Explorer and Legacy Edge: artifacts/webcache.md
       - Network Activity:
           - Networks: artifacts/networks.md
       - Lateral Movement:

@@ -111,6 +111,16 @@ ys-browser-parser के form history test databases। सभी 293 visits, 21
 मेल खाईं। Deleted entries केवल वहीं recover हुईं जहाँ entries सचमुच delete की गई थीं: Firefox 140 history से
 delete किए गए दो pages और दो visits, उनके समय, URLs और titles के साथ, और test databases की deleted form entries।
 
+## Internet Explorer और लेगेसी Edge (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` `WebCacheV01.dat` को
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) से पढ़ता है। इसकी तुलना `dissect.database`
+के ESE reader से Plaso के दो सार्वजनिक WebCache databases पर की गई: एक Internet Explorer 11 का, और एक Windows 10
+का dirty database जिसमें legacy Edge का history, downloads और cookies हैं। सभी 4,156 rows value-दर-value मेल
+खाईं: 44 containers, 182 history entries, 6 downloads, 170 cookies और 3,754 अन्य entries। तुलना ने download
+records को स्वतंत्र रूप से, अपने तरीके से decode किया। जिन records को databases deleted के रूप में चिह्नित करते हैं,
+उन्हें दोनों में से किसी में भी शामिल नहीं किया गया।
+
 ## LNK शॉर्टकट { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)

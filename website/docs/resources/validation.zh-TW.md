@@ -110,6 +110,15 @@ ys-browser-parser 的表單歷程測試資料庫。全部 293 筆造訪、21 筆
 皆一致。已刪除的項目只在確實有項目被刪除之處才被復原：即從 Firefox 140 歷程中刪除的兩個網頁與兩筆
 造訪（連同其時間、URL 與標題），以及測試資料庫中已刪除的表單項目。
 
+## Internet Explorer 與舊版 Edge（WebCache） { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` 使用 [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser)
+讀取 `WebCacheV01.dat`。它曾在 Plaso 的兩個公開 WebCache 資料庫上與 `dissect.database` 的 ESE 讀取器
+進行比較：一個是 Internet Explorer 11 的資料庫，另一個是處於 dirty 狀態、含有舊版 Edge 瀏覽歷程記錄、
+下載與 Cookie 的 Windows 10 資料庫。全部 4,156 筆資料列逐值一致：44 個容器、182 筆歷程記錄項目、
+6 筆下載、170 個 Cookie 與 3,754 筆其他項目。比較時另行獨立解碼了下載記錄。資料庫標記為已刪除的
+記錄，在兩邊皆予以排除。
+
 ## LNK 捷徑 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) 是

@@ -13,6 +13,7 @@ Juntei 剖析已從 Windows 收集的檔案。請使用可信任的擷取工具�
 | USN Journal | NTFS 中繼資料資料流 `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | 使用者存取記錄（Windows Server） | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer 與舊版 Edge（WebCache） | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
 | 網頁瀏覽器 | `%LOCALAPPDATA%\Google\Chrome\User Data\`、`%LOCALAPPDATA%\Microsoft\Edge\User Data\`、`%APPDATA%\Mozilla\Firefox\Profiles\` 以及其他瀏覽器的設定檔資料夾 |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 以及其他使用者／系統位置 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 與 `CustomDestinations` |
@@ -37,6 +38,8 @@ Juntei 剖析已從 Windows 收集的檔案。請使用可信任的擷取工具�
 - 收集瀏覽器資料庫時，請一併收集其旁的 `-wal` 檔案（`places.sqlite-wal`、
   `cookies.sqlite-wal`）：最新的變更，以及用來復原已刪除項目的舊版頁面，只會保留到瀏覽器執行
   檢查點為止。
+- 請收集整個 `WebCache` 資料夾：使用者登入期間，Windows 會持續開啟 `WebCacheV01.dat`，而其最新的
+  變更只存在於 `V01*.log` 交易記錄檔中，Juntei 不會重播這些記錄檔。
 - 請收集完整的 Defender `Quarantine` 樹狀結構，以便比對 Entries、ResourceData 與 Resources。
 
 ## 執行中系統的注意事項 { #live-system-cautions }

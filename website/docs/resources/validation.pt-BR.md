@@ -113,6 +113,16 @@ e 41 entradas de formulários coincidiram. Entradas excluídas só foram recuper
 excluídas: as duas páginas e as duas visitas excluídas do histórico do Firefox 140, com seus horários, URLs e
 títulos, e as entradas de formulários excluídas dos bancos de dados de teste.
 
+## Internet Explorer e Edge legado (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+O `parse-ese webcache` lê o `WebCacheV01.dat` com o
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). Ele foi comparado com o leitor ESE do
+`dissect.database` nos dois bancos de dados WebCache públicos do Plaso: um do Internet Explorer 11 e um sujo do
+Windows 10 com o histórico, os downloads e os cookies do Edge legado. Todas as 4.156 linhas coincidiram, valor por
+valor: 44 contêineres, 182 entradas de histórico, 6 downloads, 170 cookies e 3.754 outras entradas. A comparação
+decodificou os registros de download por conta própria. Os registros que os bancos de dados marcam como excluídos
+ficaram de fora de ambos.
+
 ## Atalhos LNK { #lnk-shortcuts }
 
 O [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) é um fork mantido do crate

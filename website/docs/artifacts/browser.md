@@ -86,8 +86,9 @@ database file's own copies of the pages a `-wal` replaced, until the next checkp
   doesn't change it. Without a browser folder, the label is `Chromium-based`, `Firefox-based` or
   `Safari`; when neither the contents nor the path tell, it is `Unknown`. `User` and `Profile` come
   from the path only, and are lost when the files are copied elsewhere.
-- Rollback journals (`-journal`) are not read, nor Internet Explorer and legacy Edge's
-  `WebCacheV01.dat`.
+- Rollback journals (`-journal`) are not read. Internet Explorer and legacy Edge's
+  `WebCacheV01.dat` is read by `parse-ese webcache`: see
+  [Internet Explorer and Legacy Edge](webcache.md).
 
 ## Parse with Juntei
 

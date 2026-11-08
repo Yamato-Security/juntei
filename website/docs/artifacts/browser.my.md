@@ -90,8 +90,8 @@ free space တွင်၊ ၎င်း၏ freelist ပေါ်တွင် သ
 - ဖျက်ထားသော row မရှိခြင်းသည် ဘာမျှ မဖျက်ခဲ့ဟု မဆိုလိုပါ။ သုညဖြင့် ဖြည့်ထားသော space နှင့် checkpoint တို့သည်
   ပြန်လည်ရယူစရာ ဘာမျှ မချန်ထားပါ။ ဖျက်ထားသော cookie များကို ယခုထိ ပြန်လည်မရယူသေးပါ။
 - Database အကြောင်းအရာက browser မျိုးစုကို သတ်မှတ်သည်။ ကိုက်ညီသော profile path ရှိလျှင် `Browser` ကို Chrome သို့မဟုတ် Firefox ကဲ့သို့ ဖော်ပြသည်။ မကိုက်ညီသော path ကြောင့် မျိုးစု မပြောင်းပါ။ အခြားအခြေအနေတွင် `Chromium-based`၊ `Firefox-based` သို့မဟုတ် `Safari` ဖြစ်ပြီး မသိလျှင် `Unknown` ဖြစ်သည်။ `User` နှင့် `Profile` သည် path မှ ရရှိပြီး ဖိုင်ကူးယူသည့်အခါ ပျောက်ဆုံးနိုင်သည်။
-- Rollback journal များ (`-journal`) ကို မဖတ်ပါ။ Internet Explorer နှင့် legacy Edge ၏ `WebCacheV01.dat` ကိုလည်း
-  မဖတ်ပါ။
+- Rollback journal များ (`-journal`) ကို မဖတ်ပါ။ Internet Explorer နှင့် legacy Edge ၏ `WebCacheV01.dat` ကို
+  `parse-ese webcache` က ဖတ်ပါသည်။ [Internet Explorer နှင့် legacy Edge](webcache.md) ကို ကြည့်ပါ။
 
 ## Juntei ဖြင့် ခွဲခြမ်းစိတ်ဖြာခြင်း { #parse-with-juntei }
 

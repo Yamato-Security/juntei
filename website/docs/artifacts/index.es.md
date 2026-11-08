@@ -16,7 +16,7 @@ pero el investigador sigue teniendo que interpretar lo que significa cada una.
 | ¿En qué volumen estaba el destino de un acceso directo o de un archivo Prefetch? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [dispositivos USB](usb.md) |
 | ¿Qué abrió un usuario? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | ¿Transfirió un programa una gran cantidad de datos? | [SRUM](srum.md) | Telemetría de cortafuegos, proxy, DNS, paquetes o EDR |
-| ¿Qué sitios web visitó un usuario y qué descargó? | [Navegadores web](browser.md) | Registros de proxy y DNS, `$MFT` y Diario USN, Defender, SRUM |
+| ¿Qué sitios web visitó un usuario y qué descargó? | [Navegadores web](browser.md), [Internet Explorer y Edge heredado](webcache.md) | Registros de proxy y DNS, `$MFT` y Diario USN, Defender, SRUM |
 | ¿Qué clientes y cuentas usaron este servidor, y en qué días? | [Registro de acceso de usuarios (UAL)](ual.md) | Registros de eventos Security, registros de SMB y RDP, registros del cortafuegos |
 | ¿Se configuró persistencia? | [Servicios](services.md), [TaskCache](taskcache.md), [Registro](registry.md) | Registros de eventos, Prefetch, `$MFT` |
 | ¿Qué eliminó Defender? | [Cuarentena de Defender](defender-quarantine.md) | Registros de eventos, `$MFT`, Diario USN |
