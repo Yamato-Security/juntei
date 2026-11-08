@@ -1376,6 +1376,8 @@ nav:
       - Browser Activity:
           - Web Browsers: artifacts/browser.md
           - Internet Explorer and Legacy Edge: artifacts/webcache.md
+      - Communication:
+          - Outlook: artifacts/outlook.md
       - Network Activity:
           - Networks: artifacts/networks.md
       - Lateral Movement:
