@@ -230,6 +230,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cfb"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fef29b910ef2b9dbecc60168d1568d643c633b0518af970c17e83bd5f6e2c94f"
+dependencies = [
+ "fnv",
+ "uuid",
+ "web-time",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -695,6 +706,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fnv"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
+
+[[package]]
 name = "foldhash"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1012,6 +1029,7 @@ dependencies = [
  "ys-jump-lists-parser",
  "ys-lnk-parser",
  "ys-ntfs-parser",
+ "ys-outlook-parser",
  "ys-prefetch-parser",
  "ys-registry-parser",
  "ys-shimcache-parser",
@@ -1975,6 +1993,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "009dbb7700f11c55ef83aebbe4c0e9cf1f1ac0844bd8d6f00dc38f302026e13a"
 
 [[package]]
+name = "tracing"
+version = "0.1.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100"
+dependencies = [
+ "pin-project-lite",
+ "tracing-attributes",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-attributes"
+version = "0.1.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "tracing-core"
+version = "0.1.36"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2432,6 +2481,46 @@ source = "git+https://github.com/Yamato-Security/ys-ntfs-parser?branch=main#aba8
 dependencies = [
  "ys-ntfs-parser-common",
  "ys-ntfs-parser-mft",
+]
+
+[[package]]
+name = "ys-outlook-parser"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-outlook-parser?branch=ys%2F1.0.0#d3a375fedf1c07246ae8c4ddc07aeddfc029ecd0"
+dependencies = [
+ "ys-outlook-parser-msg",
+ "ys-outlook-parser-pst",
+]
+
+[[package]]
+name = "ys-outlook-parser-msg"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-outlook-parser?branch=ys%2F1.0.0#d3a375fedf1c07246ae8c4ddc07aeddfc029ecd0"
+dependencies = [
+ "cfb",
+ "encoding_rs",
+ "thiserror 2.0.21",
+ "ys-outlook-parser-rtf",
+]
+
+[[package]]
+name = "ys-outlook-parser-pst"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-outlook-parser?branch=ys%2F1.0.0#d3a375fedf1c07246ae8c4ddc07aeddfc029ecd0"
+dependencies = [
+ "byteorder",
+ "flate2",
+ "thiserror 2.0.21",
+ "tracing",
+]
+
+[[package]]
+name = "ys-outlook-parser-rtf"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-outlook-parser?branch=ys%2F1.0.0#d3a375fedf1c07246ae8c4ddc07aeddfc029ecd0"
+dependencies = [
+ "byteorder",
+ "thiserror 2.0.21",
 ]
 
 [[package]]

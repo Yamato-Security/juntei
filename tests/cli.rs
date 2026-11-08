@@ -398,7 +398,13 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
         (
             "parse-file",
             "Parse file artifacts",
-            &["prefetch", "lnk", "jump-lists", "defender-quarantine"][..],
+            &[
+                "prefetch",
+                "lnk",
+                "jump-lists",
+                "defender-quarantine",
+                "outlook",
+            ][..],
         ),
     ] {
         let top = run(&["--help"]);
