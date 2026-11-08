@@ -152,6 +152,7 @@ plugins:
         Browser Activity: ブラウザの活動
         Web Browsers: Web ブラウザ
         Internet Explorer and Legacy Edge: Internet Explorer と従来の Edge
+        Communication: コミュニケーション
         Network Activity: ネットワークの活動
         Networks: ネットワーク
         Lateral Movement: 横展開
@@ -226,6 +227,7 @@ plugins:
         Browser Activity: 瀏覽器活動
         Web Browsers: 網頁瀏覽器
         Internet Explorer and Legacy Edge: Internet Explorer 與舊版 Edge
+        Communication: 通訊
         Network Activity: 網路活動
         Networks: 網路
         Lateral Movement: 橫向移動
@@ -313,6 +315,7 @@ plugins:
         Browser Activity: 브라우저 활동
         Web Browsers: 웹 브라우저
         Internet Explorer and Legacy Edge: Internet Explorer와 레거시 Edge
+        Communication: 커뮤니케이션
         Network Activity: 네트워크 활동
         Networks: 네트워크
         Lateral Movement: 측면 이동
@@ -400,6 +403,7 @@ plugins:
         Browser Activity: Browseraktivität
         Web Browsers: Webbrowser
         Internet Explorer and Legacy Edge: Internet Explorer und Edge Legacy
+        Communication: Kommunikation
         Network Activity: Netzwerkaktivität
         Networks: Netzwerke
         Lateral Movement: Laterale Bewegung
@@ -487,6 +491,7 @@ plugins:
         Browser Activity: Tarayıcı Etkinliği
         Web Browsers: Web Tarayıcıları
         Internet Explorer and Legacy Edge: Internet Explorer ve Eski Edge
+        Communication: İletişim
         Network Activity: Ağ Etkinliği
         Networks: Ağlar
         Lateral Movement: Yanal Hareket
@@ -574,6 +579,7 @@ plugins:
         Browser Activity: Activité du navigateur
         Web Browsers: Navigateurs web
         Internet Explorer and Legacy Edge: Internet Explorer et l'ancien Edge
+        Communication: Communication
         Network Activity: Activité réseau
         Networks: Réseaux
         Lateral Movement: Déplacement latéral
@@ -661,6 +667,7 @@ plugins:
         Browser Activity: Actividad del navegador
         Web Browsers: Navegadores web
         Internet Explorer and Legacy Edge: Internet Explorer y Edge heredado
+        Communication: Comunicación
         Network Activity: Actividad de red
         Networks: Redes
         Lateral Movement: Movimiento lateral
@@ -748,6 +755,7 @@ plugins:
         Browser Activity: Atividade do navegador
         Web Browsers: Navegadores web
         Internet Explorer and Legacy Edge: Internet Explorer e Edge legado
+        Communication: Comunicação
         Network Activity: Atividade de rede
         Networks: Redes
         Lateral Movement: Movimentação lateral
@@ -835,6 +843,7 @@ plugins:
         Browser Activity: Активність браузера
         Web Browsers: Веб-браузери
         Internet Explorer and Legacy Edge: Internet Explorer і застарілий Edge
+        Communication: Комунікації
         Network Activity: Мережева активність
         Networks: Мережі
         Lateral Movement: Латеральне переміщення
@@ -922,6 +931,7 @@ plugins:
         Browser Activity: ब्राउज़र गतिविधि
         Web Browsers: वेब ब्राउज़र
         Internet Explorer and Legacy Edge: Internet Explorer और लेगेसी Edge
+        Communication: संचार
         Network Activity: नेटवर्क गतिविधि
         Networks: नेटवर्क
         Lateral Movement: लैटरल मूवमेंट
@@ -1009,6 +1019,7 @@ plugins:
         Browser Activity: Aktivitas browser
         Web Browsers: Browser web
         Internet Explorer and Legacy Edge: Internet Explorer dan Edge lama
+        Communication: Komunikasi
         Network Activity: Aktivitas jaringan
         Networks: Jaringan
         Lateral Movement: Pergerakan lateral
@@ -1096,6 +1107,7 @@ plugins:
         Browser Activity: ဘရောက်ဇာ လှုပ်ရှားမှု
         Web Browsers: ဝဘ် ဘရောက်ဇာများ
         Internet Explorer and Legacy Edge: Internet Explorer နှင့် legacy Edge
+        Communication: ဆက်သွယ်ရေး
         Network Activity: ကွန်ရက် လှုပ်ရှားမှု
         Networks: ကွန်ရက်များ
         Lateral Movement: ကွန်ရက်အတွင်း ဘေးတိုက်ရွေ့လျားမှု
@@ -1183,6 +1195,7 @@ plugins:
         Browser Activity: กิจกรรมเบราว์เซอร์
         Web Browsers: เว็บเบราว์เซอร์
         Internet Explorer and Legacy Edge: Internet Explorer และ Edge รุ่นเก่า
+        Communication: การสื่อสาร
         Network Activity: กิจกรรมเครือข่าย
         Networks: เครือข่าย
         Lateral Movement: การเคลื่อนย้ายภายในเครือข่าย
@@ -1270,6 +1283,7 @@ plugins:
         Browser Activity: نشاط المتصفح
         Web Browsers: متصفحات الويب
         Internet Explorer and Legacy Edge: Internet Explorer وEdge القديم
+        Communication: الاتصالات
         Network Activity: نشاط الشبكة
         Networks: الشبكات
         Lateral Movement: الحركة الجانبية

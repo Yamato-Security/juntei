@@ -14,6 +14,7 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Журналювання доступу користувачів (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer і застарілий Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` до Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, а також файли `.msg`, де б їх не було збережено |
 | Веб-браузери | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` та папки профілів інших браузерів |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` та інші розташування користувача/системи |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` і `CustomDestinations` |
@@ -41,6 +42,9 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
   записи, зберігаються там лише до контрольної точки браузера.
 - Збирайте всю папку `WebCache`: Windows тримає `WebCacheV01.dat` відкритим, поки користувач у системі,
   а його найновіші зміни є лише в журналах транзакцій `V01*.log`, які Juntei не відтворює.
+- Збирайте файли OST і PST Outlook із закритим Outlook або з образу диска чи тіньової копії тому:
+  Outlook тримає їх відкритими, поки працює. Шукайте PST і поза типовими папками: користувачі
+  переносять архіви в інші папки, на інші диски та у спільні файлові ресурси.
 - Збирайте все дерево `Quarantine` Defender, щоб можна було зіставити Entries, ResourceData і Resources.
 
 ## Застереження щодо працюючих систем { #live-system-cautions }

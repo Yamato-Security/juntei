@@ -14,6 +14,7 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Benutzerzugriffsprotokollierung (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer und Edge Legacy (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` vor Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft` sowie `.msg`-Dateien, wo immer sie gespeichert wurden |
 | Webbrowser | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` und die Profilordner der anderen Browser |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` und weitere Benutzer-/Systemspeicherorte |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` und `CustomDestinations` |
@@ -41,6 +42,9 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 - Sichern Sie den gesamten Ordner `WebCache`: Windows hält `WebCacheV01.dat` geöffnet, solange der Benutzer
   angemeldet ist, und die neuesten Änderungen stehen nur in den Transaktionsprotokollen `V01*.log`, die Juntei nicht
   einspielt.
+- Sichern Sie die OST- und PST-Dateien von Outlook bei geschlossenem Outlook oder aus einem Datenträgerabbild bzw. einer
+  Volumeschattenkopie: Outlook hält sie geöffnet, solange es läuft. Suchen Sie PSTs auch außerhalb der Standardordner:
+  Benutzer verschieben Archive in andere Ordner, auf andere Laufwerke und auf Dateifreigaben.
 - Sichern Sie den gesamten Defender-Verzeichnisbaum `Quarantine`, damit Entries, ResourceData und Resources einander zugeordnet werden können.
 
 ## Hinweise zu Live-Systemen { #live-system-cautions }

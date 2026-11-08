@@ -1,9 +1,9 @@
 # ファイルコマンド { #file-commands }
 
-`parse-file` は、アーティファクト固有のファイル (Prefetch、ショートカット、Jump Lists、および Defender 隔離) を処理します。自動 Jump Lists は複合ファイル コンテナーを使用します。カスタム Jump Lists は異なるバイナリ レイアウトを使用します。両方とも同じアーティファクト コマンドに属します。
+`parse-file` は、アーティファクト固有のファイル (Prefetch、ショートカット、Jump Lists、Defender 隔離、および Outlook の PST、OST、MSG、OFT ファイル) を処理します。自動 Jump Lists は複合ファイル コンテナーを使用します。カスタム Jump Lists は異なるバイナリ レイアウトを使用します。両方とも同じアーティファクト コマンドに属します。
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -14,6 +14,7 @@ Commands:
   help                 Print this message or the help of the given subcommand(s)
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
+  outlook              Parse Outlook PST, OST, MSG and OFT files
   prefetch             Parse Prefetch files
 
 Options:
@@ -121,6 +122,43 @@ juntei parse-file lnk -f suspicious.lnk -t jsonl | jq .
 ```
 
 「[LNK ショートカット](../artifacts/lnk.md)」を参照してください。
+
+## `parse-file outlook` { #parse-file-outlook }
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file outlook <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Outlook files (*.pst, *.ost, *.msg, *.oft)
+  -f, --file <FILE>      File path to one PST, OST, MSG or OFT file (told apart by its contents, whatever its name)
+      --code-page <CP>   Code page of text that isn't Unicode, for items that don't give theirs: the system's ANSI code page (932 for Japanese) [default: 1252]
+
+Output:
+  -o, --output <PATH>              Save every row: a directory of CSV tables, or a file (json, jsonl)
+  -t, --output-type <TYPE>         Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+      --properties                 Also write every property of the stores, folders, items, recipients and attachments (the Properties table)
+      --extract-attachments <DIR>  Write each attachment's data once to DIR, named by its SHA-256 (attachments can be malware: never run them)
+  -C, --clobber                    Overwrite files when saving or extracting
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file outlook -d Users -o outlook-csv
+juntei parse-file outlook -f mailbox.ost -t jsonl | jq 'select(.Table == "Items")'
+juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attachments isolated-output/
+```
+
+テーブルは、読み取ったファイル、そのフォルダー、すべてのアイテム (フォルダーの非表示アイテムと、添付ファイルに埋め込まれたアイテムを含む)、受信者、添付ファイル、連絡先、予定表アイテム、タスクで、`--properties` を指定すると、保存されているとおりのすべてのプロパティも含まれます。[Outlook](../artifacts/outlook.md)を参照してください。
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

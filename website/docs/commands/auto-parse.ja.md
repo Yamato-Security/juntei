@@ -88,6 +88,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - ユーザーアクセスログ (UAL)
 - Web ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴 (Chromium 系および Firefox 系ブラウザ)
 - Internet Explorer と従来の Edge の WebCache: 閲覧履歴、ダウンロード、Cookie、キャッシュ エントリ
+- Outlook の PST、OST、MSG、OFT ファイル: フォルダー、アイテム、受信者、添付ファイル、連絡先、予定表アイテム、タスク
 - LNK のショートカット
 - Jump Lists
 - ShimCache
@@ -143,6 +144,16 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -249,6 +260,7 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 | `Applications` | アプリケーション履歴 (サードパーティツールのトレース) |
 | `Applications` | インストールされているプログラム |
 | `BrowserActivity` | Web ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴 (復元された削除済みエントリを含む)、Internet Explorer と従来の Edge の WebCache |
+| `Communication` | Outlook の PST、OST、MSG、OFT ファイル: フォルダー、アイテム、受信者、添付ファイル、連絡先、予定表アイテム、タスク |
 | `ExternalDevices` | USB デバイスとボリューム |
 | `FileAndFolderOpening` | Jump Lists、LNK ショートカット、Microsoft Office、MRU リスト、開くダイアログと名前を付けて保存ダイアログ、RecentDocs、ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -265,7 +277,7 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 
 CSV、JSON、および JSONL は同じカテゴリを使用します。パーサー ジョブごとに 1 つの `<artifact>-logs.txt` ファイルには、その正確なコマンドとメッセージが含まれます。たとえば、`HOST1/FileSystem/MFT-logs.txt` や `HOST1/ProcessExecution/Prefetch-logs.txt` などです。 JSON と JSONL は同じログ ファイル名を使用します。 Amcache と Jump Lists にはそれぞれ、プレフィックス付きテーブルの横に 1 つの共有ログがあります。 SRUM プロバイダー テーブルは、共有 `SystemInformation/SRUM-logs.txt` ファイルを使用して、`NetworkActivity`、`ProcessExecution`、および `SystemInformation` に直接配置されます。 `logs/` サブディレクトリは作成されません。
 
-デフォルトの CSV ファイル名は、`Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、`I30.csv`、`MFT.csv`、`UsnJournal.csv`、 `Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、`Registry-SecuritySettings.csv`、`PrefetchTimeline.csv`、 `Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、 `Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、および`DefenderQuarantine.csv`。レジストリ派生テーブルでは、`Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv`、`Registry-SystemInfo.csv` など、`Registry-` プレフィックスが使用されます。一般的なハイブのキーと値は `Registry-Dump.csv` にあります。 Amcache テーブルは、`FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、`Registry-Amcache-Findings.csv`、および `Registry-Amcache-Summary.csv` です。 Jump Lists は `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` と `JumpLists-CustomDestinations.csv` を使用します。 Amcache または Jump Lists サブディレクトリはありません。 SRUM テーブルは、そのカテゴリの直下で `SRUM-` ファイル名を使用します (例: `NetworkActivity/SRUM-NetworkConnections.csv`)。ユーザーアクセスログのテーブルは `LateralMovement` にあり、`UAL-Clients.csv` や `UAL-SystemIdentity.csv` のようにテーブルごとに 1 つのファイルとなり、`UAL-logs.txt` も作成されます。[ユーザーアクセスログ (UAL)](../artifacts/ual.md#automatic-parsing) を参照してください。Web ブラウザのテーブルは `BrowserActivity` にあり、`Browser-History.csv`、`Browser-Downloads.csv`、`Browser-Cookies.csv`、`Browser-FormHistory.csv` と `Browser-logs.txt` が作成されます。[Web ブラウザ](../artifacts/browser.md#automatic-parsing) を参照してください。Internet Explorer と従来の Edge の WebCache のテーブルも同じ場所にあり、`WebCache-History.csv`、`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv`、`WebCache-Containers.csv` と `WebCache-logs.txt` が作成されます。[Internet Explorer と従来の Edge](../artifacts/webcache.md#automatic-parsing) を参照してください。 [完全な SRUM 配置テーブル](../artifacts/srum.md#categorized-auto-parse-output) を参照してください。
+デフォルトの CSV ファイル名は、`Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、`I30.csv`、`MFT.csv`、`UsnJournal.csv`、 `Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、`Registry-SecuritySettings.csv`、`PrefetchTimeline.csv`、 `Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、 `Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、および`DefenderQuarantine.csv`。レジストリ派生テーブルでは、`Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv`、`Registry-SystemInfo.csv` など、`Registry-` プレフィックスが使用されます。一般的なハイブのキーと値は `Registry-Dump.csv` にあります。 Amcache テーブルは、`FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、`Registry-Amcache-Findings.csv`、および `Registry-Amcache-Summary.csv` です。 Jump Lists は `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` と `JumpLists-CustomDestinations.csv` を使用します。 Amcache または Jump Lists サブディレクトリはありません。 SRUM テーブルは、そのカテゴリの直下で `SRUM-` ファイル名を使用します (例: `NetworkActivity/SRUM-NetworkConnections.csv`)。ユーザーアクセスログのテーブルは `LateralMovement` にあり、`UAL-Clients.csv` や `UAL-SystemIdentity.csv` のようにテーブルごとに 1 つのファイルとなり、`UAL-logs.txt` も作成されます。[ユーザーアクセスログ (UAL)](../artifacts/ual.md#automatic-parsing) を参照してください。Web ブラウザのテーブルは `BrowserActivity` にあり、`Browser-History.csv`、`Browser-Downloads.csv`、`Browser-Cookies.csv`、`Browser-FormHistory.csv` と `Browser-logs.txt` が作成されます。[Web ブラウザ](../artifacts/browser.md#automatic-parsing) を参照してください。Internet Explorer と従来の Edge の WebCache のテーブルも同じ場所にあり、`WebCache-History.csv`、`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv`、`WebCache-Containers.csv` と `WebCache-logs.txt` が作成されます。[Internet Explorer と従来の Edge](../artifacts/webcache.md#automatic-parsing) を参照してください。 Outlook のテーブルは `Communication` にあり、`Outlook-Files.csv`、`Outlook-Folders.csv`、`Outlook-Items.csv`、`Outlook-Recipients.csv`、`Outlook-Attachments.csv`、`Outlook-Contacts.csv`、`Outlook-Calendar.csv`、`Outlook-Tasks.csv` と `Outlook-logs.txt` が作成されます。[Outlook](../artifacts/outlook.md#automatic-parsing) を参照してください。 [完全な SRUM 配置テーブル](../artifacts/srum.md#categorized-auto-parse-output) を参照してください。
 
 ログは、`Registry-SAM-logs.txt`、`PrefetchTimeline-logs.txt`、`Registry-UserAssist-logs.txt` などの大文字のアーティファクト名と一致します。 JSON/JSONL ファイルは同じステムを使用します (例: `MFT.jsonl`)。レコードの `Artifact` 識別子は、クエリの場合は `mft` です。マルチテーブル出力では、テーブルの横に `Registry-Amcache-logs.txt` または `JumpLists-logs.txt` が表示されます。共有 SRUM ログは `SystemInformation` にあります。
 

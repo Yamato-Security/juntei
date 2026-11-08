@@ -124,6 +124,30 @@ base « dirty » de Windows 10 contenant l'historique, les téléchargements e
 170 cookies et 3 754 autres entrées. La comparaison a décodé elle-même les enregistrements de téléchargement. Les
 enregistrements que les bases de données marquent comme supprimés ont été exclus des deux côtés.
 
+## Outlook { #outlook }
+
+`parse-file outlook` lit les fichiers PST, OST, `.msg` et `.oft` avec
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser), dont le lecteur PST et OST est un fork
+d'[outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) de Microsoft et dont le lecteur `.msg` a été écrit à
+partir des spécifications ouvertes de Microsoft.
+
+- **PST et OST** : 66 fichiers PST et OST publics (Apache Tika, artemis, les exemples d'Aspose.Email, le DFIR
+  Artifact Museum, Enron, les exemples de GroupDocs, java-libpst, les données de test de libyal, outlook-pst-rs et
+  pst-extractor) ont été comparés à libpff, propriété par propriété : chaque propriété de chaque banque de messages,
+  dossier, message, destinataire et pièce jointe, et les données de chaque pièce jointe. 324 175 valeurs étaient
+  identiques, et aucune ne différait sans explication. Les autres sont ce que seul ys-outlook-parser lit (15 846
+  valeurs de messages, de destinataires et de pièces jointes sur lesquels libpff échoue, et d'une banque de messages
+  qu'il ne peut pas ouvrir ; 8 223 d'éléments masqués), des cellules de destinataires que libpff donne vides ou à zéro alors que leurs lignes les disent
+  absentes (49 077), des identifiants d'entrée et des types de dossiers calculés comme le fait MAPI (2 004), et des
+  objets et messages incorporés que libpff donne sous forme de données brutes (480). Deux des fichiers ne sont lus par
+  aucun des deux lecteurs.
+- **`.msg` et `.oft`** : 214 fichiers publics, contenant 2 404 messages, destinataires et pièces jointes et 41 002
+  propriétés, ont été comparés à extract-msg : 110 114 valeurs étaient identiques, et chacune des 791 qui diffèrent
+  est expliquée : 601 sont des erreurs d'extract-msg sur les heures, 35 proviennent de fichiers ANSI qu'il décode avec
+  la mauvaise page de codes, et les autres sont ce qu'il omet ou ajoute.
+- **Entrées endommagées** : plus de 260 000 fichiers `.msg` mutés et 160 000 PST mutés, ainsi que des fichiers
+  spécialement conçus, ont été lus sans plantage, sans blocage et sans consommation de mémoire illimitée.
+
 ## Raccourcis LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) est un fork maintenu de la crate

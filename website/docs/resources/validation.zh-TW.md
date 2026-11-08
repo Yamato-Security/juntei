@@ -119,6 +119,27 @@ ys-browser-parser 的表單歷程測試資料庫。全部 293 筆造訪、21 筆
 6 筆下載、170 個 Cookie 與 3,754 筆其他項目。比較時另行獨立解碼了下載記錄。資料庫標記為已刪除的
 記錄，在兩邊皆予以排除。
 
+## Outlook { #outlook }
+
+`parse-file outlook` 使用 [ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser)
+讀取 PST、OST、`.msg` 與 `.oft` 檔案；其 PST 與 OST 讀取器是 Microsoft 的
+[outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) 之分支，而其 `.msg` 讀取器則是依據
+Microsoft 的公開規格撰寫而成。
+
+- **PST 與 OST**：66 個公開的 PST 與 OST 檔案（Apache Tika、artemis、Aspose.Email 範例、DFIR
+  Artifact Museum、Enron、GroupDocs 範例、java-libpst、libyal 的測試資料、outlook-pst-rs 與
+  pst-extractor）曾與 libpff 逐一屬性進行比較：涵蓋每個存放區、資料夾、郵件、收件者與附件的每一個
+  屬性，以及每個附件的資料。324,175 個值相同，且沒有任何無法解釋的差異。其餘部分為：只有
+  ys-outlook-parser 讀得到的內容（libpff 無法讀取之郵件、收件者與附件，以及一個它無法開啟之存放區的
+  15,846 個值；隱藏項目的 8,223 個值）、其資料列標示為不存在、libpff 卻以空白或零呈現的收件者儲存格
+  （49,077 個）、依 MAPI 方式計算的資料夾 entry ID 與類型（2,004 個），以及 libpff 以原始資料呈現的
+  物件與內嵌郵件（480 個）。其中有兩個檔案，兩邊的讀取器都完全無法讀取。
+- **`.msg` 與 `.oft`**：214 個公開檔案，含 2,404 個郵件、收件者與附件以及 41,002 個屬性，曾與
+  extract-msg 進行比較：110,114 個值相同，而不同的 791 個值都各有解釋：其中 601 個是 extract-msg 在
+  時間上的錯誤，35 個來自它以錯誤字碼頁解碼的 ANSI 檔案，其餘則是它遺漏或額外加入的內容。
+- **損毀的輸入**：超過 260,000 個經變異的 `.msg` 檔案與 160,000 個經變異的 PST，以及特製的檔案，
+  皆在未發生當機、停滯或記憶體無限制增長的情況下讀取完成。
+
 ## LNK 捷徑 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) 是

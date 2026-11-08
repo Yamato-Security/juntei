@@ -17,6 +17,7 @@ doch die Ermittlerin oder der Ermittler muss weiterhin interpretieren, was jede 
 | Was hat ein Benutzer geöffnet? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Hat ein Programm eine große Datenmenge übertragen? | [SRUM](srum.md) | Telemetrie von Firewall, Proxy, DNS, Paketmitschnitten oder EDR |
 | Welche Websites hat ein Benutzer besucht, und was hat er heruntergeladen? | [Webbrowser](browser.md), [Internet Explorer und Edge Legacy](webcache.md) | Proxy- und DNS-Protokolle, `$MFT` und USN-Journal, Defender, SRUM |
+| Mit wem hat ein Benutzer E-Mails ausgetauscht, und was war angehängt? | [Outlook](outlook.md) | Protokolle von Mailservern und Gateways, `$MFT` und USN-Journal, Defender, LNK und Jump Lists |
 | Welche Clients und Konten haben diesen Server genutzt, und an welchen Tagen? | [Benutzerzugriffsprotokollierung (UAL)](ual.md) | Security-Ereignisprotokolle, SMB- und RDP-Protokolle, Firewall-Protokolle |
 | Wurde Persistenz eingerichtet? | [Dienste](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Ereignisprotokolle, Prefetch, `$MFT` |
 | Was hat Defender entfernt? | [Defender-Quarantäne](defender-quarantine.md) | Ereignisprotokolle, `$MFT`, USN-Journal |

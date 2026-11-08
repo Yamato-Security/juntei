@@ -15,6 +15,7 @@ Windows は、ファイル システム、レジストリ、互換性データ�
 | ユーザーは何を開きましたか? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | プログラムが大量のデータを転送しましたか? | [SRUM](srum.md) | ファイアウォール、プロキシ、DNS、パケットまたは EDR テレメトリ |
 | ユーザーはどの Web サイトを閲覧し、何をダウンロードしましたか? | [Web ブラウザ](browser.md)、[Internet Explorer と従来の Edge](webcache.md) | プロキシと DNS のログ、`$MFT` と USN ジャーナル、Defender、SRUM |
+| ユーザーは誰と電子メールをやり取りし、何が添付されていましたか? | [Outlook](outlook.md) | メール サーバーとゲートウェイのログ、`$MFT` と USN ジャーナル、Defender、LNK と Jump Lists |
 | このサーバーを利用したのはどのクライアントとアカウントで、それはどの日ですか? | [ユーザーアクセスログ (UAL)](ual.md) | セキュリティ イベント ログ、SMB と RDP のログ、ファイアウォール ログ |
 | 永続性が設定されましたか? | [サービス](services.md)、[TaskCache](taskcache.md)、[レジストリ](registry.md) | イベントログ、Prefetch、`$MFT` |
 | Defender は何を削除しましたか? | [Defender 隔離](defender-quarantine.md) | イベント ログ、`$MFT`、USN ジャーナル |

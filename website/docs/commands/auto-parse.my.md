@@ -131,6 +131,8 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
 - အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
 - ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history (Chromium-based နှင့် Firefox-based ဘရောက်ဇာများ)
 - Internet Explorer နှင့် legacy Edge ၏ WebCache: history၊ download များ၊ cookie များနှင့် cache entry များ
+- Outlook PST၊ OST၊ MSG နှင့် OFT ဖိုင်များ: ဖိုင်တွဲများ၊ item များ၊ လက်ခံသူများ၊ ပူးတွဲဖိုင်များ၊ contact များ၊
+  ပြက္ခဒိန် item များနှင့် task များ
 - LNK shortcut များ
 - Jump Lists
 - ShimCache
@@ -199,6 +201,16 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -305,6 +317,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `Applications` | Application မှတ်တမ်း (third-party tool များ၏ ခြေရာများ) |
 | `Applications` | ထည့်သွင်းထားသော ပရိုဂရမ်များ |
 | `BrowserActivity` | ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history၊ ပြန်လည်ရယူထားသော ဖျက်ထားသည့် entry များ အပါအဝင်။ Internet Explorer နှင့် legacy Edge ၏ WebCache |
+| `Communication` | Outlook PST၊ OST၊ MSG နှင့် OFT ဖိုင်များ: ဖိုင်တွဲများ၊ item များ၊ လက်ခံသူများ၊ ပူးတွဲဖိုင်များ၊ contact များ၊ ပြက္ခဒိန် item များနှင့် task များ |
 | `ExternalDevices` | USB device များနှင့် volume များ |
 | `FileAndFolderOpening` | Jump Lists၊ LNK shortcut များ၊ Microsoft Office၊ MRU စာရင်းများ၊ Open နှင့် Save As dialog များ၊ RecentDocs၊ ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -350,6 +363,10 @@ SRUM table များသည် ၎င်းတို့၏ အမျိုး�
 Internet Explorer နှင့် legacy Edge ၏ WebCache table များလည်း ထိုနေရာတွင် ရှိပါသည်: `WebCache-History.csv`၊ `WebCache-Downloads.csv`၊
 `WebCache-Cookies.csv`၊ `WebCache-Entries.csv` နှင့် `WebCache-Containers.csv` တို့ကို `WebCache-logs.txt` နှင့်အတူ ထားပါသည်။
 [Internet Explorer နှင့် legacy Edge](../artifacts/webcache.md#automatic-parsing) ကို ကြည့်ပါ။
+Outlook table များသည် `Communication` တွင် ရှိပါသည်: `Outlook-Files.csv`၊ `Outlook-Folders.csv`၊
+`Outlook-Items.csv`၊ `Outlook-Recipients.csv`၊ `Outlook-Attachments.csv`၊ `Outlook-Contacts.csv`၊
+`Outlook-Calendar.csv` နှင့် `Outlook-Tasks.csv` တို့ကို `Outlook-logs.txt` နှင့်အတူ ထားပါသည်။
+[Outlook](../artifacts/outlook.md#automatic-parsing) ကို ကြည့်ပါ။
 [SRUM နေရာချထားမှု table အပြည့်အစုံ](../artifacts/srum.md#categorized-auto-parse-output) ကို ကြည့်ပါ။
 
 Log များသည် `Registry-SAM-logs.txt`၊ `PrefetchTimeline-logs.txt`

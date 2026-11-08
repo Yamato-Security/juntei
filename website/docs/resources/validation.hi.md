@@ -121,6 +121,29 @@ delete किए गए दो pages और दो visits, उनके सम�
 records को स्वतंत्र रूप से, अपने तरीके से decode किया। जिन records को databases deleted के रूप में चिह्नित करते हैं,
 उन्हें दोनों में से किसी में भी शामिल नहीं किया गया।
 
+## Outlook { #outlook }
+
+`parse-file outlook` PST, OST, `.msg` और `.oft` files को
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser) से पढ़ता है, जिसका PST और OST
+reader Microsoft के [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) का fork है और जिसका
+`.msg` reader Microsoft के open specifications से लिखा गया है।
+
+- **PST और OST**: 66 सार्वजनिक PST और OST files (Apache Tika, artemis, Aspose.Email के examples, DFIR
+  Artifact Museum, Enron, GroupDocs के examples, java-libpst, libyal का test data, outlook-pst-rs और
+  pst-extractor) की तुलना libpff से property-दर-property की गई: हर store, folder, message, recipient और
+  attachment की हर property, और हर attachment का data। 324,175 तथ्य समान थे और कोई भी बिना स्पष्टीकरण के
+  अलग नहीं था। बाकी तथ्य ये हैं: जो केवल ys-outlook-parser पढ़ता है (उन messages, recipients और attachments के
+  15,846 तथ्य जिन पर libpff विफल होता है, और एक ऐसे store के जिसे वह खोल नहीं पाता; hidden items के 8,223),
+  recipient cells जिन्हें libpff खाली या शून्य देता है जबकि उनकी rows कहती हैं कि वे अनुपस्थित हैं (49,077),
+  folder entry ids और types जिनकी गणना MAPI की तरह की गई (2,004), और objects तथा embedded messages जिन्हें
+  libpff उनके raw data के रूप में देता है (480)। दो files को दोनों में से कोई भी reader बिल्कुल नहीं पढ़ता।
+- **`.msg` और `.oft`**: 214 सार्वजनिक files की, जिनमें 2,404 messages, recipients और attachments और 41,002
+  properties हैं, तुलना extract-msg से की गई: 110,114 तथ्य समान थे, और जो 791 अलग हैं उनमें से हर एक का
+  स्पष्टीकरण है: 601 समयों में extract-msg की त्रुटियाँ हैं, 35 उन ANSI files से आते हैं जिन्हें वह गलत code
+  page में decode करता है, और बाकी वह है जो वह छोड़ देता है या जोड़ देता है।
+- **क्षतिग्रस्त input**: 260,000 से अधिक mutated `.msg` files और 160,000 mutated PSTs, और crafted files,
+  बिना crash, hang या असीमित memory के पढ़ी गईं।
+
 ## LNK शॉर्टकट { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)

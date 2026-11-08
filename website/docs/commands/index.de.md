@@ -34,6 +34,7 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 | `parse-file defender-quarantine` | Defender-Quarantäneverzeichnis oder -eintrag | [Defender-Quarantäne](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK-Verknüpfungen](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS-Befehle](filesystem.md) { #ntfs-commands }

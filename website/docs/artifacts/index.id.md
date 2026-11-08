@@ -17,6 +17,7 @@ tetapi investigator tetap harus menginterpretasikan makna dari setiap sumber.
 | Apa yang dibuka oleh pengguna? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Apakah sebuah program mentransfer data dalam jumlah besar? | [SRUM](srum.md) | Telemetri firewall, proxy, DNS, paket, atau EDR |
 | Situs web mana yang dikunjungi pengguna, dan apa yang diunduhnya? | [Browser web](browser.md), [Internet Explorer dan Edge lama](webcache.md) | Log proxy dan DNS, `$MFT` dan Jurnal USN, Defender, SRUM |
+| Dengan siapa pengguna bertukar e-mail, dan apa yang dilampirkan? | [Outlook](outlook.md) | Log server dan gateway e-mail, `$MFT` dan Jurnal USN, Defender, LNK dan Jump Lists |
 | Klien dan akun mana yang menggunakan server ini, dan pada hari apa saja? | [Pencatatan Akses Pengguna (UAL)](ual.md) | Log peristiwa Security, log SMB dan RDP, log firewall |
 | Apakah persistensi dikonfigurasi? | [Layanan](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Log peristiwa, Prefetch, `$MFT` |
 | Apa yang dihapus oleh Defender? | [Karantina Defender](defender-quarantine.md) | Log peristiwa, `$MFT`, Jurnal USN |

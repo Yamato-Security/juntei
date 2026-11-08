@@ -132,6 +132,7 @@ yang ditemukan. Tugas-tugas ini menggunakan perintah yang dikelompokkan berdasar
 - Pencatatan Akses Pengguna (UAL)
 - Riwayat, unduhan, cookie, dan riwayat formulir browser web (browser berbasis Chromium dan Firefox)
 - WebCache milik Internet Explorer dan Edge lama: riwayat, unduhan, cookie, dan entri cache
+- Berkas PST, OST, MSG, dan OFT Outlook: folder, item, penerima, lampiran, kontak, item kalender, dan tugas
 - Pintasan LNK
 - Jump Lists
 - ShimCache
@@ -200,6 +201,16 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -306,6 +317,7 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 | `Applications` | Riwayat aplikasi (jejak alat pihak ketiga) |
 | `Applications` | Program terinstal |
 | `BrowserActivity` | Riwayat, unduhan, cookie, dan riwayat formulir browser web, termasuk entri terhapus yang dipulihkan; WebCache milik Internet Explorer dan Edge lama |
+| `Communication` | Berkas PST, OST, MSG, dan OFT Outlook: folder, item, penerima, lampiran, kontak, item kalender, dan tugas |
 | `ExternalDevices` | Perangkat dan volume USB |
 | `FileAndFolderOpening` | Jump Lists, pintasan LNK, Microsoft Office, daftar MRU, dialog Open dan Save As, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -351,6 +363,10 @@ Tabel browser web berada di `BrowserActivity`: `Browser-History.csv`, `Browser-D
 lama juga berada di sana: `WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv`, dan `WebCache-Containers.csv`, beserta
 `WebCache-logs.txt`; lihat [Internet Explorer dan Edge lama](../artifacts/webcache.md#automatic-parsing).
+Tabel Outlook berada di `Communication`: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv`, dan `Outlook-Tasks.csv`, beserta `Outlook-logs.txt`; lihat
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 Lihat [tabel penempatan SRUM selengkapnya](../artifacts/srum.md#categorized-auto-parse-output).
 
 Log sesuai dengan nama artefak yang ditulis dengan huruf kapital, seperti `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
