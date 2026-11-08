@@ -80,7 +80,12 @@ database file's own copies of the pages a `-wal` replaced, until the next checkp
   live rows and the other evidence.
 - No deleted row does not mean nothing was deleted: zeroed space and a checkpoint leave nothing
   to recover. Deleted cookies are not recovered yet.
-- The database contents establish the browser family. A compatible profile path refines `Browser` to a vendor such as Chrome or Firefox; a conflicting path cannot override the family. Otherwise the label is `Chromium-based`, `Firefox-based`, or `Safari` (`Unknown` if undetermined). `User` and `Profile` come from the path and may be lost when files are copied.
+- `Browser` comes from the database's contents first: its tables tell a Chromium-based database
+  from a Firefox-based one. A profile folder of the same family then names the browser (Chrome,
+  Edge, Firefox …); a folder of another family, as when evidence is copied into another profile,
+  doesn't change it. Without a browser folder, the label is `Chromium-based`, `Firefox-based` or
+  `Safari`; when neither the contents nor the path tell, it is `Unknown`. `User` and `Profile` come
+  from the path only, and are lost when the files are copied elsewhere.
 - Rollback journals (`-journal`) are not read, nor Internet Explorer and legacy Edge's
   `WebCacheV01.dat`.
 
@@ -144,7 +149,7 @@ Every table starts with these fields:
 | `Typed`, `TypedCount` | Whether the URL was ever typed, and how many times (Chromium). |
 | `Hidden` | Hidden from the history list: subframes, redirect sources, errors. |
 | `Frecency` | Firefox's ranking of the page for address bar suggestions. |
-| `VisitID`, `FromVisitID` | The visit's row id, and that of the visit it came from (the referring page, the redirect's source). |
+| `VisitID`, `FromVisitID` | The visit's row id (empty when a recovered record lost it), and that of the visit it came from (the referring page, the redirect's source). |
 | `LastVisitTime` | A deleted page's last visit (UTC). |
 | `PageSource` | Where a deleted visit's URL and title come from: `Live` (a live page), `Recovered` (a deleted page) or `NotFound`. |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | How a deleted entry was recovered; see [Deleted entries](#deleted-entries). |
@@ -163,7 +168,7 @@ Every table starts with these fields:
 | `Referrer`, `TabURL` | The referring page, and the page in the tab that started the download. |
 | `MimeType`, `Opened` | The file's type as served, and whether it was opened from the browser (Chromium). |
 | `FileDeletedByUser` | Whether the user deleted the downloaded file from disk through the browser's download list (Firefox). |
-| `DownloadID` | The download's row id. |
+| `DownloadID` | The download's row id; empty when a recovered record lost it. |
 
 ### Cookies
 
@@ -186,7 +191,7 @@ Every table starts with these fields:
 | `Count` | How many times the value was entered. |
 | `GUID` | Firefox's identifier of the entry, which removal records name. |
 | `Sources` | Where Firefox saved the entry from, in the versions that keep it (separated by a vertical bar in CSV). |
-| `RowID` | The entry’s row id; blank/null when recovery lost it. An observed row id of zero remains `0`. |
+| `RowID` | The entry's row id; empty when a recovered record lost it. A row id of zero stays `0`. |
 
 ## Automatic parsing
 

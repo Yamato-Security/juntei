@@ -671,9 +671,14 @@ impl Family {
     }
 }
 
+/// The browser a database is from: the vendor its path names when that is of the family its
+/// contents show (or when they show none), else the family.
 fn browser_label(database: &Path, family: Family) -> String {
     browser_name(database)
         .filter(|name| {
+            if family == Family::Unknown {
+                return true;
+            }
             let named_family = match name.as_str() {
                 "Tor Browser" | "Waterfox" | "LibreWolf" | "Thunderbird" | "Firefox" => {
                     Family::Firefox
@@ -829,7 +834,7 @@ fn visit_row(
     row.push("TypedCount", json!(visit.typed_count));
     row.push("Hidden", json!(visit.hidden));
     row.push("Frecency", json!(visit.frecency));
-    row.push("VisitID", id(Some(visit.id)));
+    row.push("VisitID", row_id(visit.id, provenance));
     row.push("FromVisitID", id(visit.from_visit));
     row.push("LastVisitTime", Json::Null);
     row.push(
@@ -903,7 +908,7 @@ fn download_row(
     row.push("MimeType", optional(download.mime_type.as_deref()));
     row.push("Opened", json!(download.opened));
     row.push("FileDeletedByUser", json!(download.deleted));
-    row.push("DownloadID", id(Some(download.id)));
+    row.push("DownloadID", row_id(download.id, provenance));
     row.recovery(provenance);
     row
 }
@@ -1026,12 +1031,7 @@ fn form_row(
             json!(entry.sources)
         },
     );
-    row.push(
-        "RowID",
-        provenance
-            .map_or(Some(entry.rowid), |p| p.rowid)
-            .map_or(Json::Null, |id| json!(id)),
-    );
+    row.push("RowID", row_id(entry.rowid, provenance));
     row.recovery(provenance);
     row
 }
@@ -1065,9 +1065,17 @@ fn optional(value: Option<&str>) -> Json {
     value.map_or(Json::Null, text)
 }
 
-/// A row id: nothing when a recovered record lost it (0) or there is none.
+/// The visit another one came from: nothing when there is none (0).
 fn id(value: Option<i64>) -> Json {
     value.filter(|&v| v != 0).map_or(Json::Null, |v| json!(v))
+}
+
+/// A row's id: a live row's own, a recovered record's from its cell (nothing when the cell's
+/// start was overwritten; the record's 0 then is a placeholder, not a rowid).
+fn row_id(own: i64, provenance: Option<&Provenance>) -> Json {
+    provenance
+        .map_or(Some(own), |p| p.rowid)
+        .map_or(Json::Null, |id| json!(id))
 }
 
 fn confidence(value: Confidence) -> &'static str {
@@ -1472,6 +1480,20 @@ mod tests {
         }
         // a Users folder must have a folder after it, below which the database is
         assert_eq!(context(Path::new("Users/History")).user, None);
+        // The contents decide the family; the path names the browser within it, or alone when
+        // the contents can't tell (a cookie database without its tables yet).
+        let chrome = Path::new("C/Users/a/AppData/Local/Google/Chrome/User Data/Default/History");
+        let firefox = Path::new(
+            "C/Users/a/AppData/Roaming/Mozilla/Firefox/Profiles/p.default/cookies.sqlite",
+        );
+        let elsewhere = Path::new("copies/History");
+        assert_eq!(browser_label(chrome, Family::Chromium), "Chrome");
+        assert_eq!(browser_label(chrome, Family::Firefox), "Firefox-based");
+        assert_eq!(browser_label(chrome, Family::Unknown), "Chrome");
+        assert_eq!(browser_label(firefox, Family::Unknown), "Firefox");
+        assert_eq!(browser_label(firefox, Family::Chromium), "Chromium-based");
+        assert_eq!(browser_label(elsewhere, Family::Firefox), "Firefox-based");
+        assert_eq!(browser_label(elsewhere, Family::Unknown), "Unknown");
     }
 
     #[test]
@@ -1502,6 +1524,23 @@ mod tests {
         assert_eq!(id(Some(0)), Json::Null);
         assert_eq!(id(None), Json::Null);
         assert_eq!(id(Some(7)), json!(7));
+        assert_eq!(row_id(0, None), json!(0), "a live row's id, even 0");
+        let mut provenance = Provenance {
+            table: "visits".into(),
+            rowid: None,
+            page: 2,
+            offset: 100,
+            page_state: PageState::InUse,
+            area: Area::Freeblock,
+            evidence: Evidence::Record,
+            confidence: Confidence::Medium,
+            also_fits: Vec::new(),
+            lost: Vec::new(),
+            truncated: false,
+        };
+        assert_eq!(row_id(0, Some(&provenance)), Json::Null, "lost");
+        provenance.rowid = Some(12);
+        assert_eq!(row_id(12, Some(&provenance)), json!(12));
     }
 
     #[test]

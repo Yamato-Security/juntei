@@ -139,7 +139,7 @@ CSV는 네 개의 파일을 생성하며, 행이 없으면 헤더만 있는 파�
 | `Typed`, `TypedCount` | URL을 직접 입력한 적이 있는지 여부와 그 횟수(Chromium). |
 | `Hidden` | 방문 기록 목록에서 숨겨진 항목: 하위 프레임, 리디렉션 출발지, 오류. |
 | `Frecency` | 주소 표시줄 제안을 위해 Firefox가 매긴 페이지 순위. |
-| `VisitID`, `FromVisitID` | 방문의 행 ID와, 이 방문의 출발점이 된 방문(참조 페이지, 리디렉션의 출발지)의 행 ID. |
+| `VisitID`, `FromVisitID` | 방문의 행 ID와, 이 방문의 출발점이 된 방문(참조 페이지, 리디렉션의 출발지)의 행 ID. 복구된 레코드에서 행 ID가 손실된 경우 방문의 행 ID는 비어 있습니다. |
 | `LastVisitTime` | 삭제된 페이지의 마지막 방문(UTC). |
 | `PageSource` | 삭제된 방문의 URL과 제목을 가져온 곳: `Live`(활성 페이지), `Recovered`(삭제된 페이지) 또는 `NotFound`. |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | 삭제된 항목이 복구된 방식. [삭제된 항목](#deleted-entries)을 참조하십시오. |
@@ -158,7 +158,7 @@ CSV는 네 개의 파일을 생성하며, 행이 없으면 헤더만 있는 파�
 | `Referrer`, `TabURL` | 참조 페이지와, 다운로드를 시작한 탭의 페이지. |
 | `MimeType`, `Opened` | 서버가 제공한 파일 유형과, 브라우저에서 파일을 열었는지 여부(Chromium). |
 | `FileDeletedByUser` | 사용자가 브라우저의 다운로드 목록을 통해 다운로드한 파일을 디스크에서 삭제했는지 여부(Firefox). |
-| `DownloadID` | 다운로드의 행 ID. |
+| `DownloadID` | 다운로드의 행 ID. 복구된 레코드에서 손실된 경우 비어 있습니다. |
 
 ### 쿠키 { #cookies }
 

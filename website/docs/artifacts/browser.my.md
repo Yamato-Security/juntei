@@ -153,7 +153,7 @@ Table တိုင်းသည် ဤ field များဖြင့် စတ�
 | `Typed`, `TypedCount` | URL ကို တစ်ကြိမ်ကြိမ် ရိုက်ထည့်ခဲ့ခြင်း ရှိမရှိနှင့် အကြိမ်မည်မျှ (Chromium)။ |
 | `Hidden` | History စာရင်းမှ ဝှက်ထားသည်: subframe များ၊ redirect source များ၊ error များ။ |
 | `Frecency` | Address bar အကြံပြုချက်များအတွက် Firefox ၏ စာမျက်နှာ အဆင့်သတ်မှတ်ချက်။ |
-| `VisitID`, `FromVisitID` | Visit ၏ row id နှင့် ၎င်း လာခဲ့သော visit ၏ row id (ညွှန်းဆိုသော စာမျက်နှာ၊ redirect ၏ source)။ |
+| `VisitID`, `FromVisitID` | Visit ၏ row id နှင့် ၎င်း လာခဲ့သော visit ၏ row id (ညွှန်းဆိုသော စာမျက်နှာ၊ redirect ၏ source)။ ပြန်လည်ရယူထားသော record တွင် row id ပျောက်ဆုံးသွားပါက visit ၏ row id သည် ဗလာ ဖြစ်သည်။ |
 | `LastVisitTime` | ဖျက်ထားသော စာမျက်နှာတစ်ခု၏ နောက်ဆုံး visit (UTC)။ |
 | `PageSource` | ဖျက်ထားသော visit တစ်ခု၏ URL နှင့် title လာရာ: `Live` (live စာမျက်နှာ)၊ `Recovered` (ဖျက်ထားသော စာမျက်နှာ) သို့မဟုတ် `NotFound`။ |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | ဖျက်ထားသော entry တစ်ခုကို ပြန်လည်ရယူခဲ့ပုံ။ [ဖျက်ထားသော entry များ](#deleted-entries) ကို ကြည့်ပါ။ |
@@ -172,7 +172,7 @@ Table တိုင်းသည် ဤ field များဖြင့် စတ�
 | `Referrer`, `TabURL` | ညွှန်းဆိုသော စာမျက်နှာနှင့် download ကို စတင်ခဲ့သော tab ရှိ စာမျက်နှာ။ |
 | `MimeType`, `Opened` | Server က ပေးပို့ခဲ့သည့်အတိုင်း ဖိုင်၏ type နှင့် ၎င်းကို ဘရောက်ဇာမှ ဖွင့်ခဲ့ခြင်း ရှိမရှိ (Chromium)။ |
 | `FileDeletedByUser` | အသုံးပြုသူက download လုပ်ထားသော ဖိုင်ကို ဘရောက်ဇာ၏ download စာရင်းမှတစ်ဆင့် disk ပေါ်မှ ဖျက်ခဲ့ခြင်း ရှိမရှိ (Firefox)။ |
-| `DownloadID` | Download ၏ row id။ |
+| `DownloadID` | Download ၏ row id။ ပြန်လည်ရယူထားသော record တွင် ပျောက်ဆုံးသွားပါက ဗလာ ဖြစ်သည်။ |
 
 ### Cookie များ { #cookies }
 

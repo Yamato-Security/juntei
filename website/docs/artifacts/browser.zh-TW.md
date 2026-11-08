@@ -139,7 +139,7 @@ CSV 會建立四個檔案；沒有資料列的檔案只含標題列。JSON 與 J
 | `Typed`、`TypedCount` | 該 URL 是否曾被手動輸入，以及輸入的次數（Chromium）。 |
 | `Hidden` | 不顯示於歷程清單中：子框架、重新導向的來源、錯誤。 |
 | `Frecency` | Firefox 為網址列建議所計算的網頁排名。 |
-| `VisitID`、`FromVisitID` | 該造訪的資料列 ID，以及其來源造訪的資料列 ID（參照網頁、重新導向的來源）。 |
+| `VisitID`、`FromVisitID` | 該造訪的資料列 ID，以及其來源造訪的資料列 ID（參照網頁、重新導向的來源）。復原的記錄若已遺失資料列 ID，該造訪的資料列 ID 為空。 |
 | `LastVisitTime` | 已刪除網頁的最後一次造訪（UTC）。 |
 | `PageSource` | 已刪除造訪的 URL 與標題來自何處：`Live`（現存網頁）、`Recovered`（已刪除網頁）或 `NotFound`。 |
 | `Confidence`、`RecoveredFrom`、`LostColumns` | 已刪除項目的復原方式；請參閱[已刪除的項目](#deleted-entries)。 |
@@ -158,7 +158,7 @@ CSV 會建立四個檔案；沒有資料列的檔案只含標題列。JSON 與 J
 | `Referrer`、`TabURL` | 參照網頁，以及啟動下載之分頁中的網頁。 |
 | `MimeType`、`Opened` | 伺服器提供的檔案類型，以及是否曾從瀏覽器開啟該檔案（Chromium）。 |
 | `FileDeletedByUser` | 使用者是否透過瀏覽器的下載清單，從磁碟刪除了下載的檔案（Firefox）。 |
-| `DownloadID` | 該下載的資料列 ID。 |
+| `DownloadID` | 該下載的資料列 ID。復原的記錄若已遺失資料列 ID，此欄為空。 |
 
 ### Cookie { #cookies }
 

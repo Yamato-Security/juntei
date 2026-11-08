@@ -145,7 +145,7 @@ Setiap tabel diawali dengan field berikut:
 | `Typed`, `TypedCount` | Apakah URL pernah diketik, dan berapa kali (Chromium). |
 | `Hidden` | Disembunyikan dari daftar riwayat: subframe, sumber redirect, error. |
 | `Frecency` | Peringkat halaman oleh Firefox untuk saran di bilah alamat. |
-| `VisitID`, `FromVisitID` | Row id kunjungan, dan row id kunjungan asalnya (halaman perujuk, sumber redirect). |
+| `VisitID`, `FromVisitID` | Row id kunjungan, dan row id kunjungan asalnya (halaman perujuk, sumber redirect). Row id kunjungan kosong jika record yang dipulihkan kehilangannya. |
 | `LastVisitTime` | Kunjungan terakhir ke sebuah halaman terhapus (UTC). |
 | `PageSource` | Asal URL dan judul sebuah kunjungan terhapus: `Live` (halaman aktif), `Recovered` (halaman terhapus), atau `NotFound`. |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | Bagaimana sebuah entri terhapus dipulihkan; lihat [Entri terhapus](#deleted-entries). |
@@ -164,7 +164,7 @@ Setiap tabel diawali dengan field berikut:
 | `Referrer`, `TabURL` | Halaman perujuk, dan halaman di tab yang memulai unduhan. |
 | `MimeType`, `Opened` | Tipe berkas sebagaimana dikirim server, dan apakah berkas dibuka dari browser (Chromium). |
 | `FileDeletedByUser` | Apakah pengguna menghapus berkas yang diunduh dari disk melalui daftar unduhan browser (Firefox). |
-| `DownloadID` | Row id unduhan. |
+| `DownloadID` | Row id unduhan. Kosong jika record yang dipulihkan kehilangannya. |
 
 ### Cookie { #cookies }
 

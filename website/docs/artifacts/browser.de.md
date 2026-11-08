@@ -147,7 +147,7 @@ Jede Tabelle beginnt mit diesen Feldern:
 | `Typed`, `TypedCount` | Ob die URL jemals eingetippt wurde, und wie oft (Chromium). |
 | `Hidden` | In der Verlaufsliste ausgeblendet: Subframes, Quellen von Weiterleitungen, Fehler. |
 | `Frecency` | Die Rangfolge der Seite bei Firefox für Vorschläge in der Adressleiste. |
-| `VisitID`, `FromVisitID` | Die Zeilen-ID des Besuchs und die des Besuchs, von dem er ausging (die verweisende Seite, die Quelle der Weiterleitung). |
+| `VisitID`, `FromVisitID` | Die Zeilen-ID des Besuchs und die des Besuchs, von dem er ausging (die verweisende Seite, die Quelle der Weiterleitung). Die Zeilen-ID des Besuchs ist leer, wenn ein wiederhergestellter Datensatz sie verloren hat. |
 | `LastVisitTime` | Der letzte Besuch einer gelöschten Seite (UTC). |
 | `PageSource` | Woher URL und Titel eines gelöschten Besuchs stammen: `Live` (eine aktive Seite), `Recovered` (eine gelöschte Seite) oder `NotFound`. |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | Wie ein gelöschter Eintrag wiederhergestellt wurde; siehe [Gelöschte Einträge](#deleted-entries). |
@@ -166,7 +166,7 @@ Jede Tabelle beginnt mit diesen Feldern:
 | `Referrer`, `TabURL` | Die verweisende Seite und die Seite im Tab, der den Download gestartet hat. |
 | `MimeType`, `Opened` | Der Typ der Datei, wie vom Server geliefert, und ob sie aus dem Browser heraus geöffnet wurde (Chromium). |
 | `FileDeletedByUser` | Ob der Benutzer die heruntergeladene Datei über die Downloadliste des Browsers vom Datenträger gelöscht hat (Firefox). |
-| `DownloadID` | Die Zeilen-ID des Downloads. |
+| `DownloadID` | Die Zeilen-ID des Downloads. Leer, wenn ein wiederhergestellter Datensatz sie verloren hat. |
 
 ### Cookies { #cookies }
 

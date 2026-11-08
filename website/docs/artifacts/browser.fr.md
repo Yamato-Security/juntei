@@ -150,7 +150,7 @@ Chaque table commence par ces champs :
 | `Typed`, `TypedCount` | Si l'URL a déjà été saisie, et combien de fois (Chromium). |
 | `Hidden` | Masquée dans la liste de l'historique : sous-cadres, sources de redirection, erreurs. |
 | `Frecency` | Le classement de la page par Firefox pour les suggestions de la barre d'adresse. |
-| `VisitID`, `FromVisitID` | L'identifiant de ligne de la visite, et celui de la visite dont elle provient (la page référente, la source de la redirection). |
+| `VisitID`, `FromVisitID` | L'identifiant de ligne de la visite, et celui de la visite dont elle provient (la page référente, la source de la redirection). L'identifiant de la visite est vide lorsqu'un enregistrement récupéré l'a perdu. |
 | `LastVisitTime` | La dernière visite d'une page supprimée (UTC). |
 | `PageSource` | L'origine de l'URL et du titre d'une visite supprimée : `Live` (une page active), `Recovered` (une page supprimée) ou `NotFound`. |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | La manière dont une entrée supprimée a été récupérée ; voir [Entrées supprimées](#deleted-entries). |
@@ -169,7 +169,7 @@ Chaque table commence par ces champs :
 | `Referrer`, `TabURL` | La page référente, et la page de l'onglet qui a lancé le téléchargement. |
 | `MimeType`, `Opened` | Le type du fichier tel que servi, et s'il a été ouvert depuis le navigateur (Chromium). |
 | `FileDeletedByUser` | Si l'utilisateur a supprimé du disque le fichier téléchargé depuis la liste des téléchargements du navigateur (Firefox). |
-| `DownloadID` | L'identifiant de ligne du téléchargement. |
+| `DownloadID` | L'identifiant de ligne du téléchargement. Vide lorsqu'un enregistrement récupéré l'a perdu. |
 
 ### Cookies { #cookies }
 

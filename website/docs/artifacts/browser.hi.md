@@ -142,7 +142,7 @@ CSV चार files बनाता है; rows न होने पर हर 
 | `Typed`, `TypedCount` | क्या URL कभी टाइप किया गया, और कितनी बार (Chromium)। |
 | `Hidden` | History list से छिपा हुआ: subframes, redirect sources, errors। |
 | `Frecency` | Address bar suggestions के लिए Firefox द्वारा page की ranking। |
-| `VisitID`, `FromVisitID` | Visit का row id, और उस visit का row id जिससे यह आया (referring page, redirect का source)। |
+| `VisitID`, `FromVisitID` | Visit का row id, और उस visit का row id जिससे यह आया (referring page, redirect का source)। Recover किए गए record में row id खो गया हो तो visit का row id खाली रहता है। |
 | `LastVisitTime` | किसी deleted page का आखिरी visit (UTC)। |
 | `PageSource` | किसी deleted visit का URL और title कहाँ से आते हैं: `Live` (कोई live page), `Recovered` (कोई deleted page) या `NotFound`। |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | कोई deleted entry कैसे recover हुई; [हटाई गई entries](#deleted-entries) देखें। |
@@ -161,7 +161,7 @@ CSV चार files बनाता है; rows न होने पर हर 
 | `Referrer`, `TabURL` | Referring page, और उस tab का page जिसने download शुरू किया। |
 | `MimeType`, `Opened` | File का type जैसा server ने बताया, और क्या उसे browser से खोला गया (Chromium)। |
 | `FileDeletedByUser` | क्या उपयोगकर्ता ने browser की download list के ज़रिए download की गई file को disk से delete किया (Firefox)। |
-| `DownloadID` | Download का row id। |
+| `DownloadID` | Download का row id। Recover किए गए record में यह खो गया हो तो खाली रहता है। |
 
 ### Cookies { #cookies }
 

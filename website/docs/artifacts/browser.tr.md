@@ -151,7 +151,7 @@ Her tablo şu alanlarla başlar:
 | `Typed`, `TypedCount` | URL'nin hiç yazılıp yazılmadığı ve kaç kez yazıldığı (Chromium). |
 | `Hidden` | Geçmiş listesinde gizli: alt çerçeveler, yönlendirme kaynakları, hatalar. |
 | `Frecency` | Firefox'un adres çubuğu önerileri için sayfaya verdiği sıralama puanı. |
-| `VisitID`, `FromVisitID` | Ziyaretin satır kimliği ve gelinen ziyaretin satır kimliği (yönlendiren sayfa, yönlendirmenin kaynağı). |
+| `VisitID`, `FromVisitID` | Ziyaretin satır kimliği ve gelinen ziyaretin satır kimliği (yönlendiren sayfa, yönlendirmenin kaynağı). Kurtarılan bir kayıt satır kimliğini kaybetmişse ziyaretin satır kimliği boştur. |
 | `LastVisitTime` | Silinmiş bir sayfanın son ziyareti (UTC). |
 | `PageSource` | Silinmiş bir ziyaretin URL'sinin ve başlığının nereden geldiği: `Live` (canlı bir sayfa), `Recovered` (silinmiş bir sayfa) veya `NotFound`. |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | Silinmiş bir girdinin nasıl kurtarıldığı; bkz. [Silinmiş girdiler](#deleted-entries). |
@@ -170,7 +170,7 @@ Her tablo şu alanlarla başlar:
 | `Referrer`, `TabURL` | Yönlendiren sayfa ve indirmeyi başlatan sekmedeki sayfa. |
 | `MimeType`, `Opened` | Sunulduğu haliyle dosyanın türü ve tarayıcıdan açılıp açılmadığı (Chromium). |
 | `FileDeletedByUser` | Kullanıcının indirilen dosyayı tarayıcının indirme listesi üzerinden diskten silip silmediği (Firefox). |
-| `DownloadID` | İndirmenin satır kimliği. |
+| `DownloadID` | İndirmenin satır kimliği. Kurtarılan bir kayıt onu kaybetmişse boştur. |
 
 ### Çerezler { #cookies }
 

@@ -143,7 +143,7 @@ Todas as tabelas começam com estes campos:
 | `Typed`, `TypedCount` | Se a URL chegou a ser digitada, e quantas vezes (Chromium). |
 | `Hidden` | Oculta na lista do histórico: subframes, origens de redirecionamentos, erros. |
 | `Frecency` | A classificação da página pelo Firefox para as sugestões da barra de endereços. |
-| `VisitID`, `FromVisitID` | O ID de linha da visita e o da visita da qual ela veio (a página de referência, a origem do redirecionamento). |
+| `VisitID`, `FromVisitID` | O ID de linha da visita e o da visita da qual ela veio (a página de referência, a origem do redirecionamento). O ID da visita fica vazio quando um registro recuperado o perdeu. |
 | `LastVisitTime` | A última visita de uma página excluída (UTC). |
 | `PageSource` | De onde vêm a URL e o título de uma visita excluída: `Live` (uma página ativa), `Recovered` (uma página excluída) ou `NotFound`. |
 | `Confidence`, `RecoveredFrom`, `LostColumns` | Como uma entrada excluída foi recuperada; consulte [Entradas excluídas](#deleted-entries). |
@@ -162,7 +162,7 @@ Todas as tabelas começam com estes campos:
 | `Referrer`, `TabURL` | A página de referência, e a página na aba que iniciou o download. |
 | `MimeType`, `Opened` | O tipo do arquivo como foi servido, e se ele foi aberto a partir do navegador (Chromium). |
 | `FileDeletedByUser` | Se o usuário excluiu do disco o arquivo baixado pela lista de downloads do navegador (Firefox). |
-| `DownloadID` | O ID de linha do download. |
+| `DownloadID` | O ID de linha do download. Vazio quando um registro recuperado o perdeu. |
 
 ### Cookies { #cookies }
 
