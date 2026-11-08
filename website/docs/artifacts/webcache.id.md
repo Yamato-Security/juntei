@@ -53,7 +53,11 @@ transaksi `V01*.log`.
 
 ## Peringatan bagi analis { #analyst-cautions }
 
-- Waktu dalam UTC, hingga 100 nanodetik.
+- Waktu dalam UTC, hingga 100 nanodetik, kecuali `ModifiedTime` pada kontainer riwayat satu hari atau
+  satu minggu: nilai itu adalah waktu lokal sistem, ditulis tanpa offset, dan `-Z` membiarkannya apa
+  adanya. Konversikan nilai itu dengan zona waktu sistem sumber pada saat itu. Selisihnya dengan
+  `AccessedTime` sering kali sama dengan offset zona waktu tersebut, tetapi tidak selalu: keduanya bisa
+  merupakan momen yang berbeda.
 - Entri riwayat adalah sebuah URL, bukan sebuah kunjungan: `AccessedTime` adalah kunjungan terakhirnya dan
   `AccessCount` berapa banyak kunjungannya. Kontainer `History` menyimpan satu entri per URL; kontainer
   satu hari atau satu minggu menyimpan entri periode tersebut, dan namanya memuat hari pertama periode itu
@@ -127,9 +131,13 @@ Setiap tabel diawali dengan field berikut:
 |---|---|
 | `Container` | Kontainer: `History`, atau `MSHist01` diikuti hari pertama periodenya dan hari setelah hari terakhirnya. |
 | `AccessedTime` | Kunjungan terakhir ke URL (UTC); di kontainer satu hari atau satu minggu, kunjungan terakhir pada periode itu. |
+| `ModifiedTime` | Kapan entri terakhir diubah (UTC); di kontainer satu hari atau satu minggu, waktu lokal sistem, tanpa offset. |
+| `CreationTime` | Kapan entri dibuat (UTC). |
+| `ExpiryTime`, `SyncTime` | Kapan entri dijadwalkan keluar dari riwayat, dan kapan terakhir disinkronkan (UTC). |
 | `Account` | Akun yang tercatat untuk entri tersebut. |
 | `URL` | Halaman atau berkas, tanpa awalan `Visited: account@`. |
-| `AccessCount` | Berapa kali URL tersebut dikunjungi. |
+| `AccessCount`, `SyncCount` | Berapa kali URL tersebut dikunjungi, dan entri tersebut disinkronkan. |
+| `EntryType`, `Flags` | Tipe dan flag entri, sebagaimana tersimpan. |
 | `EntryID`, `ContainerID` | ID entri di kontainernya, dan ID kontainer. |
 
 ### Unduhan { #downloads }
@@ -192,8 +200,9 @@ Setiap tabel diawali dengan field berikut:
 `WebCache-Downloads.csv`, `WebCache-Cookies.csv`, `WebCache-Entries.csv`, dan
 `WebCache-Containers.csv` (satu berkas `WebCache.json` atau `WebCache.jsonl` dengan `-t json` atau
 `-t jsonl`), beserta `BrowserActivity/WebCache-logs.txt`. Timeline gabungan `-j` menyertakan setiap baris,
-dengan `Comp` dan pengenal `Artifact` `webcache`. `-Z` mengonversi setiap waktu: field yang namanya
-berakhiran `Time`, `LastModified`, dan `Expires`.
+dengan `Comp` dan pengenal `Artifact` `webcache`. `-Z` mengonversi setiap waktu, yaitu field yang
+namanya berakhiran `Time`, `LastModified`, dan `Expires`, kecuali `ModifiedTime` lokal pada kontainer
+riwayat satu hari atau satu minggu.
 
 ## Detail lebih lanjut { #further-details }
 

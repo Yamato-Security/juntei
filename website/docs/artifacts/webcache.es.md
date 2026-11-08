@@ -52,7 +52,10 @@ están en los registros de transacciones `V01*.log`.
 
 ## Precauciones para el analista { #analyst-cautions }
 
-- Las horas están en UTC, con precisión de 100 nanosegundos.
+- Las horas están en UTC, con precisión de 100 nanosegundos, salvo el `ModifiedTime` del contenedor del historial de
+  un día o de una semana: es la hora local del sistema, escrita sin desplazamiento, y `-Z` la deja tal cual.
+  Conviértala con la zona horaria que tenía el sistema de origen en ese momento. Su diferencia con `AccessedTime`
+  suele ser el desplazamiento de esa zona horaria, pero no siempre: ambas pueden ser momentos distintos.
 - Una entrada del historial es una URL, no una visita: `AccessedTime` es su última visita y `AccessCount`, cuántas
   hubo. El contenedor `History` guarda una entrada por URL; el contenedor de un día o de una semana guarda las de ese
   periodo, y su nombre indica su primer día y el día siguiente al último (`MSHist012026110120261102`: 1 de noviembre de
@@ -125,9 +128,13 @@ Todas las tablas empiezan con estos campos:
 |---|---|
 | `Container` | El contenedor: `History`, o `MSHist01` seguido del primer día de su periodo y del día siguiente al último. |
 | `AccessedTime` | La última visita a la URL (UTC); en el contenedor de un día o de una semana, la última de ese periodo. |
+| `ModifiedTime` | Cuándo se modificó la entrada por última vez (UTC); en el contenedor de un día o de una semana, la hora local del sistema, sin desplazamiento. |
+| `CreationTime` | Cuándo se creó la entrada (UTC). |
+| `ExpiryTime`, `SyncTime` | Cuándo debe salir la entrada del historial y cuándo se sincronizó por última vez (UTC). |
 | `Account` | La cuenta para la que se registró la entrada. |
 | `URL` | La página o el archivo, sin el prefijo `Visited: account@`. |
-| `AccessCount` | Cuántas veces se visitó la URL. |
+| `AccessCount`, `SyncCount` | Cuántas veces se visitó la URL y cuántas se sincronizó la entrada. |
+| `EntryType`, `Flags` | El tipo y los indicadores de la entrada, tal como están almacenados. |
 | `EntryID`, `ContainerID` | El id de la entrada en su contenedor y el id del contenedor. |
 
 ### Descargas { #downloads }
@@ -190,7 +197,8 @@ Todas las tablas empiezan con estos campos:
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` y `WebCache-Containers.csv` (un único archivo `WebCache.json` o
 `WebCache.jsonl` con `-t json` o `-t jsonl`), junto con `BrowserActivity/WebCache-logs.txt`. La línea de tiempo
 combinada `-j` incluye todas las filas, con `Comp` y el identificador de `Artifact` `webcache`. `-Z` convierte todas las
-horas: los campos que terminan en `Time`, `LastModified` y `Expires`.
+horas, los campos que terminan en `Time`, `LastModified` y `Expires`, salvo el `ModifiedTime` local del contenedor
+del historial de un día o de una semana.
 
 ## Más información { #further-details }
 

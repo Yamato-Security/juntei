@@ -27,9 +27,10 @@ use crate::progress;
 use crate::srum::{Ordered, cell};
 use crate::util::{self, check_output, error_msg, fmt_num, p, p_label};
 use browser::{
-    Visit, WebCache, WebCacheContainer, WebCacheCookie, WebCacheDownload, WebCacheEntry,
+    WebCache, WebCacheContainer, WebCacheCookie, WebCacheDownload, WebCacheEntry, WebCacheVisit,
 };
-use common::time::{Precision, Ts};
+use chrono::{DateTime, Utc};
+use common::time::{Precision, Semantic, Ts};
 use indicatif::ProgressBar;
 use serde_json::{Value as Json, json};
 use std::collections::{BTreeSet, HashMap};
@@ -91,9 +92,16 @@ impl Table {
                 "Package",
                 "Container",
                 "AccessedTime",
+                "ModifiedTime",
+                "CreationTime",
+                "ExpiryTime",
+                "SyncTime",
                 "Account",
                 "URL",
                 "AccessCount",
+                "SyncCount",
+                "EntryType",
+                "Flags",
                 "EntryID",
                 "ContainerID",
             ],
@@ -394,11 +402,13 @@ fn rows(context: &Context, cache: &WebCache) -> Vec<Row> {
     };
     let mut rows = Vec::new();
     for visit in &cache.visits {
-        let id = container_id(&visit.table);
-        let name = id
-            .and_then(|id| containers.get(&id))
-            .map(|c| c.name.as_str());
-        rows.push(history_row(context, visit, id, name, directory(id)));
+        let name = containers.get(&visit.container).map(|c| c.name.as_str());
+        rows.push(history_row(
+            context,
+            visit,
+            name,
+            directory(Some(visit.container)),
+        ));
     }
     for download in &cache.downloads {
         rows.push(download_row(
@@ -419,15 +429,6 @@ fn rows(context: &Context, cache: &WebCache) -> Vec<Row> {
     rows
 }
 
-/// The `ContainerId` of a container's table: `Container_12` is 12.
-fn container_id(table: &str) -> Option<i64> {
-    let (prefix, id) = table.rsplit_once('_')?;
-    prefix
-        .eq_ignore_ascii_case("Container")
-        .then(|| id.parse().ok())
-        .flatten()
-}
-
 /// The app package whose data a directory holds: the folder after `Packages` (legacy Edge's
 /// `…\Packages\microsoft.microsoftedge_8wekyb3d8bbwe\AC\…`, Internet Explorer's app container
 /// `windows_ie_ac_001`, another app's); none for the user's own folders.
@@ -441,20 +442,47 @@ fn package(directory: Option<&str>) -> Option<&str> {
 
 fn history_row(
     context: &Context,
-    visit: &Visit,
-    container: Option<i64>,
+    entry: &WebCacheVisit,
     name: Option<&str>,
     directory: Option<&str>,
 ) -> Row {
+    let visit = &entry.visit;
     let mut row = context.start(Table::History, directory);
     row.push("Container", optional(name));
     row.push("AccessedTime", time(visit.time));
+    // local time in a day's or a week's container
+    row.push("ModifiedTime", any_time(entry.modified));
+    row.push("CreationTime", time(entry.created));
+    row.push("ExpiryTime", time(entry.expires));
+    row.push("SyncTime", time(entry.synced));
     row.push("Account", optional(visit.user.as_deref()));
     row.push("URL", text(&visit.url));
     row.push("AccessCount", json!(visit.visit_count));
+    row.push("SyncCount", json!(entry.sync_count));
+    row.push("EntryType", json!(entry.entry_type));
+    row.push("Flags", json!(entry.flags));
     row.push("EntryID", json!(visit.id));
-    row.push("ContainerID", json!(container));
+    row.push("ContainerID", json!(entry.container));
     row
+}
+
+/// A time as [`time`] writes it, or, for the wall clock of an unknown zone, the same without an
+/// offset (`2014-05-12T09:30:41.686`), which `-Z` leaves as it is.
+fn any_time(t: Option<Ts>) -> Json {
+    match t {
+        Some(t) if t.semantic() == Semantic::LocalUnknownZone => t
+            .ticks()
+            .and_then(|ticks| {
+                DateTime::<Utc>::from_timestamp(
+                    ticks.div_euclid(10_000_000),
+                    (ticks.rem_euclid(10_000_000) * 100) as u32,
+                )
+            })
+            .map_or(Json::Null, |t| {
+                json!(t.naive_utc().format("%Y-%m-%dT%H:%M:%S%.f").to_string())
+            }),
+        _ => time(t),
+    }
 }
 
 fn download_row(context: &Context, entry: &WebCacheDownload, directory: Option<&str>) -> Row {
@@ -681,7 +709,7 @@ impl Stats {
         self.cookies += cache.cookies.len();
         self.entries += cache.entries.len();
         self.containers += cache.containers.len();
-        for visit in &cache.visits {
+        for visit in cache.visits.iter().map(|v| &v.visit) {
             if let Some(ticks) = visit.time.and_then(|t| t.ticks()) {
                 self.first = Some(self.first.map_or(ticks, |f| f.min(ticks)));
                 self.last = Some(self.last.map_or(ticks, |l| l.max(ticks)));
@@ -746,7 +774,7 @@ fn print_summary(s: &Stats, no_color: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use browser::{Download, Transition};
+    use browser::{Download, Transition, Visit};
 
     #[test]
     fn database_names() {
@@ -768,11 +796,7 @@ mod tests {
     }
 
     #[test]
-    fn containers_and_packages() {
-        assert_eq!(container_id("Container_12"), Some(12));
-        assert_eq!(container_id("container_3"), Some(3));
-        assert_eq!(container_id("Containers"), None);
-        assert_eq!(container_id("Container_x"), None);
+    fn packages() {
         assert_eq!(
             package(Some(
                 r"C:\Users\a\AppData\Local\Packages\microsoft.microsoftedge_8wekyb3d8bbwe\AC\#!001\MicrosoftEdge\History\"
@@ -826,6 +850,20 @@ mod tests {
             typed_count: None,
             hidden: false,
             frecency: None,
+        };
+        let visit = WebCacheVisit {
+            visit,
+            container: 23,
+            created: None,
+            modified: Some(Ts::from_local_ticks(
+                15_765_374_270_010_000,
+                Precision::Tick,
+            )),
+            expires: None,
+            synced: None,
+            sync_count: Some(0),
+            entry_type: Some(0x20_0004),
+            flags: Some(4),
         };
         let download = WebCacheDownload {
             download: Download {
@@ -895,10 +933,16 @@ mod tests {
                 .map(|(_, v)| v.clone())
                 .unwrap()
         };
-        let row = history_row(&context, &visit, Some(2), Some("History"), None);
+        let row = history_row(&context, &visit, Some("MSHist012019121620191217"), None);
         assert_eq!(names(&row), Table::History.columns());
         assert_eq!(value(&row, "Package"), Json::Null);
         assert_eq!(value(&row, "AccessedTime"), json!("2019-12-16T21:03:47Z"));
+        // a day's container's local time: no offset, so -Z leaves it
+        assert_eq!(
+            value(&row, "ModifiedTime"),
+            json!("2019-12-16T23:03:47.001")
+        );
+        assert_eq!(value(&row, "ContainerID"), json!(23));
         let row = download_row(&context, &download, Some(edge));
         assert_eq!(names(&row), Table::Downloads.columns());
         assert_eq!(

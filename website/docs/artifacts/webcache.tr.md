@@ -54,7 +54,11 @@ tutar; bu nedenle çalışan bir sistemden alınan kopya genellikle kirlidir: en
 
 ## Analist için uyarılar { #analyst-cautions }
 
-- Zamanlar UTC'dir ve 100 nanosaniye hassasiyetindedir.
+- Zamanlar UTC'dir ve 100 nanosaniye hassasiyetindedir; tek istisna, bir günün veya bir haftanın geçmiş
+  kapsayıcısındaki `ModifiedTime` değeridir: bu değer sistemin yerel saatidir, fark (offset) belirtilmeden
+  yazılır ve `-Z` onu olduğu gibi bırakır. Onu, kaynak sistemin o tarihteki saat
+  dilimiyle dönüştürün. `AccessedTime` ile arasındaki fark çoğu zaman o saat diliminin farkıdır, ancak her
+  zaman değil: ikisi farklı anlar olabilir.
 - Bir geçmiş girdisi bir ziyaret değil, bir URL'dir: `AccessedTime` URL'nin son ziyareti, `AccessCount`
   ise kaç ziyaret olduğudur. `History` kapsayıcısı URL başına bir girdi tutar; bir günün veya bir
   haftanın kapsayıcısı o döneme ait girdileri tutar ve adı, dönemin ilk gününü ve son gününden sonraki
@@ -129,9 +133,13 @@ Her tablo şu alanlarla başlar:
 |---|---|
 | `Container` | Kapsayıcı: `History` ya da ardından döneminin ilk günü ve son gününden sonraki gün gelen `MSHist01`. |
 | `AccessedTime` | URL'nin son ziyareti (UTC); bir günün veya bir haftanın kapsayıcısında o dönemin son ziyareti. |
+| `ModifiedTime` | Girdinin en son değiştirildiği zaman (UTC); bir günün veya bir haftanın kapsayıcısında, fark belirtilmeden sistemin yerel saati. |
+| `CreationTime` | Girdinin oluşturulduğu zaman (UTC). |
+| `ExpiryTime`, `SyncTime` | Girdinin geçmişten çıkmasının öngörüldüğü zaman ve en son eşitlendiği zaman (UTC). |
 | `Account` | Girdinin kaydedildiği hesap. |
 | `URL` | `Visited: account@` öneki olmadan sayfa veya dosya. |
-| `AccessCount` | URL'nin kaç kez ziyaret edildiği. |
+| `AccessCount`, `SyncCount` | URL'nin kaç kez ziyaret edildiği ve girdinin kaç kez eşitlendiği. |
+| `EntryType`, `Flags` | Saklandığı haliyle girdinin türü ve bayrakları. |
 | `EntryID`, `ContainerID` | Girdinin kapsayıcısındaki kimliği ve kapsayıcının kimliği. |
 
 ### İndirmeler { #downloads }
@@ -194,8 +202,9 @@ Her tablo şu alanlarla başlar:
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` ve `WebCache-Containers.csv` olarak (`-t json` veya
 `-t jsonl` ile tek bir `WebCache.json` ya da `WebCache.jsonl` dosyası olarak) ve
 `BrowserActivity/WebCache-logs.txt` ile birlikte yazar. Birleştirilmiş `-j` zaman çizelgesi her satırı
-`Comp` ve `Artifact` tanımlayıcısı `webcache` ile birlikte içerir. `-Z` her zamanı dönüştürür: adı
-`Time` ile biten alanları, `LastModified` ve `Expires` değerlerini.
+`Comp` ve `Artifact` tanımlayıcısı `webcache` ile birlikte içerir. `-Z`, bir günün veya bir haftanın geçmiş
+kapsayıcısındaki yerel `ModifiedTime` dışında her zamanı dönüştürür: adı `Time` ile biten alanları,
+`LastModified` ve `Expires` değerlerini.
 
 ## Daha fazla ayrıntı { #further-details }
 

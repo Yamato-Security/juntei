@@ -50,7 +50,11 @@ transação `V01*.log`.
 
 ## Cuidados para o analista { #analyst-cautions }
 
-- Os horários estão em UTC, com precisão de 100 nanossegundos.
+- Os horários estão em UTC, com precisão de 100 nanossegundos, exceto o `ModifiedTime` do contêiner de histórico de
+  um dia ou de uma semana: ele é o horário local do sistema, gravado sem deslocamento, e `-Z` o mantém como está.
+  Converta-o com o fuso horário que o sistema de origem tinha naquele momento. Sua diferença em relação a
+  `AccessedTime` costuma ser o deslocamento desse fuso horário, mas nem sempre: os dois podem ser momentos
+  diferentes.
 - Uma entrada do histórico é uma URL, não uma visita: `AccessedTime` é sua última visita e `AccessCount`, quantas
   houve. O contêiner `History` guarda uma entrada por URL; o contêiner de um dia ou de uma semana guarda as daquele
   período, e seu nome indica seu primeiro dia e o dia seguinte ao último (`MSHist012026110120261102`: 1º de novembro de
@@ -124,9 +128,13 @@ Todas as tabelas começam com estes campos:
 |---|---|
 | `Container` | O contêiner: `History`, ou `MSHist01` seguido do primeiro dia de seu período e do dia seguinte ao último. |
 | `AccessedTime` | A última visita à URL (UTC); no contêiner de um dia ou de uma semana, a última daquele período. |
+| `ModifiedTime` | Quando a entrada foi alterada pela última vez (UTC); no contêiner de um dia ou de uma semana, o horário local do sistema, sem deslocamento. |
+| `CreationTime` | Quando a entrada foi criada (UTC). |
+| `ExpiryTime`, `SyncTime` | Quando a entrada deve sair do histórico, e quando foi sincronizada pela última vez (UTC). |
 | `Account` | A conta para a qual a entrada foi registrada. |
 | `URL` | A página ou o arquivo, sem o prefixo `Visited: account@`. |
-| `AccessCount` | Quantas vezes a URL foi visitada. |
+| `AccessCount`, `SyncCount` | Quantas vezes a URL foi visitada, e a entrada sincronizada. |
+| `EntryType`, `Flags` | O tipo e os flags da entrada, como armazenados. |
 | `EntryID`, `ContainerID` | O ID da entrada em seu contêiner, e o ID do contêiner. |
 
 ### Downloads { #downloads }
@@ -189,7 +197,8 @@ O `auto-parse` grava as tabelas em `BrowserActivity` como `WebCache-History.csv`
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` e `WebCache-Containers.csv` (um único arquivo `WebCache.json` ou
 `WebCache.jsonl` com `-t json` ou `-t jsonl`), junto com `BrowserActivity/WebCache-logs.txt`. A linha do tempo
 combinada de `-j` inclui todas as linhas, com `Comp` e o identificador de `Artifact` `webcache`. `-Z` converte todos os
-horários: os campos terminados em `Time`, `LastModified` e `Expires`.
+horários, os campos terminados em `Time`, `LastModified` e `Expires`, exceto o `ModifiedTime` local do contêiner
+de histórico de um dia ou de uma semana.
 
 ## Mais detalhes { #further-details }
 

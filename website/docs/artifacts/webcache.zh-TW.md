@@ -48,7 +48,9 @@ SQLite 資料庫（請參閱[網頁瀏覽器](browser.md)），但這個資料�
 
 ## 分析注意事項 { #analyst-cautions }
 
-- 時間皆為 UTC，精確到 100 奈秒。
+- 時間皆為 UTC，精確到 100 奈秒；但以一天或一週為單位的歷程記錄容器的 `ModifiedTime` 除外：
+  它是系統的本機時間，寫入時未附時差，`-Z` 也會保持原樣。請以來源系統當時的時區加以換算。它與
+  `AccessedTime` 的差距通常即為該時區的時差，但並非總是如此：兩者可能是不同的時刻。
 - 歷程記錄項目代表一個 URL，而非一次造訪：`AccessedTime` 是其最後一次造訪，`AccessCount` 是
   造訪的次數。`History` 容器中每個 URL 只有一筆項目；以一天或一週為單位的容器則保存該期間的
   項目，其名稱標示期間的第一天與最後一天的隔天（`MSHist012026110120261102`：2026 年 11 月 1 日）。
@@ -117,9 +119,13 @@ CSV 會建立五個檔案；沒有資料列的檔案只含標題列。JSON 與 J
 |---|---|
 | `Container` | 容器：`History`，或 `MSHist01` 後接其期間的第一天與最後一天的隔天。 |
 | `AccessedTime` | 該 URL 的最後一次造訪（UTC）；在以一天或一週為單位的容器中，為該期間內的最後一次造訪。 |
+| `ModifiedTime` | 項目最後一次變更的時間（UTC）；在以一天或一週為單位的容器中，為系統的本機時間，未附時差。 |
+| `CreationTime` | 項目建立的時間（UTC）。 |
+| `ExpiryTime`、`SyncTime` | 項目預定離開歷程記錄的時間，以及最後一次同步的時間（UTC）。 |
 | `Account` | 項目記錄所屬的帳戶。 |
 | `URL` | 網頁或檔案，不含 `Visited: account@` 前置詞。 |
-| `AccessCount` | 該 URL 被造訪的次數。 |
+| `AccessCount`、`SyncCount` | 該 URL 被造訪的次數，以及項目同步的次數。 |
+| `EntryType`、`Flags` | 項目的類型與旗標，依原樣儲存。 |
 | `EntryID`、`ContainerID` | 項目在其容器中的 ID，以及容器的 ID。 |
 
 ### 下載 { #downloads }
@@ -183,7 +189,7 @@ CSV 會建立五個檔案；沒有資料列的檔案只含標題列。JSON 與 J
 （使用 `-t json` 或 `-t jsonl` 時則為單一的 `WebCache.json` 或 `WebCache.jsonl` 檔案），並附上
 `BrowserActivity/WebCache-logs.txt`。合併的 `-j` 時間軸包含每一筆資料列，並帶有 `Comp` 以及
 `Artifact` 識別碼 `webcache`。`-Z` 會轉換所有時間：名稱以 `Time` 結尾的欄位、`LastModified` 與
-`Expires`。
+`Expires`，但以一天或一週為單位的歷程記錄容器中屬於本機時間的 `ModifiedTime` 除外。
 
 ## 延伸資訊 { #further-details }
 

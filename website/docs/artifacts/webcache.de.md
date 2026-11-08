@@ -52,7 +52,11 @@ Transaktionsprotokollen `V01*.log`.
 
 ## Hinweise für die Analyse { #analyst-cautions }
 
-- Zeiten sind in UTC angegeben, auf 100 Nanosekunden genau.
+- Zeiten sind in UTC angegeben, auf 100 Nanosekunden genau, mit Ausnahme von `ModifiedTime` im Verlaufscontainer
+  eines Tages oder einer Woche: Dieser Wert ist die lokale Zeit des Systems, ohne UTC-Offset geschrieben, und `-Z`
+  lässt ihn unverändert. Rechnen Sie ihn mit der Zeitzone um, die das Quellsystem zu diesem Zeitpunkt hatte. Seine
+  Differenz zu `AccessedTime` ist oft der UTC-Offset dieser Zeitzone, aber nicht immer: Beide Werte können
+  unterschiedliche Zeitpunkte sein.
 - Ein Verlaufseintrag ist eine URL, kein Besuch: `AccessedTime` ist ihr letzter Besuch und `AccessCount` die Anzahl der
   Besuche. Der Container `History` enthält einen Eintrag pro URL; der Container eines Tages oder einer Woche enthält die
   Einträge dieses Zeitraums, wobei sein Name den ersten Tag und den Tag nach dem letzten angibt
@@ -126,9 +130,13 @@ Jede Tabelle beginnt mit diesen Feldern:
 |---|---|
 | `Container` | Der Container: `History` oder `MSHist01`, gefolgt vom ersten Tag seines Zeitraums und dem Tag nach dem letzten. |
 | `AccessedTime` | Der letzte Besuch der URL (UTC); im Container eines Tages oder einer Woche der letzte in diesem Zeitraum. |
+| `ModifiedTime` | Wann der Eintrag zuletzt geändert wurde (UTC); im Container eines Tages oder einer Woche die lokale Zeit des Systems, ohne UTC-Offset. |
+| `CreationTime` | Wann der Eintrag angelegt wurde (UTC). |
+| `ExpiryTime`, `SyncTime` | Wann der Eintrag aus dem Verlauf entfernt werden soll und wann er zuletzt synchronisiert wurde (UTC). |
 | `Account` | Das Konto, für das der Eintrag aufgezeichnet wurde. |
 | `URL` | Die Seite oder Datei, ohne das Präfix `Visited: account@`. |
-| `AccessCount` | Wie oft die URL besucht wurde. |
+| `AccessCount`, `SyncCount` | Wie oft die URL besucht und wie oft der Eintrag synchronisiert wurde. |
+| `EntryType`, `Flags` | Typ und Flags des Eintrags, wie gespeichert. |
 | `EntryID`, `ContainerID` | Die ID des Eintrags in seinem Container und die ID des Containers. |
 
 ### Downloads { #downloads }
@@ -190,8 +198,9 @@ Jede Tabelle beginnt mit diesen Feldern:
 `auto-parse` schreibt die Tabellen nach `BrowserActivity` als `WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` und `WebCache-Containers.csv` (eine einzige Datei `WebCache.json` bzw.
 `WebCache.jsonl` mit `-t json` bzw. `-t jsonl`), zusammen mit `BrowserActivity/WebCache-logs.txt`. Die kombinierte
-Zeitleiste `-j` enthält jede Zeile, mit `Comp` und dem `Artifact`-Bezeichner `webcache`. `-Z` konvertiert jede Zeit: die
-Felder, die auf `Time` enden, `LastModified` und `Expires`.
+Zeitleiste `-j` enthält jede Zeile, mit `Comp` und dem `Artifact`-Bezeichner `webcache`. `-Z` konvertiert jede Zeit, also die
+Felder, die auf `Time` enden, `LastModified` und `Expires`, mit Ausnahme der lokalen `ModifiedTime` im
+Verlaufscontainer eines Tages oder einer Woche.
 
 ## Weitere Informationen { #further-details }
 

@@ -32,7 +32,7 @@
 
 ## 分析時の注意点 { #analyst-cautions }
 
-- 時刻は UTC で、100 ナノ秒単位です。
+- 時刻は UTC で、100 ナノ秒単位です。ただし、1 日または 1 週間の履歴コンテナーの `ModifiedTime` は例外で、システムのローカル時刻がオフセットなしで書き込まれており、`-Z` もそのままにします。元のシステムの当時のタイム ゾーンで変換してください。`AccessedTime` との差はそのタイム ゾーンのオフセットであることが多いものの、常にそうとは限りません。2 つが異なる時点を示している場合もあります。
 - 履歴エントリは閲覧ではなく URL です。`AccessedTime` はその最後の閲覧、`AccessCount` は閲覧された回数です。`History` コンテナーは URL ごとに 1 つのエントリを保持します。1 日または 1 週間のコンテナーはその期間のエントリを保持し、その名前は期間の初日と最終日の翌日を示します (`MSHist012026110120261102`: 2026 年 11 月 1 日)。
 - 履歴内の `file:///` URL は、エクスプローラーや他のプログラムから開かれたローカル ファイルであり、Web ページではありません。
 - `Account` はエントリの記録の対象となったアカウント (`Visited: alice@…`) で、`User` はデータベースのパスが含まれるプロファイル フォルダーです。両者は異なる場合があります。プロファイル フォルダーの名前が常にアカウントの名前と同じとは限らず、また別の場所にコピーされたデータベースのパスにはプロファイル フォルダーが含まれません。
@@ -91,9 +91,13 @@ CSV では 5 つのファイルが作成されます。行がない場合は、�
 |---|---|
 | `Container` | コンテナー: `History`、または `MSHist01` の後に期間の初日と最終日の翌日が続くもの。 |
 | `AccessedTime` | URL の最後の閲覧 (UTC)。1 日または 1 週間のコンテナーでは、その期間内の最後の閲覧。 |
+| `ModifiedTime` | エントリが最後に変更された時刻 (UTC)。1 日または 1 週間のコンテナーでは、オフセットなしのシステムのローカル時刻。 |
+| `CreationTime` | エントリが作成された時刻 (UTC)。 |
+| `ExpiryTime`, `SyncTime` | エントリが履歴から外れる予定の時刻と、最後に同期された時刻 (UTC)。 |
 | `Account` | エントリの記録の対象となったアカウント。 |
 | `URL` | ページまたはファイル。`Visited: account@` プレフィックスは除かれます。 |
-| `AccessCount` | URL が閲覧された回数。 |
+| `AccessCount`, `SyncCount` | URL が閲覧された回数と、エントリが同期された回数。 |
+| `EntryType`, `Flags` | 保存されているままのエントリの種類とフラグ。 |
 | `EntryID`, `ContainerID` | コンテナー内でのエントリの ID と、コンテナーの ID。 |
 
 ### ダウンロード { #downloads }
@@ -152,7 +156,7 @@ CSV では 5 つのファイルが作成されます。行がない場合は、�
 
 ## 自動解析 { #automatic-parsing }
 
-`auto-parse` は、テーブルを `BrowserActivity` に `WebCache-History.csv`、`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv`、`WebCache-Containers.csv` として書き出し (`-t json` または `-t jsonl` の場合は 1 つの `WebCache.json` または `WebCache.jsonl` ファイル)、あわせて `BrowserActivity/WebCache-logs.txt` を作成します。結合された `-j` タイムラインにはすべての行が含まれ、`Comp` と `Artifact` 識別子 `webcache` が付きます。`-Z` はすべての時刻、すなわち `Time` で終わるフィールド、`LastModified`、`Expires` を変換します。
+`auto-parse` は、テーブルを `BrowserActivity` に `WebCache-History.csv`、`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv`、`WebCache-Containers.csv` として書き出し (`-t json` または `-t jsonl` の場合は 1 つの `WebCache.json` または `WebCache.jsonl` ファイル)、あわせて `BrowserActivity/WebCache-logs.txt` を作成します。結合された `-j` タイムラインにはすべての行が含まれ、`Comp` と `Artifact` 識別子 `webcache` が付きます。`-Z` は、1 日または 1 週間の履歴コンテナーのローカル時刻である `ModifiedTime` を除き、すべての時刻、すなわち `Time` で終わるフィールド、`LastModified`、`Expires` を変換します。
 
 ## さらに詳しい情報 { #further-details }
 

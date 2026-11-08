@@ -52,7 +52,11 @@ transaction logs.
 
 ## Analyst cautions
 
-- Times are in UTC, to the 100 nanoseconds.
+- Times are in UTC, to the 100 nanoseconds, except the `ModifiedTime` of a day's or a week's
+  history container: it is the system's local time, written without an offset, and `-Z` leaves
+  it as it is. Convert it with the source system's time zone at that time. Its difference from
+  `AccessedTime` is often that time zone's offset, but not always: the two can be different
+  moments.
 - A history entry is a URL, not a visit: `AccessedTime` is its last visit and `AccessCount` how
   many there were. The `History` container keeps one entry per URL; a day's or a week's
   container keeps those of that period, its name giving its first day and the day after its last
@@ -126,9 +130,13 @@ Every table starts with these fields:
 |---|---|
 | `Container` | The container: `History`, or `MSHist01` followed by the first day of its period and the day after its last. |
 | `AccessedTime` | The URL's last visit (UTC); in a day's or a week's container, the last of that period. |
+| `ModifiedTime` | When the entry was last changed (UTC); in a day's or a week's container, the system's local time, without an offset. |
+| `CreationTime` | When the entry was made (UTC). |
+| `ExpiryTime`, `SyncTime` | When the entry is due to leave the history, and when it was last synchronized (UTC). |
 | `Account` | The account the entry was recorded for. |
 | `URL` | The page or file, without the `Visited: account@` prefix. |
-| `AccessCount` | How many times the URL was visited. |
+| `AccessCount`, `SyncCount` | How many times the URL was visited, and the entry synchronized. |
+| `EntryType`, `Flags` | The entry's type and flags, as stored. |
 | `EntryID`, `ContainerID` | The entry's id in its container, and the container's id. |
 
 ### Downloads
@@ -191,8 +199,9 @@ Every table starts with these fields:
 `WebCache-Downloads.csv`, `WebCache-Cookies.csv`, `WebCache-Entries.csv` and
 `WebCache-Containers.csv` (one `WebCache.json` or `WebCache.jsonl` file with `-t json` or
 `-t jsonl`), with `BrowserActivity/WebCache-logs.txt`. The combined `-j` timeline includes every
-row, with `Comp` and the `Artifact` identifier `webcache`. `-Z` converts every time: the fields
-ending in `Time`, `LastModified` and `Expires`.
+row, with `Comp` and the `Artifact` identifier `webcache`. `-Z` converts every time, the fields
+ending in `Time`, `LastModified` and `Expires`, except the local `ModifiedTime` of a day's or a
+week's history container.
 
 ## Further Details
 

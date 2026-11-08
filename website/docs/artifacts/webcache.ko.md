@@ -49,7 +49,10 @@ SQLite 데이터베이스를 사용하지만([웹 브라우저](browser.md) 참�
 
 ## 분석 시 주의 사항 { #analyst-cautions }
 
-- 시각은 UTC이며 100나노초 단위입니다.
+- 시각은 UTC이며 100나노초 단위입니다. 단, 하루 또는 일주일 단위 방문 기록 컨테이너의 `ModifiedTime`은
+  예외로, 오프셋 없이 기록된 시스템의 로컬 시각이며 `-Z`도 그대로 둡니다. 원본 시스템의 당시 표준 시간대로
+  변환하십시오. `AccessedTime`과의 차이는 그 표준 시간대의 오프셋인 경우가 많지만 항상 그렇지는 않습니다. 두
+  시각이 서로 다른 시점일 수도 있습니다.
 - 방문 기록 항목은 방문이 아니라 URL입니다. `AccessedTime`은 마지막 방문이고 `AccessCount`는 방문 횟수입니다.
   `History` 컨테이너는 URL마다 하나의 항목을 보관하고, 하루 또는 일주일 단위의 컨테이너는 그 기간의 항목을
   보관하며, 그 이름은 기간의 첫날과 마지막 날의 다음 날을 나타냅니다(`MSHist012026110120261102`: 2026년
@@ -121,9 +124,13 @@ CSV는 다섯 개의 파일을 생성하며, 행이 없으면 헤더만 있는 �
 |---|---|
 | `Container` | 컨테이너: `History`, 또는 `MSHist01` 뒤에 기간의 첫날과 마지막 날의 다음 날이 이어지는 이름. |
 | `AccessedTime` | URL의 마지막 방문(UTC). 하루 또는 일주일 단위의 컨테이너에서는 그 기간의 마지막 방문. |
+| `ModifiedTime` | 항목이 마지막으로 변경된 시각(UTC). 하루 또는 일주일 단위의 컨테이너에서는 오프셋 없는 시스템의 로컬 시각. |
+| `CreationTime` | 항목이 생성된 시각(UTC). |
+| `ExpiryTime`, `SyncTime` | 항목이 방문 기록에서 빠질 예정인 시각과, 마지막으로 동기화된 시각(UTC). |
 | `Account` | 항목이 기록된 대상 계정. |
 | `URL` | 페이지 또는 파일. `Visited: account@` 접두사는 제외됩니다. |
-| `AccessCount` | URL을 방문한 횟수. |
+| `AccessCount`, `SyncCount` | URL을 방문한 횟수와 항목이 동기화된 횟수. |
+| `EntryType`, `Flags` | 저장된 그대로의 항목 유형과 플래그. |
 | `EntryID`, `ContainerID` | 컨테이너 내 항목의 ID와 컨테이너의 ID. |
 
 ### 다운로드 { #downloads }
@@ -186,7 +193,8 @@ CSV는 다섯 개의 파일을 생성하며, 행이 없으면 헤더만 있는 �
 `WebCache-Cookies.csv`, `WebCache-Entries.csv`, `WebCache-Containers.csv`로 기록하며(`-t json` 또는
 `-t jsonl`을 사용하면 하나의 `WebCache.json` 또는 `WebCache.jsonl` 파일), `BrowserActivity/WebCache-logs.txt`도
 함께 생성합니다. 결합된 `-j` 타임라인에는 모든 행이 `Comp`와 `Artifact` 식별자 `webcache`와 함께 포함됩니다.
-`-Z`는 모든 시각, 즉 `Time`으로 끝나는 필드, `LastModified`, `Expires`를 변환합니다.
+`-Z`는 하루 또는 일주일 단위 방문 기록 컨테이너의 로컬 시각인 `ModifiedTime`을 제외한 모든 시각, 즉 `Time`으로
+끝나는 필드, `LastModified`, `Expires`를 변환합니다.
 
 ## 추가 정보 { #further-details }
 

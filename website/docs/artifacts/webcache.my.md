@@ -53,7 +53,10 @@ app များအတွက် `%LOCALAPPDATA%\Packages\` အောက်တွ
 
 ## စိစစ်သူများ သတိပြုရန် { #analyst-cautions }
 
-- အချိန်များသည် UTC ဖြင့် 100 nanosecond အထိ ဖြစ်ပါသည်။
+- အချိန်များသည် UTC ဖြင့် 100 nanosecond အထိ ဖြစ်ပါသည်။ ခြွင်းချက်မှာ တစ်ရက် သို့မဟုတ် တစ်ပတ်၏ history container ၏
+  `ModifiedTime` ဖြစ်ပြီး ၎င်းသည် offset မပါဘဲ ရေးထားသော စနစ်၏ local time ဖြစ်ကာ `-Z` က ၎င်းကို ပြောင်းလဲခြင်း
+  မပြုပါ။ ၎င်းကို ထိုအချိန်က source စနစ်၏ time zone ဖြင့် ပြောင်းလဲပါ။ ၎င်းနှင့် `AccessedTime` ကြား ကွာခြားချက်သည်
+  မကြာခဏ ထို time zone ၏ offset ဖြစ်သော်လည်း အမြဲတမ်း မဟုတ်ပါ: နှစ်ခုသည် မတူညီသော အချိန်အခိုက်အတန့်များ ဖြစ်နိုင်ပါသည်။
 - History entry တစ်ခုသည် visit တစ်ခု မဟုတ်ဘဲ URL တစ်ခု ဖြစ်ပါသည်။ `AccessedTime` သည် ၎င်း၏ နောက်ဆုံး visit
   ဖြစ်ပြီး `AccessCount` သည် visit အရေအတွက် ဖြစ်ပါသည်။ `History` container သည် URL တစ်ခုလျှင် entry တစ်ခု
   ထားပါသည်။ တစ်ရက် သို့မဟုတ် တစ်ပတ်၏ container သည် ထိုကာလ၏ entry များကို ထားပြီး ၎င်း၏ အမည်သည် ကာလ၏
@@ -129,9 +132,13 @@ Table တိုင်းသည် ဤ field များဖြင့် စတ�
 |---|---|
 | `Container` | Container: `History` သို့မဟုတ် `MSHist01` နှင့် ၎င်းနောက်တွင် ၎င်း၏ ကာလ၏ ပထမဆုံးနေ့နှင့် နောက်ဆုံးနေ့၏ နောက်တစ်ရက်။ |
 | `AccessedTime` | URL ၏ နောက်ဆုံး visit (UTC)။ တစ်ရက် သို့မဟုတ် တစ်ပတ်၏ container တွင် ထိုကာလ၏ နောက်ဆုံး visit။ |
+| `ModifiedTime` | Entry ကို နောက်ဆုံး ပြောင်းလဲခဲ့သည့်အချိန် (UTC)။ တစ်ရက် သို့မဟုတ် တစ်ပတ်၏ container တွင် offset မပါသော စနစ်၏ local time။ |
+| `CreationTime` | Entry ကို ဖန်တီးခဲ့သည့်အချိန် (UTC)။ |
+| `ExpiryTime`, `SyncTime` | Entry သည် history မှ ထွက်ရန် သတ်မှတ်ထားသည့်အချိန်နှင့် နောက်ဆုံး synchronize လုပ်ခဲ့သည့်အချိန် (UTC)။ |
 | `Account` | Entry ကို မှတ်တမ်းတင်ခဲ့သည့် account။ |
 | `URL` | `Visited: account@` prefix မပါသော စာမျက်နှာ သို့မဟုတ် ဖိုင်။ |
-| `AccessCount` | URL ကို ကြည့်ရှုခဲ့သည့် အကြိမ်ရေ။ |
+| `AccessCount`, `SyncCount` | URL ကို ကြည့်ရှုခဲ့သည့် အကြိမ်ရေနှင့် entry ကို synchronize လုပ်ခဲ့သည့် အကြိမ်ရေ။ |
+| `EntryType`, `Flags` | သိမ်းဆည်းထားသည့်အတိုင်း entry ၏ type နှင့် flag များ။ |
 | `EntryID`, `ContainerID` | ၎င်း၏ container အတွင်းရှိ entry ၏ id နှင့် container ၏ id။ |
 
 ### Download များ { #downloads }
@@ -194,8 +201,9 @@ Table တိုင်းသည် ဤ field များဖြင့် စတ�
 `WebCache-Cookies.csv`၊ `WebCache-Entries.csv` နှင့် `WebCache-Containers.csv` အဖြစ် (`-t json` သို့မဟုတ်
 `-t jsonl` ဖြင့်ဆိုလျှင် `WebCache.json` သို့မဟုတ် `WebCache.jsonl` ဖိုင်တစ်ခုတည်း) `BrowserActivity/WebCache-logs.txt`
 နှင့်အတူ ရေးသားပါသည်။ ပေါင်းစပ်ထားသော `-j` timeline တွင် row တိုင်းကို `Comp` နှင့် `Artifact` identifier `webcache`
-တို့နှင့်အတူ ထည့်သွင်းပါသည်။ `-Z` သည် အချိန်တိုင်းကို ပြောင်းလဲပေးပါသည်: `Time` ဖြင့် အဆုံးသတ်သော field များ၊
-`LastModified` နှင့် `Expires`။
+တို့နှင့်အတူ ထည့်သွင်းပါသည်။ `-Z` သည် တစ်ရက် သို့မဟုတ် တစ်ပတ်၏ history container ၏
+local `ModifiedTime` မှလွဲ၍ အချိန်တိုင်းကို ပြောင်းလဲပေးပါသည်: `Time` ဖြင့် အဆုံးသတ်သော field များ၊ `LastModified` နှင့်
+`Expires`။
 
 ## နောက်ထပ် အသေးစိတ်များ { #further-details }
 

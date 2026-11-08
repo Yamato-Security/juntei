@@ -168,9 +168,16 @@ fn webcache_csv_tables() {
             "Package",
             "Container",
             "AccessedTime",
+            "ModifiedTime",
+            "CreationTime",
+            "ExpiryTime",
+            "SyncTime",
             "Account",
             "URL",
             "AccessCount",
+            "SyncCount",
+            "EntryType",
+            "Flags",
             "EntryID",
             "ContainerID"
         ]
@@ -190,14 +197,20 @@ fn webcache_csv_tables() {
         .find(|h| h["Container"] == "MSHist012014051220140513")
         .unwrap();
     assert_eq!(daily["AccessedTime"], "2014-05-12T07:31:38.359991100Z");
+    // the day's container keeps ModifiedTime in the system's local time (UTC+2): no offset
+    assert_eq!(daily["ModifiedTime"], "2014-05-12T09:31:38.359");
+    assert_eq!(daily["ExpiryTime"], "2014-06-07T07:31:38.360514100Z");
+    assert_eq!(daily["Flags"], "4");
     assert_eq!(daily["Account"], "test");
     assert_eq!(daily["Package"], "");
     assert_eq!(daily["ContainerID"], "23");
-    assert!(
-        superfetch
-            .iter()
-            .any(|h| h["Container"] == "History" && h["AccessCount"] == "5")
-    );
+    let main = superfetch
+        .iter()
+        .find(|h| h["Container"] == "History" && h["AccessCount"] == "5")
+        .unwrap();
+    assert_eq!(main["AccessedTime"], "2014-05-12T07:32:17.646662500Z");
+    assert_eq!(main["ModifiedTime"], "2014-05-12T07:31:38.359991100Z");
+    assert_eq!(main["CreationTime"], "");
     // legacy Edge's history is its package's
     let edge: Vec<_> = history.iter().filter(|h| h["User"] == "John Doe").collect();
     assert_eq!(edge.len(), 69);
@@ -615,6 +628,9 @@ fn auto_parse_puts_webcache_tables_in_browser_activity_with_their_times_in_the_o
                 "{}",
                 daily["AccessedTime"]
             );
+            // a local time of an unknown zone is left as it is
+            assert_eq!(daily["URL"], "http://plaso.kiddaland.net/");
+            assert_eq!(daily["ModifiedTime"], "2014-05-12T09:30:41.686");
             let (_, downloads) = csv_rows(&activity.join("WebCache-Downloads.csv"));
             let putty = downloads
                 .iter()

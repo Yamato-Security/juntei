@@ -52,7 +52,10 @@ Containers जिन files के नाम देते हैं (cache की
 
 ## विश्लेषक के लिए सावधानियाँ { #analyst-cautions }
 
-- समय UTC में हैं, 100 nanoseconds तक।
+- समय UTC में हैं, 100 nanoseconds तक, सिवाय किसी दिन या सप्ताह के history container के `ModifiedTime` के: वह
+  system का local time है, बिना offset के लिखा हुआ, और `-Z` उसे जैसा है वैसा ही छोड़ देता है। उसे source system के उस समय के
+  time zone से convert करें। `AccessedTime` से उसका अंतर अक्सर उसी time zone का offset होता है, लेकिन हमेशा नहीं:
+  दोनों अलग-अलग क्षण हो सकते हैं।
 - History entry एक URL है, visit नहीं: `AccessedTime` उसका आखिरी visit है और `AccessCount` बताता है कि कितने
   visits हुए। `History` container हर URL के लिए एक entry रखता है; किसी दिन या सप्ताह का container उस अवधि की
   entries रखता है, और उसका नाम अवधि का पहला दिन और आखिरी दिन के बाद वाला दिन बताता है
@@ -124,9 +127,13 @@ CSV पाँच files बनाता है; rows न होने पर ह�
 |---|---|
 | `Container` | Container: `History`, या `MSHist01` और उसके बाद उसकी अवधि का पहला दिन और आखिरी दिन के बाद वाला दिन। |
 | `AccessedTime` | URL का आखिरी visit (UTC); किसी दिन या सप्ताह के container में, उस अवधि का आखिरी visit। |
+| `ModifiedTime` | Entry में आखिरी बदलाव कब हुआ (UTC); किसी दिन या सप्ताह के container में, system का local time, बिना offset के। |
+| `CreationTime` | Entry कब बनी (UTC)। |
+| `ExpiryTime`, `SyncTime` | Entry का history से हटना कब तय है, और आखिरी बार कब synchronize हुई (UTC)। |
 | `Account` | वह account जिसके लिए entry दर्ज की गई। |
 | `URL` | Page या file, `Visited: account@` prefix के बिना। |
-| `AccessCount` | URL कितनी बार visit किया गया। |
+| `AccessCount`, `SyncCount` | URL कितनी बार visit किया गया, और entry कितनी बार synchronize हुई। |
+| `EntryType`, `Flags` | Entry का type और flags, जैसे stored हैं। |
 | `EntryID`, `ContainerID` | उसके container में entry का id, और container का id। |
 
 ### Downloads { #downloads }
@@ -189,7 +196,8 @@ CSV पाँच files बनाता है; rows न होने पर ह�
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` और `WebCache-Containers.csv` के रूप में लिखता है (`-t json` या
 `-t jsonl` के साथ एक ही `WebCache.json` या `WebCache.jsonl` file), साथ में `BrowserActivity/WebCache-logs.txt`
 भी। संयुक्त `-j` timeline में हर row शामिल होती है, `Comp` और `Artifact` identifier `webcache` के साथ। `-Z`
-हर समय को convert करता है: `Time` पर समाप्त होने वाले fields, `LastModified` और `Expires`।
+हर समय को convert करता है, यानी `Time` पर समाप्त होने वाले fields, `LastModified` और `Expires`, सिवाय किसी दिन
+या सप्ताह के history container के local `ModifiedTime` के।
 
 ## अधिक जानकारी { #further-details }
 
