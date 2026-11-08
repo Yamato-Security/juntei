@@ -75,6 +75,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite コマンド](sqlite.md) { #sqlite-commands }
+
+| コマンド | 入力アーティファクト | 詳細ガイド |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Web ブラウザ](../artifacts/browser.md) |
+
 ## ソースの種類とフォーマットの変更 { #source-types-and-format-changes }
 
 グループは、Juntei が現在サポートしている形式を説明します。 `parse-registry amcache` は `Amcache.hve` を読み取ります。 SQLite Amcache インベントリ データベースのサポートを意味するものではありません。アーティファクト パーサー クレートは分離されたままであるため、別のストレージ形式のサポートを個別に追加できます。
@@ -98,6 +104,7 @@ Commands:
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts
   parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
 
 Options:

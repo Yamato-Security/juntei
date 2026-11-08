@@ -101,6 +101,18 @@ SDDL, включно з умовами його 3 384 ACE зворотного �
 `dissect.esedb`. У кожному рядку клієнта першим днем із лічильником був день `InsertDate` за UTC,
 останнім — день `LastAccess` за UTC, а сума лічильників дорівнювала `TotalAccesses`.
 
+## Веб-браузери { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) — це підтримуваний форк
+крейтів browser, sqlite і plist від Sootmark, обраний після порівняння з іншою бібліотекою Rust, а також
+із Plaso, Velociraptor (SQLiteHunter) і Hindsight на тих самих базах даних. `parse-sqlite browser`
+порівнювали з бібліотекою `sqlite3`, що читала копію кожної бази даних разом із її файлом `-wal`, на
+38 публічних базах даних: тестових файлах Plaso (Chrome від 8 до 68, Firefox від 2 до 118), профілях,
+створених Chromium 150 і Firefox 140, і тестових базах даних історії форм ys-browser-parser. Усі 293
+відвідування, 21 завантаження, 692 файли cookie і 41 запис форм збіглися. Видалені записи було
+відновлено лише там, де записи справді видаляли: дві сторінки та два відвідування, видалені з історії
+Firefox 140, з їхнім часом, URL і заголовками, а також видалені записи форм тестових баз даних.
+
 ## Ярлики LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) — це підтримуваний форк крейта

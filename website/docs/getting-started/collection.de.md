@@ -13,6 +13,7 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 | USN-Journal | NTFS-Metadaten-Stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Benutzerzugriffsprotokollierung (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Webbrowser | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` und die Profilordner der anderen Browser |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` und weitere Benutzer-/Systemspeicherorte |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` und `CustomDestinations` |
 | ShimCache | `SYSTEM`-Hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -33,6 +34,9 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 - Sichern Sie SRUM zusammen mit dem passenden `SOFTWARE`-Hive, um Konto- und WLAN-Profilnamen aufzulösen.
 - Sichern Sie das gesamte Verzeichnis `Sum` der Benutzerzugriffsprotokollierung: `SystemIdentity.mdb` benennt die Rollen
   und die jährlichen `{GUID}.mdb`-Datenbanken. Auch deren Transaktionsprotokolle `Svc*.log` spielt Juntei nicht ein.
+- Sichern Sie Browserdatenbanken zusammen mit den `-wal`-Dateien daneben (`places.sqlite-wal`,
+  `cookies.sqlite-wal`): Die neuesten Änderungen und die älteren Seitenversionen, aus denen gelöschte Einträge
+  wiederhergestellt werden, sind nur dort vorhanden, bis der Browser einen Checkpoint ausführt.
 - Sichern Sie den gesamten Defender-Verzeichnisbaum `Quarantine`, damit Entries, ResourceData und Resources einander zugeordnet werden können.
 
 ## Hinweise zu Live-Systemen { #live-system-cautions }

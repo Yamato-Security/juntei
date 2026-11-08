@@ -17,6 +17,7 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
 | Indeks direktori (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, modul `i30`) | Riset index slack yang disebutkan di bawah |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `boot` dan `secure`) | MS-DTYP dari Microsoft dan riset NTFS yang disebutkan di bawah |
 | SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) dan [ese](https://github.com/Sootmark/ese) |
+| Browser web / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite), dan [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Karya compound file dan Jump List dari Sootmark shell |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -56,6 +57,8 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   Defender dan perilaku ekstraksi yang aman.
 - **Plaso**, **Chainsaw**, dan **Velociraptor** menyediakan perbandingan parser, bukti uji, atau
   perilaku referensi yang berorientasi pengumpulan untuk berbagai artefak.
+- **Hindsight** dari Obsidian Forensics dan definisi **SQLiteHunter** dari Velocidex menjadi referensi untuk
+  riwayat, unduhan, cookie, dan riwayat formulir browser.
 
 ## Spesifikasi dan riset { #specifications-and-research }
 

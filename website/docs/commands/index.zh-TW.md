@@ -78,6 +78,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`、`NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite 命令](sqlite.md) { #sqlite-commands }
+
+| 命令 | 輸入跡證 | 詳細指南 |
+|---|---|---|
+| `parse-sqlite browser` | `History`、`Cookies`、`Web Data`、`places.sqlite`、`cookies.sqlite`、`formhistory.sqlite` | [網頁瀏覽器](../artifacts/browser.md) |
+
 ## 來源類型與格式變更 { #source-types-and-format-changes }
 
 分組描述的是 Juntei 目前支援的格式。`parse-registry amcache` 讀取的是 `Amcache.hve`；這並不表示
@@ -106,6 +112,7 @@ Commands:
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts
   parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
 
 Options:

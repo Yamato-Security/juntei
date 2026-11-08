@@ -13,6 +13,7 @@ Juntei Windows से पहले ही एकत्र की गई files �
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| वेब ब्राउज़र | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` और अन्य browsers के profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` और अन्य उपयोगकर्ता/system स्थान |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` और `CustomDestinations` |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -34,6 +35,9 @@ Juntei Windows से पहले ही एकत्र की गई files �
 - पूरी User Access Logging `Sum` directory संग्रहित करें: `SystemIdentity.mdb` roles के नाम देता है और वार्षिक
   `{GUID}.mdb` databases को सूचीबद्ध करता है। SRUM की तरह, Juntei UAL के `Svc*.log` transaction logs को replay
   नहीं करता।
+- Browser databases को उनके बगल वाली `-wal` files (`places.sqlite-wal`, `cookies.sqlite-wal`) के साथ
+  संग्रहित करें: सबसे नए बदलाव, और वे पुराने page versions जिनसे deleted entries recover की जाती हैं, केवल
+  तब तक वहाँ रहते हैं जब तक browser checkpoint नहीं करता।
 - पूरा Defender `Quarantine` tree संग्रहित करें ताकि Entries, ResourceData और Resources का मिलान किया जा सके।
 
 ## Live system के लिए सावधानियाँ { #live-system-cautions }

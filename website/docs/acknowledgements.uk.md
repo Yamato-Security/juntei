@@ -17,6 +17,7 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
 | Індекси каталогів (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (крейт `mft`, модуль `i30`) | Дослідження index slack, згадані нижче |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (крейти `boot` і `secure`) | MS-DTYP від Microsoft і дослідження NTFS, згадані нижче |
 | SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) і [ese](https://github.com/Sootmark/ese) |
+| Веб-браузери / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite) і [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Робота Sootmark shell щодо складених файлів і Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -56,6 +57,8 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
   Defender і безпечного вилучення даних.
 - **Plaso**, **Chainsaw** і **Velociraptor** надали порівняння парсерів, тестові докази або
   еталонну поведінку, орієнтовану на збирання, для кількох артефактів.
+- **Hindsight** від Obsidian Forensics і визначення **SQLiteHunter** від Velocidex слугували еталоном
+  для історії, завантажень, файлів cookie та історії форм браузерів.
 
 ## Специфікації та дослідження { #specifications-and-research }
 

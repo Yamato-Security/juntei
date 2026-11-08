@@ -101,6 +101,18 @@ O `parse-ese ual` lê os bancos de dados do UAL com o mesmo leitor ESE. Em 16 ba
 pelo `dissect.esedb`. Em todas as linhas de clientes, o primeiro dia com contagem foi o dia UTC de `InsertDate`,
 o último, o dia UTC de `LastAccess`, e as contagens somavam `TotalAccesses`.
 
+## Navegadores web { #web-browsers }
+
+O [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) é um fork mantido dos crates browser,
+sqlite e plist do Sootmark, escolhido após compará-lo com outra biblioteca Rust e com o Plaso, o Velociraptor
+(SQLiteHunter) e o Hindsight nos mesmos bancos de dados. O `parse-sqlite browser` foi comparado com a biblioteca
+`sqlite3` lendo uma cópia de cada banco de dados com seu arquivo `-wal`, em 38 bancos de dados públicos: os arquivos
+de teste do Plaso (Chrome 8 a 68, Firefox 2 a 118), perfis criados pelo Chromium 150 e pelo Firefox 140, e os bancos
+de dados de teste de histórico de formulários do ys-browser-parser. Todas as 293 visitas, 21 downloads, 692 cookies
+e 41 entradas de formulários coincidiram. Entradas excluídas só foram recuperadas onde entradas haviam sido
+excluídas: as duas páginas e as duas visitas excluídas do histórico do Firefox 140, com seus horários, URLs e
+títulos, e as entradas de formulários excluídas dos bancos de dados de teste.
+
 ## Atalhos LNK { #lnk-shortcuts }
 
 O [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) é um fork mantido do crate

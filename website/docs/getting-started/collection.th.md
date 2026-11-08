@@ -13,6 +13,7 @@ Juntei พาร์สไฟล์ที่รวบรวมจาก Windows �
 | USN Journal | สตรีมเมทาดาทาของ NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | การบันทึกการเข้าถึงของผู้ใช้ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| เว็บเบราว์เซอร์ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` และโฟลเดอร์โปรไฟล์ของเบราว์เซอร์อื่น ๆ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` และตำแหน่งอื่นของผู้ใช้/ระบบ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` และ `CustomDestinations` |
 | ShimCache | ไฮฟ์ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -33,6 +34,9 @@ Juntei พาร์สไฟล์ที่รวบรวมจาก Windows �
 - เก็บรวบรวม SRUM พร้อมไฮฟ์ `SOFTWARE` ที่ตรงกันเพื่อ resolve ชื่อบัญชีและชื่อโปรไฟล์ Wi-Fi
 - เก็บรวบรวมไดเรกทอรี `Sum` ของการบันทึกการเข้าถึงของผู้ใช้ทั้งหมด เพราะ `SystemIdentity.mdb` ระบุชื่อบทบาทและ
   ฐานข้อมูล `{GUID}.mdb` รายปี นอกจากนี้ Juntei ก็ไม่ได้เล่นซ้ำบันทึกธุรกรรม `Svc*.log` ของ UAL เช่นกัน
+- เก็บรวบรวมฐานข้อมูลของเบราว์เซอร์พร้อมไฟล์ `-wal` ที่อยู่ข้างกัน (`places.sqlite-wal`,
+  `cookies.sqlite-wal`) เพราะการเปลี่ยนแปลงล่าสุด และเพจเวอร์ชันเก่าที่ใช้กู้คืนรายการที่ถูกลบ
+  จะอยู่ในไฟล์เหล่านั้นจนกว่าเบราว์เซอร์จะทำ checkpoint เท่านั้น
 - เก็บรวบรวมโครงสร้าง `Quarantine` ของ Defender ทั้งหมด เพื่อให้จับคู่ Entries, ResourceData และ Resources ได้
 
 ## ข้อควรระวังสำหรับระบบที่กำลังทำงาน { #live-system-cautions }

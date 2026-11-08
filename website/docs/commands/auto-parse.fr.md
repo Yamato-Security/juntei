@@ -130,6 +130,7 @@ découvert. Les tâches utilisent les mêmes commandes regroupées par source qu
 - Secteurs de démarrage `$Boot` et descripteurs de sécurité `$Secure:$SDS`
 - SRUM
 - Journalisation des accès utilisateur (UAL)
+- Historique, téléchargements, cookies et historique des formulaires des navigateurs web (navigateurs basés sur Chromium et sur Firefox)
 - Raccourcis LNK
 - Jump Lists
 - ShimCache
@@ -186,6 +187,12 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -291,6 +298,7 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `Accounts` | Comptes locaux SAM, noms et horodatages des secrets LSA |
 | `Applications` | Historique des applications (traces d'outils tiers) |
 | `Applications` | Programmes installés |
+| `BrowserActivity` | Historique, téléchargements, cookies et historique des formulaires des navigateurs web, avec les entrées supprimées récupérées |
 | `ExternalDevices` | Périphériques et volumes USB |
 | `FileAndFolderOpening` | Jump Lists, raccourcis LNK, Microsoft Office, listes MRU, boîtes de dialogue Ouvrir et Enregistrer sous, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -330,6 +338,9 @@ Les tables SRUM utilisent des noms de fichiers `SRUM-` directement sous leur cat
 Les tables de la journalisation des accès utilisateur se trouvent dans `LateralMovement`, à raison d'un fichier par
 table, par exemple `UAL-Clients.csv` et `UAL-SystemIdentity.csv`, avec `UAL-logs.txt` ; consultez
 [Journalisation des accès utilisateur (UAL)](../artifacts/ual.md#automatic-parsing).
+Les tables des navigateurs web se trouvent dans `BrowserActivity` : `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` et `Browser-FormHistory.csv`, avec `Browser-logs.txt` ; consultez
+[Navigateurs web](../artifacts/browser.md#automatic-parsing).
 Consultez le [tableau complet de placement des tables SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Les journaux reprennent le nom de l'artefact avec ses majuscules, par exemple `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

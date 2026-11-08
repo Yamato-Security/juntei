@@ -48,6 +48,10 @@ Juntei は、パブリック go-ntfs テスト ボリューム (2,129 レコー�
 
 `parse-ese ual` は、同じ ESE リーダーで UAL データベースを読み取ります。16 の実データベース (308 行、うちクライアント行 145 行) 全体で、すべての値が `dissect.esedb` によって公開された値の独立したデコードと一致しました。すべてのクライアント行で、要求数のある日は `InsertDate` の UTC 日に始まって `LastAccess` の UTC 日に終わり、その合計は `TotalAccesses` と一致しました。
 
+## Web ブラウザ { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) は、Sootmark の browser、sqlite、plist クレートの保守フォークで、同じデータベースを対象に別の Rust ライブラリ、および Plaso、Velociraptor (SQLiteHunter)、Hindsight と比較したうえで選定しました。`parse-sqlite browser` は、38 の公開データベースで、各データベースのコピーを `-wal` ファイルとともに読み取った `sqlite3` ライブラリの結果と比較しました。対象は、Plaso のテスト ファイル (Chrome 8 ～ 68、Firefox 2 ～ 118)、Chromium 150 と Firefox 140 で作成したプロファイル、および ys-browser-parser のフォーム入力履歴のテスト データベースです。293 件の閲覧、21 件のダウンロード、692 件の Cookie、41 件のフォーム入力がすべて一致しました。削除済みエントリが復元されたのは、実際にエントリが削除されていた箇所だけでした。すなわち、Firefox 140 の履歴から削除された 2 つのページと 2 件の閲覧 (時刻、URL、タイトルを含む) と、テスト データベースの削除されたフォーム入力です。
+
 ## LNK のショートカット { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) は、Sootmark の [shell](https://github.com/Sootmark/shell) クレートの保守フォークです。 1,118 パブリック ショートカット間で比較されました。参照パーサーと共有される 30 CSV 列のうち、16 の個々の値は異なります。破損した、切り捨てられた、プレースホルダー、MTP、またはコントロール パネル項目を含む 13 ターゲット パス。不明なブロックまたは切り捨てられたブロックを含む 2 つの追加データ ブロック リスト。もう 1 つは、参照パーサーが異なるバイトから読み取った MFT 参照です。 Juntei は、構造をサイレントに正規化するのではなく、損傷した構造を報告します。

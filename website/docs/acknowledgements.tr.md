@@ -18,6 +18,7 @@ kendisine başvurun.
 | Dizin indeksleri (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` crate'i, `i30` modülü) | Aşağıda teşekkür edilen index slack araştırmaları |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` ve `secure` crate'leri) | Microsoft'un MS-DTYP belgesi ve aşağıda teşekkür edilen NTFS araştırmaları |
 | SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) ve [ese](https://github.com/Sootmark/ese) |
+| Web tarayıcıları / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite) ve [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell'in bileşik dosya ve Jump List çalışmaları |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -59,6 +60,8 @@ kendisine başvurun.
   anlamak için ayrı uygulamalar sunar.
 - **Plaso**, **Chainsaw** ve **Velociraptor**, çeşitli artefaktlar genelinde ayrıştırıcı
   karşılaştırmaları, test kanıtları veya toplama odaklı referans davranış sağlamıştır.
+- Obsidian Forensics'in **Hindsight** aracı ve Velocidex'in **SQLiteHunter** tanımları, tarayıcı
+  geçmişi, indirmeler, çerezler ve form geçmişi için referans olmuştur.
 
 ## Spesifikasyonlar ve araştırmalar { #specifications-and-research }
 

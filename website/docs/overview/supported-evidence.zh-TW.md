@@ -13,6 +13,7 @@
 | VHDX 磁碟映像檔 | `mount`、`auto-parse --vhdx` | 其 NTFS 磁碟區中的檔案，可由 Juntei 或其他工具就地以唯讀方式讀取 | 需要 FUSE（僅限 Linux）；不會顯示替代資料流 |
 | SRUM | `parse-ese srum` | 各應用程式／使用者的網路與資源使用情形 | 通常為彙總資料；無法作為封包或目的地層級的證明 |
 | 使用者存取記錄 (UAL) | `parse-ese ual` | 哪些用戶端位址與帳戶在哪幾天使用了 Windows Server 的角色（檔案共用、Active Directory、DHCP、IIS） | 要求以天為單位計數，而非逐筆記錄；位址可能是 NAT 或 Proxy；dirty 的 `Current.mdb` 會缺少最新的變更 |
+| 網頁瀏覽器（Chromium 與 Firefox 系列） | `parse-sqlite browser` | 造訪過的網頁及造訪方式、下載的檔案及其來源、Cookie、在網頁表單中輸入的值；復原已刪除的造訪、下載與表單項目 | 一次造訪可能是重新導向、框架或其他程式開啟的網頁；Chromium 的 Cookie 值經過加密；瀏覽器將已刪除的項目清零或執行檢查點後，這些項目即無法復原 |
 | LNK 捷徑 | `parse-file lnk` | 開啟過的目標、參數、磁碟區、共用資料夾、來源機器 | 即使目標從未執行，也可以建立捷徑 |
 | Jump Lists | `parse-file jump-lists` | 應用程式開啟過的項目、釘選、使用情形與內嵌的 LNK 資料 | 行為與保留方式因應用程式而異 |
 | ShimCache | `parse-registry shimcache` | 歷史執行檔路徑與相容性檢查 | 快取可能要到關機時才寫出；單一項目不等於執行 |

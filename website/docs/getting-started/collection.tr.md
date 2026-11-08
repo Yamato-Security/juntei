@@ -13,6 +13,7 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 | USN Journal | NTFS meta veri akışı `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Kullanıcı Erişim Günlüğü (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Web tarayıcıları | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` ve diğer tarayıcıların profil klasörleri |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ve diğer kullanıcı/sistem konumları |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` ve `CustomDestinations` |
 | ShimCache | `SYSTEM` kovanı: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -36,6 +37,9 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 - Hesap ve Wi-Fi profil adlarını çözümlemek için SRUM'u eşleşen `SOFTWARE` kovanıyla birlikte toplayın.
 - Kullanıcı Erişim Günlüğü'nün `Sum` dizininin tamamını toplayın: `SystemIdentity.mdb` rolleri ve yıllık
   `{GUID}.mdb` veritabanlarını adlandırır. Juntei bunun `Svc*.log` işlem günlüklerini de yeniden oynatmaz.
+- Tarayıcı veritabanlarını yanlarındaki `-wal` dosyalarıyla birlikte toplayın (`places.sqlite-wal`,
+  `cookies.sqlite-wal`): en yeni değişiklikler ve silinmiş girdilerin kurtarıldığı eski sayfa sürümleri
+  yalnızca tarayıcı bir denetim noktası (checkpoint) uygulayana kadar orada bulunur.
 - Entries, ResourceData ve Resources'ın eşleştirilebilmesi için Defender `Quarantine` ağacının
   tamamını toplayın.
 

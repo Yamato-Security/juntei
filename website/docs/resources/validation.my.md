@@ -100,6 +100,19 @@ database 11 ခုတွင် ထုတ်ပေးခဲ့သော entry 45,
 လွတ်လပ်သော decoding နှင့် ကိုက်ညီခဲ့ပါသည်။ Client row တိုင်းတွင် အရေအတွက်ရှိသော နေ့များသည် `InsertDate` ၏ UTC နေ့မှ
 `LastAccess` ၏ UTC နေ့အထိ ရှိခဲ့ပြီး ၎င်းတို့၏ ပေါင်းလဒ်သည် `TotalAccesses` နှင့် ညီခဲ့ပါသည်။
 
+## ဝဘ် ဘရောက်ဇာများ { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) သည် Sootmark ၏ browser၊ sqlite နှင့်
+plist crate များ၏ ထိန်းသိမ်းထားသော fork ဖြစ်ပြီး အခြား Rust library တစ်ခုနှင့်လည်းကောင်း၊ တူညီသော database များပေါ်တွင်
+Plaso၊ Velociraptor (SQLiteHunter) နှင့် Hindsight တို့နှင့်လည်းကောင်း နှိုင်းယှဉ်ပြီးနောက် ရွေးချယ်ခဲ့ခြင်း ဖြစ်ပါသည်။
+`parse-sqlite browser` ကို database တစ်ခုစီ၏ မိတ္တူကို ၎င်း၏ `-wal` ဖိုင်နှင့်အတူ ဖတ်သော `sqlite3` library နှင့်
+အများသုံး database 38 ခုပေါ်တွင် နှိုင်းယှဉ်ခဲ့ပါသည်: Plaso ၏ test ဖိုင်များ (Chrome 8 မှ 68၊ Firefox 2 မှ 118)၊
+Chromium 150 နှင့် Firefox 140 တို့က ဖန်တီးထားသော profile များနှင့် ys-browser-parser ၏ form history test database
+များ။ Visit 293 ခု၊ download 21 ခု၊ cookie 692 ခုနှင့် form entry 41 ခု အားလုံး ကိုက်ညီခဲ့ပါသည်။ ဖျက်ထားသော entry
+များကို entry များ အမှန်တကယ် ဖျက်ခံထားရသည့်နေရာတွင်သာ ပြန်လည်ရယူခဲ့ပါသည်: Firefox 140 history မှ ဖျက်ထားသော
+စာမျက်နှာ နှစ်ခုနှင့် visit နှစ်ခု (၎င်းတို့၏ အချိန်၊ URL နှင့် title များနှင့်အတူ) နှင့် test database များ၏ ဖျက်ထားသော
+form entry များ ဖြစ်ပါသည်။
+
 ## LNK ဖြတ်လမ်းများ { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) သည်

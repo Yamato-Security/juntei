@@ -13,6 +13,7 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 | Журнал USN | Потік метаданих NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Журналювання доступу користувачів (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Веб-браузери | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` та папки профілів інших браузерів |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` та інші розташування користувача/системи |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` і `CustomDestinations` |
 | ShimCache | Кущ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -34,6 +35,9 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 - Збирайте весь каталог `Sum` журналювання доступу користувачів: `SystemIdentity.mdb` містить назви ролей
   і перелічує щорічні бази даних `{GUID}.mdb`. Як і у випадку SRUM, Juntei не відтворює журнали транзакцій
   UAL `Svc*.log`.
+- Збирайте бази даних браузерів разом із файлами `-wal` поруч із ними (`places.sqlite-wal`,
+  `cookies.sqlite-wal`): найновіші зміни, а також старіші версії сторінок, з яких відновлюються видалені
+  записи, зберігаються там лише до контрольної точки браузера.
 - Збирайте все дерево `Quarantine` Defender, щоб можна було зіставити Entries, ResourceData і Resources.
 
 ## Застереження щодо працюючих систем { #live-system-cautions }

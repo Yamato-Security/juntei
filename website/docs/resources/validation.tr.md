@@ -108,6 +108,19 @@ bunların 145'i istemci satırı), her değer `dissect.esedb` tarafından sunula
 çözümüyle eşleşti. Her istemci satırında, sayı bulunan günler `InsertDate` değerinin UTC gününden
 `LastAccess` değerinin UTC gününe kadar uzandı ve toplamları `TotalAccesses` değerine eşit oldu.
 
+## Web tarayıcıları { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser), Sootmark'ın browser, sqlite
+ve plist crate'lerinin sürdürülen bir çatalıdır; başka bir Rust kütüphanesiyle ve aynı veritabanları
+üzerinde Plaso, Velociraptor (SQLiteHunter) ve Hindsight ile karşılaştırıldıktan sonra seçilmiştir.
+`parse-sqlite browser`, 38 herkese açık veritabanında, her veritabanının `-wal` dosyasıyla birlikte
+bir kopyasını okuyan `sqlite3` kütüphanesiyle karşılaştırıldı: Plaso'nun test dosyaları (Chrome 8 ile
+68 arası, Firefox 2 ile 118 arası), Chromium 150 ve Firefox 140 ile oluşturulan profiller ve
+ys-browser-parser'ın form geçmişi test veritabanları. 293 ziyaretin, 21 indirmenin, 692 çerezin ve 41
+form girdisinin tamamı eşleşti. Silinmiş girdiler yalnızca girdilerin silindiği yerlerde kurtarıldı:
+Firefox 140 geçmişinden silinen iki sayfa ve iki ziyaret, zamanları, URL'leri ve başlıklarıyla birlikte,
+ve test veritabanlarının silinmiş form girdileri.
+
 ## LNK kısayolları { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser), Sootmark'ın

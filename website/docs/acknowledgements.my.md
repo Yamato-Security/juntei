@@ -18,6 +18,7 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
 | Directory index များ (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` crate၊ `i30` module) | အောက်တွင် ဖော်ပြထားသော index-slack သုတေသန |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` နှင့် `secure` crate များ) | Microsoft ၏ MS-DTYP နှင့် အောက်တွင် ဖော်ပြထားသော NTFS သုတေသန |
 | SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) နှင့် [ese](https://github.com/Sootmark/ese) |
+| ဝဘ် ဘရောက်ဇာများ / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser)၊ [sqlite](https://github.com/Sootmark/sqlite) နှင့် [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell ၏ compound-file နှင့် Jump List လုပ်ငန်း |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -59,6 +60,8 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   ထုတ်ယူမှု အပြုအမူကို နားလည်ရန် သီးခြား implementation များကို ပေးပါသည်။
 - **Plaso**၊ **Chainsaw** နှင့် **Velociraptor** တို့သည် artifact အများအပြားတွင် parser နှိုင်းယှဉ်ချက်များ၊
   စမ်းသပ်အထောက်အထားများ သို့မဟုတ် စုဆောင်းမှုအခြေပြု ကိုးကားရန် အပြုအမူကို ပေးခဲ့ပါသည်။
+- Obsidian Forensics ၏ **Hindsight** နှင့် Velocidex ၏ **SQLiteHunter** definition များသည် ဘရောက်ဇာ history၊
+  download များ၊ cookie များနှင့် form history အတွက် ကိုးကားချက်များ ဖြစ်ခဲ့ပါသည်။
 
 ## Spec များနှင့် သုတေသန { #specifications-and-research }
 

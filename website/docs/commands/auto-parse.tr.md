@@ -133,6 +133,7 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
 - `$Boot` önyükleme sektörleri ve `$Secure:$SDS` güvenlik tanımlayıcıları
 - SRUM
 - Kullanıcı Erişim Günlüğü (UAL)
+- Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi (Chromium ve Firefox tabanlı tarayıcılar)
 - LNK kısayolları
 - Jump Lists
 - ShimCache
@@ -191,6 +192,12 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -296,6 +303,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `Accounts` | SAM yerel hesapları, LSA sırlarının adları ve zamanları |
 | `Applications` | Uygulama geçmişi (üçüncü taraf araçların izleri) |
 | `Applications` | Yüklü programlar |
+| `BrowserActivity` | Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi; kurtarılan silinmiş girdilerle birlikte |
 | `ExternalDevices` | USB aygıtları ve birimleri |
 | `FileAndFolderOpening` | Jump Lists, LNK kısayolları, Microsoft Office, MRU listeleri, Aç ve Farklı Kaydet iletişim kutuları, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -336,6 +344,9 @@ SRUM tabloları, kategorilerinin hemen altında `SRUM-` dosya adlarını kullan�
 Kullanıcı Erişim Günlüğü tabloları `LateralMovement` içindedir; her tablo için bir dosya vardır, örneğin
 `UAL-Clients.csv` ve `UAL-SystemIdentity.csv`, bunlarla birlikte `UAL-logs.txt` bulunur; bkz.
 [Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md#automatic-parsing).
+Web tarayıcısı tabloları `BrowserActivity` içindedir: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` ve `Browser-FormHistory.csv`, bunlarla birlikte `Browser-logs.txt` bulunur; bkz.
+[Web Tarayıcıları](../artifacts/browser.md#automatic-parsing).
 [SRUM yerleşiminin tam tablosuna](../artifacts/srum.md#categorized-auto-parse-output) bakın.
 
 Günlükler, büyük harfle başlayan artefakt adıyla eşleşir; örneğin `Registry-SAM-logs.txt`,

@@ -101,6 +101,18 @@ SDDL รวมถึงเงื่อนไขของ callback ACE ทั้�
 ในทุกแถวไคลเอนต์ วันที่มีจำนวนคำขออยู่ในช่วงตั้งแต่วันตาม UTC ของ `InsertDate` ถึงวันตาม UTC ของ
 `LastAccess` และผลรวมของจำนวนเหล่านั้นเท่ากับ `TotalAccesses`
 
+## เว็บเบราว์เซอร์ { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) เป็น fork ที่ดูแลต่อจาก crate
+browser, sqlite และ plist ของ Sootmark ซึ่งได้รับเลือกหลังจากเปรียบเทียบกับไลบรารี Rust อีกตัวหนึ่ง
+และกับ Plaso, Velociraptor (SQLiteHunter) และ Hindsight บนฐานข้อมูลชุดเดียวกัน `parse-sqlite browser`
+ได้รับการเปรียบเทียบกับไลบรารี `sqlite3` ที่อ่านสำเนาของแต่ละฐานข้อมูลพร้อมไฟล์ `-wal` บนฐานข้อมูลสาธารณะ
+38 ชุด ได้แก่ ไฟล์ทดสอบของ Plaso (Chrome 8 ถึง 68, Firefox 2 ถึง 118) โปรไฟล์ที่สร้างโดย Chromium 150
+และ Firefox 140 และฐานข้อมูลทดสอบประวัติฟอร์มของ ys-browser-parser การเข้าชมทั้ง 293 รายการ
+การดาวน์โหลด 21 รายการ คุกกี้ 692 รายการ และรายการฟอร์ม 41 รายการตรงกันทั้งหมด รายการที่ถูกลบ
+ถูกกู้คืนเฉพาะในกรณีที่มีการลบรายการจริงเท่านั้น ได้แก่ หน้าเว็บสองหน้าและการเข้าชมสองรายการที่ถูกลบจาก
+ประวัติของ Firefox 140 พร้อมเวลา URL และชื่อเรื่อง และรายการฟอร์มที่ถูกลบในฐานข้อมูลทดสอบ
+
 ## ทางลัด LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) เป็น fork ที่ดูแลต่อจาก crate

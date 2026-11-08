@@ -112,6 +112,18 @@ independiente de los valores que expone `dissect.esedb`. En cada fila de cliente
 recuento fue el día UTC de `InsertDate`, el último, el día UTC de `LastAccess`, y los recuentos sumaban
 `TotalAccesses`.
 
+## Navegadores web { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) es una bifurcación mantenida de los
+crates browser, sqlite y plist de Sootmark, elegida tras compararla con otra biblioteca de Rust y con Plaso,
+Velociraptor (SQLiteHunter) y Hindsight sobre las mismas bases de datos. `parse-sqlite browser` se comparó con la
+biblioteca `sqlite3` leyendo una copia de cada base de datos con su archivo `-wal`, en 38 bases de datos públicas:
+los archivos de prueba de Plaso (Chrome 8 a 68, Firefox 2 a 118), perfiles creados con Chromium 150 y Firefox 140,
+y las bases de datos de prueba de historial de formularios de ys-browser-parser. Coincidieron las 293 visitas, las
+21 descargas, las 692 cookies y las 41 entradas de formularios. Solo se recuperaron entradas eliminadas donde se
+habían eliminado entradas: las dos páginas y las dos visitas eliminadas del historial de Firefox 140, con sus horas,
+URL y títulos, y las entradas de formularios eliminadas de las bases de datos de prueba.
+
 ## Accesos directos LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) es una bifurcación mantenida del

@@ -130,6 +130,7 @@ yang ditemukan. Tugas-tugas ini menggunakan perintah yang dikelompokkan berdasar
 - Sektor boot `$Boot` dan deskriptor keamanan `$Secure:$SDS`
 - SRUM
 - Pencatatan Akses Pengguna (UAL)
+- Riwayat, unduhan, cookie, dan riwayat formulir browser web (browser berbasis Chromium dan Firefox)
 - Pintasan LNK
 - Jump Lists
 - ShimCache
@@ -186,6 +187,12 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -291,6 +298,7 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 | `Accounts` | Akun lokal SAM, nama dan waktu LSA secrets |
 | `Applications` | Riwayat aplikasi (jejak alat pihak ketiga) |
 | `Applications` | Program terinstal |
+| `BrowserActivity` | Riwayat, unduhan, cookie, dan riwayat formulir browser web, termasuk entri terhapus yang dipulihkan |
 | `ExternalDevices` | Perangkat dan volume USB |
 | `FileAndFolderOpening` | Jump Lists, pintasan LNK, Microsoft Office, daftar MRU, dialog Open dan Save As, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -330,6 +338,9 @@ Tabel SRUM menggunakan nama berkas `SRUM-` langsung di bawah kategorinya, misaln
 Tabel Pencatatan Akses Pengguna berada di `LateralMovement`, satu berkas per tabel, seperti
 `UAL-Clients.csv` dan `UAL-SystemIdentity.csv`, beserta `UAL-logs.txt`; lihat
 [Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md#automatic-parsing).
+Tabel browser web berada di `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv`, dan `Browser-FormHistory.csv`, beserta `Browser-logs.txt`; lihat
+[Browser web](../artifacts/browser.md#automatic-parsing).
 Lihat [tabel penempatan SRUM selengkapnya](../artifacts/srum.md#categorized-auto-parse-output).
 
 Log sesuai dengan nama artefak yang ditulis dengan huruf kapital, seperti `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,

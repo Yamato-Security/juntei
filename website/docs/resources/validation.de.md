@@ -100,6 +100,19 @@ der von `dissect.esedb` bereitgestellten Werte überein.
 Werte überein. In jeder Client-Zeile reichten die Tage mit Anzahlen vom UTC-Tag von `InsertDate` bis zum UTC-Tag von
 `LastAccess` und ergaben in der Summe `TotalAccesses`.
 
+## Webbrowser { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) ist ein gepflegter Fork der Crates
+browser, sqlite und plist von Sootmark, ausgewählt nach einem Vergleich mit einer anderen Rust-Bibliothek sowie mit
+Plaso, Velociraptor (SQLiteHunter) und Hindsight anhand derselben Datenbanken. `parse-sqlite browser` wurde anhand
+von 38 öffentlichen Datenbanken mit der Bibliothek `sqlite3` verglichen, die jeweils eine Kopie jeder Datenbank mit
+ihrer `-wal`-Datei las: die Testdateien von Plaso (Chrome 8 bis 68, Firefox 2 bis 118), mit Chromium 150 und
+Firefox 140 erstellte Profile sowie die Testdatenbanken von ys-browser-parser für den Formularverlauf. Alle 293
+Besuche, 21 Downloads, 692 Cookies und 41 Formulareinträge stimmten überein. Gelöschte Einträge wurden nur dort
+wiederhergestellt, wo Einträge gelöscht worden waren: die zwei Seiten und zwei Besuche, die aus dem Verlauf von
+Firefox 140 gelöscht worden waren, mit ihren Zeiten, URLs und Titeln, sowie die gelöschten Formulareinträge der
+Testdatenbanken.
+
 ## LNK-Verknüpfungen { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) ist ein gepflegter Fork des Crates

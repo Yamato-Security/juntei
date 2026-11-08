@@ -101,6 +101,18 @@ Security نفسها. وعبر دفقات `$SDS` الخمسة في المتحف (
 وفي كل صف للعملاء، امتدت الأيام التي لها أعداد من يوم `InsertDate` بتوقيت UTC إلى يوم `LastAccess`
 بتوقيت UTC، وبلغ مجموع أعدادها `TotalAccesses`.
 
+## متصفحات الويب { #web-browsers }
+
+يُعد [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) تفرّعًا مُصانًا من حزم
+browser وsqlite وplist الخاصة بـ Sootmark، وقد اختير بعد مقارنته بمكتبة Rust أخرى، وبـ Plaso
+وVelociraptor ‏(SQLiteHunter) وHindsight على قواعد البيانات نفسها. وقورن `parse-sqlite browser`
+بمكتبة `sqlite3` وهي تقرأ نسخة من كل قاعدة بيانات مع ملف `-wal` الخاص بها، عبر 38 قاعدة بيانات
+عامة: ملفات اختبار Plaso ‏(Chrome من 8 إلى 68، وFirefox من 2 إلى 118)، وملفات تعريف أنشأها Chromium 150
+وFirefox 140، وقواعد بيانات اختبار سجل النماذج في ys-browser-parser. وتطابقت جميع الزيارات الـ 293،
+والتنزيلات الـ 21، وملفات تعريف الارتباط الـ 692، وإدخالات النماذج الـ 41. ولم تُستعد إدخالات محذوفة
+إلا حيث حُذفت إدخالات فعلًا: ما حُذف من سجل Firefox 140 (صفحتان وزيارتان) بأوقاته وعناوين URL
+وعناوين الصفحات، وإدخالات النماذج المحذوفة في قواعد بيانات الاختبار.
+
 ## اختصارات LNK { #lnk-shortcuts }
 
 يُعد [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) تفرّعًا مُصانًا من حزمة

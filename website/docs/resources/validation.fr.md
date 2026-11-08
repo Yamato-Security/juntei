@@ -101,6 +101,19 @@ dont 145 lignes de clients), chaque valeur correspondait à un décodage indépe
 `dissect.esedb`. Dans chaque ligne de client, le premier jour comportant un décompte était le jour UTC de
 `InsertDate`, le dernier le jour UTC de `LastAccess`, et la somme des décomptes était égale à `TotalAccesses`.
 
+## Navigateurs web { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) est un fork maintenu des crates
+browser, sqlite et plist de Sootmark, choisi après l'avoir comparé à une autre bibliothèque Rust ainsi qu'à Plaso,
+Velociraptor (SQLiteHunter) et Hindsight sur les mêmes bases de données. `parse-sqlite browser` a été comparé à la
+bibliothèque `sqlite3` lisant une copie de chaque base de données avec son fichier `-wal`, sur 38 bases de données
+publiques : les fichiers de test de Plaso (Chrome 8 à 68, Firefox 2 à 118), des profils créés par Chromium 150 et
+Firefox 140, et les bases de données de test de l'historique des formulaires de ys-browser-parser. Les 293 visites,
+21 téléchargements, 692 cookies et 41 entrées de formulaires correspondaient tous. Des entrées supprimées n'ont été
+récupérées que là où des entrées avaient été supprimées : les deux pages et les deux visites supprimées de
+l'historique de Firefox 140, avec leurs heures, URL et titres, et les entrées de formulaires supprimées des bases de
+données de test.
+
 ## Raccourcis LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) est un fork maintenu de la crate

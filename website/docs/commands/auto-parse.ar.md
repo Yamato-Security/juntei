@@ -130,6 +130,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - قطاعات الإقلاع `$Boot` وواصفات الأمان `$Secure:$SDS`
 - SRUM
 - تسجيل وصول المستخدمين (UAL)
+- سجل التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج في متصفحات الويب (المتصفحات المبنية على Chromium وFirefox)
 - اختصارات LNK
 - Jump Lists
 - ShimCache
@@ -185,6 +186,12 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -290,6 +297,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 | `Accounts` | حسابات SAM المحلية، وأسماء أسرار LSA وأوقاتها |
 | `Applications` | سجل التطبيقات (آثار أدوات الجهات الخارجية) |
 | `Applications` | البرامج المثبتة |
+| `BrowserActivity` | سجل التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج في متصفحات الويب، مع الإدخالات المحذوفة المستعادة |
 | `ExternalDevices` | أجهزة USB ووحدات التخزين |
 | `FileAndFolderOpening` | Jump Lists، واختصارات LNK، وMicrosoft Office، وقوائم MRU، ومربعات حوار الفتح والحفظ باسم، وRecentDocs، وShellBags |
 | `FileExistence` | Amcache، ShimCache |
@@ -329,6 +337,9 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 وتوجد جداول تسجيل وصول المستخدمين في `LateralMovement`، بملف واحد لكل جدول، مثل
 `UAL-Clients.csv` و`UAL-SystemIdentity.csv`، مع `UAL-logs.txt`؛ راجع
 [تسجيل وصول المستخدمين (UAL)](../artifacts/ual.md#automatic-parsing).
+وتوجد جداول متصفحات الويب في `BrowserActivity`: ‏`Browser-History.csv` و`Browser-Downloads.csv`
+و`Browser-Cookies.csv` و`Browser-FormHistory.csv`، مع `Browser-logs.txt`؛ راجع
+[متصفحات الويب](../artifacts/browser.md#automatic-parsing).
 راجع [جدول توزيع SRUM الكامل](../artifacts/srum.md#categorized-auto-parse-output).
 
 تطابق السجلات اسم الأثر الرقمي بأحرفه الكبيرة، مثل `Registry-SAM-logs.txt` و`PrefetchTimeline-logs.txt`

@@ -96,6 +96,18 @@ Windows 11 `$Boot`는 같은 호스트의 LNK 파일이 기록한 볼륨 일련 
 클라이언트 행에서 요청 수가 있는 날짜는 `InsertDate`의 UTC 날짜에서 시작하여 `LastAccess`의 UTC 날짜에서
 끝났으며, 그 합계는 `TotalAccesses`와 일치했습니다.
 
+## 웹 브라우저 { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser)는 Sootmark의 browser, sqlite, plist
+크레이트를 유지 관리하는 포크로, 같은 데이터베이스를 대상으로 다른 Rust 라이브러리 및 Plaso, Velociraptor
+(SQLiteHunter), Hindsight와 비교한 끝에 선택되었습니다. `parse-sqlite browser`는 공개된 데이터베이스
+38개, 즉 Plaso의 테스트 파일(Chrome 8~68, Firefox 2~118), Chromium 150과 Firefox 140으로 만든 프로필,
+ys-browser-parser의 양식 기록 테스트 데이터베이스를 대상으로, 각 데이터베이스의 사본을 `-wal` 파일과 함께
+`sqlite3` 라이브러리로 읽은 결과와 비교되었습니다. 방문 293건, 다운로드 21건, 쿠키 692개, 양식 항목 41개가
+모두 일치했습니다. 삭제된 항목은 실제로 항목이 삭제된 곳에서만 복구되었습니다. Firefox 140 방문 기록에서
+삭제된 페이지 2개와 방문 2건이 그 시각, URL, 제목과 함께 복구되었고, 테스트 데이터베이스의 삭제된 양식 항목도
+복구되었습니다.
+
 ## LNK 바로 가기 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)는 Sootmark의

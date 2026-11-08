@@ -130,6 +130,7 @@ descoberto. As tarefas usam os mesmos comandos agrupados por origem da análise 
 - Setores de inicialização `$Boot` e descritores de segurança `$Secure:$SDS`
 - SRUM
 - Registro de acesso do usuário (UAL)
+- Histórico, downloads, cookies e histórico de formulários de navegadores web (navegadores baseados no Chromium e no Firefox)
 - Atalhos LNK
 - Jump Lists
 - ShimCache
@@ -186,6 +187,12 @@ O CSV mantém tabelas separadas porque cada artefato tem colunas diferentes:
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -291,6 +298,7 @@ O CSV mantém tabelas separadas porque cada artefato tem colunas diferentes:
 | `Accounts` | Contas locais SAM, nomes e horários dos segredos LSA |
 | `Applications` | Histórico de aplicativos (vestígios de ferramentas de terceiros) |
 | `Applications` | Programas instalados |
+| `BrowserActivity` | Histórico, downloads, cookies e histórico de formulários de navegadores web, com as entradas excluídas recuperadas |
 | `ExternalDevices` | Dispositivos e volumes USB |
 | `FileAndFolderOpening` | Jump Lists, atalhos LNK, Microsoft Office, listas MRU, caixas de diálogo Abrir e Salvar como, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -330,6 +338,9 @@ As tabelas do SRUM usam nomes de arquivo `SRUM-` diretamente sob sua categoria, 
 As tabelas do Registro de acesso do usuário ficam em `LateralMovement`, um arquivo por tabela, como
 `UAL-Clients.csv` e `UAL-SystemIdentity.csv`, com `UAL-logs.txt`; consulte
 [Registro de acesso do usuário (UAL)](../artifacts/ual.md#automatic-parsing).
+As tabelas dos navegadores web ficam em `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` e `Browser-FormHistory.csv`, com `Browser-logs.txt`; consulte
+[Navegadores web](../artifacts/browser.md#automatic-parsing).
 Consulte a [tabela completa de posicionamento do SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Os logs correspondem ao nome do artefato com iniciais maiúsculas, como `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

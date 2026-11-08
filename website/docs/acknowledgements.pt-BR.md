@@ -18,6 +18,7 @@ cada projeto para conhecer sua licença.
 | Índices de diretórios (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, módulo `i30`) | Pesquisa sobre slack de índice creditada abaixo |
 | `$Boot`, `$Secure:$SDS` do NTFS | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crates `boot` e `secure`) | MS-DTYP da Microsoft e a pesquisa sobre NTFS creditada abaixo |
 | SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) e [ese](https://github.com/Sootmark/ese) |
+| Navegadores web / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite) e [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Trabalho do Sootmark shell sobre arquivos compostos e Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
@@ -61,6 +62,8 @@ cada projeto para conhecer sua licença.
   estruturas de quarentena do Defender e o comportamento de extração segura.
 - O **Plaso**, o **Chainsaw** e o **Velociraptor** forneceram comparações de analisadores, evidências
   de teste ou comportamento de referência orientado à coleta para vários artefatos.
+- O **Hindsight**, da Obsidian Forensics, e as definições do **SQLiteHunter**, da Velocidex, serviram de
+  referência para histórico, downloads, cookies e histórico de formulários de navegadores.
 
 ## Especificações e pesquisas { #specifications-and-research }
 

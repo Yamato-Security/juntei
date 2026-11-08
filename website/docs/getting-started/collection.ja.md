@@ -13,6 +13,7 @@ Juntei は Windows から収集済みのファイルを解析します。信頼�
 | USN ジャーナル | NTFS メタデータ ストリーム `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | ユーザーアクセスログ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Web ブラウザ | `%LOCALAPPDATA%\Google\Chrome\User Data\`、`%LOCALAPPDATA%\Microsoft\Edge\User Data\`、`%APPDATA%\Mozilla\Firefox\Profiles\`、およびその他のブラウザのプロファイル フォルダー |
 | LNK / 最近 | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` およびその他のユーザー/システムの場所 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` および `CustomDestinations` |
 | ShimCache | `SYSTEM` ハイブ: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -28,6 +29,7 @@ Juntei は Windows から収集済みのファイルを解析します。信頼�
 - `$LogFile` を、同じボリュームの `$MFT` とできるだけ近いタイミングで収集します。 `$LogFile` は急速にラップします。後の収集では、以前の REDO/UNDO レコードが完全に失われる可能性があります。
 - 一致する `SOFTWARE` ハイブを含む SRUM を収集し、アカウントと Wi-Fi プロファイル名を解決します。
 - ユーザーアクセスログの `Sum` ディレクトリ全体を収集します。`SystemIdentity.mdb` が役割の名前を定め、年ごとの `{GUID}.mdb` データベースを列挙しています。Juntei は、UAL のトランザクション ログ `Svc*.log` も再生しません。
+- ブラウザのデータベースは、隣にある `-wal` ファイル (`places.sqlite-wal`、`cookies.sqlite-wal`) と一緒に収集します。最新の変更と、削除済みエントリの復元元となる古いバージョンのページは、ブラウザがチェックポイントを行うまでそこにしか存在しません。
 - Defender `Quarantine` ツリー全体を収集して、エントリ、ResourceData、およびリソースを照合できるようにします。
 
 ## ライブシステムに関する注意事項 { #live-system-cautions }

@@ -13,6 +13,7 @@ Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisis
 | Jurnal USN | Stream metadata NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Pencatatan Akses Pengguna (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Browser web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\`, dan folder profil browser lainnya |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` dan lokasi pengguna/sistem lainnya |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` dan `CustomDestinations` |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -33,6 +34,9 @@ Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisis
 - Kumpulkan SRUM bersama hive `SOFTWARE` yang bersesuaian untuk me-resolve nama akun dan nama profil Wi-Fi.
 - Kumpulkan seluruh direktori `Sum` milik Pencatatan Akses Pengguna: `SystemIdentity.mdb` menamai role-role dan
   database `{GUID}.mdb` tahunan. Juntei juga tidak memutar ulang log transaksi `Svc*.log` miliknya.
+- Kumpulkan database browser beserta berkas `-wal` di sampingnya (`places.sqlite-wal`,
+  `cookies.sqlite-wal`): perubahan terbaru, serta versi halaman lama yang menjadi sumber pemulihan entri
+  terhapus, hanya ada di sana sampai browser melakukan checkpoint.
 - Kumpulkan seluruh pohon `Quarantine` Defender agar Entries, ResourceData, dan Resources dapat dicocokkan.
 
 ## Peringatan untuk sistem live { #live-system-cautions }

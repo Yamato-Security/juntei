@@ -23,14 +23,14 @@ Juntei という名前は、深い慈悲の心を持つ仏教の尊格「准胝�
 
 ## 対応アーティファクト
 
-Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 39 種類に対応しており、今後も対応範囲を拡大していきます。
+Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 40 種類に対応しており、今後も対応範囲を拡大していきます。
 
 `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` を実行すると、収集済みの複数の Windows システムを
 自動検出し、対応するすべてのアーティファクトを並列に解析します。結果はコンピュータと証拠のカテゴリ別に
 整理され、各結果の隣に `<artifact>-logs.txt` が保存されます。`-j <FILE>` を追加すると、CSV や JSON の
 結果を残したまま、コンピュータ名を付与した SIEM 向けの JSONL ファイルも作成できます。
 
-個別に解析する場合は、`parse-ese`、`parse-file`、`parse-ntfs`、`parse-registry` を使用します。
+個別に解析する場合は、`parse-ese`、`parse-file`、`parse-ntfs`、`parse-registry`、`parse-sqlite` を使用します。
 例: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`。
 
 `juntei mount <IMAGE> <MOUNTPOINT>` は、VHDX ディスクイメージを読み取り専用で
@@ -140,6 +140,12 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 | アーティファクト | 種類 |
 | --- | --- |
 | **監査ポリシー** (`SECURITY` の `PolAdtEv`) — セキュリティイベントの記録設定をサブカテゴリ別に示します。記録がないことを判断材料にできない場合の把握に役立ちます。 | Registry |
+
+### ブラウザの活動
+
+| アーティファクト | 種類 |
+| --- | --- |
+| **Web ブラウザ** (`History`、`Cookies`、`Web Data`、`places.sqlite`、`cookies.sqlite`、`formhistory.sqlite`) — Chrome、Edge、Brave、Opera、Vivaldi、Firefox など Chromium 系・Firefox 系ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴。ライトアヘッドログ（`-wal`）も含めて読み、削除された閲覧履歴、ページ、ダウンロード、フォーム入力を復元します。 | SQLite |
 
 ### ネットワークの活動
 

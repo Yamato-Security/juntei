@@ -23,14 +23,15 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
-Juntei currently supports 39 of the most popular Windows forensic artifacts and we continue to add more.
+Juntei currently supports 40 of the most popular Windows forensic artifacts and we continue to add more.
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
 with `<artifact>-logs.txt` files beside the results. Add a computer-labelled SIEM JSONL file with `-j <FILE>`
 while keeping the CSV or JSON results.
 
-For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, or `parse-registry`.
+For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, `parse-registry`, or
+`parse-sqlite`.
 For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
 
 Use `juntei mount <IMAGE> <MOUNTPOINT>` to mount a VHDX disk image
@@ -140,6 +141,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Audit policy** (`SECURITY` `PolAdtEv`) — Which security events the system was set to log, per subcategory, and so which missing events say nothing. | Registry |
+
+### Browser Activity
+
+| Artifact | Type |
+| --- | --- |
+| **Web browsers** (`History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite`) — The visits, downloads, cookies and form entries of Chrome, Edge, Brave, Opera, Vivaldi, Firefox and other Chromium- and Firefox-based browsers, read with their write-ahead logs, with deleted visits, pages, downloads and form entries recovered. | SQLite |
 
 ### Network Activity
 

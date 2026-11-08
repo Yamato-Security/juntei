@@ -129,6 +129,7 @@ Computer diese Jobs aus. Die Jobs verwenden dieselben nach Quelle gruppierten Be
 - `$Boot`-Bootsektoren und `$Secure:$SDS`-Sicherheitsbeschreibungen
 - SRUM
 - Benutzerzugriffsprotokollierung (UAL)
+- Webbrowser-Verlauf, Downloads, Cookies und Formularverlauf (Chromium- und Firefox-basierte Browser)
 - LNK-Verknüpfungen
 - Jump Lists
 - ShimCache
@@ -185,6 +186,12 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   └── Browser-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -290,6 +297,7 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 | `Accounts` | Lokale SAM-Konten, Namen und Zeitstempel der LSA-Secrets |
 | `Applications` | Anwendungsverlauf (Spuren von Drittanbieterwerkzeugen) |
 | `Applications` | Installierte Programme |
+| `BrowserActivity` | Webbrowser-Verlauf, Downloads, Cookies und Formularverlauf, mit wiederhergestellten gelöschten Einträgen |
 | `ExternalDevices` | USB-Geräte und -Volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK-Verknüpfungen, Microsoft Office, MRU-Listen, Dialoge zum Öffnen und Speichern unter, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -329,6 +337,9 @@ SRUM-Tabellen verwenden `SRUM-`-Dateinamen direkt unter ihrer Kategorie, zum Bei
 Die Tabellen der Benutzerzugriffsprotokollierung liegen in `LateralMovement`, eine Datei pro Tabelle, etwa
 `UAL-Clients.csv` und `UAL-SystemIdentity.csv`, zusammen mit `UAL-logs.txt`; siehe
 [Benutzerzugriffsprotokollierung (UAL)](../artifacts/ual.md#automatic-parsing).
+Die Tabellen der Webbrowser liegen in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` und `Browser-FormHistory.csv`, zusammen mit `Browser-logs.txt`; siehe
+[Webbrowser](../artifacts/browser.md#automatic-parsing).
 Siehe die [vollständige Tabelle zur Ablage der SRUM-Tabellen](../artifacts/srum.md#categorized-auto-parse-output).
 
 Protokolle entsprechen dem großgeschriebenen Artefaktnamen, etwa `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`
