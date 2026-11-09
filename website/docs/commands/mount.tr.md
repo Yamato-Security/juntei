@@ -52,38 +52,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse ile her imajı ayrıştırma { #parsing-every-image-with-auto-parse }
+## İmajları yerel olarak analiz etme { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx`, ayrıca bağlama gerektirmeden, kanıt dizinindeki her VHDX disk imajının (veya
-`-d` ile verilen tek imajın) içindeki Windows sistemlerini ayrıştırır:
+`auto-parse --vhdx`, VHDX imajlarını **Linux, macOS ve Windows** üzerinde yerel olarak okur; işletim sistemi bağlaması, FUSE veya yönetici yetkisi gerekmez.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Her imaj, yeni bir geçici dizinde, imajın adını taşıyan bir klasöre (`host1-triage`) salt okunur
-  olarak bağlanır ve orada bulunan sistemler, diskteki bir koleksiyonda olduğu gibi ayrıştırılır.
-  İmajların bağlantısı, çalıştırmanın sonunda ve Ctrl+C ile kaldırılır.
-- Terminal, imajları ve her sistemin imajını listeler:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- Bildirim dosyasında `EvidenceDirectory` verilen dizindir ve her sistemin `Image` değeri o sistemin
-  imajını belirtir. `EvidenceRoot` ve ayrıştırıcı komutları bağlama klasörünü (`./host1-triage/C`)
-  kullanır.
-- İmaj, Volume Shadow Copies dosyalarını `VSS32` gibi klasörlerde içeriyorsa her klasör başka bir sistem (`HOST1_2`, …) olarak bulunur ve ayrıştırılır.
-- Bağlanamayan bir imaj raporlanır; diğerleri yine de ayrıştırılır ve çalıştırma 1 çıkış durumuyla
-  sona erer.
+Ayrıştırıcılar dosya yolu gerektirdiğinden Juntei, NTFS okuyucusunun sunduğu dosyaları özel bir geçici dizine kopyalar. **Bu dosyalar için yeterli geçici disk alanı ayırın.** Kaynak imaj salt okunur kalır; normal tamamlanmada geçici kopyalar silinir.
 
-Bir NTFS birimi açılamazsa Juntei sorunu bildirir ve okunabilen birimleri korur. Kısmen okunabilen imajlarda `auto-parse --vhdx` çıkış kodu 1 döndürür; `mount` da ayırma işleminden sonra 1 döndürür.
+Okuma hataları ve güvenli olmayan adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara kaydedilir. Okunabilen sonuçlar korunur; eksik girdiler çıkış kodu 1 döndürür.
 
-## Gereksinimler { #requirements }
+Dosyaları diğer programlara sunan ayrı `mount` komutu için hâlâ Linux, FUSE 3 ve `/dev/fuse` erişimi gerekir.
 
-- Linux: FUSE 3 (`fusermount3`, `fuse3` paketi) ve normal kullanıcıların genellikle sahip olduğu
-  `/dev/fuse` erişimi. Root gerekmez.
-- Windows ve macOS desteklenmez. Windows'ta bunun yerine imajı yönetici olarak çalıştırılan bir
-  PowerShell'de salt okunur olarak ekleyin ve araçlara sürücü harfini verin:
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

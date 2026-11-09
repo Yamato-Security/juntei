@@ -51,38 +51,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse ဖြင့် image တိုင်းကို parse လုပ်ခြင်း { #parsing-every-image-with-auto-parse }
+## အင်မေ့ဂျ်များကို မူလစနစ်ဖြင့် ခွဲခြမ်းစိတ်ဖြာခြင်း { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` သည် အထောက်အထား ဖိုင်တွဲရှိ VHDX disk image တိုင်း (သို့မဟုတ် `-d` ဖြင့် ပေးထားသော image
-တစ်ခုတည်း) အတွင်းရှိ Windows စနစ်များကို သီးခြား mount လုပ်စရာမလိုဘဲ parse လုပ်ပါသည်-
+`auto-parse --vhdx` သည် **Linux၊ macOS နှင့် Windows** တွင် VHDX ကို တိုက်ရိုက်ဖတ်သည်။ OS mount၊ FUSE သို့မဟုတ် administrator အခွင့်အရေး မလိုအပ်ပါ။
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Image တစ်ခုစီကို ယာယီ ဖိုင်တွဲအသစ်တစ်ခုအတွင်း image ၏ အမည်ဖြင့် အမည်ပေးထားသော ဖိုင်တွဲ (`host1-triage`)
-  တွင် read-only အဖြစ် mount လုပ်ပြီး ထိုနေရာတွင် တွေ့ရှိသော စနစ်များကို disk ပေါ်ရှိ collection တစ်ခုကဲ့သို့ parse
-  လုပ်ပါသည်။ Image များကို အဆုံးတွင်လည်းကောင်း၊ Ctrl+C နှိပ်သည့်အခါတွင်လည်းကောင်း unmount လုပ်ပါသည်။
-- Terminal သည် image များနှင့် စနစ်တစ်ခုစီ၏ image ကို ဖော်ပြပါသည်-
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`။
-- Manifest တွင် `EvidenceDirectory` သည် ပေးထားသော ဖိုင်တွဲ ဖြစ်ပြီး စနစ်တစ်ခုစီ၏ `Image` သည် ၎င်း၏ image ကို
-  ဖော်ပြပါသည်။ `EvidenceRoot` နှင့် parser ညွှန်ကြားချက်များသည် mount ဖိုင်တွဲ (`./host1-triage/C`) ကို
-  အသုံးပြုပါသည်။
-- Image တွင် Volume Shadow Copies မှ ဖိုင်များကို `VSS32` ကဲ့သို့ folder များ၌ သိမ်းထားပါက folder တစ်ခုစီကို နောက်ထပ် system (`HOST1_2`၊ …) အဖြစ် ရှာဖွေ၍ parse လုပ်သည်။
-- Mount မလုပ်နိုင်သော image ကို report လုပ်ပါသည်။ ကျန် image များကို ဆက်လက် parse လုပ်ပြီး run သည်
-  exit status 1 ဖြင့် ပြီးဆုံးပါသည်။
+Parser များအတွက် ဖိုင်လမ်းကြောင်းများ လိုအပ်သဖြင့် NTFS reader မှ ရရှိသော ဖိုင်များကို သီးသန့်ယာယီ directory သို့ ကူးယူသည်။ **ထိုဖိုင်များအားလုံးအတွက် ယာယီ disk နေရာ လုံလောက်စွာ ရှိရမည်။** မူရင်း image ကို read-only အဖြစ် ထားပြီး ပုံမှန်ပြီးဆုံးပါက ယာယီမိတ္တူများကို ဖယ်ရှားသည်။
 
-NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
+ဖတ်ရှုမှုအမှားများနှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` ၏ failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ဆက်လက်သိမ်းဆည်းပြီး input မပြည့်စုံပါက exit code 1 ပြန်ပေးသည်။
 
-## လိုအပ်ချက်များ { #requirements }
+အခြား program များမှ ဖိုင်များကို ဖတ်နိုင်ရန် အသုံးပြုသော သီးခြား `mount` command သည် Linux၊ FUSE 3 နှင့် `/dev/fuse` access လိုအပ်ဆဲ ဖြစ်သည်။
 
-- Linux- FUSE 3 (`fusermount3`၊ `fuse3` package) နှင့် `/dev/fuse` သို့ ဝင်ရောက်ခွင့်။ ပုံမှန်အသုံးပြုသူများတွင်
-  ထိုခွင့် အများအားဖြင့် ရှိပါသည်။ Root မလိုအပ်ပါ။
-- Windows နှင့် macOS ကို မပံ့ပိုးပါ။ Windows တွင် ယင်းအစား administrator အခွင့်အရေးဖြင့် run ထားသော (elevated) PowerShell တွင် image ကို
-  read-only အဖြစ် attach လုပ်ပြီး ၎င်း၏ drive letter ကို tool များအား ပေးပါ-
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

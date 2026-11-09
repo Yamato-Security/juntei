@@ -50,37 +50,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## Mengurai setiap image dengan auto-parse { #parsing-every-image-with-auto-parse }
+## Analisis image secara native { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` mengurai sistem-sistem Windows di dalam setiap image disk VHDX di direktori bukti
-(atau satu image yang diberikan dengan `-d`), tanpa mount terpisah:
+`auto-parse --vhdx` membaca VHDX secara native di **Linux, macOS, dan Windows**, tanpa mount OS, FUSE, atau hak administrator.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Setiap image di-mount dalam mode baca saja di sebuah direktori sementara baru, dalam folder yang dinamai sesuai
-  image tersebut (`host1-triage`), dan sistem-sistem yang ditemukan di sana diurai seperti pada hasil pengumpulan
-  di disk. Mount image-image tersebut dilepas di akhir eksekusi, dan juga saat Ctrl+C ditekan.
-- Terminal mencantumkan image-image tersebut beserta image dari setiap sistem:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- Di manifest, `EvidenceDirectory` adalah direktori yang diberikan dan `Image` milik setiap sistem menyebutkan
-  image-nya. `EvidenceRoot` dan perintah parser menggunakan folder mount (`./host1-triage/C`).
-- Jika image berisi berkas dari Volume Shadow Copies dalam folder seperti `VSS32`, setiap folder ditemukan dan diurai sebagai sistem lain (`HOST1_2`, …).
-- Image yang tidak dapat di-mount dilaporkan; image lainnya tetap diurai, dan eksekusi berakhir dengan
-  exit status 1.
+Parser membutuhkan jalur berkas: Juntei menyalin berkas yang disediakan pembaca NTFS ke direktori sementara privat. **Sediakan ruang disk sementara yang cukup untuk semua berkas tersebut.** Image sumber tetap hanya-baca dan salinan dihapus saat proses selesai secara normal.
 
-Jika sebuah volume NTFS tidak dapat dibuka, Juntei melaporkan masalahnya dan mempertahankan volume yang dapat dibaca. Untuk citra yang hanya terbaca sebagian, `auto-parse --vhdx` mengembalikan kode keluar 1; `mount` juga mengembalikan 1 setelah pelepasan.
+Kesalahan baca dan nama yang tidak aman dicatat dalam `ImageErrors` dan baris gagal `manifest.csv`. Hasil yang dapat dibaca tetap disimpan; input tidak lengkap menghasilkan kode keluar 1.
 
-## Persyaratan { #requirements }
+Perintah `mount` terpisah untuk menyediakan berkas kepada program lain tetap memerlukan Linux, FUSE 3, dan akses ke `/dev/fuse`.
 
-- Linux: FUSE 3 (`fusermount3`, paket `fuse3`) dan akses ke `/dev/fuse`, yang biasanya dimiliki oleh pengguna
-  biasa. Root tidak diperlukan.
-- Windows dan macOS tidak didukung. Di Windows, sebagai gantinya, pasang image dalam mode baca saja di PowerShell
-  yang dijalankan dengan hak administrator (elevated), lalu berikan huruf drive-nya ke alat-alat tersebut:
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

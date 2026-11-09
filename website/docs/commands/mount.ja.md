@@ -48,29 +48,38 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse ですべてのイメージを解析する { #parsing-every-image-with-auto-parse }
+## auto-parse でイメージを解析する { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` は、証拠ディレクトリ内のすべての VHDX ディスクイメージ (または `-d` で指定した 1 つのイメージ) に含まれる Windows システムを、別途マウントすることなく解析します。
+`--vhdx` を指定すると、[ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用して
+**Linux、macOS、Windows** で VHDX をネイティブに読み取ります。OS へのマウント、FUSE ドライバー、管理者権限は不要です。
 
 ```bash
+# ディレクトリ内のイメージを再帰的に検索
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# 単一イメージ
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- 各イメージは、新しい一時ディレクトリ内の、イメージ名に由来するフォルダー (`host1-triage`) に読み取り専用でマウントされ、そこで見つかったシステムは、ディスク上のコレクションと同じように解析されます。イメージは実行の最後と、Ctrl+C を押したときにアンマウントされます。
-- ターミナルには、イメージの一覧と、各システムがどのイメージのものかが表示されます: `HOST1: ./host1-triage/C (./host1-triage.vhdx)`。
-- マニフェストでは、`EvidenceDirectory` は指定されたディレクトリで、各システムの `Image` はそのイメージを示します。`EvidenceRoot` とパーサー コマンドはマウント フォルダー (`./host1-triage/C`) を使用します。
-- Volume Shadow Copies から取得したファイルが `VSS32` などのフォルダーに含まれる場合、それぞれを別のシステム (`HOST1_2`、…) として検出し、解析します。
-- マウントできないイメージは報告されます。その場合も他のイメージは解析されますが、実行は終了ステータス 1 で終了します。
+各パーサーはファイルパスを必要とするため、リーダーが公開する NTFS ボリューム内のファイルを、
+システムの専用一時ディレクトリにストリーミングでコピーしてから通常の解析を行います。
+**出力結果に加えて、これらのファイルを保存する一時ディスク容量が必要です。**
+解析対象になったアーティファクトだけではなく、公開されたファイルシステム全体をコピーします。
+読み取りバッファーは固定サイズです。ホストのファイルシステムが対応している場合、ゼロ領域はスパース領域として書き込みます。
+元のファイル名、ディレクトリ構造、ハードリンク、ファイル更新時刻を保持します。
+LNK と Jump List のソース作成・更新・アクセス時刻は、一時ファイルではなく元の NTFS メタデータのスナップショットから取得します。
+一時ディレクトリは、パーサーエラーが報告された場合を含めて正常な終了処理で削除されますが、強制終了時には残る場合があります。
+元のイメージは読み取り専用で開き、未反映の VHDX ログもメモリ上でのみ適用します。
 
-開けない NTFS ボリュームがある場合、その問題を報告し、読み取り可能なボリュームの処理を続けます。画像の一部を読み取れなかった場合、`auto-parse --vhdx` は終了コード 1 を返し、`mount` もアンマウント後に 1 を返します。
+ホスト名の検出、ホスト別の出力、CSV/JSON/JSONL、`-j` は通常の証拠ディレクトリと同じ解析処理を使用します。
+`manifest.json` の `Image` は元のイメージを、`EvidenceRoot` はイメージ内の相対パスを示します。
+読み取れないイメージ、ボリューム、ファイル、安全に表現できないファイル名は、`ImageErrors` と
+`manifest.csv` の失敗行に記録します。読み取れる証拠の解析は継続し、不完全な入力があれば終了コードは 1 になります。
+危険な名前や曖昧な名前は勝手に変更せず、エラーとして報告します。名前付き NTFS ストリームを追加ファイルとして抽出する機能はありません。
+トリアージイメージ内に通常のファイルとして収集済みのアーティファクトは利用できます。
 
-## 要件 { #requirements }
+他のプログラムにファイルシステムを公開する [`mount` コマンド](mount.md) は、引き続き Linux の FUSE を必要とします。
+`auto-parse --vhdx` はこのコマンドを使用しません。
 
-- Linux: FUSE 3 (`fusermount3`、`fuse3` パッケージ) と `/dev/fuse` へのアクセス権。通常のユーザーは、たいていこのアクセス権を持っています。root 権限は不要です。
-- Windows と macOS はサポートされていません。Windows では代わりに、管理者として実行した PowerShell でイメージを読み取り専用でアタッチし、そのドライブ文字をツールに指定します。
+## OS へのマウント要件
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+`juntei mount` は Linux の FUSE 3 (`fusermount3`) と `/dev/fuse` へのアクセスを必要とします。Windows と macOS では、上記のネイティブ解析を使用してください。

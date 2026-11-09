@@ -50,36 +50,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## การพาร์สทุกอิมเมจด้วย auto-parse { #parsing-every-image-with-auto-parse }
+## การวิเคราะห์อิมเมจแบบเนทีฟ { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` พาร์สระบบ Windows ภายในอิมเมจดิสก์ VHDX ทุกไฟล์ในไดเรกทอรีหลักฐาน (หรืออิมเมจเดียว
-ที่ระบุด้วย `-d`) โดยไม่ต้องเมานต์แยกต่างหาก:
+`auto-parse --vhdx` อ่าน VHDX แบบเนทีฟบน **Linux, macOS และ Windows** โดยไม่ต้องเมานต์ผ่าน OS ใช้ FUSE หรือมีสิทธิ์ผู้ดูแลระบบ
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- แต่ละอิมเมจจะถูกเมานต์แบบอ่านอย่างเดียวในไดเรกทอรีชั่วคราวใหม่ ภายในโฟลเดอร์ที่ตั้งชื่อตามอิมเมจ
-  (`host1-triage`) และระบบที่พบในนั้นจะถูกพาร์สเหมือนกับชุดข้อมูลที่อยู่บนดิสก์ อิมเมจจะถูกยกเลิกการเมานต์
-  เมื่อทำงานเสร็จ และเมื่อกด Ctrl+C
-- เทอร์มินัลแสดงรายการอิมเมจและอิมเมจของแต่ละระบบ:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`
-- ใน manifest `EvidenceDirectory` คือไดเรกทอรีที่ระบุ และ `Image` ของแต่ละระบบระบุอิมเมจของระบบนั้น
-  `EvidenceRoot` และคำสั่งของพาร์เซอร์ใช้โฟลเดอร์เมานต์ (`./host1-triage/C`)
-- หากอิมเมจมีไฟล์จาก Volume Shadow Copies ในโฟลเดอร์เช่น `VSS32` แต่ละโฟลเดอร์จะถูกตรวจพบและพาร์สเป็นอีกระบบหนึ่ง (`HOST1_2`, …)
-- อิมเมจที่เมานต์ไม่ได้จะถูกรายงาน อิมเมจอื่น ๆ ยังคงถูกพาร์สต่อ และการทำงานจะจบลงด้วย exit status 1
+พาร์เซอร์ต้องใช้พาธไฟล์ Juntei จึงคัดลอกไฟล์ที่ตัวอ่าน NTFS แสดงไปยังไดเรกทอรีชั่วคราวส่วนตัว **ต้องมีพื้นที่ดิสก์ชั่วคราวเพียงพอสำหรับไฟล์เหล่านี้ทั้งหมด** อิมเมจต้นฉบับยังคงอ่านอย่างเดียว และสำเนาจะถูกลบเมื่อจบการทำงานตามปกติ
 
-หากเปิดโวลุ่ม NTFS ไม่ได้ Juntei จะรายงานปัญหาและคงโวลุ่มที่อ่านได้ไว้ สำหรับอิมเมจที่อ่านได้เพียงบางส่วน `auto-parse --vhdx` จะคืนรหัสจบการทำงาน 1 และ `mount` จะคืนค่า 1 หลังยกเลิกการเมานต์เช่นกัน
+ข้อผิดพลาดในการอ่านและชื่อที่ไม่ปลอดภัยจะบันทึกใน `ImageErrors` และแถวที่ล้มเหลวของ `manifest.csv` ผลลัพธ์ที่อ่านได้ยังคงถูกเก็บไว้ และอินพุตที่ไม่สมบูรณ์จะคืนรหัสออก 1
 
-## สิ่งที่ต้องมี { #requirements }
+คำสั่ง `mount` แยกต่างหากสำหรับให้โปรแกรมอื่นเข้าถึงไฟล์ยังคงต้องใช้ Linux, FUSE 3 และสิทธิ์เข้าถึง `/dev/fuse`
 
-- Linux: FUSE 3 (`fusermount3`, แพ็กเกจ `fuse3`) และสิทธิ์เข้าถึง `/dev/fuse` ซึ่งผู้ใช้ทั่วไปมักมีอยู่แล้ว
-  ไม่จำเป็นต้องใช้ root
-- ไม่รองรับ Windows และ macOS บน Windows ให้แนบ (attach) อิมเมจแบบอ่านอย่างเดียวใน PowerShell ที่รันด้วยสิทธิ์ผู้ดูแลระบบแทน
-  แล้วระบุอักษรไดรฟ์ของอิมเมจนั้นให้กับเครื่องมือ:
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

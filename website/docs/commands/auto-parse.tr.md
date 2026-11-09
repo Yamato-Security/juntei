@@ -23,13 +23,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX disk imajları { #vhdx-disk-images }
 
-`--vhdx` ile `auto-parse`, kanıt dizinindeki her VHDX disk imajının içindeki sistemleri ayrıştırır. Her imaj ayrıştırılırken FUSE ile salt okunur bağlanır; dosyalar dışarı çıkarılmaz. Bkz. [Disk İmajlarını Bağlama](mount.md).
+`auto-parse --vhdx`, VHDX imajlarını **Linux, macOS ve Windows** üzerinde yerel olarak okur; işletim sistemi bağlaması, FUSE veya yönetici yetkisi gerekmez.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Bir NTFS birimi açılamazsa Juntei sorunu bildirir ve okunabilen birimleri korur. Kısmen okunabilen imajlarda `auto-parse --vhdx` çıkış kodu 1 döndürür; `mount` da ayırma işleminden sonra 1 döndürür.
+Ayrıştırıcılar dosya yolu gerektirdiğinden Juntei, NTFS okuyucusunun sunduğu dosyaları özel bir geçici dizine kopyalar. **Bu dosyalar için yeterli geçici disk alanı ayırın.** Kaynak imaj salt okunur kalır; normal tamamlanmada geçici kopyalar silinir.
+
+Okuma hataları ve güvenli olmayan adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara kaydedilir. Okunabilen sonuçlar korunur; eksik girdiler çıkış kodu 1 döndürür.
+
+Dosyaları diğer programlara sunan ayrı `mount` komutu için hâlâ Linux, FUSE 3 ve `/dev/fuse` erişimi gerekir.
+
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
 
 ## Çıktı saat dilimi { #output-time-zone }
 
@@ -527,7 +534,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

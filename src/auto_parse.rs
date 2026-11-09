@@ -37,7 +37,6 @@ mod flat_outputs;
 mod srum_outputs;
 mod timeline;
 mod timestamps;
-#[cfg(target_os = "linux")]
 mod vhdx_images;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
@@ -437,6 +436,11 @@ struct Manifest<'a> {
     hosts: Vec<ManifestHost>,
     #[serde(rename = "Tasks")]
     tasks: &'a [TaskResult],
+    #[serde(
+        rename = "ImageErrors",
+        skip_serializing_if = "<[ImageProblem]>::is_empty"
+    )]
+    image_errors: &'a [ImageProblem],
 }
 
 struct DataFile {
@@ -445,17 +449,26 @@ struct DataFile {
     artifact: &'static str,
 }
 
-/// The disk images `--vhdx` mounted for a run: the name of the directory they were found in, and
-/// each mount folder (in the directory the parsers read) with its image, from that directory
+/// The disk images prepared for a run: the name of the directory they were found in, and
+/// each staging folder (in the directory the parsers read) with its image, from that directory
 /// (`./host1-triage.vhdx`).
-// Only `--vhdx` makes them, where FUSE is.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) struct Images {
     directory_name: String,
     mounts: Vec<(PathBuf, String)>,
+    problems: Vec<ImageProblem>,
+    metadata: crate::image_metadata::Snapshot,
 }
 
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[derive(Serialize)]
+struct ImageProblem {
+    #[serde(rename = "Image")]
+    image: String,
+    #[serde(rename = "Path")]
+    path: String,
+    #[serde(rename = "Error")]
+    error: String,
+}
+
 impl Images {
     /// The image a host's files are in.
     fn of(&self, root: &Path) -> Option<&str> {
@@ -469,13 +482,7 @@ impl Images {
 /// Run the command; returns the exit status.
 pub fn run(opts: &AutoParseOptions) -> i32 {
     if opts.vhdx {
-        #[cfg(target_os = "linux")]
         return vhdx_images::run(opts);
-        #[cfg(not(target_os = "linux"))]
-        {
-            error_msg(opts.common.no_color, crate::mount::NO_FUSE);
-            return 1;
-        }
     }
     run_evidence(opts, None)
 }
@@ -940,6 +947,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             .map(|host| manifest_host(host, &evidence, images))
             .collect(),
         tasks: &recorded,
+        image_errors: images.map_or(&[], |i| i.problems.as_slice()),
     };
     let manifest_path = opts.output.join("manifest.json");
     if let Err(e) = write_pretty_json(&manifest_path, &manifest) {
@@ -1383,6 +1391,12 @@ fn build_tasks(
                     // `ExtractedFile` from the output directory, as the manifests write paths
                     args.push("--extract-shown-as".into());
                     args.push(dot_relative(&parser_output, &extract).into_os_string());
+                }
+                if matches!(artifact, "lnk" | "jump-lists")
+                    && let Some(path) = &opts.image_source_metadata
+                {
+                    args.push("--image-source-metadata".into());
+                    args.push(path.clone().into_os_string());
                 }
                 args.push("-C".into());
                 args.push("-K".into());
@@ -2411,6 +2425,14 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             task.error.clone().unwrap_or_default(),
             serde_json::to_string(&task.command).map_err(io::Error::other)?,
         ])?;
+    }
+    for problem in manifest.image_errors {
+        let mut row = vec![String::new(); 18];
+        row[4] = format!("{}!/{}", problem.image, problem.path);
+        row[5] = "vhdx".into();
+        row[10] = "failed".into();
+        row[16] = problem.error.clone();
+        writer.write_record(row)?;
     }
     writer.flush()
 }

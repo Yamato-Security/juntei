@@ -163,13 +163,21 @@ pub fn run(opts: &LnkOptions) -> i32 {
     let options = lnk::Options {
         code_page: opts.code_page,
     };
+    let source_times =
+        match crate::image_metadata::SourceTimes::load(opts.image_source_metadata.as_deref()) {
+            Ok(times) => times,
+            Err(e) => {
+                error_msg(no_color, &e);
+                return 1;
+            }
+        };
     let mut parsed = Vec::new();
     let mut failed = 0usize;
     for path in &files {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
         }
-        match parse_file(path, &options) {
+        match parse_file(path, &options, &source_times) {
             Ok(record) => parsed.push(record),
             Err(e) => {
                 failed += 1;
@@ -296,7 +304,11 @@ impl Parsed {
     }
 }
 
-fn parse_file(path: &Path, options: &lnk::Options) -> Result<Parsed, String> {
+fn parse_file(
+    path: &Path,
+    options: &lnk::Options,
+    source_times: &crate::image_metadata::SourceTimes,
+) -> Result<Parsed, String> {
     let meta = path.metadata().map_err(|e| e.to_string())?;
     if meta.len() > MAX_LNK_SIZE {
         return Err(format!("too large for a shortcut ({} bytes)", meta.len()));
@@ -305,11 +317,7 @@ fn parse_file(path: &Path, options: &lnk::Options) -> Result<Parsed, String> {
     let link = lnk::parse_with(&data, options).map_err(|e| e.to_string())?;
     Ok(Parsed {
         source: path.to_string_lossy().to_string(),
-        source_times: [
-            meta.created().ok(),
-            meta.modified().ok(),
-            meta.accessed().ok(),
-        ],
+        source_times: source_times.for_file(path, &meta)?,
         file_size: meta.len(),
         link,
     })

@@ -20,7 +20,7 @@ use crate::util::error_msg;
 
 /// What to use where FUSE isn't available.
 #[cfg(not(target_os = "linux"))]
-pub const NO_FUSE: &str = "Mounting needs FUSE and works on Linux. On Windows, attach the image read-only instead: Mount-DiskImage -ImagePath <IMAGE> -Access ReadOnly";
+pub const NO_FUSE: &str = "OS-visible mounting needs Linux FUSE. To parse VHDX images on Windows or macOS without mounting or administrator privileges, use: juntei auto-parse --vhdx -d <IMAGE_OR_DIR> -o <OUTPUT>";
 
 /// Run the command; returns the exit status.
 #[cfg(target_os = "linux")]

@@ -50,36 +50,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## تحليل كل صورة باستخدام auto-parse { #parsing-every-image-with-auto-parse }
+## تحليل الصور محليًا { #parsing-every-image-with-auto-parse }
 
-يحلل `auto-parse --vhdx` أنظمة Windows الموجودة داخل كل صورة قرص VHDX في مجلد الأدلة (أو الصورة الواحدة
-المعطاة عبر `-d`)، دون تحميل منفصل:
+يقرأ `auto-parse --vhdx` صور VHDX مباشرة على **Linux وmacOS وWindows**، دون تركيب عبر نظام التشغيل أو FUSE أو صلاحيات مسؤول.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- تُحمَّل كل صورة للقراءة فقط في مجلد مؤقت جديد، داخل مجلد يحمل اسم الصورة (`host1-triage`)، وتُحلَّل
-  الأنظمة التي يُعثر عليها هناك كما في مجموعة موجودة على القرص. ويُلغى تحميل الصور في النهاية، وعند الضغط
-  على Ctrl+C.
-- تسرد الطرفية الصور وصورة كل نظام:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- في البيان، يمثل `EvidenceDirectory` المجلد المعطى، ويسمّي `Image` الخاص بكل نظام صورته. ويستخدم
-  `EvidenceRoot` وأوامر المحللات مجلد التحميل (`./host1-triage/C`).
-- إذا احتوت الصورة على ملفات من Volume Shadow Copies ضمن مجلدات مثل `VSS32`، يُكتشف كل مجلد ويُحلل بوصفه نظامًا آخر (`HOST1_2`، …).
-- يُبلَّغ عن الصورة التي يتعذر تحميلها؛ وتظل الصور الأخرى تُحلَّل، وينتهي التشغيل بحالة الخروج 1.
+تحتاج المحللات إلى مسارات ملفات، لذلك ينسخ Juntei الملفات التي يتيحها قارئ NTFS إلى مجلد مؤقت خاص. **يجب توفير مساحة مؤقتة كافية لهذه الملفات.** تبقى الصورة الأصلية للقراءة فقط وتُحذف النسخ عند انتهاء التشغيل بشكل طبيعي.
 
-إذا تعذر فتح وحدة NTFS، يبلغ Juntei عن المشكلة ويحتفظ بالوحدات القابلة للقراءة. تعيد الصور القابلة للقراءة جزئيًا رمز الخروج 1 مع `auto-parse --vhdx`، ويعيد `mount` أيضًا الرمز 1 بعد إلغاء التركيب.
+تُسجّل أخطاء القراءة والأسماء غير الآمنة في `ImageErrors` والصفوف الفاشلة في `manifest.csv`. تُحفظ النتائج القابلة للقراءة، وتكون حالة الخروج 1 عند وجود مدخلات غير مكتملة.
 
-## المتطلبات { #requirements }
+لا يزال أمر `mount` المنفصل، الذي يتيح الملفات للبرامج الأخرى، يتطلب Linux وFUSE 3 والوصول إلى `/dev/fuse`.
 
-- Linux: يلزم FUSE 3 ‏(`fusermount3`، والحزمة `fuse3`) وإمكانية الوصول إلى `/dev/fuse`، وهي متاحة
-  عادةً للمستخدمين العاديين. ولا حاجة إلى صلاحيات root.
-- لا يُدعم Windows ولا macOS. وعلى Windows، أرفق الصورة للقراءة فقط بدلًا من ذلك في جلسة PowerShell بصلاحيات
-  المسؤول (elevated)، ثم أعطِ الأدوات حرف محرك الأقراص الخاص بها:
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

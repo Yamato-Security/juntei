@@ -50,37 +50,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## Аналіз кожного образу за допомогою auto-parse { #parsing-every-image-with-auto-parse }
+## Нативний аналіз образів { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` аналізує системи Windows усередині кожного образу диска VHDX у каталозі доказів (або в
-одному образі, указаному через `-d`) без окремого монтування:
+`auto-parse --vhdx` читає VHDX нативно в **Linux, macOS і Windows**, без системного монтування, FUSE або прав адміністратора.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Кожен образ монтується лише для читання в новому тимчасовому каталозі, у папці з назвою образу
-  (`host1-triage`), а знайдені там системи аналізуються так само, як у збірці на диску. Образи
-  відмонтовуються наприкінці роботи, а також після Ctrl+C.
-- Термінал перелічує образи та образ кожної системи:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- У маніфесті `EvidenceDirectory` — це вказаний каталог, а поле `Image` кожної системи називає її образ.
-  `EvidenceRoot` і команди парсерів використовують папку монтування (`./host1-triage/C`).
-- Якщо образ містить файли Volume Shadow Copies у папках на кшталт `VSS32`, кожна папка виявляється й аналізується як інша система (`HOST1_2`, …).
-- Про образ, який не вдається змонтувати, буде повідомлено; решта однаково аналізуються, а запуск завершується
-  з кодом виходу 1.
+Парсерам потрібні файлові шляхи: Juntei копіює файли, доступні через NTFS-читач, у приватний тимчасовий каталог. **Забезпечте достатньо тимчасового дискового простору для цих файлів.** Джерельний образ залишається лише для читання; за нормального завершення копії видаляються.
 
-Якщо том NTFS не відкривається, Juntei повідомляє про проблему та зберігає доступ до читабельних томів. Для частково читабельного образу `auto-parse --vhdx` повертає код завершення 1; `mount` також повертає 1 після відмонтування.
+Помилки читання та небезпечні імена записуються в `ImageErrors` і рядки помилок `manifest.csv`. Читабельні результати зберігаються; неповні вхідні дані дають код завершення 1.
 
-## Вимоги { #requirements }
+Окрема команда `mount`, що надає файли іншим програмам, і далі потребує Linux, FUSE 3 та доступу до `/dev/fuse`.
 
-- Linux: FUSE 3 (`fusermount3`, пакет `fuse3`) і доступ до `/dev/fuse`, який зазвичай мають звичайні
-  користувачі. Права root не потрібні.
-- Windows і macOS не підтримуються. У Windows натомість підключіть образ лише для читання в PowerShell,
-  запущеному з підвищеними правами, і передайте інструментам його літеру диска:
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

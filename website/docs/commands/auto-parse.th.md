@@ -23,13 +23,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## อิมเมจดิสก์ VHDX { #vhdx-disk-images }
 
-เมื่อใช้ `--vhdx` คำสั่ง `auto-parse` จะพาร์สระบบภายในอิมเมจดิสก์ VHDX ทุกไฟล์ในไดเรกทอรีหลักฐาน แต่ละอิมเมจจะถูกเมานต์แบบอ่านอย่างเดียวด้วย FUSE ระหว่างการพาร์ส โดยไม่มีการแยกไฟล์ ดู[การเมานต์อิมเมจดิสก์](mount.md)
+`auto-parse --vhdx` อ่าน VHDX แบบเนทีฟบน **Linux, macOS และ Windows** โดยไม่ต้องเมานต์ผ่าน OS ใช้ FUSE หรือมีสิทธิ์ผู้ดูแลระบบ
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-หากเปิดโวลุ่ม NTFS ไม่ได้ Juntei จะรายงานปัญหาและคงโวลุ่มที่อ่านได้ไว้ สำหรับอิมเมจที่อ่านได้เพียงบางส่วน `auto-parse --vhdx` จะคืนรหัสจบการทำงาน 1 และ `mount` จะคืนค่า 1 หลังยกเลิกการเมานต์เช่นกัน
+พาร์เซอร์ต้องใช้พาธไฟล์ Juntei จึงคัดลอกไฟล์ที่ตัวอ่าน NTFS แสดงไปยังไดเรกทอรีชั่วคราวส่วนตัว **ต้องมีพื้นที่ดิสก์ชั่วคราวเพียงพอสำหรับไฟล์เหล่านี้ทั้งหมด** อิมเมจต้นฉบับยังคงอ่านอย่างเดียว และสำเนาจะถูกลบเมื่อจบการทำงานตามปกติ
+
+ข้อผิดพลาดในการอ่านและชื่อที่ไม่ปลอดภัยจะบันทึกใน `ImageErrors` และแถวที่ล้มเหลวของ `manifest.csv` ผลลัพธ์ที่อ่านได้ยังคงถูกเก็บไว้ และอินพุตที่ไม่สมบูรณ์จะคืนรหัสออก 1
+
+คำสั่ง `mount` แยกต่างหากสำหรับให้โปรแกรมอื่นเข้าถึงไฟล์ยังคงต้องใช้ Linux, FUSE 3 และสิทธิ์เข้าถึง `/dev/fuse`
+
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
 
 ## เขตเวลาของเอาต์พุต { #output-time-zone }
 
@@ -517,7 +524,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

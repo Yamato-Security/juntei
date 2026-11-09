@@ -1,6 +1,8 @@
 # 証拠の収集 { #collecting-evidence }
 
-Juntei は Windows から収集済みのファイルを解析します。信頼できる取得ツールを使用し、可能な限り元のメタデータを保存してください。VHDX ディスクイメージは抽出せずに解析できます。[ディスクイメージのマウント](../commands/mount.md)を参照してください。
+Juntei は Windows から収集済みのファイルを解析します。信頼できる取得ツールを使用し、可能な限り元のメタデータを保存してください。
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
 ## 共通の場所 { #common-locations }
 

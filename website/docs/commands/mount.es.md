@@ -51,38 +51,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## Analizar todas las imágenes con auto-parse { #parsing-every-image-with-auto-parse }
+## Análisis nativo de imágenes { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` analiza los sistemas Windows contenidos en cada imagen de disco VHDX del directorio de
-evidencias (o en la única imagen indicada con `-d`), sin un montaje aparte:
+`auto-parse --vhdx` lee imágenes VHDX de forma nativa en **Linux, macOS y Windows**, sin montaje del sistema, FUSE ni privilegios de administrador.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Cada imagen se monta en modo de solo lectura en un nuevo directorio temporal, en una carpeta con el nombre de
-  la imagen (`host1-triage`), y los sistemas que se encuentran allí se analizan como en una recopilación en
-  disco. Las imágenes se desmontan al final y también al pulsar Ctrl+C.
-- La terminal enumera las imágenes y la imagen de cada sistema:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- En el manifiesto, `EvidenceDirectory` es el directorio indicado y el campo `Image` de cada sistema nombra su
-  imagen. `EvidenceRoot` y los comandos de los analizadores utilizan la carpeta de montaje
-  (`./host1-triage/C`).
-- Si la imagen contiene archivos de Volume Shadow Copies en carpetas como `VSS32`, cada carpeta se detecta y analiza como otro sistema (`HOST1_2`, …).
-- Si una imagen no se puede montar, se informa de ello; las demás se siguen analizando y la ejecución termina
-  con el código de salida 1.
+Los analizadores necesitan rutas de archivo: Juntei copia los archivos expuestos por el lector NTFS a un directorio temporal privado. **Reserve espacio temporal suficiente para todos esos archivos.** La imagen original permanece en modo de solo lectura y el espacio temporal se elimina al finalizar normalmente.
 
-Si no se puede abrir un volumen NTFS, Juntei informa del problema y conserva los volúmenes legibles. Con imágenes parcialmente legibles, `auto-parse --vhdx` devuelve el código 1; `mount` también devuelve 1 después de desmontar.
+Los errores de lectura y nombres no seguros se registran en `ImageErrors` y en las filas fallidas de `manifest.csv`. Se conservan los resultados legibles y la salida es 1 si la entrada está incompleta.
 
-## Requisitos { #requirements }
+El comando `mount` para exponer archivos a otros programas sigue requiriendo Linux, FUSE 3 y acceso a `/dev/fuse`.
 
-- Linux: FUSE 3 (`fusermount3`, el paquete `fuse3`) y acceso a `/dev/fuse`, que los usuarios normales suelen
-  tener. No se necesita root.
-- Windows y macOS no son compatibles. En Windows, conecte en su lugar la imagen en modo de solo lectura desde
-  un PowerShell con privilegios elevados e indique a las herramientas su letra de unidad:
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

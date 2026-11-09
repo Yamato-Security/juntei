@@ -21,13 +21,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX 磁碟映像檔 { #vhdx-disk-images }
 
-使用 `--vhdx` 時，`auto-parse` 會剖析證據目錄中每個 VHDX 磁碟映像內的系統。每個映像在剖析期間透過 FUSE 以唯讀方式掛載，不會擷取檔案。請參閱[掛載磁碟映像](mount.md)。
+`auto-parse --vhdx` 可在 **Linux、macOS 和 Windows** 原生讀取 VHDX，無需 OS 掛載、FUSE 或系統管理員權限。
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-若無法開啟某個 NTFS 磁碟區，Juntei 會回報問題並保留可讀取的磁碟區。映像檔僅部分可讀取時，`auto-parse --vhdx` 會傳回結束代碼 1；`mount` 也會在卸載後傳回 1。
+解析器需要檔案路徑，因此 Juntei 會將 NTFS 讀取器公開的檔案複製至專用暫存目錄。**請預留足夠的暫存磁碟空間以容納這些檔案。** 原始映像維持唯讀，正常結束時會刪除暫存副本。
+
+讀取失敗及不安全的檔名會記錄於 `ImageErrors` 與 `manifest.csv` 的失敗列。仍會保留可讀取資料的結果；輸入不完整時結束代碼為 1。
+
+供其他程式存取檔案的獨立 `mount` 命令仍需要 Linux、FUSE 3 及 `/dev/fuse` 存取權。
+
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
 
 ## 輸出時區 { #output-time-zone }
 
@@ -512,7 +519,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

@@ -23,13 +23,38 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX disk images
 
-With `--vhdx`, `auto-parse` parses the systems inside every VHDX disk image in the evidence directory. Each image is mounted read-only with FUSE while it is parsed, so nothing is extracted. See [Mounting Disk Images](mount.md).
+With `--vhdx`, `auto-parse` reads VHDX images natively on **Linux, macOS and Windows**, using
+[ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). No OS mount, FUSE driver,
+or administrator privileges are needed.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-If an NTFS volume cannot be opened, Juntei reports it and keeps the readable volumes. Partial images cause `auto-parse --vhdx` to return exit status 1; `mount` also returns 1 after unmounting.
+The artifact parsers need filesystem paths. Juntei therefore streams the files exposed by the
+reader's NTFS volumes into a private system-temporary workspace, then runs the usual parsers.
+**Allow enough temporary disk space for those files**, in addition to the results. This is a
+copy of the exposed filesystem, not just the artifacts that eventually produce records.
+Reads use bounded buffers; zero-filled regions are written as holes where the host filesystem
+supports them. Original filenames, directory structure, hard links, and file modification times
+are preserved. LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
+a forced termination can leave temporary files. The source image is opened read-only, and pending
+VHDX log updates are applied in memory only.
+
+Computer discovery, per-host output, CSV/JSON/JSONL, and `-j` use the same parsing pipeline as
+ordinary evidence directories. `Image` in `manifest.json` identifies the original image and
+`EvidenceRoot` identifies the relative path inside the prepared image tree. Unreadable images,
+volumes, files, and filenames that cannot be represented safely are reported in `ImageErrors`
+and failed rows of `manifest.csv`. Readable evidence is still parsed, and the process exits with
+status 1 if any image input was incomplete. Unsafe or ambiguous names are rejected rather than
+silently renamed. Named NTFS streams are not synthesized as extra files; already-collected
+artifacts stored as ordinary files inside a triage image remain available.
+
+The separate [`mount` command](mount.md) exposes a filesystem to other programs and still needs
+Linux FUSE. It is not used by `auto-parse --vhdx`.
 
 ## Output time zone
 
@@ -519,7 +544,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

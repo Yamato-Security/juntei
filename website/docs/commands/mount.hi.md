@@ -50,37 +50,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse से हर image को parse करना { #parsing-every-image-with-auto-parse }
+## इमेज का नेटिव विश्लेषण { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` evidence directory की हर VHDX disk image (या `-d` के साथ दी गई एकमात्र image) के अंदर के
-Windows systems को, अलग से mount किए बिना, parse करता है:
+`auto-parse --vhdx` **Linux, macOS और Windows** पर VHDX को नेटिव रूप से पढ़ता है। OS माउंट, FUSE या प्रशासक अधिकारों की आवश्यकता नहीं है।
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- हर image को एक नई temporary directory में, image के नाम वाले फ़ोल्डर (`host1-triage`) में read-only
-  mount किया जाता है, और वहाँ मिले systems को disk पर रखे संग्रह की तरह ही parse किया जाता है। अंत में, और
-  Ctrl+C दबाने पर, images unmount कर दी जाती हैं।
-- Terminal images और हर system की image सूचीबद्ध करता है:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`।
-- Manifest में, `EvidenceDirectory` दी गई directory होती है और हर system का `Image` उसकी image का नाम बताता
-  है। `EvidenceRoot` और parser commands mount फ़ोल्डर (`./host1-triage/C`) का उपयोग करते हैं।
-- यदि image में Volume Shadow Copies की files `VSS32` जैसे folders में हैं, तो हर folder को दूसरे system (`HOST1_2`, …) के रूप में खोजकर parse किया जाता है।
-- जो image mount नहीं हो पाती, उसकी सूचना दी जाती है; बाकी images फिर भी parse की जाती हैं, और run exit
-  status 1 के साथ समाप्त होता है।
+पार्सरों को फ़ाइल पथ चाहिए, इसलिए Juntei NTFS रीडर द्वारा उपलब्ध कराई गई फ़ाइलों को निजी अस्थायी डायरेक्टरी में कॉपी करता है। **इन सभी फ़ाइलों के लिए पर्याप्त अस्थायी डिस्क स्थान रखें।** मूल इमेज केवल पढ़ने के लिए खुलती है और सामान्य समापन पर अस्थायी प्रतियाँ हटा दी जाती हैं।
 
-यदि कोई NTFS वॉल्यूम नहीं खुलता, तो Juntei समस्या बताता है और पढ़ने योग्य वॉल्यूम को बनाए रखता है। आंशिक रूप से पढ़ी जा सकने वाली इमेज के लिए `auto-parse --vhdx` निकास कोड 1 लौटाता है; `mount` भी अनमाउंट करने के बाद 1 लौटाता है।
+पढ़ने की त्रुटियाँ और असुरक्षित नाम `ImageErrors` तथा `manifest.csv` की असफल पंक्तियों में दर्ज होते हैं। पढ़े जा सकने वाले परिणाम सुरक्षित रहते हैं; अधूरे इनपुट पर एग्ज़िट कोड 1 मिलता है।
 
-## आवश्यकताएँ { #requirements }
+अन्य प्रोग्रामों को फ़ाइलें उपलब्ध कराने वाले अलग `mount` कमांड के लिए अभी भी Linux, FUSE 3 और `/dev/fuse` तक पहुँच आवश्यक है।
 
-- Linux: FUSE 3 (`fusermount3`, `fuse3` package) और `/dev/fuse` तक access, जो सामान्य users के पास आमतौर पर
-  होता है। Root की आवश्यकता नहीं है।
-- Windows और macOS समर्थित नहीं हैं। Windows पर, इसके बजाय image को elevated PowerShell में read-only attach
-  करें, और tools को उसका drive letter दें:
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

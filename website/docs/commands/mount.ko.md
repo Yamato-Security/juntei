@@ -50,36 +50,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse로 모든 이미지 파싱 { #parsing-every-image-with-auto-parse }
+## 이미지의 네이티브 분석 { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx`는 별도로 마운트하지 않고도 증거 디렉터리에 있는 모든 VHDX 디스크 이미지(또는 `-d`로
-지정한 단일 이미지) 안의 Windows 시스템을 파싱합니다.
+`auto-parse --vhdx`는 **Linux, macOS, Windows**에서 VHDX를 네이티브로 읽습니다. OS 마운트, FUSE, 관리자 권한이 필요하지 않습니다.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- 각 이미지는 새 임시 디렉터리 안에 이미지 이름을 딴 폴더(`host1-triage`)로 읽기 전용 마운트되며, 그곳에서
-  발견된 시스템은 디스크에 있는 수집물과 마찬가지로 파싱됩니다. 이미지는 실행이 끝날 때와 Ctrl+C를 눌렀을 때
-  마운트 해제됩니다.
-- 터미널에는 이미지 목록과 각 시스템의 이미지가 표시됩니다:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- 매니페스트에서 `EvidenceDirectory`는 지정된 디렉터리이며, 각 시스템의 `Image`는 해당 시스템의 이미지를
-  나타냅니다. `EvidenceRoot`와 파서 명령어는 마운트 폴더(`./host1-triage/C`)를 사용합니다.
-- 이미지에 Volume Shadow Copies의 파일이 `VSS32` 같은 폴더에 들어 있으면 각 폴더를 별도 시스템 (`HOST1_2`, …)으로 찾아 파싱합니다.
-- 마운트할 수 없는 이미지는 보고됩니다. 나머지 이미지는 계속 파싱되며, 실행은 종료 상태 1로 끝납니다.
+파서는 파일 경로를 요구하므로 NTFS 리더가 제공하는 파일을 비공개 임시 디렉터리에 복사합니다. **해당 파일을 저장할 충분한 임시 디스크 공간을 확보하세요.** 원본 이미지는 읽기 전용이며 정상 종료 시 임시 복사본을 삭제합니다.
 
-NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`는 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.
+읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록합니다. 읽을 수 있는 증거의 결과는 유지하며, 불완전한 입력은 종료 코드 1을 반환합니다.
 
-## 요구 사항 { #requirements }
+다른 프로그램에 파일을 제공하는 별도 `mount` 명령은 여전히 Linux, FUSE 3 및 `/dev/fuse` 접근 권한을 요구합니다.
 
-- Linux: FUSE 3(`fusermount3`, `fuse3` 패키지)과 `/dev/fuse`에 대한 액세스 권한. 일반 사용자는 보통 이
-  권한을 가지고 있습니다. root 권한은 필요하지 않습니다.
-- Windows와 macOS는 지원되지 않습니다. Windows에서는 대신 관리자 권한으로 실행한 PowerShell에서 이미지를 읽기
-  전용으로 연결하고, 해당 드라이브 문자를 도구에 지정하십시오.
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

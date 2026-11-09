@@ -23,13 +23,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## Imagens de disco VHDX { #vhdx-disk-images }
 
-Com `--vhdx`, `auto-parse` analisa os sistemas em cada imagem de disco VHDX do diretório de evidências. Cada imagem é montada somente para leitura com FUSE durante a análise, sem extrair arquivos. Consulte [Montar imagens de disco](mount.md).
+`auto-parse --vhdx` lê imagens VHDX nativamente no **Linux, macOS e Windows**, sem montagem pelo sistema, FUSE ou privilégios de administrador.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Se um volume NTFS não puder ser aberto, o Juntei informa o problema e mantém os volumes legíveis. Para imagens parcialmente legíveis, `auto-parse --vhdx` retorna o código 1; `mount` também retorna 1 após desmontar.
+Os parsers precisam de caminhos de arquivo: o Juntei copia os arquivos expostos pelo leitor NTFS para um diretório temporário privado. **Reserve espaço temporário suficiente para todos esses arquivos.** A imagem original permanece somente leitura e as cópias são removidas ao terminar normalmente.
+
+Falhas de leitura e nomes inseguros são registrados em `ImageErrors` e nas linhas com falha de `manifest.csv`. Os resultados legíveis são preservados; entradas incompletas retornam o código 1.
+
+O comando separado `mount`, que expõe arquivos a outros programas, ainda exige Linux, FUSE 3 e acesso a `/dev/fuse`.
+
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
 
 ## Fuso horário da saída { #output-time-zone }
 
@@ -515,7 +522,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

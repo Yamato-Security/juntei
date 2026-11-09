@@ -5129,14 +5129,12 @@ fn auto_parse_puts_ual_tables_in_lateral_movement_with_their_times_in_the_offset
 // --- mount and auto-parse --vhdx ------------------------------------------------------------------
 
 /// The sample VHDX (test_files/vhdx), decompressed to `path`.
-#[cfg(target_os = "linux")]
 fn sample_vhdx(path: &Path) {
     let gz = std::fs::File::open(repo("test_files/vhdx/sample.vhdx.gz")).unwrap();
     let mut out = std::fs::File::create(path).unwrap();
     std::io::copy(&mut flate2::read::GzDecoder::new(gz), &mut out).unwrap();
 }
 
-#[cfg(target_os = "linux")]
 fn add_unreadable_partition_to_sample(path: &Path) {
     let mut bytes = std::fs::read(path).unwrap();
     // The first logical MiB is fully present. Resolve its BAT entry in this fixture only.
@@ -5268,11 +5266,11 @@ fn mount_serves_a_vhdx_read_only_until_interrupted() {
 /// Without FUSE support (Windows, macOS), mounting says what to do instead.
 #[cfg(not(target_os = "linux"))]
 #[test]
-fn mount_and_auto_parse_vhdx_need_fuse() {
+fn only_os_visible_mounting_needs_fuse() {
     let dir = tempfile::tempdir().unwrap();
     let r = run(&["mount", "image.vhdx", dir.path().to_str().unwrap(), "-K"]);
     assert_eq!(r.code, 1);
-    assert!(r.stdout.contains("Mount-DiskImage"), "{}", r.stdout);
+    assert!(r.stdout.contains("auto-parse --vhdx"), "{}", r.stdout);
     let r = run(&[
         "auto-parse",
         "-d",
@@ -5283,7 +5281,7 @@ fn mount_and_auto_parse_vhdx_need_fuse() {
         "-K",
     ]);
     assert_eq!(r.code, 1);
-    assert!(r.stdout.contains("Mount-DiskImage"), "{}", r.stdout);
+    assert!(r.stdout.contains("No VHDX disk images"), "{}", r.stdout);
 }
 
 #[cfg(target_os = "linux")]
@@ -5322,7 +5320,6 @@ fn mount_input_errors() {
     );
 }
 
-#[cfg(target_os = "linux")]
 #[test]
 fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     let evidence = tempfile::tempdir().unwrap();
@@ -5343,9 +5340,6 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
         "{}",
         r.stdout
     );
-    if !fuse_available() {
-        return;
-    }
     sample_vhdx(&evidence.path().join("first-auto.vhdx"));
     std::fs::create_dir(evidence.path().join("sub")).unwrap();
     sample_vhdx(&evidence.path().join("sub/second-auto.vhdx"));
@@ -5372,18 +5366,20 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     ]);
     // the broken image is a failure; the others are parsed
     assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+    let stdout = r.stdout.replace('\\', "/");
     for line in [
         "VHDX images: 4\n",
-        "Could not mount ./broken-auto.vhdx: ",
+        "Could not read ./broken-auto.vhdx: ",
+        "Incomplete VHDX input:",
         "Could not read ./partial-auto.vhdx: volume 2 at byte 32768: ",
-        "  ./first-auto.vhdx: mounted read-only (1 NTFS volume)\n",
-        "  ./sub/second-auto.vhdx: mounted read-only (1 NTFS volume)\n",
+        "  ./first-auto.vhdx: reading natively (1 NTFS volume)\n",
+        "  ./sub/second-auto.vhdx: reading natively (1 NTFS volume)\n",
         "Windows systems: 3\n",
         "  first-auto: ./first-auto/C (./first-auto.vhdx)\n",
         "  sub_second-auto: ./sub_second-auto/C (./sub/second-auto.vhdx)\n",
         "Failed: 0\n",
     ] {
-        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+        assert!(stdout.contains(line), "{line}\n{}", r.stdout);
     }
     let manifest: Value =
         serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
@@ -5392,9 +5388,26 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     let hosts = manifest["Hosts"].as_array().unwrap();
     assert_eq!(hosts.len(), 3);
     assert_eq!(hosts[0]["Image"], "./first-auto.vhdx");
-    assert_eq!(hosts[0]["EvidenceRoot"], "./first-auto/C");
+    assert_eq!(
+        hosts[0]["EvidenceRoot"]
+            .as_str()
+            .unwrap()
+            .replace('\\', "/"),
+        "./first-auto/C"
+    );
     assert_eq!(hosts[1]["Image"], "./partial-auto.vhdx");
     assert_eq!(hosts[2]["Image"], "./sub/second-auto.vhdx");
+    let errors = manifest["ImageErrors"].as_array().unwrap();
+    assert_eq!(errors.len(), 2, "{errors:?}");
+    assert!(errors.iter().any(|e| e["Image"] == "./broken-auto.vhdx"));
+    assert!(errors.iter().any(|e| e["Image"] == "./partial-auto.vhdx"));
+    let (_, rows) = csv_rows(&output.join("manifest.csv"));
+    assert_eq!(
+        rows.iter()
+            .filter(|row| row["Artifact"] == "vhdx" && row["Status"] == "failed")
+            .count(),
+        2
+    );
     // the files inside were parsed
     for host in ["first-auto", "partial-auto", "sub_second-auto"] {
         let (_, rows) = csv_rows(&output.join(host).join("ProcessExecution/Prefetch.csv"));
@@ -5418,19 +5431,18 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
         let text = String::from_utf8_lossy(&std::fs::read(&file).unwrap()).into_owned();
         assert!(!text.contains("juntei-vhdx-"), "{}", file.display());
     }
-    assert!(!mounted_from("first-auto.vhdx"));
-    assert!(!mounted_from("second-auto.vhdx"));
-    assert!(!mounted_from("partial-auto.vhdx"));
 }
 
-#[cfg(target_os = "linux")]
 #[test]
 fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
-    if !fuse_available() {
-        return;
-    }
     let evidence = tempfile::tempdir().unwrap();
-    sample_vhdx(&evidence.path().join("single.vhdx"));
+    let image = evidence.path().join("single.vhdx");
+    sample_vhdx(&image);
+    let original = std::fs::read(&image).unwrap();
+    let permissions = std::fs::metadata(&image).unwrap().permissions();
+    let mut read_only = permissions.clone();
+    read_only.set_readonly(true);
+    std::fs::set_permissions(&image, read_only).unwrap();
     let output_root = tempfile::tempdir().unwrap();
     let output = output_root.path().join("parsed");
     let result = Command::new(env!("CARGO_BIN_EXE_juntei"))
@@ -5447,8 +5459,12 @@ fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
             "-q",
         ])
         .current_dir(evidence.path())
+        // Native parsing needs no fusermount, system mount utility or helper.
+        .env("PATH", evidence.path())
         .output()
         .unwrap();
+    assert_eq!(std::fs::read(&image).unwrap(), original);
+    std::fs::set_permissions(&image, permissions).unwrap();
     assert!(
         result.status.success(),
         "{}\n{}",
@@ -5462,7 +5478,121 @@ fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
         evidence.path().file_name().unwrap().to_str().unwrap()
     );
     assert_eq!(manifest["Hosts"][0]["Image"], "./single.vhdx");
-    assert!(!mounted_from("single.vhdx"));
+}
+
+#[test]
+fn auto_parse_vhdx_refuses_input_as_timeline_even_through_a_hard_link() {
+    let dir = tempfile::tempdir().unwrap();
+    let image = dir.path().join("input.vhdx");
+    sample_vhdx(&image);
+    let original = std::fs::read(&image).unwrap();
+    let alias = dir.path().join("alias.jsonl");
+    std::fs::hard_link(&image, &alias).unwrap();
+    for target in [&image, &alias] {
+        let output = dir.path().join("output");
+        let r = run(&[
+            "auto-parse",
+            "--vhdx",
+            "-d",
+            image.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-j",
+            target.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 1, "{}", r.stdout);
+        assert!(r.stdout.contains("also a VHDX input"), "{}", r.stdout);
+        assert!(!output.exists());
+        assert_eq!(std::fs::read(&image).unwrap(), original);
+    }
+}
+
+#[test]
+fn staged_shell_files_use_original_source_times_in_every_format() {
+    let dir = tempfile::tempdir().unwrap();
+    for (command, fixture) in [
+        ("lnk", "test_files/lnk/nero_infotool.lnk"),
+        (
+            "jump-lists",
+            "test_files/jump_lists/f01b4d95cf55d32a.automaticDestinations-ms",
+        ),
+    ] {
+        let path = dir.path().join(Path::new(fixture).file_name().unwrap());
+        std::fs::copy(repo(fixture), &path).unwrap();
+        let mut files = serde_json::Map::new();
+        files.insert(
+            path.canonicalize().unwrap().to_string_lossy().into_owned(),
+            json!([
+                132_223_104_000_000_000u64,
+                132_223_104_010_000_000u64,
+                132_223_104_020_000_000u64
+            ]),
+        );
+        let snapshot = dir.path().join("metadata.json");
+        std::fs::write(
+            &snapshot,
+            serde_json::to_vec(&json!({"Files": files})).unwrap(),
+        )
+        .unwrap();
+        for kind in ["csv", "json", "jsonl"] {
+            let output = dir.path().join(format!("{command}-{kind}"));
+            let r = run(&[
+                "parse-file",
+                command,
+                "-f",
+                path.to_str().unwrap(),
+                "--image-source-metadata",
+                snapshot.to_str().unwrap(),
+                "-t",
+                kind,
+                "-o",
+                output.to_str().unwrap(),
+                "-K",
+                "-q",
+            ]);
+            assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+            let record: Value = if kind == "csv" {
+                let csv = if command == "jump-lists" {
+                    output.join("AutomaticDestinations.csv")
+                } else {
+                    output.clone()
+                };
+                let (_, rows) = csv_rows(&csv);
+                serde_json::to_value(&rows[0]).unwrap()
+            } else {
+                let text = std::fs::read_to_string(&output).unwrap();
+                let value: Value = serde_json::from_str(&text).unwrap();
+                if value.is_array() {
+                    value[0].clone()
+                } else {
+                    value
+                }
+            };
+            assert_eq!(record["SourceCreated"], "2020-01-01T00:00:00Z");
+            assert_eq!(record["SourceModified"], "2020-01-01T00:00:01Z");
+            assert_eq!(record["SourceAccessed"], "2020-01-01T00:00:02Z");
+        }
+        // Missing metadata must be an error, not a fallback to the cache's times.
+        std::fs::write(&snapshot, br#"{"Files":{}}"#).unwrap();
+        let r = run(&[
+            "parse-file",
+            command,
+            "-f",
+            path.to_str().unwrap(),
+            "--image-source-metadata",
+            snapshot.to_str().unwrap(),
+            "-t",
+            "jsonl",
+        ]);
+        assert_eq!(r.code, 1);
+        assert!(
+            r.stderr.contains("Original image metadata is missing")
+                || r.stdout.contains("Original image metadata is missing")
+        );
+    }
 }
 
 // --- parse-file lnk ---------------------------------------------------------------------------------

@@ -1,6 +1,8 @@
 # 증거 수집 { #collecting-evidence }
 
-Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 수 있는 수집 도구를 사용하고 가능한 한 원본 메타데이터를 보존하십시오. VHDX 디스크 이미지는 추출 없이 파싱할 수 있습니다. [디스크 이미지 마운트](../commands/mount.md)를 참조하십시오.
+Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 수 있는 수집 도구를 사용하고 가능한 한 원본 메타데이터를 보존하십시오.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
 ## 일반적인 위치 { #common-locations }
 

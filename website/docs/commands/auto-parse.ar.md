@@ -23,13 +23,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## صور أقراص VHDX { #vhdx-disk-images }
 
-عند استخدام `--vhdx`، يحلل `auto-parse` الأنظمة داخل كل صورة قرص VHDX في مجلد الأدلة. تُركّب كل صورة للقراءة فقط باستخدام FUSE أثناء تحليلها، دون استخراج الملفات. راجع [تحميل صور الأقراص](mount.md).
+يقرأ `auto-parse --vhdx` صور VHDX مباشرة على **Linux وmacOS وWindows**، دون تركيب عبر نظام التشغيل أو FUSE أو صلاحيات مسؤول.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-إذا تعذر فتح وحدة NTFS، يبلغ Juntei عن المشكلة ويحتفظ بالوحدات القابلة للقراءة. تعيد الصور القابلة للقراءة جزئيًا رمز الخروج 1 مع `auto-parse --vhdx`، ويعيد `mount` أيضًا الرمز 1 بعد إلغاء التركيب.
+تحتاج المحللات إلى مسارات ملفات، لذلك ينسخ Juntei الملفات التي يتيحها قارئ NTFS إلى مجلد مؤقت خاص. **يجب توفير مساحة مؤقتة كافية لهذه الملفات.** تبقى الصورة الأصلية للقراءة فقط وتُحذف النسخ عند انتهاء التشغيل بشكل طبيعي.
+
+تُسجّل أخطاء القراءة والأسماء غير الآمنة في `ImageErrors` والصفوف الفاشلة في `manifest.csv`. تُحفظ النتائج القابلة للقراءة، وتكون حالة الخروج 1 عند وجود مدخلات غير مكتملة.
+
+لا يزال أمر `mount` المنفصل، الذي يتيح الملفات للبرامج الأخرى، يتطلب Linux وFUSE 3 والوصول إلى `/dev/fuse`.
+
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
 
 ## المنطقة الزمنية للإخراج { #output-time-zone }
 
@@ -514,7 +521,7 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

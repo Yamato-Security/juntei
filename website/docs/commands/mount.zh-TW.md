@@ -49,36 +49,19 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## 使用 auto-parse 剖析每個映像檔 { #parsing-every-image-with-auto-parse }
+## 原生映像分析 { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` 會剖析證據目錄中每個 VHDX 磁碟映像檔（或以 `-d` 指定的單一映像檔）內的
-Windows 系統，不需要另外掛載：
+`auto-parse --vhdx` 可在 **Linux、macOS 和 Windows** 原生讀取 VHDX，無需 OS 掛載、FUSE 或系統管理員權限。
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- 每個映像檔會以唯讀方式掛載於一個新的暫存目錄中、以該映像檔命名的資料夾（`host1-triage`），
-  在其中找到的系統會如同磁碟上的收集資料一樣被剖析。映像檔會在執行結束時卸載，按下 Ctrl+C 時
-  也會卸載。
-- 終端機會列出各映像檔，以及每個系統所屬的映像檔：
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`。
-- 在清單檔中，`EvidenceDirectory` 是所提供的目錄，每個系統的 `Image` 則標示其所屬的映像檔。
-  `EvidenceRoot` 與剖析器命令使用掛載資料夾（`./host1-triage/C`）。
-- 若映像將 Volume Shadow Copies 的檔案存放於 `VSS32` 等資料夾，每個資料夾會被偵測並作為另一個系統 (`HOST1_2`、…) 剖析。
-- 無法掛載的映像檔會被回報；其他映像檔仍會被剖析，而這次執行會以結束狀態 1 結束。
+解析器需要檔案路徑，因此 Juntei 會將 NTFS 讀取器公開的檔案複製至專用暫存目錄。**請預留足夠的暫存磁碟空間以容納這些檔案。** 原始映像維持唯讀，正常結束時會刪除暫存副本。
 
-若無法開啟某個 NTFS 磁碟區，Juntei 會回報問題並保留可讀取的磁碟區。映像檔僅部分可讀取時，`auto-parse --vhdx` 會傳回結束代碼 1；`mount` 也會在卸載後傳回 1。
+讀取失敗及不安全的檔名會記錄於 `ImageErrors` 與 `manifest.csv` 的失敗列。仍會保留可讀取資料的結果；輸入不完整時結束代碼為 1。
 
-## 需求 { #requirements }
+供其他程式存取檔案的獨立 `mount` 命令仍需要 Linux、FUSE 3 及 `/dev/fuse` 存取權。
 
-- Linux：FUSE 3（`fusermount3`，即 `fuse3` 套件），以及對 `/dev/fuse` 的存取權限，一般使用者
-  通常都具備。不需要 root。
-- 不支援 Windows 與 macOS。在 Windows 上，請改為在以系統管理員身分執行的 PowerShell 中，以唯讀方式
-  連結映像檔，並將其磁碟機代號提供給工具：
-
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
-```
+[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).

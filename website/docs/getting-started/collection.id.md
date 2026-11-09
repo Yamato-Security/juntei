@@ -1,6 +1,8 @@
 # Pengumpulan bukti { #collecting-evidence }
 
-Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisisi tepercaya dan pertahankan metadata asli jika memungkinkan. Image disk VHDX dapat diurai tanpa mengekstraknya: lihat [Memasang Image Disk](../commands/mount.md).
+Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisisi tepercaya dan pertahankan metadata asli jika memungkinkan.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
 ## Lokasi umum { #common-locations }
 

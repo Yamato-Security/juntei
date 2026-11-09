@@ -4,6 +4,8 @@
 
 **New Features:**
 
+- `auto-parse --vhdx` reads images natively on Linux, macOS and Windows without FUSE, an OS mount, or administrator privileges. Files are staged in a private temporary workspace for the path-based parsers; enough temporary disk space is required. Preserve image provenance and report incomplete image inputs in both manifests while retaining readable results. (@YamatoSecurity)
+
 - Use Yamato Security’s [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) workspace for the VHDX reader and reusable NTFS/FUSE mounting library, retaining the original reader’s license and attribution. (@YamatoSecurity)
 
 - `parse-ese ual` parses the User Access Logging (UAL) databases of Windows Server (`Current.mdb`, the yearly `{GUID}.mdb` databases and `SystemIdentity.mdb`): the client addresses and accounts that used each server role, with their first and last access times and request counts per day, and the role, DNS, virtual machine and server identity tables. Results are CSV tables, JSON or JSONL. `auto-parse` saves them in `LateralMovement` and adds them to the `-j` timeline. (#133) (@YamatoSecurity)
@@ -16,7 +18,6 @@
 
 - `mount` mounts the NTFS volumes of a VHDX disk image read-only at a directory through FUSE (Linux), without root and without the system supporting the image or the file system, so other tools such as Hayabusa can read the files. NTFS volumes whose boot sectors have zeroed jump instructions and signatures are supported. Ctrl+C unmounts. (@YamatoSecurity)
 
-- `auto-parse --vhdx` parses the Windows systems inside every VHDX disk image in the evidence directory, each mounted read-only while it is parsed. The manifest records the image of each system (`Image`). (@YamatoSecurity)
 
 **Bug Fixes:**
 
