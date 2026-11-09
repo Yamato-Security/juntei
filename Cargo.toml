@@ -112,7 +112,7 @@ outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yama
 # (Linux only).
 [target.'cfg(target_os = "linux")'.dependencies]
 vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
-ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "ys/1.0.0" }
+ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "main" }
 
 [dev-dependencies]
 # Build synthetic Outlook files for end-to-end export regressions.
