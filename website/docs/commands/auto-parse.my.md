@@ -38,6 +38,12 @@ Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည�
 
 အခြား program များအတွက် filesystem ဖော်ပြသော သီးခြား [`mount` command](mount.md) သည် Linux FUSE လိုအပ်ဆဲ ဖြစ်သည်။ `auto-parse --vhdx` က ၎င်းကို မသုံးပါ။
 
+Staging အတွက် default သည် RAM ပေါ်ရှိ နေရာနည်းသော system temp directory အစား output filesystem ဖြစ်သည်။ အခြား disk ပေါ်ရှိ ရှိပြီးသား directory ကို ရွေးရန် `--temp-dir` ကို သုံးပါ။ မူရင်း metadata ကို output filesystem တွင် သီးခြားသိမ်းထားသဖြင့် staging disk ပြည့်လျှင်လည်း ဖတ်နိုင်ပြီးသောဖိုင်များကို parse လုပ်နိုင်သည်။ မိတ္တူနှင့် ရလဒ်နှစ်မျိုးလုံးအတွက် နေရာချန်ပါ။ Output volume ကိုယ်တိုင်ပြည့်လျှင် ရလဒ်များမသိမ်းနိုင်ပါ။ Ctrl+C သည် parser process များကို ရပ်ပြီး private workspace ကိုရှင်းကာ code 130 ဖြင့်ထွက်သည်။ SIGKILL သို့မဟုတ် မီးပျက်ခြင်းကြောင့် မိတ္တူများကျန်နိုင်သည်။ Image ရှာရာတွင် ဖတ်မရသော subdirectory များကို ကျော်သော်လည်း input root ဖတ်မရခြင်းသည် error ဖြစ်ဆဲဖြစ်သည်။
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## Output time zone { #output-time-zone }
 
 Parse လုပ်ထားသော timestamp များသည် analyst ကွန်ပျူတာ၏ local time zone နှင့် မသက်ဆိုင်ဘဲ မူလအားဖြင့် UTC ဖြစ်ပါသည်။ UTC
@@ -522,6 +528,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

@@ -36,7 +36,9 @@ For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
 
 Use `juntei auto-parse --vhdx -d <IMAGE_OR_DIR> -o <OUTPUT>` to parse VHDX images
 natively on **Linux, macOS and Windows**, without an OS mount or administrator privileges.
-The parsers use private temporary file copies, so allow enough temporary disk space.
+The parsers use private temporary file copies on the output filesystem by default; allow enough
+space for copies and results. Choose another staging disk with `--temp-dir <DIR>`. Ctrl+C stops
+parsers and cleans up the private copies.
 `juntei mount <IMAGE> <MOUNTPOINT>` remains available for exposing an image read-only to
 other programs through Linux FUSE. Both use
 [Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).

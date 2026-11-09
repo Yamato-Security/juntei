@@ -66,6 +66,12 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 獨立的 [`mount` 命令](mount.md) 將檔案系統公開給其他程式，仍需要 Linux FUSE；`auto-parse --vhdx` 不使用此命令。
 
+暫存位置預設改為輸出所在的檔案系統，不再使用可能容量很小的記憶體型系統暫存區。可用 `--temp-dir` 指定另一磁碟上已存在的目錄。原始中繼資料另存於輸出檔案系統，因此暫存磁碟滿載時仍可解析已讀取的檔案。請為暫存檔與結果保留空間；若輸出檔案系統本身已滿，結果將無法儲存。Ctrl+C 會停止解析程序、清除專用工作區，並以代碼 130 結束。SIGKILL 或斷電仍可能留下副本。搜尋映像檔時會略過無法讀取的子目錄，但輸入根目錄無法讀取仍屬錯誤。
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## OS 可見掛載的需求 { #os-visible-mount-requirements }
 
 `juntei mount` 需要 Linux FUSE 3（`fusermount3`）和 `/dev/fuse` 存取權。Windows 和 macOS 請使用上述原生解析方式。

@@ -67,6 +67,12 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 다른 프로그램에 파일시스템을 제공하는 별도 [`mount` 명령](mount.md)은 Linux FUSE가 필요합니다. `auto-parse --vhdx`는 이를 사용하지 않습니다.
 
+스테이징은 이제 작은 RAM 기반 볼륨일 수 있는 시스템 임시 디렉터리 대신 출력 파일시스템을 기본으로 사용합니다. `--temp-dir`로 다른 디스크의 기존 디렉터리를 지정할 수 있습니다. 원본 메타데이터는 출력 파일시스템에 별도로 보관하므로 스테이징 디스크가 가득 차도 읽을 수 있는 파일은 파싱할 수 있습니다. 복사본과 결과를 위한 공간을 모두 확보하세요. 출력 파일시스템 자체가 가득 차면 결과를 저장할 수 없습니다. Ctrl+C는 파서 프로세스를 중지하고 전용 작업 공간을 정리한 뒤 코드 130으로 종료합니다. SIGKILL이나 전원 차단으로는 복사본이 남을 수 있습니다. 이미지 검색 중 접근할 수 없는 하위 디렉터리는 건너뛰지만 입력 루트를 읽지 못하면 오류입니다.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## OS에 노출되는 마운트의 요구 사항 { #os-visible-mount-requirements }
 
 `juntei mount`는 Linux FUSE 3(`fusermount3`)와 `/dev/fuse` 접근 권한이 필요합니다. Windows와 macOS에서는 위의 네이티브 분석을 사용하세요.

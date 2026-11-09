@@ -38,6 +38,12 @@ Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `ma
 
 Ayrı [`mount` komutu](mount.md) dosya sistemini başka programlara sunar ve Linux FUSE gerektirir. `auto-parse --vhdx` bunu kullanmaz.
 
+Hazırlama alanı artık küçük, RAM tabanlı olabilen sistem geçici dizini yerine çıktı dosya sistemini varsayılan olarak kullanır. Başka bir diskteki mevcut dizini seçmek için `--temp-dir` kullanın. Özgün meta veriler çıktı dosya sisteminde ayrı tutulur; böylece hazırlama diski dolsa da okunabilen dosyalar ayrıştırılabilir. Hem kopyalar hem sonuçlar için yer ayırın; çıktı dosya sistemi doluysa sonuçlar kaydedilemez. Ctrl+C ayrıştırıcı süreçlerini durdurur, özel çalışma alanını temizler ve 130 koduyla çıkar. SIGKILL veya güç kesintisi kopya bırakabilir. İmaj ararken okunamayan alt dizinler atlanır; okunamayan giriş kökü hata olmaya devam eder.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## Çıktı saat dilimi { #output-time-zone }
 
 Ayrıştırılan zaman damgaları, analistin bilgisayarının yerel saat diliminden bağımsız olarak varsayılan
@@ -535,6 +541,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

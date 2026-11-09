@@ -49,15 +49,23 @@ fn discover(given: &Path) -> io::Result<(Vec<PathBuf>, PathBuf)> {
     let mut images = Vec::new();
     let mut seen = HashSet::new();
     while let Some(directory) = pending.pop() {
-        for entry in fs::read_dir(&directory)? {
-            let entry = entry?;
-            let kind = entry.file_type()?;
+        crate::interrupt::check()?;
+        let entries = match fs::read_dir(&directory) {
+            Ok(entries) => entries,
+            Err(error) if directory == given => return Err(error),
+            Err(_) => continue,
+        };
+        for entry in entries.flatten() {
+            let Ok(kind) = entry.file_type() else {
+                continue;
+            };
             let path = entry.path();
             if kind.is_dir() {
                 pending.push(path);
             } else if (kind.is_file() || (kind.is_symlink() && path.is_file()))
                 && is_vhdx_name(&entry.file_name().to_string_lossy())
-                && seen.insert(path.canonicalize()?)
+                && let Ok(canonical) = path.canonicalize()
+                && seen.insert(canonical)
             {
                 images.push(path);
             }
@@ -87,10 +95,30 @@ fn protect_images(opts: &AutoParseOptions, images: &[PathBuf]) -> io::Result<()>
 }
 
 pub(super) fn run(opts: &AutoParseOptions) -> i32 {
+    if let Err(error) = crate::interrupt::install() {
+        error_msg(
+            opts.common.no_color,
+            &format!("Could not install Ctrl+C handler: {error}"),
+        );
+        return 1;
+    }
+    let code = run_inner(opts);
+    if crate::interrupt::requested() {
+        error_msg(opts.common.no_color, "Cancelled by Ctrl+C.");
+        130
+    } else {
+        code
+    }
+}
+
+fn run_inner(opts: &AutoParseOptions) -> i32 {
     let no_color = opts.common.no_color;
     let (paths, root) = match discover(&opts.directory) {
         Ok(found) => found,
         Err(e) => {
+            if crate::interrupt::requested() {
+                return 130;
+            }
             error_msg(
                 no_color,
                 &format!("Could not search {}: {e}", shown(&opts.directory)),
@@ -116,7 +144,45 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
         error_msg(no_color, &e);
         return 1;
     }
-    let base = match tempfile::Builder::new().prefix("juntei-vhdx-").tempdir() {
+    // Prefer the output filesystem to a small RAM-backed system temp volume.
+    // Keep the metadata snapshot there even if an explicitly selected staging
+    // filesystem fills, so readable inputs can still reach the parsers.
+    let output = match super::absolute_candidate(&opts.output) {
+        Ok(path) => path,
+        Err(error) => {
+            error_msg(
+                no_color,
+                &format!("Could not resolve output directory: {error}"),
+            );
+            return 1;
+        }
+    };
+    let parent = output.parent().unwrap_or(Path::new("."));
+    if let Err(error) = fs::create_dir_all(parent) {
+        error_msg(
+            no_color,
+            &format!("Could not prepare output parent: {error}"),
+        );
+        return 1;
+    }
+    let control = match tempfile::Builder::new()
+        .prefix(".juntei-image-control-")
+        .tempdir_in(parent)
+    {
+        Ok(control) => control,
+        Err(error) => {
+            error_msg(
+                no_color,
+                &format!("Could not create image control workspace: {error}"),
+            );
+            return 1;
+        }
+    };
+    let staging_parent = opts.temp_dir.as_deref().unwrap_or(parent);
+    let base = match tempfile::Builder::new()
+        .prefix("juntei-vhdx-")
+        .tempdir_in(staging_parent)
+    {
         Ok(base) => base,
         Err(e) => {
             error_msg(
@@ -138,13 +204,26 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
     };
     p_label(no_color, "VHDX images: ", &fmt_num(paths.len()));
     let mut used = HashSet::new();
+    let mut storage_full = false;
     for path in paths {
+        if crate::interrupt::requested() {
+            return 130;
+        }
         let source = Path::new(".")
             .join(path.strip_prefix(&root).unwrap_or(&path))
             .display()
             .to_string();
         #[cfg(windows)]
         let source = source.replace('\\', "/");
+        if storage_full {
+            problem(
+                &mut inputs,
+                &source,
+                "",
+                "Not staged because the staging filesystem ran out of space".into(),
+            );
+            continue;
+        }
         let folder = util::unique_name(&root, &path, &mut used);
         let point = base.path().join(folder);
         let image = match Image::open(&path) {
@@ -169,6 +248,7 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
         );
         if let Err(e) = fs::create_dir(&point) {
             problem(&mut inputs, &source, "", e.to_string());
+            storage_full = e.kind() == io::ErrorKind::StorageFull;
             continue;
         }
         for index in 0..image.volumes.len() {
@@ -186,6 +266,13 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
                 &point,
                 &mut inputs,
             ) {
+                if e.kind() == io::ErrorKind::Interrupted {
+                    return 130;
+                }
+                if e.kind() == io::ErrorKind::StorageFull {
+                    storage_full = true;
+                    break;
+                }
                 problem(&mut inputs, &source, "", e.to_string());
             }
         }
@@ -219,7 +306,10 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
     let mut inner = opts.clone();
     inner.directory = base.path().to_path_buf();
     inner.vhdx = false;
-    let metadata_path = base.path().join("SourceMetadata.json");
+    if crate::interrupt::requested() {
+        return 130;
+    }
+    let metadata_path = control.path().join("SourceMetadata.json");
     if let Err(error) = super::write_pretty_json(&metadata_path, &inputs.metadata) {
         error_msg(
             no_color,
@@ -229,6 +319,9 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
     }
     inner.image_source_metadata = Some(metadata_path);
     let code = run_evidence(&inner, Some(&inputs)).max(i32::from(incomplete));
+    if crate::interrupt::requested() {
+        return 130;
+    }
     if incomplete {
         error_msg(
             no_color,
@@ -304,11 +397,18 @@ fn stage_volume(
     point: &Path,
     inputs: &mut Images,
 ) -> io::Result<()> {
-    fs::create_dir_all(root)?;
+    if let Err(error) = fs::create_dir_all(root) {
+        problem(inputs, source, "", error.to_string());
+        if error.kind() == io::ErrorKind::StorageFull {
+            return Err(error);
+        }
+        return Ok(());
+    }
     let mut pending = vec![(ROOT_RECORD, root.to_path_buf())];
     let mut visited = HashSet::new();
     let mut files = HashMap::new();
     while let Some((record, directory)) = pending.pop() {
+        crate::interrupt::check()?;
         let display = directory
             .strip_prefix(point)
             .unwrap_or(&directory)
@@ -332,6 +432,7 @@ fn stage_volume(
         };
         let mut names = HashSet::new();
         for entry in entries.iter() {
+            crate::interrupt::check()?;
             let relative = format!("{display}/{}", entry.name)
                 .trim_start_matches('/')
                 .to_string();
@@ -348,7 +449,12 @@ fn stage_volume(
             if entry.directory {
                 match fs::create_dir(&output) {
                     Ok(()) => pending.push((entry.record, output)),
-                    Err(e) => problem(inputs, source, &relative, e.to_string()),
+                    Err(e) => {
+                        problem(inputs, source, &relative, e.to_string());
+                        if e.kind() == io::ErrorKind::StorageFull {
+                            return Err(e);
+                        }
+                    }
                 }
             } else {
                 // Preserve NTFS file identity so hive deduplication behaves as
@@ -385,6 +491,9 @@ fn stage_volume(
                         files.insert(entry.record, output);
                     }
                     Err(e) => {
+                        if e.kind() == io::ErrorKind::Interrupted {
+                            return Err(e);
+                        }
                         problem(inputs, source, &relative, e.to_string());
                         if e.kind() == io::ErrorKind::StorageFull {
                             return Err(e);
@@ -428,6 +537,7 @@ fn copy_sparse(reader: &mut impl Read, output: &mut File, expected: u64) -> io::
     let mut buffer = vec![0; 256 * 1024];
     let mut copied = 0u64;
     loop {
+        crate::interrupt::check()?;
         let count = reader.read(&mut buffer)?;
         if count == 0 {
             break;

@@ -21,6 +21,10 @@
 
 **Bug Fixes:**
 
+- Native image discovery skips inaccessible subdirectories without losing readable images. Stage on the output filesystem by default, add `--temp-dir` to choose another disk, and keep original source metadata separately so readable files can still be parsed after staging runs out of space. Report the failed write once and mark remaining images that were not staged. (@YamatoSecurity)
+
+- Ctrl+C during native image parsing stops and reaps parser processes before removing private staged evidence; return exit code 130. Preserve existing evidence and keep source metadata paths out of exported results. (@YamatoSecurity)
+
 - Disk-image mounting checks GPT offset and length arithmetic, rejects cyclic extended-partition chains, preserves valid FILETIMEs beyond 2554, and reads compressed-file metadata without decompressing content. Bound the decompression cache, report unreadable NTFS partitions while retaining readable volumes, and preserve the original evidence directory when `auto-parse --vhdx` receives a bare image filename. (@YamatoSecurity)
 
 - Preserve UAL daily dates when `LastAccess` is zero or invalid but `InsertDate` is usable. Report damage in adjacent `SystemIdentity.mdb` lookup tables while retaining readable access records, and distinguish built-in role-name fallback in the summary. (@YamatoSecurity)

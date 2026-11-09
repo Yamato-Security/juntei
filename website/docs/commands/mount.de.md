@@ -69,6 +69,12 @@ Hosterkennung, CSV/JSON/JSONL und `-j` nutzen dieselbe Verarbeitung wie normale 
 
 Der separate [`mount`-Befehl](mount.md) stellt anderen Programmen ein Dateisystem bereit und benötigt weiterhin Linux FUSE. `auto-parse --vhdx` verwendet ihn nicht.
 
+Das Staging nutzt standardmäßig das Dateisystem der Ausgabe statt des möglicherweise kleinen RAM-basierten System-Temp-Verzeichnisses. Mit `--temp-dir` wählen Sie ein vorhandenes Verzeichnis auf einem anderen Datenträger. Quellmetadaten bleiben separat im Ausgabedateisystem, damit bereits lesbare Dateien auch bei vollem Staging-Datenträger analysiert werden können. Platz für Kopien und Ergebnisse einplanen; ein volles Ausgabedateisystem verhindert das Speichern. Ctrl+C stoppt Parserprozesse, entfernt den privaten Arbeitsbereich und beendet mit Code 130. SIGKILL oder Stromausfall können Kopien hinterlassen. Nicht lesbare Unterverzeichnisse werden bei der Imagesuche übersprungen; ein nicht lesbares Eingabewurzelverzeichnis bleibt ein Fehler.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## Anforderungen für OS-sichtbare Mounts { #os-visible-mount-requirements }
 
 `juntei mount` benötigt Linux FUSE 3 (`fusermount3`) und Zugriff auf `/dev/fuse`. Unter Windows und macOS steht die oben beschriebene native Analyse bereit.

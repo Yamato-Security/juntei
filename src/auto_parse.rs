@@ -484,6 +484,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     if opts.vhdx {
         return vhdx_images::run(opts);
     }
+    if opts.temp_dir.is_some() {
+        error_msg(opts.common.no_color, "--temp-dir requires --vhdx");
+        return 1;
+    }
     run_evidence(opts, None)
 }
 
@@ -597,11 +601,11 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             return 1;
         }
     };
-    let task_paths = TaskPaths::new(
-        parser_directory.clone(),
-        &[&evidence, &parser_directory],
-        &output_root,
-    );
+    let mut source_roots = vec![evidence.as_path(), parser_directory.as_path()];
+    if let Some(parent) = opts.image_source_metadata.as_deref().and_then(Path::parent) {
+        source_roots.push(parent);
+    }
+    let task_paths = TaskPaths::new(parser_directory.clone(), &source_roots, &output_root);
     let inventories: Vec<InputInventory> = hosts
         .iter()
         .map(|host| InputInventory::scan(&host.root))
@@ -770,6 +774,19 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         &bar,
         opts.timezone,
     );
+    if crate::interrupt::requested() {
+        bar.abandon_with_message("Cancelled");
+        if let Some(path) = &timeline_work
+            && temporary_work_directory(&opts.output, path)
+            && let Err(error) = fs::remove_dir_all(path)
+        {
+            error_msg(
+                no_color,
+                &format!("Could not remove cancelled timeline workspace: {error}"),
+            );
+        }
+        return 130;
+    }
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
         if matches!(
@@ -2002,6 +2019,9 @@ fn run_tasks(
         for _ in 0..threads {
             scope.spawn(|| {
                 loop {
+                    if crate::interrupt::requested() {
+                        break;
+                    }
                     let index = next.fetch_add(1, Ordering::Relaxed);
                     let Some(task) = tasks.get(index) else {
                         break;
@@ -2046,10 +2066,11 @@ fn run_task(
     )
     .chain(task.args.iter().map(|a| paths.text(&a.to_string_lossy())))
     .collect();
-    let output = Command::new(executable)
-        .current_dir(&paths.directory)
-        .args(&task.args)
-        .output();
+    let output = crate::interrupt::output(
+        Command::new(executable)
+            .current_dir(&paths.directory)
+            .args(&task.args),
+    );
     let mut error = None;
     let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
@@ -2202,6 +2223,7 @@ fn annotate_json_file(
             return annotate_jsonl(input, &mut writer, computer, artifact);
         }
         for value in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
+            crate::interrupt::check()?;
             let mut value = value.map_err(io::Error::other)?;
             annotate_value(&mut value, computer, artifact);
             serde_json::to_writer_pretty(&mut writer, &value).map_err(io::Error::other)?;
@@ -2232,6 +2254,7 @@ fn annotate_jsonl(
 
     let mut line = Vec::new();
     loop {
+        crate::interrupt::check()?;
         line.clear();
         if input.read_until(b'\n', &mut line)? == 0 {
             break;

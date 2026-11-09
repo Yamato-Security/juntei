@@ -5531,6 +5531,8 @@ fn auto_parse_vhdx_keeps_image_provenance_through_a_temporary_directory_alias() 
         .args([
             "auto-parse",
             "--vhdx",
+            "--temp-dir",
+            alias.to_str().unwrap(),
             "-d",
             image.to_str().unwrap(),
             "-o",
@@ -5549,6 +5551,261 @@ fn auto_parse_vhdx_keeps_image_provenance_through_a_temporary_directory_alias() 
     assert_eq!(manifest["Hosts"][0]["Image"], "./alias-case.vhdx");
     assert_no_absolute_paths(&output, &String::from_utf8_lossy(&r.stdout), &[dir.path()]);
     assert_eq!(std::fs::read_dir(&actual).unwrap().count(), 0);
+}
+
+#[cfg(unix)]
+#[test]
+fn auto_parse_vhdx_skips_an_unreadable_subdirectory_but_not_the_input_root() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    std::fs::create_dir(&evidence).unwrap();
+    sample_vhdx(&evidence.join("readable.vhdx"));
+    let locked = evidence.join("locked");
+    std::fs::create_dir(&locked).unwrap();
+    std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o0)).unwrap();
+    if std::fs::read_dir(&locked).is_ok() {
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o700)).unwrap();
+        return; // Permission checks do not apply to a privileged test process.
+    }
+    let output = dir.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "--vhdx",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    let blocked_root = run(&[
+        "auto-parse",
+        "--vhdx",
+        "-d",
+        locked.to_str().unwrap(),
+        "-o",
+        dir.path().join("blocked").to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(
+        output
+            .join("readable/ProcessExecution/Prefetch.csv")
+            .is_file()
+    );
+    assert_eq!(blocked_root.code, 1);
+    assert!(blocked_root.stdout.contains("Could not search"));
+}
+
+#[test]
+fn auto_parse_vhdx_uses_the_output_filesystem_unless_a_staging_directory_is_given() {
+    let dir = tempfile::tempdir().unwrap();
+    let image = dir.path().join("image.vhdx");
+    sample_vhdx(&image);
+    let unused_system_temp = dir.path().join("not-a-directory");
+    std::fs::write(&unused_system_temp, b"not a directory").unwrap();
+    let staging = dir.path().join("staging");
+    std::fs::create_dir(&staging).unwrap();
+    for explicit in [false, true] {
+        let output = dir
+            .path()
+            .join(if explicit { "explicit" } else { "default" });
+        let mut cmd = Command::new(env!("CARGO_BIN_EXE_juntei"));
+        cmd.args([
+            "auto-parse",
+            "--vhdx",
+            "-d",
+            image.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ])
+        .env("TMPDIR", &unused_system_temp)
+        .env("TMP", &unused_system_temp)
+        .env("TEMP", &unused_system_temp);
+        if explicit {
+            cmd.args(["--temp-dir", staging.to_str().unwrap()]);
+        }
+        let r = cmd.output().unwrap();
+        assert!(
+            r.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&r.stdout),
+            String::from_utf8_lossy(&r.stderr)
+        );
+        assert!(output.join("image/ProcessExecution/Prefetch.csv").is_file());
+        assert_eq!(std::fs::read_dir(&staging).unwrap().count(), 0);
+        assert!(!std::fs::read_dir(dir.path()).unwrap().any(|e| {
+            e.unwrap()
+                .file_name()
+                .to_string_lossy()
+                .starts_with(".juntei-image-control-")
+        }));
+    }
+    let invalid = run(&[
+        "auto-parse",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        dir.path().join("invalid").to_str().unwrap(),
+        "--temp-dir",
+        staging.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(invalid.code, 1);
+    assert!(invalid.stdout.contains("--temp-dir requires --vhdx"));
+}
+
+#[cfg(unix)]
+#[test]
+fn auto_parse_vhdx_ctrl_c_cleans_staged_evidence_during_copying_and_parsing() {
+    use std::time::{Duration, Instant};
+    for parsing in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let evidence = dir.path().join("evidence");
+        let staging = dir.path().join("staging");
+        std::fs::create_dir(&evidence).unwrap();
+        std::fs::create_dir(&staging).unwrap();
+        let image = evidence.join("00.vhdx");
+        sample_vhdx(&image);
+        let original = std::fs::read(&image).unwrap();
+        for n in 1..24 {
+            std::fs::hard_link(&image, evidence.join(format!("{n:02}.vhdx"))).unwrap();
+        }
+        let output = dir.path().join("output");
+        let mut child = Command::new(env!("CARGO_BIN_EXE_juntei"))
+            .args([
+                "auto-parse",
+                "--vhdx",
+                "-d",
+                evidence.to_str().unwrap(),
+                "-o",
+                output.to_str().unwrap(),
+                "--temp-dir",
+                staging.to_str().unwrap(),
+                "-T",
+                "2",
+                "-K",
+                "-q",
+            ])
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        let start = Instant::now();
+        loop {
+            let ready = if parsing {
+                output.exists()
+                    && walk_files(&output)
+                        .iter()
+                        .any(|p| p.extension().is_some_and(|e| e == "csv"))
+            } else {
+                !walk_files(&staging).is_empty()
+            };
+            if ready {
+                break;
+            }
+            if start.elapsed() > Duration::from_secs(30) || child.try_wait().unwrap().is_some() {
+                let _ = child.kill();
+                let result = child.wait_with_output().unwrap();
+                panic!(
+                    "Image run ended before the interrupt test: {}\n{}",
+                    String::from_utf8_lossy(&result.stdout),
+                    String::from_utf8_lossy(&result.stderr)
+                );
+            }
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        // Signal only the parent: it must also stop and reap its parser processes.
+        assert!(
+            Command::new("kill")
+                .args(["-INT", &child.id().to_string()])
+                .status()
+                .unwrap()
+                .success()
+        );
+        let interrupted = Instant::now();
+        while child.try_wait().unwrap().is_none() {
+            if interrupted.elapsed() > Duration::from_secs(15) {
+                let _ = child.kill();
+                let _ = child.wait();
+                panic!("Ctrl+C did not stop the image parser");
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let result = child.wait_with_output().unwrap();
+        assert_eq!(
+            result.status.code(),
+            Some(130),
+            "{}\n{}",
+            String::from_utf8_lossy(&result.stdout),
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert_eq!(std::fs::read_dir(&staging).unwrap().count(), 0);
+        assert!(!std::fs::read_dir(dir.path()).unwrap().any(|e| {
+            e.unwrap()
+                .file_name()
+                .to_string_lossy()
+                .starts_with(".juntei-image-control-")
+        }));
+        assert_eq!(std::fs::read(&image).unwrap(), original);
+    }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn auto_parse_vhdx_retains_readable_results_when_the_staging_filesystem_fills() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let staging = dir.path().join("small");
+    std::fs::create_dir(&evidence).unwrap();
+    std::fs::create_dir(&staging).unwrap();
+    let image = evidence.join("00.vhdx");
+    sample_vhdx(&image);
+    for n in 1..12 {
+        std::fs::hard_link(&image, evidence.join(format!("{n:02}.vhdx"))).unwrap();
+    }
+    let output = dir.path().join("output");
+    let result = Command::new("unshare").args(["--user", "--map-root-user", "--mount", "sh", "-c",
+        "mount -t tmpfs -o size=12m tmpfs \"$1\" || exit 77; TMPDIR=\"$1\" \"$2\" auto-parse --vhdx -d \"$3\" -o \"$4\" --temp-dir \"$1\" -T 2 -K -q",
+        "_", staging.to_str().unwrap(), env!("CARGO_BIN_EXE_juntei"), evidence.to_str().unwrap(), output.to_str().unwrap()]).output();
+    let Ok(result) = result else { return }; // Namespace tools are optional on developer systems.
+    let stdout = String::from_utf8_lossy(&result.stdout);
+    let stderr = String::from_utf8_lossy(&result.stderr);
+    if result.status.code() == Some(77) || stderr.contains("unshare:") {
+        eprintln!("Bounded-filesystem test unavailable: {stderr}");
+        return;
+    }
+    assert_eq!(result.status.code(), Some(1), "{stdout}\n{stderr}");
+    assert!(stdout.contains("No space left"), "{stdout}");
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let errors = manifest["ImageErrors"].as_array().unwrap();
+    assert_eq!(
+        errors
+            .iter()
+            .filter(|e| e["Error"]
+                .as_str()
+                .is_some_and(|s| s.contains("No space left")))
+            .count(),
+        1,
+        "{errors:?}"
+    );
+    assert!(
+        walk_files(&output)
+            .iter()
+            .any(|p| p.file_name().is_some_and(|name| name == "Prefetch.csv"))
+    );
+    assert_eq!(std::fs::read_dir(&staging).unwrap().count(), 0);
 }
 
 #[test]

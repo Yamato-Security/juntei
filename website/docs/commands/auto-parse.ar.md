@@ -38,6 +38,12 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 يعرض أمر [`mount` المنفصل](mount.md) نظام الملفات للبرامج الأخرى ويحتاج إلى Linux FUSE. لا يستخدمه `auto-parse --vhdx`.
 
+تستخدم مساحة التجهيز افتراضياً نظام ملفات الإخراج بدلاً من مجلد النظام المؤقت، الذي قد يكون وحدة صغيرة في RAM. استخدم `--temp-dir` لاختيار مجلد موجود على قرص آخر. تُحفظ بيانات المصدر الوصفية منفصلةً على نظام ملفات الإخراج، فلا يمنع امتلاء قرص التجهيز تحليل الملفات المقروءة مسبقاً. خصص مساحة للنسخ والنتائج معاً؛ إذا امتلأت وحدة الإخراج نفسها فلن يمكن حفظ النتائج. يوقف Ctrl+C عمليات التحليل وينظف المساحة الخاصة ويخرج بالرمز 130. قد يترك SIGKILL أو انقطاع الطاقة نسخاً. يتم تجاوز المجلدات الفرعية غير المقروءة أثناء البحث عن الصور، لكن جذر الإدخال غير المقروء يبقى خطأ.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## المنطقة الزمنية للإخراج { #output-time-zone }
 
 تكون الطوابع الزمنية المحللة افتراضيًا بتوقيت UTC، بصرف النظر عن المنطقة الزمنية المحلية لحاسوب المحلل. ويستخدم UTC
@@ -522,6 +528,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

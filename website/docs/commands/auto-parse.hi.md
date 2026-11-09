@@ -37,6 +37,12 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 अलग [`mount` कमांड](mount.md) अन्य प्रोग्रामों को फ़ाइलसिस्टम देता है और Linux FUSE की आवश्यकता होती है। `auto-parse --vhdx` इसे उपयोग नहीं करता।
 
+स्टेजिंग अब सिस्टम की अस्थायी डायरेक्टरी के बजाय आउटपुट फ़ाइल सिस्टम पर होती है; सिस्टम का अस्थायी स्थान छोटा RAM-आधारित वॉल्यूम हो सकता है। दूसरे डिस्क की मौजूदा डायरेक्टरी चुनने के लिए `--temp-dir` उपयोग करें। मूल मेटाडेटा आउटपुट फ़ाइल सिस्टम पर अलग रखा जाता है, ताकि स्टेजिंग डिस्क भरने पर भी पढ़ने योग्य फ़ाइलें पार्स हो सकें। कॉपी और परिणाम दोनों के लिए स्थान रखें; आउटपुट वॉल्यूम भरने पर परिणाम नहीं सहेजे जा सकते। Ctrl+C पार्सर प्रक्रियाएँ रोकता है, निजी कार्यक्षेत्र साफ़ करता है और कोड 130 से निकलता है। SIGKILL या बिजली जाने से कॉपी रह सकती हैं। इमेज खोजते समय अपठनीय उपडायरेक्टरियाँ छोड़ी जाती हैं, लेकिन अपठनीय इनपुट रूट त्रुटि बना रहता है।
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## आउटपुट time zone { #output-time-zone }
 
 Parse किए गए timestamps default रूप से UTC में होते हैं, विश्लेषक के computer के local time zone से स्वतंत्र। UTC
@@ -523,6 +529,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

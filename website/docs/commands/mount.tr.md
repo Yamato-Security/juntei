@@ -69,6 +69,12 @@ Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `ma
 
 Ayrı [`mount` komutu](mount.md) dosya sistemini başka programlara sunar ve Linux FUSE gerektirir. `auto-parse --vhdx` bunu kullanmaz.
 
+Hazırlama alanı artık küçük, RAM tabanlı olabilen sistem geçici dizini yerine çıktı dosya sistemini varsayılan olarak kullanır. Başka bir diskteki mevcut dizini seçmek için `--temp-dir` kullanın. Özgün meta veriler çıktı dosya sisteminde ayrı tutulur; böylece hazırlama diski dolsa da okunabilen dosyalar ayrıştırılabilir. Hem kopyalar hem sonuçlar için yer ayırın; çıktı dosya sistemi doluysa sonuçlar kaydedilemez. Ctrl+C ayrıştırıcı süreçlerini durdurur, özel çalışma alanını temizler ve 130 koduyla çıkar. SIGKILL veya güç kesintisi kopya bırakabilir. İmaj ararken okunamayan alt dizinler atlanır; okunamayan giriş kökü hata olmaya devam eder.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## OS tarafından görülen bağlama gereksinimleri { #os-visible-mount-requirements }
 
 `juntei mount`, Linux FUSE 3 (`fusermount3`) ve `/dev/fuse` erişimi gerektirir. Windows ve macOS’ta yukarıdaki yerel analizi kullanın.
