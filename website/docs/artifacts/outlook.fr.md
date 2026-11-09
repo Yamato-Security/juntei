@@ -86,7 +86,7 @@ Juntei lit chaque banque de messages en flux : il ne garde jamais une banque en
   qu'obscurcir ses blocs. Les messages chiffrés avec S/MIME conservent leur corps et leurs pièces jointes dans une
   pièce jointe chiffrée (`smime.p7m`), qui n'est pas déchiffrée.
 - Les pièces jointes sont souvent des logiciels malveillants. `--extract-attachments` écrit leurs données dans des
-  fichiers nommés d'après leur SHA-256, sans autorisation d'exécution ; ne les exécutez jamais, et conservez-les sur
+  fichiers nommés d'après leur SHA-256, avec le mode `0600` pour les nouveaux fichiers sous Unix ; ne les exécutez jamais, et conservez-les sur
   un système d'analyse isolé.
 
 ### Pas encore lus { #not-read-yet }

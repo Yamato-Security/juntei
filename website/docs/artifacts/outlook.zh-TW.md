@@ -70,7 +70,7 @@ Outlook 執行期間會持續開啟其存放區，而一個 OST 可能達數十 
 - PST 的密碼並不會加密檔案：Juntei 讀取受密碼保護的 PST 與讀取其他 PST 無異。存放區的
   `Encryption`（`Permute`，即 Outlook 的「可壓縮加密」，或 `Cyclic`）只會混淆其區塊。以 S/MIME
   加密的郵件會將其內文與附件保存在一個加密的附件（`smime.p7m`）中，Juntei 不會將其解密。
-- 附件經常是惡意程式。`--extract-attachments` 會將其資料寫入以 SHA-256 命名、不具執行權限的檔案；
+- 附件經常是惡意程式。`--extract-attachments` 會將其資料寫入以 SHA-256 命名的檔案（Unix 上的新檔案使用不具執行權限的 `0600` 模式）；
   請勿執行這些檔案，並將其保存在隔離的分析系統上。
 
 ### 尚未讀取的內容 { #not-read-yet }

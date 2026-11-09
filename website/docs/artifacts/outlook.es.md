@@ -85,7 +85,7 @@ nunca mantiene un almacén completo en memoria.
   Los mensajes cifrados con S/MIME guardan su cuerpo y sus adjuntos en un adjunto cifrado (`smime.p7m`), que no se
   descifra.
 - Los adjuntos suelen ser malware. `--extract-attachments` escribe sus datos en archivos con el nombre de su
-  SHA-256, sin permiso de ejecución; no los ejecute nunca y consérvelos en un sistema de análisis aislado.
+  SHA-256, con modo `0600` para archivos nuevos en Unix; no los ejecute nunca y consérvelos en un sistema de análisis aislado.
 
 ### Todavía no se leen { #not-read-yet }
 

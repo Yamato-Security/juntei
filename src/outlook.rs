@@ -65,8 +65,8 @@ const NAMES_SHOWN: &str = "*.pst, *.ost, *.msg, *.oft";
 /// What `--extract-attachments` warns before it writes anything.
 const EXTRACT_WARNING: &str = "WARNING: --extract-attachments writes the attachments of e-mail \
 and other items to disk. They can be malware: never run them, keep them on an isolated analysis \
-system, and expect antivirus software to remove them. They are named by their SHA-256 and created \
-without execute permission.";
+system, and expect antivirus software to remove them. They are named by their SHA-256. New files \
+use mode 0600 (no execute permission) on Unix.";
 
 /// The signature PST and OST files start with ([MS-PST] 2.2.2.6 `dwMagic`).
 const STORE_SIGNATURE: &[u8; 4] = b"!BDN";
@@ -1035,6 +1035,7 @@ fn item_row(source: &Source, place: &Place<'_>, item: &Item) -> Row {
             item.sent_representing
                 .smtp
                 .as_deref()
+                .filter(|address| !address.is_empty())
                 .or(item.sent_representing.address.as_deref()),
         ),
     );
@@ -1139,6 +1140,7 @@ fn calendar_row(source: &Source, place: &Place<'_>, item: &Item) -> Option<Row> 
             item.sender
                 .name
                 .as_deref()
+                .filter(|name| !name.is_empty())
                 .or(item.sent_representing.name.as_deref()),
         ),
     );
@@ -1456,7 +1458,9 @@ fn property_value(value: &Value) -> Json {
             let v = v.unsigned_abs();
             json!(format!("{sign}{}.{:04}", v / 10_000, v % 10_000))
         }
-        Value::FloatingTime(days) => time(Some(Ts::from_ole_date(*days))),
+        Value::FloatingTime(days) => filetime(
+            outlook_parser::outlook_msg::floating_time_to_filetime(*days),
+        ),
         Value::ErrorCode(code) => json!(format!("0x{code:08X}")),
         Value::Boolean(v) => json!(v),
         Value::String(text) => json!(text),
@@ -1486,7 +1490,7 @@ fn property_value(value: &Value) -> Json {
 
 // --- extraction -----------------------------------------------------------------------------
 
-/// Writes each attachment's data once, named by its SHA-256, without execute permission.
+/// Writes each attachment's data once, named by its SHA-256 (mode 0600 on Unix).
 struct Extractor {
     dir: PathBuf,
     clobber: bool,
@@ -1557,7 +1561,7 @@ impl Extractor {
     }
 }
 
-/// A new file without execute permission.
+/// A new file, with mode 0600 on Unix.
 fn write_private(path: &Path, bytes: &[u8]) -> io::Result<()> {
     let mut options = std::fs::OpenOptions::new();
     options.write(true).create_new(true);
@@ -1740,7 +1744,12 @@ impl Stats {
             .sender
             .smtp
             .as_deref()
-            .or(item.sender.address.as_deref())
+            .filter(|address| !address.is_empty())
+            .or(item
+                .sender
+                .address
+                .as_deref()
+                .filter(|address| !address.is_empty()))
             .map(str::to_lowercase)
             .or_else(|| item.sender.name.clone())
             .filter(|s| !s.is_empty());
@@ -1953,6 +1962,65 @@ mod tests {
         );
         assert_eq!(filetime(Some(i64::MAX)), Json::Null);
         assert_eq!(filetime(Some(-1)), Json::Null);
+    }
+
+    #[test]
+    fn ole_properties_keep_the_epoch_and_submillisecond_ticks() {
+        for (days, expected) in [
+            (0.0, "1899-12-30T00:00:00Z"),
+            (-0.5, "1899-12-30T12:00:00Z"),
+            (-1.25, "1899-12-29T06:00:00Z"),
+            (
+                f64::from_bits(25_569.0f64.to_bits() + 1),
+                "1970-01-01T00:00:00.000000300Z",
+            ),
+        ] {
+            assert_eq!(property_value(&Value::FloatingTime(days)), json!(expected));
+        }
+        for days in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY, f64::MAX] {
+            assert_eq!(property_value(&Value::FloatingTime(days)), Json::Null);
+        }
+    }
+
+    #[test]
+    fn empty_party_fields_do_not_hide_sender_and_organizer_fallbacks() {
+        let source = Source {
+            path: "calendar.msg".into(),
+            user: None,
+        };
+        let properties = vec![
+            string(tags::MESSAGE_CLASS, "IPM.Appointment"),
+            string(tags::SENDER_NAME, ""),
+            string(tags::SENDER_SMTP_ADDRESS, ""),
+            string(tags::SENDER_EMAIL_ADDRESS, "sender@example.test"),
+            string(tags::SENT_REPRESENTING_NAME, "Organizer"),
+            string(tags::SENT_REPRESENTING_SMTP_ADDRESS, ""),
+            string(
+                tags::SENT_REPRESENTING_EMAIL_ADDRESS,
+                "organizer@example.test",
+            ),
+        ];
+        let item = Item::build(properties, Vec::new(), Vec::new(), Vec::new());
+        let place = Place {
+            folder: None,
+            id: "0".into(),
+            hidden: false,
+            embedded_in: None,
+        };
+        let value = |row: &Row, name: &str| {
+            row.values[row.table.columns().iter().position(|c| *c == name).unwrap()].clone()
+        };
+        assert_eq!(
+            value(&item_row(&source, &place, &item), "SentRepresentingAddress"),
+            json!("organizer@example.test")
+        );
+        assert_eq!(
+            value(&calendar_row(&source, &place, &item).unwrap(), "Organizer"),
+            json!("Organizer")
+        );
+        let mut stats = Stats::default();
+        stats.add_item(&item);
+        assert_eq!(stats.senders.get("sender@example.test"), Some(&1));
     }
 
     #[test]

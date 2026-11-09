@@ -18,7 +18,7 @@
 use flate2::read::GzDecoder;
 use serde_json::Value;
 use std::collections::BTreeMap;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -1126,4 +1126,125 @@ fn auto_parse_puts_outlook_tables_in_communication_with_their_times_in_the_offse
             .unwrap();
         assert_eq!(test2["DeliveryTime"], "2014-04-10T01:38:32+09:00");
     }
+}
+
+#[test]
+fn outlook_precise_properties_and_party_fallbacks_survive_all_exports() {
+    let evidence = tempfile::tempdir().unwrap();
+    let host = evidence.path().join("HOST1");
+    std::fs::create_dir_all(host.join("C/Windows/System32")).unwrap();
+    let input = host.join(MSG).join("precise.msg");
+    std::fs::create_dir_all(input.parent().unwrap()).unwrap();
+    let mut file = cfb::CompoundFile::create(std::io::Cursor::new(Vec::new())).unwrap();
+    let mut properties = vec![0; 32];
+    for (tag, value) in [
+        (0x6000_0007u32, 0.0f64.to_bits()),
+        (0x6001_0007, 25_569.0f64.to_bits() + 1),
+        (0x0039_0040, 116_444_736_000_000_003),
+    ] {
+        properties.extend(tag.to_le_bytes());
+        properties.extend(6u32.to_le_bytes());
+        properties.extend(value.to_le_bytes());
+    }
+    file.create_stream("/__properties_version1.0")
+        .unwrap()
+        .write_all(&properties)
+        .unwrap();
+    for (tag, text) in [
+        (0x001Au16, "IPM.Appointment"),
+        (0x0C1A, ""),
+        (0x5D01, ""),
+        (0x0C1F, "sender@example.test"),
+        (0x0042, "Organizer"),
+        (0x5D02, ""),
+        (0x0065, "organizer@example.test"),
+    ] {
+        file.create_stream(format!("/__substg1.0_{tag:04X}001E"))
+            .unwrap()
+            .write_all(text.as_bytes())
+            .unwrap();
+    }
+    std::fs::write(&input, file.into_inner().into_inner()).unwrap();
+    let input_before = std::fs::read(&input).unwrap();
+
+    let check_json = |rows: &[Value], submitted: &str| {
+        let property = |tag: &str| {
+            rows.iter()
+                .find(|r| r["Table"] == "Properties" && r["PropertyTag"] == tag)
+                .unwrap()["Value"]
+                .clone()
+        };
+        assert_eq!(property("0x60000007"), "1899-12-30T00:00:00Z");
+        assert_eq!(property("0x60010007"), "1970-01-01T00:00:00.000000300Z");
+        let item = rows.iter().find(|r| r["Table"] == "Items").unwrap();
+        assert_eq!(item["SentRepresentingAddress"], "organizer@example.test");
+        assert_eq!(item["SubmitTime"], submitted);
+        assert_eq!(
+            rows.iter().find(|r| r["Table"] == "Calendar").unwrap()["Organizer"],
+            "Organizer"
+        );
+    };
+    for format in ["csv", "json", "jsonl"] {
+        let output = evidence.path().join(format!("direct-{format}"));
+        let r = run(&[
+            "parse-file",
+            "outlook",
+            "-f",
+            input.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            format,
+            "--properties",
+            "-K",
+        ]);
+        assert_eq!(r.code, 0, "{}", r.all());
+        assert!(r.stdout.contains("sender@example.test"), "{}", r.stdout);
+        if format == "csv" {
+            let (_, properties) = csv_rows(&output.join("Outlook-Properties.csv"));
+            let property = |tag: &str| {
+                properties.iter().find(|r| r["PropertyTag"] == tag).unwrap()["Value"].clone()
+            };
+            assert_eq!(property("0x60000007"), "1899-12-30T00:00:00Z");
+            assert_eq!(property("0x60010007"), "1970-01-01T00:00:00.000000300Z");
+            let (_, items) = csv_rows(&output.join("Outlook-Items.csv"));
+            assert_eq!(
+                items[0]["SentRepresentingAddress"],
+                "organizer@example.test"
+            );
+            let (_, calendar) = csv_rows(&output.join("Outlook-Calendar.csv"));
+            assert_eq!(calendar[0]["Organizer"], "Organizer");
+        } else {
+            let contents = std::fs::read_to_string(output).unwrap();
+            let rows = serde_json::Deserializer::from_str(&contents)
+                .into_iter::<Value>()
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap();
+            check_json(&rows, "1970-01-01T00:00:00.000000300Z");
+        }
+    }
+    let auto_output = tempfile::tempdir().unwrap();
+    let output = auto_output.path().join("auto");
+    let timeline = output.join("all.jsonl");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-j",
+        timeline.to_str().unwrap(),
+        "-Z",
+        "+09:00",
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}", r.all());
+    let timeline = jsonl(&std::fs::read_to_string(timeline).unwrap());
+    let item = timeline
+        .iter()
+        .find(|r| r["Table"] == "Items" && r["Artifact"] == "outlook")
+        .unwrap();
+    assert_eq!(item["SubmitTime"], "1970-01-01T09:00:00.000000300+09:00");
+    assert_eq!(item["SentRepresentingAddress"], "organizer@example.test");
+    assert_eq!(std::fs::read(input).unwrap(), input_before);
 }

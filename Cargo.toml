@@ -112,6 +112,8 @@ outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yama
 vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
 
 [dev-dependencies]
+# Build synthetic Outlook files for end-to-end export regressions.
+cfb = "0.16"
 # The SYSTEM hive of test_files/shimcache/ is kept gzipped.
 flate2 = "1"
 tempfile = "3"

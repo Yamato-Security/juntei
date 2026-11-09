@@ -87,7 +87,7 @@ liest jeden Nachrichtenspeicher als Datenstrom: Es hält nie einen ganzen Nachri
   `Cyclic`) verschleiert nur seine Blöcke. Mit S/MIME verschlüsselte Nachrichten speichern ihren Textkörper und ihre
   Anhänge in einem verschlüsselten Anhang (`smime.p7m`), der nicht entschlüsselt wird.
 - Anhänge sind oft Malware. `--extract-attachments` schreibt ihre Daten in Dateien, die nach ihrem SHA-256 benannt
-  sind, ohne Ausführungsberechtigung; führen Sie sie niemals aus und bewahren Sie sie auf einem isolierten
+  sind, bei neuen Dateien unter Unix ohne Ausführungsberechtigung (`0600`); führen Sie sie niemals aus und bewahren Sie sie auf einem isolierten
   Analysesystem auf.
 
 ### Noch nicht gelesen { #not-read-yet }

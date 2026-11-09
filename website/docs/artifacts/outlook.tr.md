@@ -89,7 +89,7 @@ akış olarak okur: hiçbir zaman bir deponun tamamını bellekte tutmaz.
   `Cyclic`) yalnızca bloklarını gizler. S/MIME ile şifrelenmiş iletiler gövdelerini ve eklerini şifreli
   bir ekte (`smime.p7m`) tutar; bu ekin şifresi çözülmez.
 - Ekler çoğu zaman kötü amaçlı yazılımdır. `--extract-attachments`, verilerini SHA-256 değerleriyle
-  adlandırılmış dosyalara, yürütme izni olmadan yazar; bunları asla çalıştırmayın ve yalıtılmış bir
+  adlandırılmış dosyalara, Unix üzerinde yeni dosyalar için `0600` moduyla yazar; bunları asla çalıştırmayın ve yalıtılmış bir
   analiz sisteminde tutun.
 
 ### Henüz okunmayanlar { #not-read-yet }

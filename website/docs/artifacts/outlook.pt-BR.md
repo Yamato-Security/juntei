@@ -84,8 +84,7 @@ repositório como um fluxo: ele nunca mantém um repositório inteiro na memóri
   de um repositório (`Permute`, a “criptografia compactável” do Outlook, ou `Cyclic`) apenas ofusca seus blocos.
   Mensagens criptografadas com S/MIME guardam seu corpo e seus anexos em um anexo criptografado (`smime.p7m`), que
   não é descriptografado.
-- Anexos costumam ser malware. `--extract-attachments` grava seus dados em arquivos nomeados pelo SHA-256, sem
-  permissão de execução; nunca os execute e mantenha-os em um sistema de análise isolado.
+- Anexos costumam ser malware. `--extract-attachments` grava seus dados em arquivos nomeados pelo SHA-256, com modo `0600` para novos arquivos no Unix; nunca os execute e mantenha-os em um sistema de análise isolado.
 
 ### Ainda não lidos { #not-read-yet }
 

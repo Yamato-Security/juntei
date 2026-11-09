@@ -88,7 +88,7 @@ membaca setiap store sebagai stream: Juntei tidak pernah memuat seluruh store ke
   hanya menyamarkan blok-bloknya. Pesan yang dienkripsi dengan S/MIME menyimpan isi dan lampirannya
   dalam sebuah lampiran terenkripsi (`smime.p7m`), yang tidak didekripsi.
 - Lampiran sering kali berupa malware. `--extract-attachments` menulis datanya ke berkas yang dinamai
-  dengan SHA-256-nya, tanpa izin eksekusi; jangan pernah menjalankannya, dan simpan di sistem analisis
+  dengan SHA-256-nya, dengan mode `0600` untuk berkas baru di Unix; jangan pernah menjalankannya, dan simpan di sistem analisis
   yang terisolasi.
 
 ### Belum dibaca { #not-read-yet }

@@ -86,7 +86,7 @@ it never holds a whole store in memory.
   its blocks. Messages encrypted with S/MIME keep their body and attachments in an encrypted
   attachment (`smime.p7m`), which is not decrypted.
 - Attachments are often malware. `--extract-attachments` writes their data to files named by their
-  SHA-256, without execute permission; never run them, and keep them on an isolated analysis
+  SHA-256 (new files have mode `0600` on Unix); never run them, and keep them on an isolated analysis
   system.
 
 ### Not read yet

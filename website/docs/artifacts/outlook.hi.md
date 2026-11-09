@@ -84,7 +84,7 @@ Outlook चलते समय अपने stores को खुला रखत
   अस्पष्ट (obscure) करता है। S/MIME से encrypt किए गए messages अपना body और attachments एक encrypted attachment
   (`smime.p7m`) में रखते हैं, जिसे decrypt नहीं किया जाता।
 - Attachments अक्सर malware होते हैं। `--extract-attachments` उनका data उनके SHA-256 के नाम वाली files में लिखता
-  है, execute permission के बिना; उन्हें कभी न चलाएँ, और उन्हें एक अलग-थलग (isolated) analysis system पर ही रखें।
+  है, Unix पर नई files के लिए mode `0600` के साथ; उन्हें कभी न चलाएँ, और उन्हें एक अलग-थलग (isolated) analysis system पर ही रखें।
 
 ### अभी नहीं पढ़ा जाता { #not-read-yet }
 
