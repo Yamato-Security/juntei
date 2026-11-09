@@ -16,6 +16,8 @@
 
 - `auto-parse --vhdx` parses the Windows systems inside every VHDX disk image in the evidence directory, each mounted read-only while it is parsed. The manifest records the image of each system (`Image`). (@YamatoSecurity)
 
+- `mount` and `auto-parse --e01` read E01 disk images (EnCase's Expert Witness Format, also `.Ex01`) as they are, split images from their first segment, with Yamato Security's [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser), a reader-only fork of [ewf-image](https://github.com/ebrig/ewf-image): the image is mounted read-only like a VHDX image, and `--vhdx` and `--e01` can be given together. (#140) (@YamatoSecurity)
+
 **Bug Fixes:**
 
 - Disk-image mounting checks GPT offset and length arithmetic, rejects cyclic extended-partition chains, preserves valid FILETIMEs beyond 2554, and reads compressed-file metadata without decompressing content. Bound the decompression cache, report unreadable NTFS partitions while retaining readable volumes, and preserve the original evidence directory when `auto-parse --vhdx` receives a bare image filename. (@YamatoSecurity)

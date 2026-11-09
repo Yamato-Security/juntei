@@ -33,10 +33,12 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 個別に解析する場合は、`parse-ese`、`parse-file`、`parse-ntfs`、`parse-registry`、`parse-sqlite` を使用します。
 例: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`。
 
-`juntei mount <IMAGE> <MOUNTPOINT>` は、VHDX ディスクイメージを読み取り専用で
+`juntei mount <IMAGE> <MOUNTPOINT>` は、VHDX または E01 のディスクイメージを読み取り専用で
 マウントし、Hayabusa などの他のツールから読めるようにします（FUSE、Linux のみ）。`auto-parse` に `--vhdx`
-を付けると、ディレクトリ内のすべての VHDX イメージの中にあるシステムを解析します。VHDX リーダーとマウントライブラリは
-[Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) で管理しています。
+または `--e01` を付けると、ディレクトリ内のすべての VHDX または E01 イメージの中にあるシステムを解析します。
+VHDX リーダーとマウントライブラリは
+[Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) で、E01 リーダーは
+[Yamato Security/ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) で管理しています。
 
 [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/ja/commands/persistence-hunter/)
 では、レジストリハイブ、スケジュールタスク、スタートアップファイル、WMI、BITS を横断して永続化の痕跡を調べます。

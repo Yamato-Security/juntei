@@ -47,7 +47,7 @@ pub enum Commands {
     )]
     AutoParse(AutoParseOptions),
 
-    /// Mount a VHDX disk image read-only (FUSE)
+    /// Mount a VHDX or E01 disk image read-only (FUSE)
     #[command(
         author = AUTHOR,
         version = VERSION,
