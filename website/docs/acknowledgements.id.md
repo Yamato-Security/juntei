@@ -23,6 +23,7 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
 | Image disk VHDX (`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) dan [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), disajikan melalui [fuser](https://github.com/cberner/fuser) | MS-VHDX dari Microsoft |
+| Image disk E01 (`mount`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ([ewf-image](https://github.com/ebrig/ewf-image) karya Elijah Brigham), di-mount dengan ys-vhdx-parser | Dokumentasi format dan alat [libewf](https://github.com/libyal/libewf) karya Joachim Metz, yang digunakan untuk memvalidasi pembaca |
 | Registry | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Riset format dan pemulihan registry yang disebutkan di bawah |
 
 ## Alat referensi dan validasi independen { #reference-tools-and-independent-validation }

@@ -1,6 +1,6 @@
 # Beweise sichern { #collecting-evidence }
 
-Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauenswürdiges Erfassungswerkzeug und bewahren Sie nach Möglichkeit die ursprünglichen Metadaten. VHDX-Disk-Images lassen sich ohne Extraktion parsen: siehe [Disk-Images einbinden](../commands/mount.md).
+Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauenswürdiges Erfassungswerkzeug und bewahren Sie nach Möglichkeit die ursprünglichen Metadaten. VHDX- und E01-Disk-Images lassen sich ohne Extraktion parsen: siehe [Disk-Images einbinden](../commands/mount.md).
 
 ## Gängige Speicherorte { #common-locations }
 

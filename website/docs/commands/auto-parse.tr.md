@@ -21,15 +21,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     Bu, üretilen verilerin yeniden kanıt olarak keşfedilmesini ve `--clobber` seçeneğinin kaynak
     koleksiyondaki dosyalara dokunmasını önler.
 
-## VHDX disk imajları { #vhdx-disk-images }
+## VHDX ve E01 disk imajları { #vhdx-and-e01-disk-images }
 
-`--vhdx` ile `auto-parse`, kanıt dizinindeki her VHDX disk imajının içindeki sistemleri ayrıştırır. Her imaj ayrıştırılırken FUSE ile salt okunur bağlanır; dosyalar dışarı çıkarılmaz. Bkz. [Disk İmajlarını Bağlama](mount.md).
+`--vhdx` ile `auto-parse`, kanıt dizinindeki her VHDX disk imajının içindeki sistemleri, `--e01` ile de her E01 imajının (parçalı bir imajda ilk segmentinden, `*.E01` veya `*.Ex01`) içindekileri ayrıştırır. İki seçenek birlikte verilebilir. Her imaj ayrıştırılırken FUSE ile salt okunur bağlanır; dosyalar dışarı çıkarılmaz. Bkz. [Disk İmajlarını Bağlama](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
-Bir NTFS birimi açılamazsa Juntei sorunu bildirir ve okunabilen birimleri korur. Kısmen okunabilen imajlarda `auto-parse --vhdx` çıkış kodu 1 döndürür; `mount` da ayırma işleminden sonra 1 döndürür.
+Bir NTFS birimi açılamazsa Juntei sorunu bildirir ve okunabilen birimleri korur. Kısmen okunabilen imajlarda `auto-parse --vhdx` ve `--e01` çıkış kodu 1 döndürür; `mount` da ayırma işleminden sonra 1 döndürür.
 
 ## Çıktı saat dilimi { #output-time-zone }
 
@@ -512,6 +513,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

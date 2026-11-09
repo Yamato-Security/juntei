@@ -1,6 +1,6 @@
 # Collecte des preuves { #collecting-evidence }
 
-Juntei analyse des fichiers déjà collectés sur Windows. Utilisez un outil d'acquisition fiable et préservez les métadonnées d'origine autant que possible. Les images disque VHDX peuvent être analysées sans extraction : voir [Monter des images disque](../commands/mount.md).
+Juntei analyse des fichiers déjà collectés sur Windows. Utilisez un outil d'acquisition fiable et préservez les métadonnées d'origine autant que possible. Les images disque VHDX et E01 peuvent être analysées sans extraction : voir [Monter des images disque](../commands/mount.md).
 
 ## Emplacements courants { #common-locations }
 

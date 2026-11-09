@@ -23,6 +23,7 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
 | อิมเมจดิสก์ VHDX (`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) และ [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic) ให้บริการไฟล์ผ่าน [fuser](https://github.com/cberner/fuser) | MS-VHDX ของ Microsoft |
+| อิมเมจดิสก์ E01 (`mount`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ([ewf-image](https://github.com/ebrig/ewf-image) ของ Elijah Brigham) เมานต์ด้วย ys-vhdx-parser | เอกสารรูปแบบและเครื่องมือ [libewf](https://github.com/libyal/libewf) ของ Joachim Metz ซึ่งใช้ตรวจสอบความถูกต้องของตัวอ่าน |
 | รีจิสทรี | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | งานวิจัยด้านรูปแบบรีจิสทรีและการกู้คืนข้อมูลที่ระบุไว้ด้านล่าง |
 
 ## เครื่องมืออ้างอิงและการตรวจสอบโดยอิสระ { #reference-tools-and-independent-validation }

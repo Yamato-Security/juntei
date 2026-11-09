@@ -21,15 +21,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     ထုတ်လုပ်ထားသော ဒေတာကို အထောက်အထားအဖြစ် ပြန်လည်ရှာဖွေတွေ့ရှိခြင်းမှ ကာကွယ်ပြီး `--clobber` က ရင်းမြစ် collection
     ရှိ ဖိုင်များကို ထိခိုက်ခြင်းမှ ကာကွယ်ပါသည်။
 
-## VHDX disk image များ { #vhdx-disk-images }
+## VHDX နှင့် E01 disk image များ { #vhdx-and-e01-disk-images }
 
-`--vhdx` ဖြင့် `auto-parse` သည် အထောက်အထား directory ရှိ VHDX disk image တစ်ခုစီအတွင်းမှ system များကို parse လုပ်သည်။ Parsing လုပ်နေစဉ် image ကို FUSE ဖြင့် read-only mount လုပ်သဖြင့် ဖိုင်များကို ထုတ်ယူခြင်းမရှိပါ။ [Disk image များကို mount လုပ်ခြင်း](mount.md) ကို ကြည့်ပါ။
+`--vhdx` ဖြင့် `auto-parse` သည် အထောက်အထား directory ရှိ VHDX disk image တစ်ခုစီအတွင်းမှ system များကို parse လုပ်ပြီး `--e01` ဖြင့် E01 image တစ်ခုစီ (split image ဖြစ်ပါက ၎င်း၏ ပထမ segment၊ `*.E01` သို့မဟုတ် `*.Ex01`) အတွင်းမှ system များကို parse လုပ်သည်။ Option နှစ်ခုကို အတူတကွ ပေးနိုင်သည်။ Parsing လုပ်နေစဉ် image ကို FUSE ဖြင့် read-only mount လုပ်သဖြင့် ဖိုင်များကို ထုတ်ယူခြင်းမရှိပါ။ [Disk image များကို mount လုပ်ခြင်း](mount.md) ကို ကြည့်ပါ။
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
-NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
+NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` နှင့် `--e01` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
 
 ## Output time zone { #output-time-zone }
 
@@ -498,6 +499,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

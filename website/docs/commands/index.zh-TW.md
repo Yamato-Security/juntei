@@ -17,7 +17,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | 命令 | 輸入 | 詳細指南 |
 |---|---|---|
-| `mount` | VHDX 磁碟映像檔 | [掛載磁碟映像](mount.md) |
+| `mount` | VHDX 或 E01 磁碟映像檔 | [掛載磁碟映像](mount.md) |
 
 ## [ESE 命令](user-activity.md) { #ese-commands }
 
@@ -108,7 +108,7 @@ Usage: juntei <COMMAND>
 Commands:
   auto-parse          Discover and parse Windows evidence
   help                Print this message or the help of the given subcommand(s)
-  mount               Mount a VHDX disk image read-only (FUSE)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts

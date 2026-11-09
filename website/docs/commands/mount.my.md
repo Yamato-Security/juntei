@@ -1,10 +1,16 @@
 # Disk image များကို mount လုပ်ခြင်း { #mounting-disk-images }
 
-`juntei mount` သည် လုပ်ဆောင်နေစဉ် VHDX disk image အတွင်းမှ ဖိုင်များကို directory တစ်ခုမှ read-only ဖတ်ရှုနိုင်စေသည်။ Hayabusa နှင့် Juntei ကဲ့သို့ tool များဖြင့် ဖိုင်ထုတ်ယူခြင်း သို့မဟုတ် root အခွင့်အရေးမလိုဘဲ စစ်ဆေးနိုင်သည်။ FUSE ကို အသုံးပြုပြီး Linux ပေါ်တွင် အလုပ်လုပ်သည်။ Reader နှင့် mounting library ကို [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) တွင် ထိန်းသိမ်းထားသည်။
+`juntei mount` သည် လုပ်ဆောင်နေစဉ် disk image (VHDX သို့မဟုတ် E01 image) အတွင်းမှ ဖိုင်များကို directory တစ်ခုမှ read-only ဖတ်ရှုနိုင်စေသည်။ Hayabusa နှင့် Juntei ကဲ့သို့ tool များဖြင့် ဖိုင်ထုတ်ယူခြင်း သို့မဟုတ် root အခွင့်အရေးမလိုဘဲ စစ်ဆေးနိုင်သည်။ FUSE ကို အသုံးပြုပြီး Linux ပေါ်တွင် အလုပ်လုပ်သည်။ VHDX reader နှင့် mounting library ကို [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) တွင်၊ E01 reader ကို [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) တွင် ထိန်းသိမ်းထားသည်။
 
 ```bash
 mkdir /mnt/host1
 juntei mount host1-triage.vhdx /mnt/host1
+```
+
+E01 image (EnCase ၏ Expert Witness Format၊ `.Ex01` လည်း ပါဝင်သည်) ကိုလည်း ထိုနည်းအတိုင်း mount လုပ်သည်။ ခွဲထားသော (split) image ကို ၎င်း၏ ပထမ segment ဖြင့် ပေးရပြီး ကျန် segment များ (`host1.E02`၊ `host1.E03`၊ …) ကို Juntei က ၎င်းနှင့် တူညီသောနေရာတွင် ရှာတွေ့သည်-
+
+```bash
+juntei mount host1.E01 /mnt/host1
 ```
 
 အခြား terminal တစ်ခုတွင်-
@@ -21,6 +27,7 @@ Unmount လုပ်ရန် ပထမ terminal တွင် Ctrl+C ကို �
 - Mount point တွင် NTFS volume ၏ ဖိုင်များကို တွေ့ရသည်။ စုဆောင်းထားသော image တွင် `C`၊ `LongFileNames` ကဲ့သို့ directory များနှင့် `$MFT` ကဲ့သို့ volume metadata ပါဝင်နိုင်သည်။ NTFS volume များစွာရှိလျှင် `Volume1`၊ `Volume2` အဖြစ် ဖော်ပြသည်။
 - ဖိုင်တိုင်းသည် read-only ဖြစ်ပြီး mount point ၏ ပိုင်ရှင်က ပိုင်ဆိုင်ပါသည်။ ဖိုင်အချိန်များသည် NTFS ၏
   `$STANDARD_INFORMATION` အချိန်များ ဖြစ်ပါသည်။
+- Partition table မပါသော volume တစ်ခုတည်း၏ image သည် ထို volume ပင် ဖြစ်ပါသည်။
 - အမည်များကို NTFS က သိမ်းဆည်းထားသည့်အတိုင်း ဖော်ပြပြီး အတိအကျ ကိုက်ညီမှသာ ရှာဖွေတွေ့ရှိပါသည်။ DOS 8.3 အမည်များနှင့်
   alternate data stream များကို မပြသပါ။
 - Compress လုပ်ထားသော ဖိုင်များကို decompress လုပ်ပေးပါသည် (ဖိုင်တစ်ခုလျှင် 1 GiB အထိ)။ EFS ဖြင့် encrypt
@@ -29,6 +36,8 @@ Unmount လုပ်ရန် ပထမ terminal တွင် Ctrl+C ကို �
 ## အထောက်အထားကို မပြောင်းလဲပါ { #the-evidence-is-not-changed }
 
 Image ကို read-only ဖွင့်ပြီး mount မှ ရေးသားခြင်းကို ငြင်းပယ်သည်။ သေချာမပိတ်ခဲ့သော VHDX ၏ pending log ကို memory တွင်သာ အသုံးချပြီး image သို့ ပြန်မရေးပါ။ အချို့ DiscUtils writer များသည် NTFS boot sector ၏ jump instruction နှင့် `55 AA` signature ကို သုညထားသည်။ Juntei သည် ထို volume များကို မူလအတိုင်း ဖတ်နိုင်သည်။
+
+E01 image ၏ segment များကိုလည်း read-only ဖွင့်သည်။ Chunk တစ်ခုစီကို ဖတ်သည့်အခါ ၎င်း၏ checksum နှင့် တိုက်စစ်သည်- ပျက်စီးနေသော chunk ကို မဖတ်နိုင်သော်လည်း image ၏ ကျန်အပိုင်းများကို ဖတ်နိုင်သည်။ Acquisition က မဖတ်နိုင်ခဲ့သော sector များနှင့် မပြီးဆုံးခဲ့သော acquisition ကို warning များအဖြစ် ဖော်ပြသည်။ Logical evidence file (`.L01`၊ `.Lx01`) တွင် disk မဟုတ်ဘဲ ဖိုင်များသာ ပါဝင်သဖြင့် mount မလုပ်ပါ။
 
 ## အသုံးပြုပုံ { #usage }
 
@@ -40,7 +49,7 @@ Usage:
   juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
 
 Input:
-  <IMAGE>       The disk image (VHDX)
+  <IMAGE>       The disk image (VHDX or E01; a split E01 image from its first segment)
   <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
 
 General Options:
@@ -54,10 +63,12 @@ Display Settings:
 ## auto-parse ဖြင့် image တိုင်းကို parse လုပ်ခြင်း { #parsing-every-image-with-auto-parse }
 
 `auto-parse --vhdx` သည် အထောက်အထား ဖိုင်တွဲရှိ VHDX disk image တိုင်း (သို့မဟုတ် `-d` ဖြင့် ပေးထားသော image
-တစ်ခုတည်း) အတွင်းရှိ Windows စနစ်များကို သီးခြား mount လုပ်စရာမလိုဘဲ parse လုပ်ပါသည်-
+တစ်ခုတည်း) အတွင်းရှိ Windows စနစ်များကို၊ `auto-parse --e01` သည် E01 image တိုင်း အတွင်းရှိ Windows စနစ်များကို
+သီးခြား mount လုပ်စရာမလိုဘဲ parse လုပ်ပါသည်။ Option နှစ်ခုကို အတူတကွ ပေးနိုင်ပါသည်-
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
 - Image တစ်ခုစီကို ယာယီ ဖိုင်တွဲအသစ်တစ်ခုအတွင်း image ၏ အမည်ဖြင့် အမည်ပေးထားသော ဖိုင်တွဲ (`host1-triage`)
@@ -65,6 +76,8 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
   လုပ်ပါသည်။ Image များကို အဆုံးတွင်လည်းကောင်း၊ Ctrl+C နှိပ်သည့်အခါတွင်လည်းကောင်း unmount လုပ်ပါသည်။
 - Terminal သည် image များနှင့် စနစ်တစ်ခုစီ၏ image ကို ဖော်ပြပါသည်-
   `HOST1: ./host1-triage/C (./host1-triage.vhdx)`။
+- `--e01` သည် E01 image တစ်ခုစီ၏ ပထမ segment (`*.E01`၊ `*.Ex01`) ကို ယူပြီး ကျန် segment များကို ၎င်းနှင့်အတူ
+  ဖတ်ပါသည်။
 - Manifest တွင် `EvidenceDirectory` သည် ပေးထားသော ဖိုင်တွဲ ဖြစ်ပြီး စနစ်တစ်ခုစီ၏ `Image` သည် ၎င်း၏ image ကို
   ဖော်ပြပါသည်။ `EvidenceRoot` နှင့် parser ညွှန်ကြားချက်များသည် mount ဖိုင်တွဲ (`./host1-triage/C`) ကို
   အသုံးပြုပါသည်။
@@ -72,14 +85,15 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 - Mount မလုပ်နိုင်သော image ကို report လုပ်ပါသည်။ ကျန် image များကို ဆက်လက် parse လုပ်ပြီး run သည်
   exit status 1 ဖြင့် ပြီးဆုံးပါသည်။
 
-NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
+NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` နှင့် `--e01` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
 
 ## လိုအပ်ချက်များ { #requirements }
 
 - Linux- FUSE 3 (`fusermount3`၊ `fuse3` package) နှင့် `/dev/fuse` သို့ ဝင်ရောက်ခွင့်။ ပုံမှန်အသုံးပြုသူများတွင်
   ထိုခွင့် အများအားဖြင့် ရှိပါသည်။ Root မလိုအပ်ပါ။
-- Windows နှင့် macOS ကို မပံ့ပိုးပါ။ Windows တွင် ယင်းအစား administrator အခွင့်အရေးဖြင့် run ထားသော (elevated) PowerShell တွင် image ကို
-  read-only အဖြစ် attach လုပ်ပြီး ၎င်း၏ drive letter ကို tool များအား ပေးပါ-
+- Windows နှင့် macOS ကို မပံ့ပိုးပါ။ Windows တွင် ယင်းအစား administrator အခွင့်အရေးဖြင့် run ထားသော (elevated) PowerShell တွင် VHDX image ကို
+  read-only အဖြစ် attach လုပ်ပြီး ၎င်း၏ drive letter ကို tool များအား ပေးပါ။ Windows သည် E01 image ကို attach မလုပ်နိုင်ပါ-
+  ၎င်းကို mount လုပ်နိုင်သော tool ဖြင့် read-only အဖြစ် mount လုပ်ပြီး ထို drive ကို tool များအား ပေးပါ။
 
 ```powershell
 Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly

@@ -24,6 +24,7 @@ kendisine başvurun.
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
 | VHDX disk imajları (`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) ve [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), [fuser](https://github.com/cberner/fuser) ile sunulur | Microsoft'un MS-VHDX belgesi |
+| E01 disk imajları (`mount`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) (Elijah Brigham'ın [ewf-image](https://github.com/ebrig/ewf-image) projesi), ys-vhdx-parser ile bağlanır | Joachim Metz'in [libewf](https://github.com/libyal/libewf) biçim belgeleri ve araçları; okuyucuyu doğrulamak için kullanılır |
 | Kayıt Defteri | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Aşağıda teşekkür edilen kayıt defteri biçimi ve kurtarma araştırmaları |
 
 ## Referans araçlar ve bağımsız doğrulama { #reference-tools-and-independent-validation }

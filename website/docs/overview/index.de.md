@@ -24,7 +24,7 @@ Dieselbe Binärdatei läuft unter Windows, macOS und Linux. Analysten können ge
 ## Was Juntei nicht tut { #what-juntei-does-not-do }
 
 Juntei erfasst keinen Live-Datenträger und ersetzt nicht die Beweissicherung; als Disk-Images bindet es nur
-VHDX-Images ein, und zwar schreibgeschützt. Es
+VHDX- und E01-Images ein, und zwar schreibgeschützt. Es
 fasst nicht automatisch alle Artefakte zu einer einzigen Darstellung des Vorfalls zusammen. Es parst die
 von Ihnen bereitgestellten Beweise und erzeugt Datensätze, die sich für Untersuchung und Korrelation eignen.
 

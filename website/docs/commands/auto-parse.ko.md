@@ -20,15 +20,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     생성된 데이터가 증거로 다시 발견되는 것을 방지하고, `--clobber`가 원본 수집물의 파일을 건드리지 않도록
     합니다.
 
-## VHDX 디스크 이미지 { #vhdx-disk-images }
+## VHDX 및 E01 디스크 이미지 { #vhdx-and-e01-disk-images }
 
-`--vhdx`를 지정하면 `auto-parse`는 증거 디렉터리의 모든 VHDX 디스크 이미지 안에 있는 시스템을 파싱합니다. 각 이미지는 파싱 중 FUSE로 읽기 전용 마운트되며 파일을 추출하지 않습니다. [디스크 이미지 마운트](mount.md)를 참조하십시오.
+`--vhdx`를 지정하면 `auto-parse`는 증거 디렉터리의 모든 VHDX 디스크 이미지 안에 있는 시스템을 파싱하고, `--e01`을 지정하면 모든 E01 이미지(분할 이미지는 첫 번째 세그먼트인 `*.E01` 또는 `*.Ex01`) 안에 있는 시스템을 파싱합니다. 두 옵션은 함께 지정할 수 있습니다. 각 이미지는 파싱 중 FUSE로 읽기 전용 마운트되며 파일을 추출하지 않습니다. [디스크 이미지 마운트](mount.md)를 참조하십시오.
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
-NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`는 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.
+NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`와 `--e01`은 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.
 
 ## 출력 표준 시간대 { #output-time-zone }
 
@@ -478,6 +479,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

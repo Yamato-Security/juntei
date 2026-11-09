@@ -21,15 +21,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     يمنع إعادة اكتشاف البيانات المولَّدة بوصفها أدلة ويمنع `--clobber` من
     المساس بالملفات في المجموعة المصدر.
 
-## صور أقراص VHDX { #vhdx-disk-images }
+## صور أقراص VHDX وE01 { #vhdx-and-e01-disk-images }
 
-عند استخدام `--vhdx`، يحلل `auto-parse` الأنظمة داخل كل صورة قرص VHDX في مجلد الأدلة. تُركّب كل صورة للقراءة فقط باستخدام FUSE أثناء تحليلها، دون استخراج الملفات. راجع [تحميل صور الأقراص](mount.md).
+عند استخدام `--vhdx`، يحلل `auto-parse` الأنظمة داخل كل صورة قرص VHDX في مجلد الأدلة، وعند استخدام `--e01`، يحلل الأنظمة داخل كل صورة E01 ‏(الصورة المقسّمة بمقطعها الأول، `*.E01` أو `*.Ex01`). ويمكن تحديد الخيارين معًا. تُركّب كل صورة للقراءة فقط باستخدام FUSE أثناء تحليلها، دون استخراج الملفات. راجع [تحميل صور الأقراص](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
-إذا تعذر فتح وحدة NTFS، يبلغ Juntei عن المشكلة ويحتفظ بالوحدات القابلة للقراءة. تعيد الصور القابلة للقراءة جزئيًا رمز الخروج 1 مع `auto-parse --vhdx`، ويعيد `mount` أيضًا الرمز 1 بعد إلغاء التركيب.
+إذا تعذر فتح وحدة NTFS، يبلغ Juntei عن المشكلة ويحتفظ بالوحدات القابلة للقراءة. تعيد الصور القابلة للقراءة جزئيًا رمز الخروج 1 مع `auto-parse --vhdx` و`--e01`، ويعيد `mount` أيضًا الرمز 1 بعد إلغاء التركيب.
 
 ## المنطقة الزمنية للإخراج { #output-time-zone }
 
@@ -499,6 +500,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

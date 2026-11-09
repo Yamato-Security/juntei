@@ -21,15 +21,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     ป้องกันไม่ให้ข้อมูลที่สร้างขึ้นถูกค้นพบซ้ำเป็นหลักฐาน และป้องกันไม่ให้ `--clobber`
     แตะต้องไฟล์ในชุดข้อมูลต้นทาง
 
-## อิมเมจดิสก์ VHDX { #vhdx-disk-images }
+## อิมเมจดิสก์ VHDX และ E01 { #vhdx-and-e01-disk-images }
 
-เมื่อใช้ `--vhdx` คำสั่ง `auto-parse` จะพาร์สระบบภายในอิมเมจดิสก์ VHDX ทุกไฟล์ในไดเรกทอรีหลักฐาน แต่ละอิมเมจจะถูกเมานต์แบบอ่านอย่างเดียวด้วย FUSE ระหว่างการพาร์ส โดยไม่มีการแยกไฟล์ ดู[การเมานต์อิมเมจดิสก์](mount.md)
+เมื่อใช้ `--vhdx` คำสั่ง `auto-parse` จะพาร์สระบบภายในอิมเมจดิสก์ VHDX ทุกไฟล์ในไดเรกทอรีหลักฐาน และเมื่อใช้ `--e01` จะพาร์สระบบภายในอิมเมจ E01 ทุกไฟล์ (สำหรับอิมเมจที่แบ่งเป็นหลายเซกเมนต์ จะใช้เซกเมนต์แรก คือ `*.E01` หรือ `*.Ex01`) สามารถระบุทั้งสองตัวเลือกพร้อมกันได้ แต่ละอิมเมจจะถูกเมานต์แบบอ่านอย่างเดียวด้วย FUSE ระหว่างการพาร์ส โดยไม่มีการแยกไฟล์ ดู[การเมานต์อิมเมจดิสก์](mount.md)
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
-หากเปิดโวลุ่ม NTFS ไม่ได้ Juntei จะรายงานปัญหาและคงโวลุ่มที่อ่านได้ไว้ สำหรับอิมเมจที่อ่านได้เพียงบางส่วน `auto-parse --vhdx` จะคืนรหัสจบการทำงาน 1 และ `mount` จะคืนค่า 1 หลังยกเลิกการเมานต์เช่นกัน
+หากเปิดโวลุ่ม NTFS ไม่ได้ Juntei จะรายงานปัญหาและคงโวลุ่มที่อ่านได้ไว้ สำหรับอิมเมจที่อ่านได้เพียงบางส่วน `auto-parse --vhdx` และ `--e01` จะคืนรหัสจบการทำงาน 1 และ `mount` จะคืนค่า 1 หลังยกเลิกการเมานต์เช่นกัน
 
 ## เขตเวลาของเอาต์พุต { #output-time-zone }
 
@@ -501,6 +502,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

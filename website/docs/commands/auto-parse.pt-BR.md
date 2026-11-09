@@ -21,15 +21,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     impede que os dados gerados sejam redescobertos como evidência e impede que `--clobber`
     toque em arquivos da coleta de origem.
 
-## Imagens de disco VHDX { #vhdx-disk-images }
+## Imagens de disco VHDX e E01 { #vhdx-and-e01-disk-images }
 
-Com `--vhdx`, `auto-parse` analisa os sistemas em cada imagem de disco VHDX do diretório de evidências. Cada imagem é montada somente para leitura com FUSE durante a análise, sem extrair arquivos. Consulte [Montar imagens de disco](mount.md).
+Com `--vhdx`, `auto-parse` analisa os sistemas em cada imagem de disco VHDX do diretório de evidências e, com `--e01`, os de cada imagem E01 (uma imagem dividida a partir do primeiro segmento, `*.E01` ou `*.Ex01`). As duas opções podem ser usadas juntas. Cada imagem é montada somente para leitura com FUSE durante a análise, sem extrair arquivos. Consulte [Montar imagens de disco](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
-Se um volume NTFS não puder ser aberto, o Juntei informa o problema e mantém os volumes legíveis. Para imagens parcialmente legíveis, `auto-parse --vhdx` retorna o código 1; `mount` também retorna 1 após desmontar.
+Se um volume NTFS não puder ser aberto, o Juntei informa o problema e mantém os volumes legíveis. Para imagens parcialmente legíveis, `auto-parse --vhdx` e `--e01` retornam o código 1; `mount` também retorna 1 após desmontar.
 
 ## Fuso horário da saída { #output-time-zone }
 
@@ -500,6 +501,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

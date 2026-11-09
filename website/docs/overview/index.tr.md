@@ -24,7 +24,7 @@ Aynı ikili dosya Windows, macOS ve Linux üzerinde çalışır. Analistler, her
 ## Juntei'nin yapmadıkları { #what-juntei-does-not-do }
 
 Juntei canlı bir diskin imajını almaz veya kanıt korumanın yerini almaz; bağladığı tek disk imajları VHDX
-imajlarıdır ve bunları yalnızca salt okunur olarak bağlar.
+ve E01 imajlarıdır ve bunları yalnızca salt okunur olarak bağlar.
 Tüm artefaktları otomatik olarak tek bir olay anlatısında birleştirmez. Sağladığınız
 kanıtları ayrıştırır ve inceleme ile ilişkilendirmeye uygun kayıtlar üretir.
 

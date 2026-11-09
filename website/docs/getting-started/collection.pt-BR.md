@@ -1,6 +1,6 @@
 # Coleta de evidências { #collecting-evidence }
 
-Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisição confiável e preserve os metadados originais quando possível. Imagens de disco VHDX podem ser analisadas sem extração: consulte [Montar imagens de disco](../commands/mount.md).
+Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisição confiável e preserve os metadados originais quando possível. Imagens de disco VHDX e E01 podem ser analisadas sem extração: consulte [Montar imagens de disco](../commands/mount.md).
 
 ## Localizações comuns { #common-locations }
 

@@ -1,6 +1,6 @@
 # साक्ष्य संग्रह { #collecting-evidence }
 
-Juntei Windows से पहले ही एकत्र की गई files को parse करता है। भरोसेमंद acquisition tool का उपयोग करें और जहाँ संभव हो मूल metadata सुरक्षित रखें। VHDX disk images को extract किए बिना parse किया जा सकता है: [डिस्क इमेज माउंट करना](../commands/mount.md) देखें।
+Juntei Windows से पहले ही एकत्र की गई files को parse करता है। भरोसेमंद acquisition tool का उपयोग करें और जहाँ संभव हो मूल metadata सुरक्षित रखें। VHDX और E01 disk images को extract किए बिना parse किया जा सकता है: [डिस्क इमेज माउंट करना](../commands/mount.md) देखें।
 
 ## सामान्य स्थान { #common-locations }
 

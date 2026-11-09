@@ -24,7 +24,7 @@ Le même binaire fonctionne sous Windows, macOS et Linux. Les analystes peuvent 
 ## Ce que Juntei ne fait pas { #what-juntei-does-not-do }
 
 Juntei n'acquiert pas de disque en direct et ne remplace pas la préservation des preuves ; les seules images disque qu'il
-monte sont des images VHDX, en lecture seule. Il
+monte sont des images VHDX et E01, en lecture seule. Il
 ne combine pas automatiquement tous les artefacts en un récit d'incident unique. Il analyse les
 preuves que vous fournissez et produit des enregistrements adaptés à l'investigation et à la corrélation.
 

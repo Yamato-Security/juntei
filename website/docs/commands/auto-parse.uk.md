@@ -21,15 +21,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     запобігає повторному виявленню згенерованих даних як доказів і не дає `--clobber`
     торкатися файлів у вихідній колекції.
 
-## Образи дисків VHDX { #vhdx-disk-images }
+## Образи дисків VHDX і E01 { #vhdx-and-e01-disk-images }
 
-З параметром `--vhdx` команда `auto-parse` аналізує системи в кожному образі диска VHDX у каталозі доказів. Під час аналізу кожен образ монтується через FUSE лише для читання; файли не розпаковуються. Див. [Монтування образів дисків](mount.md).
+З параметром `--vhdx` команда `auto-parse` аналізує системи в кожному образі диска VHDX у каталозі доказів, а з параметром `--e01` — системи в кожному образі E01 (розділений образ — за його першим сегментом, `*.E01` або `*.Ex01`). Обидва параметри можна вказати разом. Під час аналізу кожен образ монтується через FUSE лише для читання; файли не розпаковуються. Див. [Монтування образів дисків](mount.md).
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
-Якщо том NTFS не відкривається, Juntei повідомляє про проблему та зберігає доступ до читабельних томів. Для частково читабельного образу `auto-parse --vhdx` повертає код завершення 1; `mount` також повертає 1 після відмонтування.
+Якщо том NTFS не відкривається, Juntei повідомляє про проблему та зберігає доступ до читабельних томів. Для частково читабельного образу `auto-parse --vhdx` і `--e01` повертають код завершення 1; `mount` також повертає 1 після відмонтування.
 
 ## Часовий пояс виводу { #output-time-zone }
 
@@ -500,6 +501,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

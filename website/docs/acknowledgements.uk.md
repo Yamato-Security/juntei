@@ -23,6 +23,7 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
 | Образи дисків VHDX (`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) і [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), що надаються через [fuser](https://github.com/cberner/fuser) | MS-VHDX від Microsoft |
+| Образи дисків E01 (`mount`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ([ewf-image](https://github.com/ebrig/ewf-image) Елайджі Брігема), що монтується за допомогою ys-vhdx-parser | Документація формату та інструменти [libewf](https://github.com/libyal/libewf) Йоахима Метца, використані для перевірки модуля читання |
 | Реєстр | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Дослідження формату реєстру та відновлення даних, згадані нижче |
 
 ## Еталонні інструменти та незалежна перевірка { #reference-tools-and-independent-validation }

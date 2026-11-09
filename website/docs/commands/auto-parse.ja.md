@@ -15,15 +15,16 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 !!! warning "出力ツリーと証拠ツリーを分離しておきます。"
     Juntei は、`<EVIDENCE>` 内にある出力ディレクトリ、または `<EVIDENCE>` を含む出力ディレクトリを拒否します。これにより、生成されたデータが証拠として再発見されるのを防ぎ、`--clobber` がソース コレクション内のファイルにアクセスするのを防ぎます。
 
-## VHDX ディスクイメージ { #vhdx-disk-images }
+## VHDX と E01 のディスクイメージ { #vhdx-and-e01-disk-images }
 
-`--vhdx` を指定すると、`auto-parse` は証拠ディレクトリ内のすべての VHDX ディスクイメージに含まれるシステムを解析します。各イメージは解析中だけ FUSE で読み取り専用でマウントされ、ファイルは抽出されません。[ディスクイメージのマウント](mount.md)を参照してください。
+`--vhdx` を指定すると、`auto-parse` は証拠ディレクトリ内のすべての VHDX ディスクイメージに含まれるシステムを解析し、`--e01` を指定すると、すべての E01 イメージ (分割イメージは最初のセグメント、`*.E01` または `*.Ex01`) に含まれるシステムを解析します。2 つのオプションは同時に指定できます。各イメージは解析中だけ FUSE で読み取り専用でマウントされ、ファイルは抽出されません。[ディスクイメージのマウント](mount.md)を参照してください。
 
 ```bash
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+juntei auto-parse -d /cases/e01 --e01 -o parsed
 ```
 
-開けない NTFS ボリュームがある場合、その問題を報告し、読み取り可能なボリュームの処理を続けます。画像の一部を読み取れなかった場合、`auto-parse --vhdx` は終了コード 1 を返し、`mount` もアンマウント後に 1 を返します。
+開けない NTFS ボリュームがある場合、その問題を報告し、読み取り可能なボリュームの処理を続けます。イメージの一部を読み取れなかった場合、`auto-parse --vhdx` と `--e01` は終了コード 1 を返し、`mount` もアンマウント後に 1 を返します。
 
 ## 出力タイムゾーン { #output-time-zone }
 
@@ -349,6 +350,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
