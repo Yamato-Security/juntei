@@ -5436,7 +5436,13 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
 #[test]
 fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
     let evidence = tempfile::tempdir().unwrap();
-    let image = evidence.path().join("single.vhdx");
+    // A backslash is part of a filename on Unix, never a directory separator.
+    let filename = if cfg!(unix) {
+        r"single\image.vhdx"
+    } else {
+        "single.vhdx"
+    };
+    let image = evidence.path().join(filename);
     sample_vhdx(&image);
     let original = std::fs::read(&image).unwrap();
     let permissions = std::fs::metadata(&image).unwrap().permissions();
@@ -5450,7 +5456,7 @@ fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
             "auto-parse",
             "--vhdx",
             "-d",
-            "single.vhdx",
+            filename,
             "-o",
             output.to_str().unwrap(),
             "-T",
@@ -5477,7 +5483,7 @@ fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {
         manifest["EvidenceDirectory"],
         evidence.path().file_name().unwrap().to_str().unwrap()
     );
-    assert_eq!(manifest["Hosts"][0]["Image"], "./single.vhdx");
+    assert_eq!(manifest["Hosts"][0]["Image"], format!("./{filename}"));
 }
 
 #[test]

@@ -142,8 +142,9 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
         let source = Path::new(".")
             .join(path.strip_prefix(&root).unwrap_or(&path))
             .display()
-            .to_string()
-            .replace('\\', "/");
+            .to_string();
+        #[cfg(windows)]
+        let source = source.replace('\\', "/");
         let folder = util::unique_name(&root, &path, &mut used);
         let point = base.path().join(folder);
         let image = match Image::open(&path) {
