@@ -16,6 +16,7 @@ Windows 會在檔案系統、登錄、相容性資料庫、使用者介面歷程
 | 使用者開啟了什麼？ | [Jump Lists](jump-lists.md)、[LNK](lnk.md)、[RecentDocs](recentdocs.md) | SRUM、Prefetch |
 | 是否有程式傳輸了大量資料？ | [SRUM](srum.md) | 防火牆、Proxy、DNS、封包或 EDR 遙測資料 |
 | 使用者造訪了哪些網站，又下載了什麼？ | [網頁瀏覽器](browser.md)、[Internet Explorer 與舊版 Edge](webcache.md) | Proxy 與 DNS 記錄、`$MFT` 與 USN Journal、Defender、SRUM |
+| 使用者與誰往來電子郵件，又附加了什麼？ | [Outlook](outlook.md) | 郵件伺服器與閘道記錄、`$MFT` 與 USN Journal、Defender、LNK 與 Jump Lists |
 | 哪些用戶端與帳戶使用過這台伺服器，又是在哪幾天？ | [使用者存取記錄 (UAL)](ual.md) | Security 事件記錄、SMB 與 RDP 記錄、防火牆記錄 |
 | 是否設定了持續存取機制？ | [服務](services.md)、[TaskCache](taskcache.md)、[登錄](registry.md) | 事件記錄、Prefetch、`$MFT` |
 | Defender 移除了什麼？ | [Defender 隔離資料](defender-quarantine.md) | 事件記錄、`$MFT`、USN Journal |

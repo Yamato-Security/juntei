@@ -123,6 +123,32 @@ Seluruh 4.156 baris cocok, nilai demi nilai: 44 kontainer, 182 entri riwayat, 6 
 3.754 entri lainnya. Perbandingan tersebut mendekode record unduhan secara mandiri. Record yang ditandai
 terhapus oleh database dikecualikan dari keduanya.
 
+## Outlook { #outlook }
+
+`parse-file outlook` membaca berkas PST, OST, `.msg`, dan `.oft` dengan
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser), yang pembaca PST dan OST-nya
+merupakan fork dari [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) milik Microsoft dan
+pembaca `.msg`-nya ditulis berdasarkan spesifikasi terbuka Microsoft.
+
+- **PST dan OST**: 66 berkas PST dan OST publik (Apache Tika, artemis, contoh Aspose.Email, DFIR
+  Artifact Museum, Enron, contoh GroupDocs, java-libpst, data uji libyal, outlook-pst-rs, dan
+  pst-extractor) dibandingkan dengan libpff, properti demi properti: setiap properti dari setiap
+  store, folder, pesan, penerima, dan lampiran, serta data setiap lampiran. 324.175 fakta sama dan
+  tidak ada yang berbeda tanpa penjelasan. Sisanya adalah apa yang hanya dibaca oleh ys-outlook-parser
+  (15.846 fakta dari pesan, penerima, dan lampiran yang gagal dibaca libpff, serta dari sebuah store
+  yang tidak dapat dibukanya; 8.223 dari item tersembunyi), sel penerima yang diberikan libpff sebagai
+  kosong atau nol padahal barisnya menyatakan nilai itu tidak ada (49.077), entry id dan tipe folder
+  yang dihitung seperti yang dilakukan MAPI (2.004), serta objek dan pesan tertanam yang diberikan
+  libpff sebagai data mentahnya (480). Dua dari berkas tersebut sama sekali tidak dapat dibaca oleh
+  kedua pembaca.
+- **`.msg` dan `.oft`**: 214 berkas publik, dengan 2.404 pesan, penerima, dan lampiran serta 41.002
+  properti, dibandingkan dengan extract-msg: 110.114 fakta sama, dan masing-masing dari 791 fakta yang
+  berbeda dapat dijelaskan: 601 adalah kesalahan extract-msg terkait waktu, 35 berasal dari berkas ANSI
+  yang didekodenya dengan code page yang salah, dan sisanya adalah apa yang dihilangkan atau
+  ditambahkannya.
+- **Input rusak**: lebih dari 260.000 berkas `.msg` hasil mutasi dan 160.000 PST hasil mutasi, serta
+  berkas yang dibuat khusus, dibaca tanpa crash, hang, atau penggunaan memori yang tak terbatas.
+
 ## Pintasan LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) adalah fork yang dikelola dari crate

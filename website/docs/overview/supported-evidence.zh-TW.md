@@ -16,6 +16,7 @@
 | 使用者存取記錄 (UAL) | `parse-ese ual` | 哪些用戶端位址與帳戶在哪幾天使用了 Windows Server 的角色（檔案共用、Active Directory、DHCP、IIS） | 要求以天為單位計數，而非逐筆記錄；位址可能是 NAT 或 Proxy；dirty 的 `Current.mdb` 會缺少最新的變更 |
 | Internet Explorer 與舊版 Edge（WebCache） | `parse-ese webcache` | 造訪過的網頁與在檔案總管中開啟的本機檔案、下載的檔案及其來源、Cookie、快取的檔案及其 HTTP 標頭 | 一筆歷程記錄項目是一個 URL 及其最後一次造訪，而非每一次造訪；不會復原已刪除的項目；dirty 的資料庫會缺少最新的變更 |
 | 網頁瀏覽器（Chromium 與 Firefox 系列） | `parse-sqlite browser` | 造訪過的網頁及造訪方式、下載的檔案及其來源、Cookie、在網頁表單中輸入的值；復原已刪除的造訪、下載與表單項目 | 一次造訪可能是重新導向、框架或其他程式開啟的網頁；Chromium 的 Cookie 值經過加密；瀏覽器將已刪除的項目清零或執行檢查點後，這些項目即無法復原 |
+| Outlook（PST、OST、MSG、OFT） | `parse-file outlook` | 電子郵件及其寄件者、收件者、時間與附件；連絡人、行事曆項目與工作；資料夾、隱藏的設定項目，以及依原樣儲存的每一個屬性 | 寄件者的地址可能遭偽造；已不在任何資料夾中的項目不會被復原；尚不讀取離線通訊錄、自動完成與其他 Outlook 檔案 |
 | LNK 捷徑 | `parse-file lnk` | 開啟過的目標、參數、磁碟區、共用資料夾、來源機器 | 即使目標從未執行，也可以建立捷徑 |
 | Jump Lists | `parse-file jump-lists` | 應用程式開啟過的項目、釘選、使用情形與內嵌的 LNK 資料 | 行為與保留方式因應用程式而異 |
 | ShimCache | `parse-registry shimcache` | 歷史執行檔路徑與相容性檢查 | 快取可能要到關機時才寫出；單一項目不等於執行 |

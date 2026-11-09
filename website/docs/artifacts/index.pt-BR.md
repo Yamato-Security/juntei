@@ -17,6 +17,7 @@ mas o investigador ainda precisa interpretar o que cada fonte significa.
 | O que um usuário abriu? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Um programa transferiu uma grande quantidade de dados? | [SRUM](srum.md) | Telemetria de firewall, proxy, DNS, pacotes ou EDR |
 | Quais sites um usuário visitou, e o que ele baixou? | [Navegadores web](browser.md), [Internet Explorer e Edge legado](webcache.md) | Logs de proxy e DNS, `$MFT` e Diário USN, Defender, SRUM |
+| Com quem um usuário trocou e-mails, e o que estava anexado? | [Outlook](outlook.md) | Logs de servidores e gateways de e-mail, `$MFT` e Diário USN, Defender, LNK e Jump Lists |
 | Quais clientes e contas usaram este servidor, e em quais dias? | [Registro de acesso do usuário (UAL)](ual.md) | Logs de eventos Security, logs de SMB e RDP, logs de firewall |
 | Foi configurada persistência? | [Serviços](services.md), [TaskCache](taskcache.md), [Registro](registry.md) | Logs de eventos, Prefetch, `$MFT` |
 | O que o Defender removeu? | [Quarentena do Defender](defender-quarantine.md) | Logs de eventos, `$MFT`, Diário USN |

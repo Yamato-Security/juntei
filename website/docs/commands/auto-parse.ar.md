@@ -133,6 +133,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - تسجيل وصول المستخدمين (UAL)
 - سجل التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج في متصفحات الويب (المتصفحات المبنية على Chromium وFirefox)
 - قاعدة WebCache الخاصة بـ Internet Explorer وEdge القديم: سجل التصفح والتنزيلات وملفات تعريف الارتباط وإدخالات ذاكرة التخزين المؤقت
+- ملفات Outlook من نوع PST وOST وMSG وOFT: المجلدات والعناصر والمستلمون والمرفقات وجهات الاتصال وعناصر التقويم والمهام
 - اختصارات LNK
 - Jump Lists
 - ShimCache
@@ -200,6 +201,16 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -306,6 +317,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 | `Applications` | سجل التطبيقات (آثار أدوات الجهات الخارجية) |
 | `Applications` | البرامج المثبتة |
 | `BrowserActivity` | سجل التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج في متصفحات الويب، مع الإدخالات المحذوفة المستعادة؛ وقاعدة WebCache الخاصة بـ Internet Explorer وEdge القديم |
+| `Communication` | ملفات Outlook من نوع PST وOST وMSG وOFT: المجلدات والعناصر والمستلمون والمرفقات وجهات الاتصال وعناصر التقويم والمهام |
 | `ExternalDevices` | أجهزة USB ووحدات التخزين |
 | `FileAndFolderOpening` | Jump Lists، واختصارات LNK، وMicrosoft Office، وقوائم MRU، ومربعات حوار الفتح والحفظ باسم، وRecentDocs، وShellBags |
 | `FileExistence` | Amcache، ShimCache |
@@ -351,6 +363,10 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 بـ Internet Explorer وEdge القديم: ‏`WebCache-History.csv` و`WebCache-Downloads.csv`
 و`WebCache-Cookies.csv` و`WebCache-Entries.csv` و`WebCache-Containers.csv`، مع
 `WebCache-logs.txt`؛ راجع [Internet Explorer وEdge القديم](../artifacts/webcache.md#automatic-parsing).
+وتوجد جداول Outlook في `Communication`: ‏`Outlook-Files.csv` و`Outlook-Folders.csv`
+و`Outlook-Items.csv` و`Outlook-Recipients.csv` و`Outlook-Attachments.csv` و`Outlook-Contacts.csv`
+و`Outlook-Calendar.csv` و`Outlook-Tasks.csv`، مع `Outlook-logs.txt`؛ راجع
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 راجع [جدول توزيع SRUM الكامل](../artifacts/srum.md#categorized-auto-parse-output).
 
 تطابق السجلات اسم الأثر الرقمي بأحرفه الكبيرة، مثل `Registry-SAM-logs.txt` و`PrefetchTimeline-logs.txt`

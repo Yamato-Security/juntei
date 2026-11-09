@@ -427,6 +427,16 @@ pub enum FileCommands {
     )]
     Lnk(LnkOptions),
 
+    /// Parse Outlook PST, OST, MSG and OFT files
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file outlook <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Outlook(OutlookOptions),
+
     /// Parse Prefetch files
     #[command(
         author = AUTHOR,
@@ -1388,6 +1398,73 @@ impl WebCacheOptions {
             && matches!(
                 self.output_type,
                 Some(WebCacheOutputType::Json | WebCacheOutputType::Jsonl)
+            )
+    }
+}
+
+/// What `parse-file outlook` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OutlookOutputType {
+    /// One CSV table each for files, folders, items, recipients, attachments, contacts, calendar items and tasks (and properties), in a directory
+    Csv,
+    /// One pretty-printed JSON object per row
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+#[clap(group(ArgGroup::new("destination").args(["output", "extract_attachments"]).multiple(true)))]
+pub struct OutlookOptions {
+    /// Directory to search recursively for Outlook files (*.pst, *.ost, *.msg, *.oft)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one PST, OST, MSG or OFT file (told apart by its contents, whatever its name)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Code page of text that isn't Unicode, for items that don't give theirs: the system's ANSI code page (932 for Japanese)
+    #[arg(help_heading = Some("Input"), long = "code-page", value_name = "CP", default_value_t = 1252, display_order = 102)]
+    pub code_page: u16,
+
+    /// Save every row: a directory of CSV tables, or a file (json, jsonl)
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "PATH", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<OutlookOutputType>,
+
+    /// Also write every property of the stores, folders, items, recipients and attachments (the Properties table)
+    #[arg(help_heading = Some("Output"), long, display_order = 302)]
+    pub properties: bool,
+
+    /// Write each attachment's data once to DIR, named by its SHA-256 (attachments can be malware: never run them)
+    #[arg(help_heading = Some("Output"), long = "extract-attachments", value_name = "DIR", display_order = 303)]
+    pub extract_attachments: Option<PathBuf>,
+
+    /// Overwrite files when saving or extracting
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "destination", display_order = 304)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl OutlookOptions {
+    pub fn output_type(&self) -> OutlookOutputType {
+        self.output_type.unwrap_or(OutlookOutputType::Csv)
+    }
+
+    /// Rows on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there. CSV tables need a directory.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(OutlookOutputType::Json | OutlookOutputType::Jsonl)
             )
     }
 }

@@ -123,6 +123,30 @@ stimmten Wert für Wert überein: 44 Container, 182 Verlaufseinträge, 6 Downloa
 Einträge. Der Vergleich dekodierte die Download-Datensätze eigenständig. Datensätze, die die Datenbanken als gelöscht
 kennzeichnen, wurden bei beiden ausgelassen.
 
+## Outlook { #outlook }
+
+`parse-file outlook` liest PST-, OST-, `.msg`- und `.oft`-Dateien mit
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser), dessen PST- und OST-Leser ein Fork von
+Microsofts [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) ist und dessen `.msg`-Leser nach den offenen
+Spezifikationen von Microsoft geschrieben wurde.
+
+- **PST und OST**: 66 öffentliche PST- und OST-Dateien (Apache Tika, artemis, die Beispiele von Aspose.Email, das
+  DFIR Artifact Museum, Enron, die Beispiele von GroupDocs, java-libpst, die Testdaten von libyal, outlook-pst-rs und
+  pst-extractor) wurden Eigenschaft für Eigenschaft mit libpff verglichen: jede Eigenschaft jedes Nachrichtenspeichers,
+  Ordners, jeder Nachricht, jedes Empfängers und Anhangs sowie die Daten jedes Anhangs. 324.175 Werte stimmten
+  überein, und keiner wich ohne Erklärung ab. Die übrigen sind das, was nur ys-outlook-parser liest (15.846 Werte von
+  Nachrichten, Empfängern und Anhängen, an denen libpff scheitert, und eines Nachrichtenspeichers, den es nicht öffnen
+  kann; 8.223 von versteckten Elementen), Empfängerzellen, die libpff als leer oder null ausgibt, obwohl ihre Zeilen
+  sie als nicht vorhanden ausweisen (49.077), Eintrags-IDs und Typen von Ordnern, die so berechnet werden, wie MAPI
+  es tut (2.004), sowie Objekte und eingebettete Nachrichten, die libpff als Rohdaten ausgibt (480). Zwei der Dateien
+  kann keiner der beiden Leser überhaupt lesen.
+- **`.msg` und `.oft`**: 214 öffentliche Dateien mit 2.404 Nachrichten, Empfängern und Anhängen und 41.002
+  Eigenschaften wurden mit extract-msg verglichen: 110.114 Werte stimmten überein, und jede der 791 Abweichungen ist
+  erklärt: 601 sind Fehler von extract-msg bei Zeiten, 35 stammen aus ANSI-Dateien, die es mit der falschen Codepage
+  dekodiert, und die übrigen sind das, was es auslässt oder hinzufügt.
+- **Beschädigte Eingaben**: Mehr als 260.000 mutierte `.msg`-Dateien und 160.000 mutierte PSTs sowie eigens
+  präparierte Dateien wurden ohne Absturz, ohne Hängenbleiben und ohne unbegrenzten Speicherverbrauch gelesen.
+
 ## LNK-Verknüpfungen { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) ist ein gepflegter Fork des Crates

@@ -133,6 +133,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - журналювання доступу користувачів (UAL)
 - історія, завантаження, файли cookie та історія форм веб-браузерів (браузери на основі Chromium і Firefox)
 - WebCache Internet Explorer і застарілого Edge: історія, завантаження, файли cookie та записи кешу
+- файли Outlook PST, OST, MSG і OFT: папки, елементи, одержувачі, вкладення, контакти, елементи календаря та завдання
 - ярлики LNK
 - Jump Lists
 - ShimCache
@@ -201,6 +202,16 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -307,6 +318,7 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `Applications` | Історія програм (сліди сторонніх інструментів) |
 | `Applications` | Встановлені програми |
 | `BrowserActivity` | Історія, завантаження, файли cookie та історія форм веб-браузерів разом із відновленими видаленими записами; WebCache Internet Explorer і застарілого Edge |
+| `Communication` | Файли Outlook PST, OST, MSG і OFT: папки, елементи, одержувачі, вкладення, контакти, елементи календаря та завдання |
 | `ExternalDevices` | Пристрої та томи USB |
 | `FileAndFolderOpening` | Jump Lists, ярлики LNK, Microsoft Office, списки MRU, діалоги відкриття та збереження файлів, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -352,6 +364,10 @@ Amcache і Jump Lists мають по одному спільному журна
 Internet Explorer і застарілого Edge: `WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` і `WebCache-Containers.csv`, разом із
 `WebCache-logs.txt`; див. [Internet Explorer і застарілий Edge](../artifacts/webcache.md#automatic-parsing).
+Таблиці Outlook розміщуються в `Communication`: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` і `Outlook-Tasks.csv`, разом із `Outlook-logs.txt`; див.
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 Див. [повну таблицю розміщення SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Імена журналів відповідають назві артефакту з великої літери, як-от `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

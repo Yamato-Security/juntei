@@ -125,6 +125,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - 사용자 액세스 로깅 (UAL)
 - 웹 브라우저 방문 기록, 다운로드, 쿠키 및 양식 기록(Chromium 및 Firefox 기반 브라우저)
 - Internet Explorer와 레거시 Edge의 WebCache: 방문 기록, 다운로드, 쿠키 및 캐시 항목
+- Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업
 - LNK 바로 가기
 - Jump Lists
 - ShimCache
@@ -191,6 +192,16 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -297,6 +308,7 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 | `Applications` | 애플리케이션 기록(서드 파티 도구의 흔적) |
 | `Applications` | 설치된 프로그램 |
 | `BrowserActivity` | 복구된 삭제 항목을 포함한 웹 브라우저 방문 기록, 다운로드, 쿠키 및 양식 기록, 그리고 Internet Explorer와 레거시 Edge의 WebCache |
+| `Communication` | Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업 |
 | `ExternalDevices` | USB 장치와 볼륨 |
 | `FileAndFolderOpening` | Jump Lists, LNK 바로 가기, Microsoft Office, MRU 목록, 열기 및 다른 이름으로 저장 대화 상자, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -340,6 +352,10 @@ Amcache나 Jump Lists의 하위 디렉터리는 없습니다. SRUM 테이블은 
 Internet Explorer와 레거시 Edge의 WebCache 테이블도 이곳에 있으며(`WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv`, `WebCache-Containers.csv`), `WebCache-logs.txt`도 함께 있습니다.
 [Internet Explorer와 레거시 Edge](../artifacts/webcache.md#automatic-parsing)를 참조하십시오.
+Outlook 테이블은 `Communication`에 있으며(`Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv`, `Outlook-Tasks.csv`), `Outlook-logs.txt`도 함께 있습니다.
+[Outlook](../artifacts/outlook.md#automatic-parsing)을 참조하십시오.
 [SRUM 배치 표 전체](../artifacts/srum.md#categorized-auto-parse-output)를 참조하십시오.
 
 로그는 `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`, `Registry-UserAssist-logs.txt`처럼 대문자로 시작하는

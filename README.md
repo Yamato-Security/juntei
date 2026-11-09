@@ -23,7 +23,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
-Juntei currently supports 41 of the most popular Windows forensic artifacts and we continue to add more.
+Juntei currently supports 42 of the most popular Windows forensic artifacts and we continue to add more.
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
@@ -150,6 +150,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Web browsers** (`History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite`) — The visits, downloads, cookies and form entries of Chrome, Edge, Brave, Opera, Vivaldi, Firefox and other Chromium- and Firefox-based browsers, read with their write-ahead logs, with deleted visits, pages, downloads and form entries recovered. | SQLite |
 | **Internet Explorer and legacy Edge** (`WebCacheV01.dat`) — The history (with page titles, and the local files File Explorer opened), downloads, cookies and cached files of Internet Explorer 10 and 11, legacy Edge and other programs that use the Windows Internet functions, with each cached file's path and HTTP headers. | ESE |
+
+### Communication
+
+| Artifact | Type |
+| --- | --- |
+| **Outlook** (`*.pst`, `*.ost`, `*.msg`, `*.oft`) — The folders and items of PST and OST stores (OSTs of Outlook 2013 and later included) and saved messages and templates: e-mail with its senders, recipients, times and attachments (SHA-256, optional extraction), the items embedded in attachments, contacts, calendar items, tasks, the folders' hidden items and every property as stored. | File |
 
 ### Network Activity
 

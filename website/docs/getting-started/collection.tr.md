@@ -14,6 +14,7 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Kullanıcı Erişim Günlüğü (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer ve eski Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (Outlook 2010'dan önce `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft` ve kaydedildikleri her yerdeki `.msg` dosyaları |
 | Web tarayıcıları | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` ve diğer tarayıcıların profil klasörleri |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ve diğer kullanıcı/sistem konumları |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` ve `CustomDestinations` |
@@ -44,6 +45,9 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 - `WebCache` klasörünün tamamını toplayın: Windows, kullanıcı oturum açtığı sürece `WebCacheV01.dat`
   dosyasını açık tutar ve en yeni değişiklikleri yalnızca `V01*.log` işlem günlüklerinde bulunur; Juntei
   bu günlükleri yeniden oynatmaz.
+- Outlook'un OST ve PST dosyalarını Outlook kapalıyken ya da bir disk imajından veya bir birim gölge
+  kopyasından toplayın: Outlook çalıştığı sürece bunları açık tutar. PST'leri varsayılan klasörlerin
+  dışında da arayın: kullanıcılar arşivleri başka klasörlere, sürücülere ve dosya paylaşımlarına taşır.
 - Entries, ResourceData ve Resources'ın eşleştirilebilmesi için Defender `Quarantine` ağacının
   tamamını toplayın.
 

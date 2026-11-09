@@ -133,6 +133,8 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - User Access Logging (UAL)
 - Web browser history, downloads, cookies and form history (Chromium- and Firefox-based browsers)
 - Internet Explorer and legacy Edge's WebCache: history, downloads, cookies and cache entries
+- Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar
+  items and tasks
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -204,6 +206,16 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -310,6 +322,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `Applications` | Application history (third-party tools' traces) |
 | `Applications` | Installed programs |
 | `BrowserActivity` | Web browser history, downloads, cookies and form history, with recovered deleted entries; Internet Explorer and legacy Edge's WebCache |
+| `Communication` | Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar items and tasks |
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -355,6 +368,10 @@ Web browser tables are in `BrowserActivity`: `Browser-History.csv`, `Browser-Dow
 WebCache tables are there too: `WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` and `WebCache-Containers.csv`, with
 `WebCache-logs.txt`; see [Internet Explorer and Legacy Edge](../artifacts/webcache.md#automatic-parsing).
+Outlook tables are in `Communication`: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` and `Outlook-Tasks.csv`, with `Outlook-logs.txt`; see
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 See the [complete SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output).
 
 Logs match the capitalized artifact name, such as `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,

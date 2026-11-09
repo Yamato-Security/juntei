@@ -17,6 +17,7 @@ Windows เก็บรักษาร่องรอยที่ซ้อนท
 | ผู้ใช้เปิดอะไรบ้าง | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | โปรแกรมถ่ายโอนข้อมูลปริมาณมากหรือไม่ | [SRUM](srum.md) | telemetry จากไฟร์วอลล์ พร็อกซี DNS แพ็กเก็ต หรือ EDR |
 | ผู้ใช้เข้าชมเว็บไซต์ใดบ้าง และดาวน์โหลดอะไร | [เว็บเบราว์เซอร์](browser.md), [Internet Explorer และ Edge รุ่นเก่า](webcache.md) | บันทึกของพร็อกซีและ DNS, `$MFT` และ USN Journal, Defender, SRUM |
+| ผู้ใช้รับส่งอีเมลกับใคร และมีอะไรแนบมาบ้าง | [Outlook](outlook.md) | บันทึกของเมลเซิร์ฟเวอร์และเกตเวย์, `$MFT` และ USN Journal, Defender, LNK และ Jump Lists |
 | ไคลเอนต์และบัญชีใดใช้งานเซิร์ฟเวอร์นี้ และในวันใดบ้าง | [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](ual.md) | Security event log, บันทึกของ SMB และ RDP, บันทึกของไฟร์วอลล์ |
 | มีการกำหนดค่าการคงอยู่ (persistence) หรือไม่ | [บริการ](services.md), [TaskCache](taskcache.md), [รีจิสทรี](registry.md) | Event log, Prefetch, `$MFT` |
 | Defender ลบอะไรออกไปบ้าง | [ข้อมูลที่ Defender กักกัน](defender-quarantine.md) | Event log, `$MFT`, USN Journal |

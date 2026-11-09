@@ -14,6 +14,7 @@ Juntei พาร์สไฟล์ที่รวบรวมจาก Windows �
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | การบันทึกการเข้าถึงของผู้ใช้ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer และ Edge รุ่นเก่า (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` ก่อน Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft` และไฟล์ `.msg` ไม่ว่าจะถูกบันทึกไว้ที่ใด |
 | เว็บเบราว์เซอร์ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` และโฟลเดอร์โปรไฟล์ของเบราว์เซอร์อื่น ๆ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` และตำแหน่งอื่นของผู้ใช้/ระบบ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` และ `CustomDestinations` |
@@ -40,6 +41,9 @@ Juntei พาร์สไฟล์ที่รวบรวมจาก Windows �
   จะอยู่ในไฟล์เหล่านั้นจนกว่าเบราว์เซอร์จะทำ checkpoint เท่านั้น
 - เก็บรวบรวมโฟลเดอร์ `WebCache` ทั้งหมด เพราะ Windows เปิด `WebCacheV01.dat` ค้างไว้ตลอดเวลาที่ผู้ใช้
   ลงชื่อเข้าใช้อยู่ และการเปลี่ยนแปลงล่าสุดจะมีอยู่เฉพาะในบันทึกธุรกรรม `V01*.log` ซึ่ง Juntei ไม่ได้เล่นซ้ำ
+- เก็บรวบรวมไฟล์ OST และ PST ของ Outlook ขณะที่ Outlook ปิดอยู่ หรือเก็บจากอิมเมจดิสก์หรือ Volume Shadow
+  Copy เพราะ Outlook เปิดไฟล์เหล่านี้ค้างไว้ตลอดเวลาที่ทำงาน และให้ค้นหา PST นอกโฟลเดอร์เริ่มต้นด้วย
+  เพราะผู้ใช้มักย้ายไฟล์เก็บถาวรไปไว้ในโฟลเดอร์ ไดรฟ์ และการแชร์ไฟล์อื่น
 - เก็บรวบรวมโครงสร้าง `Quarantine` ของ Defender ทั้งหมด เพื่อให้จับคู่ Entries, ResourceData และ Resources ได้
 
 ## ข้อควรระวังสำหรับระบบที่กำลังทำงาน { #live-system-cautions }

@@ -17,6 +17,7 @@
 | ماذا فتح المستخدم؟ | [Jump Lists](jump-lists.md)، [LNK](lnk.md)، [RecentDocs](recentdocs.md) | SRUM، Prefetch |
 | هل نقل برنامج ما كمية كبيرة من البيانات؟ | [SRUM](srum.md) | الجدار الناري، أو الوكيل (proxy)، أو DNS، أو الحزم، أو بيانات EDR |
 | ما مواقع الويب التي زارها المستخدم، وماذا نزّل؟ | [متصفحات الويب](browser.md)، [Internet Explorer وEdge القديم](webcache.md) | سجلات الوكيل (proxy) وDNS، و`$MFT` ودفتر يومية USN، وDefender، وSRUM |
+| مع من تبادل المستخدم رسائل البريد الإلكتروني، وماذا أُرفق بها؟ | [Outlook](outlook.md) | سجلات خادم البريد وبوابة البريد، و`$MFT` ودفتر يومية USN، وDefender، وLNK وJump Lists |
 | ما العملاء والحسابات التي استخدمت هذا الخادم، وفي أي أيام؟ | [تسجيل وصول المستخدمين (UAL)](ual.md) | سجلات أحداث Security، وسجلات SMB وRDP، وسجلات الجدار الناري |
 | هل جرى تكوين آلية استمرارية؟ | [الخدمات](services.md)، [TaskCache](taskcache.md)، [سجل Windows](registry.md) | سجلات الأحداث، Prefetch، `$MFT` |
 | ما الذي أزاله Defender؟ | [حجر Defender](defender-quarantine.md) | سجلات الأحداث، `$MFT`، دفتر يومية USN |

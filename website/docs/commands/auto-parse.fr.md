@@ -133,6 +133,7 @@ découvert. Les tâches utilisent les mêmes commandes regroupées par source qu
 - Journalisation des accès utilisateur (UAL)
 - Historique, téléchargements, cookies et historique des formulaires des navigateurs web (navigateurs basés sur Chromium et sur Firefox)
 - WebCache d'Internet Explorer et de l'ancien Edge : historique, téléchargements, cookies et entrées du cache
+- Fichiers PST, OST, MSG et OFT d'Outlook : dossiers, éléments, destinataires, pièces jointes, contacts, éléments de calendrier et tâches
 - Raccourcis LNK
 - Jump Lists
 - ShimCache
@@ -201,6 +202,16 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -307,6 +318,7 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `Applications` | Historique des applications (traces d'outils tiers) |
 | `Applications` | Programmes installés |
 | `BrowserActivity` | Historique, téléchargements, cookies et historique des formulaires des navigateurs web, avec les entrées supprimées récupérées ; WebCache d'Internet Explorer et de l'ancien Edge |
+| `Communication` | Fichiers PST, OST, MSG et OFT d'Outlook : dossiers, éléments, destinataires, pièces jointes, contacts, éléments de calendrier et tâches |
 | `ExternalDevices` | Périphériques et volumes USB |
 | `FileAndFolderOpening` | Jump Lists, raccourcis LNK, Microsoft Office, listes MRU, boîtes de dialogue Ouvrir et Enregistrer sous, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -352,6 +364,10 @@ Les tables des navigateurs web se trouvent dans `BrowserActivity` : `Browser-Hi
 l'ancien Edge s'y trouvent aussi : `WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` et `WebCache-Containers.csv`, avec
 `WebCache-logs.txt` ; consultez [Internet Explorer et l'ancien Edge](../artifacts/webcache.md#automatic-parsing).
+Les tables d'Outlook se trouvent dans `Communication` : `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` et `Outlook-Tasks.csv`, avec `Outlook-logs.txt` ; consultez
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 Consultez le [tableau complet de placement des tables SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Les journaux reprennent le nom de l'artefact avec ses majuscules, par exemple `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

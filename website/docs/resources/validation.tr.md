@@ -131,6 +131,32 @@ Internet Explorer 11'e ait, diğeri ise eski Edge'in geçmişini, indirmelerini 
 6 indirme, 170 çerez ve 3.754 diğer girdi. Karşılaştırma, indirme kayıtlarının kodunu kendi başına çözdü.
 Veritabanlarının silinmiş olarak işaretlediği kayıtlar her iki taraftan da çıkarıldı.
 
+## Outlook { #outlook }
+
+`parse-file outlook`, PST, OST, `.msg` ve `.oft` dosyalarını
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser) ile okur. Bu ayrıştırıcının
+PST ve OST okuyucusu Microsoft'un [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs)
+projesinin bir çatalıdır; `.msg` okuyucusu ise Microsoft'un açık belirtimlerine dayanarak yazılmıştır.
+
+- **PST ve OST**: Herkese açık 66 PST ve OST dosyası (Apache Tika, artemis, Aspose.Email örnekleri,
+  DFIR Artifact Museum, Enron, GroupDocs örnekleri, java-libpst, libyal'ın test verileri,
+  outlook-pst-rs ve pst-extractor) libpff ile özellik özellik karşılaştırıldı: her deponun, klasörün,
+  iletinin, alıcının ve ekin her özelliği ve her ekin verisi. 324.175 veri noktası aynıydı ve hiçbiri
+  açıklaması olmadan farklı değildi. Geri kalanlar şunlardır: yalnızca ys-outlook-parser'ın
+  okuyabildikleri (libpff'in başarısız olduğu iletilere, alıcılara ve eklere ve onun açamadığı bir
+  depoya ait 15.846 veri noktası; gizli öğelere ait 8.223 veri noktası), satırları yok olduklarını
+  söylediği halde libpff'in boş veya sıfır olarak verdiği alıcı hücreleri (49.077), MAPI'nin yaptığı
+  gibi hesaplanan klasör giriş kimlikleri ve türleri (2.004) ve libpff'in ham verileri olarak verdiği
+  nesneler ve gömülü iletiler (480). Dosyalardan ikisini iki okuyucu da hiç okuyamaz.
+- **`.msg` ve `.oft`**: 2.404 ileti, alıcı ve ek ile 41.002 özellik içeren herkese açık 214 dosya
+  extract-msg ile karşılaştırıldı: 110.114 veri noktası aynıydı ve farklı olan 791 veri noktasının her
+  birinin bir açıklaması var: 601'i extract-msg'nin zamanlarla ilgili hatalarıdır, 35'i onun yanlış kod
+  sayfasıyla çözdüğü ANSI dosyalarından gelir, geri kalanlar ise onun dışarıda bıraktıkları veya
+  ekledikleridir.
+- **Hasarlı girdi**: 260.000'den fazla mutasyona uğratılmış `.msg` dosyası ve 160.000 mutasyona
+  uğratılmış PST ile özel olarak hazırlanmış dosyalar çökme, takılma veya sınırsız bellek kullanımı
+  olmadan okundu.
+
 ## LNK kısayolları { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser), Sootmark'ın

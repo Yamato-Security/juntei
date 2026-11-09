@@ -132,6 +132,8 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
 - User Access Logging (UAL)
 - Web browser का history, downloads, cookies और form history (Chromium- और Firefox-based browsers)
 - Internet Explorer और legacy Edge का WebCache: history, downloads, cookies और cache entries
+- Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar
+  items और tasks
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -200,6 +202,16 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -306,6 +318,7 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `Applications` | ऐप्लिकेशन इतिहास (third-party tools के निशान) |
 | `Applications` | इंस्टॉल किए गए प्रोग्राम |
 | `BrowserActivity` | Web browser का history, downloads, cookies और form history, recover की गई deleted entries सहित; Internet Explorer और legacy Edge का WebCache |
+| `Communication` | Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar items और tasks |
 | `ExternalDevices` | USB devices और volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open और Save As संवाद, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -351,6 +364,10 @@ Web browser tables `BrowserActivity` में होती हैं: `Browser-
 Internet Explorer और legacy Edge की WebCache tables भी वहीं होती हैं: `WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` और `WebCache-Containers.csv`, साथ में `WebCache-logs.txt`;
 [Internet Explorer और लेगेसी Edge](../artifacts/webcache.md#automatic-parsing) देखें।
+Outlook tables `Communication` में होती हैं: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` और `Outlook-Tasks.csv`, साथ में `Outlook-logs.txt`;
+[Outlook](../artifacts/outlook.md#automatic-parsing) देखें।
 [पूरी SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output) देखें।
 
 Logs capitalized आर्टिफ़ैक्ट नाम से मेल खाते हैं, जैसे `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`

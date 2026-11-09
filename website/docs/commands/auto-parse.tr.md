@@ -136,6 +136,7 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
 - Kullanıcı Erişim Günlüğü (UAL)
 - Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi (Chromium ve Firefox tabanlı tarayıcılar)
 - Internet Explorer'ın ve eski Edge'in WebCache verileri: geçmiş, indirmeler, çerezler ve önbellek girdileri
+- Outlook PST, OST, MSG ve OFT dosyaları: klasörler, öğeler, alıcılar, ekler, kişiler, takvim öğeleri ve görevler
 - LNK kısayolları
 - Jump Lists
 - ShimCache
@@ -206,6 +207,16 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -312,6 +323,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `Applications` | Uygulama geçmişi (üçüncü taraf araçların izleri) |
 | `Applications` | Yüklü programlar |
 | `BrowserActivity` | Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi; kurtarılan silinmiş girdilerle birlikte; Internet Explorer'ın ve eski Edge'in WebCache verileri |
+| `Communication` | Outlook PST, OST, MSG ve OFT dosyaları: klasörler, öğeler, alıcılar, ekler, kişiler, takvim öğeleri ve görevler |
 | `ExternalDevices` | USB aygıtları ve birimleri |
 | `FileAndFolderOpening` | Jump Lists, LNK kısayolları, Microsoft Office, MRU listeleri, Aç ve Farklı Kaydet iletişim kutuları, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -358,6 +370,10 @@ Web tarayıcısı tabloları `BrowserActivity` içindedir: `Browser-History.csv`
 WebCache tabloları da oradadır: `WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` ve `WebCache-Containers.csv`, bunlarla birlikte
 `WebCache-logs.txt` bulunur; bkz. [Internet Explorer ve Eski Edge](../artifacts/webcache.md#automatic-parsing).
+Outlook tabloları `Communication` içindedir: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` ve `Outlook-Tasks.csv`, bunlarla birlikte `Outlook-logs.txt` bulunur; bkz.
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 [SRUM yerleşiminin tam tablosuna](../artifacts/srum.md#categorized-auto-parse-output) bakın.
 
 Günlükler, büyük harfle başlayan artefakt adıyla eşleşir; örneğin `Registry-SAM-logs.txt`,

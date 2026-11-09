@@ -14,6 +14,7 @@ Juntei parses files already collected from Windows. Use a trusted acquisition to
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer and legacy Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` before Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, and `.msg` files wherever they were saved |
 | Web browsers | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` and the other browsers' profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` and other user/system locations |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` and `CustomDestinations` |
@@ -42,6 +43,9 @@ Juntei parses files already collected from Windows. Use a trusted acquisition to
 - Collect the whole `WebCache` folder: Windows keeps `WebCacheV01.dat` open while the user is
   logged on, and its newest changes are only in the `V01*.log` transaction logs, which Juntei does
   not replay.
+- Collect Outlook's OST and PST files with Outlook closed, or from a disk image or a volume shadow
+  copy: Outlook keeps them open while it runs. Look for PSTs beyond the default folders too: users
+  move archives to other folders, drives and file shares.
 - Collect the whole Defender `Quarantine` tree so Entries, ResourceData, and Resources can be matched.
 
 ## Live-system cautions

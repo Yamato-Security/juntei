@@ -123,6 +123,30 @@ Explorer 11, and a dirty one of Windows 10 with legacy Edge's history, downloads
 and 3,754 other entries. The comparison decoded the download records on its own. Records the
 databases flag as deleted were left out of both.
 
+## Outlook
+
+`parse-file outlook` reads PST, OST, `.msg` and `.oft` files with
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser), whose PST and OST
+reader is a fork of Microsoft's [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) and
+whose `.msg` reader is written from Microsoft's open specifications.
+
+- **PST and OST**: 66 public PST and OST files (Apache Tika, artemis, the Aspose.Email examples,
+  the DFIR Artifact Museum, Enron, the GroupDocs examples, java-libpst, libyal's test data,
+  outlook-pst-rs and pst-extractor) were compared with libpff, property by property: every
+  property of every store, folder, message, recipient and attachment, and every attachment's data.
+  324,175 facts were the same and none differed without an explanation. The others are what only
+  ys-outlook-parser reads (15,846 facts of messages, recipients and attachments libpff fails on,
+  and of a store it cannot open; 8,223 of hidden items), recipient cells libpff gives as empty
+  or zero though their rows say they are absent (49,077), folder entry ids and types computed as
+  MAPI does (2,004), and objects and embedded messages libpff gives as their raw data (480). Two
+  of the files neither reader reads at all.
+- **`.msg` and `.oft`**: 214 public files, with 2,404 messages, recipients and attachments and
+  41,002 properties, were compared with extract-msg: 110,114 facts were the same, and each of the
+  791 that differ is explained: 601 are extract-msg's errors with times, 35 come from ANSI files it
+  decodes in the wrong code page, and the others are what it leaves out or adds.
+- **Damaged input**: more than 260,000 mutated `.msg` files and 160,000 mutated PSTs, and crafted
+  files, were read without a crash, a hang or unbounded memory.
+
 ## LNK shortcuts
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) is a maintained fork of

@@ -14,6 +14,7 @@ Juntei သည် Windows မှ စုဆောင်းထားပြီးသ
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer နှင့် legacy Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (Outlook 2010 မတိုင်မီ `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft` နှင့် သိမ်းဆည်းထားသည့် မည်သည့်နေရာတွင်မဆို ရှိသော `.msg` ဖိုင်များ |
 | ဝဘ် ဘရောက်ဇာများ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` နှင့် အခြား ဘရောက်ဇာများ၏ profile ဖိုင်တွဲများ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` နှင့် အခြား အသုံးပြုသူ/စနစ် တည်နေရာများ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` နှင့် `CustomDestinations` |
@@ -41,6 +42,9 @@ Juntei သည် Windows မှ စုဆောင်းထားပြီးသ
 - `WebCache` ဖိုင်တွဲတစ်ခုလုံးကို စုဆောင်းပါ။ အသုံးပြုသူ logon ဝင်ထားစဉ် Windows သည် `WebCacheV01.dat` ကို
   ဖွင့်ထားပြီး ၎င်း၏ နောက်ဆုံး ပြောင်းလဲမှုများသည် Juntei က replay မလုပ်သော `V01*.log` transaction log များတွင်သာ
   ရှိပါသည်။
+- Outlook ၏ OST နှင့် PST ဖိုင်များကို Outlook ပိတ်ထားစဉ် သို့မဟုတ် disk image သို့မဟုတ် volume shadow copy မှ
+  စုဆောင်းပါ။ Outlook သည် လည်ပတ်နေစဉ် ၎င်းတို့ကို ဖွင့်ထားပါသည်။ မူလ ဖိုင်တွဲများ အပြင်ဘက်တွင်လည်း PST များကို
+  ရှာဖွေပါ။ အသုံးပြုသူများသည် archive များကို အခြား ဖိုင်တွဲများ၊ drive များနှင့် file share များသို့ ရွှေ့တတ်ပါသည်။
 - Entries၊ ResourceData နှင့် Resources တို့ကို ကိုက်ညီစေနိုင်ရန် Defender `Quarantine` tree တစ်ခုလုံးကို စုဆောင်းပါ။
 
 ## Live စနစ်တွင် သတိပြုရန် { #live-system-cautions }
