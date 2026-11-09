@@ -105,7 +105,7 @@ defender = { package = "ys-defender-history-parser", git = "https://github.com/Y
 # Outlook PST and OST stores and MSG and OFT files: Yamato Security's ys-outlook-parser, whose PST
 # and compressed RTF readers are a fork of Microsoft's outlook-pst-rs (MIT). Named outlook-parser
 # here so that its library does not clash with parse-file outlook's module.
-outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yamato-Security/ys-outlook-parser", branch = "ys/1.0.0" }
+outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yamato-Security/ys-outlook-parser" }
 
 # Read-only VHDX/NTFS mounting through Yamato Security's reusable FUSE SDK (Linux only).
 [target.'cfg(target_os = "linux")'.dependencies]

@@ -2486,7 +2486,7 @@ dependencies = [
 [[package]]
 name = "ys-outlook-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-outlook-parser?branch=ys%2F1.0.0#5bf2cc0004f4a84780bfe2d2da79f9c09c800b38"
+source = "git+https://github.com/Yamato-Security/ys-outlook-parser#5d3011bd25a51e20948d210ccc8970aa067d9642"
 dependencies = [
  "ys-outlook-parser-msg",
  "ys-outlook-parser-pst",
@@ -2495,7 +2495,7 @@ dependencies = [
 [[package]]
 name = "ys-outlook-parser-msg"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-outlook-parser?branch=ys%2F1.0.0#5bf2cc0004f4a84780bfe2d2da79f9c09c800b38"
+source = "git+https://github.com/Yamato-Security/ys-outlook-parser#5d3011bd25a51e20948d210ccc8970aa067d9642"
 dependencies = [
  "cfb",
  "encoding_rs",
@@ -2506,7 +2506,7 @@ dependencies = [
 [[package]]
 name = "ys-outlook-parser-pst"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-outlook-parser?branch=ys%2F1.0.0#5bf2cc0004f4a84780bfe2d2da79f9c09c800b38"
+source = "git+https://github.com/Yamato-Security/ys-outlook-parser#5d3011bd25a51e20948d210ccc8970aa067d9642"
 dependencies = [
  "byteorder",
  "flate2",
@@ -2517,7 +2517,7 @@ dependencies = [
 [[package]]
 name = "ys-outlook-parser-rtf"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-outlook-parser?branch=ys%2F1.0.0#5bf2cc0004f4a84780bfe2d2da79f9c09c800b38"
+source = "git+https://github.com/Yamato-Security/ys-outlook-parser#5d3011bd25a51e20948d210ccc8970aa067d9642"
 dependencies = [
  "byteorder",
  "thiserror 2.0.21",
