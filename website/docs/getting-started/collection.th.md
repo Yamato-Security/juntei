@@ -1,6 +1,10 @@
 # การเก็บรวบรวมหลักฐาน { #collecting-evidence }
 
-Juntei พาร์สไฟล์ที่รวบรวมจาก Windows แล้ว ใช้เครื่องมือเก็บหลักฐานที่เชื่อถือได้และรักษาเมทาดาทาต้นฉบับเมื่อทำได้ อิมเมจดิสก์ VHDX และ E01 สามารถพาร์สได้โดยไม่ต้องแยกไฟล์ ดู[การเมานต์อิมเมจดิสก์](../commands/mount.md)
+Juntei พาร์สไฟล์ที่รวบรวมจาก Windows แล้ว ใช้เครื่องมือเก็บหลักฐานที่เชื่อถือได้และรักษาเมทาดาทาต้นฉบับเมื่อทำได้
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## ตำแหน่งทั่วไป { #common-locations }
 

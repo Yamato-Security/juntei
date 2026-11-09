@@ -24,7 +24,7 @@ El mismo binario funciona en Windows, macOS y Linux. Los analistas pueden examin
 ## Lo que Juntei no hace { #what-juntei-does-not-do }
 
 Juntei no adquiere un disco en vivo ni sustituye la preservación de evidencias, y las únicas imágenes de disco que
-monta son imágenes VHDX y E01, en modo de solo lectura. No
+monta son imágenes VHDX / E01 / Ex01, en modo de solo lectura. No
 combina automáticamente todos los artefactos en una única narrativa del incidente. Analiza las
 evidencias que se le proporcionan y produce registros adecuados para la investigación y la correlación.
 

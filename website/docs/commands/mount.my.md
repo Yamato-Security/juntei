@@ -1,16 +1,10 @@
 # Disk image များကို mount လုပ်ခြင်း { #mounting-disk-images }
 
-`juntei mount` သည် လုပ်ဆောင်နေစဉ် disk image (VHDX သို့မဟုတ် E01 image) အတွင်းမှ ဖိုင်များကို directory တစ်ခုမှ read-only ဖတ်ရှုနိုင်စေသည်။ Hayabusa နှင့် Juntei ကဲ့သို့ tool များဖြင့် ဖိုင်ထုတ်ယူခြင်း သို့မဟုတ် root အခွင့်အရေးမလိုဘဲ စစ်ဆေးနိုင်သည်။ FUSE ကို အသုံးပြုပြီး Linux ပေါ်တွင် အလုပ်လုပ်သည်။ VHDX reader နှင့် mounting library ကို [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) တွင်၊ E01 reader ကို [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) တွင် ထိန်းသိမ်းထားသည်။
+`juntei mount` သည် လုပ်ဆောင်နေစဉ် VHDX / E01 / Ex01 disk image အတွင်းမှ ဖိုင်များကို directory တစ်ခုမှ read-only ဖတ်ရှုနိုင်စေသည်။ Hayabusa နှင့် Juntei ကဲ့သို့ tool များဖြင့် ဖိုင်ထုတ်ယူခြင်း သို့မဟုတ် root အခွင့်အရေးမလိုဘဲ စစ်ဆေးနိုင်သည်။ FUSE ကို အသုံးပြုပြီး Linux ပေါ်တွင် အလုပ်လုပ်သည်။ Reader နှင့် mounting library ကို [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) တွင် ထိန်းသိမ်းထားသည်။
 
 ```bash
 mkdir /mnt/host1
 juntei mount host1-triage.vhdx /mnt/host1
-```
-
-E01 image (EnCase ၏ Expert Witness Format၊ `.Ex01` လည်း ပါဝင်သည်) ကိုလည်း ထိုနည်းအတိုင်း mount လုပ်သည်။ ခွဲထားသော (split) image ကို ၎င်း၏ ပထမ segment ဖြင့် ပေးရပြီး ကျန် segment များ (`host1.E02`၊ `host1.E03`၊ …) ကို Juntei က ၎င်းနှင့် တူညီသောနေရာတွင် ရှာတွေ့သည်-
-
-```bash
-juntei mount host1.E01 /mnt/host1
 ```
 
 အခြား terminal တစ်ခုတွင်-
@@ -27,7 +21,6 @@ Unmount လုပ်ရန် ပထမ terminal တွင် Ctrl+C ကို �
 - Mount point တွင် NTFS volume ၏ ဖိုင်များကို တွေ့ရသည်။ စုဆောင်းထားသော image တွင် `C`၊ `LongFileNames` ကဲ့သို့ directory များနှင့် `$MFT` ကဲ့သို့ volume metadata ပါဝင်နိုင်သည်။ NTFS volume များစွာရှိလျှင် `Volume1`၊ `Volume2` အဖြစ် ဖော်ပြသည်။
 - ဖိုင်တိုင်းသည် read-only ဖြစ်ပြီး mount point ၏ ပိုင်ရှင်က ပိုင်ဆိုင်ပါသည်။ ဖိုင်အချိန်များသည် NTFS ၏
   `$STANDARD_INFORMATION` အချိန်များ ဖြစ်ပါသည်။
-- Partition table မပါသော volume တစ်ခုတည်း၏ image သည် ထို volume ပင် ဖြစ်ပါသည်။
 - အမည်များကို NTFS က သိမ်းဆည်းထားသည့်အတိုင်း ဖော်ပြပြီး အတိအကျ ကိုက်ညီမှသာ ရှာဖွေတွေ့ရှိပါသည်။ DOS 8.3 အမည်များနှင့်
   alternate data stream များကို မပြသပါ။
 - Compress လုပ်ထားသော ဖိုင်များကို decompress လုပ်ပေးပါသည် (ဖိုင်တစ်ခုလျှင် 1 GiB အထိ)။ EFS ဖြင့် encrypt
@@ -36,8 +29,6 @@ Unmount လုပ်ရန် ပထမ terminal တွင် Ctrl+C ကို �
 ## အထောက်အထားကို မပြောင်းလဲပါ { #the-evidence-is-not-changed }
 
 Image ကို read-only ဖွင့်ပြီး mount မှ ရေးသားခြင်းကို ငြင်းပယ်သည်။ သေချာမပိတ်ခဲ့သော VHDX ၏ pending log ကို memory တွင်သာ အသုံးချပြီး image သို့ ပြန်မရေးပါ။ အချို့ DiscUtils writer များသည် NTFS boot sector ၏ jump instruction နှင့် `55 AA` signature ကို သုညထားသည်။ Juntei သည် ထို volume များကို မူလအတိုင်း ဖတ်နိုင်သည်။
-
-E01 image ၏ segment များကိုလည်း read-only ဖွင့်သည်။ Chunk တစ်ခုစီကို ဖတ်သည့်အခါ ၎င်း၏ checksum နှင့် တိုက်စစ်သည်- ပျက်စီးနေသော chunk ကို မဖတ်နိုင်သော်လည်း image ၏ ကျန်အပိုင်းများကို ဖတ်နိုင်သည်။ Acquisition က မဖတ်နိုင်ခဲ့သော sector များနှင့် မပြီးဆုံးခဲ့သော acquisition ကို warning များအဖြစ် ဖော်ပြသည်။ Logical evidence file (`.L01`၊ `.Lx01`) တွင် disk မဟုတ်ဘဲ ဖိုင်များသာ ပါဝင်သဖြင့် mount မလုပ်ပါ။
 
 ## အသုံးပြုပုံ { #usage }
 
@@ -60,43 +51,39 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse ဖြင့် image တိုင်းကို parse လုပ်ခြင်း { #parsing-every-image-with-auto-parse }
+## အင်မေ့ဂျ်များကို မူလစနစ်ဖြင့် ခွဲခြမ်းစိတ်ဖြာခြင်း { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` သည် အထောက်အထား ဖိုင်တွဲရှိ VHDX disk image တိုင်း (သို့မဟုတ် `-d` ဖြင့် ပေးထားသော image
-တစ်ခုတည်း) အတွင်းရှိ Windows စနစ်များကို၊ `auto-parse --e01` သည် E01 image တိုင်း အတွင်းရှိ Windows စနစ်များကို
-သီးခြား mount လုပ်စရာမလိုဘဲ parse လုပ်ပါသည်။ Option နှစ်ခုကို အတူတကွ ပေးနိုင်ပါသည်-
+`--vhdx` ဖြင့် `auto-parse` သည် [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) ကို သုံးကာ **Linux၊ macOS နှင့် Windows** တွင် VHDX ကို တိုက်ရိုက်ဖတ်သည်။ OS mount၊ FUSE သို့မဟုတ် administrator အခွင့်အရေး မလိုအပ်ပါ။
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Image တစ်ခုစီကို ယာယီ ဖိုင်တွဲအသစ်တစ်ခုအတွင်း image ၏ အမည်ဖြင့် အမည်ပေးထားသော ဖိုင်တွဲ (`host1-triage`)
-  တွင် read-only အဖြစ် mount လုပ်ပြီး ထိုနေရာတွင် တွေ့ရှိသော စနစ်များကို disk ပေါ်ရှိ collection တစ်ခုကဲ့သို့ parse
-  လုပ်ပါသည်။ Image များကို အဆုံးတွင်လည်းကောင်း၊ Ctrl+C နှိပ်သည့်အခါတွင်လည်းကောင်း unmount လုပ်ပါသည်။
-- Terminal သည် image များနှင့် စနစ်တစ်ခုစီ၏ image ကို ဖော်ပြပါသည်-
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`။
-- `--e01` သည် E01 image တစ်ခုစီ၏ ပထမ segment (`*.E01`၊ `*.Ex01`) ကို ယူပြီး ကျန် segment များကို ၎င်းနှင့်အတူ
-  ဖတ်ပါသည်။
-- Manifest တွင် `EvidenceDirectory` သည် ပေးထားသော ဖိုင်တွဲ ဖြစ်ပြီး စနစ်တစ်ခုစီ၏ `Image` သည် ၎င်း၏ image ကို
-  ဖော်ပြပါသည်။ `EvidenceRoot` နှင့် parser ညွှန်ကြားချက်များသည် mount ဖိုင်တွဲ (`./host1-triage/C`) ကို
-  အသုံးပြုပါသည်။
-- Image တွင် Volume Shadow Copies မှ ဖိုင်များကို `VSS32` ကဲ့သို့ folder များ၌ သိမ်းထားပါက folder တစ်ခုစီကို နောက်ထပ် system (`HOST1_2`၊ …) အဖြစ် ရှာဖွေ၍ parse လုပ်သည်။
-- Mount မလုပ်နိုင်သော image ကို report လုပ်ပါသည်။ ကျန် image များကို ဆက်လက် parse လုပ်ပြီး run သည်
-  exit status 1 ဖြင့် ပြီးဆုံးပါသည်။
+Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် NTFS reader မှ ရရှိသောဖိုင်များကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ **ရလဒ်ထွက်သော artifact များသာမက ထိုဖိုင်အားလုံးအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
 
-NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` နှင့် `--e01` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
+Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည် ပုံမှန် pipeline ကို သုံးသည်။ `manifest.json` ရှိ `Image` သည် မူရင်း image ဖြစ်ပြီး `EvidenceRoot` သည် အတွင်း relative path ဖြစ်သည်။ Read error နှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ထိန်းသိမ်းပြီး input မပြည့်စုံလျှင် exit code 1 ပြန်ပေးသည်။ မလုံခြုံသော သို့မဟုတ် မရှင်းလင်းသောအမည်များကို ပြောင်းမပေးပါ။ Named NTFS stream များကို နောက်ထပ်ဖိုင်အဖြစ် မထုတ်ပေးသော်လည်း သာမန်ဖိုင်အဖြစ် စုဆောင်းထားသော artifact များကို အသုံးပြုနိုင်သည်။
 
-## လိုအပ်ချက်များ { #requirements }
+အခြား program များအတွက် filesystem ဖော်ပြသော သီးခြား [`mount` command](mount.md) သည် Linux FUSE လိုအပ်ဆဲ ဖြစ်သည်။ `auto-parse --vhdx` က ၎င်းကို မသုံးပါ။
 
-- Linux- FUSE 3 (`fusermount3`၊ `fuse3` package) နှင့် `/dev/fuse` သို့ ဝင်ရောက်ခွင့်။ ပုံမှန်အသုံးပြုသူများတွင်
-  ထိုခွင့် အများအားဖြင့် ရှိပါသည်။ Root မလိုအပ်ပါ။
-- Windows နှင့် macOS ကို မပံ့ပိုးပါ။ Windows တွင် ယင်းအစား administrator အခွင့်အရေးဖြင့် run ထားသော (elevated) PowerShell တွင် VHDX image ကို
-  read-only အဖြစ် attach လုပ်ပြီး ၎င်း၏ drive letter ကို tool များအား ပေးပါ။ Windows သည် E01 image ကို attach မလုပ်နိုင်ပါ-
-  ၎င်းကို mount လုပ်နိုင်သော tool ဖြင့် read-only အဖြစ် mount လုပ်ပြီး ထို drive ကို tool များအား ပေးပါ။
+## E01 နှင့် Ex01 disk image များ { #e01-and-ex01-disk-images }
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+`--e01` သည် physical EWF1 (`.E01`) နှင့် EWF2 (`.Ex01`) image များကို **Linux၊ macOS နှင့် Windows** တွင် native အဖြစ် ဖတ်သည်။ FUSE၊ OS mount သို့မဟုတ် administrator ခွင့်ပြုချက် မလိုပါ။ [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) နှင့် အထက်ပါ NTFS parsing လုပ်ငန်းစဉ်ကို အသုံးပြုသည်။
+
+အပိုင်းခွဲထားသော image ၏ ပထမ segment ကို ပေးပါ။ `.E02` အပါအဝင် ဆက်စပ်ဖိုင်အားလုံးကို မူရင်းအမည်များဖြင့် တစ်နေရာတည်းတွင် ထားပါ။ Disk အပြည့် (MBR/GPT) နှင့် NTFS volume တစ်ခုတည်းကို ပံ့ပိုးသည်။ ပုံစံနှစ်မျိုးပါသော directory အတွက် `--vhdx --e01` ကို သုံးပါ။
+
+ယာယီနေရာနှင့် မူရင်း metadata လိုအပ်ချက်များသည် အတူတူဖြစ်သည်။ Image များကို read-only ဖတ်သည်။ Acquisition အတွင်း ပျောက်နေသောဒေတာနှင့် ဖွင့်စဉ် သို့မဟုတ် ဖတ်စဉ်တွေ့သော ပျက်စီးမှုများကို `ImageErrors` နှင့် `manifest.csv` တွင် ဖော်ပြသည်။ ဖတ်နိုင်သည့်ရလဒ်များကို သိမ်းပြီး exit code 1 ပြန်ပေးသည်။ ဝင်ဖတ်သည့်ဒေတာကိုသာ စစ်ဆေးပြီး chunk အားလုံး သို့မဟုတ် media တစ်ခုလုံး၏ hash ကို မစစ်ပါ။ Logical `.L01` နှင့် `.Lx01` ဖိုင်များကို ငြင်းပယ်ပြီး password option မရှိပါ။
+
+သီးခြား `mount` command သည် Linux FUSE လိုအပ်ဆဲဖြစ်သော်လည်း native automatic parsing အတွက် မလိုပါ။
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
+
+## OS မှ မြင်နိုင်သော mount လိုအပ်ချက်များ { #os-visible-mount-requirements }
+
+`juntei mount` သည် Linux FUSE 3 (`fusermount3`) နှင့် `/dev/fuse` access လိုအပ်သည်။ Windows နှင့် macOS တွင် အထက်ပါ native analysis ကို သုံးပါ။

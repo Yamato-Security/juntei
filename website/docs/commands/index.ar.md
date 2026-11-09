@@ -17,7 +17,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | الأمر | المُدخل | الدليل التفصيلي |
 |---|---|---|
-| `mount` | صورة قرص VHDX أو E01 ‏ | [تحميل صور الأقراص](mount.md) |
+| `mount` | صورة قرص VHDX / E01 / Ex01 ‏ | [تحميل صور الأقراص](mount.md) |
 
 ## [أوامر ESE](user-activity.md) { #ese-commands }
 

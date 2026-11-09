@@ -1,16 +1,10 @@
 # Disk-Images einbinden { #mounting-disk-images }
 
-`juntei mount` stellt die Dateien eines Disk-Images, eines VHDX- oder E01-Images, während seiner Laufzeit schreibgeschützt in einem Verzeichnis bereit. Werkzeuge wie Hayabusa und Juntei können sie ohne Extraktion und ohne root-Rechte untersuchen. Die Funktion verwendet FUSE und läuft unter Linux. Der VHDX-Reader und die Mount-Bibliothek werden in [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) gepflegt, der E01-Reader in [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser).
+`juntei mount` stellt die Dateien eines VHDX / E01 / Ex01-Disk-Images während seiner Laufzeit schreibgeschützt in einem Verzeichnis bereit. Werkzeuge wie Hayabusa und Juntei können sie ohne Extraktion und ohne root-Rechte untersuchen. Die Funktion verwendet FUSE und läuft unter Linux. Reader und Mount-Bibliothek werden in [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) gepflegt.
 
 ```bash
 mkdir /mnt/host1
 juntei mount host1-triage.vhdx /mnt/host1
-```
-
-Ein E01-Image (das Expert Witness Format von EnCase, auch `.Ex01`) wird auf dieselbe Weise eingebunden. Ein aufgeteiltes Image wird über sein erstes Segment angegeben, und Juntei findet die übrigen (`host1.E02`, `host1.E03`, …) daneben:
-
-```bash
-juntei mount host1.E01 /mnt/host1
 ```
 
 In einem zweiten Terminal:
@@ -28,7 +22,6 @@ Drücken Sie im ersten Terminal Strg+C, um die Einbindung aufzuheben, oder führ
 - Am Einhängepunkt erscheinen die Dateien des NTFS-Volumes. Ein gesichertes Image kann Verzeichnisse wie `C` und `LongFileNames` sowie Volume-Metadaten wie `$MFT` enthalten. Mehrere NTFS-Volumes erscheinen als `Volume1`, `Volume2` usw.
 - Jede Datei ist schreibgeschützt und gehört dem Besitzer des Einhängepunkts. Die Dateizeiten sind die
   NTFS-Zeiten aus `$STANDARD_INFORMATION`.
-- Ein Image eines einzelnen Volumes ohne Partitionstabelle ist selbst dieses Volume.
 - Namen werden so aufgelistet, wie NTFS sie speichert, und exakt nachgeschlagen. DOS-8.3-Namen und
   alternative Datenströme werden nicht angezeigt.
 - Komprimierte Dateien werden dekomprimiert (bis zu 1 GiB pro Datei). EFS-verschlüsselte Dateien können nicht
@@ -37,8 +30,6 @@ Drücken Sie im ersten Terminal Strg+C, um die Einbindung aufzuheben, oder führ
 ## Die Beweise werden nicht verändert { #the-evidence-is-not-changed }
 
 Das Image wird schreibgeschützt geöffnet; der Mount verweigert Schreibzugriffe. Bei einem nicht sauber geschlossenen VHDX wird das ausstehende Protokoll nur im Arbeitsspeicher angewendet und nie zurückgeschrieben. Manche DiscUtils-Writer lassen die Sprunganweisung und die Signatur `55 AA` im NTFS-Bootsektor auf null; Juntei liest solche Volumes unverändert.
-
-Auch die Segmente eines E01-Images werden schreibgeschützt geöffnet. Jeder Chunk wird beim Lesen anhand seiner Prüfsumme geprüft: Ein beschädigter Chunk kann nicht gelesen werden, der Rest des Images schon. Sektoren, die bei der Erfassung nicht gelesen werden konnten, und eine nicht abgeschlossene Erfassung werden als Warnungen gemeldet. Eine logische Beweisdatei (`.L01`, `.Lx01`) enthält Dateien, keinen Datenträger, und wird nicht eingebunden.
 
 ## Verwendung { #usage }
 
@@ -61,43 +52,39 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## Jedes Image mit auto-parse parsen { #parsing-every-image-with-auto-parse }
+## Native Analyse von Images { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` parst die Windows-Systeme in jedem VHDX-Disk-Image im Beweisverzeichnis (oder in dem
-einen mit `-d` angegebenen Image) und `auto-parse --e01` die in jedem E01-Image, ohne dass Sie sie separat
-einbinden müssen. Die beiden Optionen können zusammen angegeben werden:
+Mit `--vhdx` liest `auto-parse` VHDX nativ unter **Linux, macOS und Windows**, über [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). OS-Mount, FUSE und Administratorrechte sind nicht erforderlich.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Jedes Image wird schreibgeschützt in einem neuen temporären Verzeichnis eingebunden, in einem nach dem Image
-  benannten Ordner (`host1-triage`), und die dort gefundenen Systeme werden wie eine Sammlung auf dem
-  Datenträger geparst. Die Einbindungen werden am Ende aufgehoben, ebenso bei Strg+C.
-- Das Terminal listet die Images und das Image jedes Systems auf:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- `--e01` nimmt das erste Segment jedes E01-Images (`*.E01`, `*.Ex01`); die übrigen Segmente werden mit
-  ihm gelesen.
-- Im Manifest ist `EvidenceDirectory` das angegebene Verzeichnis, und `Image` nennt für jedes System sein
-  Image. `EvidenceRoot` und die Parser-Befehle verwenden den Einbindungsordner (`./host1-triage/C`).
-- Enthält das Image Dateien aus Volume Shadow Copies in Ordnern wie `VSS32`, wird jeder Ordner als weiteres System (`HOST1_2`, …) erkannt und geparst.
-- Ein Image, das sich nicht einbinden lässt, wird gemeldet; die übrigen werden trotzdem geparst, und der Lauf
-  endet mit dem Exit-Status 1.
+Die Parser benötigen Dateipfade. Daher kopiert Juntei die bereitgestellten NTFS-Dateien mit begrenzten Puffern in ein privates temporäres Verzeichnis. **Es muss Platz für alle bereitgestellten Dateien vorhanden sein**, nicht nur für Artefakte mit Ergebnissen. Nullbereiche werden, soweit unterstützt, als Löcher geschrieben. Namen, Struktur, Hardlinks und Änderungszeiten bleiben erhalten. LNK- und Sprunglisten-Quellzeiten stammen aus einem Snapshot der ursprünglichen NTFS-Metadaten, niemals aus den temporären Dateien. Regulärer Abschluss, auch mit Parserfehlern, entfernt die Kopien; erzwungene Beendigung kann sie zurücklassen. Die Quelle bleibt schreibgeschützt; ausstehende VHDX-Logs werden nur im Speicher angewendet.
 
-Kann ein NTFS-Volume nicht geöffnet werden, meldet Juntei dies und behält die lesbaren Volumes bei. Bei teilweise lesbaren Images liefern `auto-parse --vhdx` und `--e01` den Exitstatus 1; `mount` liefert nach dem Aushängen ebenfalls 1.
+Hosterkennung, CSV/JSON/JSONL und `-j` nutzen dieselbe Verarbeitung wie normale Beweisverzeichnisse. `Image` in `manifest.json` bezeichnet das Originalimage, `EvidenceRoot` den internen relativen Pfad. Lesefehler und unsichere Namen erscheinen in `ImageErrors` sowie Fehlerzeilen von `manifest.csv`. Lesbare Ergebnisse bleiben erhalten; unvollständige Eingaben ergeben Exitcode 1. Unsichere oder mehrdeutige Namen werden nicht umbenannt. Benannte NTFS-Streams werden nicht als zusätzliche Dateien extrahiert; als normale Dateien gesammelte Artefakte bleiben verfügbar.
 
-## Voraussetzungen { #requirements }
+Der separate [`mount`-Befehl](mount.md) stellt anderen Programmen ein Dateisystem bereit und benötigt weiterhin Linux FUSE. `auto-parse --vhdx` verwendet ihn nicht.
 
-- Linux: FUSE 3 (`fusermount3`, das Paket `fuse3`) und Zugriff auf `/dev/fuse`, den normale Benutzer in der
-  Regel haben. Root-Rechte sind nicht erforderlich.
-- Windows und macOS werden nicht unterstützt. Fügen Sie ein VHDX-Image unter Windows stattdessen in einer
-  PowerShell mit erhöhten Rechten schreibgeschützt an, und übergeben Sie den Werkzeugen seinen
-  Laufwerksbuchstaben. Ein E01-Image kann Windows nicht anfügen: Binden Sie es mit einem Werkzeug, das dies
-  kann, schreibgeschützt ein, und übergeben Sie den Werkzeugen dieses Laufwerk.
+## E01- und Ex01-Datenträgerabbilder { #e01-and-ex01-disk-images }
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+`--e01` liest physische EWF1- (`.E01`) und EWF2-Abbilder (`.Ex01`) nativ unter **Linux, macOS und Windows**, ohne FUSE, Betriebssystem-Mount oder Administratorrechte. Es verwendet [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) und dieselbe oben beschriebene NTFS-Verarbeitung.
+
+Bei geteilten Abbildern das erste Segment angeben. Alle zugehörigen Dateien einschließlich `.E02` müssen mit ihren ursprünglichen Namen daneben liegen. Ganze Datenträger (MBR/GPT) und einzelne NTFS-Volumes werden unterstützt. Für gemischte Verzeichnisse `--vhdx --e01` verwenden.
+
+Dieselben Anforderungen an temporären Speicher und Quellmetadaten gelten. Abbilder werden nur gelesen. Erfassungslücken und beim Öffnen oder Lesen erkannte Schäden erscheinen in `ImageErrors` und `manifest.csv`; lesbare Ergebnisse bleiben erhalten, der Exit-Code ist 1. Geprüft werden gelesene Daten, nicht alle Chunks oder der Hash des gesamten Mediums. Logische Dateien `.L01` und `.Lx01` werden abgewiesen; eine Passwortoption gibt es nicht.
+
+Der separate Befehl `mount` benötigt weiterhin Linux FUSE, die native automatische Verarbeitung nicht.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
+
+## Anforderungen für OS-sichtbare Mounts { #os-visible-mount-requirements }
+
+`juntei mount` benötigt Linux FUSE 3 (`fusermount3`) und Zugriff auf `/dev/fuse`. Unter Windows und macOS steht die oben beschriebene native Analyse bereit.

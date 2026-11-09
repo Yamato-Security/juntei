@@ -1,16 +1,10 @@
 # Montar imágenes de disco { #mounting-disk-images }
 
-`juntei mount` permite leer los archivos de una imagen de disco, VHDX o E01, desde un directorio, en modo de solo lectura, mientras se ejecuta. Herramientas como Hayabusa y Juntei pueden analizarlos sin extraer archivos ni requerir permisos de root. Utiliza FUSE y funciona en Linux. El lector de VHDX y la biblioteca de montaje se mantienen en [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser), y el lector de E01, en [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser).
+`juntei mount` permite leer los archivos de una imagen de disco VHDX / E01 / Ex01 desde un directorio, en modo de solo lectura, mientras se ejecuta. Herramientas como Hayabusa y Juntei pueden analizarlos sin extraer archivos ni requerir permisos de root. Utiliza FUSE y funciona en Linux. El lector y la biblioteca de montaje se mantienen en [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
 juntei mount host1-triage.vhdx /mnt/host1
-```
-
-Una imagen E01 (el formato Expert Witness de EnCase, también `.Ex01`) se monta de la misma manera. Una imagen dividida se indica por su primer segmento, y Juntei encuentra los demás (`host1.E02`, `host1.E03`, …) junto a él:
-
-```bash
-juntei mount host1.E01 /mnt/host1
 ```
 
 En otra terminal:
@@ -27,7 +21,6 @@ Pulse Ctrl+C en la primera terminal para desmontar, o ejecute `fusermount3 -u /m
 - Los archivos del volumen NTFS aparecen en el punto de montaje. Una imagen recopilada puede contener directorios como `C` y `LongFileNames`, junto con metadatos del volumen como `$MFT`. Varios volúmenes NTFS aparecen como `Volume1`, `Volume2`, etc.
 - Todos los archivos son de solo lectura y pertenecen al propietario del punto de montaje. Las marcas de tiempo
   de los archivos son las de `$STANDARD_INFORMATION` de NTFS.
-- Una imagen de un único volumen, sin tabla de particiones, corresponde a ese volumen.
 - Los nombres se enumeran tal como los almacena NTFS y se buscan de forma exacta. No se muestran los nombres
   DOS 8.3 ni los flujos de datos alternativos.
 - Los archivos comprimidos se descomprimen (hasta 1 GiB cada uno). Los archivos cifrados con EFS no se pueden
@@ -36,8 +29,6 @@ Pulse Ctrl+C en la primera terminal para desmontar, o ejecute `fusermount3 -u /m
 ## Las evidencias no se modifican { #the-evidence-is-not-changed }
 
 La imagen se abre en modo de solo lectura y el montaje rechaza escrituras. Si un VHDX no se cerró correctamente, su registro pendiente se aplica en memoria, sin escribirlo en la imagen. Algunos componentes DiscUtils dejan a cero la instrucción de salto y la firma `55 AA` del sector de arranque NTFS; Juntei lee estos volúmenes tal como están.
-
-Los segmentos de una imagen E01 también se abren en modo de solo lectura. Cada bloque se comprueba con su suma de comprobación al leerse: un bloque dañado no se puede leer, pero el resto de la imagen sí. Los sectores que la adquisición no pudo leer y una adquisición que no llegó a terminar se notifican como advertencias. Un archivo de evidencia lógica (`.L01`, `.Lx01`) contiene archivos, no un disco, y no se monta.
 
 ## Uso { #usage }
 
@@ -60,44 +51,39 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## Analizar todas las imágenes con auto-parse { #parsing-every-image-with-auto-parse }
+## Análisis nativo de imágenes { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` analiza los sistemas Windows contenidos en cada imagen de disco VHDX del directorio de
-evidencias (o en la única imagen indicada con `-d`), y `auto-parse --e01` los de cada imagen E01, sin un
-montaje aparte. Las dos opciones pueden indicarse juntas:
+Con `--vhdx`, `auto-parse` lee VHDX de forma nativa en **Linux, macOS y Windows** mediante [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). No requiere montaje del sistema, FUSE ni privilegios de administrador.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Cada imagen se monta en modo de solo lectura en un nuevo directorio temporal, en una carpeta con el nombre de
-  la imagen (`host1-triage`), y los sistemas que se encuentran allí se analizan como en una recopilación en
-  disco. Las imágenes se desmontan al final y también al pulsar Ctrl+C.
-- La terminal enumera las imágenes y la imagen de cada sistema:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- `--e01` toma el primer segmento de cada imagen E01 (`*.E01`, `*.Ex01`); los demás segmentos se leen
-  con él.
-- En el manifiesto, `EvidenceDirectory` es el directorio indicado y el campo `Image` de cada sistema nombra su
-  imagen. `EvidenceRoot` y los comandos de los analizadores utilizan la carpeta de montaje
-  (`./host1-triage/C`).
-- Si la imagen contiene archivos de Volume Shadow Copies en carpetas como `VSS32`, cada carpeta se detecta y analiza como otro sistema (`HOST1_2`, …).
-- Si una imagen no se puede montar, se informa de ello; las demás se siguen analizando y la ejecución termina
-  con el código de salida 1.
+Los parsers necesitan rutas: Juntei copia los archivos NTFS expuestos a un espacio temporal privado con búferes limitados. **Reserve espacio para todos esos archivos**, no solo los artefactos que produzcan resultados. Las regiones nulas se escriben como huecos cuando se admite. Se conservan nombres, estructura, enlaces físicos y fechas de modificación. Las fechas de origen de LNK y Jump Lists provienen de los metadatos NTFS originales, nunca de las copias temporales. La finalización normal, incluso con errores de parser, elimina las copias; una terminación forzada puede dejarlas. La fuente es solo lectura y los registros VHDX pendientes se aplican únicamente en memoria.
 
-Si no se puede abrir un volumen NTFS, Juntei informa del problema y conserva los volúmenes legibles. Con imágenes parcialmente legibles, `auto-parse --vhdx` y `--e01` devuelven el código 1; `mount` también devuelve 1 después de desmontar.
+La detección de hosts, CSV/JSON/JSONL y `-j` usan el flujo habitual. `Image` en `manifest.json` identifica la imagen original; `EvidenceRoot`, la ruta relativa interna. Los errores de lectura y nombres inseguros se registran en `ImageErrors` y filas fallidas de `manifest.csv`. Se conservan los resultados legibles; una entrada incompleta devuelve 1. No se renombran nombres peligrosos o ambiguos. Los flujos NTFS con nombre no se extraen como archivos adicionales; los artefactos recogidos como archivos normales siguen disponibles.
 
-## Requisitos { #requirements }
+El [`mount` independiente](mount.md) expone un sistema de archivos a otros programas y sigue necesitando Linux FUSE. `auto-parse --vhdx` no lo utiliza.
 
-- Linux: FUSE 3 (`fusermount3`, el paquete `fuse3`) y acceso a `/dev/fuse`, que los usuarios normales suelen
-  tener. No se necesita root.
-- Windows y macOS no son compatibles. En Windows, conecte en su lugar una imagen VHDX en modo de solo lectura
-  desde un PowerShell con privilegios elevados e indique a las herramientas su letra de unidad. Windows no
-  puede conectar una imagen E01: móntela en modo de solo lectura con una herramienta que sí pueda hacerlo e
-  indique esa unidad a las herramientas.
+## Imágenes de disco E01 y Ex01 { #e01-and-ex01-disk-images }
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+`--e01` lee imágenes físicas EWF1 (`.E01`) y EWF2 (`.Ex01`) de forma nativa en **Linux, macOS y Windows**, sin FUSE, montaje del sistema ni privilegios de administrador. Utiliza [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) y el mismo procesamiento NTFS descrito arriba.
+
+Indique el primer segmento de una imagen dividida. Mantenga todos los archivos asociados, incluido `.E02`, junto a él con sus nombres originales. Se admiten discos completos (MBR/GPT) y volúmenes NTFS individuales. Use `--vhdx --e01` para directorios mixtos.
+
+Se aplican los mismos requisitos de espacio temporal y metadatos de origen. Las imágenes son de solo lectura. Los huecos de adquisición y los daños detectados al abrir o leer se indican en `ImageErrors` y `manifest.csv`; se conservan los resultados legibles y se devuelve el código 1. Se comprueban los datos consultados, no todos los bloques ni el hash del medio completo. Se rechazan los archivos lógicos `.L01` y `.Lx01`; no hay opción de contraseña.
+
+El comando independiente `mount` sigue necesitando Linux FUSE; el análisis nativo automático no.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
+
+## Requisitos del montaje visible para el sistema { #os-visible-mount-requirements }
+
+`juntei mount` necesita Linux FUSE 3 (`fusermount3`) y acceso a `/dev/fuse`. En Windows y macOS, use el análisis nativo anterior.

@@ -14,7 +14,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | コマンド | 入力 | 詳細ガイド |
 |---|---|---|
-| `mount` | VHDX または E01 のディスクイメージ | [ディスクイメージのマウント](mount.md) |
+| `mount` | VHDX / E01 / Ex01 ディスクイメージ | [ディスクイメージのマウント](mount.md) |
 
 ## [ESE コマンド](user-activity.md) { #ese-commands }
 

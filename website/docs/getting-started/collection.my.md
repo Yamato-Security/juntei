@@ -1,6 +1,10 @@
 # အထောက်အထား စုဆောင်းခြင်း { #collecting-evidence }
 
-Juntei သည် Windows မှ စုဆောင်းထားပြီးသော ဖိုင်များကို parse လုပ်သည်။ ယုံကြည်ရသော acquisition tool ကို အသုံးပြုပြီး မူလ metadata ကို ဖြစ်နိုင်သမျှ ထိန်းသိမ်းပါ။ VHDX နှင့် E01 disk image များကို ထုတ်ယူစရာမလိုဘဲ parse လုပ်နိုင်သည်။ [Disk image များကို mount လုပ်ခြင်း](../commands/mount.md) ကို ကြည့်ပါ။
+Juntei သည် Windows မှ စုဆောင်းထားပြီးသော ဖိုင်များကို parse လုပ်သည်။ ယုံကြည်ရသော acquisition tool ကို အသုံးပြုပြီး မူလ metadata ကို ဖြစ်နိုင်သမျှ ထိန်းသိမ်းပါ။
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## အသုံးများသော တည်နေရာများ { #common-locations }
 

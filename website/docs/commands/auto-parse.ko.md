@@ -20,16 +20,38 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     생성된 데이터가 증거로 다시 발견되는 것을 방지하고, `--clobber`가 원본 수집물의 파일을 건드리지 않도록
     합니다.
 
-## VHDX 및 E01 디스크 이미지 { #vhdx-and-e01-disk-images }
+## VHDX 디스크 이미지 { #vhdx-disk-images }
 
-`--vhdx`를 지정하면 `auto-parse`는 증거 디렉터리의 모든 VHDX 디스크 이미지 안에 있는 시스템을 파싱하고, `--e01`을 지정하면 모든 E01 이미지(분할 이미지는 첫 번째 세그먼트인 `*.E01` 또는 `*.Ex01`) 안에 있는 시스템을 파싱합니다. 두 옵션은 함께 지정할 수 있습니다. 각 이미지는 파싱 중 FUSE로 읽기 전용 마운트되며 파일을 추출하지 않습니다. [디스크 이미지 마운트](mount.md)를 참조하십시오.
+`--vhdx`를 지정하면 `auto-parse`는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)로 **Linux, macOS, Windows**에서 VHDX를 네이티브로 읽습니다. OS 마운트, FUSE, 관리자 권한이 필요하지 않습니다.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`와 `--e01`은 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일을 비공개 임시 디렉터리에 스트리밍 복사합니다. **결과가 생성되는 아티팩트뿐 아니라 제공되는 모든 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
+
+호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
+
+다른 프로그램에 파일시스템을 제공하는 별도 [`mount` 명령](mount.md)은 Linux FUSE가 필요합니다. `auto-parse --vhdx`는 이를 사용하지 않습니다.
+
+## E01 및 Ex01 디스크 이미지 { #e01-and-ex01-disk-images }
+
+`--e01`은 **Linux, macOS, Windows**에서 물리 EWF1(`.E01`) 및 EWF2(`.Ex01`) 이미지를 네이티브로 읽습니다. FUSE, OS 마운트, 관리자 권한이 필요하지 않습니다. [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser)와 위에서 설명한 동일한 NTFS 파싱 경로를 사용합니다.
+
+분할 이미지는 첫 번째 세그먼트를 지정하세요. `.E02`를 포함한 모든 관련 파일을 원래 이름으로 같은 디렉터리에 보관하세요. 전체 디스크(MBR/GPT)와 단일 NTFS 볼륨을 지원합니다. 두 형식이 섞인 디렉터리에는 `--vhdx --e01`을 사용하세요.
+
+임시 공간과 원본 메타데이터 요구 사항은 동일합니다. 이미지는 읽기 전용입니다. 수집 누락과 열기 또는 읽기 중 발견된 손상은 `ImageErrors`와 `manifest.csv`에 기록됩니다. 읽을 수 있는 결과는 보존하고 종료 코드 1을 반환합니다. 접근한 데이터만 검사하며 모든 청크나 전체 미디어 해시를 검증하지는 않습니다. 논리 파일 `.L01`, `.Lx01`은 거부하며 암호 옵션은 없습니다.
+
+별도의 `mount` 명령은 여전히 Linux FUSE가 필요하지만 네이티브 자동 파싱에는 필요하지 않습니다.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
 
 ## 출력 표준 시간대 { #output-time-zone }
 
@@ -494,8 +516,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
-      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

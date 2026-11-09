@@ -33,12 +33,16 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 個別に解析する場合は、`parse-ese`、`parse-file`、`parse-ntfs`、`parse-registry`、`parse-sqlite` を使用します。
 例: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`。
 
-`juntei mount <IMAGE> <MOUNTPOINT>` は、VHDX または E01 のディスクイメージを読み取り専用で
-マウントし、Hayabusa などの他のツールから読めるようにします（FUSE、Linux のみ）。`auto-parse` に `--vhdx`
-または `--e01` を付けると、ディレクトリ内のすべての VHDX または E01 イメージの中にあるシステムを解析します。
-VHDX リーダーとマウントライブラリは
-[Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) で、E01 リーダーは
-[Yamato Security/ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) で管理しています。
+`juntei auto-parse --vhdx -d <IMAGE_OR_DIR> -o <OUTPUT>` は、**Linux、macOS、Windows** で
+FUSE、OS へのマウントや管理者権限なしに VHDX を解析します。パーサー用の専用一時コピーを作成するため、
+十分な一時ディスク容量が必要です。`juntei mount <IMAGE> <MOUNTPOINT>` は、Linux の FUSE を使って
+他のプログラムにイメージを読み取り専用で公開する用途で引き続き利用できます。
+どちらも [Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用します。
+
+`--e01` を追加すると、[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) で
+物理 E01/Ex01 イメージも解析できます。分割イメージは最初のセグメントを指定し、関連する全セグメントを
+元の名前のまま同じ場所に置いてください。混在したディレクトリには `--vhdx --e01` を使用します。
+E01 も同じ読み取り専用のネイティブ処理と専用一時領域を使用します。
 
 [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/ja/commands/persistence-hunter/)
 では、レジストリハイブ、スケジュールタスク、スタートアップファイル、WMI、BITS を横断して永続化の痕跡を調べます。

@@ -1,16 +1,10 @@
 # 디스크 이미지 마운트 { #mounting-disk-images }
 
-`juntei mount`는 실행 중 디스크 이미지(VHDX 또는 E01 이미지) 내부 파일을 디렉터리에서 읽기 전용으로 제공합니다. Hayabusa와 Juntei 같은 도구로 파일 추출이나 root 권한 없이 스캔할 수 있습니다. FUSE를 사용하며 Linux에서 작동합니다. VHDX 리더와 마운트 라이브러리는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)에서, E01 리더는 [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser)에서 관리합니다.
+`juntei mount`는 실행 중 VHDX / E01 / Ex01 디스크 이미지 내부 파일을 디렉터리에서 읽기 전용으로 제공합니다. Hayabusa와 Juntei 같은 도구로 파일 추출이나 root 권한 없이 스캔할 수 있습니다. FUSE를 사용하며 Linux에서 작동합니다. 리더와 마운트 라이브러리는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)에서 관리합니다.
 
 ```bash
 mkdir /mnt/host1
 juntei mount host1-triage.vhdx /mnt/host1
-```
-
-E01 이미지(EnCase의 Expert Witness Format, `.Ex01` 포함)도 같은 방법으로 마운트합니다. 분할 이미지는 첫 번째 세그먼트로 지정하며, 나머지 세그먼트(`host1.E02`, `host1.E03`, …)는 Juntei가 같은 위치에서 찾습니다.
-
-```bash
-juntei mount host1.E01 /mnt/host1
 ```
 
 다른 터미널에서 다음을 실행합니다.
@@ -27,7 +21,6 @@ juntei auto-parse -d /mnt/host1 -o host1-juntei
 - 마운트 지점에 NTFS 볼륨 파일이 표시됩니다. 수집된 이미지에는 `C`, `LongFileNames` 같은 디렉터리와 `$MFT` 같은 볼륨 메타데이터가 포함될 수 있습니다. 여러 NTFS 볼륨은 `Volume1`, `Volume2` 등으로 표시됩니다.
 - 모든 파일은 읽기 전용이며 마운트 지점의 소유자에게 속합니다. 파일 시간은 NTFS
   `$STANDARD_INFORMATION` 시간입니다.
-- 파티션 테이블이 없는 단일 볼륨 이미지는 그 볼륨 자체로 취급됩니다.
 - 이름은 NTFS에 저장된 그대로 나열되며, 정확히 일치하는 이름으로 조회됩니다. DOS 8.3 이름과 대체 데이터
   스트림은 표시되지 않습니다.
 - 압축된 파일은 압축이 해제됩니다(파일당 최대 1 GiB). EFS로 암호화된 파일은 읽을 수 없습니다.
@@ -35,8 +28,6 @@ juntei auto-parse -d /mnt/host1 -o host1-juntei
 ## 증거는 변경되지 않음 { #the-evidence-is-not-changed }
 
 이미지는 읽기 전용으로 열리며 마운트는 쓰기를 거부합니다. 정상적으로 닫히지 않은 VHDX의 보류 중인 로그는 메모리에서 적용되고 이미지에 기록되지 않습니다. 일부 DiscUtils 기록기는 NTFS 부트 섹터의 점프 명령과 `55 AA` 서명을 0으로 남깁니다. Juntei는 이러한 볼륨을 그대로 읽습니다.
-
-E01 이미지의 세그먼트도 읽기 전용으로 열립니다. 각 청크는 읽을 때 체크섬으로 검사됩니다. 손상된 청크는 읽을 수 없지만, 이미지의 나머지 부분은 읽을 수 있습니다. 수집 시 읽지 못한 섹터와 완료되지 않은 수집은 경고로 보고됩니다. 논리 증거 파일(`.L01`, `.Lx01`)은 디스크가 아니라 파일을 담고 있으므로 마운트되지 않습니다.
 
 ## 사용법 { #usage }
 
@@ -59,40 +50,39 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse로 모든 이미지 파싱 { #parsing-every-image-with-auto-parse }
+## 이미지의 네이티브 분석 { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx`는 증거 디렉터리에 있는 모든 VHDX 디스크 이미지(또는 `-d`로 지정한 단일 이미지) 안의
-Windows 시스템을, `auto-parse --e01`은 모든 E01 이미지 안의 Windows 시스템을 별도로 마운트하지 않고도
-파싱합니다. 두 옵션은 함께 지정할 수 있습니다.
+`--vhdx`를 지정하면 `auto-parse`는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)로 **Linux, macOS, Windows**에서 VHDX를 네이티브로 읽습니다. OS 마운트, FUSE, 관리자 권한이 필요하지 않습니다.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- 각 이미지는 새 임시 디렉터리 안에 이미지 이름을 딴 폴더(`host1-triage`)로 읽기 전용 마운트되며, 그곳에서
-  발견된 시스템은 디스크에 있는 수집물과 마찬가지로 파싱됩니다. 이미지는 실행이 끝날 때와 Ctrl+C를 눌렀을 때
-  마운트 해제됩니다.
-- 터미널에는 이미지 목록과 각 시스템의 이미지가 표시됩니다:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- `--e01`은 각 E01 이미지의 첫 번째 세그먼트(`*.E01`, `*.Ex01`)를 받으며, 나머지 세그먼트는 함께 읽힙니다.
-- 매니페스트에서 `EvidenceDirectory`는 지정된 디렉터리이며, 각 시스템의 `Image`는 해당 시스템의 이미지를
-  나타냅니다. `EvidenceRoot`와 파서 명령어는 마운트 폴더(`./host1-triage/C`)를 사용합니다.
-- 이미지에 Volume Shadow Copies의 파일이 `VSS32` 같은 폴더에 들어 있으면 각 폴더를 별도 시스템 (`HOST1_2`, …)으로 찾아 파싱합니다.
-- 마운트할 수 없는 이미지는 보고됩니다. 나머지 이미지는 계속 파싱되며, 실행은 종료 상태 1로 끝납니다.
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일을 비공개 임시 디렉터리에 스트리밍 복사합니다. **결과가 생성되는 아티팩트뿐 아니라 제공되는 모든 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
 
-NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`와 `--e01`은 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.
+호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
 
-## 요구 사항 { #requirements }
+다른 프로그램에 파일시스템을 제공하는 별도 [`mount` 명령](mount.md)은 Linux FUSE가 필요합니다. `auto-parse --vhdx`는 이를 사용하지 않습니다.
 
-- Linux: FUSE 3(`fusermount3`, `fuse3` 패키지)과 `/dev/fuse`에 대한 액세스 권한. 일반 사용자는 보통 이
-  권한을 가지고 있습니다. root 권한은 필요하지 않습니다.
-- Windows와 macOS는 지원되지 않습니다. Windows에서는 대신 관리자 권한으로 실행한 PowerShell에서 VHDX 이미지를 읽기
-  전용으로 연결하고, 해당 드라이브 문자를 도구에 지정하십시오. Windows는 E01 이미지를 연결할 수 없으므로,
-  E01 이미지를 마운트할 수 있는 도구로 읽기 전용 마운트한 뒤 그 드라이브를 도구에 지정하십시오.
+## E01 및 Ex01 디스크 이미지 { #e01-and-ex01-disk-images }
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+`--e01`은 **Linux, macOS, Windows**에서 물리 EWF1(`.E01`) 및 EWF2(`.Ex01`) 이미지를 네이티브로 읽습니다. FUSE, OS 마운트, 관리자 권한이 필요하지 않습니다. [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser)와 위에서 설명한 동일한 NTFS 파싱 경로를 사용합니다.
+
+분할 이미지는 첫 번째 세그먼트를 지정하세요. `.E02`를 포함한 모든 관련 파일을 원래 이름으로 같은 디렉터리에 보관하세요. 전체 디스크(MBR/GPT)와 단일 NTFS 볼륨을 지원합니다. 두 형식이 섞인 디렉터리에는 `--vhdx --e01`을 사용하세요.
+
+임시 공간과 원본 메타데이터 요구 사항은 동일합니다. 이미지는 읽기 전용입니다. 수집 누락과 열기 또는 읽기 중 발견된 손상은 `ImageErrors`와 `manifest.csv`에 기록됩니다. 읽을 수 있는 결과는 보존하고 종료 코드 1을 반환합니다. 접근한 데이터만 검사하며 모든 청크나 전체 미디어 해시를 검증하지는 않습니다. 논리 파일 `.L01`, `.Lx01`은 거부하며 암호 옵션은 없습니다.
+
+별도의 `mount` 명령은 여전히 Linux FUSE가 필요하지만 네이티브 자동 파싱에는 필요하지 않습니다.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
+
+## OS에 노출되는 마운트의 요구 사항 { #os-visible-mount-requirements }
+
+`juntei mount`는 Linux FUSE 3(`fusermount3`)와 `/dev/fuse` 접근 권한이 필요합니다. Windows와 macOS에서는 위의 네이티브 분석을 사용하세요.

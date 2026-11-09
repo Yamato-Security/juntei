@@ -17,7 +17,7 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 
 | Perintah | Input | Panduan terperinci |
 |---|---|---|
-| `mount` | Image disk VHDX atau E01 | [Memasang Image Disk](mount.md) |
+| `mount` | Image disk VHDX / E01 / Ex01 | [Memasang Image Disk](mount.md) |
 
 ## [Perintah ESE](user-activity.md) { #ese-commands }
 

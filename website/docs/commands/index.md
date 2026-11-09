@@ -17,7 +17,7 @@ and organizes results and logs by computer and investigative category.
 
 | Command | Input | Detailed guide |
 |---|---|---|
-| `mount` | VHDX or E01 disk image | [Mounting Disk Images](mount.md) |
+| `mount` | VHDX / E01 / Ex01 disk image | [Mounting Disk Images](mount.md) |
 
 ## [ESE commands](user-activity.md)
 

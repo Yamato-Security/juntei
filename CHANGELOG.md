@@ -4,6 +4,8 @@
 
 **New Features:**
 
+- `auto-parse --vhdx` reads images natively on Linux, macOS and Windows without FUSE, an OS mount, or administrator privileges. Files are staged in a private temporary workspace for the path-based parsers; enough temporary disk space is required. Preserve image provenance and report incomplete image inputs in both manifests while retaining readable results. (@YamatoSecurity)
+
 - Use Yamato Security’s [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) workspace for the VHDX reader and reusable NTFS/FUSE mounting library, retaining the original reader’s license and attribution. (@YamatoSecurity)
 
 - `parse-ese ual` parses the User Access Logging (UAL) databases of Windows Server (`Current.mdb`, the yearly `{GUID}.mdb` databases and `SystemIdentity.mdb`): the client addresses and accounts that used each server role, with their first and last access times and request counts per day, and the role, DNS, virtual machine and server identity tables. Results are CSV tables, JSON or JSONL. `auto-parse` saves them in `LateralMovement` and adds them to the `-j` timeline. (#133) (@YamatoSecurity)
@@ -16,11 +18,12 @@
 
 - `mount` mounts the NTFS volumes of a VHDX disk image read-only at a directory through FUSE (Linux), without root and without the system supporting the image or the file system, so other tools such as Hayabusa can read the files. NTFS volumes whose boot sectors have zeroed jump instructions and signatures are supported. Ctrl+C unmounts. (@YamatoSecurity)
 
-- `auto-parse --vhdx` parses the Windows systems inside every VHDX disk image in the evidence directory, each mounted read-only while it is parsed. The manifest records the image of each system (`Image`). (@YamatoSecurity)
 
-- `mount` and `auto-parse --e01` read E01 disk images (EnCase's Expert Witness Format, also `.Ex01`) as they are, split images from their first segment, with Yamato Security's [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser), a reader-only fork of [ewf-image](https://github.com/ebrig/ewf-image): the image is mounted read-only like a VHDX image, and `--vhdx` and `--e01` can be given together. (#140) (@YamatoSecurity)
+- `auto-parse --e01` reads physical E01/Ex01 images natively on Linux, macOS and Windows without FUSE, OS mounting or administrator privileges. Split images start at their first segment; whole disks and single NTFS volumes use the same read-only temporary-workspace pipeline as VHDX. `--vhdx --e01` accepts mixed input, and the separate Linux/FUSE `mount` command also accepts E01 images. Uses [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser), a reader-only fork of [ewf-image](https://github.com/ebrig/ewf-image). (#140) (@YamatoSecurity)
 
 **Bug Fixes:**
+
+- Protect every split E01 segment, including damaged companions and hard-link aliases, from output replacement. Resolve first-segment case aliases without changing segment families, retain reader warnings discovered during parsing, and saturate acquisition-error counts instead of overflowing. (@YamatoSecurity)
 
 - Disk-image mounting checks GPT offset and length arithmetic, rejects cyclic extended-partition chains, preserves valid FILETIMEs beyond 2554, and reads compressed-file metadata without decompressing content. Bound the decompression cache, report unreadable NTFS partitions while retaining readable volumes, and preserve the original evidence directory when `auto-parse --vhdx` receives a bare image filename. (@YamatoSecurity)
 

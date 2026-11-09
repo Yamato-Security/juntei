@@ -17,7 +17,7 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 
 | Befehl | Eingabe | Ausführlicher Leitfaden |
 |---|---|---|
-| `mount` | VHDX- oder E01-Disk-Image | [Disk-Images einbinden](mount.md) |
+| `mount` | VHDX / E01 / Ex01-Disk-Image | [Disk-Images einbinden](mount.md) |
 
 ## [ESE-Befehle](user-activity.md) { #ese-commands }
 

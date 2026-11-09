@@ -15,16 +15,53 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 !!! warning "出力ツリーと証拠ツリーを分離しておきます。"
     Juntei は、`<EVIDENCE>` 内にある出力ディレクトリ、または `<EVIDENCE>` を含む出力ディレクトリを拒否します。これにより、生成されたデータが証拠として再発見されるのを防ぎ、`--clobber` がソース コレクション内のファイルにアクセスするのを防ぎます。
 
-## VHDX と E01 のディスクイメージ { #vhdx-and-e01-disk-images }
+## VHDX ディスクイメージ { #vhdx-disk-images }
 
-`--vhdx` を指定すると、`auto-parse` は証拠ディレクトリ内のすべての VHDX ディスクイメージに含まれるシステムを解析し、`--e01` を指定すると、すべての E01 イメージ (分割イメージは最初のセグメント、`*.E01` または `*.Ex01`) に含まれるシステムを解析します。2 つのオプションは同時に指定できます。各イメージは解析中だけ FUSE で読み取り専用でマウントされ、ファイルは抽出されません。[ディスクイメージのマウント](mount.md)を参照してください。
+`--vhdx` を指定すると、`auto-parse` は [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用して
+**Linux、macOS、Windows** で VHDX をネイティブに読み取ります。OS へのマウント、FUSE ドライバー、管理者権限は不要です。
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-開けない NTFS ボリュームがある場合、その問題を報告し、読み取り可能なボリュームの処理を続けます。イメージの一部を読み取れなかった場合、`auto-parse --vhdx` と `--e01` は終了コード 1 を返し、`mount` もアンマウント後に 1 を返します。
+各パーサーはファイルパスを必要とするため、リーダーが公開する NTFS ボリューム内のファイルを、
+システムの専用一時ディレクトリにストリーミングでコピーしてから通常の解析を行います。
+**出力結果に加えて、これらのファイルを保存する一時ディスク容量が必要です。**
+解析対象になったアーティファクトだけではなく、公開されたファイルシステム全体をコピーします。
+読み取りバッファーは固定サイズです。ホストのファイルシステムが対応している場合、ゼロ領域はスパース領域として書き込みます。
+元のファイル名、ディレクトリ構造、ハードリンク、ファイル更新時刻を保持します。
+LNK と Jump List のソース作成・更新・アクセス時刻は、一時ファイルではなく元の NTFS メタデータのスナップショットから取得します。
+一時ディレクトリは、パーサーエラーが報告された場合を含めて正常な終了処理で削除されますが、強制終了時には残る場合があります。
+元のイメージは読み取り専用で開き、未反映の VHDX ログもメモリ上でのみ適用します。
+
+ホスト名の検出、ホスト別の出力、CSV/JSON/JSONL、`-j` は通常の証拠ディレクトリと同じ解析処理を使用します。
+`manifest.json` の `Image` は元のイメージを、`EvidenceRoot` はイメージ内の相対パスを示します。
+読み取れないイメージ、ボリューム、ファイル、安全に表現できないファイル名は、`ImageErrors` と
+`manifest.csv` の失敗行に記録します。読み取れる証拠の解析は継続し、不完全な入力があれば終了コードは 1 になります。
+危険な名前や曖昧な名前は勝手に変更せず、エラーとして報告します。名前付き NTFS ストリームを追加ファイルとして抽出する機能はありません。
+トリアージイメージ内に通常のファイルとして収集済みのアーティファクトは利用できます。
+
+他のプログラムにファイルシステムを公開する [`mount` コマンド](mount.md) は、引き続き Linux の FUSE を必要とします。
+`auto-parse --vhdx` はこのコマンドを使用しません。
+
+## E01 と Ex01 ディスクイメージ { #e01-and-ex01-disk-images }
+
+`--e01` は、物理 EWF1（`.E01`）および EWF2（`.Ex01`）イメージを **Linux、macOS、Windows** でネイティブに読み取ります。FUSE、OS へのマウント、管理者権限は不要です。[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) と、上記と同じ NTFS 解析処理を使用します。
+
+分割イメージは最初のセグメントを指定します。`.E02` などの関連ファイルを元の名前のまま同じディレクトリに置いてください。ディスク全体（MBR/GPT）と単一の NTFS ボリュームに対応します。両形式が混在するディレクトリには `--vhdx --e01` を使用します。
+
+一時ディスク容量と元のメタデータに関する要件も同じです。イメージは読み取り専用です。取得時の欠損や、開始時・読み取り中に見つかった破損は `ImageErrors` と `manifest.csv` に記録され、読み取れる結果を保持して終了コード 1 を返します。検査対象はアクセスしたデータであり、全チャンクやメディア全体のハッシュではありません。論理形式の `.L01`、`.Lx01` は拒否します。パスワード指定には対応しません。
+
+別機能の `mount` コマンドには引き続き Linux FUSE が必要ですが、ネイティブ自動解析には不要です。
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
 
 ## 出力タイムゾーン { #output-time-zone }
 
@@ -361,8 +398,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
-      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

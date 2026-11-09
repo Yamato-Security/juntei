@@ -21,7 +21,7 @@ use crate::util::error_msg;
 
 /// What to use where FUSE isn't available.
 #[cfg(not(target_os = "linux"))]
-pub const NO_FUSE: &str = "Mounting needs FUSE and works on Linux. On Windows, attach a VHDX image read-only instead (Mount-DiskImage -ImagePath <IMAGE> -Access ReadOnly) or mount an E01 image with an image-mounting tool, then parse the mounted drive";
+pub const NO_FUSE: &str = "OS-visible mounting needs Linux FUSE. For native parsing on Linux, macOS or Windows without administrator privileges, use: juntei auto-parse --vhdx --e01 -d <IMAGE_OR_DIR> -o <OUTPUT>";
 
 /// Run the command; returns the exit status.
 #[cfg(target_os = "linux")]
@@ -62,11 +62,12 @@ pub fn run(opts: &MountOptions) -> i32 {
     };
     let image = opened.image;
     // an unreadable volume, or damage the image was read past: what is mounted may lack files
-    let partial = !image.problems.is_empty() || !opened.warnings.is_empty();
+    let initial = opened.status.warnings();
+    let partial = !image.problems.is_empty() || !initial.is_empty();
     for problem in &image.problems {
         error_msg(no_color, &format!("Could not read {problem}"));
     }
-    for warning in &opened.warnings {
+    for warning in &initial {
         error_msg(no_color, &format!("Warning: {warning}"));
     }
     p_label(no_color, "Image: ", &opts.image.display().to_string());
@@ -144,7 +145,13 @@ pub fn run(opts: &MountOptions) -> i32 {
         "Unmounted: ",
         &opts.mount_point.display().to_string(),
     );
-    i32::from(partial)
+    let final_warnings = opened.status.warnings();
+    for warning in &final_warnings {
+        if !initial.contains(warning) {
+            error_msg(no_color, &format!("Warning: {warning}"));
+        }
+    }
+    i32::from(partial || !final_warnings.is_empty())
 }
 
 /// Run the command; returns the exit status.

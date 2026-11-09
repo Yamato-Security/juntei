@@ -22,8 +22,8 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Travaux de Sootmark shell sur les fichiers composés et les Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
-| Images disque VHDX (`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) et [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), exposés via [fuser](https://github.com/cberner/fuser) | MS-VHDX de Microsoft |
-| Images disque E01 (`mount`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ([ewf-image](https://github.com/ebrig/ewf-image) d'Elijah Brigham), montées avec ys-vhdx-parser | Documentation du format et outils [libewf](https://github.com/libyal/libewf) de Joachim Metz, utilisés pour valider le lecteur |
+| Images disque VHDX (`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) et [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), exposés via [fuser](https://github.com/cberner/fuser) | MS-VHDX de Microsoft |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | Registre | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Recherches sur le format du Registre et la récupération citées ci-dessous |
 
 ## Outils de référence et validation indépendante { #reference-tools-and-independent-validation }

@@ -21,16 +21,38 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     ထုတ်လုပ်ထားသော ဒေတာကို အထောက်အထားအဖြစ် ပြန်လည်ရှာဖွေတွေ့ရှိခြင်းမှ ကာကွယ်ပြီး `--clobber` က ရင်းမြစ် collection
     ရှိ ဖိုင်များကို ထိခိုက်ခြင်းမှ ကာကွယ်ပါသည်။
 
-## VHDX နှင့် E01 disk image များ { #vhdx-and-e01-disk-images }
+## VHDX disk image များ { #vhdx-disk-images }
 
-`--vhdx` ဖြင့် `auto-parse` သည် အထောက်အထား directory ရှိ VHDX disk image တစ်ခုစီအတွင်းမှ system များကို parse လုပ်ပြီး `--e01` ဖြင့် E01 image တစ်ခုစီ (split image ဖြစ်ပါက ၎င်း၏ ပထမ segment၊ `*.E01` သို့မဟုတ် `*.Ex01`) အတွင်းမှ system များကို parse လုပ်သည်။ Option နှစ်ခုကို အတူတကွ ပေးနိုင်သည်။ Parsing လုပ်နေစဉ် image ကို FUSE ဖြင့် read-only mount လုပ်သဖြင့် ဖိုင်များကို ထုတ်ယူခြင်းမရှိပါ။ [Disk image များကို mount လုပ်ခြင်း](mount.md) ကို ကြည့်ပါ။
+`--vhdx` ဖြင့် `auto-parse` သည် [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) ကို သုံးကာ **Linux၊ macOS နှင့် Windows** တွင် VHDX ကို တိုက်ရိုက်ဖတ်သည်။ OS mount၊ FUSE သို့မဟုတ် administrator အခွင့်အရေး မလိုအပ်ပါ။
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-NTFS volume တစ်ခုကို မဖွင့်နိုင်ပါက Juntei က ပြဿနာကို ဖော်ပြပြီး ဖတ်နိုင်သော volume များကို ဆက်လက်သုံးသည်။ Image ကို တစ်စိတ်တစ်ပိုင်းသာ ဖတ်နိုင်ပါက `auto-parse --vhdx` နှင့် `--e01` သည် exit status 1 ကို ပြန်ပေးပြီး `mount` သည်လည်း unmount ပြီးနောက် 1 ကို ပြန်ပေးသည်။
+Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် NTFS reader မှ ရရှိသောဖိုင်များကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ **ရလဒ်ထွက်သော artifact များသာမက ထိုဖိုင်အားလုံးအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
+
+Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည် ပုံမှန် pipeline ကို သုံးသည်။ `manifest.json` ရှိ `Image` သည် မူရင်း image ဖြစ်ပြီး `EvidenceRoot` သည် အတွင်း relative path ဖြစ်သည်။ Read error နှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ထိန်းသိမ်းပြီး input မပြည့်စုံလျှင် exit code 1 ပြန်ပေးသည်။ မလုံခြုံသော သို့မဟုတ် မရှင်းလင်းသောအမည်များကို ပြောင်းမပေးပါ။ Named NTFS stream များကို နောက်ထပ်ဖိုင်အဖြစ် မထုတ်ပေးသော်လည်း သာမန်ဖိုင်အဖြစ် စုဆောင်းထားသော artifact များကို အသုံးပြုနိုင်သည်။
+
+အခြား program များအတွက် filesystem ဖော်ပြသော သီးခြား [`mount` command](mount.md) သည် Linux FUSE လိုအပ်ဆဲ ဖြစ်သည်။ `auto-parse --vhdx` က ၎င်းကို မသုံးပါ။
+
+## E01 နှင့် Ex01 disk image များ { #e01-and-ex01-disk-images }
+
+`--e01` သည် physical EWF1 (`.E01`) နှင့် EWF2 (`.Ex01`) image များကို **Linux၊ macOS နှင့် Windows** တွင် native အဖြစ် ဖတ်သည်။ FUSE၊ OS mount သို့မဟုတ် administrator ခွင့်ပြုချက် မလိုပါ။ [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) နှင့် အထက်ပါ NTFS parsing လုပ်ငန်းစဉ်ကို အသုံးပြုသည်။
+
+အပိုင်းခွဲထားသော image ၏ ပထမ segment ကို ပေးပါ။ `.E02` အပါအဝင် ဆက်စပ်ဖိုင်အားလုံးကို မူရင်းအမည်များဖြင့် တစ်နေရာတည်းတွင် ထားပါ။ Disk အပြည့် (MBR/GPT) နှင့် NTFS volume တစ်ခုတည်းကို ပံ့ပိုးသည်။ ပုံစံနှစ်မျိုးပါသော directory အတွက် `--vhdx --e01` ကို သုံးပါ။
+
+ယာယီနေရာနှင့် မူရင်း metadata လိုအပ်ချက်များသည် အတူတူဖြစ်သည်။ Image များကို read-only ဖတ်သည်။ Acquisition အတွင်း ပျောက်နေသောဒေတာနှင့် ဖွင့်စဉ် သို့မဟုတ် ဖတ်စဉ်တွေ့သော ပျက်စီးမှုများကို `ImageErrors` နှင့် `manifest.csv` တွင် ဖော်ပြသည်။ ဖတ်နိုင်သည့်ရလဒ်များကို သိမ်းပြီး exit code 1 ပြန်ပေးသည်။ ဝင်ဖတ်သည့်ဒေတာကိုသာ စစ်ဆေးပြီး chunk အားလုံး သို့မဟုတ် media တစ်ခုလုံး၏ hash ကို မစစ်ပါ။ Logical `.L01` နှင့် `.Lx01` ဖိုင်များကို ငြင်းပယ်ပြီး password option မရှိပါ။
+
+သီးခြား `mount` command သည် Linux FUSE လိုအပ်ဆဲဖြစ်သော်လည်း native automatic parsing အတွက် မလိုပါ။
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
 
 ## Output time zone { #output-time-zone }
 
@@ -515,8 +537,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
-      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

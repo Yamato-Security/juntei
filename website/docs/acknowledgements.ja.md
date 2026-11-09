@@ -19,8 +19,8 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 | Jump Lists | [ys-ジャンプリスト-パーサー](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark シェル複合ファイルとジャンプ リストが機能する |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [セキュリティ Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [コートマークディフェンダー](https://github.com/Sootmark/defender) |
-| VHDX ディスクイメージ (`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) と [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)、[fuser](https://github.com/cberner/fuser) で提供 | Microsoft の MS-VHDX |
-| E01 ディスクイメージ (`mount`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) (Elijah Brigham の [ewf-image](https://github.com/ebrig/ewf-image))、ys-vhdx-parser でマウント | Joachim Metz の [libewf](https://github.com/libyal/libewf) の形式ドキュメントとツール (リーダーの検証に使用) |
+| VHDX ディスクイメージ (`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) と [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)、[fuser](https://github.com/cberner/fuser) で提供 | Microsoft の MS-VHDX |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | レジストリ | [ys-レジストリ-パーサー](https://github.com/Yamato-Security/ys-registry-parser) | レジストリ形式と回復に関する研究のクレジットは以下に記載されています |
 
 ## 参照ツールと独立した検証 { #reference-tools-and-independent-validation }

@@ -495,6 +495,9 @@ fn parse_auto_threads(value: &str) -> Result<usize, String> {
 
 #[derive(Args, Clone, Debug)]
 pub struct AutoParseOptions {
+    #[arg(skip)]
+    pub(crate) image_source_metadata: Option<PathBuf>,
+
     /// Evidence directory containing one or more collected Windows systems
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "EVIDENCE", display_order = 100)]
     pub directory: PathBuf,
@@ -503,11 +506,11 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Input"), long, value_name = "DEPTH", default_value_t = 10, value_parser = parse_auto_depth, display_order = 101)]
     pub max_depth: usize,
 
-    /// Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+    /// Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
     #[arg(help_heading = Some("Input"), long, display_order = 102)]
     pub vhdx: bool,
 
-    /// Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
+    /// Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
     #[arg(help_heading = Some("Input"), long, display_order = 103)]
     pub e01: bool,
 
@@ -1537,6 +1540,10 @@ pub enum LnkOutputType {
 #[derive(Args, Clone, Debug, Default)]
 #[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
 pub struct LnkOptions {
+    /// Internal snapshot of original source timestamps for image parsing.
+    #[arg(long = "image-source-metadata", hide = true)]
+    pub image_source_metadata: Option<PathBuf>,
+
     /// Directory to search recursively for shortcuts (*.lnk)
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
     pub directory: Option<PathBuf>,
@@ -1590,6 +1597,10 @@ pub enum JumpListOutputType {
 #[derive(Args, Clone, Debug, Default)]
 #[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
 pub struct JumpListOptions {
+    /// Internal snapshot of original source timestamps for image parsing.
+    #[arg(long = "image-source-metadata", hide = true)]
+    pub image_source_metadata: Option<PathBuf>,
+
     /// Directory to search recursively for jump lists (*.automaticDestinations-ms, *.customDestinations-ms)
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
     pub directory: Option<PathBuf>,

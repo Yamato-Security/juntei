@@ -17,7 +17,7 @@ y organiza los resultados y los registros por equipo y por categoría de investi
 
 | Comando | Entrada | Guía detallada |
 |---|---|---|
-| `mount` | Imagen de disco VHDX o E01 | [Montar imágenes de disco](mount.md) |
+| `mount` | Imagen de disco VHDX / E01 / Ex01 | [Montar imágenes de disco](mount.md) |
 
 ## [Comandos ESE](user-activity.md) { #ese-commands }
 

@@ -17,7 +17,7 @@ e organiza os resultados e os logs por computador e por categoria investigativa.
 
 | Comando | Entrada | Guia detalhado |
 |---|---|---|
-| `mount` | Imagem de disco VHDX ou E01 | [Montar imagens de disco](mount.md) |
+| `mount` | Imagem de disco VHDX / E01 / Ex01 | [Montar imagens de disco](mount.md) |
 
 ## [Comandos ESE](user-activity.md) { #ese-commands }
 

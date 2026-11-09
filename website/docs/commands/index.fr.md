@@ -17,7 +17,7 @@ et organise les résultats et les journaux par ordinateur et par catégorie d'in
 
 | Commande | Entrée | Guide détaillé |
 |---|---|---|
-| `mount` | Image disque VHDX ou E01 | [Monter des images disque](mount.md) |
+| `mount` | Image disque VHDX / E01 / Ex01 | [Monter des images disque](mount.md) |
 
 ## [Commandes ESE](user-activity.md) { #ese-commands }
 

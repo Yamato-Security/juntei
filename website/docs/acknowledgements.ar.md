@@ -21,8 +21,8 @@
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | أعمال Sootmark shell حول الملفات المركبة وJump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
-| صور أقراص VHDX ‏(`mount`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) و[ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)، ويُقدَّم ذلك عبر [fuser](https://github.com/cberner/fuser) | مواصفة MS-VHDX من Microsoft |
-| صور أقراص E01 ‏(`mount`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ([ewf-image](https://github.com/ebrig/ewf-image) من Elijah Brigham)، ويُحمَّل باستخدام ys-vhdx-parser | توثيق تنسيق [libewf](https://github.com/libyal/libewf) وأدواتها من Joachim Metz، المستخدمة للتحقق من مكتبة القراءة |
+| صور أقراص VHDX ‏(`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) و[ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)، ويُقدَّم ذلك عبر [fuser](https://github.com/cberner/fuser) | مواصفة MS-VHDX من Microsoft |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | سجل Windows | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | أبحاث تنسيق سجل Windows واستعادته المذكورة أدناه |
 
 ## الأدوات المرجعية والتحقق المستقل { #reference-tools-and-independent-validation }

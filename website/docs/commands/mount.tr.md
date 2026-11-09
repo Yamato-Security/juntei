@@ -1,16 +1,10 @@
 # Disk İmajlarını Bağlama { #mounting-disk-images }
 
-`juntei mount`, çalıştığı sürece bir disk imajındaki (VHDX veya E01 imajı) dosyaları bir dizinde salt okunur olarak sunar. Hayabusa ve Juntei gibi araçlar dosyaları çıkarmadan veya root yetkisi gerektirmeden inceleyebilir. FUSE kullanır ve Linux'ta çalışır. VHDX okuyucusu ve bağlama kitaplığı [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) deposunda, E01 okuyucusu ise [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) deposunda geliştirilmektedir.
+`juntei mount`, çalıştığı sürece VHDX / E01 / Ex01 disk imajındaki dosyaları bir dizinde salt okunur olarak sunar. Hayabusa ve Juntei gibi araçlar dosyaları çıkarmadan veya root yetkisi gerektirmeden inceleyebilir. FUSE kullanır ve Linux'ta çalışır. Okuyucu ve bağlama kitaplığı [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) deposunda geliştirilmektedir.
 
 ```bash
 mkdir /mnt/host1
 juntei mount host1-triage.vhdx /mnt/host1
-```
-
-Bir E01 imajı (EnCase'in Expert Witness Format'ı, `.Ex01` dahil) aynı şekilde bağlanır. Parçalı bir imaj ilk segmentiyle verilir ve Juntei diğer segmentleri (`host1.E02`, `host1.E03`, …) onun yanında bulur:
-
-```bash
-juntei mount host1.E01 /mnt/host1
 ```
 
 İkinci bir terminalde:
@@ -28,7 +22,6 @@ komutunu çalıştırın.
 - Bağlama noktasında NTFS biriminin dosyaları görünür. Toplanmış bir imajda `C` ve `LongFileNames` gibi dizinler ile `$MFT` gibi birim meta verileri bulunabilir. Birden çok NTFS birimi `Volume1`, `Volume2` vb. olarak gösterilir.
 - Her dosya salt okunurdur ve bağlama noktasının sahibine aittir. Dosya zamanları, NTFS
   `$STANDARD_INFORMATION` zamanlarıdır.
-- Bölüm tablosu olmayan, tek bir birimin imajı o birimin kendisidir.
 - Adlar NTFS'in sakladığı şekliyle listelenir ve birebir eşleşmeyle aranır. DOS 8.3 adları ve
   alternatif veri akışları gösterilmez.
 - Sıkıştırılmış dosyaların sıkıştırması açılır (her biri için en fazla 1 GiB). EFS ile şifrelenmiş
@@ -37,8 +30,6 @@ komutunu çalıştırın.
 ## Kanıt değiştirilmez { #the-evidence-is-not-changed }
 
 İmaj salt okunur açılır ve bağlama yazma işlemlerini reddeder. Düzgün kapatılmamış bir VHDX'in bekleyen günlüğü bellekte uygulanır, imaja geri yazılmaz. Bazı DiscUtils yazıcıları NTFS önyükleme sektörünün atlama komutunu ve `55 AA` imzasını sıfır bırakır; Juntei bu birimleri olduğu gibi okur.
-
-Bir E01 imajının segmentleri de salt okunur açılır. Her öbek okunurken sağlama toplamıyla denetlenir: Hasarlı bir öbek okunamaz, imajın geri kalanı ise okunabilir. Edinim sırasında okunamayan sektörler ve tamamlanmamış bir edinim uyarı olarak bildirilir. Mantıksal kanıt dosyası (`.L01`, `.Lx01`) disk değil dosya içerir ve bağlanmaz.
 
 ## Kullanım { #usage }
 
@@ -61,43 +52,39 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse ile her imajı ayrıştırma { #parsing-every-image-with-auto-parse }
+## İmajları yerel olarak analiz etme { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx`, ayrıca bağlama gerektirmeden, kanıt dizinindeki her VHDX disk imajının (veya
-`-d` ile verilen tek imajın) içindeki Windows sistemlerini, `auto-parse --e01` ise her E01 imajının
-içindekileri ayrıştırır. İki seçenek birlikte verilebilir:
+`--vhdx` ile `auto-parse`, [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) üzerinden **Linux, macOS ve Windows** üzerinde VHDX’i yerel olarak okur. OS bağlaması, FUSE veya yönetici yetkisi gerekmez.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Her imaj, yeni bir geçici dizinde, imajın adını taşıyan bir klasöre (`host1-triage`) salt okunur
-  olarak bağlanır ve orada bulunan sistemler, diskteki bir koleksiyonda olduğu gibi ayrıştırılır.
-  İmajların bağlantısı, çalıştırmanın sonunda ve Ctrl+C ile kaldırılır.
-- Terminal, imajları ve her sistemin imajını listeler:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- `--e01`, her E01 imajının ilk segmentini (`*.E01`, `*.Ex01`) alır; diğer segmentler onunla birlikte
-  okunur.
-- Bildirim dosyasında `EvidenceDirectory` verilen dizindir ve her sistemin `Image` değeri o sistemin
-  imajını belirtir. `EvidenceRoot` ve ayrıştırıcı komutları bağlama klasörünü (`./host1-triage/C`)
-  kullanır.
-- İmaj, Volume Shadow Copies dosyalarını `VSS32` gibi klasörlerde içeriyorsa her klasör başka bir sistem (`HOST1_2`, …) olarak bulunur ve ayrıştırılır.
-- Bağlanamayan bir imaj raporlanır; diğerleri yine de ayrıştırılır ve çalıştırma 1 çıkış durumuyla
-  sona erer.
+Ayrıştırıcılar dosya yolu gerektirir; Juntei sunulan NTFS dosyalarını sınırlı tamponlarla özel bir geçici dizine kopyalar. **Yalnızca sonuç üreten eserler değil, tüm bu dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
 
-Bir NTFS birimi açılamazsa Juntei sorunu bildirir ve okunabilen birimleri korur. Kısmen okunabilen imajlarda `auto-parse --vhdx` ve `--e01` çıkış kodu 1 döndürür; `mount` da ayırma işleminden sonra 1 döndürür.
+Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `manifest.json` içindeki `Image` özgün imajı, `EvidenceRoot` iç göreli yolu tanımlar. Okuma hataları ve güvensiz adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara yazılır. Okunabilir sonuçlar korunur; eksik girdiler 1 döndürür. Güvensiz veya belirsiz adlar yeniden adlandırılmaz. Adlandırılmış NTFS akışları ek dosya olarak çıkarılmaz; normal dosya olarak toplanmış eserler kullanılabilir.
 
-## Gereksinimler { #requirements }
+Ayrı [`mount` komutu](mount.md) dosya sistemini başka programlara sunar ve Linux FUSE gerektirir. `auto-parse --vhdx` bunu kullanmaz.
 
-- Linux: FUSE 3 (`fusermount3`, `fuse3` paketi) ve normal kullanıcıların genellikle sahip olduğu
-  `/dev/fuse` erişimi. Root gerekmez.
-- Windows ve macOS desteklenmez. Windows'ta bunun yerine bir VHDX imajını yönetici olarak çalıştırılan
-  bir PowerShell'de salt okunur olarak ekleyin ve araçlara sürücü harfini verin. Windows bir E01 imajını
-  ekleyemez: İmajı bunu yapabilen bir araçla salt okunur olarak bağlayın ve araçlara o sürücüyü verin.
+## E01 ve Ex01 disk imajları { #e01-and-ex01-disk-images }
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+`--e01`, fiziksel EWF1 (`.E01`) ve EWF2 (`.Ex01`) imajlarını **Linux, macOS ve Windows** üzerinde yerel olarak okur; FUSE, işletim sistemi bağlaması veya yönetici yetkisi gerekmez. [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ve yukarıdaki NTFS ayrıştırma hattını kullanır.
+
+Bölünmüş imajın ilk parçasını belirtin. `.E02` dahil tüm parçaları özgün adlarıyla aynı dizinde tutun. Tam diskler (MBR/GPT) ve tek NTFS birimleri desteklenir. Karışık dizinler için `--vhdx --e01` kullanın.
+
+Aynı geçici alan ve kaynak meta verisi gereksinimleri geçerlidir. İmajlar salt okunurdur. Edinim boşlukları ve açma veya okuma sırasında bulunan hasarlar `ImageErrors` ve `manifest.csv` içinde bildirilir; okunabilen sonuçlar korunur ve çıkış kodu 1 olur. Yalnızca erişilen veriler denetlenir; tüm parçalar veya medyanın tam özeti doğrulanmaz. Mantıksal `.L01` ve `.Lx01` dosyaları reddedilir; parola seçeneği yoktur.
+
+Ayrı `mount` komutu hâlâ Linux FUSE gerektirir; yerel otomatik ayrıştırma gerektirmez.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
+
+## OS tarafından görülen bağlama gereksinimleri { #os-visible-mount-requirements }
+
+`juntei mount`, Linux FUSE 3 (`fusermount3`) ve `/dev/fuse` erişimi gerektirir. Windows ve macOS’ta yukarıdaki yerel analizi kullanın.

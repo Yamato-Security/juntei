@@ -1,6 +1,10 @@
 # Збирання доказів { #collecting-evidence }
 
-Juntei аналізує файли, уже зібрані з Windows. Використовуйте надійний засіб збору та за можливості зберігайте початкові метадані. Образи дисків VHDX і E01 можна аналізувати без розпакування: див. [Монтування образів дисків](../commands/mount.md).
+Juntei аналізує файли, уже зібрані з Windows. Використовуйте надійний засіб збору та за можливості зберігайте початкові метадані.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## Поширені розташування { #common-locations }
 

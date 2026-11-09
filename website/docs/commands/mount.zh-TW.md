@@ -1,16 +1,10 @@
 # 掛載磁碟映像 { #mounting-disk-images }
 
-`juntei mount` 在執行期間將磁碟映像（VHDX 或 E01 映像）內的檔案以唯讀方式呈現在目錄中。Hayabusa 和 Juntei 等工具可直接掃描，不必擷取檔案或取得 root 權限。此功能使用 FUSE，適用於 Linux。VHDX 讀取器與掛載函式庫由 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) 維護，E01 讀取器則由 [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) 維護。
+`juntei mount` 在執行期間將 VHDX / E01 / Ex01 磁碟映像內的檔案以唯讀方式呈現在目錄中。Hayabusa 和 Juntei 等工具可直接掃描，不必擷取檔案或取得 root 權限。此功能使用 FUSE，適用於 Linux。讀取器與掛載函式庫由 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) 維護。
 
 ```bash
 mkdir /mnt/host1
 juntei mount host1-triage.vhdx /mnt/host1
-```
-
-E01 映像（EnCase 的 Expert Witness Format，也包括 `.Ex01`）以相同方式掛載。分割的映像以其第一個區段指定，Juntei 會在同一位置找到其他區段（`host1.E02`、`host1.E03`、…）：
-
-```bash
-juntei mount host1.E01 /mnt/host1
 ```
 
 在另一個終端機中：
@@ -27,15 +21,12 @@ juntei auto-parse -d /mnt/host1 -o host1-juntei
 - 掛載點顯示 NTFS 磁碟區內的檔案。收集的映像可能包含 `C`、`LongFileNames` 等目錄，以及 `$MFT` 等磁碟區中繼資料。多個 NTFS 磁碟區會顯示為 `Volume1`、`Volume2` 等。
 - 每個檔案都是唯讀的，且屬於掛載點的擁有者。檔案時間為 NTFS 的
   `$STANDARD_INFORMATION` 時間。
-- 沒有分割表的單一磁碟區映像，即為該磁碟區本身。
 - 名稱依 NTFS 儲存的原樣列出，並以完全相符的方式查找。不會顯示 DOS 8.3 名稱與替代資料流。
 - 壓縮的檔案會被解壓縮（每個檔案最多 1 GiB）。以 EFS 加密的檔案無法讀取。
 
 ## 證據不會被變更 { #the-evidence-is-not-changed }
 
 映像以唯讀方式開啟，掛載拒絕寫入。未正常關閉的 VHDX 會在記憶體中套用待處理記錄，絕不寫回映像。部分 DiscUtils 寫入器會將 NTFS 開機磁區的跳躍指令和 `55 AA` 簽章設為零；Juntei 可直接讀取這些磁碟區。
-
-E01 映像的區段同樣以唯讀方式開啟。每個資料區塊在讀取時都會以其總和檢查碼驗證：損壞的區塊無法讀取，但映像的其餘部分仍可讀取。擷取時無法讀取的磁區，以及未完成的擷取，會以警告回報。邏輯證據檔（`.L01`、`.Lx01`）存放的是檔案而非磁碟，因此不會掛載。
 
 ## 用法 { #usage }
 
@@ -58,40 +49,39 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## 使用 auto-parse 剖析每個映像檔 { #parsing-every-image-with-auto-parse }
+## 原生映像分析 { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` 會剖析證據目錄中每個 VHDX 磁碟映像檔（或以 `-d` 指定的單一映像檔）內的
-Windows 系統，`auto-parse --e01` 則剖析每個 E01 映像檔內的 Windows 系統，不需要另外掛載。這兩個
-選項可以同時指定：
+使用 `--vhdx` 時，`auto-parse` 透過 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) 在 **Linux、macOS、Windows** 原生讀取 VHDX，無需 OS 掛載、FUSE 或系統管理員權限。
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- 每個映像檔會以唯讀方式掛載於一個新的暫存目錄中、以該映像檔命名的資料夾（`host1-triage`），
-  在其中找到的系統會如同磁碟上的收集資料一樣被剖析。映像檔會在執行結束時卸載，按下 Ctrl+C 時
-  也會卸載。
-- 終端機會列出各映像檔，以及每個系統所屬的映像檔：
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`。
-- `--e01` 會取用每個 E01 映像檔的第一個區段（`*.E01`、`*.Ex01`）；其他區段會隨之一併讀取。
-- 在清單檔中，`EvidenceDirectory` 是所提供的目錄，每個系統的 `Image` 則標示其所屬的映像檔。
-  `EvidenceRoot` 與剖析器命令使用掛載資料夾（`./host1-triage/C`）。
-- 若映像將 Volume Shadow Copies 的檔案存放於 `VSS32` 等資料夾，每個資料夾會被偵測並作為另一個系統 (`HOST1_2`、…) 剖析。
-- 無法掛載的映像檔會被回報；其他映像檔仍會被剖析，而這次執行會以結束狀態 1 結束。
+解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案串流複製至專用暫存目錄。**請預留足夠空間容納全部公開的檔案**，而不只是會產生結果的鑑識產物。讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
 
-若無法開啟某個 NTFS 磁碟區，Juntei 會回報問題並保留可讀取的磁碟區。映像檔僅部分可讀取時，`auto-parse --vhdx` 與 `--e01` 會傳回結束代碼 1；`mount` 也會在卸載後傳回 1。
+主機偵測、CSV/JSON/JSONL 和 `-j` 使用一般證據目錄的解析流程。`manifest.json` 中的 `Image` 識別原始映像；`EvidenceRoot` 識別內部相對路徑。讀取失敗或不安全的名稱會記錄在 `ImageErrors` 與 `manifest.csv` 的失敗列。保留可讀取資料的結果；輸入不完整時結束代碼為 1。不會擅自重新命名不安全或曖昧的名稱，也不會將具名 NTFS 串流抽取為額外檔案；初步蒐證映像中已收集為一般檔案的證據仍可使用。
 
-## 需求 { #requirements }
+獨立的 [`mount` 命令](mount.md) 將檔案系統公開給其他程式，仍需要 Linux FUSE；`auto-parse --vhdx` 不使用此命令。
 
-- Linux：FUSE 3（`fusermount3`，即 `fuse3` 套件），以及對 `/dev/fuse` 的存取權限，一般使用者
-  通常都具備。不需要 root。
-- 不支援 Windows 與 macOS。在 Windows 上，請改為在以系統管理員身分執行的 PowerShell 中，以唯讀方式
-  連結 VHDX 映像檔，並將其磁碟機代號提供給工具。Windows 無法連結 E01 映像檔：請使用能掛載它的工具
-  以唯讀方式掛載，並將該磁碟機提供給工具。
+## E01 與 Ex01 磁碟映像檔 { #e01-and-ex01-disk-images }
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+`--e01` 可在 **Linux、macOS 和 Windows** 原生讀取實體 EWF1（`.E01`）與 EWF2（`.Ex01`）映像檔，不需要 FUSE、作業系統掛載或管理員權限。它使用 [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) 及上述相同的 NTFS 解析流程。
+
+分割映像檔請指定第一個區段。將 `.E02` 等所有相關檔案以原始名稱保留在相同目錄。支援完整磁碟（MBR/GPT）與單一 NTFS 磁碟區。混合兩種格式的目錄可使用 `--vhdx --e01`。
+
+暫存空間與來源中繼資料的要求相同。映像檔以唯讀方式開啟。取得時的缺損及開啟或讀取時發現的損壞會列入 `ImageErrors` 與 `manifest.csv`；保留可讀取的結果並以狀態碼 1 結束。這只檢查實際存取的資料，不是所有區塊或完整媒體雜湊。拒絕邏輯格式 `.L01` 與 `.Lx01`，且沒有密碼選項。
+
+獨立的 `mount` 命令仍需要 Linux FUSE；原生自動解析則不需要。
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
+
+## OS 可見掛載的需求 { #os-visible-mount-requirements }
+
+`juntei mount` 需要 Linux FUSE 3（`fusermount3`）和 `/dev/fuse` 存取權。Windows 和 macOS 請使用上述原生解析方式。

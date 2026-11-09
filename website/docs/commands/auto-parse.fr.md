@@ -21,16 +21,38 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     évite que des données générées soient redécouvertes comme preuves et empêche `--clobber` de
     toucher aux fichiers de la collecte source.
 
-## Images disque VHDX et E01 { #vhdx-and-e01-disk-images }
+## Images disque VHDX { #vhdx-disk-images }
 
-Avec `--vhdx`, `auto-parse` analyse les systèmes présents dans chaque image disque VHDX du répertoire de preuves, et avec `--e01`, ceux de chaque image E01 (une image fractionnée à partir de son premier segment, `*.E01` ou `*.Ex01`). Les deux options peuvent être utilisées ensemble. Chaque image est montée en lecture seule avec FUSE pendant l'analyse, sans extraction de fichiers. Voir [Monter des images disque](mount.md).
+Avec `--vhdx`, `auto-parse` lit VHDX nativement sous **Linux, macOS et Windows**, via [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). Aucun montage système, FUSE ou droit administrateur n’est nécessaire.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-juntei auto-parse -d /cases/e01 --e01 -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Si un volume NTFS ne peut pas être ouvert, Juntei le signale et conserve les volumes lisibles. Pour une image partiellement lisible, `auto-parse --vhdx` et `--e01` renvoient le code 1 ; `mount` renvoie également 1 après le démontage.
+Les parseurs exigent des chemins : Juntei copie donc les fichiers NTFS exposés dans un espace temporaire privé avec des tampons bornés. **Prévoyez de la place pour tous ces fichiers**, pas seulement les artefacts produisant des résultats. Les zones nulles sont écrites comme des trous si le système le permet. Noms, structure, liens physiques et dates de modification sont préservés. Les dates sources des LNK et Jump Lists viennent des métadonnées NTFS originales, jamais des copies temporaires. Une fin normale, même avec erreurs de parsing, supprime les copies ; un arrêt forcé peut les laisser. La source reste en lecture seule ; les journaux VHDX en attente sont appliqués en mémoire uniquement.
+
+La découverte des hôtes, CSV/JSON/JSONL et `-j` utilisent le traitement habituel. `Image` dans `manifest.json` identifie l’image originale, `EvidenceRoot` son chemin relatif interne. Les erreurs de lecture et noms dangereux figurent dans `ImageErrors` et les lignes en échec de `manifest.csv`. Les résultats lisibles sont conservés ; une entrée incomplète produit le code 1. Les noms dangereux ou ambigus ne sont pas renommés. Les flux NTFS nommés ne deviennent pas des fichiers supplémentaires ; les artefacts collectés comme fichiers ordinaires restent disponibles.
+
+La [commande `mount`](mount.md) expose un système de fichiers aux autres programmes et nécessite toujours Linux FUSE. `auto-parse --vhdx` ne l’utilise pas.
+
+## Images disque E01 et Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` lit nativement les images physiques EWF1 (`.E01`) et EWF2 (`.Ex01`) sous **Linux, macOS et Windows**, sans FUSE, montage système ni droits administrateur. Il utilise [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) et le même traitement NTFS que ci-dessus.
+
+Indiquez le premier segment d’une image fractionnée. Conservez tous les fichiers associés, dont `.E02`, à côté avec leurs noms d’origine. Les disques entiers (MBR/GPT) et les volumes NTFS seuls sont pris en charge. Utilisez `--vhdx --e01` pour un répertoire mixte.
+
+Les mêmes exigences d’espace temporaire et de métadonnées source s’appliquent. Les images sont en lecture seule. Les lacunes d’acquisition et les dommages découverts à l’ouverture ou à la lecture figurent dans `ImageErrors` et `manifest.csv` ; les résultats lisibles sont conservés avec un code de sortie 1. Seules les données consultées sont vérifiées, pas tous les blocs ni le hachage du support entier. Les fichiers logiques `.L01` et `.Lx01` sont refusés ; aucune option de mot de passe n’est proposée.
+
+La commande distincte `mount` nécessite toujours Linux FUSE ; l’analyse native automatique n’en a pas besoin.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
 
 ## Fuseau horaire de sortie { #output-time-zone }
 
@@ -516,8 +538,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
-      --e01                   Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

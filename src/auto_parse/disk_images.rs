@@ -11,35 +11,31 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `auto-parse --vhdx` and `--e01`: every VHDX or E01 disk image in the evidence directory (or
-//! the one image given) is mounted read-only with FUSE in a folder of a new temporary directory,
-//! named after the image (`host1-triage`), and that directory is parsed as the evidence: each
-//! image's Windows systems are found and parsed as in a collection on disk. An E01 image split
-//! into segments is one image, found from its first segment (`.E01`, `.Ex01`). The images are
-//! unmounted at the end, and on Ctrl+C or SIGTERM.
+//! Portable read-only VHDX/E01 input. Stage NTFS files in a private workspace because
+//! the artifact parsers accept paths, then reuse the ordinary parsing pipeline.
+//! No kernel mount, external command, or administrator permission is required.
 
-use super::{Images, run_evidence, shown};
+use super::{ImageProblem, Images, run_evidence, shown};
 use crate::cli::AutoParseOptions;
 use crate::disk_image::{self, Kind};
 use crate::util::{self, error_msg, fmt_num, p, p_label};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+use std::fs::{self, File, FileTimes};
+use std::io::{self, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
-use vhdx_mount::image_mount::{self, Mounted};
+use std::sync::Arc;
+use vhdx_mount::image::{Image, ROOT_RECORD};
 
-/// The kinds of image the options ask for.
 fn kinds(opts: &AutoParseOptions) -> Vec<Kind> {
-    let mut kinds = Vec::new();
+    let mut selected = Vec::new();
     if opts.vhdx {
-        kinds.push(Kind::Vhdx);
+        selected.push(Kind::Vhdx);
     }
     if opts.e01 {
-        kinds.push(Kind::E01);
+        selected.push(Kind::E01);
     }
-    kinds
+    selected
 }
-
-/// What the images asked for are, for messages: `VHDX`, `E01`, `VHDX or E01`.
 fn kinds_name(kinds: &[Kind]) -> String {
     kinds
         .iter()
@@ -47,185 +43,576 @@ fn kinds_name(kinds: &[Kind]) -> String {
         .collect::<Vec<_>>()
         .join(" or ")
 }
+fn selected_name(name: &str, kinds: &[Kind]) -> bool {
+    kinds.iter().any(|kind| kind.matches_name(name))
+}
 
-/// Their file names, for messages: `*.vhdx`, `*.E01, *.Ex01`.
-fn kinds_patterns(kinds: &[Kind]) -> String {
-    kinds
-        .iter()
-        .map(|k| match k {
-            Kind::Vhdx => "*.vhdx",
-            Kind::E01 => "*.E01, *.Ex01",
-        })
-        .collect::<Vec<_>>()
-        .join(", ")
+fn discover(given: &Path, kinds: &[Kind]) -> io::Result<(Vec<PathBuf>, PathBuf)> {
+    if given.is_file() {
+        if !selected_name(
+            &given.file_name().unwrap_or_default().to_string_lossy(),
+            kinds,
+        ) {
+            return Err(io::Error::other(format!(
+                "The input must be a {} image; provide the first segment of a split E01",
+                kinds_name(kinds)
+            )));
+        }
+        return Ok((
+            vec![given.to_path_buf()],
+            given
+                .parent()
+                .filter(|p| !p.as_os_str().is_empty())
+                .unwrap_or(Path::new("."))
+                .to_path_buf(),
+        ));
+    }
+    let mut pending = vec![given.to_path_buf()];
+    let mut images = Vec::new();
+    let mut seen = HashSet::new();
+    while let Some(directory) = pending.pop() {
+        for entry in fs::read_dir(&directory)? {
+            let entry = entry?;
+            let kind = entry.file_type()?;
+            let path = entry.path();
+            if kind.is_dir() {
+                pending.push(path);
+            } else if (kind.is_file() || (kind.is_symlink() && path.is_file()))
+                && selected_name(&entry.file_name().to_string_lossy(), kinds)
+                && seen.insert(path.canonicalize()?)
+            {
+                images.push(path);
+            }
+        }
+    }
+    images.sort();
+    Ok((images, given.to_path_buf()))
+}
+
+/// The JSONL destination must never replace an input, including through hard links.
+fn protect_images(opts: &AutoParseOptions, images: &[PathBuf]) -> io::Result<()> {
+    let output_root = super::absolute_candidate(&opts.output)?;
+    for image in images {
+        let image = image.canonicalize()?;
+        if image != output_root && image.starts_with(&output_root) {
+            return Err(io::Error::other(
+                "The output directory contains an input image or segment",
+            ));
+        }
+    }
+    for output in std::iter::once(&opts.output).chain(opts.json_timeline.iter()) {
+        match fs::metadata(output) {
+            Err(e) if e.kind() == io::ErrorKind::NotFound => continue,
+            Err(e) => return Err(e),
+            Ok(_) => {}
+        }
+        for image in images {
+            if same_file::is_same_file(output, image)? {
+                return Err(io::Error::other(
+                    "An output overlaps an input image or segment and cannot be overwritten",
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 pub(super) fn run(opts: &AutoParseOptions) -> i32 {
     let no_color = opts.common.no_color;
-    let given = &opts.directory;
     let kinds = kinds(opts);
-    let (images, root) = if given.is_file() {
-        let root = given
-            .parent()
-            .filter(|parent| !parent.as_os_str().is_empty())
-            .unwrap_or(Path::new("."))
-            .to_path_buf();
-        (vec![given.clone()], root)
-    } else if given.is_dir() {
-        let mut images: Vec<PathBuf> = kinds
-            .iter()
-            .flat_map(|kind| util::find_files(given, kind.name_filter()))
-            .collect();
-        images.sort();
-        (images, given.clone())
-    } else {
-        error_msg(
-            no_color,
-            &format!("The evidence directory does not exist: {}", shown(given)),
-        );
-        return 1;
-    };
-    if images.is_empty() {
-        error_msg(
-            no_color,
-            &format!(
-                "No {} disk images ({}) were found in {}",
-                kinds_name(&kinds),
-                kinds_patterns(&kinds),
-                shown(given)
-            ),
-        );
-        return 1;
-    }
-
-    // a new directory for the mount points, removed at the end
-    let base = match new_mount_directory() {
-        Ok(base) => base,
+    let label = kinds_name(&kinds);
+    let (paths, root) = match discover(&opts.directory, &kinds) {
+        Ok(found) => found,
         Err(e) => {
             error_msg(
                 no_color,
-                &format!("Could not create a directory for the mount points: {e}"),
+                &format!("Could not search {}: {e}", shown(&opts.directory)),
             );
             return 1;
         }
     };
-    let unmounters = Arc::new(Mutex::new(Vec::new()));
-    if let Err(e) =
-        image_mount::unmount_on_interrupt(unmounters.clone(), Some(base.clone()), Some(130))
+    if paths.is_empty() {
+        error_msg(
+            no_color,
+            &format!(
+                "No {} disk images ({}) were found in {}",
+                label,
+                kinds
+                    .iter()
+                    .map(|k| match k {
+                        Kind::Vhdx => "*.vhdx",
+                        Kind::E01 => "*.E01, *.Ex01",
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                shown(&opts.directory)
+            ),
+        );
+        return 1;
+    }
+    let sources = match paths
+        .iter()
+        .map(|path| disk_image::source_files(path))
+        .collect::<io::Result<Vec<_>>>()
     {
-        error_msg(no_color, &format!("Could not handle Ctrl+C: {e}"));
-        image_mount::remove_mount_points(&base);
-        return 1;
-    }
-
-    p_label(
-        no_color,
-        &format!("{} images: ", kinds_name(&kinds)),
-        &fmt_num(images.len()),
-    );
-    let mut used = HashSet::new();
-    let mut mounted: Vec<Mounted> = Vec::new();
-    let mut mounts = Vec::new();
-    let mut failed = 0usize;
-    for image in &images {
-        let shown_image = Path::new(".")
-            .join(image.strip_prefix(&root).unwrap_or(image))
-            .display()
-            .to_string();
-        let folder = util::unique_name(&root, image, &mut used);
-        let point = base.join(&folder);
-        let mut damaged = false;
-        let result = std::fs::create_dir(&point).and_then(|()| {
-            let opened = disk_image::open(image)?;
-            for warning in &opened.warnings {
-                error_msg(no_color, &format!("Warning: {shown_image}: {warning}"));
-            }
-            damaged = !opened.warnings.is_empty();
-            image_mount::mount_image(opened.image, image, &point, &unmounters)
-        });
-        match result {
-            Ok(mount) => {
-                // a partial image is a failure, as an unreadable volume is
-                if damaged && mount.problems.is_empty() {
-                    failed += 1;
-                }
-                if !mount.problems.is_empty() {
-                    failed += 1;
-                    for problem in &mount.problems {
-                        error_msg(
-                            no_color,
-                            &format!("Could not read {shown_image}: {problem}"),
-                        );
-                    }
-                }
-                p(
-                    None,
-                    &format!(
-                        "  {shown_image}: mounted read-only ({} NTFS volume{})",
-                        fmt_num(mount.volumes.len()),
-                        if mount.volumes.len() == 1 { "" } else { "s" }
-                    ),
-                    true,
-                );
-                mounts.push((point, shown_image));
-                mounted.push(mount);
-            }
-            Err(e) => {
-                failed += 1;
-                let _ = std::fs::remove_dir(&point);
-                error_msg(no_color, &format!("Could not mount {shown_image}: {e}"));
-            }
+        Ok(groups) => groups.into_iter().flatten().collect::<Vec<_>>(),
+        Err(error) => {
+            error_msg(no_color, &error.to_string());
+            return 1;
         }
-    }
-    if mounted.is_empty() {
-        image_mount::remove_mount_points(&base);
+    };
+    if let Err(e) = protect_images(opts, &sources) {
+        error_msg(no_color, &e.to_string());
         return 1;
     }
-
-    let mut inner = opts.clone();
-    inner.directory = base.clone();
-    inner.vhdx = false;
-    inner.e01 = false;
-    let images = Images {
+    if let Err(e) = util::check_output(&opts.output, true, opts.clobber) {
+        error_msg(no_color, &e);
+        return 1;
+    }
+    let base = match tempfile::Builder::new().prefix("juntei-images-").tempdir() {
+        Ok(base) => base,
+        Err(e) => {
+            error_msg(
+                no_color,
+                &format!("Could not create a temporary workspace: {e}"),
+            );
+            return 1;
+        }
+    };
+    let mut inputs = Images {
         directory_name: root
             .canonicalize()
             .ok()
             .and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()))
             .unwrap_or_else(|| ".".into()),
-        mounts,
+        mounts: Vec::new(),
+        problems: Vec::new(),
+        metadata: crate::image_metadata::Snapshot::default(),
     };
-    // an image that couldn't be mounted is a failure, as a parser's is
-    let mut code = run_evidence(&inner, Some(&images)).max(i32::from(failed > 0));
-    for mount in mounted {
-        let point = mount.mount_point.clone();
-        if let Err(e) = mount.unmount() {
-            error_msg(
-                no_color,
-                &format!("Could not unmount {}: {e}", point.display()),
+    p_label(
+        no_color,
+        &format!("{label} images: "),
+        &fmt_num(paths.len()),
+    );
+    let mut used = HashSet::new();
+    for path in paths {
+        let source = Path::new(".")
+            .join(path.strip_prefix(&root).unwrap_or(&path))
+            .display()
+            .to_string();
+        #[cfg(windows)]
+        let source = source.replace('\\', "/");
+        let folder = util::unique_name(&root, &path, &mut used);
+        let point = base.path().join(folder);
+        match disk_image::kind(&path) {
+            Ok(kind) if kinds.contains(&kind) => {}
+            Ok(kind) => {
+                problem(
+                    &mut inputs,
+                    &source,
+                    "",
+                    format!("Expected {label}, found {}", kind.name()),
+                );
+                continue;
+            }
+            Err(error) => {
+                problem(&mut inputs, &source, "", error.to_string());
+                continue;
+            }
+        }
+        let opened = match disk_image::open(&path) {
+            Ok(opened) if kinds.contains(&opened.kind) => opened,
+            Ok(opened) => {
+                problem(
+                    &mut inputs,
+                    &source,
+                    "",
+                    format!("Expected {label}, found {}", opened.kind.name()),
+                );
+                continue;
+            }
+            Err(e) => {
+                problem(&mut inputs, &source, "", e.to_string());
+                continue;
+            }
+        };
+        let initial_warnings = opened.status.warnings();
+        for warning in &initial_warnings {
+            problem(&mut inputs, &source, "", warning.clone());
+        }
+        let image = Arc::new(opened.image);
+        for e in &image.problems {
+            problem(&mut inputs, &source, "", e.clone());
+        }
+        p(
+            None,
+            &format!(
+                "  {}: reading natively ({} NTFS volume{})",
+                source.escape_debug(),
+                fmt_num(image.volumes.len()),
+                if image.volumes.len() == 1 { "" } else { "s" }
+            ),
+            true,
+        );
+        if opened.segments > 1 {
+            p(
+                None,
+                &format!(
+                    "    {} segments: {}",
+                    opened.kind.name(),
+                    fmt_num(opened.segments)
+                ),
+                true,
             );
-            code = 1;
+        }
+        if let Err(e) = fs::create_dir(&point) {
+            problem(&mut inputs, &source, "", e.to_string());
+            continue;
+        }
+        for index in 0..image.volumes.len() {
+            let volume_root = if image.volumes.len() == 1 {
+                point.clone()
+            } else {
+                point.join(format!("Volume{}", index + 1))
+            };
+            if let Err(e) = stage_volume(
+                &image,
+                index,
+                &volume_root,
+                base.path(),
+                &source,
+                &point,
+                &mut inputs,
+            ) {
+                problem(&mut inputs, &source, "", e.to_string());
+            }
+        }
+        // Reader findings append as chunks are read. Keep distinct findings
+        // with identical text, without re-reporting the opening snapshot.
+        for warning in opened
+            .status
+            .warnings()
+            .into_iter()
+            .skip(initial_warnings.len())
+        {
+            problem(&mut inputs, &source, "", warning);
+        }
+        // Discovery canonicalizes its root. macOS resolves /var to /private/var
+        // and Windows adds a verbatim prefix; provenance must use that same
+        // spelling rather than the temporary directory's original alias.
+        match point.canonicalize() {
+            Ok(point) => inputs.mounts.push((point, source)),
+            Err(error) => problem(&mut inputs, &source, "", error.to_string()),
         }
     }
-    image_mount::remove_mount_points(&base);
+    for entry in &inputs.problems {
+        let location = if entry.path.is_empty() {
+            entry.image.clone()
+        } else {
+            format!("{}!/{}", entry.image, entry.path)
+        };
+        error_msg(
+            no_color,
+            &format!(
+                "Could not read {}: {}",
+                location.escape_debug(),
+                entry.error.escape_debug()
+            ),
+        );
+    }
+    if inputs.mounts.is_empty() {
+        return 1;
+    }
+    let incomplete = !inputs.problems.is_empty();
+    let mut inner = opts.clone();
+    inner.directory = base.path().to_path_buf();
+    inner.vhdx = false;
+    inner.e01 = false;
+    let metadata_path = base.path().join("SourceMetadata.json");
+    if let Err(error) = super::write_pretty_json(&metadata_path, &inputs.metadata) {
+        error_msg(
+            no_color,
+            &format!("Could not preserve original image metadata: {error}"),
+        );
+        return 1;
+    }
+    inner.image_source_metadata = Some(metadata_path);
+    let code = run_evidence(&inner, Some(&inputs)).max(i32::from(incomplete));
+    if incomplete {
+        error_msg(
+            no_color,
+            &format!(
+                "Incomplete {} input: {} read problem(s). Readable results were retained.",
+                label,
+                inputs.problems.len()
+            ),
+        );
+    }
+    // TempDir owns only this run's private copies, never the source evidence.
+    if let Err(e) = base.close() {
+        error_msg(
+            no_color,
+            &format!("Could not remove the temporary workspace: {e}"),
+        );
+        return 1;
+    }
     code
 }
 
-/// A new, empty directory for the mount points, in the system's temporary directory.
-fn new_mount_directory() -> std::io::Result<PathBuf> {
-    let temp = std::env::temp_dir();
-    let pid = std::process::id();
-    for n in 0..1000u32 {
-        let name = if n == 0 {
-            format!("juntei-images-{pid}")
-        } else {
-            format!("juntei-images-{pid}-{n}")
+fn problem(inputs: &mut Images, image: &str, path: &str, error: String) {
+    inputs.problems.push(ImageProblem {
+        image: image.into(),
+        path: path.into(),
+        error,
+    });
+}
+
+/// Refuse names that escape the private tree or alias a Windows device/path.
+/// Use the same rules on every OS rather than silently rename evidence.
+fn safe_name(name: &str) -> bool {
+    if name.is_empty()
+        || name == "."
+        || name == ".."
+        || name.ends_with(['.', ' '])
+        || name.chars().any(|c| {
+            c.is_control() || matches!(c, '/' | '\\' | ':' | '<' | '>' | '"' | '|' | '?' | '*')
+        })
+    {
+        return false;
+    }
+    let stem = name
+        .split('.')
+        .next()
+        .unwrap_or_default()
+        .trim_end()
+        .to_uppercase();
+    if matches!(
+        stem.as_str(),
+        "CON" | "PRN" | "AUX" | "NUL" | "CLOCK$" | "CONIN$" | "CONOUT$"
+    ) {
+        return false;
+    }
+    if let Some(number) = stem
+        .strip_prefix("COM")
+        .or_else(|| stem.strip_prefix("LPT"))
+        && matches!(
+            number,
+            "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³"
+        )
+    {
+        return false;
+    }
+    true
+}
+
+fn stage_volume(
+    image: &Arc<Image>,
+    volume: usize,
+    root: &Path,
+    scratch: &Path,
+    source: &str,
+    point: &Path,
+    inputs: &mut Images,
+) -> io::Result<()> {
+    fs::create_dir_all(root)?;
+    let mut pending = vec![(ROOT_RECORD, root.to_path_buf())];
+    let mut visited = HashSet::new();
+    let mut files = HashMap::new();
+    while let Some((record, directory)) = pending.pop() {
+        let display = directory
+            .strip_prefix(point)
+            .unwrap_or(&directory)
+            .to_string_lossy()
+            .replace('\\', "/");
+        if !visited.insert(record) {
+            problem(
+                inputs,
+                source,
+                &display,
+                "Directory record repeats; traversal stopped".into(),
+            );
+            continue;
+        }
+        let entries = match image.volumes[volume].list(record) {
+            Ok(entries) => entries,
+            Err(e) => {
+                problem(inputs, source, &display, e.to_string());
+                continue;
+            }
         };
-        let path = temp.join(name);
-        match std::fs::create_dir(&path) {
-            Ok(()) => return Ok(path),
-            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
-            Err(e) => return Err(e),
+        let mut names = HashSet::new();
+        for entry in entries.iter() {
+            let relative = format!("{display}/{}", entry.name)
+                .trim_start_matches('/')
+                .to_string();
+            if !safe_name(&entry.name) || !names.insert(entry.name.to_lowercase()) {
+                problem(
+                    inputs,
+                    source,
+                    &relative,
+                    "Unsafe or ambiguous filename; it was not copied".into(),
+                );
+                continue;
+            }
+            let output = directory.join(&entry.name);
+            if entry.directory {
+                match fs::create_dir(&output) {
+                    Ok(()) => pending.push((entry.record, output)),
+                    Err(e) => problem(inputs, source, &relative, e.to_string()),
+                }
+            } else {
+                // Preserve NTFS file identity so hive deduplication behaves as
+                // it does when the image is exposed through FUSE.
+                let result = if let Some(first) = files.get(&entry.record) {
+                    fs::hard_link(first, &output).map(|()| None)
+                } else {
+                    stage_file(image, volume, entry.record, &output, scratch)
+                };
+                match result {
+                    Ok(time_error) => {
+                        if let Some(error) = time_error {
+                            problem(inputs, source, &relative, error);
+                        }
+                        if crate::lnk::is_lnk_name(&entry.name)
+                            || crate::jump_lists::is_jump_list_name(&entry.name)
+                        {
+                            let result =
+                                image.volumes[volume].stat(entry.record).and_then(|stat| {
+                                    inputs.metadata.insert(
+                                        &output,
+                                        [stat.created.0, stat.modified.0, stat.accessed.0],
+                                    )
+                                });
+                            if let Err(error) = result {
+                                problem(
+                                    inputs,
+                                    source,
+                                    &relative,
+                                    format!("Original image metadata is unavailable: {error}"),
+                                );
+                            }
+                        }
+                        files.insert(entry.record, output);
+                    }
+                    Err(e) => {
+                        problem(inputs, source, &relative, e.to_string());
+                        if e.kind() == io::ErrorKind::StorageFull {
+                            return Err(e);
+                        }
+                    }
+                }
+            }
         }
     }
-    Err(std::io::Error::other("no free directory name"))
+    Ok(())
+}
+
+fn stage_file(
+    image: &Arc<Image>,
+    volume: usize,
+    record: u64,
+    output: &Path,
+    scratch: &Path,
+) -> io::Result<Option<String>> {
+    let stat = image.volumes[volume].stat(record)?;
+    let mut reader = image.file_reader(volume, record)?;
+    let mut temporary = tempfile::NamedTempFile::new_in(scratch)?;
+    let file = temporary.as_file_mut();
+    copy_sparse(&mut reader, file, stat.size)?;
+    // Preserve the filesystem mtime used by persistence-hunter; parsed artifact
+    // timestamps still come from the evidence bytes, never these staging files.
+    let mut times = FileTimes::new();
+    if let Some(t) = crate::image_metadata::system_time(stat.modified.0) {
+        times = times.set_modified(t);
+    }
+    if let Some(t) = crate::image_metadata::system_time(stat.accessed.0) {
+        times = times.set_accessed(t);
+    }
+    let time_error = file.set_times(times).err().map(|error|
+        format!("File content was retained, but its filesystem timestamps could not be preserved: {error}"));
+    temporary.persist_noclobber(output).map_err(|e| e.error)?;
+    Ok(time_error)
+}
+
+fn copy_sparse(reader: &mut impl Read, output: &mut File, expected: u64) -> io::Result<()> {
+    let mut buffer = vec![0; 256 * 1024];
+    let mut copied = 0u64;
+    loop {
+        let count = reader.read(&mut buffer)?;
+        if count == 0 {
+            break;
+        }
+        copied = copied
+            .checked_add(count as u64)
+            .ok_or_else(|| io::Error::other("File length overflow"))?;
+        if copied > expected {
+            return Err(io::Error::other("NTFS stream exceeds its declared length"));
+        }
+        if buffer[..count].iter().all(|b| *b == 0) {
+            output.seek(SeekFrom::Current(count as i64))?;
+        } else {
+            output.write_all(&buffer[..count])?;
+        }
+    }
+    if copied != expected {
+        return Err(io::Error::new(
+            io::ErrorKind::UnexpectedEof,
+            "NTFS stream ended before its declared length",
+        ));
+    }
+    output.set_len(expected)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn portable_names_do_not_escape_or_alias_devices() {
+        for name in [
+            "",
+            ".",
+            "..",
+            "../outside",
+            "a/b",
+            "a\\b",
+            "C:foo",
+            "CON",
+            "nul.txt",
+            "COM1.log",
+            "LPT²",
+            "x.",
+            "x ",
+            "a:stream",
+            "a?",
+            "a\0",
+        ] {
+            assert!(!safe_name(name), "{name:?}");
+        }
+        for name in [
+            "SYSTEM",
+            "$MFT",
+            "日本語.pf",
+            "x%3Ay",
+            "CONTEXT.txt",
+            "COM10",
+        ] {
+            assert!(safe_name(name), "{name:?}");
+        }
+    }
+
+    #[test]
+    fn sparse_copy_preserves_bytes_and_rejects_short_or_long_reads() {
+        let mut bytes = vec![0; 600_001];
+        bytes[42] = 1;
+        bytes[599_999] = 2;
+        let mut file = tempfile::tempfile().unwrap();
+        copy_sparse(&mut bytes.as_slice(), &mut file, bytes.len() as u64).unwrap();
+        file.rewind().unwrap();
+        let mut actual = Vec::new();
+        file.read_to_end(&mut actual).unwrap();
+        assert_eq!(actual, bytes);
+        assert!(copy_sparse(&mut b"x".as_slice(), &mut file, 2).is_err());
+        assert!(copy_sparse(&mut b"xx".as_slice(), &mut file, 1).is_err());
+    }
 }

@@ -107,11 +107,10 @@ defender = { package = "ys-defender-history-parser", git = "https://github.com/Y
 # here so that its library does not clash with parse-file outlook's module.
 outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yamato-Security/ys-outlook-parser" }
 
-# Read-only VHDX/NTFS mounting through Yamato Security's reusable FUSE SDK, and E01 (EWF) images
-# read with Yamato Security's ys-e01-parser, a fork of ebrig/ewf-image (Apache-2.0), reader only
-# (Linux only).
-[target.'cfg(target_os = "linux")'.dependencies]
+# Native read-only VHDX/NTFS access on Linux, macOS and Windows. The separate
+# OS-visible mount command uses the SDK's Linux-only FUSE adapter.
 vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
+tempfile = "3"
 ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "main" }
 
 [dev-dependencies]
@@ -119,7 +118,6 @@ ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Securi
 cfb = "0.16"
 # The SYSTEM hive of test_files/shimcache/ is kept gzipped.
 flate2 = "1"
-tempfile = "3"
 
 [profile.release]
 lto = "fat"

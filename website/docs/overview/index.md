@@ -24,7 +24,7 @@ The same binary runs on Windows, macOS, and Linux. Analysts can use one consiste
 ## What Juntei does not do
 
 Juntei does not acquire a live disk or replace evidence preservation, and the only disk images it
-mounts are VHDX and E01 images, read-only. It does not automatically combine every artifact into a single
+mounts are VHDX / E01 / Ex01 images, read-only. It does not automatically combine every artifact into a single
 incident narrative. It parses the
 evidence you provide and produces records suitable for investigation and correlation.
 

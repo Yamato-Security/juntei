@@ -1,6 +1,10 @@
 # Recopilación de evidencias { #collecting-evidence }
 
-Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquisición fiable y preserve los metadatos originales cuando sea posible. Las imágenes de disco VHDX y E01 pueden analizarse sin extraerlas: consulte [Montar imágenes de disco](../commands/mount.md).
+Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquisición fiable y preserve los metadatos originales cuando sea posible.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## Ubicaciones habituales { #common-locations }
 

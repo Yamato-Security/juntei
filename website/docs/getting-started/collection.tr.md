@@ -1,6 +1,10 @@
 # Kanıt Toplama { #collecting-evidence }
 
-Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir bir edinim aracı kullanın ve mümkün olduğunda özgün meta verileri koruyun. VHDX ve E01 disk imajları dosyalar çıkarılmadan ayrıştırılabilir: bkz. [Disk İmajlarını Bağlama](../commands/mount.md).
+Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir bir edinim aracı kullanın ve mümkün olduğunda özgün meta verileri koruyun.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## Yaygın konumlar { #common-locations }
 
