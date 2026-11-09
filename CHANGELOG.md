@@ -24,6 +24,9 @@
 **Bug Fixes:**
 
 - Protect every split E01 segment, including damaged companions and hard-link aliases, from output replacement. Resolve first-segment case aliases without changing segment families, retain reader warnings discovered during parsing, and saturate acquisition-error counts instead of overflowing. (@YamatoSecurity)
+- Native image discovery skips inaccessible subdirectories without losing readable images. Stage on the output filesystem by default, add `--temp-dir` to choose another disk, and keep original source metadata separately so readable files can still be parsed after staging runs out of space. Report the failed write once and mark remaining images that were not staged. (@YamatoSecurity)
+
+- Ctrl+C during native image parsing stops and reaps parser processes before removing private staged evidence; return exit code 130. Preserve existing evidence and keep source metadata paths out of exported results. (@YamatoSecurity)
 
 - Disk-image mounting checks GPT offset and length arithmetic, rejects cyclic extended-partition chains, preserves valid FILETIMEs beyond 2554, and reads compressed-file metadata without decompressing content. Bound the decompression cache, report unreadable NTFS partitions while retaining readable volumes, and preserve the original evidence directory when `auto-parse --vhdx` receives a bare image filename. (@YamatoSecurity)
 

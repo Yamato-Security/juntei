@@ -38,6 +38,12 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 คำสั่ง [`mount` แยกต่างหาก](mount.md) เปิดระบบไฟล์ให้โปรแกรมอื่นและยังต้องใช้ Linux FUSE โดย `auto-parse --vhdx` ไม่ได้เรียกใช้คำสั่งนี้
 
+พื้นที่เตรียมข้อมูลเริ่มต้นเปลี่ยนเป็นระบบไฟล์ของผลลัพธ์ แทนไดเรกทอรีชั่วคราวของระบบซึ่งอาจเป็นวอลุ่ม RAM ขนาดเล็ก ใช้ `--temp-dir` เพื่อเลือกไดเรกทอรีที่มีอยู่บนดิสก์อื่น เมทาดาทาต้นฉบับเก็บแยกบนระบบไฟล์ผลลัพธ์ จึงยังแยกวิเคราะห์ไฟล์ที่อ่านได้แล้วเมื่อดิสก์เตรียมข้อมูลเต็ม ควรสำรองพื้นที่สำหรับทั้งสำเนาและผลลัพธ์ หากวอลุ่มผลลัพธ์เต็มจะบันทึกผลไม่ได้ Ctrl+C หยุดโปรเซสตัวแยกวิเคราะห์ ล้างพื้นที่ส่วนตัว และออกด้วยรหัส 130 แต่ SIGKILL หรือไฟดับยังอาจทิ้งสำเนาไว้ การค้นหาอิมเมจจะข้ามไดเรกทอรีย่อยที่อ่านไม่ได้ แต่รากอินพุตที่อ่านไม่ได้ยังเป็นข้อผิดพลาด
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## อิมเมจดิสก์ E01 และ Ex01 { #e01-and-ex01-disk-images }
 
 `--e01` อ่านอิมเมจแบบกายภาพ EWF1 (`.E01`) และ EWF2 (`.Ex01`) แบบเนทีฟบน **Linux, macOS และ Windows** โดยไม่ต้องใช้ FUSE การเมานต์ของ OS หรือสิทธิ์ผู้ดูแลระบบ ใช้ [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) และกระบวนการแยกวิเคราะห์ NTFS เดียวกับที่อธิบายไว้ข้างต้น
@@ -542,6 +548,7 @@ Input:
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
       --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

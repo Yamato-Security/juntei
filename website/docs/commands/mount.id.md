@@ -67,6 +67,12 @@ Penemuan host, CSV/JSON/JSONL, dan `-j` memakai alur biasa. `Image` dalam `manif
 
 Perintah [`mount` terpisah](mount.md) menyediakan sistem berkas bagi program lain dan tetap memerlukan Linux FUSE. `auto-parse --vhdx` tidak memakainya.
 
+Staging kini memakai sistem berkas output secara default, bukan direktori sementara sistem yang mungkin merupakan volume RAM kecil. Gunakan `--temp-dir` untuk memilih direktori yang sudah ada di disk lain. Metadata asli disimpan terpisah pada sistem berkas output, sehingga disk staging yang penuh tidak menghalangi parsing berkas yang sudah terbaca. Sediakan ruang untuk salinan dan hasil; jika volume output penuh, hasil tidak dapat disimpan. Ctrl+C menghentikan proses parser, membersihkan ruang privat, dan keluar dengan kode 130. SIGKILL atau listrik padam masih dapat meninggalkan salinan. Subdirektori yang tak dapat dibaca dilewati saat pencarian image; root input yang tak terbaca tetap merupakan kesalahan.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## Image disk E01 dan Ex01 { #e01-and-ex01-disk-images }
 
 `--e01` membaca image fisik EWF1 (`.E01`) dan EWF2 (`.Ex01`) secara native di **Linux, macOS dan Windows**, tanpa FUSE, mount OS, atau hak administrator. Fitur ini menggunakan [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) dan alur parsing NTFS yang sama seperti di atas.

@@ -68,6 +68,12 @@ La detección de hosts, CSV/JSON/JSONL y `-j` usan el flujo habitual. `Image` en
 
 El [`mount` independiente](mount.md) expone un sistema de archivos a otros programas y sigue necesitando Linux FUSE. `auto-parse --vhdx` no lo utiliza.
 
+La preparación usa ahora el sistema de archivos de salida de forma predeterminada, en vez del directorio temporal del sistema, que puede ser un volumen pequeño en RAM. Use `--temp-dir` para elegir un directorio existente en otro disco. Los metadatos originales se guardan aparte en el volumen de salida, por lo que un disco de preparación lleno no impide analizar los archivos ya legibles. Reserve espacio para copias y resultados; si el volumen de salida está lleno, no se pueden guardar resultados. Ctrl+C detiene los analizadores, limpia el espacio privado y sale con código 130. SIGKILL o un corte de energía pueden dejar copias. Se omiten los subdirectorios inaccesibles al buscar imágenes; una raíz de entrada ilegible sigue siendo un error.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## Imágenes de disco E01 y Ex01 { #e01-and-ex01-disk-images }
 
 `--e01` lee imágenes físicas EWF1 (`.E01`) y EWF2 (`.Ex01`) de forma nativa en **Linux, macOS y Windows**, sin FUSE, montaje del sistema ni privilegios de administrador. Utiliza [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) y el mismo procesamiento NTFS descrito arriba.

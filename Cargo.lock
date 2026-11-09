@@ -1111,6 +1111,7 @@ dependencies = [
  "clap",
  "cms",
  "csv",
+ "ctrlc",
  "der",
  "evtx",
  "flate2",

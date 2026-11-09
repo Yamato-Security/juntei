@@ -47,6 +47,12 @@ LNK と Jump List のソース作成・更新・アクセス時刻は、一時�
 他のプログラムにファイルシステムを公開する [`mount` コマンド](mount.md) は、引き続き Linux の FUSE を必要とします。
 `auto-parse --vhdx` はこのコマンドを使用しません。
 
+ステージング先は、容量の小さい RAM ディスクの場合があるシステムの一時ディレクトリではなく、出力先と同じファイルシステムが既定になりました。`--temp-dir` で別ディスク上の既存のディレクトリを指定できます。元のメタデータは出力側に別途保持するため、ステージング先が満杯でも、読み取れたファイルの解析を続行できます。コピーと結果の両方に必要な空き容量を確保してください。出力先自体が満杯の場合は結果を保存できません。Ctrl+C はパーサープロセスを停止し、専用作業領域を削除して終了コード 130 を返します。SIGKILL や電源断ではコピーが残る場合があります。イメージ検索では読み取れないサブディレクトリをスキップしますが、入力ルートが読めない場合はエラーです。
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## E01 と Ex01 ディスクイメージ { #e01-and-ex01-disk-images }
 
 `--e01` は、物理 EWF1（`.E01`）および EWF2（`.Ex01`）イメージを **Linux、macOS、Windows** でネイティブに読み取ります。FUSE、OS へのマウント、管理者権限は不要です。[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) と、上記と同じ NTFS 解析処理を使用します。
@@ -400,6 +406,7 @@ Input:
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
       --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

@@ -64,7 +64,7 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
 The artifact parsers need filesystem paths. Juntei therefore streams the files exposed by the
-reader's NTFS volumes into a private system-temporary workspace, then runs the usual parsers.
+reader's NTFS volumes into a private staging workspace, then runs the usual parsers.
 **Allow enough temporary disk space for those files**, in addition to the results. This is a
 copy of the exposed filesystem, not just the artifacts that eventually produce records.
 Reads use bounded buffers; zero-filled regions are written as holes where the host filesystem
@@ -84,6 +84,12 @@ artifacts stored as ordinary files inside a triage image remain available.
 
 The separate [`mount` command](mount.md) exposes a filesystem to other programs and still needs
 Linux FUSE. It is not used by `auto-parse --vhdx`.
+
+Staging now defaults to the output filesystem rather than the system temp directory, which may be a small RAM-backed volume. Use `--temp-dir` to choose an existing staging directory on another disk. Original source metadata is kept separately on the output filesystem, so a full staging disk does not prevent parsing already-readable files. Reserve space for both staged files and results; if the output filesystem itself is full, results cannot be saved. Ctrl+C stops parser processes, cleans the private workspace and exits with code 130. A forced termination such as SIGKILL or power loss can still leave copies. Inaccessible subdirectories are skipped during image discovery; an unreadable input root remains an error.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
 
 ## E01 and Ex01 disk images
 

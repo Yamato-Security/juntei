@@ -513,6 +513,9 @@ pub struct AutoParseOptions {
     /// Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
     #[arg(help_heading = Some("Input"), long, display_order = 103)]
     pub e01: bool,
+    /// Directory for private image staging (default: output filesystem)
+    #[arg(help_heading = Some("Input"), long, value_name = "DIR", display_order = 104)]
+    pub temp_dir: Option<PathBuf>,
 
     /// New directory in which to create per-computer results
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "DIR", display_order = 200)]

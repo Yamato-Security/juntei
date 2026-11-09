@@ -38,6 +38,12 @@ Hosterkennung, CSV/JSON/JSONL und `-j` nutzen dieselbe Verarbeitung wie normale 
 
 Der separate [`mount`-Befehl](mount.md) stellt anderen Programmen ein Dateisystem bereit und benötigt weiterhin Linux FUSE. `auto-parse --vhdx` verwendet ihn nicht.
 
+Das Staging nutzt standardmäßig das Dateisystem der Ausgabe statt des möglicherweise kleinen RAM-basierten System-Temp-Verzeichnisses. Mit `--temp-dir` wählen Sie ein vorhandenes Verzeichnis auf einem anderen Datenträger. Quellmetadaten bleiben separat im Ausgabedateisystem, damit bereits lesbare Dateien auch bei vollem Staging-Datenträger analysiert werden können. Platz für Kopien und Ergebnisse einplanen; ein volles Ausgabedateisystem verhindert das Speichern. Ctrl+C stoppt Parserprozesse, entfernt den privaten Arbeitsbereich und beendet mit Code 130. SIGKILL oder Stromausfall können Kopien hinterlassen. Nicht lesbare Unterverzeichnisse werden bei der Imagesuche übersprungen; ein nicht lesbares Eingabewurzelverzeichnis bleibt ein Fehler.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## E01- und Ex01-Datenträgerabbilder { #e01-and-ex01-disk-images }
 
 `--e01` liest physische EWF1- (`.E01`) und EWF2-Abbilder (`.Ex01`) nativ unter **Linux, macOS und Windows**, ohne FUSE, Betriebssystem-Mount oder Administratorrechte. Es verwendet [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) und dieselbe oben beschriebene NTFS-Verarbeitung.
@@ -539,6 +545,7 @@ Input:
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
       --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

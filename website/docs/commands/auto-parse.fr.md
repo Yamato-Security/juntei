@@ -38,6 +38,12 @@ La découverte des hôtes, CSV/JSON/JSONL et `-j` utilisent le traitement habitu
 
 La [commande `mount`](mount.md) expose un système de fichiers aux autres programmes et nécessite toujours Linux FUSE. `auto-parse --vhdx` ne l’utilise pas.
 
+La préparation utilise désormais le système de fichiers de sortie, plutôt que le répertoire temporaire système, parfois limité et stocké en RAM. Utilisez `--temp-dir` pour choisir un répertoire existant sur un autre disque. Les métadonnées source restent séparées sur le volume de sortie ; un disque de préparation plein ne bloque donc pas l’analyse des fichiers déjà lisibles. Prévoyez de la place pour les copies et les résultats ; si le volume de sortie est plein, les résultats ne peuvent pas être enregistrés. Ctrl+C arrête les parseurs, nettoie l’espace privé et termine avec le code 130. SIGKILL ou une coupure de courant peuvent laisser des copies. La recherche ignore les sous-répertoires illisibles, mais une racine d’entrée illisible reste une erreur.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## Images disque E01 et Ex01 { #e01-and-ex01-disk-images }
 
 `--e01` lit nativement les images physiques EWF1 (`.E01`) et EWF2 (`.Ex01`) sous **Linux, macOS et Windows**, sans FUSE, montage système ni droits administrateur. Il utilise [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) et le même traitement NTFS que ci-dessus.
@@ -540,6 +546,7 @@ Input:
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
       --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

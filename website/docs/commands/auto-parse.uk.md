@@ -38,6 +38,12 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 Окрема [команда `mount`](mount.md) надає файлову систему іншим програмам і досі потребує Linux FUSE. `auto-parse --vhdx` її не використовує.
 
+Тимчасове копіювання тепер за замовчуванням використовує файлову систему результатів замість системного тимчасового каталогу, який може бути малим томом у RAM. Через `--temp-dir` можна вибрати наявний каталог на іншому диску. Вихідні метадані зберігаються окремо у файловій системі результатів, тому заповнення диска копій не заважає розбору вже читабельних файлів. Залишайте місце і для копій, і для результатів; заповнений вихідний том не дозволяє зберігати результати. Ctrl+C зупиняє процеси, очищує приватний каталог і завершує роботу з кодом 130. SIGKILL або втрата живлення можуть залишити копії. Під час пошуку образів нечитабельні підкаталоги пропускаються; нечитабельний кореневий каталог введення залишається помилкою.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
 ## Образи дисків E01 та Ex01 { #e01-and-ex01-disk-images }
 
 `--e01` нативно читає фізичні образи EWF1 (`.E01`) та EWF2 (`.Ex01`) у **Linux, macOS і Windows**, без FUSE, системного монтування чи прав адміністратора. Використовуються [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) і той самий описаний вище процес розбору NTFS.
@@ -540,6 +546,7 @@ Input:
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
       --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
