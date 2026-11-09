@@ -497,6 +497,10 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Input"), long, display_order = 102)]
     pub vhdx: bool,
 
+    /// Parse the files inside every E01 disk image in the evidence directory (split images from their first segment), each mounted read-only with FUSE while it is parsed
+    #[arg(help_heading = Some("Input"), long, display_order = 103)]
+    pub e01: bool,
+
     /// New directory in which to create per-computer results
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "DIR", display_order = 200)]
     pub output: PathBuf,
@@ -1268,7 +1272,7 @@ impl SrumOptions {
 
 #[derive(Args, Clone, Debug, Default)]
 pub struct MountOptions {
-    /// The disk image (VHDX)
+    /// The disk image (VHDX or E01; a split E01 image from its first segment)
     #[arg(help_heading = Some("Input"), value_name = "IMAGE", display_order = 100)]
     pub image: PathBuf,
 

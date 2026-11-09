@@ -33,12 +33,12 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
+#[cfg(target_os = "linux")]
+mod disk_images;
 mod flat_outputs;
 mod srum_outputs;
 mod timeline;
 mod timestamps;
-#[cfg(target_os = "linux")]
-mod vhdx_images;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
@@ -399,7 +399,8 @@ struct ManifestHost {
     windows_directories: Vec<String>,
     #[serde(rename = "OutputDirectory")]
     output_directory: String,
-    /// With `--vhdx`: the disk image the system's files are in, from the evidence directory.
+    /// With `--vhdx` or `--e01`: the disk image the system's files are in, from the evidence
+    /// directory.
     #[serde(rename = "Image", skip_serializing_if = "Option::is_none")]
     image: Option<String>,
 }
@@ -442,10 +443,10 @@ struct DataFile {
     artifact: &'static str,
 }
 
-/// The disk images `--vhdx` mounted for a run: the name of the directory they were found in, and
-/// each mount folder (in the directory the parsers read) with its image, from that directory
-/// (`./host1-triage.vhdx`).
-// Only `--vhdx` makes them, where FUSE is.
+/// The disk images `--vhdx` or `--e01` mounted for a run: the name of the directory they were
+/// found in, and each mount folder (in the directory the parsers read) with its image, from that
+/// directory (`./host1-triage.vhdx`).
+// Only `--vhdx` and `--e01` make them, where FUSE is.
 #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) struct Images {
     directory_name: String,
@@ -465,9 +466,9 @@ impl Images {
 
 /// Run the command; returns the exit status.
 pub fn run(opts: &AutoParseOptions) -> i32 {
-    if opts.vhdx {
+    if opts.vhdx || opts.e01 {
         #[cfg(target_os = "linux")]
-        return vhdx_images::run(opts);
+        return disk_images::run(opts);
         #[cfg(not(target_os = "linux"))]
         {
             error_msg(opts.common.no_color, crate::mount::NO_FUSE);

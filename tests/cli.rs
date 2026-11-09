@@ -5263,17 +5263,20 @@ fn mount_and_auto_parse_vhdx_need_fuse() {
     let r = run(&["mount", "image.vhdx", dir.path().to_str().unwrap(), "-K"]);
     assert_eq!(r.code, 1);
     assert!(r.stdout.contains("Mount-DiskImage"), "{}", r.stdout);
-    let r = run(&[
-        "auto-parse",
-        "-d",
-        dir.path().to_str().unwrap(),
-        "--vhdx",
-        "-o",
-        dir.path().join("out").to_str().unwrap(),
-        "-K",
-    ]);
-    assert_eq!(r.code, 1);
-    assert!(r.stdout.contains("Mount-DiskImage"), "{}", r.stdout);
+    for option in ["--vhdx", "--e01"] {
+        let r = run(&[
+            "auto-parse",
+            "-d",
+            dir.path().to_str().unwrap(),
+            option,
+            "-o",
+            dir.path().join("out").to_str().unwrap(),
+            "-K",
+        ]);
+        assert_eq!(r.code, 1);
+        assert!(r.stdout.contains("Mount-DiskImage"), "{}", r.stdout);
+        assert!(r.stdout.contains("E01 image"), "{}", r.stdout);
+    }
 }
 
 #[cfg(target_os = "linux")]
@@ -5406,11 +5409,198 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     assert_no_absolute_paths(&output, &r.stdout, &[evidence.path(), root.path()]);
     for file in walk_files(&output) {
         let text = String::from_utf8_lossy(&std::fs::read(&file).unwrap()).into_owned();
-        assert!(!text.contains("juntei-vhdx-"), "{}", file.display());
+        assert!(!text.contains("juntei-images-"), "{}", file.display());
     }
     assert!(!mounted_from("first-auto.vhdx"));
     assert!(!mounted_from("second-auto.vhdx"));
     assert!(!mounted_from("partial-auto.vhdx"));
+}
+
+/// The sample E01 image (test_files/e01, two segments) copied to `dir` as `<stem>.E01` and
+/// `<stem>.E02`; returns the first segment.
+#[cfg(target_os = "linux")]
+fn sample_e01(dir: &Path, stem: &str) -> PathBuf {
+    for segment in ["E01", "E02"] {
+        std::fs::copy(
+            repo(&format!("test_files/e01/sample.{segment}")),
+            dir.join(format!("{stem}.{segment}")),
+        )
+        .unwrap();
+    }
+    dir.join(format!("{stem}.E01"))
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn mount_serves_an_e01_image_from_its_segments() {
+    let dir = tempfile::tempdir().unwrap();
+    let image = sample_e01(dir.path(), "mount-test");
+    let point = dir.path().join("mnt");
+    std::fs::create_dir(&point).unwrap();
+    // a logical evidence file holds files, not a disk
+    let logical = dir.path().join("files.L01");
+    std::fs::write(&logical, b"LVF\x09\x0d\x0a\xff\x00").unwrap();
+    let r = run(&[
+        "mount",
+        logical.to_str().unwrap(),
+        point.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout
+            .contains("it is a logical evidence file (L01 or Lx01), which holds files, not a disk"),
+        "{}",
+        r.stdout
+    );
+    if !fuse_available() {
+        return;
+    }
+    let child = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args([
+            "mount",
+            image.to_str().unwrap(),
+            point.to_str().unwrap(),
+            "-K",
+            "-q",
+        ])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    let data = point.join("C/Users/sample/Data");
+    for _ in 0..100 {
+        if data.is_dir() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    assert!(data.is_dir(), "not mounted");
+    assert!(mounted_from("mount-test.E01"));
+    let sha256 = |path: &Path| {
+        use sha2::{Digest, Sha256};
+        format!("{:x}", Sha256::digest(std::fs::read(path).unwrap()))
+    };
+    // the same files as in the VHDX
+    assert_eq!(
+        std::fs::read(data.join("small.txt")).unwrap(),
+        b"resident content\n"
+    );
+    assert_eq!(
+        sha256(&data.join("fragmented.bin")),
+        "dad53fd22d62e1acbf48ababc172c8eb3ffb45486b261fb960a2990199a8e459"
+    );
+    assert_eq!(
+        sha256(&data.join("compressed/text.log")),
+        "cc3c52b090233f44ecfc2dbd90adc6c787e071872ca488fa96eae24af8162f98"
+    );
+    assert!(std::fs::write(data.join("new.txt"), b"x").is_err());
+    let killed = Command::new("kill")
+        .args(["-INT", &child.id().to_string()])
+        .status()
+        .unwrap();
+    assert!(killed.success());
+    let output = child.wait_with_output().unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "{stdout}");
+    assert!(stdout.contains("Format: E01 (2 segments)\n"), "{stdout}");
+    assert!(stdout.contains("Disk size: 33.2 MiB\n"), "{stdout}");
+    assert!(stdout.contains("NTFS volumes: 1 ("), "{stdout}");
+    assert!(!mounted_from("mount-test.E01"));
+    assert!(!data.exists());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn auto_parse_e01_parses_the_systems_inside_every_image() {
+    let evidence = tempfile::tempdir().unwrap();
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--e01",
+        "-o",
+        evidence.path().join("unused").to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout
+            .contains("No E01 disk images (*.E01, *.Ex01) were found in"),
+        "{}",
+        r.stdout
+    );
+    if !fuse_available() {
+        return;
+    }
+    sample_e01(evidence.path(), "first-e01");
+    std::fs::create_dir(evidence.path().join("sub")).unwrap();
+    sample_e01(&evidence.path().join("sub"), "second-e01");
+    std::fs::write(evidence.path().join("broken-e01.E01"), b"not an E01").unwrap();
+    sample_vhdx(&evidence.path().join("third.vhdx"));
+    let root = tempfile::tempdir().unwrap();
+
+    // --e01: the E01 images only, each once (not their second segments)
+    let output = root.path().join("e01");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--e01",
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+    for line in [
+        "E01 images: 3\n",
+        "Could not mount ./broken-e01.E01: it is not a VHDX or E01 disk image",
+        "  ./first-e01.E01: mounted read-only (1 NTFS volume)\n",
+        "  ./sub/second-e01.E01: mounted read-only (1 NTFS volume)\n",
+        "Windows systems: 2\n",
+        "  first-e01: ./first-e01/C (./first-e01.E01)\n",
+        "Failed: 0\n",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    assert!(!r.stdout.contains("third.vhdx"), "{}", r.stdout);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let hosts = manifest["Hosts"].as_array().unwrap();
+    assert_eq!(hosts.len(), 2);
+    assert_eq!(hosts[0]["Image"], "./first-e01.E01");
+    assert_eq!(hosts[1]["Image"], "./sub/second-e01.E01");
+    for host in ["first-e01", "sub_second-e01"] {
+        let (_, rows) = csv_rows(&output.join(host).join("ProcessExecution/Prefetch.csv"));
+        assert_eq!(rows.len(), 1, "{host}");
+    }
+    assert_no_absolute_paths(&output, &r.stdout, &[evidence.path(), root.path()]);
+
+    // --vhdx and --e01 together: both kinds
+    std::fs::remove_file(evidence.path().join("broken-e01.E01")).unwrap();
+    let output = root.path().join("both");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--vhdx",
+        "--e01",
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(r.stdout.contains("VHDX or E01 images: 3\n"), "{}", r.stdout);
+    assert!(r.stdout.contains("Windows systems: 3\n"), "{}", r.stdout);
+    assert!(!mounted_from("first-e01.E01"));
+    assert!(!mounted_from("second-e01.E01"));
+    assert!(!mounted_from("third.vhdx"));
 }
 
 #[cfg(target_os = "linux")]

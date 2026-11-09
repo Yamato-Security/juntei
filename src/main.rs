@@ -21,6 +21,8 @@ mod browser;
 mod cli;
 mod color;
 mod defender_quarantine;
+#[cfg(target_os = "linux")]
+mod disk_image;
 mod hive;
 mod i30;
 mod jump_lists;

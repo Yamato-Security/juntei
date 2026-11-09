@@ -11,24 +11,25 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `mount`: a VHDX disk image's NTFS volumes, read-only at a directory through FUSE, for as long
-//! as the command runs, so other tools (Hayabusa, Juntei's own commands) can read the files
-//! without the operating system supporting the image or the file system, and without root.
+//! `mount`: a disk image's NTFS volumes (a VHDX or E01 image), read-only at a directory through
+//! FUSE, for as long as the command runs, so other tools (Hayabusa, Juntei's own commands) can
+//! read the files without the operating system supporting the image or the file system, and
+//! without root.
 
 use crate::cli::MountOptions;
 use crate::util::error_msg;
 
 /// What to use where FUSE isn't available.
 #[cfg(not(target_os = "linux"))]
-pub const NO_FUSE: &str = "Mounting needs FUSE and works on Linux. On Windows, attach the image read-only instead: Mount-DiskImage -ImagePath <IMAGE> -Access ReadOnly";
+pub const NO_FUSE: &str = "Mounting needs FUSE and works on Linux. On Windows, attach a VHDX image read-only instead (Mount-DiskImage -ImagePath <IMAGE> -Access ReadOnly) or mount an E01 image with an image-mounting tool, then parse the mounted drive";
 
 /// Run the command; returns the exit status.
 #[cfg(target_os = "linux")]
 pub fn run(opts: &MountOptions) -> i32 {
     use crate::color::JunteiColor;
+    use crate::disk_image;
     use crate::util::{self, fmt_num, p, p_label};
     use std::sync::{Arc, Mutex};
-    use vhdx_mount::image::Image;
     use vhdx_mount::image_mount;
 
     let no_color = opts.common.no_color;
@@ -49,8 +50,8 @@ pub fn run(opts: &MountOptions) -> i32 {
         );
         return 1;
     }
-    let image = match Image::open(&opts.image) {
-        Ok(image) => image,
+    let opened = match disk_image::open(&opts.image) {
+        Ok(opened) => opened,
         Err(e) => {
             error_msg(
                 no_color,
@@ -59,16 +60,26 @@ pub fn run(opts: &MountOptions) -> i32 {
             return 1;
         }
     };
+    let image = opened.image;
     let partial = !image.problems.is_empty();
     for problem in &image.problems {
         error_msg(no_color, &format!("Could not read {problem}"));
     }
+    for warning in &opened.warnings {
+        error_msg(no_color, &format!("Warning: {warning}"));
+    }
     p_label(no_color, "Image: ", &opts.image.display().to_string());
-    p_label(
-        no_color,
-        "Virtual disk size: ",
-        &util::size_display(image.size),
-    );
+    let format = if opened.segments > 1 {
+        format!(
+            "{} ({} segments)",
+            opened.kind.name(),
+            fmt_num(opened.segments)
+        )
+    } else {
+        opened.kind.name().to_string()
+    };
+    p_label(no_color, "Format: ", &format);
+    p_label(no_color, "Disk size: ", &util::size_display(image.size));
     let volumes: Vec<String> = image
         .volumes
         .iter()

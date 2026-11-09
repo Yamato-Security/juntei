@@ -11,28 +11,59 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `auto-parse --vhdx`: every VHDX disk image in the evidence directory (or the one image given)
-//! is mounted read-only with FUSE in a folder of a new temporary directory, named after the image
-//! (`host1-triage`), and that directory is parsed as the evidence: each image's Windows systems
-//! are found and parsed as in a collection on disk. The images are unmounted at the end, and on
-//! Ctrl+C or SIGTERM.
+//! `auto-parse --vhdx` and `--e01`: every VHDX or E01 disk image in the evidence directory (or
+//! the one image given) is mounted read-only with FUSE in a folder of a new temporary directory,
+//! named after the image (`host1-triage`), and that directory is parsed as the evidence: each
+//! image's Windows systems are found and parsed as in a collection on disk. An E01 image split
+//! into segments is one image, found from its first segment (`.E01`, `.Ex01`). The images are
+//! unmounted at the end, and on Ctrl+C or SIGTERM.
 
 use super::{Images, run_evidence, shown};
 use crate::cli::AutoParseOptions;
+use crate::disk_image::{self, Kind};
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use vhdx_mount::image_mount::{self, Mounted};
 
-/// Whether a file name is a VHDX disk image's.
-pub(super) fn is_vhdx_name(name: &str) -> bool {
-    name.to_ascii_lowercase().ends_with(".vhdx")
+/// The kinds of image the options ask for.
+fn kinds(opts: &AutoParseOptions) -> Vec<Kind> {
+    let mut kinds = Vec::new();
+    if opts.vhdx {
+        kinds.push(Kind::Vhdx);
+    }
+    if opts.e01 {
+        kinds.push(Kind::E01);
+    }
+    kinds
+}
+
+/// What the images asked for are, for messages: `VHDX`, `E01`, `VHDX or E01`.
+fn kinds_name(kinds: &[Kind]) -> String {
+    kinds
+        .iter()
+        .map(|k| k.name())
+        .collect::<Vec<_>>()
+        .join(" or ")
+}
+
+/// Their file names, for messages: `*.vhdx`, `*.E01, *.Ex01`.
+fn kinds_patterns(kinds: &[Kind]) -> String {
+    kinds
+        .iter()
+        .map(|k| match k {
+            Kind::Vhdx => "*.vhdx",
+            Kind::E01 => "*.E01, *.Ex01",
+        })
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 pub(super) fn run(opts: &AutoParseOptions) -> i32 {
     let no_color = opts.common.no_color;
     let given = &opts.directory;
+    let kinds = kinds(opts);
     let (images, root) = if given.is_file() {
         let root = given
             .parent()
@@ -41,7 +72,12 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
             .to_path_buf();
         (vec![given.clone()], root)
     } else if given.is_dir() {
-        (util::find_files(given, is_vhdx_name), given.clone())
+        let mut images: Vec<PathBuf> = kinds
+            .iter()
+            .flat_map(|kind| util::find_files(given, kind.name_filter()))
+            .collect();
+        images.sort();
+        (images, given.clone())
     } else {
         error_msg(
             no_color,
@@ -53,7 +89,9 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
         error_msg(
             no_color,
             &format!(
-                "No VHDX disk images (*.vhdx) were found in {}",
+                "No {} disk images ({}) were found in {}",
+                kinds_name(&kinds),
+                kinds_patterns(&kinds),
                 shown(given)
             ),
         );
@@ -80,7 +118,11 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
         return 1;
     }
 
-    p_label(no_color, "VHDX images: ", &fmt_num(images.len()));
+    p_label(
+        no_color,
+        &format!("{} images: ", kinds_name(&kinds)),
+        &fmt_num(images.len()),
+    );
     let mut used = HashSet::new();
     let mut mounted: Vec<Mounted> = Vec::new();
     let mut mounts = Vec::new();
@@ -92,8 +134,13 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
             .to_string();
         let folder = util::unique_name(&root, image, &mut used);
         let point = base.join(&folder);
-        let result = std::fs::create_dir(&point)
-            .and_then(|()| image_mount::mount(image, &point, &unmounters));
+        let result = std::fs::create_dir(&point).and_then(|()| {
+            let opened = disk_image::open(image)?;
+            for warning in &opened.warnings {
+                error_msg(no_color, &format!("Warning: {shown_image}: {warning}"));
+            }
+            image_mount::mount_image(opened.image, image, &point, &unmounters)
+        });
         match result {
             Ok(mount) => {
                 if !mount.problems.is_empty() {
@@ -132,6 +179,7 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
     let mut inner = opts.clone();
     inner.directory = base.clone();
     inner.vhdx = false;
+    inner.e01 = false;
     let images = Images {
         directory_name: root
             .canonicalize()
@@ -162,9 +210,9 @@ fn new_mount_directory() -> std::io::Result<PathBuf> {
     let pid = std::process::id();
     for n in 0..1000u32 {
         let name = if n == 0 {
-            format!("juntei-vhdx-{pid}")
+            format!("juntei-images-{pid}")
         } else {
-            format!("juntei-vhdx-{pid}-{n}")
+            format!("juntei-images-{pid}-{n}")
         };
         let path = temp.join(name);
         match std::fs::create_dir(&path) {
@@ -174,17 +222,4 @@ fn new_mount_directory() -> std::io::Result<PathBuf> {
         }
     }
     Err(std::io::Error::other("no free directory name"))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn vhdx_names() {
-        assert!(is_vhdx_name("host1-triage.vhdx"));
-        assert!(is_vhdx_name("HOST.VHDX"));
-        assert!(!is_vhdx_name("disk.vhd"));
-        assert!(!is_vhdx_name("disk.vhdx.txt"));
-    }
 }
