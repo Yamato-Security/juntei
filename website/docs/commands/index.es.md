@@ -34,6 +34,7 @@ y organiza los resultados y los registros por equipo y por categoría de investi
 | `parse-file defender-quarantine` | Árbol o entrada de la cuarentena de Defender | [Cuarentena de Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Accesos directos LNK](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [Comandos NTFS](filesystem.md) { #ntfs-commands }

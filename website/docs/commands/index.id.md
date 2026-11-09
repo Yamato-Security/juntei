@@ -34,6 +34,7 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 | `parse-file defender-quarantine` | Pohon atau entri karantina Defender | [Karantina Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Pintasan LNK](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [Perintah NTFS](filesystem.md) { #ntfs-commands }

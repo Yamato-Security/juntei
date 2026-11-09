@@ -134,6 +134,29 @@ valor: 44 contenedores, 182 entradas del historial, 6 descargas, 170 cookies y 3
 decodificó por su cuenta los registros de descarga. Los registros que las bases de datos marcan como eliminados se
 excluyeron de ambos lados.
 
+## Outlook { #outlook }
+
+`parse-file outlook` lee archivos PST, OST, `.msg` y `.oft` con
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser), cuyo lector de PST y OST es un fork de
+[outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) de Microsoft y cuyo lector de `.msg` está escrito a partir
+de las especificaciones abiertas de Microsoft.
+
+- **PST y OST**: 66 archivos PST y OST públicos (Apache Tika, artemis, los ejemplos de Aspose.Email, el DFIR Artifact
+  Museum, Enron, los ejemplos de GroupDocs, java-libpst, los datos de prueba de libyal, outlook-pst-rs y pst-extractor)
+  se compararon con libpff, propiedad por propiedad: cada propiedad de cada almacén, carpeta, mensaje, destinatario y
+  adjunto, y los datos de cada adjunto. 324 175 valores coincidieron y ninguno difirió sin una explicación. Los demás
+  son lo que solo lee ys-outlook-parser (15 846 valores de mensajes, destinatarios y adjuntos en los que falla libpff,
+  y de un almacén que no puede abrir; 8223 de elementos ocultos), celdas de destinatarios que libpff da como vacías o
+  cero aunque sus filas indican que no existen (49 077), identificadores de entrada y tipos de carpetas calculados como
+  lo hace MAPI (2004), y objetos y mensajes incrustados que libpff da como sus datos sin procesar (480). Ninguno de
+  los dos lectores puede leer en absoluto dos de los archivos.
+- **`.msg` y `.oft`**: 214 archivos públicos, con 2404 mensajes, destinatarios y adjuntos y 41 002 propiedades, se
+  compararon con extract-msg: 110 114 valores coincidieron, y cada uno de los 791 que difieren tiene explicación: 601
+  son errores de extract-msg con las horas, 35 proceden de archivos ANSI que decodifica con la página de códigos
+  equivocada, y los demás son lo que omite o añade.
+- **Entradas dañadas**: más de 260 000 archivos `.msg` mutados y 160 000 PST mutados, además de archivos diseñados
+  expresamente, se leyeron sin un fallo, sin un bloqueo y sin un uso de memoria ilimitado.
+
 ## Accesos directos LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) es una bifurcación mantenida del

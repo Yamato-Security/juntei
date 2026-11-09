@@ -14,6 +14,7 @@ Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisiç
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Registro de acesso do usuário (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer e Edge legado (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` antes do Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, e os arquivos `.msg` onde quer que tenham sido salvos |
 | Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` e as pastas de perfil dos outros navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` e outros locais do usuário/do sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` e `CustomDestinations` |
@@ -41,6 +42,9 @@ Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisiç
   excluídas são recuperadas, só ficam ali até o navegador fazer um checkpoint.
 - Colete a pasta `WebCache` inteira: o Windows mantém o `WebCacheV01.dat` aberto enquanto o usuário está conectado,
   e suas alterações mais recentes ficam apenas nos logs de transação `V01*.log`, que o Juntei não reproduz.
+- Colete os arquivos OST e PST do Outlook com o Outlook fechado, ou a partir de uma imagem de disco ou de uma cópia de
+  sombra de volume: o Outlook os mantém abertos enquanto está em execução. Procure PSTs também fora das pastas padrão: os
+  usuários movem os PSTs de arquivamento para outras pastas, unidades e compartilhamentos de rede.
 - Colete a árvore `Quarantine` inteira do Defender para que Entries, ResourceData e Resources possam ser associados.
 
 ## Cuidados com sistemas ativos { #live-system-cautions }

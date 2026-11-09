@@ -14,6 +14,7 @@ Juntei は Windows から収集済みのファイルを解析します。信頼�
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | ユーザーアクセスログ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer と従来の Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`、`%USERPROFILE%\Documents\Outlook Files\*.pst` (Outlook 2010 より前は `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`)、`%APPDATA%\Microsoft\Templates\*.oft`、および保存先にある `.msg` ファイル |
 | Web ブラウザ | `%LOCALAPPDATA%\Google\Chrome\User Data\`、`%LOCALAPPDATA%\Microsoft\Edge\User Data\`、`%APPDATA%\Mozilla\Firefox\Profiles\`、およびその他のブラウザのプロファイル フォルダー |
 | LNK / 最近 | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` およびその他のユーザー/システムの場所 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` および `CustomDestinations` |
@@ -32,6 +33,7 @@ Juntei は Windows から収集済みのファイルを解析します。信頼�
 - ユーザーアクセスログの `Sum` ディレクトリ全体を収集します。`SystemIdentity.mdb` が役割の名前を定め、年ごとの `{GUID}.mdb` データベースを列挙しています。Juntei は、UAL のトランザクション ログ `Svc*.log` も再生しません。
 - ブラウザのデータベースは、隣にある `-wal` ファイル (`places.sqlite-wal`、`cookies.sqlite-wal`) と一緒に収集します。最新の変更と、削除済みエントリの復元元となる古いバージョンのページは、ブラウザがチェックポイントを行うまでそこにしか存在しません。
 - `WebCache` フォルダー全体を収集します。Windows はユーザーがログオンしている間 `WebCacheV01.dat` を開いたままにしており、その最新の変更は `V01*.log` トランザクション ログにしか存在しません。Juntei はこのログを再生しません。
+- Outlook の OST と PST ファイルは、Outlook を終了した状態で収集するか、ディスク イメージまたはボリューム シャドウ コピーから収集します。Outlook は実行中これらのファイルを開いたままにします。既定のフォルダー以外にある PST も探してください。ユーザーはアーカイブを他のフォルダー、ドライブ、ファイル共有に移動します。
 - Defender `Quarantine` ツリー全体を収集して、エントリ、ResourceData、およびリソースを照合できるようにします。
 
 ## ライブシステムに関する注意事項 { #live-system-cautions }

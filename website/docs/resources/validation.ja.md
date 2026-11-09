@@ -56,6 +56,14 @@ Juntei は、パブリック go-ntfs テスト ボリューム (2,129 レコー�
 
 `parse-ese webcache` は、[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) を使用して `WebCacheV01.dat` を読み取ります。Plaso の 2 つの公開 WebCache データベース (Internet Explorer 11 のものと、従来の Edge の閲覧履歴、ダウンロード、Cookie を含む Windows 10 のダーティなもの) で、`dissect.database` の ESE リーダーと比較しました。4,156 行すべてが値ごとに一致しました。内訳は、44 のコンテナー、182 件の履歴エントリ、6 件のダウンロード、170 件の Cookie、3,754 件のその他のエントリです。比較側では、ダウンロード レコードを独自にデコードしました。データベースが削除済みとしてフラグを付けているレコードは、どちらからも除外しました。
 
+## Outlook { #outlook }
+
+`parse-file outlook` は、[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser) を使用して PST、OST、`.msg`、`.oft` ファイルを読み取ります。その PST と OST のリーダーは Microsoft の [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) のフォークで、`.msg` のリーダーは Microsoft のオープン仕様に基づいて作成されています。
+
+- **PST と OST**: 66 の公開 PST および OST ファイル (Apache Tika、artemis、Aspose.Email のサンプル、DFIR Artifact Museum、Enron、GroupDocs のサンプル、java-libpst、libyal のテスト データ、outlook-pst-rs、pst-extractor) を、libpff とプロパティ単位で比較しました。対象は、すべてのストア、フォルダー、メッセージ、受信者、添付ファイルのすべてのプロパティと、すべての添付ファイルのデータです。324,175 個の値が一致し、説明のつかない差異はありませんでした。残りは、ys-outlook-parser だけが読み取るもの (libpff が読み取りに失敗するメッセージ、受信者、添付ファイル、および libpff が開けないストアの 15,846 個の値と、非表示アイテムの 8,223 個の値)、行の情報では存在しないとされているのに libpff が空またはゼロとして返す受信者のセル (49,077 個)、MAPI と同じ方法で算出したフォルダーのエントリ ID と種類 (2,004 個)、libpff が生データとして返すオブジェクトと埋め込みメッセージ (480 個) です。うち 2 つのファイルは、どちらのリーダーもまったく読み取れません。
+- **`.msg` と `.oft`**: 2,404 のメッセージ、受信者、添付ファイルと 41,002 のプロパティを含む 214 の公開ファイルを extract-msg と比較しました。110,114 個の値が一致し、異なる 791 個にはすべて説明がつきます。601 個は extract-msg の時刻の誤り、35 個は extract-msg が誤ったコード ページでデコードする ANSI ファイルに由来し、残りは extract-msg が省略または追加するものです。
+- **損傷した入力**: 260,000 を超える変異させた `.msg` ファイル、160,000 を超える変異させた PST、および細工したファイルを、クラッシュ、ハング、メモリの際限ない消費を起こすことなく読み取りました。
+
 ## LNK のショートカット { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) は、Sootmark の [shell](https://github.com/Sootmark/shell) クレートの保守フォークです。 1,118 パブリック ショートカット間で比較されました。参照パーサーと共有される 30 CSV 列のうち、16 の個々の値は異なります。破損した、切り捨てられた、プレースホルダー、MTP、またはコントロール パネル項目を含む 13 ターゲット パス。不明なブロックまたは切り捨てられたブロックを含む 2 つの追加データ ブロック リスト。もう 1 つは、参照パーサーが異なるバイトから読み取った MFT 参照です。 Juntei は、構造をサイレントに正規化するのではなく、損傷した構造を報告します。

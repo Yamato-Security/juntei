@@ -398,7 +398,13 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
         (
             "parse-file",
             "Parse file artifacts",
-            &["prefetch", "lnk", "jump-lists", "defender-quarantine"][..],
+            &[
+                "prefetch",
+                "lnk",
+                "jump-lists",
+                "defender-quarantine",
+                "outlook",
+            ][..],
         ),
     ] {
         let top = run(&["--help"]);
@@ -573,6 +579,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "Accounts",
         "Applications",
         "BrowserActivity",
+        "Communication",
         "ExternalDevices",
         "FileAndFolderOpening",
         "FileExistence",
@@ -733,6 +740,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "app-history" => "Applications",
             "installed-programs" => "Applications",
             "browser" | "webcache" => "BrowserActivity",
+            "outlook" => "Communication",
             "usb" => "ExternalDevices",
             "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs"
             | "shellbags" => "FileAndFolderOpening",
@@ -783,7 +791,9 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "srum" | "ual" | "webcache" => ("parse-ese", artifact),
             "browser" => ("parse-sqlite", artifact),
             "prefetch-timeline" => ("parse-file", "prefetch"),
-            "prefetch" | "lnk" | "jump-lists" | "defender-quarantine" => ("parse-file", artifact),
+            "prefetch" | "lnk" | "jump-lists" | "defender-quarantine" | "outlook" => {
+                ("parse-file", artifact)
+            }
             "registry" => ("parse-registry", "read"),
             "appcompat" => ("parse-registry", "app-compat"),
             "featureusage" => ("parse-registry", "feature-usage"),
@@ -1134,7 +1144,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["Purpose"] == "json_timeline")
                     .count(),
-                43
+                44
             );
             assert!(
                 output
@@ -1280,7 +1290,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 86);
+    assert_eq!(tasks.len(), 88);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()

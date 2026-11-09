@@ -140,6 +140,7 @@ manual, como `parse-ntfs mft`, `parse-registry amcache`, `parse-ese srum` y `par
 - Registro de acceso de usuarios (UAL)
 - Historial, descargas, cookies e historial de formularios de los navegadores web (navegadores basados en Chromium y en Firefox)
 - WebCache de Internet Explorer y del Edge heredado: historial, descargas, cookies y entradas de la caché
+- Archivos PST, OST, MSG y OFT de Outlook: carpetas, elementos, destinatarios, adjuntos, contactos, elementos de calendario y tareas
 - Accesos directos LNK
 - Jump Lists
 - ShimCache
@@ -214,6 +215,16 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -320,6 +331,7 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 | `Applications` | Historial de aplicaciones (rastros de herramientas de terceros) |
 | `Applications` | Programas instalados |
 | `BrowserActivity` | Historial, descargas, cookies e historial de formularios de los navegadores web, con las entradas eliminadas recuperadas; WebCache de Internet Explorer y del Edge heredado |
+| `Communication` | Archivos PST, OST, MSG y OFT de Outlook: carpetas, elementos, destinatarios, adjuntos, contactos, elementos de calendario y tareas |
 | `ExternalDevices` | Dispositivos y volúmenes USB |
 | `FileAndFolderOpening` | Jump Lists, accesos directos LNK, Microsoft Office, listas MRU, cuadros de diálogo Abrir y Guardar como, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
@@ -366,6 +378,10 @@ Las tablas de los navegadores web están en `BrowserActivity`: `Browser-History.
 heredado también están allí: `WebCache-History.csv`, `WebCache-Downloads.csv`,
 `WebCache-Cookies.csv`, `WebCache-Entries.csv` y `WebCache-Containers.csv`, junto con
 `WebCache-logs.txt`; consulte [Internet Explorer y Edge heredado](../artifacts/webcache.md#automatic-parsing).
+Las tablas de Outlook están en `Communication`: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` y `Outlook-Tasks.csv`, junto con `Outlook-logs.txt`; consulte
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 Consulte la [tabla completa de ubicación de SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Los registros coinciden con el nombre del artefacto en mayúsculas, como `Registry-SAM-logs.txt`,

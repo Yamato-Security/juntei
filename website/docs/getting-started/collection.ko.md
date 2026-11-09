@@ -14,6 +14,7 @@ Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 �
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | 사용자 액세스 로깅(Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer와 레거시 Edge(WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst`(Outlook 2010 이전에는 `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft`, 그리고 저장된 위치에 있는 `.msg` 파일 |
 | 웹 브라우저 | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` 및 기타 브라우저의 프로필 폴더 |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 및 기타 사용자/시스템 위치 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 및 `CustomDestinations` |
@@ -40,6 +41,9 @@ Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 �
   버전은 브라우저가 체크포인트를 수행할 때까지만 그곳에 있습니다.
 - `WebCache` 폴더 전체를 수집하십시오. Windows는 사용자가 로그온해 있는 동안 `WebCacheV01.dat`를 열어 두며,
   최신 변경 사항은 Juntei가 재생하지 않는 `V01*.log` 트랜잭션 로그에만 있습니다.
+- Outlook의 OST 및 PST 파일은 Outlook을 종료한 상태에서 수집하거나, 디스크 이미지 또는 볼륨 섀도 복사본에서
+  수집하십시오. Outlook은 실행 중에 이 파일들을 열어 둡니다. 기본 폴더 밖에 있는 PST도 찾아보십시오. 사용자는
+  보관 파일을 다른 폴더, 드라이브, 파일 공유로 옮깁니다.
 - Entries, ResourceData, Resources를 대응시킬 수 있도록 Defender `Quarantine` 트리 전체를 수집하십시오.
 
 ## 라이브 시스템에 관한 주의 사항 { #live-system-cautions }

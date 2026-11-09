@@ -14,6 +14,7 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Registro de acceso de usuarios (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer y Edge heredado (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` antes de Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, y los archivos `.msg` dondequiera que se hayan guardado |
 | Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` y las carpetas de perfil de los demás navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` y otras ubicaciones de usuario/sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` y `CustomDestinations` |
@@ -47,6 +48,9 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
 - Recopile toda la carpeta `WebCache`: Windows mantiene abierto `WebCacheV01.dat` mientras el usuario tiene la
   sesión iniciada, y sus cambios más recientes solo están en los registros de transacciones `V01*.log`, que Juntei
   no reproduce.
+- Recopile los archivos OST y PST de Outlook con Outlook cerrado, o desde una imagen de disco o una instantánea de
+  volumen: Outlook los mantiene abiertos mientras se ejecuta. Busque también archivos PST fuera de las carpetas
+  predeterminadas: los usuarios mueven los PST archivados a otras carpetas, unidades y recursos compartidos de red.
 - Recopile todo el árbol `Quarantine` de Defender para poder relacionar Entries, ResourceData y
   Resources.
 

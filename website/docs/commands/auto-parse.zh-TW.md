@@ -130,6 +130,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - 使用者存取記錄 (UAL)
 - 網頁瀏覽器的瀏覽歷程、下載、Cookie 與表單歷程（Chromium 與 Firefox 系列瀏覽器）
 - Internet Explorer 與舊版 Edge 的 WebCache：瀏覽歷程記錄、下載、Cookie 與快取項目
+- Outlook 的 PST、OST、MSG 與 OFT 檔案：資料夾、項目、收件者、附件、連絡人、行事曆項目與工作
 - LNK 捷徑
 - Jump Lists
 - ShimCache
@@ -197,6 +198,16 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── WebCache-Entries.csv
 │   │   ├── WebCache-History.csv
 │   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -303,6 +314,7 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 | `Applications` | 應用程式歷程（第三方工具的痕跡） |
 | `Applications` | 已安裝程式 |
 | `BrowserActivity` | 網頁瀏覽器的瀏覽歷程、下載、Cookie 與表單歷程，以及復原的已刪除項目；Internet Explorer 與舊版 Edge 的 WebCache |
+| `Communication` | Outlook 的 PST、OST、MSG 與 OFT 檔案：資料夾、項目、收件者、附件、連絡人、行事曆項目與工作 |
 | `ExternalDevices` | USB 裝置與磁碟區 |
 | `FileAndFolderOpening` | Jump Lists、LNK 捷徑、Microsoft Office、MRU 清單、開啟與另存新檔對話方塊、RecentDocs、ShellBags |
 | `FileExistence` | Amcache、ShimCache |
@@ -348,6 +360,10 @@ SRUM 資料表以 `SRUM-` 檔名直接放在其類別之下，例如
 Internet Explorer 與舊版 Edge 的 WebCache 資料表也位於此處：`WebCache-History.csv`、
 `WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv` 與 `WebCache-Containers.csv`，
 並附有 `WebCache-logs.txt`；請參閱 [Internet Explorer 與舊版 Edge](../artifacts/webcache.md#automatic-parsing)。
+Outlook 的資料表位於 `Communication`：`Outlook-Files.csv`、`Outlook-Folders.csv`、
+`Outlook-Items.csv`、`Outlook-Recipients.csv`、`Outlook-Attachments.csv`、`Outlook-Contacts.csv`、
+`Outlook-Calendar.csv` 與 `Outlook-Tasks.csv`，並附有 `Outlook-logs.txt`；請參閱
+[Outlook](../artifacts/outlook.md#automatic-parsing)。
 請參閱 [SRUM 完整配置表](../artifacts/srum.md#categorized-auto-parse-output)。
 
 記錄檔名與首字母大寫的跡證名稱一致，例如 `Registry-SAM-logs.txt`、`PrefetchTimeline-logs.txt`

@@ -124,6 +124,31 @@ database တစ်ခုနှင့် legacy Edge ၏ history၊ download မ�
 သီးခြား decode လုပ်ခဲ့ပါသည်။ Database များက ဖျက်ထားသည်ဟု အမှတ်အသားပြုထားသော record များကို နှစ်ဖက်စလုံးမှ
 ချန်လှပ်ထားခဲ့ပါသည်။
 
+## Outlook { #outlook }
+
+`parse-file outlook` သည် PST၊ OST၊ `.msg` နှင့် `.oft` ဖိုင်များကို
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser) ဖြင့် ဖတ်ပါသည်။ ၎င်း၏ PST နှင့် OST
+reader သည် Microsoft ၏ [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) ၏ fork ဖြစ်ပြီး ၎င်း၏ `.msg`
+reader ကို Microsoft ၏ open specification များမှ ရေးသားထားပါသည်။
+
+- **PST နှင့် OST**: အများသုံး PST နှင့် OST ဖိုင် 66 ခု (Apache Tika၊ artemis၊ Aspose.Email ၏ ဥပမာများ၊ DFIR
+  Artifact Museum၊ Enron၊ GroupDocs ၏ ဥပမာများ၊ java-libpst၊ libyal ၏ test data၊ outlook-pst-rs နှင့်
+  pst-extractor) ကို libpff နှင့် property တစ်ခုချင်းစီ နှိုင်းယှဉ်ခဲ့ပါသည်: store၊ ဖိုင်တွဲ၊ message၊ လက်ခံသူနှင့်
+  ပူးတွဲဖိုင် တိုင်း၏ property တိုင်းနှင့် ပူးတွဲဖိုင်တိုင်း၏ data။ အချက်အလက် 324,175 ခု တူညီခဲ့ပြီး ရှင်းလင်းချက်
+  မရှိဘဲ ကွဲပြားသည့် အချက် တစ်ခုမျှ မရှိပါ။ ကျန်အချက်များမှာ ys-outlook-parser တစ်ခုတည်းသာ ဖတ်နိုင်သော အရာများ
+  (libpff မအောင်မြင်သော message များ၊ လက်ခံသူများနှင့် ပူးတွဲဖိုင်များ၏ အချက် 15,846 ခုနှင့် ၎င်း မဖွင့်နိုင်သော
+  store တစ်ခု၏ အချက်များ၊ ဝှက်ထားသော item များ၏ အချက် 8,223 ခု)၊ row များက မရှိကြောင်း ဖော်ပြထားသော်လည်း
+  libpff က ဗလာ သို့မဟုတ် သုည အဖြစ် ပေးသော လက်ခံသူ cell များ (49,077)၊ MAPI ကဲ့သို့ တွက်ချက်ထားသော ဖိုင်တွဲ
+  entry id များနှင့် type များ (2,004) နှင့် libpff က ၎င်းတို့၏ raw data အဖြစ် ပေးသော object များနှင့် ထည့်သွင်းထားသော
+  message များ (480) ဖြစ်ပါသည်။ ဖိုင်နှစ်ခုကို reader နှစ်ခုစလုံး လုံးဝ မဖတ်နိုင်ပါ။
+- **`.msg` နှင့် `.oft`**: message များ၊ လက်ခံသူများနှင့် ပူးတွဲဖိုင်များ 2,404 ခုနှင့် property 41,002 ခု ပါဝင်သော
+  အများသုံး ဖိုင် 214 ခုကို extract-msg နှင့် နှိုင်းယှဉ်ခဲ့ပါသည်: အချက် 110,114 ခု တူညီခဲ့ပြီး ကွဲပြားသော 791 ခု
+  တစ်ခုစီတိုင်းကို ရှင်းပြနိုင်ပါသည်: 601 ခုမှာ အချိန်များဆိုင်ရာ extract-msg ၏ အမှားများ၊ 35 ခုမှာ ၎င်းက မှားယွင်းသော
+  code page ဖြင့် decode လုပ်သော ANSI ဖိုင်များမှ လာခြင်း ဖြစ်ပြီး ကျန်အချက်များမှာ ၎င်းက ချန်လှပ်သော သို့မဟုတ်
+  ထပ်ထည့်သော အရာများ ဖြစ်ပါသည်။
+- **ပျက်စီးနေသော input**: mutate လုပ်ထားသော `.msg` ဖိုင် 260,000 ကျော်နှင့် mutate လုပ်ထားသော PST 160,000 ခုနှင့်
+  crafted ဖိုင်များကို crash၊ hang သို့မဟုတ် အကန့်အသတ်မဲ့ memory အသုံးပြုမှု မရှိဘဲ ဖတ်ခဲ့ပါသည်။
+
 ## LNK ဖြတ်လမ်းများ { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) သည်

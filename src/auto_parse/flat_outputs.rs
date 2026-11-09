@@ -47,6 +47,15 @@ fn table_name<'a>(artifact: &str, name: &'a str) -> Option<&'a str> {
         ("webcache", "WebCache-Cookies.csv") => Some("Cookies"),
         ("webcache", "WebCache-Entries.csv") => Some("Entries"),
         ("webcache", "WebCache-Containers.csv") => Some("Containers"),
+        ("outlook", "Outlook-Files.csv") => Some("Files"),
+        ("outlook", "Outlook-Folders.csv") => Some("Folders"),
+        ("outlook", "Outlook-Items.csv") => Some("Items"),
+        ("outlook", "Outlook-Recipients.csv") => Some("Recipients"),
+        ("outlook", "Outlook-Attachments.csv") => Some("Attachments"),
+        ("outlook", "Outlook-Contacts.csv") => Some("Contacts"),
+        ("outlook", "Outlook-Calendar.csv") => Some("Calendar"),
+        ("outlook", "Outlook-Tasks.csv") => Some("Tasks"),
+        ("outlook", "Outlook-Properties.csv") => Some("Properties"),
         // `parse-ese ual` names each table's file `UAL-<table>.csv`, a table it doesn't know
         // under its own name, in letters, digits and `-_{}` only
         ("ual", name) => name
@@ -159,7 +168,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
         let stem = artifact_filename(task.artifact);
         if !matches!(
             task.artifact,
-            "amcache" | "browser" | "jump-lists" | "ual" | "webcache"
+            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
         ) && !stem.starts_with("Registry-")
         {
             continue;
@@ -221,7 +230,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                     for name in [old_stem, stem] {
                         if matches!(
                             task.artifact,
-                            "amcache" | "browser" | "jump-lists" | "ual" | "webcache"
+                            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
                         ) && path == category.join(name)
                         {
                             remove_generated_path(&path, root)?;

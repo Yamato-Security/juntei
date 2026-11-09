@@ -34,6 +34,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file defender-quarantine` | Defender quarantine tree သို့မဟုတ် entry | [Defender သီးခြားခွဲထားသော ဒေတာ](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK ဖြတ်လမ်းများ](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS ညွှန်ကြားချက်များ](filesystem.md) { #ntfs-commands }

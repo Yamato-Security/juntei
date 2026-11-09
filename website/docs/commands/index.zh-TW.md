@@ -34,6 +34,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file defender-quarantine` | Defender 隔離資料樹狀結構或項目 | [Defender 隔離資料](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`、`*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK 捷徑](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS 命令](filesystem.md) { #ntfs-commands }
