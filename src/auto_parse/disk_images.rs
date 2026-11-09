@@ -134,15 +134,21 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
             .to_string();
         let folder = util::unique_name(&root, image, &mut used);
         let point = base.join(&folder);
+        let mut damaged = false;
         let result = std::fs::create_dir(&point).and_then(|()| {
             let opened = disk_image::open(image)?;
             for warning in &opened.warnings {
                 error_msg(no_color, &format!("Warning: {shown_image}: {warning}"));
             }
+            damaged = !opened.warnings.is_empty();
             image_mount::mount_image(opened.image, image, &point, &unmounters)
         });
         match result {
             Ok(mount) => {
+                // a partial image is a failure, as an unreadable volume is
+                if damaged && mount.problems.is_empty() {
+                    failed += 1;
+                }
                 if !mount.problems.is_empty() {
                     failed += 1;
                     for problem in &mount.problems {

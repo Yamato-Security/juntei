@@ -108,7 +108,7 @@ defender = { package = "ys-defender-history-parser", git = "https://github.com/Y
 # (Linux only).
 [target.'cfg(target_os = "linux")'.dependencies]
 vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "feat/any-disk" }
-ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "ys/1.0.0", default-features = false }
+ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "ys/1.0.0" }
 
 [dev-dependencies]
 # The SYSTEM hive of test_files/shimcache/ is kept gzipped.

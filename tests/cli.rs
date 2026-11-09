@@ -5603,6 +5603,47 @@ fn auto_parse_e01_parses_the_systems_inside_every_image() {
     assert!(!mounted_from("third.vhdx"));
 }
 
+/// A damaged E01 image is read as far as it can be checked: the damage is reported, what is
+/// readable is parsed, and the run fails, as for an image with an unreadable volume.
+#[cfg(target_os = "linux")]
+#[test]
+fn auto_parse_e01_reads_a_damaged_image_and_reports_it() {
+    if !fuse_available() {
+        return;
+    }
+    let evidence = tempfile::tempdir().unwrap();
+    sample_e01(evidence.path(), "damaged");
+    // cut the second segment short: it holds the random bytes after the disk's partition
+    let second = evidence.path().join("damaged.E02");
+    let bytes = std::fs::read(&second).unwrap();
+    std::fs::write(&second, &bytes[..400_000]).unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let output = root.path().join("results");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--e01",
+        "-o",
+        output.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+    for line in [
+        "Warning: ./damaged.E01: the image is incomplete: its acquisition did not finish\n",
+        "Warning: ./damaged.E01: EWF1 section data exceeds file",
+        "  ./damaged.E01: mounted read-only (1 NTFS volume)\n",
+        "  damaged: ./damaged/C (./damaged.E01)\n",
+        "Failed: 0\n",
+    ] {
+        assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let (_, rows) = csv_rows(&output.join("damaged/ProcessExecution/Prefetch.csv"));
+    assert_eq!(rows.len(), 1);
+    assert!(!mounted_from("damaged.E01"));
+}
+
 #[cfg(target_os = "linux")]
 #[test]
 fn auto_parse_vhdx_bare_filename_keeps_original_directory_provenance() {

@@ -61,7 +61,8 @@ pub fn run(opts: &MountOptions) -> i32 {
         }
     };
     let image = opened.image;
-    let partial = !image.problems.is_empty();
+    // an unreadable volume, or damage the image was read past: what is mounted may lack files
+    let partial = !image.problems.is_empty() || !opened.warnings.is_empty();
     for problem in &image.problems {
         error_msg(no_color, &format!("Could not read {problem}"));
     }

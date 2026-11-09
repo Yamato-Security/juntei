@@ -140,6 +140,12 @@ fn open_e01(path: &Path) -> io::Result<Opened> {
             if unread == 1 { "" } else { "s" }
         ));
     }
+    // what lenient opening went past: damaged structures, with the chunks they make unreadable
+    warnings.extend(
+        ewf.lenient_findings()
+            .into_iter()
+            .map(|finding| finding.message),
+    );
     let segments = info.segment_count;
     let size = ewf.media_size();
     let sector = ewf.bytes_per_sector().unwrap_or(512);
