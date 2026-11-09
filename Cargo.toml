@@ -111,7 +111,7 @@ outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yama
 # read with Yamato Security's ys-e01-parser, a fork of ebrig/ewf-image (Apache-2.0), reader only
 # (Linux only).
 [target.'cfg(target_os = "linux")'.dependencies]
-vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "feat/any-disk" }
+vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
 ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "ys/1.0.0" }
 
 [dev-dependencies]
