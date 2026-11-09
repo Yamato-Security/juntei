@@ -23,20 +23,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX disk image များ { #vhdx-disk-images }
 
-`auto-parse --vhdx` သည် **Linux၊ macOS နှင့် Windows** တွင် VHDX ကို တိုက်ရိုက်ဖတ်သည်။ OS mount၊ FUSE သို့မဟုတ် administrator အခွင့်အရေး မလိုအပ်ပါ။
+`--vhdx` ဖြင့် `auto-parse` သည် [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) ကို သုံးကာ **Linux၊ macOS နှင့် Windows** တွင် VHDX ကို တိုက်ရိုက်ဖတ်သည်။ OS mount၊ FUSE သို့မဟုတ် administrator အခွင့်အရေး မလိုအပ်ပါ။
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser များအတွက် ဖိုင်လမ်းကြောင်းများ လိုအပ်သဖြင့် NTFS reader မှ ရရှိသော ဖိုင်များကို သီးသန့်ယာယီ directory သို့ ကူးယူသည်။ **ထိုဖိုင်များအားလုံးအတွက် ယာယီ disk နေရာ လုံလောက်စွာ ရှိရမည်။** မူရင်း image ကို read-only အဖြစ် ထားပြီး ပုံမှန်ပြီးဆုံးပါက ယာယီမိတ္တူများကို ဖယ်ရှားသည်။
+Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် NTFS reader မှ ရရှိသောဖိုင်များကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ **ရလဒ်ထွက်သော artifact များသာမက ထိုဖိုင်အားလုံးအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
 
-ဖတ်ရှုမှုအမှားများနှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` ၏ failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ဆက်လက်သိမ်းဆည်းပြီး input မပြည့်စုံပါက exit code 1 ပြန်ပေးသည်။
+Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည် ပုံမှန် pipeline ကို သုံးသည်။ `manifest.json` ရှိ `Image` သည် မူရင်း image ဖြစ်ပြီး `EvidenceRoot` သည် အတွင်း relative path ဖြစ်သည်။ Read error နှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ထိန်းသိမ်းပြီး input မပြည့်စုံလျှင် exit code 1 ပြန်ပေးသည်။ မလုံခြုံသော သို့မဟုတ် မရှင်းလင်းသောအမည်များကို ပြောင်းမပေးပါ။ Named NTFS stream များကို နောက်ထပ်ဖိုင်အဖြစ် မထုတ်ပေးသော်လည်း သာမန်ဖိုင်အဖြစ် စုဆောင်းထားသော artifact များကို အသုံးပြုနိုင်သည်။
 
-အခြား program များမှ ဖိုင်များကို ဖတ်နိုင်ရန် အသုံးပြုသော သီးခြား `mount` command သည် Linux၊ FUSE 3 နှင့် `/dev/fuse` access လိုအပ်ဆဲ ဖြစ်သည်။
-
-[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
+အခြား program များအတွက် filesystem ဖော်ပြသော သီးခြား [`mount` command](mount.md) သည် Linux FUSE လိုအပ်ဆဲ ဖြစ်သည်။ `auto-parse --vhdx` က ၎င်းကို မသုံးပါ။
 
 ## Output time zone { #output-time-zone }
 

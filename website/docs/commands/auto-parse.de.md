@@ -23,20 +23,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX-Disk-Images { #vhdx-disk-images }
 
-`auto-parse --vhdx` liest VHDX-Images nativ unter **Linux, macOS und Windows**. Ein Betriebssystem-Mount, FUSE oder Administratorrechte sind nicht erforderlich.
+Mit `--vhdx` liest `auto-parse` VHDX nativ unter **Linux, macOS und Windows**, über [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). OS-Mount, FUSE und Administratorrechte sind nicht erforderlich.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Die Parser benötigen Dateipfade. Juntei kopiert deshalb die vom NTFS-Leser bereitgestellten Dateien in ein privates temporäres Verzeichnis. **Dafür muss genügend temporärer Speicherplatz vorhanden sein.** Das Quellimage bleibt schreibgeschützt; bei regulärem Abschluss werden die Kopien entfernt.
+Die Parser benötigen Dateipfade. Daher kopiert Juntei die bereitgestellten NTFS-Dateien mit begrenzten Puffern in ein privates temporäres Verzeichnis. **Es muss Platz für alle bereitgestellten Dateien vorhanden sein**, nicht nur für Artefakte mit Ergebnissen. Nullbereiche werden, soweit unterstützt, als Löcher geschrieben. Namen, Struktur, Hardlinks und Änderungszeiten bleiben erhalten. LNK- und Sprunglisten-Quellzeiten stammen aus einem Snapshot der ursprünglichen NTFS-Metadaten, niemals aus den temporären Dateien. Regulärer Abschluss, auch mit Parserfehlern, entfernt die Kopien; erzwungene Beendigung kann sie zurücklassen. Die Quelle bleibt schreibgeschützt; ausstehende VHDX-Logs werden nur im Speicher angewendet.
 
-Lesefehler und unsichere Namen erscheinen in `ImageErrors` und als fehlgeschlagene Zeilen in `manifest.csv`. Lesbare Ergebnisse bleiben erhalten; unvollständige Eingaben führen zum Exitcode 1.
+Hosterkennung, CSV/JSON/JSONL und `-j` nutzen dieselbe Verarbeitung wie normale Beweisverzeichnisse. `Image` in `manifest.json` bezeichnet das Originalimage, `EvidenceRoot` den internen relativen Pfad. Lesefehler und unsichere Namen erscheinen in `ImageErrors` sowie Fehlerzeilen von `manifest.csv`. Lesbare Ergebnisse bleiben erhalten; unvollständige Eingaben ergeben Exitcode 1. Unsichere oder mehrdeutige Namen werden nicht umbenannt. Benannte NTFS-Streams werden nicht als zusätzliche Dateien extrahiert; als normale Dateien gesammelte Artefakte bleiben verfügbar.
 
-Der separate Befehl `mount` stellt Dateien anderen Programmen bereit und benötigt weiterhin Linux, FUSE 3 und Zugriff auf `/dev/fuse`.
-
-[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
+Der separate [`mount`-Befehl](mount.md) stellt anderen Programmen ein Dateisystem bereit und benötigt weiterhin Linux FUSE. `auto-parse --vhdx` verwendet ihn nicht.
 
 ## Ausgabezeitzone { #output-time-zone }
 

@@ -188,7 +188,13 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
                 problem(&mut inputs, &source, "", e.to_string());
             }
         }
-        inputs.mounts.push((point, source));
+        // Discovery canonicalizes its root. macOS resolves /var to /private/var
+        // and Windows adds a verbatim prefix; provenance must use that same
+        // spelling rather than the temporary directory's original alias.
+        match point.canonicalize() {
+            Ok(point) => inputs.mounts.push((point, source)),
+            Err(error) => problem(&mut inputs, &source, "", error.to_string()),
+        }
     }
     for entry in &inputs.problems {
         let location = if entry.path.is_empty() {

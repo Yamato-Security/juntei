@@ -53,17 +53,21 @@ Display Settings:
 
 ## Análisis nativo de imágenes { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` lee imágenes VHDX de forma nativa en **Linux, macOS y Windows**, sin montaje del sistema, FUSE ni privilegios de administrador.
+Con `--vhdx`, `auto-parse` lee VHDX de forma nativa en **Linux, macOS y Windows** mediante [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). No requiere montaje del sistema, FUSE ni privilegios de administrador.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Los analizadores necesitan rutas de archivo: Juntei copia los archivos expuestos por el lector NTFS a un directorio temporal privado. **Reserve espacio temporal suficiente para todos esos archivos.** La imagen original permanece en modo de solo lectura y el espacio temporal se elimina al finalizar normalmente.
+Los parsers necesitan rutas: Juntei copia los archivos NTFS expuestos a un espacio temporal privado con búferes limitados. **Reserve espacio para todos esos archivos**, no solo los artefactos que produzcan resultados. Las regiones nulas se escriben como huecos cuando se admite. Se conservan nombres, estructura, enlaces físicos y fechas de modificación. Las fechas de origen de LNK y Jump Lists provienen de los metadatos NTFS originales, nunca de las copias temporales. La finalización normal, incluso con errores de parser, elimina las copias; una terminación forzada puede dejarlas. La fuente es solo lectura y los registros VHDX pendientes se aplican únicamente en memoria.
 
-Los errores de lectura y nombres no seguros se registran en `ImageErrors` y en las filas fallidas de `manifest.csv`. Se conservan los resultados legibles y la salida es 1 si la entrada está incompleta.
+La detección de hosts, CSV/JSON/JSONL y `-j` usan el flujo habitual. `Image` en `manifest.json` identifica la imagen original; `EvidenceRoot`, la ruta relativa interna. Los errores de lectura y nombres inseguros se registran en `ImageErrors` y filas fallidas de `manifest.csv`. Se conservan los resultados legibles; una entrada incompleta devuelve 1. No se renombran nombres peligrosos o ambiguos. Los flujos NTFS con nombre no se extraen como archivos adicionales; los artefactos recogidos como archivos normales siguen disponibles.
 
-El comando `mount` para exponer archivos a otros programas sigue requiriendo Linux, FUSE 3 y acceso a `/dev/fuse`.
+El [`mount` independiente](mount.md) expone un sistema de archivos a otros programas y sigue necesitando Linux FUSE. `auto-parse --vhdx` no lo utiliza.
 
-[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
+## Requisitos del montaje visible para el sistema { #os-visible-mount-requirements }
+
+`juntei mount` necesita Linux FUSE 3 (`fusermount3`) y acceso a `/dev/fuse`. En Windows y macOS, use el análisis nativo anterior.

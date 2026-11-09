@@ -22,20 +22,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX 디스크 이미지 { #vhdx-disk-images }
 
-`auto-parse --vhdx`는 **Linux, macOS, Windows**에서 VHDX를 네이티브로 읽습니다. OS 마운트, FUSE, 관리자 권한이 필요하지 않습니다.
+`--vhdx`를 지정하면 `auto-parse`는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)로 **Linux, macOS, Windows**에서 VHDX를 네이티브로 읽습니다. OS 마운트, FUSE, 관리자 권한이 필요하지 않습니다.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-파서는 파일 경로를 요구하므로 NTFS 리더가 제공하는 파일을 비공개 임시 디렉터리에 복사합니다. **해당 파일을 저장할 충분한 임시 디스크 공간을 확보하세요.** 원본 이미지는 읽기 전용이며 정상 종료 시 임시 복사본을 삭제합니다.
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일을 비공개 임시 디렉터리에 스트리밍 복사합니다. **결과가 생성되는 아티팩트뿐 아니라 제공되는 모든 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
 
-읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록합니다. 읽을 수 있는 증거의 결과는 유지하며, 불완전한 입력은 종료 코드 1을 반환합니다.
+호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
 
-다른 프로그램에 파일을 제공하는 별도 `mount` 명령은 여전히 Linux, FUSE 3 및 `/dev/fuse` 접근 권한을 요구합니다.
-
-[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
+다른 프로그램에 파일시스템을 제공하는 별도 [`mount` 명령](mount.md)은 Linux FUSE가 필요합니다. `auto-parse --vhdx`는 이를 사용하지 않습니다.
 
 ## 출력 표준 시간대 { #output-time-zone }
 

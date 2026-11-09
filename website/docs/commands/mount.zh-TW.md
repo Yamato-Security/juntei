@@ -51,17 +51,21 @@ Display Settings:
 
 ## 原生映像分析 { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` 可在 **Linux、macOS 和 Windows** 原生讀取 VHDX，無需 OS 掛載、FUSE 或系統管理員權限。
+使用 `--vhdx` 時，`auto-parse` 透過 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) 在 **Linux、macOS、Windows** 原生讀取 VHDX，無需 OS 掛載、FUSE 或系統管理員權限。
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-解析器需要檔案路徑，因此 Juntei 會將 NTFS 讀取器公開的檔案複製至專用暫存目錄。**請預留足夠的暫存磁碟空間以容納這些檔案。** 原始映像維持唯讀，正常結束時會刪除暫存副本。
+解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案串流複製至專用暫存目錄。**請預留足夠空間容納全部公開的檔案**，而不只是會產生結果的鑑識產物。讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
 
-讀取失敗及不安全的檔名會記錄於 `ImageErrors` 與 `manifest.csv` 的失敗列。仍會保留可讀取資料的結果；輸入不完整時結束代碼為 1。
+主機偵測、CSV/JSON/JSONL 和 `-j` 使用一般證據目錄的解析流程。`manifest.json` 中的 `Image` 識別原始映像；`EvidenceRoot` 識別內部相對路徑。讀取失敗或不安全的名稱會記錄在 `ImageErrors` 與 `manifest.csv` 的失敗列。保留可讀取資料的結果；輸入不完整時結束代碼為 1。不會擅自重新命名不安全或曖昧的名稱，也不會將具名 NTFS 串流抽取為額外檔案；初步蒐證映像中已收集為一般檔案的證據仍可使用。
 
-供其他程式存取檔案的獨立 `mount` 命令仍需要 Linux、FUSE 3 及 `/dev/fuse` 存取權。
+獨立的 [`mount` 命令](mount.md) 將檔案系統公開給其他程式，仍需要 Linux FUSE；`auto-parse --vhdx` 不使用此命令。
 
-[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
+## OS 可見掛載的需求 { #os-visible-mount-requirements }
+
+`juntei mount` 需要 Linux FUSE 3（`fusermount3`）和 `/dev/fuse` 存取權。Windows 和 macOS 請使用上述原生解析方式。

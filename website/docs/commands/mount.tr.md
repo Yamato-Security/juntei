@@ -54,17 +54,21 @@ Display Settings:
 
 ## İmajları yerel olarak analiz etme { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx`, VHDX imajlarını **Linux, macOS ve Windows** üzerinde yerel olarak okur; işletim sistemi bağlaması, FUSE veya yönetici yetkisi gerekmez.
+`--vhdx` ile `auto-parse`, [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) üzerinden **Linux, macOS ve Windows** üzerinde VHDX’i yerel olarak okur. OS bağlaması, FUSE veya yönetici yetkisi gerekmez.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Ayrıştırıcılar dosya yolu gerektirdiğinden Juntei, NTFS okuyucusunun sunduğu dosyaları özel bir geçici dizine kopyalar. **Bu dosyalar için yeterli geçici disk alanı ayırın.** Kaynak imaj salt okunur kalır; normal tamamlanmada geçici kopyalar silinir.
+Ayrıştırıcılar dosya yolu gerektirir; Juntei sunulan NTFS dosyalarını sınırlı tamponlarla özel bir geçici dizine kopyalar. **Yalnızca sonuç üreten eserler değil, tüm bu dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
 
-Okuma hataları ve güvenli olmayan adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara kaydedilir. Okunabilen sonuçlar korunur; eksik girdiler çıkış kodu 1 döndürür.
+Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `manifest.json` içindeki `Image` özgün imajı, `EvidenceRoot` iç göreli yolu tanımlar. Okuma hataları ve güvensiz adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara yazılır. Okunabilir sonuçlar korunur; eksik girdiler 1 döndürür. Güvensiz veya belirsiz adlar yeniden adlandırılmaz. Adlandırılmış NTFS akışları ek dosya olarak çıkarılmaz; normal dosya olarak toplanmış eserler kullanılabilir.
 
-Dosyaları diğer programlara sunan ayrı `mount` komutu için hâlâ Linux, FUSE 3 ve `/dev/fuse` erişimi gerekir.
+Ayrı [`mount` komutu](mount.md) dosya sistemini başka programlara sunar ve Linux FUSE gerektirir. `auto-parse --vhdx` bunu kullanmaz.
 
-[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
+## OS tarafından görülen bağlama gereksinimleri { #os-visible-mount-requirements }
+
+`juntei mount`, Linux FUSE 3 (`fusermount3`) ve `/dev/fuse` erişimi gerektirir. Windows ve macOS’ta yukarıdaki yerel analizi kullanın.

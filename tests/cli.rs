@@ -5510,6 +5510,41 @@ fn auto_parse_vhdx_refuses_input_as_timeline_even_through_a_hard_link() {
     }
 }
 
+#[cfg(unix)]
+#[test]
+fn auto_parse_vhdx_keeps_image_provenance_through_a_temporary_directory_alias() {
+    let dir = tempfile::tempdir().unwrap();
+    let actual = dir.path().join("actual");
+    let alias = dir.path().join("alias");
+    std::fs::create_dir(&actual).unwrap();
+    std::os::unix::fs::symlink(&actual, &alias).unwrap();
+    let image = dir.path().join("alias-case.vhdx");
+    sample_vhdx(&image);
+    let output = dir.path().join("output");
+    let r = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args([
+            "auto-parse",
+            "--vhdx",
+            "-d",
+            image.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ])
+        .env("TMPDIR", &alias)
+        .output()
+        .unwrap();
+    assert!(r.status.success(), "{}", String::from_utf8_lossy(&r.stdout));
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(manifest["Hosts"][0]["Image"], "./alias-case.vhdx");
+    assert_no_absolute_paths(&output, &String::from_utf8_lossy(&r.stdout), &[dir.path()]);
+    assert_eq!(std::fs::read_dir(&actual).unwrap().count(), 0);
+}
+
 #[test]
 fn staged_shell_files_use_original_source_times_in_every_format() {
     let dir = tempfile::tempdir().unwrap();

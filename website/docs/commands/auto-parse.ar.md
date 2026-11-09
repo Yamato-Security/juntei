@@ -23,20 +23,20 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## صور أقراص VHDX { #vhdx-disk-images }
 
-يقرأ `auto-parse --vhdx` صور VHDX مباشرة على **Linux وmacOS وWindows**، دون تركيب عبر نظام التشغيل أو FUSE أو صلاحيات مسؤول.
+مع `--vhdx` يقرأ `auto-parse` صور VHDX مباشرة على **Linux وmacOS وWindows** عبر [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)، دون تركيب نظام أو FUSE أو صلاحيات مسؤول.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-تحتاج المحللات إلى مسارات ملفات، لذلك ينسخ Juntei الملفات التي يتيحها قارئ NTFS إلى مجلد مؤقت خاص. **يجب توفير مساحة مؤقتة كافية لهذه الملفات.** تبقى الصورة الأصلية للقراءة فقط وتُحذف النسخ عند انتهاء التشغيل بشكل طبيعي.
+تحتاج المحللات إلى مسارات، لذلك ينسخ Juntei ملفات NTFS المتاحة إلى مساحة مؤقتة خاصة بمخازن قراءة محدودة. **وفّر مساحة لجميع هذه الملفات** وليس فقط الآثار المنتجة للسجلات. تُكتب مناطق الأصفار كفجوات حيثما أمكن. تُحفظ الأسماء والبنية والروابط الصلبة وأوقات التعديل. تأتي أوقات مصادر LNK وJump Lists من لقطة بيانات NTFS الأصلية لا من النسخ المؤقتة. يحذف الانتهاء الطبيعي، بما فيه أخطاء المحللات، النسخ؛ وقد يتركها الإنهاء القسري. المصدر للقراءة فقط وتُطبّق سجلات VHDX المعلقة في الذاكرة وحدها.
 
-تُسجّل أخطاء القراءة والأسماء غير الآمنة في `ImageErrors` والصفوف الفاشلة في `manifest.csv`. تُحفظ النتائج القابلة للقراءة، وتكون حالة الخروج 1 عند وجود مدخلات غير مكتملة.
+يستخدم اكتشاف الأجهزة وCSV/JSON/JSONL و`-j` مسار المعالجة المعتاد. يحدد `Image` في `manifest.json` الصورة الأصلية، ويحدد `EvidenceRoot` المسار النسبي داخلها. تُسجّل أخطاء القراءة والأسماء غير الآمنة في `ImageErrors` وصفوف الفشل في `manifest.csv`. تُحفظ النتائج المقروءة ويُرجع الإدخال غير المكتمل الرمز 1. لا تُعاد تسمية الأسماء الخطرة أو الملتبسة. لا تُستخرج تدفقات NTFS المسماة كملفات إضافية؛ وتبقى الآثار المجموعة كملفات عادية متاحة.
 
-لا يزال أمر `mount` المنفصل، الذي يتيح الملفات للبرامج الأخرى، يتطلب Linux وFUSE 3 والوصول إلى `/dev/fuse`.
-
-[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
+يعرض أمر [`mount` المنفصل](mount.md) نظام الملفات للبرامج الأخرى ويحتاج إلى Linux FUSE. لا يستخدمه `auto-parse --vhdx`.
 
 ## المنطقة الزمنية للإخراج { #output-time-zone }
 

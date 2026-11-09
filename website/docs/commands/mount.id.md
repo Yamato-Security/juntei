@@ -52,17 +52,21 @@ Display Settings:
 
 ## Analisis image secara native { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` membaca VHDX secara native di **Linux, macOS, dan Windows**, tanpa mount OS, FUSE, atau hak administrator.
+Dengan `--vhdx`, `auto-parse` membaca VHDX secara native di **Linux, macOS, dan Windows** melalui [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). Tidak perlu mount OS, FUSE, atau hak administrator.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser membutuhkan jalur berkas: Juntei menyalin berkas yang disediakan pembaca NTFS ke direktori sementara privat. **Sediakan ruang disk sementara yang cukup untuk semua berkas tersebut.** Image sumber tetap hanya-baca dan salinan dihapus saat proses selesai secara normal.
+Parser memerlukan jalur: Juntei menyalin berkas NTFS yang tersedia ke ruang sementara privat dengan buffer terbatas. **Sediakan ruang untuk semua berkas tersebut**, bukan hanya artefak yang menghasilkan rekaman. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
 
-Kesalahan baca dan nama yang tidak aman dicatat dalam `ImageErrors` dan baris gagal `manifest.csv`. Hasil yang dapat dibaca tetap disimpan; input tidak lengkap menghasilkan kode keluar 1.
+Penemuan host, CSV/JSON/JSONL, dan `-j` memakai alur biasa. `Image` dalam `manifest.json` menunjukkan image asli; `EvidenceRoot` menunjukkan jalur relatif di dalamnya. Kesalahan baca dan nama tidak aman dicatat dalam `ImageErrors` dan baris gagal `manifest.csv`. Hasil yang terbaca dipertahankan; input tidak lengkap mengembalikan 1. Nama berbahaya atau ambigu tidak diganti. Stream NTFS bernama tidak diekstrak sebagai berkas tambahan; artefak yang sudah dikumpulkan sebagai berkas biasa tetap tersedia.
 
-Perintah `mount` terpisah untuk menyediakan berkas kepada program lain tetap memerlukan Linux, FUSE 3, dan akses ke `/dev/fuse`.
+Perintah [`mount` terpisah](mount.md) menyediakan sistem berkas bagi program lain dan tetap memerlukan Linux FUSE. `auto-parse --vhdx` tidak memakainya.
 
-[English: implementation details and limitations](https://yamato-security.github.io/juntei/commands/auto-parse/#vhdx-disk-images).
+## Persyaratan mount yang terlihat oleh OS { #os-visible-mount-requirements }
+
+`juntei mount` memerlukan Linux FUSE 3 (`fusermount3`) dan akses ke `/dev/fuse`. Di Windows dan macOS, gunakan analisis native di atas.

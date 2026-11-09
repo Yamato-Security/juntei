@@ -50,13 +50,13 @@ Display Settings:
 
 ## auto-parse でイメージを解析する { #parsing-every-image-with-auto-parse }
 
-`--vhdx` を指定すると、[ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用して
+`--vhdx` を指定すると、`auto-parse` は [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用して
 **Linux、macOS、Windows** で VHDX をネイティブに読み取ります。OS へのマウント、FUSE ドライバー、管理者権限は不要です。
 
 ```bash
-# ディレクトリ内のイメージを再帰的に検索
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-# 単一イメージ
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
@@ -80,6 +80,6 @@ LNK と Jump List のソース作成・更新・アクセス時刻は、一時�
 他のプログラムにファイルシステムを公開する [`mount` コマンド](mount.md) は、引き続き Linux の FUSE を必要とします。
 `auto-parse --vhdx` はこのコマンドを使用しません。
 
-## OS へのマウント要件
+## OS へのマウント要件 { #os-visible-mount-requirements }
 
 `juntei mount` は Linux の FUSE 3 (`fusermount3`) と `/dev/fuse` へのアクセスを必要とします。Windows と macOS では、上記のネイティブ解析を使用してください。

@@ -17,13 +17,13 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX ディスクイメージ { #vhdx-disk-images }
 
-`--vhdx` を指定すると、[ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用して
+`--vhdx` を指定すると、`auto-parse` は [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用して
 **Linux、macOS、Windows** で VHDX をネイティブに読み取ります。OS へのマウント、FUSE ドライバー、管理者権限は不要です。
 
 ```bash
-# ディレクトリ内のイメージを再帰的に検索
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
-# 単一イメージ
+# One image
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
