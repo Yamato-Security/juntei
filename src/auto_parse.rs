@@ -1041,10 +1041,9 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             p(
                 JunteiColor::Red.rdg(no_color),
                 &format!(
-                    "  {} / {}: {} (log: {})",
+                    "  {} / {}: Parsing error (log: {})",
                     result.computer,
                     result.artifact,
-                    result.error.as_deref().unwrap_or("parser failed"),
                     shown(Path::new(&result.log))
                 ),
                 true,

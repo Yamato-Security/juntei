@@ -1312,6 +1312,62 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
 }
 
 #[test]
+fn auto_parse_failure_summary_labels_the_error_and_links_to_the_parser_log() {
+    let root = tempfile::tempdir().unwrap();
+    let windows = root.path().join("evidence/HOST1/C/Windows");
+    let programs = windows.join("AppCompat/Programs");
+    std::fs::create_dir_all(&programs).unwrap();
+    std::fs::create_dir_all(windows.join("System32")).unwrap();
+    std::fs::write(programs.join("Amcache.hve"), b"not a registry hive").unwrap();
+    let prefetch = windows.join("Prefetch");
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
+        prefetch.join("CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+
+    let r = run_at(
+        root.path(),
+        &[
+            "auto-parse",
+            "-d",
+            "evidence",
+            "-o",
+            "parsed",
+            "-T",
+            "2",
+            "-K",
+        ],
+    );
+    assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let log = "parsed/HOST1/FileExistence/Registry-Amcache-logs.txt";
+    let summary = r.stdout.split("Results Summary:").nth(1).unwrap();
+    let failure = summary
+        .lines()
+        .find(|line| line.contains("HOST1 / amcache:"))
+        .unwrap();
+    assert_eq!(
+        failure,
+        format!("  HOST1 / amcache: Parsing error (log: {log})")
+    );
+    let details = std::fs::read_to_string(root.path().join(log)).unwrap();
+    assert!(details.contains("Could not parse"), "{details}");
+    assert!(details.contains("Elapsed time:"), "{details}");
+    let (_, tasks) = csv_rows(&root.path().join("parsed/manifest.csv"));
+    assert!(
+        tasks
+            .iter()
+            .any(|task| task["Artifact"] == "amcache" && task["Status"] == "failed")
+    );
+    assert!(
+        tasks
+            .iter()
+            .any(|task| task["Artifact"] == "prefetch" && task["Status"] == "succeeded")
+    );
+}
+
+#[test]
 fn auto_parse_refuses_an_output_parent_of_the_evidence() {
     let container = tempfile::tempdir().unwrap();
     let evidence = container.path().join("evidence");
