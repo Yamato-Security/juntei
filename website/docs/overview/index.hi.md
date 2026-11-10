@@ -23,7 +23,7 @@ Juntei memory-safe Rust में लिखा गया एक Windows फ़�
 
 ## Juntei क्या नहीं करता { #what-juntei-does-not-do }
 
-Juntei live disk acquire नहीं करता और न ही साक्ष्य संरक्षण का स्थान लेता है, और वह केवल VHDX disk images को ही
+Juntei live disk acquire नहीं करता और न ही साक्ष्य संरक्षण का स्थान लेता है, और वह केवल VHDX / E01 / Ex01 disk images को ही
 mount करता है, read-only रूप में। यह
 हर आर्टिफ़ैक्ट को स्वचालित रूप से एक ही incident कथा में नहीं जोड़ता। यह आपके द्वारा दिए गए
 साक्ष्य को पार्स करता है और जाँच तथा correlation के लिए उपयुक्त records बनाता है।

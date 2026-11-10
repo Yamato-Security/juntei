@@ -4,6 +4,8 @@ Juntei 剖析已從 Windows 收集的檔案。請使用可信任的擷取工具�
 
 [auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
+
 ## 常見位置 { #common-locations }
 
 | 跡證 | 一般位置 |

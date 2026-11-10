@@ -47,7 +47,7 @@ pub enum Commands {
     )]
     AutoParse(AutoParseOptions),
 
-    /// Mount a VHDX disk image read-only (FUSE)
+    /// Mount a VHDX or E01 disk image read-only (FUSE)
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -510,8 +510,11 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Input"), long, display_order = 102)]
     pub vhdx: bool,
 
+    /// Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+    #[arg(help_heading = Some("Input"), long, display_order = 103)]
+    pub e01: bool,
     /// Directory for private image staging (default: output filesystem)
-    #[arg(help_heading = Some("Input"), long, value_name = "DIR", display_order = 103)]
+    #[arg(help_heading = Some("Input"), long, value_name = "DIR", display_order = 104)]
     pub temp_dir: Option<PathBuf>,
 
     /// New directory in which to create per-computer results
@@ -1285,7 +1288,7 @@ impl SrumOptions {
 
 #[derive(Args, Clone, Debug, Default)]
 pub struct MountOptions {
-    /// The disk image (VHDX)
+    /// The disk image (VHDX or E01; a split E01 image from its first segment)
     #[arg(help_heading = Some("Input"), value_name = "IMAGE", display_order = 100)]
     pub image: PathBuf,
 

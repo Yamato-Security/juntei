@@ -5404,7 +5404,7 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     let (_, rows) = csv_rows(&output.join("manifest.csv"));
     assert_eq!(
         rows.iter()
-            .filter(|row| row["Artifact"] == "vhdx" && row["Status"] == "failed")
+            .filter(|row| row["Artifact"] == "disk-image" && row["Status"] == "failed")
             .count(),
         2
     );
@@ -5429,7 +5429,11 @@ fn auto_parse_vhdx_parses_the_systems_inside_every_image() {
     assert_no_absolute_paths(&output, &r.stdout, &[evidence.path(), root.path()]);
     for file in walk_files(&output) {
         let text = String::from_utf8_lossy(&std::fs::read(&file).unwrap()).into_owned();
-        assert!(!text.contains("juntei-vhdx-"), "{}", file.display());
+        assert!(
+            !text.contains("juntei-vhdx-") && !text.contains("juntei-images-"),
+            "{}",
+            file.display()
+        );
     }
 }
 
@@ -5510,7 +5514,11 @@ fn auto_parse_vhdx_refuses_input_as_timeline_even_through_a_hard_link() {
             "-q",
         ]);
         assert_eq!(r.code, 1, "{}", r.stdout);
-        assert!(r.stdout.contains("also a VHDX input"), "{}", r.stdout);
+        assert!(
+            r.stdout.contains("overlaps an input image or segment"),
+            "{}",
+            r.stdout
+        );
         assert!(!output.exists());
         assert_eq!(std::fs::read(&image).unwrap(), original);
     }
@@ -5666,55 +5674,58 @@ fn auto_parse_vhdx_uses_the_output_filesystem_unless_a_staging_directory_is_give
 }
 
 #[test]
-fn auto_parse_vhdx_rejects_staging_inside_output_before_opening_images() {
-    let dir = tempfile::tempdir().unwrap();
-    let image = dir.path().join("invalid.vhdx");
-    // An early validation failure must take priority over an unreadable image.
-    std::fs::write(&image, b"not a VHDX image").unwrap();
-    let output = dir.path().join("output");
-    std::fs::create_dir(&output).unwrap();
-    let nested = output.join("staging");
-    std::fs::create_dir(&nested).unwrap();
-    let marker = output.join("keep.txt");
-    std::fs::write(&marker, b"existing output").unwrap();
-    let staging_paths = vec![output.clone(), nested, output.join("not-created")];
-    #[cfg(unix)]
-    let staging_paths = {
-        let mut paths = staging_paths;
-        let alias = dir.path().join("alias");
-        std::os::unix::fs::symlink(&output, &alias).unwrap();
-        paths.push(alias);
-        paths
-    };
-    for staging in staging_paths {
-        let result = run(&[
-            "auto-parse",
-            "--vhdx",
-            "-d",
-            image.to_str().unwrap(),
-            "-o",
-            output.to_str().unwrap(),
-            "--temp-dir",
-            staging.to_str().unwrap(),
-            "--clobber",
-            "-K",
-            "-q",
-        ]);
-        assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
-        let messages = format!("{}\n{}", result.stdout, result.stderr);
-        assert!(messages.contains("--temp-dir must be outside the output directory"));
-        assert!(!messages.contains("VHDX images:"), "{messages}");
-        assert!(
-            !messages.contains(dir.path().to_str().unwrap()),
-            "{messages}"
-        );
-        assert_eq!(std::fs::read(&marker).unwrap(), b"existing output");
-        assert!(!output.join("manifest.json").exists());
-        assert!(!std::fs::read_dir(dir.path()).unwrap().any(|entry| {
-            let name = entry.unwrap().file_name();
-            let name = name.to_string_lossy();
-            name.starts_with("juntei-vhdx-") || name.starts_with(".juntei-image-control-")
-        }));
+fn auto_parse_native_images_reject_staging_inside_output_before_opening_images() {
+    for (flag, extension) in [("--vhdx", "vhdx"), ("--e01", "E01")] {
+        let dir = tempfile::tempdir().unwrap();
+        let image = dir.path().join(format!("invalid.{extension}"));
+        // An early validation failure must take priority over an unreadable image.
+        std::fs::write(&image, b"not a VHDX image").unwrap();
+        let output = dir.path().join("output");
+        std::fs::create_dir(&output).unwrap();
+        let nested = output.join("staging");
+        std::fs::create_dir(&nested).unwrap();
+        let marker = output.join("keep.txt");
+        std::fs::write(&marker, b"existing output").unwrap();
+        let staging_paths = vec![output.clone(), nested, output.join("not-created")];
+        #[cfg(unix)]
+        let staging_paths = {
+            let mut paths = staging_paths;
+            let alias = dir.path().join("alias");
+            std::os::unix::fs::symlink(&output, &alias).unwrap();
+            paths.push(alias);
+            paths
+        };
+        for staging in staging_paths {
+            let result = run(&[
+                "auto-parse",
+                flag,
+                "-d",
+                image.to_str().unwrap(),
+                "-o",
+                output.to_str().unwrap(),
+                "--temp-dir",
+                staging.to_str().unwrap(),
+                "--clobber",
+                "-K",
+                "-q",
+            ]);
+            assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+            let messages = format!("{}\n{}", result.stdout, result.stderr);
+            assert!(messages.contains("--temp-dir must be outside the output directory"));
+            assert!(!messages.contains("VHDX images:"), "{messages}");
+            assert!(!messages.contains("E01 images:"), "{messages}");
+            assert!(
+                !messages.contains(dir.path().to_str().unwrap()),
+                "{messages}"
+            );
+            assert_eq!(std::fs::read(&marker).unwrap(), b"existing output");
+            assert!(!output.join("manifest.json").exists());
+            assert!(!std::fs::read_dir(dir.path()).unwrap().any(|entry| {
+                let name = entry.unwrap().file_name();
+                let name = name.to_string_lossy();
+                name.starts_with("juntei-vhdx-") || name.starts_with(".juntei-image-control-")
+            }));
+        }
     }
 }
 
@@ -5955,6 +5966,472 @@ fn staged_shell_files_use_original_source_times_in_every_format() {
                 || r.stdout.contains("Original image metadata is missing")
         );
     }
+}
+
+/// The sample E01 image (test_files/e01, two segments) copied to `dir` as `<stem>.E01` and
+/// `<stem>.E02`; returns the first segment.
+fn sample_e01(dir: &Path, stem: &str) -> PathBuf {
+    for segment in ["E01", "E02"] {
+        std::fs::copy(
+            repo(&format!("test_files/e01/sample.{segment}")),
+            dir.join(format!("{stem}.{segment}")),
+        )
+        .unwrap();
+    }
+    dir.join(format!("{stem}.E01"))
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn mount_serves_an_e01_image_from_its_segments() {
+    let dir = tempfile::tempdir().unwrap();
+    let image = sample_e01(dir.path(), "mount-test");
+    let point = dir.path().join("mnt");
+    std::fs::create_dir(&point).unwrap();
+    // a logical evidence file holds files, not a disk
+    let logical = dir.path().join("files.L01");
+    std::fs::write(&logical, b"LVF\x09\x0d\x0a\xff\x00").unwrap();
+    let r = run(&[
+        "mount",
+        logical.to_str().unwrap(),
+        point.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout
+            .contains("it is a logical evidence file (L01 or Lx01), which holds files, not a disk"),
+        "{}",
+        r.stdout
+    );
+    if !fuse_available() {
+        return;
+    }
+    let child = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args([
+            "mount",
+            image.to_str().unwrap(),
+            point.to_str().unwrap(),
+            "-K",
+            "-q",
+        ])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    let data = point.join("C/Users/sample/Data");
+    for _ in 0..100 {
+        if data.is_dir() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    assert!(data.is_dir(), "not mounted");
+    assert!(mounted_from("mount-test.E01"));
+    let sha256 = |path: &Path| {
+        use sha2::{Digest, Sha256};
+        format!("{:x}", Sha256::digest(std::fs::read(path).unwrap()))
+    };
+    // the same files as in the VHDX
+    assert_eq!(
+        std::fs::read(data.join("small.txt")).unwrap(),
+        b"resident content\n"
+    );
+    assert_eq!(
+        sha256(&data.join("fragmented.bin")),
+        "dad53fd22d62e1acbf48ababc172c8eb3ffb45486b261fb960a2990199a8e459"
+    );
+    assert_eq!(
+        sha256(&data.join("compressed/text.log")),
+        "cc3c52b090233f44ecfc2dbd90adc6c787e071872ca488fa96eae24af8162f98"
+    );
+    assert!(std::fs::write(data.join("new.txt"), b"x").is_err());
+    let killed = Command::new("kill")
+        .args(["-INT", &child.id().to_string()])
+        .status()
+        .unwrap();
+    assert!(killed.success());
+    let output = child.wait_with_output().unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "{stdout}");
+    assert!(stdout.contains("Format: E01 (2 segments)\n"), "{stdout}");
+    assert!(stdout.contains("Disk size: 33.2 MiB\n"), "{stdout}");
+    assert!(stdout.contains("NTFS volumes: 1 ("), "{stdout}");
+    assert!(!mounted_from("mount-test.E01"));
+    assert!(!data.exists());
+}
+
+#[test]
+fn auto_parse_e01_parses_the_systems_inside_every_image() {
+    let evidence = tempfile::tempdir().unwrap();
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--e01",
+        "-o",
+        evidence.path().join("unused").to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout
+            .contains("No E01 disk images (*.E01, *.Ex01) were found in"),
+        "{}",
+        r.stdout
+    );
+    sample_e01(evidence.path(), "first-e01");
+    std::fs::create_dir(evidence.path().join("sub")).unwrap();
+    sample_e01(&evidence.path().join("sub"), "second-e01");
+    std::fs::write(evidence.path().join("broken-e01.E01"), b"not an E01").unwrap();
+    sample_vhdx(&evidence.path().join("third.vhdx"));
+    let root = tempfile::tempdir().unwrap();
+
+    // --e01: the E01 images only, each once (not their second segments)
+    let output = root.path().join("e01");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--e01",
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+    let stdout = r.stdout.replace('\\', "/");
+    for line in [
+        "E01 images: 3\n",
+        "Could not read ./broken-e01.E01: it is not a VHDX or E01 disk image",
+        "  ./first-e01.E01: reading natively (1 NTFS volume)\n",
+        "  ./sub/second-e01.E01: reading natively (1 NTFS volume)\n",
+        "Windows systems: 2\n",
+        "  first-e01: ./first-e01/C (./first-e01.E01)\n",
+        "Failed: 0\n",
+    ] {
+        assert!(stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    assert!(!r.stdout.contains("third.vhdx"), "{}", r.stdout);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let hosts = manifest["Hosts"].as_array().unwrap();
+    assert_eq!(hosts.len(), 2);
+    assert_eq!(hosts[0]["Image"], "./first-e01.E01");
+    assert_eq!(hosts[1]["Image"], "./sub/second-e01.E01");
+    for host in ["first-e01", "sub_second-e01"] {
+        let (_, rows) = csv_rows(&output.join(host).join("ProcessExecution/Prefetch.csv"));
+        assert_eq!(rows.len(), 1, "{host}");
+    }
+    assert_no_absolute_paths(&output, &r.stdout, &[evidence.path(), root.path()]);
+
+    // --vhdx and --e01 together: both kinds
+    std::fs::remove_file(evidence.path().join("broken-e01.E01")).unwrap();
+    let output = root.path().join("both");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--vhdx",
+        "--e01",
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(r.stdout.contains("VHDX or E01 images: 3\n"), "{}", r.stdout);
+    assert!(r.stdout.contains("Windows systems: 3\n"), "{}", r.stdout);
+}
+
+/// A damaged E01 image is read as far as it can be checked: the damage is reported, what is
+/// readable is parsed, and the run fails, as for an image with an unreadable volume.
+#[test]
+fn auto_parse_e01_reads_a_damaged_image_and_reports_it() {
+    let evidence = tempfile::tempdir().unwrap();
+    sample_e01(evidence.path(), "damaged");
+    // cut the second segment short: it holds the random bytes after the disk's partition
+    let second = evidence.path().join("damaged.E02");
+    let bytes = std::fs::read(&second).unwrap();
+    std::fs::write(&second, &bytes[..400_000]).unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let output = root.path().join("results");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--e01",
+        "-o",
+        output.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+    let stdout = r.stdout.replace('\\', "/");
+    for line in [
+        "Could not read ./damaged.E01: the image is incomplete: its acquisition did not finish\n",
+        "Could not read ./damaged.E01: EWF1 section data exceeds file",
+        "  ./damaged.E01: reading natively (1 NTFS volume)\n",
+        "  damaged: ./damaged/C (./damaged.E01)\n",
+        "Failed: 0\n",
+    ] {
+        assert!(stdout.contains(line), "{line}\n{}", r.stdout);
+    }
+    let (_, rows) = csv_rows(&output.join("damaged/ProcessExecution/Prefetch.csv"));
+    assert_eq!(rows.len(), 1);
+}
+
+#[test]
+fn auto_parse_e01_protects_secondary_segments_even_when_damaged() {
+    let dir = tempfile::tempdir().unwrap();
+    let image = sample_e01(dir.path(), "protected");
+    let second = dir.path().join("protected.E02");
+    let mut damaged = std::fs::read(&second).unwrap();
+    damaged[..16].fill(0);
+    std::fs::write(&second, &damaged).unwrap();
+    let alias = dir.path().join("timeline.jsonl");
+    std::fs::hard_link(&second, &alias).unwrap();
+    let original = std::fs::read(&image).unwrap();
+    for target in [&second, &alias, &image] {
+        let output = dir.path().join("output");
+        let r = run(&[
+            "auto-parse",
+            "--e01",
+            "-d",
+            image.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-j",
+            target.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 1, "{}", r.stdout);
+        assert!(
+            r.stdout.contains("overlaps an input image or segment"),
+            "{}",
+            r.stdout
+        );
+        assert!(!output.exists());
+        assert_eq!(std::fs::read(&second).unwrap(), damaged);
+        assert_eq!(std::fs::read(&image).unwrap(), original);
+    }
+}
+
+#[test]
+fn auto_parse_e01_and_vhdx_selection_checks_the_actual_signature() {
+    let dir = tempfile::tempdir().unwrap();
+    let wrong_e01 = dir.path().join("spoof.E01");
+    sample_vhdx(&wrong_e01);
+    let wrong_vhdx = dir.path().join("spoof.vhdx");
+    std::fs::copy(repo("test_files/e01/sample.E01"), &wrong_vhdx).unwrap();
+    for (flag, path, message) in [
+        ("--e01", &wrong_e01, "Expected E01, found VHDX"),
+        ("--vhdx", &wrong_vhdx, "Expected VHDX, found E01"),
+    ] {
+        let output = dir.path().join("output");
+        let r = run(&[
+            "auto-parse",
+            flag,
+            "-d",
+            path.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 1, "{}", r.stdout);
+        assert!(r.stdout.contains(message), "{}", r.stdout);
+        assert!(!output.exists());
+    }
+}
+
+#[test]
+fn auto_parse_e01_rejects_logical_evidence_and_continuation_inputs() {
+    let dir = tempfile::tempdir().unwrap();
+    let logical = dir.path().join("logical.E01");
+    std::fs::write(&logical, b"LVF\x09\x0d\x0a\xff\x00").unwrap();
+    let first = sample_e01(dir.path(), "split");
+    for (input, expected) in [
+        (logical, "logical evidence file"),
+        (first.with_extension("E02"), "first segment"),
+    ] {
+        let output = dir.path().join("output");
+        let r = run(&[
+            "auto-parse",
+            "--e01",
+            "-d",
+            input.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+        assert!(r.stdout.contains(expected), "{}", r.stdout);
+        assert!(!output.exists());
+    }
+}
+
+#[test]
+fn auto_parse_images_refuse_outputs_containing_source_segments() {
+    let dir = tempfile::tempdir().unwrap();
+    let image = sample_e01(dir.path(), "protected");
+    let before = std::fs::read(&image).unwrap();
+    let r = run(&[
+        "auto-parse",
+        "--e01",
+        "-d",
+        image.to_str().unwrap(),
+        "-o",
+        dir.path().to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout
+            .contains("output directory contains an input image or segment"),
+        "{}",
+        r.stdout
+    );
+    assert_eq!(std::fs::read(&image).unwrap(), before);
+    assert!(!dir.path().join("manifest.json").exists());
+}
+
+#[test]
+fn auto_parse_e01_native_inputs_work_without_helpers_in_csv_and_jsonl() {
+    let dir = tempfile::tempdir().unwrap();
+    let staging = dir.path().join("staging");
+    std::fs::create_dir(&staging).unwrap();
+    let first = sample_e01(dir.path(), "split");
+    let direct = run(&[
+        "parse-file",
+        "prefetch",
+        "-f",
+        PREFETCH_CMD10,
+        "-t",
+        "jsonl",
+    ]);
+    assert_eq!(direct.code, 0, "{}", direct.stderr);
+    let expected: Value = serde_json::from_str(&direct.stdout).unwrap();
+    for name in ["sample.Ex01", "volume.Ex01"] {
+        std::fs::copy(
+            repo(&format!("test_files/e01/{name}")),
+            dir.path().join(name),
+        )
+        .unwrap();
+    }
+    let sources: Vec<_> = ["split.E01", "split.E02", "sample.Ex01", "volume.Ex01"]
+        .into_iter()
+        .map(|name| {
+            let path = dir.path().join(name);
+            let permissions = path.metadata().unwrap().permissions();
+            let bytes = std::fs::read(&path).unwrap();
+            let mut readonly = permissions.clone();
+            readonly.set_readonly(true);
+            std::fs::set_permissions(&path, readonly).unwrap();
+            (path, permissions, bytes)
+        })
+        .collect();
+    for image in [
+        &first,
+        &dir.path().join("sample.Ex01"),
+        &dir.path().join("volume.Ex01"),
+    ] {
+        for kind in ["csv", "json", "jsonl"] {
+            let output = dir.path().join(format!(
+                "{}-{kind}",
+                image.file_name().unwrap().to_string_lossy()
+            ));
+            let timeline = output.with_extension(format!("{kind}.timeline.jsonl"));
+            let r = Command::new(env!("CARGO_BIN_EXE_juntei"))
+                .args([
+                    "auto-parse",
+                    "--e01",
+                    "--temp-dir",
+                    staging.to_str().unwrap(),
+                    "-d",
+                    image.to_str().unwrap(),
+                    "-o",
+                    output.to_str().unwrap(),
+                    "-t",
+                    kind,
+                    "-j",
+                    timeline.to_str().unwrap(),
+                    "-T",
+                    "2",
+                    "-K",
+                    "-q",
+                ])
+                .env("PATH", dir.path())
+                .output()
+                .unwrap();
+            assert!(
+                r.status.success(),
+                "{}\n{}",
+                String::from_utf8_lossy(&r.stdout),
+                String::from_utf8_lossy(&r.stderr)
+            );
+            let manifest: Value =
+                serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap())
+                    .unwrap();
+            assert_eq!(manifest["Hosts"].as_array().unwrap().len(), 1);
+            assert_eq!(
+                manifest["Hosts"][0]["Image"],
+                format!("./{}", image.file_name().unwrap().to_string_lossy())
+            );
+            let records = jsonl_records(&std::fs::read_to_string(&timeline).unwrap());
+            let actual = records
+                .iter()
+                .find(|r| r["Artifact"] == "prefetch")
+                .unwrap();
+            for (key, value) in expected.as_object().unwrap() {
+                if key != "SourceFile" {
+                    assert_eq!(&actual[key], value, "{key}: {} ({kind})", image.display());
+                }
+            }
+            assert_no_absolute_paths(&output, &String::from_utf8_lossy(&r.stdout), &[dir.path()]);
+            assert_eq!(std::fs::read_dir(&staging).unwrap().count(), 0);
+        }
+    }
+    for (path, permissions, bytes) in sources {
+        assert_eq!(std::fs::read(&path).unwrap(), bytes);
+        std::fs::set_permissions(path, permissions).unwrap();
+    }
+}
+
+#[test]
+fn auto_parse_e01_resolves_a_case_alias_of_the_first_segment() {
+    let dir = tempfile::tempdir().unwrap();
+    sample_e01(dir.path(), "MiXeD");
+    let alias = dir.path().join("mixed.e01");
+    if !alias.is_file() {
+        return;
+    } // Relevant only on a case-insensitive filesystem.
+    let output = dir.path().join("output");
+    let r = run(&[
+        "auto-parse",
+        "--e01",
+        "-d",
+        alias.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(manifest["Hosts"][0]["Image"], "./mixed.e01");
 }
 
 // --- parse-file lnk ---------------------------------------------------------------------------------

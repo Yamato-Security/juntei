@@ -1,6 +1,6 @@
 # Memasang Image Disk { #mounting-disk-images }
 
-`juntei mount` menyediakan berkas di dalam image disk VHDX melalui direktori hanya-baca selama perintah berjalan. Alat seperti Hayabusa dan Juntei dapat memeriksanya tanpa ekstraksi atau hak root. Fitur ini menggunakan FUSE dan berjalan di Linux. Pembaca dan pustaka mount dipelihara di [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+`juntei mount` menyediakan berkas di dalam image disk VHDX / E01 / Ex01 melalui direktori hanya-baca selama perintah berjalan. Alat seperti Hayabusa dan Juntei dapat memeriksanya tanpa ekstraksi atau hak root. Fitur ini menggunakan FUSE dan berjalan di Linux. Pembaca dan pustaka mount dipelihara di [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
@@ -39,7 +39,7 @@ Usage:
   juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
 
 Input:
-  <IMAGE>       The disk image (VHDX)
+  <IMAGE>       The disk image (VHDX or E01; a split E01 image from its first segment)
   <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
 
 General Options:
@@ -73,6 +73,22 @@ Direktori staging harus berada di luar direktori output. Di Linux dan macOS, SIG
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## Image disk E01 dan Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` membaca image fisik EWF1 (`.E01`) dan EWF2 (`.Ex01`) secara native di **Linux, macOS dan Windows**, tanpa FUSE, mount OS, atau hak administrator. Fitur ini menggunakan [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) dan alur parsing NTFS yang sama seperti di atas.
+
+Berikan segmen pertama untuk image terpisah. Simpan semua berkas pendamping, termasuk `.E02`, di sampingnya dengan nama asli. Disk penuh (MBR/GPT) dan volume NTFS tunggal didukung. Gunakan `--vhdx --e01` untuk direktori campuran.
+
+Persyaratan ruang sementara dan metadata sumber tetap sama. Image E01 biasanya berisi seluruh disk, dan semua image di-staging sebelum parsing dimulai, jadi sediakan ruang kosong kira-kira sebesar total ruang terpakai semua volume NTFS-nya; disk dengan 200 GB terpakai memerlukan sekitar 200 GB. Image dibaca saja. Kekosongan akuisisi dan kerusakan saat membuka atau membaca dilaporkan dalam `ImageErrors` dan `manifest.csv`; hasil yang terbaca dipertahankan dengan kode keluar 1. Hanya data yang diakses yang diperiksa, bukan semua chunk atau hash seluruh media. Berkas logis `.L01` dan `.Lx01` ditolak; tidak ada opsi kata sandi.
+
+Perintah terpisah `mount` tetap memerlukan Linux FUSE; parsing otomatis native tidak.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
 
 ## Persyaratan mount yang terlihat oleh OS { #os-visible-mount-requirements }

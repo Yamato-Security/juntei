@@ -1,6 +1,6 @@
 # Montar imagens de disco { #mounting-disk-images }
 
-`juntei mount` disponibiliza os arquivos de uma imagem de disco VHDX em um diretório, somente para leitura, durante sua execução. Ferramentas como Hayabusa e Juntei podem analisá-los sem extração nem privilégios de root. Usa FUSE e funciona no Linux. O leitor e a biblioteca de montagem são mantidos em [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+`juntei mount` disponibiliza os arquivos de uma imagem de disco VHDX / E01 / Ex01 em um diretório, somente para leitura, durante sua execução. Ferramentas como Hayabusa e Juntei podem analisá-los sem extração nem privilégios de root. Usa FUSE e funciona no Linux. O leitor e a biblioteca de montagem são mantidos em [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
@@ -39,7 +39,7 @@ Usage:
   juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
 
 Input:
-  <IMAGE>       The disk image (VHDX)
+  <IMAGE>       The disk image (VHDX or E01; a split E01 image from its first segment)
   <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
 
 General Options:
@@ -73,6 +73,22 @@ O diretório de preparação deve ficar fora do diretório de saída. No Linux e
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## Imagens de disco E01 e Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` lê imagens físicas EWF1 (`.E01`) e EWF2 (`.Ex01`) nativamente no **Linux, macOS e Windows**, sem FUSE, montagem do sistema ou privilégios de administrador. Usa [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) e o mesmo processamento NTFS descrito acima.
+
+Informe o primeiro segmento de uma imagem dividida. Mantenha todos os arquivos associados, incluindo `.E02`, ao lado dele com seus nomes originais. Há suporte para discos inteiros (MBR/GPT) e volumes NTFS individuais. Use `--vhdx --e01` para diretórios mistos.
+
+Valem os mesmos requisitos de espaço temporário e metadados de origem. Imagens E01 costumam conter discos inteiros, e todas as imagens são preparadas antes do início da análise; por isso, reserve espaço livre aproximadamente igual ao espaço usado de todos os seus volumes NTFS somados. Um disco com 200 GB em uso precisa de cerca de 200 GB. As imagens são somente leitura. Lacunas de aquisição e danos encontrados ao abrir ou ler aparecem em `ImageErrors` e `manifest.csv`; os resultados legíveis são preservados com código de saída 1. Apenas os dados acessados são verificados, não todos os blocos nem o hash da mídia completa. Arquivos lógicos `.L01` e `.Lx01` são recusados; não há opção de senha.
+
+O comando separado `mount` ainda exige Linux FUSE; a análise automática nativa não.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
 
 ## Requisitos da montagem visível ao sistema { #os-visible-mount-requirements }

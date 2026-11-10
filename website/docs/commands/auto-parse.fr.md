@@ -46,6 +46,22 @@ Le répertoire de préparation doit se trouver hors du répertoire de sortie. So
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
 
+## Images disque E01 et Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` lit nativement les images physiques EWF1 (`.E01`) et EWF2 (`.Ex01`) sous **Linux, macOS et Windows**, sans FUSE, montage système ni droits administrateur. Il utilise [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) et le même traitement NTFS que ci-dessus.
+
+Indiquez le premier segment d’une image fractionnée. Conservez tous les fichiers associés, dont `.E02`, à côté avec leurs noms d’origine. Les disques entiers (MBR/GPT) et les volumes NTFS seuls sont pris en charge. Utilisez `--vhdx --e01` pour un répertoire mixte.
+
+Les mêmes exigences d’espace temporaire et de métadonnées source s’appliquent. Les images E01 contiennent généralement des disques entiers, et toutes les images sont préparées avant le début de l’analyse : prévoyez un espace libre à peu près égal à l’espace utilisé de l’ensemble de leurs volumes NTFS ; un disque dont 200 Go sont utilisés nécessite environ 200 Go. Les images sont en lecture seule. Les lacunes d’acquisition et les dommages découverts à l’ouverture ou à la lecture figurent dans `ImageErrors` et `manifest.csv` ; les résultats lisibles sont conservés avec un code de sortie 1. Seules les données consultées sont vérifiées, pas tous les blocs ni le hachage du support entier. Les fichiers logiques `.L01` et `.Lx01` sont refusés ; aucune option de mot de passe n’est proposée.
+
+La commande distincte `mount` nécessite toujours Linux FUSE ; l’analyse native automatique n’en a pas besoin.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## Fuseau horaire de sortie { #output-time-zone }
 
 Les horodatages analysés sont par défaut en UTC, indépendamment du fuseau horaire local de l'ordinateur de l'analyste. L'UTC
@@ -531,6 +547,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
       --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:

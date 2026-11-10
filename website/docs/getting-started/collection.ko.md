@@ -4,6 +4,8 @@ Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 �
 
 [auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
+
 ## 일반적인 위치 { #common-locations }
 
 | 아티팩트 | 일반적인 위치 |

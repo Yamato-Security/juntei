@@ -17,7 +17,7 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 
 | Perintah | Input | Panduan terperinci |
 |---|---|---|
-| `mount` | Image disk VHDX | [Memasang Image Disk](mount.md) |
+| `mount` | Image disk VHDX / E01 / Ex01 | [Memasang Image Disk](mount.md) |
 
 ## [Perintah ESE](user-activity.md) { #ese-commands }
 
@@ -110,7 +110,7 @@ Usage: juntei <COMMAND>
 Commands:
   auto-parse          Discover and parse Windows evidence
   help                Print this message or the help of the given subcommand(s)
-  mount               Mount a VHDX disk image read-only (FUSE)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts

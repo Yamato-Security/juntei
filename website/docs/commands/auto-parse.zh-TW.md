@@ -44,6 +44,22 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
 
+## E01 與 Ex01 磁碟映像檔 { #e01-and-ex01-disk-images }
+
+`--e01` 可在 **Linux、macOS 和 Windows** 原生讀取實體 EWF1（`.E01`）與 EWF2（`.Ex01`）映像檔，不需要 FUSE、作業系統掛載或管理員權限。它使用 [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) 及上述相同的 NTFS 解析流程。
+
+分割映像檔請指定第一個區段。將 `.E02` 等所有相關檔案以原始名稱保留在相同目錄。支援完整磁碟（MBR/GPT）與單一 NTFS 磁碟區。混合兩種格式的目錄可使用 `--vhdx --e01`。
+
+暫存空間與來源中繼資料的要求相同。E01 映像檔通常包含整顆磁碟，且所有映像檔都會在解析開始前完成暫存，因此需要約等於所有映像檔 NTFS 磁碟區已用空間總和的可用空間；已使用 200 GB 的磁碟約需 200 GB。映像檔以唯讀方式開啟。取得時的缺損及開啟或讀取時發現的損壞會列入 `ImageErrors` 與 `manifest.csv`；保留可讀取的結果並以狀態碼 1 結束。這只檢查實際存取的資料，不是所有區塊或完整媒體雜湊。拒絕邏輯格式 `.L01` 與 `.Lx01`，且沒有密碼選項。
+
+獨立的 `mount` 命令仍需要 Linux FUSE；原生自動解析則不需要。
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## 輸出時區 { #output-time-zone }
 
 剖析出的時間戳記預設為 UTC，與分析人員電腦的當地時區無關。UTC
@@ -528,6 +544,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
       --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:

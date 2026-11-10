@@ -55,6 +55,22 @@ LNK と Jump List のソース作成・更新・アクセス時刻は、一時�
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
 
+## E01 と Ex01 ディスクイメージ { #e01-and-ex01-disk-images }
+
+`--e01` は、物理 EWF1（`.E01`）および EWF2（`.Ex01`）イメージを **Linux、macOS、Windows** でネイティブに読み取ります。FUSE、OS へのマウント、管理者権限は不要です。[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) と、上記と同じ NTFS 解析処理を使用します。
+
+分割イメージは最初のセグメントを指定します。`.E02` などの関連ファイルを元の名前のまま同じディレクトリに置いてください。ディスク全体（MBR/GPT）と単一の NTFS ボリュームに対応します。両形式が混在するディレクトリには `--vhdx --e01` を使用します。
+
+一時ディスク容量と元のメタデータに関する要件も同じです。E01 は通常ディスク全体を収録しており、すべてのイメージを解析開始前にステージングするため、全イメージの NTFS ボリュームの使用容量の合計とほぼ同じ空き容量が必要です。たとえば、200 GB を使用しているディスクには約 200 GB が必要です。イメージは読み取り専用です。取得時の欠損や、開始時・読み取り中に見つかった破損は `ImageErrors` と `manifest.csv` に記録され、読み取れる結果を保持して終了コード 1 を返します。検査対象はアクセスしたデータであり、全チャンクやメディア全体のハッシュではありません。論理形式の `.L01`、`.Lx01` は拒否します。パスワード指定には対応しません。
+
+別機能の `mount` コマンドには引き続き Linux FUSE が必要ですが、ネイティブ自動解析には不要です。
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## 出力タイムゾーン { #output-time-zone }
 
 解析されたタイムスタンプは、アナリスト コンピュータのローカル タイム ゾーンに関係なく、デフォルトで UTC になります。 UTC は、`2026-10-20T08:46:38.2001668Z` 形式の Windows イベント ログを使用します。ISO 8601 日付/時刻、日付と時刻の間の `T`、および UTC の `Z`。使用可能な小数桁は保持されます。`manifest.json` の `GeneratedUTC` もこの形式を使用します。コンソールの `Start time` と `End time` は、出力タイム ゾーンに関係なく、アナリスト コンピュータのローカル時刻 (例: `2026-11-04 09:15:02`) です。
@@ -391,6 +407,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
       --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:

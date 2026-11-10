@@ -34,12 +34,17 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 例: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`。
 
 `juntei auto-parse --vhdx -d <IMAGE_OR_DIR> -o <OUTPUT>` は、**Linux、macOS、Windows** で
-OS へのマウントや管理者権限なしに VHDX を解析します。パーサー用の専用一時コピーを作成するため、
+FUSE、OS へのマウントや管理者権限なしに VHDX を解析します。パーサー用の専用一時コピーを作成するため、
 十分な一時ディスク容量が必要です。`juntei mount <IMAGE> <MOUNTPOINT>` は、Linux の FUSE を使って
 他のプログラムにイメージを読み取り専用で公開する用途で引き続き利用できます。
 一時コピーは既定で出力先のファイルシステムに作成されます。コピーと結果の両方に必要な空き容量を確保し、
 別のディスクを使う場合は `--temp-dir <DIR>` を指定してください。Ctrl+C はパーサーを停止して専用コピーを削除します。
 どちらも [Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用します。
+
+`--e01` を追加すると、[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) で
+物理 E01/Ex01 イメージも解析できます。分割イメージは最初のセグメントを指定し、関連する全セグメントを
+元の名前のまま同じ場所に置いてください。混在したディレクトリには `--vhdx --e01` を使用します。
+E01 も同じ読み取り専用のネイティブ処理と専用一時領域を使用します。
 
 [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/ja/commands/persistence-hunter/)
 では、レジストリハイブ、スケジュールタスク、スタートアップファイル、WMI、BITS を横断して永続化の痕跡を調べます。

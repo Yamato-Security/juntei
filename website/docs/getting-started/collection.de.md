@@ -4,6 +4,8 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 
 [auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
+
 ## Gängige Speicherorte { #common-locations }
 
 | Artefakt | Typischer Speicherort |

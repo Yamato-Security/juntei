@@ -18,6 +18,7 @@
 
 - `mount` mounts the NTFS volumes of a VHDX disk image read-only at a directory through FUSE (Linux), without root and without the system supporting the image or the file system, so other tools such as Hayabusa can read the files. NTFS volumes whose boot sectors have zeroed jump instructions and signatures are supported. Ctrl+C unmounts. (@YamatoSecurity)
 
+- `auto-parse --e01` reads physical E01/Ex01 images natively on Linux, macOS and Windows without FUSE, OS mounting or administrator privileges. Split images start at their first segment; whole disks and single NTFS volumes use the same read-only temporary-workspace pipeline as VHDX. `--vhdx --e01` accepts mixed input, and the separate Linux/FUSE `mount` command also accepts E01 images. Protect every split E01 segment, including damaged companions and hard-link aliases, from output replacement. Resolve first-segment case aliases without changing segment families, retain reader warnings discovered during parsing, and saturate acquisition-error counts instead of overflowing. Uses [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser), a reader-only fork of [ewf-image](https://github.com/ebrig/ewf-image). (#140) (@YamatoSecurity)
 
 **Bug Fixes:**
 

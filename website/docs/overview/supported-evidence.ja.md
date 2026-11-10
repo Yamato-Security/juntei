@@ -11,6 +11,7 @@
 | NTFS ブート セクタ `$Boot` | `parse-ntfs boot` | ボリュームシリアル番号 LNK、Jump Lists、および Prefetch レコード。ジオメトリと `$MFT` の場所。ホスト間で比較するためのブート コード ハッシュ | シリアル番号は変更または繰り返すことができます。異なるブート コードは手がかりであり、ブートキットの証拠ではありません |
 | NTFS セキュリティ記述子 `$Secure:$SDS` | `parse-ntfs secure-sds` | ファイルの所有者と ACL (`$MFT` または `SID` による)。 NULL DACL と寛容 ACL | 所有者は変更できます。 ACL には、誰がアクセスしたかではなく、誰がアクセスできるかが記載されています |
 | VHDX ディスクイメージ | `mount`、`auto-parse --vhdx` | NTFS → CSV / JSON / JSONL | `auto-parse`：Linux/macOS/Windows、一時コピーが必要。`mount`：Linux/FUSE。名前付き NTFS ストリームの抽出は未対応 |
+| E01 / Ex01 ディスクイメージ | `mount`、`auto-parse --e01` | NTFS → CSV / JSON / JSONL | `auto-parse`：Linux/macOS/Windows、一時コピーが必要。`mount`：Linux/FUSE。名前付き NTFS ストリームの抽出は未対応 |
 | SRUM | `parse-ese srum` | アプリ/ユーザーごとのネットワークとリソースの使用 | 通常は集約されます。パケットまたは宛先レベルの証明ではない |
 | ユーザーアクセスログ (UAL) | `parse-ese ual` | Windows Server の役割 (ファイル共有、Active Directory、DHCP、IIS) を、どのクライアントのアドレスとアカウントがどの日に利用したか | 要求は日ごとに集計され、1 件ずつは記録されない。アドレスが NAT やプロキシのものである場合がある。ダーティな `Current.mdb` には最新の変更が含まれない |
 | Internet Explorer と従来の Edge (WebCache) | `parse-ese webcache` | 閲覧したページとエクスプローラーで開いたローカル ファイル、ダウンロードしたファイルとその入手元、Cookie、HTTP ヘッダーを含むキャッシュされたファイル | 履歴エントリは最後の閲覧を記録した URL であり、個々の閲覧ではない。削除済みエントリは復元されない。ダーティなデータベースには最新の変更が含まれない |

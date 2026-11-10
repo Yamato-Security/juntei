@@ -46,6 +46,22 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
 
+## อิมเมจดิสก์ E01 และ Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` อ่านอิมเมจแบบกายภาพ EWF1 (`.E01`) และ EWF2 (`.Ex01`) แบบเนทีฟบน **Linux, macOS และ Windows** โดยไม่ต้องใช้ FUSE การเมานต์ของ OS หรือสิทธิ์ผู้ดูแลระบบ ใช้ [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) และกระบวนการแยกวิเคราะห์ NTFS เดียวกับที่อธิบายไว้ข้างต้น
+
+สำหรับอิมเมจที่แบ่งส่วน ให้ระบุส่วนแรก เก็บไฟล์ประกอบทั้งหมดรวมถึง `.E02` ไว้ข้างกันด้วยชื่อเดิม รองรับทั้งดิสก์เต็ม (MBR/GPT) และวอลุ่ม NTFS เดี่ยว ใช้ `--vhdx --e01` สำหรับไดเรกทอรีที่มีทั้งสองรูปแบบ
+
+ข้อกำหนดพื้นที่ชั่วคราวและเมทาดาทาต้นฉบับเหมือนกัน อิมเมจ E01 มักเก็บทั้งดิสก์ และอิมเมจทั้งหมดจะถูกเตรียมข้อมูลก่อนเริ่มแยกวิเคราะห์ จึงต้องมีพื้นที่ว่างประมาณเท่ากับพื้นที่ที่ใช้งานรวมของวอลุ่ม NTFS ทั้งหมดในอิมเมจ ดิสก์ที่ใช้งาน 200 GB ต้องใช้พื้นที่ประมาณ 200 GB อิมเมจเปิดแบบอ่านอย่างเดียว ช่องว่างจากการเก็บข้อมูลและความเสียหายที่พบขณะเปิดหรืออ่านจะแสดงใน `ImageErrors` และ `manifest.csv` โดยเก็บผลลัพธ์ที่อ่านได้และจบด้วยรหัส 1 ตรวจเฉพาะข้อมูลที่เข้าถึง ไม่ใช่ทุกชังก์หรือแฮชของสื่อทั้งหมด ปฏิเสธไฟล์เชิงตรรกะ `.L01` และ `.Lx01` และไม่มีตัวเลือกรหัสผ่าน
+
+คำสั่ง `mount` ที่แยกต่างหากยังต้องใช้ Linux FUSE แต่การแยกวิเคราะห์อัตโนมัติแบบเนทีฟไม่ต้องใช้
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## เขตเวลาของเอาต์พุต { #output-time-zone }
 
 timestamp ที่พาร์สแล้วใช้ UTC เป็นค่าเริ่มต้น โดยไม่ขึ้นกับเขตเวลาท้องถิ่นของคอมพิวเตอร์ของนักวิเคราะห์ UTC
@@ -533,6 +549,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
       --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:

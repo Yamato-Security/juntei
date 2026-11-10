@@ -1,6 +1,6 @@
 # تحميل صور الأقراص { #mounting-disk-images }
 
-يتيح `juntei mount` قراءة ملفات صورة قرص VHDX عبر مجلد للقراءة فقط طوال تشغيله. تستطيع أدوات مثل Hayabusa وJuntei فحصها دون استخراج الملفات أو طلب صلاحيات root. تستخدم الميزة FUSE وتعمل على Linux. تُصان مكتبة القراءة ومكتبة التركيب في [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+يتيح `juntei mount` قراءة ملفات صورة قرص VHDX / E01 / Ex01 عبر مجلد للقراءة فقط طوال تشغيله. تستطيع أدوات مثل Hayabusa وJuntei فحصها دون استخراج الملفات أو طلب صلاحيات root. تستخدم الميزة FUSE وتعمل على Linux. تُصان مكتبة القراءة ومكتبة التركيب في [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
@@ -39,7 +39,7 @@ Usage:
   juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
 
 Input:
-  <IMAGE>       The disk image (VHDX)
+  <IMAGE>       The disk image (VHDX or E01; a split E01 image from its first segment)
   <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
 
 General Options:
@@ -73,6 +73,22 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## صور الأقراص E01 وEx01 { #e01-and-ex01-disk-images }
+
+يقرأ `--e01` صور EWF1 الفعلية (`.E01`) وصور EWF2 (`.Ex01`) مباشرةً على **Linux وmacOS وWindows**، دون FUSE أو تركيب عبر نظام التشغيل أو صلاحيات مسؤول. يستخدم [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ومسار تحليل NTFS نفسه الموضح أعلاه.
+
+للصورة المقسمة، حدد الجزء الأول. احتفظ بجميع الملفات المصاحبة، ومنها `.E02`، بجواره بأسمائها الأصلية. تُدعم الأقراص الكاملة (MBR/GPT) ووحدات NTFS المنفردة. استخدم `--vhdx --e01` للمجلدات المختلطة.
+
+تنطبق متطلبات المساحة المؤقتة وبيانات المصدر الوصفية نفسها. تحتوي صور E01 عادةً على أقراص كاملة، وتُجهَّز جميع الصور قبل بدء التحليل، لذا وفّر مساحة حرة تعادل تقريباً إجمالي المساحة المستخدمة في جميع وحدات تخزين NTFS فيها؛ فالقرص الذي يستخدم 200 GB يحتاج إلى نحو 200 GB. تُفتح الصور للقراءة فقط. تُسجل فجوات الاكتساب والأضرار المكتشفة عند الفتح أو القراءة في `ImageErrors` و`manifest.csv`؛ تُحفظ النتائج المقروءة مع رمز خروج 1. تُفحص البيانات التي تم الوصول إليها، وليس كل الكتل أو بصمة الوسيط بأكمله. تُرفض الملفات المنطقية `.L01` و`.Lx01`، ولا يوجد خيار كلمة مرور.
+
+لا يزال الأمر المنفصل `mount` يتطلب Linux FUSE؛ أما التحليل التلقائي المباشر فلا يحتاجه.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
 
 ## متطلبات التركيب الظاهر لنظام التشغيل { #os-visible-mount-requirements }

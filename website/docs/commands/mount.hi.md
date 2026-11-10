@@ -1,6 +1,6 @@
 # डिस्क इमेज माउंट करना { #mounting-disk-images }
 
-`juntei mount` चलते समय VHDX disk image की files को एक directory में read-only रूप में उपलब्ध करता है। Hayabusa और Juntei जैसे tools बिना files extract किए या root अधिकारों के उनकी जाँच कर सकते हैं। यह FUSE का उपयोग करता है और Linux पर चलता है। Reader और mounting library का रखरखाव [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) में किया जाता है।
+`juntei mount` चलते समय VHDX / E01 / Ex01 disk image की files को एक directory में read-only रूप में उपलब्ध करता है। Hayabusa और Juntei जैसे tools बिना files extract किए या root अधिकारों के उनकी जाँच कर सकते हैं। यह FUSE का उपयोग करता है और Linux पर चलता है। Reader और mounting library का रखरखाव [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) में किया जाता है।
 
 ```bash
 mkdir /mnt/host1
@@ -39,7 +39,7 @@ Usage:
   juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
 
 Input:
-  <IMAGE>       The disk image (VHDX)
+  <IMAGE>       The disk image (VHDX or E01; a split E01 image from its first segment)
   <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
 
 General Options:
@@ -73,6 +73,22 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 और Ex01 डिस्क इमेज { #e01-and-ex01-disk-images }
+
+`--e01` भौतिक EWF1 (`.E01`) और EWF2 (`.Ex01`) इमेज को **Linux, macOS और Windows** पर मूल रूप से पढ़ता है। FUSE, OS माउंट या व्यवस्थापक अधिकार आवश्यक नहीं हैं। यह [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) और ऊपर बताए गए NTFS पार्सिंग प्रवाह का उपयोग करता है।
+
+विभाजित इमेज का पहला सेगमेंट दें। `.E02` सहित सभी संबंधित फ़ाइलें अपने मूल नामों के साथ उसी डायरेक्टरी में रखें। पूरे डिस्क (MBR/GPT) और एकल NTFS वॉल्यूम समर्थित हैं। मिश्रित डायरेक्टरी के लिए `--vhdx --e01` उपयोग करें।
+
+अस्थायी स्थान और मूल मेटाडेटा की आवश्यकताएँ समान हैं। E01 इमेज में आम तौर पर पूरी डिस्क होती है, और पार्सिंग शुरू होने से पहले सभी इमेज स्टेज की जाती हैं, इसलिए उनके सभी NTFS वॉल्यूम के कुल उपयोग किए गए स्थान के लगभग बराबर खाली स्थान रखें; 200 GB उपयोग वाली डिस्क के लिए लगभग 200 GB चाहिए। इमेज केवल पढ़ी जाती हैं। संग्रह की कमियाँ और खोलते या पढ़ते समय मिली क्षति `ImageErrors` तथा `manifest.csv` में दर्ज होती हैं; पढ़ने योग्य परिणाम सुरक्षित रहते हैं और निकास कोड 1 होता है। केवल पढ़े गए डेटा की जाँच होती है, सभी चंक या पूरे मीडिया के हैश की नहीं। तार्किक `.L01` और `.Lx01` फ़ाइलें अस्वीकार की जाती हैं; पासवर्ड विकल्प नहीं है।
+
+अलग `mount` कमांड को अभी भी Linux FUSE चाहिए; मूल स्वचालित पार्सिंग को नहीं।
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
 
 ## OS को दिखने वाले माउंट की आवश्यकताएँ { #os-visible-mount-requirements }

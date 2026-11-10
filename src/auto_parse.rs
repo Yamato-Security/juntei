@@ -33,11 +33,11 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
+mod disk_images;
 mod flat_outputs;
 mod srum_outputs;
 mod timeline;
 mod timestamps;
-mod vhdx_images;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
@@ -481,11 +481,11 @@ impl Images {
 
 /// Run the command; returns the exit status.
 pub fn run(opts: &AutoParseOptions) -> i32 {
-    if opts.vhdx {
-        return vhdx_images::run(opts);
+    if opts.vhdx || opts.e01 {
+        return disk_images::run(opts);
     }
     if opts.temp_dir.is_some() {
-        error_msg(opts.common.no_color, "--temp-dir requires --vhdx");
+        error_msg(opts.common.no_color, "--temp-dir requires --vhdx or --e01");
         return 1;
     }
     run_evidence(opts, None)
@@ -2452,7 +2452,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
     for problem in manifest.image_errors {
         let mut row = vec![String::new(); 18];
         row[4] = format!("{}!/{}", problem.image, problem.path);
-        row[5] = "vhdx".into();
+        row[5] = "disk-image".into();
         row[10] = "failed".into();
         row[16] = problem.error.clone();
         writer.write_record(row)?;

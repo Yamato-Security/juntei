@@ -46,6 +46,22 @@ O diretório de preparação deve ficar fora do diretório de saída. No Linux e
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
 
+## Imagens de disco E01 e Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` lê imagens físicas EWF1 (`.E01`) e EWF2 (`.Ex01`) nativamente no **Linux, macOS e Windows**, sem FUSE, montagem do sistema ou privilégios de administrador. Usa [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) e o mesmo processamento NTFS descrito acima.
+
+Informe o primeiro segmento de uma imagem dividida. Mantenha todos os arquivos associados, incluindo `.E02`, ao lado dele com seus nomes originais. Há suporte para discos inteiros (MBR/GPT) e volumes NTFS individuais. Use `--vhdx --e01` para diretórios mistos.
+
+Valem os mesmos requisitos de espaço temporário e metadados de origem. Imagens E01 costumam conter discos inteiros, e todas as imagens são preparadas antes do início da análise; por isso, reserve espaço livre aproximadamente igual ao espaço usado de todos os seus volumes NTFS somados. Um disco com 200 GB em uso precisa de cerca de 200 GB. As imagens são somente leitura. Lacunas de aquisição e danos encontrados ao abrir ou ler aparecem em `ImageErrors` e `manifest.csv`; os resultados legíveis são preservados com código de saída 1. Apenas os dados acessados são verificados, não todos os blocos nem o hash da mídia completa. Arquivos lógicos `.L01` e `.Lx01` são recusados; não há opção de senha.
+
+O comando separado `mount` ainda exige Linux FUSE; a análise automática nativa não.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## Fuso horário da saída { #output-time-zone }
 
 Por padrão, os carimbos de data/hora analisados ficam em UTC, independentemente do fuso horário local do computador do analista. O UTC
@@ -531,6 +547,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
       --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:

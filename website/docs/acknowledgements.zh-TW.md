@@ -22,6 +22,7 @@ Juntei 中；授權條款請參閱各專案。
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
 | VHDX 磁碟映像檔（`mount`、`auto-parse --vhdx`） | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) 與 [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)，透過 [fuser](https://github.com/cberner/fuser) 提供 | Microsoft 的 MS-VHDX |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | Registry | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | 下方致謝的登錄檔格式與復原研究 |
 
 ## 參考工具與獨立驗證 { #reference-tools-and-independent-validation }

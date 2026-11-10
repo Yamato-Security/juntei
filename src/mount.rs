@@ -11,24 +11,25 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `mount`: a VHDX disk image's NTFS volumes, read-only at a directory through FUSE, for as long
-//! as the command runs, so other tools (Hayabusa, Juntei's own commands) can read the files
-//! without the operating system supporting the image or the file system, and without root.
+//! `mount`: a disk image's NTFS volumes (a VHDX or E01 image), read-only at a directory through
+//! FUSE, for as long as the command runs, so other tools (Hayabusa, Juntei's own commands) can
+//! read the files without the operating system supporting the image or the file system, and
+//! without root.
 
 use crate::cli::MountOptions;
 use crate::util::error_msg;
 
 /// What to use where FUSE isn't available.
 #[cfg(not(target_os = "linux"))]
-pub const NO_FUSE: &str = "OS-visible mounting needs Linux FUSE. To parse VHDX images on Windows or macOS without mounting or administrator privileges, use: juntei auto-parse --vhdx -d <IMAGE_OR_DIR> -o <OUTPUT>";
+pub const NO_FUSE: &str = "OS-visible mounting needs Linux FUSE. For native parsing on Linux, macOS or Windows without administrator privileges, use: juntei auto-parse --vhdx --e01 -d <IMAGE_OR_DIR> -o <OUTPUT>";
 
 /// Run the command; returns the exit status.
 #[cfg(target_os = "linux")]
 pub fn run(opts: &MountOptions) -> i32 {
     use crate::color::JunteiColor;
+    use crate::disk_image;
     use crate::util::{self, fmt_num, p, p_label};
     use std::sync::{Arc, Mutex};
-    use vhdx_mount::image::Image;
     use vhdx_mount::image_mount;
 
     let no_color = opts.common.no_color;
@@ -49,8 +50,8 @@ pub fn run(opts: &MountOptions) -> i32 {
         );
         return 1;
     }
-    let image = match Image::open(&opts.image) {
-        Ok(image) => image,
+    let opened = match disk_image::open(&opts.image) {
+        Ok(opened) => opened,
         Err(e) => {
             error_msg(
                 no_color,
@@ -59,16 +60,28 @@ pub fn run(opts: &MountOptions) -> i32 {
             return 1;
         }
     };
-    let partial = !image.problems.is_empty();
+    let image = opened.image;
+    // an unreadable volume, or damage the image was read past: what is mounted may lack files
+    let initial = opened.status.warnings();
+    let partial = !image.problems.is_empty() || !initial.is_empty();
     for problem in &image.problems {
         error_msg(no_color, &format!("Could not read {problem}"));
     }
+    for warning in &initial {
+        error_msg(no_color, &format!("Warning: {warning}"));
+    }
     p_label(no_color, "Image: ", &opts.image.display().to_string());
-    p_label(
-        no_color,
-        "Virtual disk size: ",
-        &util::size_display(image.size),
-    );
+    let format = if opened.segments > 1 {
+        format!(
+            "{} ({} segments)",
+            opened.kind.name(),
+            fmt_num(opened.segments)
+        )
+    } else {
+        opened.kind.name().to_string()
+    };
+    p_label(no_color, "Format: ", &format);
+    p_label(no_color, "Disk size: ", &util::size_display(image.size));
     let volumes: Vec<String> = image
         .volumes
         .iter()
@@ -132,7 +145,13 @@ pub fn run(opts: &MountOptions) -> i32 {
         "Unmounted: ",
         &opts.mount_point.display().to_string(),
     );
-    i32::from(partial)
+    let final_warnings = opened.status.warnings();
+    for warning in &final_warnings {
+        if !initial.contains(warning) {
+            error_msg(no_color, &format!("Warning: {warning}"));
+        }
+    }
+    i32::from(partial || !final_warnings.is_empty())
 }
 
 /// Run the command; returns the exit status.

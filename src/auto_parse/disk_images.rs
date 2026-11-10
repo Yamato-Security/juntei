@@ -11,12 +11,13 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! Portable read-only VHDX input. Stage NTFS files in a private workspace because
+//! Portable read-only VHDX/E01 input. Stage NTFS files in a private workspace because
 //! the artifact parsers accept paths, then reuse the ordinary parsing pipeline.
 //! No kernel mount, external command, or administrator permission is required.
 
 use super::{ImageProblem, Images, run_evidence, shown};
 use crate::cli::AutoParseOptions;
+use crate::disk_image::{self, Kind};
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use std::collections::{HashMap, HashSet};
 use std::fs::{self, File, FileTimes};
@@ -25,16 +26,37 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use vhdx_mount::image::{Image, ROOT_RECORD};
 
-fn is_vhdx_name(name: &str) -> bool {
-    name.to_ascii_lowercase().ends_with(".vhdx")
+fn kinds(opts: &AutoParseOptions) -> Vec<Kind> {
+    let mut selected = Vec::new();
+    if opts.vhdx {
+        selected.push(Kind::Vhdx);
+    }
+    if opts.e01 {
+        selected.push(Kind::E01);
+    }
+    selected
+}
+fn kinds_name(kinds: &[Kind]) -> String {
+    kinds
+        .iter()
+        .map(|k| k.name())
+        .collect::<Vec<_>>()
+        .join(" or ")
+}
+fn selected_name(name: &str, kinds: &[Kind]) -> bool {
+    kinds.iter().any(|kind| kind.matches_name(name))
 }
 
-fn discover(given: &Path) -> io::Result<(Vec<PathBuf>, PathBuf)> {
+fn discover(given: &Path, kinds: &[Kind]) -> io::Result<(Vec<PathBuf>, PathBuf)> {
     if given.is_file() {
-        if !is_vhdx_name(&given.file_name().unwrap_or_default().to_string_lossy()) {
-            return Err(io::Error::other(
-                "The input file must have a .vhdx extension",
-            ));
+        if !selected_name(
+            &given.file_name().unwrap_or_default().to_string_lossy(),
+            kinds,
+        ) {
+            return Err(io::Error::other(format!(
+                "The input must be a {} image; provide the first segment of a split E01",
+                kinds_name(kinds)
+            )));
         }
         return Ok((
             vec![given.to_path_buf()],
@@ -63,7 +85,7 @@ fn discover(given: &Path) -> io::Result<(Vec<PathBuf>, PathBuf)> {
             if kind.is_dir() {
                 pending.push(path);
             } else if (kind.is_file() || (kind.is_symlink() && path.is_file()))
-                && is_vhdx_name(&entry.file_name().to_string_lossy())
+                && selected_name(&entry.file_name().to_string_lossy(), kinds)
                 && let Ok(canonical) = path.canonicalize()
                 && seen.insert(canonical)
             {
@@ -77,7 +99,15 @@ fn discover(given: &Path) -> io::Result<(Vec<PathBuf>, PathBuf)> {
 
 /// The JSONL destination must never replace an input, including through hard links.
 fn protect_images(opts: &AutoParseOptions, images: &[PathBuf]) -> io::Result<()> {
-    super::validate_image_staging(opts)?;
+    let output_root = super::absolute_candidate(&opts.output)?;
+    for image in images {
+        let image = image.canonicalize()?;
+        if image != output_root && image.starts_with(&output_root) {
+            return Err(io::Error::other(
+                "The output directory contains an input image or segment",
+            ));
+        }
+    }
     for output in std::iter::once(&opts.output).chain(opts.json_timeline.iter()) {
         match fs::metadata(output) {
             Err(e) if e.kind() == io::ErrorKind::NotFound => continue,
@@ -87,7 +117,7 @@ fn protect_images(opts: &AutoParseOptions, images: &[PathBuf]) -> io::Result<()>
         for image in images {
             if same_file::is_same_file(output, image)? {
                 return Err(io::Error::other(
-                    "An output is also a VHDX input and cannot be overwritten",
+                    "An output overlaps an input image or segment and cannot be overwritten",
                 ));
             }
         }
@@ -114,7 +144,9 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
 
 fn run_inner(opts: &AutoParseOptions) -> i32 {
     let no_color = opts.common.no_color;
-    let (paths, root) = match discover(&opts.directory) {
+    let kinds = kinds(opts);
+    let label = kinds_name(&kinds);
+    let (paths, root) = match discover(&opts.directory, &kinds) {
         Ok(found) => found,
         Err(e) => {
             if crate::interrupt::requested() {
@@ -131,13 +163,37 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
         error_msg(
             no_color,
             &format!(
-                "No VHDX disk images (*.vhdx) were found in {}",
+                "No {} disk images ({}) were found in {}",
+                label,
+                kinds
+                    .iter()
+                    .map(|k| match k {
+                        Kind::Vhdx => "*.vhdx",
+                        Kind::E01 => "*.E01, *.Ex01",
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", "),
                 shown(&opts.directory)
             ),
         );
         return 1;
     }
-    if let Err(e) = protect_images(opts, &paths) {
+    if let Err(error) = super::validate_image_staging(opts) {
+        error_msg(no_color, &error.to_string());
+        return 1;
+    }
+    let sources = match paths
+        .iter()
+        .map(|path| disk_image::source_files(path))
+        .collect::<io::Result<Vec<_>>>()
+    {
+        Ok(groups) => groups.into_iter().flatten().collect::<Vec<_>>(),
+        Err(error) => {
+            error_msg(no_color, &error.to_string());
+            return 1;
+        }
+    };
+    if let Err(e) = protect_images(opts, &sources) {
         error_msg(no_color, &e.to_string());
         return 1;
     }
@@ -181,7 +237,7 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
     };
     let staging_parent = opts.temp_dir.as_deref().unwrap_or(parent);
     let base = match tempfile::Builder::new()
-        .prefix("juntei-vhdx-")
+        .prefix("juntei-images-")
         .tempdir_in(staging_parent)
     {
         Ok(base) => base,
@@ -203,7 +259,11 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
         problems: Vec::new(),
         metadata: crate::image_metadata::Snapshot::default(),
     };
-    p_label(no_color, "VHDX images: ", &fmt_num(paths.len()));
+    p_label(
+        no_color,
+        &format!("{label} images: "),
+        &fmt_num(paths.len()),
+    );
     let mut used = HashSet::new();
     let mut storage_full = false;
     for path in paths {
@@ -227,13 +287,43 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
         }
         let folder = util::unique_name(&root, &path, &mut used);
         let point = base.path().join(folder);
-        let image = match Image::open(&path) {
-            Ok(image) => Arc::new(image),
+        match disk_image::kind(&path) {
+            Ok(kind) if kinds.contains(&kind) => {}
+            Ok(kind) => {
+                problem(
+                    &mut inputs,
+                    &source,
+                    "",
+                    format!("Expected {label}, found {}", kind.name()),
+                );
+                continue;
+            }
+            Err(error) => {
+                problem(&mut inputs, &source, "", error.to_string());
+                continue;
+            }
+        }
+        let opened = match disk_image::open(&path) {
+            Ok(opened) if kinds.contains(&opened.kind) => opened,
+            Ok(opened) => {
+                problem(
+                    &mut inputs,
+                    &source,
+                    "",
+                    format!("Expected {label}, found {}", opened.kind.name()),
+                );
+                continue;
+            }
             Err(e) => {
                 problem(&mut inputs, &source, "", e.to_string());
                 continue;
             }
         };
+        let initial_warnings = opened.status.warnings();
+        for warning in &initial_warnings {
+            problem(&mut inputs, &source, "", warning.clone());
+        }
+        let image = Arc::new(opened.image);
         for e in &image.problems {
             problem(&mut inputs, &source, "", e.clone());
         }
@@ -247,6 +337,17 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
             ),
             true,
         );
+        if opened.segments > 1 {
+            p(
+                None,
+                &format!(
+                    "    {} segments: {}",
+                    opened.kind.name(),
+                    fmt_num(opened.segments)
+                ),
+                true,
+            );
+        }
         if let Err(e) = fs::create_dir(&point) {
             problem(&mut inputs, &source, "", e.to_string());
             storage_full = e.kind() == io::ErrorKind::StorageFull;
@@ -276,6 +377,16 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
                 }
                 problem(&mut inputs, &source, "", e.to_string());
             }
+        }
+        // Reader findings append as chunks are read. Keep distinct findings
+        // with identical text, without re-reporting the opening snapshot.
+        for warning in opened
+            .status
+            .warnings()
+            .into_iter()
+            .skip(initial_warnings.len())
+        {
+            problem(&mut inputs, &source, "", warning);
         }
         // Discovery canonicalizes its root. macOS resolves /var to /private/var
         // and Windows adds a verbatim prefix; provenance must use that same
@@ -307,6 +418,7 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
     let mut inner = opts.clone();
     inner.directory = base.path().to_path_buf();
     inner.vhdx = false;
+    inner.e01 = false;
     if crate::interrupt::requested() {
         return 130;
     }
@@ -327,7 +439,8 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
         error_msg(
             no_color,
             &format!(
-                "Incomplete VHDX input: {} read problem(s). Readable results were retained.",
+                "Incomplete {} input: {} read problem(s). Readable results were retained.",
+                label,
                 inputs.problems.len()
             ),
         );

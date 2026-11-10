@@ -111,6 +111,7 @@ outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yama
 # OS-visible mount command uses the SDK's Linux-only FUSE adapter.
 vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
 tempfile = "3"
+ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "main" }
 ctrlc = { version = "3.5", features = ["termination"] }
 
 [dev-dependencies]

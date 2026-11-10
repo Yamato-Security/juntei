@@ -4,6 +4,8 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 
 [auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
+
 ## Поширені розташування { #common-locations }
 
 | Артефакт | Типове розташування |

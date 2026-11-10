@@ -45,6 +45,22 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
 
+## E01 및 Ex01 디스크 이미지 { #e01-and-ex01-disk-images }
+
+`--e01`은 **Linux, macOS, Windows**에서 물리 EWF1(`.E01`) 및 EWF2(`.Ex01`) 이미지를 네이티브로 읽습니다. FUSE, OS 마운트, 관리자 권한이 필요하지 않습니다. [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser)와 위에서 설명한 동일한 NTFS 파싱 경로를 사용합니다.
+
+분할 이미지는 첫 번째 세그먼트를 지정하세요. `.E02`를 포함한 모든 관련 파일을 원래 이름으로 같은 디렉터리에 보관하세요. 전체 디스크(MBR/GPT)와 단일 NTFS 볼륨을 지원합니다. 두 형식이 섞인 디렉터리에는 `--vhdx --e01`을 사용하세요.
+
+임시 공간과 원본 메타데이터 요구 사항은 동일합니다. E01 이미지는 보통 디스크 전체를 담고 있고 모든 이미지를 파싱 시작 전에 스테이징하므로, 모든 이미지의 NTFS 볼륨 사용 공간을 합친 것과 비슷한 여유 공간이 필요합니다. 200 GB를 사용 중인 디스크에는 약 200 GB가 필요합니다. 이미지는 읽기 전용입니다. 수집 누락과 열기 또는 읽기 중 발견된 손상은 `ImageErrors`와 `manifest.csv`에 기록됩니다. 읽을 수 있는 결과는 보존하고 종료 코드 1을 반환합니다. 접근한 데이터만 검사하며 모든 청크나 전체 미디어 해시를 검증하지는 않습니다. 논리 파일 `.L01`, `.Lx01`은 거부하며 암호 옵션은 없습니다.
+
+별도의 `mount` 명령은 여전히 Linux FUSE가 필요하지만 네이티브 자동 파싱에는 필요하지 않습니다.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## 출력 표준 시간대 { #output-time-zone }
 
 파싱된 타임스탬프는 분석용 컴퓨터의 로컬 표준 시간대와 관계없이 기본적으로 UTC입니다. UTC는 Windows 이벤트
@@ -509,6 +525,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
       --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:

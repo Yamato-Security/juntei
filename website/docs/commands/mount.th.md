@@ -1,6 +1,6 @@
 # การเมานต์อิมเมจดิสก์ { #mounting-disk-images }
 
-`juntei mount` ทำให้ไฟล์ภายในอิมเมจดิสก์ VHDX อ่านได้ผ่านไดเรกทอรีแบบอ่านอย่างเดียวขณะคำสั่งทำงาน เครื่องมืออย่าง Hayabusa และ Juntei สามารถตรวจสอบได้โดยไม่ต้องแยกไฟล์หรือใช้สิทธิ์ root ฟังก์ชันนี้ใช้ FUSE และทำงานบน Linux ตัวอ่านและไลบรารีการเมานต์ได้รับการดูแลใน [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)
+`juntei mount` ทำให้ไฟล์ภายในอิมเมจดิสก์ VHDX / E01 / Ex01 อ่านได้ผ่านไดเรกทอรีแบบอ่านอย่างเดียวขณะคำสั่งทำงาน เครื่องมืออย่าง Hayabusa และ Juntei สามารถตรวจสอบได้โดยไม่ต้องแยกไฟล์หรือใช้สิทธิ์ root ฟังก์ชันนี้ใช้ FUSE และทำงานบน Linux ตัวอ่านและไลบรารีการเมานต์ได้รับการดูแลใน [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)
 
 ```bash
 mkdir /mnt/host1
@@ -39,7 +39,7 @@ Usage:
   juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
 
 Input:
-  <IMAGE>       The disk image (VHDX)
+  <IMAGE>       The disk image (VHDX or E01; a split E01 image from its first segment)
   <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
 
 General Options:
@@ -73,6 +73,22 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## อิมเมจดิสก์ E01 และ Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` อ่านอิมเมจแบบกายภาพ EWF1 (`.E01`) และ EWF2 (`.Ex01`) แบบเนทีฟบน **Linux, macOS และ Windows** โดยไม่ต้องใช้ FUSE การเมานต์ของ OS หรือสิทธิ์ผู้ดูแลระบบ ใช้ [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) และกระบวนการแยกวิเคราะห์ NTFS เดียวกับที่อธิบายไว้ข้างต้น
+
+สำหรับอิมเมจที่แบ่งส่วน ให้ระบุส่วนแรก เก็บไฟล์ประกอบทั้งหมดรวมถึง `.E02` ไว้ข้างกันด้วยชื่อเดิม รองรับทั้งดิสก์เต็ม (MBR/GPT) และวอลุ่ม NTFS เดี่ยว ใช้ `--vhdx --e01` สำหรับไดเรกทอรีที่มีทั้งสองรูปแบบ
+
+ข้อกำหนดพื้นที่ชั่วคราวและเมทาดาทาต้นฉบับเหมือนกัน อิมเมจ E01 มักเก็บทั้งดิสก์ และอิมเมจทั้งหมดจะถูกเตรียมข้อมูลก่อนเริ่มแยกวิเคราะห์ จึงต้องมีพื้นที่ว่างประมาณเท่ากับพื้นที่ที่ใช้งานรวมของวอลุ่ม NTFS ทั้งหมดในอิมเมจ ดิสก์ที่ใช้งาน 200 GB ต้องใช้พื้นที่ประมาณ 200 GB อิมเมจเปิดแบบอ่านอย่างเดียว ช่องว่างจากการเก็บข้อมูลและความเสียหายที่พบขณะเปิดหรืออ่านจะแสดงใน `ImageErrors` และ `manifest.csv` โดยเก็บผลลัพธ์ที่อ่านได้และจบด้วยรหัส 1 ตรวจเฉพาะข้อมูลที่เข้าถึง ไม่ใช่ทุกชังก์หรือแฮชของสื่อทั้งหมด ปฏิเสธไฟล์เชิงตรรกะ `.L01` และ `.Lx01` และไม่มีตัวเลือกรหัสผ่าน
+
+คำสั่ง `mount` ที่แยกต่างหากยังต้องใช้ Linux FUSE แต่การแยกวิเคราะห์อัตโนมัติแบบเนทีฟไม่ต้องใช้
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
 
 ## ข้อกำหนดสำหรับการเมานต์ที่ OS มองเห็น { #os-visible-mount-requirements }

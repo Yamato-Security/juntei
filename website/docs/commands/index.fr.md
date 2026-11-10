@@ -17,7 +17,7 @@ et organise les résultats et les journaux par ordinateur et par catégorie d'in
 
 | Commande | Entrée | Guide détaillé |
 |---|---|---|
-| `mount` | Image disque VHDX | [Monter des images disque](mount.md) |
+| `mount` | Image disque VHDX / E01 / Ex01 | [Monter des images disque](mount.md) |
 
 ## [Commandes ESE](user-activity.md) { #ese-commands }
 
@@ -110,7 +110,7 @@ Usage: juntei <COMMAND>
 Commands:
   auto-parse          Discover and parse Windows evidence
   help                Print this message or the help of the given subcommand(s)
-  mount               Mount a VHDX disk image read-only (FUSE)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases
   parse-file          Parse file artifacts
   parse-ntfs          Parse NTFS artifacts

@@ -46,6 +46,22 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
 
+## Образи дисків E01 та Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` нативно читає фізичні образи EWF1 (`.E01`) та EWF2 (`.Ex01`) у **Linux, macOS і Windows**, без FUSE, системного монтування чи прав адміністратора. Використовуються [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) і той самий описаний вище процес розбору NTFS.
+
+Для розділеного образу вкажіть перший сегмент. Зберігайте всі пов’язані файли, зокрема `.E02`, поруч із початковими назвами. Підтримуються цілі диски (MBR/GPT) та окремі томи NTFS. Для змішаних каталогів використовуйте `--vhdx --e01`.
+
+Вимоги до тимчасового місця й вихідних метаданих такі самі. Образи E01 зазвичай містять увесь диск, а всі образи копіюються до початку аналізу, тому передбачте вільне місце, приблизно рівне сумарному зайнятому місцю всіх їхніх томів NTFS; для диска, на якому зайнято 200 ГБ, потрібно близько 200 ГБ. Образи відкриваються лише для читання. Прогалини збору та пошкодження, знайдені під час відкриття або читання, записуються в `ImageErrors` і `manifest.csv`; читабельні результати зберігаються, код завершення — 1. Перевіряються прочитані дані, а не всі блоки чи хеш усього носія. Логічні файли `.L01` і `.Lx01` відхиляються; параметра пароля немає.
+
+Окрема команда `mount` досі потребує Linux FUSE; нативний автоматичний розбір — ні.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## Часовий пояс виводу { #output-time-zone }
 
 Позначки часу після аналізу за замовчуванням подаються в UTC, незалежно від місцевого часового поясу комп'ютера аналітика. UTC
@@ -531,6 +547,7 @@ Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
       --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
       --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:

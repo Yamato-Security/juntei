@@ -4,6 +4,8 @@ Juntei Windows से पहले ही एकत्र की गई files �
 
 [auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
+
 ## सामान्य स्थान { #common-locations }
 
 | आर्टिफ़ैक्ट | सामान्य स्थान |

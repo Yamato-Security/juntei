@@ -4,6 +4,8 @@ Juntei พาร์สไฟล์ที่รวบรวมจาก Windows �
 
 [auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
+
 ## ตำแหน่งทั่วไป { #common-locations }
 
 | อาร์ติแฟกต์ | ตำแหน่งทั่วไป |

@@ -21,6 +21,7 @@ mod browser;
 mod cli;
 mod color;
 mod defender_quarantine;
+mod disk_image;
 mod hive;
 mod i30;
 mod image_metadata;

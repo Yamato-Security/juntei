@@ -1,6 +1,6 @@
 # Монтування образів дисків { #mounting-disk-images }
 
-`juntei mount` надає доступ до файлів образу диска VHDX через каталог лише для читання протягом своєї роботи. Hayabusa, Juntei та інші інструменти можуть аналізувати їх без розпакування й прав root. Функція використовує FUSE та працює в Linux. Модуль читання та бібліотека монтування підтримуються в [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+`juntei mount` надає доступ до файлів образу диска VHDX / E01 / Ex01 через каталог лише для читання протягом своєї роботи. Hayabusa, Juntei та інші інструменти можуть аналізувати їх без розпакування й прав root. Функція використовує FUSE та працює в Linux. Модуль читання та бібліотека монтування підтримуються в [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
 
 ```bash
 mkdir /mnt/host1
@@ -39,7 +39,7 @@ Usage:
   juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
 
 Input:
-  <IMAGE>       The disk image (VHDX)
+  <IMAGE>       The disk image (VHDX or E01; a split E01 image from its first segment)
   <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
 
 General Options:
@@ -73,6 +73,22 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## Образи дисків E01 та Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` нативно читає фізичні образи EWF1 (`.E01`) та EWF2 (`.Ex01`) у **Linux, macOS і Windows**, без FUSE, системного монтування чи прав адміністратора. Використовуються [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) і той самий описаний вище процес розбору NTFS.
+
+Для розділеного образу вкажіть перший сегмент. Зберігайте всі пов’язані файли, зокрема `.E02`, поруч із початковими назвами. Підтримуються цілі диски (MBR/GPT) та окремі томи NTFS. Для змішаних каталогів використовуйте `--vhdx --e01`.
+
+Вимоги до тимчасового місця й вихідних метаданих такі самі. Образи E01 зазвичай містять увесь диск, а всі образи копіюються до початку аналізу, тому передбачте вільне місце, приблизно рівне сумарному зайнятому місцю всіх їхніх томів NTFS; для диска, на якому зайнято 200 ГБ, потрібно близько 200 ГБ. Образи відкриваються лише для читання. Прогалини збору та пошкодження, знайдені під час відкриття або читання, записуються в `ImageErrors` і `manifest.csv`; читабельні результати зберігаються, код завершення — 1. Перевіряються прочитані дані, а не всі блоки чи хеш усього носія. Логічні файли `.L01` і `.Lx01` відхиляються; параметра пароля немає.
+
+Окрема команда `mount` досі потребує Linux FUSE; нативний автоматичний розбір — ні.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
 
 ## Вимоги до монтування, видимого ОС { #os-visible-mount-requirements }

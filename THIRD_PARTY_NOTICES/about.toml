@@ -11,6 +11,9 @@ accepted = [
     "Unicode-3.0",
     "Unlicense",
     "Zlib",
+    # libbz2-rs-sys, the pure-Rust bzip2 that ys-e01-parser decompresses EWF2 chunks with: a
+    # BSD-style permissive license.
+    "bzip2-1.0.6",
     # Juntei's own license (LICENSE), and that of Yamato Security's crates such as ys-ntfs-parser:
     # the template leaves it out, and lists the upstream licenses those crates also carry.
     "RPL-1.5",

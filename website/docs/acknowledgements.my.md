@@ -24,6 +24,7 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
 | VHDX disk image များ (`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) နှင့် [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)၊ [fuser](https://github.com/cberner/fuser) ဖြင့် serve လုပ်သည် | Microsoft ၏ MS-VHDX |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | Registry | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | အောက်တွင် ဖော်ပြထားသော registry ဖိုင်ပုံစံနှင့် ပြန်လည်ရယူခြင်း သုတေသန |
 
 ## ကိုးကားသည့် tool များနှင့် လွတ်လပ်သော မှန်ကန်မှု စစ်ဆေးခြင်း { #reference-tools-and-independent-validation }

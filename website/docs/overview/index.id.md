@@ -24,7 +24,7 @@ Binary yang sama berjalan di Windows, macOS, dan Linux. Analis dapat memeriksa b
 ## Apa yang tidak dilakukan Juntei { #what-juntei-does-not-do }
 
 Juntei tidak melakukan akuisisi disk secara live dan tidak menggantikan preservasi bukti, dan satu-satunya image disk
-yang di-mount-nya adalah image VHDX, dalam mode baca saja. Juntei
+yang di-mount-nya adalah image VHDX / E01 / Ex01, dalam mode baca saja. Juntei
 tidak secara otomatis menggabungkan setiap artefak menjadi satu narasi insiden. Juntei mengurai
 bukti yang Anda berikan dan menghasilkan catatan yang sesuai untuk investigasi dan korelasi.
 

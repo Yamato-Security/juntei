@@ -1,6 +1,6 @@
 # Disk image များကို mount လုပ်ခြင်း { #mounting-disk-images }
 
-`juntei mount` သည် လုပ်ဆောင်နေစဉ် VHDX disk image အတွင်းမှ ဖိုင်များကို directory တစ်ခုမှ read-only ဖတ်ရှုနိုင်စေသည်။ Hayabusa နှင့် Juntei ကဲ့သို့ tool များဖြင့် ဖိုင်ထုတ်ယူခြင်း သို့မဟုတ် root အခွင့်အရေးမလိုဘဲ စစ်ဆေးနိုင်သည်။ FUSE ကို အသုံးပြုပြီး Linux ပေါ်တွင် အလုပ်လုပ်သည်။ Reader နှင့် mounting library ကို [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) တွင် ထိန်းသိမ်းထားသည်။
+`juntei mount` သည် လုပ်ဆောင်နေစဉ် VHDX / E01 / Ex01 disk image အတွင်းမှ ဖိုင်များကို directory တစ်ခုမှ read-only ဖတ်ရှုနိုင်စေသည်။ Hayabusa နှင့် Juntei ကဲ့သို့ tool များဖြင့် ဖိုင်ထုတ်ယူခြင်း သို့မဟုတ် root အခွင့်အရေးမလိုဘဲ စစ်ဆေးနိုင်သည်။ FUSE ကို အသုံးပြုပြီး Linux ပေါ်တွင် အလုပ်လုပ်သည်။ Reader နှင့် mounting library ကို [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) တွင် ထိန်းသိမ်းထားသည်။
 
 ```bash
 mkdir /mnt/host1
@@ -40,7 +40,7 @@ Usage:
   juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]
 
 Input:
-  <IMAGE>       The disk image (VHDX)
+  <IMAGE>       The disk image (VHDX or E01; a split E01 image from its first segment)
   <MOUNTPOINT>  An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
 
 General Options:
@@ -74,6 +74,22 @@ Staging directory သည် output directory ၏ အပြင်ဘက်တွ�
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 နှင့် Ex01 disk image များ { #e01-and-ex01-disk-images }
+
+`--e01` သည် physical EWF1 (`.E01`) နှင့် EWF2 (`.Ex01`) image များကို **Linux၊ macOS နှင့် Windows** တွင် native အဖြစ် ဖတ်သည်။ FUSE၊ OS mount သို့မဟုတ် administrator ခွင့်ပြုချက် မလိုပါ။ [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) နှင့် အထက်ပါ NTFS parsing လုပ်ငန်းစဉ်ကို အသုံးပြုသည်။
+
+အပိုင်းခွဲထားသော image ၏ ပထမ segment ကို ပေးပါ။ `.E02` အပါအဝင် ဆက်စပ်ဖိုင်အားလုံးကို မူရင်းအမည်များဖြင့် တစ်နေရာတည်းတွင် ထားပါ။ Disk အပြည့် (MBR/GPT) နှင့် NTFS volume တစ်ခုတည်းကို ပံ့ပိုးသည်။ ပုံစံနှစ်မျိုးပါသော directory အတွက် `--vhdx --e01` ကို သုံးပါ။
+
+ယာယီနေရာနှင့် မူရင်း metadata လိုအပ်ချက်များသည် အတူတူဖြစ်သည်။ E01 image များတွင် များသောအားဖြင့် disk တစ်ခုလုံး ပါဝင်ပြီး parsing မစမီ image အားလုံးကို staging လုပ်သောကြောင့် ၎င်းတို့၏ NTFS volume အားလုံးတွင် အသုံးပြုထားသော နေရာ စုစုပေါင်းခန့် လွတ်နေသောနေရာ လိုအပ်သည်။ 200 GB အသုံးပြုထားသော disk အတွက် 200 GB ခန့် လိုအပ်သည်။ Image များကို read-only ဖတ်သည်။ Acquisition အတွင်း ပျောက်နေသောဒေတာနှင့် ဖွင့်စဉ် သို့မဟုတ် ဖတ်စဉ်တွေ့သော ပျက်စီးမှုများကို `ImageErrors` နှင့် `manifest.csv` တွင် ဖော်ပြသည်။ ဖတ်နိုင်သည့်ရလဒ်များကို သိမ်းပြီး exit code 1 ပြန်ပေးသည်။ ဝင်ဖတ်သည့်ဒေတာကိုသာ စစ်ဆေးပြီး chunk အားလုံး သို့မဟုတ် media တစ်ခုလုံး၏ hash ကို မစစ်ပါ။ Logical `.L01` နှင့် `.Lx01` ဖိုင်များကို ငြင်းပယ်ပြီး password option မရှိပါ။
+
+သီးခြား `mount` command သည် Linux FUSE လိုအပ်ဆဲဖြစ်သော်လည်း native automatic parsing အတွက် မလိုပါ။
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
 ```
 
 ## OS မှ မြင်နိုင်သော mount လိုအပ်ချက်များ { #os-visible-mount-requirements }

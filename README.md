@@ -35,13 +35,18 @@ For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, `parse
 For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
 
 Use `juntei auto-parse --vhdx -d <IMAGE_OR_DIR> -o <OUTPUT>` to parse VHDX images
-natively on **Linux, macOS and Windows**, without an OS mount or administrator privileges.
+natively on **Linux, macOS and Windows**, without FUSE, an OS mount or administrator privileges.
 The parsers use private temporary file copies on the output filesystem by default; allow enough
 space for copies and results. Choose another staging disk with `--temp-dir <DIR>`. Ctrl+C stops
 parsers and cleans up the private copies.
 `juntei mount <IMAGE> <MOUNTPOINT>` remains available for exposing an image read-only to
 other programs through Linux FUSE. Both use
 [Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+
+Add `--e01` to parse physical E01/Ex01 images with
+[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser). Give a split image by its first
+segment and keep all companion segments beside it under their original names. Use `--vhdx --e01`
+for mixed directories. E01 parsing uses the same native, read-only temporary-workspace pipeline.
 
 Use [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/commands/persistence-hunter/)
 to hunt for persistence across registry hives, scheduled tasks, startup files, WMI, and BITS.
