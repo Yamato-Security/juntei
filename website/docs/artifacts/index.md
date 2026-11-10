@@ -16,6 +16,9 @@ but the investigator must still interpret what each source means.
 | Which volume was a shortcut's or Prefetch file's target on? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB devices](usb.md) |
 | What did a user open? | [Jump Lists](jump-lists.md), [LNK](lnk.md), [RecentDocs](recentdocs.md) | SRUM, Prefetch |
 | Did a program transfer a large amount of data? | [SRUM](srum.md) | Firewall, proxy, DNS, packet or EDR telemetry |
+| Which websites did a user visit, and what did they download? | [Web Browsers](browser.md), [Internet Explorer and Legacy Edge](webcache.md) | Proxy and DNS logs, `$MFT` and USN Journal, Defender, SRUM |
+| Who did a user exchange e-mail with, and what was attached? | [Outlook](outlook.md) | Mail server and gateway logs, `$MFT` and USN Journal, Defender, LNK and Jump Lists |
+| Which clients and accounts used this server, and on which days? | [User Access Logging (UAL)](ual.md) | Security event logs, SMB and RDP logs, firewall logs |
 | Was persistence configured? | [Services](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Event logs, Prefetch, `$MFT` |
 | What did Defender remove? | [Defender Quarantine](defender-quarantine.md) | Event logs, `$MFT`, USN Journal |
 | Were local accounts added or changed? | [SAM](sam.md) | Security event logs and registry transaction history |

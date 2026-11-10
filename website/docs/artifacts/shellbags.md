@@ -40,6 +40,9 @@ profile, and the system's `SOFTWARE` hive, which gives an `NTUSER.DAT` user's SI
 - **The shell item's times** (`ItemModifiedUTC`, `ItemCreatedUTC`, `ItemAccessedUTC`) are the
   folder's own file system times (FAT precision: 2 seconds) when Explorer wrote the item. They
   date the folder, not the visit, and are not updated on later visits.
+  FAT clocks have no stored UTC offset. The legacy `UTC` headings and rendered `Z` suffix are
+  display conventions, not proof of the source time zone. `auto-parse --timezone` preserves
+  these fields; interpret them with source-system context.
 - **A key's last-write time** changes when its `MRUListEx` is rewritten, that is when one of its
   items is opened and moved to the front. So the time of the key an item's value is in
   (`ParentKeyLastWrittenUTC`) is when the item was last opened **only when it is the most recent
@@ -72,7 +75,7 @@ profile, and the system's `SOFTWARE` hive, which gives an `NTUSER.DAT` user's SI
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-registry shellbags <INPUT> [OPTIONS]
+Usage: juntei parse-registry shell-bags <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find UsrClass.dat and NTUSER.DAT hives
@@ -89,8 +92,8 @@ Output:
 ```
 
 ```bash
-juntei parse-registry shellbags -d evidence/ -o shellbags.csv
-juntei parse-registry shellbags -f UsrClass.dat -t jsonl \
+juntei parse-registry shell-bags -d evidence/ -o shellbags.csv
+juntei parse-registry shell-bags -f UsrClass.dat -t jsonl \
   | jq 'select(.ItemType == "volume" and .GUID == "{F5FB2C77-0E2F-4A16-A381-3E560C68BC83}")'
 ```
 

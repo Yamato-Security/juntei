@@ -140,6 +140,14 @@ pub fn run(opts: &JumpListOptions) -> i32 {
     let options = jumplist::Options {
         code_page: opts.code_page,
     };
+    let source_times =
+        match crate::image_metadata::SourceTimes::load(opts.image_source_metadata.as_deref()) {
+            Ok(times) => times,
+            Err(e) => {
+                error_msg(no_color, &e);
+                return 1;
+            }
+        };
     let mut parsed = Vec::new();
     let mut failed = 0usize;
     let mut printed = 0usize;
@@ -147,7 +155,7 @@ pub fn run(opts: &JumpListOptions) -> i32 {
         if let Some(b) = &bar {
             b.set_message(progress::message(path));
         }
-        match parse_file(path, &options) {
+        match parse_file(path, &options, &source_times) {
             Ok(record) => {
                 for problem in record.problems() {
                     printed += 1;
@@ -272,7 +280,11 @@ impl Parsed {
     }
 }
 
-fn parse_file(path: &Path, options: &jumplist::Options) -> Result<Parsed, String> {
+fn parse_file(
+    path: &Path,
+    options: &jumplist::Options,
+    source_times: &crate::image_metadata::SourceTimes,
+) -> Result<Parsed, String> {
     let meta = path.metadata().map_err(|e| e.to_string())?;
     if meta.len() > MAX_JUMP_LIST_SIZE {
         return Err(format!("too large for a jump list ({} bytes)", meta.len()));
@@ -286,11 +298,7 @@ fn parse_file(path: &Path, options: &jumplist::Options) -> Result<Parsed, String
     let app_id = jumplist::appid::app_id(&name).unwrap_or_default();
     Ok(Parsed {
         source: path.to_string_lossy().to_string(),
-        source_times: [
-            meta.created().ok(),
-            meta.modified().ok(),
-            meta.accessed().ok(),
-        ],
+        source_times: source_times.for_file(path, &meta)?,
         app_name: jumplist::appid::app_name(&app_id),
         app_id,
         list,
@@ -684,7 +692,6 @@ fn write_json(
 
 fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let automatic: Vec<(&Parsed, &Automatic)> = parsed
         .iter()
         .filter_map(|r| match &r.list {
@@ -868,7 +875,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
             p(None, l, true);
         }
     }
-    p(None, "", true);
 }
 
 /// Whether a file name is a jump list: `*.automaticDestinations-ms` or `*.customDestinations-ms`.

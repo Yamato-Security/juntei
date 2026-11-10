@@ -1,13 +1,29 @@
 [package]
 name = "juntei"
-version = "1.0.0"
+version = "1.1.0"
 repository = "https://github.com/Yamato-Security/juntei"
 authors = ["Yamato Security @SecurityYamato"]
 description = "Windows forensics artifact parser"
 license = "RPL-1.5"
 edition = "2024"
 rust-version = "1.99"
-include = ["src/**/*", "art/**/*", "LICENSE", "THIRD_PARTY_NOTICES/**/*", "README.md", "CHANGELOG.md"]
+build = "build.rs"
+include = ["src/**/*", "art/**/*", "build.rs", "LICENSE", "THIRD_PARTY_NOTICES/**/*", "README.md", "CHANGELOG.md"]
+
+# The Windows file properties (Details tab) of juntei.exe, embedded by build.rs. FileVersion and
+# ProductVersion are the version above. The release workflow checks every value in the executable.
+[package.metadata.winresource]
+ProductName = "Juntei"
+FileDescription = "Juntei - Windows Forensics Artifact Parser"
+CompanyName = "Yamato Security"
+InternalName = "juntei"
+OriginalFilename = "juntei.exe"
+LegalCopyright = "Copyright (C) 2026 Shirofune Security Co., Ltd."
+Comments = "Windows artifact parsing for digital forensics and incident response"
+
+# Compiles the Windows file properties into juntei.exe (build.rs); unused for other targets.
+[build-dependencies]
+winresource = "0.1.34"
 
 # Every crates.io dependency has an explicit floor rather than "*": a wildcard accepts any future
 # release, including a breaking one, on the next `cargo update`. The parsers are Yamato Security's
@@ -34,8 +50,8 @@ ys-ntfs-parser = { git = "https://github.com/Yamato-Security/ys-ntfs-parser", br
 # Prefetch parsing: Yamato Security's ys-prefetch-parser, a fork of Samuel Garcés Marín's
 # frnsc-prefetch crate (MIT).
 frnsc-prefetch = { package = "ys-prefetch-parser", git = "https://github.com/Yamato-Security/ys-prefetch-parser" }
-# Preserve parser field order when auto-parse adds Computer and Artifact to JSON records.
-serde_json = { version = "1", features = ["preserve_order"] }
+# Preserve field order and exact float values when auto-parse rewrites generated JSON.
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
 # Refuse to overwrite an input through the same path, a symlink or a hard link.
 same-file = "1"
 # parse-registry's filters on key paths, value names and data.
@@ -73,15 +89,36 @@ serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
 # (MIT OR Apache-2.0).
 srum = { package = "ys-srum-parser", git = "https://github.com/Yamato-Security/ys-srum-parser" }
+# User Access Logging parsing: the ESE reader of ys-srum-parser (the fork of Sootmark's ese crate).
+ese = { package = "ys-srum-parser-ese", git = "https://github.com/Yamato-Security/ys-srum-parser" }
+# Browser history, downloads, cookies and form history: Yamato Security's ys-browser-parser, a
+# fork of Sootmark's browser, sqlite and plist crates (MIT OR Apache-2.0); its timestamps are
+# sootmark-common's.
+browser = { package = "ys-browser-parser", git = "https://github.com/Yamato-Security/ys-browser-parser" }
+# Use the same reader for detection: the committed schema may exist only in the WAL.
+browser-sqlite = { package = "ys-browser-parser-sqlite", git = "https://github.com/Yamato-Security/ys-browser-parser" }
+common = { package = "sootmark-common", version = "0.3.7" }
 termcolor = "1"
 # Defender quarantine parsing: Yamato Security's ys-defender-history-parser, a fork of
 # sootmark-defender (MIT OR Apache-2.0).
 defender = { package = "ys-defender-history-parser", git = "https://github.com/Yamato-Security/ys-defender-history-parser" }
+# Outlook PST and OST stores and MSG and OFT files: Yamato Security's ys-outlook-parser, whose PST
+# and compressed RTF readers are a fork of Microsoft's outlook-pst-rs (MIT). Named outlook-parser
+# here so that its library does not clash with parse-file outlook's module.
+outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yamato-Security/ys-outlook-parser" }
+
+# Native read-only VHDX/NTFS access on Linux, macOS and Windows. The separate
+# OS-visible mount command uses the SDK's Linux-only FUSE adapter.
+vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
+tempfile = "3"
+ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "main" }
+ctrlc = { version = "3.5", features = ["termination"] }
 
 [dev-dependencies]
+# Build synthetic Outlook files for end-to-end export regressions.
+cfb = "0.16"
 # The SYSTEM hive of test_files/shimcache/ is kept gzipped.
 flate2 = "1"
-tempfile = "3"
 
 [profile.release]
 lto = "fat"

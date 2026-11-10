@@ -1,0 +1,4 @@
+outlook.pst.gz is outlook.pst of libyal's test data (https://github.com/libyal/testdata, pst/outlook.pst
+at commit f018eb7c91c8356123b021ecd28ae894dd500210), by Joachim Metz, licensed under the Creative
+Commons Attribution 4.0 International licence (CC BY 4.0,
+https://creativecommons.org/licenses/by/4.0/). It is changed only by gzip compression.

@@ -17,17 +17,24 @@ mod amcache;
 mod amcache_output;
 mod auto_parse;
 mod boot;
+mod browser;
 mod cli;
 mod color;
 mod defender_quarantine;
+mod disk_image;
 mod hive;
 mod i30;
+mod image_files;
+mod image_metadata;
+mod interrupt;
 mod jump_lists;
 mod lnk;
 mod logfile;
 mod mft;
 mod mft_csv;
 mod mft_inspect;
+mod mount;
+mod outlook;
 mod output_schema;
 mod persistence_hunter;
 mod prefetch;
@@ -38,12 +45,17 @@ mod security_descriptor;
 mod shimcache;
 mod srum;
 mod super_timeline;
+mod time_display;
+mod ual;
 mod usn_journal;
 mod util;
+mod webcache;
 
-use chrono::Local;
 use clap::{CommandFactory, Parser};
-use cli::{Cli, Commands, EseCommands, FileCommands, NtfsCommands, RegistryCommands, VERSION};
+use cli::{
+    Cli, Commands, EseCommands, FileCommands, NtfsCommands, RegistryCommands, SqliteCommands,
+    VERSION,
+};
 use color::JunteiColor::Green;
 use std::env;
 use std::time::Instant;
@@ -82,6 +94,12 @@ fn main() {
         Commands::AutoParse(opts) => {
             display_logo(opts.common.quiet, opts.common.no_color, true, false);
             let code = auto_parse::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
+        Commands::Mount(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = mount::run(opts);
             print_elapsed(start, opts.common.no_color);
             code
         }
@@ -153,6 +171,19 @@ fn main() {
                 code
             }
         },
+        Commands::ParseSqlite(source) => match &source.cmd {
+            SqliteCommands::Browser(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = browser::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+        },
         Commands::ParseEse(source) => match &source.cmd {
             EseCommands::Srum(opts) => {
                 let data_only = opts.data_on_stdout();
@@ -160,6 +191,28 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = srum::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            EseCommands::Ual(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = ual::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            EseCommands::Webcache(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = webcache::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }
@@ -173,6 +226,17 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = prefetch::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::Outlook(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = outlook::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }
@@ -259,7 +323,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Recentdocs(opts) => {
+            RegistryCommands::RecentDocs(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -270,7 +334,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Shellbags(opts) => {
+            RegistryCommands::ShellBags(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -325,7 +389,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Userassist(opts) => {
+            RegistryCommands::UserAssist(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -336,7 +400,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Opensavemru(opts) => {
+            RegistryCommands::OpenSaveMru(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -424,7 +488,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Featureusage(opts) => {
+            RegistryCommands::FeatureUsage(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -468,7 +532,7 @@ fn main() {
                 }
                 code
             }
-            RegistryCommands::Appcompat(opts) => {
+            RegistryCommands::AppCompat(opts) => {
                 let data_only = opts.data_on_stdout();
                 if !data_only {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
@@ -517,29 +581,33 @@ fn main() {
     std::process::exit(code);
 }
 
+/// The analyst computer's local time, as `Start time` and `End time` show it.
+fn local_time() -> String {
+    chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
+}
+
 fn print_elapsed(start: Instant, no_color: bool) {
-    let duration = start.elapsed();
-    let hours = duration.as_secs() / 3600;
-    let minutes = (duration.as_secs() % 3600) / 60;
-    let seconds = duration.as_secs() % 60;
-    let millis = duration.subsec_millis();
+    p(Green.rdg(no_color), "End time: ", false);
+    p(None, &local_time(), true);
     p(Green.rdg(no_color), "Elapsed time: ", false);
-    p(
-        None,
-        &format!("{hours:02}:{minutes:02}:{seconds:02}.{millis:03}\n"),
-        true,
-    );
+    p(None, &format!("{}\n", elapsed_text(start.elapsed())), true);
+}
+
+/// `HH:MM:SS`, rounded to the nearest second.
+fn elapsed_text(duration: std::time::Duration) -> String {
+    let total = (duration.as_millis() + 500) / 1000;
+    format!(
+        "{:02}:{:02}:{:02}",
+        total / 3600,
+        (total % 3600) / 60,
+        total % 60
+    )
 }
 
 fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
+    // The logo ends with a newline, so printing it with one leaves a single blank line after it.
     if !quiet {
         p(Green.rdg(no_color), LOGO, true);
-        p(None, "", true);
-    }
-    if time {
-        let msg = Local::now().format("%Y/%m/%d %H:%M").to_string();
-        p(Green.rdg(no_color), "Start time: ", false);
-        p(None, &msg, true);
     }
     if help {
         p(None, &format!("Version: {VERSION}"), true);
@@ -547,5 +615,35 @@ fn display_logo(quiet: bool, no_color: bool, time: bool, help: bool) {
         p(Green.rdg(no_color), "Version: ", false);
         p(None, VERSION, true);
     }
+    if time {
+        p(Green.rdg(no_color), "Start time: ", false);
+        p(None, &local_time(), true);
+    }
     p(None, "", true);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::elapsed_text;
+    use std::time::Duration;
+
+    #[test]
+    fn elapsed_time_is_rounded_to_the_nearest_second() {
+        for (millis, text) in [
+            (0, "00:00:00"),
+            (499, "00:00:00"),
+            (500, "00:00:01"),
+            (1_499, "00:00:01"),
+            (59_500, "00:01:00"),
+            (3_599_499, "00:59:59"),
+            (3_599_500, "01:00:00"),
+            (90_061_000, "25:01:01"),
+        ] {
+            assert_eq!(
+                elapsed_text(Duration::from_millis(millis)),
+                text,
+                "{millis}"
+            );
+        }
+    }
 }

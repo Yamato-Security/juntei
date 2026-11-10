@@ -1,0 +1,120 @@
+# تنسيقات الإخراج { #output-formats }
+
+## ملخصات الطرفية { #terminal-summaries }
+
+من دون `-o` أو `-t` منظم، تعرض الأوامر عمومًا الأعداد، والنطاقات الزمنية، والتلف، والنتائج عالية
+القيمة. وتساعدك الملخصات على فهم النطاق قبل إنشاء إخراج كبير.
+
+## CSV { #csv }
+
+CSV هو التنسيق الافتراضي للحفظ. وهو ملائم لأدوات جداول البيانات، والاستيراد إلى SQL، وعارضات
+الجداول الزمنية. وتُنشئ بعض المحللات عدة جداول لأن آثارها الرقمية تحتوي على أنواع سجلات مختلفة
+(Amcache، وJump Lists، وSRUM).
+
+!!! warning "تعامل مع أعمدة الأدلة على أنها نص"
+    قد يبدأ مسار أو سطر أوامر بـ `=` أو `+` أو `-` أو `@`. وقد تفسّره برامج جداول البيانات
+    على أنه صيغة. استورد كل الحقول كنص أو استخدم عارض CSV آمنًا جنائيًا. ويحتفظ Juntei
+    بسلاسل الأدلة النصية بدلًا من تعديلها.
+
+## أسماء الحقول { #field-names }
+
+تستخدم ترويسات أعمدة CSV وأسماء حقول JSON/JSONL صيغة PascalCase، بما في ذلك Amcache و
+بيانات `auto-parse`. وتبقى الاختصارات بأحرف كبيرة: `ProcessID`، `TimestampUTC`، `UserSID`،
+`SHA256`. وتُفصل الكلمة التالية لاختصار بشرطة: `IP-Address`، `MFT-Entry`،
+`USN-Journal`. ومع `jq`، ضع الحقل الذي يحتوي على شرطة بين علامتي اقتباس: `.["IP-Address"]`.
+
+يستخدم ملف MFT CSV الافتراضي ترويسات أقصر وسهلة القراءة مثل `EntryNum` و`Ext` و`Dir` و`HasADS`
+و`Size` و`Created (SI)` و`Created (FN)`. راجع [مرجع حقول MFT](../artifacts/mft.md)
+للاطلاع على مخطط CSV الكامل الخاص به. وتتبع أزواج الطوابع الزمنية ترتيب MACB: ‏DataModified، وAccessed،
+وMetadataChanged، وCreated، مع SI قبل FN. وضع الترويسات التي تحتوي على مسافات أو علامات ترقيم
+بين علامتي اقتباس في أدوات CSV.
+
+تحتفظ قيم الأدلة بتهجئتها الأصلية. كما تبقى مفاتيح القواميس التي يوفرها المصدر، مثل أسماء
+قيم سجل Windows تحت `Details`/`DataRaw` وأسماء `Zone.Identifier` تحت `ZoneIdentifier`،
+دون تغيير. ويستخدم قاموسا `ValueState` و`Raw` في SRUM التسميات نفسها المستخدمة في أعمدة
+بياناتهما. ويُبلَّغ عن أي تصادم في التطبيع بدلًا من إسقاط حقل بصمت.
+
+يغيّر هذا مخططات التصدير السابقة. أعد توليد النتائج الموجودة وحدّث الاستعلامات المحفوظة
+(مثلًا، يصبح `.record_type` ‏`.RecordType`، ويصبح `full_path` في Amcache ‏`FullPath`).
+وتحتفظ التقارير النصية المقروءة للبشر وتنسيقات الإدخال/التكوين باصطلاحاتها الحالية.
+
+## أسماء الحقول المختصرة { #abbreviated-field-names }
+
+تنطبق التسميات التالية على صادرات CSV وJSON وJSONL، بما في ذلك التحليل التلقائي و
+البيانات. حدّث مرشحات `jq` و`xsv` وجداول البيانات المحفوظة عند إعادة توليد النتائج الأقدم.
+ولا تتغير إلا تسميات الإخراج؛ أما قيم الأدلة وأسماء قيم سجل Windows الخام فتحتفظ بتهجئتها الأصلية.
+
+| التسمية السابقة | التسمية الحالية |
+|---|---|
+| `ADS` | `HasADS` |
+| `Application` | `App` |
+| `ApplicationCompany` | `AppCompany` |
+| `ApplicationCompanyRaw` | `AppCompanyRaw` |
+| `ApplicationPath` | `AppPath` |
+| `Arguments` | `Args` |
+| `Attributes` | `Attr` |
+| `AttributeType` | `AttrType` |
+| `BytesRecvd` | `BytesReceived` |
+| `Computer` | `Comp` |
+| `ComputerName` | `CompName` |
+| `ComputerNameLastWrittenUTC` | `CompNameLastWrittenUTC` |
+| `Directories` | `Dir` |
+| `FileName` | `Filename` |
+| `MicrosecondZeros` | `ZeroU-Secs` |
+| `SI-BeforeFN` | `SI<FN` |
+| `UserName` | `User` |
+| `Username` | `User` |
+| `UserNameSource` | `UserSource` |
+| `Users` | `User` |
+
+تستخدم ملفات MFT CSV أسماء أعمدة خاصة: `File` (Filename) و`SN` (Sequence Number) و`ParentEntryNum` (ParentEntryNumber) و`ParentSN` (Parent Sequence Number) و`USN` (Update Sequence Number) و`LogfileSN` (Logfile Sequence Number) و`SID` (Security ID) و`Type` (Name Type) و`RefCnt` (Reference Count). وتنطبق أيضًا على ملفات MFT CSV الناتجة عن `auto-parse`؛ راجع [حقول مخرجات MFT](../artifacts/mft.md#csv-output-fields).
+
+وقت JSON الأصلي لمعلومات النظام هو `CompNameLastWritten` (في CSV:
+`CompNameLastWrittenUTC`). و`HasADS` مؤشر منطقي (Boolean)؛ و`Dir` في Prefetch يحتوي على
+قائمة المجلدات المسجلة. ويحتفظ `User` بنوعه الخاص بكل أثر رقمي: سلسلة نصية لاسم حساب،
+أو قائمة المستخدمين المرتبطين في إخراج USB. ولا يعني ضمنًا هوية منفِّذة.
+ضع علامات الترقيم بين علامتي اقتباس في الاستعلامات: `."SI<FN"` و`.["ZeroU-Secs"]`.
+
+## JSON { #json }
+
+يخزن JSON النتيجة الكاملة كمستند واحد. ويحتفظ بالمصفوفات، والبنى المتداخلة، والقيم الفارغة (null)،
+والأعداد الصحيحة الكبيرة، والفروق التي لا يستطيع CSV المسطح تمثيلها دائمًا.
+
+```bash
+juntei parse-file lnk -f sample.lnk -o lnk.json -t json
+```
+
+## JSON Lines { #json-lines }
+
+يكتب JSONL كائن JSON مستقلًا واحدًا في كل سطر. وهو ملائم للتدفق ويعمل بشكل طبيعي مع `jq`:
+
+```bash
+juntei parse-registry services -d evidence/ -t jsonl \
+  | jq -c 'select(.StartType == "automatic") | {Host, ServiceName, ImagePath}'
+```
+
+عندما يُوجَّه الإخراج المنظم إلى الإخراج القياسي، يرسل Juntei رسائل التقدم والرسائل الأخرى إلى
+الخطأ القياسي حتى لا يتلقى الأنبوب (pipe) سوى البيانات.
+
+يُنشئ `auto-parse -j timeline.jsonl` مجموعة بيانات JSONL إضافية لمجموعة كاملة متعددة
+المضيفين مع الاحتفاظ بنتائج CSV المصنفة. أضف `-t json` أو `-t jsonl` لتغيير
+تنسيق النتائج الفردية. ولكل سجل حقلا `Comp` و`Artifact` حتى يبقى مصدره واضحًا
+بعد الاستيعاب في SIEM.
+
+## UTC والدقة { #utc-and-precision }
+
+ينسّق Juntei الأوقات المحللة بتوقيت UTC باستخدام RFC 3339 حيثما يسمح التنسيق بذلك. ولبعض الآثار الرقمية
+دقة 100 نانوثانية؛ ويخزن بعضها الآخر الثواني، أو وقت FAT، أو فترات تجميع، أو لا وقت على الإطلاق.
+وعدد الأرقام لا يعني الدقة: افهم دائمًا الحقل المصدر الموصوف في صفحة الأثر الرقمي الخاصة به.
+
+يستخدم UTC صيغة سجل أحداث Windows ‏`2026-10-20T08:46:38.2001668Z`، مع الاحتفاظ بالدقة
+الكسرية المتاحة. ويعرض `auto-parse -Z "+09:00"` اللحظات المحللة بإزاحة ثابتة صريحة
+في جميع تنسيقات نتائجه وفي تصدير `-j` الاختياري. والقيمة الافتراضية هي UTC، بصرف النظر عن
+الحاسوب الذي يشغّل Juntei. وتبقى القيم الخام وأوقات الساعة غير المرتبطة بمنطقة زمنية كما سُجلت؛ راجع
+[المناطق الزمنية للإخراج](../commands/auto-parse.md#output-time-zone).
+
+## التلف والقيم المفقودة { #damage-and-missing-values }
+
+للقيم الفارغة، و`null`، و`NA`، و`Problems`، وحقول الحالة الخاصة بكل محلل معنى. فقد تعني أن
+الأثر الرقمي لم يخزن قيمة، أو أن السجل تالف، أو أن التنسيق لا يدعمها، أو أن
+المحلل لم يتمكن من حلها. لا تستبدل كل القيم الفارغة بالصفر.

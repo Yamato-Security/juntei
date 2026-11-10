@@ -124,7 +124,8 @@ pub fn run(opts: &DefenderQuarantineOptions) -> i32 {
                 p(JunteiColor::Red.rdg(no_color), EXTRACT_WARNING, true);
                 p(None, "", true);
             }
-            Some(Extractor::new(dir, opts.clobber))
+            let shown = opts.extract_shown_as.as_deref().unwrap_or(dir);
+            Some(Extractor::new(dir, shown, opts.clobber))
         }
         None => None,
     };
@@ -703,6 +704,8 @@ fn read_content(path: &Path, name: &str) -> Content {
 /// holding something else unless asked.
 struct Extractor {
     dir: PathBuf,
+    /// The directory as `ExtractedFile` shows it: `dir` unless `--extract-shown-as` is given.
+    shown: PathBuf,
     clobber: bool,
     written: usize,
     already: usize,
@@ -719,9 +722,10 @@ struct ExtractedStream<'a> {
 }
 
 impl Extractor {
-    fn new(dir: &Path, clobber: bool) -> Self {
+    fn new(dir: &Path, shown: &Path, clobber: bool) -> Self {
         Self {
             dir: dir.to_path_buf(),
+            shown: shown.to_path_buf(),
             clobber,
             written: 0,
             already: 0,
@@ -809,10 +813,10 @@ impl Extractor {
             match self.write(&path, file.bytes) {
                 Ok(()) => {
                     if first.is_none() {
-                        first = Some(path.clone());
+                        first = Some(self.shown.join(&target));
                     }
                     if file.primary {
-                        primary = Some(path);
+                        primary = Some(self.shown.join(&target));
                     }
                     if file.security {
                         let report = security_descriptor::report(file.bytes);
@@ -1166,7 +1170,6 @@ fn print_summary(
     no_color: bool,
 ) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     p_label(no_color, "Quarantine folders: ", &fmt_num(folders.len()));
     p_label(no_color, "Quarantine entries parsed: ", &fmt_num(read));
     if failed > 0 {
@@ -1256,7 +1259,6 @@ fn print_summary(
             );
         }
     }
-    p(None, "", true);
 }
 
 #[cfg(test)]
@@ -1289,7 +1291,7 @@ mod tests {
             .range
             .clone();
         data.content[security.start] = 0xff;
-        let mut extractor = Extractor::new(dir.path(), false);
+        let mut extractor = Extractor::new(dir.path(), dir.path(), false);
         let (primary, problems) = extractor.extract(&data, Some(r"C:\tool.exe"));
         assert!(primary.unwrap().ends_with("tool.exe.quarantined"));
         assert!(
@@ -1324,7 +1326,7 @@ mod tests {
         let first = file_fixture();
         let mut second = file_fixture();
         second.id = "1111111111111111111111111111111111111111".into();
-        let mut extractor = Extractor::new(dir.path(), false);
+        let mut extractor = Extractor::new(dir.path(), dir.path(), false);
         assert!(extractor.extract(&first, Some(r"C:\tool.exe")).1.is_empty());
         assert!(
             extractor
@@ -1366,7 +1368,7 @@ mod tests {
             std::fs::read(fixture.join("5C/5CA5633C0E2AE818B85C5695677170EA42D55131")).unwrap();
         let first = read_resource_data(&file);
         let second = read_resource_data(&orphan);
-        let mut extractor = Extractor::new(dir.path(), true);
+        let mut extractor = Extractor::new(dir.path(), dir.path(), true);
         let (a, errors) = extractor.extract(&first, Some(r"C:\Users\alice\tool.exe"));
         assert!(errors.is_empty());
         assert!(a.unwrap().ends_with("tool.exe.quarantined"));

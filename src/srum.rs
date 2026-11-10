@@ -400,7 +400,7 @@ fn file_name(path: &str) -> &str {
 }
 
 /// The SOFTWARE hive of the Windows a database comes from, in a collection that keeps the
-/// layout (KAPE: `Windows/System32/sru/SRUDB.dat` and `Windows/System32/config/SOFTWARE`), or
+/// layout (`Windows/System32/sru/SRUDB.dat` and `Windows/System32/config/SOFTWARE`), or
 /// copied next to the database. Names are matched ignoring case.
 fn software_hive(database: &Path) -> Option<PathBuf> {
     let directory = database.parent()?;
@@ -507,7 +507,7 @@ fn time(t: Option<Time>) -> Json {
 
 /// An ESE value as JSON: numbers as numbers, an OLE date as a time, a GUID in its usual form,
 /// binary data in hex, NULL as null.
-fn json_value(v: &Value) -> Json {
+pub(crate) fn json_value(v: &Value) -> Json {
     match v {
         Value::Null => Json::Null,
         Value::Bool(b) => json!(b),
@@ -529,7 +529,7 @@ fn json_value(v: &Value) -> Json {
 }
 
 /// A GUID's 16 bytes as stored (the first three fields little-endian) in the usual form.
-fn guid(g: &[u8; 16]) -> String {
+pub(crate) fn guid(g: &[u8; 16]) -> String {
     format!(
         "{{{:08X}-{:04X}-{:04X}-{:02X}{:02X}-{}}}",
         u32::from_le_bytes([g[0], g[1], g[2], g[3]]),
@@ -545,7 +545,7 @@ fn guid(g: &[u8; 16]) -> String {
 }
 
 /// A JSON value in a CSV cell: text as is, null empty, a list joined with `, `.
-fn cell(v: &Json) -> String {
+pub(crate) fn cell(v: &Json) -> String {
     match v {
         Json::Null => String::new(),
         Json::String(s) => s.clone(),
@@ -555,7 +555,7 @@ fn cell(v: &Json) -> String {
 }
 
 /// A row serialized as a JSON object with its columns in order.
-struct Ordered<'a>(&'a [(String, Json)]);
+pub(crate) struct Ordered<'a>(pub(crate) &'a [(String, Json)]);
 
 impl Serialize for Ordered<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -691,24 +691,30 @@ fn write_csv_tables(dir: &Path, srum: &Srum, protected: &[PathBuf]) -> io::Resul
 
 /// The rows of one CSV file, with every column any of them has, in the order first seen.
 #[derive(Default)]
-struct CsvTable {
+pub(crate) struct CsvTable {
     columns: Vec<String>,
     index: HashMap<String, usize>,
     rows: Vec<Vec<(String, Json)>>,
 }
 
 impl CsvTable {
-    fn push(&mut self, row: Vec<(String, Json)>) {
-        for (name, _) in &row {
-            if !self.index.contains_key(name) {
-                self.index.insert(name.clone(), self.columns.len());
-                self.columns.push(name.clone());
-            }
-        }
+    pub(crate) fn push(&mut self, row: Vec<(String, Json)>) {
+        self.add_columns(row.iter().map(|(name, _)| name.clone()));
         self.rows.push(row);
     }
 
-    fn write(&self, path: &Path) -> io::Result<()> {
+    /// Add the columns of `names` it hasn't yet, after its own: the header of a table that may
+    /// get no row.
+    pub(crate) fn add_columns(&mut self, names: impl IntoIterator<Item = String>) {
+        for name in names {
+            if !self.index.contains_key(&name) {
+                self.index.insert(name.clone(), self.columns.len());
+                self.columns.push(name);
+            }
+        }
+    }
+
+    pub(crate) fn write(&self, path: &Path) -> io::Result<()> {
         let mut w = csv::Writer::from_path(path)?;
         w.write_record(crate::output_schema::headers(
             self.columns.iter().map(String::as_str),
@@ -748,7 +754,7 @@ pub(crate) fn table_filename(kind: Option<Kind>, raw: &str, used: &mut HashSet<S
 
 /// A table name as a file name: only letters, digits and `-_{}` (a crafted table name can't
 /// leave the directory), unique among the files written.
-fn safe_file_name(name: &str, used: &mut HashSet<String>) -> String {
+pub(crate) fn safe_file_name(name: &str, used: &mut HashSet<String>) -> String {
     let mut safe: String = name
         .chars()
         .map(|c| {
@@ -918,7 +924,6 @@ impl Stats {
 
 fn print_summary(s: &Stats, no_color: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let mut parsed = fmt_num(s.databases);
     if s.failed > 0 {
         parsed.push_str(&format!(" (could not parse: {})", fmt_num(s.failed)));
@@ -995,7 +1000,6 @@ fn print_summary(s: &Stats, no_color: bool) {
         );
     }
     p_label(no_color, "Problems: ", &fmt_num(s.problems));
-    p(None, "", true);
 }
 
 /// Whether a file name is a SRUM database: `SRUDB.dat`, or a name ending in it
@@ -1168,7 +1172,7 @@ mod tests {
         // next to the database
         std::fs::write(sru.join("SOFTWARE"), b"").unwrap();
         assert_eq!(software_hive(&database), Some(sru.join("SOFTWARE")));
-        // KAPE's layout first, names in any case
+        // the collection's layout first, names in any case
         let config = dir.path().join("C/Windows/System32/Config");
         std::fs::create_dir_all(&config).unwrap();
         std::fs::write(config.join("software"), b"").unwrap();

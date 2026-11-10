@@ -525,7 +525,6 @@ fn write_records(
 
 fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let hives = parsed.iter().filter(|f| !f.is_value).count();
     let values = parsed.len() - hives;
     if hives > 0 || values == 0 {
@@ -710,7 +709,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
             true,
         );
     }
-    p(None, "", true);
 }
 
 /// Whether a file name is a `SYSTEM` hive's (in any case; its logs are not hives).

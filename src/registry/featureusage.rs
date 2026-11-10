@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-registry featureusage`: how users used applications in Explorer, from `NTUSER.DAT`
+//! `parse-registry feature-usage`: how users used applications in Explorer, from `NTUSER.DAT`
 //! hives, read by ys-registry-parser's `ntuser` module, with Hayabusa's input options, progress
 //! bar and results summary. One record per application, button or item of:
 //!
@@ -484,7 +484,6 @@ impl Stats {
         trim(&mut self.recent, MAX_PRINTED);
         trim(&mut self.created, MAX_PRINTED);
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(no_color, "NTUSER.DAT hives parsed: ", &fmt_num(self.hives));
         if self.failed > 0 {
             p_label(no_color, "Could not parse: ", &fmt_num(self.failed));
@@ -584,7 +583,6 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }
 

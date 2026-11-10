@@ -1,18 +1,23 @@
 # ESE Commands
 
 `parse-ese` handles Extensible Storage Engine databases. SRUM's `SRUDB.dat` is an ESE database;
-the optional SOFTWARE hive enriches account and Wi-Fi names.
+the optional SOFTWARE hive enriches account and Wi-Fi names. The User Access Logging databases of
+Windows Server (`Current.mdb`, `{GUID}.mdb` and `SystemIdentity.mdb`) are ESE databases too, as
+is `WebCacheV01.dat`, where Internet Explorer and legacy Edge keep their history, downloads,
+cookies and cache.
 
 ```text
-Version: 1.0.0
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  help  Print this message or the help of the given subcommand(s)
-  srum  Parse SRUM databases
+  help      Print this message or the help of the given subcommand(s)
+  srum      Parse SRUM databases
+  ual       Parse User Access Logging (UAL) databases
+  webcache  Parse Internet Explorer and legacy Edge's WebCache databases
 
 Options:
   -h, --help  Print help
@@ -21,7 +26,7 @@ Options:
 ## `parse-ese srum`
 
 ```text
-Version: 1.0.0
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -52,3 +57,69 @@ juntei parse-ese srum -f SRUDB.dat -t jsonl | jq 'select(.Provider == "NetworkUs
 ```
 
 See [SRUM](../artifacts/srum.md).
+
+## `parse-ese ual`
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ese ual <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for UAL databases (Current.mdb, {GUID}.mdb, SystemIdentity.mdb)
+  -f, --file <FILE>      File path to one UAL database (role names come from the SystemIdentity.mdb next to it)
+
+Output:
+  -o, --output <PATH>       Save every row: a directory of CSV tables, or a file (json, jsonl)
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese ual -d Sum -o ual-csv
+juntei parse-ese ual -d Sum -t jsonl | jq 'select(.Table == "CLIENTS")'
+```
+
+See [User Access Logging (UAL)](../artifacts/ual.md).
+
+## `parse-ese webcache`
+
+```text
+Version: 1.1.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-ese webcache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for WebCache databases (WebCacheV01.dat)
+  -f, --file <FILE>      File path to one WebCache database (its transaction logs are not read)
+
+Output:
+  -o, --output <PATH>       Save every row: a directory of CSV tables, or a file (json, jsonl)
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese webcache -d Users -o webcache-csv
+juntei parse-ese webcache -f WebCacheV01.dat -t jsonl | jq 'select(.Table == "History")'
+```
+
+See [Internet Explorer and Legacy Edge](../artifacts/webcache.md).

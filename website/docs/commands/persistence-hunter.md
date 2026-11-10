@@ -16,7 +16,7 @@ PowerShell projects behind the catalogue.
 ## Usage
 
 ```text
-Version: 1.0.0
+Version: 1.0.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -237,7 +237,7 @@ warnings go to stderr. Without either option, Juntei prints a summary and up to 
 | `Description`, `References` | Why the mechanism matters and where to read more |
 | `AccessGained` | The mechanism's usual scope (`USER` or `SYSTEM`; BITS can also identify `LOCAL_SERVICE`/`NETWORK_SERVICE`); not proof that a specific command achieved that privilege |
 | `Severity`, `PolicyReason` | Profile classification, matching policy explanation, and any partial-match or unverified-signer qualification |
-| `SourceFile`, `RecordStatus` | Exact collected source and allocation/replay/recovery context; follow this back to original evidence |
+| `SourceFile`, `RecordStatus` | Exact collected source, its path starting with the input as given (`./HOST/...` from auto-parse), and allocation/replay/recovery context; follow this back to original evidence |
 | `KeyLastWrite` | The registry **key's** timestamp. It does not date an individual value |
 | `LastChange`, `ChangeSource`, `ChangeEvidence` | Independently correlated change time, source proof, and whether correlation succeeded |
 | `ResolvedPath`, `ResolutionStatus`, `Exists` | Payload path and offline resolution result; uncollected evidence is unknown, not `false` |

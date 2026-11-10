@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-registry recentdocs`: Explorer's recent documents in `NTUSER.DAT` hives, read by
+//! `parse-registry recent-docs`: Explorer's recent documents in `NTUSER.DAT` hives, read by
 //! ys-registry-parser's `ntuser` module, with Hayabusa's input options, progress bar and results
 //! summary. One record per item of `RecentDocs` and of each of its subkeys (one per extension,
 //! and `Folder`), in the order of the key's `MRUListEx`: the item's name, the name of its
@@ -377,7 +377,6 @@ impl Stats {
 
     fn print(&self, no_color: bool) {
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(no_color, "NTUSER.DAT hives parsed: ", &fmt_num(self.hives));
         if self.failed > 0 {
             p_label(no_color, "Could not parse: ", &fmt_num(self.failed));
@@ -444,6 +443,5 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }

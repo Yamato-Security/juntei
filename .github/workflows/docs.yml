@@ -38,7 +38,11 @@ jobs:
         run: pip install -r website/requirements.txt
 
       - name: Build site strictly
-        run: mkdocs build --strict --config-file website/mkdocs.yml
+        # Keep command examples and forensic field names consistent across languages.
+        # Translation validation runs without contacting a translation service.
+        run: |
+          python website/scripts/check_translations.py
+          mkdocs build --strict --config-file website/mkdocs.yml
 
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'

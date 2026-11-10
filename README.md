@@ -2,7 +2,11 @@
   <img src="./art/Juntei_Goddess%20of%20Digital%20Forensics_small.png" alt="Juntei, Goddess of Digital Forensics" width="65%">
 </p>
 
-# Juntei
+<h1 align="center">Juntei</h1>
+
+<p align="center">
+  <strong>English</strong> | <a href="README-Japanese.md">日本語</a>
+</p>
 
 Juntei is a Windows forensics artifact parser by [Yamato Security](https://github.com/Yamato-Security),
 a sibling of [Hayabusa](https://github.com/Yamato-Security/hayabusa) for the artifacts that are
@@ -19,13 +23,30 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
+Juntei currently supports 42 of the most popular Windows forensic artifacts and we continue to add more.
+
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
 with `<artifact>-logs.txt` files beside the results. Add a computer-labelled SIEM JSONL file with `-j <FILE>`
 while keeping the CSV or JSON results.
 
-For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, or `parse-registry`.
+For individual artifacts, choose `parse-ese`, `parse-file`, `parse-ntfs`, `parse-registry`, or
+`parse-sqlite`.
 For example: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`.
+
+Use `juntei auto-parse --vhdx -d <IMAGE_OR_DIR> -o <OUTPUT>` to parse VHDX images
+natively on **Linux, macOS and Windows**, without FUSE, an OS mount or administrator privileges.
+The parsers use private temporary file copies on the output filesystem by default; allow enough
+space for copies and results. Choose another staging disk with `--temp-dir <DIR>`. Ctrl+C stops
+parsers and cleans up the private copies.
+`juntei mount <IMAGE> <MOUNTPOINT>` remains available for exposing an image read-only to
+other programs through Linux FUSE. Both use
+[Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser).
+
+Add `--e01` to parse physical E01/Ex01 images with
+[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser). Give a split image by its first
+segment and keep all companion segments beside it under their original names. Use `--vhdx --e01`
+for mixed directories. E01 parsing uses the same native, read-only temporary-workspace pipeline.
 
 Use [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/commands/persistence-hunter/)
 to hunt for persistence across registry hives, scheduled tasks, startup files, WMI, and BITS.
@@ -110,6 +131,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Remote access, user side** (`NTUSER.DAT`) — Computers a user reached with Remote Desktop, PuTTY and WinSCP, the accounts used, accepted SSH host keys with their fingerprints, mapped drives and shares. | Registry |
+| **User Access Logging** (`Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb`) — The client addresses and accounts that used a Windows Server's roles (file shares, Active Directory, DHCP, IIS and more), with daily request counts. | ESE |
 
 ### System Information
 
@@ -129,6 +151,19 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Audit policy** (`SECURITY` `PolAdtEv`) — Which security events the system was set to log, per subcategory, and so which missing events say nothing. | Registry |
 
+### Browser Activity
+
+| Artifact | Type |
+| --- | --- |
+| **Web browsers** (`History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite`) — The visits, downloads, cookies and form entries of Chrome, Edge, Brave, Opera, Vivaldi, Firefox and other Chromium- and Firefox-based browsers, read with their write-ahead logs, with deleted visits, pages, downloads and form entries recovered. | SQLite |
+| **Internet Explorer and legacy Edge** (`WebCacheV01.dat`) — The history (with page titles, and the local files File Explorer opened), downloads, cookies and cached files of Internet Explorer 10 and 11, legacy Edge and other programs that use the Windows Internet functions, with each cached file's path and HTTP headers. | ESE |
+
+### Communication
+
+| Artifact | Type |
+| --- | --- |
+| **Outlook** (`*.pst`, `*.ost`, `*.msg`, `*.oft`) — The folders and items of PST and OST stores (OSTs of Outlook 2013 and later included) and saved messages and templates: e-mail with its senders, recipients, times and attachments (SHA-256, optional extraction), the items embedded in attachments, contacts, calendar items, tasks, the folders' hidden items and every property as stored. | File |
+
 ### Network Activity
 
 | Artifact | Type |
@@ -140,12 +175,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Microsoft Defender quarantine** (`Quarantine\Entries`, `ResourceData`, `Resources`) — Threat records, original paths, hashes, download origins, and recoverable quarantined content. | File |
+| **Security settings** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`) — Defender and its exclusions, UAC, WDigest and LSA protection, RDP, the firewall, SMBv1, PowerShell logging and AMSI, and event log settings, flagged where they weaken the default. | Registry |
 
 ## License
 
 Juntei is released under the [Reciprocal Public License 1.5](LICENSE) (RPL-1.5) and copyright
-Shirofune Security Co., Ltd. Its source code was published under the AGPLv3 before version 1.0.0. The licenses
-of the crates and other third-party code and data that Juntei is built with are in
+Shirofune Security Co., Ltd.
+The licenses of the crates and other third-party code and data that Juntei is built with are in
 [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES/), and the licenses of the test files are next to them
 in [`test_files`](test_files/).
-| **Security settings** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`) — Defender and its exclusions, UAC, WDigest and LSA protection, RDP, the firewall, SMBv1, PowerShell logging and AMSI, and event log settings, flagged where they weaken the default. | Registry |

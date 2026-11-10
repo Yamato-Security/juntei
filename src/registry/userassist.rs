@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-registry userassist`: the programs and shortcuts users started from Explorer, from the
+//! `parse-registry user-assist`: the programs and shortcuts users started from Explorer, from the
 //! `UserAssist` keys of `NTUSER.DAT` hives, read by ys-registry-parser's `ntuser` module, with
 //! Hayabusa's input options, progress bar and results summary. One record per item: its name
 //! decoded from ROT13, its path with a known folder's GUID resolved, its run count, focus count
@@ -436,7 +436,6 @@ impl Stats {
     fn print(&mut self, no_color: bool) {
         self.trim_latest();
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(no_color, "NTUSER.DAT hives parsed: ", &fmt_num(self.hives));
         if self.failed > 0 {
             p_label(no_color, "Could not parse: ", &fmt_num(self.failed));
@@ -516,6 +515,5 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }

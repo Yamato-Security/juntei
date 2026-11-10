@@ -17,11 +17,19 @@ For a chronologically sorted timeline across parsed artifacts, use
 [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md).
 It expands and labels timestamp meanings; `auto-parse -j` continues to retain native records.
 
+## [Disk images](mount.md)
+
+| Command | Input | Detailed guide |
+|---|---|---|
+| `mount` | VHDX / E01 / Ex01 disk image | [Mounting Disk Images](mount.md) |
+
 ## [ESE commands](user-activity.md)
 
 | Command | Input artifact | Detailed guide |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [User Access Logging (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer and Legacy Edge](../artifacts/webcache.md) |
 
 ## [File commands](execution.md)
 
@@ -30,6 +38,7 @@ It expands and labels timestamp meanings; `auto-parse -j` continues to retain na
 | `parse-file defender-quarantine` | Defender quarantine tree or entry | [Defender Quarantine](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS commands](filesystem.md)
@@ -51,19 +60,19 @@ It expands and labels timestamp meanings; `auto-parse -j` continues to retain na
 | `parse-registry networks` | `SOFTWARE`, `SYSTEM` | [Networks](../artifacts/networks.md) |
 | `parse-registry lsa-secrets` | `SECURITY` | [LSA Secrets](../artifacts/lsa-secrets.md) |
 | `parse-registry bcd` | `BCD` (and `BCD-Template`) | [Boot Configuration Data (BCD)](../artifacts/bcd.md) |
-| `parse-registry appcompat` | `SOFTWARE`, `NTUSER.DAT` | [Application Compatibility](../artifacts/appcompat.md) |
+| `parse-registry app-compat` | `SOFTWARE`, `NTUSER.DAT` | [Application Compatibility](../artifacts/appcompat.md) |
 | `parse-registry auditpol` | `SECURITY` | [Audit Policy](../artifacts/auditpol.md) |
 | `parse-registry office` | `NTUSER.DAT` | [Microsoft Office](../artifacts/office.md) |
-| `parse-registry featureusage` | `NTUSER.DAT` | [FeatureUsage, RecentApps and Taskbar Pins](../artifacts/featureusage.md) |
+| `parse-registry feature-usage` | `NTUSER.DAT` | [FeatureUsage, RecentApps and Taskbar Pins](../artifacts/featureusage.md) |
 | `parse-registry app-history` | `NTUSER.DAT` | [Application History](../artifacts/app-history.md) |
 | `parse-registry mru` | `NTUSER.DAT` | [Most-Recently-Used Lists](../artifacts/mru.md) |
 | `parse-registry bam` | `SYSTEM` (with `SAM`, `SOFTWARE` for user names) | [BAM and DAM](../artifacts/bam.md) |
 | `parse-registry muicache` | `UsrClass.dat` (`NTUSER.DAT` on Windows XP) | [MuiCache](../artifacts/muicache.md) |
 | `parse-registry installed-programs` | `SOFTWARE`, `NTUSER.DAT` | [Installed Programs](../artifacts/installed-programs.md) |
-| `parse-registry opensavemru` | `NTUSER.DAT` | [Open and Save As Dialogs](../artifacts/opensavemru.md) |
+| `parse-registry open-save-mru` | `NTUSER.DAT` | [Open and Save As Dialogs](../artifacts/opensavemru.md) |
 | `parse-registry persistence` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT`, `UsrClass.dat` | [Registry Autostarts](../artifacts/persistence.md) |
 | `parse-registry read` | Any primary registry hive | [Registry Hives](../artifacts/registry.md) |
-| `parse-registry recentdocs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
+| `parse-registry recent-docs` | `NTUSER.DAT` | [RecentDocs](../artifacts/recentdocs.md) |
 | `parse-registry remote-access` | `NTUSER.DAT` (with `SOFTWARE` for user SIDs) | [Remote Access (User Side)](../artifacts/remote-access.md) |
 | `parse-registry sam` | `SAM` | [SAM Local Accounts](../artifacts/sam.md) |
 | `parse-registry security-settings` | `SOFTWARE`, `SYSTEM`, `NTUSER.DAT` | [Security Settings](../artifacts/security-settings.md) |
@@ -72,8 +81,14 @@ It expands and labels timestamp meanings; `auto-parse -j` continues to retain na
 | `parse-registry system-info` | `SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` of one system | [System Information](../artifacts/system-info.md) |
 | `parse-registry taskcache` | `SOFTWARE` | [Task Scheduler Cache](../artifacts/taskcache.md) |
 | `parse-registry usb` | `SYSTEM`, with `SOFTWARE` and `NTUSER.DAT` | [USB Devices](../artifacts/usb.md) |
-| `parse-registry userassist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
-| `parse-registry shellbags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
+| `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
+| `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
+
+## [SQLite commands](sqlite.md)
+
+| Command | Input artifact | Detailed guide |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Web Browsers](../artifacts/browser.md) |
 
 ## Source types and format changes
 
@@ -97,13 +112,15 @@ command. It complements the full configuration inventory from `parse-registry pe
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

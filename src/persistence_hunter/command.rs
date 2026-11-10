@@ -76,6 +76,9 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
         }
     }
     let profile = Profile::load(opts.profile.as_deref(), definitions)?;
+    if let Some(sources) = &opts.image_files {
+        crate::image_files::install(sources)?;
+    }
     let selected_definitions: Vec<_> = definitions
         .iter()
         .filter(|d| selected.is_empty() || selected.iter().any(|s| selected_by(d, s)))
@@ -97,6 +100,7 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
     {
         return Err(format!("Invalid evidence input: {}", input.display()));
     }
+    let given = input.clone();
     let input = std::fs::canonicalize(input).map_err(|e| e.to_string())?;
     if opts.filepath.is_some() && !registry::is_hive_file(&input) {
         return Err(format!(
@@ -262,6 +266,17 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
             && a.value == b.value
             && a.source_file == b.source_file
     });
+    if let Some(paths) = GivenPaths::new(&input, &given, opts.filepath.is_some()) {
+        for finding in &mut findings {
+            paths.apply(&mut finding.source_file);
+            paths.apply(&mut finding.change_source);
+            // a COM handler's registration names the hive it is in
+            paths.apply(&mut finding.description);
+        }
+        for row in &mut coverage {
+            paths.apply(&mut row.detail);
+        }
+    }
     inputs.sort();
     inputs.dedup();
     // Check all targets before opening any output so --coverage cannot clobber
@@ -383,6 +398,43 @@ fn run_checks(ctx: &Context, definitions: &[checks::CheckDefinition]) -> Scan {
         result.coverage.append(&mut scan.coverage);
     }
     result
+}
+
+/// Evidence paths as the input was given (`./HOST/C/Windows/...`), as Juntei's other commands
+/// show them. The hunter reads through the canonical path, which also says where the evidence is
+/// on the analyst's system.
+struct GivenPaths {
+    canonical: String,
+    given: String,
+}
+
+impl GivenPaths {
+    /// For `-d`, the directory's paths; for `-f`, those of the hive's directory. None when the
+    /// spellings are the same, or the canonical directory is the file system's root.
+    fn new(canonical: &Path, given: &Path, file: bool) -> Option<Self> {
+        let (canonical, given) = if file {
+            (canonical.parent()?, given.parent().unwrap_or(Path::new("")))
+        } else {
+            (canonical, given)
+        };
+        canonical.parent()?;
+        // `./HOST/` without its trailing separator; `.` for a hive in the current directory.
+        let given: PathBuf = given.components().collect();
+        let given = if given.as_os_str().is_empty() {
+            ".".to_string()
+        } else {
+            given.to_string_lossy().into_owned()
+        };
+        let canonical = canonical.to_string_lossy().into_owned();
+        (canonical != given).then_some(Self { canonical, given })
+    }
+
+    /// Replace the canonical directory with the given one wherever `text` names it.
+    fn apply(&self, text: &mut String) {
+        if text.contains(&self.canonical) {
+            *text = text.replace(&self.canonical, &self.given);
+        }
+    }
 }
 
 fn count_status(coverage: &[Coverage], status: &str) -> usize {

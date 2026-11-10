@@ -84,7 +84,1251 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 plugins:
-  - search
+- search
+- i18n:
+    docs_structure: suffix
+    fallback_to_default: true
+    reconfigure_material: true
+    reconfigure_search: true
+    # The same fifteen languages as the Hayabusa documentation, each with full page translations.
+    languages:
+    - locale: en
+      name: English
+      build: true
+      default: true
+    - locale: ja
+      name: 日本語
+      build: true
+      site_name: Juntei ドキュメント
+      nav_translations:
+        Home: ホーム
+        Overview: 概要
+        Screenshots: スクリーンショット
+        Getting Started: はじめに
+        Commands: コマンド
+        Command List: コマンド一覧
+        Resources: リソース
+        About Juntei: Juntei について
+        Supported Evidence: 対応する証拠
+        Evidence and Interpretation: 証拠とその解釈
+        Install Juntei: インストール
+        First Investigation: 初めての調査
+        Output Formats: 出力形式
+        Collecting Evidence: 証拠の収集
+        Automatic Collection Parsing: 収集データの自動解析
+        Mounting Disk Images: ディスクイメージのマウント
+        ESE: ESE
+        Files: ファイル
+        NTFS: NTFS
+        SQLite: SQLite
+        Registry: レジストリ
+        Persistence Hunter: Persistence Hunter
+        Common Output Patterns: 共通の出力方法
+        Artifacts: アーティファクト
+        Artifact Guide: アーティファクトガイド
+        Process Execution: プロセスの実行
+        Application Compatibility: アプリケーション互換性
+        FeatureUsage and Pins: FeatureUsage とピン留め
+        BAM and DAM: BAM / DAM
+        MuiCache: MuiCache
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        File System and File Existence: ファイルシステムとファイルの存在
+        Master File Table ($MFT): マスター ファイル テーブル ($MFT)
+        NTFS Transaction Log ($LogFile): NTFS トランザクション ログ ($LogFile)
+        USN Journal: USN ジャーナル
+        Directory Indexes ($I30): ディレクトリインデックス ($I30)
+        Security Descriptors ($Secure:$SDS): セキュリティ記述子 ($Secure:$SDS)
+        Boot Sector ($Boot): ブート セクタ ($Boot)
+        Amcache: Amcache
+        ShimCache: ShimCache
+        File and Folder Opening: ファイルとフォルダのオープン
+        LNK Shortcuts: LNK のショートカット
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        MRU Lists: MRU リスト
+        RecentDocs: RecentDocs
+        Browser Activity: ブラウザの活動
+        Web Browsers: Web ブラウザ
+        Internet Explorer and Legacy Edge: Internet Explorer と従来の Edge
+        Communication: コミュニケーション
+        Network Activity: ネットワークの活動
+        Networks: ネットワーク
+        Lateral Movement: 横展開
+        Remote Access (User Side): リモートアクセス (ユーザー側)
+        User Access Logging (UAL): ユーザーアクセスログ (UAL)
+        Open and Save As Dialogs: ファイルを開く・名前を付けて保存
+        ShellBags: ShellBags
+        External Devices: 外部デバイス
+        USB Devices: USB デバイス
+        Security Products: セキュリティ製品
+        Defender Quarantine: Defender の隔離データ
+        Security Settings: セキュリティ設定
+        Registry and Persistence: レジストリと永続化
+        Registry Hives: レジストリハイブ
+        Windows Services: Windows サービス
+        Task Scheduler Cache: タスクスケジューラキャッシュ
+        Registry Autostarts: レジストリの自動起動
+        Boot Configuration (BCD): ブート構成 (BCD)
+        Accounts: アカウント
+        SAM Local Accounts: SAM ローカル アカウント
+        LSA Secrets: LSA シークレット
+        System Information: システム情報
+        Audit Policy: 監査ポリシー
+        Applications: アプリケーション
+        Application History: アプリケーション履歴
+        Installed Programs: インストール済みプログラム
+        Persistence Mechanisms: 永続化メカニズム
+        Acknowledgements: 謝辞
+        Articles and References: 記事と参考文献
+        Cross-Artifact Workflows: アーティファクトを横断する調査
+        Parser Validation: パーサーの検証
+        DFIR Glossary: DFIR 用語集
+    - locale: zh-TW
+      name: 繁體中文
+      build: true
+      nav_translations:
+        Home: 首頁
+        Overview: 概觀
+        Screenshots: 螢幕擷圖
+        Getting Started: 開始使用
+        Commands: 命令
+        Command List: 命令清單
+        Resources: 資源
+        About Juntei: 關於 Juntei
+        Supported Evidence: 支援的證據類型
+        Evidence and Interpretation: 證據與判讀
+        Install Juntei: 安裝 Juntei
+        First Investigation: 第一次調查
+        Output Formats: 輸出格式
+        Collecting Evidence: 收集證據
+        Automatic Collection Parsing: 自動解析收集資料
+        Mounting Disk Images: 掛載磁碟映像
+        Files: 檔案
+        Registry: 登錄
+        Common Output Patterns: 常見輸出方式
+        Artifacts: 鑑識跡證
+        Artifact Guide: 跡證指南
+        Process Execution: 程序執行
+        Application Compatibility: 應用程式相容性
+        FeatureUsage and Pins: FeatureUsage 與釘選項目
+        BAM and DAM: BAM / DAM
+        File System and File Existence: 檔案系統與檔案存在跡證
+        Master File Table ($MFT): 主檔案表 ($MFT)
+        NTFS Transaction Log ($LogFile): NTFS 交易記錄 ($LogFile)
+        USN Journal: USN 日誌
+        Directory Indexes ($I30): 目錄索引 ($I30)
+        Security Descriptors ($Secure:$SDS): 安全性描述元 ($Secure:$SDS)
+        Boot Sector ($Boot): 開機磁區 ($Boot)
+        File and Folder Opening: 檔案與資料夾開啟
+        LNK Shortcuts: LNK 捷徑
+        MRU Lists: MRU 清單
+        Browser Activity: 瀏覽器活動
+        Web Browsers: 網頁瀏覽器
+        Internet Explorer and Legacy Edge: Internet Explorer 與舊版 Edge
+        Communication: 通訊
+        Network Activity: 網路活動
+        Networks: 網路
+        Lateral Movement: 橫向移動
+        Remote Access (User Side): 遠端存取（使用者端）
+        User Access Logging (UAL): 使用者存取記錄 (UAL)
+        Open and Save As Dialogs: 開啟與另存新檔對話方塊
+        External Devices: 外部裝置
+        USB Devices: USB 裝置
+        Security Products: 資安產品
+        Defender Quarantine: Defender 隔離資料
+        Security Settings: 安全性設定
+        Registry and Persistence: 登錄與持續存取
+        Registry Hives: 登錄區
+        Windows Services: Windows 服務
+        Task Scheduler Cache: 工作排程器快取
+        Registry Autostarts: 登錄自動啟動項目
+        Boot Configuration (BCD): 開機設定 (BCD)
+        Accounts: 帳戶
+        SAM Local Accounts: SAM 本機帳戶
+        LSA Secrets: LSA 機密資訊
+        System Information: 系統資訊
+        Audit Policy: 稽核原則
+        Applications: 應用程式
+        Application History: 應用程式歷程
+        Installed Programs: 已安裝程式
+        Persistence Mechanisms: 持續存取機制
+        Acknowledgements: 致謝
+        Articles and References: 文章與參考資料
+        Cross-Artifact Workflows: 跨跡證調查流程
+        Parser Validation: 剖析器驗證
+        DFIR Glossary: DFIR 詞彙表
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: ko
+      name: 한국어
+      build: true
+      nav_translations:
+        Home: 홈
+        Overview: 개요
+        Screenshots: 스크린샷
+        Getting Started: 시작하기
+        Commands: 명령어
+        Command List: 명령어 목록
+        Resources: 리소스
+        About Juntei: Juntei 소개
+        Supported Evidence: 지원하는 증거 유형
+        Evidence and Interpretation: 증거와 해석
+        Install Juntei: Juntei 설치
+        First Investigation: 첫 번째 조사
+        Output Formats: 출력 형식
+        Collecting Evidence: 증거 수집
+        Automatic Collection Parsing: 수집 데이터 자동 분석
+        Mounting Disk Images: 디스크 이미지 마운트
+        Files: 파일
+        Registry: 레지스트리
+        Common Output Patterns: 일반적인 출력 방식
+        Artifacts: 아티팩트
+        Artifact Guide: 아티팩트 가이드
+        Process Execution: 프로세스 실행
+        Application Compatibility: 애플리케이션 호환성
+        FeatureUsage and Pins: FeatureUsage 및 고정 항목
+        BAM and DAM: BAM / DAM
+        File System and File Existence: 파일 시스템과 파일 존재
+        Master File Table ($MFT): 마스터 파일 테이블 ($MFT)
+        NTFS Transaction Log ($LogFile): NTFS 트랜잭션 로그 ($LogFile)
+        USN Journal: USN 저널
+        Directory Indexes ($I30): 디렉터리 인덱스 ($I30)
+        Security Descriptors ($Secure:$SDS): 보안 설명자 ($Secure:$SDS)
+        Boot Sector ($Boot): 부트 섹터 ($Boot)
+        File and Folder Opening: 파일 및 폴더 열기
+        LNK Shortcuts: LNK 바로 가기
+        MRU Lists: MRU 목록
+        Browser Activity: 브라우저 활동
+        Web Browsers: 웹 브라우저
+        Internet Explorer and Legacy Edge: Internet Explorer와 레거시 Edge
+        Communication: 커뮤니케이션
+        Network Activity: 네트워크 활동
+        Networks: 네트워크
+        Lateral Movement: 측면 이동
+        Remote Access (User Side): 원격 액세스 (사용자 측)
+        User Access Logging (UAL): 사용자 액세스 로깅 (UAL)
+        Open and Save As Dialogs: 열기 및 다른 이름으로 저장 대화 상자
+        External Devices: 외부 장치
+        USB Devices: USB 장치
+        Security Products: 보안 제품
+        Defender Quarantine: Defender 격리 데이터
+        Security Settings: 보안 설정
+        Registry and Persistence: 레지스트리와 지속성
+        Registry Hives: 레지스트리 하이브
+        Windows Services: Windows 서비스
+        Task Scheduler Cache: 작업 스케줄러 캐시
+        Registry Autostarts: 레지스트리 자동 실행
+        Boot Configuration (BCD): 부팅 구성 (BCD)
+        Accounts: 계정
+        SAM Local Accounts: SAM 로컬 계정
+        LSA Secrets: LSA 비밀 정보
+        System Information: 시스템 정보
+        Audit Policy: 감사 정책
+        Applications: 애플리케이션
+        Application History: 애플리케이션 기록
+        Installed Programs: 설치된 프로그램
+        Persistence Mechanisms: 지속성 메커니즘
+        Acknowledgements: 감사의 말
+        Articles and References: 문서 및 참고 자료
+        Cross-Artifact Workflows: 아티팩트 간 조사 절차
+        Parser Validation: 파서 검증
+        DFIR Glossary: DFIR 용어집
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: de
+      name: Deutsch
+      build: true
+      nav_translations:
+        Home: Startseite
+        Overview: Übersicht
+        Screenshots: Screenshots
+        Getting Started: Erste Schritte
+        Commands: Befehle
+        Command List: Befehlsliste
+        Resources: Ressourcen
+        About Juntei: Über Juntei
+        Supported Evidence: Unterstützte Beweisquellen
+        Evidence and Interpretation: Beweise und Interpretation
+        Install Juntei: Juntei installieren
+        First Investigation: Erste Untersuchung
+        Output Formats: Ausgabeformate
+        Collecting Evidence: Beweise sichern
+        Automatic Collection Parsing: Sammlungen automatisch analysieren
+        Mounting Disk Images: Disk-Images einbinden
+        Files: Dateien
+        Registry: Registry
+        Common Output Patterns: Gemeinsame Ausgabemuster
+        Artifacts: Artefakte
+        Artifact Guide: Artefaktleitfaden
+        Process Execution: Prozessausführung
+        Application Compatibility: Anwendungskompatibilität
+        FeatureUsage and Pins: FeatureUsage und angeheftete Elemente
+        BAM and DAM: BAM / DAM
+        File System and File Existence: Dateisystem und Dateiexistenz
+        Master File Table ($MFT): Master File Table ($MFT)
+        NTFS Transaction Log ($LogFile): NTFS-Transaktionsprotokoll ($LogFile)
+        USN Journal: USN-Journal
+        Directory Indexes ($I30): Verzeichnisindizes ($I30)
+        Security Descriptors ($Secure:$SDS): Sicherheitsbeschreibungen ($Secure:$SDS)
+        Boot Sector ($Boot): Bootsektor ($Boot)
+        File and Folder Opening: Öffnen von Dateien und Ordnern
+        LNK Shortcuts: LNK-Verknüpfungen
+        MRU Lists: MRU-Listen
+        Browser Activity: Browseraktivität
+        Web Browsers: Webbrowser
+        Internet Explorer and Legacy Edge: Internet Explorer und Edge Legacy
+        Communication: Kommunikation
+        Network Activity: Netzwerkaktivität
+        Networks: Netzwerke
+        Lateral Movement: Laterale Bewegung
+        Remote Access (User Side): Fernzugriff (Benutzerseite)
+        User Access Logging (UAL): Benutzerzugriffsprotokollierung (UAL)
+        Open and Save As Dialogs: Dialoge zum Öffnen und Speichern unter
+        External Devices: Externe Geräte
+        USB Devices: USB-Geräte
+        Security Products: Sicherheitsprodukte
+        Defender Quarantine: Defender-Quarantäne
+        Security Settings: Sicherheitseinstellungen
+        Registry and Persistence: Registry und Persistenz
+        Registry Hives: Registry-Hives
+        Windows Services: Windows-Dienste
+        Task Scheduler Cache: Aufgabenplaner-Cache
+        Registry Autostarts: Registry-Autostarts
+        Boot Configuration (BCD): Startkonfiguration (BCD)
+        Accounts: Konten
+        SAM Local Accounts: Lokale SAM-Konten
+        LSA Secrets: LSA-Secrets
+        System Information: Systeminformationen
+        Audit Policy: Überwachungsrichtlinie
+        Applications: Anwendungen
+        Application History: Anwendungsverlauf
+        Installed Programs: Installierte Programme
+        Persistence Mechanisms: Persistenzmechanismen
+        Acknowledgements: Danksagungen
+        Articles and References: Artikel und Referenzen
+        Cross-Artifact Workflows: Artefaktübergreifende Untersuchungen
+        Parser Validation: Parservalidierung
+        DFIR Glossary: DFIR-Glossar
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: tr
+      name: Türkçe
+      build: true
+      nav_translations:
+        Home: Ana Sayfa
+        Overview: Genel Bakış
+        Screenshots: Ekran Görüntüleri
+        Getting Started: Başlarken
+        Commands: Komutlar
+        Command List: Komut Listesi
+        Resources: Kaynaklar
+        About Juntei: Juntei Hakkında
+        Supported Evidence: Desteklenen Kanıt Türleri
+        Evidence and Interpretation: Kanıtlar ve Yorumlama
+        Install Juntei: Juntei Kurulumu
+        First Investigation: İlk İnceleme
+        Output Formats: Çıktı Biçimleri
+        Collecting Evidence: Kanıt Toplama
+        Automatic Collection Parsing: Toplanan Verilerin Otomatik Ayrıştırılması
+        Mounting Disk Images: Disk İmajlarını Bağlama
+        Files: Dosyalar
+        Registry: Kayıt Defteri
+        Common Output Patterns: Ortak Çıktı Yöntemleri
+        Artifacts: Artefaktlar
+        Artifact Guide: Artefakt Kılavuzu
+        Process Execution: İşlem Yürütme
+        Application Compatibility: Uygulama Uyumluluğu
+        FeatureUsage and Pins: FeatureUsage ve Sabitlenmiş Öğeler
+        BAM and DAM: BAM / DAM
+        File System and File Existence: Dosya Sistemi ve Dosya Varlığı
+        Master File Table ($MFT): Ana Dosya Tablosu ($MFT)
+        NTFS Transaction Log ($LogFile): NTFS İşlem Günlüğü ($LogFile)
+        USN Journal: USN Günlüğü
+        Directory Indexes ($I30): Dizin İndeksleri ($I30)
+        Security Descriptors ($Secure:$SDS): Güvenlik Tanımlayıcıları ($Secure:$SDS)
+        Boot Sector ($Boot): Önyükleme Sektörü ($Boot)
+        File and Folder Opening: Dosya ve Klasör Açma
+        LNK Shortcuts: LNK Kısayolları
+        MRU Lists: MRU Listeleri
+        Browser Activity: Tarayıcı Etkinliği
+        Web Browsers: Web Tarayıcıları
+        Internet Explorer and Legacy Edge: Internet Explorer ve Eski Edge
+        Communication: İletişim
+        Network Activity: Ağ Etkinliği
+        Networks: Ağlar
+        Lateral Movement: Yanal Hareket
+        Remote Access (User Side): Uzaktan Erişim (Kullanıcı Tarafı)
+        User Access Logging (UAL): Kullanıcı Erişim Günlüğü (UAL)
+        Open and Save As Dialogs: Aç ve Farklı Kaydet İletişim Kutuları
+        External Devices: Harici Aygıtlar
+        USB Devices: USB Aygıtları
+        Security Products: Güvenlik Ürünleri
+        Defender Quarantine: Defender Karantinası
+        Security Settings: Güvenlik Ayarları
+        Registry and Persistence: Kayıt Defteri ve Kalıcılık
+        Registry Hives: Kayıt Defteri Kovanları
+        Windows Services: Windows Hizmetleri
+        Task Scheduler Cache: Görev Zamanlayıcı Önbelleği
+        Registry Autostarts: Kayıt Defteri Otomatik Başlatmaları
+        Boot Configuration (BCD): Önyükleme Yapılandırması (BCD)
+        Accounts: Hesaplar
+        SAM Local Accounts: SAM Yerel Hesapları
+        LSA Secrets: LSA Sırları
+        System Information: Sistem Bilgileri
+        Audit Policy: Denetim İlkesi
+        Applications: Uygulamalar
+        Application History: Uygulama Geçmişi
+        Installed Programs: Yüklü Programlar
+        Persistence Mechanisms: Kalıcılık Mekanizmaları
+        Acknowledgements: Teşekkürler
+        Articles and References: Makaleler ve Kaynaklar
+        Cross-Artifact Workflows: Artefaktlar Arası İnceleme Akışları
+        Parser Validation: Ayrıştırıcı Doğrulaması
+        DFIR Glossary: DFIR Sözlüğü
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: fr
+      name: Français
+      build: true
+      nav_translations:
+        Home: Accueil
+        Overview: Vue d'ensemble
+        Screenshots: Captures d'écran
+        Getting Started: Premiers pas
+        Commands: Commandes
+        Command List: Liste des commandes
+        Resources: Ressources
+        About Juntei: À propos de Juntei
+        Supported Evidence: Sources de preuve prises en charge
+        Evidence and Interpretation: Preuves et interprétation
+        Install Juntei: Installer Juntei
+        First Investigation: Première investigation
+        Output Formats: Formats de sortie
+        Collecting Evidence: Collecte des preuves
+        Automatic Collection Parsing: Analyse automatique des collectes
+        Mounting Disk Images: Monter des images disque
+        Files: Fichiers
+        Registry: Registre
+        Common Output Patterns: Méthodes de sortie communes
+        Artifacts: Artefacts
+        Artifact Guide: Guide des artefacts
+        Process Execution: Exécution de processus
+        Application Compatibility: Compatibilité des applications
+        FeatureUsage and Pins: FeatureUsage et éléments épinglés
+        BAM and DAM: BAM / DAM
+        File System and File Existence: Système de fichiers et existence des fichiers
+        Master File Table ($MFT): Table de fichiers principale ($MFT)
+        NTFS Transaction Log ($LogFile): Journal des transactions NTFS ($LogFile)
+        USN Journal: Journal USN
+        Directory Indexes ($I30): Index de répertoires ($I30)
+        Security Descriptors ($Secure:$SDS): Descripteurs de sécurité ($Secure:$SDS)
+        Boot Sector ($Boot): Secteur de démarrage ($Boot)
+        File and Folder Opening: Ouverture de fichiers et dossiers
+        LNK Shortcuts: Raccourcis LNK
+        MRU Lists: Listes MRU
+        Browser Activity: Activité du navigateur
+        Web Browsers: Navigateurs web
+        Internet Explorer and Legacy Edge: Internet Explorer et l'ancien Edge
+        Communication: Communication
+        Network Activity: Activité réseau
+        Networks: Réseaux
+        Lateral Movement: Déplacement latéral
+        Remote Access (User Side): Accès à distance (côté utilisateur)
+        User Access Logging (UAL): Journalisation des accès utilisateur (UAL)
+        Open and Save As Dialogs: Boîtes de dialogue Ouvrir et Enregistrer sous
+        External Devices: Périphériques externes
+        USB Devices: Périphériques USB
+        Security Products: Produits de sécurité
+        Defender Quarantine: Quarantaine Defender
+        Security Settings: Paramètres de sécurité
+        Registry and Persistence: Registre et persistance
+        Registry Hives: Ruches du Registre
+        Windows Services: Services Windows
+        Task Scheduler Cache: Cache du Planificateur de tâches
+        Registry Autostarts: Démarrages automatiques du Registre
+        Boot Configuration (BCD): Configuration de démarrage (BCD)
+        Accounts: Comptes
+        SAM Local Accounts: Comptes locaux SAM
+        LSA Secrets: Secrets LSA
+        System Information: Informations système
+        Audit Policy: Stratégie d’audit
+        Applications: Applications
+        Application History: Historique des applications
+        Installed Programs: Programmes installés
+        Persistence Mechanisms: Mécanismes de persistance
+        Acknowledgements: Remerciements
+        Articles and References: Articles et références
+        Cross-Artifact Workflows: Investigations croisées entre artefacts
+        Parser Validation: Validation des parseurs
+        DFIR Glossary: Glossaire DFIR
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: es
+      name: Español
+      build: true
+      nav_translations:
+        Home: Inicio
+        Overview: Visión general
+        Screenshots: Capturas de pantalla
+        Getting Started: Primeros pasos
+        Commands: Comandos
+        Command List: Lista de comandos
+        Resources: Recursos
+        About Juntei: Acerca de Juntei
+        Supported Evidence: Fuentes de evidencia compatibles
+        Evidence and Interpretation: Evidencia e interpretación
+        Install Juntei: Instalar Juntei
+        First Investigation: Primera investigación
+        Output Formats: Formatos de salida
+        Collecting Evidence: Recopilación de evidencias
+        Automatic Collection Parsing: Análisis automático de recopilaciones
+        Mounting Disk Images: Montar imágenes de disco
+        Files: Archivos
+        Registry: Registro
+        Common Output Patterns: Métodos comunes de salida
+        Artifacts: Artefactos
+        Artifact Guide: Guía de artefactos
+        Process Execution: Ejecución de procesos
+        Application Compatibility: Compatibilidad de aplicaciones
+        FeatureUsage and Pins: FeatureUsage y elementos anclados
+        BAM and DAM: BAM / DAM
+        File System and File Existence: Sistema de archivos y existencia de archivos
+        Master File Table ($MFT): Tabla maestra de archivos ($MFT)
+        NTFS Transaction Log ($LogFile): Registro de transacciones NTFS ($LogFile)
+        USN Journal: Diario USN
+        Directory Indexes ($I30): Índices de directorios ($I30)
+        Security Descriptors ($Secure:$SDS): Descriptores de seguridad ($Secure:$SDS)
+        Boot Sector ($Boot): Sector de arranque ($Boot)
+        File and Folder Opening: Apertura de archivos y carpetas
+        LNK Shortcuts: Accesos directos LNK
+        MRU Lists: Listas MRU
+        Browser Activity: Actividad del navegador
+        Web Browsers: Navegadores web
+        Internet Explorer and Legacy Edge: Internet Explorer y Edge heredado
+        Communication: Comunicación
+        Network Activity: Actividad de red
+        Networks: Redes
+        Lateral Movement: Movimiento lateral
+        Remote Access (User Side): Acceso remoto (lado del usuario)
+        User Access Logging (UAL): Registro de acceso de usuarios (UAL)
+        Open and Save As Dialogs: Cuadros de diálogo Abrir y Guardar como
+        External Devices: Dispositivos externos
+        USB Devices: Dispositivos USB
+        Security Products: Productos de seguridad
+        Defender Quarantine: Cuarentena de Defender
+        Security Settings: Configuración de seguridad
+        Registry and Persistence: Registro y persistencia
+        Registry Hives: Hives del Registro
+        Windows Services: Servicios de Windows
+        Task Scheduler Cache: Caché del Programador de tareas
+        Registry Autostarts: Inicio automático en el Registro
+        Boot Configuration (BCD): Configuración de arranque (BCD)
+        Accounts: Cuentas
+        SAM Local Accounts: Cuentas locales SAM
+        LSA Secrets: Secretos LSA
+        System Information: Información del sistema
+        Audit Policy: Directiva de auditoría
+        Applications: Aplicaciones
+        Application History: Historial de aplicaciones
+        Installed Programs: Programas instalados
+        Persistence Mechanisms: Mecanismos de persistencia
+        Acknowledgements: Agradecimientos
+        Articles and References: Artículos y referencias
+        Cross-Artifact Workflows: Investigaciones entre artefactos
+        Parser Validation: Validación de analizadores
+        DFIR Glossary: Glosario DFIR
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: pt-BR
+      name: Português (Brasil)
+      build: true
+      nav_translations:
+        Home: Início
+        Overview: Visão geral
+        Screenshots: Capturas de tela
+        Getting Started: Primeiros passos
+        Commands: Comandos
+        Command List: Lista de comandos
+        Resources: Recursos
+        About Juntei: Sobre o Juntei
+        Supported Evidence: Fontes de evidência compatíveis
+        Evidence and Interpretation: Evidências e interpretação
+        Install Juntei: Instalar o Juntei
+        First Investigation: Primeira investigação
+        Output Formats: Formatos de saída
+        Collecting Evidence: Coleta de evidências
+        Automatic Collection Parsing: Análise automática de coletas
+        Mounting Disk Images: Montar imagens de disco
+        Files: Arquivos
+        Registry: Registro
+        Common Output Patterns: Métodos comuns de saída
+        Artifacts: Artefatos
+        Artifact Guide: Guia de artefatos
+        Process Execution: Execução de processos
+        Application Compatibility: Compatibilidade de aplicativos
+        FeatureUsage and Pins: FeatureUsage e itens fixados
+        BAM and DAM: BAM / DAM
+        File System and File Existence: Sistema de arquivos e existência de arquivos
+        Master File Table ($MFT): Tabela Mestre de Arquivos ($MFT)
+        NTFS Transaction Log ($LogFile): Log de transações NTFS ($LogFile)
+        USN Journal: Diário USN
+        Directory Indexes ($I30): Índices de diretórios ($I30)
+        Security Descriptors ($Secure:$SDS): Descritores de segurança ($Secure:$SDS)
+        Boot Sector ($Boot): Setor de inicialização ($Boot)
+        File and Folder Opening: Abertura de arquivos e pastas
+        LNK Shortcuts: Atalhos LNK
+        MRU Lists: Listas MRU
+        Browser Activity: Atividade do navegador
+        Web Browsers: Navegadores web
+        Internet Explorer and Legacy Edge: Internet Explorer e Edge legado
+        Communication: Comunicação
+        Network Activity: Atividade de rede
+        Networks: Redes
+        Lateral Movement: Movimentação lateral
+        Remote Access (User Side): Acesso remoto (lado do usuário)
+        User Access Logging (UAL): Registro de acesso do usuário (UAL)
+        Open and Save As Dialogs: Caixas de diálogo Abrir e Salvar como
+        External Devices: Dispositivos externos
+        USB Devices: Dispositivos USB
+        Security Products: Produtos de segurança
+        Defender Quarantine: Quarentena do Defender
+        Security Settings: Configurações de segurança
+        Registry and Persistence: Registro e persistência
+        Registry Hives: Hives do Registro
+        Windows Services: Serviços do Windows
+        Task Scheduler Cache: Cache do Agendador de Tarefas
+        Registry Autostarts: Inicializações automáticas do Registro
+        Boot Configuration (BCD): Configuração de inicialização (BCD)
+        Accounts: Contas
+        SAM Local Accounts: Contas locais SAM
+        LSA Secrets: Segredos LSA
+        System Information: Informações do sistema
+        Audit Policy: Política de auditoria
+        Applications: Aplicativos
+        Application History: Histórico de aplicativos
+        Installed Programs: Programas instalados
+        Persistence Mechanisms: Mecanismos de persistência
+        Acknowledgements: Agradecimentos
+        Articles and References: Artigos e referências
+        Cross-Artifact Workflows: Investigações entre artefatos
+        Parser Validation: Validação dos analisadores
+        DFIR Glossary: Glossário DFIR
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: uk
+      name: Українська
+      build: true
+      nav_translations:
+        Home: Головна
+        Overview: Огляд
+        Screenshots: Знімки екрана
+        Getting Started: Початок роботи
+        Commands: Команди
+        Command List: Список команд
+        Resources: Ресурси
+        About Juntei: Про Juntei
+        Supported Evidence: Підтримувані джерела доказів
+        Evidence and Interpretation: Докази та інтерпретація
+        Install Juntei: Встановлення Juntei
+        First Investigation: Перше розслідування
+        Output Formats: Формати виводу
+        Collecting Evidence: Збирання доказів
+        Automatic Collection Parsing: Автоматичний аналіз зібраних даних
+        Mounting Disk Images: Монтування образів дисків
+        Files: Файли
+        Registry: Реєстр
+        Common Output Patterns: Спільні способи виводу
+        Artifacts: Артефакти
+        Artifact Guide: Посібник з артефактів
+        Process Execution: Виконання процесів
+        Application Compatibility: Сумісність програм
+        FeatureUsage and Pins: FeatureUsage і закріплені елементи
+        BAM and DAM: BAM / DAM
+        File System and File Existence: Файлова система та існування файлів
+        Master File Table ($MFT): Головна файлова таблиця ($MFT)
+        NTFS Transaction Log ($LogFile): Журнал транзакцій NTFS ($LogFile)
+        USN Journal: Журнал USN
+        Directory Indexes ($I30): Індекси каталогів ($I30)
+        Security Descriptors ($Secure:$SDS): Дескриптори безпеки ($Secure:$SDS)
+        Boot Sector ($Boot): Завантажувальний сектор ($Boot)
+        File and Folder Opening: Відкриття файлів і папок
+        LNK Shortcuts: Ярлики LNK
+        MRU Lists: Списки MRU
+        Browser Activity: Активність браузера
+        Web Browsers: Веб-браузери
+        Internet Explorer and Legacy Edge: Internet Explorer і застарілий Edge
+        Communication: Комунікації
+        Network Activity: Мережева активність
+        Networks: Мережі
+        Lateral Movement: Латеральне переміщення
+        Remote Access (User Side): Віддалений доступ (з боку користувача)
+        User Access Logging (UAL): Журналювання доступу користувачів (UAL)
+        Open and Save As Dialogs: Діалоги відкриття та збереження файлів
+        External Devices: Зовнішні пристрої
+        USB Devices: Пристрої USB
+        Security Products: Засоби захисту
+        Defender Quarantine: Карантин Defender
+        Security Settings: Параметри безпеки
+        Registry and Persistence: Реєстр і закріплення
+        Registry Hives: Кущі реєстру
+        Windows Services: Служби Windows
+        Task Scheduler Cache: Кеш планувальника завдань
+        Registry Autostarts: Автозапуск через реєстр
+        Boot Configuration (BCD): Конфігурація завантаження (BCD)
+        Accounts: Облікові записи
+        SAM Local Accounts: Локальні облікові записи SAM
+        LSA Secrets: Секрети LSA
+        System Information: Відомості про систему
+        Audit Policy: Політика аудиту
+        Applications: Програми
+        Application History: Історія програм
+        Installed Programs: Встановлені програми
+        Persistence Mechanisms: Механізми закріплення
+        Acknowledgements: Подяки
+        Articles and References: Статті та джерела
+        Cross-Artifact Workflows: Розслідування за кількома артефактами
+        Parser Validation: Перевірка парсерів
+        DFIR Glossary: Глосарій DFIR
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: hi
+      name: हिन्दी
+      build: true
+      nav_translations:
+        Home: होम
+        Overview: अवलोकन
+        Screenshots: स्क्रीनशॉट
+        Getting Started: शुरुआत करना
+        Commands: कमांड
+        Command List: कमांड सूची
+        Resources: संसाधन
+        About Juntei: Juntei के बारे में
+        Supported Evidence: समर्थित साक्ष्य स्रोत
+        Evidence and Interpretation: साक्ष्य और व्याख्या
+        Install Juntei: Juntei इंस्टॉल करें
+        First Investigation: पहली जाँच
+        Output Formats: आउटपुट प्रारूप
+        Collecting Evidence: साक्ष्य संग्रह
+        Automatic Collection Parsing: संग्रहीत डेटा का स्वचालित विश्लेषण
+        Mounting Disk Images: डिस्क इमेज माउंट करना
+        Files: फ़ाइलें
+        Registry: रेजिस्ट्री
+        Common Output Patterns: सामान्य आउटपुट विधियाँ
+        Artifacts: आर्टिफ़ैक्ट
+        Artifact Guide: आर्टिफ़ैक्ट मार्गदर्शिका
+        Process Execution: प्रोसेस निष्पादन
+        Application Compatibility: ऐप्लिकेशन संगतता
+        FeatureUsage and Pins: FeatureUsage और पिन किए गए आइटम
+        BAM and DAM: BAM / DAM
+        File System and File Existence: फ़ाइल सिस्टम और फ़ाइल का अस्तित्व
+        Master File Table ($MFT): मास्टर फ़ाइल टेबल ($MFT)
+        NTFS Transaction Log ($LogFile): NTFS ट्रांज़ैक्शन लॉग ($LogFile)
+        USN Journal: USN जर्नल
+        Directory Indexes ($I30): डायरेक्टरी इंडेक्स ($I30)
+        Security Descriptors ($Secure:$SDS): सुरक्षा विवरणक ($Secure:$SDS)
+        Boot Sector ($Boot): बूट सेक्टर ($Boot)
+        File and Folder Opening: फ़ाइल और फ़ोल्डर खोलना
+        LNK Shortcuts: LNK शॉर्टकट
+        MRU Lists: MRU सूचियाँ
+        Browser Activity: ब्राउज़र गतिविधि
+        Web Browsers: वेब ब्राउज़र
+        Internet Explorer and Legacy Edge: Internet Explorer और लेगेसी Edge
+        Communication: संचार
+        Network Activity: नेटवर्क गतिविधि
+        Networks: नेटवर्क
+        Lateral Movement: लैटरल मूवमेंट
+        Remote Access (User Side): रिमोट एक्सेस (उपयोगकर्ता पक्ष)
+        User Access Logging (UAL): उपयोगकर्ता एक्सेस लॉगिंग (UAL)
+        Open and Save As Dialogs: खोलें और इस रूप में सहेजें संवाद
+        External Devices: बाहरी डिवाइस
+        USB Devices: USB डिवाइस
+        Security Products: सुरक्षा उत्पाद
+        Defender Quarantine: Defender क्वारंटीन
+        Security Settings: सुरक्षा सेटिंग
+        Registry and Persistence: रेजिस्ट्री और पर्सिस्टेंस
+        Registry Hives: रेजिस्ट्री हाइव
+        Windows Services: Windows सेवाएँ
+        Task Scheduler Cache: टास्क शेड्यूलर कैश
+        Registry Autostarts: रेजिस्ट्री ऑटोस्टार्ट
+        Boot Configuration (BCD): बूट कॉन्फ़िगरेशन (BCD)
+        Accounts: खाते
+        SAM Local Accounts: SAM स्थानीय खाते
+        LSA Secrets: LSA सीक्रेट
+        System Information: सिस्टम जानकारी
+        Audit Policy: ऑडिट नीति
+        Applications: ऐप्लिकेशन
+        Application History: ऐप्लिकेशन इतिहास
+        Installed Programs: इंस्टॉल किए गए प्रोग्राम
+        Persistence Mechanisms: पर्सिस्टेंस तंत्र
+        Acknowledgements: आभार
+        Articles and References: लेख और संदर्भ
+        Cross-Artifact Workflows: कई आर्टिफ़ैक्ट पर आधारित जाँच
+        Parser Validation: पार्सर सत्यापन
+        DFIR Glossary: DFIR शब्दावली
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: id
+      name: Bahasa Indonesia
+      build: true
+      nav_translations:
+        Home: Beranda
+        Overview: Ikhtisar
+        Screenshots: Tangkapan Layar
+        Getting Started: Memulai
+        Commands: Perintah
+        Command List: Daftar Perintah
+        Resources: Sumber Daya
+        About Juntei: Tentang Juntei
+        Supported Evidence: Sumber bukti yang didukung
+        Evidence and Interpretation: Bukti dan interpretasi
+        Install Juntei: Instal Juntei
+        First Investigation: Investigasi pertama
+        Output Formats: Format keluaran
+        Collecting Evidence: Pengumpulan bukti
+        Automatic Collection Parsing: Analisis otomatis hasil pengumpulan
+        Mounting Disk Images: Memasang Image Disk
+        Files: Berkas
+        Registry: Registry
+        Common Output Patterns: Metode keluaran umum
+        Artifacts: Artefak
+        Artifact Guide: Panduan artefak
+        Process Execution: Eksekusi proses
+        Application Compatibility: Kompatibilitas aplikasi
+        FeatureUsage and Pins: FeatureUsage dan item yang disematkan
+        BAM and DAM: BAM / DAM
+        File System and File Existence: Sistem berkas dan keberadaan berkas
+        Master File Table ($MFT): Master File Table ($MFT)
+        NTFS Transaction Log ($LogFile): Log transaksi NTFS ($LogFile)
+        USN Journal: Jurnal USN
+        Directory Indexes ($I30): Indeks direktori ($I30)
+        Security Descriptors ($Secure:$SDS): Deskriptor keamanan ($Secure:$SDS)
+        Boot Sector ($Boot): Sektor boot ($Boot)
+        File and Folder Opening: Pembukaan berkas dan folder
+        LNK Shortcuts: Pintasan LNK
+        MRU Lists: Daftar MRU
+        Browser Activity: Aktivitas browser
+        Web Browsers: Browser web
+        Internet Explorer and Legacy Edge: Internet Explorer dan Edge lama
+        Communication: Komunikasi
+        Network Activity: Aktivitas jaringan
+        Networks: Jaringan
+        Lateral Movement: Pergerakan lateral
+        Remote Access (User Side): Akses jarak jauh (sisi pengguna)
+        User Access Logging (UAL): Pencatatan Akses Pengguna (UAL)
+        Open and Save As Dialogs: Dialog Buka dan Simpan Sebagai
+        External Devices: Perangkat eksternal
+        USB Devices: Perangkat USB
+        Security Products: Produk keamanan
+        Defender Quarantine: Karantina Defender
+        Security Settings: Pengaturan keamanan
+        Registry and Persistence: Registry dan persistensi
+        Registry Hives: Hive Registry
+        Windows Services: Layanan Windows
+        Task Scheduler Cache: Cache Penjadwal Tugas
+        Registry Autostarts: Autostart Registry
+        Boot Configuration (BCD): Konfigurasi boot (BCD)
+        Accounts: Akun
+        SAM Local Accounts: Akun lokal SAM
+        LSA Secrets: Rahasia LSA
+        System Information: Informasi sistem
+        Audit Policy: Kebijakan audit
+        Applications: Aplikasi
+        Application History: Riwayat aplikasi
+        Installed Programs: Program terinstal
+        Persistence Mechanisms: Mekanisme persistensi
+        Acknowledgements: Ucapan terima kasih
+        Articles and References: Artikel dan referensi
+        Cross-Artifact Workflows: Investigasi lintas artefak
+        Parser Validation: Validasi parser
+        DFIR Glossary: Glosarium DFIR
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: my
+      name: မြန်မာဘာသာ
+      build: true
+      nav_translations:
+        Home: ပင်မစာမျက်နှာ
+        Overview: ခြုံငုံသုံးသပ်ချက်
+        Screenshots: ဖန်သားပြင်ဓာတ်ပုံများ
+        Getting Started: စတင်အသုံးပြုခြင်း
+        Commands: ညွှန်ကြားချက်များ
+        Command List: ညွှန်ကြားချက်စာရင်း
+        Resources: အရင်းအမြစ်များ
+        About Juntei: Juntei အကြောင်း
+        Supported Evidence: ပံ့ပိုးထားသော အထောက်အထားအမျိုးအစားများ
+        Evidence and Interpretation: အထောက်အထားနှင့် အဓိပ္ပာယ်ဖော်ခြင်း
+        Install Juntei: Juntei ထည့်သွင်းခြင်း
+        First Investigation: ပထမဆုံး စုံစမ်းစစ်ဆေးမှု
+        Output Formats: ထုတ်ယူမှု ပုံစံများ
+        Collecting Evidence: အထောက်အထား စုဆောင်းခြင်း
+        Automatic Collection Parsing: စုဆောင်းထားသော ဒေတာကို အလိုအလျောက် ခွဲခြမ်းခြင်း
+        Mounting Disk Images: Disk image များကို mount လုပ်ခြင်း
+        Files: ဖိုင်များ
+        Registry: Registry
+        Common Output Patterns: ဘုံထုတ်ယူမှု နည်းလမ်းများ
+        Artifacts: ဒစ်ဂျစ်တယ်အထောက်အထားများ
+        Artifact Guide: အထောက်အထား လမ်းညွှန်
+        Process Execution: Process လုပ်ဆောင်မှု
+        Application Compatibility: အပလီကေးရှင်း လိုက်ဖက်မှု
+        FeatureUsage and Pins: FeatureUsage နှင့် ပင်ထိုးထားသော အရာများ
+        BAM and DAM: BAM / DAM
+        File System and File Existence: ဖိုင်စနစ်နှင့် ဖိုင်တည်ရှိမှု
+        Master File Table ($MFT): ပင်မဖိုင်ဇယား ($MFT)
+        NTFS Transaction Log ($LogFile): NTFS အပြောင်းအလဲမှတ်တမ်း ($LogFile)
+        USN Journal: USN ဂျာနယ်
+        Directory Indexes ($I30): ဖိုင်တွဲ အညွှန်းများ ($I30)
+        Security Descriptors ($Secure:$SDS): လုံခြုံရေးဖော်ပြချက်များ ($Secure:$SDS)
+        Boot Sector ($Boot): Boot sector ($Boot)
+        File and Folder Opening: ဖိုင်နှင့် ဖိုင်တွဲ ဖွင့်ခြင်း
+        LNK Shortcuts: LNK ဖြတ်လမ်းများ
+        MRU Lists: MRU စာရင်းများ
+        Browser Activity: ဘရောက်ဇာ လှုပ်ရှားမှု
+        Web Browsers: ဝဘ် ဘရောက်ဇာများ
+        Internet Explorer and Legacy Edge: Internet Explorer နှင့် legacy Edge
+        Communication: ဆက်သွယ်ရေး
+        Network Activity: ကွန်ရက် လှုပ်ရှားမှု
+        Networks: ကွန်ရက်များ
+        Lateral Movement: ကွန်ရက်အတွင်း ဘေးတိုက်ရွေ့လျားမှု
+        Remote Access (User Side): အဝေးမှ ဝင်ရောက်မှု (အသုံးပြုသူဘက်)
+        User Access Logging (UAL): အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
+        Open and Save As Dialogs: ဖွင့်ရန်နှင့် အမည်သစ်ဖြင့် သိမ်းရန် dialog များ
+        External Devices: ပြင်ပစက်ပစ္စည်းများ
+        USB Devices: USB စက်ပစ္စည်းများ
+        Security Products: လုံခြုံရေးထုတ်ကုန်များ
+        Defender Quarantine: Defender သီးခြားခွဲထားသော ဒေတာ
+        Security Settings: လုံခြုံရေးဆက်တင်များ
+        Registry and Persistence: Registry နှင့် အမြဲတမ်းဝင်ရောက်နိုင်မှု
+        Registry Hives: Registry hive များ
+        Windows Services: Windows ဝန်ဆောင်မှုများ
+        Task Scheduler Cache: Task Scheduler cache
+        Registry Autostarts: Registry အလိုအလျောက် စတင်မှု
+        Boot Configuration (BCD): Boot ပြင်ဆင်မှု (BCD)
+        Accounts: အကောင့်များ
+        SAM Local Accounts: SAM စက်တွင်းအကောင့်များ
+        LSA Secrets: LSA လျှို့ဝှက်ဒေတာ
+        System Information: စနစ်အချက်အလက်
+        Audit Policy: စစ်ဆေးမှတ်တမ်း မူဝါဒ
+        Applications: အပလီကေးရှင်းများ
+        Application History: အပလီကေးရှင်း မှတ်တမ်း
+        Installed Programs: ထည့်သွင်းထားသော ပရိုဂရမ်များ
+        Persistence Mechanisms: အမြဲတမ်းဝင်ရောက်နိုင်မှု နည်းလမ်းများ
+        Acknowledgements: ကျေးဇူးတင်လွှာ
+        Articles and References: ဆောင်းပါးနှင့် ကိုးကားချက်များ
+        Cross-Artifact Workflows: အထောက်အထားများ ချိတ်ဆက်စစ်ဆေးခြင်း
+        Parser Validation: Parser မှန်ကန်မှု စစ်ဆေးခြင်း
+        DFIR Glossary: DFIR ဝေါဟာရစာရင်း
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: th
+      name: ไทย
+      build: true
+      nav_translations:
+        Home: หน้าแรก
+        Overview: ภาพรวม
+        Screenshots: ภาพหน้าจอ
+        Getting Started: เริ่มต้นใช้งาน
+        Commands: คำสั่ง
+        Command List: รายการคำสั่ง
+        Resources: แหล่งข้อมูล
+        About Juntei: เกี่ยวกับ Juntei
+        Supported Evidence: แหล่งหลักฐานที่รองรับ
+        Evidence and Interpretation: หลักฐานและการตีความ
+        Install Juntei: ติดตั้ง Juntei
+        First Investigation: การตรวจสอบครั้งแรก
+        Output Formats: รูปแบบเอาต์พุต
+        Collecting Evidence: การเก็บรวบรวมหลักฐาน
+        Automatic Collection Parsing: วิเคราะห์ข้อมูลที่รวบรวมโดยอัตโนมัติ
+        Mounting Disk Images: การเมานต์อิมเมจดิสก์
+        Files: ไฟล์
+        Registry: รีจิสทรี
+        Common Output Patterns: วิธีส่งออกข้อมูลทั่วไป
+        Artifacts: อาร์ติแฟกต์
+        Artifact Guide: คู่มืออาร์ติแฟกต์
+        Process Execution: การทำงานของโพรเซส
+        Application Compatibility: ความเข้ากันได้ของแอปพลิเคชัน
+        FeatureUsage and Pins: FeatureUsage และรายการที่ปักหมุด
+        BAM and DAM: BAM / DAM
+        File System and File Existence: ระบบไฟล์และการมีอยู่ของไฟล์
+        Master File Table ($MFT): ตารางไฟล์หลัก ($MFT)
+        NTFS Transaction Log ($LogFile): บันทึกธุรกรรม NTFS ($LogFile)
+        USN Journal: บันทึก USN
+        Directory Indexes ($I30): ดัชนีไดเรกทอรี ($I30)
+        Security Descriptors ($Secure:$SDS): ตัวบอกความปลอดภัย ($Secure:$SDS)
+        Boot Sector ($Boot): บูตเซกเตอร์ ($Boot)
+        File and Folder Opening: การเปิดไฟล์และโฟลเดอร์
+        LNK Shortcuts: ทางลัด LNK
+        MRU Lists: รายการ MRU
+        Browser Activity: กิจกรรมเบราว์เซอร์
+        Web Browsers: เว็บเบราว์เซอร์
+        Internet Explorer and Legacy Edge: Internet Explorer และ Edge รุ่นเก่า
+        Communication: การสื่อสาร
+        Network Activity: กิจกรรมเครือข่าย
+        Networks: เครือข่าย
+        Lateral Movement: การเคลื่อนย้ายภายในเครือข่าย
+        Remote Access (User Side): การเข้าถึงระยะไกล (ฝั่งผู้ใช้)
+        User Access Logging (UAL): การบันทึกการเข้าถึงของผู้ใช้ (UAL)
+        Open and Save As Dialogs: กล่องโต้ตอบเปิดและบันทึกเป็น
+        External Devices: อุปกรณ์ภายนอก
+        USB Devices: อุปกรณ์ USB
+        Security Products: ผลิตภัณฑ์ความปลอดภัย
+        Defender Quarantine: ข้อมูลที่ Defender กักกัน
+        Security Settings: การตั้งค่าความปลอดภัย
+        Registry and Persistence: รีจิสทรีและการคงอยู่
+        Registry Hives: ไฮฟ์รีจิสทรี
+        Windows Services: บริการ Windows
+        Task Scheduler Cache: แคช Task Scheduler
+        Registry Autostarts: การเริ่มอัตโนมัติผ่านรีจิสทรี
+        Boot Configuration (BCD): การกำหนดค่าบูต (BCD)
+        Accounts: บัญชี
+        SAM Local Accounts: บัญชีภายในเครื่อง SAM
+        LSA Secrets: ความลับ LSA
+        System Information: ข้อมูลระบบ
+        Audit Policy: นโยบายการตรวจสอบ
+        Applications: แอปพลิเคชัน
+        Application History: ประวัติแอปพลิเคชัน
+        Installed Programs: โปรแกรมที่ติดตั้ง
+        Persistence Mechanisms: กลไกการคงอยู่
+        Acknowledgements: กิตติกรรมประกาศ
+        Articles and References: บทความและแหล่งอ้างอิง
+        Cross-Artifact Workflows: การตรวจสอบข้ามอาร์ติแฟกต์
+        Parser Validation: การตรวจสอบความถูกต้องของพาร์เซอร์
+        DFIR Glossary: อภิธานศัพท์ DFIR
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
+    - locale: ar
+      name: العربية
+      build: true
+      nav_translations:
+        Home: الرئيسية
+        Overview: نظرة عامة
+        Screenshots: لقطات الشاشة
+        Getting Started: البدء
+        Commands: الأوامر
+        Command List: قائمة الأوامر
+        Resources: الموارد
+        About Juntei: حول Juntei
+        Supported Evidence: مصادر الأدلة المدعومة
+        Evidence and Interpretation: الأدلة وتفسيرها
+        Install Juntei: تثبيت Juntei
+        First Investigation: التحقيق الأول
+        Output Formats: تنسيقات الإخراج
+        Collecting Evidence: جمع الأدلة
+        Automatic Collection Parsing: تحليل البيانات المجمعة تلقائيًا
+        Mounting Disk Images: تحميل صور الأقراص
+        Files: الملفات
+        Registry: سجل Windows
+        Common Output Patterns: أساليب الإخراج الشائعة
+        Artifacts: الآثار الرقمية
+        Artifact Guide: دليل الآثار الرقمية
+        Process Execution: تنفيذ العمليات
+        Application Compatibility: توافق التطبيقات
+        FeatureUsage and Pins: FeatureUsage والعناصر المثبتة
+        BAM and DAM: BAM / DAM
+        File System and File Existence: نظام الملفات ووجود الملفات
+        Master File Table ($MFT): جدول الملفات الرئيسي ($MFT)
+        NTFS Transaction Log ($LogFile): سجل معاملات NTFS ($LogFile)
+        USN Journal: دفتر يومية USN
+        Directory Indexes ($I30): فهارس المجلدات ($I30)
+        Security Descriptors ($Secure:$SDS): واصفات الأمان ($Secure:$SDS)
+        Boot Sector ($Boot): قطاع الإقلاع ($Boot)
+        File and Folder Opening: فتح الملفات والمجلدات
+        LNK Shortcuts: اختصارات LNK
+        MRU Lists: قوائم MRU
+        Browser Activity: نشاط المتصفح
+        Web Browsers: متصفحات الويب
+        Internet Explorer and Legacy Edge: Internet Explorer وEdge القديم
+        Communication: الاتصالات
+        Network Activity: نشاط الشبكة
+        Networks: الشبكات
+        Lateral Movement: الحركة الجانبية
+        Remote Access (User Side): الوصول عن بُعد (جهة المستخدم)
+        User Access Logging (UAL): تسجيل وصول المستخدمين (UAL)
+        Open and Save As Dialogs: مربعات حوار الفتح والحفظ باسم
+        External Devices: الأجهزة الخارجية
+        USB Devices: أجهزة USB
+        Security Products: منتجات الأمان
+        Defender Quarantine: حجر Defender
+        Security Settings: إعدادات الأمان
+        Registry and Persistence: سجل Windows والاستمرارية
+        Registry Hives: خلايا سجل Windows
+        Windows Services: خدمات Windows
+        Task Scheduler Cache: ذاكرة التخزين المؤقت لجدولة المهام
+        Registry Autostarts: التشغيل التلقائي عبر سجل Windows
+        Boot Configuration (BCD): تكوين الإقلاع (BCD)
+        Accounts: الحسابات
+        SAM Local Accounts: حسابات SAM المحلية
+        LSA Secrets: أسرار LSA
+        System Information: معلومات النظام
+        Audit Policy: نهج التدقيق
+        Applications: التطبيقات
+        Application History: سجل التطبيقات
+        Installed Programs: البرامج المثبتة
+        Persistence Mechanisms: آليات الاستمرارية
+        Acknowledgements: شكر وتقدير
+        Articles and References: المقالات والمراجع
+        Cross-Artifact Workflows: التحقيق عبر عدة آثار رقمية
+        Parser Validation: التحقق من المحللات
+        DFIR Glossary: مسرد DFIR
+        ESE: ESE
+        NTFS: NTFS
+        SQLite: SQLite
+        Prefetch: Prefetch
+        SRUM: SRUM
+        UserAssist: UserAssist
+        MuiCache: MuiCache
+        Amcache: Amcache
+        ShimCache: ShimCache
+        RecentDocs: RecentDocs
+        ShellBags: ShellBags
+        Microsoft Office: Microsoft Office
+        Jump Lists: Jump Lists
+        Persistence Hunter: Persistence Hunter
 
 extra:
   social:
@@ -101,6 +1345,7 @@ nav:
       - About Juntei: overview/index.md
       - Supported Evidence: overview/supported-evidence.md
       - Evidence and Interpretation: overview/evidence-model.md
+  - Screenshots: screenshots.md
   - Getting Started:
       - Install Juntei: getting-started/index.md
       - First Investigation: getting-started/first-investigation.md
@@ -109,10 +1354,12 @@ nav:
   - Commands:
       - Command List: commands/index.md
       - Automatic Collection Parsing: commands/auto-parse.md
+      - Mounting Disk Images: commands/mount.md
       - ESE: commands/user-activity.md
       - Files: commands/execution.md
       - NTFS: commands/filesystem.md
       - Registry: commands/security-registry.md
+      - SQLite: commands/sqlite.md
       - Persistence Hunter: commands/persistence-hunter.md
       - Super Timeline: commands/super-timeline.md
       - Common Output Patterns: commands/output.md
@@ -141,10 +1388,16 @@ nav:
           - Jump Lists: artifacts/jump-lists.md
           - MRU Lists: artifacts/mru.md
           - RecentDocs: artifacts/recentdocs.md
+      - Browser Activity:
+          - Web Browsers: artifacts/browser.md
+          - Internet Explorer and Legacy Edge: artifacts/webcache.md
+      - Communication:
+          - Outlook: artifacts/outlook.md
       - Network Activity:
           - Networks: artifacts/networks.md
       - Lateral Movement:
           - Remote Access (User Side): artifacts/remote-access.md
+          - User Access Logging (UAL): artifacts/ual.md
           - Open and Save As Dialogs: artifacts/opensavemru.md
           - ShellBags: artifacts/shellbags.md
       - External Devices:

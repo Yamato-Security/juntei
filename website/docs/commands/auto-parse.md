@@ -21,6 +21,116 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     prevents generated data from being rediscovered as evidence and prevents `--clobber` from
     touching files in the source collection.
 
+## VHDX disk images
+
+With `--vhdx`, `auto-parse` reads VHDX images natively on **Linux, macOS and Windows**, using
+[ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). No OS mount, FUSE driver,
+or administrator privileges are needed.
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
+reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
+hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
+lists, Outlook files and Defender quarantine folders. Every other file is an empty placeholder
+with its original modification time, so directories and paths look as they do on the disk.
+persistence-hunter reads a placeholder's content from the image only when it needs it, such as
+an executable that a persistence entry refers to.
+**Allow enough temporary disk space for the copied files**, in addition to the results.
+Reads use bounded buffers; zero-filled regions are written as holes where the host filesystem
+supports them. Original filenames, directory structure, hard links, and file modification times
+are preserved. LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
+a forced termination can leave temporary files. The source image is opened read-only, and pending
+VHDX log updates are applied in memory only.
+
+Computer discovery, per-host output, CSV/JSON/JSONL, and `-j` use the same parsing pipeline as
+ordinary evidence directories. `Image` in `manifest.json` identifies the original image and
+`EvidenceRoot` identifies the relative path inside the prepared image tree. Unreadable images,
+volumes, files, and filenames that cannot be represented safely are reported in `ImageErrors`
+and failed rows of `manifest.csv`. Readable evidence is still parsed, and the process exits with
+status 1 if any image input was incomplete. Unsafe or ambiguous names are rejected rather than
+silently renamed. Named NTFS streams are not synthesized as extra files; already-collected
+artifacts stored as ordinary files inside a triage image remain available.
+
+The separate [`mount` command](mount.md) exposes a filesystem to other programs and still needs
+Linux FUSE. It is not used by `auto-parse --vhdx`.
+
+Staging uses a private directory on the output filesystem by default. Use `--temp-dir` to choose an existing staging directory on another disk. Original source metadata is kept separately on the output filesystem, so a full staging disk does not prevent parsing already-readable files. Reserve space for both staged files and results; if the output filesystem itself is full, results cannot be saved. Ctrl+C stops parser processes, cleans the private workspace and exits with code 130. A forced termination such as SIGKILL or power loss can still leave copies. Inaccessible subdirectories are skipped during image discovery; an unreadable input root remains an error.
+
+The staging directory must be outside the output directory. On Linux and macOS, SIGTERM and SIGHUP also stop parser processes and clean up the workspace.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 and Ex01 disk images
+
+`--e01` reads physical EWF1 (`.E01`) and EWF2 (`.Ex01`) images natively on **Linux, macOS and Windows**, without FUSE, an OS mount, or administrator privileges. It uses [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) and the same NTFS parsing pipeline described above.
+
+Provide the first segment of a split image. Keep all companions, including `.E02`, beside it with their original names. Both whole disks (MBR/GPT) and single NTFS volumes are supported. Use `--vhdx --e01` for a directory containing both formats.
+
+The same temporary-space and source-metadata requirements apply. E01 images usually hold whole disks, and every image is staged before parsing starts, but only the files the parsers read are copied: usually a small part of the used space. Images are read-only. Acquisition gaps and damage found during opening or reading appear in `ImageErrors` and `manifest.csv`; readable results are retained with exit status 1. This checks accessed data, not every chunk or the image's full-media hash. Logical `.L01` and `.Lx01` files are rejected; there is no password option.
+
+The separate `mount` command still requires Linux FUSE; native automatic parsing does not.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
+## Output time zone
+
+Parsed timestamps default to UTC, independent of the analyst computer's local time zone. UTC
+uses the Windows event-log form `2026-10-20T08:46:38.2001668Z`: an ISO 8601 date/time, `T`
+between the date and time, and `Z` for UTC. The available fractional digits are preserved.
+`manifest.json`'s `GeneratedUTC` uses this form too. The console's `Start time` and `End time`
+are the analyst computer's local time, such as `2026-11-04 09:15:02`, whatever the output time
+zone.
+
+Choose a fixed display offset with `-Z, --timezone`:
+
+```bash
+juntei auto-parse -d evidence/ -o parsed-jst/ --timezone "+09:00"
+juntei auto-parse -d evidence/ -o parsed-offset/ -Z "-01:00"
+juntei auto-parse -d evidence/ -o parsed-half-hour/ -Z "+02:30"
+```
+
+An offset is a signed, two-digit `HH:MM` value (hours `00–23`, minutes `00–59`). Names such as
+`JST`, shortened values such as `+9`, and invalid ranges produce an error with example syntax.
+Omit the option or use `--timezone "+00:00"` for UTC. A fixed offset does not apply daylight
+saving rules.
+
+The option applies to parsed timestamps in the per-artifact CSV, JSON and JSONL results and
+the additional `-j` JSONL export. For example, `2026-10-20T08:46:38.2001668Z` becomes
+`2026-10-20T17:46:38.2001668+09:00`; both describe the same instant.
+
+Field names stay stable, including existing names ending in `UTC`. Converted values explicitly
+carry the selected offset. `OutputTimeZone` in both manifests records the requested display
+offset, while `GeneratedUTC` remains UTC run metadata. Per-parser logs retain the parsers' native UTC summaries.
+
+Raw FILETIME/epoch numbers, registry-value dictionaries, source time-zone configuration, text
+metadata, date-only values and local clock values without a known offset are preserved. Juntei
+does not add `Z` to an unknown local time. FAT-derived shell-item clocks (`Item*UTC` in
+ShellBags/OpenSaveMRU and LNK/Jump List `TargetItems`) have no recorded offset; their legacy
+UTC labels or rendered `Z` suffix do not prove UTC, so the offset option preserves them.
+CSV columns containing free-text summaries retain
+their recorded text; JSON/JSONL preserves nested parsed timestamps as structured fields.
+
+UTC uses the existing parser output directly. An explicit nonzero offset adds a streaming
+formatting pass within each parser worker; it changes display values without changing evidence.
+
+If an offset would move a timestamp outside years `0000–9999`, that value keeps its original
+explicit offset. Values with more than nine fractional digits also stay unchanged rather than
+being rounded. Juntei records a warning in the parser's `*-logs.txt` file and converts the other
+timestamps. Malformed CSV/JSON or an output error still fails the task and leaves the affected
+original result file unchanged.
+
 ## What it discovers
 
 Juntei searches recursively for directories named `Windows` that contain a `System32`, `Prefetch`,
@@ -51,10 +161,12 @@ Names are made safe for use as directory names. Duplicate names receive a numeri
 their output directory and `Comp` value so separate systems remain distinguishable in JSON.
 The manifest keeps the hostname exactly as discovered in a separate `Hostname` field.
 
-When it lists the systems it found, `auto-parse` also prints each one's time zone from its `SYSTEM`
-hive (for example `Eastern Standard Time, UTC-05:00; daylight time UTC-04:00 from the second
-Sunday of March, 02:00 to the first Sunday of November, 02:00`): the local times the system kept.
-See [System Information](../artifacts/system-info.md).
+After listing the systems, `auto-parse` prints one `Timezone:` line directly above
+`Parser tasks`. It shows the selected output timezone: `UTC` by default, or a value such as
+`UTC+09:00` when `--timezone "+09:00"` is used. The label is green and the value uses the
+terminal's default text color, like the other summary values. `-K, --no-color` keeps the line plain.
+Collected systems' time-zone configuration is available in the
+[System Information](../artifacts/system-info.md) results.
 
 ## Parsers it runs
 
@@ -70,6 +182,11 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - `$I30` directory indexes
 - `$Boot` boot sectors and `$Secure:$SDS` security descriptors
 - SRUM
+- User Access Logging (UAL)
+- Web browser history, downloads, cookies and form history (Chromium- and Firefox-based browsers)
+- Internet Explorer and legacy Edge's WebCache: history, downloads, cookies and cache entries
+- Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar
+  items and tasks
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -98,6 +215,11 @@ CSV `$MFT` output includes all timestamps and short names. Registry output inclu
 FILETIME interpretation of `REG_QWORD` values. JSON and JSONL SRUM output includes value-state
 metadata. Defender files and resident `$MFT` streams are **not extracted** automatically.
 
+With `--mft-slack`, the `$MFT` output also includes the file names left in the slack of FILE
+records, as [`parse-ntfs mft -x`](../artifacts/mft.md) writes them: rows marked `FromSlack` in
+CSV, and `SlackFileNames` in JSON and JSONL. `--code-page` applies to LNK files, Jump Lists,
+ShellBags and OpenSaveMRU.
+
 An artifact that was not collected is a normal `skipped` task, not a failure.
 
 ## Output layout
@@ -124,6 +246,28 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -172,7 +316,11 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -200,8 +348,8 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-UserAssist.csv
 │   │   └── Registry-UserAssist-logs.txt
 │   ├── Registry/
-│   │   ├── Registry-Read.csv
-│   │   └── Registry-Read-logs.txt
+│   │   ├── Registry-Dump.csv
+│   │   └── Registry-Dump-logs.txt
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
@@ -225,12 +373,14 @@ CSV keeps separate tables because each artifact has different columns:
 | `Accounts` | SAM local accounts, LSA secrets' names and times |
 | `Applications` | Application history (third-party tools' traces) |
 | `Applications` | Installed programs |
+| `BrowserActivity` | Web browser history, downloads, cookies and form history, with recovered deleted entries; Internet Explorer and legacy Edge's WebCache |
+| `Communication` | Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar items and tasks |
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
-| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
+| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; User Access Logging (the clients of a server's roles) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU activity, UserAssist |
 | `Registry` | General hive keys and values, including recovered records |
@@ -251,16 +401,29 @@ in `NetworkActivity`, `ProcessExecution` and `SystemInformation`, with a shared
 Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Read.csv`, and
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, and
 `DefenderQuarantine.csv`. Registry-derived tables use the `Registry-` prefix, including
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` and `Registry-SystemInfo.csv`.
-General hive keys and values are in `Registry-Read.csv`. Amcache tables are
+General hive keys and values are in `Registry-Dump.csv`. Amcache tables are
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
 `Registry-Amcache-Findings.csv` and `Registry-Amcache-Summary.csv`. Jump Lists use
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` and
 `JumpLists-CustomDestinations.csv`. There are no Amcache or Jump Lists subdirectories.
 SRUM tables use `SRUM-` filenames directly under their category, for example
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+User Access Logging tables are in `LateralMovement`, one file per table, such as
+`UAL-Clients.csv` and `UAL-SystemIdentity.csv`, with `UAL-logs.txt`; see
+[User Access Logging (UAL)](../artifacts/ual.md#automatic-parsing).
+Web browser tables are in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` and `Browser-FormHistory.csv`, with `Browser-logs.txt`; see
+[Web Browsers](../artifacts/browser.md#automatic-parsing). Internet Explorer and legacy Edge's
+WebCache tables are there too: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` and `WebCache-Containers.csv`, with
+`WebCache-logs.txt`; see [Internet Explorer and Legacy Edge](../artifacts/webcache.md#automatic-parsing).
+Outlook tables are in `Communication`: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` and `Outlook-Tasks.csv`, with `Outlook-logs.txt`; see
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 See the [complete SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output).
 
 Logs match the capitalized artifact name, such as `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
@@ -275,6 +438,28 @@ identity, hostname provenance, evidence paths, artifact `Category`, command line
 code, result path, log path, the requested JSONL timeline and any export error, whether Defender extraction was requested,
 and whether each task
 succeeded, was skipped, or failed.
+
+Auto-parse writes no absolute path, so results can be shared without showing where the evidence,
+the results or Juntei are on the analysis system:
+
+- Evidence paths are relative to the evidence directory. The terminal lists each computer with its
+  directory in the evidence (`HOST1: ./HOST1_F`), and the parsers run in the evidence directory and
+  are given such paths. The results' source path columns (`SourceFile`, `SourcePath`, …), the logs
+  and the manifests' `EvidenceRoot` and `WindowsDirectories` show where each file is in the
+  evidence (`./HOST1_F/C/Windows/Prefetch/CMD.EXE-6D6290C5.pf`).
+- The manifests' and logs' result paths (`Output`, `OutputFiles`, `Log`, `JSON-Timeline`, the
+  output paths in `Command`) and Defender's `ExtractedFile` are relative to the output directory
+  (`./HOST1/ProcessExecution/Prefetch.csv`, `../siem.jsonl` for a timeline beside it). `Command`
+  starts with the program's name (`juntei`); its evidence paths are relative to the evidence
+  directory and its output paths to the output directory.
+- `EvidenceDirectory` and `OutputDirectory` are the two directories' names. `ManifestVersion` 2
+  marks manifests that record result paths from the output directory; earlier manifests have no
+  `ManifestVersion` and record them as given to `-o`. A `-C` rerun reads both.
+- The terminal shows an output or timeline path as given when it is relative, and from the
+  current directory when it is absolute (`../results/`).
+
+After the number of parallel processes, the terminal shows the total size of the files of the
+Windows systems found (`Total filesize: 26.1 MiB`).
 
 The progress message shows the active computer and artifact followed by an approximate input
 size, for example `HOST1 / prefetch (~2.0 MiB)`. A group of files uses their combined size; each
@@ -296,10 +481,11 @@ may be empty, with the explanation in its `Log` file.
 
 The terminal summary includes the total number and size of regular files currently beneath the
 output directory, including both manifests, parser logs, and extracted files. Symbolic links are
-not followed. Sizes use decimal MB (1 MB = 1,000,000 bytes):
+not followed. Sizes scale automatically using the same formatter as `Total filesize`, with
+units such as `KiB`, `MiB`, and `GiB`:
 
 ```text
-Results saved: output/ ( 125 files / 42.50 MB )
+Results saved: output/ ( 125 files / 40.5 MiB )
 ```
 
 Amcache and SRUM tables use `-Source1`, `-Source2`, etc. when several source databases
@@ -377,7 +563,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Usage
 
 ```text
-Version: 1.0.0
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -386,11 +572,15 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
   -t, --output-type <TYPE>            Output type: csv (default), json, or jsonl [default: csv]
   -j, --json-timeline <FILE>          Create a single JSONL timeline to import into a SIEM
+  -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
 
@@ -398,7 +588,8 @@ Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
 
 Parsing:
-      --code-page <NUMBER>  Windows code page for ANSI strings in LNK and Jump List files [default: 1252]
+      --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
+      --mft-slack           Recover the file names left in the slack of $MFT records
 
 General Options:
   -h, --help  Show the help menu

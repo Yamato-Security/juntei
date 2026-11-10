@@ -214,14 +214,24 @@ pub fn run(opts: &I30Options) -> i32 {
 pub(crate) fn is_i30_file(path: &Path) -> bool {
     let named = path
         .file_name()
-        .is_some_and(|n| n.to_string_lossy().to_uppercase().contains("$I30"));
+        .is_some_and(|n| is_i30_name(&n.to_string_lossy()));
     named || {
         let mut head = [0u8; 4];
         File::open(path)
             .and_then(|mut f| f.read_exact(&mut head))
             .is_ok()
-            && &head == mft::i30::INDX_SIGNATURE
+            && is_i30_head(&head)
     }
+}
+
+/// Whether a file name is a `$I30` file's.
+pub(crate) fn is_i30_name(name: &str) -> bool {
+    name.to_uppercase().contains("$I30")
+}
+
+/// Whether a file's first bytes are an INDX record's.
+pub(crate) fn is_i30_head(head: &[u8]) -> bool {
+    head.len() >= 4 && &head[..4] == mft::i30::INDX_SIGNATURE
 }
 
 /// The `$I30` files under `dir`, recursively, in path order.
@@ -515,7 +525,6 @@ impl Stats {
 
     fn print(&self, no_color: bool) {
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(no_color, "$I30 files parsed: ", &fmt_num(self.files));
         if self.failed > 0 {
             p_label(no_color, "Could not parse: ", &fmt_num(self.failed));
@@ -572,7 +581,6 @@ impl Stats {
                 p(None, &format!("  {problem}"), true);
             }
         }
-        p(None, "", true);
     }
 }
 

@@ -71,7 +71,7 @@ Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage               Progr
 ## Parse with Juntei
 
 ```text
-Usage: juntei parse-registry featureusage <INPUT> [OPTIONS]
+Usage: juntei parse-registry feature-usage <INPUT> [OPTIONS]
 
 Input:
   -d, --directory <DIR>  Recursively find NTUSER.DAT hives
@@ -85,8 +85,8 @@ Output:
 ```
 
 ```bash
-juntei parse-registry featureusage -d evidence/ -o featureusage.csv
-juntei parse-registry featureusage -f NTUSER.DAT -t jsonl \
+juntei parse-registry feature-usage -d evidence/ -o featureusage.csv
+juntei parse-registry feature-usage -f NTUSER.DAT -t jsonl \
   | jq 'select(.Source == "AppSwitched") | [.Count, .AppPath // .App]'
 ```
 

@@ -487,7 +487,6 @@ fn write_records(
 
 fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let mut count = fmt_num(parsed.len());
     if failed > 0 {
         count.push_str(&format!(" (could not parse: {})", fmt_num(failed)));
@@ -576,7 +575,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
             true,
         );
     }
-    p(None, "", true);
 }
 
 /// Whether a file name is a prefetch file: `*.pf`.

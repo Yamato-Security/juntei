@@ -589,7 +589,6 @@ impl Stats {
 
 fn print_summary(s: &Stats, carve: bool, no_color: bool) {
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     let mut parsed = fmt_num(s.journals);
     if s.failed > 0 {
         parsed.push_str(&format!(" (could not parse: {})", fmt_num(s.failed)));
@@ -677,7 +676,6 @@ fn print_summary(s: &Stats, carve: bool, no_color: bool) {
             ),
         );
     }
-    p(None, "", true);
 }
 
 fn file_len(path: &Path) -> u64 {
@@ -695,8 +693,8 @@ pub fn find_journals(dir: &Path) -> Vec<PathBuf> {
     util::find_files(dir, is_journal_name)
 }
 
-/// The volume's `$MFT` in a collection that keeps the volume's layout (KAPE:
-/// `C/$Extend/$J` and `C/$MFT`).
+/// The volume's `$MFT` in a collection that keeps the volume's layout (`C/$Extend/$J` and
+/// `C/$MFT`).
 fn volume_mft(journal: &Path) -> Option<PathBuf> {
     let extend = journal.parent()?;
     if !extend

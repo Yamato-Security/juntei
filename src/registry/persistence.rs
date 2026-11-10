@@ -614,7 +614,6 @@ impl Stats {
                 .join(", ")
         };
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         let types: Vec<String> = self
             .types
             .iter()
@@ -698,7 +697,6 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }
 

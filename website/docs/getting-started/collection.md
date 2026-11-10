@@ -1,7 +1,10 @@
 # Collecting Evidence
 
-Juntei parses files already collected from Windows. Use a trusted acquisition tool and preserve
-original metadata where possible.
+Juntei parses files already collected from Windows. Use a trusted acquisition tool and preserve original metadata where possible.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## Common locations
 
@@ -13,6 +16,10 @@ original metadata where possible.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer and legacy Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` before Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, and `.msg` files wherever they were saved |
+| Web browsers | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` and the other browsers' profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` and other user/system locations |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` and `CustomDestinations` |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +38,18 @@ original metadata where possible.
 - Collect `$LogFile` with the same volume's `$MFT` as close in time as possible. `$LogFile` wraps
   rapidly; later collection can lose the earlier redo/undo records entirely.
 - Collect SRUM with the matching `SOFTWARE` hive to resolve account and Wi-Fi profile names.
+- Collect the whole User Access Logging `Sum` directory: `SystemIdentity.mdb` gives the role names
+  and lists the yearly `{GUID}.mdb` databases. As with SRUM, Juntei does not replay its `Svc*.log`
+  transaction logs.
+- Collect browser databases with the `-wal` files beside them (`places.sqlite-wal`,
+  `cookies.sqlite-wal`): the newest changes, and the older page versions deleted entries are
+  recovered from, are only there until the browser checkpoints.
+- Collect the whole `WebCache` folder: Windows keeps `WebCacheV01.dat` open while the user is
+  logged on, and its newest changes are only in the `V01*.log` transaction logs, which Juntei does
+  not replay.
+- Collect Outlook's OST and PST files with Outlook closed, or from a disk image or a volume shadow
+  copy: Outlook keeps them open while it runs. Look for PSTs beyond the default folders too: users
+  move archives to other folders, drives and file shares.
 - Collect the whole Defender `Quarantine` tree so Entries, ResourceData, and Resources can be matched.
 
 ## Live-system cautions

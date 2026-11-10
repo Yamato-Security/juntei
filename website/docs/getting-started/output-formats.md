@@ -67,6 +67,8 @@ Only output labels change; evidence values and raw registry-value names keep the
 | `UserNameSource` | `UserSource` |
 | `Users` | `User` |
 
+MFT CSV output uses artifact-specific labels: `File` (Filename), `SN` (Sequence Number), `ParentEntryNum` (ParentEntryNumber), `ParentSN` (Parent Sequence Number), `USN` (Update Sequence Number), `LogfileSN` (Logfile Sequence Number), `SID` (Security ID), `Type` (Name Type), and `RefCnt` (Reference Count). These labels also apply to `auto-parse` MFT CSVs; see [MFT output fields](../artifacts/mft.md#csv-output-fields).
+
 The native system-information JSON time is `CompNameLastWritten` (CSV:
 `CompNameLastWrittenUTC`). `HasADS` is a Boolean indicator; `Dir` in Prefetch contains the
 recorded directory list. `User` retains its artifact-specific type: a string for an account name,
@@ -104,6 +106,12 @@ after SIEM ingestion.
 Juntei formats parsed times in UTC using RFC 3339 where the format permits it. Some artifacts have
 100-nanosecond precision; others store seconds, FAT time, aggregation intervals, or no time at all.
 Digits are not accuracy: always understand the source field described on its artifact page.
+
+UTC uses the Windows event-log form `2026-10-20T08:46:38.2001668Z`, retaining available
+fractional precision. `auto-parse -Z "+09:00"` displays parsed instants with an explicit fixed
+offset in all its result formats and its optional `-j` export. The default is UTC, regardless of
+the computer running Juntei. Raw values and unzoned wall clocks remain as recorded; see
+[output time zones](../commands/auto-parse.md#output-time-zone).
 
 ## Damage and missing values
 

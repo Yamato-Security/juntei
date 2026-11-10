@@ -1,0 +1,64 @@
+# အထောက်အထား စုဆောင်းခြင်း { #collecting-evidence }
+
+Juntei သည် Windows မှ စုဆောင်းထားပြီးသော ဖိုင်များကို parse လုပ်သည်။ ယုံကြည်ရသော acquisition tool ကို အသုံးပြုပြီး မူလ metadata ကို ဖြစ်နိုင်သမျှ ထိန်းသိမ်းပါ။
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
+
+## အသုံးများသော တည်နေရာများ { #common-locations }
+
+| Artifact | ပုံမှန် တည်နေရာ |
+|---|---|
+| Amcache | `C:\Windows\AppCompat\Programs\Amcache.hve` |
+| `$MFT` | NTFS volume metadata ဖိုင် `C:\$MFT` |
+| `$LogFile` | NTFS volume metadata ဖိုင် `C:\$LogFile` |
+| Prefetch | `C:\Windows\Prefetch\*.pf` |
+| USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
+| SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer နှင့် legacy Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (Outlook 2010 မတိုင်မီ `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft` နှင့် သိမ်းဆည်းထားသည့် မည်သည့်နေရာတွင်မဆို ရှိသော `.msg` ဖိုင်များ |
+| ဝဘ် ဘရောက်ဇာများ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` နှင့် အခြား ဘရောက်ဇာများ၏ profile ဖိုင်တွဲများ |
+| LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` နှင့် အခြား အသုံးပြုသူ/စနစ် တည်နေရာများ |
+| Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` နှင့် `CustomDestinations` |
+| ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
+| Defender quarantine | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
+| Machine registry | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |
+| User registry | `%USERPROFILE%\NTUSER.DAT`, `%LOCALAPPDATA%\Microsoft\Windows\UsrClass.dat` |
+
+## အတူတကွ ပါရမည့် ဖိုင်များ { #files-that-must-travel-together }
+
+- Registry hive များကို ဘေးချင်းကပ်ရှိသော `.LOG`၊ `.LOG1` နှင့် `.LOG2` ဖိုင်များနှင့်အတူ စုဆောင်းပါ။ Hive သည် dirty
+  ဖြစ်သည့်အခါ Juntei သည် registry ညွှန်ကြားချက်များနှင့် ShimCache အတွက် log များကို replay လုပ်နိုင်ပါသည်။
+- SRUM ၏ `SRUDB.dat` ကို ကိုက်ညီမှုရှိစွာ စုဆောင်းပါ။ Juntei သည် လက်ရှိတွင် dirty ESE database ကို အစီရင်ခံသော်လည်း
+  `SRU*.log` ကို replay မလုပ်ပါ။ ထို log များတွင်သာ ရှိသော record များကို မရရှိနိုင်ပါ။
+- ဖြစ်နိုင်လျှင် `$MFT` ကို `$Extend/$J` ဘေးတွင် စုဆောင်းပါ။ USN record သည် path အပြည့်အစုံ မဟုတ်ဘဲ parent file
+  reference များကို သိမ်းဆည်းပါသည်။ MFT သည် path ဖြေရှင်းမှုကို ပိုမိုကောင်းမွန်စေပါသည်။
+- `$LogFile` ကို တူညီသော volume ၏ `$MFT` နှင့်အတူ အချိန်အနီးဆုံးတွင် စုဆောင်းပါ။ `$LogFile` သည် အလျင်အမြန်
+  လည်ပတ်ထပ်ရေးသောကြောင့် နောက်ကျမှ စုဆောင်းလျှင် အစောပိုင်း redo/undo record များကို လုံးဝ ဆုံးရှုံးနိုင်ပါသည်။
+- Account နှင့် Wi-Fi profile အမည်များကို ဖြေရှင်းရန် SRUM ကို ကိုက်ညီသော `SOFTWARE` hive နှင့်အတူ စုဆောင်းပါ။
+- User Access Logging ၏ `Sum` ဖိုင်တွဲတစ်ခုလုံးကို စုဆောင်းပါ။ `SystemIdentity.mdb` သည် role များနှင့် နှစ်စဉ်
+  `{GUID}.mdb` database များကို အမည်ဖော်ပြပါသည်။ Juntei သည် ၎င်း၏ `Svc*.log` transaction log များကိုလည်း replay မလုပ်ပါ။
+- ဘရောက်ဇာ database များကို ၎င်းတို့ဘေးရှိ `-wal` ဖိုင်များ (`places.sqlite-wal`၊ `cookies.sqlite-wal`) နှင့်အတူ
+  စုဆောင်းပါ။ နောက်ဆုံး ပြောင်းလဲမှုများနှင့် ဖျက်ထားသော entry များကို ပြန်လည်ရယူရာ page ဗားရှင်းဟောင်းများသည်
+  ဘရောက်ဇာ checkpoint မလုပ်မီအထိသာ ထိုနေရာတွင် ရှိပါသည်။
+- `WebCache` ဖိုင်တွဲတစ်ခုလုံးကို စုဆောင်းပါ။ အသုံးပြုသူ logon ဝင်ထားစဉ် Windows သည် `WebCacheV01.dat` ကို
+  ဖွင့်ထားပြီး ၎င်း၏ နောက်ဆုံး ပြောင်းလဲမှုများသည် Juntei က replay မလုပ်သော `V01*.log` transaction log များတွင်သာ
+  ရှိပါသည်။
+- Outlook ၏ OST နှင့် PST ဖိုင်များကို Outlook ပိတ်ထားစဉ် သို့မဟုတ် disk image သို့မဟုတ် volume shadow copy မှ
+  စုဆောင်းပါ။ Outlook သည် လည်ပတ်နေစဉ် ၎င်းတို့ကို ဖွင့်ထားပါသည်။ မူလ ဖိုင်တွဲများ အပြင်ဘက်တွင်လည်း PST များကို
+  ရှာဖွေပါ။ အသုံးပြုသူများသည် archive များကို အခြား ဖိုင်တွဲများ၊ drive များနှင့် file share များသို့ ရွှေ့တတ်ပါသည်။
+- Entries၊ ResourceData နှင့် Resources တို့ကို ကိုက်ညီစေနိုင်ရန် Defender `Quarantine` tree တစ်ခုလုံးကို စုဆောင်းပါ။
+
+## Live စနစ်တွင် သတိပြုရန် { #live-system-cautions }
+
+ဖွင့်ထားသော ဖိုင်များသည် ကူးယူနေစဉ် ပြောင်းလဲနိုင်ပါသည်။ Registry hive များနှင့် ESE database များသည် အတွင်းပိုင်း dirty
+ဖြစ်နိုင်ပါသည်။ ShimCache သည် ၎င်း၏ memory အတွင်းရှိ အသစ်ဆုံး entry များကို shutdown မတိုင်မီ flush မလုပ်နိုင်ပါ။ Volume
+snapshot သို့မဟုတ် raw ဝင်ရောက်ခွင့်ကို အသုံးပြုသော forensic collection tool သည် သာမန် ဖိုင်ကူးယူခြင်းထက် ပိုကောင်းပါသည်။
+
+## ဘေးကင်းရေး { #safety }
+
+အထောက်အထားတွင် malware၊ exploit နမူနာများ၊ အန္တရာယ်ရှိသော LNK ဖိုင်များနှင့် spreadsheet-formula စာသားများ ပါဝင်နိုင်ပါသည်။
+သီးခြားခွဲထားသော စနစ်ပေါ်တွင် ခွဲခြမ်းစိတ်ဖြာပါ၊ ပြန်လည်ရယူထားသော stream များကို execute မလုပ်ပါနှင့်၊ အန္တရာယ်ရှိသော
+အကြောင်းအရာကို ကိုင်တွယ်ရန် ရည်ရွယ်မှသာ `--extract` ကို အသုံးပြုပါ။ မထိခိုက်ရသေးသော ရင်းမြစ်ကို သီးခြား ထိန်းသိမ်းပါ။

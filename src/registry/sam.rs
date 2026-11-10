@@ -496,7 +496,6 @@ impl Stats {
 
     fn print(&self, no_color: bool) {
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         p_label(no_color, "SAM hives parsed: ", &fmt_num(self.hives));
         if self.failed > 0 {
             p_label(no_color, "Could not parse: ", &fmt_num(self.failed));
@@ -570,6 +569,5 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }

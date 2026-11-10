@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! `parse-registry appcompat`: application compatibility data beyond the ShimCache and Amcache,
+//! `parse-registry app-compat`: application compatibility data beyond the ShimCache and Amcache,
 //! in SOFTWARE and NTUSER.DAT hives, read by ys-registry-parser's `appcompat` module, with
 //! Hayabusa's input options, progress bar and results summary. One record per program with
 //! compatibility layers, program the Program Compatibility Assistant saw run (`Store`,
@@ -550,7 +550,6 @@ impl Stats {
                 .join(", ")
         };
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         let types: Vec<String> = self
             .types
             .iter()
@@ -643,7 +642,6 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }
 

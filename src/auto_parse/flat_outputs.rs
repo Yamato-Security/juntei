@@ -30,7 +30,7 @@ fn check_category(root: &Path, directory: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn table_name(artifact: &str, name: &str) -> Option<&'static str> {
+fn table_name<'a>(artifact: &str, name: &'a str) -> Option<&'a str> {
     match (artifact, name) {
         ("amcache", "Amcache_devices.csv") => Some("Devices"),
         ("amcache", "Amcache_files.csv") => Some("Files"),
@@ -38,11 +38,41 @@ fn table_name(artifact: &str, name: &str) -> Option<&'static str> {
         ("amcache", "Amcache_summary.csv") => Some("Summary"),
         ("jump-lists", "AutomaticDestinations.csv") => Some("AutomaticDestinations"),
         ("jump-lists", "CustomDestinations.csv") => Some("CustomDestinations"),
+        ("browser", "Browser-History.csv") => Some("History"),
+        ("browser", "Browser-Downloads.csv") => Some("Downloads"),
+        ("browser", "Browser-Cookies.csv") => Some("Cookies"),
+        ("browser", "Browser-FormHistory.csv") => Some("FormHistory"),
+        ("webcache", "WebCache-History.csv") => Some("History"),
+        ("webcache", "WebCache-Downloads.csv") => Some("Downloads"),
+        ("webcache", "WebCache-Cookies.csv") => Some("Cookies"),
+        ("webcache", "WebCache-Entries.csv") => Some("Entries"),
+        ("webcache", "WebCache-Containers.csv") => Some("Containers"),
+        ("outlook", "Outlook-Files.csv") => Some("Files"),
+        ("outlook", "Outlook-Folders.csv") => Some("Folders"),
+        ("outlook", "Outlook-Items.csv") => Some("Items"),
+        ("outlook", "Outlook-Recipients.csv") => Some("Recipients"),
+        ("outlook", "Outlook-Attachments.csv") => Some("Attachments"),
+        ("outlook", "Outlook-Contacts.csv") => Some("Contacts"),
+        ("outlook", "Outlook-Calendar.csv") => Some("Calendar"),
+        ("outlook", "Outlook-Tasks.csv") => Some("Tasks"),
+        ("outlook", "Outlook-Properties.csv") => Some("Properties"),
+        // `parse-ese ual` names each table's file `UAL-<table>.csv`, a table it doesn't know
+        // under its own name, in letters, digits and `-_{}` only
+        ("ual", name) => name
+            .strip_prefix("UAL-")
+            .and_then(|table| table.strip_suffix(".csv"))
+            .filter(|table| {
+                !table.is_empty()
+                    && table
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || "-_{}".contains(c))
+            }),
         _ => None,
     }
 }
 
-pub(super) fn distribute(task: &Task) -> io::Result<Vec<PathBuf>> {
+/// The log names the tables from `output`, the output directory, as the manifests do.
+pub(super) fn distribute(task: &Task, output: &Path) -> io::Result<Vec<PathBuf>> {
     let directory = task
         .output
         .parent()
@@ -99,8 +129,8 @@ pub(super) fn distribute(task: &Task) -> io::Result<Vec<PathBuf>> {
         writeln!(
             log,
             "Table: {} -> {}",
-            source.display(),
-            destination.display()
+            super::dot_relative(output, &source).display(),
+            super::dot_relative(output, &destination).display()
         )?;
     }
     log.flush()?;
@@ -127,6 +157,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
         Err(error) => return Err(error),
     };
+    let from_output = super::paths_from_output(&old);
     let Some(previous) = old.get("Tasks").and_then(Value::as_array) else {
         return Ok(());
     };
@@ -135,7 +166,11 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
     };
     for task in tasks.iter().filter(|task| !task.timeline_only) {
         let stem = artifact_filename(task.artifact);
-        if !matches!(task.artifact, "amcache" | "jump-lists") && !stem.starts_with("Registry-") {
+        if !matches!(
+            task.artifact,
+            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
+        ) && !stem.starts_with("Registry-")
+        {
             continue;
         }
         let Some(folder) = hosts
@@ -174,7 +209,11 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
         }) {
             if previous.get("Purpose").and_then(Value::as_str) != Some("json_timeline") {
                 if let Some(files) = previous.get("OutputFiles").and_then(Value::as_array) {
-                    for path in files.iter().filter_map(Value::as_str).map(PathBuf::from) {
+                    for path in files
+                        .iter()
+                        .filter_map(Value::as_str)
+                        .map(|path| super::recorded_path(root, path, from_output))
+                    {
                         if !flat_table_path(&host, &path, task.artifact) {
                             return Err(io::Error::other(
                                 "Previous table manifest contains an invalid output path",
@@ -186,11 +225,13 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                 if let Some(path) = previous
                     .get("Output")
                     .and_then(Value::as_str)
-                    .map(PathBuf::from)
+                    .map(|path| super::recorded_path(root, path, from_output))
                 {
                     for name in [old_stem, stem] {
-                        if matches!(task.artifact, "amcache" | "jump-lists")
-                            && path == category.join(name)
+                        if matches!(
+                            task.artifact,
+                            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
+                        ) && path == category.join(name)
                         {
                             remove_generated_path(&path, root)?;
                         }
@@ -205,7 +246,7 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
             if let Some(path) = previous
                 .get("Log")
                 .and_then(Value::as_str)
-                .map(PathBuf::from)
+                .map(|path| super::recorded_path(root, path, from_output))
             {
                 for name in [old_stem, stem] {
                     for suffix in ["-logs.txt", "-json-timeline-logs.txt"] {
@@ -262,7 +303,7 @@ mod tests {
                 vec!["AutomaticDestinations.csv", "CustomDestinations.csv"],
             ),
         ] {
-            let (_temp, task) = setup(artifact);
+            let (temp, task) = setup(artifact);
             for (index, capture) in ["a", "b"].iter().enumerate() {
                 let source = task.output.join(capture);
                 fs::create_dir(&source).unwrap();
@@ -274,7 +315,7 @@ mod tests {
                     .unwrap();
                 }
             }
-            let files = distribute(&task).unwrap();
+            let files = distribute(&task, temp.path()).unwrap();
             assert_eq!(files.len(), names.len() * 2);
             for source in [1, 2] {
                 for name in &names {
@@ -298,7 +339,7 @@ mod tests {
 
     #[test]
     fn unknown_tables_do_not_disappear_or_partially_replace_outputs() {
-        let (_temp, task) = setup("jump-lists");
+        let (temp, task) = setup("jump-lists");
         fs::write(task.output.join("AutomaticDestinations.csv"), b"new\n").unwrap();
         fs::write(task.output.join("Unexpected.csv"), b"retain\n").unwrap();
         let destination = task
@@ -307,7 +348,7 @@ mod tests {
             .unwrap()
             .join("JumpLists-AutomaticDestinations.csv");
         fs::write(&destination, b"previous\n").unwrap();
-        assert!(distribute(&task).is_err());
+        assert!(distribute(&task, temp.path()).is_err());
         assert_eq!(fs::read(destination).unwrap(), b"previous\n");
         assert!(task.output.join("AutomaticDestinations.csv").is_file());
         assert!(task.output.join("Unexpected.csv").is_file());
@@ -334,7 +375,7 @@ mod tests {
         assert!(!legacy.exists());
         assert_eq!(fs::read(notes).unwrap(), b"keep\n");
         fs::write(task.output.join("Amcache_files.csv"), b"same\n").unwrap();
-        let files = distribute(&task).unwrap();
+        let files = distribute(&task, temp.path()).unwrap();
         let manifest = json!({"Hosts":[{"Computer":"HOST1","OutputDirectory":"HOST1"}], "Tasks":[
             {"Computer":"HOST1","Artifact":"amcache","Purpose":"artifact","Output":category,"OutputFiles":files}
         ]});

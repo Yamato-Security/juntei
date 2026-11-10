@@ -521,7 +521,6 @@ impl Stats {
 
     fn print(&self, opts: &RegistrySecuritySettingsOptions, no_color: bool) {
         p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-        p(None, "", true);
         let hives: Vec<String> = self
             .hives
             .iter()
@@ -659,6 +658,5 @@ impl Stats {
                 true,
             );
         }
-        p(None, "", true);
     }
 }

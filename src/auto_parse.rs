@@ -20,10 +20,10 @@ use crate::color::JunteiColor;
 use crate::progress;
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use chrono::Utc;
-use serde::Serialize;
 use serde::de::IgnoredAny;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ffi::OsString;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
@@ -33,15 +33,19 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
+mod disk_images;
 mod flat_outputs;
 mod srum_outputs;
 mod timeline;
+mod timestamps;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
 
 const CATEGORIES: &[&str] = &[
     "Accounts",
     "Applications",
+    "BrowserActivity",
+    "Communication",
     "ExternalDevices",
     "FileAndFolderOpening",
     "FileExistence",
@@ -61,6 +65,8 @@ fn artifact_category(artifact: &str) -> &'static str {
         "lsa-secrets" | "sam" => "Accounts",
         "app-history" => "Applications",
         "installed-programs" => "Applications",
+        "browser" | "webcache" => "BrowserActivity",
+        "outlook" => "Communication",
         "usb" => "ExternalDevices",
         "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
             "FileAndFolderOpening"
@@ -68,7 +74,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "amcache" | "shimcache" => "FileExistence",
         "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
         "networks" => "NetworkActivity",
-        "remote-access" => "LateralMovement",
+        "remote-access" | "ual" => "LateralMovement",
         "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "Persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
         | "userassist" => "ProcessExecution",
@@ -86,6 +92,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "amcache" => "Registry-Amcache",
         "bcd" => "Registry-BCD",
         "boot" => "Boot",
+        "browser" => "Browser",
         "appcompat" => "Registry-AppCompat",
         "auditpol" => "Registry-AuditPolicy",
         "app-history" => "Registry-AppHistory",
@@ -101,6 +108,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "mft" => "MFT",
         "networks" => "Registry-Networks",
         "office" => "Registry-Office",
+        "outlook" => "Outlook",
         "mru" => "Registry-MRU",
         "muicache" => "Registry-MuiCache",
         "opensavemru" => "Registry-OpenSaveMRU",
@@ -109,7 +117,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "Registry-RecentDocs",
-        "registry" => "Registry-Read",
+        "registry" => "Registry-Dump",
         "remote-access" => "Registry-RemoteAccess",
         "sam" => "Registry-SAM",
         "secure-sds" => "SecureSDS",
@@ -121,9 +129,157 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "system-info" => "Registry-SystemInfo",
         "taskcache" => "Registry-TaskCache",
         "usb" => "Registry-USB",
+        "ual" => "UAL",
         "usn-journal" => "UsnJournal",
         "userassist" => "Registry-UserAssist",
+        "webcache" => "WebCache",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
+    }
+}
+
+// Auto-parse writes no absolute path: what it shows and records says where a file is in the
+// evidence or the results, not where they are on the analyst's system. The parsers run in the
+// evidence directory and are given paths relative to it (`./HOST/C`); the manifests and logs give
+// the results' paths relative to the output directory (`./HOST/FileSystem/MFT.csv`).
+
+/// `path` relative to `base`, both resolved through the file system as the containment checks
+/// resolve them (a symbolic link's `..` is beside its target): `HOST/C`, `.` for `base` itself,
+/// `../other` outside it, and only the name when they share no root (two Windows drives).
+fn relative_path(base: &Path, path: &Path) -> PathBuf {
+    let resolve = |p: &Path| {
+        absolute_candidate(p).unwrap_or_else(|_| {
+            normalize_absolute(&std::path::absolute(p).unwrap_or_else(|_| p.to_path_buf()))
+        })
+    };
+    let base = resolve(base);
+    let path = resolve(path);
+    let base_parts: Vec<_> = base.components().collect();
+    let path_parts: Vec<_> = path.components().collect();
+    let common = base_parts
+        .iter()
+        .zip(&path_parts)
+        .take_while(|(a, b)| a == b)
+        .count();
+    if common == 0 {
+        return path.file_name().map_or_else(|| ".".into(), PathBuf::from);
+    }
+    let mut relative = PathBuf::new();
+    for _ in common..base_parts.len() {
+        relative.push("..");
+    }
+    for part in &path_parts[common..] {
+        relative.push(part.as_os_str());
+    }
+    if relative.as_os_str().is_empty() {
+        relative.push(".");
+    }
+    relative
+}
+
+/// `path` relative to `base` from `.` when inside it (`./HOST/C`, `.` for `base` itself), as the
+/// host list, the parsers' inputs and the manifests write it.
+fn dot_relative(base: &Path, path: &Path) -> PathBuf {
+    let relative = relative_path(base, path);
+    match relative.components().next() {
+        Some(Component::Normal(_)) => Path::new(".").join(relative),
+        _ => relative,
+    }
+}
+
+/// The `ManifestVersion` of manifests whose result paths are relative to the output directory.
+/// Earlier manifests have no version and record the paths as given to `-o`.
+const MANIFEST_VERSION: u64 = 2;
+
+/// Whether an earlier run's manifest records its result paths from the output directory.
+fn paths_from_output(manifest: &Value) -> bool {
+    manifest
+        .get("ManifestVersion")
+        .and_then(Value::as_u64)
+        .is_some_and(|version| version >= MANIFEST_VERSION)
+}
+
+/// A result path from an earlier run's manifest in the output directory `root`: from `root` in a
+/// manifest that records them so (`./HOST1/...`, see [`paths_from_output`]), else as given to
+/// `-o` (`./results/HOST1/...`).
+fn recorded_path(root: &Path, recorded: &str, from_output: bool) -> PathBuf {
+    let path = Path::new(recorded);
+    if from_output && path.is_relative() {
+        root.join(path)
+    } else {
+        path.to_path_buf()
+    }
+}
+
+/// `path` for the terminal: as given when relative, else relative to the current directory.
+fn shown(path: &Path) -> String {
+    if path.is_relative() {
+        return path.display().to_string();
+    }
+    let relative = std::env::current_dir().map_or_else(
+        |_| path.file_name().map_or_else(|| ".".into(), PathBuf::from),
+        |current| relative_path(&current, path),
+    );
+    relative.display().to_string()
+}
+
+/// What the parser tasks' commands, logs and errors show for the absolute directories they use:
+/// the evidence directory (where they run) and the output directory (their outputs' paths), each
+/// as `.`.
+struct TaskPaths {
+    /// The evidence directory as given, made absolute: where the parsers run. A canonical Windows
+    /// path is a verbatim one (`\\?\C:\...`), which not every API accepts.
+    directory: PathBuf,
+    /// The output directory that generated paths in parser logs are relative to.
+    output_directory: PathBuf,
+    /// Each directory's absolute spellings, longest first, so that none replaces part of another.
+    roots: Vec<String>,
+}
+
+impl TaskPaths {
+    fn new(directory: PathBuf, evidence: &[&Path], output: &Path) -> Self {
+        let mut roots: Vec<String> = evidence
+            .iter()
+            .copied()
+            .chain([output])
+            .map(|p| {
+                p.to_string_lossy()
+                    .trim_end_matches(['/', '\\'])
+                    .to_string()
+            })
+            .filter(|p| !p.is_empty())
+            .collect();
+        roots.sort_by_key(|root| std::cmp::Reverse(root.len()));
+        roots.dedup();
+        Self {
+            directory,
+            output_directory: output.to_path_buf(),
+            roots,
+        }
+    }
+
+    /// `text` with each directory, where it ends a word or a path continues from it, as `.`.
+    fn text(&self, text: &str) -> String {
+        let mut text = text.to_string();
+        for root in &self.roots {
+            if !text.contains(root.as_str()) {
+                continue;
+            }
+            let mut replaced = String::with_capacity(text.len());
+            let mut rest = text.as_str();
+            while let Some(at) = rest.find(root.as_str()) {
+                let after = &rest[at + root.len()..];
+                let ends = after
+                    .chars()
+                    .next()
+                    .is_none_or(|c| !(c.is_alphanumeric() || "-_.~$%{}()[]".contains(c)));
+                replaced.push_str(&rest[..at]);
+                replaced.push_str(if ends { "." } else { root });
+                rest = after;
+            }
+            replaced.push_str(rest);
+            text = replaced;
+        }
+        text
     }
 }
 
@@ -182,7 +338,7 @@ impl TaskStatus {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 struct TaskResult {
     #[serde(rename = "Comp")]
     computer: String,
@@ -210,6 +366,26 @@ struct TaskResult {
     log: String,
     #[serde(rename = "Error")]
     error: Option<String>,
+    /// Structured diagnostics emitted by a child while reading a staged placeholder.
+    #[serde(skip)]
+    image_errors: Vec<ImageProblem>,
+}
+
+impl TaskResult {
+    /// The result as the manifests record it: its paths from the output directory `output`.
+    fn recorded(&self, output: &Path) -> Self {
+        let path = |p: &str| {
+            dot_relative(output, Path::new(p))
+                .to_string_lossy()
+                .into_owned()
+        };
+        Self {
+            output: self.output.as_deref().map(path),
+            output_files: self.output_files.iter().map(|p| path(p)).collect(),
+            log: path(&self.log),
+            ..self.clone()
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -228,6 +404,9 @@ struct ManifestHost {
     windows_directories: Vec<String>,
     #[serde(rename = "OutputDirectory")]
     output_directory: String,
+    /// With `--vhdx`: the disk image the system's files are in, from the evidence directory.
+    #[serde(rename = "Image", skip_serializing_if = "Option::is_none")]
+    image: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -236,12 +415,16 @@ struct Manifest<'a> {
     generated_utc: String,
     #[serde(rename = "JunteiVersion")]
     juntei_version: &'static str,
+    #[serde(rename = "ManifestVersion")]
+    manifest_version: u64,
     #[serde(rename = "EvidenceDirectory")]
     evidence_directory: String,
     #[serde(rename = "OutputDirectory")]
     output_directory: String,
     #[serde(rename = "OutputType")]
     output_type: &'static str,
+    #[serde(rename = "OutputTimeZone")]
+    output_time_zone: String,
     #[serde(rename = "JSON-Timeline")]
     json_timeline: Option<String>,
     #[serde(rename = "JSON-TimelineError")]
@@ -256,6 +439,11 @@ struct Manifest<'a> {
     hosts: Vec<ManifestHost>,
     #[serde(rename = "Tasks")]
     tasks: &'a [TaskResult],
+    #[serde(
+        rename = "ImageErrors",
+        skip_serializing_if = "<[ImageProblem]>::is_empty"
+    )]
+    image_errors: &'a [ImageProblem],
 }
 
 struct DataFile {
@@ -264,15 +452,62 @@ struct DataFile {
     artifact: &'static str,
 }
 
+/// The disk images prepared for a run: the name of the directory they were found in, and
+/// each staging folder (in the directory the parsers read) with its image, from that directory
+/// (`./host1-triage.vhdx`).
+pub(crate) struct Images {
+    directory_name: String,
+    mounts: Vec<(PathBuf, String)>,
+    problems: Vec<ImageProblem>,
+    metadata: crate::image_metadata::Snapshot,
+    /// Files that were not copied: canonical placeholder path → size in the image.
+    placeholders: HashMap<PathBuf, u64>,
+    /// Where each staged volume came from, for reading placeholders on demand.
+    sources: crate::image_files::Sources,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub(crate) struct ImageProblem {
+    #[serde(rename = "Image")]
+    pub(crate) image: String,
+    #[serde(rename = "Path")]
+    pub(crate) path: String,
+    #[serde(rename = "Error")]
+    pub(crate) error: String,
+}
+
+impl Images {
+    /// The image a host's files are in.
+    fn of(&self, root: &Path) -> Option<&str> {
+        self.mounts
+            .iter()
+            .find(|(folder, _)| root.starts_with(folder))
+            .map(|(_, image)| image.as_str())
+    }
+}
+
 /// Run the command; returns the exit status.
 pub fn run(opts: &AutoParseOptions) -> i32 {
+    if opts.vhdx || opts.e01 {
+        return disk_images::run(opts);
+    }
+    if opts.temp_dir.is_some() {
+        error_msg(opts.common.no_color, "--temp-dir requires --vhdx or --e01");
+        return 1;
+    }
+    run_evidence(opts, None)
+}
+
+/// Parse the systems found in `opts.directory`; `images`, the disk images its folders are
+/// mounted from.
+fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
     let no_color = opts.common.no_color;
     if !opts.directory.is_dir() {
         error_msg(
             no_color,
             &format!(
                 "The evidence directory does not exist: {}",
-                opts.directory.display()
+                shown(&opts.directory)
             ),
         );
         return 1;
@@ -284,7 +519,20 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                 no_color,
                 &format!(
                     "Could not resolve the evidence directory {}: {e}",
-                    opts.directory.display()
+                    shown(&opts.directory)
+                ),
+            );
+            return 1;
+        }
+    };
+    let parser_directory = match std::path::absolute(&opts.directory) {
+        Ok(path) => path,
+        Err(e) => {
+            error_msg(
+                no_color,
+                &format!(
+                    "Could not resolve the evidence directory {}: {e}",
+                    shown(&opts.directory)
                 ),
             );
             return 1;
@@ -307,7 +555,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                 &format!(
                     "No Windows directories were found within depth {} of {}.",
                     opts.max_depth,
-                    evidence.display()
+                    shown(&opts.directory)
                 ),
             );
             return 1;
@@ -315,7 +563,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         Err(e) => {
             error_msg(
                 no_color,
-                &format!("Could not search {}: {e}", evidence.display()),
+                &format!("Could not search {}: {e}", shown(&opts.directory)),
             );
             return 1;
         }
@@ -343,11 +591,33 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     if let Err(e) = fs::create_dir_all(&opts.output) {
         error_msg(
             no_color,
-            &format!("Could not create {}: {e}", opts.output.display()),
+            &format!("Could not create {}: {e}", shown(&opts.output)),
         );
         return 1;
     }
     let work = opts.output.clone();
+    // Not normalized: `link/..` is where the link points, as the containment check and the
+    // parsers resolve it (see `build_tasks`).
+    let output_root = match std::path::absolute(&opts.output) {
+        Ok(path) => path,
+        Err(e) => {
+            error_msg(
+                no_color,
+                &format!("Could not resolve {}: {e}", shown(&opts.output)),
+            );
+            return 1;
+        }
+    };
+    let mut source_roots = vec![evidence.as_path(), parser_directory.as_path()];
+    if let Some(parent) = opts.image_source_metadata.as_deref().and_then(Path::parent) {
+        source_roots.push(parent);
+    }
+    let task_paths = TaskPaths::new(parser_directory.clone(), &source_roots, &output_root);
+    let inventories: Vec<InputInventory> = hosts
+        .iter()
+        .map(|host| InputInventory::scan(&host.root, images.map(|images| &images.placeholders)))
+        .collect();
+    let evidence_bytes: u64 = inventories.iter().map(|inputs| inputs.total).sum();
 
     let executable = match std::env::current_exe() {
         Ok(path) => path,
@@ -359,7 +629,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             return 1;
         }
     };
-    let mut tasks = match build_tasks(&hosts, opts, &work) {
+    let mut tasks = match build_tasks(&hosts, &inventories, opts, &evidence, &work) {
         Ok(tasks) => tasks,
         Err(e) => {
             error_msg(
@@ -381,7 +651,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             let mut json_opts = opts.clone();
             json_opts.output_type = AutoOutputType::Jsonl;
             json_opts.extract_defender_quarantined = false;
-            let mut extra = build_tasks(&hosts, &json_opts, &path)?;
+            let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
             for task in &mut extra {
                 task.timeline_only = true;
                 let name = task.log.file_stem().unwrap_or_default().to_string_lossy();
@@ -446,7 +716,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                     no_color,
                     &format!(
                         "Could not clear earlier generated file {}: {e}",
-                        path.display()
+                        shown(&path)
                     ),
                 );
                 return 1;
@@ -467,18 +737,33 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             .as_deref()
             .filter(|fqdn| *fqdn != host.computer)
             .map_or_else(String::new, |fqdn| format!(" ({fqdn})"));
+        let image = images
+            .and_then(|images| images.of(&host.root))
+            .map_or_else(String::new, |image| format!(" ({image})"));
         p(
             None,
-            &format!("  {}{}: {}", host.computer, fqdn, host.root.display()),
+            &format!(
+                "  {}{}: {}{image}",
+                host.computer,
+                fqdn,
+                dot_relative(&evidence, &host.root).display()
+            ),
             true,
         );
-        // the local times the system kept
-        if let Some(zone) = system_time_zone(&host.windows) {
-            p(None, &format!("    Time zone: {zone}"), true);
-        }
     }
+    let timezone = if opts.timezone.is_utc() {
+        "UTC".to_owned()
+    } else {
+        format!("UTC{}", opts.timezone)
+    };
+    p_label(no_color, "Timezone: ", &timezone);
     p_label(no_color, "Parser tasks: ", &fmt_num(tasks.len()));
     p_label(no_color, "Parallel processes: ", &fmt_num(threads));
+    p_label(
+        no_color,
+        "Total filesize: ",
+        &util::size_display(evidence_bytes),
+    );
     p(None, "", true);
     p(
         JunteiColor::Orange.rdg(no_color),
@@ -488,14 +773,36 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     p(None, "", true);
 
     let bar = progress::progress_bar(tasks.len(), no_color);
-    let mut results = run_tasks(&tasks, &executable, threads, &bar);
+    let mut results = run_tasks(
+        &tasks,
+        &executable,
+        &task_paths,
+        threads,
+        &bar,
+        opts.timezone,
+    );
+    if crate::interrupt::requested() {
+        bar.abandon_with_message("Cancelled");
+        if let Some(path) = &timeline_work
+            && temporary_work_directory(&opts.output, path)
+            && let Err(error) = fs::remove_dir_all(path)
+        {
+            error_msg(
+                no_color,
+                &format!("Could not remove cancelled timeline workspace: {error}"),
+            );
+        }
+        return 130;
+    }
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
-        if matches!(task.artifact, "amcache" | "jump-lists")
-            && task.output_type == AutoOutputType::Csv
+        if matches!(
+            task.artifact,
+            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
+        ) && task.output_type == AutoOutputType::Csv
             && result.status == TaskStatus::Succeeded
         {
-            match flat_outputs::distribute(task) {
+            match flat_outputs::distribute(task, &output_root) {
                 Ok(files) => {
                     result.output_files = files
                         .iter()
@@ -520,7 +827,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     for (task, result) in tasks.iter().zip(&mut results) {
         if task.artifact == "srum" && !task.timeline_only && result.status == TaskStatus::Succeeded
         {
-            match srum_outputs::distribute(task) {
+            match srum_outputs::distribute(task, &output_root) {
                 Ok(files) => {
                     result.output_files = files
                         .iter()
@@ -568,7 +875,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                     result.output = None;
                     result.error = Some(format!(
                         "could not add Comp and Artifact to {}: {e}",
-                        path.display()
+                        shown(&path)
                     ));
                     break;
                 }
@@ -589,16 +896,19 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     if let Some(path) = &json_timeline {
         match timeline::write(&data_files, path, opts.clobber) {
             Ok(()) => {
-                combined = Some(path.clone());
+                // Shown and recorded as given: the checked path is canonical, unlike the output
+                // directory's that the manifests give paths from.
+                let given = opts.json_timeline.clone().unwrap_or_else(|| path.clone());
                 // Keep the primary result paths: the timeline is an additional output.
                 for (task, result) in tasks.iter().zip(&mut results) {
                     if task.timeline_only && result.status == TaskStatus::Succeeded {
-                        result.output = Some(path.to_string_lossy().to_string());
+                        result.output = Some(given.to_string_lossy().to_string());
                     }
                 }
+                combined = Some(given);
             }
             Err(e) => {
-                let msg = format!("Could not create JSONL timeline {}: {e}", path.display());
+                let msg = format!("Could not create JSONL timeline {}: {e}", shown(path));
                 error_msg(no_color, &msg);
                 json_timeline_error = Some(msg);
             }
@@ -612,7 +922,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             {
                 let msg = format!(
                     "Could not remove temporary JSONL outputs {}: {e}",
-                    path.display()
+                    shown(path)
                 );
                 error_msg(no_color, &msg);
                 json_timeline_error = Some(msg);
@@ -622,7 +932,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                 JunteiColor::Orange.rdg(no_color),
                 &format!(
                     "Temporary JSONL outputs were kept in {} because a parser or timeline export failed.",
-                    path.display()
+                    shown(path)
                 ),
                 true,
             );
@@ -630,27 +940,51 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     }
     let timeline_failed = json_timeline_error.is_some();
 
+    // The manifests name the two directories, and give the other paths from them.
+    let name = |path: &Path| {
+        path.file_name()
+            .map_or_else(|| ".".into(), |name| name.to_string_lossy().into_owned())
+    };
+    let recorded: Vec<TaskResult> = results
+        .iter()
+        .map(|result| result.recorded(&output_root))
+        .collect();
+    let mut image_errors = images.map_or_else(Vec::new, |i| i.problems.clone());
+    let staged_errors = image_errors.len();
+    for problem in results.iter().flat_map(|result| &result.image_errors) {
+        if !image_errors.contains(problem) {
+            image_errors.push(problem.clone());
+        }
+    }
     let manifest = Manifest {
-        generated_utc: Utc::now().to_rfc3339(),
+        generated_utc: Utc::now().to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         juntei_version: env!("CARGO_PKG_VERSION"),
-        evidence_directory: evidence.to_string_lossy().to_string(),
-        output_directory: opts.output.to_string_lossy().to_string(),
+        manifest_version: MANIFEST_VERSION,
+        evidence_directory: images.map_or_else(|| name(&evidence), |i| i.directory_name.clone()),
+        output_directory: name(&output_root),
         output_type: opts.output_type.as_str(),
-        json_timeline: json_timeline
+        output_time_zone: opts.timezone.to_string(),
+        json_timeline: opts
+            .json_timeline
             .as_ref()
-            .map(|p| p.to_string_lossy().to_string()),
+            .filter(|_| json_timeline.is_some())
+            .map(|p| dot_relative(&output_root, p).to_string_lossy().into_owned()),
         json_timeline_error,
         extract_defender_quarantined: opts.extract_defender_quarantined,
         threads,
         max_depth: opts.max_depth,
-        hosts: hosts.iter().map(manifest_host).collect(),
-        tasks: &results,
+        hosts: hosts
+            .iter()
+            .map(|host| manifest_host(host, &evidence, images))
+            .collect(),
+        tasks: &recorded,
+        image_errors: &image_errors,
     };
     let manifest_path = opts.output.join("manifest.json");
     if let Err(e) = write_pretty_json(&manifest_path, &manifest) {
         error_msg(
             no_color,
-            &format!("Could not write {}: {e}", manifest_path.display()),
+            &format!("Could not write {}: {e}", shown(&manifest_path)),
         );
         return 1;
     }
@@ -658,7 +992,7 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
     if let Err(e) = write_manifest_csv(&manifest_csv_path, &manifest) {
         error_msg(
             no_color,
-            &format!("Could not write {}: {e}", manifest_csv_path.display()),
+            &format!("Could not write {}: {e}", shown(&manifest_csv_path)),
         );
         return 1;
     }
@@ -684,7 +1018,6 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         .count();
     p(None, "", true);
     p(JunteiColor::Green.rdg(no_color), "Results Summary:", true);
-    p(None, "", true);
     p_label(no_color, "Succeeded: ", &fmt_num(succeeded));
     p_label(no_color, "Not collected / skipped: ", &fmt_num(skipped));
     p_label(no_color, "Failed: ", &fmt_num(failed));
@@ -692,14 +1025,14 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         no_color,
         "Results saved: ",
         &format!(
-            "{}/ ( {} files / {:.2} MB )",
-            opts.output.to_string_lossy().trim_end_matches(['/', '\\']),
+            "{}/ ( {} files / {} )",
+            shown(&opts.output).trim_end_matches(['/', '\\']),
             fmt_num(file_count),
-            total_bytes as f64 / 1_000_000.0,
+            util::size_display(total_bytes),
         ),
     );
     if let Some(path) = combined {
-        p_label(no_color, "JSONL timeline: ", &path.to_string_lossy());
+        p_label(no_color, "JSONL timeline: ", &shown(&path));
     } else if timeline_failed {
         p_label(no_color, "JSONL timeline: ", "Failed (see manifest.json)");
     }
@@ -712,15 +1045,23 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
                     result.computer,
                     result.artifact,
                     result.error.as_deref().unwrap_or("parser failed"),
-                    result.log
+                    shown(Path::new(&result.log))
                 ),
                 true,
             );
         }
     }
-    p(None, "", true);
 
-    i32::from(failed > 0 || succeeded == 0 || timeline_failed)
+    if image_errors.len() > staged_errors {
+        error_msg(
+            no_color,
+            &format!(
+                "Incomplete disk image input: {} read problem(s) discovered during parsing. Readable results were retained; see ImageErrors in manifest.json or the disk-image rows in manifest.csv.",
+                image_errors.len() - staged_errors,
+            ),
+        );
+    }
+    i32::from(failed > 0 || succeeded == 0 || timeline_failed || !image_errors.is_empty())
 }
 
 fn discovered_roots(input: &Path, max_depth: usize) -> io::Result<BTreeMap<PathBuf, Vec<PathBuf>>> {
@@ -908,16 +1249,6 @@ fn system_computer_name(windows: &[PathBuf]) -> Option<String> {
     read_system_hive(windows, registry::system::computer_name)
 }
 
-/// The time zone of a collected system's `SYSTEM` hive, in words: the local times it kept.
-fn system_time_zone(windows: &[PathBuf]) -> Option<String> {
-    read_system_hive(windows, |hive| {
-        registry::system_info::system(hive)
-            .time_zone
-            .as_ref()
-            .map(crate::registry::system_info::describe_time_zone)
-    })
-}
-
 /// What `read` finds in the first `System32\config\SYSTEM` of `windows` that gives something.
 fn read_system_hive<T>(
     windows: &[PathBuf],
@@ -1042,12 +1373,27 @@ fn assign_output_folders(hosts: &mut [Host]) {
     }
 }
 
-fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Result<Vec<Task>> {
+/// The parser tasks for `hosts`. The parsers run in `evidence` (see [`dot_relative`]), so
+/// their output paths are absolute.
+fn build_tasks(
+    hosts: &[Host],
+    inventories: &[InputInventory],
+    opts: &AutoParseOptions,
+    evidence: &Path,
+    work: &Path,
+) -> io::Result<Vec<Task>> {
+    // The output directory as given, made absolute but not normalized: the file system resolves
+    // `link/..` to where the link points, as the containment check does, while removing it from
+    // the text would name another directory, which can be inside the evidence. `TaskPaths`
+    // spells it the same way, so that the parsers' messages show it as `.`.
+    let parser_work = std::path::absolute(work)?;
+    let parser_output = std::path::absolute(&opts.output)?;
     let mut tasks = Vec::new();
-    for host in hosts {
-        let inputs = InputInventory::scan(&host.root);
+    for (host, inputs) in hosts.iter().zip(inventories) {
         let data_dir = work.join(&host.folder);
+        let parser_data_dir = parser_work.join(&host.folder);
         let host_output_dir = opts.output.join(&host.folder);
+        let root = dot_relative(evidence, &host.root);
         for directory in [&data_dir, &host_output_dir] {
             if fs::symlink_metadata(directory).is_ok_and(|m| m.file_type().is_symlink()) {
                 return Err(io::Error::other(
@@ -1069,17 +1415,34 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
                 let output = task_output(&data_dir, artifact, opts.output_type, shape);
                 let mut args: Vec<OsString> = command.iter().map(OsString::from).collect();
                 args.push("-d".into());
-                args.push(host.root.as_os_str().to_owned());
+                args.push(root.clone().into_os_string());
                 args.push("-o".into());
-                args.push(output.as_os_str().to_owned());
+                args.push(
+                    task_output(&parser_data_dir, artifact, opts.output_type, shape)
+                        .into_os_string(),
+                );
                 args.push("-t".into());
                 args.push(opts.output_type.as_str().into());
                 args.extend(extra.iter().map(OsString::from));
                 if artifact == "defender-quarantine" && opts.extract_defender_quarantined {
+                    let extract = defender_extraction_directory(&parser_output, &host.folder);
                     args.push("--extract".into());
-                    args.push(
-                        defender_extraction_directory(&opts.output, &host.folder).into_os_string(),
-                    );
+                    args.push(extract.clone().into_os_string());
+                    // `ExtractedFile` from the output directory, as the manifests write paths
+                    args.push("--extract-shown-as".into());
+                    args.push(dot_relative(&parser_output, &extract).into_os_string());
+                }
+                if matches!(artifact, "lnk" | "jump-lists")
+                    && let Some(path) = &opts.image_source_metadata
+                {
+                    args.push("--image-source-metadata".into());
+                    args.push(path.clone().into_os_string());
+                }
+                if artifact == "persistence-hunter"
+                    && let Some(path) = &opts.image_files
+                {
+                    args.push("--image-files".into());
+                    args.push(path.clone().into_os_string());
                 }
                 args.push("-C".into());
                 args.push("-K".into());
@@ -1135,6 +1498,19 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
             OutputShape::Directory,
             srum_extra,
         );
+        add("ual", &["parse-ese", "ual"], OutputShape::CsvDirectory, &[]);
+        add(
+            "webcache",
+            &["parse-ese", "webcache"],
+            OutputShape::CsvDirectory,
+            &[],
+        );
+        add(
+            "browser",
+            &["parse-sqlite", "browser"],
+            OutputShape::CsvDirectory,
+            &[],
+        );
         let code_page = opts.code_page.to_string();
         add(
             "lnk",
@@ -1145,6 +1521,12 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         add(
             "jump-lists",
             &["parse-file", "jump-lists"],
+            OutputShape::CsvDirectory,
+            &["--code-page", &code_page],
+        );
+        add(
+            "outlook",
+            &["parse-file", "outlook"],
             OutputShape::CsvDirectory,
             &["--code-page", &code_page],
         );
@@ -1174,7 +1556,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "recentdocs",
-            &["parse-registry", "recentdocs"],
+            &["parse-registry", "recent-docs"],
             OutputShape::File,
             &[],
         );
@@ -1219,7 +1601,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "userassist",
-            &["parse-registry", "userassist"],
+            &["parse-registry", "user-assist"],
             OutputShape::File,
             &[],
         );
@@ -1231,9 +1613,9 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "shellbags",
-            &["parse-registry", "shellbags"],
+            &["parse-registry", "shell-bags"],
             OutputShape::File,
-            &[],
+            &["--code-page", &code_page],
         );
         add(
             "usb",
@@ -1255,7 +1637,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "opensavemru",
-            &["parse-registry", "opensavemru"],
+            &["parse-registry", "open-save-mru"],
             OutputShape::File,
             &["--code-page", &code_page],
         );
@@ -1274,7 +1656,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "featureusage",
-            &["parse-registry", "featureusage"],
+            &["parse-registry", "feature-usage"],
             OutputShape::File,
             &[],
         );
@@ -1292,7 +1674,7 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         add(
             "appcompat",
-            &["parse-registry", "appcompat"],
+            &["parse-registry", "app-compat"],
             OutputShape::File,
             &[],
         );
@@ -1305,42 +1687,50 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
         );
         drop(add);
 
-        let mft_extra: &[&str] = if opts.output_type == AutoOutputType::Csv {
-            &["--all-times", "--short-names"]
-        } else {
-            &[]
-        };
+        let mut mft_extra: Vec<&str> = Vec::new();
+        if opts.output_type == AutoOutputType::Csv {
+            mft_extra.extend(["--all-times", "--short-names"]);
+        }
+        if opts.mft_slack {
+            mft_extra.push("--recover-slack");
+        }
         add_file_artifact_tasks(
             &mut tasks,
             host,
             opts,
+            evidence,
             &data_dir,
+            &parser_data_dir,
             &host_output_dir,
             "mft",
             &["parse-ntfs", "mft"],
-            inputs.mfts,
-            mft_extra,
+            inputs.mfts.clone(),
+            &mft_extra,
         );
         add_file_artifact_tasks(
             &mut tasks,
             host,
             opts,
+            evidence,
             &data_dir,
+            &parser_data_dir,
             &host_output_dir,
             "usn-journal",
             &["parse-ntfs", "usn-journal"],
-            inputs.journals,
+            inputs.journals.clone(),
             &[],
         );
         add_file_artifact_tasks(
             &mut tasks,
             host,
             opts,
+            evidence,
             &data_dir,
+            &parser_data_dir,
             &host_output_dir,
             "logfile",
             &["parse-ntfs", "logfile"],
-            inputs.logfiles,
+            inputs.logfiles.clone(),
             &[],
         );
     }
@@ -1348,10 +1738,33 @@ fn build_tasks(hosts: &[Host], opts: &AutoParseOptions, work: &Path) -> io::Resu
     Ok(tasks)
 }
 
+type NamePredicate = fn(&str) -> bool;
+
+/// The artifacts whose parsers choose input files by name. Disk-image staging copies the files
+/// named so, and the inventory estimates each parser's work from their sizes. Keep both in one
+/// place: a file a parser selects but staging leaves out would be read as an empty file.
+pub(super) const NAMED_INPUTS: &[(&str, NamePredicate)] = &[
+    ("amcache", crate::amcache::is_amcache_name),
+    ("prefetch", crate::prefetch::is_prefetch_name),
+    ("prefetch-timeline", crate::prefetch::is_prefetch_name),
+    ("srum", crate::srum::is_database_name),
+    ("ual", crate::ual::is_database_name),
+    ("browser", crate::browser::is_database_name),
+    ("webcache", crate::webcache::is_database_name),
+    ("outlook", crate::outlook::is_outlook_name),
+    ("lnk", crate::lnk::is_lnk_name),
+    ("jump-lists", crate::jump_lists::is_jump_list_name),
+    ("shimcache", crate::shimcache::is_system_name),
+    ("boot", crate::boot::is_boot_name),
+    ("secure-sds", crate::secure_sds::is_sds_name),
+];
+
 /// Inventory each host once. Sizes describe primary inputs, excluding transaction logs and
 /// enrichment hives, and are only estimates of the work a parser will perform.
 #[derive(Default)]
 struct InputInventory {
+    /// The size of every file of the host.
+    total: u64,
     sizes: BTreeMap<&'static str, u64>,
     mfts: Vec<PathBuf>,
     journals: Vec<PathBuf>,
@@ -1359,32 +1772,33 @@ struct InputInventory {
 }
 
 impl InputInventory {
-    fn scan(root: &Path) -> Self {
+    /// `placeholders`: the sizes in their images of disk-image files that were not copied
+    /// (canonical paths of empty placeholder files).
+    fn scan(root: &Path, placeholders: Option<&HashMap<PathBuf, u64>>) -> Self {
         let mut found = Self::default();
         for path in util::find_files(root, |_| true) {
             let name = path.file_name().unwrap_or_default().to_string_lossy();
-            let size = path.metadata().map_or(0, |meta| meta.len());
+            let mut size = path.metadata().map_or(0, |meta| meta.len());
+            if size == 0
+                && let Some(placeholders) = placeholders.filter(|p| !p.is_empty())
+                && let Some(original) = path
+                    .canonicalize()
+                    .ok()
+                    .and_then(|canonical| placeholders.get(&canonical))
+            {
+                size = *original;
+            }
             // Cross-source hunting inspects the host's hives and filesystem
             // evidence, with optional MFT and event-log correlation.
+            found.total += size;
             found.add_size("persistence-hunter", size);
-            for (artifact, matches) in [
-                ("amcache", crate::amcache::is_amcache_name(&name)),
-                ("prefetch", crate::prefetch::is_prefetch_name(&name)),
-                (
-                    "prefetch-timeline",
-                    crate::prefetch::is_prefetch_name(&name),
-                ),
-                ("srum", crate::srum::is_database_name(&name)),
-                ("lnk", crate::lnk::is_lnk_name(&name)),
-                ("jump-lists", crate::jump_lists::is_jump_list_name(&name)),
-                ("shimcache", crate::shimcache::is_system_name(&name)),
-                ("i30", crate::i30::is_i30_file(&path)),
-                ("boot", crate::boot::is_boot_name(&name)),
-                ("secure-sds", crate::secure_sds::is_sds_name(&name)),
-            ] {
-                if matches {
+            for (artifact, matches) in NAMED_INPUTS {
+                if matches(&name) {
                     found.add_size(artifact, size);
                 }
+            }
+            if crate::i30::is_i30_file(&path) {
+                found.add_size("i30", size);
             }
             if crate::registry::is_hive_file(&path) {
                 found.add_size("registry", size);
@@ -1491,7 +1905,9 @@ fn add_file_artifact_tasks(
     tasks: &mut Vec<Task>,
     host: &Host,
     opts: &AutoParseOptions,
+    evidence: &Path,
     data_dir: &Path,
+    parser_data_dir: &Path,
     host_output_dir: &Path,
     artifact: &'static str,
     command: &[&str],
@@ -1515,14 +1931,18 @@ fn add_file_artifact_tasks(
             format!("{}-{}", artifact_filename(artifact), index + 1)
         };
         let category = artifact_category(artifact);
-        let output = data_dir
-            .join(category)
-            .join(format!("{stem}.{}", opts.output_type.as_str()));
+        let file_name = format!("{stem}.{}", opts.output_type.as_str());
+        let output = data_dir.join(category).join(&file_name);
         let mut args: Vec<OsString> = command.iter().map(OsString::from).collect();
         args.push(input_flag);
-        args.push(input.into_os_string());
+        args.push(dot_relative(evidence, &input).into_os_string());
         args.push("-o".into());
-        args.push(output.as_os_str().to_owned());
+        args.push(
+            parser_data_dir
+                .join(category)
+                .join(file_name)
+                .into_os_string(),
+        );
         args.push("-t".into());
         args.push(opts.output_type.as_str().into());
         args.extend(extra.iter().map(OsString::from));
@@ -1634,8 +2054,10 @@ fn remove_generated_file(path: &Path) -> io::Result<()> {
 fn run_tasks(
     tasks: &[Task],
     executable: &Path,
+    paths: &TaskPaths,
     threads: usize,
     bar: &indicatif::ProgressBar,
+    offset: crate::time_display::OutputOffset,
 ) -> Vec<TaskResult> {
     let next = AtomicUsize::new(0);
     let results = Mutex::new(Vec::with_capacity(tasks.len()));
@@ -1643,12 +2065,15 @@ fn run_tasks(
         for _ in 0..threads {
             scope.spawn(|| {
                 loop {
+                    if crate::interrupt::requested() {
+                        break;
+                    }
                     let index = next.fetch_add(1, Ordering::Relaxed);
                     let Some(task) = tasks.get(index) else {
                         break;
                     };
                     bar.set_message(task_progress_message(task));
-                    let result = run_task(task, executable);
+                    let result = run_task(task, executable, paths, offset);
                     results.lock().unwrap().push((index, result));
                     bar.inc(1);
                 }
@@ -1669,18 +2094,38 @@ fn task_progress_message(task: &Task) -> String {
     )
 }
 
-fn run_task(task: &Task, executable: &Path) -> TaskResult {
+/// Run `task` in the evidence directory, whose paths its arguments are relative to. Its command,
+/// log and error show the program's name and the output paths from `.` (see [`TaskPaths`]).
+fn run_task(
+    task: &Task,
+    executable: &Path,
+    paths: &TaskPaths,
+    offset: crate::time_display::OutputOffset,
+) -> TaskResult {
     let start = Instant::now();
-    let command: Vec<String> =
-        std::iter::once(executable.as_os_str().to_string_lossy().to_string())
-            .chain(task.args.iter().map(|a| a.to_string_lossy().to_string()))
-            .collect();
-    let output = Command::new(executable).args(&task.args).output();
+    let command: Vec<String> = std::iter::once(
+        executable
+            .file_name()
+            .unwrap_or(executable.as_os_str())
+            .to_string_lossy()
+            .to_string(),
+    )
+    .chain(task.args.iter().map(|a| paths.text(&a.to_string_lossy())))
+    .collect();
+    let output = crate::interrupt::output(
+        Command::new(executable)
+            .current_dir(&paths.directory)
+            .args(&task.args),
+    );
     let mut error = None;
-    let (status, exit_code, stdout, stderr) = match output {
+    let mut image_errors = Vec::new();
+    let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
-            let mut combined = String::from_utf8_lossy(&output.stdout).to_string();
-            combined.push_str(&String::from_utf8_lossy(&output.stderr));
+            let stdout = paths.text(&String::from_utf8_lossy(&output.stdout));
+            let (stderr, problems) =
+                image_diagnostics(&String::from_utf8_lossy(&output.stderr), paths);
+            image_errors = problems;
+            let combined = format!("{stdout}{stderr}");
             let skipped = !output.status.success() && no_artifact_message(&combined);
             let status = if output.status.success() {
                 TaskStatus::Succeeded
@@ -1694,25 +2139,40 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
                 );
                 TaskStatus::Failed
             };
-            (status, output.status.code(), output.stdout, output.stderr)
+            (status, output.status.code(), stdout, stderr)
         }
         Err(e) => {
             error = Some(format!("could not start parser: {e}"));
-            (TaskStatus::Failed, None, Vec::new(), Vec::new())
+            (TaskStatus::Failed, None, String::new(), String::new())
         }
     };
-    let mut log = Vec::new();
-    let _ = writeln!(log, "Command: {}", command.join(" "));
-    log.extend_from_slice(&stdout);
-    if !stdout.is_empty() && !stdout.ends_with(b"\n") {
-        log.push(b'\n');
+    let mut formatting_warnings = Vec::new();
+    if status == TaskStatus::Succeeded {
+        match timestamps::rewrite(task, offset, &paths.output_directory) {
+            Ok(warnings) => formatting_warnings = warnings,
+            Err(e) => {
+                status = TaskStatus::Failed;
+                error = Some(paths.text(&format!("could not format output timestamps: {e}")));
+            }
+        }
     }
-    log.extend_from_slice(&stderr);
+    let mut log = format!("Command: {}\n", command.join(" "));
+    log.push_str(&stdout);
+    if !stdout.is_empty() && !stdout.ends_with('\n') {
+        log.push('\n');
+    }
+    log.push_str(&stderr);
+    for warning in formatting_warnings {
+        log.push_str(&format!("\n{}\n", paths.text(&warning)));
+    }
+    if let Some(message) = &error {
+        log.push_str(&format!("\nError: {message}\n"));
+    }
     if let Some(parent) = task.log.parent() {
         let _ = fs::create_dir_all(parent);
     }
     if let Err(e) = fs::write(&task.log, log) {
-        error = Some(format!("could not write {}: {e}", task.log.display()));
+        error = Some(format!("could not write {}: {e}", shown(&task.log)));
     }
     TaskResult {
         computer: task.computer.clone(),
@@ -1737,7 +2197,36 @@ fn run_task(task: &Task, executable: &Path) -> TaskResult {
         output_files: Vec::new(),
         log: task.log.to_string_lossy().to_string(),
         error,
+        image_errors,
     }
+}
+
+/// Decode before path sanitizing: Windows backslashes inside JSON are escaped and would not
+/// match the directory spellings. Preserve ordinary and malformed diagnostic lines verbatim.
+fn image_diagnostics(stderr: &str, paths: &TaskPaths) -> (String, Vec<ImageProblem>) {
+    let mut text = String::new();
+    let mut problems = Vec::new();
+    for line in stderr.split_inclusive('\n') {
+        let problem = line
+            .trim_end_matches(['\r', '\n'])
+            .strip_prefix(crate::image_files::PROBLEM_PREFIX)
+            .and_then(|json| serde_json::from_str::<ImageProblem>(json).ok());
+        if let Some(mut problem) = problem {
+            problem.error = paths.text(&problem.error);
+            text.push_str(&format!(
+                "Image read problem at {}!/{}: {}\n",
+                problem.image.escape_debug(),
+                problem.path.escape_debug(),
+                problem.error
+            ));
+            if !problems.contains(&problem) {
+                problems.push(problem);
+            }
+        } else {
+            text.push_str(&paths.text(line));
+        }
+    }
+    (text, problems)
 }
 
 fn no_artifact_message(output: &str) -> bool {
@@ -1812,6 +2301,7 @@ fn annotate_json_file(
             return annotate_jsonl(input, &mut writer, computer, artifact);
         }
         for value in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
+            crate::interrupt::check()?;
             let mut value = value.map_err(io::Error::other)?;
             annotate_value(&mut value, computer, artifact);
             serde_json::to_writer_pretty(&mut writer, &value).map_err(io::Error::other)?;
@@ -1842,6 +2332,7 @@ fn annotate_jsonl(
 
     let mut line = Vec::new();
     loop {
+        crate::interrupt::check()?;
         line.clear();
         if input.read_until(b'\n', &mut line)? == 0 {
             break;
@@ -1959,17 +2450,21 @@ fn replace_generated_file(path: &Path, replacement: &Path) -> io::Result<()> {
     fs::remove_file(backup)
 }
 
-fn manifest_host(host: &Host) -> ManifestHost {
+/// `host` in the manifests, its directories relative to `evidence`.
+fn manifest_host(host: &Host, evidence: &Path, images: Option<&Images>) -> ManifestHost {
     ManifestHost {
+        image: images.and_then(|i| i.of(&host.root)).map(str::to_string),
         computer: host.computer.clone(),
         hostname: host.hostname.clone(),
         fqdn: host.fqdn.clone(),
         hostname_source: host.source,
-        evidence_root: host.root.to_string_lossy().to_string(),
+        evidence_root: dot_relative(evidence, &host.root)
+            .to_string_lossy()
+            .to_string(),
         windows_directories: host
             .windows
             .iter()
-            .map(|p| p.to_string_lossy().to_string())
+            .map(|p| dot_relative(evidence, p).to_string_lossy().to_string())
             .collect(),
         output_directory: host.folder.clone(),
     }
@@ -1994,6 +2489,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "Artifact",
         "Category",
         "OutputType",
+        "OutputTimeZone",
         "Purpose",
         "Status",
         "DurationMs",
@@ -2018,6 +2514,7 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             task.artifact.clone(),
             task.category.to_string(),
             task.output_type.to_string(),
+            manifest.output_time_zone.clone(),
             task.purpose.to_string(),
             task.status.as_str().to_string(),
             task.duration_ms.to_string(),
@@ -2029,6 +2526,14 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             task.error.clone().unwrap_or_default(),
             serde_json::to_string(&task.command).map_err(io::Error::other)?,
         ])?;
+    }
+    for problem in manifest.image_errors {
+        let mut row = vec![String::new(); 18];
+        row[4] = format!("{}!/{}", problem.image, problem.path);
+        row[5] = "disk-image".into();
+        row[10] = "failed".into();
+        row[16] = problem.error.clone();
+        writer.write_record(row)?;
     }
     writer.flush()
 }
@@ -2053,6 +2558,25 @@ fn output_totals(root: &Path) -> io::Result<(usize, u64)> {
         }
     }
     Ok((files, bytes))
+}
+
+/// Validate staging before creating workspaces or reading an image's contents.
+/// The ordinary pipeline requires its evidence tree to be outside the output.
+fn validate_image_staging(opts: &AutoParseOptions) -> io::Result<()> {
+    let Some(staging) = &opts.temp_dir else {
+        return Ok(());
+    };
+    let output = absolute_candidate(&opts.output)?;
+    let staging = absolute_candidate(staging)?;
+    if staging.starts_with(&output) {
+        return Err(io::Error::other(
+            "--temp-dir must be outside the output directory",
+        ));
+    }
+    if !staging.is_dir() {
+        return Err(io::Error::other("--temp-dir must be an existing directory"));
+    }
+    Ok(())
 }
 
 fn output_separate_from_evidence(evidence: &Path, output: &Path) -> Result<(), String> {
@@ -2123,6 +2647,38 @@ fn normalize_absolute(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn child_image_diagnostics_retain_provenance_and_sanitize_escaped_windows_paths() {
+        let paths = TaskPaths::new(
+            ".".into(),
+            &[Path::new(r"C:\private\staging")],
+            Path::new("output"),
+        );
+        let problem = ImageProblem {
+            image: "./evidence.E01".into(),
+            path: "Volume2/C/Example/agent.exe".into(),
+            error: r"Could not read C:\private\staging\host\C\Example\agent.exe".into(),
+        };
+        let json = serde_json::to_string(&problem).unwrap();
+        let diagnostic = format!("{}{json}\r\n", crate::image_files::PROBLEM_PREFIX);
+        let stderr = format!(
+            "ordinary warning\n{diagnostic}{diagnostic}{}invalid json\n",
+            crate::image_files::PROBLEM_PREFIX
+        );
+        let (text, errors) = image_diagnostics(&stderr, &paths);
+        assert!(text.starts_with("ordinary warning\n"));
+        assert!(text.contains("evidence.E01!/Volume2/C/Example/agent.exe"));
+        assert!(text.contains("JUNTEI_IMAGE_READ_PROBLEM: invalid json\n"));
+        assert!(!text.contains("private"));
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].image, problem.image);
+        assert_eq!(errors[0].path, problem.path);
+        assert_eq!(
+            errors[0].error,
+            r"Could not read .\host\C\Example\agent.exe"
+        );
+    }
 
     #[test]
     fn metadata_discovery_bounds_client_info_and_does_not_follow_links() {
@@ -2377,6 +2933,44 @@ mod tests {
     }
 
     #[test]
+    fn paths_are_relative_to_the_evidence_and_output_directories() {
+        let evidence = Path::new("/cases/evidence");
+        assert_eq!(dot_relative(evidence, evidence), Path::new("."));
+        assert_eq!(
+            dot_relative(evidence, &evidence.join("HOST_C").join("C")),
+            Path::new(".").join("HOST_C").join("C")
+        );
+        let output = Path::new("/cases/results");
+        assert_eq!(
+            relative_path(output, &output.join("HOST1")),
+            Path::new("HOST1")
+        );
+        // A timeline beside the output directory
+        assert_eq!(
+            dot_relative(output, Path::new("/cases/timeline.jsonl")),
+            Path::new("..").join("timeline.jsonl")
+        );
+
+        let paths = TaskPaths::new(
+            evidence.to_path_buf(),
+            &[evidence, Path::new("/private/cases/evidence")],
+            output,
+        );
+        assert_eq!(
+            paths.text("Results saved: /cases/results/HOST1/MFT.csv (1.0 KiB)"),
+            "Results saved: ./HOST1/MFT.csv (1.0 KiB)"
+        );
+        // The longest spelling first: no `/private.` is left of the canonical one.
+        assert_eq!(paths.text("/private/cases/evidence/HOST/x"), "./HOST/x");
+        assert_eq!(
+            paths.text("Could not create /cases/results: denied"),
+            "Could not create .: denied"
+        );
+        // A directory whose name only begins with the output directory's is another directory.
+        assert_eq!(paths.text("/cases/results2/x"), "/cases/results2/x");
+    }
+
+    #[test]
     fn refuses_output_that_contains_or_is_inside_evidence() {
         let dir = tempfile::tempdir().unwrap();
         fs::create_dir_all(dir.path().join("case")).unwrap();
@@ -2451,7 +3045,7 @@ mod tests {
         fs::write(dir.path().join("$MFT"), vec![0u8; 64]).unwrap();
         fs::write(dir.path().join("$J"), vec![0u8; 128]).unwrap();
         fs::write(dir.path().join("$LogFile"), vec![0u8; 256]).unwrap();
-        let inputs = InputInventory::scan(dir.path());
+        let inputs = InputInventory::scan(dir.path(), None);
         assert_eq!(inputs.sizes["prefetch"], 3072);
         assert_eq!(inputs.sizes["prefetch-timeline"], 3072);
         assert_eq!(inputs.sizes["registry"], 0x70);
@@ -2469,7 +3063,7 @@ mod tests {
         let mut hive = vec![0u8; 0x70];
         hive[..4].copy_from_slice(b"regf");
         fs::write(dir.path().join("SOFTWARE"), &hive).unwrap();
-        let only_machine = InputInventory::scan(dir.path());
+        let only_machine = InputInventory::scan(dir.path(), None);
         assert_eq!(only_machine.sizes["appcompat"], 0x70);
         assert_eq!(only_machine.sizes["system-info"], 0x70);
         for user_reader in [
@@ -2489,7 +3083,7 @@ mod tests {
         fs::write(dir.path().join("NTUSER.DAT"), &hive).unwrap();
         hive.resize(0xa0, 0);
         fs::write(dir.path().join("SECURITY"), &hive).unwrap();
-        let mixed = InputInventory::scan(dir.path());
+        let mixed = InputInventory::scan(dir.path(), None);
         assert_eq!(mixed.sizes["appcompat"], 0x100);
         assert_eq!(mixed.sizes["system-info"], 0x110);
         assert_eq!(mixed.sizes["auditpol"], 0xa0);
@@ -2573,7 +3167,7 @@ mod tests {
         assert_eq!(computers.len(), 3);
         assert_eq!(hosts[1].computer, "host_2");
         assert_eq!(hosts[1].hostname, "host");
-        let manifest = manifest_host(&hosts[1]);
+        let manifest = manifest_host(&hosts[1], Path::new(""), None);
         assert_eq!(manifest.computer, "host_2");
         assert_eq!(manifest.hostname, "host");
     }
