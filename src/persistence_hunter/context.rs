@@ -719,7 +719,6 @@ fn identity_of(file: &EvidenceFile, standalone: bool) -> Option<(String, String)
 
 fn client_names_inner(root: &Path) -> Option<Vec<(String, String)>> {
     let path = root.join("client_info.json");
-    crate::image_files::materialize(&path).ok()?;
     let metadata = fs::symlink_metadata(&path).ok()?;
     if !metadata.is_file()
         || metadata.len() > 1024 * 1024
@@ -727,6 +726,7 @@ fn client_names_inner(root: &Path) -> Option<Vec<(String, String)>> {
     {
         return None;
     }
+    crate::image_files::materialize(&path).ok()?;
     let mut bytes = Vec::new();
     fs::File::open(path)
         .ok()?

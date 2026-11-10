@@ -3680,6 +3680,85 @@ fn hunter_software_hive() -> Vec<u8> {
 }
 
 #[test]
+fn persistence_hunter_reports_failed_image_reads_without_losing_readable_findings() {
+    let evidence = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let config = evidence.path().join("Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::create_dir(evidence.path().join("Example")).unwrap();
+    std::fs::write(config.join("SOFTWARE"), hunter_software_hive()).unwrap();
+    let payload = evidence.path().join("Example/agent.exe");
+    std::fs::write(&payload, []).unwrap();
+    let sources = output.path().join("ImageFiles.json");
+    std::fs::write(
+        &sources,
+        serde_json::to_vec(&json!({
+            "Workspace": output.path().canonicalize().unwrap(),
+            "Volumes": [{
+                "Root": evidence.path().canonicalize().unwrap(),
+                "Image": output.path().join("unavailable.E01"),
+                "Source": "./evidence.E01",
+                "PathPrefix": "Volume2",
+                "Volume": 0
+            }]
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    let findings = output.path().join("findings.jsonl");
+    let r = run(&[
+        "persistence-hunter",
+        "-d",
+        evidence.path().to_str().unwrap(),
+        "--check",
+        "run_keys",
+        "--no-timeline",
+        "--image-files",
+        sources.to_str().unwrap(),
+        "-o",
+        findings.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-K",
+        "-q",
+    ]);
+    let errors: Vec<Value> = r
+        .stderr
+        .lines()
+        .filter_map(|line| {
+            line.strip_prefix("JUNTEI_IMAGE_READ_PROBLEM: ")
+                .map(|json| serde_json::from_str(json).unwrap())
+        })
+        .collect();
+    assert!(
+        errors.iter().any(|error| error["Image"] == "./evidence.E01"
+            && error["Path"] == "Volume2/Example/agent.exe"),
+        "{}",
+        r.stderr
+    );
+    let records = jsonl_records(&std::fs::read_to_string(findings).unwrap());
+    assert!(
+        records
+            .iter()
+            .any(|record| record["Value"] == r"C:\Example\agent.exe --start")
+    );
+    let retained = records
+        .iter()
+        .find(|record| record["Value"] == r"C:\Example\agent.exe --start")
+        .unwrap();
+    assert_eq!(retained["SHA256"], "");
+    assert!(
+        retained["ResolutionStatus"]
+            .as_str()
+            .unwrap()
+            .starts_with("unreadable:")
+    );
+    assert!(records.iter().all(|record| record["SHA256"]
+        != "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
+    assert_eq!(std::fs::metadata(payload).unwrap().len(), 0);
+}
+
+#[test]
 fn persistence_hunter_selected_check_has_csv_json_and_jsonl_parity() {
     let source = tempfile::tempdir().unwrap();
     let output = tempfile::tempdir().unwrap();

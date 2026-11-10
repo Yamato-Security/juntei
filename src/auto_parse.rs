@@ -20,8 +20,8 @@ use crate::color::JunteiColor;
 use crate::progress;
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use chrono::Utc;
-use serde::Serialize;
 use serde::de::IgnoredAny;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ffi::OsString;
@@ -366,6 +366,9 @@ struct TaskResult {
     log: String,
     #[serde(rename = "Error")]
     error: Option<String>,
+    /// Structured diagnostics emitted by a child while reading a staged placeholder.
+    #[serde(skip)]
+    image_errors: Vec<ImageProblem>,
 }
 
 impl TaskResult {
@@ -463,14 +466,14 @@ pub(crate) struct Images {
     sources: crate::image_files::Sources,
 }
 
-#[derive(Serialize)]
-struct ImageProblem {
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub(crate) struct ImageProblem {
     #[serde(rename = "Image")]
-    image: String,
+    pub(crate) image: String,
     #[serde(rename = "Path")]
-    path: String,
+    pub(crate) path: String,
     #[serde(rename = "Error")]
-    error: String,
+    pub(crate) error: String,
 }
 
 impl Images {
@@ -946,6 +949,13 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         .iter()
         .map(|result| result.recorded(&output_root))
         .collect();
+    let mut image_errors = images.map_or_else(Vec::new, |i| i.problems.clone());
+    let staged_errors = image_errors.len();
+    for problem in results.iter().flat_map(|result| &result.image_errors) {
+        if !image_errors.contains(problem) {
+            image_errors.push(problem.clone());
+        }
+    }
     let manifest = Manifest {
         generated_utc: Utc::now().to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         juntei_version: env!("CARGO_PKG_VERSION"),
@@ -968,7 +978,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             .map(|host| manifest_host(host, &evidence, images))
             .collect(),
         tasks: &recorded,
-        image_errors: images.map_or(&[], |i| i.problems.as_slice()),
+        image_errors: &image_errors,
     };
     let manifest_path = opts.output.join("manifest.json");
     if let Err(e) = write_pretty_json(&manifest_path, &manifest) {
@@ -1042,7 +1052,16 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         }
     }
 
-    i32::from(failed > 0 || succeeded == 0 || timeline_failed)
+    if image_errors.len() > staged_errors {
+        error_msg(
+            no_color,
+            &format!(
+                "Incomplete disk image input: {} read problem(s) discovered during parsing. Readable results were retained; see ImageErrors in manifest.json or the disk-image rows in manifest.csv.",
+                image_errors.len() - staged_errors,
+            ),
+        );
+    }
+    i32::from(failed > 0 || succeeded == 0 || timeline_failed || !image_errors.is_empty())
 }
 
 fn discovered_roots(input: &Path, max_depth: usize) -> io::Result<BTreeMap<PathBuf, Vec<PathBuf>>> {
@@ -2099,10 +2118,13 @@ fn run_task(
             .args(&task.args),
     );
     let mut error = None;
+    let mut image_errors = Vec::new();
     let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
             let stdout = paths.text(&String::from_utf8_lossy(&output.stdout));
-            let stderr = paths.text(&String::from_utf8_lossy(&output.stderr));
+            let (stderr, problems) =
+                image_diagnostics(&String::from_utf8_lossy(&output.stderr), paths);
+            image_errors = problems;
             let combined = format!("{stdout}{stderr}");
             let skipped = !output.status.success() && no_artifact_message(&combined);
             let status = if output.status.success() {
@@ -2175,7 +2197,36 @@ fn run_task(
         output_files: Vec::new(),
         log: task.log.to_string_lossy().to_string(),
         error,
+        image_errors,
     }
+}
+
+/// Decode before path sanitizing: Windows backslashes inside JSON are escaped and would not
+/// match the directory spellings. Preserve ordinary and malformed diagnostic lines verbatim.
+fn image_diagnostics(stderr: &str, paths: &TaskPaths) -> (String, Vec<ImageProblem>) {
+    let mut text = String::new();
+    let mut problems = Vec::new();
+    for line in stderr.split_inclusive('\n') {
+        let problem = line
+            .trim_end_matches(['\r', '\n'])
+            .strip_prefix(crate::image_files::PROBLEM_PREFIX)
+            .and_then(|json| serde_json::from_str::<ImageProblem>(json).ok());
+        if let Some(mut problem) = problem {
+            problem.error = paths.text(&problem.error);
+            text.push_str(&format!(
+                "Image read problem at {}!/{}: {}\n",
+                problem.image.escape_debug(),
+                problem.path.escape_debug(),
+                problem.error
+            ));
+            if !problems.contains(&problem) {
+                problems.push(problem);
+            }
+        } else {
+            text.push_str(&paths.text(line));
+        }
+    }
+    (text, problems)
 }
 
 fn no_artifact_message(output: &str) -> bool {
@@ -2596,6 +2647,38 @@ fn normalize_absolute(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn child_image_diagnostics_retain_provenance_and_sanitize_escaped_windows_paths() {
+        let paths = TaskPaths::new(
+            ".".into(),
+            &[Path::new(r"C:\private\staging")],
+            Path::new("output"),
+        );
+        let problem = ImageProblem {
+            image: "./evidence.E01".into(),
+            path: "Volume2/C/Example/agent.exe".into(),
+            error: r"Could not read C:\private\staging\host\C\Example\agent.exe".into(),
+        };
+        let json = serde_json::to_string(&problem).unwrap();
+        let diagnostic = format!("{}{json}\r\n", crate::image_files::PROBLEM_PREFIX);
+        let stderr = format!(
+            "ordinary warning\n{diagnostic}{diagnostic}{}invalid json\n",
+            crate::image_files::PROBLEM_PREFIX
+        );
+        let (text, errors) = image_diagnostics(&stderr, &paths);
+        assert!(text.starts_with("ordinary warning\n"));
+        assert!(text.contains("evidence.E01!/Volume2/C/Example/agent.exe"));
+        assert!(text.contains("JUNTEI_IMAGE_READ_PROBLEM: invalid json\n"));
+        assert!(!text.contains("private"));
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].image, problem.image);
+        assert_eq!(errors[0].path, problem.path);
+        assert_eq!(
+            errors[0].error,
+            r"Could not read .\host\C\Example\agent.exe"
+        );
+    }
 
     #[test]
     fn metadata_discovery_bounds_client_info_and_does_not_follow_links() {

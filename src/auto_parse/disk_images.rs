@@ -249,7 +249,7 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
             return 1;
         }
     };
-    // Placeholders are read from the image into this workspace, then renamed into place.
+    // Files are verified in this workspace before their shared placeholders are filled.
     let workspace = match base.path().canonicalize() {
         Ok(path) => path,
         Err(e) => {
@@ -639,6 +639,11 @@ fn stage_volume(
         .push(crate::image_files::VolumeSource {
             root: canonical_root.clone(),
             image: image_path.to_path_buf(),
+            source: source.to_string(),
+            path_prefix: root
+                .strip_prefix(point)
+                .unwrap_or(Path::new(""))
+                .to_path_buf(),
             volume,
         });
     // A directory record, its staged directory, and whether to copy every file under it.
@@ -735,7 +740,12 @@ fn stage_volume(
                 (Plan::Copy, Some((first, true))) | (Plan::Placeholder(_), Some((first, _))) => {
                     fs::hard_link(first, &output).map(|()| None)
                 }
-                (Plan::Copy, _) => stage_file(image, volume, entry.record, &output, scratch),
+                (Plan::Copy, Some((first, false))) => {
+                    // A different name may have been staged as a placeholder first. Fill that
+                    // inode before linking the selected name; replacing it detaches older names.
+                    stage_linked_file(image, volume, entry.record, first, &output, scratch)
+                }
+                (Plan::Copy, None) => stage_file(image, volume, entry.record, &output, scratch),
                 (Plan::Placeholder(stat), None) => placeholder(&output, stat),
             };
             match result {
@@ -803,6 +813,23 @@ fn stage_file(
         crate::image_files::copy_record(image, volume, record, &stat, scratch)?;
     temporary.persist_noclobber(output).map_err(|e| e.error)?;
     Ok(time_error)
+}
+
+fn stage_linked_file(
+    image: &Arc<Image>,
+    volume: usize,
+    record: u64,
+    first: &Path,
+    output: &Path,
+    scratch: &Path,
+) -> io::Result<Option<String>> {
+    let stat = image.volumes[volume].stat(record)?;
+    let (mut temporary, time_error) =
+        crate::image_files::copy_record(image, volume, record, &stat, scratch)?;
+    let mut file = fs::OpenOptions::new().write(true).open(first)?;
+    let filled_time_error = crate::image_files::fill_placeholder(&mut temporary, &mut file, &stat)?;
+    fs::hard_link(first, output)?;
+    Ok(time_error.or(filled_time_error))
 }
 
 /// An empty file standing in for one that was not copied, with its timestamps.
@@ -986,6 +1013,24 @@ mod tests {
         assert!(len(&point.join("$MFT")) > 0);
         assert!(len(&point.join("$LogFile")) > 0);
 
+        // A selected name can appear after another name of the same record was left empty.
+        // Promoting it must populate the earlier name without changing its file identity.
+        let small = c.join("Users/sample/Data/small.txt");
+        let selected = c.join("Users/sample/Data/selected.lnk");
+        assert_eq!(len(&small), 0);
+        let mut small_record = ROOT_RECORD;
+        for name in ["C", "Users", "sample", "Data", "small.txt"] {
+            small_record = image.volumes[0]
+                .lookup(small_record, name)
+                .unwrap()
+                .unwrap()
+                .record;
+        }
+        stage_linked_file(&image, 0, small_record, &small, &selected, &base).unwrap();
+        assert_eq!(fs::read(&small).unwrap(), b"resident content\n");
+        assert_eq!(fs::read(&selected).unwrap(), b"resident content\n");
+        assert!(same_file::is_same_file(&small, &selected).unwrap());
+
         // Other files are empty placeholders that keep their size and modification time.
         let evtx = c
             .join("Windows/System32/winevt/Logs/Microsoft-Windows-TaskScheduler%4Operational.evtx");
@@ -1016,11 +1061,17 @@ mod tests {
             8 * (16 * 1024 + 123)
         );
         let sha256 = |path: &Path| format!("{:x}", Sha256::digest(fs::read(path).unwrap()));
+        // Hydration must not detach other names of the same NTFS file. Consumers deduplicate
+        // hives and payloads by identity, not just by their bytes.
+        let alias = c.join("Users/sample/Data/fragmented-alias.bin");
+        fs::hard_link(&fragmented, &alias).unwrap();
         crate::image_files::materialize(&fragmented).unwrap();
         assert_eq!(
             sha256(&fragmented),
             "dad53fd22d62e1acbf48ababc172c8eb3ffb45486b261fb960a2990199a8e459"
         );
+        assert_eq!(sha256(&alias), sha256(&fragmented));
+        assert!(same_file::is_same_file(&alias, &fragmented).unwrap());
         assert_eq!(fs::metadata(&fragmented).unwrap().modified().ok(), modified);
         crate::image_files::materialize(&compressed).unwrap();
         assert_eq!(
@@ -1040,6 +1091,35 @@ mod tests {
         assert_eq!(len(&outside), 0);
         crate::image_files::materialize(&empty).unwrap();
         assert_eq!(len(&empty), 0);
+        // A second hunter must wait for a writer even after its first nonzero bytes exist.
+        // Each opens its own handle, as the CSV and JSON-timeline child processes do.
+        let mut writing = fs::OpenOptions::new().write(true).open(&small).unwrap();
+        writing.lock().unwrap();
+        writing.set_len(0).unwrap();
+        io::Write::write_all(&mut writing, b"resident ").unwrap();
+        std::thread::scope(|scope| {
+            let (started, begin) = std::sync::mpsc::channel();
+            let (finished, done) = std::sync::mpsc::channel();
+            let small = &small;
+            let reader = scope.spawn(move || {
+                started.send(()).unwrap();
+                crate::image_files::materialize(small).unwrap();
+                finished.send(fs::read(small).unwrap()).unwrap();
+            });
+            begin.recv().unwrap();
+            assert!(
+                done.recv_timeout(std::time::Duration::from_millis(50))
+                    .is_err()
+            );
+            io::Write::write_all(&mut writing, b"content\n").unwrap();
+            writing.unlock().unwrap();
+            assert_eq!(
+                done.recv_timeout(std::time::Duration::from_secs(10))
+                    .unwrap(),
+                b"resident content\n"
+            );
+            reader.join().unwrap();
+        });
         // No temporary copy is left in the workspace.
         let leftovers: Vec<_> = fs::read_dir(&base)
             .unwrap()
