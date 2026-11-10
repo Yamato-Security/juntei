@@ -609,3 +609,13 @@ Rapor alanları ve adli bilişim açısından sınırlamaları için
 bölümüne bakın.
 
 Auto-parse, kullanıcıların uzak bağlantılarını da (RDP, PuTTY, WinSCP ve eşlenmiş sürücüler) okur.
+
+## Kronolojik birleşik zaman çizelgesi oluşturma { #build-a-chronological-super-timeline }
+
+Ayrıştırmadan sonra [`super-timeline`](super-timeline.md) ile kayıtlı zamanları etiketli olaylara dönüştürüp bilgisayarlar ve artefaktlar arasında sıralayın:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+`-j, --json-timeline` dışa aktarımı, şemaları koruyan yerel kayıtların birleşik JSONL dosyasıdır; zamanları genişletmez veya sıralamaz. Kanıt incelemesi için bunu ve ayrı ayrıştırıcı çıktılarını saklayın.

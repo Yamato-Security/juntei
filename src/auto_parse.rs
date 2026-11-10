@@ -2649,6 +2649,51 @@ mod tests {
     use super::*;
 
     #[test]
+    fn super_timeline_supports_every_scheduled_parser_artifact() {
+        use clap::Parser;
+        let root = tempfile::tempdir().unwrap();
+        let evidence = root.path().join("evidence");
+        let windows = evidence.join("HOST/C/Windows");
+        fs::create_dir_all(windows.join("System32")).unwrap();
+        for name in ["$MFT", "$J", "$LogFile", "$I30", "$Boot", "$SDS"] {
+            fs::write(evidence.join("HOST/C").join(name), [0u8; 512]).unwrap();
+        }
+        let output = root.path().join("parsed");
+        let cli = crate::cli::Cli::parse_from([
+            "juntei",
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+        ]);
+        let crate::cli::Commands::AutoParse(opts) = cli.cmd else {
+            unreachable!()
+        };
+        let hosts = discover_hosts(&evidence, 10).unwrap();
+        let inventories: Vec<_> = hosts
+            .iter()
+            .map(|host| InputInventory::scan(&host.root, None))
+            .collect();
+        let tasks = build_tasks(
+            &hosts,
+            &inventories,
+            &opts,
+            &evidence,
+            &root.path().join("work"),
+        )
+        .unwrap();
+        assert!(tasks.len() >= 40, "{} tasks", tasks.len());
+        for task in tasks {
+            assert!(
+                crate::super_timeline::supports_artifact(task.artifact),
+                "Missing timeline adapter: {}",
+                task.artifact
+            );
+        }
+    }
+
+    #[test]
     fn child_image_diagnostics_retain_provenance_and_sanitize_escaped_windows_paths() {
         let paths = TaskPaths::new(
             ".".into(),

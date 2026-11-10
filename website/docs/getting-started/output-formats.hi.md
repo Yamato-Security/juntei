@@ -117,3 +117,7 @@ fractional precision को बनाए रखते हुए। `auto-parse -
 खाली, `null`, `NA`, `Problems` और parser-विशिष्ट state fields अर्थपूर्ण हैं। इनका अर्थ हो सकता है कि
 आर्टिफ़ैक्ट ने कोई value संग्रहीत नहीं की, record क्षतिग्रस्त था, format इसका समर्थन नहीं करता, या
 parser इसे resolve नहीं कर सका। सभी खाली values को zero से न बदलें।
+
+## सामान्यीकृत कालानुक्रमिक समयरेखा { #normalized-chronological-timeline }
+
+[`super-timeline`](../commands/super-timeline.md) लेबल किए गए टाइमस्टैम्प अर्थ, स्रोत संदर्भ और कालानुक्रमिक सॉर्टिंग के साथ एक सामान्य CSV/JSONL ईवेंट स्कीमा बनाता है। यह टाइम्सकेच आयात प्रोफ़ाइल का भी समर्थन करता है। नेटिव पार्सर एक्सपोर्ट और `auto-parse -j` अपने मौजूदा स्कीमा बनाए रखते हैं।

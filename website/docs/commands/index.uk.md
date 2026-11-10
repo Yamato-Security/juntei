@@ -13,6 +13,8 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Ця команда викликає ті самі згруповані команди
 та впорядковує результати й журнали за комп'ютерами та категоріями розслідування.
 
+Для хронологічно відсортованої шкали часу за проаналізованими артефактами використовуйте [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). Він розширює та позначає значення позначок часу; `auto-parse -j` продовжує зберігати власні записи.
+
 ## [Образи дисків](mount.md) { #disk-images }
 
 | Команда | Вхідні дані | Докладний посібник |

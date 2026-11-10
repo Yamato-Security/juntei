@@ -22,6 +22,7 @@ fn ctx(artifact: &str) -> Context {
         artifact: artifact.into(),
         computer: "HOST".into(),
         raw_source: Some("/evidence/source".into()),
+        image: None,
         input_index: 0,
         record: 1,
         location: String::new(),
@@ -410,5 +411,192 @@ fn ntfs_metadata_without_timestamps_is_untimed_and_supported() {
                 .iter()
                 .any(|d| d.reason.contains("No usable mapped event timestamp"))
         );
+    }
+}
+
+#[test]
+fn current_mft_short_headers_keep_names_generations_dos_and_ads_semantics() {
+    let a = json!({"EntryNum":123,"SN":2,"ParentEntryNum":5,"ParentSN":1,
+        "ParentPath":"Windows\\Temp","File":"agent.exe","Type":"Win32","IsADS":false,
+        "Created (SI)":DATE,"Created (FN)":DATE});
+    let p = project(&a, &ctx("mft"), &policy());
+    assert_eq!(p.events.len(), 2);
+    assert!(
+        p.events
+            .iter()
+            .all(|e| e.event.path == r"Windows\Temp\agent.exe")
+    );
+    let mut next = a.clone();
+    next["SN"] = json!(3);
+    let q = project(&next, &ctx("mft"), &policy());
+    assert_ne!(p.events[0].identity, q.events[0].identity);
+    next["Type"] = json!("DOS");
+    assert_eq!(project(&next, &ctx("mft"), &policy()).events.len(), 1);
+    next["HasADS"] = json!(true);
+    next.as_object_mut().unwrap().remove("IsADS");
+    assert_eq!(project(&next, &ctx("mft"), &policy()).events.len(), 1);
+    next["IsADS"] = json!(true);
+    assert!(project(&next, &ctx("mft"), &policy()).events.is_empty());
+}
+
+#[test]
+fn browser_visits_downloads_and_form_tombstones_keep_distinct_time_meanings() {
+    for (row, expected) in [
+        (
+            json!({"Table":"History","RecordType":"Visit","URL":"https://example.test/","VisitID":1,"VisitTime":DATE}),
+            1,
+        ),
+        (
+            json!({"Table":"Downloads","DownloadID":1,"URL":"https://example.test/a.exe","TargetPath":"C:\\a.exe","StartTime":DATE,"EndTime":DATE}),
+            2,
+        ),
+        (
+            json!({"Table":"FormHistory","RowID":1,"FirstUsed":DATE,"LastUsed":DATE,"RemovedTime":DATE,"Status":"Deleted"}),
+            3,
+        ),
+        (
+            json!({"Table":"Cookies","Host":"example.test","Name":"x","Created":DATE,"LastAccessed":DATE,"Expires":DATE}),
+            3,
+        ),
+    ] {
+        let p = project(&row, &ctx("browser"), &policy());
+        assert_eq!(p.counts.unsupported_records, 0);
+        assert_eq!(p.events.len(), expected);
+    }
+}
+
+#[test]
+fn webcache_metadata_is_not_automatically_a_page_visit() {
+    let r = json!({"Table":"Entries","EntryID":12,"URL":"https://example.test/",
+        "AccessedTime":DATE,"ModifiedTime":DATE,"CreationTime":DATE,"ExpiryTime":DATE,"SyncTime":DATE});
+    let p = project(&r, &ctx("webcache"), &policy());
+    assert_eq!(p.events.len(), 5);
+    assert!(
+        p.events
+            .iter()
+            .all(|e| e.event.details["TimeRole"] != "browser_visit")
+    );
+}
+
+#[test]
+fn outlook_messages_and_calendars_preserve_submission_delivery_and_scheduled_time() {
+    let r = json!({"Table":"Items","ItemID":"12","FolderPath":"Inbox","Subject":"Example",
+        "SubmitTime":DATE,"DeliveryTime":DATE,"CreationTime":DATE,"LastModifiedTime":DATE});
+    let p = project(&r, &ctx("outlook"), &policy());
+    assert_eq!(p.events.len(), 4);
+    assert!(
+        p.events
+            .iter()
+            .all(|e| e.event.details["Subject"] == "Example")
+    );
+    let cal = json!({"Table":"Calendar","ItemID":"12","Subject":"Scheduled meeting",
+        "StartTime":DATE,"EndTime":DATE,"ReminderTime":DATE});
+    let p = project(&cal, &ctx("outlook"), &policy());
+    assert_eq!(p.events.len(), 3);
+    assert!(
+        p.events
+            .iter()
+            .all(|e| e.event.details["TimeRole"] == "scheduled_time")
+    );
+}
+
+#[test]
+fn outlook_only_typed_time_properties_are_projected() {
+    let mut r = json!({"Table":"Properties","ItemID":"12","PropertyTag":"0x30070040","Type":"PtypTime","Value":DATE});
+    assert_eq!(project(&r, &ctx("outlook"), &policy()).events.len(), 1);
+    r["Type"] = json!("PtypString");
+    let p = project(&r, &ctx("outlook"), &policy());
+    assert!(p.events.is_empty());
+    assert_eq!(p.counts.unsupported_records, 0);
+}
+
+#[test]
+fn ual_accesses_and_database_metadata_do_not_turn_daily_counters_into_timestamps() {
+    let r = json!({"Table":"CLIENTS","AuthenticatedUserName":"DOMAIN\\alice","RoleGuid":"role",
+        "Address":"192.0.2.1","InsertDate":DATE,"LastAccess":DATE,"TotalAccesses":7,
+        "DailyAccesses":[{"Date":"2026-10-20","Accesses":7}]});
+    let p = project(&r, &ctx("ual"), &policy());
+    assert_eq!(p.events.len(), 2);
+    assert!(p.events.iter().all(|e| e.event.user == "DOMAIN\\alice"));
+    assert!(
+        p.events
+            .iter()
+            .all(|e| e.event.details["TotalAccesses"] == 7)
+    );
+    let r = json!({"Table":"DNS","Address":"192.0.2.1","HostName":"example.test"});
+    let p = project(&r, &ctx("ual"), &policy());
+    assert!(p.events.is_empty());
+    assert_eq!(p.counts.unsupported_records, 0);
+}
+
+#[test]
+fn outlook_multi_time_csv_cells_are_decoded_only_for_time_types() {
+    let r = json!({"Table":"Properties","ItemID":"12","PropertyTag":"0x80001040",
+        "Type":"PtypMultipleTime","Value":format!("[\"{DATE}\",\"2026-10-21T00:00:00Z\"]")});
+    let p = project(&r, &ctx("outlook"), &policy());
+    assert_eq!(p.events.len(), 2);
+    assert_eq!(p.events[1].event.source_field, "Value[1]");
+}
+
+#[test]
+fn recovered_browser_and_current_records_are_not_consolidated() {
+    let a = json!({"Table":"History","RecordType":"Visit","VisitID":1,"URL":"https://example.test/","VisitTime":DATE,"Status":"Live"});
+    let mut b = a.clone();
+    b["Status"] = json!("Deleted");
+    b["RecoveredFrom"] = json!("WAL");
+    let p = project(&a, &ctx("browser"), &policy());
+    let q = project(&b, &ctx("browser"), &policy());
+    assert_ne!(p.events[0].identity, q.events[0].identity);
+    assert_eq!(q.events[0].event.details["Status"], "Deleted");
+}
+
+#[test]
+fn image_inputs_keep_container_and_internal_path_after_the_workspace_is_gone() {
+    let mut c = ctx("prefetch");
+    c.image = Some(super::model::ImageSource {
+        image: "./disk.E01".into(),
+        staged_root: "disk".into(),
+    });
+    let r = json!({"SourceFile":"./disk/Volume2/C/Windows/Prefetch/APP.pf","ExecutableName":"APP.EXE","LastRunTimes":[DATE]});
+    let p = project(&r, &c, &policy());
+    assert_eq!(
+        p.events[0].event.source_file,
+        "./disk.E01!/Volume2/C/Windows/Prefetch/APP.pf"
+    );
+    assert_eq!(p.events[0].event.details["Image"], "./disk.E01");
+}
+
+#[test]
+fn recovered_mft_csv_rows_and_ual_normalized_columns_keep_their_meanings() {
+    let r = json!({"EntryNum":123,"SN":2,"File":"old.exe","ParentPath":"Windows",
+        "Type":"Win32","FromSlack":true,"Created (SI)":DATE,"Created (FN)":DATE});
+    let p = project(&r, &ctx("mft"), &policy());
+    assert_eq!(p.events.len(), 1);
+    assert_eq!(
+        p.events[0].event.details["TimeRole"],
+        "recovered_file_metadata"
+    );
+    let r = json!({"Table":"SYSTEM_IDENTITY","OS-LastBootUpTime":DATE});
+    let p = project(&r, &ctx("ual"), &policy());
+    assert_eq!(p.events.len(), 1);
+    assert_eq!(p.events[0].event.source_field, "OS-LastBootUpTime");
+    let r =
+        json!({"Table":"VIRTUALMACHINES","VmGUID":"vm","BIOS-GUID":"bios","LastSeenActive":DATE});
+    let p = project(&r, &ctx("ual"), &policy());
+    assert_eq!(p.events.len(), 1);
+}
+
+#[test]
+fn mft_parent_generations_and_current_indicator_names_remain_available() {
+    let a = json!({"EntryNum":123,"SN":2,"ParentEntryNum":5,"ParentSN":1,
+        "File":"agent.exe","Type":"Win32","Created (FN)":DATE,"HasADS":true,"uSecZeros":true,"SI<FN":true,"Copied":true});
+    let mut b = a.clone();
+    b["ParentSN"] = json!(2);
+    let p = project(&a, &ctx("mft"), &policy());
+    let q = project(&b, &ctx("mft"), &policy());
+    assert_eq!(p.events.len(), 1);
+    assert_ne!(p.events[0].identity, q.events[0].identity);
+    for key in ["HasADS", "uSecZeros", "SI<FN", "Copied"] {
+        assert_eq!(p.events[0].event.details[key], true);
     }
 }

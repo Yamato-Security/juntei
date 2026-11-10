@@ -16,6 +16,8 @@ use crate::cli::SuperTimelineOptions;
 use serde_json::{Map, Value, json};
 use std::io;
 
+mod activity;
+
 pub struct Policy {
     pub assumed: Option<chrono::FixedOffset>,
     pub start: Option<Point>,
@@ -66,6 +68,7 @@ pub const ARTIFACTS: &[&str] = &[
     "appcompat",
     "auditpol",
     "bam",
+    "browser",
     "bcd",
     "boot",
     "defender-quarantine",
@@ -83,6 +86,7 @@ pub const ARTIFACTS: &[&str] = &[
     "networks",
     "office",
     "opensavemru",
+    "outlook",
     "persistence",
     "persistence-hunter",
     "prefetch",
@@ -99,9 +103,11 @@ pub const ARTIFACTS: &[&str] = &[
     "srum",
     "system-info",
     "taskcache",
+    "ual",
     "usb",
     "userassist",
     "usn-journal",
+    "webcache",
 ];
 
 pub fn source(value: &Value, ctx: &Context) -> (String, bool) {
@@ -115,6 +121,14 @@ pub fn source(value: &Value, ctx: &Context) -> (String, bool) {
     }
     if path.is_empty() {
         path = ctx.raw_source.clone().unwrap_or_default();
+    }
+    if let Some(image) = &ctx.image {
+        let normalized = path.replace('\\', "/");
+        let prefix = format!("{}/", image.staged_root);
+        let normalized = normalized.strip_prefix("./").unwrap_or(&normalized);
+        if let Some(relative) = normalized.strip_prefix(&prefix) {
+            path = format!("{}!/{relative}", image.image);
+        }
     }
     if path.is_empty() {
         (ctx.parsed_file.to_string_lossy().into_owned(), false)
@@ -171,6 +185,7 @@ struct Builder<'a, 'b> {
     user: String,
     path: String,
     id: String,
+    extra: Map<String, Value>,
     valid: usize,
     projection: Projection,
     sink: Option<&'b mut dyn FnMut(Item) -> io::Result<()>>,
@@ -253,6 +268,7 @@ impl<'a, 'b> Builder<'a, 'b> {
             } else {
                 id
             },
+            extra: Map::new(),
             valid: 0,
             sink,
             failure: None,
@@ -362,12 +378,15 @@ impl<'a, 'b> Builder<'a, 'b> {
             self.projection.counts.filtered_events += 1;
             return;
         }
-        let mut details = Map::new();
+        let mut details = self.extra.clone();
         for key in [
             "RecordType",
             "Header",
             "Record",
             "RecordStatus",
+            "Status",
+            "Confidence",
+            "LostColumns",
             "AllocationStatus",
             "RecoveredFrom",
             "FromSlack",
@@ -383,6 +402,16 @@ impl<'a, 'b> Builder<'a, 'b> {
             "EntryNum",
             "EntryNumber",
             "SequenceNumber",
+            "SN",
+            "ParentEntryNum",
+            "ParentSN",
+            "Type",
+            "RefCnt",
+            "LogfileSN",
+            "ADS",
+            "MicrosecondZeros",
+            "SI-BeforeFN",
+            "Copied",
             "NameType",
             "FileAttributes",
             "SI-Flags",
@@ -419,8 +448,11 @@ impl<'a, 'b> Builder<'a, 'b> {
             "MitreID",
         ] {
             if let Some(v) = get(self.value, &[key]) {
-                details.insert(key.into(), compact(v, 0));
+                details.insert(crate::output_schema::field_name(key).into(), compact(v, 0));
             }
+        }
+        if let Some(image) = &self.ctx.image {
+            details.insert("Image".into(), json!(image.image));
         }
         details.insert("TimeRole".into(), json!(role));
         if role == "recovered_file_metadata" {
@@ -442,11 +474,19 @@ impl<'a, 'b> Builder<'a, 'b> {
                 self.ctx.record, self.ctx.location
             )
         };
-        let state = ["AllocationStatus", "RecordStatus", "FromSlack", "Truncated"]
-            .into_iter()
-            .map(|key| text(self.value, &[key]).to_ascii_lowercase())
-            .collect::<Vec<_>>()
-            .join("|");
+        let state = [
+            "AllocationStatus",
+            "RecordStatus",
+            "Status",
+            "Confidence",
+            "RecoveredFrom",
+            "FromSlack",
+            "Truncated",
+        ]
+        .into_iter()
+        .map(|key| text(self.value, &[key]).to_ascii_lowercase())
+        .collect::<Vec<_>>()
+        .join("|");
         let recovery_record = if state.contains("deleted") || truth(self.value, &["FromSlack"]) {
             format!("{}:{}", self.ctx.record, self.ctx.location)
         } else {
@@ -534,6 +574,8 @@ const MACB: [(&str, &str); 4] = [
 ];
 
 fn mft(b: &mut Builder<'_, '_>) {
+    // HasADS describes a base file with named streams; IsADS marks a separate stream row.
+    // The base file still supplies its SI/FN metadata even when HasADS is true.
     if truth(b.value, &["IsADS", "IsAds"]) {
         b.diagnostic(
             "ADS row shares its base file metadata; projected from the file row",
@@ -544,12 +586,12 @@ fn mft(b: &mut Builder<'_, '_>) {
     }
     let header = get(b.value, &["Header"]).unwrap_or(b.value);
     let entry = text(header, &["RecordNumber", "EntryNum", "EntryNumber"]);
-    let seq = text(header, &["Sequence", "SequenceNumber"]);
+    let seq = text(header, &["SN", "Sequence", "SequenceNumber"]);
     let entry_id = format!("MFT:{entry}:{seq}");
     let path = if b.path.is_empty() || get(b.value, &["FullPath"]).is_none() {
         join(
             &text(b.value, &["ParentPath"]),
-            &text(b.value, &["FileName", "Name"]),
+            &text(b.value, &["File", "FileName", "Name"]),
         )
     } else {
         b.path.clone()
@@ -570,10 +612,14 @@ fn mft(b: &mut Builder<'_, '_>) {
                 entry_id.clone()
             } else {
                 format!(
-                    "{entry_id}:FN:{}:{}:{}",
+                    "{entry_id}:FN:{}:{}:{}:{}",
                     text(data, &["Name"]),
                     text(data, &["Namespace"]),
-                    text(get(data, &["Parent"]).unwrap_or(&Value::Null), &["Entry"])
+                    text(get(data, &["Parent"]).unwrap_or(&Value::Null), &["Entry"]),
+                    text(
+                        get(data, &["Parent"]).unwrap_or(&Value::Null),
+                        &["Sequence", "SN", "SequenceNumber"]
+                    )
                 )
             };
             for (timestamp_field, label) in MACB {
@@ -613,17 +659,22 @@ fn mft(b: &mut Builder<'_, '_>) {
         return;
     }
     for (group, suffix) in [("SI", "0x10"), ("FN", "0x30")] {
-        if group == "SI" && text(b.value, &["NameType"]).eq_ignore_ascii_case("DOS") {
+        let recovered = truth(b.value, &["FromSlack"]);
+        if recovered && group == "SI" {
+            continue;
+        }
+        if group == "SI" && text(b.value, &["Type", "NameType"]).eq_ignore_ascii_case("DOS") {
             continue;
         }
         let id = if group == "SI" {
             entry_id.clone()
         } else {
             format!(
-                "{entry_id}:FN:{}:{}:{}",
-                text(b.value, &["FileName"]),
-                text(b.value, &["NameType"]),
-                text(b.value, &["ParentEntryNumber"])
+                "{entry_id}:FN:{}:{}:{}:{}",
+                text(b.value, &["File", "FileName"]),
+                text(b.value, &["Type", "NameType"]),
+                text(b.value, &["ParentEntryNum", "ParentEntryNumber"]),
+                text(b.value, &["ParentSN", "ParentSequenceNumber"])
             )
         };
         for (old, new, label) in [
@@ -639,8 +690,15 @@ fn mft(b: &mut Builder<'_, '_>) {
                 b.emit(
                     value,
                     key,
-                    &format!("MFT {group} {label}"),
-                    "file_metadata",
+                    &format!(
+                        "{}MFT {group} {label}",
+                        if recovered { "Recovered " } else { "" }
+                    ),
+                    if recovered {
+                        "recovered_file_metadata"
+                    } else {
+                        "file_metadata"
+                    },
                     &path,
                     &id,
                     true,
@@ -1459,7 +1517,7 @@ fn build(
     sink: Option<&mut dyn FnMut(Item) -> io::Result<()>>,
 ) -> (Projection, Option<io::Error>) {
     let mut b = Builder::new(value, ctx, policy, sink);
-    if !ARTIFACTS.contains(&ctx.artifact.as_str()) {
+    if !super::supports_artifact(&ctx.artifact) {
         b.projection.counts.unsupported_records = 1;
         b.diagnostic("Unsupported or missing Artifact identifier", "", "");
         return b.finish();
@@ -1469,6 +1527,10 @@ fn build(
         "prefetch" | "prefetch-timeline" => prefetch(&mut b),
         "amcache" => amcache(&mut b),
         "srum" => srum(&mut b),
+        "browser" => activity::browser(&mut b),
+        "outlook" => activity::outlook(&mut b),
+        "ual" => activity::ual(&mut b),
+        "webcache" => activity::webcache(&mut b),
         "lnk" | "jump-lists" => links(&mut b),
         "logfile" => logfile(&mut b),
         "usn-journal" => {

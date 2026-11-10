@@ -630,3 +630,13 @@ para conocer los campos del informe y sus limitaciones forenses.
 
 Auto-parse también lee las conexiones remotas de los usuarios (RDP, PuTTY, WinSCP y unidades
 asignadas).
+
+## Construye una súper línea de tiempo cronológica { #build-a-chronological-super-timeline }
+
+Después del análisis, use [`super-timeline`](super-timeline.md) para expandir las marcas de tiempo registradas en eventos etiquetados y ordenarlos entre computadoras y artefactos:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+La exportación `-j, --json-timeline` existente sigue siendo un archivo JSONL de registro nativo combinado. Conserva los esquemas del analizador; no expande los campos de marca de tiempo ni ordena eventos. Consérvelo junto con los resultados del analizador individual para una revisión a nivel de evidencia.

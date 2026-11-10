@@ -443,3 +443,13 @@ Display Settings:
 レポート フィールドとそのフォレンジック制限については、[回復されたセキュリティ記述子の読み取り](../artifacts/defender-quarantine.md#reading-the-recovered-security-descriptor)を参照してください。
 
 自動解析は、ユーザーのリモート接続 (RDP、PuTTY、WinSCP、およびマップされたドライブ) も読み取ります。
+
+## 時系列を統合したタイムラインの作成 { #build-a-chronological-super-timeline }
+
+解析後、[`super-timeline`](super-timeline.md) を使うと、記録された各時刻を意味付きのイベントに展開し、ホストやアーティファクトを横断して時系列に並べられます。
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+既存の `-j, --json-timeline` は、各パーサーのスキーマを保ったネイティブレコードを JSONL にまとめる機能です。時刻の展開や並べ替えは行いません。詳細な証拠確認のため、このファイルと各パーサーの結果も保管してください。

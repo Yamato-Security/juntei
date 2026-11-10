@@ -32,6 +32,11 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
+/// Shared with the auto-parse task coverage test, so a new parser cannot be silently omitted.
+pub(crate) fn supports_artifact(artifact: &str) -> bool {
+    adapters::ARTIFACTS.contains(&artifact)
+}
+
 struct Scratch(PathBuf);
 impl Scratch {
     fn new(parent: &Path) -> io::Result<Self> {

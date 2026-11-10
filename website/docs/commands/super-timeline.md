@@ -60,6 +60,10 @@ resolved under the new directory. Inputs must remain inside it, including symbol
 Legacy per-artifact Amcache, SRUM and Jump Lists directories are supported; category directories
 need explicit `OutputFiles`.
 
+Current manifests with output-relative paths and flattened multi-table exports are supported. The command recognizes every artifact scheduled by automatic parsing, including the newer browser, WebCache, Outlook and UAL tables.
+
+When a manifest identifies a VHDX or E01 image, source references include the image and internal path, and the image name is retained in event context. The temporary staging workspace is not needed to read the parsed results.
+
 A raw source is taken from the record or an unambiguous manifest command. SRUM CSV tables can be
 assigned to a database only when the host has one uniquely identifiable collected SRUDB.dat.
 Otherwise `SourceFile` points to the parsed file and `Details.RawSourceAvailable` is `false`.
@@ -105,6 +109,10 @@ attack. The adapters intentionally keep these distinctions:
 | USN Journal | Journal record timestamp and update reasons. A record can describe several changes; it does not necessarily record their precise start time. |
 | LogFile | Stored redo/undo timestamp snapshots and filename metadata. Redo and undo remain separate. LSNs and file offsets are identifiers, never converted to dates. |
 | Prefetch | Recorded execution times, consolidated with the matching Prefetch timeline export. Referenced volume-creation metadata is labeled separately. |
+| Browser SQLite databases | Recorded visits, recovered page last-visit metadata, download start/end, cookie creation/access/expiry and form-history first/last use or deletion tombstones. A download end does not by itself prove success or execution; a cookie expiry is a configured deadline. Recovery status, confidence and origin remain in context. |
+| Internet Explorer / legacy Edge WebCache | Stored entry access, creation/modification, expiry and synchronization, download starts, cookie metadata and container access/scavenging. Cache bookkeeping is not automatically evidence of a user opening a page. |
+| Outlook PST, OST, MSG and OFT | Message submission/delivery; folder, item and attachment creation/modification; calendar start/end/reminders; task start/due/completion/reminders; and explicitly typed time properties. Scheduled times do not prove a meeting occurred, a reminder fired or a program executed. A stored delivery time does not prove the message was read. |
+| User Access Logging (UAL) | First/last access metadata, database insertion/creation, first/last seen and stored operating-system boot time. Role, account, source address and daily counters remain context. Daily dates/counts are not invented midnight logons; untimed identity and DNS rows remain available in the companion report. |
 | Amcache | Inventory key last writes, parent volume key context, recorded install dates and PE link metadata. Inventory presence or LinkDate alone does not prove execution. |
 | ShimCache | Stored file modification, cache-update metadata and cache key last write. None is automatically an execution timestamp. |
 | SRUM | Provider timestamp/bucket, connection start, explicit start/end interval fields and application-identifier metadata. Bytes, duration and other counters are not dates. |
@@ -210,4 +218,12 @@ basename for each run when retaining an earlier complete export matters.
 - [Evidence and interpretation](../overview/evidence-model.md)
 - [Output formats](../getting-started/output-formats.md)
 
-Current Juntei inputs use abbreviated labels such as `Comp`, `Filename`, `Args` and `Attr`. Older exported labels remain accepted, and `SourceField` retains the spelling in the actual input. Hayabusa input retains its own `Computer` field. Boot-sector and security-descriptor metadata is retained in the untimed report because it does not supply an event timestamp.
+Current Juntei inputs use abbreviated labels such as `Comp`, `Filename`, `Args` and `Attr`. MFT CSV also accepts the current `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` and `HasADS` headers, keeping sequence-number generations and DOS/ADS distinctions intact. Older exported labels remain accepted, and `SourceField` retains the spelling in the actual input. Hayabusa input retains its own `Computer` field. Boot-sector and security-descriptor metadata is retained in the untimed report because it does not supply an event timestamp.
+
+## Newer multi-table parsers
+
+Native JSON/JSONL carries each table name. For a standalone CSV, the browser, WebCache and Outlook adapters identify its table from the column schema, so renaming the CSV or using automatic parsing's source suffixes does not change timestamp interpretation. UAL keeps its explicit known timestamp fields; access counters and unrelated date-looking text are not guessed as dates.
+
+Outlook property rows are projected only when their declared type is a time or multiple-time type. A string containing a date remains a string. Embedded messages keep their item IDs and parent references, and attachment extraction times are not substituted for stored attachment timestamps. Untimed file, recipient, contact or property rows remain traceable in the native output and untimed report.
+
+The same CSV and JSONL output schemas apply to these parsers; adding a new artifact does not add hundreds of CSV columns. Artifact-specific context stays in `Details`.

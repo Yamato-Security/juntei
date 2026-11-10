@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-use super::model::{Context, get, text};
+use super::model::{Context, ImageSource, get, text};
 use crate::cli::SuperTimelineOptions;
 use serde_json::{Map, Value};
 use std::cell::Cell;
@@ -34,6 +34,7 @@ pub struct Input {
     pub artifact: String,
     pub computer: String,
     pub raw_source: Option<String>,
+    pub image: Option<ImageSource>,
     pub format: Format,
     pub index: usize,
 }
@@ -100,19 +101,58 @@ fn child(parent: &Path, name: &str) -> Option<PathBuf> {
 
 /// A CSV provider table has no SourceFile. Resolve only a unique existing database; multiple
 /// captures cannot safely be assigned by a SourceN filename without a capture/source mapping.
-fn unique_srum(host: &Value) -> Option<String> {
+fn unique_srum(host: &Value, evidence: &[PathBuf]) -> Option<String> {
     let mut sources = BTreeSet::new();
     for windows in get(host, &["WindowsDirectories"])?.as_array()? {
         let windows = PathBuf::from(windows.as_str()?);
-        if let Some(path) = child(&windows, "System32")
-            .and_then(|p| child(&p, "sru"))
-            .and_then(|p| child(&p, "SRUDB.dat"))
-            .filter(|p| p.is_file())
-        {
-            sources.insert(fs::canonicalize(path).ok()?);
+        let locations = if windows.is_absolute() {
+            vec![windows]
+        } else {
+            evidence.iter().map(|root| root.join(&windows)).collect()
+        };
+        for windows in locations {
+            if let Some(path) = child(&windows, "System32")
+                .and_then(|p| child(&p, "sru"))
+                .and_then(|p| child(&p, "SRUDB.dat"))
+                .filter(|p| p.is_file())
+            {
+                sources.insert(fs::canonicalize(path).ok()?);
+            }
         }
     }
     (sources.len() == 1).then(|| sources.first().unwrap().to_string_lossy().into_owned())
+}
+
+/// Current portable manifests record directory names and evidence-relative host paths. Resolve
+/// only existing, structurally matching evidence beside an ancestor (or in the current working
+/// directory); never recursively search for a hive/database or choose between two captures.
+fn evidence_locations(root: &Path, recorded: &str, hosts: &[Value]) -> Vec<PathBuf> {
+    let mut locations = BTreeSet::new();
+    let recorded = Path::new(recorded);
+    let candidates = std::iter::once(recorded.to_path_buf()).chain(
+        root.ancestors()
+            .take(10)
+            .map(|parent| parent.join(recorded)),
+    );
+    for path in candidates {
+        let Ok(path) = path.canonicalize() else {
+            continue;
+        };
+        if !path.is_dir() {
+            continue;
+        }
+        if hosts.iter().any(|host| {
+            let image = text(host, &["Image"]);
+            if !image.is_empty() {
+                return path.join(image).is_file();
+            }
+            let within = text(host, &["EvidenceRoot"]);
+            !within.is_empty() && path.join(within).is_dir()
+        }) {
+            locations.insert(path);
+        }
+    }
+    locations.into_iter().collect()
 }
 
 pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
@@ -147,6 +187,8 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
         let hosts = get(&value, &["Hosts"])
             .and_then(Value::as_array)
             .ok_or_else(|| io::Error::other("Manifest has no Hosts array"))?;
+        let evidence = evidence_locations(&root, &text(&value, &["EvidenceDirectory"]), hosts);
+        result.evidence_roots.extend(evidence.iter().cloned());
         let tasks = get(&value, &["Tasks"])
             .and_then(Value::as_array)
             .ok_or_else(|| io::Error::other("Manifest has no Tasks array"))?;
@@ -168,6 +210,15 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
             {
                 result.evidence_roots.push(PathBuf::from(path));
             }
+            let image = host.and_then(|host| {
+                let image = text(host, &["Image"]);
+                let root = text(host, &["EvidenceRoot"]).replace('\\', "/");
+                let staged_root = root.split('/').find(|p| !p.is_empty() && *p != ".")?;
+                (!image.is_empty()).then(|| ImageSource {
+                    image,
+                    staged_root: staged_root.into(),
+                })
+            });
             let raw = get(task, &["Command"])
                 .and_then(Value::as_array)
                 .and_then(|command| {
@@ -179,7 +230,7 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
                 })
                 .or_else(|| {
                     (artifact == "srum")
-                        .then(|| host.and_then(unique_srum))
+                        .then(|| host.and_then(|host| unique_srum(host, &evidence)))
                         .flatten()
                 });
             let hint = text(task, &["OutputType"]);
@@ -259,6 +310,7 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
                     artifact: artifact.clone(),
                     computer: computer.clone(),
                     raw_source: raw.clone(),
+                    image: image.clone(),
                     format: kind,
                     index: 0,
                 });
@@ -278,6 +330,7 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
             artifact: opts.input_artifact.clone().unwrap_or_default(),
             computer: opts.computer.clone().unwrap_or_default(),
             raw_source: None,
+            image: None,
             format: kind,
             index: 0,
         });
@@ -288,6 +341,7 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
             artifact: "hayabusa".into(),
             computer: opts.computer.clone().unwrap_or_default(),
             raw_source: None,
+            image: None,
             format: Format::Jsonl,
             index: 0,
         });
@@ -345,6 +399,7 @@ fn context(input: &Input, record: u64) -> Context {
         artifact: input.artifact.clone(),
         computer: input.computer.clone(),
         raw_source: input.raw_source.clone(),
+        image: input.image.clone(),
         input_index: input.index,
         record,
         location: String::new(),

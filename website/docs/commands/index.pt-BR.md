@@ -13,6 +13,8 @@ Para uma coleta de evidências do Windows com vários computadores, use
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Ele invoca os mesmos comandos agrupados
 e organiza os resultados e os logs por computador e por categoria investigativa.
 
+Para obter uma linha do tempo classificada cronologicamente entre artefatos analisados, use [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). Ele expande e rotula os significados do carimbo de data/hora; `auto-parse -j` continua a reter registros nativos.
+
 ## [Imagens de disco](mount.md) { #disk-images }
 
 | Comando | Entrada | Guia detalhado |

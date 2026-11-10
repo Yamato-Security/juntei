@@ -13,6 +13,8 @@ Pour une collecte de preuves Windows portant sur plusieurs ordinateurs, utilisez
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Elle invoque les mêmes commandes regroupées
 et organise les résultats et les journaux par ordinateur et par catégorie d'investigation.
 
+Utilisez [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) pour trier les événements et préciser la signification de chaque date ; `auto-parse -j` conserve les données natives.
+
 ## [Images disque](mount.md) { #disk-images }
 
 | Commande | Entrée | Guide détaillé |

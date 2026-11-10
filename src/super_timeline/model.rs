@@ -177,11 +177,18 @@ pub fn fingerprint(parts: &[&str]) -> String {
 }
 
 #[derive(Clone, Debug)]
+pub struct ImageSource {
+    pub image: String,
+    pub staged_root: String,
+}
+
+#[derive(Clone, Debug)]
 pub struct Context {
     pub parsed_file: PathBuf,
     pub artifact: String,
     pub computer: String,
     pub raw_source: Option<String>,
+    pub image: Option<ImageSource>,
     pub input_index: usize,
     pub record: u64,
     pub location: String,
@@ -236,6 +243,21 @@ pub fn field<'a>(value: &'a Value, name: &str) -> Option<(&'a str, &'a Value)> {
     object
         .get_key_value(crate::output_schema::field_name(name))
         .or_else(|| object.get_key_value(name))
+        .or_else(|| {
+            // UAL's column normalizer preserves acronyms and separates the next word. Keep
+            // accepting the database's original spelling without allocating on every lookup.
+            let current = match name {
+                "RoleGuid" => "RoleGUID",
+                "TenantId" => "TenantID",
+                "OSLastBootUpTime" => "OS-LastBootUpTime",
+                "OSVersion" => "OS-Version",
+                "OSProductType" => "OS-ProductType",
+                "VmGuid" => "VmGUID",
+                "BiosGuid" => "BIOS-GUID",
+                _ => return None,
+            };
+            object.get_key_value(current)
+        })
         .or_else(|| {
             name.strip_suffix("UTC").and_then(|key| {
                 object

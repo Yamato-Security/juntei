@@ -592,3 +592,13 @@ Unter [Lesen der wiederhergestellten Sicherheitsbeschreibung](../artifacts/defen
 finden Sie die Berichtsfelder und ihre forensischen Grenzen.
 
 Auto-parse liest außerdem die Remoteverbindungen der Benutzer (RDP, PuTTY, WinSCP und zugeordnete Laufwerke).
+
+## Chronologische Gesamttimeline erstellen { #build-a-chronological-super-timeline }
+
+Nach dem Parsen erweitert [`super-timeline`](super-timeline.md) die gespeicherten Zeitstempel zu beschrifteten Ereignissen und sortiert sie über Rechner und Artefakte hinweg:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+Der bestehende Export `-j, --json-timeline` bleibt eine Datei mit nativen Datensätzen im Format JSONL. Er erhält die Parser-Schemas, erweitert oder sortiert aber keine Zeitstempel. Für die Beweisprüfung sollten auch diese Datei und die einzelnen Parser-Ergebnisse aufbewahrt werden.

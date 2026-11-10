@@ -4,6 +4,8 @@
 
 **New Features:**
 
+- Add `super-timeline` to normalize parsed artifacts and optional Hayabusa JSONL into chronologically sorted CSV/JSONL, with native/Timesketch profiles, timestamp semantics and provenance, untimed/diagnostic reports, parallel input processing and memory-budgeted external sorting. Include UAL, browser, WebCache and Outlook adapters, current MFT abbreviations and recovery metadata, and portable manifest/image provenance. Existing native parser and `auto-parse -j` exports are unchanged. (@YamatoSecurity)
+
 - `auto-parse --vhdx` reads images natively on Linux, macOS and Windows without FUSE, an OS mount, or administrator privileges. Files are staged in a private workspace on the output filesystem by default; `--temp-dir` selects an existing directory outside the output. Copy only parser inputs and read other file content on demand, retaining hard links when placeholders are filled and locking concurrent readers. Reserve space for copies and results. Keep original source metadata separately, retain readable results if staging fills, report failed writes once, and mark images that were not staged in both manifests. Late image-read failures and acquisition warnings also reach both manifests and the nonzero exit status without discarding readable results. Skip inaccessible discovery subdirectories while treating an unreadable input root as an error. Ctrl+C, and SIGTERM/SIGHUP on Linux and macOS, stop and reap parser processes before removing staged evidence and return exit code 130. SIGKILL or power loss can leave copies. Preserve image provenance and keep private workspace paths out of exported results. (@YamatoSecurity)
 
 - Use Yamato Security’s [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) workspace for the VHDX reader and reusable NTFS/FUSE mounting library, retaining the original reader’s license and attribution. (@YamatoSecurity)
@@ -48,7 +50,6 @@
 
 - Rename registry subcommands to `app-compat`, `feature-usage`, `open-save-mru`, `recent-docs`, `user-assist` and `shell-bags`. Update automatic parsing, command help and documentation; retain the former spellings as hidden compatibility aliases. Artifact identifiers and output paths remain stable. (@YamatoSecurity)
 
-- Add `super-timeline` to normalize parsed artifacts and optional Hayabusa JSONL into chronologically sorted CSV/JSONL, with native/Timesketch profiles, timestamp semantics and provenance, untimed/diagnostic reports, parallel input processing and memory-budgeted external sorting. Existing native parser and `auto-parse -j` exports are unchanged. (@YamatoSecurity)
 - Apply the requested abbreviated CSV and JSON/JSONL labels, including `Comp`, `Filename`, `Args`, `App`, `User`, `BytesReceived`, `HasADS`, `SI<FN` and `ZeroU-Secs`. Keep evidence values and raw registry dictionaries unchanged, accept legacy manifest host labels during safe output replacement, and update the field references and examples. Regenerate existing exports and update field-based queries. (@YamatoSecurity)
 
 - NTFS metadata review: retain structured-output stream recovery warnings, preserve uppercase acronym field names, and use the reviewed NTFS descriptor parser's mirror recovery and conditional-SDDL fixes. (@YamatoSecurity)
