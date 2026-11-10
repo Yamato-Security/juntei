@@ -573,12 +573,15 @@ Display Settings:
 
 자동 분석은 사용자의 원격 연결(RDP, PuTTY, WinSCP 및 매핑된 드라이브)도 읽습니다.
 
-## 연대순 슈퍼 타임라인 구축 { #build-a-chronological-super-timeline }
+## 시간순 슈퍼 타임라인 만들기 { #build-a-chronological-super-timeline }
 
-구문 분석 후 [`super-timeline`](super-timeline.md)를 사용하여 기록된 타임스탬프를 레이블이 지정된 이벤트로 확장하고 컴퓨터와 아티팩트 전체에서 정렬합니다.
+파싱이 끝나면 [`super-timeline`](super-timeline.md)으로 기록된 타임스탬프를 레이블이 붙은 이벤트로 확장하십시오.
+컴퓨터와 아티팩트를 아울러 시간순으로 정렬하려면 `--sort`를 추가하십시오.
 
 ```bash
-juntei super-timeline -d output/ -o SuperTimeline.csv
+juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
-기존 `-j, --json-timeline` 내보내기는 결합된 기본 레코드 JSONL 파일로 유지됩니다. 파서 스키마를 보존합니다. 타임스탬프 필드를 확장하거나 이벤트를 정렬하지 않습니다. 증거 수준 검토를 위해 해당 정보와 개별 파서 결과를 보관하세요.
+기존 `-j, --json-timeline` 내보내기는 여전히 네이티브 레코드를 하나로 합친 JSONL 파일입니다. 파서 스키마를 그대로
+보존하며, 타임스탬프 필드를 확장하거나 이벤트를 정렬하지 않습니다. 증거 수준의 검토를 위해 이 파일과 개별 파서
+결과를 보관하십시오.

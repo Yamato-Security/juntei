@@ -612,10 +612,10 @@ Auto-parse, kullanıcıların uzak bağlantılarını da (RDP, PuTTY, WinSCP ve 
 
 ## Kronolojik birleşik zaman çizelgesi oluşturma { #build-a-chronological-super-timeline }
 
-Ayrıştırmadan sonra [`super-timeline`](super-timeline.md) ile kayıtlı zamanları etiketli olaylara dönüştürüp bilgisayarlar ve artefaktlar arasında sıralayın:
+Ayrıştırmadan sonra [`super-timeline`](super-timeline.md) ile kayıtlı zamanları etiketli olaylara dönüştürün. Bilgisayarlar ve artefaktlar arasında sıralamak için `--sort` ekleyin:
 
 ```bash
-juntei super-timeline -d output/ -o SuperTimeline.csv
+juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 `-j, --json-timeline` dışa aktarımı, şemaları koruyan yerel kayıtların birleşik JSONL dosyasıdır; zamanları genişletmez veya sıralamaz. Kanıt incelemesi için bunu ve ayrı ayrıştırıcı çıktılarını saklayın.

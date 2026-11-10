@@ -119,6 +119,6 @@ Field kosong, `null`, `NA`, `Problems`, dan field kondisi khusus parser memiliki
 artefak tidak menyimpan nilai, record rusak, format tidak mendukungnya, atau
 parser tidak dapat me-resolve-nya. Jangan mengganti semua nilai kosong dengan nol.
 
-## Linimasa kronologis ternormalisasi { #normalized-chronological-timeline }
+## Linimasa ternormalisasi { #normalized-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) membuat skema peristiwa CSV/JSONL umum dengan makna stempel waktu berlabel dan referensi sumber. Output tidak disortir secara default; `--sort` memungkinkan pengurutan kronologis dan konsolidasi duplikat. Ini juga mendukung profil impor Timesketch. Ekspor parser asli dan `auto-parse -j` mempertahankan skema yang ada.
+[`super-timeline`](../commands/super-timeline.md) membuat skema peristiwa CSV/JSONL bersama dengan arti waktu berlabel dan referensi sumber, serta mendukung profil impor Timesketch. Keluaran tidak diurutkan secara default; `--sort` mengaktifkan pengurutan kronologis dan konsolidasi duplikat. Ekspor parser asli dan `auto-parse -j` mempertahankan skemanya.

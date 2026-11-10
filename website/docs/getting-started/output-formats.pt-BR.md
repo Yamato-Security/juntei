@@ -118,6 +118,9 @@ Vazio, `null`, `NA`, `Problems` e os campos de estado específicos de cada anali
 artefato não armazenou um valor, que o registro estava danificado, que o formato não oferece suporte a ele ou que o
 analisador não conseguiu resolvê-lo. Não substitua todos os valores vazios por zero.
 
-## Linha do tempo cronológica normalizada { #normalized-chronological-timeline }
+## Linha do tempo normalizada { #normalized-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) cria um esquema de evento CSV/JSONL comum com significados de carimbo de data/hora rotulados e referências de origem. A saída não é classificada por padrão; `--sort` permite classificação cronológica e consolidação duplicada. Ele também oferece suporte a um perfil de importação do Timesketch. As exportações do analisador nativo e `auto-parse -j` mantêm seus esquemas existentes.
+O [`super-timeline`](../commands/super-timeline.md) cria um esquema comum de eventos em CSV/JSONL, com rótulos
+que indicam o significado de cada carimbo de data/hora e referências à origem. Por padrão, a saída não é
+ordenada; `--sort` ativa a ordenação cronológica e a consolidação de duplicatas. Ele também oferece
+um perfil de importação para o Timesketch. As exportações nativas dos analisadores e o `auto-parse -j` mantêm seus esquemas atuais.

@@ -13,7 +13,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). فهو يستدعي الأوامر المجمعة نفسها،
 وينظّم النتائج والسجلات حسب الحاسوب وفئة التحقيق.
 
-للحصول على مخطط زمني عبر العناصر التي تم تحليلها، استخدم [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). يقوم بتوسيع وتسميات معاني الطابع الزمني. لا يتم فرز الإخراج بشكل افتراضي؛ أضف `--sort` للترتيب الزمني والدمج المكرر. يستمر `auto-parse -j` في الاحتفاظ بالسجلات الأصلية.
+للحصول على جدول زمني يشمل الآثار الرقمية المحللة، استخدم
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md).
+فهو يوسّع الطوابع الزمنية ويَسِم معنى كلٍّ منها. والإخراج غير مرتب افتراضيًا؛ أضف `--sort` للحصول على
+ترتيب زمني ودمج للتكرارات. ويواصل `auto-parse -j` الاحتفاظ بالسجلات الأصلية.
 
 ## [صور الأقراص](mount.md) { #disk-images }
 

@@ -119,6 +119,7 @@ Les valeurs vides, `null`, `NA`, `Problems` et les champs d'état propres aux pa
 l'artefact n'a pas stocké de valeur, que l'enregistrement a été endommagé, que le format ne la prend pas en charge, ou que le
 parseur n'a pas pu la résoudre. Ne remplacez pas toutes les valeurs vides par zéro.
 
-## Chronologie normalisée { #normalized-chronological-timeline }
+## Chronologie normalisée { #normalized-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) crée un schéma d'événement CSV/JSONL commun avec des significations d'horodatage étiquetées et des références de source. La sortie n'est pas triée par défaut ; `--sort` permet le tri chronologique et la consolidation des doublons. Il prend également en charge un profil d'importation Timesketch. Les exportations d'analyseurs natifs et `auto-parse -j` conservent leurs schémas existants.
+[`super-timeline`](../commands/super-timeline.md) crée un schéma d'événements CSV/JSONL commun, daté et relié aux sources, avec profil Timesketch.
+La sortie n'est pas triée par défaut ; `--sort` active le tri chronologique et la consolidation des doublons. Les exports natifs et `auto-parse -j` conservent leurs schémas.

@@ -123,6 +123,6 @@ Boş, `null`, `NA`, `Problems` ve ayrıştırıcıya özgü durum alanları anla
 saklamadığı, kaydın hasarlı olduğu, biçimin bunu desteklemediği veya ayrıştırıcının değeri
 çözümleyemediği anlamına gelebilirler. Tüm boş değerleri sıfırla değiştirmeyin.
 
-## Normalleştirilmiş kronolojik çizelge { #normalized-chronological-timeline }
+## Normalleştirilmiş zaman çizelgesi { #normalized-timeline }
 
-[`super-timeline`](../commands/super-timeline.md), etiketli zaman damgası anlamları ve kaynak referanslarıyla ortak bir CSV/JSONL olay şeması oluşturur. Çıktı varsayılan olarak sıralanmamıştır; `--sort`, kronolojik sıralamaya ve kopya birleştirmeye olanak tanır. Ayrıca Timesketch içe aktarma profilini de destekler. Yerel ayrıştırıcı dışa aktarmaları ve `auto-parse -j` mevcut şemalarını korur.
+[`super-timeline`](../commands/super-timeline.md), zaman anlamı ve kaynak içeren ortak CSV/JSONL olay şeması ve Timesketch profili üretir. Çıktı varsayılan olarak sıralanmamıştır; `--sort` ile kronolojik olarak sıralanır ve yinelenenler birleştirilir. Yerel çıktılar ve `auto-parse -j` şemalarını korur.

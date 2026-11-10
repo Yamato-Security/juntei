@@ -111,6 +111,6 @@ UTC 採用 Windows 事件記錄的格式 `2026-10-20T08:46:38.2001668Z`，並保
 空值、`null`、`NA`、`Problems` 以及剖析器特有的狀態欄位都具有意義。它們可能代表
 跡證沒有儲存該值、記錄已損毀、格式不支援該值，或是剖析器無法加以解析。請勿將所有空值都替換為零。
 
-## 標準化時間順序 { #normalized-chronological-timeline }
+## 正規化時間軸 { #normalized-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) 建立一個通用的 CSV/JSONL 事件模式，其中包含標記的時間戳意義和來源引用。預設輸出是未排序的； `--sort` 支援按時間順序排序和重複合併。它還支援 Timesketch 導入設定檔。本機解析器匯出和 `auto-parse -j` 保留其現有架構。
+[`super-timeline`](../commands/super-timeline.md) 會建立共通的 CSV／JSONL 事件結構描述，其中包含加上標籤的時間戳記意義與來源參照。輸出預設不排序；`--sort` 會啟用依時間排序與重複項合併。它也支援 Timesketch 匯入設定檔。原生剖析器的匯出與 `auto-parse -j` 則維持其既有的結構描述。

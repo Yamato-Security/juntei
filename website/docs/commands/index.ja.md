@@ -10,7 +10,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 マルチコンピューター Windows 証拠収集の場合は、[`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) を使用します。同じグループ化されたコマンドを呼び出し、結果とログをコンピュータおよび調査カテゴリごとに整理します。
 
-解析されたアーティファクト全体のタイムラインの場合は、[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) を使用します。タイムスタンプの意味を拡張してラベルを付けます。デフォルトでは出力はソートされていません。時系列順と重複統合のために `--sort` を追加します。 `auto-parse -j` は引き続きネイティブ レコードを保持します。
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) は、解析済みアーティファクトの各時刻を意味付きイベントに展開します。デフォルトでは並べ替えず、`--sort` を指定すると時系列に並べ替えて重複を統合します。`auto-parse -j` は引き続きネイティブレコードを保持します。
 
 ## [ディスクイメージ](mount.md) { #disk-images }
 

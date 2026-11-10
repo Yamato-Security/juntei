@@ -595,10 +595,10 @@ Auto-parse liest außerdem die Remoteverbindungen der Benutzer (RDP, PuTTY, WinS
 
 ## Chronologische Gesamttimeline erstellen { #build-a-chronological-super-timeline }
 
-Nach dem Parsen erweitert [`super-timeline`](super-timeline.md) die gespeicherten Zeitstempel zu beschrifteten Ereignissen und sortiert sie über Rechner und Artefakte hinweg:
+Nach dem Parsen erweitert [`super-timeline`](super-timeline.md) die gespeicherten Zeitstempel zu beschrifteten Ereignissen. Mit `--sort` werden sie über Rechner und Artefakte hinweg sortiert:
 
 ```bash
-juntei super-timeline -d output/ -o SuperTimeline.csv
+juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 Der bestehende Export `-j, --json-timeline` bleibt eine Datei mit nativen Datensätzen im Format JSONL. Er erhält die Parser-Schemas, erweitert oder sortiert aber keine Zeitstempel. Für die Beweisprüfung sollten auch diese Datei und die einzelnen Parser-Ergebnisse aufbewahrt werden.

@@ -13,7 +13,11 @@ Para una recopilación de evidencias de Windows de varios equipos, utilice
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Invoca los mismos comandos agrupados
 y organiza los resultados y los registros por equipo y por categoría de investigación.
 
-Para obtener una línea de tiempo de los artefactos analizados, utilice [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). Expande y etiqueta los significados de las marcas de tiempo. La salida no está ordenada de forma predeterminada; agregue `--sort` para orden cronológico y consolidación de duplicados. `auto-parse -j` continúa conservando registros nativos.
+Para obtener una línea de tiempo que abarque los artefactos analizados, utilice
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). Expande las marcas
+de tiempo y etiqueta su significado. La salida no se ordena de forma predeterminada; añada `--sort`
+para obtener un orden cronológico y consolidar los duplicados. `auto-parse -j` sigue conservando los
+registros nativos.
 
 ## [Imágenes de disco](mount.md) { #disk-images }
 

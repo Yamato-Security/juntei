@@ -146,11 +146,11 @@ attack. The adapters intentionally keep these distinctions:
 The default export retains all timestamp projections, including repeated metadata. It performs no
 global sorting or duplicate consolidation. With `--sort`, duplicate projections are consolidated;
 this can produce fewer rows than an unsorted export of the same inputs. Multiple equal timestamps
-with different meanings or evidence sources are retained in both modes. Duplicate
-identity includes the computer, source, artifact, record, time meaning and recovery state.
-Consolidated rows record `DuplicateCount` and bounded alternative paths/source fields. Distinct
-sources are never merged merely because their paths and timestamps look alike. When the raw source
-cannot be resolved, input-record identity is retained to avoid collapsing different captures.
+with different meanings or evidence sources are retained in both modes. Duplicate identity
+includes the computer, source, artifact, record, time meaning and recovery state. Consolidated rows
+record `DuplicateCount` and bounded alternative paths/source fields. Distinct sources are never
+merged merely because their paths and timestamps look alike. When the raw source cannot be resolved,
+input-record identity is retained to avoid collapsing different captures.
 
 ### Precision, local times and assumptions
 
@@ -191,7 +191,8 @@ For `SuperTimeline.csv`, the command also writes:
 - `SuperTimeline.csv-Diagnostics.jsonl`: invalid/ambiguous times, intentionally skipped shared metadata
   and fidelity limitations that require the original parsed record.
 - `SuperTimeline.csv-Summary.json`: input files, per-artifact counts, filtered/candidate/consolidated
-  events, output count, workers, sort budget/chunks/passes and elapsed time.
+  events, output count, workers, whether sorting was enabled, sort budget/chunks/passes and elapsed
+  time.
 
 Companion names include the complete output filename. For example, `SuperTimeline.jsonl` has its
 own `SuperTimeline.jsonl-Summary.json` and corresponding untimed/diagnostic reports. CSV and JSONL
@@ -202,11 +203,11 @@ Valid dates awaiting a justified time-zone assumption increment `UnresolvedTimeZ
 
 Records with valid times outside the requested range are counted as filtered, not untimed.
 Candidate event counts precede duplicate consolidation. `Sorted` and `DuplicateConsolidation` record
-whether `--sort` was enabled. Without it, `DuplicateEvents`, `InitialSortChunks` and `MergePasses`
-are zero, and `SortMemoryBudgetMiB` is `null` because no sort buffer is allocated.
-`Complete: true` means all selected parsed
-inputs were processed successfully; it does not mean every artifact was collected, every field is
-timestamped or every attack is detectable.
+whether `--sort` was enabled. Without it, `DuplicateEvents`, `LargestSerializedSortRowBytes`,
+`InitialSortChunks` and `MergePasses` are zero, and `SortMemoryBudgetMiB` is `null` because no sort
+buffer is allocated. `Complete: true` means all selected parsed inputs were processed successfully;
+it does not mean every artifact was collected, every field is timestamped or every attack is
+detectable.
 
 CSV exports can flatten nested metadata: System Info profiles, USB user mount points, shell items
 and other structured context can be richer in native JSON/JSONL. Use native input when those
@@ -226,17 +227,17 @@ Equal-time ordering is deterministic across worker counts and sort budgets. A pr
 for each event processed during intermediate and final merges, including repeated passes. It appears
 on a terminal and is hidden when output is redirected.
 
-`--memory-limit` applies only with `--sort`: it is the aggregate **sort-buffer budget**, not a process RSS limit. Input records,
-JSON object/string overhead, CSV buffers and merge records require additional memory. Worker count
-is reduced for small budgets. `--max-record-size` limits a parsed input record (default 16 MiB);
+`--memory-limit` applies only with `--sort`: it is the aggregate **sort-buffer budget**, not a
+process RSS limit. Input records, JSON object/string overhead, CSV buffers and merge records require
+additional memory. Worker count is reduced for small budgets. `--max-record-size` limits a parsed input record (default 16 MiB);
 a pretty JSON array/report counts as one top-level input document. Larger documents may need a
 higher limit or, preferably, JSONL. CSV parser read-ahead also contributes to this limit.
 
 Temporary disk space must accommodate the formatted event fragments (default) or expanded sort
 records and merge passes (`--sort`), in addition to final results. Both modes retain temporary output
 staging and protection against publishing failed inputs. A record can yield many events, so the
-timeline can be much larger than the input. Filter
-the time range/artifacts when appropriate and select a temporary volume with adequate free space.
+timeline can be much larger than the input. Filter the time range/artifacts when appropriate and
+select a temporary volume with adequate free space.
 
 Ctrl+C cancels cooperatively, removes the private sort/staging directories and exits with code
 `130`. On Linux and macOS this also applies to SIGTERM and SIGHUP. Cancellation is checked while

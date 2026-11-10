@@ -724,7 +724,7 @@ plugins:
       name: Português (Brasil)
       build: true
       nav_translations:
-        Super Timeline: "Super Linha do Tempo"
+        Super Timeline: "Super linha do tempo"
         Home: Início
         Overview: Visão geral
         Screenshots: Capturas de tela
@@ -813,7 +813,7 @@ plugins:
       name: Українська
       build: true
       nav_translations:
-        Super Timeline: "Супер Хронологія"
+        Super Timeline: "Суперхронологія"
         Home: Головна
         Overview: Огляд
         Screenshots: Знімки екрана
@@ -1258,7 +1258,7 @@ plugins:
       name: العربية
       build: true
       nav_translations:
-        Super Timeline: "سوبر الجدول الزمني"
+        Super Timeline: "الجدول الزمني الشامل"
         Home: الرئيسية
         Overview: نظرة عامة
         Screenshots: لقطات الشاشة

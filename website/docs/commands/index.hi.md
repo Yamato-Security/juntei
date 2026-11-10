@@ -13,7 +13,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) का उपयोग करें। यह वही समूहित commands चलाता है
 और परिणामों तथा logs को computer और जाँच की category के अनुसार व्यवस्थित करता है।
 
-पार्स की गई कलाकृतियों की समयरेखा के लिए, [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) का उपयोग करें। यह टाइमस्टैम्प अर्थों का विस्तार और लेबल करता है। आउटपुट डिफ़ॉल्ट रूप से अवर्गीकृत है; कालानुक्रमिक क्रम और डुप्लिकेट समेकन के लिए `--sort` जोड़ें। `auto-parse -j` ने मूल रिकॉर्ड बनाए रखना जारी रखा है।
+पार्स किए गए सभी आर्टिफ़ैक्ट को समेटने वाली टाइमलाइन के लिए [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) का उपयोग करें। यह टाइमस्टैम्प का विस्तार करता है और उनके अर्थ लेबल करता है। आउटपुट डिफ़ॉल्ट रूप से सॉर्ट नहीं होता; कालानुक्रमिक क्रम और डुप्लिकेट समेकन के लिए `--sort` जोड़ें। `auto-parse -j` पहले की तरह नेटिव रिकॉर्ड बनाए रखता है।
 
 ## [डिस्क इमेज](mount.md) { #disk-images }
 

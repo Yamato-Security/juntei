@@ -13,7 +13,7 @@ Pour une collecte de preuves Windows portant sur plusieurs ordinateurs, utilisez
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Elle invoque les mêmes commandes regroupées
 et organise les résultats et les journaux par ordinateur et par catégorie d'investigation.
 
-Pour une chronologie des artefacts analysés, utilisez [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). Il développe et étiquette les significations de l'horodatage. La sortie n'est pas triée par défaut ; ajoutez `--sort` pour l'ordre chronologique et la consolidation des doublons. `auto-parse -j` continue de conserver les enregistrements natifs.
+Pour une chronologie des artefacts analysés, utilisez [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). La commande développe les dates et en étiquette la signification. La sortie n'est pas triée par défaut ; ajoutez `--sort` pour l'ordre chronologique et la consolidation des doublons. `auto-parse -j` conserve toujours les données natives.
 
 ## [Images disque](mount.md) { #disk-images }
 

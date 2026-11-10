@@ -13,7 +13,7 @@ Untuk hasil pengumpulan bukti Windows dari banyak komputer, gunakan
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Perintah ini memanggil perintah-perintah berkelompok yang sama
 dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 
-Untuk garis waktu di seluruh artefak yang diurai, gunakan [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). Ini memperluas dan memberi label arti stempel waktu. Output tidak disortir secara default; tambahkan `--sort` untuk urutan kronologis dan konsolidasi duplikat. `auto-parse -j` terus mempertahankan catatan asli.
+Gunakan [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) untuk linimasa lintas artefak hasil parsing dengan arti waktu berlabel. Keluaran tidak diurutkan secara default; tambahkan `--sort` untuk urutan kronologis dan konsolidasi duplikat. `auto-parse -j` tetap menyimpan rekaman asli.
 
 ## [Image disk](mount.md) { #disk-images }
 

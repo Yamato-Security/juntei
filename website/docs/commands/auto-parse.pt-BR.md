@@ -594,12 +594,17 @@ para conhecer os campos do relatório e suas limitações forenses.
 
 O auto-parse também lê as conexões remotas dos usuários (RDP, PuTTY, WinSCP e unidades mapeadas).
 
-## Construa uma super linha do tempo cronológica { #build-a-chronological-super-timeline }
+## Criar uma super linha do tempo cronológica { #build-a-chronological-super-timeline }
 
-Após a análise, use [`super-timeline`](super-timeline.md) para expandir os carimbos de data/hora registrados em eventos rotulados e classificá-los entre computadores e artefatos:
+Depois da análise, use o [`super-timeline`](super-timeline.md) para expandir os carimbos de data/hora
+registrados em eventos rotulados. Adicione `--sort` para ordená-los considerando todos os computadores e
+artefatos:
 
 ```bash
-juntei super-timeline -d output/ -o SuperTimeline.csv
+juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
-A exportação `-j, --json-timeline` existente permanece um arquivo JSONL de registro nativo combinado. Preserva os esquemas do analisador; ele não expande campos de carimbo de data/hora nem classifica eventos. Guarde-o e aos resultados individuais do analisador para revisão em nível de evidência.
+A exportação `-j, --json-timeline` já existente continua sendo um arquivo JSONL que combina os registros
+nativos. Ela preserva os esquemas dos analisadores; não expande campos de carimbo de data/hora nem ordena
+eventos. Guarde-a, junto com os resultados individuais dos analisadores, para a revisão no nível das
+evidências.
