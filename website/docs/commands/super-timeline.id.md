@@ -1,6 +1,6 @@
 # Linimasa gabungan { #super-timeline }
 
-`super-timeline` mengubah artefak yang sudah diparsing menjadi peristiwa berskema bersama lalu mengurutkannya. Setiap waktu eksekusi dalam Prefetch atau delapan waktu berkas atau lebih dalam MFT menjadi peristiwa tersendiri. Makna waktunya tetap jelas ketika membandingkan sumber.
+`super-timeline` mengubah artefak yang sudah diparsing menjadi peristiwa berskema bersama. Keluaran **tidak diurutkan secara default**: urutannya mengikuti urutan berkas masukan yang ditemukan dan urutan proyeksi setiap parser, tanpa bergantung pada urutan selesainya pekerja. Tambahkan `--sort` untuk pengurutan kronologis dan konsolidasi duplikat. Setiap waktu eksekusi dalam Prefetch atau delapan waktu berkas atau lebih dalam MFT menjadi peristiwa tersendiri. Makna waktunya tetap jelas ketika membandingkan sumber.
 
 Mulailah dari hasil [`auto-parse`](auto-parse.md), bukan direktori bukti asli:
 
@@ -16,6 +16,9 @@ Simpan hasil parsing, manifes, dan bukti asli. Linimasa hanya proyeksi analisis,
 ```bash
 # Native CSV (default)
 juntei super-timeline -d parsed/ -o SuperTimeline.csv
+
+# Chronological CSV with duplicate consolidation
+juntei super-timeline -d parsed/ -o SortedTimeline.csv --sort
 
 # Native JSON Lines
 juntei super-timeline -d parsed/ -o SuperTimeline.jsonl -t jsonl
@@ -34,7 +37,7 @@ juntei super-timeline -f MFT.csv --input-artifact mft --computer HOST01 \
 # Reduce the time range, memory used by sorting, or number of workers
 juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
   --timeline-start "2026-10-20T06:00:00Z" --timeline-end "2026-10-20T14:00:00Z" \
-  --memory-limit 64 -T 4 --temp-dir scratch/
+  --sort --memory-limit 64 -T 4 --temp-dir scratch/
 ```
 
 `--hayabusa FILE` dapat dipakai sendiri atau berulang untuk mengimpor waktu dan konteks aturan tanpa menjalankan Hayabusa. Peristiwa informasional dengan `Details` berupa string didukung. `--artifact mft,prefetch` membatasi artefak. Batas waktu inklusif dan memerlukan offset UTC eksplisit atau `Z`.
@@ -84,11 +87,11 @@ Waktu menggambarkan objek tercatat, bukan bukti eksekusi atau serangan dengan se
 
 | Artefak | Interpretasi linimasa |
 |---|---|
-| MFT | Waktu modifikasi, akses, perubahan metadata dan pembuatan SI/FN terpisah. Atribut FN bernama tetap berbeda; SI berulang digabung. Waktu dasar bersama dari baris ADS dikecualikan. Nama slack rekaman FILE yang dipulihkan memiliki peristiwa FN pemulihan tersendiri. |
+| MFT | Waktu modifikasi, akses, perubahan metadata dan pembuatan SI/FN terpisah. Atribut FN bernama tetap berbeda; dengan `--sort`, SI berulang digabung. Waktu dasar bersama dari baris ADS dikecualikan di kedua mode. Nama slack rekaman FILE yang dipulihkan memiliki peristiwa FN pemulihan tersendiri. |
 | I30 | Metadata FN/indeks dengan konteks slack/pemulihan, bukan waktu penulisan indeks direktori. |
 | Jurnal USN | Waktu jurnal dan alasan pembaruan; satu rekaman dapat berisi beberapa perubahan tanpa awal yang tepat. |
 | LogFile | Snapshot waktu redo/undo dan nama berkas tetap terpisah. LSN dan offset berkas adalah ID, bukan tanggal. |
-| Prefetch | Eksekusi tercatat digabung dengan ekspor linimasa Prefetch yang cocok; waktu pembuatan volume diberi label terpisah. |
+| Prefetch | Eksekusi tercatat, yang dengan `--sort` digabung dengan ekspor linimasa Prefetch yang cocok; waktu pembuatan volume diberi label terpisah. |
 | Database SQLite browser | Kunjungan, kunjungan terakhir yang dipulihkan, awal/akhir unduhan, waktu cookie dan penggunaan/penghapusan formulir. Akhir unduhan tidak membuktikan sukses/eksekusi; kedaluwarsa cookie adalah konfigurasi. Status pemulihan, keyakinan dan asal disimpan. |
 | Internet Explorer / Edge lama WebCache | Akses, pembuatan/modifikasi, kedaluwarsa, sinkronisasi, unduhan, cookie dan pemeliharaan kontainer. Administrasi cache tidak otomatis membuktikan kunjungan pengguna. |
 | Outlook PST, OST, MSG dan OFT | Pengiriman/penerimaan, pembuatan/modifikasi folder/item/lampiran, jadwal kalender/tugas/pengingat dan properti waktu bertipe eksplisit. Jadwal tidak membuktikan rapat, pengingat atau eksekusi; penerimaan tidak membuktikan pembacaan. |
@@ -109,7 +112,7 @@ Waktu menggambarkan objek tercatat, bukan bukti eksekusi atau serangan dengan se
 | Persistence Hunter | Penulisan kunci dan perubahan terkait. Temuan bukan otomatis instalasi bertanggal atau putusan kompromi. |
 | Hayabusa | Waktu peristiwa/alert dengan aturan, tingkat, kanal, ID dan konteks. Aturan serta korelasi berbeda tidak digabung. |
 
-Waktu sama dengan makna/sumber berbeda tetap dipertahankan. Identitas mencakup komputer, sumber, artefak, rekaman, makna waktu dan pemulihan. Hasil gabungan menyimpan `DuplicateCount` dan referensi alternatif terbatas. Sumber berbeda tidak digabung hanya karena jalur/waktu mirip. Tanpa sumber mentah, identitas masukan mencegah penggabungan koleksi berbeda.
+Ekspor default mempertahankan semua proyeksi waktu, termasuk metadata berulang, tanpa pengurutan global atau konsolidasi duplikat. Dengan `--sort`, proyeksi duplikat digabung sehingga jumlah barisnya bisa lebih sedikit daripada ekspor tak terurut dari masukan yang sama. Waktu sama dengan makna/sumber berbeda tetap dipertahankan di kedua mode. Identitas duplikat mencakup komputer, sumber, artefak, rekaman, makna waktu dan pemulihan. Hasil gabungan menyimpan `DuplicateCount` dan referensi alternatif terbatas. Sumber berbeda tidak digabung hanya karena jalur/waktu mirip. Tanpa sumber mentah, identitas masukan mencegah penggabungan koleksi berbeda.
 
 ### Presisi, waktu lokal dan asumsi { #precision-local-times-and-assumptions }
 
@@ -137,23 +140,25 @@ Untuk `SuperTimeline.csv`, perintahnya juga menulis:
 
 - `SuperTimeline.csv-Untimed.jsonl`: lokasi rekaman asli tanpa waktu peristiwa yang dapat dipetakan.
 - `SuperTimeline.csv-Diagnostics.jsonl`: waktu rusak/ambigu, metadata bersama sengaja dilewati dan batasan yang memerlukan rekaman asli.
-- `SuperTimeline.csv-Summary.json`: masukan, hitungan artefak/peristiwa, penyaringan/kandidat/konsolidasi, keluaran, pekerja, anggaran/chunk/pass pengurutan dan durasi.
+- `SuperTimeline.csv-Summary.json`: masukan, hitungan artefak/peristiwa, penyaringan/kandidat/konsolidasi, keluaran, pekerja, apakah pengurutan diaktifkan, anggaran/chunk/pass pengurutan dan durasi.
 
-Nama pendamping menyertakan nama file keluaran lengkap. Misalnya, `SuperTimeline.jsonl` memiliki `SuperTimeline.jsonl-Summary.json` sendiri dan laporan tanpa batas waktu/diagnostik terkait. Ekspor CSV dan JSONL dengan batang yang sama dapat hidup berdampingan; `-C` diperlukan hanya untuk menggantikan kumpulan hasil yang ada.
+Nama pendamping menyertakan nama file keluaran lengkap. Misalnya, `SuperTimeline.jsonl` memiliki `SuperTimeline.jsonl-Summary.json` sendiri dan laporan tanpa waktu/diagnostik terkait. Ekspor CSV dan JSONL dengan nama dasar yang sama dapat hidup berdampingan; `-C` diperlukan hanya untuk menggantikan kumpulan hasil yang ada.
 
-Tanggal valid menunggu kenaikan asumsi zona waktu yang dibenarkan `UnresolvedTimeZones`, bukan `InvalidTimestamps`. Keduanya tetap dapat dilacak dalam diagnosis; tidak ada stempel waktu yang ditemukan.
+Tanggal valid yang masih menunggu asumsi zona waktu yang beralasan menambah `UnresolvedTimeZones`, bukan `InvalidTimestamps`. Keduanya tetap dapat dilacak dalam diagnostik; tidak ada waktu yang dikarang.
 
-Waktu valid di luar rentang dihitung sebagai tersaring, bukan tanpa waktu. Kandidat dihitung sebelum konsolidasi. `Complete: true` berarti semua masukan terpilih berhasil diproses, bukan koleksi lengkap atau semua serangan terdeteksi.
+Waktu valid di luar rentang dihitung sebagai tersaring, bukan tanpa waktu. Kandidat dihitung sebelum konsolidasi. `Sorted` dan `DuplicateConsolidation` mencatat apakah `--sort` diaktifkan. Tanpa opsi itu, `DuplicateEvents`, `LargestSerializedSortRowBytes`, `InitialSortChunks` dan `MergePasses` bernilai nol, dan `SortMemoryBudgetMiB` bernilai `null` karena tidak ada buffer pengurutan yang dialokasikan. `Complete: true` berarti semua masukan terpilih berhasil diproses, bukan koleksi lengkap atau semua serangan terdeteksi.
 
 CSV bisa meratakan profil sistem, mount point pengguna USB dan shell item; JSON/JSONL asli lebih kaya. Data yang hilang dari CSV tidak bisa dipulihkan. Artefak tak didukung atau masukan rusak menghasilkan kesalahan, bukan sukses parsial.
 
 ## Performa dan keamanan keluaran { #performance-and-output-safety }
 
-Masukan dialirkan paralel; buffer pengurutan meluap ke direktori privat lalu digabung dalam pass terbatas yang deterministik. Detik/nanodetik utuh mendukung sebelum 1970. Urutan waktu sama stabil lintas pekerja/anggaran.
+Masukan dialirkan dan diproses paralel. Secara default, setiap pekerja menulis fragmen peristiwa berformat; fragmen disambung sesuai urutan berkas masukan tanpa pengurutan dan tanpa membaca ulang struktur peristiwanya. CSV tetap memiliki satu header meskipun banyak berkas diproses. Urutan keluaran deterministik lintas jumlah pekerja, tetapi tidak menandakan urutan kronologis.
 
-`--memory-limit` adalah **anggaran total buffer pengurutan**, bukan batas RSS proses. Rekaman, objek JSON, buffer CSV dan penggabungan memerlukan memori tambahan; anggaran kecil mengurangi pekerja. `--max-record-size` membatasi rekaman, default 16 MiB. Array JSON berformat dianggap satu dokumen; naikkan batas atau gunakan JSONL. Read-ahead CSV juga dihitung.
+Dengan `--sort`, buffer pengurutan meluap ke direktori sementara privat, lalu pass penggabungan terbatas menghasilkan keluaran kronologis. Pengurutan memakai detik dan nanodetik bilangan bulat utuh, termasuk tanggal sebelum 1970. Urutan peristiwa berwaktu sama deterministik lintas jumlah pekerja dan anggaran pengurutan. Bilah progres bertambah untuk setiap peristiwa yang diproses selama penggabungan perantara dan akhir, termasuk pass berulang. Bilah ini tampil di terminal dan disembunyikan jika keluaran dialihkan.
 
-Disk sementara harus menampung perluasan peristiwa dan penggabungan di samping hasil akhir. Satu rekaman dapat menghasilkan banyak peristiwa. Filter waktu/artefak dan pilih volume cukup longgar.
+`--memory-limit` hanya berlaku dengan `--sort`: nilainya adalah **anggaran total buffer pengurutan**, bukan batas RSS proses. Rekaman, objek JSON, buffer CSV dan penggabungan memerlukan memori tambahan; anggaran kecil mengurangi pekerja. `--max-record-size` membatasi rekaman, default 16 MiB. Array JSON berformat dianggap satu dokumen; naikkan batas atau gunakan JSONL. Read-ahead CSV juga dihitung.
+
+Disk sementara harus menampung fragmen peristiwa berformat (default) atau rekaman pengurutan yang diperluas beserta pass penggabungan (`--sort`), di samping hasil akhir. Kedua mode tetap memakai staging keluaran sementara dan perlindungan agar hasil dari masukan yang gagal tidak dipublikasikan. Satu rekaman dapat menghasilkan banyak peristiwa. Filter waktu/artefak dan pilih volume cukup longgar.
 
 Ctrl+C membatalkan secara kooperatif, menghapus direktori pengurutan/pementasan pribadi dan keluar dengan kode `130`. Pada Linux dan macOS, hal ini juga berlaku untuk SIGTERM dan SIGHUP. Pembatalan diperiksa saat membaca, normalisasi, menggabungkan dan menulis laporan, sebelum publikasi dimulai. Pengakhiran yang tidak dapat dicegah atau hilangnya daya masih dapat meninggalkan file-file sementara.
 

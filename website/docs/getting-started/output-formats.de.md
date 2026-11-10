@@ -119,6 +119,6 @@ Leere Werte, `null`, `NA`, `Problems` und parserspezifische Zustandsfelder sind 
 Artefakt keinen Wert gespeichert hat, der Datensatz beschädigt war, das Format ihn nicht unterstützt oder der
 Parser ihn nicht auflösen konnte. Ersetzen Sie nicht alle leeren Werte durch Null.
 
-## Normalisierte chronologische Timeline { #normalized-chronological-timeline }
+## Normalisierte Timeline { #normalized-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) erstellt ein gemeinsames CSV-/JSONL-Ereignisschema mit Zeitbedeutung, Quellenangaben und chronologischer Sortierung sowie einem Timesketch-Profil. Native Exporte und `auto-parse -j` behalten ihre Schemas.
+[`super-timeline`](../commands/super-timeline.md) erstellt ein gemeinsames CSV-/JSONL-Ereignisschema mit Zeitbedeutung und Quellenangaben. Die Ausgabe ist standardmäßig unsortiert; `--sort` sortiert chronologisch und führt Duplikate zusammen. Ein Timesketch-Importprofil wird ebenfalls unterstützt. Native Exporte und `auto-parse -j` behalten ihre Schemas.

@@ -18,9 +18,16 @@ use std::path::Path;
 use std::process::{Command, Output};
 
 fn run(args: &[&str]) -> Output {
+    invoke(args, true)
+}
+fn invoke(args: &[&str], sort: bool) -> Output {
+    let mut args = args.to_vec();
+    if sort {
+        args.push("--sort");
+    }
     Command::new(env!("CARGO_BIN_EXE_juntei"))
         .arg("super-timeline")
-        .args(args)
+        .args(&args)
         .args(["-q", "-K"])
         .output()
         .unwrap()
@@ -95,6 +102,204 @@ fn seed(dir: &Path) -> std::path::PathBuf {
         ],
     );
     input
+}
+
+#[test]
+fn default_keeps_input_order_and_duplicates_in_every_output_profile() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = seed(dir.path());
+    for profile in ["native", "timesketch"] {
+        let mut equivalent = Vec::new();
+        for format in ["csv", "jsonl"] {
+            let output = dir.path().join(format!("unsorted-{profile}.{format}"));
+            let result = invoke(
+                &[
+                    "-f",
+                    input.to_str().unwrap(),
+                    "-o",
+                    output.to_str().unwrap(),
+                    "-t",
+                    format,
+                    "--profile",
+                    profile,
+                ],
+                false,
+            );
+            assert!(!String::from_utf8_lossy(&result.stdout).contains("Sorting chunks:"));
+            ok(result);
+            let rows = if format == "csv" {
+                csv(&output)
+            } else {
+                jsonl(&output)
+            };
+            let key = if profile == "native" {
+                "Timestamp"
+            } else {
+                "datetime"
+            };
+            assert_eq!(rows[0][key], "2026-10-20T08:46:38.200166800Z");
+            assert_eq!(rows[1][key], "1969-01-01T00:00:00.000000000Z");
+            assert!(
+                rows.iter()
+                    .all(|r| r["Details"].get("DuplicateCount").is_none())
+            );
+            let summary: Value = serde_json::from_slice(
+                &fs::read(
+                    output.with_file_name(format!("unsorted-{profile}.{format}-Summary.json")),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(summary["Sorted"], false);
+            assert_eq!(summary["DuplicateConsolidation"], false);
+            assert_eq!(summary["InitialSortChunks"], 0);
+            assert_eq!(summary["MergePasses"], 0);
+            assert!(summary["SortMemoryBudgetMiB"].is_null());
+            assert_eq!(summary["Counts"]["DuplicateEvents"], 0);
+            assert_eq!(summary["OutputEvents"], rows.len());
+            equivalent.push(rows);
+        }
+        assert_eq!(equivalent[0], equivalent[1]);
+        let output = dir.path().join(format!("sorted-{profile}.jsonl"));
+        let result = run(&[
+            "-f",
+            input.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            "jsonl",
+            "--profile",
+            profile,
+        ]);
+        assert!(String::from_utf8_lossy(&result.stdout).contains("Sorting chunks:"));
+        ok(result);
+        let sorted = jsonl(&output);
+        let key = if profile == "native" {
+            "Timestamp"
+        } else {
+            "datetime"
+        };
+        assert!(
+            sorted
+                .windows(2)
+                .all(|pair| pair[0][key].as_str() <= pair[1][key].as_str())
+        );
+        assert_eq!(sorted.len() + 1, equivalent[0].len());
+        assert!(sorted.iter().any(|r| r["Details"]["DuplicateCount"] == 1));
+    }
+}
+
+#[test]
+fn unsorted_parallel_fragments_keep_file_order_and_quoted_csv_data() {
+    let dir = tempfile::tempdir().unwrap();
+    let parsed = dir.path().join("parsed");
+    manifest(&parsed, &[("a.csv", "prefetch"), ("b.csv", "prefetch")]);
+    for (name, count, executable) in [("a.csv", 2000, "first.exe"), ("b.csv", 2, "last.exe")] {
+        let mut writer = csv::Writer::from_path(parsed.join(name)).unwrap();
+        writer
+            .write_record(["SourceFile", "ExecutableName", "LastRun"])
+            .unwrap();
+        for _ in 0..count {
+            writer
+                .write_record([
+                    "capture/a,\"quoted\"\nfile.pf",
+                    executable,
+                    "2026-10-20T08:00:00Z",
+                ])
+                .unwrap();
+        }
+        writer.flush().unwrap();
+    }
+    let mut equivalent = Vec::new();
+    for format in ["csv", "jsonl"] {
+        for threads in ["1", "4"] {
+            let output = dir.path().join(format!("ordered-{threads}.{format}"));
+            ok(invoke(
+                &[
+                    "-d",
+                    parsed.to_str().unwrap(),
+                    "-o",
+                    output.to_str().unwrap(),
+                    "-t",
+                    format,
+                    "-T",
+                    threads,
+                ],
+                false,
+            ));
+            let rows = if format == "csv" {
+                csv(&output)
+            } else {
+                jsonl(&output)
+            };
+            assert_eq!(rows.len(), 2002);
+            assert!(
+                rows[..2000]
+                    .iter()
+                    .all(|r| r["Details"]["ExecutableName"] == "first.exe")
+            );
+            assert!(
+                rows[2000..]
+                    .iter()
+                    .all(|r| r["Details"]["ExecutableName"] == "last.exe")
+            );
+            assert!(
+                rows.iter()
+                    .all(|r| r["SourceFile"] == "capture/a,\"quoted\"\nfile.pf")
+            );
+            equivalent.push(rows);
+        }
+    }
+    assert!(equivalent.windows(2).all(|pair| pair[0] == pair[1]));
+}
+
+#[test]
+fn unsorted_input_failure_preserves_all_previous_outputs_and_cleans_fragments() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = dir.path().join("malformed.jsonl");
+    fs::write(&input, format!("{}\n{{broken\n", json!({"Artifact":"prefetch","SourceFile":"capture/a.pf","LastRun":"2026-10-20T08:00:00Z"}))).unwrap();
+    let scratch = dir.path().join("scratch");
+    fs::create_dir(&scratch).unwrap();
+    for format in ["csv", "jsonl"] {
+        let name = format!("timeline.{format}");
+        let paths: Vec<_> = [
+            name.clone(),
+            format!("{name}-Summary.json"),
+            format!("{name}-Untimed.jsonl"),
+            format!("{name}-Diagnostics.jsonl"),
+        ]
+        .iter()
+        .map(|name| dir.path().join(name))
+        .collect();
+        for path in &paths {
+            fs::write(path, "previous complete result").unwrap();
+        }
+        assert!(
+            !invoke(
+                &[
+                    "-f",
+                    input.to_str().unwrap(),
+                    "-o",
+                    paths[0].to_str().unwrap(),
+                    "-t",
+                    format,
+                    "--temp-dir",
+                    scratch.to_str().unwrap(),
+                    "-C"
+                ],
+                false
+            )
+            .status
+            .success()
+        );
+        for path in &paths {
+            assert_eq!(
+                fs::read_to_string(path).unwrap(),
+                "previous complete result"
+            );
+        }
+        assert_eq!(fs::read_dir(&scratch).unwrap().count(), 0);
+    }
 }
 #[test]
 fn csv_jsonl_timesketch_and_threads_have_identical_events() {

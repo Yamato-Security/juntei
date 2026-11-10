@@ -1,6 +1,8 @@
 # Super Timeline
 
-`super-timeline` turns parsed artifacts into events with a common schema and sorts them by time.
+`super-timeline` turns parsed artifacts into events with a common schema. Output is **unsorted by
+default**: it follows the discovered input-file order and each parser's projection order, independently
+of worker completion order. Add `--sort` for chronological ordering and duplicate consolidation.
 A Prefetch record can contain several execution times; an MFT record can contain eight or more
 file timestamps. Each becomes a separately labeled event. This makes it easier to compare evidence
 from different sources without losing what each timestamp actually means.
@@ -21,6 +23,9 @@ it does not replace those records or create a native Plaso storage file.
 # Native CSV (default)
 juntei super-timeline -d parsed/ -o SuperTimeline.csv
 
+# Chronological CSV with duplicate consolidation
+juntei super-timeline -d parsed/ -o SortedTimeline.csv --sort
+
 # Native JSON Lines
 juntei super-timeline -d parsed/ -o SuperTimeline.jsonl -t jsonl
 
@@ -38,7 +43,7 @@ juntei super-timeline -f MFT.csv --input-artifact mft --computer HOST01 \
 # Reduce the time range, memory used by sorting, or number of workers
 juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
   --timeline-start "2026-10-20T06:00:00Z" --timeline-end "2026-10-20T14:00:00Z" \
-  --memory-limit 64 -T 4 --temp-dir scratch/
+  --sort --memory-limit 64 -T 4 --temp-dir scratch/
 ```
 
 `--hayabusa FILE` can be repeated or used on its own. It imports existing event/alert timestamps
@@ -113,11 +118,11 @@ attack. The adapters intentionally keep these distinctions:
 
 | Artifacts | Timeline interpretation |
 |---|---|
-| MFT | Separate SI and FN modification, access, metadata-change and creation times; named FN attributes remain distinct. Repeated SI fields on filename rows are consolidated. ADS rows' shared base-file times are excluded. Recovered FILE-record slack names keep separate recovered-FN events. |
+| MFT | Separate SI and FN modification, access, metadata-change and creation times; named FN attributes remain distinct. With `--sort`, repeated SI fields on filename rows are consolidated. ADS rows' shared base-file times are excluded in both modes. Recovered FILE-record slack names keep separate recovered-FN events. |
 | I30 | Stored FN/index metadata, with slack/recovery context when available. These are not timestamps of the directory-index write. |
 | USN Journal | Journal record timestamp and update reasons. A record can describe several changes; it does not necessarily record their precise start time. |
 | LogFile | Stored redo/undo timestamp snapshots and filename metadata. Redo and undo remain separate. LSNs and file offsets are identifiers, never converted to dates. |
-| Prefetch | Recorded execution times, consolidated with the matching Prefetch timeline export. Referenced volume-creation metadata is labeled separately. |
+| Prefetch | Recorded execution times. With `--sort`, these are consolidated with the matching Prefetch timeline export. Referenced volume-creation metadata is labeled separately. |
 | Browser SQLite databases | Recorded visits, recovered page last-visit metadata, download start/end, cookie creation/access/expiry and form-history first/last use or deletion tombstones. A download end does not by itself prove success or execution; a cookie expiry is a configured deadline. Recovery status, confidence and origin remain in context. |
 | Internet Explorer / legacy Edge WebCache | Stored entry access, creation/modification, expiry and synchronization, download starts, cookie metadata and container access/scavenging. Cache bookkeeping is not automatically evidence of a user opening a page. |
 | Outlook PST, OST, MSG and OFT | Message submission/delivery; folder, item and attachment creation/modification; calendar start/end/reminders; task start/due/completion/reminders; and explicitly typed time properties. Scheduled times do not prove a meeting occurred, a reminder fired or a program executed. A stored delivery time does not prove the message was read. |
@@ -138,11 +143,14 @@ attack. The adapters intentionally keep these distinctions:
 | Persistence Hunter | Supporting key last write and correlated change time. A finding is not itself a timestamped installation or a verdict of compromise. |
 | Hayabusa | Event/alert timestamp with rule, level, channel, event ID and available detail context. Multiple rules and distinct correlation rows remain separate. |
 
-Multiple equal timestamps with different meanings or evidence sources are retained. Duplicate
-identity includes the computer, source, artifact, record, time meaning and recovery state.
-Consolidated rows record `DuplicateCount` and bounded alternative paths/source fields. Distinct
-sources are never merged merely because their paths and timestamps look alike. When the raw source
-cannot be resolved, input-record identity is retained to avoid collapsing different captures.
+The default export retains all timestamp projections, including repeated metadata. It performs no
+global sorting or duplicate consolidation. With `--sort`, duplicate projections are consolidated;
+this can produce fewer rows than an unsorted export of the same inputs. Multiple equal timestamps
+with different meanings or evidence sources are retained in both modes. Duplicate identity
+includes the computer, source, artifact, record, time meaning and recovery state. Consolidated rows
+record `DuplicateCount` and bounded alternative paths/source fields. Distinct sources are never
+merged merely because their paths and timestamps look alike. When the raw source cannot be resolved,
+input-record identity is retained to avoid collapsing different captures.
 
 ### Precision, local times and assumptions
 
@@ -183,7 +191,8 @@ For `SuperTimeline.csv`, the command also writes:
 - `SuperTimeline.csv-Diagnostics.jsonl`: invalid/ambiguous times, intentionally skipped shared metadata
   and fidelity limitations that require the original parsed record.
 - `SuperTimeline.csv-Summary.json`: input files, per-artifact counts, filtered/candidate/consolidated
-  events, output count, workers, sort budget/chunks/passes and elapsed time.
+  events, output count, workers, whether sorting was enabled, sort budget/chunks/passes and elapsed
+  time.
 
 Companion names include the complete output filename. For example, `SuperTimeline.jsonl` has its
 own `SuperTimeline.jsonl-Summary.json` and corresponding untimed/diagnostic reports. CSV and JSONL
@@ -193,9 +202,12 @@ Valid dates awaiting a justified time-zone assumption increment `UnresolvedTimeZ
 `InvalidTimestamps`. Both remain traceable in diagnostics; no timestamp is invented.
 
 Records with valid times outside the requested range are counted as filtered, not untimed.
-Candidate event counts precede duplicate consolidation. `Complete: true` means all selected parsed
-inputs were processed successfully; it does not mean every artifact was collected, every field is
-timestamped or every attack is detectable.
+Candidate event counts precede duplicate consolidation. `Sorted` and `DuplicateConsolidation` record
+whether `--sort` was enabled. Without it, `DuplicateEvents`, `LargestSerializedSortRowBytes`,
+`InitialSortChunks` and `MergePasses` are zero, and `SortMemoryBudgetMiB` is `null` because no sort
+buffer is allocated. `Complete: true` means all selected parsed inputs were processed successfully;
+it does not mean every artifact was collected, every field is timestamped or every attack is
+detectable.
 
 CSV exports can flatten nested metadata: System Info profiles, USB user mount points, shell items
 and other structured context can be richer in native JSON/JSONL. Use native input when those
@@ -204,20 +216,28 @@ IDs and malformed input files cause an error instead of a success containing par
 
 ## Performance and output safety
 
-Inputs are streamed and processed in parallel. Sort buffers spill to a private temporary directory,
-then bounded merge passes produce deterministic chronological output. Sorting uses full integer
-seconds and nanoseconds, including dates before 1970. Equal-time ordering is deterministic across
-worker counts and sort budgets.
+Inputs are streamed and processed in parallel. By default, each worker writes a formatted event
+fragment; fragments are concatenated in input-file order without sorting or re-reading their event
+structures. CSV has one header even when multiple files are processed. Output order is deterministic
+across worker counts; it does not imply chronology.
 
-`--memory-limit` is the aggregate **sort-buffer budget**, not a process RSS limit. Input records,
-JSON object/string overhead, CSV buffers and merge records require additional memory. Worker count
-is reduced for small budgets. `--max-record-size` limits a parsed input record (default 16 MiB);
+With `--sort`, buffers spill to a private temporary directory, then bounded merge passes produce
+chronological output. Sorting uses full integer seconds and nanoseconds, including dates before 1970.
+Equal-time ordering is deterministic across worker counts and sort budgets. A progress bar advances
+for each event processed during intermediate and final merges, including repeated passes. It appears
+on a terminal and is hidden when output is redirected.
+
+`--memory-limit` applies only with `--sort`: it is the aggregate **sort-buffer budget**, not a
+process RSS limit. Input records, JSON object/string overhead, CSV buffers and merge records require
+additional memory. Worker count is reduced for small budgets. `--max-record-size` limits a parsed input record (default 16 MiB);
 a pretty JSON array/report counts as one top-level input document. Larger documents may need a
 higher limit or, preferably, JSONL. CSV parser read-ahead also contributes to this limit.
 
-Temporary disk space must accommodate the expanded events and merge passes, in addition to final
-results. A record can yield many events, so the timeline can be much larger than the input. Filter
-the time range/artifacts when appropriate and select a temporary volume with adequate free space.
+Temporary disk space must accommodate the formatted event fragments (default) or expanded sort
+records and merge passes (`--sort`), in addition to final results. Both modes retain temporary output
+staging and protection against publishing failed inputs. A record can yield many events, so the
+timeline can be much larger than the input. Filter the time range/artifacts when appropriate and
+select a temporary volume with adequate free space.
 
 Ctrl+C cancels cooperatively, removes the private sort/staging directories and exits with code
 `130`. On Linux and macOS this also applies to SIGTERM and SIGHUP. Cancellation is checked while

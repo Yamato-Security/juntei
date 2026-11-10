@@ -13,7 +13,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) คำสั่งนี้เรียกใช้คำสั่งที่จัดกลุ่มเดียวกัน
 และจัดระเบียบผลลัพธ์และ log ตามคอมพิวเตอร์และหมวดหมู่การตรวจสอบ
 
-สำหรับไทม์ไลน์ที่เรียงลำดับตามลำดับเวลาสำหรับอาร์ติแฟกต์ที่แยกวิเคราะห์ ให้ใช้ [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) มันขยายและติดป้ายกำกับความหมายการประทับเวลา `auto-parse -j` ยังคงรักษาบันทึกดั้งเดิมไว้
+สำหรับไทม์ไลน์ที่ครอบคลุมอาร์ติแฟกต์ที่พาร์สแล้ว ให้ใช้
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md)
+คำสั่งนี้ขยาย timestamp และติดป้ายกำกับความหมายของแต่ละค่า เอาต์พุตไม่ถูกเรียงลำดับโดยค่าเริ่มต้น
+เพิ่ม `--sort` เพื่อเรียงตามลำดับเวลาและรวมรายการที่ซ้ำกัน ส่วน `auto-parse -j` ยังคงเก็บเรคคอร์ดเนทีฟไว้ตามเดิม
 
 ## [อิมเมจดิสก์](mount.md) { #disk-images }
 

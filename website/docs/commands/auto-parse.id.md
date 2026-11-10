@@ -596,10 +596,10 @@ Auto-parse juga membaca koneksi jarak jauh milik pengguna (RDP, PuTTY, WinSCP, d
 
 ## Membuat linimasa gabungan kronologis { #build-a-chronological-super-timeline }
 
-Setelah parsing, gunakan [`super-timeline`](super-timeline.md) untuk memperluas waktu menjadi peristiwa berlabel dan mengurutkannya lintas komputer dan artefak:
+Setelah parsing, gunakan [`super-timeline`](super-timeline.md) untuk memperluas waktu menjadi peristiwa berlabel. Tambahkan `--sort` untuk mengurutkannya lintas komputer dan artefak:
 
 ```bash
-juntei super-timeline -d output/ -o SuperTimeline.csv
+juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 Ekspor `-j, --json-timeline` tetap berupa gabungan rekaman asli JSONL, mempertahankan skema tanpa memperluas atau mengurutkan waktu. Simpan bersama hasil masing-masing parser untuk pemeriksaan bukti.

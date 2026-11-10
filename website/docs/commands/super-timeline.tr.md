@@ -1,6 +1,6 @@
 # Birleşik zaman çizelgesi { #super-timeline }
 
-`super-timeline` ayrıştırılmış artefaktları ortak şemalı olaylara dönüştürüp zamana göre sıralar. Bir Prefetch kaydındaki birden çok yürütme zamanı veya bir MFT kaydındaki sekiz ya da daha fazla dosya zamanı ayrı etiketlenir. Böylece kaynakları karşılaştırırken zamanların anlamı kaybolmaz.
+`super-timeline` ayrıştırılmış artefaktları ortak şemalı olaylara dönüştürür. Çıktı **varsayılan olarak sıralanmamıştır**: işçilerin bitiş sırasından bağımsız olarak, bulunan girdi dosyalarının sırasını ve her ayrıştırıcının olay yansıtma sırasını izler. Kronolojik sıralama ve yinelenenlerin birleştirilmesi için `--sort` ekleyin. Bir Prefetch kaydındaki birden çok yürütme zamanı veya bir MFT kaydındaki sekiz ya da daha fazla dosya zamanı ayrı etiketlenir. Böylece kaynakları karşılaştırırken zamanların anlamı kaybolmaz.
 
 Özgün kanıt dizini yerine [`auto-parse`](auto-parse.md) sonuçlarını kullanın:
 
@@ -16,6 +16,9 @@ Ayrıştırılmış dosyaları, manifestleri ve özgün kanıtları saklayın. B
 ```bash
 # Native CSV (default)
 juntei super-timeline -d parsed/ -o SuperTimeline.csv
+
+# Chronological CSV with duplicate consolidation
+juntei super-timeline -d parsed/ -o SortedTimeline.csv --sort
 
 # Native JSON Lines
 juntei super-timeline -d parsed/ -o SuperTimeline.jsonl -t jsonl
@@ -34,7 +37,7 @@ juntei super-timeline -f MFT.csv --input-artifact mft --computer HOST01 \
 # Reduce the time range, memory used by sorting, or number of workers
 juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
   --timeline-start "2026-10-20T06:00:00Z" --timeline-end "2026-10-20T14:00:00Z" \
-  --memory-limit 64 -T 4 --temp-dir scratch/
+  --sort --memory-limit 64 -T 4 --temp-dir scratch/
 ```
 
 `--hayabusa FILE` tek başına veya tekrarlanarak, Hayabusa çalıştırmadan mevcut olay/uyarı zamanlarını ve kural bağlamını aktarır. `Details` değeri metin olan bilgi olayları desteklenir. `--artifact mft,prefetch` artefaktları sınırlar. Zaman sınırları dahildir; açık UTC ofseti veya `Z` gerekir.
@@ -84,11 +87,11 @@ Zaman damgası kayıtlı nesneye ilişkin kanıttır; tek başına yürütme vey
 
 | Artefaktlar | Zaman çizelgesindeki yorum |
 |---|---|
-| MFT | SI/FN değiştirme, erişim, metaveri değişimi ve oluşturma zamanları ayrıdır; adlandırılmış FN öznitelikleri korunur. Yinelenen SI alanları birleştirilir. ADS satırlarının ortak temel dosya zamanları dışlanır. FILE kayıt boşluğundan kurtarılan adlar ayrı kurtarılmış FN olaylarıdır. |
+| MFT | SI/FN değiştirme, erişim, metaveri değişimi ve oluşturma zamanları ayrıdır; adlandırılmış FN öznitelikleri korunur. `--sort` ile yinelenen SI alanları birleştirilir. ADS satırlarının ortak temel dosya zamanları her iki modda da dışlanır. FILE kayıt boşluğundan kurtarılan adlar ayrı kurtarılmış FN olaylarıdır. |
 | I30 | Kaydedilmiş FN/indeks metaverileri ve varsa boşluk/kurtarma bağlamı; dizin indeksinin yazılma zamanı değildir. |
 | USN Günlüğü | Günlük zamanı ve değişiklik nedenleri; bir kayıt birden fazla değişikliği tam başlangıç saati olmadan açıklayabilir. |
 | LogFile | Saklı redo/undo zaman görüntüleri ve dosya adları ayrı tutulur. LSN ve dosya ofsetleri kimliktir, tarihe çevrilmez. |
-| Prefetch | Eşleşen Prefetch zaman çizelgesiyle birleştirilmiş kayıtlı yürütmeler. Birim oluşturma metaverileri ayrıca etiketlenir. |
+| Prefetch | Kayıtlı yürütmeler; `--sort` ile eşleşen Prefetch zaman çizelgesiyle birleştirilir. Birim oluşturma metaverileri ayrıca etiketlenir. |
 | Tarayıcı SQLite veritabanları | Ziyaretler, kurtarılan son ziyaretler, indirme başlangıç/bitişi, çerez zamanları ve form ilk/son kullanım ya da silme izleri. Bitiş başarı/yürütme kanıtı değildir; çerez son kullanımı yapılandırılmış süredir. Kurtarma durumu, güven ve köken korunur. |
 | Internet Explorer / eski Edge WebCache | Erişim, oluşturma/değiştirme, son kullanma, eşitleme, indirme, çerez ve kapsayıcı bakım zamanları. Önbellek bakımı kullanıcının sayfayı açtığını otomatik olarak kanıtlamaz. |
 | Outlook PST, OST, MSG ve OFT | İleti gönderimi/teslimi, klasör/öğe/ek oluşturma-değiştirme, takvim ve görev zamanları, hatırlatmalar ve açıkça zaman türündeki özellikler. Planlanan saat toplantı, hatırlatma veya yürütme kanıtı değildir; teslim, okuma kanıtı değildir. |
@@ -109,7 +112,7 @@ Zaman damgası kayıtlı nesneye ilişkin kanıttır; tek başına yürütme vey
 | Persistence Hunter | Destekleyici anahtar yazımı ve ilişkili değişim. Bulgu tek başına zamanlanmış kurulum veya ihlal hükmü değildir. |
 | Hayabusa | Kural, seviye, kanal, olay ID ve bağlamla olay/uyarı zamanı. Farklı kurallar ve korelasyon satırları ayrı kalır. |
 
-Eşit zamanlı fakat anlamı veya kaynağı farklı olaylar korunur. Kimlik; bilgisayar, kaynak, artefakt, kayıt, zaman anlamı ve kurtarma durumunu içerir. Birleştirmeler `DuplicateCount` ve sınırlı alternatif referansları taşır. Yalnızca benzer yol/zamanla farklı kaynaklar birleşmez. Ham kaynak yoksa girdi kimliği ayrı toplamaları korur.
+Varsayılan dışa aktarım, yinelenen metaveriler dahil zaman damgalarından üretilen tüm olayları korur; genel sıralama yapmaz ve yinelenenleri birleştirmez. `--sort` ile yinelenen olaylar birleştirildiğinden aynı girdilerin sıralanmamış dışa aktarımından daha az satır çıkabilir. Eşit zamanlı fakat anlamı veya kaynağı farklı olaylar her iki modda da korunur. Kimlik; bilgisayar, kaynak, artefakt, kayıt, zaman anlamı ve kurtarma durumunu içerir. Birleştirmeler `DuplicateCount` ve sınırlı alternatif referansları taşır. Yalnızca benzer yol/zamanla farklı kaynaklar birleşmez. Ham kaynak yoksa girdi kimliği ayrı toplamaları korur.
 
 ### Hassasiyet, yerel saat ve varsayımlar { #precision-local-times-and-assumptions }
 
@@ -137,23 +140,25 @@ Yalnızca tarihler de bu seçeneği gerektirir; gece yarısı **gün hassasiyetl
 
 - `SuperTimeline.csv-Untimed.jsonl`: kullanılabilir eşlenmiş olay zamanı olmayan yerel kayıt konumları.
 - `SuperTimeline.csv-Diagnostics.jsonl`: geçersiz/belirsiz zamanlar, bilerek atlanan ortak metaveriler ve özgün kaydı gerektiren sınırlamalar.
-- `SuperTimeline.csv-Summary.json`: dosyalar, artefakt sayıları, filtrelenen/aday/birleştirilen olaylar, çıktı, işçiler, sıralama bütçesi/parçaları/geçişleri ve süre.
+- `SuperTimeline.csv-Summary.json`: dosyalar, artefakt sayıları, filtrelenen/aday/birleştirilen olaylar, çıktı, işçiler, sıralamanın etkin olup olmadığı, sıralama bütçesi/parçaları/geçişleri ve süre.
 
 Tamamlayıcı adlar, çıktı dosya adının tamamını içerir. Örneğin, `SuperTimeline.jsonl`'in kendi `SuperTimeline.jsonl-Summary.json`'i ve karşılık gelen zamanlanmamış/tanılama raporları vardır. Aynı köke sahip CSV ve JSONL dışa aktarmaları bir arada bulunabilir; `-C` yalnızca mevcut bir sonuç kümesini değiştirmek için gereklidir.
 
 `InvalidTimestamps` yerine `UnresolvedTimeZones` gerekçeli saat dilimi varsayım artışını bekleyen geçerli tarihler. Her ikisi de tanılamada izlenebilir olmaya devam ediyor; hiçbir zaman damgası icat edilmedi.
 
-Geçerli ama aralık dışı zamanlar zamansız değil filtrelenmiş sayılır. Adaylar birleştirmeden önce sayılır. `Complete: true` tüm seçili girdilerin başarıyla işlendiğidir; eksiksiz toplama veya her saldırının saptanması değildir.
+Geçerli ama aralık dışı zamanlar zamansız değil filtrelenmiş sayılır. Adaylar birleştirmeden önce sayılır. `Sorted` ve `DuplicateConsolidation` alanları `--sort` seçeneğinin etkin olup olmadığını kaydeder. Bu seçenek olmadan `DuplicateEvents`, `LargestSerializedSortRowBytes`, `InitialSortChunks` ve `MergePasses` sıfırdır; sıralama tamponu ayrılmadığından `SortMemoryBudgetMiB` değeri `null` olur. `Complete: true` tüm seçili girdilerin başarıyla işlendiğidir; eksiksiz toplama veya her saldırının saptanması değildir.
 
 CSV, sistem profilleri, USB kullanıcı bağlama noktaları ve shell yapılarını düzleştirebilir; yerel JSON/JSONL daha zengindir. CSV ile kaybolan veri geri üretilemez. Desteklenmeyen artefaktlar ve bozuk girdiler kısmi başarı değil hata verir.
 
 ## Performans ve güvenli çıktı { #performance-and-output-safety }
 
-Girdiler akışla paralel işlenir; sıralama özel geçici dizine taşar ve sınırlı birleştirme geçişleri deterministik sonuç verir. Tam saniye/nanosaniye, 1970 öncesini de destekler. Eşit zamanların sırası işçi ve bütçeden bağımsızdır.
+Girdiler akışla paralel işlenir. Varsayılan olarak her işçi biçimlendirilmiş bir olay parçası yazar; parçalar sıralanmadan ve olay yapıları yeniden okunmadan girdi dosyası sırasıyla uç uca eklenir. Birden çok dosya işlense de CSV tek başlık içerir. Çıktı sırası işçi sayısından bağımsız olarak deterministiktir; kronolojik sıra anlamına gelmez.
 
-`--memory-limit` toplam **sıralama tampon bütçesidir**, işlem RSS sınırı değildir. Kayıtlar, JSON nesneleri, CSV tamponları ve birleştirmeler ek bellek ister; küçük bütçe işçi sayısını azaltır. `--max-record-size` varsayılan 16 MiB kayıt sınırıdır. Biçimli JSON dizisi tek belge sayılır; gerekirse sınırı artırın veya JSONL kullanın. CSV ön okuması da sınıra dahildir.
+`--sort` ile tamponlar özel geçici dizine taşar, ardından sınırlı birleştirme geçişleri kronolojik çıktı üretir. Sıralama tam saniye/nanosaniye kullanır, 1970 öncesini de destekler. Eşit zamanların sırası işçi ve bütçeden bağımsızdır. İlerleme çubuğu, tekrarlanan geçişler dahil ara ve son birleştirmelerde işlenen her olayla ilerler; terminalde görünür, çıktı yönlendirildiğinde gizlenir.
 
-Geçici disk hem genişletilen olayları ve birleştirmeleri hem sonuçları karşılamalıdır. Bir kayıt çok olay üretebilir; gerektiğinde zaman/artefakt filtreleyip yeterli boş alan seçin.
+`--memory-limit` yalnızca `--sort` ile geçerlidir: toplam **sıralama tampon bütçesidir**, işlem RSS sınırı değildir. Kayıtlar, JSON nesneleri, CSV tamponları ve birleştirmeler ek bellek ister; küçük bütçe işçi sayısını azaltır. `--max-record-size` varsayılan 16 MiB kayıt sınırıdır. Biçimli JSON dizisi tek belge sayılır; gerekirse sınırı artırın veya JSONL kullanın. CSV ön okuması da sınıra dahildir.
+
+Geçici disk, sonuçlara ek olarak biçimlendirilmiş olay parçalarını (varsayılan) veya genişletilmiş sıralama kayıtlarını ve birleştirme geçişlerini (`--sort`) karşılamalıdır. Her iki modda da çıktı geçici olarak hazırlanır ve girdi hatasında yayımlanmaz. Bir kayıt çok olay üretebilir; gerektiğinde zaman/artefakt filtreleyip yeterli boş alan seçin.
 
 Ctrl+C birlikte iptal eder, özel sıralama/hazırlama dizinlerini kaldırır ve `130` koduyla çıkar. Linux ve macOS'te bu aynı zamanda SIGTERM ve SIGHUP için de geçerlidir. Yayın başlamadan önce raporların okunması, normalleştirilmesi, birleştirilmesi ve yazılması sırasında iptal kontrolü yapılır. Yakalanamayan sonlandırma veya güç kaybı hala geçici dosyalar bırakabilir.
 

@@ -43,6 +43,24 @@ impl Writer {
         format: TimelineOutputType,
         profile: TimelineProfile,
     ) -> io::Result<Self> {
+        Self::with_header(file, format, profile, true)
+    }
+
+    /// Per-input fragments concatenate without repeating the CSV header.
+    pub fn fragment(
+        file: File,
+        format: TimelineOutputType,
+        profile: TimelineProfile,
+    ) -> io::Result<Self> {
+        Self::with_header(file, format, profile, false)
+    }
+
+    fn with_header(
+        file: File,
+        format: TimelineOutputType,
+        profile: TimelineProfile,
+        include_header: bool,
+    ) -> io::Result<Self> {
         let mut writer = Self {
             csv: None,
             jsonl: None,
@@ -56,7 +74,9 @@ impl Writer {
                 header[3] = "timestamp_desc";
                 header[6] = "message";
             }
-            csv.write_record(header)?;
+            if include_header {
+                csv.write_record(header)?;
+            }
             writer.csv = Some(csv);
         } else {
             writer.jsonl = Some(BufWriter::new(file));

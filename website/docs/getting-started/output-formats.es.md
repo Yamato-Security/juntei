@@ -132,6 +132,10 @@ tienen significado. Pueden indicar que el artefacto no almacenaba un valor, que 
 dañado, que el formato no lo admite o que el analizador no pudo resolverlo. No sustituya todos los
 valores vacíos por cero.
 
-## Cronología cronológica normalizada { #normalized-chronological-timeline }
+## Línea de tiempo normalizada { #normalized-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) crea un esquema de evento común CSV/JSONL con significados de marcas de tiempo etiquetados, referencias de fuentes y clasificación cronológica. También admite un perfil de importación de Timesketch. Las exportaciones de analizadores nativos y `auto-parse -j` mantienen sus esquemas existentes.
+[`super-timeline`](../commands/super-timeline.md) crea un esquema de eventos CSV/JSONL común, con
+el significado de cada marca de tiempo etiquetado y referencias de origen. La salida no se ordena
+de forma predeterminada; `--sort` habilita la ordenación cronológica y la consolidación de
+duplicados. También admite un perfil de importación para Timesketch. Las exportaciones nativas de
+los analizadores y `auto-parse -j` mantienen sus esquemas actuales.

@@ -37,6 +37,18 @@ pub fn progress_bar_with_len(len: u64, no_color: bool) -> ProgressBar {
     bar
 }
 
+/// Timeline events, with a bar that fits the available terminal width.
+pub fn progress_bar_events(len: u64, no_color: bool) -> ProgressBar {
+    let bar = progress_bar_with_len(len, no_color);
+    // Large timelines have longer counters than file scans. Let the bar shrink to fit.
+    bar.set_style(
+        ProgressStyle::with_template(&template(no_color).replace("{bar:40}", "{wide_bar}"))
+            .unwrap_or_else(|_| ProgressStyle::default_bar())
+            .progress_chars("=> "),
+    );
+    bar
+}
+
 /// The same bar for a count of bytes (a USN journal read twice).
 pub fn progress_bar_bytes(len: u64, no_color: bool) -> ProgressBar {
     let bar = progress_bar_with_len(len, no_color);

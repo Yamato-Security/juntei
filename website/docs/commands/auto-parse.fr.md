@@ -596,10 +596,10 @@ Auto-parse lit également les connexions à distance des utilisateurs (RDP, PuTT
 
 ## Construire une chronologie globale { #build-a-chronological-super-timeline }
 
-Après l'analyse, [`super-timeline`](super-timeline.md) développe les horodatages en événements étiquetés et les trie entre ordinateurs et artefacts :
+Après l'analyse, [`super-timeline`](super-timeline.md) développe les horodatages en événements étiquetés. Ajoutez `--sort` pour les trier entre ordinateurs et artefacts :
 
 ```bash
-juntei super-timeline -d output/ -o SuperTimeline.csv
+juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 L'export `-j, --json-timeline` reste un fichier JSONL de données natives : il conserve les schémas sans développer ni trier les dates. Conservez-le avec les résultats individuels pour examiner les preuves.

@@ -11,7 +11,7 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! Chronological, semantically labeled projections of existing parsed evidence.
+//! Semantically labeled projections of existing parsed evidence, with optional chronological sorting.
 mod adapters;
 mod input;
 mod model;
@@ -27,7 +27,7 @@ use crate::{progress, util};
 use model::{ArtifactCounts, Counts, Diagnostic, SortRow};
 use serde_json::{Value, json};
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, BufReader, BufWriter, Write};
+use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -174,6 +174,7 @@ impl Targets {
 
 struct Completed {
     chunks: Vec<PathBuf>,
+    event_file: Option<PathBuf>,
     diagnostic_file: PathBuf,
     counts: ArtifactCounts,
     largest: usize,
@@ -188,7 +189,20 @@ fn process(
     folder: &Path,
     budget: usize,
 ) -> io::Result<Completed> {
-    let mut buffer = sort::Buffer::new(folder, input.index, budget);
+    let mut buffer = opts
+        .sort
+        .then(|| sort::Buffer::new(folder, input.index, budget));
+    let event_file = (!opts.sort).then(|| folder.join(format!("input-{}-events", input.index)));
+    let mut direct = event_file
+        .as_ref()
+        .map(|path| {
+            output::Writer::fragment(
+                OpenOptions::new().write(true).create_new(true).open(path)?,
+                opts.output_type,
+                opts.profile,
+            )
+        })
+        .transpose()?;
     let diagnostic_file = folder.join(format!("input-{}-diagnostics.jsonl", input.index));
     let mut diagnostics = BufWriter::new(
         OpenOptions::new()
@@ -239,7 +253,11 @@ fn process(
                         previous_source = event.event.source_file.clone();
                     }
                     references.event(&mut event.event);
-                    buffer.push(event)?;
+                    if let Some(buffer) = &mut buffer {
+                        buffer.push(event)?;
+                    } else if let Some(writer) = &mut direct {
+                        writer.event(&event.event)?;
+                    }
                 }
                 adapters::Item::Diagnostic(mut diagnostic) => {
                     references.diagnostic(&mut diagnostic);
@@ -258,13 +276,119 @@ fn process(
         Ok(())
     })?;
     diagnostics.flush()?;
-    buffer.flush()?;
+    if let Some(buffer) = &mut buffer {
+        buffer.flush()?;
+    }
+    if let Some(writer) = direct {
+        writer.finish()?;
+    }
+    let (chunks, largest) = buffer
+        .map(|buffer| (buffer.chunks, buffer.largest_row))
+        .unwrap_or_default();
     Ok(Completed {
-        chunks: buffer.chunks,
+        chunks,
+        event_file,
         diagnostic_file,
         counts,
-        largest: buffer.largest_row,
+        largest,
     })
+}
+
+fn write_sorted(
+    chunks: Vec<PathBuf>,
+    scratch: &Path,
+    opts: &SuperTimelineOptions,
+    counts: &mut ArtifactCounts,
+    largest: usize,
+    timeline: &Path,
+) -> io::Result<(u64, usize)> {
+    let memory = opts.memory_limit * 1024 * 1024;
+    let expected_passes = sort::merge_passes(chunks.len(), memory, largest);
+    let events: u64 = counts.values().map(|c| c.emitted_events).sum();
+    let total = events.saturating_mul(expected_passes as u64 + 1);
+    util::p_label(
+        opts.common.no_color,
+        "Sorting chunks: ",
+        &util::fmt_num(chunks.len()),
+    );
+    let bar = progress::progress_bar_events(total, opts.common.no_color);
+    bar.set_message("Sorting timeline: merging timestamped events");
+    let result = (|| {
+        let (chunks, passes) = sort::reduce(chunks, scratch, memory, largest, || bar.inc(1))?;
+        let mut writer = output::Writer::new(
+            OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(timeline)?,
+            opts.output_type,
+            opts.profile,
+        )?;
+        let mut pending: Option<SortRow> = None;
+        let mut written = 0u64;
+        sort::merge(&chunks, |row| {
+            bar.inc(1);
+            if let Some(previous) = &mut pending {
+                if previous.time == row.time && previous.identity == row.identity {
+                    output::duplicate(previous, &row);
+                    counts
+                        .entry(row.event.artifact.clone())
+                        .or_default()
+                        .duplicate_events += 1;
+                    return Ok(());
+                }
+                writer.event(&previous.event)?;
+                written += 1;
+            }
+            pending = Some(row);
+            Ok(())
+        })?;
+        if let Some(row) = pending {
+            writer.event(&row.event)?;
+            written += 1;
+        }
+        writer.finish()?;
+        Ok((written, passes))
+    })();
+    match &result {
+        Ok(_) => bar.finish_with_message("Sorting finished.\n"),
+        Err(_) if crate::interrupt::requested() => bar.abandon_with_message("Cancelled"),
+        Err(_) => bar.abandon_with_message("Sorting failed"),
+    }
+    result
+}
+
+fn write_unsorted(
+    completed: &[Completed],
+    opts: &SuperTimelineOptions,
+    timeline: &Path,
+) -> io::Result<u64> {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(timeline)?;
+    // Emit the single CSV header first; JSONL has no header. Then copy already-formatted
+    // fragments without parsing or serializing their events a second time.
+    output::Writer::new(file.try_clone()?, opts.output_type, opts.profile)?.finish()?;
+    let mut buffer = vec![0u8; 256 * 1024];
+    let mut written = 0;
+    for input in completed {
+        let path = input
+            .event_file
+            .as_ref()
+            .ok_or_else(|| io::Error::other("Missing unsorted event fragment"))?;
+        let mut fragment = File::open(path)?;
+        loop {
+            crate::interrupt::check()?;
+            let count = fragment.read(&mut buffer)?;
+            if count == 0 {
+                break;
+            }
+            file.write_all(&buffer[..count])?;
+        }
+        written += input.counts.values().map(|c| c.emitted_events).sum::<u64>();
+    }
+    file.flush()?;
+    Ok(written)
 }
 
 fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
@@ -300,7 +424,11 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
         .threads
         .unwrap_or(available)
         .min(inventory.inputs.len())
-        .min((memory / (4 * 1024 * 1024)).max(1))
+        .min(if opts.sort {
+            (memory / (4 * 1024 * 1024)).max(1)
+        } else {
+            usize::MAX
+        })
         .max(1);
     let per_worker = memory / workers;
     util::p_label(
@@ -382,48 +510,16 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
         largest = largest.max(result.largest);
     }
     let original_chunks = chunks.len();
-    util::p_label(
-        opts.common.no_color,
-        "Sorting chunks: ",
-        &util::fmt_num(original_chunks),
-    );
-    let (chunks, passes) = sort::reduce(chunks, &scratch.0, memory, largest)?;
     // Outputs are staged only after every input has been read and checked. A private sibling
     // directory keeps final replacements on the same filesystem as their destination.
     let parent = targets.timeline.parent().unwrap();
     let staged = Scratch::new(parent)?;
     let timeline = staged.0.join("timeline");
-    let mut writer = output::Writer::new(
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&timeline)?,
-        opts.output_type,
-        opts.profile,
-    )?;
-    let mut pending: Option<SortRow> = None;
-    let mut written = 0u64;
-    sort::merge(&chunks, |row| {
-        if let Some(previous) = &mut pending {
-            if previous.time == row.time && previous.identity == row.identity {
-                output::duplicate(previous, &row);
-                counts
-                    .entry(row.event.artifact.clone())
-                    .or_default()
-                    .duplicate_events += 1;
-                return Ok(());
-            }
-            writer.event(&previous.event)?;
-            written += 1;
-        }
-        pending = Some(row);
-        Ok(())
-    })?;
-    if let Some(row) = pending {
-        writer.event(&row.event)?;
-        written += 1;
-    }
-    writer.finish()?;
+    let (written, passes) = if opts.sort {
+        write_sorted(chunks, &scratch.0, opts, &mut counts, largest, &timeline)?
+    } else {
+        (write_unsorted(&completed, opts, &timeline)?, 0)
+    };
     let untimed = staged.0.join("untimed");
     let diagnostics = staged.0.join("diagnostics");
     let mut untimed_writer = BufWriter::new(
@@ -470,7 +566,8 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
         "Diagnostics":format!("./{}",targets.diagnostics.file_name().unwrap().to_string_lossy()),
         "Format":match opts.output_type { crate::cli::TimelineOutputType::Csv=>"csv",crate::cli::TimelineOutputType::Jsonl=>"jsonl" },
         "Profile":match opts.profile { crate::cli::TimelineProfile::Native=>"native",crate::cli::TimelineProfile::Timesketch=>"timesketch" },
-        "Workers":workers,"SortMemoryBudgetMiB":opts.memory_limit,"LargestSerializedSortRowBytes":largest,
+        "Workers":workers,"Sorted":opts.sort,"DuplicateConsolidation":opts.sort,
+        "SortMemoryBudgetMiB":opts.sort.then_some(opts.memory_limit),"LargestSerializedSortRowBytes":largest,
         "InitialSortChunks":original_chunks,"MergePasses":passes,"OutputEvents":written,
         "Counts":total,"Artifacts":counts,"ElapsedSeconds":started.elapsed().as_secs_f64(),
         "SourceRecordsRetainedInInput":true,"InputFiles":inventory.inputs.iter().map(|i|inventory.references.parsed(&i.path)).collect::<Vec<_>>(),
@@ -517,11 +614,13 @@ pub fn run(opts: &SuperTimelineOptions) -> i32 {
                 "Timeline events: ",
                 &summary["OutputEvents"].to_string(),
             );
-            util::p_label(
-                opts.common.no_color,
-                "Duplicate events consolidated: ",
-                &summary["Counts"]["DuplicateEvents"].to_string(),
-            );
+            if opts.sort {
+                util::p_label(
+                    opts.common.no_color,
+                    "Duplicate events consolidated: ",
+                    &summary["Counts"]["DuplicateEvents"].to_string(),
+                );
+            }
             util::p_label(
                 opts.common.no_color,
                 "Untimed records: ",

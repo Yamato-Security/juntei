@@ -1,6 +1,6 @@
 # Chronologie globale { #super-timeline }
 
-`super-timeline` convertit les artefacts analysés en événements de schéma commun, triés par date. Chaque heure d'exécution d'un enregistrement Prefetch et chacun des huit horodatages ou plus d'un enregistrement MFT devient un événement distinct. La comparaison entre sources conserve ainsi le sens de chaque date.
+`super-timeline` convertit les artefacts analysés en événements de schéma commun. La sortie n'est **pas triée par défaut** : elle suit l'ordre de découverte des fichiers d'entrée et l'ordre de projection de chaque parseur, quel que soit l'ordre dans lequel les threads se terminent. Ajoutez `--sort` pour un tri chronologique et la consolidation des doublons. Chaque heure d'exécution d'un enregistrement Prefetch et chacun des huit horodatages ou plus d'un enregistrement MFT devient un événement distinct. La comparaison entre sources conserve ainsi le sens de chaque date.
 
 Partez des résultats de [`auto-parse`](auto-parse.md) plutôt que du répertoire de preuves originales :
 
@@ -16,6 +16,9 @@ Conservez les fichiers analysés, les manifestes et les originaux. Cette project
 ```bash
 # Native CSV (default)
 juntei super-timeline -d parsed/ -o SuperTimeline.csv
+
+# Chronological CSV with duplicate consolidation
+juntei super-timeline -d parsed/ -o SortedTimeline.csv --sort
 
 # Native JSON Lines
 juntei super-timeline -d parsed/ -o SuperTimeline.jsonl -t jsonl
@@ -34,7 +37,7 @@ juntei super-timeline -f MFT.csv --input-artifact mft --computer HOST01 \
 # Reduce the time range, memory used by sorting, or number of workers
 juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
   --timeline-start "2026-10-20T06:00:00Z" --timeline-end "2026-10-20T14:00:00Z" \
-  --memory-limit 64 -T 4 --temp-dir scratch/
+  --sort --memory-limit 64 -T 4 --temp-dir scratch/
 ```
 
 `--hayabusa FILE` s'utilise seul ou plusieurs fois pour importer dates et contexte des alertes sans exécuter Hayabusa. Les événements informatifs dont `Details` est une chaîne sont acceptés. `--artifact mft,prefetch` limite les artefacts. Les bornes sont inclusives et exigent un décalage UTC explicite ou `Z`.
@@ -84,11 +87,11 @@ Une date renseigne sur un objet enregistré ; elle ne prouve seule ni exécution
 
 | Artefacts | Interprétation chronologique |
 |---|---|
-| MFT | Dates SI et FN de modification, accès, changement de métadonnées et création ; les attributs FN nommés restent distincts. Les SI répétés sont consolidés. Les dates partagées du fichier de base des lignes ADS sont exclues. Les noms récupérés dans le slack d'enregistrements FILE conservent leurs événements FN récupérés. |
+| MFT | Dates SI et FN de modification, accès, changement de métadonnées et création ; les attributs FN nommés restent distincts. Avec `--sort`, les SI répétés sont consolidés. Les dates partagées du fichier de base des lignes ADS sont exclues dans les deux modes. Les noms récupérés dans le slack d'enregistrements FILE conservent leurs événements FN récupérés. |
 | I30 | Métadonnées FN/index avec contexte de récupération ou slack, pas dates d'écriture de l'index de répertoire. |
 | Journal USN | Date du journal et motifs de changement : plusieurs modifications peuvent partager une entrée sans heure de début exacte. |
 | LogFile | Instantanés temporels et noms des opérations redo/undo, conservés séparément. LSN et positions de fichier sont des identifiants, jamais des dates. |
-| Prefetch | Exécutions enregistrées, consolidées avec la chronologie Prefetch correspondante. La création du volume est étiquetée séparément. |
+| Prefetch | Exécutions enregistrées. Avec `--sort`, elles sont consolidées avec la chronologie Prefetch correspondante. La création du volume est étiquetée séparément. |
 | Bases SQLite des navigateurs | Visites, dernières visites récupérées, débuts/fins de téléchargements, dates des cookies et première/dernière utilisation ou suppression des formulaires. Une fin ne prouve ni réussite ni exécution ; l'expiration est une échéance configurée. Récupération, confiance et origine sont conservées. |
 | Internet Explorer / ancien Edge WebCache | Accès, création/modification, expiration, synchronisation, téléchargements, cookies et entretien des conteneurs. La gestion du cache ne prouve pas automatiquement une visite de l'utilisateur. |
 | Outlook PST, OST, MSG et OFT | Envoi/réception ; création/modification des dossiers, éléments et pièces jointes ; dates de calendrier, tâches, rappels et propriétés temporelles typées. Une date planifiée ne prouve ni réunion, ni rappel déclenché, ni exécution. La réception ne prouve pas la lecture. |
@@ -109,7 +112,7 @@ Une date renseigne sur un objet enregistré ; elle ne prouve seule ni exécution
 | Persistence Hunter | Écriture de clé et changement corrélé. Un résultat ne prouve seul ni installation datée ni compromission. |
 | Hayabusa | Date d'événement/alerte, règle, niveau, canal, ID et contexte. Les règles et lignes de corrélation distinctes restent séparées. |
 
-Les dates égales de sens ou de sources différents restent distinctes. L'identité inclut ordinateur, source, artefact, enregistrement, sens et récupération. Les consolidations indiquent `DuplicateCount` et des références alternatives limitées. Des sources différentes ne fusionnent jamais sur la seule similarité des chemins/dates. Sans source brute, l'identité d'entrée protège les captures distinctes.
+L'export par défaut conserve toutes les projections de dates, y compris les métadonnées répétées, sans tri global ni consolidation des doublons. Avec `--sort`, les projections en double sont consolidées ; un export trié peut donc compter moins de lignes qu'un export non trié des mêmes entrées. Les dates égales de sens ou de sources différents restent distinctes dans les deux modes. L'identité des doublons inclut ordinateur, source, artefact, enregistrement, sens et récupération. Les consolidations indiquent `DuplicateCount` et des références alternatives limitées. Des sources différentes ne fusionnent jamais sur la seule similarité des chemins/dates. Sans source brute, l'identité d'entrée protège les captures distinctes.
 
 ### Précision, heure locale et hypothèses { #precision-local-times-and-assumptions }
 
@@ -137,23 +140,25 @@ Pour `SuperTimeline.csv`, la commande écrit également :
 
 - `SuperTimeline.csv-Untimed.jsonl` : emplacements natifs sans horodatage exploitable associé.
 - `SuperTimeline.csv-Diagnostics.jsonl` : dates invalides/ambiguës, métadonnées communes volontairement exclues et limites nécessitant l'original.
-- `SuperTimeline.csv-Summary.json` : fichiers, compteurs par artefact, événements filtrés/candidats/consolidés, sorties, threads, budget/fichiers/passes de tri et durée.
+- `SuperTimeline.csv-Summary.json` : fichiers, compteurs par artefact, événements filtrés/candidats/consolidés, sorties, threads, activation du tri, budget/fichiers/passes de tri et durée.
 
 Les noms de compagnon incluent le nom complet du fichier de sortie. Par exemple, `SuperTimeline.jsonl` possède son propre `SuperTimeline.jsonl-Summary.json` et les rapports non chronométrés/diagnostiques correspondants. Les exportations CSV et JSONL avec la même tige peuvent coexister ; `-C` est nécessaire uniquement pour remplacer un jeu de résultats existant.
 
 Dates valides en attente d'un incrément d'hypothèse de fuseau horaire justifié `UnresolvedTimeZones`, plutôt que `InvalidTimestamps`. Les deux restent traçables dans les diagnostics ; aucun horodatage n'est inventé.
 
-Les dates hors intervalle sont filtrées, pas sans date. Les candidats précèdent la consolidation. `Complete: true` signifie traitement réussi des entrées choisies, pas collecte exhaustive, date dans chaque champ ou détection de toutes les attaques.
+Les dates hors intervalle sont filtrées, pas sans date. Les candidats précèdent la consolidation. `Sorted` et `DuplicateConsolidation` indiquent si `--sort` était activé. Sans cette option, `DuplicateEvents`, `LargestSerializedSortRowBytes`, `InitialSortChunks` et `MergePasses` valent zéro et `SortMemoryBudgetMiB` vaut `null`, car aucun tampon de tri n'est alloué. `Complete: true` signifie traitement réussi des entrées choisies, pas collecte exhaustive, date dans chaque champ ou détection de toutes les attaques.
 
 CSV peut aplatir profils système, montages utilisateur USB et éléments shell ; JSON/JSONL natifs sont plus riches. Les données omises par CSV ne se reconstruisent pas. Un artefact inconnu ou fichier malformé provoque une erreur, pas un succès partiel.
 
 ## Performances et protection des sorties { #performance-and-output-safety }
 
-Lecture en flux et en parallèle, débordement du tri dans un répertoire privé, puis fusions bornées et déterministes. Secondes/nanosecondes entières incluent les dates avant 1970. L'ordre des égalités reste stable entre budgets et nombres de threads.
+Les entrées sont lues en flux et traitées en parallèle. Par défaut, chaque thread écrit un fragment d'événements formatés ; les fragments sont concaténés dans l'ordre des fichiers d'entrée, sans tri ni relecture de leurs structures d'événements. Le CSV n'a qu'un en-tête, même avec plusieurs fichiers. L'ordre de sortie est déterministe quel que soit le nombre de threads, mais n'implique aucune chronologie.
 
-`--memory-limit` limite le **budget total des tampons de tri**, pas la mémoire RSS. Enregistrements, objets/chaînes JSON, tampons CSV et fusions ajoutent de la mémoire ; les petits budgets réduisent les threads. `--max-record-size` limite un enregistrement à 16 MiB par défaut. Un tableau JSON formaté compte comme un document entier ; augmentez la limite ou préférez JSONL. La lecture anticipée CSV compte aussi.
+Avec `--sort`, les tampons débordent dans un répertoire temporaire privé, puis des passes de fusion bornées produisent une sortie chronologique. Le tri utilise secondes et nanosecondes entières, dates antérieures à 1970 comprises. L'ordre des égalités reste stable entre budgets et nombres de threads. Une barre de progression avance à chaque événement traité pendant les fusions intermédiaires et finales, passes répétées comprises. Elle s'affiche dans un terminal et est masquée quand la sortie est redirigée.
 
-L'espace temporaire doit contenir événements développés et passes de fusion, en plus des résultats. Un enregistrement peut produire beaucoup d'événements. Filtrez si nécessaire et choisissez un volume assez libre.
+`--memory-limit` ne s'applique qu'avec `--sort` : c'est le **budget total des tampons de tri**, pas une limite de mémoire RSS du processus. Enregistrements, objets/chaînes JSON, tampons CSV et fusions ajoutent de la mémoire ; les petits budgets réduisent les threads. `--max-record-size` limite un enregistrement à 16 MiB par défaut. Un tableau JSON formaté compte comme un document entier ; augmentez la limite ou préférez JSONL. La lecture anticipée CSV compte aussi.
+
+L'espace temporaire doit contenir les fragments d'événements formatés (par défaut) ou les enregistrements de tri développés et les passes de fusion (`--sort`), en plus des résultats. Les deux modes préparent les sorties dans un espace temporaire et empêchent toute publication si une entrée échoue. Un enregistrement peut produire beaucoup d'événements : la chronologie peut largement dépasser l'entrée. Filtrez la période ou les artefacts si nécessaire et choisissez un volume temporaire assez libre.
 
 Ctrl+C annule de manière coopérative, supprime les répertoires de tri/mise en scène privés et quitte avec le code `130`. Sur Linux et macOS, cela s'applique également à SIGTERM et SIGHUP. L'annulation est vérifiée lors de la lecture, de la normalisation, de la fusion et de la rédaction des rapports, avant le début de la publication. Une interruption irrécupérable ou une coupure de courant peut toujours laisser des fichiers temporaires.
 

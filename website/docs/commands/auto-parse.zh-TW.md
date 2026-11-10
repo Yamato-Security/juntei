@@ -590,12 +590,12 @@ Display Settings:
 
 Auto-parse 也會讀取使用者的遠端連線（RDP、PuTTY、WinSCP 與對應的磁碟機）。
 
-## 建立一個按時間順序排列的超級時間軸 { #build-a-chronological-super-timeline }
+## 建立依時間排序的超級時間軸 { #build-a-chronological-super-timeline }
 
-解析後，使用 [`super-timeline`](super-timeline.md) 將記錄的時間戳記擴展為標記事件，並跨電腦和工件對它們進行排序：
+剖析完成後，請使用 [`super-timeline`](super-timeline.md) 將所記錄的時間戳記展開為加上標籤的事件。加上 `--sort`，即可跨電腦與跡證將這些事件依時間排序：
 
 ```bash
-juntei super-timeline -d output/ -o SuperTimeline.csv
+juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
-現有的 `-j, --json-timeline` 匯出仍然是組合的本機記錄 JSONL 檔案。它保留解析器模式；它不會擴展時間戳字段或對事件進行排序。保留它和單一解析器結果以進行證據級審查。
+既有的 `-j, --json-timeline` 匯出仍是合併所有原生記錄的單一 JSONL 檔案。它保留各剖析器的結構描述；不會展開時間戳記欄位，也不會排序事件。請保留它與各剖析器的個別結果，以供證據層級的檢閱。

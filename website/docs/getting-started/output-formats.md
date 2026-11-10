@@ -119,8 +119,9 @@ Empty, `null`, `NA`, `Problems`, and parser-specific state fields are meaningful
 artifact did not store a value, the record was damaged, the format does not support it, or the
 parser could not resolve it. Do not replace all empty values with zero.
 
-## Normalized chronological timeline
+## Normalized timeline
 
 [`super-timeline`](../commands/super-timeline.md) creates a common CSV/JSONL event schema
-with labeled timestamp meanings, source references and chronological sorting. It also supports
+with labeled timestamp meanings and source references. Output is unsorted by default; `--sort`
+enables chronological sorting and duplicate consolidation. It also supports
 a Timesketch import profile. Native parser exports and `auto-parse -j` keep their existing schemas.

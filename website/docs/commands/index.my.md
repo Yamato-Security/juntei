@@ -13,7 +13,11 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) ကို အသုံးပြုပါ။ ၎င်းသည် အုပ်စုဖွဲ့ထားသော တူညီသည့်
 ညွှန်ကြားချက်များကို ခေါ်ယူပြီး ရလဒ်များနှင့် log များကို ကွန်ပျူတာနှင့် စုံစမ်းစစ်ဆေးရေး category အလိုက် စီစဉ်ပေးသည်။
 
-ခွဲခြမ်းစိတ်ဖြာထားသော ရှေးဟောင်းပစ္စည်းများတစ်လျှောက် အချိန်နှင့်တပြေးညီစီထားသော အချိန်ဇယားအတွက် [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) ကိုသုံးပါ။ ၎င်းသည် အချိန်တံဆိပ်တုံး၏ အဓိပ္ပါယ်များကို ချဲ့ထွင်ပြီး တံဆိပ်ခတ်ထားသည်။ `auto-parse -j` သည် မူရင်းမှတ်တမ်းများကို ဆက်လက်ထိန်းသိမ်းထားသည်။
+Parse လုပ်ထားသော artifact များအားလုံးကို ခြုံငုံသည့် timeline အတွက်
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) ကို အသုံးပြုပါ။
+၎င်းသည် timestamp များကို event များအဖြစ် ချဲ့ထွင်ပြီး ၎င်းတို့၏ အဓိပ္ပာယ်ကို label တပ်ပေးသည်။ Output ကို မူလအားဖြင့်
+စီမထားပါ။ အချိန်အစဉ်လိုက် စီရန်နှင့် ထပ်နေသည်များ ပေါင်းစည်းရန် `--sort` ကို ထည့်ပါ။ `auto-parse -j` သည် native
+record များကို ဆက်လက် ထိန်းသိမ်းထားသည်။
 
 ## [Disk image များ](mount.md) { #disk-images }
 

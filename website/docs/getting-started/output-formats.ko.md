@@ -115,6 +115,9 @@ UTC는 Windows 이벤트 로그 형식인 `2026-10-20T08:46:38.2001668Z`를 사�
 레코드가 손상되었거나, 형식이 이를 지원하지 않거나, 파서가 이를 해석할 수 없었음을 의미할 수 있습니다. 모든
 빈 값을 0으로 대체하지 마십시오.
 
-## 정규화된 연대순 타임라인 { #normalized-chronological-timeline }
+## 정규화된 타임라인 { #normalized-timeline }
 
-[`super-timeline`](../commands/super-timeline.md)는 레이블이 지정된 타임스탬프 의미, 소스 참조 및 시간순 정렬을 사용하여 공통 CSV/JSONL 이벤트 스키마를 생성합니다. 또한 Timesketch 가져오기 프로필도 지원합니다. 기본 파서 내보내기 및 `auto-parse -j`는 기존 스키마를 유지합니다.
+[`super-timeline`](../commands/super-timeline.md)은 타임스탬프의 의미를 나타내는 레이블과 소스 참조를 갖춘 공통
+CSV/JSONL 이벤트 스키마를 만듭니다. 출력은 기본적으로 정렬되지 않으며, `--sort`를 지정하면 시간순 정렬과 중복
+통합이 활성화됩니다. Timesketch 가져오기 프로필도 지원합니다. 네이티브 파서 내보내기와 `auto-parse -j`는 기존
+스키마를 유지합니다.

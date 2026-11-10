@@ -230,13 +230,21 @@ fn signals_clean_normalization_and_merge_workspaces_and_preserve_existing_output
     )
     .unwrap();
     for signal in ["-INT", "-TERM", "-HUP"] {
-        for phase in ["normalize", "merge", "reports"] {
+        for (sort, phase) in [
+            (true, "normalize"),
+            (true, "merge"),
+            (true, "reports"),
+            (false, "normalize"),
+            (false, "reports"),
+        ] {
             if phase == "reports" && signal != "-INT" {
                 continue;
             }
-            let scratch = tmp.path().join(format!("scratch-{signal}-{phase}"));
+            let scratch = tmp.path().join(format!("scratch-{sort}-{signal}-{phase}"));
             fs::create_dir(&scratch).unwrap();
-            let output = tmp.path().join(format!("output-{signal}-{phase}.jsonl"));
+            let output = tmp
+                .path()
+                .join(format!("output-{sort}-{signal}-{phase}.jsonl"));
             let companions = [
                 output.clone(),
                 output.with_file_name(format!(
@@ -274,6 +282,7 @@ fn signals_clean_normalization_and_merge_workspaces_and_preserve_existing_output
                     "-q",
                     "-K",
                 ])
+                .args(sort.then_some("--sort"))
                 .stdout(std::process::Stdio::piped())
                 .stderr(std::process::Stdio::piped())
                 .spawn()
@@ -303,8 +312,11 @@ fn signals_clean_normalization_and_merge_workspaces_and_preserve_existing_output
                                 name == "untimed" && file.metadata().is_ok_and(|m| m.len() > 0)
                             } else if phase == "merge" {
                                 name.starts_with("merge-")
-                            } else {
+                            } else if sort {
                                 name.contains("-chunk-")
+                            } else {
+                                name.ends_with("-events")
+                                    && file.metadata().is_ok_and(|m| m.len() > 0)
                             }
                         })
                     })
