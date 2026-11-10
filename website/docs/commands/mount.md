@@ -32,7 +32,7 @@ The image is opened read-only and the mount refuses writes. A VHDX that was not 
 ## Usage
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

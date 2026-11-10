@@ -7,7 +7,7 @@ también son bases de datos ESE, como lo es `WebCacheV01.dat`, donde Internet Ex
 historial, sus descargas, sus cookies y su caché.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -26,7 +26,7 @@ Options:
 ## `parse-ese srum` { #parse-ese-srum }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -61,7 +61,7 @@ Consulte [SRUM](../artifacts/srum.md).
 ## `parse-ese ual` { #parse-ese-ual }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -94,7 +94,7 @@ Consulte [Registro de acceso de usuarios (UAL)](../artifacts/ual.md).
 ## `parse-ese webcache` { #parse-ese-webcache }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

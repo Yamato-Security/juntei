@@ -5,7 +5,7 @@
 Jump Lists는 다른 바이너리 레이아웃을 사용합니다. 두 가지 모두 같은 아티팩트 명령어에 속합니다.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -129,7 +129,7 @@ juntei parse-file lnk -f suspicious.lnk -t jsonl | jq .
 ## `parse-file outlook` { #parse-file-outlook }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

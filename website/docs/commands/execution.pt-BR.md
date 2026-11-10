@@ -5,7 +5,7 @@ Defender e os arquivos PST, OST, MSG e OFT do Outlook. As Jump Lists automática
 layout binário diferente. Ambas pertencem ao mesmo comando de artefato.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -129,7 +129,7 @@ Consulte [Atalhos LNK](../artifacts/lnk.md).
 ## `parse-file outlook` { #parse-file-outlook }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

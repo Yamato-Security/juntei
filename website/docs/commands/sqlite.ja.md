@@ -3,7 +3,7 @@
 `parse-sqlite` は、SQLite データベースを処理します。Web ブラウザは、閲覧履歴、ダウンロード、Cookie、フォーム入力を SQLite データベースに保存します。Chromium 系ブラウザの `History`、`Cookies`、`Web Data`、および Firefox の `places.sqlite`、`cookies.sqlite`、`formhistory.sqlite` です。Juntei は SQLite を使わずにこれらを読み取り、`-wal` ファイルにある最新の変更も反映したうえで、削除されたエントリを復元します。
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -20,7 +20,7 @@ Options:
 ## `parse-sqlite browser` { #parse-sqlite-browser }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

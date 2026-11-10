@@ -238,7 +238,7 @@ fn banner_and_help() {
     assert!(r.stdout.contains("by Yamato Security"));
     assert!(r.stdout.contains("parse-registry"));
     // The release name follows the version, and the usage follows them.
-    let version = format!("Version: {} (Dev Build)", env!("CARGO_PKG_VERSION"));
+    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
     assert!(
         r.stdout
             .contains(&format!("{version}\n\nUsage: juntei <COMMAND>")),
@@ -257,7 +257,7 @@ fn banner_and_help() {
     let r = run(&["--version"]);
     assert_eq!(
         r.stdout,
-        format!("juntei {} (Dev Build)\n", env!("CARGO_PKG_VERSION"))
+        format!("juntei {} (CODE BLUE Release)\n", env!("CARGO_PKG_VERSION"))
     );
 }
 
@@ -276,7 +276,7 @@ fn banner_is_logo_blank_version_and_start_time_then_blank() {
         }
         out
     };
-    let version = format!("Version: {} (Dev Build)", env!("CARGO_PKG_VERSION"));
+    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
     // The help screen: the logo, a blank line, the version, a blank line and the usage.
     let help = plain(&run(&[]).stdout);
     assert!(
@@ -1309,6 +1309,65 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
             .to_string_lossy()
             .starts_with(".juntei-work-")
     }));
+}
+
+#[test]
+fn auto_parse_failure_summary_labels_the_error_and_links_to_the_parser_log() {
+    let root = tempfile::tempdir().unwrap();
+    let windows = root.path().join("evidence/HOST1/C/Windows");
+    let programs = windows.join("AppCompat/Programs");
+    std::fs::create_dir_all(&programs).unwrap();
+    std::fs::create_dir_all(windows.join("System32")).unwrap();
+    std::fs::write(programs.join("Amcache.hve"), b"not a registry hive").unwrap();
+    let prefetch = windows.join("Prefetch");
+    std::fs::create_dir_all(&prefetch).unwrap();
+    std::fs::copy(
+        repo("test_files/prefetch/CMD.EXE-6D6290C5.pf"),
+        prefetch.join("CMD.EXE-6D6290C5.pf"),
+    )
+    .unwrap();
+
+    let r = run_at(
+        root.path(),
+        &[
+            "auto-parse",
+            "-d",
+            "evidence",
+            "-o",
+            "parsed",
+            "-T",
+            "2",
+            "-K",
+        ],
+    );
+    assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
+    let log = Path::new("parsed")
+        .join("HOST1")
+        .join("FileExistence")
+        .join("Registry-Amcache-logs.txt");
+    let summary = r.stdout.split("Results Summary:").nth(1).unwrap();
+    let failure = summary
+        .lines()
+        .find(|line| line.contains("HOST1 / amcache:"))
+        .unwrap();
+    assert_eq!(
+        failure,
+        format!("  HOST1 / amcache: Parsing error (log: {})", log.display())
+    );
+    let details = std::fs::read_to_string(root.path().join(log)).unwrap();
+    assert!(details.contains("Could not parse"), "{details}");
+    assert!(details.contains("Elapsed time:"), "{details}");
+    let (_, tasks) = csv_rows(&root.path().join("parsed/manifest.csv"));
+    assert!(
+        tasks
+            .iter()
+            .any(|task| task["Artifact"] == "amcache" && task["Status"] == "failed")
+    );
+    assert!(
+        tasks
+            .iter()
+            .any(|task| task["Artifact"] == "prefetch" && task["Status"] == "succeeded")
+    );
 }
 
 #[test]

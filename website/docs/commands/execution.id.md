@@ -6,7 +6,7 @@ menggunakan kontainer compound-file; Jump List kustom menggunakan tata letak bin
 Keduanya termasuk dalam perintah artefak yang sama.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -130,7 +130,7 @@ Lihat [Pintasan LNK](../artifacts/lnk.md).
 ## `parse-file outlook` { #parse-file-outlook }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

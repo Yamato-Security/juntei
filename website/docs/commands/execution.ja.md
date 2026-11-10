@@ -3,7 +3,7 @@
 `parse-file` は、アーティファクト固有のファイル (Prefetch、ショートカット、Jump Lists、Defender 隔離、および Outlook の PST、OST、MSG、OFT ファイル) を処理します。自動 Jump Lists は複合ファイル コンテナーを使用します。カスタム Jump Lists は異なるバイナリ レイアウトを使用します。両方とも同じアーティファクト コマンドに属します。
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -126,7 +126,7 @@ juntei parse-file lnk -f suspicious.lnk -t jsonl | jq .
 ## `parse-file outlook` { #parse-file-outlook }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

@@ -6,7 +6,7 @@ SQLite 데이터베이스에 저장합니다. Chromium 기반 브라우저의 `H
 `-wal` 파일의 최신 변경 사항까지 반영하고 삭제된 항목을 복구합니다.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -23,7 +23,7 @@ Options:
 ## `parse-sqlite browser` { #parse-sqlite-browser }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

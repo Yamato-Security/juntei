@@ -6,7 +6,7 @@
 เช่นเดียวกับ `WebCacheV01.dat` ซึ่ง Internet Explorer และ Edge รุ่นเก่าใช้เก็บประวัติ การดาวน์โหลด คุกกี้ และแคช
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -25,7 +25,7 @@ Options:
 ## `parse-ese srum` { #parse-ese-srum }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -60,7 +60,7 @@ juntei parse-ese srum -f SRUDB.dat -t jsonl | jq 'select(.Provider == "NetworkUs
 ## `parse-ese ual` { #parse-ese-ual }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -93,7 +93,7 @@ juntei parse-ese ual -d Sum -t jsonl | jq 'select(.Table == "CLIENTS")'
 ## `parse-ese webcache` { #parse-ese-webcache }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

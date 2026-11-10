@@ -3,7 +3,7 @@
 `parse-ese` は、Extensible Storage Engine データベースを処理します。 SRUM の `SRUDB.dat` は ESE データベースです。オプションの SOFTWARE ハイブにより、アカウント名と Wi-Fi 名が強化されます。Windows Server のユーザーアクセスログのデータベース (`Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb`) も ESE データベースで、Internet Explorer と従来の Edge が閲覧履歴、ダウンロード、Cookie、キャッシュを保存する `WebCacheV01.dat` も同様です。
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -22,7 +22,7 @@ Options:
 ## `parse-ese srum` { #parse-ese-srum }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -57,7 +57,7 @@ juntei parse-ese srum -f SRUDB.dat -t jsonl | jq 'select(.Provider == "NetworkUs
 ## `parse-ese ual` { #parse-ese-ual }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -90,7 +90,7 @@ juntei parse-ese ual -d Sum -t jsonl | jq 'select(.Table == "CLIENTS")'
 ## `parse-ese webcache` { #parse-ese-webcache }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

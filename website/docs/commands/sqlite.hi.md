@@ -6,7 +6,7 @@ SQLite databases में रखते हैं: Chromium-based browsers क�
 सबसे नए बदलावों के साथ पढ़ता है, और deleted entries recover करता है।
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -23,7 +23,7 @@ Options:
 ## `parse-sqlite browser` { #parse-sqlite-browser }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
