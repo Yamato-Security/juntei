@@ -42,7 +42,16 @@ fn jsonl(path: &Path) -> Vec<Value> {
 #[test]
 fn all_exported_provenance_is_relative_and_csv_jsonl_companions_do_not_collide() {
     let tmp = tempfile::tempdir().unwrap();
-    let case = tmp.path().join("analyst-private-parent");
+    let physical = tmp.path().join("analyst-private-parent");
+    fs::create_dir(&physical).unwrap();
+    #[cfg(unix)]
+    let case = {
+        let alias = tmp.path().join("logical-analyst-private-parent");
+        std::os::unix::fs::symlink(&physical, &alias).unwrap();
+        alias
+    };
+    #[cfg(not(unix))]
+    let case = physical;
     let evidence = case.join("Evidence");
     let parsed = case.join("Parsed");
     let reports = case.join("Reports");

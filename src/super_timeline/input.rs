@@ -166,6 +166,7 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
     let mut parsed_root = None;
     let mut reference_roots = Vec::new();
     if let Some(root) = &opts.directory {
+        let logical_root = std::path::absolute(root)?;
         let root = fs::canonicalize(root)?;
         parsed_root = Some(root.clone());
         let manifest = root.join("manifest.json");
@@ -195,6 +196,21 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
             .ok_or_else(|| io::Error::other("Manifest has no Hosts array"))?;
         let evidence = evidence_locations(&root, &text(&value, &["EvidenceDirectory"]), hosts);
         reference_roots.extend(evidence.iter().map(|p| p.to_string_lossy().into_owned()));
+        // Preserve verified spellings beside the directory supplied by the caller too. On
+        // macOS, for example, canonical /private/var paths can have /var source references.
+        // Accept an alias only when it resolves to a verified evidence directory.
+        let recorded_evidence = text(&value, &["EvidenceDirectory"]);
+        if !recorded_evidence.is_empty() {
+            for parent in logical_root.ancestors().take(10) {
+                let alias = parent.join(&recorded_evidence);
+                if alias
+                    .canonicalize()
+                    .is_ok_and(|path| evidence.contains(&path))
+                {
+                    reference_roots.push(alias.to_string_lossy().into_owned());
+                }
+            }
+        }
         result.evidence_roots.extend(evidence.iter().cloned());
         let tasks = get(&value, &["Tasks"])
             .and_then(Value::as_array)
