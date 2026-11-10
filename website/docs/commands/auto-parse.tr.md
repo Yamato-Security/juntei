@@ -52,7 +52,7 @@ juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 
 Bölünmüş imajın ilk parçasını belirtin. `.E02` dahil tüm parçaları özgün adlarıyla aynı dizinde tutun. Tam diskler (MBR/GPT) ve tek NTFS birimleri desteklenir. Karışık dizinler için `--vhdx --e01` kullanın.
 
-Aynı geçici alan ve kaynak meta verisi gereksinimleri geçerlidir. İmajlar salt okunurdur. Edinim boşlukları ve açma veya okuma sırasında bulunan hasarlar `ImageErrors` ve `manifest.csv` içinde bildirilir; okunabilen sonuçlar korunur ve çıkış kodu 1 olur. Yalnızca erişilen veriler denetlenir; tüm parçalar veya medyanın tam özeti doğrulanmaz. Mantıksal `.L01` ve `.Lx01` dosyaları reddedilir; parola seçeneği yoktur.
+Aynı geçici alan ve kaynak meta verisi gereksinimleri geçerlidir. E01 imajları genellikle diskin tamamını içerir ve tüm imajlar ayrıştırma başlamadan önce hazırlama alanına kopyalanır; bu nedenle tüm NTFS birimlerinde kullanılan alanın toplamı kadar boş alan ayırın. 200 GB'ı kullanılan bir disk için yaklaşık 200 GB gerekir. İmajlar salt okunurdur. Edinim boşlukları ve açma veya okuma sırasında bulunan hasarlar `ImageErrors` ve `manifest.csv` içinde bildirilir; okunabilen sonuçlar korunur ve çıkış kodu 1 olur. Yalnızca erişilen veriler denetlenir; tüm parçalar veya medyanın tam özeti doğrulanmaz. Mantıksal `.L01` ve `.Lx01` dosyaları reddedilir; parola seçeneği yoktur.
 
 Ayrı `mount` komutu hâlâ Linux FUSE gerektirir; yerel otomatik ayrıştırma gerektirmez.
 

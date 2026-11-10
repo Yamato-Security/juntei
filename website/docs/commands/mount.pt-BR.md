@@ -81,7 +81,7 @@ juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 
 Informe o primeiro segmento de uma imagem dividida. Mantenha todos os arquivos associados, incluindo `.E02`, ao lado dele com seus nomes originais. Há suporte para discos inteiros (MBR/GPT) e volumes NTFS individuais. Use `--vhdx --e01` para diretórios mistos.
 
-Valem os mesmos requisitos de espaço temporário e metadados de origem. As imagens são somente leitura. Lacunas de aquisição e danos encontrados ao abrir ou ler aparecem em `ImageErrors` e `manifest.csv`; os resultados legíveis são preservados com código de saída 1. Apenas os dados acessados são verificados, não todos os blocos nem o hash da mídia completa. Arquivos lógicos `.L01` e `.Lx01` são recusados; não há opção de senha.
+Valem os mesmos requisitos de espaço temporário e metadados de origem. Imagens E01 costumam conter discos inteiros, e todas as imagens são preparadas antes do início da análise; por isso, reserve espaço livre aproximadamente igual ao espaço usado de todos os seus volumes NTFS somados. Um disco com 200 GB em uso precisa de cerca de 200 GB. As imagens são somente leitura. Lacunas de aquisição e danos encontrados ao abrir ou ler aparecem em `ImageErrors` e `manifest.csv`; os resultados legíveis são preservados com código de saída 1. Apenas os dados acessados são verificados, não todos os blocos nem o hash da mídia completa. Arquivos lógicos `.L01` e `.Lx01` são recusados; não há opção de senha.
 
 O comando separado `mount` ainda exige Linux FUSE; a análise automática nativa não.
 

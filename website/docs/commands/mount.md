@@ -99,7 +99,7 @@ juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 
 Provide the first segment of a split image. Keep all companions, including `.E02`, beside it with their original names. Both whole disks (MBR/GPT) and single NTFS volumes are supported. Use `--vhdx --e01` for a directory containing both formats.
 
-The same temporary-space and source-metadata requirements apply. Images are read-only. Acquisition gaps and damage found during opening or reading appear in `ImageErrors` and `manifest.csv`; readable results are retained with exit status 1. This checks accessed data, not every chunk or the image's full-media hash. Logical `.L01` and `.Lx01` files are rejected; there is no password option.
+The same temporary-space and source-metadata requirements apply. E01 images usually hold whole disks, and every image is staged before parsing starts, so allow free space about equal to the used space of all their NTFS volumes combined; a disk with 200 GB in use needs about 200 GB. Images are read-only. Acquisition gaps and damage found during opening or reading appear in `ImageErrors` and `manifest.csv`; readable results are retained with exit status 1. This checks accessed data, not every chunk or the image's full-media hash. Logical `.L01` and `.Lx01` files are rejected; there is no password option.
 
 The separate `mount` command still requires Linux FUSE; native automatic parsing does not.
 

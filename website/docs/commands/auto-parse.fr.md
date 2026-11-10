@@ -52,7 +52,7 @@ juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 
 Indiquez le premier segment d’une image fractionnée. Conservez tous les fichiers associés, dont `.E02`, à côté avec leurs noms d’origine. Les disques entiers (MBR/GPT) et les volumes NTFS seuls sont pris en charge. Utilisez `--vhdx --e01` pour un répertoire mixte.
 
-Les mêmes exigences d’espace temporaire et de métadonnées source s’appliquent. Les images sont en lecture seule. Les lacunes d’acquisition et les dommages découverts à l’ouverture ou à la lecture figurent dans `ImageErrors` et `manifest.csv` ; les résultats lisibles sont conservés avec un code de sortie 1. Seules les données consultées sont vérifiées, pas tous les blocs ni le hachage du support entier. Les fichiers logiques `.L01` et `.Lx01` sont refusés ; aucune option de mot de passe n’est proposée.
+Les mêmes exigences d’espace temporaire et de métadonnées source s’appliquent. Les images E01 contiennent généralement des disques entiers, et toutes les images sont préparées avant le début de l’analyse : prévoyez un espace libre à peu près égal à l’espace utilisé de l’ensemble de leurs volumes NTFS ; un disque dont 200 Go sont utilisés nécessite environ 200 Go. Les images sont en lecture seule. Les lacunes d’acquisition et les dommages découverts à l’ouverture ou à la lecture figurent dans `ImageErrors` et `manifest.csv` ; les résultats lisibles sont conservés avec un code de sortie 1. Seules les données consultées sont vérifiées, pas tous les blocs ni le hachage du support entier. Les fichiers logiques `.L01` et `.Lx01` sont refusés ; aucune option de mot de passe n’est proposée.
 
 La commande distincte `mount` nécessite toujours Linux FUSE ; l’analyse native automatique n’en a pas besoin.
 

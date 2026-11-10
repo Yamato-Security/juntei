@@ -81,7 +81,7 @@ juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 
 Berikan segmen pertama untuk image terpisah. Simpan semua berkas pendamping, termasuk `.E02`, di sampingnya dengan nama asli. Disk penuh (MBR/GPT) dan volume NTFS tunggal didukung. Gunakan `--vhdx --e01` untuk direktori campuran.
 
-Persyaratan ruang sementara dan metadata sumber tetap sama. Image dibaca saja. Kekosongan akuisisi dan kerusakan saat membuka atau membaca dilaporkan dalam `ImageErrors` dan `manifest.csv`; hasil yang terbaca dipertahankan dengan kode keluar 1. Hanya data yang diakses yang diperiksa, bukan semua chunk atau hash seluruh media. Berkas logis `.L01` dan `.Lx01` ditolak; tidak ada opsi kata sandi.
+Persyaratan ruang sementara dan metadata sumber tetap sama. Image E01 biasanya berisi seluruh disk, dan semua image di-staging sebelum parsing dimulai, jadi sediakan ruang kosong kira-kira sebesar total ruang terpakai semua volume NTFS-nya; disk dengan 200 GB terpakai memerlukan sekitar 200 GB. Image dibaca saja. Kekosongan akuisisi dan kerusakan saat membuka atau membaca dilaporkan dalam `ImageErrors` dan `manifest.csv`; hasil yang terbaca dipertahankan dengan kode keluar 1. Hanya data yang diakses yang diperiksa, bukan semua chunk atau hash seluruh media. Berkas logis `.L01` dan `.Lx01` ditolak; tidak ada opsi kata sandi.
 
 Perintah terpisah `mount` tetap memerlukan Linux FUSE; parsing otomatis native tidak.
 
