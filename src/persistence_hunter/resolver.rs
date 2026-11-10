@@ -115,7 +115,7 @@ fn sha256(path: &Path) -> Result<String, String> {
         }
         hasher.update(&buffer[..count]);
     }
-    Ok(format!("{:x}", hasher.finalize()))
+    Ok(crate::util::hex_lower(&hasher.finalize()))
 }
 
 #[derive(Clone, Debug)]
