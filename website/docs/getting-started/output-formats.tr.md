@@ -122,3 +122,7 @@ olmayan duvar saati değerleri kaydedildiği gibi kalır;
 Boş, `null`, `NA`, `Problems` ve ayrıştırıcıya özgü durum alanları anlamlıdır. Artefaktın bir değer
 saklamadığı, kaydın hasarlı olduğu, biçimin bunu desteklemediği veya ayrıştırıcının değeri
 çözümleyemediği anlamına gelebilirler. Tüm boş değerleri sıfırla değiştirmeyin.
+
+## Normalleştirilmiş kronolojik çizelge { #normalized-chronological-timeline }
+
+[`super-timeline`](../commands/super-timeline.md), zaman anlamı, kaynak ve sıralama içeren ortak CSV/JSONL olay şeması ve Timesketch profili üretir. Yerel çıktılar ve `auto-parse -j` şemalarını korur.

@@ -13,6 +13,8 @@ Für eine Windows-Beweissammlung von mehreren Computern verwenden Sie
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Der Befehl ruft dieselben gruppierten Befehle auf
 und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategorie.
 
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) erzeugt eine chronologisch sortierte Timeline aus geparsten Artefakten und kennzeichnet die Bedeutung der Zeiten. `auto-parse -j` behält weiterhin die nativen Datensätze bei.
+
 ## [Disk-Images](mount.md) { #disk-images }
 
 | Befehl | Eingabe | Ausführlicher Leitfaden |

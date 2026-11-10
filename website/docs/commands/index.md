@@ -13,6 +13,10 @@ For a multi-computer Windows evidence collection, use
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). It invokes the same grouped commands
 and organizes results and logs by computer and investigative category.
 
+For a chronologically sorted timeline across parsed artifacts, use
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md).
+It expands and labels timestamp meanings; `auto-parse -j` continues to retain native records.
+
 ## [Disk images](mount.md)
 
 | Command | Input | Detailed guide |

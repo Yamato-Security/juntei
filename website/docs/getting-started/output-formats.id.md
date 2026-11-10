@@ -118,3 +118,7 @@ komputer yang menjalankan Juntei. Nilai mentah dan jam dinding tanpa zona tetap 
 Field kosong, `null`, `NA`, `Problems`, dan field kondisi khusus parser memiliki makna. Field tersebut dapat berarti
 artefak tidak menyimpan nilai, record rusak, format tidak mendukungnya, atau
 parser tidak dapat me-resolve-nya. Jangan mengganti semua nilai kosong dengan nol.
+
+## Linimasa kronologis ternormalisasi { #normalized-chronological-timeline }
+
+[`super-timeline`](../commands/super-timeline.md) membuat skema CSV/JSONL bersama dengan arti waktu, sumber, pengurutan dan profil Timesketch. Ekspor asli dan `auto-parse -j` mempertahankan skemanya.

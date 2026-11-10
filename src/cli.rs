@@ -121,6 +121,183 @@ pub enum Commands {
         disable_version_flag = true
     )]
     PersistenceHunter(PersistenceHunterOptions),
+
+    /// Build a chronological forensic timeline
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei super-timeline <INPUT> -o <FILE> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    SuperTimeline(SuperTimelineOptions),
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TimelineOutputType {
+    #[default]
+    Csv,
+    Jsonl,
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TimelineProfile {
+    #[default]
+    Native,
+    Timesketch,
+}
+
+fn parse_timeline_memory(value: &str) -> Result<usize, String> {
+    value
+        .parse::<usize>()
+        .ok()
+        .filter(|n| (8..=1_048_576).contains(n))
+        .ok_or_else(|| "memory limit must be a whole number of MiB from 8 to 1048576".into())
+}
+
+fn parse_record_limit(value: &str) -> Result<usize, String> {
+    value
+        .parse::<usize>()
+        .ok()
+        .filter(|n| (1..=4096).contains(n))
+        .ok_or_else(|| "record limit must be a whole number of MiB from 1 to 4096".into())
+}
+
+fn parse_assumed_offset(value: &str) -> Result<String, String> {
+    let b = value.as_bytes();
+    if b.len() == 6
+        && matches!(b[0], b'+' | b'-')
+        && b[3] == b':'
+        && [b[1], b[2], b[4], b[5]].iter().all(u8::is_ascii_digit)
+        && (b[1] - b'0') * 10 + b[2] - b'0' < 24
+        && (b[4] - b'0') * 10 + b[5] - b'0' < 60
+    {
+        return Ok(value.into());
+    }
+    Err("use a quoted signed offset, for example --assume-offset \"+09:00\" or \"-01:00\"".into())
+}
+
+#[derive(Args, Clone, Debug)]
+#[command(group(ArgGroup::new("input").args(["directory", "filepath", "hayabusa"]).required(true).multiple(true)))]
+pub struct SuperTimelineOptions {
+    /// Auto-parse output directory containing manifest.json
+    #[arg(
+        help_heading = "Input",
+        short = 'd',
+        long,
+        value_name = "DIR",
+        conflicts_with = "filepath",
+        display_order = 100
+    )]
+    pub directory: Option<PathBuf>,
+    /// Native combined JSONL, JSON, or a standalone CSV export
+    #[arg(
+        help_heading = "Input",
+        short = 'f',
+        long = "file",
+        value_name = "FILE",
+        display_order = 101
+    )]
+    pub filepath: Option<PathBuf>,
+    /// Hayabusa JSONL timeline to include (repeatable)
+    #[arg(help_heading = "Input", long, value_name = "FILE", display_order = 102)]
+    pub hayabusa: Vec<PathBuf>,
+    /// Artifact identifier for an untagged standalone input
+    #[arg(
+        help_heading = "Input",
+        long,
+        value_name = "ID",
+        requires = "filepath",
+        display_order = 103
+    )]
+    pub input_artifact: Option<String>,
+    /// Computer name when an input has no computer metadata
+    #[arg(help_heading = "Input", long, value_name = "NAME", display_order = 104)]
+    pub computer: Option<String>,
+    /// Offset for timestamps without a time zone; date-only values retain day precision
+    #[arg(help_heading = "Input", long, value_name = "OFFSET", value_parser = parse_assumed_offset, allow_hyphen_values = true, display_order = 105)]
+    pub assume_offset: Option<String>,
+    /// Write the sorted timeline and companion diagnostics/summary
+    #[arg(
+        help_heading = "Output",
+        short = 'o',
+        long,
+        value_name = "FILE",
+        display_order = 200
+    )]
+    pub output: PathBuf,
+    /// Output type: csv or jsonl
+    #[arg(
+        help_heading = "Output",
+        short = 't',
+        long = "output-type",
+        value_enum,
+        default_value = "csv",
+        display_order = 201
+    )]
+    pub output_type: TimelineOutputType,
+    /// Native PascalCase or Timesketch-compatible field names
+    #[arg(
+        help_heading = "Output",
+        long,
+        value_enum,
+        default_value = "native",
+        display_order = 202
+    )]
+    pub profile: TimelineProfile,
+    /// Replace existing timeline and companion files
+    #[arg(help_heading = "Output", short = 'C', long, display_order = 203)]
+    pub clobber: bool,
+    /// Include only these artifact identifiers (comma separated; repeatable)
+    #[arg(
+        help_heading = "Filtering",
+        long = "artifact",
+        value_delimiter = ',',
+        value_name = "ID",
+        display_order = 300
+    )]
+    pub artifacts: Vec<String>,
+    /// Earliest included event time, with an explicit UTC offset or Z
+    #[arg(
+        help_heading = "Filtering",
+        long,
+        value_name = "TIME",
+        display_order = 301
+    )]
+    pub timeline_start: Option<String>,
+    /// Latest included event time, with an explicit UTC offset or Z
+    #[arg(
+        help_heading = "Filtering",
+        long,
+        value_name = "TIME",
+        display_order = 302
+    )]
+    pub timeline_end: Option<String>,
+    /// Include collection-side filesystem times, labeled separately
+    #[arg(help_heading = "Records", long, display_order = 320)]
+    pub include_collection_times: bool,
+    /// Include generic registry QWORD values interpreted as FILETIME
+    #[arg(help_heading = "Records", long, display_order = 321)]
+    pub include_interpreted_times: bool,
+    /// Maximum parallel input workers
+    #[arg(help_heading = "Performance", short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 350)]
+    pub threads: Option<usize>,
+    /// Total sort-buffer budget in MiB (parser and merge overhead is additional)
+    #[arg(help_heading = "Performance", long, value_name = "MIB", default_value = "256", value_parser = parse_timeline_memory, display_order = 351)]
+    pub memory_limit: usize,
+    /// Maximum input record size in MiB
+    #[arg(help_heading = "Performance", long, value_name = "MIB", default_value = "16", value_parser = parse_record_limit, display_order = 352)]
+    pub max_record_size: usize,
+    /// Directory for external-sort temporary files
+    #[arg(
+        help_heading = "Performance",
+        long,
+        value_name = "DIR",
+        display_order = 353
+    )]
+    pub temp_dir: Option<PathBuf>,
+    #[command(flatten)]
+    pub common: CommonOptions,
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, Default)]

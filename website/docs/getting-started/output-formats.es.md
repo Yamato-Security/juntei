@@ -131,3 +131,7 @@ Los valores vacíos, `null`, `NA`, `Problems` y los campos de estado específico
 tienen significado. Pueden indicar que el artefacto no almacenaba un valor, que el registro estaba
 dañado, que el formato no lo admite o que el analizador no pudo resolverlo. No sustituya todos los
 valores vacíos por cero.
+
+## Cronología cronológica normalizada { #normalized-chronological-timeline }
+
+[`super-timeline`](../commands/super-timeline.md) crea un esquema de evento común CSV/JSONL con significados de marcas de tiempo etiquetados, referencias de fuentes y clasificación cronológica. También admite un perfil de importación de Timesketch. Las exportaciones de analizadores nativos y `auto-parse -j` mantienen sus esquemas existentes.

@@ -101,6 +101,7 @@ plugins:
       build: true
       site_name: Juntei ドキュメント
       nav_translations:
+        Super Timeline: "統合タイムライン"
         Home: ホーム
         Overview: 概要
         Screenshots: スクリーンショット
@@ -189,6 +190,7 @@ plugins:
       name: 繁體中文
       build: true
       nav_translations:
+        Super Timeline: "超級時間軸"
         Home: 首頁
         Overview: 概觀
         Screenshots: 螢幕擷圖
@@ -277,6 +279,7 @@ plugins:
       name: 한국어
       build: true
       nav_translations:
+        Super Timeline: "슈퍼 타임라인"
         Home: 홈
         Overview: 개요
         Screenshots: 스크린샷
@@ -365,6 +368,7 @@ plugins:
       name: Deutsch
       build: true
       nav_translations:
+        Super Timeline: "Gesamttimeline"
         Home: Startseite
         Overview: Übersicht
         Screenshots: Screenshots
@@ -453,6 +457,7 @@ plugins:
       name: Türkçe
       build: true
       nav_translations:
+        Super Timeline: "Birleşik zaman çizelgesi"
         Home: Ana Sayfa
         Overview: Genel Bakış
         Screenshots: Ekran Görüntüleri
@@ -541,6 +546,7 @@ plugins:
       name: Français
       build: true
       nav_translations:
+        Super Timeline: "Chronologie globale"
         Home: Accueil
         Overview: Vue d'ensemble
         Screenshots: Captures d'écran
@@ -629,6 +635,7 @@ plugins:
       name: Español
       build: true
       nav_translations:
+        Super Timeline: "Súper línea de tiempo"
         Home: Inicio
         Overview: Visión general
         Screenshots: Capturas de pantalla
@@ -717,6 +724,7 @@ plugins:
       name: Português (Brasil)
       build: true
       nav_translations:
+        Super Timeline: "Super Linha do Tempo"
         Home: Início
         Overview: Visão geral
         Screenshots: Capturas de tela
@@ -805,6 +813,7 @@ plugins:
       name: Українська
       build: true
       nav_translations:
+        Super Timeline: "Супер Хронологія"
         Home: Головна
         Overview: Огляд
         Screenshots: Знімки екрана
@@ -893,6 +902,7 @@ plugins:
       name: हिन्दी
       build: true
       nav_translations:
+        Super Timeline: "सुपर टाइमलाइन"
         Home: होम
         Overview: अवलोकन
         Screenshots: स्क्रीनशॉट
@@ -981,6 +991,7 @@ plugins:
       name: Bahasa Indonesia
       build: true
       nav_translations:
+        Super Timeline: "Linimasa gabungan"
         Home: Beranda
         Overview: Ikhtisar
         Screenshots: Tangkapan Layar
@@ -1069,6 +1080,7 @@ plugins:
       name: မြန်မာဘာသာ
       build: true
       nav_translations:
+        Super Timeline: "စူပါအချိန်လိုင်း"
         Home: ပင်မစာမျက်နှာ
         Overview: ခြုံငုံသုံးသပ်ချက်
         Screenshots: ဖန်သားပြင်ဓာတ်ပုံများ
@@ -1157,6 +1169,7 @@ plugins:
       name: ไทย
       build: true
       nav_translations:
+        Super Timeline: "ซุปเปอร์ไทม์ไลน์"
         Home: หน้าแรก
         Overview: ภาพรวม
         Screenshots: ภาพหน้าจอ
@@ -1245,6 +1258,7 @@ plugins:
       name: العربية
       build: true
       nav_translations:
+        Super Timeline: "سوبر الجدول الزمني"
         Home: الرئيسية
         Overview: نظرة عامة
         Screenshots: لقطات الشاشة
@@ -1361,6 +1375,7 @@ nav:
       - Registry: commands/security-registry.md
       - SQLite: commands/sqlite.md
       - Persistence Hunter: commands/persistence-hunter.md
+      - Super Timeline: commands/super-timeline.md
       - Common Output Patterns: commands/output.md
   - Artifacts:
       - Artifact Guide: artifacts/index.md

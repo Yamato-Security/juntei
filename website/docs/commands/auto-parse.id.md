@@ -593,3 +593,13 @@ Lihat [membaca deskriptor keamanan yang dipulihkan](../artifacts/defender-quaran
 untuk field laporan dan keterbatasan forensiknya.
 
 Auto-parse juga membaca koneksi jarak jauh milik pengguna (RDP, PuTTY, WinSCP, dan mapped drive).
+
+## Membuat linimasa gabungan kronologis { #build-a-chronological-super-timeline }
+
+Setelah parsing, gunakan [`super-timeline`](super-timeline.md) untuk memperluas waktu menjadi peristiwa berlabel dan mengurutkannya lintas komputer dan artefak:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+Ekspor `-j, --json-timeline` tetap berupa gabungan rekaman asli JSONL, mempertahankan skema tanpa memperluas atau mengurutkan waktu. Simpan bersama hasil masing-masing parser untuk pemeriksaan bukti.

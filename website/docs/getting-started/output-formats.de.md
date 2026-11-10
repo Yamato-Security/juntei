@@ -118,3 +118,7 @@ Computer, auf dem Juntei läuft. Rohwerte und Uhrzeiten ohne Zeitzone bleiben wi
 Leere Werte, `null`, `NA`, `Problems` und parserspezifische Zustandsfelder sind aussagekräftig. Sie können bedeuten, dass das
 Artefakt keinen Wert gespeichert hat, der Datensatz beschädigt war, das Format ihn nicht unterstützt oder der
 Parser ihn nicht auflösen konnte. Ersetzen Sie nicht alle leeren Werte durch Null.
+
+## Normalisierte chronologische Timeline { #normalized-chronological-timeline }
+
+[`super-timeline`](../commands/super-timeline.md) erstellt ein gemeinsames CSV-/JSONL-Ereignisschema mit Zeitbedeutung, Quellenangaben und chronologischer Sortierung sowie einem Timesketch-Profil. Native Exporte und `auto-parse -j` behalten ihre Schemas.

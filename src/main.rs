@@ -44,6 +44,7 @@ mod secure_sds;
 mod security_descriptor;
 mod shimcache;
 mod srum;
+mod super_timeline;
 mod time_display;
 mod ual;
 mod usn_journal;
@@ -73,6 +74,12 @@ fn main() {
     let start = Instant::now();
     let cli = Cli::parse();
     let code = match &cli.cmd {
+        Commands::SuperTimeline(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = super_timeline::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
         Commands::PersistenceHunter(opts) => {
             let data_only = opts.data_on_stdout();
             if !data_only && !opts.list_checks {

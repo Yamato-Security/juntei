@@ -593,3 +593,13 @@ Consultez la section [lire le descripteur de sécurité récupéré](../artifact
 pour connaître les champs du rapport et leurs limites forensiques.
 
 Auto-parse lit également les connexions à distance des utilisateurs (RDP, PuTTY, WinSCP et lecteurs mappés).
+
+## Construire une chronologie globale { #build-a-chronological-super-timeline }
+
+Après l'analyse, [`super-timeline`](super-timeline.md) développe les horodatages en événements étiquetés et les trie entre ordinateurs et artefacts :
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+L'export `-j, --json-timeline` reste un fichier JSONL de données natives : il conserve les schémas sans développer ni trier les dates. Conservez-le avec les résultats individuels pour examiner les preuves.

@@ -13,6 +13,8 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md)。它會呼叫相同的分組命令，
 並依電腦與調查類別整理結果與記錄。
 
+對於跨已解析工件的按時間順序排序的時間線，請使用 [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md)。它擴展並標記了時間戳記的含義； `auto-parse -j` 繼續保留本地記錄。
+
 ## [磁碟映像檔](mount.md) { #disk-images }
 
 | 命令 | 輸入 | 詳細指南 |

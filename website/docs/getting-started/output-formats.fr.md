@@ -118,3 +118,7 @@ l'ordinateur qui exécute Juntei. Les valeurs brutes et les heures murales sans 
 Les valeurs vides, `null`, `NA`, `Problems` et les champs d'état propres aux parseurs sont significatifs. Ils peuvent signifier que
 l'artefact n'a pas stocké de valeur, que l'enregistrement a été endommagé, que le format ne la prend pas en charge, ou que le
 parseur n'a pas pu la résoudre. Ne remplacez pas toutes les valeurs vides par zéro.
+
+## Chronologie normalisée { #normalized-chronological-timeline }
+
+[`super-timeline`](../commands/super-timeline.md) crée un schéma d'événements CSV/JSONL commun, daté, trié et relié aux sources, avec profil Timesketch. Les exports natifs et `auto-parse -j` conservent leurs schémas.
