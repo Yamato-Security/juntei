@@ -77,17 +77,24 @@ const HIVE_TYPES: [&str; 14] = [
 pub(crate) fn is_hive_file(path: &Path) -> bool {
     let name = path
         .file_name()
-        .map(|n| n.to_string_lossy().to_uppercase())
+        .map(|n| n.to_string_lossy())
         .unwrap_or_default();
-    if [".LOG", ".LOG1", ".LOG2"].iter().any(|x| name.ends_with(x)) {
-        return false;
-    }
     let mut head = [0u8; 32];
-    File::open(path)
-        .and_then(|mut f| io::Read::read_exact(&mut f, &mut head))
-        .is_ok()
-        && &head[..4] == b"regf"
-        && head[28..32] == [0; 4]
+    !is_log_name(&name)
+        && File::open(path)
+            .and_then(|mut f| io::Read::read_exact(&mut f, &mut head))
+            .is_ok()
+        && is_hive_head(&name, &head)
+}
+
+fn is_log_name(name: &str) -> bool {
+    let name = name.to_uppercase();
+    [".LOG", ".LOG1", ".LOG2"].iter().any(|x| name.ends_with(x))
+}
+
+/// [`is_hive_file`] for a file's name and first bytes (at least 32 of them for a hive).
+pub(crate) fn is_hive_head(name: &str, head: &[u8]) -> bool {
+    !is_log_name(name) && head.len() >= 32 && &head[..4] == b"regf" && head[28..32] == [0; 4]
 }
 
 /// The primary hive files under `dir`, recursively, in path order.

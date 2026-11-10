@@ -24,6 +24,7 @@ mod defender_quarantine;
 mod disk_image;
 mod hive;
 mod i30;
+mod image_files;
 mod image_metadata;
 mod interrupt;
 mod jump_lists;

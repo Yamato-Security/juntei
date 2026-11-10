@@ -163,8 +163,12 @@ fn starts_with_boot_sector(path: &Path) -> bool {
     File::open(path)
         .and_then(|mut f| f.read_exact(&mut head))
         .is_ok()
-        && &head[3..11] == ntfs_boot::NTFS_OEM_ID
-        && head[510..] == [0x55, 0xaa]
+        && is_boot_head(&head)
+}
+
+/// [`starts_with_boot_sector`] for a file's first bytes (at least 512 of them).
+pub(crate) fn is_boot_head(head: &[u8]) -> bool {
+    head.len() >= 512 && &head[3..11] == ntfs_boot::NTFS_OEM_ID && head[510..512] == [0x55, 0xaa]
 }
 
 /// The `$Boot` files under `dir`, recursively, in path order: named so, or starting with an NTFS

@@ -152,7 +152,7 @@ impl Check<'_> {
             return None;
         }
         // Bound both advertised and actual reads (the source may change after discovery).
-        if file.len > max_bytes {
+        if file.size() > max_bytes {
             self.issue(
                 "limit_reached",
                 format!(
@@ -163,7 +163,10 @@ impl Check<'_> {
             return None;
         }
         let mut data = Vec::new();
-        match File::open(&file.physical).and_then(|f| f.take(max_bytes + 1).read_to_end(&mut data))
+        match file
+            .materialize()
+            .and_then(|()| File::open(&file.physical))
+            .and_then(|f| f.take(max_bytes + 1).read_to_end(&mut data))
         {
             Ok(_) if data.len() as u64 <= max_bytes => Some(data),
             Ok(_) => {

@@ -76,6 +76,9 @@ fn execute(opts: &PersistenceHunterOptions) -> Result<i32, String> {
         }
     }
     let profile = Profile::load(opts.profile.as_deref(), definitions)?;
+    if let Some(sources) = &opts.image_files {
+        crate::image_files::install(sources)?;
+    }
     let selected_definitions: Vec<_> = definitions
         .iter()
         .filter(|d| selected.is_empty() || selected.iter().any(|s| selected_by(d, s)))

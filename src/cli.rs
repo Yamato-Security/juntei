@@ -145,6 +145,10 @@ impl PersistenceSeverity {
 
 #[derive(Args, Clone, Debug, Default)]
 pub struct PersistenceHunterOptions {
+    /// Internal: the disk images of staged files that were not copied, read on demand.
+    #[arg(long = "image-files", hide = true)]
+    pub image_files: Option<PathBuf>,
+
     /// Evidence directory (a mounted Windows volume or a collection of hosts)
     #[arg(help_heading = "Input", short = 'd', long, value_name = "DIR", required_unless_present_any = ["filepath", "list_checks"], conflicts_with = "filepath", display_order = 100)]
     pub directory: Option<PathBuf>,
@@ -497,6 +501,9 @@ fn parse_auto_threads(value: &str) -> Result<usize, String> {
 pub struct AutoParseOptions {
     #[arg(skip)]
     pub(crate) image_source_metadata: Option<PathBuf>,
+
+    #[arg(skip)]
+    pub(crate) image_files: Option<PathBuf>,
 
     /// Evidence directory containing one or more collected Windows systems
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "EVIDENCE", display_order = 100)]
