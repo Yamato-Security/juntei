@@ -5352,7 +5352,10 @@ fn mount_serves_a_vhdx_read_only_until_interrupted() {
     assert!(mounted_from("mount-test.vhdx"));
     let sha256 = |path: &Path| {
         use sha2::{Digest, Sha256};
-        format!("{:x}", Sha256::digest(std::fs::read(path).unwrap()))
+        Sha256::digest(std::fs::read(path).unwrap())
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
     };
     assert_eq!(
         std::fs::read(data.join("small.txt")).unwrap(),
@@ -6165,7 +6168,10 @@ fn mount_serves_an_e01_image_from_its_segments() {
     assert!(mounted_from("mount-test.E01"));
     let sha256 = |path: &Path| {
         use sha2::{Digest, Sha256};
-        format!("{:x}", Sha256::digest(std::fs::read(path).unwrap()))
+        Sha256::digest(std::fs::read(path).unwrap())
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
     };
     // the same files as in the VHDX
     assert_eq!(

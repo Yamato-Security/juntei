@@ -1060,7 +1060,7 @@ mod tests {
             crate::image_files::len(&fragmented, 0),
             8 * (16 * 1024 + 123)
         );
-        let sha256 = |path: &Path| format!("{:x}", Sha256::digest(fs::read(path).unwrap()));
+        let sha256 = |path: &Path| crate::util::hex_lower(&Sha256::digest(fs::read(path).unwrap()));
         // Hydration must not detach other names of the same NTFS file. Consumers deduplicate
         // hives and payloads by identity, not just by their bytes.
         let alias = c.join("Users/sample/Data/fragmented-alias.bin");

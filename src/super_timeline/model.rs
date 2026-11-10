@@ -197,7 +197,7 @@ pub fn fingerprint(parts: &[&str]) -> String {
         h.update((part.len() as u64).to_be_bytes());
         h.update(part.as_bytes());
     }
-    format!("{:x}", h.finalize())
+    crate::util::hex_lower(&h.finalize())
 }
 
 #[derive(Clone, Debug)]

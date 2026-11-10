@@ -176,6 +176,16 @@ pub fn find_files(dir: &Path, is_match: fn(&str) -> bool) -> Vec<PathBuf> {
     out
 }
 
+/// Lowercase hexadecimal digits of `bytes`, two per byte (for example a SHA-256 digest).
+pub fn hex_lower(bytes: &[u8]) -> String {
+    use std::fmt::Write;
+    let mut text = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        let _ = write!(text, "{byte:02x}");
+    }
+    text
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
