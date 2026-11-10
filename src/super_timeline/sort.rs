@@ -42,6 +42,7 @@ impl Buffer {
     }
 
     pub fn push(&mut self, row: SortRow) -> io::Result<()> {
+        crate::interrupt::check()?;
         let size = serde_json::to_vec(&row)?.len();
         self.largest_row = self.largest_row.max(size);
         // Account for tree/string/vector overhead as well as serialized bytes. One record and
@@ -61,10 +62,12 @@ impl Buffer {
     }
 
     pub fn flush(&mut self) -> io::Result<()> {
+        crate::interrupt::check()?;
         if self.rows.is_empty() {
             return Ok(());
         }
         self.rows.sort_unstable_by(|a, b| a.key().cmp(&b.key()));
+        crate::interrupt::check()?;
         let path = self.folder.join(format!(
             "input-{}-chunk-{}.jsonl",
             self.input,
@@ -77,6 +80,7 @@ impl Buffer {
                 .open(&path)?,
         );
         for row in self.rows.drain(..) {
+            crate::interrupt::check()?;
             serde_json::to_writer(&mut out, &row)?;
             out.write_all(b"\n")?;
         }
@@ -123,6 +127,7 @@ fn next(reader: &mut BufReader<File>) -> io::Result<Option<SortRow>> {
 }
 
 pub fn merge(paths: &[PathBuf], mut sink: impl FnMut(SortRow) -> io::Result<()>) -> io::Result<()> {
+    crate::interrupt::check()?;
     let mut readers: Vec<_> = paths
         .iter()
         .map(|p| File::open(p).map(BufReader::new))
@@ -134,6 +139,7 @@ pub fn merge(paths: &[PathBuf], mut sink: impl FnMut(SortRow) -> io::Result<()>)
         }
     }
     while let Some(head) = queue.pop() {
+        crate::interrupt::check()?;
         let index = head.reader;
         sink(head.row)?;
         if let Some(row) = next(&mut readers[index])? {
@@ -153,6 +159,7 @@ pub fn reduce(
     let fan_in = (budget / largest.saturating_mul(3).saturating_add(8192).max(1)).clamp(2, 32);
     let mut pass = 0;
     while paths.len() > fan_in {
+        crate::interrupt::check()?;
         let mut reduced = Vec::new();
         for (index, group) in paths.chunks(fan_in).enumerate() {
             let target = folder.join(format!("merge-{pass}-{index}.jsonl"));

@@ -54,7 +54,9 @@ juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
 
 當清單標識 VHDX 或 E01 映像時，來源引用包括影像和內部路徑，且影像名稱保留在事件上下文中。不需要暫時暫存工作區來讀取解析的結果。
 
-原始來源取自記錄或明確的清單指令。只有當主機有一個唯一可識別的收集的 SRUDB.dat 時，才能將 SRUM CSV 表指派給資料庫。否則 `SourceFile` 指向已解析的文件，且 `Details.RawSourceAvailable` 是 `false`。不要將該後備誤認為是原始證據路徑。
+原始來源取自記錄或明確的清單指令。對於 `-d`，原始來源引用與證據目錄相關，`Details.ParsedFile` 和摘要 `InputFiles` 與解析目錄相關。摘要輸出/報告名稱與時間軸的輸出目錄相關。只有當主機具有一個唯一可識別的收集的 SRUDB.dat 時，SRUM CSV 表才會分配給資料庫。否則 `SourceFile` 指向解析的文件，`Details.RawSourceAvailable` 是 `false`。
+
+獨立輸入由其檔案名稱引用。具有相同檔案名稱的輸入使用不同的 `./Inputs/<ID>/<filename>` 引用。已知證據根以外的絕對原始來源路徑使用 `./Sources/<ID>/<filename>` 標識符。這些不透明的引用保留了來源區別，而不導出分析人員的絕對目錄名稱；使用 `ParsedFile` 和 `InputRecord` 查閱原始記錄以獲取原始來源。證據中記錄的路徑（例如 Windows 可執行路徑）保持不變。
 
 ## 公共事件字段 { #common-event-fields }
 
@@ -67,7 +69,7 @@ juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
 | `User` | 當適配器有一個時，記錄的帳戶或SID；可能為空。 |
 | `Path` | 受影響的文件、登錄項目或其他特定於工件的物件。 |
 | `Message` | 時間軸檢視器的簡短描述。 |
-| `SourceFile` | 可解析時的原始證據路徑；否則，上述解析文件後備。 |
+| `SourceFile` | 證據相關的原始來源引用，或當其根未知時的相對來源標識符；否則，上述解析文件後備。 |
 | `SourceField` | 用於時間戳記的精確解析欄位或嵌套位置。 |
 | `RecordID` | 特定於工件的記錄識別。它不一定是 EVTX 記錄 ID。 |
 | `Details` | 結構化上下文包括原始時間戳記、精度、時間基礎、時間角色、解析文件、輸入記錄/位置和可用恢復/規則元資料。 |
@@ -131,11 +133,15 @@ juntei super-timeline -f Amcache.jsonl --input-artifact amcache \
 
 ## 同儕報告 { #companion-reports }
 
-對於 `SuperTimeline.csv` 或 `SuperTimeline.jsonl`，此指令也寫入：
+對於 `SuperTimeline.csv`，該指令也寫入：
 
-- `SuperTimeline-Untimed.jsonl`：沒有可用映射事件時間戳記的本機記錄位置。
-- `SuperTimeline-Diagnostics.jsonl`：無效/不明確的時間，故意跳過需要原始解析記錄的共享元資料和保真度限制。
-- `SuperTimeline-Summary.json`：輸入檔案、每個工件計數、過濾/候選/合併事件、輸出計數、工作人員、排序預算/區塊/通道和經過的時間。
+- `SuperTimeline.csv-Untimed.jsonl`：沒有可用映射事件時間戳記的本機記錄位置。
+- `SuperTimeline.csv-Diagnostics.jsonl`：無效/不明確的時間，故意跳過需要原始解析記錄的共享元資料和保真度限制。
+- `SuperTimeline.csv-Summary.json`：輸入檔案、每個工件計數、過濾/候選/合併事件、輸出計數、工作人員、排序預算/區塊/通道和經過的時間。
+
+伴隨名稱包括完整的輸出檔名。例如，`SuperTimeline.jsonl`有自己的`SuperTimeline.jsonl-Summary.json`和相應的不定時/診斷報告。 CSV和JSONL出口具有相同的莖可以共存；僅在替換現有結果集時才需要 `-C`。
+
+有效日期等待合理的時區假設增量 `UnresolvedTimeZones`，而不是 `InvalidTimestamps`。兩者在診斷中都保持可追溯性；沒有發明時間戳記。
 
 有效時間超出請求範圍的記錄將被視為已過濾，而不是未計時。候選事件計數先於重複合併。 `Complete: true` 表示所有選定的解析輸入均已成功處理；這並不表示每個工件都被收集，每個欄位都帶有時間戳記或每個攻擊都是可偵測的。
 
@@ -148,6 +154,8 @@ CSV 匯出可以展平巢狀元資料：系統資訊設定檔、USB 使用者掛
 `--memory-limit` 是總計 **排序緩衝區預算**，而不是行程 RSS 限制。輸入記錄、JSON 物件/字串開銷、CSV 緩衝區和合併記錄需要額外的記憶體。對於小預算，工人數量會減少。 `--max-record-size` 限制已解析的輸入記錄（預設 16 MiB）；一個漂亮的 JSON 陣列/報告算是頂級輸入文件。較大的文件可能需要更高的限制，或者最好是 JSONL。 CSV 解析器預讀也會導致此限制。
 
 除了最終結果之外，臨時磁碟空間還必須容納擴展事件和合併過程。一筆記錄可以產生許多事件，因此時間軸可以比輸入大得多。在適當的時候過濾時間範圍/工件，並選擇具有足夠可用空間的臨時磁碟區。
+
+Ctrl+C 協同取消，刪除私人排序/暫存目錄並退出，代碼為 `130`。在 Linux 和 macOS 上，這也適用於 SIGTERM 和 SIGHUP。在發布開始之前，在閱讀、標準化、合併和編寫報告時會檢查取消情況。無法捕獲的終止或斷電仍然可能留下臨時檔案。
 
 現有輸出需要 `-C`。時間軸與輔助報告不得覆寫輸入、資訊清單、引用的原始證據或受保護的證據目錄。輸入或排序失敗時，既有輸出保持不變。完成的檔案先暫存於目的地旁，再逐一替換，最後發布時間軸。這**不是**涵蓋四個檔案的整體交易：最終寫入發生 I/O 錯誤時，部分輔助報告可能已被替換。如需保留先前的完整匯出，每次執行應使用新的基本檔名。
 

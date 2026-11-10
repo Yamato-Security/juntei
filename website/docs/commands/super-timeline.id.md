@@ -54,7 +54,9 @@ Jalur relatif terhadap keluaran dan ekspor banyak tabel yang diratakan didukung.
 
 Untuk citra VHDX/E01, referensi berisi citra dan jalur internal; nama citra tetap dalam konteks. Direktori staging sementara tidak diperlukan saat membaca hasil.
 
-Sumber mentah diambil dari rekaman atau perintah manifes yang jelas. Tabel SRUM CSV hanya dipetakan jika tepat satu SRUDB.dat terkumpul dapat diidentifikasi. Jika tidak, `SourceFile` menunjuk berkas hasil parsing dan `Details.RawSourceAvailable` bernilai `false`. Itu bukan jalur bukti mentah.
+Sumber mentah diambil dari catatan atau perintah manifes yang tidak ambigu. Dengan `-d`, referensi sumber mentah bersifat relatif terhadap direktori bukti, dan `Details.ParsedFile` serta ringkasan `InputFiles` bersifat relatif terhadap direktori yang diurai. Nama keluaran/laporan ringkasan bersifat relatif terhadap direktori keluaran garis waktu. Tabel SRUM CSV ditetapkan ke database hanya ketika host memiliki satu SRUDB.dat yang dapat diidentifikasi secara unik. Jika tidak, `SourceFile` menunjuk ke file yang diurai dan `Details.RawSourceAvailable` adalah `false`.
+
+Input mandiri direferensikan berdasarkan nama filenya. Input dengan nama file yang sama menggunakan referensi `./Inputs/<ID>/<filename>` yang berbeda. Jalur sumber mentah absolut di luar akar bukti yang diketahui menggunakan pengidentifikasi `./Sources/<ID>/<filename>`. Referensi buram ini mempertahankan perbedaan sumber tanpa mengekspor nama direktori absolut analis; lihat catatan asli menggunakan `ParsedFile` dan `InputRecord` untuk sumber aslinya. Jalur yang dicatat dalam bukti, seperti jalur yang dapat dieksekusi Windows, tetap tidak berubah.
 
 ## Bidang peristiwa bersama { #common-event-fields }
 
@@ -67,7 +69,7 @@ Sumber mentah diambil dari rekaman atau perintah manifes yang jelas. Tabel SRUM 
 | `User` | Akun atau SID yang tercatat jika tersedia; dapat kosong. |
 | `Path` | Berkas, kunci registry atau objek khusus artefak. |
 | `Message` | Deskripsi singkat untuk penampil linimasa. |
-| `SourceFile` | Jalur bukti mentah jika dapat ditemukan; jika tidak, berkas hasil parsing di atas. |
+| `SourceFile` | Referensi sumber mentah relatif bukti, atau pengidentifikasi sumber relatif ketika akarnya tidak diketahui; jika tidak, fallback file yang diurai dijelaskan di atas. |
 | `SourceField` | Nama bidang atau lokasi bertingkat persis yang menyediakan waktu. |
 | `RecordID` | Identitas rekaman artefak, tidak harus ID rekaman EVTX ID. |
 | `Details` | Konteks terstruktur: waktu asli, presisi, dasar/peran waktu, berkas, rekaman/lokasi dan metadata pemulihan/aturan. |
@@ -131,11 +133,15 @@ Dua kategori dikecualikan secara default:
 
 ## Laporan pendamping { #companion-reports }
 
-Untuk `SuperTimeline.csv` atau `SuperTimeline.jsonl` juga dibuat:
+Untuk `SuperTimeline.csv`, perintahnya juga menulis:
 
-- `SuperTimeline-Untimed.jsonl`: lokasi rekaman asli tanpa waktu peristiwa yang dapat dipetakan.
-- `SuperTimeline-Diagnostics.jsonl`: waktu rusak/ambigu, metadata bersama sengaja dilewati dan batasan yang memerlukan rekaman asli.
-- `SuperTimeline-Summary.json`: masukan, hitungan artefak/peristiwa, penyaringan/kandidat/konsolidasi, keluaran, pekerja, anggaran/chunk/pass pengurutan dan durasi.
+- `SuperTimeline.csv-Untimed.jsonl`: lokasi rekaman asli tanpa waktu peristiwa yang dapat dipetakan.
+- `SuperTimeline.csv-Diagnostics.jsonl`: waktu rusak/ambigu, metadata bersama sengaja dilewati dan batasan yang memerlukan rekaman asli.
+- `SuperTimeline.csv-Summary.json`: masukan, hitungan artefak/peristiwa, penyaringan/kandidat/konsolidasi, keluaran, pekerja, anggaran/chunk/pass pengurutan dan durasi.
+
+Nama pendamping menyertakan nama file keluaran lengkap. Misalnya, `SuperTimeline.jsonl` memiliki `SuperTimeline.jsonl-Summary.json` sendiri dan laporan tanpa batas waktu/diagnostik terkait. Ekspor CSV dan JSONL dengan batang yang sama dapat hidup berdampingan; `-C` diperlukan hanya untuk menggantikan kumpulan hasil yang ada.
+
+Tanggal valid menunggu kenaikan asumsi zona waktu yang dibenarkan `UnresolvedTimeZones`, bukan `InvalidTimestamps`. Keduanya tetap dapat dilacak dalam diagnosis; tidak ada stempel waktu yang ditemukan.
 
 Waktu valid di luar rentang dihitung sebagai tersaring, bukan tanpa waktu. Kandidat dihitung sebelum konsolidasi. `Complete: true` berarti semua masukan terpilih berhasil diproses, bukan koleksi lengkap atau semua serangan terdeteksi.
 
@@ -148,6 +154,8 @@ Masukan dialirkan paralel; buffer pengurutan meluap ke direktori privat lalu dig
 `--memory-limit` adalah **anggaran total buffer pengurutan**, bukan batas RSS proses. Rekaman, objek JSON, buffer CSV dan penggabungan memerlukan memori tambahan; anggaran kecil mengurangi pekerja. `--max-record-size` membatasi rekaman, default 16 MiB. Array JSON berformat dianggap satu dokumen; naikkan batas atau gunakan JSONL. Read-ahead CSV juga dihitung.
 
 Disk sementara harus menampung perluasan peristiwa dan penggabungan di samping hasil akhir. Satu rekaman dapat menghasilkan banyak peristiwa. Filter waktu/artefak dan pilih volume cukup longgar.
+
+Ctrl+C membatalkan secara kooperatif, menghapus direktori pengurutan/pementasan pribadi dan keluar dengan kode `130`. Pada Linux dan macOS, hal ini juga berlaku untuk SIGTERM dan SIGHUP. Pembatalan diperiksa saat membaca, normalisasi, menggabungkan dan menulis laporan, sebelum publikasi dimulai. Pengakhiran yang tidak dapat dicegah atau hilangnya daya masih dapat meninggalkan file-file sementara.
 
 Keluaran lama memerlukan `-C`. Masukan, manifes dan bukti terlindungi tidak boleh ditimpa. Kesalahan input/pengurutan menjaga keluaran lama. Berkas disiapkan di samping tujuan dan diganti satu per satu, linimasa terakhir. Ini **bukan** transaksi empat berkas; kegagalan I/O terakhir bisa meninggalkan sebagian laporan baru. Gunakan nama dasar baru untuk mempertahankan ekspor lengkap sebelumnya.
 

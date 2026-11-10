@@ -355,7 +355,7 @@ fn portable_v2_manifest_resolves_a_unique_srum_source_without_using_the_cwd() {
     assert!(!rows.is_empty());
     assert_eq!(
         rows[0]["SourceFile"],
-        db.canonicalize().unwrap().to_string_lossy().as_ref()
+        "./HOST/C/Windows/System32/sru/SRUDB.dat"
     );
     assert_eq!(rows[0]["Details"]["RawSourceAvailable"], true);
 }

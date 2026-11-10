@@ -54,7 +54,9 @@ Les chemins relatifs à la sortie et exports multi-tables aplatis sont acceptés
 
 Pour une image VHDX ou E01 identifiée dans le manifeste, les références contiennent l'image et le chemin interne. Le nom de l'image reste dans le contexte ; le répertoire temporaire n'est plus nécessaire pour lire les résultats.
 
-La source brute vient du fichier ou d'une commande non ambiguë du manifeste. Les tables SRUM CSV ne sont rattachées à une base que si un unique SRUDB.dat collecté est identifiable. Sinon `SourceFile` désigne le fichier analysé et `Details.RawSourceAvailable` vaut `false` : ce chemin de secours n'est pas une preuve brute.
+Une source brute est extraite de l'enregistrement ou d'une commande manifeste sans ambiguïté. Avec `-d`, les références de source brute sont relatives au répertoire de preuves, et `Details.ParsedFile` et le résumé `InputFiles` sont relatifs au répertoire analysé. Les noms des sorties/rapports récapitulatifs sont relatifs au répertoire de sortie de la timeline. Les tables SRUM CSV sont affectées à une base de données uniquement lorsque l'hôte possède un fichier SRUDB.dat collecté de manière unique et identifiable. Sinon, `SourceFile` pointe vers le fichier analysé et `Details.RawSourceAvailable` est `false`.
+
+Une entrée autonome est référencée par son nom de fichier. Les entrées portant le même nom de fichier utilisent des références `./Inputs/<ID>/<filename>` distinctes. Les chemins absolus de source brute en dehors des racines de preuves connues utilisent des identifiants `./Sources/<ID>/<filename>`. Ces références opaques conservent les distinctions de source sans exporter les noms de répertoire absolus de l'analyste ; consultez l'enregistrement natif en utilisant `ParsedFile` et `InputRecord` pour la source originale. Les chemins enregistrés dans les preuves, tels que les chemins exécutables Windows, restent inchangés.
 
 ## Champs communs { #common-event-fields }
 
@@ -67,7 +69,7 @@ La source brute vient du fichier ou d'une commande non ambiguë du manifeste. Le
 | `User` | Compte ou SID enregistré si disponible ; peut être vide. |
 | `Path` | Fichier, clé de registre ou autre objet propre à l'artefact. |
 | `Message` | Description courte pour la visualisation. |
-| `SourceFile` | Chemin brut résolu, sinon fichier analysé de secours décrit ci-dessus. |
+| `SourceFile` | Référence de source brute relative aux preuves, ou un identifiant de source relatif lorsque sa racine est inconnue ; sinon, la solution de secours du fichier analysé décrite ci-dessus. |
 | `SourceField` | Champ exact ou emplacement imbriqué fournissant la date. |
 | `RecordID` | Identité propre à l'artefact, pas nécessairement un identifiant d'enregistrement EVTX ID. |
 | `Details` | Contexte structuré : date originale, précision, base et rôle temporels, fichier analysé, position et métadonnées de récupération/règle disponibles. |
@@ -131,11 +133,15 @@ Deux catégories sont exclues par défaut :
 
 ## Rapports complémentaires { #companion-reports }
 
-Pour `SuperTimeline.csv` ou `SuperTimeline.jsonl`, la commande écrit aussi :
+Pour `SuperTimeline.csv`, la commande écrit également :
 
-- `SuperTimeline-Untimed.jsonl` : emplacements natifs sans horodatage exploitable associé.
-- `SuperTimeline-Diagnostics.jsonl` : dates invalides/ambiguës, métadonnées communes volontairement exclues et limites nécessitant l'original.
-- `SuperTimeline-Summary.json` : fichiers, compteurs par artefact, événements filtrés/candidats/consolidés, sorties, threads, budget/fichiers/passes de tri et durée.
+- `SuperTimeline.csv-Untimed.jsonl` : emplacements natifs sans horodatage exploitable associé.
+- `SuperTimeline.csv-Diagnostics.jsonl` : dates invalides/ambiguës, métadonnées communes volontairement exclues et limites nécessitant l'original.
+- `SuperTimeline.csv-Summary.json` : fichiers, compteurs par artefact, événements filtrés/candidats/consolidés, sorties, threads, budget/fichiers/passes de tri et durée.
+
+Les noms de compagnon incluent le nom complet du fichier de sortie. Par exemple, `SuperTimeline.jsonl` possède son propre `SuperTimeline.jsonl-Summary.json` et les rapports non chronométrés/diagnostiques correspondants. Les exportations CSV et JSONL avec la même tige peuvent coexister ; `-C` est nécessaire uniquement pour remplacer un jeu de résultats existant.
+
+Dates valides en attente d'un incrément d'hypothèse de fuseau horaire justifié `UnresolvedTimeZones`, plutôt que `InvalidTimestamps`. Les deux restent traçables dans les diagnostics ; aucun horodatage n'est inventé.
 
 Les dates hors intervalle sont filtrées, pas sans date. Les candidats précèdent la consolidation. `Complete: true` signifie traitement réussi des entrées choisies, pas collecte exhaustive, date dans chaque champ ou détection de toutes les attaques.
 
@@ -148,6 +154,8 @@ Lecture en flux et en parallèle, débordement du tri dans un répertoire privé
 `--memory-limit` limite le **budget total des tampons de tri**, pas la mémoire RSS. Enregistrements, objets/chaînes JSON, tampons CSV et fusions ajoutent de la mémoire ; les petits budgets réduisent les threads. `--max-record-size` limite un enregistrement à 16 MiB par défaut. Un tableau JSON formaté compte comme un document entier ; augmentez la limite ou préférez JSONL. La lecture anticipée CSV compte aussi.
 
 L'espace temporaire doit contenir événements développés et passes de fusion, en plus des résultats. Un enregistrement peut produire beaucoup d'événements. Filtrez si nécessaire et choisissez un volume assez libre.
+
+Ctrl+C annule de manière coopérative, supprime les répertoires de tri/mise en scène privés et quitte avec le code `130`. Sur Linux et macOS, cela s'applique également à SIGTERM et SIGHUP. L'annulation est vérifiée lors de la lecture, de la normalisation, de la fusion et de la rédaction des rapports, avant le début de la publication. Une interruption irrécupérable ou une coupure de courant peut toujours laisser des fichiers temporaires.
 
 Les sorties existantes nécessitent `-C`. Les entrées, manifestes et preuves protégées ne peuvent être écrasés. Les erreurs de lecture/tri préservent les anciens résultats. Les fichiers sont préparés près de la destination et remplacés individuellement, chronologie en dernier : **pas** de transaction des quatre fichiers. Une erreur finale peut avoir remplacé certains rapports. Utilisez un nouveau nom de base pour conserver un export antérieur complet.
 

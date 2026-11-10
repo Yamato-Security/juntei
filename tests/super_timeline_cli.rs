@@ -146,13 +146,14 @@ fn csv_jsonl_timesketch_and_threads_have_identical_events() {
     assert_eq!(native.len(), 5); // two executions, SI, FN and one key time
     assert_eq!(native[0]["Timestamp"], "1969-01-01T00:00:00.000000000Z");
     assert!(native.iter().any(|r| r["Details"]["DuplicateCount"] == 1));
-    let summary: Value =
-        serde_json::from_slice(&fs::read(dir.path().join("native-jsonl-Summary.json")).unwrap())
-            .unwrap();
+    let summary: Value = serde_json::from_slice(
+        &fs::read(dir.path().join("native-jsonl.jsonl-Summary.json")).unwrap(),
+    )
+    .unwrap();
     assert_eq!(summary["Counts"]["DuplicateEvents"], 1);
     assert_eq!(summary["Counts"]["InvalidTimestamps"], 1);
     assert_eq!(
-        jsonl(&dir.path().join("native-jsonl-Untimed.jsonl")).len(),
+        jsonl(&dir.path().join("native-jsonl.jsonl-Untimed.jsonl")).len(),
         2
     );
 }
@@ -229,13 +230,7 @@ fn relocated_manifest_discovers_csv_by_artifact_and_reports_unresolved_sources()
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0]["Comp"], "HOST");
     assert_eq!(rows[0]["Details"]["RawSourceAvailable"], false);
-    assert_eq!(
-        rows[0]["SourceFile"],
-        fs::canonicalize(parsed.join("renamed.csv"))
-            .unwrap()
-            .to_str()
-            .unwrap()
-    );
+    assert_eq!(rows[0]["SourceFile"], "./renamed.csv");
 }
 #[test]
 fn manifest_traversal_is_rejected_before_reading() {
@@ -285,9 +280,9 @@ fn malformed_input_never_replaces_existing_timeline_or_companions() {
     let output = dir.path().join("timeline.csv");
     for name in [
         "timeline.csv",
-        "timeline-Summary.json",
-        "timeline-Diagnostics.jsonl",
-        "timeline-Untimed.jsonl",
+        "timeline.csv-Summary.json",
+        "timeline.csv-Diagnostics.jsonl",
+        "timeline.csv-Untimed.jsonl",
     ] {
         fs::write(dir.path().join(name), "old content").unwrap();
     }
@@ -310,9 +305,9 @@ fn malformed_input_never_replaces_existing_timeline_or_companions() {
     );
     for name in [
         "timeline.csv",
-        "timeline-Summary.json",
-        "timeline-Diagnostics.jsonl",
-        "timeline-Untimed.jsonl",
+        "timeline.csv-Summary.json",
+        "timeline.csv-Diagnostics.jsonl",
+        "timeline.csv-Untimed.jsonl",
     ] {
         assert_eq!(
             fs::read_to_string(dir.path().join(name)).unwrap(),
@@ -378,7 +373,7 @@ fn timezone_bounds_and_date_precision_are_explicit() {
     ]));
     assert_eq!(jsonl(&output).len(), 1);
     assert!(
-        fs::read_to_string(dir.path().join("timeline-Diagnostics.jsonl"))
+        fs::read_to_string(dir.path().join("timeline.jsonl-Diagnostics.jsonl"))
             .unwrap()
             .contains("no known time zone")
     );
@@ -442,7 +437,10 @@ fn empty_and_untimed_records_do_not_create_epoch_events() {
         output.to_str().unwrap(),
     ]));
     assert!(csv(&output).is_empty());
-    assert_eq!(jsonl(&dir.path().join("timeline-Untimed.jsonl")).len(), 1);
+    assert_eq!(
+        jsonl(&dir.path().join("timeline.csv-Untimed.jsonl")).len(),
+        1
+    );
     fs::write(&input, "").unwrap();
     ok(run(&[
         "-f",
@@ -571,7 +569,11 @@ fn external_merge_is_deterministic_across_memory_and_worker_counts() {
             threads,
         ]));
         let summary: Value = serde_json::from_slice(
-            &fs::read(dir.path().join(format!("timeline-{budget}-Summary.json"))).unwrap(),
+            &fs::read(
+                dir.path()
+                    .join(format!("timeline-{budget}.jsonl-Summary.json")),
+            )
+            .unwrap(),
         )
         .unwrap();
         assert!(summary["MergePasses"].as_u64().unwrap() > 0);
@@ -628,7 +630,10 @@ fn real_public_prefetch_exports_feed_the_timeline_in_csv_json_and_jsonl() {
         assert!(!rows.is_empty());
         assert!(
             rows.iter()
-                .all(|r| r["SourceFile"] == raw.to_str().unwrap())
+                .all(|r| r["SourceFile"]
+                    .as_str()
+                    .is_some_and(|path| path.starts_with("./Sources/")
+                        && path.ends_with("CMD.EXE-6D6290C5.pf")))
         );
         counts.push(
             rows.iter()

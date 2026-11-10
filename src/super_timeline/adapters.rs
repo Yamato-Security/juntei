@@ -32,12 +32,14 @@ impl Policy {
             .timeline_start
             .as_deref()
             .map(|v| parse_time(v, false, None).map(|t| t.point))
-            .transpose()?;
+            .transpose()
+            .map_err(|e| e.to_string())?;
         let end = opts
             .timeline_end
             .as_deref()
             .map(|v| parse_time(v, false, None).map(|t| t.point))
-            .transpose()?;
+            .transpose()
+            .map_err(|e| e.to_string())?;
         if start.zip(end).is_some_and(|(start, end)| start > end) {
             return Err("--timeline-start is later than --timeline-end".into());
         }
@@ -347,7 +349,9 @@ impl<'a, 'b> Builder<'a, 'b> {
             let seconds = (ticks / 10_000_000) as i64 - 11_644_473_600;
             let nanos = ((ticks % 10_000_000) * 100) as u32;
             chrono::DateTime::from_timestamp(seconds, nanos)
-                .ok_or_else(|| "FILETIME is outside the supported calendar range".to_string())
+                .ok_or_else(|| {
+                    TimeError::Invalid("FILETIME is outside the supported calendar range".into())
+                })
                 .and_then(|date| {
                     parse_time(
                         &date.to_rfc3339_opts(chrono::SecondsFormat::Nanos, true),
@@ -366,8 +370,12 @@ impl<'a, 'b> Builder<'a, 'b> {
         let time = match parsed {
             Ok(time) => time,
             Err(error) => {
-                self.projection.counts.invalid_timestamps += 1;
-                self.diagnostic(&error, &source_field, &raw);
+                if matches!(error, TimeError::UnknownZone) {
+                    self.projection.counts.unresolved_time_zones += 1;
+                } else {
+                    self.projection.counts.invalid_timestamps += 1;
+                }
+                self.diagnostic(&error.to_string(), &source_field, &raw);
                 return;
             }
         };
@@ -512,7 +520,11 @@ impl<'a, 'b> Builder<'a, 'b> {
         } else {
             label.to_string()
         };
-        let message = format!("{title}: {}", path.chars().take(1024).collect::<String>());
+        let message = if path.is_empty() {
+            title
+        } else {
+            format!("{title}: {}", path.chars().take(1024).collect::<String>())
+        };
         let row = SortRow {
             time: time.point,
             identity,

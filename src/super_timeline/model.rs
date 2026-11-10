@@ -35,12 +35,38 @@ pub struct ParsedTime {
     pub basis: String,
 }
 
+#[derive(Debug)]
+pub enum TimeError {
+    UnknownZone,
+    Invalid(String),
+}
+impl std::fmt::Display for TimeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UnknownZone => {
+                f.write_str("timestamp has no known time zone (use --assume-offset when justified)")
+            }
+            Self::Invalid(message) => f.write_str(message),
+        }
+    }
+}
+impl From<String> for TimeError {
+    fn from(message: String) -> Self {
+        Self::Invalid(message)
+    }
+}
+impl From<&str> for TimeError {
+    fn from(message: &str) -> Self {
+        Self::Invalid(message.into())
+    }
+}
+
 /// Numeric counters are deliberately not interpreted as arbitrary epoch/FILETIME values.
 pub fn parse_time(
     raw: &str,
     known_utc: bool,
     assumed: Option<FixedOffset>,
-) -> Result<ParsedTime, String> {
+) -> Result<ParsedTime, TimeError> {
     let raw = raw.trim();
     let fractions = raw
         .split_once('.')
@@ -80,9 +106,7 @@ pub fn parse_time(
             basis = "UTC defined by artifact/field".into();
             FixedOffset::east_opt(0).unwrap()
         } else {
-            let offset = assumed.ok_or_else(|| {
-                "timestamp has no known time zone (use --assume-offset when justified)".to_string()
-            })?;
+            let offset = assumed.ok_or(TimeError::UnknownZone)?;
             basis = format!(
                 "Assumed offset {offset}{}",
                 if day {
@@ -217,6 +241,7 @@ pub struct Counts {
     pub filtered_events: u64,
     pub untimed_records: u64,
     pub invalid_timestamps: u64,
+    pub unresolved_time_zones: u64,
     pub unsupported_records: u64,
     pub interpreted_times_omitted: u64,
     pub duplicate_events: u64,
@@ -229,6 +254,7 @@ impl Counts {
         self.filtered_events += other.filtered_events;
         self.untimed_records += other.untimed_records;
         self.invalid_timestamps += other.invalid_timestamps;
+        self.unresolved_time_zones += other.unresolved_time_zones;
         self.unsupported_records += other.unsupported_records;
         self.interpreted_times_omitted += other.interpreted_times_omitted;
         self.duplicate_events += other.duplicate_events;

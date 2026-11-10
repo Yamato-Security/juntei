@@ -54,7 +54,9 @@ Unterstützt werden aktuelle Manifeste mit ausgaberelativen Pfaden und flach abg
 
 Bei VHDX-/E01-Abbildern enthalten Quellenangaben das Abbild und den internen Pfad; der Abbildname bleibt im Ereigniskontext. Zum Lesen der Ergebnisse ist der temporäre Bereitstellungsbereich nicht erforderlich.
 
-Rohquellen stammen aus dem Datensatz oder einem eindeutigen Manifestbefehl. SRUM-CSV-Tabellen werden nur bei genau einer eindeutig erkennbaren gesammelten SRUDB.dat zugeordnet. Andernfalls verweist `SourceFile` auf die geparste Datei und `Details.RawSourceAvailable` ist `false`. Dieser Ersatzpfad ist kein Rohbeweispfad.
+Eine Rohquelle wird aus dem Datensatz oder einem eindeutigen Manifestbefehl entnommen. Bei `-d` sind Rohquellenverweise relativ zum Evidence-Verzeichnis, und `Details.ParsedFile` und die Zusammenfassung `InputFiles` sind relativ zum analysierten Verzeichnis. Zusammenfassungsausgabe-/Berichtsnamen beziehen sich auf das Ausgabeverzeichnis der Zeitleiste. SRUM CSV-Tabellen werden einer Datenbank nur dann zugewiesen, wenn der Host über eine eindeutig identifizierbare gesammelte SRUDB.dat verfügt. Andernfalls verweist `SourceFile` auf die analysierte Datei und `Details.RawSourceAvailable` ist `false`.
+
+Auf eine eigenständige Eingabe wird durch ihren Dateinamen verwiesen. Eingaben mit demselben Dateinamen verwenden unterschiedliche `./Inputs/<ID>/<filename>`-Referenzen. Absolute Rohquellenpfade außerhalb bekannter Beweiswurzeln verwenden `./Sources/<ID>/<filename>`-Bezeichner. Diese undurchsichtigen Referenzen behalten die Quellenunterscheidung bei, ohne die absoluten Verzeichnisnamen des Analysten zu exportieren. Konsultieren Sie den nativen Datensatz mit `ParsedFile` und `InputRecord` für die Originalquelle. In den Beweisen aufgezeichnete Pfade, wie z. B. die ausführbaren Pfade Windows, bleiben unverändert.
 
 ## Gemeinsame Ereignisfelder { #common-event-fields }
 
@@ -67,7 +69,7 @@ Rohquellen stammen aus dem Datensatz oder einem eindeutigen Manifestbefehl. SRUM
 | `User` | Gespeichertes Konto oder SID, sofern verfügbar; kann leer sein. |
 | `Path` | Betroffene Datei, Registrierungsschlüssel oder anderes artefaktspezifisches Objekt. |
 | `Message` | Kurzbeschreibung für Timeline-Betrachter. |
-| `SourceFile` | Auflösbarer Rohbeweispfad; sonst der oben beschriebene Ersatzpfad zur geparsten Datei. |
+| `SourceFile` | Beweisrelativer Rohquellenverweis oder ein relativer Quellenbezeichner, wenn dessen Wurzel unbekannt ist; andernfalls der oben beschriebene Fallback für geparste Dateien. |
 | `SourceField` | Tatsächlich verwendetes Parser-Feld oder verschachtelte Position des Zeitstempels. |
 | `RecordID` | Artefaktspezifische Datensatzkennung; nicht zwingend eine EVTX-Datensatz-ID. |
 | `Details` | Strukturierter Kontext: Originalzeit, Genauigkeit, Zeitbasis/-rolle, geparste Datei, Eingabedatensatz/-position und verfügbare Wiederherstellungs-/Regelmetadaten. |
@@ -131,11 +133,15 @@ Standardmäßig sind zwei optionale Kategorien ausgeschlossen:
 
 ## Begleitberichte { #companion-reports }
 
-Für `SuperTimeline.csv` oder `SuperTimeline.jsonl` entstehen außerdem:
+Für `SuperTimeline.csv` schreibt der Befehl außerdem:
 
-- `SuperTimeline-Untimed.jsonl`: Fundstellen nativer Datensätze ohne nutzbare zugeordnete Ereigniszeit.
-- `SuperTimeline-Diagnostics.jsonl`: ungültige/mehrdeutige Zeiten, bewusst ausgelassene gemeinsame Metadaten und Einschränkungen, die den Originaldatensatz erfordern.
-- `SuperTimeline-Summary.json`: Eingaben, Artefaktzähler, gefilterte/mögliche/konsolidierte Ereignisse, Ausgabeanzahl, Worker, Sortierbudget/-dateien/-Durchläufe und Laufzeit.
+- `SuperTimeline.csv-Untimed.jsonl`: Fundstellen nativer Datensätze ohne nutzbare zugeordnete Ereigniszeit.
+- `SuperTimeline.csv-Diagnostics.jsonl`: ungültige/mehrdeutige Zeiten, bewusst ausgelassene gemeinsame Metadaten und Einschränkungen, die den Originaldatensatz erfordern.
+- `SuperTimeline.csv-Summary.json`: Eingaben, Artefaktzähler, gefilterte/mögliche/konsolidierte Ereignisse, Ausgabeanzahl, Worker, Sortierbudget/-dateien/-Durchläufe und Laufzeit.
+
+Companion-Namen enthalten den vollständigen Namen der Ausgabedatei. Beispielsweise verfügt `SuperTimeline.jsonl` über ein eigenes `SuperTimeline.jsonl-Summary.json` und entsprechende nicht zeitgesteuerte/Diagnoseberichte. CSV- und JSONL-Exporte mit demselben Stamm können nebeneinander existieren; `-C` wird nur benötigt, um einen vorhandenen Ergebnissatz zu ersetzen.
+
+Gültige Daten, die auf eine gerechtfertigte Zeitzonenannahme warten, erhöhen sich um `UnresolvedTimeZones` und nicht um `InvalidTimestamps`. Beides bleibt in der Diagnostik nachvollziehbar; Es wird kein Zeitstempel erfunden.
 
 Gültige Zeiten außerhalb des Zeitfensters zählen als gefiltert, nicht zeitlos. Kandidaten werden vor Deduplizierung gezählt. `Complete: true` bedeutet erfolgreiche Verarbeitung aller gewählten Eingaben, nicht vollständige Erfassung, Zeitangaben in jedem Feld oder Erkennbarkeit jedes Angriffs.
 
@@ -148,6 +154,8 @@ Eingaben werden parallel gestreamt; Sortierpuffer laufen in ein privates tempor�
 `--memory-limit` begrenzt das gesamte **Sortierpufferbudget**, nicht Prozess-RSS. Datensätze, JSON-Objekte/-Strings, CSV-Puffer und Zusammenführung benötigen weiteren Speicher; kleine Budgets reduzieren Worker. `--max-record-size` begrenzt Eingabedatensätze auf standardmäßig 16 MiB. Ein formatiertes JSON-Array zählt als ganzes Dokument; größere Daten benötigen eine höhere Grenze oder besser JSONL. Auch CSV-Lesevorschau zählt dazu.
 
 Temporärspeicher muss erweiterte Ereignisse und Zusammenführungsdurchläufe zusätzlich zu Ergebnissen aufnehmen. Ein Datensatz kann viele Ereignisse liefern. Zeit-/Artefaktfilter verwenden und ein ausreichend freies temporäres Volume wählen.
+
+Strg+C bricht den kooperativen Vorgang ab, entfernt die privaten Sortier-/Staging-Verzeichnisse und wird mit dem Code `130` beendet. Bei Linux und macOS gilt dies auch für SIGTERM und SIGHUP. Die Stornierung wird beim Lesen, Normalisieren, Zusammenführen und Schreiben von Berichten vor Beginn der Veröffentlichung überprüft. Bei einer nicht aufhebbaren Beendigung oder einem Stromausfall können weiterhin temporäre Dateien zurückbleiben.
 
 Bestehende Ausgaben erfordern `-C`. Eingaben, Manifeste und geschützte Beweisquellen dürfen nicht überschrieben werden. Eingabe-/Sortierfehler lassen vorhandene Ergebnisse unverändert. Fertige Dateien werden am Ziel einzeln ersetzt, die Timeline zuletzt. Das ist **keine** Transaktion über vier Dateien: Ein abschließender E/A-Fehler kann einzelne Begleitberichte bereits ersetzt haben. Zum Bewahren früherer Exporte einen neuen Basisnamen verwenden.
 

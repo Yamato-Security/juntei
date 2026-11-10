@@ -54,7 +54,9 @@ Os manifestos atuais com caminhos relativos à saída e exportações simplifica
 
 Quando um manifesto identifica uma imagem VHDX ou E01, as referências de origem incluem a imagem e o caminho interno, e o nome da imagem é retido no contexto do evento. O espaço de trabalho temporário temporário não é necessário para ler os resultados analisados.
 
-Uma fonte bruta é obtida do registro ou de um comando manifesto inequívoco. SRUM As tabelas CSV podem ser designadas a um banco de dados somente quando o host tiver um SRUDB.dat coletado exclusivamente identificável. Caso contrário, `SourceFile` aponta para o arquivo analisado e `Details.RawSourceAvailable` é `false`. Não confunda esse recurso com um caminho de evidência bruta.
+Uma fonte bruta é obtida do registro ou de um comando manifesto inequívoco. Com `-d`, as referências de origem bruta são relativas ao diretório de evidências e `Details.ParsedFile` e o resumo `InputFiles` são relativos ao diretório analisado. Os nomes de saída/relatório resumidos são relativos ao diretório de saída da linha do tempo. SRUM As tabelas CSV são designadas a um banco de dados somente quando o host tem um SRUDB.dat coletado exclusivamente identificável. Caso contrário, `SourceFile` aponta para o arquivo analisado e `Details.RawSourceAvailable` é `false`.
+
+Uma entrada independente é referenciada pelo seu nome de arquivo. Entradas com o mesmo nome de arquivo usam referências `./Inputs/<ID>/<filename>` distintas. Caminhos absolutos de origem bruta fora das raízes de evidências conhecidas usam identificadores `./Sources/<ID>/<filename>`. Essas referências opacas retêm distinções de origem sem exportar os nomes absolutos do diretório do analista; consulte o registro nativo usando `ParsedFile` e `InputRecord` para a fonte original. Os caminhos registrados na evidência, como os caminhos executáveis ​​Windows, permanecem inalterados.
 
 ## Campos de eventos comuns { #common-event-fields }
 
@@ -67,7 +69,7 @@ Uma fonte bruta é obtida do registro ou de um comando manifesto inequívoco. SR
 | `User` | Conta registrada ou SID quando o adaptador possui; pode estar vazio. |
 | `Path` | Arquivo afetado, chave de registro ou outro objeto específico do artefato. |
 | `Message` | Breve descrição para um visualizador de linha do tempo. |
-| `SourceFile` | Caminho da evidência bruta quando resolvível; caso contrário, o substituto do arquivo analisado descrito acima. |
+| `SourceFile` | Referência de fonte bruta relativa à evidência ou um identificador de fonte relativo quando sua raiz é desconhecida; caso contrário, o substituto do arquivo analisado descrito acima. |
 | `SourceField` | Campo analisado exato ou local aninhado usado para o carimbo de data/hora. |
 | `RecordID` | Identidade de registro específica do artefato. Não é necessariamente um registro EVTX ID. |
 | `Details` | Contexto estruturado, incluindo carimbo de data/hora original, precisão, base de tempo, função de tempo, arquivo analisado, registro/localização de entrada e metadados de regra/recuperação disponíveis. |
@@ -131,11 +133,15 @@ Duas categorias opcionais são excluídas por padrão:
 
 ## Relatórios complementares { #companion-reports }
 
-Para `SuperTimeline.csv` ou `SuperTimeline.jsonl`, o comando também escreve:
+Para `SuperTimeline.csv`, o comando também escreve:
 
-- `SuperTimeline-Untimed.jsonl`: locais de registro nativo sem um carimbo de data/hora de evento mapeado utilizável.
-- `SuperTimeline-Diagnostics.jsonl`: horários inválidos/ambíguos, metadados compartilhados ignorados intencionalmente e limitações de fidelidade que exigem o registro original analisado.
-- `SuperTimeline-Summary.json`: arquivos de entrada, contagens por artefato, eventos filtrados/candidatos/consolidados, contagem de saída, trabalhadores, classificação de orçamento/partes/aprovações e tempo decorrido.
+- `SuperTimeline.csv-Untimed.jsonl`: locais de registro nativo sem um carimbo de data/hora de evento mapeado utilizável.
+- `SuperTimeline.csv-Diagnostics.jsonl`: horários inválidos/ambíguos, metadados compartilhados ignorados intencionalmente e limitações de fidelidade que exigem o registro original analisado.
+- `SuperTimeline.csv-Summary.json`: arquivos de entrada, contagens por artefato, eventos filtrados/candidatos/consolidados, contagem de saída, trabalhadores, classificação de orçamento/partes/aprovações e tempo decorrido.
+
+Os nomes complementares incluem o nome completo do arquivo de saída. Por exemplo, `SuperTimeline.jsonl` tem seu próprio `SuperTimeline.jsonl-Summary.json` e relatórios de diagnóstico/de duração indeterminada correspondentes. As exportações CSV e JSONL com a mesma haste podem coexistir; `-C` é necessário apenas para substituir um conjunto de resultados existente.
+
+Datas válidas aguardando um incremento justificado de suposição de fuso horário `UnresolvedTimeZones`, em vez de `InvalidTimestamps`. Ambos permanecem rastreáveis ​​em diagnósticos; nenhum carimbo de data/hora é inventado.
 
 Registros com horários válidos fora do intervalo solicitado são contados como filtrados e não sem tempo. As contagens de eventos candidatos precedem a consolidação duplicada. `Complete: true` significa que todas as entradas analisadas selecionadas foram processadas com sucesso; isso não significa que todos os artefatos foram coletados, todos os campos possuem carimbo de data/hora ou que todos os ataques são detectáveis.
 
@@ -148,6 +154,8 @@ As entradas são transmitidas e processadas em paralelo. Os buffers de classific
 `--memory-limit` é o **orçamento do buffer de classificação** agregado, não um limite do processo RSS. Registros de entrada, sobrecarga de objeto/string JSON, buffers CSV e registros de mesclagem requerem memória adicional. A contagem de trabalhadores é reduzida para orçamentos pequenos. `--max-record-size` limita um registro de entrada analisado (padrão 16 MiB); uma bela matriz/relatório JSON conta como um documento de entrada de nível superior. Documentos maiores podem necessitar de um limite maior ou, preferencialmente, JSONL. A leitura antecipada do analisador CSV também contribui para esse limite.
 
 O espaço em disco temporário deve acomodar os eventos expandidos e as etapas de mesclagem, além dos resultados finais. Um registro pode produzir muitos eventos, portanto a linha do tempo pode ser muito maior que a entrada. Filtre o intervalo de tempo/artefatos quando apropriado e selecione um volume temporário com espaço livre adequado.
+
+Ctrl+C cancela cooperativamente, remove os diretórios privados de classificação/preparo e sai com o código `130`. Em Linux e macOS isso também se aplica a SIGTERM e SIGHUP. O cancelamento é verificado durante a leitura, normalização, mesclagem e redação dos relatórios, antes do início da publicação. A terminação indetectável ou a perda de energia ainda podem deixar arquivos temporários.
 
 As saídas existentes requerem `-C`. A linha do tempo e os complementos não devem substituir entradas, manifestos, evidências locais referenciadas ou seus diretórios de evidências protegidos. Erros de entrada ou falhas de classificação deixam as saídas existentes intactas. Os arquivos concluídos são preparados ao lado do destino e substituídos individualmente, publicando a linha do tempo por último. Isto **não** é uma transação entre todos os quatro arquivos: uma falha de E/S durante a publicação final pode fazer com que alguns relatórios complementares sejam substituídos. Mantenha um novo nome base de saída para cada execução ao reter uma exportação completa anterior.
 

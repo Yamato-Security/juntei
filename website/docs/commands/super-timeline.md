@@ -64,10 +64,19 @@ Current manifests with output-relative paths and flattened multi-table exports a
 
 When a manifest identifies a VHDX or E01 image, source references include the image and internal path, and the image name is retained in event context. The temporary staging workspace is not needed to read the parsed results.
 
-A raw source is taken from the record or an unambiguous manifest command. SRUM CSV tables can be
-assigned to a database only when the host has one uniquely identifiable collected SRUDB.dat.
-Otherwise `SourceFile` points to the parsed file and `Details.RawSourceAvailable` is `false`.
-Do not mistake that fallback for a raw evidence path.
+A raw source is taken from the record or an unambiguous manifest command. With `-d`, raw-source
+references are relative to the evidence directory, and `Details.ParsedFile` and summary `InputFiles`
+are relative to the parsed directory. Summary output/report names are relative to the timeline's
+output directory. SRUM CSV tables are assigned to a database only when the host has one uniquely
+identifiable collected SRUDB.dat. Otherwise `SourceFile` points to the parsed file and
+`Details.RawSourceAvailable` is `false`.
+
+A standalone input is referenced by its filename. Inputs with the same filename use distinct
+`./Inputs/<ID>/<filename>` references. Absolute raw-source paths outside known evidence roots use
+`./Sources/<ID>/<filename>` identifiers. These opaque references retain source distinctions without
+exporting the analyst's absolute directory names; consult the native record using `ParsedFile` and
+`InputRecord` for the original source. Paths recorded in the evidence, such as Windows executable
+paths, remain unchanged.
 
 ## Common event fields
 
@@ -80,7 +89,7 @@ Do not mistake that fallback for a raw evidence path.
 | `User` | Recorded account or SID when the adapter has one; may be empty. |
 | `Path` | Affected file, registry key or other artifact-specific object. |
 | `Message` | Short description for a timeline viewer. |
-| `SourceFile` | Raw evidence path when resolvable; otherwise the parsed-file fallback described above. |
+| `SourceFile` | Evidence-relative raw-source reference, or a relative source identifier when its root is unknown; otherwise the parsed-file fallback described above. |
 | `SourceField` | Exact parsed field or nested location used for the timestamp. |
 | `RecordID` | Artifact-specific record identity. It is not necessarily an EVTX Record ID. |
 | `Details` | Structured context including the original timestamp, precision, time basis, time role, parsed file, input record/location and available recovery/rule metadata. |
@@ -168,13 +177,20 @@ Two optional categories are excluded by default:
 
 ## Companion reports
 
-For `SuperTimeline.csv` or `SuperTimeline.jsonl`, the command also writes:
+For `SuperTimeline.csv`, the command also writes:
 
-- `SuperTimeline-Untimed.jsonl`: native-record locations without a usable mapped event timestamp.
-- `SuperTimeline-Diagnostics.jsonl`: invalid/ambiguous times, intentionally skipped shared metadata
+- `SuperTimeline.csv-Untimed.jsonl`: native-record locations without a usable mapped event timestamp.
+- `SuperTimeline.csv-Diagnostics.jsonl`: invalid/ambiguous times, intentionally skipped shared metadata
   and fidelity limitations that require the original parsed record.
-- `SuperTimeline-Summary.json`: input files, per-artifact counts, filtered/candidate/consolidated
+- `SuperTimeline.csv-Summary.json`: input files, per-artifact counts, filtered/candidate/consolidated
   events, output count, workers, sort budget/chunks/passes and elapsed time.
+
+Companion names include the complete output filename. For example, `SuperTimeline.jsonl` has its
+own `SuperTimeline.jsonl-Summary.json` and corresponding untimed/diagnostic reports. CSV and JSONL
+exports with the same stem can coexist; `-C` is needed only to replace an existing result set.
+
+Valid dates awaiting a justified time-zone assumption increment `UnresolvedTimeZones`, rather than
+`InvalidTimestamps`. Both remain traceable in diagnostics; no timestamp is invented.
 
 Records with valid times outside the requested range are counted as filtered, not untimed.
 Candidate event counts precede duplicate consolidation. `Complete: true` means all selected parsed
@@ -202,6 +218,11 @@ higher limit or, preferably, JSONL. CSV parser read-ahead also contributes to th
 Temporary disk space must accommodate the expanded events and merge passes, in addition to final
 results. A record can yield many events, so the timeline can be much larger than the input. Filter
 the time range/artifacts when appropriate and select a temporary volume with adequate free space.
+
+Ctrl+C cancels cooperatively, removes the private sort/staging directories and exits with code
+`130`. On Linux and macOS this also applies to SIGTERM and SIGHUP. Cancellation is checked while
+reading, normalizing, merging and writing reports, before publication begins. Uncatchable termination
+or power loss can still leave temporary files.
 
 Existing outputs require `-C`. The timeline and companions must not overwrite inputs, manifests,
 referenced local evidence or their protected evidence directories. Input errors or sort failures

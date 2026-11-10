@@ -211,7 +211,7 @@ fn recorded_path(root: &Path, recorded: &str, from_output: bool) -> PathBuf {
 }
 
 /// `path` for the terminal: as given when relative, else relative to the current directory.
-fn shown(path: &Path) -> String {
+pub(crate) fn shown(path: &Path) -> String {
     if path.is_relative() {
         return path.display().to_string();
     }

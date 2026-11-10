@@ -54,7 +54,9 @@ juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
 
 Коли маніфест визначає зображення VHDX або E01, посилання на джерело містять зображення та внутрішній шлях, а ім’я зображення зберігається в контексті події. Тимчасова проміжна робоча область не потрібна для читання проаналізованих результатів.
 
-Необроблене джерело береться із запису або однозначної команди маніфесту. Таблиці SRUM CSV можна призначити базі даних, лише якщо на хості є один зібраний SRUDB.dat, який можна унікально ідентифікувати. В іншому випадку `SourceFile` вказує на проаналізований файл, а `Details.RawSourceAvailable` — це `false`. Не плутайте цей резерв із шляхом необроблених доказів.
+Необроблене джерело береться із запису або однозначної команди маніфесту. З `-d` посилання на необроблені джерела відносяться до каталогу доказів, а `Details.ParsedFile` і резюме `InputFiles` відносяться до каталогу проаналізованого аналізу. Назви підсумкових вихідних даних/звітів відносяться до каталогу вихідних даних часової шкали. Таблиці SRUM CSV призначаються базі даних лише тоді, коли на хості є один зібраний SRUDB.dat, який можна унікально ідентифікувати. В іншому випадку `SourceFile` вказує на проаналізований файл, а `Details.RawSourceAvailable` — це `false`.
+
+На окремий вхід посилається його ім’я файлу. Вхідні дані з однаковою назвою файлу використовують різні посилання `./Inputs/<ID>/<filename>`. Абсолютні вихідні шляхи за межами відомих коренів доказів використовують ідентифікатори `./Sources/<ID>/<filename>`. Ці непрозорі посилання зберігають розрізнення джерел без експорту абсолютних імен каталогів аналітика; зверніться до рідного запису, використовуючи `ParsedFile` і `InputRecord` як першоджерело. Шляхи, записані в свідоцтві, наприклад шляхи до виконуваних файлів Windows, залишаються незмінними.
 
 ## Загальні поля подій { #common-event-fields }
 
@@ -67,7 +69,7 @@ juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
 | `User` | Записаний обліковий запис або SID, якщо його має адаптер; може бути порожнім. |
 | `Path` | Уражений файл, розділ реєстру або інший об’єкт, пов’язаний із артефактом. |
 | `Message` | Короткий опис для перегляду хронології. |
-| `SourceFile` | Шлях необроблених доказів, якщо їх можна вирішити; інакше резервний варіант аналізованого файлу, описаний вище. |
+| `SourceFile` | Відносне до доказів посилання на необроблене джерело або відносний ідентифікатор джерела, якщо його корінь невідомий; інакше резервний варіант аналізованого файлу, описаний вище. |
 | `SourceField` | Точне проаналізоване поле або вкладене місце, що використовується для мітки часу. |
 | `RecordID` | Специфічна ідентифікація запису артефакту. Це не обов’язково запис EVTX ID. |
 | `Details` | Структурований контекст, включаючи оригінальну позначку часу, точність, часову основу, часову роль, проаналізований файл, вхідний запис/розташування та доступні метадані відновлення/правила. |
@@ -131,11 +133,15 @@ juntei super-timeline -f Amcache.jsonl --input-artifact amcache \
 
 ## Companion reports { #companion-reports }
 
-For `SuperTimeline.csv` or `SuperTimeline.jsonl`, the command also writes:
+Для `SuperTimeline.csv` команда також пише:
 
-- `SuperTimeline-Untimed.jsonl`: місцезнаходження власних записів без придатної позначки часу події.
-- `SuperTimeline-Diagnostics.jsonl`: invalid/ambiguous times, intentionally skipped shared metadata and fidelity limitations that require the original parsed record.
-- `SuperTimeline-Summary.json`: вхідні файли, кількість артефактів, відфільтровані події/кандидати/консолідовані події, кількість вихідних даних, працівники, сортування бюджету/фрагментів/пропусків і час, що минув.
+- `SuperTimeline.csv-Untimed.jsonl`: місцезнаходження власних записів без придатної позначки часу події.
+- `SuperTimeline.csv-Diagnostics.jsonl`: invalid/ambiguous times, intentionally skipped shared metadata and fidelity limitations that require the original parsed record.
+- `SuperTimeline.csv-Summary.json`: вхідні файли, кількість артефактів, відфільтровані події/кандидати/консолідовані події, кількість вихідних даних, працівники, сортування бюджету/фрагментів/пропусків і час, що минув.
+
+Супутні імена включають повну назву вихідного файлу. Наприклад, `SuperTimeline.jsonl` має власний `SuperTimeline.jsonl-Summary.json` і відповідні незаплановані/діагностичні звіти. Експорт CSV і JSONL з однаковою основою можуть співіснувати; `-C` потрібен лише для заміни існуючого набору результатів.
+
+Дійсні дати, що очікують обґрунтованого збільшення припущення часового поясу `UnresolvedTimeZones`, а не `InvalidTimestamps`. Обидва залишаються простеженими в діагностиці; жодної позначки часу не винайдено.
 
 Записи з дійсним часом поза запитуваним діапазоном вважаються відфільтрованими, а не невизначеними. Candidate event counts precede duplicate consolidation. `Complete: true` означає, що всі вибрані проаналізовані вхідні дані оброблено успішно; it does not mean every artifact was collected, every field is timestamped or every attack is detectable.
 
@@ -148,6 +154,8 @@ For `SuperTimeline.csv` or `SuperTimeline.jsonl`, the command also writes:
 `--memory-limit` is the aggregate **sort-buffer budget**, not a process RSS limit. Input records, JSON object/string overhead, CSV buffers and merge records require additional memory. Для невеликих бюджетів кількість працівників зменшується. `--max-record-size` обмежує аналізований вхідний запис (за замовчуванням 16 MiB); a pretty JSON array/report counts as one top-level input document. Для великих документів може знадобитися більший ліміт або, бажано, JSONL. Випереджальне читання аналізатора CSV також сприяє цьому обмеженню.
 
 Temporary disk space must accommodate the expanded events and merge passes, in addition to final results. Запис може давати багато подій, тому шкала часу може бути набагато більшою за вхідні дані. Filter the time range/artifacts when appropriate and select a temporary volume with adequate free space.
+
+Ctrl+C скасовує кооперацію, видаляє приватні каталоги сортування/постановки та виходить із кодом `130`. Для Linux і macOS це також стосується SIGTERM і SIGHUP. Скасування перевіряється під час читання, нормалізації, об’єднання та написання звітів перед початком публікації. Невловиме припинення або втрата живлення все ще може залишати тимчасові файли.
 
 Існуючі виходи потребують `-C`. Хронологія та супутні елементи не повинні перезаписувати вхідні дані, маніфести, локальні докази, на які посилаються, або їх захищені каталоги доказів. Помилки введення або помилки сортування залишають існуючі виходи недоторканими. Completed files are staged beside the destination and replaced individually, publishing the timeline last. This is **not** a transaction across all four files: an I/O failure during final publication can leave some companion reports replaced. Keep a new output basename for each run when retaining an earlier complete export matters.
 

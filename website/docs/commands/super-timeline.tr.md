@@ -54,7 +54,9 @@ Güncel manifestler sonuç dizininin taşınmasını destekler; eski mutlak yoll
 
 Manifestteki VHDX/E01 görüntülerinde kaynak referansı görüntüyü ve iç yolu içerir; görüntü adı bağlamda korunur. Sonuçları okumak için geçici hazırlama dizini gerekmez.
 
-Ham kaynak kayıt veya belirsiz olmayan manifest komutundan alınır. SRUM CSV tabloları yalnızca tek ve kesin tanımlanabilir toplanmış SRUDB.dat varsa veritabanına bağlanır. Aksi halde `SourceFile` ayrıştırılmış dosyadır ve `Details.RawSourceAvailable`, `false` olur; bu yedek yol ham kanıt değildir.
+Kayıttan ham bir kaynak veya net bir bildirim komutu alınır. `-d` ile ham kaynak referansları kanıt dizinine göredir ve `Details.ParsedFile` ve özet `InputFiles` ayrıştırılan dizine göredir. Özet çıktı/rapor adları, zaman çizelgesinin çıktı dizinine göredir. SRUM CSV tabloları, yalnızca ana bilgisayarın benzersiz şekilde tanımlanabilen toplanmış bir SRUDB.dat dosyasına sahip olması durumunda bir veritabanına atanır. Aksi halde `SourceFile` ayrıştırılmış dosyayı işaret eder ve `Details.RawSourceAvailable`, `false`'tir.
+
+Bağımsız bir girişe dosya adıyla başvurulur. Aynı dosya adına sahip girişler farklı `./Inputs/<ID>/<filename>` referanslarını kullanır. Bilinen kanıt köklerinin dışındaki mutlak ham kaynak yolları, `./Sources/<ID>/<filename>` tanımlayıcılarını kullanır. Bu şeffaf olmayan referanslar, analistin mutlak dizin adlarını dışa aktarmadan kaynak ayrımlarını korur; Orijinal kaynak için `ParsedFile` ve `InputRecord`'i kullanarak yerel kayda bakın. Kanıta kaydedilen Windows yürütülebilir yolları gibi yollar değişmeden kalır.
 
 ## Ortak olay alanları { #common-event-fields }
 
@@ -67,7 +69,7 @@ Ham kaynak kayıt veya belirsiz olmayan manifest komutundan alınır. SRUM CSV t
 | `User` | Varsa kayıtlı hesap veya SID; boş olabilir. |
 | `Path` | İlgili dosya, kayıt defteri anahtarı veya artefakta özgü nesne. |
 | `Message` | Zaman çizelgesi görüntüleyicisi için kısa açıklama. |
-| `SourceFile` | Çözülebilen ham kanıt yolu; yoksa yukarıdaki ayrıştırılmış dosya yolu. |
+| `SourceFile` | Kanıta dayalı ham kaynak referansı veya kökü bilinmediğinde göreceli kaynak tanımlayıcı; aksi takdirde yukarıda açıklanan ayrıştırılmış dosya geri dönüşü. |
 | `SourceField` | Zamanı sağlayan tam alan veya iç içe konum. |
 | `RecordID` | Artefakta özgü kayıt kimliği; mutlaka EVTX kayıt ID değeri değildir. |
 | `Details` | Özgün zaman, hassasiyet, zaman temeli/rolü, dosya, kayıt/konum ve kurtarma/kural metaverilerinin yapılandırılmış bağlamı. |
@@ -131,11 +133,15 @@ Yalnızca tarihler de bu seçeneği gerektirir; gece yarısı **gün hassasiyetl
 
 ## Ek raporlar { #companion-reports }
 
-`SuperTimeline.csv` veya `SuperTimeline.jsonl` yanında şunlar yazılır:
+`SuperTimeline.csv` için komut ayrıca şunu da yazar:
 
-- `SuperTimeline-Untimed.jsonl`: kullanılabilir eşlenmiş olay zamanı olmayan yerel kayıt konumları.
-- `SuperTimeline-Diagnostics.jsonl`: geçersiz/belirsiz zamanlar, bilerek atlanan ortak metaveriler ve özgün kaydı gerektiren sınırlamalar.
-- `SuperTimeline-Summary.json`: dosyalar, artefakt sayıları, filtrelenen/aday/birleştirilen olaylar, çıktı, işçiler, sıralama bütçesi/parçaları/geçişleri ve süre.
+- `SuperTimeline.csv-Untimed.jsonl`: kullanılabilir eşlenmiş olay zamanı olmayan yerel kayıt konumları.
+- `SuperTimeline.csv-Diagnostics.jsonl`: geçersiz/belirsiz zamanlar, bilerek atlanan ortak metaveriler ve özgün kaydı gerektiren sınırlamalar.
+- `SuperTimeline.csv-Summary.json`: dosyalar, artefakt sayıları, filtrelenen/aday/birleştirilen olaylar, çıktı, işçiler, sıralama bütçesi/parçaları/geçişleri ve süre.
+
+Tamamlayıcı adlar, çıktı dosya adının tamamını içerir. Örneğin, `SuperTimeline.jsonl`'in kendi `SuperTimeline.jsonl-Summary.json`'i ve karşılık gelen zamanlanmamış/tanılama raporları vardır. Aynı köke sahip CSV ve JSONL dışa aktarmaları bir arada bulunabilir; `-C` yalnızca mevcut bir sonuç kümesini değiştirmek için gereklidir.
+
+`InvalidTimestamps` yerine `UnresolvedTimeZones` gerekçeli saat dilimi varsayım artışını bekleyen geçerli tarihler. Her ikisi de tanılamada izlenebilir olmaya devam ediyor; hiçbir zaman damgası icat edilmedi.
 
 Geçerli ama aralık dışı zamanlar zamansız değil filtrelenmiş sayılır. Adaylar birleştirmeden önce sayılır. `Complete: true` tüm seçili girdilerin başarıyla işlendiğidir; eksiksiz toplama veya her saldırının saptanması değildir.
 
@@ -148,6 +154,8 @@ Girdiler akışla paralel işlenir; sıralama özel geçici dizine taşar ve sı
 `--memory-limit` toplam **sıralama tampon bütçesidir**, işlem RSS sınırı değildir. Kayıtlar, JSON nesneleri, CSV tamponları ve birleştirmeler ek bellek ister; küçük bütçe işçi sayısını azaltır. `--max-record-size` varsayılan 16 MiB kayıt sınırıdır. Biçimli JSON dizisi tek belge sayılır; gerekirse sınırı artırın veya JSONL kullanın. CSV ön okuması da sınıra dahildir.
 
 Geçici disk hem genişletilen olayları ve birleştirmeleri hem sonuçları karşılamalıdır. Bir kayıt çok olay üretebilir; gerektiğinde zaman/artefakt filtreleyip yeterli boş alan seçin.
+
+Ctrl+C birlikte iptal eder, özel sıralama/hazırlama dizinlerini kaldırır ve `130` koduyla çıkar. Linux ve macOS'te bu aynı zamanda SIGTERM ve SIGHUP için de geçerlidir. Yayın başlamadan önce raporların okunması, normalleştirilmesi, birleştirilmesi ve yazılması sırasında iptal kontrolü yapılır. Yakalanamayan sonlandırma veya güç kaybı hala geçici dosyalar bırakabilir.
 
 Mevcut çıktı için `-C` gerekir. Girdiler, manifestler ve korunan kanıtlar ezilemez. Girdi/sıralama hatası eski çıktıyı korur. Dosyalar hedef yanında hazırlanıp ayrı değiştirilir, çizelge en sondadır. Dört dosya **tek işlem değildir**; son G/Ç hatasında bazı ek raporlar değişmiş olabilir. Eski tam çıktıyı korumak için yeni temel ad kullanın.
 

@@ -16,6 +16,7 @@ mod adapters;
 mod input;
 mod model;
 mod output;
+mod paths;
 mod sort;
 #[cfg(test)]
 mod tests;
@@ -90,7 +91,7 @@ impl Targets {
         }
         let path = crate::auto_parse::absolute_candidate(path)?;
         let stem = path
-            .file_stem()
+            .file_name()
             .and_then(|s| s.to_str())
             .filter(|s| !s.is_empty())
             .ok_or_else(|| io::Error::other("Timeline output needs a filename"))?;
@@ -183,6 +184,7 @@ fn process(
     opts: &SuperTimelineOptions,
     policy: &adapters::Policy,
     targets: &Targets,
+    references: &paths::References,
     folder: &Path,
     budget: usize,
 ) -> io::Result<Completed> {
@@ -197,6 +199,7 @@ fn process(
     let mut counts = ArtifactCounts::new();
     let mut previous_source = String::new();
     input::records(input, opts.max_record_size * 1024 * 1024, |value, ctx| {
+        crate::interrupt::check()?;
         if !opts.artifacts.is_empty()
             && !opts.artifacts.iter().any(|a| {
                 a.eq_ignore_ascii_case(&ctx.artifact)
@@ -223,7 +226,7 @@ fn process(
         }
         let projected = adapters::project_into(value, ctx, policy, |item| {
             match item {
-                adapters::Item::Event(event) => {
+                adapters::Item::Event(mut event) => {
                     if event
                         .event
                         .details
@@ -235,9 +238,11 @@ fn process(
                         targets.referenced_source(&event.event.source_file)?;
                         previous_source = event.event.source_file.clone();
                     }
+                    references.event(&mut event.event);
                     buffer.push(event)?;
                 }
-                adapters::Item::Diagnostic(diagnostic) => {
+                adapters::Item::Diagnostic(mut diagnostic) => {
+                    references.diagnostic(&mut diagnostic);
                     serde_json::to_writer(&mut diagnostics, &diagnostic)?;
                     diagnostics.write_all(b"\n")?;
                 }
@@ -263,6 +268,7 @@ fn process(
 }
 
 fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
+    crate::interrupt::check()?;
     let started = Instant::now();
     let inventory = input::discover(opts)?;
     for artifact in opts.artifacts.iter().chain(opts.input_artifact.iter()) {
@@ -320,19 +326,34 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
         for _ in 0..workers {
             scope.spawn(|| {
                 loop {
+                    if crate::interrupt::requested() {
+                        break;
+                    }
                     let index = next.fetch_add(1, Ordering::Relaxed);
                     let Some(input) = inventory.inputs.get(index) else {
                         break;
                     };
                     bar.set_message(progress::message(&input.path));
-                    let result = process(input, opts, &policy, &targets, &scratch.0, per_worker)
-                        .map_err(|e| io::Error::other(format!("{}: {e}", input.path.display())));
+                    let result = process(
+                        input,
+                        opts,
+                        &policy,
+                        &targets,
+                        &inventory.references,
+                        &scratch.0,
+                        per_worker,
+                    )
+                    .map_err(|e| io::Error::other(format!("{}: {e}", input.path.display())));
                     completed.lock().unwrap().push((index, result));
                     bar.inc(1);
                 }
             });
         }
     });
+    if crate::interrupt::requested() {
+        bar.abandon_with_message("Cancelled");
+        crate::interrupt::check()?;
+    }
     let mut completed = completed.into_inner().unwrap();
     completed.sort_by_key(|(i, _)| *i);
     if completed.iter().any(|(_, r)| r.is_err()) {
@@ -422,6 +443,7 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
         )?))
         .into_iter::<Diagnostic>()
         {
+            crate::interrupt::check()?;
             let diagnostic = diagnostic?;
             let writer = if diagnostic.reason.starts_with("No usable mapped") {
                 &mut untimed_writer
@@ -442,13 +464,15 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
     }
     let summary = json!({
         "SchemaVersion":1,"Complete":true,"JunteiVersion":env!("CARGO_PKG_VERSION"),
-        "Output":targets.timeline,"Untimed":targets.untimed,"Diagnostics":targets.diagnostics,
+        "Output":format!("./{}",targets.timeline.file_name().unwrap().to_string_lossy()),
+        "Untimed":format!("./{}",targets.untimed.file_name().unwrap().to_string_lossy()),
+        "Diagnostics":format!("./{}",targets.diagnostics.file_name().unwrap().to_string_lossy()),
         "Format":match opts.output_type { crate::cli::TimelineOutputType::Csv=>"csv",crate::cli::TimelineOutputType::Jsonl=>"jsonl" },
         "Profile":match opts.profile { crate::cli::TimelineProfile::Native=>"native",crate::cli::TimelineProfile::Timesketch=>"timesketch" },
         "Workers":workers,"SortMemoryBudgetMiB":opts.memory_limit,"LargestSerializedSortRowBytes":largest,
         "InitialSortChunks":original_chunks,"MergePasses":passes,"OutputEvents":written,
         "Counts":total,"Artifacts":counts,"ElapsedSeconds":started.elapsed().as_secs_f64(),
-        "SourceRecordsRetainedInInput":true,"InputFiles":inventory.inputs.iter().map(|i|i.path.clone()).collect::<Vec<_>>(),
+        "SourceRecordsRetainedInInput":true,"InputFiles":inventory.inputs.iter().map(|i|inventory.references.parsed(&i.path)).collect::<Vec<_>>(),
         "TimestampSemantics":"Typed timestamps are recorded evidence, not a verdict that an action or attack occurred"
     });
     let summary_path = staged.0.join("summary");
@@ -463,6 +487,7 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
     summary_writer.flush()?;
     drop(summary_writer);
     targets.check(&inventory, opts.clobber)?;
+    crate::interrupt::check()?;
     // Each file is atomically replaced; the timeline is published last. A malformed input or
     // failed sort never replaces any previous output. This is not a multi-file transaction.
     for (source, target) in [
@@ -479,6 +504,10 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
 }
 
 pub fn run(opts: &SuperTimelineOptions) -> i32 {
+    if let Err(error) = crate::interrupt::install() {
+        util::error_msg(opts.common.no_color, &error.to_string());
+        return 1;
+    }
     match execute(opts) {
         Ok(summary) => {
             util::p(None, "", true);
@@ -500,11 +529,15 @@ pub fn run(opts: &SuperTimelineOptions) -> i32 {
             util::p_label(
                 opts.common.no_color,
                 "Results saved: ",
-                &opts.output.to_string_lossy(),
+                &crate::auto_parse::shown(&opts.output),
             );
             0
         }
         Err(error) => {
+            if error.kind() == io::ErrorKind::Interrupted || crate::interrupt::requested() {
+                util::p(None, "Cancelled.", true);
+                return 130;
+            }
             util::error_msg(opts.common.no_color, &error.to_string());
             1
         }

@@ -43,6 +43,7 @@ pub struct Inventory {
     pub inputs: Vec<Input>,
     pub protected: Vec<PathBuf>,
     pub evidence_roots: Vec<PathBuf>,
+    pub references: super::paths::References,
 }
 
 fn format(path: &Path, hint: &str) -> io::Result<Format> {
@@ -160,9 +161,13 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
         inputs: Vec::new(),
         protected: Vec::new(),
         evidence_roots: Vec::new(),
+        references: super::paths::References::default(),
     };
+    let mut parsed_root = None;
+    let mut reference_roots = Vec::new();
     if let Some(root) = &opts.directory {
         let root = fs::canonicalize(root)?;
+        parsed_root = Some(root.clone());
         let manifest = root.join("manifest.json");
         let size = fs::metadata(&manifest)
             .map_err(|e| {
@@ -183,11 +188,13 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
         }
         if let Some(path) = get(&value, &["EvidenceDirectory"]).and_then(Value::as_str) {
             result.evidence_roots.push(PathBuf::from(path));
+            reference_roots.push(path.to_string());
         }
         let hosts = get(&value, &["Hosts"])
             .and_then(Value::as_array)
             .ok_or_else(|| io::Error::other("Manifest has no Hosts array"))?;
         let evidence = evidence_locations(&root, &text(&value, &["EvidenceDirectory"]), hosts);
+        reference_roots.extend(evidence.iter().map(|p| p.to_string_lossy().into_owned()));
         result.evidence_roots.extend(evidence.iter().cloned());
         let tasks = get(&value, &["Tasks"])
             .and_then(Value::as_array)
@@ -372,6 +379,15 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
     if result.inputs.is_empty() {
         return Err(io::Error::other("No succeeded artifact inputs were found"));
     }
+    result.references = super::paths::References::new(
+        &result
+            .inputs
+            .iter()
+            .map(|input| input.path.clone())
+            .collect::<Vec<_>>(),
+        parsed_root.as_deref(),
+        &reference_roots,
+    );
     Ok(result)
 }
 
@@ -382,6 +398,9 @@ struct Limited<R> {
 }
 impl<R: Read> Read for Limited<R> {
     fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> {
+        // Read::bytes (used by serde_json) retries Interrupted indefinitely. Cancellation is
+        // persistent, so use a non-retryable read error; the command still returns exit 130.
+        crate::interrupt::check().map_err(|_| io::Error::other("Cancelled"))?;
         let left = self.limit.saturating_sub(self.used.get());
         if left == 0 {
             return Err(io::Error::other("input record exceeds --max-record-size"));
@@ -411,6 +430,7 @@ fn dispatch(
     ctx: &Context,
     sink: &mut impl FnMut(&Value, &Context) -> io::Result<()>,
 ) -> io::Result<()> {
+    crate::interrupt::check()?;
     if let Value::Array(values) = value {
         for (index, value) in values.into_iter().enumerate() {
             let mut child = ctx.clone();
@@ -496,6 +516,7 @@ pub fn records(
     limit: usize,
     mut sink: impl FnMut(&Value, &Context) -> io::Result<()>,
 ) -> io::Result<()> {
+    crate::interrupt::check()?;
     let mut file = BufReader::new(File::open(&input.path)?);
     if file.fill_buf()?.starts_with(&[0xef, 0xbb, 0xbf]) {
         file.consume(3);
@@ -504,8 +525,10 @@ pub fn records(
         Format::Jsonl => {
             let mut index = 0;
             loop {
+                crate::interrupt::check()?;
                 let mut line = Vec::new();
                 loop {
+                    crate::interrupt::check()?;
                     let buffer = file.fill_buf()?;
                     if buffer.is_empty() {
                         break;
