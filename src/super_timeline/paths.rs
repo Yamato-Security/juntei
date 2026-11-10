@@ -17,7 +17,7 @@ use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct References {
     parsed: BTreeMap<PathBuf, String>,
     evidence: Vec<String>,

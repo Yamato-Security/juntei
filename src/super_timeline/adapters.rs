@@ -24,10 +24,16 @@ pub struct Policy {
     pub end: Option<Point>,
     pub collection: bool,
     pub interpreted: bool,
+    /// Exported (portable) references, so event identity does not depend on where the parsed
+    /// output or evidence directory is stored.
+    pub references: super::paths::References,
 }
 
 impl Policy {
-    pub fn new(opts: &SuperTimelineOptions) -> Result<Self, String> {
+    pub fn new(
+        opts: &SuperTimelineOptions,
+        references: super::paths::References,
+    ) -> Result<Self, String> {
         let start = opts
             .timeline_start
             .as_deref()
@@ -49,6 +55,7 @@ impl Policy {
             end,
             collection: opts.include_collection_times,
             interpreted: opts.include_interpreted_times,
+            references,
         })
     }
 }
@@ -500,10 +507,13 @@ impl<'a, 'b> Builder<'a, 'b> {
         } else {
             String::new()
         };
+        // Hash the exported SourceFile reference, not the local absolute path, so consolidation
+        // and the order of same-time events are the same wherever the case is stored.
+        let portable_source = self.policy.references.source(&self.source);
         let identity = fingerprint(&[
             &self.computer,
             &self.artifact,
-            &self.source,
+            &portable_source,
             &id,
             label,
             &time.text,

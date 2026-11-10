@@ -278,7 +278,8 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
             )));
         }
     }
-    let policy = adapters::Policy::new(opts).map_err(io::Error::other)?;
+    let policy =
+        adapters::Policy::new(opts, inventory.references.clone()).map_err(io::Error::other)?;
     let targets = Targets::new(&opts.output)?;
     targets.check(&inventory, opts.clobber)?;
     let temp_base = crate::auto_parse::absolute_candidate(

@@ -35,6 +35,7 @@ fn policy() -> Policy {
         end: None,
         collection: false,
         interpreted: false,
+        references: Default::default(),
     }
 }
 const DATE: &str = "2026-10-20T08:46:38.200166800Z";
@@ -599,4 +600,31 @@ fn mft_parent_generations_and_current_indicator_names_remain_available() {
     for key in ["HasADS", "uSecZeros", "SI<FN", "Copied"] {
         assert_eq!(p.events[0].event.details[key], true);
     }
+}
+
+#[test]
+fn identity_does_not_depend_on_where_the_case_is_stored() {
+    // The same record from the same evidence-relative source, in two case locations, must get
+    // the same consolidation identity (and so the same order among same-time events).
+    let row = json!({"EntryNum":"10","SequenceNumber":"3","ParentEntryNumber":"5","ParentPath":"Windows",
+        "FileName":"first.exe","NameType":"Win32","InUse":"True","Created (SI)":DATE});
+    let located = |root: &str| {
+        let mut context = ctx("mft");
+        context.raw_source = Some(format!("{root}/HOST/C/$MFT"));
+        let mut policy = policy();
+        policy.references = super::paths::References::new(&[], None, &[root.into()]);
+        project(&row, &context, &policy).events[0].identity.clone()
+    };
+    assert_eq!(
+        located("/cases/one/Evidence"),
+        located("/mnt/copy/Evidence")
+    );
+    assert_ne!(located("/cases/one/Evidence"), {
+        let mut context = ctx("mft");
+        context.raw_source = Some("/cases/one/Evidence/OTHER/C/$MFT".into());
+        let mut policy = policy();
+        policy.references =
+            super::paths::References::new(&[], None, &["/cases/one/Evidence".into()]);
+        project(&row, &context, &policy).events[0].identity.clone()
+    });
 }
