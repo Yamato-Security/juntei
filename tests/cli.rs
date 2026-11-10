@@ -5806,6 +5806,14 @@ fn auto_parse_vhdx_signals_clean_staged_evidence_during_copying_and_parsing() {
             String::from_utf8_lossy(&result.stdout),
             String::from_utf8_lossy(&result.stderr)
         );
+        // SIGTERM and SIGHUP are not Ctrl+C, so the message must not name it.
+        let messages = format!(
+            "{}{}",
+            String::from_utf8_lossy(&result.stdout),
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert!(messages.contains("Cancelled."), "{messages}");
+        assert!(!messages.contains("Ctrl+C"), "{messages}");
         assert_eq!(std::fs::read_dir(&staging).unwrap().count(), 0);
         assert!(!std::fs::read_dir(dir.path()).unwrap().any(|e| {
             e.unwrap()

@@ -38,10 +38,7 @@ pub(crate) fn requested() -> bool {
 
 pub(crate) fn check() -> io::Result<()> {
     if requested() {
-        Err(io::Error::new(
-            io::ErrorKind::Interrupted,
-            "Cancelled by Ctrl+C",
-        ))
+        Err(io::Error::new(io::ErrorKind::Interrupted, "Cancelled"))
     } else {
         Ok(())
     }
@@ -56,10 +53,7 @@ pub(crate) fn output(command: &mut Command) -> io::Result<Output> {
 
 fn output_until(command: &mut Command, cancelled: impl Fn() -> bool) -> io::Result<Output> {
     if cancelled() {
-        return Err(io::Error::new(
-            io::ErrorKind::Interrupted,
-            "Cancelled by Ctrl+C",
-        ));
+        return Err(io::Error::new(io::ErrorKind::Interrupted, "Cancelled"));
     }
     let mut child = command
         .stdin(Stdio::null())
