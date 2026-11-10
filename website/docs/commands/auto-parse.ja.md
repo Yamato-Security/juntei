@@ -17,13 +17,43 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX ディスクイメージ { #vhdx-disk-images }
 
-`--vhdx` を指定すると、`auto-parse` は証拠ディレクトリ内のすべての VHDX ディスクイメージに含まれるシステムを解析します。各イメージは解析中だけ FUSE で読み取り専用でマウントされ、ファイルは抽出されません。[ディスクイメージのマウント](mount.md)を参照してください。
+`--vhdx` を指定すると、`auto-parse` は [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用して
+**Linux、macOS、Windows** で VHDX をネイティブに読み取ります。OS へのマウント、FUSE ドライバー、管理者権限は不要です。
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-開けない NTFS ボリュームがある場合、その問題を報告し、読み取り可能なボリュームの処理を続けます。画像の一部を読み取れなかった場合、`auto-parse --vhdx` は終了コード 1 を返し、`mount` もアンマウント後に 1 を返します。
+各パーサーはファイルパスを必要とするため、リーダーが公開する NTFS ボリューム内のファイルを、
+システムの専用一時ディレクトリにストリーミングでコピーしてから通常の解析を行います。
+**出力結果に加えて、これらのファイルを保存する一時ディスク容量が必要です。**
+解析対象になったアーティファクトだけではなく、公開されたファイルシステム全体をコピーします。
+読み取りバッファーは固定サイズです。ホストのファイルシステムが対応している場合、ゼロ領域はスパース領域として書き込みます。
+元のファイル名、ディレクトリ構造、ハードリンク、ファイル更新時刻を保持します。
+LNK と Jump List のソース作成・更新・アクセス時刻は、一時ファイルではなく元の NTFS メタデータのスナップショットから取得します。
+一時ディレクトリは、パーサーエラーが報告された場合を含めて正常な終了処理で削除されますが、強制終了時には残る場合があります。
+元のイメージは読み取り専用で開き、未反映の VHDX ログもメモリ上でのみ適用します。
+
+ホスト名の検出、ホスト別の出力、CSV/JSON/JSONL、`-j` は通常の証拠ディレクトリと同じ解析処理を使用します。
+`manifest.json` の `Image` は元のイメージを、`EvidenceRoot` はイメージ内の相対パスを示します。
+読み取れないイメージ、ボリューム、ファイル、安全に表現できないファイル名は、`ImageErrors` と
+`manifest.csv` の失敗行に記録します。読み取れる証拠の解析は継続し、不完全な入力があれば終了コードは 1 になります。
+危険な名前や曖昧な名前は勝手に変更せず、エラーとして報告します。名前付き NTFS ストリームを追加ファイルとして抽出する機能はありません。
+トリアージイメージ内に通常のファイルとして収集済みのアーティファクトは利用できます。
+
+他のプログラムにファイルシステムを公開する [`mount` コマンド](mount.md) は、引き続き Linux の FUSE を必要とします。
+`auto-parse --vhdx` はこのコマンドを使用しません。
+
+ステージングは既定で出力先のファイルシステム上の専用ディレクトリを使用します。 `--temp-dir` で別ディスク上の既存のディレクトリを指定できます。元のメタデータは出力側に別途保持するため、ステージング先が満杯でも、読み取れたファイルの解析を続行できます。コピーと結果の両方に必要な空き容量を確保してください。出力先自体が満杯の場合は結果を保存できません。Ctrl+C はパーサープロセスを停止し、専用作業領域を削除して終了コード 130 を返します。SIGKILL や電源断ではコピーが残る場合があります。イメージ検索では読み取れないサブディレクトリをスキップしますが、入力ルートが読めない場合はエラーです。
+
+ステージング先は出力ディレクトリの外に指定してください。Linux と macOS では、SIGTERM と SIGHUP でもパーサープロセスを停止し、作業領域を削除します。
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
 
 ## 出力タイムゾーン { #output-time-zone }
 
@@ -360,7 +390,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

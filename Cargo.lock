@@ -1003,6 +1003,7 @@ dependencies = [
  "clap",
  "cms",
  "csv",
+ "ctrlc",
  "der",
  "evtx",
  "flate2",
@@ -2567,8 +2568,8 @@ source = "git+https://github.com/Yamato-Security/ys-srum-parser#5be24a59a619c016
 
 [[package]]
 name = "ys-vhdx-mount"
-version = "0.1.0"
-source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#4247bcb0fa90280970ea4ce5f26ac512bc96949d"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#2ed3526aa52aa559db947ba69d6299c9e4d25288"
 dependencies = [
  "ctrlc",
  "fuser",
@@ -2578,8 +2579,8 @@ dependencies = [
 
 [[package]]
 name = "ys-vhdx-parser"
-version = "0.4.1"
-source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#4247bcb0fa90280970ea4ce5f26ac512bc96949d"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#2ed3526aa52aa559db947ba69d6299c9e4d25288"
 dependencies = [
  "thiserror 2.0.21",
 ]

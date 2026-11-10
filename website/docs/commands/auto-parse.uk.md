@@ -23,13 +23,28 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## Образи дисків VHDX { #vhdx-disk-images }
 
-З параметром `--vhdx` команда `auto-parse` аналізує системи в кожному образі диска VHDX у каталозі доказів. Під час аналізу кожен образ монтується через FUSE лише для читання; файли не розпаковуються. Див. [Монтування образів дисків](mount.md).
+З `--vhdx` команда `auto-parse` читає VHDX нативно в **Linux, macOS і Windows** через [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). Системне монтування, FUSE та права адміністратора не потрібні.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Якщо том NTFS не відкривається, Juntei повідомляє про проблему та зберігає доступ до читабельних томів. Для частково читабельного образу `auto-parse --vhdx` повертає код завершення 1; `mount` також повертає 1 після відмонтування.
+Парсерам потрібні шляхи: Juntei копіює доступні NTFS-файли у приватний тимчасовий каталог з обмеженими буферами. **Потрібне місце для всіх цих файлів**, а не лише артефактів із результатами. Нульові області записуються як розріджені, якщо це підтримується. Зберігаються імена, структура, жорсткі посилання та час зміни. Часи джерел LNK і Jump Lists беруться зі знімка оригінальних метаданих NTFS, ніколи з тимчасових копій. Нормальне завершення, навіть з помилками парсерів, видаляє копії; примусове завершення може залишити їх. Джерело лише для читання; незастосований журнал VHDX відтворюється тільки в пам’яті.
+
+Пошук хостів, CSV/JSON/JSONL і `-j` використовують звичайний конвеєр. `Image` у `manifest.json` позначає оригінальний образ, `EvidenceRoot` — внутрішній відносний шлях. Помилки читання й небезпечні імена записуються в `ImageErrors` та рядки помилок `manifest.csv`. Читабельні результати зберігаються; неповний ввід повертає код 1. Небезпечні чи неоднозначні імена не перейменовуються. Іменовані потоки NTFS не видобуваються як окремі файли; артефакти, зібрані як звичайні файли, доступні.
+
+Окрема [команда `mount`](mount.md) надає файлову систему іншим програмам і досі потребує Linux FUSE. `auto-parse --vhdx` її не використовує.
+
+Тимчасове копіювання за замовчуванням використовує приватний каталог у файловій системі результатів. Через `--temp-dir` можна вибрати наявний каталог на іншому диску. Вихідні метадані зберігаються окремо у файловій системі результатів, тому заповнення диска копій не заважає розбору вже читабельних файлів. Залишайте місце і для копій, і для результатів; заповнений вихідний том не дозволяє зберігати результати. Ctrl+C зупиняє процеси, очищує приватний каталог і завершує роботу з кодом 130. SIGKILL або втрата живлення можуть залишити копії. Під час пошуку образів нечитабельні підкаталоги пропускаються; нечитабельний кореневий каталог введення залишається помилкою.
+
+Каталог тимчасового копіювання має бути поза каталогом результатів. У Linux і macOS сигнали SIGTERM та SIGHUP також зупиняють процеси розбору й очищують робочий каталог.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
 
 ## Часовий пояс виводу { #output-time-zone }
 
@@ -515,7 +530,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

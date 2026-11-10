@@ -1,6 +1,8 @@
 # جمع الأدلة { #collecting-evidence }
 
-يحلل Juntei الملفات التي جُمعت مسبقًا من Windows. استخدم أداة اقتناء موثوقة وحافظ على البيانات الوصفية الأصلية كلما أمكن. يمكن تحليل صور أقراص VHDX دون استخراج ملفاتها: راجع [تحميل صور الأقراص](../commands/mount.md).
+يحلل Juntei الملفات التي جُمعت مسبقًا من Windows. استخدم أداة اقتناء موثوقة وحافظ على البيانات الوصفية الأصلية كلما أمكن.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
 
 ## المواقع الشائعة { #common-locations }
 

@@ -49,36 +49,31 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## 使用 auto-parse 剖析每個映像檔 { #parsing-every-image-with-auto-parse }
+## 原生映像分析 { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` 會剖析證據目錄中每個 VHDX 磁碟映像檔（或以 `-d` 指定的單一映像檔）內的
-Windows 系統，不需要另外掛載：
+使用 `--vhdx` 時，`auto-parse` 透過 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) 在 **Linux、macOS、Windows** 原生讀取 VHDX，無需 OS 掛載、FUSE 或系統管理員權限。
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- 每個映像檔會以唯讀方式掛載於一個新的暫存目錄中、以該映像檔命名的資料夾（`host1-triage`），
-  在其中找到的系統會如同磁碟上的收集資料一樣被剖析。映像檔會在執行結束時卸載，按下 Ctrl+C 時
-  也會卸載。
-- 終端機會列出各映像檔，以及每個系統所屬的映像檔：
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`。
-- 在清單檔中，`EvidenceDirectory` 是所提供的目錄，每個系統的 `Image` 則標示其所屬的映像檔。
-  `EvidenceRoot` 與剖析器命令使用掛載資料夾（`./host1-triage/C`）。
-- 若映像將 Volume Shadow Copies 的檔案存放於 `VSS32` 等資料夾，每個資料夾會被偵測並作為另一個系統 (`HOST1_2`、…) 剖析。
-- 無法掛載的映像檔會被回報；其他映像檔仍會被剖析，而這次執行會以結束狀態 1 結束。
+解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案串流複製至專用暫存目錄。**請預留足夠空間容納全部公開的檔案**，而不只是會產生結果的鑑識產物。讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
 
-若無法開啟某個 NTFS 磁碟區，Juntei 會回報問題並保留可讀取的磁碟區。映像檔僅部分可讀取時，`auto-parse --vhdx` 會傳回結束代碼 1；`mount` 也會在卸載後傳回 1。
+主機偵測、CSV/JSON/JSONL 和 `-j` 使用一般證據目錄的解析流程。`manifest.json` 中的 `Image` 識別原始映像；`EvidenceRoot` 識別內部相對路徑。讀取失敗或不安全的名稱會記錄在 `ImageErrors` 與 `manifest.csv` 的失敗列。保留可讀取資料的結果；輸入不完整時結束代碼為 1。不會擅自重新命名不安全或曖昧的名稱，也不會將具名 NTFS 串流抽取為額外檔案；初步蒐證映像中已收集為一般檔案的證據仍可使用。
 
-## 需求 { #requirements }
+獨立的 [`mount` 命令](mount.md) 將檔案系統公開給其他程式，仍需要 Linux FUSE；`auto-parse --vhdx` 不使用此命令。
 
-- Linux：FUSE 3（`fusermount3`，即 `fuse3` 套件），以及對 `/dev/fuse` 的存取權限，一般使用者
-  通常都具備。不需要 root。
-- 不支援 Windows 與 macOS。在 Windows 上，請改為在以系統管理員身分執行的 PowerShell 中，以唯讀方式
-  連結映像檔，並將其磁碟機代號提供給工具：
+暫存作業預設使用輸出檔案系統上的專用目錄。可用 `--temp-dir` 指定另一磁碟上已存在的目錄。原始中繼資料另存於輸出檔案系統，因此暫存磁碟滿載時仍可解析已讀取的檔案。請為暫存檔與結果保留空間；若輸出檔案系統本身已滿，結果將無法儲存。Ctrl+C 會停止解析程序、清除專用工作區，並以代碼 130 結束。SIGKILL 或斷電仍可能留下副本。搜尋映像檔時會略過無法讀取的子目錄，但輸入根目錄無法讀取仍屬錯誤。
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+暫存目錄必須位於輸出目錄之外。在 Linux 和 macOS 上，SIGTERM 和 SIGHUP 也會停止解析程序並清理工作區。
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
+
+## OS 可見掛載的需求 { #os-visible-mount-requirements }
+
+`juntei mount` 需要 Linux FUSE 3（`fusermount3`）和 `/dev/fuse` 存取權。Windows 和 macOS 請使用上述原生解析方式。

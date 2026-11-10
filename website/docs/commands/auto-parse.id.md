@@ -23,13 +23,28 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## Image disk VHDX { #vhdx-disk-images }
 
-Dengan `--vhdx`, `auto-parse` mengurai sistem di dalam setiap image disk VHDX pada direktori bukti. Setiap image di-mount hanya-baca melalui FUSE selama penguraian, tanpa mengekstrak berkas. Lihat [Memasang Image Disk](mount.md).
+Dengan `--vhdx`, `auto-parse` membaca VHDX secara native di **Linux, macOS, dan Windows** melalui [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). Tidak perlu mount OS, FUSE, atau hak administrator.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Jika sebuah volume NTFS tidak dapat dibuka, Juntei melaporkan masalahnya dan mempertahankan volume yang dapat dibaca. Untuk citra yang hanya terbaca sebagian, `auto-parse --vhdx` mengembalikan kode keluar 1; `mount` juga mengembalikan 1 setelah pelepasan.
+Parser memerlukan jalur: Juntei menyalin berkas NTFS yang tersedia ke ruang sementara privat dengan buffer terbatas. **Sediakan ruang untuk semua berkas tersebut**, bukan hanya artefak yang menghasilkan rekaman. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
+
+Penemuan host, CSV/JSON/JSONL, dan `-j` memakai alur biasa. `Image` dalam `manifest.json` menunjukkan image asli; `EvidenceRoot` menunjukkan jalur relatif di dalamnya. Kesalahan baca dan nama tidak aman dicatat dalam `ImageErrors` dan baris gagal `manifest.csv`. Hasil yang terbaca dipertahankan; input tidak lengkap mengembalikan 1. Nama berbahaya atau ambigu tidak diganti. Stream NTFS bernama tidak diekstrak sebagai berkas tambahan; artefak yang sudah dikumpulkan sebagai berkas biasa tetap tersedia.
+
+Perintah [`mount` terpisah](mount.md) menyediakan sistem berkas bagi program lain dan tetap memerlukan Linux FUSE. `auto-parse --vhdx` tidak memakainya.
+
+Staging secara default memakai direktori privat pada sistem berkas output. Gunakan `--temp-dir` untuk memilih direktori yang sudah ada di disk lain. Metadata asli disimpan terpisah pada sistem berkas output, sehingga disk staging yang penuh tidak menghalangi parsing berkas yang sudah terbaca. Sediakan ruang untuk salinan dan hasil; jika volume output penuh, hasil tidak dapat disimpan. Ctrl+C menghentikan proses parser, membersihkan ruang privat, dan keluar dengan kode 130. SIGKILL atau listrik padam masih dapat meninggalkan salinan. Subdirektori yang tak dapat dibaca dilewati saat pencarian image; root input yang tak terbaca tetap merupakan kesalahan.
+
+Direktori staging harus berada di luar direktori output. Di Linux dan macOS, SIGTERM dan SIGHUP juga menghentikan proses parser dan membersihkan ruang kerja.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
 
 ## Zona waktu keluaran { #output-time-zone }
 
@@ -515,7 +530,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

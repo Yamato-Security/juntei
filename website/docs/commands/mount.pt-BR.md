@@ -50,37 +50,31 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## Analisar todas as imagens com o auto-parse { #parsing-every-image-with-auto-parse }
+## Análise nativa de imagens { #parsing-every-image-with-auto-parse }
 
-O `auto-parse --vhdx` analisa os sistemas Windows contidos em cada imagem de disco VHDX do diretório de
-evidências (ou na única imagem informada com `-d`), sem uma montagem separada:
+Com `--vhdx`, `auto-parse` lê VHDX nativamente no **Linux, macOS e Windows**, usando [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). Não exige montagem pelo sistema, FUSE ou privilégios de administrador.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Cada imagem é montada somente leitura em um novo diretório temporário, em uma pasta com o nome da imagem
-  (`host1-triage`), e os sistemas encontrados ali são analisados como em uma coleta em disco. As imagens são
-  desmontadas no final e também ao pressionar Ctrl+C.
-- O terminal lista as imagens e a imagem de cada sistema:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- No manifesto, `EvidenceDirectory` é o diretório informado e o campo `Image` de cada sistema indica sua imagem.
-  O `EvidenceRoot` e os comandos dos analisadores usam a pasta de montagem (`./host1-triage/C`).
-- Se a imagem contiver arquivos de Volume Shadow Copies em pastas como `VSS32`, cada pasta será detectada e analisada como outro sistema (`HOST1_2`, …).
-- Uma imagem que não pode ser montada é relatada; as demais ainda são analisadas, e a execução termina com
-  status de saída 1.
+Os parsers precisam de caminhos: o Juntei copia os arquivos NTFS expostos para um espaço temporário privado com buffers limitados. **Reserve espaço para todos esses arquivos**, não apenas os artefatos que produzam resultados. Regiões nulas são gravadas como lacunas quando permitido. Nomes, estrutura, hard links e horários de modificação são preservados. Os horários de origem de LNK e Jump Lists vêm dos metadados NTFS originais, nunca dos arquivos temporários. O término normal, mesmo com erros de parser, remove as cópias; uma interrupção forçada pode deixá-las. A origem permanece somente leitura; logs VHDX pendentes são aplicados apenas na memória.
 
-Se um volume NTFS não puder ser aberto, o Juntei informa o problema e mantém os volumes legíveis. Para imagens parcialmente legíveis, `auto-parse --vhdx` retorna o código 1; `mount` também retorna 1 após desmontar.
+A descoberta de hosts, CSV/JSON/JSONL e `-j` usam o fluxo habitual. `Image` em `manifest.json` identifica a imagem original; `EvidenceRoot`, o caminho relativo interno. Erros de leitura e nomes inseguros aparecem em `ImageErrors` e nas linhas com falha de `manifest.csv`. Resultados legíveis são preservados; entradas incompletas retornam 1. Nomes perigosos ou ambíguos não são renomeados. Streams NTFS nomeados não são extraídos como arquivos adicionais; artefatos coletados como arquivos comuns continuam disponíveis.
 
-## Requisitos { #requirements }
+O [`mount` separado](mount.md) expõe o sistema de arquivos a outros programas e ainda exige Linux FUSE. `auto-parse --vhdx` não o utiliza.
 
-- Linux: FUSE 3 (`fusermount3`, o pacote `fuse3`) e acesso a `/dev/fuse`, que usuários comuns normalmente têm.
-  Não é necessário ser root.
-- Windows e macOS não são suportados. No Windows, em vez disso, anexe a imagem somente leitura em um
-  PowerShell com privilégios elevados e informe às ferramentas a letra da unidade dela:
+A preparação usa por padrão um diretório privado no sistema de arquivos de saída. Use `--temp-dir` para escolher um diretório existente em outro disco. Os metadados originais ficam separados no volume de saída, permitindo analisar arquivos já legíveis mesmo se o disco de preparação encher. Reserve espaço para cópias e resultados; se o volume de saída estiver cheio, os resultados não podem ser salvos. Ctrl+C interrompe os processos, limpa a área privada e sai com código 130. SIGKILL ou falta de energia ainda podem deixar cópias. Subdiretórios inacessíveis são ignorados na busca; uma raiz de entrada ilegível continua sendo um erro.
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+O diretório de preparação deve ficar fora do diretório de saída. No Linux e no macOS, SIGTERM e SIGHUP também interrompem os processos de análise e limpam a área de trabalho.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
+
+## Requisitos da montagem visível ao sistema { #os-visible-mount-requirements }
+
+`juntei mount` exige Linux FUSE 3 (`fusermount3`) e acesso a `/dev/fuse`. No Windows e macOS, use a análise nativa acima.

@@ -50,37 +50,31 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## Mengurai setiap image dengan auto-parse { #parsing-every-image-with-auto-parse }
+## Analisis image secara native { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` mengurai sistem-sistem Windows di dalam setiap image disk VHDX di direktori bukti
-(atau satu image yang diberikan dengan `-d`), tanpa mount terpisah:
+Dengan `--vhdx`, `auto-parse` membaca VHDX secara native di **Linux, macOS, dan Windows** melalui [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). Tidak perlu mount OS, FUSE, atau hak administrator.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Setiap image di-mount dalam mode baca saja di sebuah direktori sementara baru, dalam folder yang dinamai sesuai
-  image tersebut (`host1-triage`), dan sistem-sistem yang ditemukan di sana diurai seperti pada hasil pengumpulan
-  di disk. Mount image-image tersebut dilepas di akhir eksekusi, dan juga saat Ctrl+C ditekan.
-- Terminal mencantumkan image-image tersebut beserta image dari setiap sistem:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- Di manifest, `EvidenceDirectory` adalah direktori yang diberikan dan `Image` milik setiap sistem menyebutkan
-  image-nya. `EvidenceRoot` dan perintah parser menggunakan folder mount (`./host1-triage/C`).
-- Jika image berisi berkas dari Volume Shadow Copies dalam folder seperti `VSS32`, setiap folder ditemukan dan diurai sebagai sistem lain (`HOST1_2`, …).
-- Image yang tidak dapat di-mount dilaporkan; image lainnya tetap diurai, dan eksekusi berakhir dengan
-  exit status 1.
+Parser memerlukan jalur: Juntei menyalin berkas NTFS yang tersedia ke ruang sementara privat dengan buffer terbatas. **Sediakan ruang untuk semua berkas tersebut**, bukan hanya artefak yang menghasilkan rekaman. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
 
-Jika sebuah volume NTFS tidak dapat dibuka, Juntei melaporkan masalahnya dan mempertahankan volume yang dapat dibaca. Untuk citra yang hanya terbaca sebagian, `auto-parse --vhdx` mengembalikan kode keluar 1; `mount` juga mengembalikan 1 setelah pelepasan.
+Penemuan host, CSV/JSON/JSONL, dan `-j` memakai alur biasa. `Image` dalam `manifest.json` menunjukkan image asli; `EvidenceRoot` menunjukkan jalur relatif di dalamnya. Kesalahan baca dan nama tidak aman dicatat dalam `ImageErrors` dan baris gagal `manifest.csv`. Hasil yang terbaca dipertahankan; input tidak lengkap mengembalikan 1. Nama berbahaya atau ambigu tidak diganti. Stream NTFS bernama tidak diekstrak sebagai berkas tambahan; artefak yang sudah dikumpulkan sebagai berkas biasa tetap tersedia.
 
-## Persyaratan { #requirements }
+Perintah [`mount` terpisah](mount.md) menyediakan sistem berkas bagi program lain dan tetap memerlukan Linux FUSE. `auto-parse --vhdx` tidak memakainya.
 
-- Linux: FUSE 3 (`fusermount3`, paket `fuse3`) dan akses ke `/dev/fuse`, yang biasanya dimiliki oleh pengguna
-  biasa. Root tidak diperlukan.
-- Windows dan macOS tidak didukung. Di Windows, sebagai gantinya, pasang image dalam mode baca saja di PowerShell
-  yang dijalankan dengan hak administrator (elevated), lalu berikan huruf drive-nya ke alat-alat tersebut:
+Staging secara default memakai direktori privat pada sistem berkas output. Gunakan `--temp-dir` untuk memilih direktori yang sudah ada di disk lain. Metadata asli disimpan terpisah pada sistem berkas output, sehingga disk staging yang penuh tidak menghalangi parsing berkas yang sudah terbaca. Sediakan ruang untuk salinan dan hasil; jika volume output penuh, hasil tidak dapat disimpan. Ctrl+C menghentikan proses parser, membersihkan ruang privat, dan keluar dengan kode 130. SIGKILL atau listrik padam masih dapat meninggalkan salinan. Subdirektori yang tak dapat dibaca dilewati saat pencarian image; root input yang tak terbaca tetap merupakan kesalahan.
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+Direktori staging harus berada di luar direktori output. Di Linux dan macOS, SIGTERM dan SIGHUP juga menghentikan proses parser dan membersihkan ruang kerja.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
+
+## Persyaratan mount yang terlihat oleh OS { #os-visible-mount-requirements }
+
+`juntei mount` memerlukan Linux FUSE 3 (`fusermount3`) dan akses ke `/dev/fuse`. Di Windows dan macOS, gunakan analisis native di atas.

@@ -37,7 +37,6 @@ mod flat_outputs;
 mod srum_outputs;
 mod timeline;
 mod timestamps;
-#[cfg(target_os = "linux")]
 mod vhdx_images;
 
 const WORK_DIR_PREFIX: &str = ".juntei-work-";
@@ -437,6 +436,11 @@ struct Manifest<'a> {
     hosts: Vec<ManifestHost>,
     #[serde(rename = "Tasks")]
     tasks: &'a [TaskResult],
+    #[serde(
+        rename = "ImageErrors",
+        skip_serializing_if = "<[ImageProblem]>::is_empty"
+    )]
+    image_errors: &'a [ImageProblem],
 }
 
 struct DataFile {
@@ -445,17 +449,26 @@ struct DataFile {
     artifact: &'static str,
 }
 
-/// The disk images `--vhdx` mounted for a run: the name of the directory they were found in, and
-/// each mount folder (in the directory the parsers read) with its image, from that directory
+/// The disk images prepared for a run: the name of the directory they were found in, and
+/// each staging folder (in the directory the parsers read) with its image, from that directory
 /// (`./host1-triage.vhdx`).
-// Only `--vhdx` makes them, where FUSE is.
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 pub(crate) struct Images {
     directory_name: String,
     mounts: Vec<(PathBuf, String)>,
+    problems: Vec<ImageProblem>,
+    metadata: crate::image_metadata::Snapshot,
 }
 
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[derive(Serialize)]
+struct ImageProblem {
+    #[serde(rename = "Image")]
+    image: String,
+    #[serde(rename = "Path")]
+    path: String,
+    #[serde(rename = "Error")]
+    error: String,
+}
+
 impl Images {
     /// The image a host's files are in.
     fn of(&self, root: &Path) -> Option<&str> {
@@ -469,13 +482,11 @@ impl Images {
 /// Run the command; returns the exit status.
 pub fn run(opts: &AutoParseOptions) -> i32 {
     if opts.vhdx {
-        #[cfg(target_os = "linux")]
         return vhdx_images::run(opts);
-        #[cfg(not(target_os = "linux"))]
-        {
-            error_msg(opts.common.no_color, crate::mount::NO_FUSE);
-            return 1;
-        }
+    }
+    if opts.temp_dir.is_some() {
+        error_msg(opts.common.no_color, "--temp-dir requires --vhdx");
+        return 1;
     }
     run_evidence(opts, None)
 }
@@ -590,11 +601,11 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             return 1;
         }
     };
-    let task_paths = TaskPaths::new(
-        parser_directory.clone(),
-        &[&evidence, &parser_directory],
-        &output_root,
-    );
+    let mut source_roots = vec![evidence.as_path(), parser_directory.as_path()];
+    if let Some(parent) = opts.image_source_metadata.as_deref().and_then(Path::parent) {
+        source_roots.push(parent);
+    }
+    let task_paths = TaskPaths::new(parser_directory.clone(), &source_roots, &output_root);
     let inventories: Vec<InputInventory> = hosts
         .iter()
         .map(|host| InputInventory::scan(&host.root))
@@ -763,6 +774,19 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         &bar,
         opts.timezone,
     );
+    if crate::interrupt::requested() {
+        bar.abandon_with_message("Cancelled");
+        if let Some(path) = &timeline_work
+            && temporary_work_directory(&opts.output, path)
+            && let Err(error) = fs::remove_dir_all(path)
+        {
+            error_msg(
+                no_color,
+                &format!("Could not remove cancelled timeline workspace: {error}"),
+            );
+        }
+        return 130;
+    }
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
         if matches!(
@@ -940,6 +964,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             .map(|host| manifest_host(host, &evidence, images))
             .collect(),
         tasks: &recorded,
+        image_errors: images.map_or(&[], |i| i.problems.as_slice()),
     };
     let manifest_path = opts.output.join("manifest.json");
     if let Err(e) = write_pretty_json(&manifest_path, &manifest) {
@@ -1383,6 +1408,12 @@ fn build_tasks(
                     // `ExtractedFile` from the output directory, as the manifests write paths
                     args.push("--extract-shown-as".into());
                     args.push(dot_relative(&parser_output, &extract).into_os_string());
+                }
+                if matches!(artifact, "lnk" | "jump-lists")
+                    && let Some(path) = &opts.image_source_metadata
+                {
+                    args.push("--image-source-metadata".into());
+                    args.push(path.clone().into_os_string());
                 }
                 args.push("-C".into());
                 args.push("-K".into());
@@ -1988,6 +2019,9 @@ fn run_tasks(
         for _ in 0..threads {
             scope.spawn(|| {
                 loop {
+                    if crate::interrupt::requested() {
+                        break;
+                    }
                     let index = next.fetch_add(1, Ordering::Relaxed);
                     let Some(task) = tasks.get(index) else {
                         break;
@@ -2032,10 +2066,11 @@ fn run_task(
     )
     .chain(task.args.iter().map(|a| paths.text(&a.to_string_lossy())))
     .collect();
-    let output = Command::new(executable)
-        .current_dir(&paths.directory)
-        .args(&task.args)
-        .output();
+    let output = crate::interrupt::output(
+        Command::new(executable)
+            .current_dir(&paths.directory)
+            .args(&task.args),
+    );
     let mut error = None;
     let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
@@ -2188,6 +2223,7 @@ fn annotate_json_file(
             return annotate_jsonl(input, &mut writer, computer, artifact);
         }
         for value in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
+            crate::interrupt::check()?;
             let mut value = value.map_err(io::Error::other)?;
             annotate_value(&mut value, computer, artifact);
             serde_json::to_writer_pretty(&mut writer, &value).map_err(io::Error::other)?;
@@ -2218,6 +2254,7 @@ fn annotate_jsonl(
 
     let mut line = Vec::new();
     loop {
+        crate::interrupt::check()?;
         line.clear();
         if input.read_until(b'\n', &mut line)? == 0 {
             break;
@@ -2412,6 +2449,14 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             serde_json::to_string(&task.command).map_err(io::Error::other)?,
         ])?;
     }
+    for problem in manifest.image_errors {
+        let mut row = vec![String::new(); 18];
+        row[4] = format!("{}!/{}", problem.image, problem.path);
+        row[5] = "vhdx".into();
+        row[10] = "failed".into();
+        row[16] = problem.error.clone();
+        writer.write_record(row)?;
+    }
     writer.flush()
 }
 
@@ -2435,6 +2480,25 @@ fn output_totals(root: &Path) -> io::Result<(usize, u64)> {
         }
     }
     Ok((files, bytes))
+}
+
+/// Validate staging before creating workspaces or reading an image's contents.
+/// The ordinary pipeline requires its evidence tree to be outside the output.
+fn validate_image_staging(opts: &AutoParseOptions) -> io::Result<()> {
+    let Some(staging) = &opts.temp_dir else {
+        return Ok(());
+    };
+    let output = absolute_candidate(&opts.output)?;
+    let staging = absolute_candidate(staging)?;
+    if staging.starts_with(&output) {
+        return Err(io::Error::other(
+            "--temp-dir must be outside the output directory",
+        ));
+    }
+    if !staging.is_dir() {
+        return Err(io::Error::other("--temp-dir must be an existing directory"));
+    }
+    Ok(())
 }
 
 fn output_separate_from_evidence(evidence: &Path, output: &Path) -> Result<(), String> {

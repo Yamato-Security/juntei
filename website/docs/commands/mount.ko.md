@@ -50,36 +50,31 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## auto-parse로 모든 이미지 파싱 { #parsing-every-image-with-auto-parse }
+## 이미지의 네이티브 분석 { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx`는 별도로 마운트하지 않고도 증거 디렉터리에 있는 모든 VHDX 디스크 이미지(또는 `-d`로
-지정한 단일 이미지) 안의 Windows 시스템을 파싱합니다.
+`--vhdx`를 지정하면 `auto-parse`는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)로 **Linux, macOS, Windows**에서 VHDX를 네이티브로 읽습니다. OS 마운트, FUSE, 관리자 권한이 필요하지 않습니다.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- 각 이미지는 새 임시 디렉터리 안에 이미지 이름을 딴 폴더(`host1-triage`)로 읽기 전용 마운트되며, 그곳에서
-  발견된 시스템은 디스크에 있는 수집물과 마찬가지로 파싱됩니다. 이미지는 실행이 끝날 때와 Ctrl+C를 눌렀을 때
-  마운트 해제됩니다.
-- 터미널에는 이미지 목록과 각 시스템의 이미지가 표시됩니다:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- 매니페스트에서 `EvidenceDirectory`는 지정된 디렉터리이며, 각 시스템의 `Image`는 해당 시스템의 이미지를
-  나타냅니다. `EvidenceRoot`와 파서 명령어는 마운트 폴더(`./host1-triage/C`)를 사용합니다.
-- 이미지에 Volume Shadow Copies의 파일이 `VSS32` 같은 폴더에 들어 있으면 각 폴더를 별도 시스템 (`HOST1_2`, …)으로 찾아 파싱합니다.
-- 마운트할 수 없는 이미지는 보고됩니다. 나머지 이미지는 계속 파싱되며, 실행은 종료 상태 1로 끝납니다.
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일을 비공개 임시 디렉터리에 스트리밍 복사합니다. **결과가 생성되는 아티팩트뿐 아니라 제공되는 모든 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
 
-NTFS 볼륨을 열 수 없으면 Juntei는 문제를 보고하고 읽을 수 있는 볼륨은 유지합니다. 이미지의 일부만 읽을 수 있으면 `auto-parse --vhdx`는 종료 코드 1을 반환하며, `mount`도 마운트 해제 후 1을 반환합니다.
+호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
 
-## 요구 사항 { #requirements }
+다른 프로그램에 파일시스템을 제공하는 별도 [`mount` 명령](mount.md)은 Linux FUSE가 필요합니다. `auto-parse --vhdx`는 이를 사용하지 않습니다.
 
-- Linux: FUSE 3(`fusermount3`, `fuse3` 패키지)과 `/dev/fuse`에 대한 액세스 권한. 일반 사용자는 보통 이
-  권한을 가지고 있습니다. root 권한은 필요하지 않습니다.
-- Windows와 macOS는 지원되지 않습니다. Windows에서는 대신 관리자 권한으로 실행한 PowerShell에서 이미지를 읽기
-  전용으로 연결하고, 해당 드라이브 문자를 도구에 지정하십시오.
+스테이징은 기본적으로 출력 파일시스템의 전용 디렉터리를 사용합니다. `--temp-dir`로 다른 디스크의 기존 디렉터리를 지정할 수 있습니다. 원본 메타데이터는 출력 파일시스템에 별도로 보관하므로 스테이징 디스크가 가득 차도 읽을 수 있는 파일은 파싱할 수 있습니다. 복사본과 결과를 위한 공간을 모두 확보하세요. 출력 파일시스템 자체가 가득 차면 결과를 저장할 수 없습니다. Ctrl+C는 파서 프로세스를 중지하고 전용 작업 공간을 정리한 뒤 코드 130으로 종료합니다. SIGKILL이나 전원 차단으로는 복사본이 남을 수 있습니다. 이미지 검색 중 접근할 수 없는 하위 디렉터리는 건너뛰지만 입력 루트를 읽지 못하면 오류입니다.
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+스테이징 디렉터리는 출력 디렉터리 밖에 있어야 합니다. Linux와 macOS에서는 SIGTERM과 SIGHUP도 파서 프로세스를 중지하고 작업 공간을 정리합니다.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
+
+## OS에 노출되는 마운트의 요구 사항 { #os-visible-mount-requirements }
+
+`juntei mount`는 Linux FUSE 3(`fusermount3`)와 `/dev/fuse` 접근 권한이 필요합니다. Windows와 macOS에서는 위의 네이티브 분석을 사용하세요.

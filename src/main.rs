@@ -23,6 +23,8 @@ mod color;
 mod defender_quarantine;
 mod hive;
 mod i30;
+mod image_metadata;
+mod interrupt;
 mod jump_lists;
 mod lnk;
 mod logfile;

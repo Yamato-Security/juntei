@@ -22,13 +22,28 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## VHDX डिस्क इमेज { #vhdx-disk-images }
 
-`--vhdx` के साथ `auto-parse` evidence directory की हर VHDX disk image के अंदर के systems को parse करता है। हर image को parsing के दौरान FUSE से read-only mount किया जाता है; files extract नहीं की जातीं। [डिस्क इमेज माउंट करना](mount.md) देखें।
+`--vhdx` के साथ `auto-parse`, [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) द्वारा **Linux, macOS और Windows** पर VHDX को नेटिव रूप से पढ़ता है। OS माउंट, FUSE या प्रशासक अधिकार आवश्यक नहीं हैं।
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-यदि कोई NTFS वॉल्यूम नहीं खुलता, तो Juntei समस्या बताता है और पढ़ने योग्य वॉल्यूम को बनाए रखता है। आंशिक रूप से पढ़ी जा सकने वाली इमेज के लिए `auto-parse --vhdx` निकास कोड 1 लौटाता है; `mount` भी अनमाउंट करने के बाद 1 लौटाता है।
+पार्सरों को पथ चाहिए; Juntei उपलब्ध NTFS फ़ाइलों को सीमित बफ़र से निजी अस्थायी स्थान में कॉपी करता है। **इन सभी फ़ाइलों के लिए पर्याप्त स्थान रखें**, सिर्फ़ परिणाम देने वाले आर्टिफ़ैक्ट के लिए नहीं। समर्थित होने पर शून्य क्षेत्रों को स्पार्स रूप में लिखा जाता है। नाम, संरचना, हार्ड लिंक और संशोधन समय सुरक्षित रहते हैं। LNK और Jump List के स्रोत समय मूल NTFS मेटाडेटा स्नैपशॉट से आते हैं, अस्थायी फ़ाइलों से नहीं। पार्सर त्रुटियों सहित सामान्य समापन प्रतियाँ हटाता है; जबरन समाप्ति उन्हें छोड़ सकती है। स्रोत केवल पढ़ने योग्य रहता है; लंबित VHDX लॉग सिर्फ़ मेमोरी में लागू होते हैं।
+
+होस्ट खोज, CSV/JSON/JSONL और `-j` सामान्य पाइपलाइन इस्तेमाल करते हैं। `manifest.json` का `Image` मूल इमेज बताता है; `EvidenceRoot` अंदर का सापेक्ष पथ बताता है। पढ़ने की त्रुटियाँ और असुरक्षित नाम `ImageErrors` तथा `manifest.csv` की असफल पंक्तियों में दर्ज होते हैं। पढ़े जा सकने वाले परिणाम सुरक्षित रहते हैं; अधूरा इनपुट कोड 1 देता है। खतरनाक या अस्पष्ट नाम बदले नहीं जाते। नामित NTFS स्ट्रीम अतिरिक्त फ़ाइलों की तरह निकाली नहीं जातीं; सामान्य फ़ाइलों के रूप में एकत्र आर्टिफ़ैक्ट उपलब्ध रहते हैं।
+
+अलग [`mount` कमांड](mount.md) अन्य प्रोग्रामों को फ़ाइलसिस्टम देता है और Linux FUSE की आवश्यकता होती है। `auto-parse --vhdx` इसे उपयोग नहीं करता।
+
+स्टेजिंग डिफ़ॉल्ट रूप से आउटपुट फ़ाइल सिस्टम पर एक निजी डायरेक्टरी का उपयोग करती है। दूसरे डिस्क की मौजूदा डायरेक्टरी चुनने के लिए `--temp-dir` उपयोग करें। मूल मेटाडेटा आउटपुट फ़ाइल सिस्टम पर अलग रखा जाता है, ताकि स्टेजिंग डिस्क भरने पर भी पढ़ने योग्य फ़ाइलें पार्स हो सकें। कॉपी और परिणाम दोनों के लिए स्थान रखें; आउटपुट वॉल्यूम भरने पर परिणाम नहीं सहेजे जा सकते। Ctrl+C पार्सर प्रक्रियाएँ रोकता है, निजी कार्यक्षेत्र साफ़ करता है और कोड 130 से निकलता है। SIGKILL या बिजली जाने से कॉपी रह सकती हैं। इमेज खोजते समय अपठनीय उपडायरेक्टरियाँ छोड़ी जाती हैं, लेकिन अपठनीय इनपुट रूट त्रुटि बना रहता है।
+
+स्टेजिंग डायरेक्टरी आउटपुट डायरेक्टरी के बाहर होनी चाहिए। Linux और macOS पर SIGTERM और SIGHUP भी पार्सर प्रक्रियाओं को रोकते हैं और कार्यक्षेत्र साफ़ करते हैं।
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
 
 ## आउटपुट time zone { #output-time-zone }
 
@@ -515,7 +530,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

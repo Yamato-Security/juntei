@@ -50,37 +50,49 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-## Parsing every image with auto-parse
+## Parsing images natively with auto-parse { #parsing-every-image-with-auto-parse }
 
-`auto-parse --vhdx` parses the Windows systems inside every VHDX disk image in the evidence
-directory (or the one image given with `-d`), without a separate mount:
+With `--vhdx`, `auto-parse` reads VHDX images natively on **Linux, macOS and Windows**, using
+[ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). No OS mount, FUSE driver,
+or administrator privileges are needed.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-- Each image is mounted read-only in a new temporary directory, in a folder named after the image
-  (`host1-triage`), and the systems found there are parsed as in a collection on disk. The images
-  are unmounted at the end, and on Ctrl+C.
-- The terminal lists the images and the image of each system:
-  `HOST1: ./host1-triage/C (./host1-triage.vhdx)`.
-- In the manifest, `EvidenceDirectory` is the directory given and each system's `Image` names its
-  image. `EvidenceRoot` and the parser commands use the mount folder (`./host1-triage/C`).
-- If the image contains files from Volume Shadow Copies in folders such as `VSS32`, each folder is found and parsed as another system (`HOST1_2`, …).
-- An image that can't be mounted is reported; the others are still parsed, and the run ends with
-  exit status 1.
+The artifact parsers need filesystem paths. Juntei therefore streams the files exposed by the
+reader's NTFS volumes into a private staging workspace, then runs the usual parsers.
+**Allow enough temporary disk space for those files**, in addition to the results. This is a
+copy of the exposed filesystem, not just the artifacts that eventually produce records.
+Reads use bounded buffers; zero-filled regions are written as holes where the host filesystem
+supports them. Original filenames, directory structure, hard links, and file modification times
+are preserved. LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
+a forced termination can leave temporary files. The source image is opened read-only, and pending
+VHDX log updates are applied in memory only.
 
-If an NTFS volume cannot be opened, Juntei reports it and keeps the readable volumes. Partial images cause `auto-parse --vhdx` to return exit status 1; `mount` also returns 1 after unmounting.
+Computer discovery, per-host output, CSV/JSON/JSONL, and `-j` use the same parsing pipeline as
+ordinary evidence directories. `Image` in `manifest.json` identifies the original image and
+`EvidenceRoot` identifies the relative path inside the prepared image tree. Unreadable images,
+volumes, files, and filenames that cannot be represented safely are reported in `ImageErrors`
+and failed rows of `manifest.csv`. Readable evidence is still parsed, and the process exits with
+status 1 if any image input was incomplete. Unsafe or ambiguous names are rejected rather than
+silently renamed. Named NTFS streams are not synthesized as extra files; already-collected
+artifacts stored as ordinary files inside a triage image remain available.
 
-## Requirements
+The separate [`mount` command](mount.md) exposes a filesystem to other programs and still needs
+Linux FUSE. It is not used by `auto-parse --vhdx`.
 
-- Linux: FUSE 3 (`fusermount3`, the `fuse3` package) and access to `/dev/fuse`, which normal users
-  usually have. Root is not needed.
-- Windows and macOS are not supported. On Windows, attach the image read-only in an elevated
-  PowerShell instead, and give the tools its drive letter:
+Staging uses a private directory on the output filesystem by default. Use `--temp-dir` to choose an existing staging directory on another disk. Original source metadata is kept separately on the output filesystem, so a full staging disk does not prevent parsing already-readable files. Reserve space for both staged files and results; if the output filesystem itself is full, results cannot be saved. Ctrl+C stops parser processes, cleans the private workspace and exits with code 130. A forced termination such as SIGKILL or power loss can still leave copies. Inaccessible subdirectories are skipped during image discovery; an unreadable input root remains an error.
 
-```powershell
-Mount-DiskImage -ImagePath D:\cases\host1-triage.vhdx -Access ReadOnly
-juntei auto-parse -d E:\ -o host1-juntei
-Dismount-DiskImage -ImagePath D:\cases\host1-triage.vhdx
+The staging directory must be outside the output directory. On Linux and macOS, SIGTERM and SIGHUP also stop parser processes and clean up the workspace.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 ```
+
+## OS-visible mount requirements
+
+`juntei mount` requires Linux FUSE 3 (`fusermount3`) and access to `/dev/fuse`. On Windows and macOS, use the native parsing command above.

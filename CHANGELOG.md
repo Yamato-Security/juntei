@@ -4,6 +4,8 @@
 
 **New Features:**
 
+- `auto-parse --vhdx` reads images natively on Linux, macOS and Windows without FUSE, an OS mount, or administrator privileges. Files are staged in a private workspace on the output filesystem by default; `--temp-dir` selects an existing directory outside the output. Reserve space for copies and results. Keep original source metadata separately, retain readable results if staging fills, report failed writes once, and mark images that were not staged in both manifests. Skip inaccessible discovery subdirectories while treating an unreadable input root as an error. Ctrl+C, and SIGTERM/SIGHUP on Linux and macOS, stop and reap parser processes before removing staged evidence and return exit code 130. SIGKILL or power loss can leave copies. Preserve image provenance and keep private workspace paths out of exported results. (@YamatoSecurity)
+
 - Use Yamato Security’s [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) workspace for the VHDX reader and reusable NTFS/FUSE mounting library, retaining the original reader’s license and attribution. (@YamatoSecurity)
 
 - `parse-ese ual` parses the User Access Logging (UAL) databases of Windows Server (`Current.mdb`, the yearly `{GUID}.mdb` databases and `SystemIdentity.mdb`): the client addresses and accounts that used each server role, with their first and last access times and request counts per day, and the role, DNS, virtual machine and server identity tables. Results are CSV tables, JSON or JSONL. `auto-parse` saves them in `LateralMovement` and adds them to the `-j` timeline. (#133) (@YamatoSecurity)
@@ -16,7 +18,6 @@
 
 - `mount` mounts the NTFS volumes of a VHDX disk image read-only at a directory through FUSE (Linux), without root and without the system supporting the image or the file system, so other tools such as Hayabusa can read the files. NTFS volumes whose boot sectors have zeroed jump instructions and signatures are supported. Ctrl+C unmounts. (@YamatoSecurity)
 
-- `auto-parse --vhdx` parses the Windows systems inside every VHDX disk image in the evidence directory, each mounted read-only while it is parsed. The manifest records the image of each system (`Image`). (@YamatoSecurity)
 
 **Bug Fixes:**
 

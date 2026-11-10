@@ -23,13 +23,28 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## อิมเมจดิสก์ VHDX { #vhdx-disk-images }
 
-เมื่อใช้ `--vhdx` คำสั่ง `auto-parse` จะพาร์สระบบภายในอิมเมจดิสก์ VHDX ทุกไฟล์ในไดเรกทอรีหลักฐาน แต่ละอิมเมจจะถูกเมานต์แบบอ่านอย่างเดียวด้วย FUSE ระหว่างการพาร์ส โดยไม่มีการแยกไฟล์ ดู[การเมานต์อิมเมจดิสก์](mount.md)
+เมื่อใช้ `--vhdx` คำสั่ง `auto-parse` อ่าน VHDX แบบเนทีฟบน **Linux, macOS และ Windows** ผ่าน [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) โดยไม่ต้องเมานต์ OS ใช้ FUSE หรือมีสิทธิ์ผู้ดูแลระบบ
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-หากเปิดโวลุ่ม NTFS ไม่ได้ Juntei จะรายงานปัญหาและคงโวลุ่มที่อ่านได้ไว้ สำหรับอิมเมจที่อ่านได้เพียงบางส่วน `auto-parse --vhdx` จะคืนรหัสจบการทำงาน 1 และ `mount` จะคืนค่า 1 หลังยกเลิกการเมานต์เช่นกัน
+พาร์เซอร์ต้องใช้พาธ Juntei จึงคัดลอกไฟล์ NTFS ที่แสดงไปยังพื้นที่ชั่วคราวส่วนตัวด้วยบัฟเฟอร์จำกัด **ต้องมีพื้นที่สำหรับไฟล์เหล่านี้ทั้งหมด** ไม่ใช่เฉพาะอาร์ติแฟกต์ที่ให้ผลลัพธ์ หากรองรับจะเขียนพื้นที่ศูนย์เป็นพื้นที่ sparse โดยรักษาชื่อ โครงสร้าง ฮาร์ดลิงก์ และเวลาแก้ไข เวลาแหล่งข้อมูล LNK และ Jump List มาจากสแนปช็อตเมทาดาทา NTFS เดิม ไม่ใช่สำเนาชั่วคราว เมื่อจบตามปกติรวมถึงกรณีพาร์เซอร์ผิดพลาดจะลบสำเนา แต่การบังคับหยุดอาจทิ้งไฟล์ไว้ ต้นฉบับอ่านอย่างเดียวและใช้ล็อก VHDX ที่ค้างในหน่วยความจำเท่านั้น
+
+การค้นหาโฮสต์ CSV/JSON/JSONL และ `-j` ใช้ขั้นตอนปกติ `Image` ใน `manifest.json` ระบุอิมเมจต้นฉบับ ส่วน `EvidenceRoot` ระบุพาธสัมพัทธ์ภายใน ข้อผิดพลาดการอ่านและชื่อไม่ปลอดภัยอยู่ใน `ImageErrors` และแถวล้มเหลวของ `manifest.csv` จะเก็บผลที่อ่านได้และคืนรหัส 1 หากอินพุตไม่สมบูรณ์ ไม่เปลี่ยนชื่ออันตรายหรือกำกวม และไม่แยกสตรีม NTFS ที่มีชื่อเป็นไฟล์เพิ่มเติม อาร์ติแฟกต์ที่รวบรวมเป็นไฟล์ปกติยังใช้ได้
+
+คำสั่ง [`mount` แยกต่างหาก](mount.md) เปิดระบบไฟล์ให้โปรแกรมอื่นและยังต้องใช้ Linux FUSE โดย `auto-parse --vhdx` ไม่ได้เรียกใช้คำสั่งนี้
+
+พื้นที่เตรียมข้อมูลใช้ไดเรกทอรีส่วนตัวบนระบบไฟล์ของผลลัพธ์เป็นค่าเริ่มต้น ใช้ `--temp-dir` เพื่อเลือกไดเรกทอรีที่มีอยู่บนดิสก์อื่น เมทาดาทาต้นฉบับเก็บแยกบนระบบไฟล์ผลลัพธ์ จึงยังแยกวิเคราะห์ไฟล์ที่อ่านได้แล้วเมื่อดิสก์เตรียมข้อมูลเต็ม ควรสำรองพื้นที่สำหรับทั้งสำเนาและผลลัพธ์ หากวอลุ่มผลลัพธ์เต็มจะบันทึกผลไม่ได้ Ctrl+C หยุดโปรเซสตัวแยกวิเคราะห์ ล้างพื้นที่ส่วนตัว และออกด้วยรหัส 130 แต่ SIGKILL หรือไฟดับยังอาจทิ้งสำเนาไว้ การค้นหาอิมเมจจะข้ามไดเรกทอรีย่อยที่อ่านไม่ได้ แต่รากอินพุตที่อ่านไม่ได้ยังเป็นข้อผิดพลาด
+
+ไดเรกทอรีเตรียมข้อมูลต้องอยู่นอกไดเรกทอรีผลลัพธ์ บน Linux และ macOS สัญญาณ SIGTERM และ SIGHUP จะหยุดโปรเซสตัวแยกวิเคราะห์และล้างพื้นที่ทำงานด้วย
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
 
 ## เขตเวลาของเอาต์พุต { #output-time-zone }
 
@@ -517,7 +532,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

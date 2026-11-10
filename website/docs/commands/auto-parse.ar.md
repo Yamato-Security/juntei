@@ -23,13 +23,28 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 
 ## صور أقراص VHDX { #vhdx-disk-images }
 
-عند استخدام `--vhdx`، يحلل `auto-parse` الأنظمة داخل كل صورة قرص VHDX في مجلد الأدلة. تُركّب كل صورة للقراءة فقط باستخدام FUSE أثناء تحليلها، دون استخراج الملفات. راجع [تحميل صور الأقراص](mount.md).
+مع `--vhdx` يقرأ `auto-parse` صور VHDX مباشرة على **Linux وmacOS وWindows** عبر [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)، دون تركيب نظام أو FUSE أو صلاحيات مسؤول.
 
 ```bash
+# A directory of images, searched recursively
 juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-إذا تعذر فتح وحدة NTFS، يبلغ Juntei عن المشكلة ويحتفظ بالوحدات القابلة للقراءة. تعيد الصور القابلة للقراءة جزئيًا رمز الخروج 1 مع `auto-parse --vhdx`، ويعيد `mount` أيضًا الرمز 1 بعد إلغاء التركيب.
+تحتاج المحللات إلى مسارات، لذلك ينسخ Juntei ملفات NTFS المتاحة إلى مساحة مؤقتة خاصة بمخازن قراءة محدودة. **وفّر مساحة لجميع هذه الملفات** وليس فقط الآثار المنتجة للسجلات. تُكتب مناطق الأصفار كفجوات حيثما أمكن. تُحفظ الأسماء والبنية والروابط الصلبة وأوقات التعديل. تأتي أوقات مصادر LNK وJump Lists من لقطة بيانات NTFS الأصلية لا من النسخ المؤقتة. يحذف الانتهاء الطبيعي، بما فيه أخطاء المحللات، النسخ؛ وقد يتركها الإنهاء القسري. المصدر للقراءة فقط وتُطبّق سجلات VHDX المعلقة في الذاكرة وحدها.
+
+يستخدم اكتشاف الأجهزة وCSV/JSON/JSONL و`-j` مسار المعالجة المعتاد. يحدد `Image` في `manifest.json` الصورة الأصلية، ويحدد `EvidenceRoot` المسار النسبي داخلها. تُسجّل أخطاء القراءة والأسماء غير الآمنة في `ImageErrors` وصفوف الفشل في `manifest.csv`. تُحفظ النتائج المقروءة ويُرجع الإدخال غير المكتمل الرمز 1. لا تُعاد تسمية الأسماء الخطرة أو الملتبسة. لا تُستخرج تدفقات NTFS المسماة كملفات إضافية؛ وتبقى الآثار المجموعة كملفات عادية متاحة.
+
+يعرض أمر [`mount` المنفصل](mount.md) نظام الملفات للبرامج الأخرى ويحتاج إلى Linux FUSE. لا يستخدمه `auto-parse --vhdx`.
+
+تستخدم مساحة التجهيز افتراضياً مجلداً خاصاً على نظام ملفات الإخراج. استخدم `--temp-dir` لاختيار مجلد موجود على قرص آخر. تُحفظ بيانات المصدر الوصفية منفصلةً على نظام ملفات الإخراج، فلا يمنع امتلاء قرص التجهيز تحليل الملفات المقروءة مسبقاً. خصص مساحة للنسخ والنتائج معاً؛ إذا امتلأت وحدة الإخراج نفسها فلن يمكن حفظ النتائج. يوقف Ctrl+C عمليات التحليل وينظف المساحة الخاصة ويخرج بالرمز 130. قد يترك SIGKILL أو انقطاع الطاقة نسخاً. يتم تجاوز المجلدات الفرعية غير المقروءة أثناء البحث عن الصور، لكن جذر الإدخال غير المقروء يبقى خطأ.
+
+يجب أن يكون مجلد التجهيز خارج مجلد الإخراج. في Linux وmacOS، يوقف SIGTERM وSIGHUP أيضاً عمليات التحليل وينظفان مساحة العمل.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
 
 ## المنطقة الزمنية للإخراج { #output-time-zone }
 
@@ -514,7 +529,8 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
-      --vhdx                  Parse the files inside every VHDX disk image in the evidence directory, each mounted read-only with FUSE while it is parsed
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results

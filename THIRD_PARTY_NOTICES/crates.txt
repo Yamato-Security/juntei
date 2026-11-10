@@ -16,7 +16,7 @@ Apache License 2.0 (Apache-2.0)
 
 Used by:
 - ys-shimcache-parser 1.0.0 (https://github.com/Yamato-Security/ys-shimcache-parser)
-- ys-vhdx-parser 0.4.1 (https://github.com/Yamato-Security/ys-vhdx-parser)
+- ys-vhdx-parser 1.0.0 (https://github.com/Yamato-Security/ys-vhdx-parser)
 - flagset 0.4.7 (https://github.com/enarx/flagset)
 - forensicnomicon-core 1.7.0 (https://github.com/SecurityRonin/forensicnomicon)
 - forensicnomicon-data 1.6.0 (https://github.com/SecurityRonin/forensicnomicon)

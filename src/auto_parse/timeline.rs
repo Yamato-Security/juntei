@@ -19,7 +19,7 @@ use crate::cli::AutoOutputType;
 use crate::util;
 use serde_json::Value;
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, BufReader, BufWriter, Write};
+use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
 
 /// Validate before creating output directories, clearing previous outputs, or starting a parser.
@@ -120,12 +120,22 @@ pub(super) fn write(files: &[DataFile], output: &Path, clobber: bool) -> io::Res
         let mut ordered: Vec<_> = files.iter().collect();
         ordered.sort_by_key(|file| &file.path);
         for data in ordered {
+            crate::interrupt::check()?;
             let mut input = BufReader::new(File::open(&data.path)?);
             if data.output_type == AutoOutputType::Jsonl {
                 // These inputs have already been validated and annotated one record per line.
-                io::copy(&mut input, &mut writer)?;
+                let mut buffer = [0; 256 * 1024];
+                loop {
+                    crate::interrupt::check()?;
+                    let count = input.read(&mut buffer)?;
+                    if count == 0 {
+                        break;
+                    }
+                    writer.write_all(&buffer[..count])?;
+                }
             } else {
                 for value in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
+                    crate::interrupt::check()?;
                     let value = value.map_err(io::Error::other)?;
                     if data.artifact == "amcache" {
                         amcache_records(value, &mut writer)?;
