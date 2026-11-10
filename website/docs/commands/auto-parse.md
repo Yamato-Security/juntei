@@ -34,10 +34,14 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-The artifact parsers need filesystem paths. Juntei therefore streams the files exposed by the
-reader's NTFS volumes into a private staging workspace, then runs the usual parsers.
-**Allow enough temporary disk space for those files**, in addition to the results. This is a
-copy of the exposed filesystem, not just the artifacts that eventually produce records.
+The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
+reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
+hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
+lists, Outlook files and Defender quarantine folders. Every other file is an empty placeholder
+with its original modification time, so directories and paths look as they do on the disk.
+persistence-hunter reads a placeholder's content from the image only when it needs it, such as
+an executable that a persistence entry refers to.
+**Allow enough temporary disk space for the copied files**, in addition to the results.
 Reads use bounded buffers; zero-filled regions are written as holes where the host filesystem
 supports them. Original filenames, directory structure, hard links, and file modification times
 are preserved. LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
@@ -70,7 +74,7 @@ juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
 
 Provide the first segment of a split image. Keep all companions, including `.E02`, beside it with their original names. Both whole disks (MBR/GPT) and single NTFS volumes are supported. Use `--vhdx --e01` for a directory containing both formats.
 
-The same temporary-space and source-metadata requirements apply. E01 images usually hold whole disks, and every image is staged before parsing starts, so allow free space about equal to the used space of all their NTFS volumes combined; a disk with 200 GB in use needs about 200 GB. Images are read-only. Acquisition gaps and damage found during opening or reading appear in `ImageErrors` and `manifest.csv`; readable results are retained with exit status 1. This checks accessed data, not every chunk or the image's full-media hash. Logical `.L01` and `.Lx01` files are rejected; there is no password option.
+The same temporary-space and source-metadata requirements apply. E01 images usually hold whole disks, and every image is staged before parsing starts, but only the files the parsers read are copied: usually a small part of the used space. Images are read-only. Acquisition gaps and damage found during opening or reading appear in `ImageErrors` and `manifest.csv`; readable results are retained with exit status 1. This checks accessed data, not every chunk or the image's full-media hash. Logical `.L01` and `.Lx01` files are rejected; there is no password option.
 
 The separate `mount` command still requires Linux FUSE; native automatic parsing does not.
 

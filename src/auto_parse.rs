@@ -20,10 +20,10 @@ use crate::color::JunteiColor;
 use crate::progress;
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use chrono::Utc;
-use serde::Serialize;
 use serde::de::IgnoredAny;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ffi::OsString;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
@@ -366,6 +366,9 @@ struct TaskResult {
     log: String,
     #[serde(rename = "Error")]
     error: Option<String>,
+    /// Structured diagnostics emitted by a child while reading a staged placeholder.
+    #[serde(skip)]
+    image_errors: Vec<ImageProblem>,
 }
 
 impl TaskResult {
@@ -457,16 +460,20 @@ pub(crate) struct Images {
     mounts: Vec<(PathBuf, String)>,
     problems: Vec<ImageProblem>,
     metadata: crate::image_metadata::Snapshot,
+    /// Files that were not copied: canonical placeholder path → size in the image.
+    placeholders: HashMap<PathBuf, u64>,
+    /// Where each staged volume came from, for reading placeholders on demand.
+    sources: crate::image_files::Sources,
 }
 
-#[derive(Serialize)]
-struct ImageProblem {
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub(crate) struct ImageProblem {
     #[serde(rename = "Image")]
-    image: String,
+    pub(crate) image: String,
     #[serde(rename = "Path")]
-    path: String,
+    pub(crate) path: String,
     #[serde(rename = "Error")]
-    error: String,
+    pub(crate) error: String,
 }
 
 impl Images {
@@ -608,7 +615,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
     let task_paths = TaskPaths::new(parser_directory.clone(), &source_roots, &output_root);
     let inventories: Vec<InputInventory> = hosts
         .iter()
-        .map(|host| InputInventory::scan(&host.root))
+        .map(|host| InputInventory::scan(&host.root, images.map(|images| &images.placeholders)))
         .collect();
     let evidence_bytes: u64 = inventories.iter().map(|inputs| inputs.total).sum();
 
@@ -942,6 +949,13 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         .iter()
         .map(|result| result.recorded(&output_root))
         .collect();
+    let mut image_errors = images.map_or_else(Vec::new, |i| i.problems.clone());
+    let staged_errors = image_errors.len();
+    for problem in results.iter().flat_map(|result| &result.image_errors) {
+        if !image_errors.contains(problem) {
+            image_errors.push(problem.clone());
+        }
+    }
     let manifest = Manifest {
         generated_utc: Utc::now().to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         juntei_version: env!("CARGO_PKG_VERSION"),
@@ -964,7 +978,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             .map(|host| manifest_host(host, &evidence, images))
             .collect(),
         tasks: &recorded,
-        image_errors: images.map_or(&[], |i| i.problems.as_slice()),
+        image_errors: &image_errors,
     };
     let manifest_path = opts.output.join("manifest.json");
     if let Err(e) = write_pretty_json(&manifest_path, &manifest) {
@@ -1038,7 +1052,16 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         }
     }
 
-    i32::from(failed > 0 || succeeded == 0 || timeline_failed)
+    if image_errors.len() > staged_errors {
+        error_msg(
+            no_color,
+            &format!(
+                "Incomplete disk image input: {} read problem(s) discovered during parsing. Readable results were retained; see ImageErrors in manifest.json or the disk-image rows in manifest.csv.",
+                image_errors.len() - staged_errors,
+            ),
+        );
+    }
+    i32::from(failed > 0 || succeeded == 0 || timeline_failed || !image_errors.is_empty())
 }
 
 fn discovered_roots(input: &Path, max_depth: usize) -> io::Result<BTreeMap<PathBuf, Vec<PathBuf>>> {
@@ -1415,6 +1438,12 @@ fn build_tasks(
                     args.push("--image-source-metadata".into());
                     args.push(path.clone().into_os_string());
                 }
+                if artifact == "persistence-hunter"
+                    && let Some(path) = &opts.image_files
+                {
+                    args.push("--image-files".into());
+                    args.push(path.clone().into_os_string());
+                }
                 args.push("-C".into());
                 args.push("-K".into());
                 args.push("-q".into());
@@ -1709,6 +1738,27 @@ fn build_tasks(
     Ok(tasks)
 }
 
+type NamePredicate = fn(&str) -> bool;
+
+/// The artifacts whose parsers choose input files by name. Disk-image staging copies the files
+/// named so, and the inventory estimates each parser's work from their sizes. Keep both in one
+/// place: a file a parser selects but staging leaves out would be read as an empty file.
+pub(super) const NAMED_INPUTS: &[(&str, NamePredicate)] = &[
+    ("amcache", crate::amcache::is_amcache_name),
+    ("prefetch", crate::prefetch::is_prefetch_name),
+    ("prefetch-timeline", crate::prefetch::is_prefetch_name),
+    ("srum", crate::srum::is_database_name),
+    ("ual", crate::ual::is_database_name),
+    ("browser", crate::browser::is_database_name),
+    ("webcache", crate::webcache::is_database_name),
+    ("outlook", crate::outlook::is_outlook_name),
+    ("lnk", crate::lnk::is_lnk_name),
+    ("jump-lists", crate::jump_lists::is_jump_list_name),
+    ("shimcache", crate::shimcache::is_system_name),
+    ("boot", crate::boot::is_boot_name),
+    ("secure-sds", crate::secure_sds::is_sds_name),
+];
+
 /// Inventory each host once. Sizes describe primary inputs, excluding transaction logs and
 /// enrichment hives, and are only estimates of the work a parser will perform.
 #[derive(Default)]
@@ -1722,37 +1772,33 @@ struct InputInventory {
 }
 
 impl InputInventory {
-    fn scan(root: &Path) -> Self {
+    /// `placeholders`: the sizes in their images of disk-image files that were not copied
+    /// (canonical paths of empty placeholder files).
+    fn scan(root: &Path, placeholders: Option<&HashMap<PathBuf, u64>>) -> Self {
         let mut found = Self::default();
         for path in util::find_files(root, |_| true) {
             let name = path.file_name().unwrap_or_default().to_string_lossy();
-            let size = path.metadata().map_or(0, |meta| meta.len());
+            let mut size = path.metadata().map_or(0, |meta| meta.len());
+            if size == 0
+                && let Some(placeholders) = placeholders.filter(|p| !p.is_empty())
+                && let Some(original) = path
+                    .canonicalize()
+                    .ok()
+                    .and_then(|canonical| placeholders.get(&canonical))
+            {
+                size = *original;
+            }
             // Cross-source hunting inspects the host's hives and filesystem
             // evidence, with optional MFT and event-log correlation.
             found.total += size;
             found.add_size("persistence-hunter", size);
-            for (artifact, matches) in [
-                ("amcache", crate::amcache::is_amcache_name(&name)),
-                ("prefetch", crate::prefetch::is_prefetch_name(&name)),
-                (
-                    "prefetch-timeline",
-                    crate::prefetch::is_prefetch_name(&name),
-                ),
-                ("srum", crate::srum::is_database_name(&name)),
-                ("ual", crate::ual::is_database_name(&name)),
-                ("browser", crate::browser::is_database_name(&name)),
-                ("webcache", crate::webcache::is_database_name(&name)),
-                ("outlook", crate::outlook::is_outlook_name(&name)),
-                ("lnk", crate::lnk::is_lnk_name(&name)),
-                ("jump-lists", crate::jump_lists::is_jump_list_name(&name)),
-                ("shimcache", crate::shimcache::is_system_name(&name)),
-                ("i30", crate::i30::is_i30_file(&path)),
-                ("boot", crate::boot::is_boot_name(&name)),
-                ("secure-sds", crate::secure_sds::is_sds_name(&name)),
-            ] {
-                if matches {
+            for (artifact, matches) in NAMED_INPUTS {
+                if matches(&name) {
                     found.add_size(artifact, size);
                 }
+            }
+            if crate::i30::is_i30_file(&path) {
+                found.add_size("i30", size);
             }
             if crate::registry::is_hive_file(&path) {
                 found.add_size("registry", size);
@@ -2072,10 +2118,13 @@ fn run_task(
             .args(&task.args),
     );
     let mut error = None;
+    let mut image_errors = Vec::new();
     let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
             let stdout = paths.text(&String::from_utf8_lossy(&output.stdout));
-            let stderr = paths.text(&String::from_utf8_lossy(&output.stderr));
+            let (stderr, problems) =
+                image_diagnostics(&String::from_utf8_lossy(&output.stderr), paths);
+            image_errors = problems;
             let combined = format!("{stdout}{stderr}");
             let skipped = !output.status.success() && no_artifact_message(&combined);
             let status = if output.status.success() {
@@ -2148,7 +2197,36 @@ fn run_task(
         output_files: Vec::new(),
         log: task.log.to_string_lossy().to_string(),
         error,
+        image_errors,
     }
+}
+
+/// Decode before path sanitizing: Windows backslashes inside JSON are escaped and would not
+/// match the directory spellings. Preserve ordinary and malformed diagnostic lines verbatim.
+fn image_diagnostics(stderr: &str, paths: &TaskPaths) -> (String, Vec<ImageProblem>) {
+    let mut text = String::new();
+    let mut problems = Vec::new();
+    for line in stderr.split_inclusive('\n') {
+        let problem = line
+            .trim_end_matches(['\r', '\n'])
+            .strip_prefix(crate::image_files::PROBLEM_PREFIX)
+            .and_then(|json| serde_json::from_str::<ImageProblem>(json).ok());
+        if let Some(mut problem) = problem {
+            problem.error = paths.text(&problem.error);
+            text.push_str(&format!(
+                "Image read problem at {}!/{}: {}\n",
+                problem.image.escape_debug(),
+                problem.path.escape_debug(),
+                problem.error
+            ));
+            if !problems.contains(&problem) {
+                problems.push(problem);
+            }
+        } else {
+            text.push_str(&paths.text(line));
+        }
+    }
+    (text, problems)
 }
 
 fn no_artifact_message(output: &str) -> bool {
@@ -2571,6 +2649,38 @@ mod tests {
     use super::*;
 
     #[test]
+    fn child_image_diagnostics_retain_provenance_and_sanitize_escaped_windows_paths() {
+        let paths = TaskPaths::new(
+            ".".into(),
+            &[Path::new(r"C:\private\staging")],
+            Path::new("output"),
+        );
+        let problem = ImageProblem {
+            image: "./evidence.E01".into(),
+            path: "Volume2/C/Example/agent.exe".into(),
+            error: r"Could not read C:\private\staging\host\C\Example\agent.exe".into(),
+        };
+        let json = serde_json::to_string(&problem).unwrap();
+        let diagnostic = format!("{}{json}\r\n", crate::image_files::PROBLEM_PREFIX);
+        let stderr = format!(
+            "ordinary warning\n{diagnostic}{diagnostic}{}invalid json\n",
+            crate::image_files::PROBLEM_PREFIX
+        );
+        let (text, errors) = image_diagnostics(&stderr, &paths);
+        assert!(text.starts_with("ordinary warning\n"));
+        assert!(text.contains("evidence.E01!/Volume2/C/Example/agent.exe"));
+        assert!(text.contains("JUNTEI_IMAGE_READ_PROBLEM: invalid json\n"));
+        assert!(!text.contains("private"));
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].image, problem.image);
+        assert_eq!(errors[0].path, problem.path);
+        assert_eq!(
+            errors[0].error,
+            r"Could not read .\host\C\Example\agent.exe"
+        );
+    }
+
+    #[test]
     fn metadata_discovery_bounds_client_info_and_does_not_follow_links() {
         let root = tempfile::tempdir().unwrap();
         let client = root.path().join("client_info.json");
@@ -2935,7 +3045,7 @@ mod tests {
         fs::write(dir.path().join("$MFT"), vec![0u8; 64]).unwrap();
         fs::write(dir.path().join("$J"), vec![0u8; 128]).unwrap();
         fs::write(dir.path().join("$LogFile"), vec![0u8; 256]).unwrap();
-        let inputs = InputInventory::scan(dir.path());
+        let inputs = InputInventory::scan(dir.path(), None);
         assert_eq!(inputs.sizes["prefetch"], 3072);
         assert_eq!(inputs.sizes["prefetch-timeline"], 3072);
         assert_eq!(inputs.sizes["registry"], 0x70);
@@ -2953,7 +3063,7 @@ mod tests {
         let mut hive = vec![0u8; 0x70];
         hive[..4].copy_from_slice(b"regf");
         fs::write(dir.path().join("SOFTWARE"), &hive).unwrap();
-        let only_machine = InputInventory::scan(dir.path());
+        let only_machine = InputInventory::scan(dir.path(), None);
         assert_eq!(only_machine.sizes["appcompat"], 0x70);
         assert_eq!(only_machine.sizes["system-info"], 0x70);
         for user_reader in [
@@ -2973,7 +3083,7 @@ mod tests {
         fs::write(dir.path().join("NTUSER.DAT"), &hive).unwrap();
         hive.resize(0xa0, 0);
         fs::write(dir.path().join("SECURITY"), &hive).unwrap();
-        let mixed = InputInventory::scan(dir.path());
+        let mixed = InputInventory::scan(dir.path(), None);
         assert_eq!(mixed.sizes["appcompat"], 0x100);
         assert_eq!(mixed.sizes["system-info"], 0x110);
         assert_eq!(mixed.sizes["auditpol"], 0xa0);

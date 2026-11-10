@@ -104,6 +104,7 @@ pub fn enrich(ctx: &Context, finding: &mut Finding) {
 }
 
 fn sha256(path: &Path) -> Result<String, String> {
+    crate::image_files::materialize(path).map_err(|e| e.to_string())?;
     let mut file = File::open(path).map_err(|e| e.to_string())?;
     let mut buffer = [0u8; 65536];
     let mut hasher = Sha256::new();
@@ -134,6 +135,8 @@ pub(super) fn pe_metadata(ctx: &Context, path: &Path) -> PeMetadata {
 }
 
 fn metadata(ctx: &Context, path: &Path) -> Metadata {
+    // A failure is reported by the reads below, as for any unreadable file.
+    let _ = crate::image_files::materialize(path);
     let stat = std::fs::metadata(path).ok();
     let cache_key = format!(
         "{}\0{}\0{:?}",
@@ -270,16 +273,19 @@ fn catalog_signer(ctx: &Context, hashes: &[Vec<u8>]) -> (String, String) {
     }
     let mut damaged = 0;
     for file in catalogs {
-        if file.len > MAX_CERTIFICATE_BYTES {
+        if file.size() > MAX_CERTIFICATE_BYTES {
             damaged += 1;
             continue;
         }
-        let bytes = match File::open(&file.physical).and_then(|file| {
-            let mut bytes = Vec::new();
-            file.take(MAX_CERTIFICATE_BYTES + 1)
-                .read_to_end(&mut bytes)?;
-            Ok(bytes)
-        }) {
+        let bytes = match file
+            .materialize()
+            .and_then(|()| File::open(&file.physical))
+            .and_then(|file| {
+                let mut bytes = Vec::new();
+                file.take(MAX_CERTIFICATE_BYTES + 1)
+                    .read_to_end(&mut bytes)?;
+                Ok(bytes)
+            }) {
             Ok(bytes) if bytes.len() as u64 <= MAX_CERTIFICATE_BYTES => bytes,
             _ => {
                 damaged += 1;
@@ -899,6 +905,7 @@ fn embedded_signer(path: &Path) -> (String, String) {
 }
 
 fn embedded_signer_inner(path: &Path) -> Result<Option<String>, String> {
+    crate::image_files::materialize(path).map_err(|e| format!("unreadable: {e}"))?;
     let mut file = File::open(path).map_err(|e| format!("unreadable: {e}"))?;
     let file_len = file.metadata().map_err(|e| e.to_string())?.len();
     let mut dos = [0u8; 64];

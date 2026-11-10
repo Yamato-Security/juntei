@@ -37,6 +37,7 @@ fn windows(
     overlap: usize,
     mut inspect: impl FnMut(&[u8], usize) -> bool,
 ) -> io::Result<()> {
+    crate::image_files::materialize(path)?;
     let mut handle = File::open(path)?;
     let mut window = Vec::new();
     handle
