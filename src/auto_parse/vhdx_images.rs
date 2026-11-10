@@ -77,6 +77,7 @@ fn discover(given: &Path) -> io::Result<(Vec<PathBuf>, PathBuf)> {
 
 /// The JSONL destination must never replace an input, including through hard links.
 fn protect_images(opts: &AutoParseOptions, images: &[PathBuf]) -> io::Result<()> {
+    super::validate_image_staging(opts)?;
     for output in std::iter::once(&opts.output).chain(opts.json_timeline.iter()) {
         match fs::metadata(output) {
             Err(e) if e.kind() == io::ErrorKind::NotFound => continue,

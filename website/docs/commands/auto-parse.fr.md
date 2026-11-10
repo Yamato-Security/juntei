@@ -38,7 +38,9 @@ La découverte des hôtes, CSV/JSON/JSONL et `-j` utilisent le traitement habitu
 
 La [commande `mount`](mount.md) expose un système de fichiers aux autres programmes et nécessite toujours Linux FUSE. `auto-parse --vhdx` ne l’utilise pas.
 
-La préparation utilise désormais le système de fichiers de sortie, plutôt que le répertoire temporaire système, parfois limité et stocké en RAM. Utilisez `--temp-dir` pour choisir un répertoire existant sur un autre disque. Les métadonnées source restent séparées sur le volume de sortie ; un disque de préparation plein ne bloque donc pas l’analyse des fichiers déjà lisibles. Prévoyez de la place pour les copies et les résultats ; si le volume de sortie est plein, les résultats ne peuvent pas être enregistrés. Ctrl+C arrête les parseurs, nettoie l’espace privé et termine avec le code 130. SIGKILL ou une coupure de courant peuvent laisser des copies. La recherche ignore les sous-répertoires illisibles, mais une racine d’entrée illisible reste une erreur.
+La préparation utilise par défaut un répertoire privé sur le système de fichiers de sortie. Utilisez `--temp-dir` pour choisir un répertoire existant sur un autre disque. Les métadonnées source restent séparées sur le volume de sortie ; un disque de préparation plein ne bloque donc pas l’analyse des fichiers déjà lisibles. Prévoyez de la place pour les copies et les résultats ; si le volume de sortie est plein, les résultats ne peuvent pas être enregistrés. Ctrl+C arrête les parseurs, nettoie l’espace privé et termine avec le code 130. SIGKILL ou une coupure de courant peuvent laisser des copies. La recherche ignore les sous-répertoires illisibles, mais une racine d’entrée illisible reste une erreur.
+
+Le répertoire de préparation doit se trouver hors du répertoire de sortie. Sous Linux et macOS, SIGTERM et SIGHUP arrêtent également les processus d’analyse et nettoient l’espace de travail.
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work

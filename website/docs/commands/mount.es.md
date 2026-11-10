@@ -68,7 +68,9 @@ La detección de hosts, CSV/JSON/JSONL y `-j` usan el flujo habitual. `Image` en
 
 El [`mount` independiente](mount.md) expone un sistema de archivos a otros programas y sigue necesitando Linux FUSE. `auto-parse --vhdx` no lo utiliza.
 
-La preparación usa ahora el sistema de archivos de salida de forma predeterminada, en vez del directorio temporal del sistema, que puede ser un volumen pequeño en RAM. Use `--temp-dir` para elegir un directorio existente en otro disco. Los metadatos originales se guardan aparte en el volumen de salida, por lo que un disco de preparación lleno no impide analizar los archivos ya legibles. Reserve espacio para copias y resultados; si el volumen de salida está lleno, no se pueden guardar resultados. Ctrl+C detiene los analizadores, limpia el espacio privado y sale con código 130. SIGKILL o un corte de energía pueden dejar copias. Se omiten los subdirectorios inaccesibles al buscar imágenes; una raíz de entrada ilegible sigue siendo un error.
+La preparación usa de forma predeterminada un directorio privado en el sistema de archivos de salida. Use `--temp-dir` para elegir un directorio existente en otro disco. Los metadatos originales se guardan aparte en el volumen de salida, por lo que un disco de preparación lleno no impide analizar los archivos ya legibles. Reserve espacio para copias y resultados; si el volumen de salida está lleno, no se pueden guardar resultados. Ctrl+C detiene los analizadores, limpia el espacio privado y sale con código 130. SIGKILL o un corte de energía pueden dejar copias. Se omiten los subdirectorios inaccesibles al buscar imágenes; una raíz de entrada ilegible sigue siendo un error.
+
+El directorio de preparación debe estar fuera del directorio de salida. En Linux y macOS, SIGTERM y SIGHUP también detienen los procesos de análisis y limpian el espacio de trabajo.
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work

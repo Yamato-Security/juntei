@@ -68,7 +68,9 @@ Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည�
 
 အခြား program များအတွက် filesystem ဖော်ပြသော သီးခြား [`mount` command](mount.md) သည် Linux FUSE လိုအပ်ဆဲ ဖြစ်သည်။ `auto-parse --vhdx` က ၎င်းကို မသုံးပါ။
 
-Staging အတွက် default သည် RAM ပေါ်ရှိ နေရာနည်းသော system temp directory အစား output filesystem ဖြစ်သည်။ အခြား disk ပေါ်ရှိ ရှိပြီးသား directory ကို ရွေးရန် `--temp-dir` ကို သုံးပါ။ မူရင်း metadata ကို output filesystem တွင် သီးခြားသိမ်းထားသဖြင့် staging disk ပြည့်လျှင်လည်း ဖတ်နိုင်ပြီးသောဖိုင်များကို parse လုပ်နိုင်သည်။ မိတ္တူနှင့် ရလဒ်နှစ်မျိုးလုံးအတွက် နေရာချန်ပါ။ Output volume ကိုယ်တိုင်ပြည့်လျှင် ရလဒ်များမသိမ်းနိုင်ပါ။ Ctrl+C သည် parser process များကို ရပ်ပြီး private workspace ကိုရှင်းကာ code 130 ဖြင့်ထွက်သည်။ SIGKILL သို့မဟုတ် မီးပျက်ခြင်းကြောင့် မိတ္တူများကျန်နိုင်သည်။ Image ရှာရာတွင် ဖတ်မရသော subdirectory များကို ကျော်သော်လည်း input root ဖတ်မရခြင်းသည် error ဖြစ်ဆဲဖြစ်သည်။
+Staging သည် ပုံမှန်အားဖြင့် output filesystem ရှိ သီးသန့် directory ကို အသုံးပြုသည်။ အခြား disk ပေါ်ရှိ ရှိပြီးသား directory ကို ရွေးရန် `--temp-dir` ကို သုံးပါ။ မူရင်း metadata ကို output filesystem တွင် သီးခြားသိမ်းထားသဖြင့် staging disk ပြည့်လျှင်လည်း ဖတ်နိုင်ပြီးသောဖိုင်များကို parse လုပ်နိုင်သည်။ မိတ္တူနှင့် ရလဒ်နှစ်မျိုးလုံးအတွက် နေရာချန်ပါ။ Output volume ကိုယ်တိုင်ပြည့်လျှင် ရလဒ်များမသိမ်းနိုင်ပါ။ Ctrl+C သည် parser process များကို ရပ်ပြီး private workspace ကိုရှင်းကာ code 130 ဖြင့်ထွက်သည်။ SIGKILL သို့မဟုတ် မီးပျက်ခြင်းကြောင့် မိတ္တူများကျန်နိုင်သည်။ Image ရှာရာတွင် ဖတ်မရသော subdirectory များကို ကျော်သော်လည်း input root ဖတ်မရခြင်းသည် error ဖြစ်ဆဲဖြစ်သည်။
+
+Staging directory သည် output directory ၏ အပြင်ဘက်တွင် ရှိရမည်။ Linux နှင့် macOS တွင် SIGTERM နှင့် SIGHUP သည်လည်း parser process များကို ရပ်ပြီး workspace ကို ရှင်းလင်းပေးသည်။
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work

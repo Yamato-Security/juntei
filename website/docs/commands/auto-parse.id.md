@@ -38,7 +38,9 @@ Penemuan host, CSV/JSON/JSONL, dan `-j` memakai alur biasa. `Image` dalam `manif
 
 Perintah [`mount` terpisah](mount.md) menyediakan sistem berkas bagi program lain dan tetap memerlukan Linux FUSE. `auto-parse --vhdx` tidak memakainya.
 
-Staging kini memakai sistem berkas output secara default, bukan direktori sementara sistem yang mungkin merupakan volume RAM kecil. Gunakan `--temp-dir` untuk memilih direktori yang sudah ada di disk lain. Metadata asli disimpan terpisah pada sistem berkas output, sehingga disk staging yang penuh tidak menghalangi parsing berkas yang sudah terbaca. Sediakan ruang untuk salinan dan hasil; jika volume output penuh, hasil tidak dapat disimpan. Ctrl+C menghentikan proses parser, membersihkan ruang privat, dan keluar dengan kode 130. SIGKILL atau listrik padam masih dapat meninggalkan salinan. Subdirektori yang tak dapat dibaca dilewati saat pencarian image; root input yang tak terbaca tetap merupakan kesalahan.
+Staging secara default memakai direktori privat pada sistem berkas output. Gunakan `--temp-dir` untuk memilih direktori yang sudah ada di disk lain. Metadata asli disimpan terpisah pada sistem berkas output, sehingga disk staging yang penuh tidak menghalangi parsing berkas yang sudah terbaca. Sediakan ruang untuk salinan dan hasil; jika volume output penuh, hasil tidak dapat disimpan. Ctrl+C menghentikan proses parser, membersihkan ruang privat, dan keluar dengan kode 130. SIGKILL atau listrik padam masih dapat meninggalkan salinan. Subdirektori yang tak dapat dibaca dilewati saat pencarian image; root input yang tak terbaca tetap merupakan kesalahan.
+
+Direktori staging harus berada di luar direktori output. Di Linux dan macOS, SIGTERM dan SIGHUP juga menghentikan proses parser dan membersihkan ruang kerja.
 
 ```bash
 juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
