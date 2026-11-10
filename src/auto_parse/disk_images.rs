@@ -135,7 +135,7 @@ pub(super) fn run(opts: &AutoParseOptions) -> i32 {
     }
     let code = run_inner(opts);
     if crate::interrupt::requested() {
-        error_msg(opts.common.no_color, "Cancelled by Ctrl+C.");
+        error_msg(opts.common.no_color, "Cancelled.");
         130
     } else {
         code
