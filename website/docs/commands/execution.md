@@ -6,7 +6,7 @@ container; custom Jump Lists use a different binary layout. Both belong to the s
 command.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -130,7 +130,7 @@ See [LNK Shortcuts](../artifacts/lnk.md).
 ## `parse-file outlook`
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

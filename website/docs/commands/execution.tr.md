@@ -6,7 +6,7 @@ kapsayıcısı kullanır; özel Jump Lists farklı bir ikili düzen kullanır. H
 komutuna aittir.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -130,7 +130,7 @@ Bkz. [LNK Kısayolları](../artifacts/lnk.md).
 ## `parse-file outlook` { #parse-file-outlook }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

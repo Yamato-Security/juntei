@@ -534,7 +534,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## 用法 { #usage }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

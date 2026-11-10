@@ -6,7 +6,7 @@
 โดยไม่พึ่งไลบรารี SQLite พร้อมการเปลี่ยนแปลงล่าสุดจากไฟล์ `-wal` ของแต่ละฐานข้อมูล และกู้คืนรายการที่ถูกลบ
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -23,7 +23,7 @@ Options:
 ## `parse-sqlite browser` { #parse-sqlite-browser }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

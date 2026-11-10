@@ -32,7 +32,7 @@ Image dibuka hanya-baca dan mount menolak penulisan. Log tertunda dari VHDX yang
 ## Penggunaan { #usage }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

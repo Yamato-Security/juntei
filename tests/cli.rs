@@ -238,7 +238,7 @@ fn banner_and_help() {
     assert!(r.stdout.contains("by Yamato Security"));
     assert!(r.stdout.contains("parse-registry"));
     // The release name follows the version, and the usage follows them.
-    let version = format!("Version: {} (Dev Build)", env!("CARGO_PKG_VERSION"));
+    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
     assert!(
         r.stdout
             .contains(&format!("{version}\n\nUsage: juntei <COMMAND>")),
@@ -257,7 +257,7 @@ fn banner_and_help() {
     let r = run(&["--version"]);
     assert_eq!(
         r.stdout,
-        format!("juntei {} (Dev Build)\n", env!("CARGO_PKG_VERSION"))
+        format!("juntei {} (CODE BLUE Release)\n", env!("CARGO_PKG_VERSION"))
     );
 }
 
@@ -276,7 +276,7 @@ fn banner_is_logo_blank_version_and_start_time_then_blank() {
         }
         out
     };
-    let version = format!("Version: {} (Dev Build)", env!("CARGO_PKG_VERSION"));
+    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
     // The help screen: the logo, a blank line, the version, a blank line and the usage.
     let help = plain(&run(&[]).stdout);
     assert!(

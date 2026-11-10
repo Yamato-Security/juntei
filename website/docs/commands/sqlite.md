@@ -6,7 +6,7 @@ and Firefox's `places.sqlite`, `cookies.sqlite` and `formhistory.sqlite`. Juntei
 without SQLite, with the newest changes of their `-wal` files, and recovers deleted entries.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -23,7 +23,7 @@ Options:
 ## `parse-sqlite browser`
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

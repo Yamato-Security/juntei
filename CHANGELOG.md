@@ -1,6 +1,6 @@
 # Changes
 
-## 1.1.0 [xxxx/xx/xx]
+## 1.1.0 [xxxx/xx/xx] - CODE BLUE Release
 
 **New Features:**
 

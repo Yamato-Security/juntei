@@ -6,7 +6,7 @@ form entry များကို SQLite database များတွင် သိ
 မလိုဘဲ ၎င်းတို့၏ `-wal` ဖိုင်များရှိ နောက်ဆုံး ပြောင်းလဲမှုများနှင့်အတူ ဖတ်ပြီး ဖျက်ထားသော entry များကို ပြန်လည်ရယူသည်။
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -23,7 +23,7 @@ Options:
 ## `parse-sqlite browser` { #parse-sqlite-browser }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

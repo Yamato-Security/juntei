@@ -5,7 +5,7 @@ Outlook 的 PST、OST、MSG 與 OFT 檔案。自動 Jump Lists 使用複合檔�
 二進位配置。兩者都屬於同一個跡證命令。
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -129,7 +129,7 @@ juntei parse-file lnk -f suspicious.lnk -t jsonl | jq .
 ## `parse-file outlook` { #parse-file-outlook }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

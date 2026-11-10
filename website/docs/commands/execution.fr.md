@@ -5,7 +5,7 @@ Defender, et fichiers PST, OST, MSG et OFT d'Outlook. Les Jump Lists automatique
 disposition binaire différente. Les deux relèvent de la même commande d'artefact.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -129,7 +129,7 @@ Voir [Raccourcis LNK](../artifacts/lnk.md).
 ## `parse-file outlook` { #parse-file-outlook }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

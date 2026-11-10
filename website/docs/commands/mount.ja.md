@@ -30,7 +30,7 @@ juntei auto-parse -d /mnt/host1 -o host1-juntei
 ## 使用法 { #usage }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

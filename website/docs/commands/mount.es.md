@@ -33,7 +33,7 @@ La imagen se abre en modo de solo lectura y el montaje rechaza escrituras. Si un
 ## Uso { #usage }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

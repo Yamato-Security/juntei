@@ -5,7 +5,7 @@ sowie die PST-, OST-, MSG- und OFT-Dateien von Outlook. Automatische Jump Lists 
 binäres Layout. Beide gehören zum selben Artefaktbefehl.
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -129,7 +129,7 @@ Siehe [LNK-Verknüpfungen](../artifacts/lnk.md).
 ## `parse-file outlook` { #parse-file-outlook }
 
 ```text
-Version: 1.1.0 (Dev Build)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
