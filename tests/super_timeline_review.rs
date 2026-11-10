@@ -449,3 +449,49 @@ fn cancellation_during_json_deserialization_does_not_retry_interrupted_reads_for
     assert_eq!(fs::read_dir(&scratch).unwrap().count(), 0);
     assert!(!output.exists());
 }
+
+#[test]
+fn ambiguous_evidence_roots_keep_distinct_absolute_captures_distinct() {
+    let tmp = tempfile::tempdir().unwrap();
+    let case = tmp.path().join("case");
+    let parsed = case.join("exports/Parsed");
+    fs::create_dir_all(&parsed).unwrap();
+    let mut sources = Vec::new();
+    for root in [case.join("Evidence"), case.join("exports/Evidence")] {
+        fs::create_dir_all(root.join("HOST/C/Windows")).unwrap();
+        let source = root.join("HOST/C/Windows/APP.pf");
+        fs::write(&source, []).unwrap();
+        sources.push(source);
+    }
+    let mut writer = csv::Writer::from_path(parsed.join("Prefetch.csv")).unwrap();
+    writer
+        .write_record(["SourceFile", "ExecutableName", "LastRun"])
+        .unwrap();
+    for source in &sources {
+        writer
+            .write_record([source.to_str().unwrap(), "APP.EXE", "2026-10-20T08:00:00Z"])
+            .unwrap();
+    }
+    writer.flush().unwrap();
+    fs::write(parsed.join("manifest.json"), serde_json::to_vec(&json!({
+        "OutputDirectory":"Parsed","EvidenceDirectory":"Evidence",
+        "Hosts":[{"Comp":"HOST","EvidenceRoot":"./HOST/C","WindowsDirectories":["./HOST/C/Windows"]}],
+        "Tasks":[{"Artifact":"prefetch","Comp":"HOST","Status":"succeeded","OutputType":"csv","OutputFiles":["Prefetch.csv"]}]
+    })).unwrap()).unwrap();
+    let output = tmp.path().join("Timeline.jsonl");
+    run(&[
+        "-d",
+        parsed.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    let rows = jsonl(&output);
+    assert_eq!(rows.len(), 2);
+    assert_ne!(rows[0]["SourceFile"], rows[1]["SourceFile"]);
+    assert!(
+        rows.iter()
+            .all(|r| r["SourceFile"].as_str().unwrap().starts_with("./Sources/"))
+    );
+}
