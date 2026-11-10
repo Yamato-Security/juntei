@@ -1341,7 +1341,10 @@ fn auto_parse_failure_summary_labels_the_error_and_links_to_the_parser_log() {
         ],
     );
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
-    let log = "parsed/HOST1/FileExistence/Registry-Amcache-logs.txt";
+    let log = Path::new("parsed")
+        .join("HOST1")
+        .join("FileExistence")
+        .join("Registry-Amcache-logs.txt");
     let summary = r.stdout.split("Results Summary:").nth(1).unwrap();
     let failure = summary
         .lines()
@@ -1349,7 +1352,7 @@ fn auto_parse_failure_summary_labels_the_error_and_links_to_the_parser_log() {
         .unwrap();
     assert_eq!(
         failure,
-        format!("  HOST1 / amcache: Parsing error (log: {log})")
+        format!("  HOST1 / amcache: Parsing error (log: {})", log.display())
     );
     let details = std::fs::read_to_string(root.path().join(log)).unwrap();
     assert!(details.contains("Could not parse"), "{details}");
