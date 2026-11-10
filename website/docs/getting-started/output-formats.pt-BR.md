@@ -120,4 +120,4 @@ analisador não conseguiu resolvê-lo. Não substitua todos os valores vazios po
 
 ## Linha do tempo cronológica normalizada { #normalized-chronological-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) cria um esquema de evento CSV/JSONL comum com significados de carimbo de data/hora rotulados, referências de origem e classificação cronológica. Ele também oferece suporte a um perfil de importação do Timesketch. As exportações do analisador nativo e `auto-parse -j` mantêm seus esquemas existentes.
+[`super-timeline`](../commands/super-timeline.md) cria um esquema de evento CSV/JSONL comum com significados de carimbo de data/hora rotulados e referências de origem. A saída não é classificada por padrão; `--sort` permite classificação cronológica e consolidação duplicada. Ele também oferece suporte a um perfil de importação do Timesketch. As exportações do analisador nativo e `auto-parse -j` mantêm seus esquemas existentes.

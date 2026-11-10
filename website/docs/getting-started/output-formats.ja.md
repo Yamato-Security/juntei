@@ -85,4 +85,4 @@ UTC は、`2026-10-20T08:46:38.2001668Z` 形式の Windows イベント ログ�
 
 ## 正規化された時系列タイムライン { #normalized-chronological-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) は共通の CSV／JSONL イベントスキーマに時刻の意味と出典を付け、時系列に並べます。Timesketch プロファイルにも対応します。各パーサーのネイティブ出力と `auto-parse -j` のスキーマは変更しません。
+[`super-timeline`](../commands/super-timeline.md) は、ラベル付きタイムスタンプの意味とソース参照を含む共通の CSV/JSONL イベント スキーマを作成します。デフォルトでは出力はソートされていません。 `--sort` では、時系列の並べ替えと重複の統合が可能になります。 Timesketch インポート プロファイルもサポートしています。ネイティブ パーサー エクスポートと `auto-parse -j` は既存のスキーマを保持します。

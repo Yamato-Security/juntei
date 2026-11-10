@@ -125,4 +125,4 @@ saklamadığı, kaydın hasarlı olduğu, biçimin bunu desteklemediği veya ayr
 
 ## Normalleştirilmiş kronolojik çizelge { #normalized-chronological-timeline }
 
-[`super-timeline`](../commands/super-timeline.md), zaman anlamı, kaynak ve sıralama içeren ortak CSV/JSONL olay şeması ve Timesketch profili üretir. Yerel çıktılar ve `auto-parse -j` şemalarını korur.
+[`super-timeline`](../commands/super-timeline.md), etiketli zaman damgası anlamları ve kaynak referanslarıyla ortak bir CSV/JSONL olay şeması oluşturur. Çıktı varsayılan olarak sıralanmamıştır; `--sort`, kronolojik sıralamaya ve kopya birleştirmeye olanak tanır. Ayrıca Timesketch içe aktarma profilini de destekler. Yerel ayrıştırıcı dışa aktarmaları ve `auto-parse -j` mevcut şemalarını korur.

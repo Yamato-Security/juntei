@@ -1,6 +1,6 @@
 # 超級時間軸 { #super-timeline }
 
-`super-timeline` 將解析的工件轉換為具有公共模式的事件，並按時間對它們進行排序。一筆Prefetch記錄可以包含多個執行時間； MFT 記錄可以包含八個或更多檔案時間戳記。每個事件都成為單獨標記的事件。這樣可以更輕鬆地比較來自不同來源的證據，而不會失去每個時間戳的實際意義。
+`super-timeline` 將解析的工件轉換為具有公共模式的事件。輸出**預設未排序**：它遵循發現的輸入檔案順序和每個解析器的投影順序，獨立於工作器完成順序。新增 `--sort` 以按時間順序排序和重複合併。一筆Prefetch記錄可以包含多個執行時間； MFT 記錄可以包含八個或更多檔案時間戳記。每個事件都成為單獨標記的事件。這樣可以更輕鬆地比較來自不同來源的證據，而不會失去每個時間戳的實際意義。
 
 從[`auto-parse`](auto-parse.md)的結果開始，而不是原始證據目錄：
 
@@ -16,6 +16,9 @@ juntei super-timeline -d parsed/ -o SuperTimeline.csv
 ```bash
 # Native CSV (default)
 juntei super-timeline -d parsed/ -o SuperTimeline.csv
+
+# Chronological CSV with duplicate consolidation
+juntei super-timeline -d parsed/ -o SortedTimeline.csv --sort
 
 # Native JSON Lines
 juntei super-timeline -d parsed/ -o SuperTimeline.jsonl -t jsonl
@@ -34,7 +37,7 @@ juntei super-timeline -f MFT.csv --input-artifact mft --computer HOST01 \
 # Reduce the time range, memory used by sorting, or number of workers
 juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
   --timeline-start "2026-10-20T06:00:00Z" --timeline-end "2026-10-20T14:00:00Z" \
-  --memory-limit 64 -T 4 --temp-dir scratch/
+  --sort --memory-limit 64 -T 4 --temp-dir scratch/
 ```
 
 `--hayabusa FILE` 可以重複或單獨使用。它會匯入現有事件/警報時間戳記和規則上下文，而無需執行 Hayabusa。支援 `Details` 為字串的資訊事件。 `--artifact mft,prefetch` 將投影限制為選定的工件標識符。時間限制包括在內，並且需要明確的 UTC 偏移量或 `Z`。
@@ -84,11 +87,11 @@ juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
 
 | 文物 | 時間軸解讀 |
 |---|---|
-| MFT | 單獨的 SI 和 FN 修改、存取、元資料變更和建立時間；名為 FN 的屬性仍然不同。檔案名稱行上重複的 SI 欄位將會合併。 ADS 行的共用基本檔案時間被排除。恢復的 FILE 記錄鬆弛名稱保留單獨的恢復的 FN 事件。 |
+| MFT | 單獨的 SI 和 FN 修改、存取、元資料變更和建立時間；名為 FN 的屬性仍然不同。使用 `--sort`，檔案名稱行上重複的 SI 欄位將會合併。 ADS 行的共享基本檔案時間在兩種模式中均被排除。恢復的 FILE 記錄鬆弛名稱保留單獨的恢復的 FN 事件。 |
 | I30 | 儲存的 FN/索引元數據，以及可用的鬆弛/恢復上下文。這些不是目錄索引寫入的時間戳記。 |
 | USN 期刊 | 日誌記錄時間戳記和更新原因。一筆記錄可以描述多個變化；它不一定會記錄他們的精確開始時間。 |
 | LogFile | 儲存的重做/撤銷時間戳快照和檔案名稱元資料。重做和撤消保持分開。 LSN 和檔案偏移量是標識符，永遠不會轉換為日期。 |
-| Prefetch | 記錄的執行時間，與匹配的 Prefetch 時間軸匯出合併。引用的磁碟區建立元資料是單獨標記的。 |
+| Prefetch | 記錄執行時間。透過 `--sort`，這些內容與匹配的 Prefetch 時間軸導出進行合併。引用的磁碟區建立元資料是單獨標記的。 |
 | 瀏覽器 SQLite 資料庫 | 記錄的存取、恢復的頁面上次存取元資料、下載開始/結束、cookie 建立/存取/過期以及表單歷史記錄首次/上次使用或刪除墓碑。下載結束本身並不證明成功或執行； cookie 過期是一個配置的截止日期。恢復狀態、信心和起源仍然在上下文中。 |
 | Internet Explorer / 舊版 Edge WebCache | 儲存條目存取、建立/修改、到期和同步、下載開始、cookie 元資料和容器存取/清理。快取簿記不會自動證明使用者開啟頁面。 |
 | 展望 PST、OST、MSG 和 OFT | 訊息提交/傳遞；資料夾、專案和附件建立/修改；日曆開始/結束/提醒；任務開始/到期/完成/提醒；以及明確鍵入的時間屬性。預定時間並不能證明會議發生、提醒已觸發或程序已執行。儲存的傳遞時間並不能證明該訊息已被閱讀。 |
@@ -109,7 +112,7 @@ juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
 | Persistence Hunter | 支援關鍵最後寫入和相關變更時間。發現本身並不是帶時間戳記的安裝或妥協的判決。 |
 | Hayabusa | 事件/警報時間戳，包含規則、等級、通道、事件 ID 和可用的詳細上下文。多個規則和不同的相關行保持獨立。 |
 
-保留多個具有不同意義或證據來源的相等時間戳。重複身分包括電腦、來源、工件、記錄、時間意義和恢復狀態。合併行記錄 `DuplicateCount` 和有界替代路徑/來源欄位。不同的來源永遠不會因為它們的路徑和時間戳看起來相似而被合併。當無法解析原始來源時，將保留輸入記錄標識以避免折疊不同的擷取。
+預設匯出保留所有時間戳投影，包括重複的元資料。它不執行全域排序或重複合併。使用 `--sort`，可以合併重複的投影；與相同輸入的未排序導出相比，這可以產生更少的行。兩種模式都會保留多個具有不同意義或證據來源的相等時間戳。重複身分包括電腦、來源、工件、記錄、時間意義和恢復狀態。合併行記錄 `DuplicateCount` 和有界替代路徑/來源欄位。不同的來源永遠不會因為它們的路徑和時間戳看起來相似而被合併。當無法解析原始來源時，將保留輸入記錄標識以避免折疊不同的擷取。
 
 ### 精度、當地時間和假設 { #precision-local-times-and-assumptions }
 
@@ -143,17 +146,19 @@ juntei super-timeline -f Amcache.jsonl --input-artifact amcache \
 
 有效日期等待合理的時區假設增量 `UnresolvedTimeZones`，而不是 `InvalidTimestamps`。兩者在診斷中都保持可追溯性；沒有發明時間戳記。
 
-有效時間超出請求範圍的記錄將被視為已過濾，而不是未計時。候選事件計數先於重複合併。 `Complete: true` 表示所有選定的解析輸入均已成功處理；這並不表示每個工件都被收集，每個欄位都帶有時間戳記或每個攻擊都是可偵測的。
+有效時間超出請求範圍的記錄將被視為已過濾，而不是未計時。候選事件計數先於重複合併。 `Sorted` 和 `DuplicateConsolidation` 記錄 `--sort` 是否啟用。如果沒有它，`DuplicateEvents`、`InitialSortChunks` 和 `MergePasses` 為零，`SortMemoryBudgetMiB` 為 `null`，因為沒有分配排序緩衝區。 `Complete: true` 表示所有選定的解析輸入均已成功處理；這並不表示每個工件都被收集，每個欄位都帶有時間戳記或每個攻擊都是可偵測的。
 
 CSV 匯出可以展平巢狀元資料：系統資訊設定檔、USB 使用者掛載點、shell 專案和其他結構化上下文可以在本機 JSON/JSONL 中更加豐富。當這些欄位很重要時，請使用本機輸入。時間軸無法重建 CSV 匯出忽略的資料。不受支援的工件 ID 和格式錯誤的輸入檔案會導致錯誤，而不是包含部分結果的成功。
 
 ## 性能和輸出安全 { #performance-and-output-safety }
 
-輸入被並行傳輸和處理。排序緩衝區溢位到私有暫存目錄，然後有界合併傳遞產生確定性的時間順序輸出。排序使用完整整數秒和奈秒，包括 1970 之前的日期。等時排序在工人數量和排序預算方面具有確定性。
+輸入被並行傳輸和處理。預設情況下，每個worker都會寫入一個格式化的事件片段；片段按輸入檔案順序連接，無需排序或重新讀取其事件結構。即使處理多個文件，CSV 也只有一個標頭。輸出順序在不同工人數量之間是確定的；它並不意味著時間順序。
 
-`--memory-limit` 是總計 **排序緩衝區預算**，而不是行程 RSS 限制。輸入記錄、JSON 物件/字串開銷、CSV 緩衝區和合併記錄需要額外的記憶體。對於小預算，工人數量會減少。 `--max-record-size` 限制已解析的輸入記錄（預設 16 MiB）；一個漂亮的 JSON 陣列/報告算是頂級輸入文件。較大的文件可能需要更高的限制，或者最好是 JSONL。 CSV 解析器預讀也會導致此限制。
+使用 `--sort`，緩衝區溢位到私有暫存目錄，然後有界合併過程產生依時間順序排列的輸出。排序使用完整整數秒和奈秒，包括 1970 之前的日期。等時排序在工人數量和排序預算方面具有確定性。進度條針對中間和最終合併期間處理的每個事件前進，包括重複通過。它出現在終端機上，並在輸出重定向時隱藏。
 
-除了最終結果之外，臨時磁碟空間還必須容納擴展事件和合併過程。一筆記錄可以產生許多事件，因此時間軸可以比輸入大得多。在適當的時候過濾時間範圍/工件，並選擇具有足夠可用空間的臨時磁碟區。
+`--memory-limit` 僅適用於 `--sort`：它是總計 **排序緩衝區預算**，而不是進程 RSS 限制。輸入記錄、JSON 物件/字串開銷、CSV 緩衝區和合併記錄需要額外的記憶體。對於小預算，工人數量會減少。 `--max-record-size` 限制已解析的輸入記錄（預設 16 MiB）；一個漂亮的 JSON 陣列/報告算是頂級輸入文件。較大的文件可能需要更高的限制，或者最好是 JSONL。 CSV 解析器預讀也會導致此限制。
+
+除了最終結果之外，臨時磁碟空間還必須容納格式化的事件片段（預設）或擴充的排序記錄和合併通道 (`--sort`)。兩種模式都保留臨時輸出分段並防止發布失敗的輸入。一筆記錄可以產生許多事件，因此時間軸可以比輸入大得多。在適當的時候過濾時間範圍/工件，並選擇具有足夠可用空間的臨時磁碟區。
 
 Ctrl+C 協同取消，刪除私人排序/暫存目錄並退出，代碼為 `130`。在 Linux 和 macOS 上，這也適用於 SIGTERM 和 SIGHUP。在發布開始之前，在閱讀、標準化、合併和編寫報告時會檢查取消情況。無法捕獲的終止或斷電仍然可能留下臨時檔案。
 

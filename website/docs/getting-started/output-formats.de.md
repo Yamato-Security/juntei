@@ -121,4 +121,4 @@ Parser ihn nicht auflösen konnte. Ersetzen Sie nicht alle leeren Werte durch Nu
 
 ## Normalisierte chronologische Timeline { #normalized-chronological-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) erstellt ein gemeinsames CSV-/JSONL-Ereignisschema mit Zeitbedeutung, Quellenangaben und chronologischer Sortierung sowie einem Timesketch-Profil. Native Exporte und `auto-parse -j` behalten ihre Schemas.
+[`super-timeline`](../commands/super-timeline.md) erstellt ein gemeinsames CSV/JSONL-Ereignisschema mit beschrifteten Zeitstempelbedeutungen und Quellenverweisen. Die Ausgabe ist standardmäßig unsortiert. `--sort` ermöglicht chronologische Sortierung und Duplikatkonsolidierung. Es unterstützt auch ein Timesketch-Importprofil. Native Parser-Exporte und `auto-parse -j` behalten ihre vorhandenen Schemata.

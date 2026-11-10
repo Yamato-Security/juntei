@@ -150,13 +150,29 @@ pub fn merge(paths: &[PathBuf], mut sink: impl FnMut(SortRow) -> io::Result<()>)
 }
 
 /// Bound both open descriptors and queued event records during every merge pass.
+fn fan_in(budget: usize, largest: usize) -> usize {
+    (budget / largest.saturating_mul(3).saturating_add(8192).max(1)).clamp(2, 32)
+}
+
+/// Every intermediate pass visits every row; the final export is one additional pass.
+pub fn merge_passes(mut chunks: usize, budget: usize, largest: usize) -> usize {
+    let fan_in = fan_in(budget, largest);
+    let mut passes = 0;
+    while chunks > fan_in {
+        chunks = chunks.div_ceil(fan_in);
+        passes += 1;
+    }
+    passes
+}
+
 pub fn reduce(
     mut paths: Vec<PathBuf>,
     folder: &Path,
     budget: usize,
     largest: usize,
+    mut advanced: impl FnMut(),
 ) -> io::Result<(Vec<PathBuf>, usize)> {
-    let fan_in = (budget / largest.saturating_mul(3).saturating_add(8192).max(1)).clamp(2, 32);
+    let fan_in = fan_in(budget, largest);
     let mut pass = 0;
     while paths.len() > fan_in {
         crate::interrupt::check()?;
@@ -171,7 +187,9 @@ pub fn reduce(
             );
             merge(group, |row| {
                 serde_json::to_writer(&mut out, &row)?;
-                out.write_all(b"\n")
+                out.write_all(b"\n")?;
+                advanced();
+                Ok(())
             })?;
             out.flush()?;
             reduced.push(target);
@@ -229,15 +247,24 @@ mod tests {
                 .unwrap();
         }
         buffer.flush().unwrap();
-        let (files, passes) = reduce(buffer.chunks, tmp.path(), 1, buffer.largest_row).unwrap();
+        let expected = merge_passes(buffer.chunks.len(), 1, buffer.largest_row);
+        let mut progress = 0;
+        let (files, passes) = reduce(buffer.chunks, tmp.path(), 1, buffer.largest_row, || {
+            progress += 1;
+        })
+        .unwrap();
         assert!(passes > 1);
+        assert_eq!(passes, expected);
+        assert_eq!(progress, passes * 100);
         let mut rows = Vec::new();
         merge(&files, |row| {
+            progress += 1;
             rows.push(row);
             Ok(())
         })
         .unwrap();
         assert_eq!(rows.len(), 100);
+        assert_eq!(progress, (passes + 1) * 100);
         assert!(rows.windows(2).all(|pair| pair[0].key() <= pair[1].key()));
         assert!(rows.first().unwrap().time.seconds < 0);
     }

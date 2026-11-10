@@ -134,4 +134,4 @@ valores vacíos por cero.
 
 ## Cronología cronológica normalizada { #normalized-chronological-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) crea un esquema de evento común CSV/JSONL con significados de marcas de tiempo etiquetados, referencias de fuentes y clasificación cronológica. También admite un perfil de importación de Timesketch. Las exportaciones de analizadores nativos y `auto-parse -j` mantienen sus esquemas existentes.
+[`super-timeline`](../commands/super-timeline.md) crea un esquema de evento CSV/JSONL común con significados de marca de tiempo etiquetados y referencias de origen. La salida no está ordenada de forma predeterminada; `--sort` permite la clasificación cronológica y la consolidación de duplicados. También admite un perfil de importación de Timesketch. Las exportaciones de analizadores nativos y `auto-parse -j` mantienen sus esquemas existentes.

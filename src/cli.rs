@@ -122,7 +122,7 @@ pub enum Commands {
     )]
     PersistenceHunter(PersistenceHunterOptions),
 
-    /// Build a chronological forensic timeline
+    /// Build a forensic timeline (optionally sorted)
     #[command(
         author = AUTHOR,
         version = VERSION,
@@ -217,7 +217,7 @@ pub struct SuperTimelineOptions {
     /// Offset for timestamps without a time zone; date-only values retain day precision
     #[arg(help_heading = "Input", long, value_name = "OFFSET", value_parser = parse_assumed_offset, allow_hyphen_values = true, display_order = 105)]
     pub assume_offset: Option<String>,
-    /// Write the sorted timeline and companion diagnostics/summary
+    /// Write the timeline and companion diagnostics/summary
     #[arg(
         help_heading = "Output",
         short = 'o',
@@ -248,6 +248,9 @@ pub struct SuperTimelineOptions {
     /// Replace existing timeline and companion files
     #[arg(help_heading = "Output", short = 'C', long, display_order = 203)]
     pub clobber: bool,
+    /// Sort chronologically and consolidate duplicate timestamp projections
+    #[arg(help_heading = "Output", long, display_order = 204)]
+    pub sort: bool,
     /// Include only these artifact identifiers (comma separated; repeatable)
     #[arg(
         help_heading = "Filtering",
@@ -282,13 +285,13 @@ pub struct SuperTimelineOptions {
     /// Maximum parallel input workers
     #[arg(help_heading = "Performance", short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 350)]
     pub threads: Option<usize>,
-    /// Total sort-buffer budget in MiB (parser and merge overhead is additional)
+    /// Sort-buffer budget in MiB with --sort (not a process memory limit)
     #[arg(help_heading = "Performance", long, value_name = "MIB", default_value = "256", value_parser = parse_timeline_memory, display_order = 351)]
     pub memory_limit: usize,
     /// Maximum input record size in MiB
     #[arg(help_heading = "Performance", long, value_name = "MIB", default_value = "16", value_parser = parse_record_limit, display_order = 352)]
     pub max_record_size: usize,
-    /// Directory for external-sort temporary files
+    /// Directory for temporary event files
     #[arg(
         help_heading = "Performance",
         long,

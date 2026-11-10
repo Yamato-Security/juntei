@@ -121,4 +121,4 @@ parseur n'a pas pu la résoudre. Ne remplacez pas toutes les valeurs vides par z
 
 ## Chronologie normalisée { #normalized-chronological-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) crée un schéma d'événements CSV/JSONL commun, daté, trié et relié aux sources, avec profil Timesketch. Les exports natifs et `auto-parse -j` conservent leurs schémas.
+[`super-timeline`](../commands/super-timeline.md) crée un schéma d'événement CSV/JSONL commun avec des significations d'horodatage étiquetées et des références de source. La sortie n'est pas triée par défaut ; `--sort` permet le tri chronologique et la consolidation des doublons. Il prend également en charge un profil d'importation Timesketch. Les exportations d'analyseurs natifs et `auto-parse -j` conservent leurs schémas existants.

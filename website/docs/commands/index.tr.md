@@ -13,7 +13,7 @@ Birden fazla bilgisayarı kapsayan bir Windows kanıt toplaması için
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) komutunu kullanın. Bu komut aynı gruplanmış
 komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme kategorisine göre düzenler.
 
-[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) ayrıştırılmış artefaktlardan zaman anlamları etiketli, sıralanmış olaylar üretir; `auto-parse -j` yerel kayıtları korur.
+Ayrıştırılmış yapılar arasında bir zaman çizelgesi için [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) kullanın. Zaman damgası anlamlarını genişletir ve etiketler. Çıktı varsayılan olarak sıralanmamıştır; Kronolojik sıralama ve kopya birleştirme için `--sort`'i ekleyin. `auto-parse -j` yerel kayıtları korumaya devam ediyor.
 
 ## [Disk İmajları](mount.md) { #disk-images }
 

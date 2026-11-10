@@ -121,4 +121,4 @@ juntei parse-registry services -d evidence/ -t jsonl \
 
 ## تطبيع الجدول الزمني الزمني { #normalized-chronological-timeline }
 
-يقوم [`super-timeline`](../commands/super-timeline.md) بإنشاء مخطط أحداث CSV/JSONL مشترك مع معاني الطابع الزمني المسمى ومراجع المصدر والفرز الزمني. كما أنه يدعم ملف تعريف استيراد Timesketch. تحتفظ صادرات المحلل اللغوي الأصلي و`auto-parse -j` بمخططاتها الحالية.
+يقوم [`super-timeline`](../commands/super-timeline.md) بإنشاء مخطط أحداث CSV/JSONL مشترك بمعاني الطابع الزمني المسمى ومراجع المصدر. لا يتم فرز الإخراج بشكل افتراضي؛ يتيح `--sort` الفرز الزمني ودمج التكرارات. كما أنه يدعم ملف تعريف استيراد Timesketch. تحتفظ صادرات المحلل اللغوي الأصلي و`auto-parse -j` بمخططاتها الحالية.

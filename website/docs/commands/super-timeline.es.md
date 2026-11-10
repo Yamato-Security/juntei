@@ -1,6 +1,6 @@
 # Súper línea de tiempo { #super-timeline }
 
-`super-timeline` convierte los artefactos analizados en eventos con un esquema común y los ordena por tiempo. Un registro Prefetch puede contener varios tiempos de ejecución; un registro MFT puede contener ocho o más marcas de tiempo de archivos. Cada uno se convierte en un evento etiquetado por separado. Esto hace que sea más fácil comparar evidencia de diferentes fuentes sin perder lo que realmente significa cada marca de tiempo.
+`super-timeline` convierte artefactos analizados en eventos con un esquema común. La salida está **sin ordenar de forma predeterminada**: sigue el orden de los archivos de entrada descubiertos y el orden de proyección de cada analizador, independientemente del orden de finalización de los trabajadores. Agregue `--sort` para ordenar cronológicamente y consolidar duplicados. Un registro Prefetch puede contener varios tiempos de ejecución; un registro MFT puede contener ocho o más marcas de tiempo de archivos. Cada uno se convierte en un evento etiquetado por separado. Esto hace que sea más fácil comparar evidencia de diferentes fuentes sin perder lo que realmente significa cada marca de tiempo.
 
 Comience con los resultados de [`auto-parse`](auto-parse.md), en lugar del directorio de evidencia original:
 
@@ -16,6 +16,9 @@ Conserve los archivos analizados, los manifiestos y las pruebas originales. La l
 ```bash
 # Native CSV (default)
 juntei super-timeline -d parsed/ -o SuperTimeline.csv
+
+# Chronological CSV with duplicate consolidation
+juntei super-timeline -d parsed/ -o SortedTimeline.csv --sort
 
 # Native JSON Lines
 juntei super-timeline -d parsed/ -o SuperTimeline.jsonl -t jsonl
@@ -34,7 +37,7 @@ juntei super-timeline -f MFT.csv --input-artifact mft --computer HOST01 \
 # Reduce the time range, memory used by sorting, or number of workers
 juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
   --timeline-start "2026-10-20T06:00:00Z" --timeline-end "2026-10-20T14:00:00Z" \
-  --memory-limit 64 -T 4 --temp-dir scratch/
+  --sort --memory-limit 64 -T 4 --temp-dir scratch/
 ```
 
 `--hayabusa FILE` se puede repetir o utilizar solo. Importa marcas de tiempo de eventos/alertas existentes y contexto de reglas sin ejecutar Hayabusa. Se admiten eventos informativos cuyo `Details` sea una cadena. `--artifact mft,prefetch` restringe la proyección a identificadores de artefactos seleccionados. Los límites de tiempo son inclusivos y requieren una compensación UTC o `Z` explícita.
@@ -84,11 +87,11 @@ Una marca de tiempo es evidencia sobre un objeto registrado. No es, por sí solo
 
 | Artefactos | Interpretación de la línea de tiempo |
 |---|---|
-| MFT | Separe los tiempos de modificación, acceso, cambio de metadatos y creación de SI y FN; Los atributos denominados FN siguen siendo distintos. Los campos SI repetidos en las filas de nombres de archivos están consolidados. Se excluyen los tiempos del archivo base compartido de las filas ADS. Los nombres flojos del registro FILE recuperado mantienen eventos FN recuperados separados. |
+| MFT | Separe los tiempos de modificación, acceso, cambio de metadatos y creación de SI y FN; Los atributos denominados FN siguen siendo distintos. Con `--sort`, se consolidan los campos SI repetidos en las filas de nombres de archivos. Los tiempos del archivo base compartido de las filas ADS se excluyen en ambos modos. Los nombres flojos de registros FILE recuperados mantienen eventos FN recuperados separados. |
 | I30 | Metadatos de índice/FN almacenados, con contexto de holgura/recuperación cuando esté disponible. Estas no son marcas de tiempo de la escritura del índice del directorio. |
 | USN Diario | Marca de tiempo del registro del diario y motivos de actualización. Un registro puede describir varios cambios; no necesariamente registra su hora de inicio precisa. |
 | LogFile | Instantáneas de marca de tiempo rehacer/deshacer almacenadas y metadatos de nombre de archivo. Rehacer y deshacer permanecen separados. Los LSN y las compensaciones de archivos son identificadores, nunca convertidos en fechas. |
-| Prefetch | Tiempos de ejecución registrados, consolidados con la exportación de línea de tiempo Prefetch coincidente. Los metadatos de creación de volúmenes a los que se hace referencia están etiquetados por separado. |
+| Prefetch | Tiempos de ejecución registrados. Con `--sort`, estos se consolidan con la exportación de línea de tiempo correspondiente Prefetch. Los metadatos de creación de volúmenes a los que se hace referencia están etiquetados por separado. |
 | Bases de datos SQLite del navegador | Visitas registradas, metadatos de la última visita de la página recuperada, inicio/fin de descarga, creación/acceso/caducidad de cookies y lápidas de eliminación o primer/último uso del historial de formularios. El final de una descarga no prueba por sí solo el éxito o la ejecución; la caducidad de una cookie es una fecha límite configurada. El estado de recuperación, la confianza y el origen permanecen en contexto. |
 | Internet Explorer/Edge heredado WebCache | Acceso a entradas almacenadas, creación/modificación, caducidad y sincronización, inicios de descarga, metadatos de cookies y acceso/eliminación de contenedores. La contabilidad de caché no es una prueba automática de que un usuario abre una página. |
 | Outlook PST, OST, MSG y OFT | Envío/entrega de mensajes; creación/modificación de carpetas, elementos y archivos adjuntos; inicio/final/recordatorios del calendario; inicio/vencimiento/finalización de tarea/recordatorios; y propiedades de tiempo escritas explícitamente. Los horarios programados no prueban que se haya producido una reunión, que se haya activado un recordatorio o que se haya ejecutado un programa. Un tiempo de entrega almacenado no prueba que el mensaje haya sido leído. |
@@ -109,7 +112,7 @@ Una marca de tiempo es evidencia sobre un objeto registrado. No es, por sí solo
 | Persistence Hunter | Última escritura de la clave de soporte y tiempo de cambio correlacionado. Un hallazgo no es en sí mismo una instalación con marca de tiempo ni un veredicto de compromiso. |
 | Hayabusa | Marca de tiempo de evento/alerta con regla, nivel, canal, evento ID y contexto detallado disponible. Varias reglas y distintas filas de correlación permanecen separadas. |
 
-Se conservan varias marcas de tiempo iguales con diferentes significados o fuentes de evidencia. La identidad duplicada incluye la computadora, la fuente, el artefacto, el registro, el significado del tiempo y el estado de recuperación. Las filas consolidadas registran `DuplicateCount` y rutas alternativas/campos de origen delimitados. Las fuentes distintas nunca se fusionan simplemente porque sus rutas y marcas de tiempo se parecen. Cuando la fuente sin procesar no se puede resolver, la identidad del registro de entrada se conserva para evitar colapsar diferentes capturas.
+La exportación predeterminada conserva todas las proyecciones de marcas de tiempo, incluidos los metadatos repetidos. No realiza clasificación global ni consolidación duplicada. Con `--sort` se consolidan proyecciones duplicadas; esto puede producir menos filas que una exportación sin clasificar de los mismos insumos. En ambos modos se conservan múltiples marcas de tiempo iguales con diferentes significados o fuentes de evidencia. La identidad duplicada incluye la computadora, la fuente, el artefacto, el registro, el significado del tiempo y el estado de recuperación. Las filas consolidadas registran `DuplicateCount` y rutas alternativas/campos de origen delimitados. Las fuentes distintas nunca se fusionan simplemente porque sus rutas y marcas de tiempo se parecen. Cuando la fuente sin procesar no se puede resolver, la identidad del registro de entrada se conserva para evitar colapsar diferentes capturas.
 
 ### Precisión, horas locales y suposiciones. { #precision-local-times-and-assumptions }
 
@@ -143,17 +146,19 @@ Los nombres complementarios incluyen el nombre completo del archivo de salida. P
 
 Las fechas válidas en espera de una suposición de zona horaria justificada incrementan `UnresolvedTimeZones`, en lugar de `InvalidTimestamps`. Ambos siguen siendo rastreables en el diagnóstico; no se inventa ninguna marca de tiempo.
 
-Los registros con tiempos válidos fuera del rango solicitado se cuentan como filtrados, no sin tiempo. Los recuentos de eventos candidatos preceden a la consolidación de duplicados. `Complete: true` significa que todas las entradas analizadas seleccionadas se procesaron correctamente; no significa que todos los artefactos hayan sido recolectados, que cada campo tenga una marca de tiempo o que cada ataque sea detectable.
+Los registros con tiempos válidos fuera del rango solicitado se cuentan como filtrados, no sin tiempo. Los recuentos de eventos candidatos preceden a la consolidación de duplicados. `Sorted` y `DuplicateConsolidation` registran si `--sort` estaba habilitado. Sin él, `DuplicateEvents`, `InitialSortChunks` y `MergePasses` son cero, y `SortMemoryBudgetMiB` es `null` porque no se asigna ningún búfer de clasificación. `Complete: true` significa que todas las entradas analizadas seleccionadas se procesaron correctamente; no significa que todos los artefactos hayan sido recolectados, que cada campo tenga una marca de tiempo o que cada ataque sea detectable.
 
 Las exportaciones de CSV pueden aplanar los metadatos anidados: los perfiles de información del sistema, los puntos de montaje del usuario USB, los elementos del shell y otros contextos estructurados pueden ser más ricos en JSON/JSONL nativo. Utilice entradas nativas cuando esos campos sean importantes. La línea de tiempo no puede reconstruir los datos omitidos por una exportación CSV. Los ID de artefactos no admitidos y los archivos de entrada con formato incorrecto provocan un error en lugar de un éxito que contiene resultados parciales.
 
 ## Rendimiento y seguridad de salida { #performance-and-output-safety }
 
-Las entradas se transmiten y procesan en paralelo. Los buffers de clasificación se extienden a un directorio temporal privado, luego los pases de fusión limitados producen una salida cronológica determinista. La clasificación utiliza segundos y nanosegundos enteros, incluidas las fechas anteriores a 1970. La ordenación en tiempos iguales es determinista en todos los recuentos de trabajadores y presupuestos de clasificación.
+Las entradas se transmiten y procesan en paralelo. De forma predeterminada, cada trabajador escribe un fragmento de evento formateado; Los fragmentos se concatenan en el orden del archivo de entrada sin ordenar ni releer sus estructuras de eventos. CSV tiene un encabezado incluso cuando se procesan varios archivos. El orden de producción es determinista en todos los recuentos de trabajadores; no implica cronología.
 
-`--memory-limit` es el **presupuesto de búfer de clasificación** agregado, no un límite de proceso RSS. Los registros de entrada, la sobrecarga de cadena/objeto JSON, los buffers CSV y los registros de combinación requieren memoria adicional. El número de trabajadores se reduce para presupuestos pequeños. `--max-record-size` limita un registro de entrada analizado (16 MiB predeterminado); una bonita matriz/informe JSON cuenta como un documento de entrada de nivel superior. Los documentos más grandes pueden necesitar un límite más alto o, preferiblemente, JSONL. La lectura anticipada del analizador CSV también contribuye a este límite.
+Con `--sort`, los buffers se extienden a un directorio temporal privado y luego los pases de fusión limitados producen resultados cronológicos. La clasificación utiliza segundos y nanosegundos enteros, incluidas las fechas anteriores a 1970. La ordenación en tiempos iguales es determinista en todos los recuentos de trabajadores y presupuestos de clasificación. Una barra de progreso avanza para cada evento procesado durante las fusiones intermedias y finales, incluidos los pases repetidos. Aparece en una terminal y se oculta cuando se redirige la salida.
 
-El espacio temporal en disco debe acomodar los eventos expandidos y los pases de fusión, además de los resultados finales. Un registro puede generar muchos eventos, por lo que la línea de tiempo puede ser mucho mayor que la entrada. Filtre el rango de tiempo/artefactos cuando sea apropiado y seleccione un volumen temporal con espacio libre adecuado.
+`--memory-limit` se aplica solo con `--sort`: es el **presupuesto de búfer de clasificación** agregado, no un límite de proceso RSS. Los registros de entrada, la sobrecarga de cadena/objeto JSON, los buffers CSV y los registros de combinación requieren memoria adicional. El número de trabajadores se reduce para presupuestos pequeños. `--max-record-size` limita un registro de entrada analizado (16 MiB predeterminado); una bonita matriz/informe JSON cuenta como un documento de entrada de nivel superior. Los documentos más grandes pueden necesitar un límite más alto o, preferiblemente, JSONL. La lectura anticipada del analizador CSV también contribuye a este límite.
+
+El espacio temporal en disco debe albergar los fragmentos de eventos formateados (predeterminado) o los registros de clasificación expandidos y los pases de combinación (`--sort`), además de los resultados finales. Ambos modos conservan la preparación temporal de la salida y la protección contra la publicación de entradas fallidas. Un registro puede generar muchos eventos, por lo que la línea de tiempo puede ser mucho mayor que la entrada. Filtre el rango de tiempo/artefactos cuando sea apropiado y seleccione un volumen temporal con espacio libre adecuado.
 
 Ctrl+C cancela de forma cooperativa, elimina los directorios privados de clasificación/preparación y sale con el código `130`. En Linux y macOS esto también se aplica a SIGTERM y SIGHUP. La cancelación se verifica durante la lectura, normalización, fusión y redacción de informes, antes de que comience la publicación. Una terminación imposible de detectar o una pérdida de energía aún pueden dejar archivos temporales.
 

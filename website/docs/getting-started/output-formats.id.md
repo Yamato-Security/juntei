@@ -121,4 +121,4 @@ parser tidak dapat me-resolve-nya. Jangan mengganti semua nilai kosong dengan no
 
 ## Linimasa kronologis ternormalisasi { #normalized-chronological-timeline }
 
-[`super-timeline`](../commands/super-timeline.md) membuat skema CSV/JSONL bersama dengan arti waktu, sumber, pengurutan dan profil Timesketch. Ekspor asli dan `auto-parse -j` mempertahankan skemanya.
+[`super-timeline`](../commands/super-timeline.md) membuat skema peristiwa CSV/JSONL umum dengan makna stempel waktu berlabel dan referensi sumber. Output tidak disortir secara default; `--sort` memungkinkan pengurutan kronologis dan konsolidasi duplikat. Ini juga mendukung profil impor Timesketch. Ekspor parser asli dan `auto-parse -j` mempertahankan skema yang ada.

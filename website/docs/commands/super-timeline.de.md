@@ -1,6 +1,6 @@
 # Gesamttimeline { #super-timeline }
 
-`super-timeline` überführt geparste Artefakte in ein gemeinsames Ereignisschema und sortiert sie zeitlich. Mehrere Ausführungszeiten eines Prefetch-Datensatzes oder acht und mehr Dateizeiten eines MFT-Datensatzes werden einzeln beschriftet. So bleiben beim Quellenvergleich die unterschiedlichen Zeitbedeutungen erhalten.
+`super-timeline` wandelt analysierte Artefakte in Ereignisse mit einem gemeinsamen Schema um. Die Ausgabe ist **standardmäßig unsortiert**: Sie folgt der ermittelten Eingabedateireihenfolge und der Projektionsreihenfolge jedes Parsers, unabhängig von der Abschlussreihenfolge der Worker. Fügen Sie `--sort` für chronologische Reihenfolge und doppelte Konsolidierung hinzu. Ein Prefetch-Datensatz kann mehrere Ausführungszeiten enthalten; Ein MFT-Datensatz kann acht oder mehr Dateizeitstempel enthalten. Jedes wird zu einem separat gekennzeichneten Ereignis. Dies erleichtert den Vergleich von Beweisen aus verschiedenen Quellen, ohne dass die tatsächliche Bedeutung jedes Zeitstempels verloren geht.
 
 Verwenden Sie die Ergebnisse von [`auto-parse`](auto-parse.md) statt des ursprünglichen Beweisverzeichnisses:
 
@@ -16,6 +16,9 @@ Bewahren Sie Parser-Ergebnisse, Manifeste und Originalbeweise auf. Die Timeline 
 ```bash
 # Native CSV (default)
 juntei super-timeline -d parsed/ -o SuperTimeline.csv
+
+# Chronological CSV with duplicate consolidation
+juntei super-timeline -d parsed/ -o SortedTimeline.csv --sort
 
 # Native JSON Lines
 juntei super-timeline -d parsed/ -o SuperTimeline.jsonl -t jsonl
@@ -34,7 +37,7 @@ juntei super-timeline -f MFT.csv --input-artifact mft --computer HOST01 \
 # Reduce the time range, memory used by sorting, or number of workers
 juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
   --timeline-start "2026-10-20T06:00:00Z" --timeline-end "2026-10-20T14:00:00Z" \
-  --memory-limit 64 -T 4 --temp-dir scratch/
+  --sort --memory-limit 64 -T 4 --temp-dir scratch/
 ```
 
 `--hayabusa FILE` ist mehrfach oder allein nutzbar und importiert vorhandene Ereignis-/Alarmzeiten samt Regelkontext, ohne Hayabusa auszuführen. Informationseinträge mit `Details` als Zeichenfolge werden unterstützt. `--artifact mft,prefetch` beschränkt die Artefakte. Zeitgrenzen sind einschließlich und benötigen einen expliziten UTC-Offset oder `Z`.
@@ -84,11 +87,11 @@ Ein Zeitstempel beschreibt ein gespeichertes Objekt und beweist allein weder Aus
 
 | Artefakte | Interpretation in der Timeline |
 |---|---|
-| MFT | Getrennte SI-/FN-Zeiten für Änderung, Zugriff, Metadatenänderung und Erstellung; benannte FN-Attribute bleiben unterscheidbar. Wiederholte SI-Felder werden zusammengeführt; gemeinsame Basisdateizeiten von ADS-Zeilen entfallen. Wiederhergestellte Namen aus FILE-Datensatz-Slack erhalten eigene wiederhergestellte FN-Ereignisse. |
+| MFT | Getrennte Änderungs-, Zugriffs-, Metadaten-Änderungs- und Erstellungszeiten für SI und FN; benannte FN-Attribute bleiben eindeutig. Mit `--sort` werden wiederholte SI-Felder in Dateinamenzeilen konsolidiert. Die gemeinsamen Basisdateizeiten von ADS-Zeilen sind in beiden Modi ausgeschlossen. Wiederhergestellte FILE-Datensatz-Slack-Namen behalten separate wiederhergestellte FN-Ereignisse bei. |
 | I30 | Gespeicherte FN-/Indexmetadaten mit verfügbarem Slack-/Wiederherstellungskontext, keine Zeitpunkte des Schreibens des Verzeichnisindexes. |
 | USN-Journal | Journalzeit und Änderungsgründe; ein Datensatz kann mehrere Änderungen beschreiben, ohne deren exakten Beginn festzuhalten. |
 | LogFile | Gespeicherte Redo-/Undo-Zeitschnappschüsse und Dateinamenmetadaten bleiben getrennt. LSNs und Dateioffsets sind Kennungen, keine Datumswerte. |
-| Prefetch | Gespeicherte Ausführungszeiten, mit dem passenden Prefetch-Timeline-Export zusammengeführt. Volume-Erstellungszeiten werden gesondert beschriftet. |
+| Prefetch | Aufgezeichnete Ausführungszeiten. Mit `--sort` werden diese mit dem passenden Timeline-Export Prefetch konsolidiert. Referenzierte Metadaten zur Volume-Erstellung werden separat gekennzeichnet. |
 | SQLite-Browserdatenbanken | Besuche, wiederhergestellte letzte Seitenbesuche, Downloadbeginn/-ende, Cookie-Erstellung/-Zugriff/-Ablauf und Formularnutzung/-löschung. Downloadende beweist keinen Erfolg oder Start, Cookie-Ablauf ist eine konfigurierte Frist. Wiederherstellungsstatus, Sicherheit und Herkunft bleiben erhalten. |
 | Internet Explorer / älteres Edge WebCache | Gespeicherte Zugriffs-, Erstellungs-, Änderungs-, Ablauf- und Synchronisationszeiten sowie Download-, Cookie- und Containerverwaltung. Cache-Verwaltung beweist nicht automatisch einen Seitenaufruf durch den Benutzer. |
 | Outlook PST, OST, MSG und OFT | Übermittlung/Zustellung, Erstellung/Änderung von Ordnern, Elementen und Anlagen; Kalender- und Aufgabenfristen, Erinnerungen, Abschlüsse sowie explizit typisierte Zeitwerte. Geplante Zeiten beweisen weder Besprechung noch Erinnerung oder Programmausführung. Zustellung beweist kein Lesen. |
@@ -109,7 +112,7 @@ Ein Zeitstempel beschreibt ein gespeichertes Objekt und beweist allein weder Aus
 | Persistence Hunter | Schlüssel-Schreib- und korrelierte Änderungszeiten. Ein Fund beweist allein weder zeitlich bestimmte Installation noch Kompromittierung. |
 | Hayabusa | Ereignis-/Alarmzeit mit Regel, Schweregrad, Kanal, Ereignis-ID und Kontext. Verschiedene Regeln und Korrelationszeilen bleiben getrennt. |
 
-Gleiche Zeiten mit unterschiedlicher Bedeutung oder Herkunft bleiben erhalten. Identität berücksichtigt Rechner, Quelle, Artefakt, Datensatz, Zeitrolle und Wiederherstellungszustand. Zusammengeführte Zeilen enthalten `DuplicateCount` und begrenzte Alternativpfade/-felder. Ähnlichkeit allein führt nie zum Zusammenführen verschiedener Quellen. Bei unbekannter Rohquelle verhindert die Eingabedatensatzkennung das Vermischen verschiedener Erfassungen.
+Der Standardexport behält alle Zeitstempelprojektionen bei, einschließlich wiederholter Metadaten. Es führt keine globale Sortierung oder doppelte Konsolidierung durch. Mit `--sort` werden doppelte Projektionen konsolidiert; Dies kann zu weniger Zeilen führen als ein unsortierter Export derselben Eingaben. In beiden Modi bleiben mehrere gleiche Zeitstempel mit unterschiedlichen Bedeutungen oder Beweisquellen erhalten. Die doppelte Identität umfasst den Computer, die Quelle, das Artefakt, den Datensatz, die Zeitbedeutung und den Wiederherstellungsstatus. Konsolidierte Zeilen erfassen `DuplicateCount` und begrenzte alternative Pfade/Quellfelder. Unterschiedliche Quellen werden niemals zusammengeführt, nur weil ihre Pfade und Zeitstempel gleich aussehen. Wenn die Rohquelle nicht aufgelöst werden kann, wird die Identität des Eingabedatensatzes beibehalten, um eine Reduzierung verschiedener Erfassungen zu vermeiden.
 
 ### Genauigkeit, Ortszeiten und Annahmen { #precision-local-times-and-assumptions }
 
@@ -143,17 +146,19 @@ Companion-Namen enthalten den vollständigen Namen der Ausgabedatei. Beispielswe
 
 Gültige Daten, die auf eine gerechtfertigte Zeitzonenannahme warten, erhöhen sich um `UnresolvedTimeZones` und nicht um `InvalidTimestamps`. Beides bleibt in der Diagnostik nachvollziehbar; Es wird kein Zeitstempel erfunden.
 
-Gültige Zeiten außerhalb des Zeitfensters zählen als gefiltert, nicht zeitlos. Kandidaten werden vor Deduplizierung gezählt. `Complete: true` bedeutet erfolgreiche Verarbeitung aller gewählten Eingaben, nicht vollständige Erfassung, Zeitangaben in jedem Feld oder Erkennbarkeit jedes Angriffs.
+Datensätze mit gültigen Zeiten außerhalb des angeforderten Bereichs werden als gefiltert und nicht ohne Zeitangabe gezählt. Die Anzahl der Kandidatenereignisse geht der doppelten Konsolidierung voraus. `Sorted` Und `DuplicateConsolidation` aufzeichnen, ob `--sort` wurde aktiviert. Ohne es, `DuplicateEvents`, `InitialSortChunks` Und `MergePasses` sind Null, und `SortMemoryBudgetMiB` Ist `null` weil kein Sortierpuffer zugewiesen ist. `Complete: true` bedeutet, dass alle ausgewählten analysierten Eingaben erfolgreich verarbeitet wurden; Dies bedeutet nicht, dass jedes Artefakt eingesammelt wurde, jedes Feld mit einem Zeitstempel versehen ist oder jeder Angriff erkennbar ist.
 
 CSV kann verschachtelte Systemprofile, USB-Benutzer-Mountpoints und Shell-Items verflachen; natives JSON/JSONL ist hierfür oft reicher. Fehlende CSV-Daten lassen sich nicht rekonstruieren. Nicht unterstützte Artefaktkennungen und fehlerhafte Eingaben führen zu einem Fehler statt erfolgreicher Teilergebnisse.
 
 ## Leistung und sichere Ausgabe { #performance-and-output-safety }
 
-Eingaben werden parallel gestreamt; Sortierpuffer laufen in ein privates temporäres Verzeichnis über. Begrenzte Zusammenführungsdurchläufe liefern deterministische Zeitreihen. Vollständige Sekunden/Nanosekunden berücksichtigen auch Zeiten vor 1970. Gleiche Zeiten bleiben unabhängig von Workern und Budget stabil sortiert.
+Eingaben werden parallel gestreamt und verarbeitet. Standardmäßig schreibt jeder Worker ein formatiertes Ereignisfragment. Fragmente werden in der Reihenfolge der Eingabedatei verkettet, ohne ihre Ereignisstrukturen zu sortieren oder erneut zu lesen. CSV hat einen Header, auch wenn mehrere Dateien verarbeitet werden. Die Ausgabereihenfolge ist über die Anzahl der Mitarbeiter hinweg deterministisch. es impliziert keine Chronologie.
 
-`--memory-limit` begrenzt das gesamte **Sortierpufferbudget**, nicht Prozess-RSS. Datensätze, JSON-Objekte/-Strings, CSV-Puffer und Zusammenführung benötigen weiteren Speicher; kleine Budgets reduzieren Worker. `--max-record-size` begrenzt Eingabedatensätze auf standardmäßig 16 MiB. Ein formatiertes JSON-Array zählt als ganzes Dokument; größere Daten benötigen eine höhere Grenze oder besser JSONL. Auch CSV-Lesevorschau zählt dazu.
+Mit `--sort` werden Puffer in ein privates temporäres Verzeichnis übertragen, und dann erzeugen begrenzte Zusammenführungsdurchgänge eine chronologische Ausgabe. Beim Sortieren werden vollständige ganzzahlige Sekunden und Nanosekunden verwendet, einschließlich Datumsangaben vor 1970. Die zeitgleiche Reihenfolge ist für alle Mitarbeiterzahlen und Sortierbudgets deterministisch. Für jedes während der Zwischen- und Endzusammenführung verarbeitete Ereignis, einschließlich wiederholter Durchläufe, wird ein Fortschrittsbalken angezeigt. Es erscheint auf einem Terminal und wird ausgeblendet, wenn die Ausgabe umgeleitet wird.
 
-Temporärspeicher muss erweiterte Ereignisse und Zusammenführungsdurchläufe zusätzlich zu Ergebnissen aufnehmen. Ein Datensatz kann viele Ereignisse liefern. Zeit-/Artefaktfilter verwenden und ein ausreichend freies temporäres Volume wählen.
+`--memory-limit` gilt nur mit `--sort`: Es handelt sich um das aggregierte **Sortierpufferbudget**, nicht um eine Prozessgrenze RSS. Eingabedatensätze, JSON-Objekt-/String-Overhead, CSV-Puffer und Zusammenführungsdatensätze erfordern zusätzlichen Speicher. Bei kleinen Budgets wird die Anzahl der Mitarbeiter reduziert. `--max-record-size` begrenzt einen analysierten Eingabedatensatz (Standard 16 MiB); Ein hübsches JSON-Array/-Bericht zählt als ein Eingabedokument der obersten Ebene. Größere Dokumente erfordern möglicherweise einen höheren Grenzwert oder vorzugsweise JSONL. Auch das Vorauslesen des Parsers CSV trägt zu diesem Grenzwert bei.
+
+Der temporäre Speicherplatz muss neben den Endergebnissen auch die formatierten Ereignisfragmente (Standard) oder erweiterte Sortierdatensätze und Zusammenführungsdurchläufe (`--sort`) aufnehmen. Beide Modi behalten die temporäre Ausgabebereitstellung und den Schutz vor der Veröffentlichung fehlgeschlagener Eingaben bei. Ein Datensatz kann viele Ereignisse hervorbringen, daher kann die Zeitleiste viel größer sein als die Eingabe. Filtern Sie gegebenenfalls den Zeitraum/die Artefakte und wählen Sie ein temporäres Volume mit ausreichend freiem Speicherplatz aus.
 
 Strg+C bricht den kooperativen Vorgang ab, entfernt die privaten Sortier-/Staging-Verzeichnisse und wird mit dem Code `130` beendet. Bei Linux und macOS gilt dies auch für SIGTERM und SIGHUP. Die Stornierung wird beim Lesen, Normalisieren, Zusammenführen und Schreiben von Berichten vor Beginn der Veröffentlichung überprüft. Bei einer nicht aufhebbaren Beendigung oder einem Stromausfall können weiterhin temporäre Dateien zurückbleiben.
 

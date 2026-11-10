@@ -13,7 +13,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md)를 사용하십시오. 이 명령은 같은 그룹화된
 명령어를 호출하고, 결과와 로그를 컴퓨터 및 조사 범주별로 정리합니다.
 
-구문 분석된 아티팩트 전체에서 시간순으로 정렬된 타임라인의 경우 [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md)를 사용하세요. 타임스탬프 의미를 확장하고 레이블을 지정합니다. `auto-parse -j`는 기본 레코드를 계속 유지합니다.
+구문 분석된 아티팩트 전체의 타임라인을 보려면 [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md)를 사용하세요. 타임스탬프 의미를 확장하고 레이블을 지정합니다. 출력은 기본적으로 정렬되지 않습니다. 시간순 및 중복 통합을 위해 `--sort`를 추가하세요. `auto-parse -j`는 기본 레코드를 계속 유지합니다.
 
 ## [디스크 이미지](mount.md) { #disk-images }
 

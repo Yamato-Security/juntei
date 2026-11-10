@@ -117,4 +117,4 @@ UTC는 Windows 이벤트 로그 형식인 `2026-10-20T08:46:38.2001668Z`를 사�
 
 ## 정규화된 연대순 타임라인 { #normalized-chronological-timeline }
 
-[`super-timeline`](../commands/super-timeline.md)는 레이블이 지정된 타임스탬프 의미, 소스 참조 및 시간순 정렬을 사용하여 공통 CSV/JSONL 이벤트 스키마를 생성합니다. 또한 Timesketch 가져오기 프로필도 지원합니다. 기본 파서 내보내기 및 `auto-parse -j`는 기존 스키마를 유지합니다.
+[`super-timeline`](../commands/super-timeline.md)는 레이블이 지정된 타임스탬프 의미와 소스 참조를 사용하여 공통 CSV/JSONL 이벤트 스키마를 생성합니다. 출력은 기본적으로 정렬되지 않습니다. `--sort`를 사용하면 시간순 정렬 및 중복 통합이 가능합니다. 또한 Timesketch 가져오기 프로필도 지원합니다. 기본 파서 내보내기 및 `auto-parse -j`는 기존 스키마를 유지합니다.
