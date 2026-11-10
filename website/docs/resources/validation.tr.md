@@ -101,6 +101,62 @@ SDDL'si vardır.
 dayanır. 11 gerçek veritabanında, çıktıya yazılan 45.255 girdideki her sütun, `dissect.esedb`
 tarafından sunulan değerlerin bağımsız bir kod çözümüyle eşleşti.
 
+## Kullanıcı Erişim Günlüğü { #user-access-logging }
+
+`parse-ese ual`, UAL veritabanlarını aynı ESE okuyucusuyla okur. 16 gerçek veritabanında (308 satır,
+bunların 145'i istemci satırı), her değer `dissect.esedb` tarafından sunulan değerlerin bağımsız bir kod
+çözümüyle eşleşti. Her istemci satırında, sayı bulunan günler `InsertDate` değerinin UTC gününden
+`LastAccess` değerinin UTC gününe kadar uzandı ve toplamları `TotalAccesses` değerine eşit oldu.
+
+## Web tarayıcıları { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser), Sootmark'ın browser, sqlite
+ve plist crate'lerinin sürdürülen bir çatalıdır; başka bir Rust kütüphanesiyle ve aynı veritabanları
+üzerinde Plaso, Velociraptor (SQLiteHunter) ve Hindsight ile karşılaştırıldıktan sonra seçilmiştir.
+`parse-sqlite browser`, 38 herkese açık veritabanında, her veritabanının `-wal` dosyasıyla birlikte
+bir kopyasını okuyan `sqlite3` kütüphanesiyle karşılaştırıldı: Plaso'nun test dosyaları (Chrome 8 ile
+68 arası, Firefox 2 ile 118 arası), Chromium 150 ve Firefox 140 ile oluşturulan profiller ve
+ys-browser-parser'ın form geçmişi test veritabanları. 293 ziyaretin, 21 indirmenin, 692 çerezin ve 41
+form girdisinin tamamı eşleşti. Silinmiş girdiler yalnızca girdilerin silindiği yerlerde kurtarıldı:
+Firefox 140 geçmişinden silinen iki sayfa ve iki ziyaret, zamanları, URL'leri ve başlıklarıyla birlikte,
+ve test veritabanlarının silinmiş form girdileri.
+
+## Internet Explorer ve eski Edge (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache`, `WebCacheV01.dat` dosyasını
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) ile okur. Plaso'nun herkese
+açık iki WebCache veritabanında `dissect.database` kütüphanesinin ESE okuyucusuyla karşılaştırıldı: biri
+Internet Explorer 11'e ait, diğeri ise eski Edge'in geçmişini, indirmelerini ve çerezlerini içeren, Windows
+10'a ait kirli bir veritabanı. 4.156 satırın tamamı değer değer eşleşti: 44 kapsayıcı, 182 geçmiş girdisi,
+6 indirme, 170 çerez ve 3.754 diğer girdi. Karşılaştırma, indirme kayıtlarının kodunu kendi başına çözdü.
+Veritabanlarının silinmiş olarak işaretlediği kayıtlar her iki taraftan da çıkarıldı.
+
+## Outlook { #outlook }
+
+`parse-file outlook`, PST, OST, `.msg` ve `.oft` dosyalarını
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser) ile okur. Bu ayrıştırıcının
+PST ve OST okuyucusu Microsoft'un [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs)
+projesinin bir çatalıdır; `.msg` okuyucusu ise Microsoft'un açık belirtimlerine dayanarak yazılmıştır.
+
+- **PST ve OST**: Herkese açık 66 PST ve OST dosyası (Apache Tika, artemis, Aspose.Email örnekleri,
+  DFIR Artifact Museum, Enron, GroupDocs örnekleri, java-libpst, libyal'ın test verileri,
+  outlook-pst-rs ve pst-extractor) libpff ile özellik özellik karşılaştırıldı: her deponun, klasörün,
+  iletinin, alıcının ve ekin her özelliği ve her ekin verisi. 324.175 veri noktası aynıydı ve hiçbiri
+  açıklaması olmadan farklı değildi. Geri kalanlar şunlardır: yalnızca ys-outlook-parser'ın
+  okuyabildikleri (libpff'in başarısız olduğu iletilere, alıcılara ve eklere ve onun açamadığı bir
+  depoya ait 15.846 veri noktası; gizli öğelere ait 8.223 veri noktası), satırları yok olduklarını
+  söylediği halde libpff'in boş veya sıfır olarak verdiği alıcı hücreleri (49.077), MAPI'nin yaptığı
+  gibi hesaplanan klasör giriş kimlikleri ve türleri (2.004) ve libpff'in ham verileri olarak verdiği
+  nesneler ve gömülü iletiler (480). Dosyalardan ikisini iki okuyucu da hiç okuyamaz.
+- **`.msg` ve `.oft`**: 2.404 ileti, alıcı ve ek ile 41.002 özellik içeren herkese açık 214 dosya
+  extract-msg ile karşılaştırıldı: 110.114 veri noktası aynıydı ve farklı olan 791 veri noktasının her
+  birinin bir açıklaması var: 601'i extract-msg'nin zamanlarla ilgili hatalarıdır, 35'i onun yanlış kod
+  sayfasıyla çözdüğü ANSI dosyalarından gelir, geri kalanlar ise onun dışarıda bıraktıkları veya
+  ekledikleridir.
+- **Hasarlı girdi**: 260.000'den fazla mutasyona uğratılmış `.msg` dosyası ve 160.000 mutasyona
+  uğratılmış PST ile özel olarak hazırlanmış dosyalar çökme, takılma veya sınırsız bellek kullanımı
+  olmadan okundu.
+
 ## LNK kısayolları { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser), Sootmark'ın

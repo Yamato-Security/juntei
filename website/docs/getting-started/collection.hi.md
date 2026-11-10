@@ -1,7 +1,10 @@
 # साक्ष्य संग्रह { #collecting-evidence }
 
-Juntei उन files को parse करता है जो Windows से पहले ही संग्रहित की जा चुकी हैं। किसी विश्वसनीय acquisition tool का उपयोग करें और जहाँ संभव हो
-मूल metadata सुरक्षित रखें।
+Juntei Windows से पहले ही एकत्र की गई files को parse करता है। भरोसेमंद acquisition tool का उपयोग करें और जहाँ संभव हो मूल metadata सुरक्षित रखें।
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## सामान्य स्थान { #common-locations }
 
@@ -13,6 +16,10 @@ Juntei उन files को parse करता है जो Windows से प�
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer और लेगेसी Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (Outlook 2010 से पहले `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft`, और `.msg` files, वे जहाँ कहीं भी save की गई हों |
+| वेब ब्राउज़र | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` और अन्य browsers के profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` और अन्य उपयोगकर्ता/system स्थान |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` और `CustomDestinations` |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +38,17 @@ Juntei उन files को parse करता है जो Windows से प�
 - `$LogFile` को उसी volume के `$MFT` के साथ, समय में यथासंभव निकट, संग्रहित करें। `$LogFile` तेज़ी से
   wrap होता है; बाद में संग्रह करने पर पहले के redo/undo records पूरी तरह खो सकते हैं।
 - Account और Wi-Fi profile नामों को resolve करने के लिए SRUM को मेल खाने वाले `SOFTWARE` hive के साथ संग्रहित करें।
+- पूरी User Access Logging `Sum` directory संग्रहित करें: `SystemIdentity.mdb` roles के नाम देता है और वार्षिक
+  `{GUID}.mdb` databases को सूचीबद्ध करता है। SRUM की तरह, Juntei UAL के `Svc*.log` transaction logs को replay
+  नहीं करता।
+- Browser databases को उनके बगल वाली `-wal` files (`places.sqlite-wal`, `cookies.sqlite-wal`) के साथ
+  संग्रहित करें: सबसे नए बदलाव, और वे पुराने page versions जिनसे deleted entries recover की जाती हैं, केवल
+  तब तक वहाँ रहते हैं जब तक browser checkpoint नहीं करता।
+- पूरा `WebCache` folder संग्रहित करें: उपयोगकर्ता के logged on रहते Windows `WebCacheV01.dat` को खुला
+  रखता है, और उसके सबसे नए बदलाव केवल `V01*.log` transaction logs में होते हैं, जिन्हें Juntei replay नहीं करता।
+- Outlook की OST और PST files को Outlook बंद करके, या disk image या volume shadow copy से संग्रहित
+  करें: Outlook चलते समय उन्हें खुला रखता है। Default folders के बाहर भी PSTs खोजें: उपयोगकर्ता archives को
+  अन्य folders, drives और file shares पर ले जाते हैं।
 - पूरा Defender `Quarantine` tree संग्रहित करें ताकि Entries, ResourceData और Resources का मिलान किया जा सके।
 
 ## Live system के लिए सावधानियाँ { #live-system-cautions }

@@ -21,6 +21,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     ထုတ်လုပ်ထားသော ဒေတာကို အထောက်အထားအဖြစ် ပြန်လည်ရှာဖွေတွေ့ရှိခြင်းမှ ကာကွယ်ပြီး `--clobber` က ရင်းမြစ် collection
     ရှိ ဖိုင်များကို ထိခိုက်ခြင်းမှ ကာကွယ်ပါသည်။
 
+## VHDX disk image များ { #vhdx-disk-images }
+
+`--vhdx` ဖြင့် `auto-parse` သည် [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) ကို သုံးကာ **Linux၊ macOS နှင့် Windows** တွင် VHDX ကို တိုက်ရိုက်ဖတ်သည်။ OS mount၊ FUSE သို့မဟုတ် administrator အခွင့်အရေး မလိုအပ်ပါ။
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
+
+Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည် ပုံမှန် pipeline ကို သုံးသည်။ `manifest.json` ရှိ `Image` သည် မူရင်း image ဖြစ်ပြီး `EvidenceRoot` သည် အတွင်း relative path ဖြစ်သည်။ Read error နှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ထိန်းသိမ်းပြီး input မပြည့်စုံလျှင် exit code 1 ပြန်ပေးသည်။ မလုံခြုံသော သို့မဟုတ် မရှင်းလင်းသောအမည်များကို ပြောင်းမပေးပါ။ Named NTFS stream များကို နောက်ထပ်ဖိုင်အဖြစ် မထုတ်ပေးသော်လည်း သာမန်ဖိုင်အဖြစ် စုဆောင်းထားသော artifact များကို အသုံးပြုနိုင်သည်။
+
+အခြား program များအတွက် filesystem ဖော်ပြသော သီးခြား [`mount` command](mount.md) သည် Linux FUSE လိုအပ်ဆဲ ဖြစ်သည်။ `auto-parse --vhdx` က ၎င်းကို မသုံးပါ။
+
+Staging သည် ပုံမှန်အားဖြင့် output filesystem ရှိ သီးသန့် directory ကို အသုံးပြုသည်။ အခြား disk ပေါ်ရှိ ရှိပြီးသား directory ကို ရွေးရန် `--temp-dir` ကို သုံးပါ။ မူရင်း metadata ကို output filesystem တွင် သီးခြားသိမ်းထားသဖြင့် staging disk ပြည့်လျှင်လည်း ဖတ်နိုင်ပြီးသောဖိုင်များကို parse လုပ်နိုင်သည်။ မိတ္တူနှင့် ရလဒ်နှစ်မျိုးလုံးအတွက် နေရာချန်ပါ။ Output volume ကိုယ်တိုင်ပြည့်လျှင် ရလဒ်များမသိမ်းနိုင်ပါ။ Ctrl+C သည် parser process များကို ရပ်ပြီး private workspace ကိုရှင်းကာ code 130 ဖြင့်ထွက်သည်။ SIGKILL သို့မဟုတ် မီးပျက်ခြင်းကြောင့် မိတ္တူများကျန်နိုင်သည်။ Image ရှာရာတွင် ဖတ်မရသော subdirectory များကို ကျော်သော်လည်း input root ဖတ်မရခြင်းသည် error ဖြစ်ဆဲဖြစ်သည်။
+
+Staging directory သည် output directory ၏ အပြင်ဘက်တွင် ရှိရမည်။ Linux နှင့် macOS တွင် SIGTERM နှင့် SIGHUP သည်လည်း parser process များကို ရပ်ပြီး workspace ကို ရှင်းလင်းပေးသည်။
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 နှင့် Ex01 disk image များ { #e01-and-ex01-disk-images }
+
+`--e01` သည် physical EWF1 (`.E01`) နှင့် EWF2 (`.Ex01`) image များကို **Linux၊ macOS နှင့် Windows** တွင် native အဖြစ် ဖတ်သည်။ FUSE၊ OS mount သို့မဟုတ် administrator ခွင့်ပြုချက် မလိုပါ။ [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) နှင့် အထက်ပါ NTFS parsing လုပ်ငန်းစဉ်ကို အသုံးပြုသည်။
+
+အပိုင်းခွဲထားသော image ၏ ပထမ segment ကို ပေးပါ။ `.E02` အပါအဝင် ဆက်စပ်ဖိုင်အားလုံးကို မူရင်းအမည်များဖြင့် တစ်နေရာတည်းတွင် ထားပါ။ Disk အပြည့် (MBR/GPT) နှင့် NTFS volume တစ်ခုတည်းကို ပံ့ပိုးသည်။ ပုံစံနှစ်မျိုးပါသော directory အတွက် `--vhdx --e01` ကို သုံးပါ။
+
+ယာယီနေရာနှင့် မူရင်း metadata လိုအပ်ချက်များသည် အတူတူဖြစ်သည်။ E01 image များတွင် များသောအားဖြင့် disk တစ်ခုလုံး ပါဝင်ပြီး parsing မစမီ image အားလုံးကို staging လုပ်သော်လည်း parser များ ဖတ်သောဖိုင်များကိုသာ ကူးယူသဖြင့် ပုံမှန်အားဖြင့် အသုံးပြုထားသောနေရာ၏ အစိတ်အပိုင်းအနည်းငယ်သာ လိုအပ်သည်။ Image များကို read-only ဖတ်သည်။ Acquisition အတွင်း ပျောက်နေသောဒေတာနှင့် ဖွင့်စဉ် သို့မဟုတ် ဖတ်စဉ်တွေ့သော ပျက်စီးမှုများကို `ImageErrors` နှင့် `manifest.csv` တွင် ဖော်ပြသည်။ ဖတ်နိုင်သည့်ရလဒ်များကို သိမ်းပြီး exit code 1 ပြန်ပေးသည်။ ဝင်ဖတ်သည့်ဒေတာကိုသာ စစ်ဆေးပြီး chunk အားလုံး သို့မဟုတ် media တစ်ခုလုံး၏ hash ကို မစစ်ပါ။ Logical `.L01` နှင့် `.Lx01` ဖိုင်များကို ငြင်းပယ်ပြီး password option မရှိပါ။
+
+သီးခြား `mount` command သည် Linux FUSE လိုအပ်ဆဲဖြစ်သော်လည်း native automatic parsing အတွက် မလိုပါ။
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## Output time zone { #output-time-zone }
 
 Parse လုပ်ထားသော timestamp များသည် analyst ကွန်ပျူတာ၏ local time zone နှင့် မသက်ဆိုင်ဘဲ မူလအားဖြင့် UTC ဖြစ်ပါသည်။ UTC
@@ -118,6 +159,11 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
 - `$I30` directory index များ
 - `$Boot` boot sector များနှင့် `$Secure:$SDS` security descriptor များ
 - SRUM
+- အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
+- ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history (Chromium-based နှင့် Firefox-based ဘရောက်ဇာများ)
+- Internet Explorer နှင့် legacy Edge ၏ WebCache: history၊ download များ၊ cookie များနှင့် cache entry များ
+- Outlook PST၊ OST၊ MSG နှင့် OFT ဖိုင်များ: ဖိုင်တွဲများ၊ item များ၊ လက်ခံသူများ၊ ပူးတွဲဖိုင်များ၊ contact များ၊
+  ပြက္ခဒိန် item များနှင့် task များ
 - LNK shortcut များ
 - Jump Lists
 - ShimCache
@@ -174,6 +220,28 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -222,7 +290,11 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -275,12 +347,14 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `Accounts` | SAM စက်တွင်း account များ၊ LSA secret များ၏ အမည်များနှင့် အချိန်များ |
 | `Applications` | Application မှတ်တမ်း (third-party tool များ၏ ခြေရာများ) |
 | `Applications` | ထည့်သွင်းထားသော ပရိုဂရမ်များ |
+| `BrowserActivity` | ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history၊ ပြန်လည်ရယူထားသော ဖျက်ထားသည့် entry များ အပါအဝင်။ Internet Explorer နှင့် legacy Edge ၏ WebCache |
+| `Communication` | Outlook PST၊ OST၊ MSG နှင့် OFT ဖိုင်များ: ဖိုင်တွဲများ၊ item များ၊ လက်ခံသူများ၊ ပူးတွဲဖိုင်များ၊ contact များ၊ ပြက္ခဒိန် item များနှင့် task များ |
 | `ExternalDevices` | USB device များနှင့် volume များ |
 | `FileAndFolderOpening` | Jump Lists၊ LNK shortcut များ၊ Microsoft Office၊ MRU စာရင်းများ၊ Open နှင့် Save As dialog များ၊ RecentDocs၊ ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | ကွန်ရက် profile များ၊ interface များ၊ share များ၊ port proxy များနှင့် route များ၊ SRUM ချိတ်ဆက်မှုများ၊ traffic နှင့် push notification များ |
-| `LateralMovement` | အသုံးပြုသူများ၏ အပြင်ဘက်သို့ Remote Desktop၊ PuTTY နှင့် WinSCP ချိတ်ဆက်မှုများ၊ map လုပ်ထားသော drive များနှင့် share များ |
+| `LateralMovement` | အသုံးပြုသူများ၏ အပြင်ဘက်သို့ Remote Desktop၊ PuTTY နှင့် WinSCP ချိတ်ဆက်မှုများ၊ map လုပ်ထားသော drive များနှင့် share များ။ အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (server တစ်ခု၏ role များကို အသုံးပြုသော client များ) |
 | `Persistence` | Boot ပြင်ဆင်မှု (BCD)၊ registry autostart များ၊ service များ၊ TaskCache |
 | `ProcessExecution` | Application compatibility၊ BAM နှင့် DAM၊ FeatureUsage နှင့် pin များ၊ MuiCache၊ Prefetch၊ Prefetch timeline၊ SRUM application/CPU လှုပ်ရှားမှု၊ UserAssist |
 | `Registry` | ပြန်လည်ရယူထားသော record များ အပါအဝင် ယေဘုယျ hive key များနှင့် value များ |
@@ -311,6 +385,19 @@ Amcache နှင့် Jump Lists တို့တွင် ၎င်းတိ�
 `JumpLists-CustomDestinations.csv` ကို အသုံးပြုပါသည်။ Amcache သို့မဟုတ် Jump Lists subdirectory များ မရှိပါ။
 SRUM table များသည် ၎င်းတို့၏ အမျိုးအစားအောက်တွင် တိုက်ရိုက် `SRUM-` ဖိုင်အမည်များကို အသုံးပြုပါသည်၊ ဥပမာ
 `NetworkActivity/SRUM-NetworkConnections.csv`။
+အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း table များသည် `LateralMovement` တွင် table တစ်ခုလျှင် ဖိုင်တစ်ခုစီ ရှိပါသည်၊ ဥပမာ
+`UAL-Clients.csv` နှင့် `UAL-SystemIdentity.csv` တို့ကို `UAL-logs.txt` နှင့်အတူ ထားပါသည်။
+[အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](../artifacts/ual.md#automatic-parsing) ကို ကြည့်ပါ။
+ဝဘ် ဘရောက်ဇာ table များသည် `BrowserActivity` တွင် ရှိပါသည်: `Browser-History.csv`၊ `Browser-Downloads.csv`၊
+`Browser-Cookies.csv` နှင့် `Browser-FormHistory.csv` တို့ကို `Browser-logs.txt` နှင့်အတူ ထားပါသည်။
+[ဝဘ် ဘရောက်ဇာများ](../artifacts/browser.md#automatic-parsing) ကို ကြည့်ပါ။
+Internet Explorer နှင့် legacy Edge ၏ WebCache table များလည်း ထိုနေရာတွင် ရှိပါသည်: `WebCache-History.csv`၊ `WebCache-Downloads.csv`၊
+`WebCache-Cookies.csv`၊ `WebCache-Entries.csv` နှင့် `WebCache-Containers.csv` တို့ကို `WebCache-logs.txt` နှင့်အတူ ထားပါသည်။
+[Internet Explorer နှင့် legacy Edge](../artifacts/webcache.md#automatic-parsing) ကို ကြည့်ပါ။
+Outlook table များသည် `Communication` တွင် ရှိပါသည်: `Outlook-Files.csv`၊ `Outlook-Folders.csv`၊
+`Outlook-Items.csv`၊ `Outlook-Recipients.csv`၊ `Outlook-Attachments.csv`၊ `Outlook-Contacts.csv`၊
+`Outlook-Calendar.csv` နှင့် `Outlook-Tasks.csv` တို့ကို `Outlook-logs.txt` နှင့်အတူ ထားပါသည်။
+[Outlook](../artifacts/outlook.md#automatic-parsing) ကို ကြည့်ပါ။
 [SRUM နေရာချထားမှု table အပြည့်အစုံ](../artifacts/srum.md#categorized-auto-parse-output) ကို ကြည့်ပါ။
 
 Log များသည် `Registry-SAM-logs.txt`၊ `PrefetchTimeline-logs.txt`
@@ -449,7 +536,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## အသုံးပြုပုံ { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -458,6 +545,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -502,3 +592,13 @@ Display Settings:
 ကို ကြည့်ပါ။
 
 Auto-parse သည် အသုံးပြုသူများ၏ remote ချိတ်ဆက်မှုများ (RDP၊ PuTTY၊ WinSCP နှင့် map လုပ်ထားသော drive များ) ကိုလည်း ဖတ်ပါသည်။
+
+## အချိန်နှင့်တပြေးညီ စူပါအချိန်ဇယားတစ်ခုကို တည်ဆောက်ပါ။ { #build-a-chronological-super-timeline }
+
+ခွဲခြမ်းစိတ်ဖြာပြီးနောက်၊ မှတ်တမ်းတင်ထားသော အချိန်တံဆိပ်များကို အညွှန်းတပ်ထားသော ဖြစ်ရပ်များအဖြစ် ချဲ့ထွင်ပြီး ကွန်ပျူတာများနှင့် ရှေးဟောင်းပစ္စည်းများတစ်လျှောက် စီရန် [`super-timeline`](super-timeline.md) ကို အသုံးပြုပါ။
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+လက်ရှိ `-j, --json-timeline` ထုတ်ယူမှုသည် ပေါင်းစပ်ဇာတိ-မှတ်တမ်း JSONL ဖိုင်အဖြစ် ကျန်ရှိနေပါသည်။ ၎င်းသည် parser schemas ကို ထိန်းသိမ်းသည်။ ၎င်းသည် အချိန်တံဆိပ်တုံး အကွက်များကို ချဲ့ထွင်ခြင်း သို့မဟုတ် ဖြစ်ရပ်များကို စီထားခြင်း မရှိပါ။ အထောက်အထားအဆင့် ပြန်လည်သုံးသပ်မှုအတွက် ၎င်းနှင့် တစ်ဦးချင်းခွဲခြမ်းစိတ်ဖြာမှုရလဒ်များကို သိမ်းဆည်းထားပါ။

@@ -20,6 +20,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     उत्पन्न डेटा को फिर से साक्ष्य के रूप में खोजे जाने से रोकता है और `--clobber` को source संग्रह की
     files को छूने से रोकता है।
 
+## VHDX डिस्क इमेज { #vhdx-disk-images }
+
+`--vhdx` के साथ `auto-parse`, [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) द्वारा **Linux, macOS और Windows** पर VHDX को नेटिव रूप से पढ़ता है। OS माउंट, FUSE या प्रशासक अधिकार आवश्यक नहीं हैं।
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+पार्सरों को पथ चाहिए; Juntei पार्सरों द्वारा पढ़ी जाने वाली फ़ाइलों को सीमित बफ़र से निजी अस्थायी स्थान में कॉपी करता है: रजिस्ट्री हाइव और उनके ट्रांज़ैक्शन लॉग, NTFS मेटाडेटा फ़ाइलें, डेटाबेस, Prefetch फ़ाइलें, शॉर्टकट, Jump List, Outlook फ़ाइलें और Defender क्वारंटीन फ़ोल्डर। बाकी हर फ़ाइल अपने मूल संशोधन समय वाली खाली प्लेसहोल्डर बनती है, इसलिए डायरेक्टरी और पथ डिस्क जैसे ही दिखते हैं। persistence-hunter किसी प्लेसहोल्डर की सामग्री इमेज से तभी पढ़ता है जब उसे ज़रूरत हो, जैसे किसी परसिस्टेंस प्रविष्टि द्वारा संदर्भित निष्पादन योग्य फ़ाइल। **परिणामों के अलावा कॉपी की गई फ़ाइलों के लिए पर्याप्त स्थान रखें।** समर्थित होने पर शून्य क्षेत्रों को स्पार्स रूप में लिखा जाता है। नाम, संरचना, हार्ड लिंक और संशोधन समय सुरक्षित रहते हैं। LNK और Jump List के स्रोत समय मूल NTFS मेटाडेटा स्नैपशॉट से आते हैं, अस्थायी फ़ाइलों से नहीं। पार्सर त्रुटियों सहित सामान्य समापन प्रतियाँ हटाता है; जबरन समाप्ति उन्हें छोड़ सकती है। स्रोत केवल पढ़ने योग्य रहता है; लंबित VHDX लॉग सिर्फ़ मेमोरी में लागू होते हैं।
+
+होस्ट खोज, CSV/JSON/JSONL और `-j` सामान्य पाइपलाइन इस्तेमाल करते हैं। `manifest.json` का `Image` मूल इमेज बताता है; `EvidenceRoot` अंदर का सापेक्ष पथ बताता है। पढ़ने की त्रुटियाँ और असुरक्षित नाम `ImageErrors` तथा `manifest.csv` की असफल पंक्तियों में दर्ज होते हैं। पढ़े जा सकने वाले परिणाम सुरक्षित रहते हैं; अधूरा इनपुट कोड 1 देता है। खतरनाक या अस्पष्ट नाम बदले नहीं जाते। नामित NTFS स्ट्रीम अतिरिक्त फ़ाइलों की तरह निकाली नहीं जातीं; सामान्य फ़ाइलों के रूप में एकत्र आर्टिफ़ैक्ट उपलब्ध रहते हैं।
+
+अलग [`mount` कमांड](mount.md) अन्य प्रोग्रामों को फ़ाइलसिस्टम देता है और Linux FUSE की आवश्यकता होती है। `auto-parse --vhdx` इसे उपयोग नहीं करता।
+
+स्टेजिंग डिफ़ॉल्ट रूप से आउटपुट फ़ाइल सिस्टम पर एक निजी डायरेक्टरी का उपयोग करती है। दूसरे डिस्क की मौजूदा डायरेक्टरी चुनने के लिए `--temp-dir` उपयोग करें। मूल मेटाडेटा आउटपुट फ़ाइल सिस्टम पर अलग रखा जाता है, ताकि स्टेजिंग डिस्क भरने पर भी पढ़ने योग्य फ़ाइलें पार्स हो सकें। कॉपी और परिणाम दोनों के लिए स्थान रखें; आउटपुट वॉल्यूम भरने पर परिणाम नहीं सहेजे जा सकते। Ctrl+C पार्सर प्रक्रियाएँ रोकता है, निजी कार्यक्षेत्र साफ़ करता है और कोड 130 से निकलता है। SIGKILL या बिजली जाने से कॉपी रह सकती हैं। इमेज खोजते समय अपठनीय उपडायरेक्टरियाँ छोड़ी जाती हैं, लेकिन अपठनीय इनपुट रूट त्रुटि बना रहता है।
+
+स्टेजिंग डायरेक्टरी आउटपुट डायरेक्टरी के बाहर होनी चाहिए। Linux और macOS पर SIGTERM और SIGHUP भी पार्सर प्रक्रियाओं को रोकते हैं और कार्यक्षेत्र साफ़ करते हैं।
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 और Ex01 डिस्क इमेज { #e01-and-ex01-disk-images }
+
+`--e01` भौतिक EWF1 (`.E01`) और EWF2 (`.Ex01`) इमेज को **Linux, macOS और Windows** पर मूल रूप से पढ़ता है। FUSE, OS माउंट या व्यवस्थापक अधिकार आवश्यक नहीं हैं। यह [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) और ऊपर बताए गए NTFS पार्सिंग प्रवाह का उपयोग करता है।
+
+विभाजित इमेज का पहला सेगमेंट दें। `.E02` सहित सभी संबंधित फ़ाइलें अपने मूल नामों के साथ उसी डायरेक्टरी में रखें। पूरे डिस्क (MBR/GPT) और एकल NTFS वॉल्यूम समर्थित हैं। मिश्रित डायरेक्टरी के लिए `--vhdx --e01` उपयोग करें।
+
+अस्थायी स्थान और मूल मेटाडेटा की आवश्यकताएँ समान हैं। E01 इमेज में आम तौर पर पूरी डिस्क होती है, और पार्सिंग शुरू होने से पहले सभी इमेज स्टेज की जाती हैं, लेकिन केवल पार्सरों द्वारा पढ़ी जाने वाली फ़ाइलें कॉपी होती हैं, जो आम तौर पर उपयोग किए गए स्थान का छोटा हिस्सा होती हैं। इमेज केवल पढ़ी जाती हैं। संग्रह की कमियाँ और खोलते या पढ़ते समय मिली क्षति `ImageErrors` तथा `manifest.csv` में दर्ज होती हैं; पढ़ने योग्य परिणाम सुरक्षित रहते हैं और निकास कोड 1 होता है। केवल पढ़े गए डेटा की जाँच होती है, सभी चंक या पूरे मीडिया के हैश की नहीं। तार्किक `.L01` और `.Lx01` फ़ाइलें अस्वीकार की जाती हैं; पासवर्ड विकल्प नहीं है।
+
+अलग `mount` कमांड को अभी भी Linux FUSE चाहिए; मूल स्वचालित पार्सिंग को नहीं।
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## आउटपुट time zone { #output-time-zone }
 
 Parse किए गए timestamps default रूप से UTC में होते हैं, विश्लेषक के computer के local time zone से स्वतंत्र। UTC
@@ -118,6 +159,11 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
 - `$I30` directory indexes
 - `$Boot` boot sectors और `$Secure:$SDS` security descriptors
 - SRUM
+- User Access Logging (UAL)
+- Web browser का history, downloads, cookies और form history (Chromium- और Firefox-based browsers)
+- Internet Explorer और legacy Edge का WebCache: history, downloads, cookies और cache entries
+- Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar
+  items और tasks
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -174,6 +220,28 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -222,7 +290,11 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -275,12 +347,14 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `Accounts` | SAM स्थानीय खाते, LSA secrets के नाम और times |
 | `Applications` | ऐप्लिकेशन इतिहास (third-party tools के निशान) |
 | `Applications` | इंस्टॉल किए गए प्रोग्राम |
+| `BrowserActivity` | Web browser का history, downloads, cookies और form history, recover की गई deleted entries सहित; Internet Explorer और legacy Edge का WebCache |
+| `Communication` | Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar items और tasks |
 | `ExternalDevices` | USB devices और volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open और Save As संवाद, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies और routes; SRUM connections, traffic और push notifications |
-| `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares |
+| `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares; User Access Logging (किसी server के roles के clients) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM और DAM, FeatureUsage और pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU गतिविधि, UserAssist |
 | `Registry` | सामान्य hive keys और values, recover किए गए records सहित |
@@ -311,6 +385,19 @@ Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, 
 `JumpLists-CustomDestinations.csv` का उपयोग करती हैं। Amcache या Jump Lists की कोई subdirectories नहीं होतीं।
 SRUM tables अपनी श्रेणी के ठीक अंतर्गत `SRUM-` filenames का उपयोग करती हैं, उदाहरण के लिए
 `NetworkActivity/SRUM-NetworkConnections.csv`।
+User Access Logging tables `LateralMovement` में होती हैं, हर table के लिए एक file, जैसे
+`UAL-Clients.csv` और `UAL-SystemIdentity.csv`, साथ में `UAL-logs.txt`;
+[उपयोगकर्ता एक्सेस लॉगिंग (UAL)](../artifacts/ual.md#automatic-parsing) देखें।
+Web browser tables `BrowserActivity` में होती हैं: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` और `Browser-FormHistory.csv`, साथ में `Browser-logs.txt`;
+[वेब ब्राउज़र](../artifacts/browser.md#automatic-parsing) देखें।
+Internet Explorer और legacy Edge की WebCache tables भी वहीं होती हैं: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` और `WebCache-Containers.csv`, साथ में `WebCache-logs.txt`;
+[Internet Explorer और लेगेसी Edge](../artifacts/webcache.md#automatic-parsing) देखें।
+Outlook tables `Communication` में होती हैं: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` और `Outlook-Tasks.csv`, साथ में `Outlook-logs.txt`;
+[Outlook](../artifacts/outlook.md#automatic-parsing) देखें।
 [पूरी SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output) देखें।
 
 Logs capitalized आर्टिफ़ैक्ट नाम से मेल खाते हैं, जैसे `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`
@@ -450,7 +537,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## उपयोग { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -459,6 +546,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -503,3 +593,13 @@ Report fields और उनकी forensic सीमाओं के लिए [
 देखें।
 
 Auto-parse उपयोगकर्ताओं के remote connections (RDP, PuTTY, WinSCP और mapped drives) भी पढ़ता है।
+
+## एक कालानुक्रमिक सुपर टाइमलाइन बनाएं { #build-a-chronological-super-timeline }
+
+पार्सिंग के बाद, रिकॉर्ड किए गए टाइमस्टैम्प को लेबल किए गए ईवेंट में विस्तारित करने और उन्हें कंप्यूटर और कलाकृतियों में क्रमबद्ध करने के लिए [`super-timeline`](super-timeline.md) का उपयोग करें:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+मौजूदा `-j, --json-timeline` निर्यात एक संयुक्त देशी-रिकॉर्ड JSONL फ़ाइल बना हुआ है। यह पार्सर स्कीमा को सुरक्षित रखता है; यह टाइमस्टैम्प फ़ील्ड का विस्तार नहीं करता है या ईवेंट को सॉर्ट नहीं करता है। इसे और व्यक्तिगत पार्सर परिणामों को साक्ष्य-स्तरीय समीक्षा के लिए रखें।

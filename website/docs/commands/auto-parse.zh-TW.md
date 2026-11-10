@@ -19,6 +19,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     可防止產生的資料被當成證據再次被找到，也可防止 `--clobber`
     動到來源收集資料中的檔案。
 
+## VHDX 磁碟映像檔 { #vhdx-disk-images }
+
+使用 `--vhdx` 時，`auto-parse` 透過 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) 在 **Linux、macOS、Windows** 原生讀取 VHDX，無需 OS 掛載、FUSE 或系統管理員權限。
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案中解析器會讀取的檔案（登錄 Hive 及其交易記錄、NTFS 中繼資料檔、資料庫、Prefetch 檔、捷徑、Jump List、Outlook 檔案與 Defender 隔離資料夾）串流複製至專用暫存目錄。其他檔案則成為保留原始更新時刻的空白預留位置，因此目錄與路徑看起來與磁碟上相同。persistence-hunter 僅在需要時才從映像檔讀取預留位置的內容，例如持續性項目所指向的執行檔。**除結果外，請預留足夠空間容納複製的檔案。**讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
+
+主機偵測、CSV/JSON/JSONL 和 `-j` 使用一般證據目錄的解析流程。`manifest.json` 中的 `Image` 識別原始映像；`EvidenceRoot` 識別內部相對路徑。讀取失敗或不安全的名稱會記錄在 `ImageErrors` 與 `manifest.csv` 的失敗列。保留可讀取資料的結果；輸入不完整時結束代碼為 1。不會擅自重新命名不安全或曖昧的名稱，也不會將具名 NTFS 串流抽取為額外檔案；初步蒐證映像中已收集為一般檔案的證據仍可使用。
+
+獨立的 [`mount` 命令](mount.md) 將檔案系統公開給其他程式，仍需要 Linux FUSE；`auto-parse --vhdx` 不使用此命令。
+
+暫存作業預設使用輸出檔案系統上的專用目錄。可用 `--temp-dir` 指定另一磁碟上已存在的目錄。原始中繼資料另存於輸出檔案系統，因此暫存磁碟滿載時仍可解析已讀取的檔案。請為暫存檔與結果保留空間；若輸出檔案系統本身已滿，結果將無法儲存。Ctrl+C 會停止解析程序、清除專用工作區，並以代碼 130 結束。SIGKILL 或斷電仍可能留下副本。搜尋映像檔時會略過無法讀取的子目錄，但輸入根目錄無法讀取仍屬錯誤。
+
+暫存目錄必須位於輸出目錄之外。在 Linux 和 macOS 上，SIGTERM 和 SIGHUP 也會停止解析程序並清理工作區。
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 與 Ex01 磁碟映像檔 { #e01-and-ex01-disk-images }
+
+`--e01` 可在 **Linux、macOS 和 Windows** 原生讀取實體 EWF1（`.E01`）與 EWF2（`.Ex01`）映像檔，不需要 FUSE、作業系統掛載或管理員權限。它使用 [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) 及上述相同的 NTFS 解析流程。
+
+分割映像檔請指定第一個區段。將 `.E02` 等所有相關檔案以原始名稱保留在相同目錄。支援完整磁碟（MBR/GPT）與單一 NTFS 磁碟區。混合兩種格式的目錄可使用 `--vhdx --e01`。
+
+暫存空間與來源中繼資料的要求相同。E01 映像檔通常包含整顆磁碟，且所有映像檔都會在解析開始前完成暫存，但只會複製解析器讀取的檔案，通常僅占已用空間的一小部分。映像檔以唯讀方式開啟。取得時的缺損及開啟或讀取時發現的損壞會列入 `ImageErrors` 與 `manifest.csv`；保留可讀取的結果並以狀態碼 1 結束。這只檢查實際存取的資料，不是所有區塊或完整媒體雜湊。拒絕邏輯格式 `.L01` 與 `.Lx01`，且沒有密碼選項。
+
+獨立的 `mount` 命令仍需要 Linux FUSE；原生自動解析則不需要。
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## 輸出時區 { #output-time-zone }
 
 剖析出的時間戳記預設為 UTC，與分析人員電腦的當地時區無關。UTC
@@ -117,6 +158,10 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - `$I30` 目錄索引
 - `$Boot` 開機磁區與 `$Secure:$SDS` 安全性描述元
 - SRUM
+- 使用者存取記錄 (UAL)
+- 網頁瀏覽器的瀏覽歷程、下載、Cookie 與表單歷程（Chromium 與 Firefox 系列瀏覽器）
+- Internet Explorer 與舊版 Edge 的 WebCache：瀏覽歷程記錄、下載、Cookie 與快取項目
+- Outlook 的 PST、OST、MSG 與 OFT 檔案：資料夾、項目、收件者、附件、連絡人、行事曆項目與工作
 - LNK 捷徑
 - Jump Lists
 - ShimCache
@@ -172,6 +217,28 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -220,7 +287,11 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -273,12 +344,14 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 | `Accounts` | SAM 本機帳戶、LSA 機密資訊的名稱與時間 |
 | `Applications` | 應用程式歷程（第三方工具的痕跡） |
 | `Applications` | 已安裝程式 |
+| `BrowserActivity` | 網頁瀏覽器的瀏覽歷程、下載、Cookie 與表單歷程，以及復原的已刪除項目；Internet Explorer 與舊版 Edge 的 WebCache |
+| `Communication` | Outlook 的 PST、OST、MSG 與 OFT 檔案：資料夾、項目、收件者、附件、連絡人、行事曆項目與工作 |
 | `ExternalDevices` | USB 裝置與磁碟區 |
 | `FileAndFolderOpening` | Jump Lists、LNK 捷徑、Microsoft Office、MRU 清單、開啟與另存新檔對話方塊、RecentDocs、ShellBags |
 | `FileExistence` | Amcache、ShimCache |
 | `FileSystem` | `$Boot`、`$I30`、`$LogFile`、`$MFT`、`$Secure:$SDS`、USN Journal |
 | `NetworkActivity` | 網路設定檔、介面、共用、連接埠 Proxy 與路由；SRUM 連線、流量與推播通知 |
-| `LateralMovement` | 使用者對外的遠端桌面、PuTTY 與 WinSCP 連線、對應的磁碟機與共用 |
+| `LateralMovement` | 使用者對外的遠端桌面、PuTTY 與 WinSCP 連線、對應的磁碟機與共用；使用者存取記錄（伺服器角色的用戶端） |
 | `Persistence` | 開機設定（BCD）、登錄自動啟動項目、服務、TaskCache |
 | `ProcessExecution` | 應用程式相容性、BAM 與 DAM、FeatureUsage 與釘選項目、MuiCache、Prefetch、Prefetch 時間軸、SRUM 應用程式／CPU 活動、UserAssist |
 | `Registry` | 一般的登錄區機碼與值，包括復原的記錄 |
@@ -309,6 +382,19 @@ Amcache 與 Jump Lists 各有一個共用的記錄檔，放在其帶前綴的資
 `JumpLists-CustomDestinations.csv`。不會有 Amcache 或 Jump Lists 子目錄。
 SRUM 資料表以 `SRUM-` 檔名直接放在其類別之下，例如
 `NetworkActivity/SRUM-NetworkConnections.csv`。
+使用者存取記錄的資料表位於 `LateralMovement`，每個資料表一個檔案，例如
+`UAL-Clients.csv` 與 `UAL-SystemIdentity.csv`，並附有 `UAL-logs.txt`；請參閱
+[使用者存取記錄 (UAL)](../artifacts/ual.md#automatic-parsing)。
+網頁瀏覽器的資料表位於 `BrowserActivity`：`Browser-History.csv`、`Browser-Downloads.csv`、
+`Browser-Cookies.csv` 與 `Browser-FormHistory.csv`，並附有 `Browser-logs.txt`；請參閱
+[網頁瀏覽器](../artifacts/browser.md#automatic-parsing)。
+Internet Explorer 與舊版 Edge 的 WebCache 資料表也位於此處：`WebCache-History.csv`、
+`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv` 與 `WebCache-Containers.csv`，
+並附有 `WebCache-logs.txt`；請參閱 [Internet Explorer 與舊版 Edge](../artifacts/webcache.md#automatic-parsing)。
+Outlook 的資料表位於 `Communication`：`Outlook-Files.csv`、`Outlook-Folders.csv`、
+`Outlook-Items.csv`、`Outlook-Recipients.csv`、`Outlook-Attachments.csv`、`Outlook-Contacts.csv`、
+`Outlook-Calendar.csv` 與 `Outlook-Tasks.csv`，並附有 `Outlook-logs.txt`；請參閱
+[Outlook](../artifacts/outlook.md#automatic-parsing)。
 請參閱 [SRUM 完整配置表](../artifacts/srum.md#categorized-auto-parse-output)。
 
 記錄檔名與首字母大寫的跡證名稱一致，例如 `Registry-SAM-logs.txt`、`PrefetchTimeline-logs.txt`
@@ -448,7 +534,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## 用法 { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -457,6 +543,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -500,3 +589,13 @@ Display Settings:
 報告欄位及其鑑識上的限制，請參閱[解讀復原的安全性描述元](../artifacts/defender-quarantine.md#reading-the-recovered-security-descriptor)。
 
 Auto-parse 也會讀取使用者的遠端連線（RDP、PuTTY、WinSCP 與對應的磁碟機）。
+
+## 建立一個按時間順序排列的超級時間軸 { #build-a-chronological-super-timeline }
+
+解析後，使用 [`super-timeline`](super-timeline.md) 將記錄的時間戳記擴展為標記事件，並跨電腦和工件對它們進行排序：
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+現有的 `-j, --json-timeline` 匯出仍然是組合的本機記錄 JSONL 檔案。它保留解析器模式；它不會擴展時間戳字段或對事件進行排序。保留它和單一解析器結果以進行證據級審查。

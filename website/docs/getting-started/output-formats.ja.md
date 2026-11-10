@@ -82,3 +82,7 @@ UTC は、`2026-10-20T08:46:38.2001668Z` 形式の Windows イベント ログ�
 ## ダメージと欠損値 { #damage-and-missing-values }
 
 空、`null`、`NA`、`Problems`、およびパーサー固有の状態フィールドは意味があります。これらは、アーティファクトに値が保存されていない、レコードが破損している、形式がサポートしていない、またはパーサーが解決できなかったことを意味する可能性があります。すべての空の値をゼロに置き換えないでください。
+
+## 正規化された時系列タイムライン { #normalized-chronological-timeline }
+
+[`super-timeline`](../commands/super-timeline.md) は共通の CSV／JSONL イベントスキーマに時刻の意味と出典を付け、時系列に並べます。Timesketch プロファイルにも対応します。各パーサーのネイティブ出力と `auto-parse -j` のスキーマは変更しません。

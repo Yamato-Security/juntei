@@ -5,9 +5,7 @@ Juntei, bellek açısından güvenli Rust diliyle yazılmış bir Windows adli a
 Juntei kalıcı dosya sistemi, kayıt defteri, yürütme, kullanıcı etkinliği, kaynak kullanımı
 ve güvenlik ürünü artefaktlarını ayrıştırır.
 
-Aynı ikili dosya Windows, macOS ve Linux üzerinde çalışır. Bu, bir analist KAPE,
-Velociraptor, disk imajı veya başka bir çevrimdışı toplama aldığında ve her artefakt için ayrı bir program
-yerine tek ve tutarlı bir arayüz istediğinde faydalıdır.
+Aynı ikili dosya Windows, macOS ve Linux üzerinde çalışır. Analistler, her artefakt için ayrı bir program yerine toplanmış Windows kanıtlarını ve disk imajlarını tutarlı tek bir arayüzle inceleyebilir.
 
 ## Tasarım hedefleri { #design-goals }
 
@@ -25,7 +23,8 @@ yerine tek ve tutarlı bir arayüz istediğinde faydalıdır.
 
 ## Juntei'nin yapmadıkları { #what-juntei-does-not-do }
 
-Juntei canlı bir diskin imajını almaz, adli bir imajı bağlamaz veya kanıt korumanın yerini almaz.
+Juntei canlı bir diskin imajını almaz veya kanıt korumanın yerini almaz; bağladığı tek disk imajları VHDX / E01 / Ex01
+imajlarıdır ve bunları yalnızca salt okunur olarak bağlar.
 Tüm artefaktları otomatik olarak tek bir olay anlatısında birleştirmez. Sağladığınız
 kanıtları ayrıştırır ve inceleme ile ilişkilendirmeye uygun kayıtlar üretir.
 

@@ -10,7 +10,13 @@
 | 디렉터리 인덱스 `$I30` | `parse-ntfs i30` | 디렉터리 내 파일, 인덱스 슬랙에 남아 있는 삭제되었거나 이름이 변경되었을 수 있는 파일의 이름, 시간, 크기 | 슬랙은 부분적이며 엔트리가 언제 제거되었는지 알려 주지 않음 |
 | NTFS 부트 섹터 `$Boot` | `parse-ntfs boot` | LNK, Jump Lists, Prefetch가 기록하는 볼륨 일련 번호, 지오메트리와 `$MFT` 위치, 호스트 간 비교를 위한 부트 코드 해시 | 일련 번호는 변경되거나 중복될 수 있음, 부트 코드가 다른 것은 단서이지 부트킷의 증명이 아님 |
 | NTFS 보안 설명자 `$Secure:$SDS` | `parse-ntfs secure-sds` | `$MFT`의 `SID`에 따른 파일의 소유자와 ACL, NULL DACL과 허용 범위가 넓은 ACL | 소유자는 변경될 수 있음, ACL은 누가 액세스할 수 있는지를 나타낼 뿐 누가 액세스했는지가 아님 |
+| VHDX 디스크 이미지 | `mount`, `auto-parse --vhdx` | NTFS → CSV / JSON / JSONL | `auto-parse`: Linux/macOS/Windows (TMP); `mount`: Linux/FUSE; NTFS ADS: — |
+| E01 / Ex01 디스크 이미지 | `mount`, `auto-parse --e01` | NTFS → CSV / JSON / JSONL | `auto-parse`: Linux/macOS/Windows (TMP); `mount`: Linux/FUSE; NTFS ADS: — |
 | SRUM | `parse-ese srum` | 앱/사용자별 네트워크 및 리소스 사용량 | 보통 집계된 값이며, 패킷이나 목적지 수준의 증명이 아님 |
+| 사용자 액세스 로깅 (UAL) | `parse-ese ual` | 어떤 클라이언트 주소와 계정이 Windows Server의 역할(파일 공유, Active Directory, DHCP, IIS)을 어느 날에 사용했는지 | 요청은 하나씩 기록되지 않고 날짜별로 집계됨, 주소가 NAT나 프록시일 수 있음, 더티 상태의 `Current.mdb`에는 최신 변경 사항이 빠져 있음 |
+| Internet Explorer와 레거시 Edge(WebCache) | `parse-ese webcache` | 방문한 페이지와 파일 탐색기에서 연 로컬 파일, 다운로드한 파일과 그 출처, 쿠키, HTTP 헤더가 포함된 캐시된 파일 | 방문 기록 항목은 각 방문이 아니라 마지막 방문이 기록된 URL임, 삭제된 항목은 복구되지 않음, 더티 상태의 데이터베이스에는 최신 변경 사항이 빠져 있음 |
+| 웹 브라우저(Chromium 및 Firefox 기반) | `parse-sqlite browser` | 방문한 페이지와 방문 경위, 다운로드한 파일과 그 출처, 쿠키, 웹 양식에 입력한 값. 삭제된 방문, 다운로드 및 양식 항목의 복구 | 방문은 리디렉션, 프레임 또는 다른 프로그램이 연 페이지일 수 있음, Chromium의 쿠키 값은 암호화되어 있음, 브라우저가 0으로 덮어쓰거나 체크포인트를 수행하면 삭제된 항목은 사라짐 |
+| Outlook(PST, OST, MSG, OFT) | `parse-file outlook` | 보낸 사람, 받는 사람, 시각, 첨부 파일이 포함된 이메일. 연락처, 일정 항목, 작업. 폴더, 숨겨진 설정 항목, 저장된 그대로의 모든 속성 | 보낸 사람의 주소는 위조될 수 있음, 더 이상 어느 폴더에도 없는 항목은 복구되지 않음, 오프라인 주소록, 자동 완성 및 기타 Outlook 파일은 아직 읽지 않음 |
 | LNK 바로 가기 | `parse-file lnk` | 열린 대상, 인수, 볼륨, 공유, 원본 머신 | 대상이 실행되지 않아도 바로 가기가 생성될 수 있음 |
 | Jump Lists | `parse-file jump-lists` | 애플리케이션이 연 항목, 고정, 사용 내역 및 포함된 LNK 데이터 | 애플리케이션별로 동작과 보존 방식이 다름 |
 | ShimCache | `parse-registry shimcache` | 과거 실행 파일 경로와 호환성 검사 | 종료될 때까지 캐시가 플러시되지 않을 수 있음, 엔트리만으로는 실행이 아님 |

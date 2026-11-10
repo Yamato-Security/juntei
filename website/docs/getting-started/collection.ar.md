@@ -1,7 +1,10 @@
 # جمع الأدلة { #collecting-evidence }
 
-يحلل Juntei ملفات جُمعت بالفعل من Windows. استخدم أداة اكتساب موثوقة واحتفظ
-بالبيانات الوصفية الأصلية حيثما أمكن.
+يحلل Juntei الملفات التي جُمعت مسبقًا من Windows. استخدم أداة اقتناء موثوقة وحافظ على البيانات الوصفية الأصلية كلما أمكن.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## المواقع الشائعة { #common-locations }
 
@@ -13,6 +16,10 @@
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | دفتر يومية USN | دفق البيانات الوصفية لـ NTFS ‏`C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| تسجيل وصول المستخدمين (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer وEdge القديم (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`، `%USERPROFILE%\Documents\Outlook Files\*.pst` ‏(`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` قبل Outlook 2010)، `%APPDATA%\Microsoft\Templates\*.oft`، وملفات `.msg` أينما حُفظت |
+| متصفحات الويب | `%LOCALAPPDATA%\Google\Chrome\User Data\`، و`%LOCALAPPDATA%\Microsoft\Edge\User Data\`، و`%APPDATA%\Mozilla\Firefox\Profiles\`، ومجلدات ملفات التعريف الخاصة بالمتصفحات الأخرى |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ومواقع أخرى للمستخدم/النظام |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` و`CustomDestinations` |
 | ShimCache | خلية `SYSTEM`: ‏`...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +38,16 @@
 - اجمع `$LogFile` مع `$MFT` لوحدة التخزين نفسها في أقرب وقت ممكن. فـ `$LogFile` يلتف
   بسرعة؛ وقد يؤدي الجمع اللاحق إلى فقدان سجلات الإعادة/التراجع (redo/undo) الأقدم بالكامل.
 - اجمع SRUM مع خلية `SOFTWARE` المطابقة لحل أسماء الحسابات وملفات تعريف Wi-Fi.
+- اجمع مجلد `Sum` الخاص بتسجيل وصول المستخدمين بأكمله: فـ `SystemIdentity.mdb` يسمّي الأدوار
+  وقواعد بيانات `{GUID}.mdb` السنوية. ولا يعيد Juntei كذلك تشغيل سجلات المعاملات `Svc*.log` الخاصة به.
+- اجمع قواعد بيانات المتصفحات مع ملفات `-wal` المجاورة لها (`places.sqlite-wal`،
+  `cookies.sqlite-wal`): فأحدث التغييرات، وإصدارات الصفحات الأقدم التي تُستعاد منها الإدخالات المحذوفة،
+  لا توجد هناك إلا إلى أن ينفذ المتصفح نقطة تحقق (checkpoint).
+- اجمع مجلد `WebCache` بأكمله: فـ Windows يُبقي `WebCacheV01.dat` مفتوحًا ما دام المستخدم مسجلًا دخوله،
+  ولا توجد أحدث تغييراته إلا في سجلات المعاملات `V01*.log`، التي لا يعيد Juntei تشغيلها.
+- اجمع ملفات OST وPST الخاصة بـ Outlook وOutlook مغلق، أو من صورة قرص أو نسخة ظل لوحدة التخزين
+  (volume shadow copy): فـ Outlook يُبقيها مفتوحة ما دام يعمل. وابحث أيضًا عن ملفات PST خارج المجلدات
+  الافتراضية: فالمستخدمون ينقلون الأرشيفات إلى مجلدات ومحركات أقراص ومشاركات ملفات أخرى.
 - اجمع شجرة `Quarantine` الخاصة بـ Defender بأكملها حتى يمكن مطابقة Entries وResourceData وResources.
 
 ## تحذيرات للأنظمة الحية { #live-system-cautions }

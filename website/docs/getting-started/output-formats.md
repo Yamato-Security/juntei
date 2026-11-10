@@ -118,3 +118,9 @@ the computer running Juntei. Raw values and unzoned wall clocks remain as record
 Empty, `null`, `NA`, `Problems`, and parser-specific state fields are meaningful. They can mean the
 artifact did not store a value, the record was damaged, the format does not support it, or the
 parser could not resolve it. Do not replace all empty values with zero.
+
+## Normalized chronological timeline
+
+[`super-timeline`](../commands/super-timeline.md) creates a common CSV/JSONL event schema
+with labeled timestamp meanings, source references and chronological sorting. It also supports
+a Timesketch import profile. Native parser exports and `auto-parse -j` keep their existing schemas.

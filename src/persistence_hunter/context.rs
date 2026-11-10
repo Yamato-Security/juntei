@@ -40,6 +40,19 @@ pub struct EvidenceFile {
     pub(super) volume: char,
 }
 
+impl EvidenceFile {
+    /// The file's size. A disk-image file that was not staged is an empty placeholder; its
+    /// size is the original's.
+    pub(super) fn size(&self) -> u64 {
+        crate::image_files::len(&self.physical, self.len)
+    }
+
+    /// Make the file's content readable: read a disk-image placeholder from its image.
+    pub(super) fn materialize(&self) -> std::io::Result<()> {
+        crate::image_files::materialize(&self.physical)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Resolution {
     Found(EvidenceFile),
@@ -299,14 +312,22 @@ impl Context {
                 let Some((kind, user)) = identity_of(file, standalone) else {
                     continue;
                 };
-                if file.len > budget.saturating_sub(input_bytes) {
-                    issues.push(format!("Skipped {kind} hive {}: {} bytes exceed remaining per-computer input memory budget of {} bytes; other hives and file checks are retained", file.physical.display(), file.len, budget.saturating_sub(input_bytes)));
+                let len = file.size();
+                if len > budget.saturating_sub(input_bytes) {
+                    issues.push(format!("Skipped {kind} hive {}: {} bytes exceed remaining per-computer input memory budget of {} bytes; other hives and file checks are retained", file.physical.display(), len, budget.saturating_sub(input_bytes)));
                     continue;
                 }
-                let mut cost = file.len;
+                let mut cost = len;
                 let mut logs = Vec::new();
                 if !no_logs {
                     for log in adjacent_logs(&file.physical, &mut issues) {
+                        if let Err(e) = crate::image_files::materialize(&log) {
+                            issues.push(format!(
+                                "Cannot inspect transaction log {}: {e}",
+                                log.display()
+                            ));
+                            continue;
+                        }
                         match fs::metadata(&log) {
                             Ok(m) if m.len() <= budget.saturating_sub(input_bytes).saturating_sub(cost) => {
                                 cost += m.len(); logs.push(log);
@@ -315,6 +336,13 @@ impl Context {
                             Err(e) => issues.push(format!("Cannot inspect transaction log {}: {e}", log.display())),
                         }
                     }
+                }
+                if let Err(e) = file.materialize() {
+                    issues.push(format!(
+                        "Cannot read {kind} hive {}: {e}",
+                        file.physical.display()
+                    ));
+                    continue;
                 }
                 match crate::registry::open(&file.physical, Logs::Given(&logs)) {
                     Ok(opened) => {
@@ -698,6 +726,7 @@ fn client_names_inner(root: &Path) -> Option<Vec<(String, String)>> {
     {
         return None;
     }
+    crate::image_files::materialize(&path).ok()?;
     let mut bytes = Vec::new();
     fs::File::open(path)
         .ok()?

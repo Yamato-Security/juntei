@@ -1,7 +1,10 @@
 # Pengumpulan bukti { #collecting-evidence }
 
-Juntei mengurai berkas yang telah dikumpulkan dari Windows. Gunakan alat akuisisi yang tepercaya dan pertahankan
-metadata asli jika memungkinkan.
+Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisisi tepercaya dan pertahankan metadata asli jika memungkinkan.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## Lokasi umum { #common-locations }
 
@@ -13,6 +16,10 @@ metadata asli jika memungkinkan.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | Jurnal USN | Stream metadata NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| Pencatatan Akses Pengguna (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer dan Edge lama (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` sebelum Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, dan berkas `.msg` di mana pun berkas itu disimpan |
+| Browser web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\`, dan folder profil browser lainnya |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` dan lokasi pengguna/sistem lainnya |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` dan `CustomDestinations` |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +38,16 @@ metadata asli jika memungkinkan.
 - Kumpulkan `$LogFile` bersama `$MFT` dari volume yang sama dengan waktu yang sedekat mungkin. `$LogFile` berputar
   dengan cepat; pengumpulan yang lebih lambat dapat kehilangan record redo/undo sebelumnya sepenuhnya.
 - Kumpulkan SRUM bersama hive `SOFTWARE` yang bersesuaian untuk me-resolve nama akun dan nama profil Wi-Fi.
+- Kumpulkan seluruh direktori `Sum` milik Pencatatan Akses Pengguna: `SystemIdentity.mdb` menamai role-role dan
+  database `{GUID}.mdb` tahunan. Juntei juga tidak memutar ulang log transaksi `Svc*.log` miliknya.
+- Kumpulkan database browser beserta berkas `-wal` di sampingnya (`places.sqlite-wal`,
+  `cookies.sqlite-wal`): perubahan terbaru, serta versi halaman lama yang menjadi sumber pemulihan entri
+  terhapus, hanya ada di sana sampai browser melakukan checkpoint.
+- Kumpulkan seluruh folder `WebCache`: Windows terus membuka `WebCacheV01.dat` selama pengguna masuk (log on),
+  dan perubahan terbarunya hanya ada di log transaksi `V01*.log`, yang tidak diputar ulang oleh Juntei.
+- Kumpulkan berkas OST dan PST Outlook saat Outlook ditutup, atau dari image disk atau volume shadow
+  copy: Outlook terus membukanya selama berjalan. Cari juga PST di luar folder default: pengguna
+  memindahkan arsip ke folder, drive, dan share berkas lain.
 - Kumpulkan seluruh pohon `Quarantine` Defender agar Entries, ResourceData, dan Resources dapat dicocokkan.
 
 ## Peringatan untuk sistem live { #live-system-cautions }

@@ -5,9 +5,7 @@ Juntei adalah parser artefak forensik Windows yang ditulis dalam Rust yang aman 
 sedangkan Juntei mengurai artefak persisten dari sistem berkas, registry, eksekusi, aktivitas pengguna, penggunaan sumber daya,
 dan produk keamanan.
 
-Binary yang sama berjalan di Windows, macOS, dan Linux. Hal ini berguna ketika analis menerima koleksi KAPE,
-Velociraptor, image disk, atau koleksi offline lainnya dan menginginkan satu antarmuka yang konsisten alih-alih
-program terpisah untuk setiap artefak.
+Binary yang sama berjalan di Windows, macOS, dan Linux. Analis dapat memeriksa bukti Windows yang telah dikumpulkan dan image disk dengan satu antarmuka konsisten, bukan program terpisah untuk setiap artefak.
 
 ## Tujuan desain { #design-goals }
 
@@ -25,7 +23,8 @@ program terpisah untuk setiap artefak.
 
 ## Apa yang tidak dilakukan Juntei { #what-juntei-does-not-do }
 
-Juntei tidak melakukan akuisisi disk secara live, tidak me-mount image forensik, dan tidak menggantikan preservasi bukti. Juntei
+Juntei tidak melakukan akuisisi disk secara live dan tidak menggantikan preservasi bukti, dan satu-satunya image disk
+yang di-mount-nya adalah image VHDX / E01 / Ex01, dalam mode baca saja. Juntei
 tidak secara otomatis menggabungkan setiap artefak menjadi satu narasi insiden. Juntei mengurai
 bukti yang Anda berikan dan menghasilkan catatan yang sesuai untuk investigasi dan korelasi.
 

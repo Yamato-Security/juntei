@@ -20,10 +20,10 @@ use crate::color::JunteiColor;
 use crate::progress;
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use chrono::Utc;
-use serde::Serialize;
 use serde::de::IgnoredAny;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ffi::OsString;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufRead, BufReader, BufWriter, Read, Write};
@@ -33,6 +33,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
+mod disk_images;
 mod flat_outputs;
 mod srum_outputs;
 mod timeline;
@@ -43,6 +44,8 @@ const WORK_DIR_PREFIX: &str = ".juntei-work-";
 const CATEGORIES: &[&str] = &[
     "Accounts",
     "Applications",
+    "BrowserActivity",
+    "Communication",
     "ExternalDevices",
     "FileAndFolderOpening",
     "FileExistence",
@@ -62,6 +65,8 @@ fn artifact_category(artifact: &str) -> &'static str {
         "lsa-secrets" | "sam" => "Accounts",
         "app-history" => "Applications",
         "installed-programs" => "Applications",
+        "browser" | "webcache" => "BrowserActivity",
+        "outlook" => "Communication",
         "usb" => "ExternalDevices",
         "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
             "FileAndFolderOpening"
@@ -69,7 +74,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "amcache" | "shimcache" => "FileExistence",
         "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
         "networks" => "NetworkActivity",
-        "remote-access" => "LateralMovement",
+        "remote-access" | "ual" => "LateralMovement",
         "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "Persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
         | "userassist" => "ProcessExecution",
@@ -87,6 +92,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "amcache" => "Registry-Amcache",
         "bcd" => "Registry-BCD",
         "boot" => "Boot",
+        "browser" => "Browser",
         "appcompat" => "Registry-AppCompat",
         "auditpol" => "Registry-AuditPolicy",
         "app-history" => "Registry-AppHistory",
@@ -102,6 +108,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "mft" => "MFT",
         "networks" => "Registry-Networks",
         "office" => "Registry-Office",
+        "outlook" => "Outlook",
         "mru" => "Registry-MRU",
         "muicache" => "Registry-MuiCache",
         "opensavemru" => "Registry-OpenSaveMRU",
@@ -122,8 +129,10 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "system-info" => "Registry-SystemInfo",
         "taskcache" => "Registry-TaskCache",
         "usb" => "Registry-USB",
+        "ual" => "UAL",
         "usn-journal" => "UsnJournal",
         "userassist" => "Registry-UserAssist",
+        "webcache" => "WebCache",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
     }
 }
@@ -202,7 +211,7 @@ fn recorded_path(root: &Path, recorded: &str, from_output: bool) -> PathBuf {
 }
 
 /// `path` for the terminal: as given when relative, else relative to the current directory.
-fn shown(path: &Path) -> String {
+pub(crate) fn shown(path: &Path) -> String {
     if path.is_relative() {
         return path.display().to_string();
     }
@@ -357,6 +366,9 @@ struct TaskResult {
     log: String,
     #[serde(rename = "Error")]
     error: Option<String>,
+    /// Structured diagnostics emitted by a child while reading a staged placeholder.
+    #[serde(skip)]
+    image_errors: Vec<ImageProblem>,
 }
 
 impl TaskResult {
@@ -392,6 +404,9 @@ struct ManifestHost {
     windows_directories: Vec<String>,
     #[serde(rename = "OutputDirectory")]
     output_directory: String,
+    /// With `--vhdx`: the disk image the system's files are in, from the evidence directory.
+    #[serde(rename = "Image", skip_serializing_if = "Option::is_none")]
+    image: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -424,6 +439,11 @@ struct Manifest<'a> {
     hosts: Vec<ManifestHost>,
     #[serde(rename = "Tasks")]
     tasks: &'a [TaskResult],
+    #[serde(
+        rename = "ImageErrors",
+        skip_serializing_if = "<[ImageProblem]>::is_empty"
+    )]
+    image_errors: &'a [ImageProblem],
 }
 
 struct DataFile {
@@ -432,8 +452,55 @@ struct DataFile {
     artifact: &'static str,
 }
 
+/// The disk images prepared for a run: the name of the directory they were found in, and
+/// each staging folder (in the directory the parsers read) with its image, from that directory
+/// (`./host1-triage.vhdx`).
+pub(crate) struct Images {
+    directory_name: String,
+    mounts: Vec<(PathBuf, String)>,
+    problems: Vec<ImageProblem>,
+    metadata: crate::image_metadata::Snapshot,
+    /// Files that were not copied: canonical placeholder path → size in the image.
+    placeholders: HashMap<PathBuf, u64>,
+    /// Where each staged volume came from, for reading placeholders on demand.
+    sources: crate::image_files::Sources,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub(crate) struct ImageProblem {
+    #[serde(rename = "Image")]
+    pub(crate) image: String,
+    #[serde(rename = "Path")]
+    pub(crate) path: String,
+    #[serde(rename = "Error")]
+    pub(crate) error: String,
+}
+
+impl Images {
+    /// The image a host's files are in.
+    fn of(&self, root: &Path) -> Option<&str> {
+        self.mounts
+            .iter()
+            .find(|(folder, _)| root.starts_with(folder))
+            .map(|(_, image)| image.as_str())
+    }
+}
+
 /// Run the command; returns the exit status.
 pub fn run(opts: &AutoParseOptions) -> i32 {
+    if opts.vhdx || opts.e01 {
+        return disk_images::run(opts);
+    }
+    if opts.temp_dir.is_some() {
+        error_msg(opts.common.no_color, "--temp-dir requires --vhdx or --e01");
+        return 1;
+    }
+    run_evidence(opts, None)
+}
+
+/// Parse the systems found in `opts.directory`; `images`, the disk images its folders are
+/// mounted from.
+fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
     let no_color = opts.common.no_color;
     if !opts.directory.is_dir() {
         error_msg(
@@ -541,14 +608,14 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             return 1;
         }
     };
-    let task_paths = TaskPaths::new(
-        parser_directory.clone(),
-        &[&evidence, &parser_directory],
-        &output_root,
-    );
+    let mut source_roots = vec![evidence.as_path(), parser_directory.as_path()];
+    if let Some(parent) = opts.image_source_metadata.as_deref().and_then(Path::parent) {
+        source_roots.push(parent);
+    }
+    let task_paths = TaskPaths::new(parser_directory.clone(), &source_roots, &output_root);
     let inventories: Vec<InputInventory> = hosts
         .iter()
-        .map(|host| InputInventory::scan(&host.root))
+        .map(|host| InputInventory::scan(&host.root, images.map(|images| &images.placeholders)))
         .collect();
     let evidence_bytes: u64 = inventories.iter().map(|inputs| inputs.total).sum();
 
@@ -670,10 +737,13 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
             .as_deref()
             .filter(|fqdn| *fqdn != host.computer)
             .map_or_else(String::new, |fqdn| format!(" ({fqdn})"));
+        let image = images
+            .and_then(|images| images.of(&host.root))
+            .map_or_else(String::new, |image| format!(" ({image})"));
         p(
             None,
             &format!(
-                "  {}{}: {}",
+                "  {}{}: {}{image}",
                 host.computer,
                 fqdn,
                 dot_relative(&evidence, &host.root).display()
@@ -711,10 +781,25 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         &bar,
         opts.timezone,
     );
+    if crate::interrupt::requested() {
+        bar.abandon_with_message("Cancelled");
+        if let Some(path) = &timeline_work
+            && temporary_work_directory(&opts.output, path)
+            && let Err(error) = fs::remove_dir_all(path)
+        {
+            error_msg(
+                no_color,
+                &format!("Could not remove cancelled timeline workspace: {error}"),
+            );
+        }
+        return 130;
+    }
     bar.finish_with_message(progress::finished_message(no_color));
     for (task, result) in tasks.iter().zip(&mut results) {
-        if matches!(task.artifact, "amcache" | "jump-lists")
-            && task.output_type == AutoOutputType::Csv
+        if matches!(
+            task.artifact,
+            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
+        ) && task.output_type == AutoOutputType::Csv
             && result.status == TaskStatus::Succeeded
         {
             match flat_outputs::distribute(task, &output_root) {
@@ -864,11 +949,18 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         .iter()
         .map(|result| result.recorded(&output_root))
         .collect();
+    let mut image_errors = images.map_or_else(Vec::new, |i| i.problems.clone());
+    let staged_errors = image_errors.len();
+    for problem in results.iter().flat_map(|result| &result.image_errors) {
+        if !image_errors.contains(problem) {
+            image_errors.push(problem.clone());
+        }
+    }
     let manifest = Manifest {
         generated_utc: Utc::now().to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
         juntei_version: env!("CARGO_PKG_VERSION"),
         manifest_version: MANIFEST_VERSION,
-        evidence_directory: name(&evidence),
+        evidence_directory: images.map_or_else(|| name(&evidence), |i| i.directory_name.clone()),
         output_directory: name(&output_root),
         output_type: opts.output_type.as_str(),
         output_time_zone: opts.timezone.to_string(),
@@ -883,9 +975,10 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         max_depth: opts.max_depth,
         hosts: hosts
             .iter()
-            .map(|host| manifest_host(host, &evidence))
+            .map(|host| manifest_host(host, &evidence, images))
             .collect(),
         tasks: &recorded,
+        image_errors: &image_errors,
     };
     let manifest_path = opts.output.join("manifest.json");
     if let Err(e) = write_pretty_json(&manifest_path, &manifest) {
@@ -959,7 +1052,16 @@ pub fn run(opts: &AutoParseOptions) -> i32 {
         }
     }
 
-    i32::from(failed > 0 || succeeded == 0 || timeline_failed)
+    if image_errors.len() > staged_errors {
+        error_msg(
+            no_color,
+            &format!(
+                "Incomplete disk image input: {} read problem(s) discovered during parsing. Readable results were retained; see ImageErrors in manifest.json or the disk-image rows in manifest.csv.",
+                image_errors.len() - staged_errors,
+            ),
+        );
+    }
+    i32::from(failed > 0 || succeeded == 0 || timeline_failed || !image_errors.is_empty())
 }
 
 fn discovered_roots(input: &Path, max_depth: usize) -> io::Result<BTreeMap<PathBuf, Vec<PathBuf>>> {
@@ -1330,6 +1432,18 @@ fn build_tasks(
                     args.push("--extract-shown-as".into());
                     args.push(dot_relative(&parser_output, &extract).into_os_string());
                 }
+                if matches!(artifact, "lnk" | "jump-lists")
+                    && let Some(path) = &opts.image_source_metadata
+                {
+                    args.push("--image-source-metadata".into());
+                    args.push(path.clone().into_os_string());
+                }
+                if artifact == "persistence-hunter"
+                    && let Some(path) = &opts.image_files
+                {
+                    args.push("--image-files".into());
+                    args.push(path.clone().into_os_string());
+                }
                 args.push("-C".into());
                 args.push("-K".into());
                 args.push("-q".into());
@@ -1384,6 +1498,19 @@ fn build_tasks(
             OutputShape::Directory,
             srum_extra,
         );
+        add("ual", &["parse-ese", "ual"], OutputShape::CsvDirectory, &[]);
+        add(
+            "webcache",
+            &["parse-ese", "webcache"],
+            OutputShape::CsvDirectory,
+            &[],
+        );
+        add(
+            "browser",
+            &["parse-sqlite", "browser"],
+            OutputShape::CsvDirectory,
+            &[],
+        );
         let code_page = opts.code_page.to_string();
         add(
             "lnk",
@@ -1394,6 +1521,12 @@ fn build_tasks(
         add(
             "jump-lists",
             &["parse-file", "jump-lists"],
+            OutputShape::CsvDirectory,
+            &["--code-page", &code_page],
+        );
+        add(
+            "outlook",
+            &["parse-file", "outlook"],
             OutputShape::CsvDirectory,
             &["--code-page", &code_page],
         );
@@ -1605,6 +1738,27 @@ fn build_tasks(
     Ok(tasks)
 }
 
+type NamePredicate = fn(&str) -> bool;
+
+/// The artifacts whose parsers choose input files by name. Disk-image staging copies the files
+/// named so, and the inventory estimates each parser's work from their sizes. Keep both in one
+/// place: a file a parser selects but staging leaves out would be read as an empty file.
+pub(super) const NAMED_INPUTS: &[(&str, NamePredicate)] = &[
+    ("amcache", crate::amcache::is_amcache_name),
+    ("prefetch", crate::prefetch::is_prefetch_name),
+    ("prefetch-timeline", crate::prefetch::is_prefetch_name),
+    ("srum", crate::srum::is_database_name),
+    ("ual", crate::ual::is_database_name),
+    ("browser", crate::browser::is_database_name),
+    ("webcache", crate::webcache::is_database_name),
+    ("outlook", crate::outlook::is_outlook_name),
+    ("lnk", crate::lnk::is_lnk_name),
+    ("jump-lists", crate::jump_lists::is_jump_list_name),
+    ("shimcache", crate::shimcache::is_system_name),
+    ("boot", crate::boot::is_boot_name),
+    ("secure-sds", crate::secure_sds::is_sds_name),
+];
+
 /// Inventory each host once. Sizes describe primary inputs, excluding transaction logs and
 /// enrichment hives, and are only estimates of the work a parser will perform.
 #[derive(Default)]
@@ -1618,33 +1772,33 @@ struct InputInventory {
 }
 
 impl InputInventory {
-    fn scan(root: &Path) -> Self {
+    /// `placeholders`: the sizes in their images of disk-image files that were not copied
+    /// (canonical paths of empty placeholder files).
+    fn scan(root: &Path, placeholders: Option<&HashMap<PathBuf, u64>>) -> Self {
         let mut found = Self::default();
         for path in util::find_files(root, |_| true) {
             let name = path.file_name().unwrap_or_default().to_string_lossy();
-            let size = path.metadata().map_or(0, |meta| meta.len());
+            let mut size = path.metadata().map_or(0, |meta| meta.len());
+            if size == 0
+                && let Some(placeholders) = placeholders.filter(|p| !p.is_empty())
+                && let Some(original) = path
+                    .canonicalize()
+                    .ok()
+                    .and_then(|canonical| placeholders.get(&canonical))
+            {
+                size = *original;
+            }
             // Cross-source hunting inspects the host's hives and filesystem
             // evidence, with optional MFT and event-log correlation.
             found.total += size;
             found.add_size("persistence-hunter", size);
-            for (artifact, matches) in [
-                ("amcache", crate::amcache::is_amcache_name(&name)),
-                ("prefetch", crate::prefetch::is_prefetch_name(&name)),
-                (
-                    "prefetch-timeline",
-                    crate::prefetch::is_prefetch_name(&name),
-                ),
-                ("srum", crate::srum::is_database_name(&name)),
-                ("lnk", crate::lnk::is_lnk_name(&name)),
-                ("jump-lists", crate::jump_lists::is_jump_list_name(&name)),
-                ("shimcache", crate::shimcache::is_system_name(&name)),
-                ("i30", crate::i30::is_i30_file(&path)),
-                ("boot", crate::boot::is_boot_name(&name)),
-                ("secure-sds", crate::secure_sds::is_sds_name(&name)),
-            ] {
-                if matches {
+            for (artifact, matches) in NAMED_INPUTS {
+                if matches(&name) {
                     found.add_size(artifact, size);
                 }
+            }
+            if crate::i30::is_i30_file(&path) {
+                found.add_size("i30", size);
             }
             if crate::registry::is_hive_file(&path) {
                 found.add_size("registry", size);
@@ -1911,6 +2065,9 @@ fn run_tasks(
         for _ in 0..threads {
             scope.spawn(|| {
                 loop {
+                    if crate::interrupt::requested() {
+                        break;
+                    }
                     let index = next.fetch_add(1, Ordering::Relaxed);
                     let Some(task) = tasks.get(index) else {
                         break;
@@ -1955,15 +2112,19 @@ fn run_task(
     )
     .chain(task.args.iter().map(|a| paths.text(&a.to_string_lossy())))
     .collect();
-    let output = Command::new(executable)
-        .current_dir(&paths.directory)
-        .args(&task.args)
-        .output();
+    let output = crate::interrupt::output(
+        Command::new(executable)
+            .current_dir(&paths.directory)
+            .args(&task.args),
+    );
     let mut error = None;
+    let mut image_errors = Vec::new();
     let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
             let stdout = paths.text(&String::from_utf8_lossy(&output.stdout));
-            let stderr = paths.text(&String::from_utf8_lossy(&output.stderr));
+            let (stderr, problems) =
+                image_diagnostics(&String::from_utf8_lossy(&output.stderr), paths);
+            image_errors = problems;
             let combined = format!("{stdout}{stderr}");
             let skipped = !output.status.success() && no_artifact_message(&combined);
             let status = if output.status.success() {
@@ -2036,7 +2197,36 @@ fn run_task(
         output_files: Vec::new(),
         log: task.log.to_string_lossy().to_string(),
         error,
+        image_errors,
     }
+}
+
+/// Decode before path sanitizing: Windows backslashes inside JSON are escaped and would not
+/// match the directory spellings. Preserve ordinary and malformed diagnostic lines verbatim.
+fn image_diagnostics(stderr: &str, paths: &TaskPaths) -> (String, Vec<ImageProblem>) {
+    let mut text = String::new();
+    let mut problems = Vec::new();
+    for line in stderr.split_inclusive('\n') {
+        let problem = line
+            .trim_end_matches(['\r', '\n'])
+            .strip_prefix(crate::image_files::PROBLEM_PREFIX)
+            .and_then(|json| serde_json::from_str::<ImageProblem>(json).ok());
+        if let Some(mut problem) = problem {
+            problem.error = paths.text(&problem.error);
+            text.push_str(&format!(
+                "Image read problem at {}!/{}: {}\n",
+                problem.image.escape_debug(),
+                problem.path.escape_debug(),
+                problem.error
+            ));
+            if !problems.contains(&problem) {
+                problems.push(problem);
+            }
+        } else {
+            text.push_str(&paths.text(line));
+        }
+    }
+    (text, problems)
 }
 
 fn no_artifact_message(output: &str) -> bool {
@@ -2111,6 +2301,7 @@ fn annotate_json_file(
             return annotate_jsonl(input, &mut writer, computer, artifact);
         }
         for value in serde_json::Deserializer::from_reader(input).into_iter::<Value>() {
+            crate::interrupt::check()?;
             let mut value = value.map_err(io::Error::other)?;
             annotate_value(&mut value, computer, artifact);
             serde_json::to_writer_pretty(&mut writer, &value).map_err(io::Error::other)?;
@@ -2141,6 +2332,7 @@ fn annotate_jsonl(
 
     let mut line = Vec::new();
     loop {
+        crate::interrupt::check()?;
         line.clear();
         if input.read_until(b'\n', &mut line)? == 0 {
             break;
@@ -2259,8 +2451,9 @@ fn replace_generated_file(path: &Path, replacement: &Path) -> io::Result<()> {
 }
 
 /// `host` in the manifests, its directories relative to `evidence`.
-fn manifest_host(host: &Host, evidence: &Path) -> ManifestHost {
+fn manifest_host(host: &Host, evidence: &Path, images: Option<&Images>) -> ManifestHost {
     ManifestHost {
+        image: images.and_then(|i| i.of(&host.root)).map(str::to_string),
         computer: host.computer.clone(),
         hostname: host.hostname.clone(),
         fqdn: host.fqdn.clone(),
@@ -2334,6 +2527,14 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             serde_json::to_string(&task.command).map_err(io::Error::other)?,
         ])?;
     }
+    for problem in manifest.image_errors {
+        let mut row = vec![String::new(); 18];
+        row[4] = format!("{}!/{}", problem.image, problem.path);
+        row[5] = "disk-image".into();
+        row[10] = "failed".into();
+        row[16] = problem.error.clone();
+        writer.write_record(row)?;
+    }
     writer.flush()
 }
 
@@ -2357,6 +2558,25 @@ fn output_totals(root: &Path) -> io::Result<(usize, u64)> {
         }
     }
     Ok((files, bytes))
+}
+
+/// Validate staging before creating workspaces or reading an image's contents.
+/// The ordinary pipeline requires its evidence tree to be outside the output.
+fn validate_image_staging(opts: &AutoParseOptions) -> io::Result<()> {
+    let Some(staging) = &opts.temp_dir else {
+        return Ok(());
+    };
+    let output = absolute_candidate(&opts.output)?;
+    let staging = absolute_candidate(staging)?;
+    if staging.starts_with(&output) {
+        return Err(io::Error::other(
+            "--temp-dir must be outside the output directory",
+        ));
+    }
+    if !staging.is_dir() {
+        return Err(io::Error::other("--temp-dir must be an existing directory"));
+    }
+    Ok(())
 }
 
 fn output_separate_from_evidence(evidence: &Path, output: &Path) -> Result<(), String> {
@@ -2427,6 +2647,83 @@ fn normalize_absolute(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn super_timeline_supports_every_scheduled_parser_artifact() {
+        use clap::Parser;
+        let root = tempfile::tempdir().unwrap();
+        let evidence = root.path().join("evidence");
+        let windows = evidence.join("HOST/C/Windows");
+        fs::create_dir_all(windows.join("System32")).unwrap();
+        for name in ["$MFT", "$J", "$LogFile", "$I30", "$Boot", "$SDS"] {
+            fs::write(evidence.join("HOST/C").join(name), [0u8; 512]).unwrap();
+        }
+        let output = root.path().join("parsed");
+        let cli = crate::cli::Cli::parse_from([
+            "juntei",
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+        ]);
+        let crate::cli::Commands::AutoParse(opts) = cli.cmd else {
+            unreachable!()
+        };
+        let hosts = discover_hosts(&evidence, 10).unwrap();
+        let inventories: Vec<_> = hosts
+            .iter()
+            .map(|host| InputInventory::scan(&host.root, None))
+            .collect();
+        let tasks = build_tasks(
+            &hosts,
+            &inventories,
+            &opts,
+            &evidence,
+            &root.path().join("work"),
+        )
+        .unwrap();
+        assert!(tasks.len() >= 40, "{} tasks", tasks.len());
+        for task in tasks {
+            assert!(
+                crate::super_timeline::supports_artifact(task.artifact),
+                "Missing timeline adapter: {}",
+                task.artifact
+            );
+        }
+    }
+
+    #[test]
+    fn child_image_diagnostics_retain_provenance_and_sanitize_escaped_windows_paths() {
+        let paths = TaskPaths::new(
+            ".".into(),
+            &[Path::new(r"C:\private\staging")],
+            Path::new("output"),
+        );
+        let problem = ImageProblem {
+            image: "./evidence.E01".into(),
+            path: "Volume2/C/Example/agent.exe".into(),
+            error: r"Could not read C:\private\staging\host\C\Example\agent.exe".into(),
+        };
+        let json = serde_json::to_string(&problem).unwrap();
+        let diagnostic = format!("{}{json}\r\n", crate::image_files::PROBLEM_PREFIX);
+        let stderr = format!(
+            "ordinary warning\n{diagnostic}{diagnostic}{}invalid json\n",
+            crate::image_files::PROBLEM_PREFIX
+        );
+        let (text, errors) = image_diagnostics(&stderr, &paths);
+        assert!(text.starts_with("ordinary warning\n"));
+        assert!(text.contains("evidence.E01!/Volume2/C/Example/agent.exe"));
+        assert!(text.contains("JUNTEI_IMAGE_READ_PROBLEM: invalid json\n"));
+        assert!(!text.contains("private"));
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].image, problem.image);
+        assert_eq!(errors[0].path, problem.path);
+        assert_eq!(
+            errors[0].error,
+            r"Could not read .\host\C\Example\agent.exe"
+        );
+    }
 
     #[test]
     fn metadata_discovery_bounds_client_info_and_does_not_follow_links() {
@@ -2793,7 +3090,7 @@ mod tests {
         fs::write(dir.path().join("$MFT"), vec![0u8; 64]).unwrap();
         fs::write(dir.path().join("$J"), vec![0u8; 128]).unwrap();
         fs::write(dir.path().join("$LogFile"), vec![0u8; 256]).unwrap();
-        let inputs = InputInventory::scan(dir.path());
+        let inputs = InputInventory::scan(dir.path(), None);
         assert_eq!(inputs.sizes["prefetch"], 3072);
         assert_eq!(inputs.sizes["prefetch-timeline"], 3072);
         assert_eq!(inputs.sizes["registry"], 0x70);
@@ -2811,7 +3108,7 @@ mod tests {
         let mut hive = vec![0u8; 0x70];
         hive[..4].copy_from_slice(b"regf");
         fs::write(dir.path().join("SOFTWARE"), &hive).unwrap();
-        let only_machine = InputInventory::scan(dir.path());
+        let only_machine = InputInventory::scan(dir.path(), None);
         assert_eq!(only_machine.sizes["appcompat"], 0x70);
         assert_eq!(only_machine.sizes["system-info"], 0x70);
         for user_reader in [
@@ -2831,7 +3128,7 @@ mod tests {
         fs::write(dir.path().join("NTUSER.DAT"), &hive).unwrap();
         hive.resize(0xa0, 0);
         fs::write(dir.path().join("SECURITY"), &hive).unwrap();
-        let mixed = InputInventory::scan(dir.path());
+        let mixed = InputInventory::scan(dir.path(), None);
         assert_eq!(mixed.sizes["appcompat"], 0x100);
         assert_eq!(mixed.sizes["system-info"], 0x110);
         assert_eq!(mixed.sizes["auditpol"], 0xa0);
@@ -2915,7 +3212,7 @@ mod tests {
         assert_eq!(computers.len(), 3);
         assert_eq!(hosts[1].computer, "host_2");
         assert_eq!(hosts[1].hostname, "host");
-        let manifest = manifest_host(&hosts[1], Path::new(""));
+        let manifest = manifest_host(&hosts[1], Path::new(""), None);
         assert_eq!(manifest.computer, "host_2");
         assert_eq!(manifest.hostname, "host");
     }

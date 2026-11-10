@@ -16,11 +16,14 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (крейт `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Індекси каталогів (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (крейт `mft`, модуль `i30`) | Дослідження index slack, згадані нижче |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (крейти `boot` і `secure`) | MS-DTYP від Microsoft і дослідження NTFS, згадані нижче |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) і [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) і [ese](https://github.com/Sootmark/ese) |
+| Веб-браузери / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite) і [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Робота Sootmark shell щодо складених файлів і Jump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| Образи дисків VHDX (`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) і [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), що надаються через [fuser](https://github.com/cberner/fuser) | MS-VHDX від Microsoft |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | Реєстр | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Дослідження формату реєстру та відновлення даних, згадані нижче |
 
 ## Еталонні інструменти та незалежна перевірка { #reference-tools-and-independent-validation }
@@ -41,7 +44,7 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
 - Проєкти Йоахима Метца / libyal — **libregf**, **libfsntfs**, **libscca**, **libfwsi** і
   **libesedb** — містять докладні дослідження форматів і є незалежними еталонами парсингу.
 - **dissect.esedb**, **dissect.ntfs** і **dissect.target** від Fox-IT надали незалежні інтерпретації SRUM,
-  `$Secure:$SDS`, SAM і Defender, використані під час перевірки.
+  UAL, `$Secure:$SDS`, SAM і Defender, використані під час перевірки.
 - `fsstat` з **The Sleuth Kit** був еталоном для завантажувальних секторів NTFS томів, створених за допомогою
   `mkntfs`.
 - Деякі інструменти Еріка Ціммермана встановили назви полів і очікування експертів, використані для порівнянь.
@@ -55,6 +58,8 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
   Defender і безпечного вилучення даних.
 - **Plaso**, **Chainsaw** і **Velociraptor** надали порівняння парсерів, тестові докази або
   еталонну поведінку, орієнтовану на збирання, для кількох артефактів.
+- **Hindsight** від Obsidian Forensics і визначення **SQLiteHunter** від Velocidex слугували еталоном
+  для історії, завантажень, файлів cookie та історії форм браузерів.
 
 ## Специфікації та дослідження { #specifications-and-research }
 

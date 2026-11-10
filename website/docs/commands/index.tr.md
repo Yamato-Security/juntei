@@ -13,11 +13,21 @@ Birden fazla bilgisayarı kapsayan bir Windows kanıt toplaması için
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) komutunu kullanın. Bu komut aynı gruplanmış
 komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme kategorisine göre düzenler.
 
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) ayrıştırılmış artefaktlardan zaman anlamları etiketli, sıralanmış olaylar üretir; `auto-parse -j` yerel kayıtları korur.
+
+## [Disk İmajları](mount.md) { #disk-images }
+
+| Komut | Girdi | Ayrıntılı kılavuz |
+|---|---|---|
+| `mount` | VHDX / E01 / Ex01 disk imajı | [Disk İmajlarını Bağlama](mount.md) |
+
 ## [ESE Komutları](user-activity.md) { #ese-commands }
 
 | Komut | Girdi artefaktı | Ayrıntılı kılavuz |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer ve Eski Edge](../artifacts/webcache.md) |
 
 ## [Dosya Komutları](execution.md) { #file-commands }
 
@@ -26,6 +36,7 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 | `parse-file defender-quarantine` | Defender karantina ağacı veya girdisi | [Defender Karantinası](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK Kısayolları](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS Komutları](filesystem.md) { #ntfs-commands }
@@ -71,6 +82,12 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite Komutları](sqlite.md) { #sqlite-commands }
+
+| Komut | Girdi artefaktı | Ayrıntılı kılavuz |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Web Tarayıcıları](../artifacts/browser.md) |
+
 ## Kaynak türleri ve biçim değişiklikleri { #source-types-and-format-changes }
 
 Gruplar, Juntei'nin şu anda desteklediği biçimleri tanımlar. `parse-registry amcache`, `Amcache.hve`
@@ -94,13 +111,15 @@ sınıflandırması, yük (payload) meta verileri, kapsam ve zaman damgası ili�
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

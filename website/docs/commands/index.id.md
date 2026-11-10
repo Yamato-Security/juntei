@@ -13,11 +13,21 @@ Untuk hasil pengumpulan bukti Windows dari banyak komputer, gunakan
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Perintah ini memanggil perintah-perintah berkelompok yang sama
 dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 
+Gunakan [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) untuk linimasa terurut dengan arti waktu berlabel; `auto-parse -j` tetap menyimpan rekaman asli.
+
+## [Image disk](mount.md) { #disk-images }
+
+| Perintah | Input | Panduan terperinci |
+|---|---|---|
+| `mount` | Image disk VHDX / E01 / Ex01 | [Memasang Image Disk](mount.md) |
+
 ## [Perintah ESE](user-activity.md) { #ese-commands }
 
 | Perintah | Artefak input | Panduan terperinci |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer dan Edge lama](../artifacts/webcache.md) |
 
 ## [Perintah berkas](execution.md) { #file-commands }
 
@@ -26,6 +36,7 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 | `parse-file defender-quarantine` | Pohon atau entri karantina Defender | [Karantina Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Pintasan LNK](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [Perintah NTFS](filesystem.md) { #ntfs-commands }
@@ -71,6 +82,12 @@ dan mengatur hasil serta log berdasarkan komputer dan kategori investigasi.
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [Perintah SQLite](sqlite.md) { #sqlite-commands }
+
+| Perintah | Artefak input | Panduan terperinci |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Browser web](../artifacts/browser.md) |
+
 ## Tipe sumber dan perubahan format { #source-types-and-format-changes }
 
 Kelompok-kelompok tersebut mendeskripsikan format yang saat ini didukung Juntei. `parse-registry amcache` membaca
@@ -93,13 +110,15 @@ tingkat atas. Perintah ini melengkapi inventaris konfigurasi lengkap dari `parse
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

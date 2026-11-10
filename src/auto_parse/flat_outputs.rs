@@ -30,7 +30,7 @@ fn check_category(root: &Path, directory: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn table_name(artifact: &str, name: &str) -> Option<&'static str> {
+fn table_name<'a>(artifact: &str, name: &'a str) -> Option<&'a str> {
     match (artifact, name) {
         ("amcache", "Amcache_devices.csv") => Some("Devices"),
         ("amcache", "Amcache_files.csv") => Some("Files"),
@@ -38,6 +38,35 @@ fn table_name(artifact: &str, name: &str) -> Option<&'static str> {
         ("amcache", "Amcache_summary.csv") => Some("Summary"),
         ("jump-lists", "AutomaticDestinations.csv") => Some("AutomaticDestinations"),
         ("jump-lists", "CustomDestinations.csv") => Some("CustomDestinations"),
+        ("browser", "Browser-History.csv") => Some("History"),
+        ("browser", "Browser-Downloads.csv") => Some("Downloads"),
+        ("browser", "Browser-Cookies.csv") => Some("Cookies"),
+        ("browser", "Browser-FormHistory.csv") => Some("FormHistory"),
+        ("webcache", "WebCache-History.csv") => Some("History"),
+        ("webcache", "WebCache-Downloads.csv") => Some("Downloads"),
+        ("webcache", "WebCache-Cookies.csv") => Some("Cookies"),
+        ("webcache", "WebCache-Entries.csv") => Some("Entries"),
+        ("webcache", "WebCache-Containers.csv") => Some("Containers"),
+        ("outlook", "Outlook-Files.csv") => Some("Files"),
+        ("outlook", "Outlook-Folders.csv") => Some("Folders"),
+        ("outlook", "Outlook-Items.csv") => Some("Items"),
+        ("outlook", "Outlook-Recipients.csv") => Some("Recipients"),
+        ("outlook", "Outlook-Attachments.csv") => Some("Attachments"),
+        ("outlook", "Outlook-Contacts.csv") => Some("Contacts"),
+        ("outlook", "Outlook-Calendar.csv") => Some("Calendar"),
+        ("outlook", "Outlook-Tasks.csv") => Some("Tasks"),
+        ("outlook", "Outlook-Properties.csv") => Some("Properties"),
+        // `parse-ese ual` names each table's file `UAL-<table>.csv`, a table it doesn't know
+        // under its own name, in letters, digits and `-_{}` only
+        ("ual", name) => name
+            .strip_prefix("UAL-")
+            .and_then(|table| table.strip_suffix(".csv"))
+            .filter(|table| {
+                !table.is_empty()
+                    && table
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || "-_{}".contains(c))
+            }),
         _ => None,
     }
 }
@@ -137,7 +166,11 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
     };
     for task in tasks.iter().filter(|task| !task.timeline_only) {
         let stem = artifact_filename(task.artifact);
-        if !matches!(task.artifact, "amcache" | "jump-lists") && !stem.starts_with("Registry-") {
+        if !matches!(
+            task.artifact,
+            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
+        ) && !stem.starts_with("Registry-")
+        {
             continue;
         }
         let Some(folder) = hosts
@@ -195,8 +228,10 @@ pub(super) fn clear_previous(root: &Path, tasks: &[Task]) -> io::Result<()> {
                     .map(|path| super::recorded_path(root, path, from_output))
                 {
                     for name in [old_stem, stem] {
-                        if matches!(task.artifact, "amcache" | "jump-lists")
-                            && path == category.join(name)
+                        if matches!(
+                            task.artifact,
+                            "amcache" | "browser" | "jump-lists" | "outlook" | "ual" | "webcache"
+                        ) && path == category.join(name)
                         {
                             remove_generated_path(&path, root)?;
                         }

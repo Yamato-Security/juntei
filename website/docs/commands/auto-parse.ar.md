@@ -21,6 +21,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     يمنع إعادة اكتشاف البيانات المولَّدة بوصفها أدلة ويمنع `--clobber` من
     المساس بالملفات في المجموعة المصدر.
 
+## صور أقراص VHDX { #vhdx-disk-images }
+
+مع `--vhdx` يقرأ `auto-parse` صور VHDX مباشرة على **Linux وmacOS وWindows** عبر [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)، دون تركيب نظام أو FUSE أو صلاحيات مسؤول.
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+تحتاج المحللات إلى مسارات، لذلك ينسخ Juntei الملفات التي تقرؤها المحللات إلى مساحة مؤقتة خاصة بمخازن قراءة محدودة: خلايا السجل وسجلات معاملاتها، وملفات بيانات NTFS الوصفية، وقواعد البيانات، وملفات Prefetch، والاختصارات، وJump Lists، وملفات Outlook، ومجلدات العزل في Defender. يصبح كل ملف آخر عنصراً نائباً فارغاً يحتفظ بوقت تعديله الأصلي، فتبدو المجلدات والمسارات كما هي على القرص. لا يقرأ persistence-hunter محتوى العنصر النائب من الصورة إلا عند الحاجة، مثل ملف تنفيذي يشير إليه إدخال استمرارية. **وفّر مساحة للملفات المنسوخة** إضافة إلى النتائج. تُكتب مناطق الأصفار كفجوات حيثما أمكن. تُحفظ الأسماء والبنية والروابط الصلبة وأوقات التعديل. تأتي أوقات مصادر LNK وJump Lists من لقطة بيانات NTFS الأصلية لا من النسخ المؤقتة. يحذف الانتهاء الطبيعي، بما فيه أخطاء المحللات، النسخ؛ وقد يتركها الإنهاء القسري. المصدر للقراءة فقط وتُطبّق سجلات VHDX المعلقة في الذاكرة وحدها.
+
+يستخدم اكتشاف الأجهزة وCSV/JSON/JSONL و`-j` مسار المعالجة المعتاد. يحدد `Image` في `manifest.json` الصورة الأصلية، ويحدد `EvidenceRoot` المسار النسبي داخلها. تُسجّل أخطاء القراءة والأسماء غير الآمنة في `ImageErrors` وصفوف الفشل في `manifest.csv`. تُحفظ النتائج المقروءة ويُرجع الإدخال غير المكتمل الرمز 1. لا تُعاد تسمية الأسماء الخطرة أو الملتبسة. لا تُستخرج تدفقات NTFS المسماة كملفات إضافية؛ وتبقى الآثار المجموعة كملفات عادية متاحة.
+
+يعرض أمر [`mount` المنفصل](mount.md) نظام الملفات للبرامج الأخرى ويحتاج إلى Linux FUSE. لا يستخدمه `auto-parse --vhdx`.
+
+تستخدم مساحة التجهيز افتراضياً مجلداً خاصاً على نظام ملفات الإخراج. استخدم `--temp-dir` لاختيار مجلد موجود على قرص آخر. تُحفظ بيانات المصدر الوصفية منفصلةً على نظام ملفات الإخراج، فلا يمنع امتلاء قرص التجهيز تحليل الملفات المقروءة مسبقاً. خصص مساحة للنسخ والنتائج معاً؛ إذا امتلأت وحدة الإخراج نفسها فلن يمكن حفظ النتائج. يوقف Ctrl+C عمليات التحليل وينظف المساحة الخاصة ويخرج بالرمز 130. قد يترك SIGKILL أو انقطاع الطاقة نسخاً. يتم تجاوز المجلدات الفرعية غير المقروءة أثناء البحث عن الصور، لكن جذر الإدخال غير المقروء يبقى خطأ.
+
+يجب أن يكون مجلد التجهيز خارج مجلد الإخراج. في Linux وmacOS، يوقف SIGTERM وSIGHUP أيضاً عمليات التحليل وينظفان مساحة العمل.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## صور الأقراص E01 وEx01 { #e01-and-ex01-disk-images }
+
+يقرأ `--e01` صور EWF1 الفعلية (`.E01`) وصور EWF2 (`.Ex01`) مباشرةً على **Linux وmacOS وWindows**، دون FUSE أو تركيب عبر نظام التشغيل أو صلاحيات مسؤول. يستخدم [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ومسار تحليل NTFS نفسه الموضح أعلاه.
+
+للصورة المقسمة، حدد الجزء الأول. احتفظ بجميع الملفات المصاحبة، ومنها `.E02`، بجواره بأسمائها الأصلية. تُدعم الأقراص الكاملة (MBR/GPT) ووحدات NTFS المنفردة. استخدم `--vhdx --e01` للمجلدات المختلطة.
+
+تنطبق متطلبات المساحة المؤقتة وبيانات المصدر الوصفية نفسها. تحتوي صور E01 عادةً على أقراص كاملة، وتُجهَّز جميع الصور قبل بدء التحليل، لكن لا تُنسخ إلا الملفات التي تقرؤها المحللات، وهي عادةً جزء صغير من المساحة المستخدمة. تُفتح الصور للقراءة فقط. تُسجل فجوات الاكتساب والأضرار المكتشفة عند الفتح أو القراءة في `ImageErrors` و`manifest.csv`؛ تُحفظ النتائج المقروءة مع رمز خروج 1. تُفحص البيانات التي تم الوصول إليها، وليس كل الكتل أو بصمة الوسيط بأكمله. تُرفض الملفات المنطقية `.L01` و`.Lx01`، ولا يوجد خيار كلمة مرور.
+
+لا يزال الأمر المنفصل `mount` يتطلب Linux FUSE؛ أما التحليل التلقائي المباشر فلا يحتاجه.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## المنطقة الزمنية للإخراج { #output-time-zone }
 
 تكون الطوابع الزمنية المحللة افتراضيًا بتوقيت UTC، بصرف النظر عن المنطقة الزمنية المحلية لحاسوب المحلل. ويستخدم UTC
@@ -119,6 +160,10 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - فهارس المجلدات `$I30`
 - قطاعات الإقلاع `$Boot` وواصفات الأمان `$Secure:$SDS`
 - SRUM
+- تسجيل وصول المستخدمين (UAL)
+- سجل التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج في متصفحات الويب (المتصفحات المبنية على Chromium وFirefox)
+- قاعدة WebCache الخاصة بـ Internet Explorer وEdge القديم: سجل التصفح والتنزيلات وملفات تعريف الارتباط وإدخالات ذاكرة التخزين المؤقت
+- ملفات Outlook من نوع PST وOST وMSG وOFT: المجلدات والعناصر والمستلمون والمرفقات وجهات الاتصال وعناصر التقويم والمهام
 - اختصارات LNK
 - Jump Lists
 - ShimCache
@@ -174,6 +219,28 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -222,7 +289,11 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -275,12 +346,14 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 | `Accounts` | حسابات SAM المحلية، وأسماء أسرار LSA وأوقاتها |
 | `Applications` | سجل التطبيقات (آثار أدوات الجهات الخارجية) |
 | `Applications` | البرامج المثبتة |
+| `BrowserActivity` | سجل التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج في متصفحات الويب، مع الإدخالات المحذوفة المستعادة؛ وقاعدة WebCache الخاصة بـ Internet Explorer وEdge القديم |
+| `Communication` | ملفات Outlook من نوع PST وOST وMSG وOFT: المجلدات والعناصر والمستلمون والمرفقات وجهات الاتصال وعناصر التقويم والمهام |
 | `ExternalDevices` | أجهزة USB ووحدات التخزين |
 | `FileAndFolderOpening` | Jump Lists، واختصارات LNK، وMicrosoft Office، وقوائم MRU، ومربعات حوار الفتح والحفظ باسم، وRecentDocs، وShellBags |
 | `FileExistence` | Amcache، ShimCache |
 | `FileSystem` | `$Boot`، `$I30`، `$LogFile`، `$MFT`، `$Secure:$SDS`، دفتر يومية USN |
 | `NetworkActivity` | ملفات تعريف الشبكات، والواجهات، والمشاركات، ووكلاء المنافذ، والمسارات؛ واتصالات SRUM وحركة المرور والإشعارات الفورية |
-| `LateralMovement` | اتصالات المستخدمين الصادرة عبر سطح المكتب البعيد وPuTTY وWinSCP، ومحركات الأقراص المعيّنة والمشاركات |
+| `LateralMovement` | اتصالات المستخدمين الصادرة عبر سطح المكتب البعيد وPuTTY وWinSCP، ومحركات الأقراص المعيّنة والمشاركات؛ وتسجيل وصول المستخدمين (عملاء أدوار الخادم) |
 | `Persistence` | تكوين الإقلاع (BCD)، والتشغيل التلقائي عبر سجل Windows، والخدمات، وTaskCache |
 | `ProcessExecution` | توافق التطبيقات، وBAM وDAM، وFeatureUsage والعناصر المثبتة، وMuiCache، وPrefetch، والجدول الزمني لـ Prefetch، ونشاط التطبيقات/CPU في SRUM، وUserAssist |
 | `Registry` | مفاتيح الخلايا وقيمها العامة، بما في ذلك السجلات المستعادة |
@@ -311,6 +384,19 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 `JumpLists-CustomDestinations.csv`. ولا توجد مجلدات فرعية لـ Amcache أو Jump Lists.
 وتستخدم جداول SRUM أسماء ملفات تبدأ بـ `SRUM-` مباشرة تحت فئتها، مثل
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+وتوجد جداول تسجيل وصول المستخدمين في `LateralMovement`، بملف واحد لكل جدول، مثل
+`UAL-Clients.csv` و`UAL-SystemIdentity.csv`، مع `UAL-logs.txt`؛ راجع
+[تسجيل وصول المستخدمين (UAL)](../artifacts/ual.md#automatic-parsing).
+وتوجد جداول متصفحات الويب في `BrowserActivity`: ‏`Browser-History.csv` و`Browser-Downloads.csv`
+و`Browser-Cookies.csv` و`Browser-FormHistory.csv`، مع `Browser-logs.txt`؛ راجع
+[متصفحات الويب](../artifacts/browser.md#automatic-parsing). وتوجد هناك أيضًا جداول WebCache الخاصة
+بـ Internet Explorer وEdge القديم: ‏`WebCache-History.csv` و`WebCache-Downloads.csv`
+و`WebCache-Cookies.csv` و`WebCache-Entries.csv` و`WebCache-Containers.csv`، مع
+`WebCache-logs.txt`؛ راجع [Internet Explorer وEdge القديم](../artifacts/webcache.md#automatic-parsing).
+وتوجد جداول Outlook في `Communication`: ‏`Outlook-Files.csv` و`Outlook-Folders.csv`
+و`Outlook-Items.csv` و`Outlook-Recipients.csv` و`Outlook-Attachments.csv` و`Outlook-Contacts.csv`
+و`Outlook-Calendar.csv` و`Outlook-Tasks.csv`، مع `Outlook-logs.txt`؛ راجع
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 راجع [جدول توزيع SRUM الكامل](../artifacts/srum.md#categorized-auto-parse-output).
 
 تطابق السجلات اسم الأثر الرقمي بأحرفه الكبيرة، مثل `Registry-SAM-logs.txt` و`PrefetchTimeline-logs.txt`
@@ -450,7 +536,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## الاستخدام { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -459,6 +545,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -503,3 +592,13 @@ Display Settings:
 للاطلاع على حقول التقرير وحدودها الجنائية.
 
 يقرأ auto-parse أيضًا الاتصالات البعيدة للمستخدمين (RDP وPuTTY وWinSCP ومحركات الأقراص المعيّنة).
+
+## قم ببناء جدول زمني فائق { #build-a-chronological-super-timeline }
+
+بعد التحليل، استخدم [`super-timeline`](super-timeline.md) لتوسيع الطوابع الزمنية المسجلة إلى أحداث مصنفة وفرزها عبر أجهزة الكمبيوتر والعناصر:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+يظل تصدير `-j, --json-timeline` الحالي عبارة عن ملف JSONL مدمج للسجل الأصلي. يحافظ على مخططات المحلل اللغوي. ولا يقوم بتوسيع حقول الطابع الزمني أو فرز الأحداث. احتفظ بها وبنتائج المحلل اللغوي الفردية للمراجعة على مستوى الأدلة.

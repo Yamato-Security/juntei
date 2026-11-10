@@ -89,6 +89,56 @@ Windows 11 `$Boot`는 같은 호스트의 LNK 파일이 기록한 볼륨 일련 
 실제 데이터베이스 11개에 걸쳐, 출력된 45,255개 항목의 모든 열이 `dissect.esedb`가 제공하는 값을 독립적으로
 디코딩한 결과와 일치했습니다.
 
+## 사용자 액세스 로깅 { #user-access-logging }
+
+`parse-ese ual`은 같은 ESE 리더로 UAL 데이터베이스를 읽습니다. 실제 데이터베이스 16개(308개 행, 그중 클라이언트
+행 145개)에 걸쳐 모든 값이 `dissect.esedb`가 제공하는 값을 독립적으로 디코딩한 결과와 일치했습니다. 모든
+클라이언트 행에서 요청 수가 있는 날짜는 `InsertDate`의 UTC 날짜에서 시작하여 `LastAccess`의 UTC 날짜에서
+끝났으며, 그 합계는 `TotalAccesses`와 일치했습니다.
+
+## 웹 브라우저 { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser)는 Sootmark의 browser, sqlite, plist
+크레이트를 유지 관리하는 포크로, 같은 데이터베이스를 대상으로 다른 Rust 라이브러리 및 Plaso, Velociraptor
+(SQLiteHunter), Hindsight와 비교한 끝에 선택되었습니다. `parse-sqlite browser`는 공개된 데이터베이스
+38개, 즉 Plaso의 테스트 파일(Chrome 8~68, Firefox 2~118), Chromium 150과 Firefox 140으로 만든 프로필,
+ys-browser-parser의 양식 기록 테스트 데이터베이스를 대상으로, 각 데이터베이스의 사본을 `-wal` 파일과 함께
+`sqlite3` 라이브러리로 읽은 결과와 비교되었습니다. 방문 293건, 다운로드 21건, 쿠키 692개, 양식 항목 41개가
+모두 일치했습니다. 삭제된 항목은 실제로 항목이 삭제된 곳에서만 복구되었습니다. Firefox 140 방문 기록에서
+삭제된 페이지 2개와 방문 2건이 그 시각, URL, 제목과 함께 복구되었고, 테스트 데이터베이스의 삭제된 양식 항목도
+복구되었습니다.
+
+## Internet Explorer와 레거시 Edge(WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache`는 [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser)로
+`WebCacheV01.dat`를 읽습니다. Plaso의 공개 WebCache 데이터베이스 2개, 즉 Internet Explorer 11의 데이터베이스와
+레거시 Edge의 방문 기록, 다운로드, 쿠키가 담긴 더티 상태의 Windows 10 데이터베이스를 대상으로
+`dissect.database`의 ESE 리더와 비교되었습니다. 4,156개 행 모두가 값 단위로 일치했습니다. 컨테이너 44개,
+방문 기록 항목 182개, 다운로드 6건, 쿠키 170개, 기타 항목 3,754개입니다. 비교 과정에서는 다운로드 레코드를
+독자적으로 디코딩했습니다. 데이터베이스가 삭제됨으로 표시한 레코드는 양쪽 모두에서 제외했습니다.
+
+## Outlook { #outlook }
+
+`parse-file outlook`은 [ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser)로 PST, OST,
+`.msg`, `.oft` 파일을 읽습니다. 이 파서의 PST 및 OST 리더는 Microsoft의
+[outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs)를 포크한 것이고, `.msg` 리더는 Microsoft의 공개
+사양을 바탕으로 작성되었습니다.
+
+- **PST와 OST**: 공개된 PST 및 OST 파일 66개(Apache Tika, artemis, Aspose.Email 예제, DFIR Artifact Museum,
+  Enron, GroupDocs 예제, java-libpst, libyal의 테스트 데이터, outlook-pst-rs, pst-extractor)를 대상으로 libpff와
+  속성 단위로 비교했습니다. 모든 저장소, 폴더, 메시지, 받는 사람, 첨부 파일의 모든 속성과 모든 첨부 파일의
+  데이터가 대상입니다. 324,175개의 값이 같았으며, 설명되지 않는 차이는 하나도 없었습니다. 나머지는
+  ys-outlook-parser만 읽는 것(libpff가 읽지 못하는 메시지, 받는 사람, 첨부 파일과 libpff가 열지 못하는
+  저장소의 값 15,846개, 숨겨진 항목의 값 8,223개), 행 정보상 존재하지 않는데도 libpff가 빈 값이나 0으로
+  내놓는 받는 사람 셀(49,077개), MAPI와 같은 방식으로 계산한 폴더 엔트리 ID와 유형(2,004개), libpff가
+  원시 데이터로 내놓는 개체와 포함된 메시지(480개)입니다. 그중 2개 파일은 어느 리더도 전혀 읽지 못합니다.
+- **`.msg`와 `.oft`**: 메시지, 받는 사람, 첨부 파일 2,404개와 속성 41,002개가 담긴 공개 파일 214개를
+  extract-msg와 비교했습니다. 110,114개의 값이 같았고, 다른 791개는 모두 설명됩니다. 601개는 extract-msg의
+  시각 오류이고, 35개는 extract-msg가 잘못된 코드 페이지로 디코딩하는 ANSI 파일에서 비롯되며, 나머지는
+  extract-msg가 빠뜨리거나 덧붙이는 것입니다.
+- **손상된 입력**: 변형된 `.msg` 파일 260,000개 이상과 변형된 PST 160,000개, 그리고 특수 제작된 파일을
+  충돌, 멈춤, 무제한 메모리 사용 없이 읽었습니다.
+
 ## LNK 바로 가기 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)는 Sootmark의

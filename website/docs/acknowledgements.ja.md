@@ -13,11 +13,14 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`logfile` クレート) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | ディレクトリインデックス (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` クレート、`i30` モジュール) | 指数スラックに関する研究のクレジットは以下の通り |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` および `secure` クレート) | Microsoft の MS-DTYP および NTFS の研究は以下にクレジットされています |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) および [ese](https://github.com/Sootmark/ese) |
+| SRUM、UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) および [ese](https://github.com/Sootmark/ese) |
+| Web ブラウザ / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser)、[sqlite](https://github.com/Sootmark/sqlite) および [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark シェル](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-ジャンプリスト-パーサー](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark シェル複合ファイルとジャンプ リストが機能する |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [セキュリティ Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [コートマークディフェンダー](https://github.com/Sootmark/defender) |
+| VHDX ディスクイメージ (`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) と [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)、[fuser](https://github.com/cberner/fuser) で提供 | Microsoft の MS-VHDX |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | レジストリ | [ys-レジストリ-パーサー](https://github.com/Yamato-Security/ys-registry-parser) | レジストリ形式と回復に関する研究のクレジットは以下に記載されています |
 
 ## 参照ツールと独立した検証 { #reference-tools-and-independent-validation }
@@ -28,7 +31,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 - Harel Segev の **INDXRipper** は、インデックス スラックからファイル名を切り出すためのさらなる参考資料です。
 - **dfir_ntfs**、Joakim Schicht の **LogFileParser**、および Stroz Friedberg の **ntfs-linker** が通知`$LogFile` の検証と解釈。 Velocidex の **go-ntfs** は、公開された NTFS テスト証拠を提供しました。
 - ヨアヒム・メッツ / リビア プロジェクト **libregf**、**libfsntfs**、**libscca**、 **libfwsi** および **libesedb** は、詳細な形式調査と独立した解析リファレンスを提供します。
-- Fox-IT の **dissect.esedb**、**dissect.ntfs**、および **dissect.target** は独立した SRUM を提供し、検証中に使用される `$Secure:$SDS`、SAM、および Defender 解釈。
+- Fox-IT の **dissect.esedb**、**dissect.ntfs**、**dissect.target** は、検証で使用した SRUM、UAL、`$Secure:$SDS`、SAM、Defender の独立した解釈を提供しました。
 - **Sleuth Kit** の `fsstat` は、`mkntfs` で作成されたボリュームの NTFS ブート セクターのリファレンスでした。
 - Eric Zimmerman のツールの一部は、比較に使用されるフィールド名と検査者の期待値を確立しました。
 - **regipy**、**python-registry**、**Notatin**、および **artemis** が提供するレジストリ実装、テスト、またはサンプル解釈。
@@ -36,6 +39,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 - Security Ronin の **prefetch-forensic** および **forensicnomicon** プロジェクトは、Juntei の高価値 Prefetch/Amcache/ShimCache を通知しました。観察。
 - **defender-dump** および dissect.target は、Defender 隔離構造と安全な抽出動作を理解するための個別の実装を提供します。
 - **Plaso**、**Chainsaw**、および **Velociraptor** は、複数のアーティファクトにわたるパーサー比較、テスト証拠、またはコレクション指向の参照動作を提供しました。
+- Obsidian Forensics の **Hindsight** と Velocidex の **SQLiteHunter** の定義は、ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴の参考資料となりました。
 
 ## 仕様と研究 { #specifications-and-research }
 

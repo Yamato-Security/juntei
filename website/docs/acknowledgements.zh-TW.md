@@ -15,11 +15,14 @@ Juntei 中；授權條款請參閱各專案。
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser)（`logfile` crate） | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | 目錄索引（`$I30`） | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser)（`mft` crate，`i30` 模組） | 下方致謝的索引 slack 研究 |
 | NTFS `$Boot`、`$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser)（`boot` 與 `secure` crate） | Microsoft 的 MS-DTYP 以及下方致謝的 NTFS 研究 |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) 與 [ese](https://github.com/Sootmark/ese) |
+| SRUM、UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) 與 [ese](https://github.com/Sootmark/ese) |
+| 網頁瀏覽器／SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser)、[sqlite](https://github.com/Sootmark/sqlite) 與 [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell 的複合檔案與 Jump List 相關成果 |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| VHDX 磁碟映像檔（`mount`、`auto-parse --vhdx`） | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) 與 [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)，透過 [fuser](https://github.com/cberner/fuser) 提供 | Microsoft 的 MS-VHDX |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | Registry | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | 下方致謝的登錄檔格式與復原研究 |
 
 ## 參考工具與獨立驗證 { #reference-tools-and-independent-validation }
@@ -37,7 +40,7 @@ Juntei 中；授權條款請參閱各專案。
   `$LogFile` 的驗證與判讀提供了依據；Velocidex 的 **go-ntfs** 提供了公開的 NTFS 測試證據。
 - Joachim Metz／libyal 專案的 **libregf**、**libfsntfs**、**libscca**、**libfwsi** 與
   **libesedb** 提供了詳盡的格式研究與獨立的剖析參考。
-- Fox-IT 的 **dissect.esedb**、**dissect.ntfs** 與 **dissect.target** 提供了驗證時所用的 SRUM、
+- Fox-IT 的 **dissect.esedb**、**dissect.ntfs** 與 **dissect.target** 提供了驗證時所用的 SRUM、UAL、
   `$Secure:$SDS`、SAM 與 Defender 的獨立判讀結果。
 - **The Sleuth Kit** 的 `fsstat` 是以
   `mkntfs` 建立之磁碟區 NTFS 開機磁區的參考。
@@ -52,6 +55,8 @@ Juntei 中；授權條款請參閱各專案。
   隔離資料結構與安全的擷取行為。
 - **Plaso**、**Chainsaw** 與 **Velociraptor** 在多種跡證上提供了剖析器比較、測試證據，
   或以收集為導向的參考行為。
+- Obsidian Forensics 的 **Hindsight** 與 Velocidex 的 **SQLiteHunter** 定義，是瀏覽歷程、下載、
+  Cookie 與表單歷程的參考依據。
 
 ## 規格與研究 { #specifications-and-research }
 

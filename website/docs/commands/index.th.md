@@ -13,11 +13,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) คำสั่งนี้เรียกใช้คำสั่งที่จัดกลุ่มเดียวกัน
 และจัดระเบียบผลลัพธ์และ log ตามคอมพิวเตอร์และหมวดหมู่การตรวจสอบ
 
+สำหรับไทม์ไลน์ที่เรียงลำดับตามลำดับเวลาสำหรับอาร์ติแฟกต์ที่แยกวิเคราะห์ ให้ใช้ [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) มันขยายและติดป้ายกำกับความหมายการประทับเวลา `auto-parse -j` ยังคงรักษาบันทึกดั้งเดิมไว้
+
+## [อิมเมจดิสก์](mount.md) { #disk-images }
+
+| คำสั่ง | อินพุต | คู่มือโดยละเอียด |
+|---|---|---|
+| `mount` | อิมเมจดิสก์ VHDX / E01 / Ex01 | [การเมานต์อิมเมจดิสก์](mount.md) |
+
 ## [คำสั่ง ESE](user-activity.md) { #ese-commands }
 
 | คำสั่ง | อาร์ติแฟกต์อินพุต | คู่มือโดยละเอียด |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer และ Edge รุ่นเก่า](../artifacts/webcache.md) |
 
 ## [คำสั่งสำหรับไฟล์](execution.md) { #file-commands }
 
@@ -26,6 +36,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file defender-quarantine` | ทรีหรือรายการกักกันของ Defender | [ข้อมูลที่ Defender กักกัน](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [ทางลัด LNK](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [คำสั่ง NTFS](filesystem.md) { #ntfs-commands }
@@ -71,6 +82,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [คำสั่ง SQLite](sqlite.md) { #sqlite-commands }
+
+| คำสั่ง | อาร์ติแฟกต์อินพุต | คู่มือโดยละเอียด |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [เว็บเบราว์เซอร์](../artifacts/browser.md) |
+
 ## ชนิดของแหล่งข้อมูลและการเปลี่ยนแปลงรูปแบบ { #source-types-and-format-changes }
 
 กลุ่มต่าง ๆ อธิบายรูปแบบที่ Juntei รองรับในปัจจุบัน `parse-registry amcache` อ่าน
@@ -93,13 +110,15 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

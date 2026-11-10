@@ -5,9 +5,7 @@ Juntei memory-safe Rust में लिखा गया एक Windows फ़�
 जबकि Juntei स्थायी file-system, registry, निष्पादन, उपयोगकर्ता-गतिविधि, resource-उपयोग
 और security-product आर्टिफ़ैक्ट को पार्स करता है।
 
-वही binary Windows, macOS और Linux पर चलता है। यह तब उपयोगी है जब किसी विश्लेषक को KAPE,
-Velociraptor, disk-image या कोई अन्य offline collection मिलता है और वह हर आर्टिफ़ैक्ट के लिए अलग प्रोग्राम
-के बजाय एक सुसंगत interface चाहता है।
+एक ही binary Windows, macOS और Linux पर चलता है। विश्लेषक हर artifact के लिए अलग प्रोग्राम के बजाय एक समान इंटरफ़ेस से एकत्र किए गए Windows evidence और disk images की जाँच कर सकते हैं।
 
 ## डिज़ाइन लक्ष्य { #design-goals }
 
@@ -25,7 +23,8 @@ Velociraptor, disk-image या कोई अन्य offline collection मि
 
 ## Juntei क्या नहीं करता { #what-juntei-does-not-do }
 
-Juntei live disk acquire नहीं करता, फ़ॉरेंसिक image mount नहीं करता, और न ही साक्ष्य संरक्षण का स्थान लेता है। यह
+Juntei live disk acquire नहीं करता और न ही साक्ष्य संरक्षण का स्थान लेता है, और वह केवल VHDX / E01 / Ex01 disk images को ही
+mount करता है, read-only रूप में। यह
 हर आर्टिफ़ैक्ट को स्वचालित रूप से एक ही incident कथा में नहीं जोड़ता। यह आपके द्वारा दिए गए
 साक्ष्य को पार्स करता है और जाँच तथा correlation के लिए उपयुक्त records बनाता है।
 

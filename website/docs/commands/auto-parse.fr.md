@@ -21,6 +21,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     évite que des données générées soient redécouvertes comme preuves et empêche `--clobber` de
     toucher aux fichiers de la collecte source.
 
+## Images disque VHDX { #vhdx-disk-images }
+
+Avec `--vhdx`, `auto-parse` lit VHDX nativement sous **Linux, macOS et Windows**, via [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). Aucun montage système, FUSE ou droit administrateur n’est nécessaire.
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+Les parseurs exigent des chemins : Juntei copie donc les fichiers que lisent les parseurs dans un espace temporaire privé avec des tampons bornés : ruches du registre et leurs journaux de transactions, fichiers de métadonnées NTFS, bases de données, fichiers prefetch, raccourcis, Jump Lists, fichiers Outlook et dossiers de quarantaine de Defender. Tout autre fichier devient un espace réservé vide qui garde sa date de modification d’origine, si bien que répertoires et chemins apparaissent comme sur le disque. persistence-hunter ne lit le contenu d’un espace réservé depuis l’image que lorsqu’il en a besoin, par exemple un exécutable désigné par une entrée de persistance. **Prévoyez de la place pour les fichiers copiés**, en plus des résultats. Les zones nulles sont écrites comme des trous si le système le permet. Noms, structure, liens physiques et dates de modification sont préservés. Les dates sources des LNK et Jump Lists viennent des métadonnées NTFS originales, jamais des copies temporaires. Une fin normale, même avec erreurs de parsing, supprime les copies ; un arrêt forcé peut les laisser. La source reste en lecture seule ; les journaux VHDX en attente sont appliqués en mémoire uniquement.
+
+La découverte des hôtes, CSV/JSON/JSONL et `-j` utilisent le traitement habituel. `Image` dans `manifest.json` identifie l’image originale, `EvidenceRoot` son chemin relatif interne. Les erreurs de lecture et noms dangereux figurent dans `ImageErrors` et les lignes en échec de `manifest.csv`. Les résultats lisibles sont conservés ; une entrée incomplète produit le code 1. Les noms dangereux ou ambigus ne sont pas renommés. Les flux NTFS nommés ne deviennent pas des fichiers supplémentaires ; les artefacts collectés comme fichiers ordinaires restent disponibles.
+
+La [commande `mount`](mount.md) expose un système de fichiers aux autres programmes et nécessite toujours Linux FUSE. `auto-parse --vhdx` ne l’utilise pas.
+
+La préparation utilise par défaut un répertoire privé sur le système de fichiers de sortie. Utilisez `--temp-dir` pour choisir un répertoire existant sur un autre disque. Les métadonnées source restent séparées sur le volume de sortie ; un disque de préparation plein ne bloque donc pas l’analyse des fichiers déjà lisibles. Prévoyez de la place pour les copies et les résultats ; si le volume de sortie est plein, les résultats ne peuvent pas être enregistrés. Ctrl+C arrête les parseurs, nettoie l’espace privé et termine avec le code 130. SIGKILL ou une coupure de courant peuvent laisser des copies. La recherche ignore les sous-répertoires illisibles, mais une racine d’entrée illisible reste une erreur.
+
+Le répertoire de préparation doit se trouver hors du répertoire de sortie. Sous Linux et macOS, SIGTERM et SIGHUP arrêtent également les processus d’analyse et nettoient l’espace de travail.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## Images disque E01 et Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` lit nativement les images physiques EWF1 (`.E01`) et EWF2 (`.Ex01`) sous **Linux, macOS et Windows**, sans FUSE, montage système ni droits administrateur. Il utilise [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) et le même traitement NTFS que ci-dessus.
+
+Indiquez le premier segment d’une image fractionnée. Conservez tous les fichiers associés, dont `.E02`, à côté avec leurs noms d’origine. Les disques entiers (MBR/GPT) et les volumes NTFS seuls sont pris en charge. Utilisez `--vhdx --e01` pour un répertoire mixte.
+
+Les mêmes exigences d’espace temporaire et de métadonnées source s’appliquent. Les images E01 contiennent généralement des disques entiers, et toutes les images sont préparées avant le début de l’analyse, mais seuls les fichiers que lisent les parseurs sont copiés, généralement une petite partie de l’espace utilisé. Les images sont en lecture seule. Les lacunes d’acquisition et les dommages découverts à l’ouverture ou à la lecture figurent dans `ImageErrors` et `manifest.csv` ; les résultats lisibles sont conservés avec un code de sortie 1. Seules les données consultées sont vérifiées, pas tous les blocs ni le hachage du support entier. Les fichiers logiques `.L01` et `.Lx01` sont refusés ; aucune option de mot de passe n’est proposée.
+
+La commande distincte `mount` nécessite toujours Linux FUSE ; l’analyse native automatique n’en a pas besoin.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## Fuseau horaire de sortie { #output-time-zone }
 
 Les horodatages analysés sont par défaut en UTC, indépendamment du fuseau horaire local de l'ordinateur de l'analyste. L'UTC
@@ -119,6 +160,10 @@ découvert. Les tâches utilisent les mêmes commandes regroupées par source qu
 - Index de répertoires `$I30`
 - Secteurs de démarrage `$Boot` et descripteurs de sécurité `$Secure:$SDS`
 - SRUM
+- Journalisation des accès utilisateur (UAL)
+- Historique, téléchargements, cookies et historique des formulaires des navigateurs web (navigateurs basés sur Chromium et sur Firefox)
+- WebCache d'Internet Explorer et de l'ancien Edge : historique, téléchargements, cookies et entrées du cache
+- Fichiers PST, OST, MSG et OFT d'Outlook : dossiers, éléments, destinataires, pièces jointes, contacts, éléments de calendrier et tâches
 - Raccourcis LNK
 - Jump Lists
 - ShimCache
@@ -175,6 +220,28 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -223,7 +290,11 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -276,12 +347,14 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `Accounts` | Comptes locaux SAM, noms et horodatages des secrets LSA |
 | `Applications` | Historique des applications (traces d'outils tiers) |
 | `Applications` | Programmes installés |
+| `BrowserActivity` | Historique, téléchargements, cookies et historique des formulaires des navigateurs web, avec les entrées supprimées récupérées ; WebCache d'Internet Explorer et de l'ancien Edge |
+| `Communication` | Fichiers PST, OST, MSG et OFT d'Outlook : dossiers, éléments, destinataires, pièces jointes, contacts, éléments de calendrier et tâches |
 | `ExternalDevices` | Périphériques et volumes USB |
 | `FileAndFolderOpening` | Jump Lists, raccourcis LNK, Microsoft Office, listes MRU, boîtes de dialogue Ouvrir et Enregistrer sous, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Journal USN |
 | `NetworkActivity` | Profils réseau, interfaces, partages, proxys de ports et routes ; connexions, trafic et notifications push SRUM |
-| `LateralMovement` | Connexions sortantes Bureau à distance, PuTTY et WinSCP des utilisateurs, lecteurs mappés et partages |
+| `LateralMovement` | Connexions sortantes Bureau à distance, PuTTY et WinSCP des utilisateurs, lecteurs mappés et partages ; journalisation des accès utilisateur (les clients des rôles d'un serveur) |
 | `Persistence` | Configuration de démarrage (BCD), démarrages automatiques du Registre, services, TaskCache |
 | `ProcessExecution` | Compatibilité des applications, BAM et DAM, FeatureUsage et éléments épinglés, MuiCache, Prefetch, chronologie Prefetch, activité des applications/du CPU SRUM, UserAssist |
 | `Registry` | Clés et valeurs générales des ruches, y compris les enregistrements récupérés |
@@ -312,6 +385,19 @@ Les clés et valeurs générales des ruches se trouvent dans `Registry-Dump.csv`
 `JumpLists-CustomDestinations.csv`. Il n'existe pas de sous-répertoires Amcache ou Jump Lists.
 Les tables SRUM utilisent des noms de fichiers `SRUM-` directement sous leur catégorie, par exemple
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Les tables de la journalisation des accès utilisateur se trouvent dans `LateralMovement`, à raison d'un fichier par
+table, par exemple `UAL-Clients.csv` et `UAL-SystemIdentity.csv`, avec `UAL-logs.txt` ; consultez
+[Journalisation des accès utilisateur (UAL)](../artifacts/ual.md#automatic-parsing).
+Les tables des navigateurs web se trouvent dans `BrowserActivity` : `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` et `Browser-FormHistory.csv`, avec `Browser-logs.txt` ; consultez
+[Navigateurs web](../artifacts/browser.md#automatic-parsing). Les tables WebCache d'Internet Explorer et de
+l'ancien Edge s'y trouvent aussi : `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` et `WebCache-Containers.csv`, avec
+`WebCache-logs.txt` ; consultez [Internet Explorer et l'ancien Edge](../artifacts/webcache.md#automatic-parsing).
+Les tables d'Outlook se trouvent dans `Communication` : `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` et `Outlook-Tasks.csv`, avec `Outlook-logs.txt` ; consultez
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 Consultez le [tableau complet de placement des tables SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Les journaux reprennent le nom de l'artefact avec ses majuscules, par exemple `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`
@@ -451,7 +537,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Utilisation { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -460,6 +546,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -504,3 +593,13 @@ Consultez la section [lire le descripteur de sécurité récupéré](../artifact
 pour connaître les champs du rapport et leurs limites forensiques.
 
 Auto-parse lit également les connexions à distance des utilisateurs (RDP, PuTTY, WinSCP et lecteurs mappés).
+
+## Construire une chronologie globale { #build-a-chronological-super-timeline }
+
+Après l'analyse, [`super-timeline`](super-timeline.md) développe les horodatages en événements étiquetés et les trie entre ordinateurs et artefacts :
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+L'export `-j, --json-timeline` reste un fichier JSONL de données natives : il conserve les schémas sans développer ni trier les dates. Conservez-le avec les résultats individuels pour examiner les preuves.

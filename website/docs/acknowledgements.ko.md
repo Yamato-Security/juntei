@@ -16,11 +16,14 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`logfile` 크레이트) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | 디렉터리 인덱스 (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`mft` 크레이트, `i30` 모듈) | 아래에 기재된 인덱스 슬랙 연구 |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (`boot` 및 `secure` 크레이트) | Microsoft의 MS-DTYP 및 아래에 기재된 NTFS 연구 |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) 및 [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) 및 [ese](https://github.com/Sootmark/ese) |
+| 웹 브라우저 / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite) 및 [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Sootmark shell의 복합 파일 및 Jump List 관련 작업 |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| VHDX 디스크 이미지 (`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) 및 [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), [fuser](https://github.com/cberner/fuser)로 제공 | Microsoft의 MS-VHDX |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | 레지스트리 | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | 아래에 기재된 레지스트리 형식 및 복구 연구 |
 
 ## 참조 도구와 독립 검증 { #reference-tools-and-independent-validation }
@@ -39,7 +42,7 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
   해석에 참고가 되었습니다. Velocidex의 **go-ntfs**는 공개 NTFS 테스트 증거를 제공했습니다.
 - Joachim Metz / libyal 프로젝트인 **libregf**, **libfsntfs**, **libscca**, **libfwsi**, **libesedb**는
   상세한 형식 연구와 독립적인 파싱 참조 구현을 제공합니다.
-- Fox-IT의 **dissect.esedb**, **dissect.ntfs**, **dissect.target**은 검증 과정에서 사용된 SRUM,
+- Fox-IT의 **dissect.esedb**, **dissect.ntfs**, **dissect.target**은 검증 과정에서 사용된 SRUM, UAL,
   `$Secure:$SDS`, SAM 및 Defender에 대한 독립적인 해석을 제공했습니다.
 - **The Sleuth Kit**의 `fsstat`는 `mkntfs`로 만든 볼륨의 NTFS 부트 섹터에 대한 참조 구현이었습니다.
 - Eric Zimmerman의 일부 도구는 비교에 사용된 필드 이름과 조사관의 기대 사항을 확립했습니다.
@@ -53,6 +56,8 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
   제공합니다.
 - **Plaso**, **Chainsaw**, **Velociraptor**는 여러 아티팩트에 걸쳐 파서 비교, 테스트 증거 또는 수집 중심의
   참조 동작을 제공했습니다.
+- Obsidian Forensics의 **Hindsight**와 Velocidex의 **SQLiteHunter** 정의는 브라우저 방문 기록, 다운로드, 쿠키 및
+  양식 기록에 대한 참고 자료가 되었습니다.
 
 ## 사양과 연구 { #specifications-and-research }
 

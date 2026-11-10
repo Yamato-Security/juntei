@@ -1,7 +1,10 @@
 # Collecte des preuves { #collecting-evidence }
 
-Juntei analyse des fichiers déjà collectés sur Windows. Utilisez un outil d'acquisition fiable et préservez
-les métadonnées d'origine dans la mesure du possible.
+Juntei analyse des fichiers déjà collectés sur Windows. Utilisez un outil d'acquisition fiable et préservez les métadonnées d'origine autant que possible.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## Emplacements courants { #common-locations }
 
@@ -13,6 +16,10 @@ les métadonnées d'origine dans la mesure du possible.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | Journal USN | Flux de métadonnées NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| Journalisation des accès utilisateur (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer et l'ancien Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` avant Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, et les fichiers `.msg` où qu'ils aient été enregistrés |
+| Navigateurs web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` et les dossiers de profil des autres navigateurs |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` et d'autres emplacements utilisateur/système |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` et `CustomDestinations` |
 | ShimCache | Ruche `SYSTEM` : `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +38,19 @@ les métadonnées d'origine dans la mesure du possible.
 - Collectez `$LogFile` avec le `$MFT` du même volume, à des moments aussi proches que possible. `$LogFile` boucle
   rapidement ; une collecte plus tardive peut faire perdre entièrement les enregistrements redo/undo antérieurs.
 - Collectez SRUM avec la ruche `SOFTWARE` correspondante pour résoudre les noms de comptes et de profils Wi-Fi.
+- Collectez l'intégralité du répertoire `Sum` de la journalisation des accès utilisateur : `SystemIdentity.mdb` fournit
+  les noms des rôles et liste les bases de données annuelles `{GUID}.mdb`. Comme pour SRUM, Juntei ne rejoue pas les
+  journaux de transactions `Svc*.log` de l'UAL.
+- Collectez les bases de données des navigateurs avec les fichiers `-wal` situés à côté (`places.sqlite-wal`,
+  `cookies.sqlite-wal`) : les modifications les plus récentes, ainsi que les versions antérieures des pages à partir
+  desquelles les entrées supprimées sont récupérées, ne s'y trouvent que jusqu'au prochain point de contrôle du
+  navigateur.
+- Collectez l'intégralité du dossier `WebCache` : Windows garde `WebCacheV01.dat` ouvert tant que l'utilisateur a
+  une session ouverte, et ses modifications les plus récentes ne se trouvent que dans les journaux de transactions
+  `V01*.log`, que Juntei ne rejoue pas.
+- Collectez les fichiers OST et PST d'Outlook avec Outlook fermé, ou à partir d'une image disque ou d'un cliché
+  instantané de volume : Outlook les garde ouverts tant qu'il s'exécute. Cherchez aussi des PST en dehors des dossiers
+  par défaut : les utilisateurs déplacent les archives vers d'autres dossiers, lecteurs et partages de fichiers.
 - Collectez l'intégralité de l'arborescence `Quarantine` de Defender afin que Entries, ResourceData et Resources puissent être mis en correspondance.
 
 ## Précautions sur un système actif { #live-system-cautions }

@@ -21,6 +21,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     Bu, üretilen verilerin yeniden kanıt olarak keşfedilmesini ve `--clobber` seçeneğinin kaynak
     koleksiyondaki dosyalara dokunmasını önler.
 
+## VHDX disk imajları { #vhdx-disk-images }
+
+`--vhdx` ile `auto-parse`, [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) üzerinden **Linux, macOS ve Windows** üzerinde VHDX’i yerel olarak okur. OS bağlaması, FUSE veya yönetici yetkisi gerekmez.
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
+
+Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `manifest.json` içindeki `Image` özgün imajı, `EvidenceRoot` iç göreli yolu tanımlar. Okuma hataları ve güvensiz adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara yazılır. Okunabilir sonuçlar korunur; eksik girdiler 1 döndürür. Güvensiz veya belirsiz adlar yeniden adlandırılmaz. Adlandırılmış NTFS akışları ek dosya olarak çıkarılmaz; normal dosya olarak toplanmış eserler kullanılabilir.
+
+Ayrı [`mount` komutu](mount.md) dosya sistemini başka programlara sunar ve Linux FUSE gerektirir. `auto-parse --vhdx` bunu kullanmaz.
+
+Hazırlama alanı varsayılan olarak çıktı dosya sistemindeki özel bir dizini kullanır. Başka bir diskteki mevcut dizini seçmek için `--temp-dir` kullanın. Özgün meta veriler çıktı dosya sisteminde ayrı tutulur; böylece hazırlama diski dolsa da okunabilen dosyalar ayrıştırılabilir. Hem kopyalar hem sonuçlar için yer ayırın; çıktı dosya sistemi doluysa sonuçlar kaydedilemez. Ctrl+C ayrıştırıcı süreçlerini durdurur, özel çalışma alanını temizler ve 130 koduyla çıkar. SIGKILL veya güç kesintisi kopya bırakabilir. İmaj ararken okunamayan alt dizinler atlanır; okunamayan giriş kökü hata olmaya devam eder.
+
+Hazırlama dizini çıktı dizininin dışında olmalıdır. Linux ve macOS üzerinde SIGTERM ve SIGHUP da ayrıştırıcı süreçlerini durdurur ve çalışma alanını temizler.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 ve Ex01 disk imajları { #e01-and-ex01-disk-images }
+
+`--e01`, fiziksel EWF1 (`.E01`) ve EWF2 (`.Ex01`) imajlarını **Linux, macOS ve Windows** üzerinde yerel olarak okur; FUSE, işletim sistemi bağlaması veya yönetici yetkisi gerekmez. [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) ve yukarıdaki NTFS ayrıştırma hattını kullanır.
+
+Bölünmüş imajın ilk parçasını belirtin. `.E02` dahil tüm parçaları özgün adlarıyla aynı dizinde tutun. Tam diskler (MBR/GPT) ve tek NTFS birimleri desteklenir. Karışık dizinler için `--vhdx --e01` kullanın.
+
+Aynı geçici alan ve kaynak meta verisi gereksinimleri geçerlidir. E01 imajları genellikle diskin tamamını içerir ve tüm imajlar ayrıştırma başlamadan önce hazırlanır, ancak yalnızca ayrıştırıcıların okuduğu dosyalar kopyalanır; bu genellikle kullanılan alanın küçük bir bölümüdür. İmajlar salt okunurdur. Edinim boşlukları ve açma veya okuma sırasında bulunan hasarlar `ImageErrors` ve `manifest.csv` içinde bildirilir; okunabilen sonuçlar korunur ve çıkış kodu 1 olur. Yalnızca erişilen veriler denetlenir; tüm parçalar veya medyanın tam özeti doğrulanmaz. Mantıksal `.L01` ve `.Lx01` dosyaları reddedilir; parola seçeneği yoktur.
+
+Ayrı `mount` komutu hâlâ Linux FUSE gerektirir; yerel otomatik ayrıştırma gerektirmez.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## Çıktı saat dilimi { #output-time-zone }
 
 Ayrıştırılan zaman damgaları, analistin bilgisayarının yerel saat diliminden bağımsız olarak varsayılan
@@ -122,6 +163,10 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
 - `$I30` dizin indeksleri
 - `$Boot` önyükleme sektörleri ve `$Secure:$SDS` güvenlik tanımlayıcıları
 - SRUM
+- Kullanıcı Erişim Günlüğü (UAL)
+- Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi (Chromium ve Firefox tabanlı tarayıcılar)
+- Internet Explorer'ın ve eski Edge'in WebCache verileri: geçmiş, indirmeler, çerezler ve önbellek girdileri
+- Outlook PST, OST, MSG ve OFT dosyaları: klasörler, öğeler, alıcılar, ekler, kişiler, takvim öğeleri ve görevler
 - LNK kısayolları
 - Jump Lists
 - ShimCache
@@ -180,6 +225,28 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -228,7 +295,11 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -281,12 +352,14 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `Accounts` | SAM yerel hesapları, LSA sırlarının adları ve zamanları |
 | `Applications` | Uygulama geçmişi (üçüncü taraf araçların izleri) |
 | `Applications` | Yüklü programlar |
+| `BrowserActivity` | Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi; kurtarılan silinmiş girdilerle birlikte; Internet Explorer'ın ve eski Edge'in WebCache verileri |
+| `Communication` | Outlook PST, OST, MSG ve OFT dosyaları: klasörler, öğeler, alıcılar, ekler, kişiler, takvim öğeleri ve görevler |
 | `ExternalDevices` | USB aygıtları ve birimleri |
 | `FileAndFolderOpening` | Jump Lists, LNK kısayolları, Microsoft Office, MRU listeleri, Aç ve Farklı Kaydet iletişim kutuları, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Ağ profilleri, arabirimler, paylaşımlar, bağlantı noktası proxy'leri ve yollar; SRUM bağlantıları, trafik ve anında iletme bildirimleri |
-| `LateralMovement` | Kullanıcıların giden Uzak Masaüstü, PuTTY ve WinSCP bağlantıları, eşlenmiş sürücüler ve paylaşımlar |
+| `LateralMovement` | Kullanıcıların giden Uzak Masaüstü, PuTTY ve WinSCP bağlantıları, eşlenmiş sürücüler ve paylaşımlar; Kullanıcı Erişim Günlüğü (bir sunucunun rollerinin istemcileri) |
 | `Persistence` | Önyükleme yapılandırması (BCD), kayıt defteri otomatik başlatmaları, hizmetler, TaskCache |
 | `ProcessExecution` | Uygulama uyumluluğu, BAM ve DAM, FeatureUsage ve sabitlenmiş öğeler, MuiCache, Prefetch, Prefetch zaman çizelgesi, SRUM uygulama/CPU etkinliği, UserAssist |
 | `Registry` | Kurtarılmış kayıtlar dahil genel kovan anahtarları ve değerleri |
@@ -318,6 +391,19 @@ dahildir. Genel kovan anahtarları ve değerleri `Registry-Dump.csv` içindedir.
 `JumpLists-CustomDestinations.csv` dosyalarını kullanır. Amcache veya Jump Lists alt dizini yoktur.
 SRUM tabloları, kategorilerinin hemen altında `SRUM-` dosya adlarını kullanır; örneğin
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Kullanıcı Erişim Günlüğü tabloları `LateralMovement` içindedir; her tablo için bir dosya vardır, örneğin
+`UAL-Clients.csv` ve `UAL-SystemIdentity.csv`, bunlarla birlikte `UAL-logs.txt` bulunur; bkz.
+[Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md#automatic-parsing).
+Web tarayıcısı tabloları `BrowserActivity` içindedir: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` ve `Browser-FormHistory.csv`, bunlarla birlikte `Browser-logs.txt` bulunur; bkz.
+[Web Tarayıcıları](../artifacts/browser.md#automatic-parsing). Internet Explorer'ın ve eski Edge'in
+WebCache tabloları da oradadır: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` ve `WebCache-Containers.csv`, bunlarla birlikte
+`WebCache-logs.txt` bulunur; bkz. [Internet Explorer ve Eski Edge](../artifacts/webcache.md#automatic-parsing).
+Outlook tabloları `Communication` içindedir: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` ve `Outlook-Tasks.csv`, bunlarla birlikte `Outlook-logs.txt` bulunur; bkz.
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 [SRUM yerleşiminin tam tablosuna](../artifacts/srum.md#categorized-auto-parse-output) bakın.
 
 Günlükler, büyük harfle başlayan artefakt adıyla eşleşir; örneğin `Registry-SAM-logs.txt`,
@@ -463,7 +549,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Kullanım { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -472,6 +558,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -520,3 +609,13 @@ Rapor alanları ve adli bilişim açısından sınırlamaları için
 bölümüne bakın.
 
 Auto-parse, kullanıcıların uzak bağlantılarını da (RDP, PuTTY, WinSCP ve eşlenmiş sürücüler) okur.
+
+## Kronolojik birleşik zaman çizelgesi oluşturma { #build-a-chronological-super-timeline }
+
+Ayrıştırmadan sonra [`super-timeline`](super-timeline.md) ile kayıtlı zamanları etiketli olaylara dönüştürüp bilgisayarlar ve artefaktlar arasında sıralayın:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+`-j, --json-timeline` dışa aktarımı, şemaları koruyan yerel kayıtların birleşik JSONL dosyasıdır; zamanları genişletmez veya sıralamaz. Kanıt incelemesi için bunu ve ayrı ayrıştırıcı çıktılarını saklayın.

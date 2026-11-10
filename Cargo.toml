@@ -1,6 +1,6 @@
 [package]
 name = "juntei"
-version = "1.0.0"
+version = "1.1.0"
 repository = "https://github.com/Yamato-Security/juntei"
 authors = ["Yamato Security @SecurityYamato"]
 description = "Windows forensics artifact parser"
@@ -61,7 +61,7 @@ regex = "1"
 rayon = "1.12"
 # Native persistence hunting: stream file hashes, parse bounded task XML and
 # YAML profiles, and inspect embedded PE certificate metadata without a runtime.
-sha2 = "0.10"
+sha2 = "0.11"
 quick-xml = "0.38"
 serde_yaml_ng = "0.10"
 cms = "0.2"
@@ -69,7 +69,7 @@ x509-cert = "0.2"
 der = { version = "0.7", features = ["alloc", "std"] }
 evtx = { version = "0.12.3", default-features = false }
 goblin = "0.10"
-sha1 = "0.10"
+sha1 = "0.11"
 # LNK parsing: Yamato Security's ys-lnk-parser, a fork of sootmark-shell (MIT OR Apache-2.0),
 # with its code pages for links from non-Western systems.
 shell = { package = "ys-lnk-parser", git = "https://github.com/Yamato-Security/ys-lnk-parser", features = ["codepages"] }
@@ -89,15 +89,36 @@ serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
 # (MIT OR Apache-2.0).
 srum = { package = "ys-srum-parser", git = "https://github.com/Yamato-Security/ys-srum-parser" }
+# User Access Logging parsing: the ESE reader of ys-srum-parser (the fork of Sootmark's ese crate).
+ese = { package = "ys-srum-parser-ese", git = "https://github.com/Yamato-Security/ys-srum-parser" }
+# Browser history, downloads, cookies and form history: Yamato Security's ys-browser-parser, a
+# fork of Sootmark's browser, sqlite and plist crates (MIT OR Apache-2.0); its timestamps are
+# sootmark-common's.
+browser = { package = "ys-browser-parser", git = "https://github.com/Yamato-Security/ys-browser-parser" }
+# Use the same reader for detection: the committed schema may exist only in the WAL.
+browser-sqlite = { package = "ys-browser-parser-sqlite", git = "https://github.com/Yamato-Security/ys-browser-parser" }
+common = { package = "sootmark-common", version = "0.3.7" }
 termcolor = "1"
 # Defender quarantine parsing: Yamato Security's ys-defender-history-parser, a fork of
 # sootmark-defender (MIT OR Apache-2.0).
 defender = { package = "ys-defender-history-parser", git = "https://github.com/Yamato-Security/ys-defender-history-parser" }
+# Outlook PST and OST stores and MSG and OFT files: Yamato Security's ys-outlook-parser, whose PST
+# and compressed RTF readers are a fork of Microsoft's outlook-pst-rs (MIT). Named outlook-parser
+# here so that its library does not clash with parse-file outlook's module.
+outlook-parser = { package = "ys-outlook-parser", git = "https://github.com/Yamato-Security/ys-outlook-parser" }
+
+# Native read-only VHDX/NTFS access on Linux, macOS and Windows. The separate
+# OS-visible mount command uses the SDK's Linux-only FUSE adapter.
+vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Security/ys-vhdx-parser", branch = "main" }
+tempfile = "3"
+ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "main" }
+ctrlc = { version = "3.5", features = ["termination"] }
 
 [dev-dependencies]
+# Build synthetic Outlook files for end-to-end export regressions.
+cfb = "0.16"
 # The SYSTEM hive of test_files/shimcache/ is kept gzipped.
 flate2 = "1"
-tempfile = "3"
 
 [profile.release]
 lto = "fat"

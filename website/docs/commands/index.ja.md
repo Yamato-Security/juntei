@@ -10,11 +10,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 マルチコンピューター Windows 証拠収集の場合は、[`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) を使用します。同じグループ化されたコマンドを呼び出し、結果とログをコンピュータおよび調査カテゴリごとに整理します。
 
+[`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) は、解析済みアーティファクトの各時刻を意味付きイベントに展開し、時系列に並べます。`auto-parse -j` は引き続きネイティブレコードを保持します。
+
+## [ディスクイメージ](mount.md) { #disk-images }
+
+| コマンド | 入力 | 詳細ガイド |
+|---|---|---|
+| `mount` | VHDX / E01 / Ex01 ディスクイメージ | [ディスクイメージのマウント](mount.md) |
+
 ## [ESE コマンド](user-activity.md) { #ese-commands }
 
 | コマンド | 入力アーティファクト | 詳細ガイド |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb` | [ユーザーアクセスログ (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer と従来の Edge](../artifacts/webcache.md) |
 
 ## [ファイルコマンド](execution.md) { #file-commands }
 
@@ -23,6 +33,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file defender-quarantine` | Defender 隔離ツリーまたはエントリ | [Defender 隔離](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK ショートカット](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS コマンド](filesystem.md) { #ntfs-commands }
@@ -68,6 +79,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite コマンド](sqlite.md) { #sqlite-commands }
+
+| コマンド | 入力アーティファクト | 詳細ガイド |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Web ブラウザ](../artifacts/browser.md) |
+
 ## ソースの種類とフォーマットの変更 { #source-types-and-format-changes }
 
 グループは、Juntei が現在サポートしている形式を説明します。 `parse-registry amcache` は `Amcache.hve` を読み取ります。 SQLite Amcache インベントリ データベースのサポートを意味するものではありません。アーティファクト パーサー クレートは分離されたままであるため、別のストレージ形式のサポートを個別に追加できます。
@@ -84,13 +101,15 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

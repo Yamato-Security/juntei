@@ -94,6 +94,61 @@ SDDL, termasuk kondisi dari 3.384 callback ACE-nya.
 11 database nyata, setiap kolom dalam 45.255 entri yang dikeluarkan cocok dengan dekode independen atas
 nilai-nilai yang diekspos oleh `dissect.esedb`.
 
+## Pencatatan Akses Pengguna { #user-access-logging }
+
+`parse-ese ual` membaca database UAL dengan pembaca ESE yang sama. Pada 16 database nyata (308 baris,
+145 di antaranya baris klien), setiap nilai cocok dengan dekode independen atas nilai-nilai yang diekspos oleh
+`dissect.esedb`. Pada setiap baris klien, hari-hari yang memiliki hitungan berlangsung dari hari UTC `InsertDate`
+hingga hari UTC `LastAccess`, dan jumlah hitungannya sama dengan `TotalAccesses`.
+
+## Browser web { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) adalah fork yang dikelola dari crate
+browser, sqlite, dan plist milik Sootmark, yang dipilih setelah dibandingkan dengan pustaka Rust lain serta dengan
+Plaso, Velociraptor (SQLiteHunter), dan Hindsight pada database yang sama. `parse-sqlite browser` dibandingkan
+dengan pustaka `sqlite3` yang membaca salinan setiap database beserta berkas `-wal`-nya, pada 38 database
+publik: berkas uji Plaso (Chrome 8 hingga 68, Firefox 2 hingga 118), profil yang dibuat oleh Chromium 150 dan
+Firefox 140, serta database uji riwayat formulir milik ys-browser-parser. Seluruh 293 kunjungan, 21 unduhan,
+692 cookie, dan 41 entri formulir cocok. Entri terhapus hanya dipulihkan di tempat entri memang telah dihapus:
+dua halaman dan dua kunjungan yang dihapus dari riwayat Firefox 140, beserta waktu, URL, dan judulnya, serta
+entri formulir terhapus pada database uji.
+
+## Internet Explorer dan Edge lama (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` membaca `WebCacheV01.dat` dengan
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). Perintah ini dibandingkan dengan
+pembaca ESE milik `dissect.database` pada dua database WebCache publik milik Plaso: satu dari Internet
+Explorer 11, dan satu database dirty dari Windows 10 yang berisi riwayat, unduhan, dan cookie Edge lama.
+Seluruh 4.156 baris cocok, nilai demi nilai: 44 kontainer, 182 entri riwayat, 6 unduhan, 170 cookie, dan
+3.754 entri lainnya. Perbandingan tersebut mendekode record unduhan secara mandiri. Record yang ditandai
+terhapus oleh database dikecualikan dari keduanya.
+
+## Outlook { #outlook }
+
+`parse-file outlook` membaca berkas PST, OST, `.msg`, dan `.oft` dengan
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser), yang pembaca PST dan OST-nya
+merupakan fork dari [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) milik Microsoft dan
+pembaca `.msg`-nya ditulis berdasarkan spesifikasi terbuka Microsoft.
+
+- **PST dan OST**: 66 berkas PST dan OST publik (Apache Tika, artemis, contoh Aspose.Email, DFIR
+  Artifact Museum, Enron, contoh GroupDocs, java-libpst, data uji libyal, outlook-pst-rs, dan
+  pst-extractor) dibandingkan dengan libpff, properti demi properti: setiap properti dari setiap
+  store, folder, pesan, penerima, dan lampiran, serta data setiap lampiran. 324.175 fakta sama dan
+  tidak ada yang berbeda tanpa penjelasan. Sisanya adalah apa yang hanya dibaca oleh ys-outlook-parser
+  (15.846 fakta dari pesan, penerima, dan lampiran yang gagal dibaca libpff, serta dari sebuah store
+  yang tidak dapat dibukanya; 8.223 dari item tersembunyi), sel penerima yang diberikan libpff sebagai
+  kosong atau nol padahal barisnya menyatakan nilai itu tidak ada (49.077), entry id dan tipe folder
+  yang dihitung seperti yang dilakukan MAPI (2.004), serta objek dan pesan tertanam yang diberikan
+  libpff sebagai data mentahnya (480). Dua dari berkas tersebut sama sekali tidak dapat dibaca oleh
+  kedua pembaca.
+- **`.msg` dan `.oft`**: 214 berkas publik, dengan 2.404 pesan, penerima, dan lampiran serta 41.002
+  properti, dibandingkan dengan extract-msg: 110.114 fakta sama, dan masing-masing dari 791 fakta yang
+  berbeda dapat dijelaskan: 601 adalah kesalahan extract-msg terkait waktu, 35 berasal dari berkas ANSI
+  yang didekodenya dengan code page yang salah, dan sisanya adalah apa yang dihilangkan atau
+  ditambahkannya.
+- **Input rusak**: lebih dari 260.000 berkas `.msg` hasil mutasi dan 160.000 PST hasil mutasi, serta
+  berkas yang dibuat khusus, dibaca tanpa crash, hang, atau penggunaan memori yang tak terbatas.
+
 ## Pintasan LNK { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) adalah fork yang dikelola dari crate

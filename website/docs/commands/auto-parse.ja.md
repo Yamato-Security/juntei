@@ -15,6 +15,62 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
 !!! warning "出力ツリーと証拠ツリーを分離しておきます。"
     Juntei は、`<EVIDENCE>` 内にある出力ディレクトリ、または `<EVIDENCE>` を含む出力ディレクトリを拒否します。これにより、生成されたデータが証拠として再発見されるのを防ぎ、`--clobber` がソース コレクション内のファイルにアクセスするのを防ぎます。
 
+## VHDX ディスクイメージ { #vhdx-disk-images }
+
+`--vhdx` を指定すると、`auto-parse` は [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用して
+**Linux、macOS、Windows** で VHDX をネイティブに読み取ります。OS へのマウント、FUSE ドライバー、管理者権限は不要です。
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+各パーサーはファイルパスを必要とするため、リーダーが公開する NTFS ボリュームから、パーサーが読み取るファイル（レジストリハイブとそのトランザクションログ、NTFS メタデータファイル、データベース、Prefetch、ショートカット、Jump List、Outlook ファイル、Defender の検疫フォルダー）を専用の一時作業領域にコピーしてから通常の解析を行います。
+それ以外のファイルは、元の更新時刻を持つ空のプレースホルダーになるため、ディレクトリとパスはディスク上と同じに見えます。
+persistence-hunter は、永続化エントリが参照する実行ファイルなど、必要になったプレースホルダーの内容だけをイメージから読み取ります。
+**出力結果に加えて、コピーするファイルを保存する一時ディスク容量が必要です。**
+読み取りバッファーは固定サイズです。ホストのファイルシステムが対応している場合、ゼロ領域はスパース領域として書き込みます。
+元のファイル名、ディレクトリ構造、ハードリンク、ファイル更新時刻を保持します。
+LNK と Jump List のソース作成・更新・アクセス時刻は、一時ファイルではなく元の NTFS メタデータのスナップショットから取得します。
+一時ディレクトリは、パーサーエラーが報告された場合を含めて正常な終了処理で削除されますが、強制終了時には残る場合があります。
+元のイメージは読み取り専用で開き、未反映の VHDX ログもメモリ上でのみ適用します。
+
+ホスト名の検出、ホスト別の出力、CSV/JSON/JSONL、`-j` は通常の証拠ディレクトリと同じ解析処理を使用します。
+`manifest.json` の `Image` は元のイメージを、`EvidenceRoot` はイメージ内の相対パスを示します。
+読み取れないイメージ、ボリューム、ファイル、安全に表現できないファイル名は、`ImageErrors` と
+`manifest.csv` の失敗行に記録します。読み取れる証拠の解析は継続し、不完全な入力があれば終了コードは 1 になります。
+危険な名前や曖昧な名前は勝手に変更せず、エラーとして報告します。名前付き NTFS ストリームを追加ファイルとして抽出する機能はありません。
+トリアージイメージ内に通常のファイルとして収集済みのアーティファクトは利用できます。
+
+他のプログラムにファイルシステムを公開する [`mount` コマンド](mount.md) は、引き続き Linux の FUSE を必要とします。
+`auto-parse --vhdx` はこのコマンドを使用しません。
+
+ステージングは既定で出力先のファイルシステム上の専用ディレクトリを使用します。 `--temp-dir` で別ディスク上の既存のディレクトリを指定できます。元のメタデータは出力側に別途保持するため、ステージング先が満杯でも、読み取れたファイルの解析を続行できます。コピーと結果の両方に必要な空き容量を確保してください。出力先自体が満杯の場合は結果を保存できません。Ctrl+C はパーサープロセスを停止し、専用作業領域を削除して終了コード 130 を返します。SIGKILL や電源断ではコピーが残る場合があります。イメージ検索では読み取れないサブディレクトリをスキップしますが、入力ルートが読めない場合はエラーです。
+
+ステージング先は出力ディレクトリの外に指定してください。Linux と macOS では、SIGTERM と SIGHUP でもパーサープロセスを停止し、作業領域を削除します。
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 と Ex01 ディスクイメージ { #e01-and-ex01-disk-images }
+
+`--e01` は、物理 EWF1（`.E01`）および EWF2（`.Ex01`）イメージを **Linux、macOS、Windows** でネイティブに読み取ります。FUSE、OS へのマウント、管理者権限は不要です。[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) と、上記と同じ NTFS 解析処理を使用します。
+
+分割イメージは最初のセグメントを指定します。`.E02` などの関連ファイルを元の名前のまま同じディレクトリに置いてください。ディスク全体（MBR/GPT）と単一の NTFS ボリュームに対応します。両形式が混在するディレクトリには `--vhdx --e01` を使用します。
+
+一時ディスク容量と元のメタデータに関する要件も同じです。E01 は通常ディスク全体を収録しており、すべてのイメージを解析開始前にステージングしますが、コピーするのはパーサーが読み取るファイルだけで、通常は使用容量のごく一部です。イメージは読み取り専用です。取得時の欠損や、開始時・読み取り中に見つかった破損は `ImageErrors` と `manifest.csv` に記録され、読み取れる結果を保持して終了コード 1 を返します。検査対象はアクセスしたデータであり、全チャンクやメディア全体のハッシュではありません。論理形式の `.L01`、`.Lx01` は拒否します。パスワード指定には対応しません。
+
+別機能の `mount` コマンドには引き続き Linux FUSE が必要ですが、ネイティブ自動解析には不要です。
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## 出力タイムゾーン { #output-time-zone }
 
 解析されたタイムスタンプは、アナリスト コンピュータのローカル タイム ゾーンに関係なく、デフォルトで UTC になります。 UTC は、`2026-10-20T08:46:38.2001668Z` 形式の Windows イベント ログを使用します。ISO 8601 日付/時刻、日付と時刻の間の `T`、および UTC の `Z`。使用可能な小数桁は保持されます。`manifest.json` の `GeneratedUTC` もこの形式を使用します。コンソールの `Start time` と `End time` は、出力タイム ゾーンに関係なく、アナリスト コンピュータのローカル時刻 (例: `2026-11-04 09:15:02`) です。
@@ -75,6 +131,10 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - `$I30` ディレクトリ インデックス
 - `$Boot` ブート セクターと `$Secure:$SDS` セキュリティ記述子
 - SRUM
+- ユーザーアクセスログ (UAL)
+- Web ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴 (Chromium 系および Firefox 系ブラウザ)
+- Internet Explorer と従来の Edge の WebCache: 閲覧履歴、ダウンロード、Cookie、キャッシュ エントリ
+- Outlook の PST、OST、MSG、OFT ファイル: フォルダー、アイテム、受信者、添付ファイル、連絡先、予定表アイテム、タスク
 - LNK のショートカット
 - Jump Lists
 - ShimCache
@@ -118,6 +178,28 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -166,7 +248,11 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -219,12 +305,14 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 | `Accounts` | SAM ローカル アカウント、LSA シークレットの名前と時刻 |
 | `Applications` | アプリケーション履歴 (サードパーティツールのトレース) |
 | `Applications` | インストールされているプログラム |
+| `BrowserActivity` | Web ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴 (復元された削除済みエントリを含む)、Internet Explorer と従来の Edge の WebCache |
+| `Communication` | Outlook の PST、OST、MSG、OFT ファイル: フォルダー、アイテム、受信者、添付ファイル、連絡先、予定表アイテム、タスク |
 | `ExternalDevices` | USB デバイスとボリューム |
 | `FileAndFolderOpening` | Jump Lists、LNK ショートカット、Microsoft Office、MRU リスト、開くダイアログと名前を付けて保存ダイアログ、RecentDocs、ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`、`$I30`、`$LogFile`、`$MFT`、`$Secure:$SDS`、USN ジャーナル |
 | `NetworkActivity` | ネットワーク プロファイル、インターフェイス、共有、ポート プロキシ、およびルート。 SRUM 接続、トラフィック、プッシュ通知 |
-| `LateralMovement` | ユーザーの送信リモート デスクトップ、PuTTY および WinSCP 接続、マップされたドライブと共有 |
+| `LateralMovement` | ユーザーの送信リモート デスクトップ、PuTTY および WinSCP 接続、マップされたドライブと共有。ユーザーアクセスログ (サーバーの役割のクライアント) |
 | `Persistence` | ブート構成 (BCD)、レジストリ自動起動、サービス、TaskCache |
 | `ProcessExecution` | アプリケーションの互換性、BAM および DAM、FeatureUsage とピン、MuiCache、Prefetch、Prefetch タイムライン、SRUM アプリケーション/CPU アクティビティ、UserAssist |
 | `Registry` | 一般的なハイブキーと値 (回復されたレコードを含む) |
@@ -235,7 +323,7 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 
 CSV、JSON、および JSONL は同じカテゴリを使用します。パーサー ジョブごとに 1 つの `<artifact>-logs.txt` ファイルには、その正確なコマンドとメッセージが含まれます。たとえば、`HOST1/FileSystem/MFT-logs.txt` や `HOST1/ProcessExecution/Prefetch-logs.txt` などです。 JSON と JSONL は同じログ ファイル名を使用します。 Amcache と Jump Lists にはそれぞれ、プレフィックス付きテーブルの横に 1 つの共有ログがあります。 SRUM プロバイダー テーブルは、共有 `SystemInformation/SRUM-logs.txt` ファイルを使用して、`NetworkActivity`、`ProcessExecution`、および `SystemInformation` に直接配置されます。 `logs/` サブディレクトリは作成されません。
 
-デフォルトの CSV ファイル名は、`Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、`I30.csv`、`MFT.csv`、`UsnJournal.csv`、 `Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、`Registry-SecuritySettings.csv`、`PrefetchTimeline.csv`、 `Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、 `Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、および`DefenderQuarantine.csv`。レジストリ派生テーブルでは、`Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv`、`Registry-SystemInfo.csv` など、`Registry-` プレフィックスが使用されます。一般的なハイブのキーと値は `Registry-Dump.csv` にあります。 Amcache テーブルは、`FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、`Registry-Amcache-Findings.csv`、および `Registry-Amcache-Summary.csv` です。 Jump Lists は `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` と `JumpLists-CustomDestinations.csv` を使用します。 Amcache または Jump Lists サブディレクトリはありません。 SRUM テーブルは、そのカテゴリの直下で `SRUM-` ファイル名を使用します (例: `NetworkActivity/SRUM-NetworkConnections.csv`)。 [完全な SRUM 配置テーブル](../artifacts/srum.md#categorized-auto-parse-output) を参照してください。
+デフォルトの CSV ファイル名は、`Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、`I30.csv`、`MFT.csv`、`UsnJournal.csv`、 `Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、`Registry-SecuritySettings.csv`、`PrefetchTimeline.csv`、 `Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、 `Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、および`DefenderQuarantine.csv`。レジストリ派生テーブルでは、`Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv`、`Registry-SystemInfo.csv` など、`Registry-` プレフィックスが使用されます。一般的なハイブのキーと値は `Registry-Dump.csv` にあります。 Amcache テーブルは、`FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、`Registry-Amcache-Findings.csv`、および `Registry-Amcache-Summary.csv` です。 Jump Lists は `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` と `JumpLists-CustomDestinations.csv` を使用します。 Amcache または Jump Lists サブディレクトリはありません。 SRUM テーブルは、そのカテゴリの直下で `SRUM-` ファイル名を使用します (例: `NetworkActivity/SRUM-NetworkConnections.csv`)。ユーザーアクセスログのテーブルは `LateralMovement` にあり、`UAL-Clients.csv` や `UAL-SystemIdentity.csv` のようにテーブルごとに 1 つのファイルとなり、`UAL-logs.txt` も作成されます。[ユーザーアクセスログ (UAL)](../artifacts/ual.md#automatic-parsing) を参照してください。Web ブラウザのテーブルは `BrowserActivity` にあり、`Browser-History.csv`、`Browser-Downloads.csv`、`Browser-Cookies.csv`、`Browser-FormHistory.csv` と `Browser-logs.txt` が作成されます。[Web ブラウザ](../artifacts/browser.md#automatic-parsing) を参照してください。Internet Explorer と従来の Edge の WebCache のテーブルも同じ場所にあり、`WebCache-History.csv`、`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv`、`WebCache-Containers.csv` と `WebCache-logs.txt` が作成されます。[Internet Explorer と従来の Edge](../artifacts/webcache.md#automatic-parsing) を参照してください。 Outlook のテーブルは `Communication` にあり、`Outlook-Files.csv`、`Outlook-Folders.csv`、`Outlook-Items.csv`、`Outlook-Recipients.csv`、`Outlook-Attachments.csv`、`Outlook-Contacts.csv`、`Outlook-Calendar.csv`、`Outlook-Tasks.csv` と `Outlook-logs.txt` が作成されます。[Outlook](../artifacts/outlook.md#automatic-parsing) を参照してください。 [完全な SRUM 配置テーブル](../artifacts/srum.md#categorized-auto-parse-output) を参照してください。
 
 ログは、`Registry-SAM-logs.txt`、`PrefetchTimeline-logs.txt`、`Registry-UserAssist-logs.txt` などの大文字のアーティファクト名と一致します。 JSON/JSONL ファイルは同じステムを使用します (例: `MFT.jsonl`)。レコードの `Artifact` 識別子は、クエリの場合は `mft` です。マルチテーブル出力では、テーブルの横に `Registry-Amcache-logs.txt` または `JumpLists-logs.txt` が表示されます。共有 SRUM ログは `SystemInformation` にあります。
 
@@ -309,7 +397,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## 使用法 { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -318,6 +406,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -352,3 +443,13 @@ Display Settings:
 レポート フィールドとそのフォレンジック制限については、[回復されたセキュリティ記述子の読み取り](../artifacts/defender-quarantine.md#reading-the-recovered-security-descriptor)を参照してください。
 
 自動解析は、ユーザーのリモート接続 (RDP、PuTTY、WinSCP、およびマップされたドライブ) も読み取ります。
+
+## 時系列を統合したタイムラインの作成 { #build-a-chronological-super-timeline }
+
+解析後、[`super-timeline`](super-timeline.md) を使うと、記録された各時刻を意味付きのイベントに展開し、ホストやアーティファクトを横断して時系列に並べられます。
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+既存の `-j, --json-timeline` は、各パーサーのスキーマを保ったネイティブレコードを JSONL にまとめる機能です。時刻の展開や並べ替えは行いません。詳細な証拠確認のため、このファイルと各パーサーの結果も保管してください。

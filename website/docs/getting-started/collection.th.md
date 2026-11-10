@@ -1,7 +1,10 @@
 # การเก็บรวบรวมหลักฐาน { #collecting-evidence }
 
-Juntei พาร์สไฟล์ที่ถูกเก็บรวบรวมมาจาก Windows แล้ว ให้ใช้เครื่องมือเก็บข้อมูลที่เชื่อถือได้และเก็บรักษา
-เมทาดาทาดั้งเดิมไว้ให้มากที่สุดเท่าที่ทำได้
+Juntei พาร์สไฟล์ที่รวบรวมจาก Windows แล้ว ใช้เครื่องมือเก็บหลักฐานที่เชื่อถือได้และรักษาเมทาดาทาต้นฉบับเมื่อทำได้
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## ตำแหน่งทั่วไป { #common-locations }
 
@@ -13,6 +16,10 @@ Juntei พาร์สไฟล์ที่ถูกเก็บรวบรว�
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | สตรีมเมทาดาทาของ NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| การบันทึกการเข้าถึงของผู้ใช้ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer และ Edge รุ่นเก่า (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` ก่อน Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft` และไฟล์ `.msg` ไม่ว่าจะถูกบันทึกไว้ที่ใด |
+| เว็บเบราว์เซอร์ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` และโฟลเดอร์โปรไฟล์ของเบราว์เซอร์อื่น ๆ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` และตำแหน่งอื่นของผู้ใช้/ระบบ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` และ `CustomDestinations` |
 | ShimCache | ไฮฟ์ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +38,16 @@ Juntei พาร์สไฟล์ที่ถูกเก็บรวบรว�
 - เก็บรวบรวม `$LogFile` พร้อมกับ `$MFT` ของวอลุ่มเดียวกันในเวลาที่ใกล้เคียงกันที่สุด `$LogFile` วนทับ
   อย่างรวดเร็ว การเก็บรวบรวมที่ล่าช้าอาจทำให้เรคคอร์ด redo/undo ก่อนหน้าสูญหายไปทั้งหมด
 - เก็บรวบรวม SRUM พร้อมไฮฟ์ `SOFTWARE` ที่ตรงกันเพื่อ resolve ชื่อบัญชีและชื่อโปรไฟล์ Wi-Fi
+- เก็บรวบรวมไดเรกทอรี `Sum` ของการบันทึกการเข้าถึงของผู้ใช้ทั้งหมด เพราะ `SystemIdentity.mdb` ระบุชื่อบทบาทและ
+  ฐานข้อมูล `{GUID}.mdb` รายปี นอกจากนี้ Juntei ก็ไม่ได้เล่นซ้ำบันทึกธุรกรรม `Svc*.log` ของ UAL เช่นกัน
+- เก็บรวบรวมฐานข้อมูลของเบราว์เซอร์พร้อมไฟล์ `-wal` ที่อยู่ข้างกัน (`places.sqlite-wal`,
+  `cookies.sqlite-wal`) เพราะการเปลี่ยนแปลงล่าสุด และเพจเวอร์ชันเก่าที่ใช้กู้คืนรายการที่ถูกลบ
+  จะอยู่ในไฟล์เหล่านั้นจนกว่าเบราว์เซอร์จะทำ checkpoint เท่านั้น
+- เก็บรวบรวมโฟลเดอร์ `WebCache` ทั้งหมด เพราะ Windows เปิด `WebCacheV01.dat` ค้างไว้ตลอดเวลาที่ผู้ใช้
+  ลงชื่อเข้าใช้อยู่ และการเปลี่ยนแปลงล่าสุดจะมีอยู่เฉพาะในบันทึกธุรกรรม `V01*.log` ซึ่ง Juntei ไม่ได้เล่นซ้ำ
+- เก็บรวบรวมไฟล์ OST และ PST ของ Outlook ขณะที่ Outlook ปิดอยู่ หรือเก็บจากอิมเมจดิสก์หรือ Volume Shadow
+  Copy เพราะ Outlook เปิดไฟล์เหล่านี้ค้างไว้ตลอดเวลาที่ทำงาน และให้ค้นหา PST นอกโฟลเดอร์เริ่มต้นด้วย
+  เพราะผู้ใช้มักย้ายไฟล์เก็บถาวรไปไว้ในโฟลเดอร์ ไดรฟ์ และการแชร์ไฟล์อื่น
 - เก็บรวบรวมโครงสร้าง `Quarantine` ของ Defender ทั้งหมด เพื่อให้จับคู่ Entries, ResourceData และ Resources ได้
 
 ## ข้อควรระวังสำหรับระบบที่กำลังทำงาน { #live-system-cautions }

@@ -93,6 +93,60 @@ SDDL, einschließlich der Bedingungen ihrer 3.384 Callback-ACEs.
 11 echte Datenbanken hinweg stimmte jede Spalte der 45.255 ausgegebenen Einträge mit einer unabhängigen Dekodierung
 der von `dissect.esedb` bereitgestellten Werte überein.
 
+## Benutzerzugriffsprotokollierung { #user-access-logging }
+
+`parse-ese ual` liest UAL-Datenbanken mit demselben ESE-Leser. Über 16 echte Datenbanken hinweg (308 Zeilen, davon
+145 Client-Zeilen) stimmte jeder Wert mit einer unabhängigen Dekodierung der von `dissect.esedb` bereitgestellten
+Werte überein. In jeder Client-Zeile reichten die Tage mit Anzahlen vom UTC-Tag von `InsertDate` bis zum UTC-Tag von
+`LastAccess` und ergaben in der Summe `TotalAccesses`.
+
+## Webbrowser { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) ist ein gepflegter Fork der Crates
+browser, sqlite und plist von Sootmark, ausgewählt nach einem Vergleich mit einer anderen Rust-Bibliothek sowie mit
+Plaso, Velociraptor (SQLiteHunter) und Hindsight anhand derselben Datenbanken. `parse-sqlite browser` wurde anhand
+von 38 öffentlichen Datenbanken mit der Bibliothek `sqlite3` verglichen, die jeweils eine Kopie jeder Datenbank mit
+ihrer `-wal`-Datei las: die Testdateien von Plaso (Chrome 8 bis 68, Firefox 2 bis 118), mit Chromium 150 und
+Firefox 140 erstellte Profile sowie die Testdatenbanken von ys-browser-parser für den Formularverlauf. Alle 293
+Besuche, 21 Downloads, 692 Cookies und 41 Formulareinträge stimmten überein. Gelöschte Einträge wurden nur dort
+wiederhergestellt, wo Einträge gelöscht worden waren: die zwei Seiten und zwei Besuche, die aus dem Verlauf von
+Firefox 140 gelöscht worden waren, mit ihren Zeiten, URLs und Titeln, sowie die gelöschten Formulareinträge der
+Testdatenbanken.
+
+## Internet Explorer und Edge Legacy (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` liest `WebCacheV01.dat` mit
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). Es wurde anhand der zwei öffentlichen
+WebCache-Datenbanken von Plaso mit dem ESE-Leser von `dissect.database` verglichen: einer von Internet Explorer 11
+und einer „dirty“ Datenbank von Windows 10 mit Verlauf, Downloads und Cookies des alten Edge. Alle 4.156 Zeilen
+stimmten Wert für Wert überein: 44 Container, 182 Verlaufseinträge, 6 Downloads, 170 Cookies und 3.754 weitere
+Einträge. Der Vergleich dekodierte die Download-Datensätze eigenständig. Datensätze, die die Datenbanken als gelöscht
+kennzeichnen, wurden bei beiden ausgelassen.
+
+## Outlook { #outlook }
+
+`parse-file outlook` liest PST-, OST-, `.msg`- und `.oft`-Dateien mit
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser), dessen PST- und OST-Leser ein Fork von
+Microsofts [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) ist und dessen `.msg`-Leser nach den offenen
+Spezifikationen von Microsoft geschrieben wurde.
+
+- **PST und OST**: 66 öffentliche PST- und OST-Dateien (Apache Tika, artemis, die Beispiele von Aspose.Email, das
+  DFIR Artifact Museum, Enron, die Beispiele von GroupDocs, java-libpst, die Testdaten von libyal, outlook-pst-rs und
+  pst-extractor) wurden Eigenschaft für Eigenschaft mit libpff verglichen: jede Eigenschaft jedes Nachrichtenspeichers,
+  Ordners, jeder Nachricht, jedes Empfängers und Anhangs sowie die Daten jedes Anhangs. 324.175 Werte stimmten
+  überein, und keiner wich ohne Erklärung ab. Die übrigen sind das, was nur ys-outlook-parser liest (15.846 Werte von
+  Nachrichten, Empfängern und Anhängen, an denen libpff scheitert, und eines Nachrichtenspeichers, den es nicht öffnen
+  kann; 8.223 von versteckten Elementen), Empfängerzellen, die libpff als leer oder null ausgibt, obwohl ihre Zeilen
+  sie als nicht vorhanden ausweisen (49.077), Eintrags-IDs und Typen von Ordnern, die so berechnet werden, wie MAPI
+  es tut (2.004), sowie Objekte und eingebettete Nachrichten, die libpff als Rohdaten ausgibt (480). Zwei der Dateien
+  kann keiner der beiden Leser überhaupt lesen.
+- **`.msg` und `.oft`**: 214 öffentliche Dateien mit 2.404 Nachrichten, Empfängern und Anhängen und 41.002
+  Eigenschaften wurden mit extract-msg verglichen: 110.114 Werte stimmten überein, und jede der 791 Abweichungen ist
+  erklärt: 601 sind Fehler von extract-msg bei Zeiten, 35 stammen aus ANSI-Dateien, die es mit der falschen Codepage
+  dekodiert, und die übrigen sind das, was es auslässt oder hinzufügt.
+- **Beschädigte Eingaben**: Mehr als 260.000 mutierte `.msg`-Dateien und 160.000 mutierte PSTs sowie eigens
+  präparierte Dateien wurden ohne Absturz, ohne Hängenbleiben und ohne unbegrenzten Speicherverbrauch gelesen.
+
 ## LNK-Verknüpfungen { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) ist ein gepflegter Fork des Crates

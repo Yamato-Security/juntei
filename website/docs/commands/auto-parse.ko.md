@@ -20,6 +20,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     생성된 데이터가 증거로 다시 발견되는 것을 방지하고, `--clobber`가 원본 수집물의 파일을 건드리지 않도록
     합니다.
 
+## VHDX 디스크 이미지 { #vhdx-disk-images }
+
+`--vhdx`를 지정하면 `auto-parse`는 [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser)로 **Linux, macOS, Windows**에서 VHDX를 네이티브로 읽습니다. OS 마운트, FUSE, 관리자 권한이 필요하지 않습니다.
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
+
+호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
+
+다른 프로그램에 파일시스템을 제공하는 별도 [`mount` 명령](mount.md)은 Linux FUSE가 필요합니다. `auto-parse --vhdx`는 이를 사용하지 않습니다.
+
+스테이징은 기본적으로 출력 파일시스템의 전용 디렉터리를 사용합니다. `--temp-dir`로 다른 디스크의 기존 디렉터리를 지정할 수 있습니다. 원본 메타데이터는 출력 파일시스템에 별도로 보관하므로 스테이징 디스크가 가득 차도 읽을 수 있는 파일은 파싱할 수 있습니다. 복사본과 결과를 위한 공간을 모두 확보하세요. 출력 파일시스템 자체가 가득 차면 결과를 저장할 수 없습니다. Ctrl+C는 파서 프로세스를 중지하고 전용 작업 공간을 정리한 뒤 코드 130으로 종료합니다. SIGKILL이나 전원 차단으로는 복사본이 남을 수 있습니다. 이미지 검색 중 접근할 수 없는 하위 디렉터리는 건너뛰지만 입력 루트를 읽지 못하면 오류입니다.
+
+스테이징 디렉터리는 출력 디렉터리 밖에 있어야 합니다. Linux와 macOS에서는 SIGTERM과 SIGHUP도 파서 프로세스를 중지하고 작업 공간을 정리합니다.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 및 Ex01 디스크 이미지 { #e01-and-ex01-disk-images }
+
+`--e01`은 **Linux, macOS, Windows**에서 물리 EWF1(`.E01`) 및 EWF2(`.Ex01`) 이미지를 네이티브로 읽습니다. FUSE, OS 마운트, 관리자 권한이 필요하지 않습니다. [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser)와 위에서 설명한 동일한 NTFS 파싱 경로를 사용합니다.
+
+분할 이미지는 첫 번째 세그먼트를 지정하세요. `.E02`를 포함한 모든 관련 파일을 원래 이름으로 같은 디렉터리에 보관하세요. 전체 디스크(MBR/GPT)와 단일 NTFS 볼륨을 지원합니다. 두 형식이 섞인 디렉터리에는 `--vhdx --e01`을 사용하세요.
+
+임시 공간과 원본 메타데이터 요구 사항은 동일합니다. E01 이미지는 보통 디스크 전체를 담고 있고 모든 이미지를 파싱 시작 전에 스테이징하지만, 복사하는 것은 파서가 읽는 파일뿐이며 보통 사용 공간의 작은 일부입니다. 이미지는 읽기 전용입니다. 수집 누락과 열기 또는 읽기 중 발견된 손상은 `ImageErrors`와 `manifest.csv`에 기록됩니다. 읽을 수 있는 결과는 보존하고 종료 코드 1을 반환합니다. 접근한 데이터만 검사하며 모든 청크나 전체 미디어 해시를 검증하지는 않습니다. 논리 파일 `.L01`, `.Lx01`은 거부하며 암호 옵션은 없습니다.
+
+별도의 `mount` 명령은 여전히 Linux FUSE가 필요하지만 네이티브 자동 파싱에는 필요하지 않습니다.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## 출력 표준 시간대 { #output-time-zone }
 
 파싱된 타임스탬프는 분석용 컴퓨터의 로컬 표준 시간대와 관계없이 기본적으로 UTC입니다. UTC는 Windows 이벤트
@@ -111,6 +152,10 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - `$I30` 디렉터리 인덱스
 - `$Boot` 부트 섹터와 `$Secure:$SDS` 보안 설명자
 - SRUM
+- 사용자 액세스 로깅 (UAL)
+- 웹 브라우저 방문 기록, 다운로드, 쿠키 및 양식 기록(Chromium 및 Firefox 기반 브라우저)
+- Internet Explorer와 레거시 Edge의 WebCache: 방문 기록, 다운로드, 쿠키 및 캐시 항목
+- Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업
 - LNK 바로 가기
 - Jump Lists
 - ShimCache
@@ -165,6 +210,28 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -213,7 +280,11 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -266,12 +337,14 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 | `Accounts` | SAM 로컬 계정, LSA 비밀 정보의 이름과 시간 |
 | `Applications` | 애플리케이션 기록(서드 파티 도구의 흔적) |
 | `Applications` | 설치된 프로그램 |
+| `BrowserActivity` | 복구된 삭제 항목을 포함한 웹 브라우저 방문 기록, 다운로드, 쿠키 및 양식 기록, 그리고 Internet Explorer와 레거시 Edge의 WebCache |
+| `Communication` | Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업 |
 | `ExternalDevices` | USB 장치와 볼륨 |
 | `FileAndFolderOpening` | Jump Lists, LNK 바로 가기, Microsoft Office, MRU 목록, 열기 및 다른 이름으로 저장 대화 상자, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN 저널 |
 | `NetworkActivity` | 네트워크 프로필, 인터페이스, 공유, 포트 프록시 및 경로. SRUM 연결, 트래픽 및 푸시 알림 |
-| `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유 |
+| `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유. 사용자 액세스 로깅(서버 역할의 클라이언트) |
 | `Persistence` | 부팅 구성(BCD), 레지스트리 자동 실행, 서비스, TaskCache |
 | `ProcessExecution` | 애플리케이션 호환성, BAM 및 DAM, FeatureUsage 및 고정 항목, MuiCache, Prefetch, Prefetch 타임라인, SRUM 애플리케이션/CPU 활동, UserAssist |
 | `Registry` | 복구된 레코드를 포함한 일반 하이브 키와 값 |
@@ -300,6 +373,19 @@ Jump Lists는 각각 접두사가 붙은 테이블 옆에 하나의 공유 로�
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv`와 `JumpLists-CustomDestinations.csv`를 사용합니다.
 Amcache나 Jump Lists의 하위 디렉터리는 없습니다. SRUM 테이블은 범주 바로 아래에 `SRUM-` 파일 이름을 사용합니다.
 예를 들어 `NetworkActivity/SRUM-NetworkConnections.csv`입니다.
+사용자 액세스 로깅 테이블은 `LateralMovement`에 테이블마다 하나의 파일로 있으며(예: `UAL-Clients.csv`,
+`UAL-SystemIdentity.csv`), `UAL-logs.txt`도 함께 있습니다.
+[사용자 액세스 로깅 (UAL)](../artifacts/ual.md#automatic-parsing)을 참조하십시오.
+웹 브라우저 테이블은 `BrowserActivity`에 있으며(`Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv`, `Browser-FormHistory.csv`), `Browser-logs.txt`도 함께 있습니다.
+[웹 브라우저](../artifacts/browser.md#automatic-parsing)를 참조하십시오.
+Internet Explorer와 레거시 Edge의 WebCache 테이블도 이곳에 있으며(`WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv`, `WebCache-Containers.csv`), `WebCache-logs.txt`도 함께 있습니다.
+[Internet Explorer와 레거시 Edge](../artifacts/webcache.md#automatic-parsing)를 참조하십시오.
+Outlook 테이블은 `Communication`에 있으며(`Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv`, `Outlook-Tasks.csv`), `Outlook-logs.txt`도 함께 있습니다.
+[Outlook](../artifacts/outlook.md#automatic-parsing)을 참조하십시오.
 [SRUM 배치 표 전체](../artifacts/srum.md#categorized-auto-parse-output)를 참조하십시오.
 
 로그는 `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`, `Registry-UserAssist-logs.txt`처럼 대문자로 시작하는
@@ -429,7 +515,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## 사용법 { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -438,6 +524,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -483,3 +572,13 @@ Display Settings:
 참조하십시오.
 
 자동 분석은 사용자의 원격 연결(RDP, PuTTY, WinSCP 및 매핑된 드라이브)도 읽습니다.
+
+## 연대순 슈퍼 타임라인 구축 { #build-a-chronological-super-timeline }
+
+구문 분석 후 [`super-timeline`](super-timeline.md)를 사용하여 기록된 타임스탬프를 레이블이 지정된 이벤트로 확장하고 컴퓨터와 아티팩트 전체에서 정렬합니다.
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+기존 `-j, --json-timeline` 내보내기는 결합된 기본 레코드 JSONL 파일로 유지됩니다. 파서 스키마를 보존합니다. 타임스탬프 필드를 확장하거나 이벤트를 정렬하지 않습니다. 증거 수준 검토를 위해 해당 정보와 개별 파서 결과를 보관하세요.

@@ -13,11 +13,21 @@ Pour une collecte de preuves Windows portant sur plusieurs ordinateurs, utilisez
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). Elle invoque les mêmes commandes regroupées
 et organise les résultats et les journaux par ordinateur et par catégorie d'investigation.
 
+Utilisez [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) pour trier les événements et préciser la signification de chaque date ; `auto-parse -j` conserve les données natives.
+
+## [Images disque](mount.md) { #disk-images }
+
+| Commande | Entrée | Guide détaillé |
+|---|---|---|
+| `mount` | Image disque VHDX / E01 / Ex01 | [Monter des images disque](mount.md) |
+
 ## [Commandes ESE](user-activity.md) { #ese-commands }
 
 | Commande | Artefact d'entrée | Guide détaillé |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Journalisation des accès utilisateur (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer et l'ancien Edge](../artifacts/webcache.md) |
 
 ## [Commandes de fichiers](execution.md) { #file-commands }
 
@@ -26,6 +36,7 @@ et organise les résultats et les journaux par ordinateur et par catégorie d'in
 | `parse-file defender-quarantine` | Arborescence ou entrée de quarantaine Defender | [Quarantaine Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Raccourcis LNK](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [Commandes NTFS](filesystem.md) { #ntfs-commands }
@@ -71,6 +82,12 @@ et organise les résultats et les journaux par ordinateur et par catégorie d'in
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [Commandes SQLite](sqlite.md) { #sqlite-commands }
+
+| Commande | Artefact d'entrée | Guide détaillé |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [Navigateurs web](../artifacts/browser.md) |
+
 ## Types de sources et changements de format { #source-types-and-format-changes }
 
 Les groupes décrivent les formats que Juntei prend actuellement en charge. `parse-registry amcache` lit
@@ -93,13 +110,15 @@ de premier niveau. Elle complète l'inventaire complet de la configuration produ
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

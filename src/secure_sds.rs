@@ -189,7 +189,12 @@ fn starts_with_sds_entry(path: &Path) -> bool {
     File::open(path)
         .and_then(|f| f.take(4096).read_to_end(&mut head))
         .is_ok()
-        && sds::looks_like_sds(&head)
+        && is_sds_head(&head)
+}
+
+/// [`starts_with_sds_entry`] for a file's first bytes (up to 4096 of them).
+pub(crate) fn is_sds_head(head: &[u8]) -> bool {
+    sds::looks_like_sds(&head[..head.len().min(4096)])
 }
 
 /// The `$SDS` streams under `dir`, recursively, in path order.

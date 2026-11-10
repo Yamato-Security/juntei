@@ -260,7 +260,11 @@ fn historical_hosts(ctx: &Context, now: DateTime<Utc>, issues: &mut Vec<String>)
         .iter()
         .filter(|file| active_channel_log(ctx, file, "System"))
     {
-        let mut parser = match EvtxParser::from_path(&source.physical) {
+        let parser = source
+            .materialize()
+            .map_err(|e| e.to_string())
+            .and_then(|()| EvtxParser::from_path(&source.physical).map_err(|e| e.to_string()));
+        let mut parser = match parser {
             Ok(parser) => parser.with_configuration(ParserSettings::new().num_threads(1)),
             Err(e) => {
                 issues.push(format!(
@@ -651,7 +655,10 @@ fn scan_mft_source(
 ) -> SourceScan {
     let mut scan = SourceScan::new(state_count);
     let drive = ctx.drive_of(source);
-    let mut parser = match MftParser::from_path(source) {
+    let parser = crate::image_files::materialize(source)
+        .map_err(|e| e.to_string())
+        .and_then(|()| MftParser::from_path(source).map_err(|e| e.to_string()));
+    let mut parser = match parser {
         Ok(parser) => parser,
         Err(e) => {
             scan.issues.push(format!(
@@ -828,7 +835,11 @@ fn scan_event_source(
     now: DateTime<Utc>,
 ) -> SourceScan {
     let mut scan = SourceScan::new(state_count);
-    let mut parser = match EvtxParser::from_path(&source.physical) {
+    let parser = source
+        .materialize()
+        .map_err(|e| e.to_string())
+        .and_then(|()| EvtxParser::from_path(&source.physical).map_err(|e| e.to_string()));
+    let mut parser = match parser {
         Ok(parser) => parser.with_configuration(ParserSettings::new().num_threads(1)),
         Err(e) => {
             scan.issues.push(format!(

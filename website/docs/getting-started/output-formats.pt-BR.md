@@ -117,3 +117,7 @@ do computador que executa o Juntei. Os valores brutos e os horários de relógio
 Vazio, `null`, `NA`, `Problems` e os campos de estado específicos de cada analisador têm significado. Eles podem indicar que o
 artefato não armazenou um valor, que o registro estava danificado, que o formato não oferece suporte a ele ou que o
 analisador não conseguiu resolvê-lo. Não substitua todos os valores vazios por zero.
+
+## Linha do tempo cronológica normalizada { #normalized-chronological-timeline }
+
+[`super-timeline`](../commands/super-timeline.md) cria um esquema de evento CSV/JSONL comum com significados de carimbo de data/hora rotulados, referências de origem e classificação cronológica. Ele também oferece suporte a um perfil de importação do Timesketch. As exportações do analisador nativo e `auto-parse -j` mantêm seus esquemas existentes.

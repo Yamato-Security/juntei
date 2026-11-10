@@ -13,11 +13,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md)。它會呼叫相同的分組命令，
 並依電腦與調查類別整理結果與記錄。
 
+對於跨已解析工件的按時間順序排序的時間線，請使用 [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md)。它擴展並標記了時間戳記的含義； `auto-parse -j` 繼續保留本地記錄。
+
+## [磁碟映像檔](mount.md) { #disk-images }
+
+| 命令 | 輸入 | 詳細指南 |
+|---|---|---|
+| `mount` | VHDX / E01 / Ex01 磁碟映像檔 | [掛載磁碟映像](mount.md) |
+
 ## [ESE 命令](user-activity.md) { #ese-commands }
 
 | 命令 | 輸入跡證 | 詳細指南 |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb` | [使用者存取記錄 (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer 與舊版 Edge](../artifacts/webcache.md) |
 
 ## [檔案命令](execution.md) { #file-commands }
 
@@ -26,6 +36,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file defender-quarantine` | Defender 隔離資料樹狀結構或項目 | [Defender 隔離資料](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`、`*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK 捷徑](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS 命令](filesystem.md) { #ntfs-commands }
@@ -71,6 +82,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`、`NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite 命令](sqlite.md) { #sqlite-commands }
+
+| 命令 | 輸入跡證 | 詳細指南 |
+|---|---|---|
+| `parse-sqlite browser` | `History`、`Cookies`、`Web Data`、`places.sqlite`、`cookies.sqlite`、`formhistory.sqlite` | [網頁瀏覽器](../artifacts/browser.md) |
+
 ## 來源類型與格式變更 { #source-types-and-format-changes }
 
 分組描述的是 Juntei 目前支援的格式。`parse-registry amcache` 讀取的是 `Amcache.hve`；這並不表示
@@ -92,13 +109,15 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

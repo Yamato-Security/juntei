@@ -1,6 +1,10 @@
 # 收集證據 { #collecting-evidence }
 
-Juntei 剖析的是已從 Windows 收集而來的檔案。請使用可信任的取證工具，並盡可能保留原始中繼資料。
+Juntei 剖析已從 Windows 收集的檔案。請使用可信任的擷取工具，並盡可能保留原始中繼資料。
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## 常見位置 { #common-locations }
 
@@ -12,6 +16,10 @@ Juntei 剖析的是已從 Windows 收集而來的檔案。請使用可信任的�
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS 中繼資料資料流 `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| 使用者存取記錄（Windows Server） | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer 與舊版 Edge（WebCache） | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`、`%USERPROFILE%\Documents\Outlook Files\*.pst`（Outlook 2010 之前為 `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`）、`%APPDATA%\Microsoft\Templates\*.oft`，以及儲存在任何位置的 `.msg` 檔案 |
+| 網頁瀏覽器 | `%LOCALAPPDATA%\Google\Chrome\User Data\`、`%LOCALAPPDATA%\Microsoft\Edge\User Data\`、`%APPDATA%\Mozilla\Firefox\Profiles\` 以及其他瀏覽器的設定檔資料夾 |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 以及其他使用者／系統位置 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 與 `CustomDestinations` |
 | ShimCache | `SYSTEM` 登錄區：`...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -30,6 +38,16 @@ Juntei 剖析的是已從 Windows 收集而來的檔案。請使用可信任的�
 - 請在盡可能接近的時間點，將 `$LogFile` 與同一磁碟區的 `$MFT` 一併收集。`$LogFile` 循環覆寫的速度很快；
   較晚收集可能會完全失去先前的 redo/undo 記錄。
 - 收集 SRUM 時請一併收集對應的 `SOFTWARE` 登錄區，以解析帳戶與 Wi-Fi 設定檔名稱。
+- 請收集完整的使用者存取記錄 `Sum` 目錄：`SystemIdentity.mdb` 提供角色名稱，並列出各年度的
+  `{GUID}.mdb` 資料庫。Juntei 同樣不會重播其 `Svc*.log` 交易記錄檔。
+- 收集瀏覽器資料庫時，請一併收集其旁的 `-wal` 檔案（`places.sqlite-wal`、
+  `cookies.sqlite-wal`）：最新的變更，以及用來復原已刪除項目的舊版頁面，只會保留到瀏覽器執行
+  檢查點為止。
+- 請收集整個 `WebCache` 資料夾：使用者登入期間，Windows 會持續開啟 `WebCacheV01.dat`，而其最新的
+  變更只存在於 `V01*.log` 交易記錄檔中，Juntei 不會重播這些記錄檔。
+- 請在 Outlook 關閉時收集其 OST 與 PST 檔案，或從磁碟映像或磁碟區陰影複製中收集：Outlook 執行
+  期間會持續開啟這些檔案。也請在預設資料夾之外尋找 PST：使用者會將封存檔移到其他資料夾、磁碟機與
+  檔案共用。
 - 請收集完整的 Defender `Quarantine` 樹狀結構，以便比對 Entries、ResourceData 與 Resources。
 
 ## 執行中系統的注意事項 { #live-system-cautions }

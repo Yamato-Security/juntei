@@ -1,7 +1,10 @@
 # Coleta de evidências { #collecting-evidence }
 
-O Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisição confiável e preserve
-os metadados originais sempre que possível.
+Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisição confiável e preserve os metadados originais quando possível.
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## Localizações comuns { #common-locations }
 
@@ -13,6 +16,10 @@ os metadados originais sempre que possível.
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | Diário USN | Fluxo de metadados do NTFS `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| Registro de acesso do usuário (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer e Edge legado (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` antes do Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, e os arquivos `.msg` onde quer que tenham sido salvos |
+| Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` e as pastas de perfil dos outros navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` e outros locais do usuário/do sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` e `CustomDestinations` |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +38,17 @@ os metadados originais sempre que possível.
 - Colete o `$LogFile` com o `$MFT` do mesmo volume, no momento mais próximo possível. O `$LogFile` se sobrescreve
   rapidamente; uma coleta posterior pode perder totalmente os registros de redo/undo anteriores.
 - Colete o SRUM com o hive `SOFTWARE` correspondente para resolver os nomes de contas e de perfis Wi-Fi.
+- Colete o diretório `Sum` inteiro do Registro de acesso do usuário: o `SystemIdentity.mdb` fornece os nomes das
+  funções e lista os bancos de dados anuais `{GUID}.mdb`. Assim como no SRUM, o Juntei não reproduz os logs de
+  transação `Svc*.log` do UAL.
+- Colete os bancos de dados dos navegadores com os arquivos `-wal` ao lado deles (`places.sqlite-wal`,
+  `cookies.sqlite-wal`): as alterações mais recentes, e as versões mais antigas das páginas das quais as entradas
+  excluídas são recuperadas, só ficam ali até o navegador fazer um checkpoint.
+- Colete a pasta `WebCache` inteira: o Windows mantém o `WebCacheV01.dat` aberto enquanto o usuário está conectado,
+  e suas alterações mais recentes ficam apenas nos logs de transação `V01*.log`, que o Juntei não reproduz.
+- Colete os arquivos OST e PST do Outlook com o Outlook fechado, ou a partir de uma imagem de disco ou de uma cópia de
+  sombra de volume: o Outlook os mantém abertos enquanto está em execução. Procure PSTs também fora das pastas padrão: os
+  usuários movem os PSTs de arquivamento para outras pastas, unidades e compartilhamentos de rede.
 - Colete a árvore `Quarantine` inteira do Defender para que Entries, ResourceData e Resources possam ser associados.
 
 ## Cuidados com sistemas ativos { #live-system-cautions }

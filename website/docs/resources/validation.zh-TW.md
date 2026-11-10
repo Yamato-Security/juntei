@@ -92,6 +92,54 @@ SDDL，包括其 3,384 個回呼 ACE 的條件。
 11 個真實資料庫中，所輸出之 45,255 筆項目的每個欄位，都與對 `dissect.esedb` 所提供之值
 進行的獨立解碼結果一致。
 
+## 使用者存取記錄 { #user-access-logging }
+
+`parse-ese ual` 使用相同的 ESE 讀取器讀取 UAL 資料庫。在 16 個真實資料庫（308 筆資料列，
+其中 145 筆為用戶端資料列）中，每個值都與對 `dissect.esedb` 所提供之值進行的獨立解碼結果一致。
+在每一筆用戶端資料列中，有計數的日子都從 `InsertDate` 的 UTC 日期開始、到 `LastAccess` 的
+UTC 日期為止，且其總和等於 `TotalAccesses`。
+
+## 網頁瀏覽器 { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) 是 Sootmark 的 browser、
+sqlite 與 plist crate 之維護分支，是在相同的資料庫上與另一個 Rust 函式庫以及 Plaso、
+Velociraptor（SQLiteHunter）與 Hindsight 比較後選定的。`parse-sqlite browser` 曾在 38 個公開資料庫上，
+與以 `sqlite3` 函式庫讀取各資料庫連同其 `-wal` 檔案之複本的結果進行比較：這些資料庫包括 Plaso 的
+測試檔案（Chrome 8 至 68、Firefox 2 至 118）、由 Chromium 150 與 Firefox 140 建立的設定檔，以及
+ys-browser-parser 的表單歷程測試資料庫。全部 293 筆造訪、21 筆下載、692 個 Cookie 與 41 筆表單項目
+皆一致。已刪除的項目只在確實有項目被刪除之處才被復原：即從 Firefox 140 歷程中刪除的兩個網頁與兩筆
+造訪（連同其時間、URL 與標題），以及測試資料庫中已刪除的表單項目。
+
+## Internet Explorer 與舊版 Edge（WebCache） { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` 使用 [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser)
+讀取 `WebCacheV01.dat`。它曾在 Plaso 的兩個公開 WebCache 資料庫上與 `dissect.database` 的 ESE 讀取器
+進行比較：一個是 Internet Explorer 11 的資料庫，另一個是處於 dirty 狀態、含有舊版 Edge 瀏覽歷程記錄、
+下載與 Cookie 的 Windows 10 資料庫。全部 4,156 筆資料列逐值一致：44 個容器、182 筆歷程記錄項目、
+6 筆下載、170 個 Cookie 與 3,754 筆其他項目。比較時另行獨立解碼了下載記錄。資料庫標記為已刪除的
+記錄，在兩邊皆予以排除。
+
+## Outlook { #outlook }
+
+`parse-file outlook` 使用 [ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser)
+讀取 PST、OST、`.msg` 與 `.oft` 檔案；其 PST 與 OST 讀取器是 Microsoft 的
+[outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) 之分支，而其 `.msg` 讀取器則是依據
+Microsoft 的公開規格撰寫而成。
+
+- **PST 與 OST**：66 個公開的 PST 與 OST 檔案（Apache Tika、artemis、Aspose.Email 範例、DFIR
+  Artifact Museum、Enron、GroupDocs 範例、java-libpst、libyal 的測試資料、outlook-pst-rs 與
+  pst-extractor）曾與 libpff 逐一屬性進行比較：涵蓋每個存放區、資料夾、郵件、收件者與附件的每一個
+  屬性，以及每個附件的資料。324,175 個值相同，且沒有任何無法解釋的差異。其餘部分為：只有
+  ys-outlook-parser 讀得到的內容（libpff 無法讀取之郵件、收件者與附件，以及一個它無法開啟之存放區的
+  15,846 個值；隱藏項目的 8,223 個值）、其資料列標示為不存在、libpff 卻以空白或零呈現的收件者儲存格
+  （49,077 個）、依 MAPI 方式計算的資料夾 entry ID 與類型（2,004 個），以及 libpff 以原始資料呈現的
+  物件與內嵌郵件（480 個）。其中有兩個檔案，兩邊的讀取器都完全無法讀取。
+- **`.msg` 與 `.oft`**：214 個公開檔案，含 2,404 個郵件、收件者與附件以及 41,002 個屬性，曾與
+  extract-msg 進行比較：110,114 個值相同，而不同的 791 個值都各有解釋：其中 601 個是 extract-msg 在
+  時間上的錯誤，35 個來自它以錯誤字碼頁解碼的 ANSI 檔案，其餘則是它遺漏或額外加入的內容。
+- **損毀的輸入**：超過 260,000 個經變異的 `.msg` 檔案與 160,000 個經變異的 PST，以及特製的檔案，
+  皆在未發生當機、停滯或記憶體無限制增長的情況下讀取完成。
+
 ## LNK 捷徑 { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) 是

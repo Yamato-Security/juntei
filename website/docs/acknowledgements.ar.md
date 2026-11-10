@@ -15,11 +15,14 @@
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (حزمة `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | فهارس المجلدات (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (حزمة `mft`، الوحدة `i30`) | أبحاث المساحة الراكدة (slack) في الفهارس المذكورة أدناه |
 | NTFS `$Boot`، `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (الحزمتان `boot` و`secure`) | مواصفة MS-DTYP من Microsoft وأبحاث NTFS المذكورة أدناه |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) و[ese](https://github.com/Sootmark/ese) |
+| SRUM، UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) و[ese](https://github.com/Sootmark/ese) |
+| متصفحات الويب / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser) و[sqlite](https://github.com/Sootmark/sqlite) و[plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | أعمال Sootmark shell حول الملفات المركبة وJump Lists |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| صور أقراص VHDX ‏(`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) و[ntfs-core](https://github.com/SecurityRonin/ntfs-forensic)، ويُقدَّم ذلك عبر [fuser](https://github.com/cberner/fuser) | مواصفة MS-VHDX من Microsoft |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | سجل Windows | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | أبحاث تنسيق سجل Windows واستعادته المذكورة أدناه |
 
 ## الأدوات المرجعية والتحقق المستقل { #reference-tools-and-independent-validation }
@@ -39,7 +42,7 @@
   في التحقق من `$LogFile` وتفسيره؛ وقدّمت مكتبة **go-ntfs** من Velocidex أدلة اختبار NTFS عامة.
 - توفر مشاريع Joachim Metz / libyal ‏**libregf** و**libfsntfs** و**libscca** و**libfwsi**
   و**libesedb** أبحاثًا تفصيلية حول التنسيقات ومراجع تحليل مستقلة.
-- قدّمت **dissect.esedb** و**dissect.ntfs** و**dissect.target** من Fox-IT تفسيرات مستقلة لـ SRUM
+- قدّمت **dissect.esedb** و**dissect.ntfs** و**dissect.target** من Fox-IT تفسيرات مستقلة لـ SRUM وUAL
   و`$Secure:$SDS` وSAM وDefender استُخدمت أثناء التحقق.
 - كانت أداة `fsstat` من **The Sleuth Kit** المرجعَ لقطاعات الإقلاع في NTFS لوحدات التخزين المنشأة باستخدام
   `mkntfs`.
@@ -54,6 +57,8 @@
   وسلوك الاستخراج الآمن.
 - قدّمت **Plaso** و**Chainsaw** و**Velociraptor** مقارنات للمحللات، أو أدلة اختبار، أو سلوكًا
   مرجعيًا موجهًا نحو الجمع عبر عدة آثار رقمية.
+- كانت أداة **Hindsight** من Obsidian Forensics وتعريفات **SQLiteHunter** من Velocidex مرجعين لسجل
+  التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج.
 
 ## المواصفات والأبحاث { #specifications-and-research }
 

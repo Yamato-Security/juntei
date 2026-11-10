@@ -13,11 +13,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) ကို အသုံးပြုပါ။ ၎င်းသည် အုပ်စုဖွဲ့ထားသော တူညီသည့်
 ညွှန်ကြားချက်များကို ခေါ်ယူပြီး ရလဒ်များနှင့် log များကို ကွန်ပျူတာနှင့် စုံစမ်းစစ်ဆေးရေး category အလိုက် စီစဉ်ပေးသည်။
 
+ခွဲခြမ်းစိတ်ဖြာထားသော ရှေးဟောင်းပစ္စည်းများတစ်လျှောက် အချိန်နှင့်တပြေးညီစီထားသော အချိန်ဇယားအတွက် [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) ကိုသုံးပါ။ ၎င်းသည် အချိန်တံဆိပ်တုံး၏ အဓိပ္ပါယ်များကို ချဲ့ထွင်ပြီး တံဆိပ်ခတ်ထားသည်။ `auto-parse -j` သည် မူရင်းမှတ်တမ်းများကို ဆက်လက်ထိန်းသိမ်းထားသည်။
+
+## [Disk image များ](mount.md) { #disk-images }
+
+| ညွှန်ကြားချက် | Input | အသေးစိတ် လမ်းညွှန် |
+|---|---|---|
+| `mount` | VHDX / E01 / Ex01 disk image | [Disk image များကို mount လုပ်ခြင်း](mount.md) |
+
 ## [ESE ညွှန်ကြားချက်များ](user-activity.md) { #ese-commands }
 
 | ညွှန်ကြားချက် | Input အထောက်အထား | အသေးစိတ် လမ်းညွှန် |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer နှင့် legacy Edge](../artifacts/webcache.md) |
 
 ## [ဖိုင် ညွှန်ကြားချက်များ](execution.md) { #file-commands }
 
@@ -26,6 +36,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file defender-quarantine` | Defender quarantine tree သို့မဟုတ် entry | [Defender သီးခြားခွဲထားသော ဒေတာ](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK ဖြတ်လမ်းများ](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS ညွှန်ကြားချက်များ](filesystem.md) { #ntfs-commands }
@@ -71,6 +82,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite ညွှန်ကြားချက်များ](sqlite.md) { #sqlite-commands }
+
+| ညွှန်ကြားချက် | Input အထောက်အထား | အသေးစိတ် လမ်းညွှန် |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [ဝဘ် ဘရောက်ဇာများ](../artifacts/browser.md) |
+
 ## Source အမျိုးအစားများနှင့် format ပြောင်းလဲမှုများ { #source-types-and-format-changes }
 
 အုပ်စုများသည် Juntei လက်ရှိ ပံ့ပိုးထားသော format များကို ဖော်ပြသည်။ `parse-registry amcache` သည် `Amcache.hve` ကို
@@ -93,13 +110,15 @@ allow/block အမျိုးအစားခွဲခြင်း၊ payload me
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

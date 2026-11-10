@@ -16,11 +16,14 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
 | NTFS `$LogFile` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `logfile`) | [Sootmark ntfslog](https://github.com/Sootmark/ntfslog) |
 | Indeks direktori (`$I30`) | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `mft`, modul `i30`) | Riset index slack yang disebutkan di bawah |
 | NTFS `$Boot`, `$Secure:$SDS` | [ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser) (crate `boot` dan `secure`) | MS-DTYP dari Microsoft dan riset NTFS yang disebutkan di bawah |
-| SRUM / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) dan [ese](https://github.com/Sootmark/ese) |
+| SRUM, UAL / ESE | [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) | [Sootmark srum](https://github.com/Sootmark/srum) dan [ese](https://github.com/Sootmark/ese) |
+| Browser web / SQLite | [ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) | [Sootmark browser](https://github.com/Sootmark/browser), [sqlite](https://github.com/Sootmark/sqlite), dan [plist](https://github.com/Sootmark/plist) |
 | LNK | [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) | [Sootmark shell](https://github.com/Sootmark/shell) |
 | Jump Lists | [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) | Karya compound file dan Jump List dari Sootmark shell |
 | ShimCache | [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) | [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) |
 | Defender | [ys-defender-history-parser](https://github.com/Yamato-Security/ys-defender-history-parser) | [Sootmark defender](https://github.com/Sootmark/defender) |
+| Image disk VHDX (`mount`, `auto-parse --vhdx`) | [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) (Security Ronin `vhdx-core`) dan [ntfs-core](https://github.com/SecurityRonin/ntfs-forensic), disajikan melalui [fuser](https://github.com/cberner/fuser) | MS-VHDX dari Microsoft |
+| E01 / Ex01 (`mount`, `auto-parse --e01`) | [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) | [ewf-image](https://github.com/ebrig/ewf-image) (Apache-2.0); [libewf](https://github.com/libyal/libewf) (EWF1/EWF2) |
 | Registry | [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser) | Riset format dan pemulihan registry yang disebutkan di bawah |
 
 ## Alat referensi dan validasi independen { #reference-tools-and-independent-validation }
@@ -40,7 +43,7 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   validasi dan interpretasi `$LogFile`; **go-ntfs** dari Velocidex menyediakan bukti uji NTFS publik.
 - Proyek Joachim Metz / libyal **libregf**, **libfsntfs**, **libscca**, **libfwsi**, dan
   **libesedb** menyediakan riset format yang terperinci dan referensi parsing independen.
-- **dissect.esedb**, **dissect.ntfs**, dan **dissect.target** dari Fox-IT menyediakan interpretasi independen atas SRUM,
+- **dissect.esedb**, **dissect.ntfs**, dan **dissect.target** dari Fox-IT menyediakan interpretasi independen atas SRUM, UAL,
   `$Secure:$SDS`, SAM, dan Defender yang digunakan selama validasi.
 - `fsstat` dari **The Sleuth Kit** menjadi referensi untuk sektor boot NTFS pada volume yang dibuat dengan
   `mkntfs`.
@@ -55,6 +58,8 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   Defender dan perilaku ekstraksi yang aman.
 - **Plaso**, **Chainsaw**, dan **Velociraptor** menyediakan perbandingan parser, bukti uji, atau
   perilaku referensi yang berorientasi pengumpulan untuk berbagai artefak.
+- **Hindsight** dari Obsidian Forensics dan definisi **SQLiteHunter** dari Velocidex menjadi referensi untuk
+  riwayat, unduhan, cookie, dan riwayat formulir browser.
 
 ## Spesifikasi dan riset { #specifications-and-research }
 

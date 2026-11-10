@@ -17,17 +17,24 @@ mod amcache;
 mod amcache_output;
 mod auto_parse;
 mod boot;
+mod browser;
 mod cli;
 mod color;
 mod defender_quarantine;
+mod disk_image;
 mod hive;
 mod i30;
+mod image_files;
+mod image_metadata;
+mod interrupt;
 mod jump_lists;
 mod lnk;
 mod logfile;
 mod mft;
 mod mft_csv;
 mod mft_inspect;
+mod mount;
+mod outlook;
 mod output_schema;
 mod persistence_hunter;
 mod prefetch;
@@ -37,12 +44,18 @@ mod secure_sds;
 mod security_descriptor;
 mod shimcache;
 mod srum;
+mod super_timeline;
 mod time_display;
+mod ual;
 mod usn_journal;
 mod util;
+mod webcache;
 
 use clap::{CommandFactory, Parser};
-use cli::{Cli, Commands, EseCommands, FileCommands, NtfsCommands, RegistryCommands, VERSION};
+use cli::{
+    Cli, Commands, EseCommands, FileCommands, NtfsCommands, RegistryCommands, SqliteCommands,
+    VERSION,
+};
 use color::JunteiColor::Green;
 use std::env;
 use std::time::Instant;
@@ -61,6 +74,12 @@ fn main() {
     let start = Instant::now();
     let cli = Cli::parse();
     let code = match &cli.cmd {
+        Commands::SuperTimeline(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = super_timeline::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
         Commands::PersistenceHunter(opts) => {
             let data_only = opts.data_on_stdout();
             if !data_only && !opts.list_checks {
@@ -75,6 +94,12 @@ fn main() {
         Commands::AutoParse(opts) => {
             display_logo(opts.common.quiet, opts.common.no_color, true, false);
             let code = auto_parse::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
+        Commands::Mount(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = mount::run(opts);
             print_elapsed(start, opts.common.no_color);
             code
         }
@@ -146,6 +171,19 @@ fn main() {
                 code
             }
         },
+        Commands::ParseSqlite(source) => match &source.cmd {
+            SqliteCommands::Browser(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = browser::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+        },
         Commands::ParseEse(source) => match &source.cmd {
             EseCommands::Srum(opts) => {
                 let data_only = opts.data_on_stdout();
@@ -153,6 +191,28 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = srum::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            EseCommands::Ual(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = ual::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            EseCommands::Webcache(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = webcache::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }
@@ -166,6 +226,17 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = prefetch::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::Outlook(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = outlook::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }

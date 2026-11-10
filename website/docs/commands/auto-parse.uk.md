@@ -21,6 +21,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     запобігає повторному виявленню згенерованих даних як доказів і не дає `--clobber`
     торкатися файлів у вихідній колекції.
 
+## Образи дисків VHDX { #vhdx-disk-images }
+
+З `--vhdx` команда `auto-parse` читає VHDX нативно в **Linux, macOS і Windows** через [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). Системне монтування, FUSE та права адміністратора не потрібні.
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+Парсерам потрібні шляхи: Juntei копіює файли, які читають парсери, у приватний тимчасовий каталог з обмеженими буферами: кущі реєстру та їхні журнали транзакцій, файли метаданих NTFS, бази даних, файли Prefetch, ярлики, Jump Lists, файли Outlook і папки карантину Defender. Кожен інший файл стає порожнім заповнювачем з початковим часом зміни, тож каталоги й шляхи виглядають так само, як на диску. persistence-hunter читає вміст заповнювача з образу лише тоді, коли він потрібен, наприклад виконуваний файл, на який вказує запис персистентності. **Потрібне місце для скопійованих файлів**, окрім результатів. Нульові області записуються як розріджені, якщо це підтримується. Зберігаються імена, структура, жорсткі посилання та час зміни. Часи джерел LNK і Jump Lists беруться зі знімка оригінальних метаданих NTFS, ніколи з тимчасових копій. Нормальне завершення, навіть з помилками парсерів, видаляє копії; примусове завершення може залишити їх. Джерело лише для читання; незастосований журнал VHDX відтворюється тільки в пам’яті.
+
+Пошук хостів, CSV/JSON/JSONL і `-j` використовують звичайний конвеєр. `Image` у `manifest.json` позначає оригінальний образ, `EvidenceRoot` — внутрішній відносний шлях. Помилки читання й небезпечні імена записуються в `ImageErrors` та рядки помилок `manifest.csv`. Читабельні результати зберігаються; неповний ввід повертає код 1. Небезпечні чи неоднозначні імена не перейменовуються. Іменовані потоки NTFS не видобуваються як окремі файли; артефакти, зібрані як звичайні файли, доступні.
+
+Окрема [команда `mount`](mount.md) надає файлову систему іншим програмам і досі потребує Linux FUSE. `auto-parse --vhdx` її не використовує.
+
+Тимчасове копіювання за замовчуванням використовує приватний каталог у файловій системі результатів. Через `--temp-dir` можна вибрати наявний каталог на іншому диску. Вихідні метадані зберігаються окремо у файловій системі результатів, тому заповнення диска копій не заважає розбору вже читабельних файлів. Залишайте місце і для копій, і для результатів; заповнений вихідний том не дозволяє зберігати результати. Ctrl+C зупиняє процеси, очищує приватний каталог і завершує роботу з кодом 130. SIGKILL або втрата живлення можуть залишити копії. Під час пошуку образів нечитабельні підкаталоги пропускаються; нечитабельний кореневий каталог введення залишається помилкою.
+
+Каталог тимчасового копіювання має бути поза каталогом результатів. У Linux і macOS сигнали SIGTERM та SIGHUP також зупиняють процеси розбору й очищують робочий каталог.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## Образи дисків E01 та Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` нативно читає фізичні образи EWF1 (`.E01`) та EWF2 (`.Ex01`) у **Linux, macOS і Windows**, без FUSE, системного монтування чи прав адміністратора. Використовуються [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) і той самий описаний вище процес розбору NTFS.
+
+Для розділеного образу вкажіть перший сегмент. Зберігайте всі пов’язані файли, зокрема `.E02`, поруч із початковими назвами. Підтримуються цілі диски (MBR/GPT) та окремі томи NTFS. Для змішаних каталогів використовуйте `--vhdx --e01`.
+
+Вимоги до тимчасового місця й вихідних метаданих такі самі. Образи E01 зазвичай містять увесь диск, а всі образи готуються до початку аналізу, але копіюються лише файли, які читають парсери, — зазвичай невелика частина зайнятого місця. Образи відкриваються лише для читання. Прогалини збору та пошкодження, знайдені під час відкриття або читання, записуються в `ImageErrors` і `manifest.csv`; читабельні результати зберігаються, код завершення — 1. Перевіряються прочитані дані, а не всі блоки чи хеш усього носія. Логічні файли `.L01` і `.Lx01` відхиляються; параметра пароля немає.
+
+Окрема команда `mount` досі потребує Linux FUSE; нативний автоматичний розбір — ні.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## Часовий пояс виводу { #output-time-zone }
 
 Позначки часу після аналізу за замовчуванням подаються в UTC, незалежно від місцевого часового поясу комп'ютера аналітика. UTC
@@ -119,6 +160,10 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - індекси каталогів `$I30`
 - завантажувальні сектори `$Boot` і дескриптори безпеки `$Secure:$SDS`
 - SRUM
+- журналювання доступу користувачів (UAL)
+- історія, завантаження, файли cookie та історія форм веб-браузерів (браузери на основі Chromium і Firefox)
+- WebCache Internet Explorer і застарілого Edge: історія, завантаження, файли cookie та записи кешу
+- файли Outlook PST, OST, MSG і OFT: папки, елементи, одержувачі, вкладення, контакти, елементи календаря та завдання
 - ярлики LNK
 - Jump Lists
 - ShimCache
@@ -175,6 +220,28 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -223,7 +290,11 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -276,12 +347,14 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `Accounts` | Локальні облікові записи SAM, імена та час секретів LSA |
 | `Applications` | Історія програм (сліди сторонніх інструментів) |
 | `Applications` | Встановлені програми |
+| `BrowserActivity` | Історія, завантаження, файли cookie та історія форм веб-браузерів разом із відновленими видаленими записами; WebCache Internet Explorer і застарілого Edge |
+| `Communication` | Файли Outlook PST, OST, MSG і OFT: папки, елементи, одержувачі, вкладення, контакти, елементи календаря та завдання |
 | `ExternalDevices` | Пристрої та томи USB |
 | `FileAndFolderOpening` | Jump Lists, ярлики LNK, Microsoft Office, списки MRU, діалоги відкриття та збереження файлів, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, журнал USN |
 | `NetworkActivity` | Мережеві профілі, інтерфейси, спільні ресурси, проксі портів і маршрути; підключення, трафік і push-сповіщення SRUM |
-| `LateralMovement` | Вихідні підключення користувачів через віддалений робочий стіл, PuTTY і WinSCP, підключені диски та спільні ресурси |
+| `LateralMovement` | Вихідні підключення користувачів через віддалений робочий стіл, PuTTY і WinSCP, підключені диски та спільні ресурси; журналювання доступу користувачів (клієнти ролей сервера) |
 | `Persistence` | Конфігурація завантаження (BCD), автозапуск через реєстр, служби, TaskCache |
 | `ProcessExecution` | Сумісність програм, BAM і DAM, FeatureUsage і закріплені елементи, MuiCache, Prefetch, хронологія Prefetch, активність програм/CPU у SRUM, UserAssist |
 | `Registry` | Загальні ключі та значення кущів, включно з відновленими записами |
@@ -312,6 +385,19 @@ Amcache і Jump Lists мають по одному спільному журна
 `JumpLists-CustomDestinations.csv`. Підкаталогів Amcache або Jump Lists немає.
 Таблиці SRUM використовують імена файлів `SRUM-` безпосередньо у своїй категорії, наприклад
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+Таблиці журналювання доступу користувачів розміщуються в `LateralMovement`, по одному файлу на таблицю, наприклад
+`UAL-Clients.csv` і `UAL-SystemIdentity.csv`, разом із `UAL-logs.txt`; див.
+[Журналювання доступу користувачів (UAL)](../artifacts/ual.md#automatic-parsing).
+Таблиці веб-браузерів розміщуються в `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` і `Browser-FormHistory.csv`, разом із `Browser-logs.txt`; див.
+[Веб-браузери](../artifacts/browser.md#automatic-parsing). Там само розміщуються й таблиці WebCache
+Internet Explorer і застарілого Edge: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` і `WebCache-Containers.csv`, разом із
+`WebCache-logs.txt`; див. [Internet Explorer і застарілий Edge](../artifacts/webcache.md#automatic-parsing).
+Таблиці Outlook розміщуються в `Communication`: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` і `Outlook-Tasks.csv`, разом із `Outlook-logs.txt`; див.
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 Див. [повну таблицю розміщення SRUM](../artifacts/srum.md#categorized-auto-parse-output).
 
 Імена журналів відповідають назві артефакту з великої літери, як-от `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`
@@ -451,7 +537,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Використання { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -460,6 +546,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -504,3 +593,13 @@ Display Settings:
 щоб дізнатися про поля звіту та їхні криміналістичні обмеження.
 
 Auto-parse також читає віддалені підключення користувачів (RDP, PuTTY, WinSCP і підключені диски).
+
+## Побудуйте хронологічну суперхронологію { #build-a-chronological-super-timeline }
+
+Після синтаксичного аналізу використовуйте [`super-timeline`](super-timeline.md), щоб розгорнути записані позначки часу в події з мітками та сортувати їх за комп’ютерами та артефактами:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+Існуючий експорт `-j, --json-timeline` залишається комбінованим файлом JSONL із рідним записом. Він зберігає схеми аналізатора; він не розгортає поля часових позначок і не сортує події. Зберігайте його та окремі результати аналізатора для перевірки на рівні доказів.

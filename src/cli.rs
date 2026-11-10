@@ -20,7 +20,7 @@ use std::path::PathBuf;
 
 /// The version that the banner, every help screen and `--version` show: the version from
 /// Cargo.toml and the release name after it. Change the release name with each release.
-pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (CODE BLUE Release)");
+pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (Dev Build)");
 const AUTHOR: &str =
     "Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)";
 
@@ -46,6 +46,16 @@ pub enum Commands {
         disable_version_flag = true
     )]
     AutoParse(AutoParseOptions),
+
+    /// Mount a VHDX or E01 disk image read-only (FUSE)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei mount <IMAGE> <MOUNTPOINT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Mount(MountOptions),
 
     /// Parse ESE databases
     #[command(
@@ -91,6 +101,17 @@ pub enum Commands {
     )]
     ParseRegistry(RegistryCommand),
 
+    /// Parse SQLite databases
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-sqlite <COMMAND> [OPTIONS]\n\n{all-args}",
+        subcommand_required = true,
+        arg_required_else_help = true,
+        disable_version_flag = true
+    )]
+    ParseSqlite(SqliteCommand),
+
     /// Hunt offline Windows persistence
     #[command(
         author = AUTHOR,
@@ -100,6 +121,183 @@ pub enum Commands {
         disable_version_flag = true
     )]
     PersistenceHunter(PersistenceHunterOptions),
+
+    /// Build a chronological forensic timeline
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei super-timeline <INPUT> -o <FILE> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    SuperTimeline(SuperTimelineOptions),
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TimelineOutputType {
+    #[default]
+    Csv,
+    Jsonl,
+}
+
+#[derive(ValueEnum, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TimelineProfile {
+    #[default]
+    Native,
+    Timesketch,
+}
+
+fn parse_timeline_memory(value: &str) -> Result<usize, String> {
+    value
+        .parse::<usize>()
+        .ok()
+        .filter(|n| (8..=1_048_576).contains(n))
+        .ok_or_else(|| "memory limit must be a whole number of MiB from 8 to 1048576".into())
+}
+
+fn parse_record_limit(value: &str) -> Result<usize, String> {
+    value
+        .parse::<usize>()
+        .ok()
+        .filter(|n| (1..=4096).contains(n))
+        .ok_or_else(|| "record limit must be a whole number of MiB from 1 to 4096".into())
+}
+
+fn parse_assumed_offset(value: &str) -> Result<String, String> {
+    let b = value.as_bytes();
+    if b.len() == 6
+        && matches!(b[0], b'+' | b'-')
+        && b[3] == b':'
+        && [b[1], b[2], b[4], b[5]].iter().all(u8::is_ascii_digit)
+        && (b[1] - b'0') * 10 + b[2] - b'0' < 24
+        && (b[4] - b'0') * 10 + b[5] - b'0' < 60
+    {
+        return Ok(value.into());
+    }
+    Err("use a quoted signed offset, for example --assume-offset \"+09:00\" or \"-01:00\"".into())
+}
+
+#[derive(Args, Clone, Debug)]
+#[command(group(ArgGroup::new("input").args(["directory", "filepath", "hayabusa"]).required(true).multiple(true)))]
+pub struct SuperTimelineOptions {
+    /// Auto-parse output directory containing manifest.json
+    #[arg(
+        help_heading = "Input",
+        short = 'd',
+        long,
+        value_name = "DIR",
+        conflicts_with = "filepath",
+        display_order = 100
+    )]
+    pub directory: Option<PathBuf>,
+    /// Native combined JSONL, JSON, or a standalone CSV export
+    #[arg(
+        help_heading = "Input",
+        short = 'f',
+        long = "file",
+        value_name = "FILE",
+        display_order = 101
+    )]
+    pub filepath: Option<PathBuf>,
+    /// Hayabusa JSONL timeline to include (repeatable)
+    #[arg(help_heading = "Input", long, value_name = "FILE", display_order = 102)]
+    pub hayabusa: Vec<PathBuf>,
+    /// Artifact identifier for an untagged standalone input
+    #[arg(
+        help_heading = "Input",
+        long,
+        value_name = "ID",
+        requires = "filepath",
+        display_order = 103
+    )]
+    pub input_artifact: Option<String>,
+    /// Computer name when an input has no computer metadata
+    #[arg(help_heading = "Input", long, value_name = "NAME", display_order = 104)]
+    pub computer: Option<String>,
+    /// Offset for timestamps without a time zone; date-only values retain day precision
+    #[arg(help_heading = "Input", long, value_name = "OFFSET", value_parser = parse_assumed_offset, allow_hyphen_values = true, display_order = 105)]
+    pub assume_offset: Option<String>,
+    /// Write the sorted timeline and companion diagnostics/summary
+    #[arg(
+        help_heading = "Output",
+        short = 'o',
+        long,
+        value_name = "FILE",
+        display_order = 200
+    )]
+    pub output: PathBuf,
+    /// Output type: csv or jsonl
+    #[arg(
+        help_heading = "Output",
+        short = 't',
+        long = "output-type",
+        value_enum,
+        default_value = "csv",
+        display_order = 201
+    )]
+    pub output_type: TimelineOutputType,
+    /// Native PascalCase or Timesketch-compatible field names
+    #[arg(
+        help_heading = "Output",
+        long,
+        value_enum,
+        default_value = "native",
+        display_order = 202
+    )]
+    pub profile: TimelineProfile,
+    /// Replace existing timeline and companion files
+    #[arg(help_heading = "Output", short = 'C', long, display_order = 203)]
+    pub clobber: bool,
+    /// Include only these artifact identifiers (comma separated; repeatable)
+    #[arg(
+        help_heading = "Filtering",
+        long = "artifact",
+        value_delimiter = ',',
+        value_name = "ID",
+        display_order = 300
+    )]
+    pub artifacts: Vec<String>,
+    /// Earliest included event time, with an explicit UTC offset or Z
+    #[arg(
+        help_heading = "Filtering",
+        long,
+        value_name = "TIME",
+        display_order = 301
+    )]
+    pub timeline_start: Option<String>,
+    /// Latest included event time, with an explicit UTC offset or Z
+    #[arg(
+        help_heading = "Filtering",
+        long,
+        value_name = "TIME",
+        display_order = 302
+    )]
+    pub timeline_end: Option<String>,
+    /// Include collection-side filesystem times, labeled separately
+    #[arg(help_heading = "Records", long, display_order = 320)]
+    pub include_collection_times: bool,
+    /// Include generic registry QWORD values interpreted as FILETIME
+    #[arg(help_heading = "Records", long, display_order = 321)]
+    pub include_interpreted_times: bool,
+    /// Maximum parallel input workers
+    #[arg(help_heading = "Performance", short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 350)]
+    pub threads: Option<usize>,
+    /// Total sort-buffer budget in MiB (parser and merge overhead is additional)
+    #[arg(help_heading = "Performance", long, value_name = "MIB", default_value = "256", value_parser = parse_timeline_memory, display_order = 351)]
+    pub memory_limit: usize,
+    /// Maximum input record size in MiB
+    #[arg(help_heading = "Performance", long, value_name = "MIB", default_value = "16", value_parser = parse_record_limit, display_order = 352)]
+    pub max_record_size: usize,
+    /// Directory for external-sort temporary files
+    #[arg(
+        help_heading = "Performance",
+        long,
+        value_name = "DIR",
+        display_order = 353
+    )]
+    pub temp_dir: Option<PathBuf>,
+    #[command(flatten)]
+    pub common: CommonOptions,
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, Default)]
@@ -124,6 +322,10 @@ impl PersistenceSeverity {
 
 #[derive(Args, Clone, Debug, Default)]
 pub struct PersistenceHunterOptions {
+    /// Internal: the disk images of staged files that were not copied, read on demand.
+    #[arg(long = "image-files", hide = true)]
+    pub image_files: Option<PathBuf>,
+
     /// Evidence directory (a mounted Windows volume or a collection of hosts)
     #[arg(help_heading = "Input", short = 'd', long, value_name = "DIR", required_unless_present_any = ["filepath", "list_checks"], conflicts_with = "filepath", display_order = 100)]
     pub directory: Option<PathBuf>,
@@ -309,6 +511,26 @@ pub enum NtfsCommands {
 
 #[derive(Args)]
 #[command(next_display_order = None)]
+pub struct SqliteCommand {
+    #[command(subcommand)]
+    pub cmd: SqliteCommands,
+}
+
+#[derive(Subcommand)]
+pub enum SqliteCommands {
+    /// Parse browser history, downloads, cookies and form history
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-sqlite browser <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Browser(BrowserOptions),
+}
+
+#[derive(Args)]
+#[command(next_display_order = None)]
 pub struct EseCommand {
     #[command(subcommand)]
     pub cmd: EseCommands,
@@ -325,6 +547,26 @@ pub enum EseCommands {
         disable_version_flag = true
     )]
     Srum(SrumOptions),
+
+    /// Parse User Access Logging (UAL) databases
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ese ual <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Ual(UalOptions),
+
+    /// Parse Internet Explorer and legacy Edge's WebCache databases
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ese webcache <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Webcache(WebCacheOptions),
 }
 
 #[derive(Args)]
@@ -365,6 +607,16 @@ pub enum FileCommands {
         disable_version_flag = true
     )]
     Lnk(LnkOptions),
+
+    /// Parse Outlook PST, OST, MSG and OFT files
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file outlook <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    Outlook(OutlookOptions),
 
     /// Parse Prefetch files
     #[command(
@@ -424,6 +676,12 @@ fn parse_auto_threads(value: &str) -> Result<usize, String> {
 
 #[derive(Args, Clone, Debug)]
 pub struct AutoParseOptions {
+    #[arg(skip)]
+    pub(crate) image_source_metadata: Option<PathBuf>,
+
+    #[arg(skip)]
+    pub(crate) image_files: Option<PathBuf>,
+
     /// Evidence directory containing one or more collected Windows systems
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "EVIDENCE", display_order = 100)]
     pub directory: PathBuf,
@@ -431,6 +689,17 @@ pub struct AutoParseOptions {
     /// Maximum directory depth at which to discover a Windows directory
     #[arg(help_heading = Some("Input"), long, value_name = "DEPTH", default_value_t = 10, value_parser = parse_auto_depth, display_order = 101)]
     pub max_depth: usize,
+
+    /// Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+    #[arg(help_heading = Some("Input"), long, display_order = 102)]
+    pub vhdx: bool,
+
+    /// Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+    #[arg(help_heading = Some("Input"), long, display_order = 103)]
+    pub e01: bool,
+    /// Directory for private image staging (default: output filesystem)
+    #[arg(help_heading = Some("Input"), long, value_name = "DIR", display_order = 104)]
+    pub temp_dir: Option<PathBuf>,
 
     /// New directory in which to create per-computer results
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "DIR", display_order = 200)]
@@ -1201,6 +1470,249 @@ impl SrumOptions {
     }
 }
 
+#[derive(Args, Clone, Debug, Default)]
+pub struct MountOptions {
+    /// The disk image (VHDX or E01; a split E01 image from its first segment)
+    #[arg(help_heading = Some("Input"), value_name = "IMAGE", display_order = 100)]
+    pub image: PathBuf,
+
+    /// An existing directory to mount its NTFS volumes at, read-only, until Ctrl+C
+    #[arg(help_heading = Some("Input"), value_name = "MOUNTPOINT", display_order = 101)]
+    pub mount_point: PathBuf,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+/// What `parse-ese ual` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UalOutputType {
+    /// One CSV table per UAL table in a directory
+    Csv,
+    /// One pretty-printed JSON object per row
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct UalOptions {
+    /// Directory to search recursively for UAL databases (Current.mdb, {GUID}.mdb, SystemIdentity.mdb)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one UAL database (role names come from the SystemIdentity.mdb next to it)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every row: a directory of CSV tables, or a file (json, jsonl)
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "PATH", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<UalOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl UalOptions {
+    pub fn output_type(&self) -> UalOutputType {
+        self.output_type.unwrap_or(UalOutputType::Csv)
+    }
+
+    /// Rows on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there. CSV tables need a directory.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(UalOutputType::Json | UalOutputType::Jsonl)
+            )
+    }
+}
+
+/// What `parse-ese webcache` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WebCacheOutputType {
+    /// One CSV table each for history, downloads, cookies, other entries and containers, in a directory
+    Csv,
+    /// One pretty-printed JSON object per row
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct WebCacheOptions {
+    /// Directory to search recursively for WebCache databases (WebCacheV01.dat)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one WebCache database (its transaction logs are not read)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every row: a directory of CSV tables, or a file (json, jsonl)
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "PATH", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<WebCacheOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl WebCacheOptions {
+    pub fn output_type(&self) -> WebCacheOutputType {
+        self.output_type.unwrap_or(WebCacheOutputType::Csv)
+    }
+
+    /// Rows on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there. CSV tables need a directory.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(WebCacheOutputType::Json | WebCacheOutputType::Jsonl)
+            )
+    }
+}
+
+/// What `parse-file outlook` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OutlookOutputType {
+    /// One CSV table each for files, folders, items, recipients, attachments, contacts, calendar items and tasks (and properties), in a directory
+    Csv,
+    /// One pretty-printed JSON object per row
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+#[clap(group(ArgGroup::new("destination").args(["output", "extract_attachments"]).multiple(true)))]
+pub struct OutlookOptions {
+    /// Directory to search recursively for Outlook files (*.pst, *.ost, *.msg, *.oft)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one PST, OST, MSG or OFT file (told apart by its contents, whatever its name)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Code page of text that isn't Unicode, for items that don't give theirs: the system's ANSI code page (932 for Japanese)
+    #[arg(help_heading = Some("Input"), long = "code-page", value_name = "CP", default_value_t = 1252, display_order = 102)]
+    pub code_page: u16,
+
+    /// Save every row: a directory of CSV tables, or a file (json, jsonl)
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "PATH", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<OutlookOutputType>,
+
+    /// Also write every property of the stores, folders, items, recipients and attachments (the Properties table)
+    #[arg(help_heading = Some("Output"), long, display_order = 302)]
+    pub properties: bool,
+
+    /// Write each attachment's data once to DIR, named by its SHA-256 (attachments can be malware: never run them)
+    #[arg(help_heading = Some("Output"), long = "extract-attachments", value_name = "DIR", display_order = 303)]
+    pub extract_attachments: Option<PathBuf>,
+
+    /// Overwrite files when saving or extracting
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "destination", display_order = 304)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl OutlookOptions {
+    pub fn output_type(&self) -> OutlookOutputType {
+        self.output_type.unwrap_or(OutlookOutputType::Csv)
+    }
+
+    /// Rows on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there. CSV tables need a directory.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(OutlookOutputType::Json | OutlookOutputType::Jsonl)
+            )
+    }
+}
+
+/// What `parse-sqlite browser` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum BrowserOutputType {
+    /// One CSV table each for history, downloads, cookies and form history, in a directory
+    Csv,
+    /// One pretty-printed JSON object per row
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct BrowserOptions {
+    /// Directory to search recursively for browser databases (History, Cookies, Web Data, places.sqlite, cookies.sqlite, formhistory.sqlite, ...)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one browser database (its -wal file next to it is read too)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every row: a directory of CSV tables, or a file (json, jsonl)
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "PATH", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl rows are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<BrowserOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl BrowserOptions {
+    pub fn output_type(&self) -> BrowserOutputType {
+        self.output_type.unwrap_or(BrowserOutputType::Csv)
+    }
+
+    /// Rows on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there. CSV tables need a directory.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(BrowserOutputType::Json | BrowserOutputType::Jsonl)
+            )
+    }
+}
+
 /// What `parse-file lnk` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LnkOutputType {
@@ -1215,6 +1727,10 @@ pub enum LnkOutputType {
 #[derive(Args, Clone, Debug, Default)]
 #[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
 pub struct LnkOptions {
+    /// Internal snapshot of original source timestamps for image parsing.
+    #[arg(long = "image-source-metadata", hide = true)]
+    pub image_source_metadata: Option<PathBuf>,
+
     /// Directory to search recursively for shortcuts (*.lnk)
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
     pub directory: Option<PathBuf>,
@@ -1268,6 +1784,10 @@ pub enum JumpListOutputType {
 #[derive(Args, Clone, Debug, Default)]
 #[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
 pub struct JumpListOptions {
+    /// Internal snapshot of original source timestamps for image parsing.
+    #[arg(long = "image-source-metadata", hide = true)]
+    pub image_source_metadata: Option<PathBuf>,
+
     /// Directory to search recursively for jump lists (*.automaticDestinations-ms, *.customDestinations-ms)
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
     pub directory: Option<PathBuf>,

@@ -94,6 +94,59 @@ SDDL, including the conditions of its 3,384 callback ACEs.
 11 real databases, every column in the 45,255 emitted entries matched an independent decoding of
 the values exposed by `dissect.esedb`.
 
+## User Access Logging
+
+`parse-ese ual` reads UAL databases with the same ESE reader. Across 16 real databases (308 rows,
+145 of them client rows), every value matched an independent decoding of the values exposed by
+`dissect.esedb`. In every client row, the first day with a count was the UTC day of `InsertDate`,
+the last one the UTC day of `LastAccess`, and the counts added up to `TotalAccesses`.
+
+## Web browsers
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) is a maintained fork of
+Sootmark's browser, sqlite and plist crates, chosen after comparing it with another Rust library
+and with Plaso, Velociraptor (SQLiteHunter) and Hindsight on the same databases. `parse-sqlite
+browser` was compared with the `sqlite3` library reading a copy of each database with its `-wal`
+file, on 38 public databases: Plaso's test files (Chrome 8 to 68, Firefox 2 to 118), profiles made
+by Chromium 150 and Firefox 140, and ys-browser-parser's form history test databases. All 293
+visits, 21 downloads, 692 cookies and 41 form entries matched. Deleted entries were recovered only
+where entries had been deleted: the two pages and two visits deleted from the Firefox 140 history,
+with their times, URLs and titles, and the deleted form entries of the test databases.
+
+## Internet Explorer and legacy Edge (WebCache)
+
+`parse-ese webcache` reads `WebCacheV01.dat` with
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser). It was compared with
+`dissect.database`'s ESE reader on Plaso's two public WebCache databases: one of Internet
+Explorer 11, and a dirty one of Windows 10 with legacy Edge's history, downloads and cookies. All
+4,156 rows matched, value by value: 44 containers, 182 history entries, 6 downloads, 170 cookies
+and 3,754 other entries. The comparison decoded the download records on its own. Records the
+databases flag as deleted were left out of both.
+
+## Outlook
+
+`parse-file outlook` reads PST, OST, `.msg` and `.oft` files with
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser), whose PST and OST
+reader is a fork of Microsoft's [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) and
+whose `.msg` reader is written from Microsoft's open specifications.
+
+- **PST and OST**: 66 public PST and OST files (Apache Tika, artemis, the Aspose.Email examples,
+  the DFIR Artifact Museum, Enron, the GroupDocs examples, java-libpst, libyal's test data,
+  outlook-pst-rs and pst-extractor) were compared with libpff, property by property: every
+  property of every store, folder, message, recipient and attachment, and every attachment's data.
+  324,175 facts were the same and none differed without an explanation. The others are what only
+  ys-outlook-parser reads (15,846 facts of messages, recipients and attachments libpff fails on,
+  and of a store it cannot open; 8,223 of hidden items), recipient cells libpff gives as empty
+  or zero though their rows say they are absent (49,077), folder entry ids and types computed as
+  MAPI does (2,004), and objects and embedded messages libpff gives as their raw data (480). Two
+  of the files neither reader reads at all.
+- **`.msg` and `.oft`**: 214 public files, with 2,404 messages, recipients and attachments and
+  41,002 properties, were compared with extract-msg: 110,114 facts were the same, and each of the
+  791 that differ is explained: 601 are extract-msg's errors with times, 35 come from ANSI files it
+  decodes in the wrong code page, and the others are what it leaves out or adds.
+- **Damaged input**: more than 260,000 mutated `.msg` files and 160,000 mutated PSTs, and crafted
+  files, were read without a crash, a hang or unbounded memory.
+
 ## LNK shortcuts
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser) is a maintained fork of

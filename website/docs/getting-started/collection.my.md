@@ -1,7 +1,10 @@
 # အထောက်အထား စုဆောင်းခြင်း { #collecting-evidence }
 
-Juntei သည် Windows မှ စုဆောင်းပြီးသား ဖိုင်များကို parse လုပ်ပါသည်။ ယုံကြည်ရသော acquisition tool ကို အသုံးပြုပြီး
-ဖြစ်နိုင်သမျှ မူလ metadata ကို ထိန်းသိမ်းပါ။
+Juntei သည် Windows မှ စုဆောင်းထားပြီးသော ဖိုင်များကို parse လုပ်သည်။ ယုံကြည်ရသော acquisition tool ကို အသုံးပြုပြီး မူလ metadata ကို ဖြစ်နိုင်သမျှ ထိန်းသိမ်းပါ။
+
+[auto-parse --vhdx](../commands/auto-parse.md#vhdx-disk-images): Linux / macOS / Windows.
+
+[auto-parse --e01](../commands/auto-parse.md#e01-and-ex01-disk-images): Linux / macOS / Windows.
 
 ## အသုံးများသော တည်နေရာများ { #common-locations }
 
@@ -13,6 +16,10 @@ Juntei သည် Windows မှ စုဆောင်းပြီးသား �
 | Prefetch | `C:\Windows\Prefetch\*.pf` |
 | USN Journal | NTFS metadata stream `C:\$Extend\$UsnJrnl:$J` |
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
+| User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
+| Internet Explorer နှင့် legacy Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (Outlook 2010 မတိုင်မီ `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft` နှင့် သိမ်းဆည်းထားသည့် မည်သည့်နေရာတွင်မဆို ရှိသော `.msg` ဖိုင်များ |
+| ဝဘ် ဘရောက်ဇာများ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` နှင့် အခြား ဘရောက်ဇာများ၏ profile ဖိုင်တွဲများ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` နှင့် အခြား အသုံးပြုသူ/စနစ် တည်နေရာများ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` နှင့် `CustomDestinations` |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
@@ -31,6 +38,17 @@ Juntei သည် Windows မှ စုဆောင်းပြီးသား �
 - `$LogFile` ကို တူညီသော volume ၏ `$MFT` နှင့်အတူ အချိန်အနီးဆုံးတွင် စုဆောင်းပါ။ `$LogFile` သည် အလျင်အမြန်
   လည်ပတ်ထပ်ရေးသောကြောင့် နောက်ကျမှ စုဆောင်းလျှင် အစောပိုင်း redo/undo record များကို လုံးဝ ဆုံးရှုံးနိုင်ပါသည်။
 - Account နှင့် Wi-Fi profile အမည်များကို ဖြေရှင်းရန် SRUM ကို ကိုက်ညီသော `SOFTWARE` hive နှင့်အတူ စုဆောင်းပါ။
+- User Access Logging ၏ `Sum` ဖိုင်တွဲတစ်ခုလုံးကို စုဆောင်းပါ။ `SystemIdentity.mdb` သည် role များနှင့် နှစ်စဉ်
+  `{GUID}.mdb` database များကို အမည်ဖော်ပြပါသည်။ Juntei သည် ၎င်း၏ `Svc*.log` transaction log များကိုလည်း replay မလုပ်ပါ။
+- ဘရောက်ဇာ database များကို ၎င်းတို့ဘေးရှိ `-wal` ဖိုင်များ (`places.sqlite-wal`၊ `cookies.sqlite-wal`) နှင့်အတူ
+  စုဆောင်းပါ။ နောက်ဆုံး ပြောင်းလဲမှုများနှင့် ဖျက်ထားသော entry များကို ပြန်လည်ရယူရာ page ဗားရှင်းဟောင်းများသည်
+  ဘရောက်ဇာ checkpoint မလုပ်မီအထိသာ ထိုနေရာတွင် ရှိပါသည်။
+- `WebCache` ဖိုင်တွဲတစ်ခုလုံးကို စုဆောင်းပါ။ အသုံးပြုသူ logon ဝင်ထားစဉ် Windows သည် `WebCacheV01.dat` ကို
+  ဖွင့်ထားပြီး ၎င်း၏ နောက်ဆုံး ပြောင်းလဲမှုများသည် Juntei က replay မလုပ်သော `V01*.log` transaction log များတွင်သာ
+  ရှိပါသည်။
+- Outlook ၏ OST နှင့် PST ဖိုင်များကို Outlook ပိတ်ထားစဉ် သို့မဟုတ် disk image သို့မဟုတ် volume shadow copy မှ
+  စုဆောင်းပါ။ Outlook သည် လည်ပတ်နေစဉ် ၎င်းတို့ကို ဖွင့်ထားပါသည်။ မူလ ဖိုင်တွဲများ အပြင်ဘက်တွင်လည်း PST များကို
+  ရှာဖွေပါ။ အသုံးပြုသူများသည် archive များကို အခြား ဖိုင်တွဲများ၊ drive များနှင့် file share များသို့ ရွှေ့တတ်ပါသည်။
 - Entries၊ ResourceData နှင့် Resources တို့ကို ကိုက်ညီစေနိုင်ရန် Defender `Quarantine` tree တစ်ခုလုံးကို စုဆောင်းပါ။
 
 ## Live စနစ်တွင် သတိပြုရန် { #live-system-cautions }

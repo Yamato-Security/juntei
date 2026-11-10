@@ -21,6 +21,69 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     prevents generated data from being rediscovered as evidence and prevents `--clobber` from
     touching files in the source collection.
 
+## VHDX disk images
+
+With `--vhdx`, `auto-parse` reads VHDX images natively on **Linux, macOS and Windows**, using
+[ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser). No OS mount, FUSE driver,
+or administrator privileges are needed.
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
+reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
+hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
+lists, Outlook files and Defender quarantine folders. Every other file is an empty placeholder
+with its original modification time, so directories and paths look as they do on the disk.
+persistence-hunter reads a placeholder's content from the image only when it needs it, such as
+an executable that a persistence entry refers to.
+**Allow enough temporary disk space for the copied files**, in addition to the results.
+Reads use bounded buffers; zero-filled regions are written as holes where the host filesystem
+supports them. Original filenames, directory structure, hard links, and file modification times
+are preserved. LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
+a forced termination can leave temporary files. The source image is opened read-only, and pending
+VHDX log updates are applied in memory only.
+
+Computer discovery, per-host output, CSV/JSON/JSONL, and `-j` use the same parsing pipeline as
+ordinary evidence directories. `Image` in `manifest.json` identifies the original image and
+`EvidenceRoot` identifies the relative path inside the prepared image tree. Unreadable images,
+volumes, files, and filenames that cannot be represented safely are reported in `ImageErrors`
+and failed rows of `manifest.csv`. Readable evidence is still parsed, and the process exits with
+status 1 if any image input was incomplete. Unsafe or ambiguous names are rejected rather than
+silently renamed. Named NTFS streams are not synthesized as extra files; already-collected
+artifacts stored as ordinary files inside a triage image remain available.
+
+The separate [`mount` command](mount.md) exposes a filesystem to other programs and still needs
+Linux FUSE. It is not used by `auto-parse --vhdx`.
+
+Staging uses a private directory on the output filesystem by default. Use `--temp-dir` to choose an existing staging directory on another disk. Original source metadata is kept separately on the output filesystem, so a full staging disk does not prevent parsing already-readable files. Reserve space for both staged files and results; if the output filesystem itself is full, results cannot be saved. Ctrl+C stops parser processes, cleans the private workspace and exits with code 130. A forced termination such as SIGKILL or power loss can still leave copies. Inaccessible subdirectories are skipped during image discovery; an unreadable input root remains an error.
+
+The staging directory must be outside the output directory. On Linux and macOS, SIGTERM and SIGHUP also stop parser processes and clean up the workspace.
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## E01 and Ex01 disk images
+
+`--e01` reads physical EWF1 (`.E01`) and EWF2 (`.Ex01`) images natively on **Linux, macOS and Windows**, without FUSE, an OS mount, or administrator privileges. It uses [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) and the same NTFS parsing pipeline described above.
+
+Provide the first segment of a split image. Keep all companions, including `.E02`, beside it with their original names. Both whole disks (MBR/GPT) and single NTFS volumes are supported. Use `--vhdx --e01` for a directory containing both formats.
+
+The same temporary-space and source-metadata requirements apply. E01 images usually hold whole disks, and every image is staged before parsing starts, but only the files the parsers read are copied: usually a small part of the used space. Images are read-only. Acquisition gaps and damage found during opening or reading appear in `ImageErrors` and `manifest.csv`; readable results are retained with exit status 1. This checks accessed data, not every chunk or the image's full-media hash. Logical `.L01` and `.Lx01` files are rejected; there is no password option.
+
+The separate `mount` command still requires Linux FUSE; native automatic parsing does not.
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## Output time zone
 
 Parsed timestamps default to UTC, independent of the analyst computer's local time zone. UTC
@@ -119,6 +182,11 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - `$I30` directory indexes
 - `$Boot` boot sectors and `$Secure:$SDS` security descriptors
 - SRUM
+- User Access Logging (UAL)
+- Web browser history, downloads, cookies and form history (Chromium- and Firefox-based browsers)
+- Internet Explorer and legacy Edge's WebCache: history, downloads, cookies and cache entries
+- Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar
+  items and tasks
 - LNK shortcuts
 - Jump Lists
 - ShimCache
@@ -178,6 +246,28 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -226,7 +316,11 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -279,12 +373,14 @@ CSV keeps separate tables because each artifact has different columns:
 | `Accounts` | SAM local accounts, LSA secrets' names and times |
 | `Applications` | Application history (third-party tools' traces) |
 | `Applications` | Installed programs |
+| `BrowserActivity` | Web browser history, downloads, cookies and form history, with recovered deleted entries; Internet Explorer and legacy Edge's WebCache |
+| `Communication` | Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar items and tasks |
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
-| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares |
+| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; User Access Logging (the clients of a server's roles) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU activity, UserAssist |
 | `Registry` | General hive keys and values, including recovered records |
@@ -315,6 +411,19 @@ General hive keys and values are in `Registry-Dump.csv`. Amcache tables are
 `JumpLists-CustomDestinations.csv`. There are no Amcache or Jump Lists subdirectories.
 SRUM tables use `SRUM-` filenames directly under their category, for example
 `NetworkActivity/SRUM-NetworkConnections.csv`.
+User Access Logging tables are in `LateralMovement`, one file per table, such as
+`UAL-Clients.csv` and `UAL-SystemIdentity.csv`, with `UAL-logs.txt`; see
+[User Access Logging (UAL)](../artifacts/ual.md#automatic-parsing).
+Web browser tables are in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` and `Browser-FormHistory.csv`, with `Browser-logs.txt`; see
+[Web Browsers](../artifacts/browser.md#automatic-parsing). Internet Explorer and legacy Edge's
+WebCache tables are there too: `WebCache-History.csv`, `WebCache-Downloads.csv`,
+`WebCache-Cookies.csv`, `WebCache-Entries.csv` and `WebCache-Containers.csv`, with
+`WebCache-logs.txt`; see [Internet Explorer and Legacy Edge](../artifacts/webcache.md#automatic-parsing).
+Outlook tables are in `Communication`: `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` and `Outlook-Tasks.csv`, with `Outlook-logs.txt`; see
+[Outlook](../artifacts/outlook.md#automatic-parsing).
 See the [complete SRUM placement table](../artifacts/srum.md#categorized-auto-parse-output).
 
 Logs match the capitalized artifact name, such as `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`,
@@ -454,7 +563,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## Usage
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -463,6 +572,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -507,3 +619,16 @@ See [reading the recovered security descriptor](../artifacts/defender-quarantine
 for the report fields and their forensic limitations.
 
 Auto-parse also reads users' remote connections (RDP, PuTTY, WinSCP and mapped drives).
+
+## Build a chronological super timeline
+
+After parsing, use [`super-timeline`](super-timeline.md) to expand the recorded timestamps
+into labeled events and sort them across computers and artifacts:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+The existing `-j, --json-timeline` export remains a combined native-record JSONL file.
+It preserves parser schemas; it does not expand timestamp fields or sort events. Keep it and
+the individual parser results for evidence-level review.

@@ -13,11 +13,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md). فهو يستدعي الأوامر المجمعة نفسها،
 وينظّم النتائج والسجلات حسب الحاسوب وفئة التحقيق.
 
+للحصول على مخطط زمني تم فرزه زمنيًا عبر العناصر التي تم تحليلها، استخدم [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md). يقوم بتوسيع وتسمية معاني الطابع الزمني؛ يستمر `auto-parse -j` في الاحتفاظ بالسجلات الأصلية.
+
+## [صور الأقراص](mount.md) { #disk-images }
+
+| الأمر | المُدخل | الدليل التفصيلي |
+|---|---|---|
+| `mount` | صورة قرص VHDX / E01 / Ex01 ‏ | [تحميل صور الأقراص](mount.md) |
+
 ## [أوامر ESE](user-activity.md) { #ese-commands }
 
 | الأمر | الأثر الرقمي المُدخل | الدليل التفصيلي |
 |---|---|---|
 | `parse-ese srum` | ملف ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ملفات ESE `Current.mdb` و`{GUID}.mdb` و`SystemIdentity.mdb` | [تسجيل وصول المستخدمين (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ملف ESE `WebCacheV01.dat` | [Internet Explorer وEdge القديم](../artifacts/webcache.md) |
 
 ## [أوامر الملفات](execution.md) { #file-commands }
 
@@ -26,6 +36,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file defender-quarantine` | شجرة حجر Defender أو أحد إدخالاتها | [حجر Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`، `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [اختصارات LNK](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`، `*.ost`، `*.msg`، `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [أوامر NTFS](filesystem.md) { #ntfs-commands }
@@ -71,6 +82,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`، `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [أوامر SQLite](sqlite.md) { #sqlite-commands }
+
+| الأمر | الأثر الرقمي المُدخل | الدليل التفصيلي |
+|---|---|---|
+| `parse-sqlite browser` | `History`، `Cookies`، `Web Data`، `places.sqlite`، `cookies.sqlite`، `formhistory.sqlite` | [متصفحات الويب](../artifacts/browser.md) |
+
 ## أنواع المصادر وتغييرات التنسيق { #source-types-and-format-changes }
 
 تصف المجموعات التنسيقات التي يدعمها Juntei حاليًا. يقرأ `parse-registry amcache` الملف
@@ -93,13 +110,15 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

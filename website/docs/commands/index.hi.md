@@ -13,11 +13,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 [`juntei auto-parse -d <EVIDENCE> -o <OUTPUT>`](auto-parse.md) का उपयोग करें। यह वही समूहित commands चलाता है
 और परिणामों तथा logs को computer और जाँच की category के अनुसार व्यवस्थित करता है।
 
+पार्स की गई कलाकृतियों में कालानुक्रमिक रूप से क्रमबद्ध समयरेखा के लिए, [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timeline.md) का उपयोग करें। यह टाइमस्टैम्प अर्थों का विस्तार और लेबल करता है; `auto-parse -j` ने मूल रिकॉर्ड बनाए रखना जारी रखा है।
+
+## [डिस्क इमेज](mount.md) { #disk-images }
+
+| Command | Input | विस्तृत मार्गदर्शिका |
+|---|---|---|
+| `mount` | VHDX / E01 / Ex01 disk image | [डिस्क इमेज माउंट करना](mount.md) |
+
 ## [ESE कमांड](user-activity.md) { #ese-commands }
 
 | Command | Input आर्टिफ़ैक्ट | विस्तृत मार्गदर्शिका |
 |---|---|---|
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
+| `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [उपयोगकर्ता एक्सेस लॉगिंग (UAL)](../artifacts/ual.md) |
+| `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer और लेगेसी Edge](../artifacts/webcache.md) |
 
 ## [फ़ाइल कमांड](execution.md) { #file-commands }
 
@@ -26,6 +36,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file defender-quarantine` | Defender क्वारंटीन tree या entry | [Defender क्वारंटीन](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK शॉर्टकट](../artifacts/lnk.md) |
+| `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 
 ## [NTFS कमांड](filesystem.md) { #ntfs-commands }
@@ -71,6 +82,12 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-registry user-assist` | `NTUSER.DAT` | [UserAssist](../artifacts/userassist.md) |
 | `parse-registry shell-bags` | `UsrClass.dat`, `NTUSER.DAT` | [ShellBags](../artifacts/shellbags.md) |
 
+## [SQLite कमांड](sqlite.md) { #sqlite-commands }
+
+| Command | Input आर्टिफ़ैक्ट | विस्तृत मार्गदर्शिका |
+|---|---|---|
+| `parse-sqlite browser` | `History`, `Cookies`, `Web Data`, `places.sqlite`, `cookies.sqlite`, `formhistory.sqlite` | [वेब ब्राउज़र](../artifacts/browser.md) |
+
 ## स्रोत types और format में बदलाव { #source-types-and-format-changes }
 
 समूह उन formats का वर्णन करते हैं जिनका Juntei वर्तमान में समर्थन करता है। `parse-registry amcache`
@@ -93,13 +110,15 @@ command है। यह `parse-registry persistence` की पूर्ण con
 Usage: juntei <COMMAND>
 
 Commands:
-  auto-parse         Discover and parse Windows evidence
+  auto-parse          Discover and parse Windows evidence
+  help                Print this message or the help of the given subcommand(s)
+  mount               Mount a VHDX or E01 disk image read-only (FUSE)
+  parse-ese           Parse ESE databases
+  parse-file          Parse file artifacts
+  parse-ntfs          Parse NTFS artifacts
+  parse-registry      Parse registry hives
+  parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
-  help               Print this message or the help of the given subcommand(s)
-  parse-ese          Parse ESE databases
-  parse-file         Parse file artifacts
-  parse-ntfs         Parse NTFS artifacts
-  parse-registry     Parse registry hives
 
 Options:
   -h, --help     Print help

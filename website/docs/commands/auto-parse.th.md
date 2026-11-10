@@ -21,6 +21,47 @@ juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -j <OUTPUT>/timeline.jsonl
     ป้องกันไม่ให้ข้อมูลที่สร้างขึ้นถูกค้นพบซ้ำเป็นหลักฐาน และป้องกันไม่ให้ `--clobber`
     แตะต้องไฟล์ในชุดข้อมูลต้นทาง
 
+## อิมเมจดิสก์ VHDX { #vhdx-disk-images }
+
+เมื่อใช้ `--vhdx` คำสั่ง `auto-parse` อ่าน VHDX แบบเนทีฟบน **Linux, macOS และ Windows** ผ่าน [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) โดยไม่ต้องเมานต์ OS ใช้ FUSE หรือมีสิทธิ์ผู้ดูแลระบบ
+
+```bash
+# A directory of images, searched recursively
+juntei auto-parse -d /cases/vhdx --vhdx -o parsed
+# One image
+juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
+```
+
+พาร์เซอร์ต้องใช้พาธ Juntei จึงคัดลอกไฟล์ที่พาร์เซอร์อ่านไปยังพื้นที่ชั่วคราวส่วนตัวด้วยบัฟเฟอร์จำกัด ได้แก่ ไฮฟ์รีจิสทรีและล็อกธุรกรรม ไฟล์เมทาดาทา NTFS ฐานข้อมูล ไฟล์ Prefetch ช็อตคัต Jump List ไฟล์ Outlook และโฟลเดอร์กักกันของ Defender ไฟล์อื่นทั้งหมดจะเป็นไฟล์แทนที่ว่างที่คงเวลาแก้ไขเดิมไว้ ไดเรกทอรีและพาธจึงดูเหมือนบนดิสก์ persistence-hunter จะอ่านเนื้อหาของไฟล์แทนที่จากอิมเมจเฉพาะเมื่อจำเป็น เช่น ไฟล์ปฏิบัติการที่รายการ persistence อ้างถึง **ต้องมีพื้นที่สำหรับไฟล์ที่คัดลอก** นอกเหนือจากผลลัพธ์ หากรองรับจะเขียนพื้นที่ศูนย์เป็นพื้นที่ sparse โดยรักษาชื่อ โครงสร้าง ฮาร์ดลิงก์ และเวลาแก้ไข เวลาแหล่งข้อมูล LNK และ Jump List มาจากสแนปช็อตเมทาดาทา NTFS เดิม ไม่ใช่สำเนาชั่วคราว เมื่อจบตามปกติรวมถึงกรณีพาร์เซอร์ผิดพลาดจะลบสำเนา แต่การบังคับหยุดอาจทิ้งไฟล์ไว้ ต้นฉบับอ่านอย่างเดียวและใช้ล็อก VHDX ที่ค้างในหน่วยความจำเท่านั้น
+
+การค้นหาโฮสต์ CSV/JSON/JSONL และ `-j` ใช้ขั้นตอนปกติ `Image` ใน `manifest.json` ระบุอิมเมจต้นฉบับ ส่วน `EvidenceRoot` ระบุพาธสัมพัทธ์ภายใน ข้อผิดพลาดการอ่านและชื่อไม่ปลอดภัยอยู่ใน `ImageErrors` และแถวล้มเหลวของ `manifest.csv` จะเก็บผลที่อ่านได้และคืนรหัส 1 หากอินพุตไม่สมบูรณ์ ไม่เปลี่ยนชื่ออันตรายหรือกำกวม และไม่แยกสตรีม NTFS ที่มีชื่อเป็นไฟล์เพิ่มเติม อาร์ติแฟกต์ที่รวบรวมเป็นไฟล์ปกติยังใช้ได้
+
+คำสั่ง [`mount` แยกต่างหาก](mount.md) เปิดระบบไฟล์ให้โปรแกรมอื่นและยังต้องใช้ Linux FUSE โดย `auto-parse --vhdx` ไม่ได้เรียกใช้คำสั่งนี้
+
+พื้นที่เตรียมข้อมูลใช้ไดเรกทอรีส่วนตัวบนระบบไฟล์ของผลลัพธ์เป็นค่าเริ่มต้น ใช้ `--temp-dir` เพื่อเลือกไดเรกทอรีที่มีอยู่บนดิสก์อื่น เมทาดาทาต้นฉบับเก็บแยกบนระบบไฟล์ผลลัพธ์ จึงยังแยกวิเคราะห์ไฟล์ที่อ่านได้แล้วเมื่อดิสก์เตรียมข้อมูลเต็ม ควรสำรองพื้นที่สำหรับทั้งสำเนาและผลลัพธ์ หากวอลุ่มผลลัพธ์เต็มจะบันทึกผลไม่ได้ Ctrl+C หยุดโปรเซสตัวแยกวิเคราะห์ ล้างพื้นที่ส่วนตัว และออกด้วยรหัส 130 แต่ SIGKILL หรือไฟดับยังอาจทิ้งสำเนาไว้ การค้นหาอิมเมจจะข้ามไดเรกทอรีย่อยที่อ่านไม่ได้ แต่รากอินพุตที่อ่านไม่ได้ยังเป็นข้อผิดพลาด
+
+ไดเรกทอรีเตรียมข้อมูลต้องอยู่นอกไดเรกทอรีผลลัพธ์ บน Linux และ macOS สัญญาณ SIGTERM และ SIGHUP จะหยุดโปรเซสตัวแยกวิเคราะห์และล้างพื้นที่ทำงานด้วย
+
+```bash
+juntei auto-parse --vhdx -d evidence.vhdx -o parsed --temp-dir /large-disk/work
+```
+
+## อิมเมจดิสก์ E01 และ Ex01 { #e01-and-ex01-disk-images }
+
+`--e01` อ่านอิมเมจแบบกายภาพ EWF1 (`.E01`) และ EWF2 (`.Ex01`) แบบเนทีฟบน **Linux, macOS และ Windows** โดยไม่ต้องใช้ FUSE การเมานต์ของ OS หรือสิทธิ์ผู้ดูแลระบบ ใช้ [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) และกระบวนการแยกวิเคราะห์ NTFS เดียวกับที่อธิบายไว้ข้างต้น
+
+สำหรับอิมเมจที่แบ่งส่วน ให้ระบุส่วนแรก เก็บไฟล์ประกอบทั้งหมดรวมถึง `.E02` ไว้ข้างกันด้วยชื่อเดิม รองรับทั้งดิสก์เต็ม (MBR/GPT) และวอลุ่ม NTFS เดี่ยว ใช้ `--vhdx --e01` สำหรับไดเรกทอรีที่มีทั้งสองรูปแบบ
+
+ข้อกำหนดพื้นที่ชั่วคราวและเมทาดาทาต้นฉบับเหมือนกัน อิมเมจ E01 มักเก็บทั้งดิสก์ และอิมเมจทั้งหมดจะถูกเตรียมข้อมูลก่อนเริ่มแยกวิเคราะห์ แต่จะคัดลอกเฉพาะไฟล์ที่พาร์เซอร์อ่าน ซึ่งมักเป็นส่วนเล็ก ๆ ของพื้นที่ที่ใช้งาน อิมเมจเปิดแบบอ่านอย่างเดียว ช่องว่างจากการเก็บข้อมูลและความเสียหายที่พบขณะเปิดหรืออ่านจะแสดงใน `ImageErrors` และ `manifest.csv` โดยเก็บผลลัพธ์ที่อ่านได้และจบด้วยรหัส 1 ตรวจเฉพาะข้อมูลที่เข้าถึง ไม่ใช่ทุกชังก์หรือแฮชของสื่อทั้งหมด ปฏิเสธไฟล์เชิงตรรกะ `.L01` และ `.Lx01` และไม่มีตัวเลือกรหัสผ่าน
+
+คำสั่ง `mount` ที่แยกต่างหากยังต้องใช้ Linux FUSE แต่การแยกวิเคราะห์อัตโนมัติแบบเนทีฟไม่ต้องใช้
+
+```bash
+juntei auto-parse --e01 -d evidence -o parsed
+juntei auto-parse --e01 -d disk.E01 -o parsed
+juntei auto-parse --vhdx --e01 -d evidence -o parsed -j timeline.jsonl
+```
+
 ## เขตเวลาของเอาต์พุต { #output-time-zone }
 
 timestamp ที่พาร์สแล้วใช้ UTC เป็นค่าเริ่มต้น โดยไม่ขึ้นกับเขตเวลาท้องถิ่นของคอมพิวเตอร์ของนักวิเคราะห์ UTC
@@ -119,6 +160,11 @@ manifest จะเก็บชื่อโฮสต์ตามที่ค้�
 - ดัชนีไดเรกทอรี `$I30`
 - บูตเซกเตอร์ `$Boot` และตัวบอกความปลอดภัย `$Secure:$SDS`
 - SRUM
+- การบันทึกการเข้าถึงของผู้ใช้ (UAL)
+- ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเว็บเบราว์เซอร์ (เบราว์เซอร์ที่ใช้ Chromium และ Firefox เป็นพื้นฐาน)
+- WebCache ของ Internet Explorer และ Edge รุ่นเก่า: ประวัติ การดาวน์โหลด คุกกี้ และรายการแคช
+- ไฟล์ PST, OST, MSG และ OFT ของ Outlook: โฟลเดอร์ รายการ ผู้รับ สิ่งที่แนบ ผู้ติดต่อ รายการปฏิทิน
+  และงาน
 - ทางลัด LNK
 - Jump Lists
 - ShimCache
@@ -175,6 +221,28 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   ├── Registry-AppHistory-logs.txt
 │   │   ├── Registry-InstalledPrograms.csv
 │   │   └── Registry-InstalledPrograms-logs.txt
+│   ├── BrowserActivity/
+│   │   ├── Browser-Cookies.csv
+│   │   ├── Browser-Downloads.csv
+│   │   ├── Browser-FormHistory.csv
+│   │   ├── Browser-History.csv
+│   │   ├── Browser-logs.txt
+│   │   ├── WebCache-Containers.csv
+│   │   ├── WebCache-Cookies.csv
+│   │   ├── WebCache-Downloads.csv
+│   │   ├── WebCache-Entries.csv
+│   │   ├── WebCache-History.csv
+│   │   └── WebCache-logs.txt
+│   ├── Communication/
+│   │   ├── Outlook-Attachments.csv
+│   │   ├── Outlook-Calendar.csv
+│   │   ├── Outlook-Contacts.csv
+│   │   ├── Outlook-Files.csv
+│   │   ├── Outlook-Folders.csv
+│   │   ├── Outlook-Items.csv
+│   │   ├── Outlook-Recipients.csv
+│   │   ├── Outlook-Tasks.csv
+│   │   └── Outlook-logs.txt
 │   ├── ExternalDevices/
 │   │   ├── Registry-USB.csv
 │   │   └── Registry-USB-logs.txt
@@ -223,7 +291,11 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
 │   │   ├── Registry-RemoteAccess.csv
-│   │   └── Registry-RemoteAccess-logs.txt
+│   │   ├── Registry-RemoteAccess-logs.txt
+│   │   ├── UAL-Clients.csv
+│   │   ├── UAL-RoleAccess.csv
+│   │   ├── UAL-SystemIdentity.csv
+│   │   └── UAL-logs.txt
 │   ├── Persistence/
 │   │   ├── Registry-BCD.csv
 │   │   ├── Registry-BCD-logs.txt
@@ -277,12 +349,14 @@ CSV แยกตารางออกจากกันเพราะแต่�
 | `Accounts` | บัญชีภายในเครื่อง SAM, ชื่อและเวลาของ LSA secrets |
 | `Applications` | ประวัติแอปพลิเคชัน (ร่องรอยของเครื่องมือจากบุคคลที่สาม) |
 | `Applications` | โปรแกรมที่ติดตั้ง |
+| `BrowserActivity` | ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเว็บเบราว์เซอร์ พร้อมรายการที่ถูกลบซึ่งกู้คืนได้ รวมถึง WebCache ของ Internet Explorer และ Edge รุ่นเก่า |
+| `Communication` | ไฟล์ PST, OST, MSG และ OFT ของ Outlook: โฟลเดอร์ รายการ ผู้รับ สิ่งที่แนบ ผู้ติดต่อ รายการปฏิทิน และงาน |
 | `ExternalDevices` | อุปกรณ์และวอลุ่ม USB |
 | `FileAndFolderOpening` | Jump Lists, ทางลัด LNK, Microsoft Office, รายการ MRU, กล่องโต้ตอบ Open และ Save As, RecentDocs, ShellBags |
 | `FileExistence` | Amcache, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | โปรไฟล์เครือข่าย อินเทอร์เฟซ แชร์ port proxy และเส้นทาง; การเชื่อมต่อ ปริมาณการรับส่งข้อมูล และ push notification ของ SRUM |
-| `LateralMovement` | การเชื่อมต่อขาออกของผู้ใช้ผ่าน Remote Desktop, PuTTY และ WinSCP, ไดรฟ์ที่แมปและแชร์ |
+| `LateralMovement` | การเชื่อมต่อขาออกของผู้ใช้ผ่าน Remote Desktop, PuTTY และ WinSCP, ไดรฟ์ที่แมปและแชร์ รวมถึงการบันทึกการเข้าถึงของผู้ใช้ (ไคลเอนต์ของบทบาทต่าง ๆ บนเซิร์ฟเวอร์) |
 | `Persistence` | การกำหนดค่าบูต (BCD), การเริ่มอัตโนมัติผ่านรีจิสทรี, บริการ, TaskCache |
 | `ProcessExecution` | ความเข้ากันได้ของแอปพลิเคชัน, BAM และ DAM, FeatureUsage และรายการที่ปักหมุด, MuiCache, Prefetch, ไทม์ไลน์ Prefetch, กิจกรรมแอปพลิเคชัน/CPU ของ SRUM, UserAssist |
 | `Registry` | คีย์และค่าของไฮฟ์ทั่วไป รวมถึงเรคคอร์ดที่กู้คืน |
@@ -313,6 +387,19 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 `JumpLists-CustomDestinations.csv` ไม่มีไดเรกทอรีย่อยสำหรับ Amcache หรือ Jump Lists
 ตาราง SRUM ใช้ชื่อไฟล์ `SRUM-` ไว้ใต้หมวดหมู่ของตนโดยตรง เช่น
 `NetworkActivity/SRUM-NetworkConnections.csv`
+ตารางของการบันทึกการเข้าถึงของผู้ใช้อยู่ใน `LateralMovement` โดยแยกหนึ่งไฟล์ต่อหนึ่งตาราง เช่น
+`UAL-Clients.csv` และ `UAL-SystemIdentity.csv` พร้อม `UAL-logs.txt` ดู
+[การบันทึกการเข้าถึงของผู้ใช้ (UAL)](../artifacts/ual.md#automatic-parsing)
+ตารางของเว็บเบราว์เซอร์อยู่ใน `BrowserActivity` ได้แก่ `Browser-History.csv`, `Browser-Downloads.csv`,
+`Browser-Cookies.csv` และ `Browser-FormHistory.csv` พร้อม `Browser-logs.txt` ดู
+[เว็บเบราว์เซอร์](../artifacts/browser.md#automatic-parsing)
+ตาราง WebCache ของ Internet Explorer และ Edge รุ่นเก่าก็อยู่ที่นี่เช่นกัน ได้แก่ `WebCache-History.csv`,
+`WebCache-Downloads.csv`, `WebCache-Cookies.csv`, `WebCache-Entries.csv` และ `WebCache-Containers.csv`
+พร้อม `WebCache-logs.txt` ดู [Internet Explorer และ Edge รุ่นเก่า](../artifacts/webcache.md#automatic-parsing)
+ตารางของ Outlook อยู่ใน `Communication` ได้แก่ `Outlook-Files.csv`, `Outlook-Folders.csv`,
+`Outlook-Items.csv`, `Outlook-Recipients.csv`, `Outlook-Attachments.csv`, `Outlook-Contacts.csv`,
+`Outlook-Calendar.csv` และ `Outlook-Tasks.csv` พร้อม `Outlook-logs.txt` ดู
+[Outlook](../artifacts/outlook.md#automatic-parsing)
 ดู[ตารางการจัดวาง SRUM ทั้งหมด](../artifacts/srum.md#categorized-auto-parse-output)
 
 บันทึกใช้ชื่อตามชื่ออาร์ติแฟกต์ที่ขึ้นต้นด้วยตัวพิมพ์ใหญ่ เช่น `Registry-SAM-logs.txt`, `PrefetchTimeline-logs.txt`
@@ -452,7 +539,7 @@ juntei auto-parse -d evidence -o parsed -T 4
 ## การใช้งาน { #usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (Dev Build)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -461,6 +548,9 @@ Usage:
 Input:
   -d, --directory <EVIDENCE>  Evidence directory containing one or more collected Windows systems
       --max-depth <DEPTH>     Maximum directory depth at which to discover a Windows directory [default: 10]
+      --vhdx                  Parse VHDX images natively on Linux, macOS and Windows (read-only; temporary disk space required)
+      --e01                   Parse E01/Ex01 images natively (split images from their first segment; temporary disk space required)
+      --temp-dir <DIR>        Directory for private image staging (default: output filesystem)
 
 Output:
   -o, --output <DIR>                  New directory in which to create per-computer results
@@ -505,3 +595,13 @@ Display Settings:
 สำหรับฟิลด์ของรายงานและข้อจำกัดทางนิติวิทยาศาสตร์
 
 Auto-parse ยังอ่านการเชื่อมต่อระยะไกลของผู้ใช้ (RDP, PuTTY, WinSCP และไดรฟ์ที่แมป) ด้วย
+
+## สร้างซุปเปอร์ไทม์ไลน์ตามลำดับเวลา { #build-a-chronological-super-timeline }
+
+หลังจากแยกวิเคราะห์แล้ว ให้ใช้ [`super-timeline`](super-timeline.md) เพื่อขยายการประทับเวลาที่บันทึกไว้เป็นเหตุการณ์ที่มีป้ายกำกับ และจัดเรียงระหว่างคอมพิวเตอร์และอาร์ติแฟกต์:
+
+```bash
+juntei super-timeline -d output/ -o SuperTimeline.csv
+```
+
+การส่งออก `-j, --json-timeline` ที่มีอยู่ยังคงเป็นไฟล์ JSONL ที่บันทึกเนทิฟรวมกัน มันรักษา parser schema; แต่จะไม่ขยายเขตข้อมูลการประทับเวลาหรือเรียงลำดับเหตุการณ์ เก็บผลลัพธ์และผลลัพธ์ของโปรแกรมแยกวิเคราะห์แต่ละรายการไว้เพื่อการตรวจสอบในระดับหลักฐาน

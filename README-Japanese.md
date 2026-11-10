@@ -23,15 +23,28 @@ Juntei という名前は、深い慈悲の心を持つ仏教の尊格「准胝�
 
 ## 対応アーティファクト
 
-Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 38 種類に対応しており、今後も対応範囲を拡大していきます。
+Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 42 種類に対応しており、今後も対応範囲を拡大していきます。
 
 `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` を実行すると、収集済みの複数の Windows システムを
 自動検出し、対応するすべてのアーティファクトを並列に解析します。結果はコンピュータと証拠のカテゴリ別に
 整理され、各結果の隣に `<artifact>-logs.txt` が保存されます。`-j <FILE>` を追加すると、CSV や JSON の
 結果を残したまま、コンピュータ名を付与した SIEM 向けの JSONL ファイルも作成できます。
 
-個別に解析する場合は、`parse-ese`、`parse-file`、`parse-ntfs`、`parse-registry` を使用します。
+個別に解析する場合は、`parse-ese`、`parse-file`、`parse-ntfs`、`parse-registry`、`parse-sqlite` を使用します。
 例: `juntei parse-file prefetch -d <EVIDENCE> -o prefetch.csv`。
+
+`juntei auto-parse --vhdx -d <IMAGE_OR_DIR> -o <OUTPUT>` は、**Linux、macOS、Windows** で
+FUSE、OS へのマウントや管理者権限なしに VHDX を解析します。パーサー用の専用一時コピーを作成するため、
+十分な一時ディスク容量が必要です。`juntei mount <IMAGE> <MOUNTPOINT>` は、Linux の FUSE を使って
+他のプログラムにイメージを読み取り専用で公開する用途で引き続き利用できます。
+一時コピーは既定で出力先のファイルシステムに作成されます。コピーと結果の両方に必要な空き容量を確保し、
+別のディスクを使う場合は `--temp-dir <DIR>` を指定してください。Ctrl+C はパーサーを停止して専用コピーを削除します。
+どちらも [Yamato Security/ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) を使用します。
+
+`--e01` を追加すると、[ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser) で
+物理 E01/Ex01 イメージも解析できます。分割イメージは最初のセグメントを指定し、関連する全セグメントを
+元の名前のまま同じ場所に置いてください。混在したディレクトリには `--vhdx --e01` を使用します。
+E01 も同じ読み取り専用のネイティブ処理と専用一時領域を使用します。
 
 [`juntei persistence-hunter`](https://yamato-security.github.io/juntei/ja/commands/persistence-hunter/)
 では、レジストリハイブ、スケジュールタスク、スタートアップファイル、WMI、BITS を横断して永続化の痕跡を調べます。
@@ -116,6 +129,7 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 | アーティファクト | 種類 |
 | --- | --- |
 | **リモートアクセス（ユーザー側）** (`NTUSER.DAT`) — ユーザーが Remote Desktop、PuTTY、WinSCP で接続したコンピュータ、使用アカウント、承認した SSH ホスト鍵とフィンガープリント、割り当てたドライブと共有。 | Registry |
+| **ユーザーアクセスログ (UAL)** (`Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb`) — Windows Server の役割（ファイル共有、Active Directory、DHCP、IIS など）を使用したクライアントのアドレスとアカウント、日ごとの要求回数。 | ESE |
 
 ### システム情報
 
@@ -134,6 +148,19 @@ Juntei は現在、広く利用されている Windows フォレンジックア�
 | アーティファクト | 種類 |
 | --- | --- |
 | **監査ポリシー** (`SECURITY` の `PolAdtEv`) — セキュリティイベントの記録設定をサブカテゴリ別に示します。記録がないことを判断材料にできない場合の把握に役立ちます。 | Registry |
+
+### ブラウザの活動
+
+| アーティファクト | 種類 |
+| --- | --- |
+| **Web ブラウザ** (`History`、`Cookies`、`Web Data`、`places.sqlite`、`cookies.sqlite`、`formhistory.sqlite`) — Chrome、Edge、Brave、Opera、Vivaldi、Firefox など Chromium 系・Firefox 系ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴。ライトアヘッドログ（`-wal`）も含めて読み、削除された閲覧履歴、ページ、ダウンロード、フォーム入力を復元します。 | SQLite |
+| **Internet Explorer と従来の Edge** (`WebCacheV01.dat`) — Internet Explorer 10・11、従来の Edge、Windows のインターネット機能 (WinINet) を使うその他のプログラムの閲覧履歴（ページタイトル付き。エクスプローラーで開いたローカルファイルを含む）、ダウンロード、Cookie、キャッシュファイル。キャッシュファイルごとにディスク上のパスと HTTP ヘッダーも示します。 | ESE |
+
+### コミュニケーション
+
+| アーティファクト | 種類 |
+| --- | --- |
+| **Outlook** (`*.pst`、`*.ost`、`*.msg`、`*.oft`) — PST・OST ストア（Outlook 2013 以降の OST を含む）のフォルダーとアイテム、保存されたメッセージとテンプレート。差出人、受信者、日時、添付ファイル（SHA-256、抽出も可能）付きのメール、添付ファイルに埋め込まれたアイテム、連絡先、予定表アイテム、タスク、フォルダーの非表示アイテム、保存されているすべてのプロパティ。 | File |
 
 ### ネットワークの活動
 

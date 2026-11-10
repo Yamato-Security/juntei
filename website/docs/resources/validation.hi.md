@@ -93,6 +93,57 @@ SDDL है, जिसमें उसके 3,384 callback ACEs की conditio
 11 वास्तविक databases में, उत्पन्न 45,255 entries का हर column
 `dissect.esedb` द्वारा उजागर values की स्वतंत्र decoding से मेल खाया।
 
+## उपयोगकर्ता एक्सेस लॉगिंग { #user-access-logging }
+
+`parse-ese ual` उसी ESE reader से UAL databases पढ़ता है। 16 वास्तविक databases (308 rows, जिनमें से 145
+client rows) में, हर value `dissect.esedb` द्वारा उजागर values की स्वतंत्र decoding से मेल खाई। हर client row में,
+गिनती वाला पहला दिन `InsertDate` का UTC दिन था, आखिरी दिन `LastAccess` का UTC दिन, और गिनतियों का योग
+`TotalAccesses` के बराबर था।
+
+## वेब ब्राउज़र { #web-browsers }
+
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) Sootmark के browser, sqlite और plist
+crates का अनुरक्षित fork है, जिसे एक अन्य Rust library से, और उन्हीं databases पर Plaso, Velociraptor
+(SQLiteHunter) और Hindsight से तुलना करने के बाद चुना गया। `parse-sqlite browser` की तुलना `sqlite3` library
+से की गई, जो हर database की एक copy को उसकी `-wal` file के साथ पढ़ती है; यह तुलना 38 सार्वजनिक databases पर हुई:
+Plaso की test files (Chrome 8 से 68, Firefox 2 से 118), Chromium 150 और Firefox 140 द्वारा बनाई गई profiles, और
+ys-browser-parser के form history test databases। सभी 293 visits, 21 downloads, 692 cookies और 41 form entries
+मेल खाईं। Deleted entries केवल वहीं recover हुईं जहाँ entries सचमुच delete की गई थीं: Firefox 140 history से
+delete किए गए दो pages और दो visits, उनके समय, URLs और titles के साथ, और test databases की deleted form entries।
+
+## Internet Explorer और लेगेसी Edge (WebCache) { #internet-explorer-and-legacy-edge-webcache }
+
+`parse-ese webcache` `WebCacheV01.dat` को
+[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) से पढ़ता है। इसकी तुलना `dissect.database`
+के ESE reader से Plaso के दो सार्वजनिक WebCache databases पर की गई: एक Internet Explorer 11 का, और एक Windows 10
+का dirty database जिसमें legacy Edge का history, downloads और cookies हैं। सभी 4,156 rows value-दर-value मेल
+खाईं: 44 containers, 182 history entries, 6 downloads, 170 cookies और 3,754 अन्य entries। तुलना ने download
+records को स्वतंत्र रूप से, अपने तरीके से decode किया। जिन records को databases deleted के रूप में चिह्नित करते हैं,
+उन्हें दोनों में से किसी में भी शामिल नहीं किया गया।
+
+## Outlook { #outlook }
+
+`parse-file outlook` PST, OST, `.msg` और `.oft` files को
+[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser) से पढ़ता है, जिसका PST और OST
+reader Microsoft के [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) का fork है और जिसका
+`.msg` reader Microsoft के open specifications से लिखा गया है।
+
+- **PST और OST**: 66 सार्वजनिक PST और OST files (Apache Tika, artemis, Aspose.Email के examples, DFIR
+  Artifact Museum, Enron, GroupDocs के examples, java-libpst, libyal का test data, outlook-pst-rs और
+  pst-extractor) की तुलना libpff से property-दर-property की गई: हर store, folder, message, recipient और
+  attachment की हर property, और हर attachment का data। 324,175 तथ्य समान थे और कोई भी बिना स्पष्टीकरण के
+  अलग नहीं था। बाकी तथ्य ये हैं: जो केवल ys-outlook-parser पढ़ता है (उन messages, recipients और attachments के
+  15,846 तथ्य जिन पर libpff विफल होता है, और एक ऐसे store के जिसे वह खोल नहीं पाता; hidden items के 8,223),
+  recipient cells जिन्हें libpff खाली या शून्य देता है जबकि उनकी rows कहती हैं कि वे अनुपस्थित हैं (49,077),
+  folder entry ids और types जिनकी गणना MAPI की तरह की गई (2,004), और objects तथा embedded messages जिन्हें
+  libpff उनके raw data के रूप में देता है (480)। दो files को दोनों में से कोई भी reader बिल्कुल नहीं पढ़ता।
+- **`.msg` और `.oft`**: 214 सार्वजनिक files की, जिनमें 2,404 messages, recipients और attachments और 41,002
+  properties हैं, तुलना extract-msg से की गई: 110,114 तथ्य समान थे, और जो 791 अलग हैं उनमें से हर एक का
+  स्पष्टीकरण है: 601 समयों में extract-msg की त्रुटियाँ हैं, 35 उन ANSI files से आते हैं जिन्हें वह गलत code
+  page में decode करता है, और बाकी वह है जो वह छोड़ देता है या जोड़ देता है।
+- **क्षतिग्रस्त input**: 260,000 से अधिक mutated `.msg` files और 160,000 mutated PSTs, और crafted files,
+  बिना crash, hang या असीमित memory के पढ़ी गईं।
+
 ## LNK शॉर्टकट { #lnk-shortcuts }
 
 [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)

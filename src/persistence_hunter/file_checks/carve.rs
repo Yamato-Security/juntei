@@ -37,6 +37,7 @@ fn windows(
     overlap: usize,
     mut inspect: impl FnMut(&[u8], usize) -> bool,
 ) -> io::Result<()> {
+    crate::image_files::materialize(path)?;
     let mut handle = File::open(path)?;
     let mut window = Vec::new();
     handle
@@ -82,7 +83,8 @@ fn class_header(class: &str) -> Vec<u8> {
         .encode_utf16()
         .flat_map(u16::to_le_bytes)
         .collect();
-    format!("{:X}", Sha256::digest(&raw))
+    crate::util::hex_lower(&Sha256::digest(&raw))
+        .to_ascii_uppercase()
         .encode_utf16()
         .flat_map(u16::to_le_bytes)
         .collect()
