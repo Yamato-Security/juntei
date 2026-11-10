@@ -4,7 +4,7 @@
 
 **New Features:**
 
-- `auto-parse --vhdx` reads images natively on Linux, macOS and Windows without FUSE, an OS mount, or administrator privileges. Files are staged in a private temporary workspace for the path-based parsers; enough temporary disk space is required. Preserve image provenance and report incomplete image inputs in both manifests while retaining readable results. (@YamatoSecurity)
+- `auto-parse --vhdx` reads images natively on Linux, macOS and Windows without FUSE, an OS mount, or administrator privileges. Files are staged in a private workspace on the output filesystem by default; `--temp-dir` selects an existing directory outside the output. Reserve space for copies and results. Keep original source metadata separately, retain readable results if staging fills, report failed writes once, and mark images that were not staged in both manifests. Skip inaccessible discovery subdirectories while treating an unreadable input root as an error. Ctrl+C, and SIGTERM/SIGHUP on Linux and macOS, stop and reap parser processes before removing staged evidence and return exit code 130. SIGKILL or power loss can leave copies. Preserve image provenance and keep private workspace paths out of exported results. (@YamatoSecurity)
 
 - Use Yamato Security’s [ys-vhdx-parser](https://github.com/Yamato-Security/ys-vhdx-parser) workspace for the VHDX reader and reusable NTFS/FUSE mounting library, retaining the original reader’s license and attribution. (@YamatoSecurity)
 
@@ -24,9 +24,6 @@
 **Bug Fixes:**
 
 - Protect every split E01 segment, including damaged companions and hard-link aliases, from output replacement. Resolve first-segment case aliases without changing segment families, retain reader warnings discovered during parsing, and saturate acquisition-error counts instead of overflowing. (@YamatoSecurity)
-- Native image discovery skips inaccessible subdirectories without losing readable images. Stage on the output filesystem by default, add `--temp-dir` to choose another disk, and keep original source metadata separately so readable files can still be parsed after staging runs out of space. Report the failed write once and mark remaining images that were not staged. (@YamatoSecurity)
-
-- Ctrl+C during native image parsing stops and reaps parser processes before removing private staged evidence; return exit code 130. Preserve existing evidence and keep source metadata paths out of exported results. (@YamatoSecurity)
 
 - Disk-image mounting checks GPT offset and length arithmetic, rejects cyclic extended-partition chains, preserves valid FILETIMEs beyond 2554, and reads compressed-file metadata without decompressing content. Bound the decompression cache, report unreadable NTFS partitions while retaining readable volumes, and preserve the original evidence directory when `auto-parse --vhdx` receives a bare image filename. (@YamatoSecurity)
 

@@ -178,6 +178,10 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
         );
         return 1;
     }
+    if let Err(error) = super::validate_image_staging(opts) {
+        error_msg(no_color, &error.to_string());
+        return 1;
+    }
     let sources = match paths
         .iter()
         .map(|path| disk_image::source_files(path))

@@ -2482,6 +2482,25 @@ fn output_totals(root: &Path) -> io::Result<(usize, u64)> {
     Ok((files, bytes))
 }
 
+/// Validate staging before creating workspaces or reading an image's contents.
+/// The ordinary pipeline requires its evidence tree to be outside the output.
+fn validate_image_staging(opts: &AutoParseOptions) -> io::Result<()> {
+    let Some(staging) = &opts.temp_dir else {
+        return Ok(());
+    };
+    let output = absolute_candidate(&opts.output)?;
+    let staging = absolute_candidate(staging)?;
+    if staging.starts_with(&output) {
+        return Err(io::Error::other(
+            "--temp-dir must be outside the output directory",
+        ));
+    }
+    if !staging.is_dir() {
+        return Err(io::Error::other("--temp-dir must be an existing directory"));
+    }
+    Ok(())
+}
+
 fn output_separate_from_evidence(evidence: &Path, output: &Path) -> Result<(), String> {
     let evidence = fs::canonicalize(evidence)
         .map_err(|e| format!("Could not resolve {}: {e}", evidence.display()))?;

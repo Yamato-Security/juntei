@@ -5673,11 +5673,70 @@ fn auto_parse_vhdx_uses_the_output_filesystem_unless_a_staging_directory_is_give
     assert!(invalid.stdout.contains("--temp-dir requires --vhdx"));
 }
 
+#[test]
+fn auto_parse_native_images_reject_staging_inside_output_before_opening_images() {
+    for (flag, extension) in [("--vhdx", "vhdx"), ("--e01", "E01")] {
+        let dir = tempfile::tempdir().unwrap();
+        let image = dir.path().join(format!("invalid.{extension}"));
+        // An early validation failure must take priority over an unreadable image.
+        std::fs::write(&image, b"not a VHDX image").unwrap();
+        let output = dir.path().join("output");
+        std::fs::create_dir(&output).unwrap();
+        let nested = output.join("staging");
+        std::fs::create_dir(&nested).unwrap();
+        let marker = output.join("keep.txt");
+        std::fs::write(&marker, b"existing output").unwrap();
+        let staging_paths = vec![output.clone(), nested, output.join("not-created")];
+        #[cfg(unix)]
+        let staging_paths = {
+            let mut paths = staging_paths;
+            let alias = dir.path().join("alias");
+            std::os::unix::fs::symlink(&output, &alias).unwrap();
+            paths.push(alias);
+            paths
+        };
+        for staging in staging_paths {
+            let result = run(&[
+                "auto-parse",
+                flag,
+                "-d",
+                image.to_str().unwrap(),
+                "-o",
+                output.to_str().unwrap(),
+                "--temp-dir",
+                staging.to_str().unwrap(),
+                "--clobber",
+                "-K",
+                "-q",
+            ]);
+            assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+            let messages = format!("{}\n{}", result.stdout, result.stderr);
+            assert!(messages.contains("--temp-dir must be outside the output directory"));
+            assert!(!messages.contains("VHDX images:"), "{messages}");
+            assert!(!messages.contains("E01 images:"), "{messages}");
+            assert!(
+                !messages.contains(dir.path().to_str().unwrap()),
+                "{messages}"
+            );
+            assert_eq!(std::fs::read(&marker).unwrap(), b"existing output");
+            assert!(!output.join("manifest.json").exists());
+            assert!(!std::fs::read_dir(dir.path()).unwrap().any(|entry| {
+                let name = entry.unwrap().file_name();
+                let name = name.to_string_lossy();
+                name.starts_with("juntei-vhdx-") || name.starts_with(".juntei-image-control-")
+            }));
+        }
+    }
+}
+
 #[cfg(unix)]
 #[test]
-fn auto_parse_vhdx_ctrl_c_cleans_staged_evidence_during_copying_and_parsing() {
+fn auto_parse_vhdx_signals_clean_staged_evidence_during_copying_and_parsing() {
     use std::time::{Duration, Instant};
-    for parsing in [false, true] {
+    for (signal, parsing) in ["-INT", "-TERM", "-HUP"]
+        .into_iter()
+        .flat_map(|signal| [false, true].map(|parsing| (signal, parsing)))
+    {
         let dir = tempfile::tempdir().unwrap();
         let evidence = dir.path().join("evidence");
         let staging = dir.path().join("staging");
@@ -5736,7 +5795,7 @@ fn auto_parse_vhdx_ctrl_c_cleans_staged_evidence_during_copying_and_parsing() {
         // Signal only the parent: it must also stop and reap its parser processes.
         assert!(
             Command::new("kill")
-                .args(["-INT", &child.id().to_string()])
+                .args([signal, &child.id().to_string()])
                 .status()
                 .unwrap()
                 .success()
@@ -5746,7 +5805,7 @@ fn auto_parse_vhdx_ctrl_c_cleans_staged_evidence_during_copying_and_parsing() {
             if interrupted.elapsed() > Duration::from_secs(15) {
                 let _ = child.kill();
                 let _ = child.wait();
-                panic!("Ctrl+C did not stop the image parser");
+                panic!("{signal} did not stop the image parser");
             }
             std::thread::sleep(Duration::from_millis(10));
         }
