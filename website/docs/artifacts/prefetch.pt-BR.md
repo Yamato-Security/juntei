@@ -30,8 +30,12 @@ ser comparados.
   prova de que um programa não foi executado.
 - As listas de arquivos carregados descrevem dependências e acessos durante a inicialização; elas não provam que cada arquivo listado
   era malicioso, foi aberto deliberadamente ou foi lido por completo.
-- O nome do executável no cabeçalho do Prefetch tem comprimento limitado; o Juntei resolve um caminho a partir dos arquivos
-  carregados quando isso é possível de forma inequívoca.
+- O nome do executável no cabeçalho do Prefetch tem comprimento limitado. O Juntei distingue
+  caminhos carregados com o mesmo nome pelo hash de caminho SCCA. Se vários candidatos continuarem
+  sem resolução, ele mantém o nome do cabeçalho e define PathAmbiguous; a lista de arquivos
+  carregados continua disponível. Um único candidato cujo hash não corresponde é mantido, com
+  PathValidated como false. Processos hospedeiros podem incluir dados da linha de comando no hash,
+  portanto um caminho não validado não está necessariamente errado.
 - Os carimbos de data/hora do sistema de arquivos de um arquivo de origem `.pf` são distintos dos horários de execução incorporados.
 - `Findings` são observações de caça a ameaças. Instaladores e a administração legítima usam frequentemente caminhos de preparação.
 
