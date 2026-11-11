@@ -26,6 +26,12 @@
 
 **Bug Fixes:**
 
+- Prefetch executable paths use the SCCA path hash to resolve same-named loaded files; unresolved
+  alternatives retain the header name instead of an arbitrary path. Export `PathValidated` and
+  `PathAmbiguous` in detailed and timeline CSV/JSON/JSONL. Preserve Control Panel task display
+  names in LNK, Jump List and ShellBag targets, honoring the selected ANSI code page.
+  (@YamatoSecurity)
+
 - Replay adjacent registry transaction logs before parsing Amcache and SRUM SOFTWARE-hive enrichment, including `auto-parse` and disk-image collections. Report recovery and missing-log limitations without contaminating structured stdout, and protect source hives and logs from output replacement. (@YamatoSecurity)
 
 - `auto-parse`: label failed parser tasks as `Parsing error` in the results summary and link to their detailed logs, instead of showing a parser's elapsed-time footer as the error. (@YamatoSecurity)

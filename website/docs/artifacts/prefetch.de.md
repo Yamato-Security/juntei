@@ -66,6 +66,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Eingabe-`.pf`; behalten Sie dieses Feld bei, um Hosts und doppelte Namen ausführbarer Dateien zu unterscheiden. |
 | `ExecutableName` | Name der ausführbaren Datei aus dem Header. Für die meisten Suchen ohne Beachtung der Groß-/Kleinschreibung verwenden; die ursprüngliche Schreibweise bewahren. |
 | `ExecutablePath` | Von Juntei nach Möglichkeit ermittelter Ladepfad. Gleichen Sie ihn mit `Files` und anderen Artefakten ab. |
+| `PathValidated` | Der gewählte Pfad entspricht dem SCCA-Pfadhash. Dies bestätigt die Pfadzuordnung, nicht den Dateiinhalt oder die Vertrauenswürdigkeit. |
+| `PathAmbiguous` | Mehrere geladene Pfade bleiben möglich; `ExecutablePath` enthält den Headernamen. Prüfen Sie `Files` und weitere Artefakte. |
 | `PrefetchHash` | Hash, den Windows im `.pf`-Dateinamen verwendet; kein kryptografischer Hash des Dateiinhalts. |
 | `FormatVersion` | Version der Prefetch-Struktur; bestimmt die verfügbaren Felder und die Anzahl der Zeitstempel. |
 | `RunCount` | Von Windows aufgezeichneter kumulativer Zähler. Nützlich für die Häufigkeit, nicht für den genauen Verlauf. |
@@ -87,6 +89,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | Ein gespeicherter Prefetch-Ausführungszeitpunkt. |
 | `ExecutableName`, `ExecutablePath` | Identität des Programms bzw. Pfadkontext. |
+| `PathValidated` | Der gewählte Pfad entspricht dem SCCA-Pfadhash. Dies bestätigt die Pfadzuordnung, nicht den Dateiinhalt oder die Vertrauenswürdigkeit. |
+| `PathAmbiguous` | Mehrere geladene Pfade bleiben möglich; `ExecutablePath` enthält den Headernamen. Prüfen Sie `Files` und weitere Artefakte. |
 | `PrefetchHash` | Unterscheidet Varianten/Pfade, die denselben Namen der ausführbaren Datei haben. |
 | `RunCount` | Zähler aus der Prefetch-Datei; er wird in jeder Zeitleistenzeile wiederholt. |
 | `SourceFile` | Quell-`.pf` zur Überprüfung. |

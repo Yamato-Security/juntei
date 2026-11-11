@@ -66,6 +66,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Fichier `.pf` d'entrée ; conservez-le pour distinguer les hôtes et les noms d'exécutables en double. |
 | `ExecutableName` | Nom de l'exécutable dans l'en-tête. Insensible à la casse pour la plupart des recherches ; conservez la graphie d'origine. |
 | `ExecutablePath` | Chemin chargé résolu par Juntei lorsque c'est possible. Confirmez-le avec `Files` et d'autres artefacts. |
+| `PathValidated` | Le chemin sélectionné reproduit le hachage de chemin SCCA. Cela valide son attribution, pas le contenu ni la fiabilité du fichier. |
+| `PathAmbiguous` | Plusieurs chemins chargés restent possibles ; `ExecutablePath` conserve le nom de l’en-tête. Vérifiez `Files` et les autres artefacts. |
 | `PrefetchHash` | Empreinte utilisée par Windows dans le nom du fichier `.pf` ; il ne s'agit pas d'une empreinte cryptographique du contenu du fichier. |
 | `FormatVersion` | Version de la structure Prefetch ; détermine les champs disponibles et le nombre d'horodatages. |
 | `RunCount` | Compteur cumulatif enregistré par Windows. Utile pour la fréquence, pas pour un historique exact. |
@@ -87,6 +89,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | Une heure d'exécution Prefetch conservée. |
 | `ExecutableName`, `ExecutablePath` | Contexte d'identité/de chemin du programme. |
+| `PathValidated` | Le chemin sélectionné reproduit le hachage de chemin SCCA. Cela valide son attribution, pas le contenu ni la fiabilité du fichier. |
+| `PathAmbiguous` | Plusieurs chemins chargés restent possibles ; `ExecutablePath` conserve le nom de l’en-tête. Vérifiez `Files` et les autres artefacts. |
 | `PrefetchHash` | Distingue les variantes/chemins partageant un même nom d'exécutable. |
 | `RunCount` | Compteur du fichier Prefetch ; il est répété sur chaque ligne de la chronologie. |
 | `SourceFile` | Fichier `.pf` source, pour validation. |

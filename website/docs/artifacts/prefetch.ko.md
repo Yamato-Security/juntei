@@ -66,6 +66,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | 입력 `.pf`입니다. 호스트와 중복된 실행 파일 이름을 구별하기 위해 보존하십시오. |
 | `ExecutableName` | 헤더의 실행 파일 이름입니다. 대부분의 헌팅에서는 대소문자를 구분하지 않지만, 원래 표기를 보존하십시오. |
 | `ExecutablePath` | 가능한 경우 Juntei가 확인한 로드 경로입니다. `Files` 및 다른 아티팩트와 대조하여 확인하십시오. |
+| `PathValidated` | 선택한 경로가 SCCA 경로 해시와 일치합니다. 경로 식별의 검증이며 파일 내용이나 신뢰성을 보장하지 않습니다. |
+| `PathAmbiguous` | 여러 로드 경로 후보를 구분할 수 없어 `ExecutablePath`에 헤더 이름을 유지합니다. `Files`와 다른 아티팩트로 확인하세요. |
 | `PrefetchHash` | Windows가 `.pf` 파일 이름에 사용하는 해시이며, 파일 콘텐츠의 암호화 해시가 아닙니다. |
 | `FormatVersion` | Prefetch 구조 버전으로, 사용 가능한 필드와 타임스탬프 수를 결정합니다. |
 | `RunCount` | Windows가 기록한 누적 카운터입니다. 빈도 파악에는 유용하지만 정확한 기록은 아닙니다. |
@@ -87,6 +89,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | 보존된 하나의 Prefetch 실행 시간입니다. |
 | `ExecutableName`, `ExecutablePath` | 프로그램 식별 정보/경로 컨텍스트입니다. |
+| `PathValidated` | 선택한 경로가 SCCA 경로 해시와 일치합니다. 경로 식별의 검증이며 파일 내용이나 신뢰성을 보장하지 않습니다. |
+| `PathAmbiguous` | 여러 로드 경로 후보를 구분할 수 없어 `ExecutablePath`에 헤더 이름을 유지합니다. `Files`와 다른 아티팩트로 확인하세요. |
 | `PrefetchHash` | 실행 파일 이름은 같지만 변형/경로가 다른 것을 구분합니다. |
 | `RunCount` | Prefetch 파일의 카운터이며, 각 타임라인 행에 반복됩니다. |
 | `SourceFile` | 검증용 원본 `.pf`입니다. |

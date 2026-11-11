@@ -56,6 +56,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | `.pf` を入力します。ホストを区別し、実行可能ファイル名を重複させるために保持します。 |
 | `ExecutableName` | ヘッダーの実行可能ファイル名。ほとんどの検索では大文字と小文字が区別されません。元のスペルを保持します。 |
 | `ExecutablePath` | 可能な場合、Juntei の解決されたロードされたパス。 `Files` および他のアーティファクトに対してそれを確認します。 |
+| `PathValidated` | 選択したパスが SCCA パスハッシュと一致します。パスの帰属を確認する値であり、ファイルの内容や安全性を証明するものではありません。 |
+| `PathAmbiguous` | ロードされた候補が複数あり、パスを確定できません。`ExecutablePath` にはヘッダーの名前を保持します。`Files` と他のアーティファクトで確認してください。 |
 | `PrefetchHash` | ハッシュ Windows は `.pf` ファイル名で使用されます。これは暗号化されたファイルコンテンツのハッシュではありません。 |
 | `FormatVersion` | Prefetch 構造バージョン。利用可能なフィールドとタイムスタンプ数を決定します。 |
 | `RunCount` | Windows によって記録された累積カウンター。正確な履歴ではなく、頻度に役立ちます。 |
@@ -77,6 +79,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | 1 つの保持された Prefetch 実行時間。 |
 | `ExecutableName`, `ExecutablePath` | プログラム ID/パス コンテキスト。 |
+| `PathValidated` | 選択したパスが SCCA パスハッシュと一致します。パスの帰属を確認する値であり、ファイルの内容や安全性を証明するものではありません。 |
+| `PathAmbiguous` | ロードされた候補が複数あり、パスを確定できません。`ExecutablePath` にはヘッダーの名前を保持します。`Files` と他のアーティファクトで確認してください。 |
 | `PrefetchHash` | 実行可能ファイル名を共有するバリアント/パスを区切ります。 |
 | `RunCount` | Prefetch ファイルからのカウンター。これはタイムラインの各行で繰り返されます。 |
 | `SourceFile` | 検証のために `.pf` をソースします。 |

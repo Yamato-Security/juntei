@@ -68,6 +68,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Girdi `.pf` dosyası; ana bilgisayarları ve yinelenen yürütülebilir dosya adlarını ayırt etmek için koruyun. |
 | `ExecutableName` | Başlıktaki yürütülebilir dosya adı. Çoğu tehdit avında büyük/küçük harf duyarsızdır; özgün yazımı koruyun. |
 | `ExecutablePath` | Mümkün olduğunda Juntei'nin çözümlediği yüklenme yolu. `Files` ve diğer artefaktlarla doğrulayın. |
+| `PathValidated` | Seçilen yol SCCA yol karmasıyla eşleşir. Bu, dosyanın içeriğini veya güvenilirliğini değil yol atfını doğrular. |
+| `PathAmbiguous` | Birden fazla yüklenen yol adayı çözümlenememiştir; `ExecutablePath` başlık adını korur. `Files` ve diğer artefaktları inceleyin. |
 | `PrefetchHash` | Windows'un `.pf` dosya adında kullandığı karma; kriptografik bir dosya içeriği karması değildir. |
 | `FormatVersion` | Prefetch yapı sürümü; mevcut alanları ve zaman damgası sayısını belirler. |
 | `RunCount` | Windows'un kaydettiği kümülatif sayaç. Sıklık için faydalıdır, kesin geçmiş için değil. |
@@ -89,6 +91,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | Saklanan bir Prefetch yürütme zamanı. |
 | `ExecutableName`, `ExecutablePath` | Program kimliği/yol bağlamı. |
+| `PathValidated` | Seçilen yol SCCA yol karmasıyla eşleşir. Bu, dosyanın içeriğini veya güvenilirliğini değil yol atfını doğrular. |
+| `PathAmbiguous` | Birden fazla yüklenen yol adayı çözümlenememiştir; `ExecutablePath` başlık adını korur. `Files` ve diğer artefaktları inceleyin. |
 | `PrefetchHash` | Aynı yürütülebilir dosya adını paylaşan varyantları/yolları ayırır. |
 | `RunCount` | Prefetch dosyasındaki sayaç; her zaman çizelgesi satırında tekrarlanır. |
 | `SourceFile` | Doğrulama için kaynak `.pf` dosyası. |

@@ -68,6 +68,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Input `.pf`။ Host များနှင့် ထပ်နေသော executable အမည်များကို ခွဲခြားရန် ၎င်းကို ထိန်းသိမ်းထားပါ။ |
 | `ExecutableName` | Header ရှိ executable အမည်။ Hunting အများစုအတွက် စာလုံးအကြီးအသေး မခွဲခြားပါ။ မူရင်းစာလုံးပေါင်းကို ထိန်းသိမ်းထားပါ။ |
 | `ExecutablePath` | ဖြစ်နိုင်သည့်အခါ Juntei က ဖြေရှင်းထားသော load လုပ်ထားသည့် path။ ၎င်းကို `Files` နှင့် အခြားအထောက်အထားများနှင့် အတည်ပြုပါ။ |
+| `PathValidated` | ရွေးထားသော လမ်းကြောင်းသည် SCCA လမ်းကြောင်း hash နှင့် ကိုက်ညီသည်။ ဖိုင်အကြောင်းအရာ သို့မဟုတ် ယုံကြည်ရမှုကို အတည်ပြုခြင်း မဟုတ်ပါ။ |
+| `PathAmbiguous` | တင်ထားသော လမ်းကြောင်းတစ်ခုထက်ပို၍ ဖြစ်နိုင်သေးသောကြောင့် `ExecutablePath` တွင် header အမည်ကို ထားရှိသည်။ `Files` နှင့် အခြားအထောက်အထားများကို စစ်ဆေးပါ။ |
 | `PrefetchHash` | Windows က `.pf` ဖိုင်အမည်တွင် အသုံးပြုသော hash။ Cryptographic ဖိုင်အကြောင်းအရာ hash မဟုတ်ပါ။ |
 | `FormatVersion` | Prefetch ဖွဲ့စည်းပုံ ဗားရှင်း။ ရရှိနိုင်သော field များနှင့် timestamp အရေအတွက်ကို ဆုံးဖြတ်သည်။ |
 | `RunCount` | Windows က မှတ်တမ်းတင်ထားသော စုစုပေါင်း counter။ အကြိမ်ရေအတွက် အသုံးဝင်ပြီး မှတ်တမ်းအတိအကျ မဟုတ်ပါ။ |
@@ -89,6 +91,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | ထိန်းသိမ်းထားသော Prefetch execution အချိန် တစ်ခု။ |
 | `ExecutableName`, `ExecutablePath` | ပရိုဂရမ်၏ ကိုယ်ပိုင်အမှတ်အသား/path အခြေအနေ။ |
+| `PathValidated` | ရွေးထားသော လမ်းကြောင်းသည် SCCA လမ်းကြောင်း hash နှင့် ကိုက်ညီသည်။ ဖိုင်အကြောင်းအရာ သို့မဟုတ် ယုံကြည်ရမှုကို အတည်ပြုခြင်း မဟုတ်ပါ။ |
+| `PathAmbiguous` | တင်ထားသော လမ်းကြောင်းတစ်ခုထက်ပို၍ ဖြစ်နိုင်သေးသောကြောင့် `ExecutablePath` တွင် header အမည်ကို ထားရှိသည်။ `Files` နှင့် အခြားအထောက်အထားများကို စစ်ဆေးပါ။ |
 | `PrefetchHash` | Executable အမည်တူသော မူကွဲ/path များကို ခွဲခြားပေးသည်။ |
 | `RunCount` | Prefetch ဖိုင်မှ counter။ Timeline row တစ်ခုစီတွင် ထပ်ခါထပ်ခါ ပါဝင်သည်။ |
 | `SourceFile` | အတည်ပြုရန်အတွက် source `.pf`။ |

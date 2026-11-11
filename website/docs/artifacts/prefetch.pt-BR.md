@@ -66,6 +66,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | `.pf` de entrada; mantenha-o para distinguir hosts e nomes de executáveis duplicados. |
 | `ExecutableName` | Nome do executável no cabeçalho. Sem distinção entre maiúsculas e minúsculas para a maior parte da caça a ameaças; preserve a grafia original. |
 | `ExecutablePath` | Caminho carregado resolvido pelo Juntei, quando possível. Confirme-o com `Files` e outros artefatos. |
+| `PathValidated` | O caminho selecionado corresponde ao hash de caminho SCCA. Isso valida sua atribuição, não o conteúdo ou a confiabilidade do arquivo. |
+| `PathAmbiguous` | Vários caminhos carregados permanecem possíveis; `ExecutablePath` mantém o nome do cabeçalho. Confira `Files` e outros artefatos. |
 | `PrefetchHash` | Hash que o Windows usa no nome do arquivo `.pf`; não é um hash criptográfico do conteúdo do arquivo. |
 | `FormatVersion` | Versão da estrutura do Prefetch; determina os campos disponíveis e a quantidade de carimbos de data/hora. |
 | `RunCount` | Contador cumulativo registrado pelo Windows. Útil para frequência, não para o histórico exato. |
@@ -87,6 +89,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | Um horário de execução mantido pelo Prefetch. |
 | `ExecutableName`, `ExecutablePath` | Contexto de identidade/caminho do programa. |
+| `PathValidated` | O caminho selecionado corresponde ao hash de caminho SCCA. Isso valida sua atribuição, não o conteúdo ou a confiabilidade do arquivo. |
+| `PathAmbiguous` | Vários caminhos carregados permanecem possíveis; `ExecutablePath` mantém o nome do cabeçalho. Confira `Files` e outros artefatos. |
 | `PrefetchHash` | Separa variantes/caminhos que compartilham um nome de executável. |
 | `RunCount` | Contador do arquivo Prefetch; é repetido em cada linha da linha do tempo. |
 | `SourceFile` | `.pf` de origem para validação. |
