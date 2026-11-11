@@ -22,6 +22,7 @@ Juntei parses files already collected from Windows. Use a trusted acquisition to
 | Web browsers | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` and the other browsers' profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` and other user/system locations |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` and `CustomDestinations` |
+| Recycle Bin | `$Recycle.Bin\<SID>\$I*` and `$R*` on every volume (`RECYCLER\<SID>\INFO2` and `D*` on Windows XP and earlier) |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender quarantine | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Machine registry | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |

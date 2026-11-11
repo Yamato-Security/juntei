@@ -37,7 +37,7 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
 reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
 hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
-lists, Outlook files and Defender quarantine folders. Every other file is an empty placeholder
+lists, Outlook files, Recycle Bin index files and Defender quarantine folders. Every other file is an empty placeholder
 with its original modification time, so directories and paths look as they do on the disk.
 persistence-hunter reads a placeholder's content from the image only when it needs it, such as
 an executable that a persistence entry refers to.
@@ -189,6 +189,7 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
   items and tasks
 - LNK shortcuts
 - Jump Lists
+- Recycle Bin: deleted items' original paths, sizes, deletion times and users
 - ShimCache
 - Persistence Hunter (131 cross-source persistence checks with allow/block profiles)
 - Defender quarantine metadata
@@ -288,6 +289,8 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -377,7 +380,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `Communication` | Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar items and tasks |
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
 | `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; User Access Logging (the clients of a server's roles) |
@@ -398,7 +401,7 @@ Amcache and Jump Lists each have one shared log beside their prefixed tables. SR
 in `NetworkActivity`, `ProcessExecution` and `SystemInformation`, with a shared
 `SystemInformation/SRUM-logs.txt` file. No `logs/` subdirectories are created.
 
-Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, and

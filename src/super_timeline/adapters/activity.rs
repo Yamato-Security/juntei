@@ -647,3 +647,46 @@ pub(super) fn ual(b: &mut Builder<'_, '_>) {
     // DailyAccesses contains dates and counts, not precise access instants. Preserve it in
     // Details instead of inventing midnight logons or treating access counts as FILETIMEs.
 }
+
+/// Recycle Bin: when an item was moved to the bin, from its `$I` file or INFO2 record. The
+/// bin's user (or SID) is the account it was deleted from; the recycled content's presence,
+/// the size and INFO2's record state remain context.
+pub(super) fn recycle_bin(b: &mut Builder<'_, '_>) {
+    for key in [
+        "Format",
+        "FormatVersion",
+        "FileSize",
+        "SID",
+        "RecycledFile",
+        "RecycledFileFound",
+        "RecordIndex",
+        "Drive",
+        "RemovedFromBin",
+        "ShortPath",
+        "Problems",
+    ] {
+        if let Some((actual, value)) = field(b.value, key).filter(|(_, value)| {
+            !value.is_null()
+                && value.as_str() != Some("")
+                && value.as_array().is_none_or(|items| !items.is_empty())
+        }) {
+            b.extra.insert(actual.into(), compact(value, 0));
+        }
+    }
+    b.path = text(b.value, &["OriginalPath"]);
+    let offset = text(b.value, &["RecordOffset"]);
+    b.id = if offset.is_empty() {
+        "IndexFile=$I".into()
+    } else {
+        format!(
+            "RecordIndex={};RecordOffset={offset}",
+            text(b.value, &["RecordIndex"])
+        )
+    };
+    b.named(
+        &["DeletedTime"],
+        "Recycle Bin deletion (moved to the bin)",
+        "deletion",
+        true,
+    );
+}

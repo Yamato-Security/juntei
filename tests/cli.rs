@@ -744,7 +744,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "usb" => "ExternalDevices",
             "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs"
             | "shellbags" => "FileAndFolderOpening",
-            "amcache" | "shimcache" => "FileExistence",
+            "amcache" | "recycle-bin" | "shimcache" => "FileExistence",
             "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
             "networks" => "NetworkActivity",
             "remote-access" | "ual" => "LateralMovement",
@@ -791,9 +791,12 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "srum" | "ual" | "webcache" => ("parse-ese", artifact),
             "browser" => ("parse-sqlite", artifact),
             "prefetch-timeline" => ("parse-file", "prefetch"),
-            "prefetch" | "lnk" | "jump-lists" | "defender-quarantine" | "outlook" => {
-                ("parse-file", artifact)
-            }
+            "prefetch"
+            | "lnk"
+            | "jump-lists"
+            | "defender-quarantine"
+            | "outlook"
+            | "recycle-bin" => ("parse-file", artifact),
             "registry" => ("parse-registry", "read"),
             "appcompat" => ("parse-registry", "app-compat"),
             "featureusage" => ("parse-registry", "feature-usage"),
@@ -1144,7 +1147,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["Purpose"] == "json_timeline")
                     .count(),
-                44
+                45
             );
             assert!(
                 output
@@ -1290,7 +1293,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 88);
+    assert_eq!(tasks.len(), 90);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -21095,4 +21098,471 @@ fn srum_protects_software_logs_from_output_replacement() {
         assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
         assert_eq!(std::fs::read(&log).unwrap(), original);
     }
+}
+
+// --- parse-file recycle-bin ----------------------------------------------------------------------
+
+const RECYCLE: &str = "test_files/recycle_bin";
+
+/// JSONL rows on stdout.
+fn recycle_rows(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-file", "recycle-bin", "-t", "jsonl"];
+    all.extend_from_slice(args);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{args:?}: {}\n{}", r.stdout, r.stderr);
+    r.stdout
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect()
+}
+
+#[test]
+fn recycle_bin_reads_every_index_format_like_the_reference_parsers() {
+    // Plaso's test expectations: Windows Vista and 10 $I files, and a Windows XP INFO2.
+    let vista = recycle_rows(&["-f", &format!("{RECYCLE}/plaso/$II3DF3L.zip")]);
+    assert_eq!(vista.len(), 1);
+    assert_eq!(vista[0]["Format"], "$I");
+    assert_eq!(vista[0]["FormatVersion"], 1);
+    assert_eq!(vista[0]["DeletedTime"], "2012-03-12T20:49:58.633Z");
+    assert_eq!(vista[0]["FileSize"], 724_919);
+    assert_eq!(
+        vista[0]["OriginalPath"],
+        r"C:\Users\nfury\Documents\Alloy Research\StarFury.zip"
+    );
+    assert_eq!(vista[0]["RecycledFileFound"], false);
+    assert!(
+        vista[0]["RecycledFile"]
+            .as_str()
+            .unwrap()
+            .ends_with("$RI3DF3L.zip")
+    );
+    let ten = recycle_rows(&["-f", &format!("{RECYCLE}/plaso/$I103S5F.jpg")]);
+    assert_eq!(ten[0]["FormatVersion"], 2);
+    assert_eq!(ten[0]["DeletedTime"], "2016-06-29T21:37:45.618Z");
+    assert_eq!(ten[0]["FileSize"], 222_255);
+    assert_eq!(
+        ten[0]["OriginalPath"],
+        r"C:\Users\random\Downloads\bunnies.jpg"
+    );
+    let xp = recycle_rows(&["-f", &format!("{RECYCLE}/plaso/INFO2")]);
+    assert_eq!(xp.len(), 4);
+    assert_eq!(xp[0]["Format"], "INFO2");
+    assert_eq!(xp[0]["DeletedTime"], "2004-08-25T16:18:25.237Z");
+    assert_eq!(xp[0]["RecordIndex"], 1);
+    assert_eq!(xp[0]["Drive"], "C:");
+    assert_eq!(xp[0]["RecordOffset"], 20);
+    assert_eq!(
+        xp[0]["OriginalPath"],
+        r"C:\Documents and Settings\Mr. Evil\Desktop\lalsetup250.exe"
+    );
+    assert!(xp[0]["RecycledFile"].as_str().unwrap().ends_with("Dc1.exe"));
+
+    // rifiuti2's results: a Windows XP INFO2 in code page 936 with an item no longer in the bin,
+    // whose ANSI path lost its first byte.
+    let xp = recycle_rows(&[
+        "-f",
+        &format!("{RECYCLE}/rifiuti2/INFO2-sample1"),
+        "--code-page",
+        "936",
+    ]);
+    assert_eq!(xp.len(), 16);
+    assert_eq!(
+        xp[0]["OriginalPath"],
+        r"C:\Documents and Settings\All Users\Desktop\有道桌面词典.lnk"
+    );
+    assert_eq!(
+        xp[0]["ShortPath"],
+        r"C:\DOCUME~1\ALLUSE~1\Desktop\有道桌~1.LNK"
+    );
+    let removed: Vec<&Value> = xp.iter().filter(|r| r["RemovedFromBin"] == true).collect();
+    assert_eq!(removed.len(), 1);
+    assert_eq!(removed[0]["RecordIndex"], 64);
+    assert_eq!(
+        removed[0]["DeletedTime"].as_str().unwrap()[..19],
+        *"2008-11-19T05:07:35"
+    );
+    assert_eq!(removed[0]["FileSize"], 2_727_936);
+    // Windows 95: version 0, ANSI paths only, here in code page 932 on drive D:.
+    let w95 = recycle_rows(&[
+        "-f",
+        &format!("{RECYCLE}/rifiuti2/INFO-95-ja-1"),
+        "--code-page",
+        "932",
+    ]);
+    assert_eq!(w95.len(), 11);
+    assert_eq!(w95[0]["FormatVersion"], 0);
+    assert_eq!(w95[0]["Drive"], "D:");
+    assert_eq!(
+        w95[0]["OriginalPath"],
+        r"D:\WINDOWS\ﾃﾞｽｸﾄｯﾌﾟ\The Microsoft Network のｾｯﾄｱｯﾌﾟ.lnk"
+    );
+    assert_eq!(w95[0]["ShortPath"], Value::Null);
+    // Windows ME: three items left the bin; UNC paths have no drive and no file in the bin.
+    let me = recycle_rows(&["-f", &format!("{RECYCLE}/rifiuti2/INFO2-ME-en-1")]);
+    assert_eq!(me.iter().filter(|r| r["RemovedFromBin"] == true).count(), 3);
+    let unc = recycle_rows(&["-f", &format!("{RECYCLE}/rifiuti2/INFO2-me-en-uncpath")]);
+    assert!(
+        unc.iter()
+            .all(|r| r["Drive"].is_null() && r["RecycledFile"].is_null())
+    );
+    assert!(unc[0]["OriginalPath"].as_str().unwrap().starts_with(r"\\"));
+    // A truncated last record keeps what it has; an empty bin has no rows.
+    let trunc = recycle_rows(&["-f", &format!("{RECYCLE}/rifiuti2/INFO2-trunc")]);
+    assert_eq!(trunc.len(), 5);
+    assert_eq!(trunc[3]["DeletedTime"], "3000-01-01T00:00:00Z");
+    assert!(
+        trunc[4]["Problems"][0]
+            .as_str()
+            .unwrap()
+            .starts_with("truncated: 795 of 800 bytes")
+    );
+    assert!(recycle_rows(&["-f", &format!("{RECYCLE}/rifiuti2/INFO2-empty")]).is_empty());
+}
+
+#[test]
+fn recycle_bin_folders_find_recycled_content_and_keep_damaged_files() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("win10.csv");
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        &format!("{RECYCLE}/rifiuti2/dir-win10-01"),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout
+            .contains("Index files parsed: 7 ($I files: 7, INFO2: 0)")
+    );
+    assert!(
+        r.stdout
+            .contains("Deleted content collected ($R / D files): 3 of 7")
+    );
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(
+        header[..4],
+        ["SourceFile", "DeletedTime", "OriginalPath", "FileSize"]
+    );
+    assert_eq!(rows.len(), 7);
+    let by = |name: &str| {
+        rows.iter()
+            .find(|r| r["SourceFile"].ends_with(name))
+            .unwrap()
+    };
+    assert_eq!(by("$IHO61YT")["FileSize"], "12884901888");
+    assert_eq!(by("$IQ7LAXT.png")["RecycledFileFound"], "true");
+    assert_eq!(by("$IKEGS1G")["RecycledFileFound"], "true");
+    assert_eq!(by("$IBBFODN")["RecycledFileFound"], "false");
+    assert_eq!(by("$IBBFODN")["OriginalPath"], r"C:\Temp\𨳊𨶙閪邨鰂");
+    assert_eq!(by("$IKEGS1G")["OriginalPath"].chars().count(), 246);
+
+    // Windows Vista's 543-byte $I files: the time and path are read, the size is not.
+    let vista = recycle_rows(&["-d", &format!("{RECYCLE}/rifiuti2/dir-sample1")]);
+    assert_eq!(vista.len(), 15);
+    let short: Vec<&Value> = vista.iter().filter(|r| r["FileSize"].is_null()).collect();
+    assert_eq!(short.len(), 2);
+    assert!(short.iter().all(|r| {
+        r["Problems"][0].as_str().unwrap().starts_with("543 bytes")
+            && r["DeletedTime"].is_string()
+            && r["OriginalPath"].as_str().unwrap().ends_with(".exe")
+    }));
+
+    // Damaged files are rows with problems, not failures.
+    let damaged = recycle_rows(&["-d", &format!("{RECYCLE}/rifiuti2/dir-badfiles")]);
+    assert_eq!(damaged.len(), 4);
+    let header_only = damaged
+        .iter()
+        .find(|r| r["SourceFile"].as_str().unwrap().ends_with("$IF47Q09"))
+        .unwrap();
+    assert_eq!(header_only["OriginalPath"], "");
+    assert_eq!(header_only["FileSize"], 7);
+    assert_eq!(
+        header_only["Problems"][0],
+        "truncated: 28 of 106 bytes, so the path may be incomplete"
+    );
+    let surrogates = recycle_rows(&["-d", &format!("{RECYCLE}/rifiuti2/dir-bad-uni")]);
+    assert_eq!(
+        surrogates
+            .iter()
+            .filter(|r| r["OriginalPath"].as_str().unwrap().contains('\u{fffd}'))
+            .count(),
+        2
+    );
+
+    // Not an index: an error, and with nothing parsed, a failure.
+    let junk = dir.path().join("$IJUNK01.txt");
+    std::fs::write(&junk, b"plain text, not a Recycle Bin index file").unwrap();
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        junk.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("not a Recycle Bin $I file"),
+        "{}",
+        r.stdout
+    );
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        dir.path().join("none").to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let empty = tempfile::tempdir().unwrap();
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        empty.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout
+            .contains("No Recycle Bin index files ($I files, INFO2) were found")
+    );
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        &format!("{RECYCLE}/plaso/INFO2"),
+        "--code-page",
+        "1",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("Code page 1 is not supported"));
+}
+
+/// A collection whose C: and D: volumes have bins: Rathbun's (named by the SOFTWARE hive),
+/// and an account without a profile.
+fn recycle_collection(root: &Path) -> PathBuf {
+    let host = root.join("HOST");
+    let config = host.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    let ten = repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg"));
+    let c_bin = host.join("C/$Recycle.Bin").join(RATHBUN_SID);
+    std::fs::create_dir_all(&c_bin).unwrap();
+    std::fs::copy(&ten, c_bin.join("$IABC123.jpg")).unwrap();
+    std::fs::write(c_bin.join("$RABC123.jpg"), b"picture").unwrap();
+    std::fs::write(c_bin.join("desktop.ini"), b"[.ShellClassInfo]").unwrap();
+    let d_bin = host
+        .join("D/$RECYCLE.BIN")
+        .join(RATHBUN_SID.to_ascii_lowercase());
+    std::fs::create_dir_all(&d_bin).unwrap();
+    std::fs::copy(
+        repo(&format!("{RECYCLE}/plaso/$II3DF3L.zip")),
+        d_bin.join("$IDEF456.zip"),
+    )
+    .unwrap();
+    let other = host.join("C/$Recycle.Bin/S-1-5-21-1-2-3-1009");
+    std::fs::create_dir_all(&other).unwrap();
+    std::fs::copy(&ten, other.join("$IGHI789")).unwrap();
+    host
+}
+
+#[test]
+fn recycle_bin_names_users_from_the_profile_list_and_protects_inputs() {
+    let dir = tempfile::tempdir().unwrap();
+    let host = recycle_collection(dir.path());
+    let rows = recycle_rows(&["-d", host.to_str().unwrap()]);
+    assert_eq!(rows.len(), 3);
+    let by = |name: &str| {
+        rows.iter()
+            .find(|r| r["SourceFile"].as_str().unwrap().ends_with(name))
+            .unwrap()
+    };
+    let c = by("$IABC123.jpg");
+    assert_eq!(c["User"], "rathbun");
+    assert_eq!(c["SID"], RATHBUN_SID);
+    assert_eq!(c["RecycledFileFound"], true);
+    // A bin on a volume without Windows: the collection's only SOFTWARE hive names it.
+    let d = by("$IDEF456.zip");
+    assert_eq!(d["User"], "rathbun");
+    assert_eq!(d["SID"], RATHBUN_SID);
+    assert_eq!(d["RecycledFileFound"], false);
+    let other = by("$IGHI789");
+    assert_eq!(other["User"], Value::Null);
+    assert_eq!(other["SID"], "S-1-5-21-1-2-3-1009");
+    assert_eq!(
+        other["RecycledFile"]
+            .as_str()
+            .unwrap()
+            .rsplit(['/', '\\'])
+            .next(),
+        Some("$RGHI789")
+    );
+
+    // Only D: has a bin: the Windows installation found on C: still names its user.
+    let only_d = tempfile::tempdir().unwrap();
+    let config = only_d.path().join("HOST/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    let bin = only_d.path().join("HOST/D/$Recycle.Bin").join(RATHBUN_SID);
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::copy(
+        repo(&format!("{RECYCLE}/plaso/$II3DF3L.zip")),
+        bin.join("$IDEF456.zip"),
+    )
+    .unwrap();
+    let rows = recycle_rows(&["-d", only_d.path().to_str().unwrap()]);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["User"], "rathbun");
+
+    // The summary counts the items per user.
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        host.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0);
+    assert!(
+        r.stdout
+            .contains("Items by user: S-1-5-21-1-2-3-1009: 1, rathbun: 2"),
+        "{}",
+        r.stdout
+    );
+
+    // Neither an index file nor the SOFTWARE hive (or a hard link to it) can be the output.
+    let software = host.join("C/Windows/System32/config/SOFTWARE");
+    let link = dir.path().join("link.csv");
+    std::fs::hard_link(&software, &link).unwrap();
+    let index = host
+        .join("C/$Recycle.Bin")
+        .join(RATHBUN_SID)
+        .join("$IABC123.jpg");
+    for out in [&software, &link, &index] {
+        let before = std::fs::read(out).unwrap();
+        let r = run(&[
+            "parse-file",
+            "recycle-bin",
+            "-d",
+            host.to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+            "-C",
+            "-K",
+        ]);
+        assert_eq!(r.code, 1, "{}", out.display());
+        assert!(r.stdout.contains("is also an input file"), "{}", r.stdout);
+        assert_eq!(std::fs::read(out).unwrap(), before);
+    }
+}
+
+#[test]
+fn auto_parse_saves_recycle_bin_items_for_the_timelines() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let host = recycle_collection(&evidence);
+    // A Velociraptor collection: every volume belongs to the host, so D:'s bin is parsed too.
+    std::fs::write(host.join("client_info.json"), br#"{"hostname":"HOST"}"#).unwrap();
+    let out = dir.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-Z",
+        "+09:00",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["Artifact"] == "recycle-bin")
+        .unwrap();
+    assert_eq!(task["Status"], "succeeded", "{task}");
+    let rows: Vec<Value> = std::fs::read_to_string(out.join("HOST/FileExistence/RecycleBin.jsonl"))
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert_eq!(rows.len(), 3);
+    let c = rows
+        .iter()
+        .find(|r| {
+            r["OriginalPath"] == r"C:\Users\random\Downloads\bunnies.jpg" && r["User"] == "rathbun"
+        })
+        .unwrap();
+    // -Z shows the deletion time at the offset given.
+    assert_eq!(c["DeletedTime"], "2016-06-30T06:37:45.618+09:00");
+    assert_eq!(c["Comp"], "HOST");
+
+    let timeline = dir.path().join("Timeline.jsonl");
+    let r = run(&[
+        "super-timeline",
+        "-d",
+        out.to_str().unwrap(),
+        "-o",
+        timeline.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let events: Vec<Value> = std::fs::read_to_string(&timeline)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .filter(|e| e["Artifact"] == "recycle-bin")
+        .collect();
+    assert_eq!(events.len(), 3);
+    let event = events
+        .iter()
+        .find(|e| e["User"] == "rathbun" && e["Timestamp"].as_str().unwrap().starts_with("2016"))
+        .unwrap();
+    assert_eq!(
+        event["TimestampType"],
+        "Recycle Bin deletion (moved to the bin)"
+    );
+    assert_eq!(event["Path"], r"C:\Users\random\Downloads\bunnies.jpg");
+    assert_eq!(event["Details"]["TimeRole"], "deletion");
+    assert_eq!(event["Details"]["RecycledFileFound"], true);
+
+    // A host without a bin: the task is skipped, not failed.
+    let bare = tempfile::tempdir().unwrap();
+    let config = bare.path().join("evidence/HOST/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    let out = bare.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        bare.path().join("evidence").to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["Artifact"] == "recycle-bin")
+        .unwrap();
+    assert_eq!(task["Status"], "skipped", "{}\n{task}", r.stdout);
 }

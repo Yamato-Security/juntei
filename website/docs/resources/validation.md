@@ -165,6 +165,19 @@ Jump Lists, all 13,057 shared comparison cellsâ€”including timestamps to 100 nsâ
 reference parser. Six files the reference refused (empty custom lists, a missing footer, or a file
 that was not a Jump List) were either decoded or explicitly reported by Juntei.
 
+## Recycle Bin
+
+`parse-file recycle-bin` is Juntei's own parser. On the public samples of
+[rifiuti2](https://github.com/abelcheung/rifiuti2), every record rifiuti2 reads had the same index,
+deletion time (to the second, as rifiuti2 shows it), removal state, size and path: 92 records, 67 in
+eleven INFO2 files from Windows 95 to Server 2003 and 25 in three folders of Windows Vista and
+Windows 10 `$I` files. INFO2's ANSI paths matched in the code pages rifiuti2's own tests use. Juntei
+also reads what rifiuti2 rejects: a folder mixing both `$I` versions, a `$I` header without a path,
+and truncated records, each with its damage reported. The `$I` and INFO2 files of Plaso's test
+data give the times, sizes, paths, indexes and drives Plaso's tests expect. On Digital Corpora's
+public M57-Jean disk image (Windows XP), read with `auto-parse --e01`, the INFO2 record matches
+rifiuti2, and the recycled file beside it, `Dc1.jpg`, has the name Juntei gives it.
+
 ## ShimCache
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) is a maintained fork

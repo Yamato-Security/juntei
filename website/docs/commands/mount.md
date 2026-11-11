@@ -66,7 +66,7 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
 reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
 hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
-lists, Outlook files and Defender quarantine folders. Every other file is an empty placeholder
+lists, Outlook files, Recycle Bin index files and Defender quarantine folders. Every other file is an empty placeholder
 with its original modification time, so directories and paths look as they do on the disk.
 persistence-hunter reads a placeholder's content from the image only when it needs it, such as
 an executable that a persistence entry refers to.
