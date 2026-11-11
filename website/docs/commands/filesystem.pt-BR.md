@@ -5,7 +5,7 @@
 específicos de cada artefato.
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -27,7 +27,7 @@ Options:
 ## `parse-ntfs boot` { #parse-ntfs-boot }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -61,7 +61,7 @@ Consulte [Setor de inicialização ($Boot)](../artifacts/boot.md).
 ## `parse-ntfs i30` { #parse-ntfs-i30 }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -100,7 +100,7 @@ Consulte [Índices de diretórios ($I30)](../artifacts/i30.md).
 ## `parse-ntfs logfile` { #parse-ntfs-logfile }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -145,7 +145,7 @@ Consulte [Log de transações NTFS](../artifacts/logfile.md) para conhecer o sig
 ## `parse-ntfs mft` { #parse-ntfs-mft }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -203,7 +203,7 @@ Consulte [Tabela Mestre de Arquivos](../artifacts/mft.md).
 ## `parse-ntfs secure-sds` { #parse-ntfs-secure-sds }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -237,7 +237,7 @@ Consulte [Descritores de segurança ($Secure:$SDS)](../artifacts/secure-sds.md).
 ## `parse-ntfs usn-journal` { #parse-ntfs-usn-journal }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

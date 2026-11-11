@@ -27,7 +27,7 @@ Options:
 ## `parse-file defender-quarantine`
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -62,7 +62,7 @@ ownership, permissions and SDDL. See [Defender Quarantine](../artifacts/defender
 ## `parse-file jump-lists`
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -96,7 +96,7 @@ See [Jump Lists](../artifacts/jump-lists.md).
 ## `parse-file lnk`
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -169,7 +169,7 @@ and with `--properties` every property as stored. See [Outlook](../artifacts/out
 ## `parse-file prefetch`
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

@@ -26,7 +26,7 @@ Options:
 ## `parse-file defender-quarantine` { #parse-file-defender-quarantine }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -61,7 +61,7 @@ juntei parse-file defender-quarantine -d evidence/ -o quarantine.csv --extract i
 ## `parse-file jump-lists` { #parse-file-jump-lists }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -95,7 +95,7 @@ juntei parse-file jump-lists -f sample.automaticDestinations-ms -t jsonl | jq .
 ## `parse-file lnk` { #parse-file-lnk }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -168,7 +168,7 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 ## `parse-file prefetch` { #parse-file-prefetch }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
