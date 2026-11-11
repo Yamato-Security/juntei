@@ -70,9 +70,8 @@ Current manifests with output-relative paths and flattened multi-table exports a
 When a manifest identifies a VHDX or E01 image, source references include the image and internal path, and the image name is retained in event context. The temporary staging workspace is not needed to read the parsed results.
 
 A raw source is taken from the record or an unambiguous manifest command. With `-d`, raw-source
-references are relative to the evidence directory, and `Details.ParsedFile` and summary `InputFiles`
-are relative to the parsed directory. Summary output/report names are relative to the timeline's
-output directory. SRUM CSV tables are assigned to a database only when the host has one uniquely
+references are relative to the evidence directory, and `Details.ParsedFile` is relative to the parsed
+directory. SRUM CSV tables are assigned to a database only when the host has one uniquely
 identifiable collected SRUDB.dat. Otherwise `SourceFile` points to the parsed file and
 `Details.RawSourceAvailable` is `false`.
 
@@ -126,7 +125,7 @@ attack. The adapters intentionally keep these distinctions:
 | Browser SQLite databases | Recorded visits, recovered page last-visit metadata, download start/end, cookie creation/access/expiry and form-history first/last use or deletion tombstones. A download end does not by itself prove success or execution; a cookie expiry is a configured deadline. Recovery status, confidence and origin remain in context. |
 | Internet Explorer / legacy Edge WebCache | Stored entry access, creation/modification, expiry and synchronization, download starts, cookie metadata and container access/scavenging. Cache bookkeeping is not automatically evidence of a user opening a page. |
 | Outlook PST, OST, MSG and OFT | Message submission/delivery; folder, item and attachment creation/modification; calendar start/end/reminders; task start/due/completion/reminders; and explicitly typed time properties. Scheduled times do not prove a meeting occurred, a reminder fired or a program executed. A stored delivery time does not prove the message was read. |
-| User Access Logging (UAL) | First/last access metadata, database insertion/creation, first/last seen and stored operating-system boot time. Role, account, source address and daily counters remain context. Daily dates/counts are not invented midnight logons; untimed identity and DNS rows remain available in the companion report. |
+| User Access Logging (UAL) | First/last access metadata, database insertion/creation, first/last seen and stored operating-system boot time. Role, account, source address and daily counters remain context. Daily dates/counts are not invented midnight logons; untimed identity and DNS rows remain in the original parsed results. |
 | Amcache | Inventory key last writes, parent volume key context, recorded install dates and PE link metadata. Inventory presence or LinkDate alone does not prove execution. |
 | ShimCache | Stored file modification, cache-update metadata and cache key last write. None is automatically an execution timestamp. |
 | SRUM | Provider timestamp/bucket, connection start, explicit start/end interval fields and application-identifier metadata. Bytes, duration and other counters are not dates. |
@@ -163,8 +162,8 @@ with `Z`. The timeline preserves the parsed value and field origin; it cannot re
 endpoint time zone or validate an upstream conversion. Verify the raw artifact and endpoint settings
 before using such a time for precise cross-host correlation.
 
-A naive timestamp with no artifact-defined time zone is diagnosed, rather than silently treated as
-UTC. If the evidence justifies it, supply a signed fixed offset:
+A naive timestamp with no artifact-defined time zone is counted as unresolved, rather than silently
+treated as UTC. If the evidence justifies it, supply a signed fixed offset:
 
 ```bash
 juntei super-timeline -f Amcache.jsonl --input-artifact amcache \
@@ -183,31 +182,24 @@ Two optional categories are excluded by default:
 - `--include-interpreted-times`: generic registry QWORD values rendered as FILETIME by the registry
   reader. They are labeled `interpreted_value` because many such values are actually counters.
 
-## Companion reports
+## Output and skipped records { #output-and-skipped-records }
 
-For `SuperTimeline.csv`, the command also writes:
+The command writes **only the timeline** selected with `-o`, in the format chosen with `-t`
+(`csv` by default, or `jsonl`). It does not create untimed, diagnostic or summary companion files,
+or per-record diagnostic spools. Existing companion files from earlier runs are left untouched.
 
-- `SuperTimeline.csv-Untimed.jsonl`: native-record locations without a usable mapped event timestamp.
-- `SuperTimeline.csv-Diagnostics.jsonl`: invalid/ambiguous times, intentionally skipped shared metadata
-  and fidelity limitations that require the original parsed record.
-- `SuperTimeline.csv-Summary.json`: input files, per-artifact counts, filtered/candidate/consolidated
-  events, output count, workers, whether sorting was enabled, sort budget/chunks/passes and elapsed
-  time.
+The terminal summary reports the number of timeline events and untimed records. Nonzero invalid
+timestamp and unresolved-time-zone counts are shown separately. With `--sort`, it also reports the
+number of consolidated duplicates. Keep the original parsed results for records that do not produce
+a timeline event and for the full artifact context.
 
-Companion names include the complete output filename. For example, `SuperTimeline.jsonl` has its
-own `SuperTimeline.jsonl-Summary.json` and corresponding untimed/diagnostic reports. CSV and JSONL
-exports with the same stem can coexist; `-C` is needed only to replace an existing result set.
-
-Valid dates awaiting a justified time-zone assumption increment `UnresolvedTimeZones`, rather than
-`InvalidTimestamps`. Both remain traceable in diagnostics; no timestamp is invented.
+Valid dates awaiting a justified time-zone assumption count as unresolved time zones, rather than
+invalid timestamps. No timestamp is invented, and records without a usable mapped time are not
+inserted into the timeline as synthetic epoch events.
 
 Records with valid times outside the requested range are counted as filtered, not untimed.
-Candidate event counts precede duplicate consolidation. `Sorted` and `DuplicateConsolidation` record
-whether `--sort` was enabled. Without it, `DuplicateEvents`, `LargestSerializedSortRowBytes`,
-`InitialSortChunks` and `MergePasses` are zero, and `SortMemoryBudgetMiB` is `null` because no sort
-buffer is allocated. `Complete: true` means all selected parsed inputs were processed successfully;
-it does not mean every artifact was collected, every field is timestamped or every attack is
-detectable.
+A successful export means the selected parsed inputs were processed successfully; it does not
+mean every artifact was collected, every field has a timestamp or every attack is detectable.
 
 CSV exports can flatten nested metadata: System Info profiles, USB user mount points, shell items
 and other structured context can be richer in native JSON/JSONL. Use native input when those
@@ -241,15 +233,14 @@ select a temporary volume with adequate free space.
 
 Ctrl+C cancels cooperatively, removes the private sort/staging directories and exits with code
 `130`. On Linux and macOS this also applies to SIGTERM and SIGHUP. Cancellation is checked while
-reading, normalizing, merging and writing reports, before publication begins. Uncatchable termination
+reading, normalizing, merging and writing the timeline, before publication begins. Uncatchable termination
 or power loss can still leave temporary files.
 
-Existing outputs require `-C`. The timeline and companions must not overwrite inputs, manifests,
+Existing outputs require `-C`. The timeline must not overwrite inputs, manifests,
 referenced local evidence or their protected evidence directories. Input errors or sort failures
-leave existing outputs untouched. Completed files are staged beside the destination and replaced
-individually, publishing the timeline last. This is **not** a transaction across all four files:
-an I/O failure during final publication can leave some companion reports replaced. Keep a new output
-basename for each run when retaining an earlier complete export matters.
+leave the existing timeline untouched. The completed timeline is staged beside its destination
+and replaces it atomically. Use a new output filename for each run when retaining an earlier
+complete export matters.
 
 ## Further details
 
@@ -259,7 +250,7 @@ basename for each run when retaining an earlier complete export matters.
 - [Evidence and interpretation](../overview/evidence-model.md)
 - [Output formats](../getting-started/output-formats.md)
 
-Current Juntei inputs use abbreviated labels such as `Comp`, `Filename`, `Args` and `Attr`. MFT CSV also accepts the current `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` and `HasADS` headers, keeping sequence-number generations and DOS/ADS distinctions intact. Older exported labels remain accepted, and `SourceField` retains the spelling in the actual input. Hayabusa input retains its own `Computer` field. Boot-sector and security-descriptor metadata is retained in the untimed report because it does not supply an event timestamp.
+Current Juntei inputs use abbreviated labels such as `Comp`, `Filename`, `Args` and `Attr`. MFT CSV also accepts the current `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` and `HasADS` headers, keeping sequence-number generations and DOS/ADS distinctions intact. Older exported labels remain accepted, and `SourceField` retains the spelling in the actual input. Hayabusa input retains its own `Computer` field. Boot-sector and security-descriptor metadata without event timestamps remains in the original parsed results; it does not create timeline events.
 
 ## Newer multi-table parsers
 

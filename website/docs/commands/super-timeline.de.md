@@ -57,7 +57,7 @@ Unterstützt werden aktuelle Manifeste mit ausgaberelativen Pfaden und flach abg
 
 Bei VHDX-/E01-Abbildern enthalten Quellenangaben das Abbild und den internen Pfad; der Abbildname bleibt im Ereigniskontext. Zum Lesen der Ergebnisse ist der temporäre Bereitstellungsbereich nicht erforderlich.
 
-Eine Rohquelle wird aus dem Datensatz oder einem eindeutigen Manifestbefehl entnommen. Bei `-d` sind Rohquellenverweise relativ zum Evidence-Verzeichnis, und `Details.ParsedFile` und die Zusammenfassung `InputFiles` sind relativ zum analysierten Verzeichnis. Zusammenfassungsausgabe-/Berichtsnamen beziehen sich auf das Ausgabeverzeichnis der Zeitleiste. SRUM CSV-Tabellen werden einer Datenbank nur dann zugewiesen, wenn der Host über eine eindeutig identifizierbare gesammelte SRUDB.dat verfügt. Andernfalls verweist `SourceFile` auf die analysierte Datei und `Details.RawSourceAvailable` ist `false`.
+Eine Rohquelle wird aus dem Datensatz oder einem eindeutigen Manifestbefehl entnommen. Bei `-d` sind Rohquellenverweise relativ zum Beweisverzeichnis und `Details.ParsedFile` relativ zum analysierten Verzeichnis. SRUM CSV-Tabellen werden einer Datenbank nur dann zugewiesen, wenn der Host über eine eindeutig identifizierbare gesammelte SRUDB.dat verfügt. Andernfalls verweist `SourceFile` auf die analysierte Datei und `Details.RawSourceAvailable` ist `false`.
 
 Auf eine eigenständige Eingabe wird durch ihren Dateinamen verwiesen. Eingaben mit demselben Dateinamen verwenden unterschiedliche `./Inputs/<ID>/<filename>`-Referenzen. Absolute Rohquellenpfade außerhalb bekannter Beweiswurzeln verwenden `./Sources/<ID>/<filename>`-Bezeichner. Diese undurchsichtigen Referenzen behalten die Quellenunterscheidung bei, ohne die absoluten Verzeichnisnamen des Analysten zu exportieren. Konsultieren Sie den nativen Datensatz mit `ParsedFile` und `InputRecord` für die Originalquelle. In den Beweisen aufgezeichnete Pfade, wie z. B. die ausführbaren Pfade Windows, bleiben unverändert.
 
@@ -95,7 +95,7 @@ Ein Zeitstempel beschreibt ein gespeichertes Objekt und beweist allein weder Aus
 | SQLite-Browserdatenbanken | Besuche, wiederhergestellte letzte Seitenbesuche, Downloadbeginn/-ende, Cookie-Erstellung/-Zugriff/-Ablauf und Formularnutzung/-löschung. Downloadende beweist keinen Erfolg oder Start, Cookie-Ablauf ist eine konfigurierte Frist. Wiederherstellungsstatus, Sicherheit und Herkunft bleiben erhalten. |
 | Internet Explorer / älteres Edge WebCache | Gespeicherte Zugriffs-, Erstellungs-, Änderungs-, Ablauf- und Synchronisationszeiten sowie Download-, Cookie- und Containerverwaltung. Cache-Verwaltung beweist nicht automatisch einen Seitenaufruf durch den Benutzer. |
 | Outlook PST, OST, MSG und OFT | Übermittlung/Zustellung, Erstellung/Änderung von Ordnern, Elementen und Anlagen; Kalender- und Aufgabenfristen, Erinnerungen, Abschlüsse sowie explizit typisierte Zeitwerte. Geplante Zeiten beweisen weder Besprechung noch Erinnerung oder Programmausführung. Zustellung beweist kein Lesen. |
-| Benutzerzugriffsprotokollierung (UAL) | Erster/letzter Zugriff, Datenbankeinfügung/-erstellung, erste/letzte Sichtung und gespeicherter Systemstart. Rolle, Konto, Quelladresse und Tageszähler bleiben Kontext. Tageswerte werden nicht zu erfundenen Mitternachtsanmeldungen; zeitlose Identitäts- und DNS-Zeilen stehen im Begleitbericht. |
+| Benutzerzugriffsprotokollierung (UAL) | Metadaten des ersten/letzten Zugriffs, Einfügung/Erstellung der Datenbank, erste/letzte gesehene und gespeicherte Startzeit des Betriebssystems. Rolle, Konto, Quelladresse und Tageszähler bleiben im Kontext. Tägliche Termine/Zählungen sind keine erfundenen Mitternachtsanmeldungen; Die Zeilen „Identität ohne Zeitangabe“ und „DNS“ verbleiben in den ursprünglich analysierten Ergebnissen. |
 | Amcache | Inventarschlüssel-Schreibzeiten, übergeordneter Volume-Schlüssel, Installationsdaten und PE-Linkmetadaten. Inventareintrag oder LinkDate allein beweist keine Ausführung. |
 | ShimCache | Gespeicherte Dateiänderung, Cache-Aktualisierung und Schlüssel-Schreibzeit sind nicht automatisch Ausführungszeiten. |
 | SRUM | Anbieterzeit/-intervall, Verbindungsbeginn, explizite Beginn-/Endfelder und Anwendungskennungen. Bytes, Dauer und Zähler sind keine Datumswerte. |
@@ -120,7 +120,7 @@ Bekannte UTC-Felder und explizite Offsets werden auf UTC normalisiert. Originalw
 
 Einige Shell-Item-/FAT-Felder bedeuten Ortszeit, selbst wenn der Parser `Z` ausgibt. Wert und Herkunft bleiben erhalten, fehlende Endpunktzeitzone oder fehlerhafte Vorumrechnung lassen sich aber nicht rekonstruieren. Vor genauer rechnerübergreifender Korrelation Original und Systemeinstellungen prüfen.
 
-Zeitwerte ohne artefaktdefinierte Zeitzone werden diagnostiziert, nicht stillschweigend als UTC behandelt. Wenn Beweise es rechtfertigen, einen festen Offset mit Vorzeichen angeben:
+Ein naiver Zeitstempel ohne artefaktdefinierte Zeitzone wird als ungelöst gezählt und nicht stillschweigend als UTC behandelt. Wenn die Beweise dies rechtfertigen, geben Sie einen unterschriebenen festen Offset an:
 
 ```bash
 juntei super-timeline -f Amcache.jsonl --input-artifact amcache \
@@ -134,19 +134,15 @@ Standardmäßig sind zwei optionale Kategorien ausgeschlossen:
 - `--include-collection-times`: LNK-/Jump-List-Quelldateimetadaten des Erfassungs-/Analysesystems. Mit `collection_filesystem` markiert und von Endpunktaktivität getrennt.
 - `--include-interpreted-times`: allgemeine Registrierungs-QWORD-Werte, vom Leser als FILETIME interpretiert. Markierung `interpreted_value`, da viele tatsächlich Zähler sind.
 
-## Begleitberichte { #companion-reports }
+## Ausgegebene und übersprungene Datensätze { #output-and-skipped-records }
 
-Für `SuperTimeline.csv` schreibt der Befehl außerdem:
+Der Befehl schreibt **nur die mit `-o` ausgewählte Zeitleiste** in dem mit `-t` gewählten Format (standardmäßig `csv` oder `jsonl`). Es werden keine zeitunabhängigen Diagnose- oder Zusammenfassungs-Begleitdateien oder datensatzbezogenen Diagnose-Spools erstellt. Vorhandene Begleitdateien aus früheren Läufen bleiben unberührt.
 
-- `SuperTimeline.csv-Untimed.jsonl`: Fundstellen nativer Datensätze ohne nutzbare zugeordnete Ereigniszeit.
-- `SuperTimeline.csv-Diagnostics.jsonl`: ungültige/mehrdeutige Zeiten, bewusst ausgelassene gemeinsame Metadaten und Einschränkungen, die den Originaldatensatz erfordern.
-- `SuperTimeline.csv-Summary.json`: Eingaben, Artefaktzähler, gefilterte/mögliche/konsolidierte Ereignisse, Ausgabeanzahl, Worker, ob sortiert wurde, Sortierbudget/-dateien/-Durchläufe und Laufzeit.
+Die Terminalzusammenfassung meldet die Anzahl der Zeitleistenereignisse und nicht zeitgesteuerten Datensätze. Ungültige Zeitstempel ungleich Null und die Anzahl der nicht aufgelösten Zeitzonen werden separat angezeigt. Mit `--sort` wird auch die Anzahl der konsolidierten Duplikate gemeldet. Behalten Sie die ursprünglichen Analyseergebnisse für Datensätze bei, die kein Zeitachsenereignis erzeugen, und für den gesamten Artefaktkontext.
 
-Companion-Namen enthalten den vollständigen Namen der Ausgabedatei. Beispielsweise verfügt `SuperTimeline.jsonl` über ein eigenes `SuperTimeline.jsonl-Summary.json` und entsprechende nicht zeitgesteuerte/Diagnoseberichte. CSV- und JSONL-Exporte mit demselben Stamm können nebeneinander existieren; `-C` wird nur benötigt, um einen vorhandenen Ergebnissatz zu ersetzen.
+Gültige Daten, die auf eine begründete Zeitzonenannahme warten, gelten als unaufgelöste Zeitzonen und nicht als ungültige Zeitstempel. Es wird kein Zeitstempel erfunden und Datensätze ohne nutzbare zugeordnete Zeit werden nicht als synthetische Epochenereignisse in die Zeitleiste eingefügt.
 
-Gültige Daten, die auf eine gerechtfertigte Zeitzonenannahme warten, erhöhen sich um `UnresolvedTimeZones` und nicht um `InvalidTimestamps`. Beides bleibt in der Diagnostik nachvollziehbar; Es wird kein Zeitstempel erfunden.
-
-Gültige Zeiten außerhalb des Zeitfensters zählen als gefiltert, nicht zeitlos. Kandidaten werden vor dem Zusammenführen von Duplikaten gezählt. `Sorted` und `DuplicateConsolidation` geben an, ob `--sort` aktiviert war. Ohne die Option sind `DuplicateEvents`, `LargestSerializedSortRowBytes`, `InitialSortChunks` und `MergePasses` gleich 0, und `SortMemoryBudgetMiB` ist `null`, weil kein Sortierpuffer reserviert wird. `Complete: true` bedeutet erfolgreiche Verarbeitung aller gewählten Eingaben, nicht vollständige Erfassung, Zeitangaben in jedem Feld oder Erkennbarkeit jedes Angriffs.
+Datensätze mit gültigen Zeiten außerhalb des angeforderten Bereichs werden als gefiltert und nicht ohne Zeitangabe gezählt. Ein erfolgreicher Export bedeutet, dass die ausgewählten analysierten Eingaben erfolgreich verarbeitet wurden; Dies bedeutet nicht, dass jedes Artefakt eingesammelt wurde, jedes Feld einen Zeitstempel hat oder jeder Angriff erkennbar ist.
 
 CSV kann verschachtelte Systemprofile, USB-Benutzer-Mountpoints und Shell-Items verflachen; natives JSON/JSONL ist hierfür oft reicher. Fehlende CSV-Daten lassen sich nicht rekonstruieren. Nicht unterstützte Artefaktkennungen und fehlerhafte Eingaben führen zu einem Fehler statt erfolgreicher Teilergebnisse.
 
@@ -160,9 +156,9 @@ Mit `--sort` laufen Sortierpuffer in ein privates temporäres Verzeichnis über;
 
 Temporärspeicher muss zusätzlich zu den Ergebnissen die formatierten Ereignisfragmente (Standard) oder erweiterte Sortierdatensätze und Zusammenführungsdurchläufe (`--sort`) aufnehmen. In beiden Modi bleiben das temporäre Staging der Ausgabe und der Schutz vor dem Veröffentlichen fehlgeschlagener Eingaben erhalten. Ein Datensatz kann viele Ereignisse liefern, sodass die Timeline viel größer als die Eingabe werden kann. Bei Bedarf Zeit-/Artefaktfilter verwenden und ein ausreichend freies temporäres Volume wählen.
 
-Strg+C bricht den kooperativen Vorgang ab, entfernt die privaten Sortier-/Staging-Verzeichnisse und wird mit dem Code `130` beendet. Bei Linux und macOS gilt dies auch für SIGTERM und SIGHUP. Die Stornierung wird beim Lesen, Normalisieren, Zusammenführen und Schreiben von Berichten vor Beginn der Veröffentlichung überprüft. Bei einer nicht aufhebbaren Beendigung oder einem Stromausfall können weiterhin temporäre Dateien zurückbleiben.
+Strg+C bricht den kooperativen Vorgang ab, entfernt die privaten Sortier-/Staging-Verzeichnisse und wird mit dem Code `130` beendet. Bei Linux und macOS gilt dies auch für SIGTERM und SIGHUP. Die Stornierung wird beim Lesen, Normalisieren, Zusammenführen und Schreiben der Zeitleiste überprüft, bevor die Veröffentlichung beginnt. Bei einer nicht aufhebbaren Beendigung oder einem Stromausfall können weiterhin temporäre Dateien zurückbleiben.
 
-Bestehende Ausgaben erfordern `-C`. Eingaben, Manifeste und geschützte Beweisquellen dürfen nicht überschrieben werden. Eingabe-/Sortierfehler lassen vorhandene Ergebnisse unverändert. Fertige Dateien werden am Ziel einzeln ersetzt, die Timeline zuletzt. Das ist **keine** Transaktion über vier Dateien: Ein abschließender E/A-Fehler kann einzelne Begleitberichte bereits ersetzt haben. Zum Bewahren früherer Exporte einen neuen Basisnamen verwenden.
+Vorhandene Ausgänge erfordern `-C`. Die Zeitleiste darf Eingaben, Manifeste, referenzierte lokale Beweise oder deren geschützte Beweisverzeichnisse nicht überschreiben. Eingabefehler oder Sortierfehler lassen die bestehende Zeitleiste unberührt. Die fertige Zeitleiste wird neben ihrem Ziel bereitgestellt und ersetzt es atomar. Verwenden Sie für jeden Lauf einen neuen Ausgabedateinamen, wenn es wichtig ist, einen früheren vollständigen Export beizubehalten.
 
 ## Weitere Informationen { #further-details }
 
@@ -172,7 +168,7 @@ Bestehende Ausgaben erfordern `-C`. Eingaben, Manifeste und geschützte Beweisqu
 - [Beweise und Interpretation](../overview/evidence-model.md)
 - [Ausgabeformate](../getting-started/output-formats.md)
 
-Aktuelle Juntei-Eingaben verwenden Kürzel wie `Comp`, `Filename`, `Args` und `Attr`. MFT-CSV unterstützt auch `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` und `HasADS`, unter Erhalt der Sequenzgenerationen und DOS-/ADS-Unterschiede. Ältere Namen bleiben gültig; `SourceField` zeigt die tatsächliche Schreibweise. Hayabusa behält `Computer`. Bootsektor- und Sicherheitsdeskriptormetadaten bleiben mangels Ereigniszeit im zeitlosen Bericht.
+Aktuell Juntei Eingaben verwenden abgekürzte Bezeichnungen wie z `Comp`, `Filename`, `Args` Und `Attr`. MFT CSV akzeptiert auch den Strom `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` Und `HasADS` Header, Beibehaltung der Sequenznummerngenerationen und DOS/ADS Unterscheidungen intakt. Ältere exportierte Etiketten werden weiterhin akzeptiert und `SourceField` Behält die Schreibweise in der tatsächlichen Eingabe bei. Hayabusa Die Eingabe bleibt erhalten `Computer` Feld. Bootsektor- und Sicherheitsbeschreibungsmetadaten ohne Ereigniszeitstempel bleiben in den ursprünglich analysierten Ergebnissen; Es werden keine Timeline-Ereignisse erstellt.
 
 ## Neuere Mehrtabellen-Parser { #newer-multi-table-parsers }
 

@@ -57,7 +57,7 @@ Jalur relatif terhadap keluaran dan ekspor banyak tabel yang diratakan didukung.
 
 Untuk citra VHDX/E01, referensi berisi citra dan jalur internal; nama citra tetap dalam konteks. Direktori staging sementara tidak diperlukan saat membaca hasil.
 
-Sumber mentah diambil dari catatan atau perintah manifes yang tidak ambigu. Dengan `-d`, referensi sumber mentah bersifat relatif terhadap direktori bukti, dan `Details.ParsedFile` serta ringkasan `InputFiles` bersifat relatif terhadap direktori yang diurai. Nama keluaran/laporan ringkasan bersifat relatif terhadap direktori keluaran garis waktu. Tabel SRUM CSV ditetapkan ke database hanya ketika host memiliki satu SRUDB.dat yang dapat diidentifikasi secara unik. Jika tidak, `SourceFile` menunjuk ke file yang diurai dan `Details.RawSourceAvailable` adalah `false`.
+Sumber mentah diambil dari catatan atau perintah manifes yang tidak ambigu. Dengan `-d`, referensi sumber mentah relatif terhadap direktori bukti, dan `Details.ParsedFile` relatif terhadap direktori yang diurai. Tabel SRUM CSV ditetapkan ke database hanya ketika host memiliki satu SRUDB.dat yang dapat diidentifikasi secara unik. Jika tidak, `SourceFile` menunjuk ke file yang diurai dan `Details.RawSourceAvailable` adalah `false`.
 
 Input mandiri direferensikan berdasarkan nama filenya. Input dengan nama file yang sama menggunakan referensi `./Inputs/<ID>/<filename>` yang berbeda. Jalur sumber mentah absolut di luar akar bukti yang diketahui menggunakan pengidentifikasi `./Sources/<ID>/<filename>`. Referensi buram ini mempertahankan perbedaan sumber tanpa mengekspor nama direktori absolut analis; lihat catatan asli menggunakan `ParsedFile` dan `InputRecord` untuk sumber aslinya. Jalur yang dicatat dalam bukti, seperti jalur yang dapat dieksekusi Windows, tetap tidak berubah.
 
@@ -95,7 +95,7 @@ Waktu menggambarkan objek tercatat, bukan bukti eksekusi atau serangan dengan se
 | Database SQLite browser | Kunjungan, kunjungan terakhir yang dipulihkan, awal/akhir unduhan, waktu cookie dan penggunaan/penghapusan formulir. Akhir unduhan tidak membuktikan sukses/eksekusi; kedaluwarsa cookie adalah konfigurasi. Status pemulihan, keyakinan dan asal disimpan. |
 | Internet Explorer / Edge lama WebCache | Akses, pembuatan/modifikasi, kedaluwarsa, sinkronisasi, unduhan, cookie dan pemeliharaan kontainer. Administrasi cache tidak otomatis membuktikan kunjungan pengguna. |
 | Outlook PST, OST, MSG dan OFT | Pengiriman/penerimaan, pembuatan/modifikasi folder/item/lampiran, jadwal kalender/tugas/pengingat dan properti waktu bertipe eksplisit. Jadwal tidak membuktikan rapat, pengingat atau eksekusi; penerimaan tidak membuktikan pembacaan. |
-| Pencatatan Akses Pengguna (UAL) | Akses pertama/terakhir, penyisipan/pembuatan database, kemunculan pertama/terakhir dan boot sistem. Peran, akun, alamat sumber dan penghitung harian adalah konteks, bukan login tengah malam buatan. Identitas dan baris DNS tanpa waktu tetap dalam laporan pendamping. |
+| Pencatatan Akses Pengguna (UAL) | Metadata akses pertama/terakhir, penyisipan/pembuatan basis data, waktu boot sistem operasi yang pertama/terakhir dilihat dan disimpan. Peran, akun, alamat sumber, dan penghitung harian tetap sesuai konteks. Tanggal/penghitungan harian tidak ditemukan saat masuk tengah malam; identitas tanpa batas waktu dan baris DNS tetap berada dalam hasil parsing asli. |
 | Amcache | Waktu tulis kunci inventaris, volume induk, pemasangan dan metadata tautan PE. Kehadiran inventaris atau LinkDate tidak membuktikan eksekusi. |
 | ShimCache | Modifikasi berkas, pembaruan cache dan penulisan kunci bukan otomatis waktu eksekusi. |
 | SRUM | Waktu/bucket penyedia, awal koneksi, interval eksplisit dan ID aplikasi. Byte, durasi dan penghitung bukan tanggal. |
@@ -120,7 +120,7 @@ Bidang UTC diketahui dan offset eksplisit dinormalisasi ke UTC. Nilai dan presis
 
 Sebagian bidang shell/FAT bermakna waktu lokal meski memakai `Z`. Nilai dan asal disimpan, tetapi zona endpoint yang hilang atau konversi sebelumnya tidak dapat direkonstruksi. Periksa artefak asli dan konfigurasi sebelum korelasi waktu presisi.
 
-Waktu tanpa zona yang ditentukan artefak dilaporkan, tidak diam-diam dianggap UTC. Jika bukti mendukung, berikan offset tetap bertanda:
+Stempel waktu yang naif tanpa zona waktu yang ditentukan artefak dihitung sebagai belum terselesaikan, bukan diperlakukan secara diam-diam sebagai UTC. Jika bukti membenarkan hal tersebut, berikan offset tetap yang ditandatangani:
 
 ```bash
 juntei super-timeline -f Amcache.jsonl --input-artifact amcache \
@@ -134,19 +134,15 @@ Dua kategori dikecualikan secara default:
 - `--include-collection-times`: metadata berkas LNK/Jump List di sistem koleksi/analisis, ditandai `collection_filesystem` dan dibedakan dari aktivitas endpoint.
 - `--include-interpreted-times`: nilai registry umum QWORD ditafsir sebagai FILETIME dan berlabel `interpreted_value` karena banyak sebenarnya penghitung.
 
-## Laporan pendamping { #companion-reports }
+## Keluaran dan lewati catatan { #output-and-skipped-records }
 
-Untuk `SuperTimeline.csv`, perintahnya juga menulis:
+Perintah ini menulis **hanya garis waktu** yang dipilih dengan `-o`, dalam format yang dipilih dengan `-t` (`csv` secara default, atau `jsonl`). Itu tidak membuat file pendamping tanpa batas waktu, diagnostik atau ringkasan, atau gulungan diagnostik per rekaman. File pendamping yang ada dari proses sebelumnya tidak tersentuh.
 
-- `SuperTimeline.csv-Untimed.jsonl`: lokasi rekaman asli tanpa waktu peristiwa yang dapat dipetakan.
-- `SuperTimeline.csv-Diagnostics.jsonl`: waktu rusak/ambigu, metadata bersama sengaja dilewati dan batasan yang memerlukan rekaman asli.
-- `SuperTimeline.csv-Summary.json`: masukan, hitungan artefak/peristiwa, penyaringan/kandidat/konsolidasi, keluaran, pekerja, apakah pengurutan diaktifkan, anggaran/chunk/pass pengurutan dan durasi.
+Ringkasan terminal melaporkan jumlah peristiwa garis waktu dan catatan tanpa batas waktu. Stempel waktu tidak valid bukan nol dan jumlah zona waktu yang belum terselesaikan ditampilkan secara terpisah. Dengan `--sort`, ia juga melaporkan jumlah duplikat terkonsolidasi. Simpan hasil penguraian asli untuk rekaman yang tidak menghasilkan peristiwa garis waktu dan untuk konteks artefak lengkap.
 
-Nama pendamping menyertakan nama file keluaran lengkap. Misalnya, `SuperTimeline.jsonl` memiliki `SuperTimeline.jsonl-Summary.json` sendiri dan laporan tanpa waktu/diagnostik terkait. Ekspor CSV dan JSONL dengan nama dasar yang sama dapat hidup berdampingan; `-C` diperlukan hanya untuk menggantikan kumpulan hasil yang ada.
+Tanggal valid yang menunggu asumsi zona waktu yang dibenarkan dihitung sebagai zona waktu yang belum terselesaikan, bukan stempel waktu yang tidak valid. Tidak ada stempel waktu yang ditemukan, dan catatan tanpa waktu yang dapat dipetakan tidak dimasukkan ke dalam garis waktu sebagai peristiwa zaman sintetis.
 
-Tanggal valid yang masih menunggu asumsi zona waktu yang beralasan menambah `UnresolvedTimeZones`, bukan `InvalidTimestamps`. Keduanya tetap dapat dilacak dalam diagnostik; tidak ada waktu yang dikarang.
-
-Waktu valid di luar rentang dihitung sebagai tersaring, bukan tanpa waktu. Kandidat dihitung sebelum konsolidasi. `Sorted` dan `DuplicateConsolidation` mencatat apakah `--sort` diaktifkan. Tanpa opsi itu, `DuplicateEvents`, `LargestSerializedSortRowBytes`, `InitialSortChunks` dan `MergePasses` bernilai nol, dan `SortMemoryBudgetMiB` bernilai `null` karena tidak ada buffer pengurutan yang dialokasikan. `Complete: true` berarti semua masukan terpilih berhasil diproses, bukan koleksi lengkap atau semua serangan terdeteksi.
+Catatan dengan waktu valid di luar rentang yang diminta dihitung sebagai difilter, bukan tanpa batas waktu. Ekspor yang berhasil berarti input parsing yang dipilih berhasil diproses; ini tidak berarti setiap artefak dikumpulkan, setiap bidang memiliki stempel waktu, atau setiap serangan dapat dideteksi.
 
 CSV bisa meratakan profil sistem, mount point pengguna USB dan shell item; JSON/JSONL asli lebih kaya. Data yang hilang dari CSV tidak bisa dipulihkan. Artefak tak didukung atau masukan rusak menghasilkan kesalahan, bukan sukses parsial.
 
@@ -160,9 +156,9 @@ Dengan `--sort`, buffer pengurutan meluap ke direktori sementara privat, lalu pa
 
 Disk sementara harus menampung fragmen peristiwa berformat (default) atau rekaman pengurutan yang diperluas beserta pass penggabungan (`--sort`), di samping hasil akhir. Kedua mode tetap memakai staging keluaran sementara dan perlindungan agar hasil dari masukan yang gagal tidak dipublikasikan. Satu rekaman dapat menghasilkan banyak peristiwa. Filter waktu/artefak dan pilih volume cukup longgar.
 
-Ctrl+C membatalkan secara kooperatif, menghapus direktori pengurutan/pementasan pribadi dan keluar dengan kode `130`. Pada Linux dan macOS, hal ini juga berlaku untuk SIGTERM dan SIGHUP. Pembatalan diperiksa saat membaca, normalisasi, menggabungkan dan menulis laporan, sebelum publikasi dimulai. Pengakhiran yang tidak dapat dicegah atau hilangnya daya masih dapat meninggalkan file-file sementara.
+Ctrl+C membatalkan secara kooperatif, menghapus direktori pengurutan/pementasan pribadi dan keluar dengan kode `130`. Pada Linux dan macOS, hal ini juga berlaku untuk SIGTERM dan SIGHUP. Pembatalan diperiksa saat membaca, menormalkan, menggabungkan dan menulis timeline, sebelum publikasi dimulai. Pengakhiran yang tidak dapat dicegah atau hilangnya daya masih dapat meninggalkan file-file sementara.
 
-Keluaran lama memerlukan `-C`. Masukan, manifes dan bukti terlindungi tidak boleh ditimpa. Kesalahan input/pengurutan menjaga keluaran lama. Berkas disiapkan di samping tujuan dan diganti satu per satu, linimasa terakhir. Ini **bukan** transaksi empat berkas; kegagalan I/O terakhir bisa meninggalkan sebagian laporan baru. Gunakan nama dasar baru untuk mempertahankan ekspor lengkap sebelumnya.
+Output yang ada memerlukan `-C`. Garis waktu tidak boleh menimpa masukan, manifes, referensi bukti lokal, atau direktori bukti yang dilindungi. Kesalahan input atau kegagalan pengurutan membuat timeline yang ada tidak tersentuh. Garis waktu yang telah selesai ditempatkan di samping tujuannya dan menggantikannya secara atom. Gunakan nama file keluaran baru untuk setiap proses ketika mempertahankan ekspor lengkap sebelumnya penting.
 
 ## Rincian lanjutan { #further-details }
 
@@ -172,7 +168,7 @@ Keluaran lama memerlukan `-C`. Masukan, manifes dan bukti terlindungi tidak bole
 - [Bukti dan interpretasi](../overview/evidence-model.md)
 - [Format keluaran](../getting-started/output-formats.md)
 
-Masukan Juntei memakai singkatan `Comp`, `Filename`, `Args`, `Attr`. MFT CSV juga menerima `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN`, `HasADS` sambil menjaga generasi sequence dan perbedaan DOS/ADS. Nama lama didukung; `SourceField` menyimpan ejaan asli. Hayabusa mempertahankan `Computer`. Boot sector dan deskriptor keamanan masuk laporan tanpa waktu karena bukan peristiwa bertanggal.
+Input Juntei saat ini menggunakan label yang disingkat seperti `Comp`, `Filename`, `Args`, dan `Attr`. MFT CSV juga menerima `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` dan Header `HasADS`, menjaga generasi nomor urut dan perbedaan DOS/ADS tetap utuh. Label lama yang diekspor tetap diterima, dan `SourceField` mempertahankan ejaan pada masukan sebenarnya. Input Hayabusa mempertahankan bidang `Computer`-nya sendiri. Metadata sektor boot dan deskriptor keamanan tanpa stempel waktu peristiwa tetap berada dalam hasil penguraian asli; itu tidak membuat acara garis waktu.
 
 ## Parser banyak tabel terbaru { #newer-multi-table-parsers }
 

@@ -105,6 +105,64 @@ fn seed(dir: &Path) -> std::path::PathBuf {
 }
 
 #[test]
+fn only_the_timeline_is_exported_and_existing_companions_are_untouched() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = seed(dir.path());
+    for sort in [false, true] {
+        for format in ["csv", "jsonl"] {
+            for profile in ["native", "timesketch"] {
+                let folder = dir.path().join(format!("{sort}-{format}-{profile}"));
+                fs::create_dir(&folder).unwrap();
+                let output = folder.join(format!("Timeline.{format}"));
+                let legacy: Vec<_> = ["-Summary.json", "-Untimed.jsonl", "-Diagnostics.jsonl"]
+                    .into_iter()
+                    .map(|suffix| folder.join(format!("Timeline.{format}{suffix}")))
+                    .collect();
+                for file in &legacy {
+                    fs::write(file, "legacy report: preserve this").unwrap();
+                }
+                let mut args = vec![
+                    "-f",
+                    input.to_str().unwrap(),
+                    "-o",
+                    output.to_str().unwrap(),
+                    "-t",
+                    format,
+                    "--profile",
+                    profile,
+                ];
+                // Existing reports from older versions must neither block a new timeline
+                // nor be replaced when -C is used for a subsequent timeline export.
+                for clobber in [false, true] {
+                    if clobber {
+                        args.push("-C");
+                    }
+                    let result = invoke(&args, sort);
+                    let stdout = String::from_utf8_lossy(&result.stdout);
+                    assert!(stdout.contains("Untimed records: 2"), "{stdout}");
+                    assert!(stdout.contains("Invalid timestamps: 1"), "{stdout}");
+                    ok(result);
+                    assert!(output.is_file());
+                    assert_eq!(fs::read_dir(&folder).unwrap().count(), 4);
+                    for file in &legacy {
+                        assert_eq!(
+                            fs::read_to_string(file).unwrap(),
+                            "legacy report: preserve this"
+                        );
+                    }
+                }
+                let rows = if format == "csv" {
+                    csv(&output)
+                } else {
+                    jsonl(&output)
+                };
+                assert_eq!(rows.len(), if sort { 5 } else { 6 });
+            }
+        }
+    }
+}
+
+#[test]
 fn default_keeps_input_order_and_duplicates_in_every_output_profile() {
     let dir = tempfile::tempdir().unwrap();
     let input = seed(dir.path());
@@ -126,6 +184,8 @@ fn default_keeps_input_order_and_duplicates_in_every_output_profile() {
                 false,
             );
             assert!(!String::from_utf8_lossy(&result.stdout).contains("Sorting chunks:"));
+            assert!(String::from_utf8_lossy(&result.stdout).contains("Untimed records: 2"));
+            assert!(String::from_utf8_lossy(&result.stdout).contains("Invalid timestamps: 1"));
             ok(result);
             let rows = if format == "csv" {
                 csv(&output)
@@ -143,20 +203,13 @@ fn default_keeps_input_order_and_duplicates_in_every_output_profile() {
                 rows.iter()
                     .all(|r| r["Details"].get("DuplicateCount").is_none())
             );
-            let summary: Value = serde_json::from_slice(
-                &fs::read(
-                    output.with_file_name(format!("unsorted-{profile}.{format}-Summary.json")),
-                )
-                .unwrap(),
-            )
-            .unwrap();
-            assert_eq!(summary["Sorted"], false);
-            assert_eq!(summary["DuplicateConsolidation"], false);
-            assert_eq!(summary["InitialSortChunks"], 0);
-            assert_eq!(summary["MergePasses"], 0);
-            assert!(summary["SortMemoryBudgetMiB"].is_null());
-            assert_eq!(summary["Counts"]["DuplicateEvents"], 0);
-            assert_eq!(summary["OutputEvents"], rows.len());
+            for suffix in ["-Summary.json", "-Untimed.jsonl", "-Diagnostics.jsonl"] {
+                assert!(
+                    !output
+                        .with_file_name(format!("unsorted-{profile}.{format}{suffix}"))
+                        .exists()
+                );
+            }
             equivalent.push(rows);
         }
         assert_eq!(equivalent[0], equivalent[1]);
@@ -351,16 +404,6 @@ fn csv_jsonl_timesketch_and_threads_have_identical_events() {
     assert_eq!(native.len(), 5); // two executions, SI, FN and one key time
     assert_eq!(native[0]["Timestamp"], "1969-01-01T00:00:00.000000000Z");
     assert!(native.iter().any(|r| r["Details"]["DuplicateCount"] == 1));
-    let summary: Value = serde_json::from_slice(
-        &fs::read(dir.path().join("native-jsonl.jsonl-Summary.json")).unwrap(),
-    )
-    .unwrap();
-    assert_eq!(summary["Counts"]["DuplicateEvents"], 1);
-    assert_eq!(summary["Counts"]["InvalidTimestamps"], 1);
-    assert_eq!(
-        jsonl(&dir.path().join("native-jsonl.jsonl-Untimed.jsonl")).len(),
-        2
-    );
 }
 #[test]
 fn hayabusa_string_details_and_correlations_merge_without_losing_events() {
@@ -479,7 +522,7 @@ fn symlinked_manifest_input_cannot_escape_the_parsed_directory() {
     );
 }
 #[test]
-fn malformed_input_never_replaces_existing_timeline_or_companions() {
+fn malformed_input_never_replaces_existing_timeline_or_legacy_companions() {
     let dir = tempfile::tempdir().unwrap();
     let input = seed(dir.path());
     let output = dir.path().join("timeline.csv");
@@ -506,7 +549,7 @@ fn malformed_input_never_replaces_existing_timeline_or_companions() {
             output.to_str().unwrap(),
             "-C",
         ]),
-        "no timeline or companions were replaced",
+        "no timeline was replaced",
     );
     for name in [
         "timeline.csv",
@@ -568,20 +611,17 @@ fn timezone_bounds_and_date_precision_are_explicit() {
         ],
     );
     let output = dir.path().join("timeline.jsonl");
-    ok(run(&[
+    let result = run(&[
         "-f",
         input.to_str().unwrap(),
         "-o",
         output.to_str().unwrap(),
         "-t",
         "jsonl",
-    ]));
+    ]);
+    assert!(String::from_utf8_lossy(&result.stdout).contains("Unresolved time zones: 1"));
+    ok(result);
     assert_eq!(jsonl(&output).len(), 1);
-    assert!(
-        fs::read_to_string(dir.path().join("timeline.jsonl-Diagnostics.jsonl"))
-            .unwrap()
-            .contains("no known time zone")
-    );
     ok(run(&[
         "-f",
         input.to_str().unwrap(),
@@ -635,17 +675,15 @@ fn empty_and_untimed_records_do_not_create_epoch_events() {
         &[json!({"Artifact":"muicache","Name":"No time","KeyLastWrittenUTC":null})],
     );
     let output = dir.path().join("timeline.csv");
-    ok(run(&[
+    let result = run(&[
         "-f",
         input.to_str().unwrap(),
         "-o",
         output.to_str().unwrap(),
-    ]));
+    ]);
+    assert!(String::from_utf8_lossy(&result.stdout).contains("Untimed records: 1"));
+    ok(result);
     assert!(csv(&output).is_empty());
-    assert_eq!(
-        jsonl(&dir.path().join("timeline.csv-Untimed.jsonl")).len(),
-        1
-    );
     fs::write(&input, "").unwrap();
     ok(run(&[
         "-f",
@@ -761,7 +799,7 @@ fn external_merge_is_deterministic_across_memory_and_worker_counts() {
     let mut outputs = Vec::new();
     for (budget, threads) in [("8", "2"), ("64", "4")] {
         let output = dir.path().join(format!("timeline-{budget}.jsonl"));
-        ok(run(&[
+        let result = run(&[
             "-d",
             parsed.to_str().unwrap(),
             "-o",
@@ -772,16 +810,10 @@ fn external_merge_is_deterministic_across_memory_and_worker_counts() {
             budget,
             "-T",
             threads,
-        ]));
-        let summary: Value = serde_json::from_slice(
-            &fs::read(
-                dir.path()
-                    .join(format!("timeline-{budget}.jsonl-Summary.json")),
-            )
-            .unwrap(),
-        )
-        .unwrap();
-        assert!(summary["MergePasses"].as_u64().unwrap() > 0);
+        ]);
+        // More than 32 chunks requires an intermediate merge with either budget.
+        assert!(String::from_utf8_lossy(&result.stdout).contains("Sorting chunks: 36"));
+        ok(result);
         outputs.push(output);
     }
     assert_eq!(

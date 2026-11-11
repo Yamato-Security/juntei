@@ -70,13 +70,7 @@ Há suporte a manifestos atuais com caminhos relativos à saída e a exportaçõ
 
 Quando um manifesto identifica uma imagem VHDX ou E01, as referências de origem incluem a imagem e o caminho interno, e o nome da imagem é mantido no contexto do evento. A área temporária de preparação não é necessária para ler os resultados analisados.
 
-A origem bruta vem do próprio registro ou de um comando do manifesto sem ambiguidade. Com `-d`, as
-referências à origem bruta são relativas ao diretório de evidências, enquanto `Details.ParsedFile` e o
-`InputFiles` do resumo são relativos ao diretório de resultados analisados. Os nomes de saída/relatório
-citados no resumo são relativos ao diretório de saída da linha do tempo. As tabelas CSV do SRUM só são
-atribuídas a um banco de dados quando o host tem exatamente um SRUDB.dat coletado que possa ser identificado
-sem ambiguidade. Caso contrário, `SourceFile` aponta para o arquivo analisado e
-`Details.RawSourceAvailable` é `false`.
+Uma fonte bruta é obtida do registro ou de um comando manifesto inequívoco. Com `-d`, as referências de origem bruta são relativas ao diretório de evidências e `Details.ParsedFile` são relativas ao diretório analisado. SRUM As tabelas CSV são designadas a um banco de dados somente quando o host tem um SRUDB.dat coletado exclusivamente identificável. Caso contrário, `SourceFile` aponta para o arquivo analisado e `Details.RawSourceAvailable` é `false`.
 
 Uma entrada avulsa é referenciada pelo nome do arquivo. Entradas com o mesmo nome de arquivo recebem
 referências `./Inputs/<ID>/<filename>` distintas. Caminhos absolutos de origem bruta fora das raízes de
@@ -128,7 +122,7 @@ um ataque. Os adaptadores preservam intencionalmente estas distinções:
 | Bancos de dados SQLite de navegadores | Visitas registradas, metadados de última visita de páginas recuperadas, início/fim de downloads, criação/acesso/expiração de cookies e primeiro/último uso no histórico de formulários ou marcas de exclusão. O fim de um download não prova, por si só, sucesso nem execução; a expiração de um cookie é um prazo configurado. O estado da recuperação, a confiança e a origem permanecem no contexto. |
 | WebCache do Internet Explorer e do Edge legado | Acesso, criação/modificação, expiração e sincronização das entradas armazenadas, início de downloads, metadados de cookies e acesso/limpeza de contêineres. O controle interno do cache não é, automaticamente, evidência de que um usuário abriu uma página. |
 | PST, OST, MSG e OFT do Outlook | Envio/entrega de mensagens; criação/modificação de pastas, itens e anexos; início/fim/lembretes de calendário; início/vencimento/conclusão/lembretes de tarefas; e propriedades declaradas explicitamente com tipo de horário. Horários agendados não provam que uma reunião aconteceu, que um lembrete disparou nem que um programa foi executado. Um horário de entrega armazenado não prova que a mensagem foi lida. |
-| Registro de acesso do usuário (UAL) | Metadados de primeiro/último acesso, inserção/criação no banco de dados, primeira/última observação e horário de inicialização do sistema operacional armazenado. Função, conta, endereço de origem e contadores diários permanecem como contexto. Datas/contagens diárias não viram logons inventados à meia-noite; as linhas de identidade e de DNS sem horário continuam disponíveis no relatório associado. |
+| Registro de acesso do usuário (UAL) | Metadados do primeiro/último acesso, inserção/criação de banco de dados, primeiro/último visto e tempo de inicialização do sistema operacional armazenado. Função, conta, endereço de origem e contadores diários permanecem no contexto. As datas/contagens diárias não são inventadas para logons à meia-noite; a identidade de duração indeterminada e as linhas DNS permanecem nos resultados originais analisados. |
 | Amcache | Últimas gravações das chaves de inventário, contexto da chave do volume pai, datas de instalação registradas e metadados de link do PE. A presença no inventário ou o LinkDate, por si sós, não provam execução. |
 | ShimCache | Modificação de arquivo armazenada, metadados de atualização do cache e última gravação da chave do cache. Nenhum deles é, automaticamente, um carimbo de data/hora de execução. |
 | SRUM | Carimbo de data/hora/intervalo do provedor, início da conexão, campos explícitos de intervalo de início/fim e metadados do identificador do aplicativo. Bytes, duração e outros contadores não são datas. |
@@ -168,8 +162,7 @@ o fuso horário do endpoint, que não foi registrado, nem validar uma conversão
 Verifique o artefato bruto e as configurações do endpoint antes de usar esse horário em uma correlação
 precisa entre hosts.
 
-Um carimbo de data/hora sem fuso (naive), cujo fuso horário o artefato não define, gera um diagnóstico em vez
-de ser tratado silenciosamente como UTC. Se as evidências justificarem, informe um deslocamento fixo com sinal:
+Um carimbo de data/hora ingênuo sem fuso horário definido por artefato é contado como não resolvido, em vez de ser tratado silenciosamente como UTC. Se a evidência justificar, forneça uma compensação fixa assinada:
 
 ```bash
 juntei super-timeline -f Amcache.jsonl --input-artifact amcache \
@@ -188,33 +181,15 @@ Duas categorias opcionais ficam de fora por padrão:
 - `--include-interpreted-times`: valores QWORD genéricos do Registro que o leitor do Registro exibe como
   FILETIME. Eles recebem o rótulo `interpreted_value` porque muitos desses valores são, na verdade, contadores.
 
-## Relatórios associados { #companion-reports }
+## Registros de saída e ignorados { #output-and-skipped-records }
 
-Para `SuperTimeline.csv`, o comando também grava:
+O comando grava **apenas a linha do tempo** selecionada com `-o`, no formato escolhido com `-t` (`csv` por padrão, ou `jsonl`). Ele não cria arquivos complementares de diagnóstico ou resumo de duração indeterminada, nem spools de diagnóstico por registro. Os arquivos complementares existentes de execuções anteriores permanecem intactos.
 
-- `SuperTimeline.csv-Untimed.jsonl`: localizações de registros nativos sem um carimbo de data/hora de evento
-  mapeado e utilizável.
-- `SuperTimeline.csv-Diagnostics.jsonl`: horários inválidos/ambíguos, metadados compartilhados ignorados de
-  propósito e limitações de fidelidade que exigem consultar o registro analisado original.
-- `SuperTimeline.csv-Summary.json`: arquivos de entrada, contagens por artefato, eventos
-  filtrados/candidatos/consolidados, contagem de saída, workers, se a ordenação foi ativada,
-  orçamento/blocos/passagens da ordenação e tempo decorrido.
+O resumo do terminal informa o número de eventos da linha do tempo e registros de duração indeterminada. O carimbo de data/hora inválido diferente de zero e as contagens de fuso horário não resolvido são mostrados separadamente. Com `--sort`, também informa o número de duplicatas consolidadas. Mantenha os resultados originais analisados ​​para registros que não produzem um evento de linha do tempo e para o contexto completo do artefato.
 
-Os nomes dos relatórios associados incluem o nome completo do arquivo de saída. Por exemplo,
-`SuperTimeline.jsonl` tem seu próprio `SuperTimeline.jsonl-Summary.json` e os relatórios correspondentes de
-registros sem horário e de diagnóstico. Exportações CSV e JSONL com a mesma raiz de nome podem coexistir; `-C`
-só é necessário para substituir um conjunto de resultados existente.
+As datas válidas que aguardam uma suposição justificada de fuso horário contam como fusos horários não resolvidos, em vez de carimbos de data e hora inválidos. Nenhum carimbo de data e hora é inventado e registros sem um tempo mapeado utilizável não são inseridos na linha do tempo como eventos de época sintéticos.
 
-Datas válidas que aguardam uma suposição de fuso horário justificada incrementam `UnresolvedTimeZones`, e não
-`InvalidTimestamps`. Ambas continuam rastreáveis nos diagnósticos; nenhum carimbo de data/hora é inventado.
-
-Registros com horários válidos fora do intervalo solicitado são contados como filtrados, e não como sem
-horário. As contagens de eventos candidatos são anteriores à consolidação de duplicatas. `Sorted` e
-`DuplicateConsolidation` registram se `--sort` foi ativado. Sem essa opção, `DuplicateEvents`,
-`LargestSerializedSortRowBytes`, `InitialSortChunks` e `MergePasses` ficam em zero, e `SortMemoryBudgetMiB`
-é `null` porque nenhum buffer de ordenação é alocado. `Complete: true` significa que todas as entradas
-analisadas selecionadas foram processadas com sucesso; não significa que todos os artefatos foram coletados,
-que todos os campos têm carimbo de data/hora nem que todo ataque é detectável.
+Registros com horários válidos fora do intervalo solicitado são contados como filtrados e não sem tempo. Uma exportação bem-sucedida significa que as entradas analisadas selecionadas foram processadas com êxito; isso não significa que todos os artefatos foram coletados, que todos os campos têm um carimbo de data/hora ou que todos os ataques são detectáveis.
 
 As exportações CSV podem achatar metadados aninhados: perfis das Informações do sistema, pontos de montagem de
 usuários do USB, itens de shell e outros contextos estruturados podem ser mais completos no JSON/JSONL nativo.
@@ -250,18 +225,9 @@ registro pode gerar muitos eventos, então a linha do tempo pode ficar muito mai
 intervalo de tempo/os artefatos quando fizer sentido e escolha um volume temporário com espaço livre
 suficiente.
 
-Ctrl+C cancela a execução de forma cooperativa, remove os diretórios privados de ordenação/preparação e sai
-com o código `130`. No Linux e no macOS, o mesmo vale para SIGTERM e SIGHUP. O cancelamento é verificado
-durante a leitura, a normalização, a mesclagem e a gravação dos relatórios, antes do início da publicação. Uma
-interrupção que não pode ser capturada ou uma queda de energia ainda podem deixar arquivos temporários.
+Ctrl+C cancela cooperativamente, remove os diretórios privados de classificação/preparo e sai com o código `130`. Em Linux e macOS isso também se aplica a SIGTERM e SIGHUP. O cancelamento é verificado durante a leitura, normalização, mesclagem e gravação da linha do tempo, antes do início da publicação. A terminação indetectável ou a perda de energia ainda podem deixar arquivos temporários.
 
-Saídas existentes exigem `-C`. A linha do tempo e os relatórios associados não podem sobrescrever entradas,
-manifestos, evidências locais referenciadas nem os diretórios de evidências protegidos que as contêm. Erros de
-entrada ou falhas de ordenação deixam as saídas existentes intactas. Os arquivos concluídos são preparados ao
-lado do destino e substituídos um a um, e a linha do tempo é publicada por último. Isso **não** é uma
-transação que abrange os quatro arquivos: uma falha de E/S durante a publicação final pode deixar alguns
-relatórios associados já substituídos. Use um novo nome base de saída a cada execução quando for importante
-preservar uma exportação completa anterior.
+As saídas existentes requerem `-C`. A linha do tempo não deve substituir entradas, manifestos, evidências locais referenciadas ou seus diretórios de evidências protegidos. Erros de entrada ou falhas de classificação deixam a linha do tempo existente intacta. A linha do tempo concluída é encenada ao lado de seu destino e a substitui atomicamente. Use um novo nome de arquivo de saída para cada execução ao reter uma exportação completa anterior.
 
 ## Mais detalhes { #further-details }
 
@@ -271,7 +237,7 @@ preservar uma exportação completa anterior.
 - [Evidências e interpretação](../overview/evidence-model.md)
 - [Formatos de saída](../getting-started/output-formats.md)
 
-As entradas atuais do Juntei usam rótulos abreviados como `Comp`, `Filename`, `Args` e `Attr`. O CSV da MFT também aceita os cabeçalhos atuais `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` e `HasADS`, preservando as gerações de número de sequência e as distinções de DOS/ADS. Os rótulos de exportações mais antigas continuam aceitos, e `SourceField` mantém a grafia usada na entrada real. A entrada do Hayabusa mantém seu próprio campo `Computer`. Os metadados do setor de inicialização e dos descritores de segurança ficam no relatório de registros sem horário, porque não fornecem um carimbo de data/hora de evento.
+As entradas Juntei atuais usam rótulos abreviados como `Comp`, `Filename`, `Args` e `Attr`. MFT CSV também aceita os atuais `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` e Cabeçalhos `HasADS`, mantendo intactas as gerações de números de sequência e as distinções DOS/ADS. Os rótulos exportados mais antigos permanecem aceitos e `SourceField` mantém a ortografia na entrada real. A entrada Hayabusa mantém seu próprio campo `Computer`. Os metadados do setor de inicialização e do descritor de segurança sem registros de data e hora do evento permanecem nos resultados originais analisados; ele não cria eventos na linha do tempo.
 
 ## Analisadores mais recentes com várias tabelas { #newer-multi-table-parsers }
 

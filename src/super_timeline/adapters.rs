@@ -24,6 +24,8 @@ pub struct Policy {
     pub end: Option<Point>,
     pub collection: bool,
     pub interpreted: bool,
+    /// Keep detailed adapter diagnostics for inspection; exports need only aggregate counts.
+    pub diagnostics: bool,
     /// Exported (portable) references, so event identity does not depend on where the parsed
     /// output or evidence directory is stored.
     pub references: super::paths::References,
@@ -55,6 +57,7 @@ impl Policy {
             end,
             collection: opts.include_collection_times,
             interpreted: opts.include_interpreted_times,
+            diagnostics: false,
             references,
         })
     }
@@ -293,6 +296,9 @@ impl<'a, 'b> Builder<'a, 'b> {
     }
 
     fn diagnostic(&mut self, reason: &str, source_field: &str, original: &str) {
+        if !self.policy.diagnostics {
+            return;
+        }
         let diagnostic = Diagnostic {
             parsed_file: self.ctx.parsed_file.to_string_lossy().into_owned(),
             input_record: self.ctx.record,

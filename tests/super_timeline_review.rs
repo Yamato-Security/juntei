@@ -15,9 +15,9 @@
 use serde_json::{Value, json};
 use std::fs;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Output};
 
-fn run(args: &[&str]) {
+fn run(args: &[&str]) -> Output {
     let output = Command::new(env!("CARGO_BIN_EXE_juntei"))
         .arg("super-timeline")
         .args(args)
@@ -30,6 +30,7 @@ fn run(args: &[&str]) {
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
+    output
 }
 fn jsonl(path: &Path) -> Vec<Value> {
     fs::read_to_string(path)
@@ -40,7 +41,7 @@ fn jsonl(path: &Path) -> Vec<Value> {
 }
 
 #[test]
-fn all_exported_provenance_is_relative_and_csv_jsonl_companions_do_not_collide() {
+fn all_exported_provenance_is_relative_and_csv_jsonl_exports_coexist() {
     let tmp = tempfile::tempdir().unwrap();
     let physical = tmp.path().join("analyst-private-parent");
     fs::create_dir(&physical).unwrap();
@@ -98,7 +99,7 @@ fn all_exported_provenance_is_relative_and_csv_jsonl_companions_do_not_collide()
     let mut tables = Vec::new();
     for format in ["csv", "jsonl"] {
         let output = reports.join(format!("Timeline.{format}"));
-        run(&[
+        let result = run(&[
             "-d",
             parsed.to_str().unwrap(),
             "--hayabusa",
@@ -108,23 +109,15 @@ fn all_exported_provenance_is_relative_and_csv_jsonl_companions_do_not_collide()
             "-t",
             format,
         ]);
-        let summary: Value = serde_json::from_slice(
-            &fs::read(reports.join(format!("Timeline.{format}-Summary.json"))).unwrap(),
-        )
-        .unwrap();
-        assert_eq!(summary["Output"], format!("./Timeline.{format}"));
-        assert_eq!(summary["Counts"]["UnresolvedTimeZones"], 1);
-        assert_eq!(summary["Counts"]["InvalidTimestamps"], 1);
-        for name in [
-            format!("Timeline.{format}"),
-            format!("Timeline.{format}-Summary.json"),
-            format!("Timeline.{format}-Untimed.jsonl"),
-            format!("Timeline.{format}-Diagnostics.jsonl"),
-        ] {
-            let bytes = fs::read_to_string(reports.join(name)).unwrap();
-            assert!(!bytes.contains("analyst-private-parent"), "{bytes}");
-            assert!(!bytes.contains("private-analyst"), "{bytes}");
+        let stdout = String::from_utf8_lossy(&result.stdout);
+        assert!(stdout.contains("Unresolved time zones: 1"), "{stdout}");
+        assert!(stdout.contains("Invalid timestamps: 1"), "{stdout}");
+        for suffix in ["-Summary.json", "-Untimed.jsonl", "-Diagnostics.jsonl"] {
+            assert!(!reports.join(format!("Timeline.{format}{suffix}")).exists());
         }
+        let bytes = fs::read_to_string(&output).unwrap();
+        assert!(!bytes.contains("analyst-private-parent"), "{bytes}");
+        assert!(!bytes.contains("private-analyst"), "{bytes}");
         let rows = if format == "jsonl" {
             jsonl(&output)
         } else {
@@ -233,11 +226,11 @@ fn signals_clean_normalization_and_merge_workspaces_and_preserve_existing_output
         for (sort, phase) in [
             (true, "normalize"),
             (true, "merge"),
-            (true, "reports"),
+            (true, "output"),
             (false, "normalize"),
-            (false, "reports"),
+            (false, "output"),
         ] {
-            if phase == "reports" && signal != "-INT" {
+            if phase == "output" && signal != "-INT" {
                 continue;
             }
             let scratch = tmp.path().join(format!("scratch-{sort}-{signal}-{phase}"));
@@ -263,11 +256,39 @@ fn signals_clean_normalization_and_merge_workspaces_and_preserve_existing_output
             for path in &companions {
                 fs::write(path, "previous complete result").unwrap();
             }
+            let selected = if !sort && phase == "output" {
+                // Concatenating small fragments can finish before an external `kill` starts
+                // on fast machines. Use a substantial output for this copy-phase check.
+                let large = tmp.path().join("large-copy-input");
+                fs::create_dir(&large).unwrap();
+                let mut writer = csv::Writer::from_path(large.join("Prefetch.csv")).unwrap();
+                writer
+                    .write_record(["SourceFile", "ExecutablePath", "LastRun"])
+                    .unwrap();
+                let path = format!("C:\\Temp\\{}\\program.exe", "a".repeat(4096));
+                for index in 0..20_000 {
+                    writer
+                        .write_record([
+                            format!("capture/{index}.pf"),
+                            path.clone(),
+                            "2026-10-20T08:00:00Z".into(),
+                        ])
+                        .unwrap();
+                }
+                writer.flush().unwrap();
+                fs::write(large.join("manifest.json"), serde_json::to_vec(&json!({
+                    "OutputDirectory":"large-copy-input","Hosts":[{"Comp":"HOST"}],
+                    "Tasks":[{"Status":"succeeded","Artifact":"prefetch","Comp":"HOST","OutputType":"csv","OutputFiles":["Prefetch.csv"]}]
+                })).unwrap()).unwrap();
+                large
+            } else {
+                parsed.clone()
+            };
             let mut child = Command::new(env!("CARGO_BIN_EXE_juntei"))
                 .args([
                     "super-timeline",
                     "-d",
-                    parsed.to_str().unwrap(),
+                    selected.to_str().unwrap(),
                     "-o",
                     output.to_str().unwrap(),
                     "-t",
@@ -289,7 +310,7 @@ fn signals_clean_normalization_and_merge_workspaces_and_preserve_existing_output
                 .unwrap();
             let start = Instant::now();
             loop {
-                let ready = fs::read_dir(if phase == "reports" {
+                let ready = fs::read_dir(if phase == "output" {
                     tmp.path()
                 } else {
                     &scratch
@@ -297,7 +318,7 @@ fn signals_clean_normalization_and_merge_workspaces_and_preserve_existing_output
                 .unwrap()
                 .filter_map(Result::ok)
                 .any(|folder| {
-                    if phase == "reports"
+                    if phase == "output"
                         && !folder
                             .file_name()
                             .to_string_lossy()
@@ -308,8 +329,12 @@ fn signals_clean_normalization_and_merge_workspaces_and_preserve_existing_output
                     fs::read_dir(folder.path()).is_ok_and(|files| {
                         files.filter_map(Result::ok).any(|file| {
                             let name = file.file_name().to_string_lossy().into_owned();
-                            if phase == "reports" {
-                                name == "untimed" && file.metadata().is_ok_and(|m| m.len() > 0)
+                            assert!(
+                                !name.contains("diagnostic"),
+                                "Unexpected diagnostic spool: {name}"
+                            );
+                            if phase == "output" {
+                                name == "timeline" && file.metadata().is_ok_and(|m| m.len() > 0)
                             } else if phase == "merge" {
                                 name.starts_with("merge-")
                             } else if sort {
@@ -422,7 +447,7 @@ fn cancellation_during_json_deserialization_does_not_retry_interrupted_reads_for
         let reading = fs::read_dir(&scratch)
             .unwrap()
             .filter_map(Result::ok)
-            .any(|e| e.path().join("input-0-diagnostics.jsonl").is_file());
+            .any(|e| e.path().join("input-0-events").is_file());
         if reading {
             break;
         }

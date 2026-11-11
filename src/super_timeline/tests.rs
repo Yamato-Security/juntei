@@ -35,6 +35,7 @@ fn policy() -> Policy {
         end: None,
         collection: false,
         interpreted: false,
+        diagnostics: true,
         references: Default::default(),
     }
 }
