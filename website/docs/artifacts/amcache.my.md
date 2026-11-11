@@ -125,6 +125,5 @@ CSV ရှိ array နှင့် raw-value column များသည် `JSON
 
 - [Juntei ၏ ys-amcache-parser ထုတ်ယူမှု schema](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [Eric Zimmerman ၏ AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [Regipy Amcache plugin](https://github.com/mkorman90/regipy)

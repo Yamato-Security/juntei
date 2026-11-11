@@ -28,21 +28,15 @@
 
 ## 실행 및 인벤토리 아티팩트 { #execution-and-inventory-artifacts }
 
-- [Eric Zimmerman의 AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [libyal libscca](https://github.com/libyal/libscca) — Prefetch 형식/라이브러리 작업입니다.
-- [Eric Zimmerman의 PECmd](https://github.com/EricZimmerman/PECmd)
 - [Mandiant: 포렌식 조사에서 Application Compatibility Cache 활용하기](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [Eric Zimmerman의 AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## 사용자 활동 아티팩트 { #user-activity-artifacts }
 
 - [Microsoft Open Specifications: Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft Open Specifications: Compound File Binary (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [Eric Zimmerman의 LECmd](https://github.com/EricZimmerman/LECmd)
-- [Eric Zimmerman의 JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [Eric Zimmerman의 SrumECmd](https://github.com/EricZimmerman/Srum)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## 레지스트리와 지속성 { #registry-and-persistence }
@@ -50,7 +44,6 @@
 - [Microsoft: 레지스트리 값 형식](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Maxim Suhanov의 Windows 레지스트리 형식 사양](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) 및 [libregf](https://github.com/libyal/libregf) — 저수준 하이브 분석 및 복구에 대한 참고 자료입니다.
-- [Eric Zimmerman의 Registry Explorer / RECmd 문서](https://ericzimmerman.github.io/)
 - [Microsoft: 서비스 레지스트리 트리](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: 작업 스케줄러 스키마](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK: Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

@@ -130,5 +130,4 @@ juntei parse-registry read -f SOFTWARE --raw-data -o software.jsonl -t jsonl
 - [Maxim Suhanov의 레지스트리 형식 사양](https://github.com/msuhanov/regf)
 - [yarp 레지스트리 파서](https://github.com/msuhanov/yarp)
 - [libyal libregf](https://github.com/libyal/libregf)
-- [Eric Zimmerman의 Registry](https://github.com/EricZimmerman/Registry)
 - [Microsoft: 레지스트리 값 유형](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)

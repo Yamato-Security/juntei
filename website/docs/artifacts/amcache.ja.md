@@ -109,6 +109,5 @@ CSV の配列および生の値の列では、`JSON` 接尾辞が使用されま
 
 - [Juntei の ys-amcache-parser 出力スキーマ](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [エリック・ジマーマンの AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [Regipy Amcache プラグイン](https://github.com/mkorman90/regipy)

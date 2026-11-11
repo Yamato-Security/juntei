@@ -28,21 +28,15 @@
 
 ## 執行與清查跡證 { #execution-and-inventory-artifacts }
 
-- [Eric Zimmerman 的 AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [libyal libscca](https://github.com/libyal/libscca)——Prefetch 格式／函式庫研究。
-- [Eric Zimmerman 的 PECmd](https://github.com/EricZimmerman/PECmd)
 - [Mandiant：Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [Eric Zimmerman 的 AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## 使用者活動跡證 { #user-activity-artifacts }
 
 - [Microsoft Open Specifications：Shell Link（MS-SHLLINK）](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft Open Specifications：Compound File Binary（MS-CFB）](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [Eric Zimmerman 的 LECmd](https://github.com/EricZimmerman/LECmd)
-- [Eric Zimmerman 的 JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [Eric Zimmerman 的 SrumECmd](https://github.com/EricZimmerman/Srum)
 - [Microsoft：Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## 登錄與持續存取 { #registry-and-persistence }
@@ -50,7 +44,6 @@
 - [Microsoft：登錄值類型](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Maxim Suhanov 的 Windows 登錄格式規格](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) 與 [libregf](https://github.com/libyal/libregf)——低階登錄區剖析與復原的參考實作。
-- [Eric Zimmerman 的 Registry Explorer／RECmd 說明文件](https://ericzimmerman.github.io/)
 - [Microsoft：Services 登錄樹狀結構](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft：工作排程器結構描述](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK：Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

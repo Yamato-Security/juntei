@@ -116,4 +116,3 @@ Arrays statt als kommagetrennte CSV-Zellen.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [PECmd von Eric Zimmerman](https://github.com/EricZimmerman/PECmd)

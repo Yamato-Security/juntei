@@ -162,7 +162,6 @@ Log သည် မူလ capture alias များကို ထိန်းသ�
 ## နောက်ထပ် အသေးစိတ်များ { #further-details }
 
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
-- [Eric Zimmerman ၏ SrumECmd](https://github.com/EricZimmerman/Srum)
 - [dissect.esedb](https://github.com/fox-it/dissect.esedb)
 - [libyal libesedb](https://github.com/libyal/libesedb)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)

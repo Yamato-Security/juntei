@@ -107,4 +107,3 @@ JSON/JSONL 會以結構化陣列保留磁碟區、目錄、已載入檔案與 NT
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [Eric Zimmerman 的 PECmd](https://github.com/EricZimmerman/PECmd)

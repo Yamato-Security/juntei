@@ -99,7 +99,6 @@ JSON/JSONL ยังเก็บรักษาข้อมูล entry, tag, �
 ## รายละเอียดเพิ่มเติม { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [AppCompatCacheParser โดย Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: การใช้ประโยชน์จาก Application Compatibility Cache ในการสืบสวนทางนิติวิทยาศาสตร์](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [ข้อกำหนดรูปแบบรีจิสทรีของ Windows โดย Maxim Suhanov](https://github.com/msuhanov/regf)

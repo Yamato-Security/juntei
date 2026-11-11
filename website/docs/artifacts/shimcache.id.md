@@ -99,7 +99,6 @@ masalah cache, dan detail pemulihan.
 ## Detail lebih lanjut { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [AppCompatCacheParser oleh Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Spesifikasi format registry Windows oleh Maxim Suhanov](https://github.com/msuhanov/regf)

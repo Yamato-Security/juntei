@@ -130,5 +130,4 @@ juntei parse-registry read -f SOFTWARE --raw-data -o software.jsonl -t jsonl
 - [Специфікація формату реєстру Максима Суханова](https://github.com/msuhanov/regf)
 - [Парсер реєстру yarp](https://github.com/msuhanov/yarp)
 - [libyal libregf](https://github.com/libyal/libregf)
-- [Registry Еріка Ціммермана](https://github.com/EricZimmerman/Registry)
 - [Microsoft: типи значень реєстру](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)

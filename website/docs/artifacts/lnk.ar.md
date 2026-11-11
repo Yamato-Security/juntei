@@ -100,4 +100,3 @@ MFT)، وبجميع كتل البيانات الإضافية، وخصائص مخ
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [أداة LECmd من Eric Zimmerman](https://github.com/EricZimmerman/LECmd)

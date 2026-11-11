@@ -116,4 +116,3 @@ terstruktur alih-alih sel CSV yang digabung dengan koma.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [PECmd oleh Eric Zimmerman](https://github.com/EricZimmerman/PECmd)

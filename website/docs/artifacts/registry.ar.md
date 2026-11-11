@@ -130,5 +130,4 @@ juntei parse-registry read -f SOFTWARE --raw-data -o software.jsonl -t jsonl
 - [مواصفة تنسيق سجل Windows من Maxim Suhanov](https://github.com/msuhanov/regf)
 - [محلل سجل Windows ‏yarp](https://github.com/msuhanov/yarp)
 - [libyal libregf](https://github.com/libyal/libregf)
-- [مكتبة Registry من Eric Zimmerman](https://github.com/EricZimmerman/Registry)
 - [Microsoft: أنواع قيم سجل Windows](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)

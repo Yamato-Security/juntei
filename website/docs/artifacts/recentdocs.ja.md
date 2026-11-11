@@ -79,5 +79,4 @@ juntei parse-registry recent-docs -d evidence/ -t jsonl \
 
 - [ys-レジストリ-パーサー](https://github.com/Yamato-Security/ys-registry-parser)
 - [libyal libfwsi](https://github.com/libyal/libfwsi)
-- [Eric Zimmerman の RECmd とレジストリ エクスプローラー](https://github.com/EricZimmerman/RECmd)
 - [SANS Windows フォレンジック分析ポスター](https://www.sans.org/posters/windows-forensic-analysis/)

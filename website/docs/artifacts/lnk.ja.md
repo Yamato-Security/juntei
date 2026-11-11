@@ -85,4 +85,3 @@ JSON/JSONL は、すべてのターゲット ID 項目 (種類、名前、GUID�
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark シェル](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [エリック・ジマーマンのLECmd](https://github.com/EricZimmerman/LECmd)

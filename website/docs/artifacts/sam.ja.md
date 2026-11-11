@@ -94,4 +94,3 @@ juntei parse-registry sam -d evidence/ -t jsonl \
 - [Microsoft オープン仕様: SAM リモート プロトコル](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-samr/)
 - [ys-レジストリ-パーサー](https://github.com/Yamato-Security/ys-registry-parser)
 - [dissect.target SAM プラグイン](https://docs.dissect.tools/en/latest/projects/dissect.target/plugins/os/windows/sam.html)
-- [Eric Zimmerman のレジストリ エクスプローラー](https://ericzimmerman.github.io/#!index.md)

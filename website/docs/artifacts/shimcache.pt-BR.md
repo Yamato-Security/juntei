@@ -99,7 +99,6 @@ problemas do cache e detalhes da recuperação.
 ## Mais detalhes { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [AppCompatCacheParser de Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [shimcache-forensic da Security Ronin](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Especificação do formato do Registro do Windows de Maxim Suhanov](https://github.com/msuhanov/regf)

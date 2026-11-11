@@ -28,21 +28,15 @@ artefactos. Las secciones **Más detalles** de cada artefacto contienen los enla
 
 ## Artefactos de ejecución e inventario { #execution-and-inventory-artifacts }
 
-- [AmcacheParser de Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [amcache-forensic de Security Ronin](https://github.com/SecurityRonin/amcache-forensic)
 - [libscca de libyal](https://github.com/libyal/libscca): trabajo sobre el formato y la biblioteca de Prefetch.
-- [PECmd de Eric Zimmerman](https://github.com/EricZimmerman/PECmd)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [AppCompatCacheParser de Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## Artefactos de actividad del usuario { #user-activity-artifacts }
 
 - [Microsoft Open Specifications: Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft Open Specifications: Compound File Binary (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [LECmd de Eric Zimmerman](https://github.com/EricZimmerman/LECmd)
-- [JLECmd de Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [SrumECmd de Eric Zimmerman](https://github.com/EricZimmerman/Srum)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## Registro y persistencia { #registry-and-persistence }
@@ -50,7 +44,6 @@ artefactos. Las secciones **Más detalles** de cada artefacto contienen los enla
 - [Microsoft: Registry value types](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Especificación del formato del Registro de Windows de Maxim Suhanov](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) y [libregf](https://github.com/libyal/libregf): referencias de bajo nivel para el análisis y la recuperación de hives.
-- [Documentación de Registry Explorer / RECmd de Eric Zimmerman](https://ericzimmerman.github.io/)
 - [Microsoft: Services registry tree](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: Task Scheduler schema](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK: Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

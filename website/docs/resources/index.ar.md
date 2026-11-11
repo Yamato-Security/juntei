@@ -28,21 +28,15 @@
 
 ## آثار التنفيذ والجرد الرقمية { #execution-and-inventory-artifacts }
 
-- [أداة AmcacheParser من Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [libyal libscca](https://github.com/libyal/libscca) — أعمال على تنسيق Prefetch ومكتبته.
-- [أداة PECmd من Eric Zimmerman](https://github.com/EricZimmerman/PECmd)
 - [Mandiant: الاستفادة من ذاكرة التخزين المؤقت لتوافق التطبيقات في التحقيقات الجنائية](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [أداة AppCompatCacheParser من Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## آثار نشاط المستخدم الرقمية { #user-activity-artifacts }
 
 - [المواصفات المفتوحة من Microsoft: Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [المواصفات المفتوحة من Microsoft: Compound File Binary (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [أداة LECmd من Eric Zimmerman](https://github.com/EricZimmerman/LECmd)
-- [أداة JLECmd من Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [أداة SrumECmd من Eric Zimmerman](https://github.com/EricZimmerman/Srum)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## سجل Windows والاستمرارية { #registry-and-persistence }
@@ -50,7 +44,6 @@
 - [Microsoft: أنواع قيم سجل Windows](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [مواصفة تنسيق سجل Windows من Maxim Suhanov](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) و[libregf](https://github.com/libyal/libregf) — مراجع منخفضة المستوى لتحليل الخلايا واستردادها.
-- [وثائق Registry Explorer / RECmd من Eric Zimmerman](https://ericzimmerman.github.io/)
 - [Microsoft: شجرة الخدمات في سجل Windows](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: مخطط Task Scheduler](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK: Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

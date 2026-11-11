@@ -129,5 +129,4 @@ juntei parse-registry read -f SOFTWARE --raw-data -o software.jsonl -t jsonl
 - [Maxim Suhanov 的登錄檔格式規格](https://github.com/msuhanov/regf)
 - [yarp 登錄檔剖析器](https://github.com/msuhanov/yarp)
 - [libyal libregf](https://github.com/libyal/libregf)
-- [Eric Zimmerman 的 Registry](https://github.com/EricZimmerman/Registry)
 - [Microsoft：登錄值類型](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)

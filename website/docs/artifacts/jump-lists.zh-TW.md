@@ -99,5 +99,4 @@ JSON/JSONL 另外保留 DestList 標頭、每個項目的分數／檢查碼／�
 - [Microsoft：Compound Binary File 格式（MS-CFB）](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft：Shell Link 格式（MS-SHLLINK）](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [Eric Zimmerman 的 JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [JumpList 剖析器測試／參考專案](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
