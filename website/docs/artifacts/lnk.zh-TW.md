@@ -99,4 +99,3 @@ LNK 標頭中的目標 FILETIME 與追蹤器時間仍是可轉換的絕對時間
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [Eric Zimmerman 的 LECmd](https://github.com/EricZimmerman/LECmd)

@@ -30,8 +30,12 @@ voisins.
   prouve pas qu'un programme n'a pas été exécuté.
 - Les listes de fichiers chargés décrivent les dépendances et les accès au démarrage ; elles ne prouvent pas que chaque fichier listé
   était malveillant, ouvert délibérément ou entièrement lu.
-- La longueur du nom de l'exécutable dans l'en-tête Prefetch est limitée ; Juntei résout un chemin à partir des fichiers
-  chargés lorsque cela est possible sans ambiguïté.
+- La longueur du nom de l'exécutable dans l'en-tête Prefetch est limitée. Juntei distingue les
+  chemins chargés portant le même nom grâce au hachage de chemin SCCA. Si plusieurs candidats
+  restent indiscernables, il conserve le nom de l'en-tête et définit PathAmbiguous ; la liste des
+  fichiers chargés reste disponible. Un candidat unique dont le hachage ne correspond pas est
+  conservé, avec PathValidated à false. Les processus hôtes peuvent intégrer des données de ligne de
+  commande au hachage : un chemin non validé n'est donc pas forcément erroné.
 - Les horodatages du système de fichiers d'un fichier source `.pf` sont distincts des heures d'exécution incorporées.
 - `Findings` sont des observations de chasse. Les programmes d'installation et l'administration légitime utilisent souvent des chemins de préparation (staging).
 
@@ -66,6 +70,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Fichier `.pf` d'entrée ; conservez-le pour distinguer les hôtes et les noms d'exécutables en double. |
 | `ExecutableName` | Nom de l'exécutable dans l'en-tête. Insensible à la casse pour la plupart des recherches ; conservez la graphie d'origine. |
 | `ExecutablePath` | Chemin chargé résolu par Juntei lorsque c'est possible. Confirmez-le avec `Files` et d'autres artefacts. |
+| `PathValidated` | Le chemin sélectionné reproduit le hachage de chemin SCCA. Cela valide son attribution, pas le contenu ni la fiabilité du fichier. |
+| `PathAmbiguous` | Plusieurs chemins chargés restent possibles ; `ExecutablePath` conserve le nom de l’en-tête. Vérifiez `Files` et les autres artefacts. |
 | `PrefetchHash` | Empreinte utilisée par Windows dans le nom du fichier `.pf` ; il ne s'agit pas d'une empreinte cryptographique du contenu du fichier. |
 | `FormatVersion` | Version de la structure Prefetch ; détermine les champs disponibles et le nombre d'horodatages. |
 | `RunCount` | Compteur cumulatif enregistré par Windows. Utile pour la fréquence, pas pour un historique exact. |
@@ -87,6 +93,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | Une heure d'exécution Prefetch conservée. |
 | `ExecutableName`, `ExecutablePath` | Contexte d'identité/de chemin du programme. |
+| `PathValidated` | Le chemin sélectionné reproduit le hachage de chemin SCCA. Cela valide son attribution, pas le contenu ni la fiabilité du fichier. |
+| `PathAmbiguous` | Plusieurs chemins chargés restent possibles ; `ExecutablePath` conserve le nom de l’en-tête. Vérifiez `Files` et les autres artefacts. |
 | `PrefetchHash` | Distingue les variantes/chemins partageant un même nom d'exécutable. |
 | `RunCount` | Compteur du fichier Prefetch ; il est répété sur chaque ligne de la chronologie. |
 | `SourceFile` | Fichier `.pf` source, pour validation. |
@@ -108,4 +116,3 @@ structurés plutôt que de cellules CSV jointes par des virgules.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [PECmd d'Eric Zimmerman](https://github.com/EricZimmerman/PECmd)

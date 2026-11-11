@@ -30,8 +30,12 @@ verglichen werden können.
   Beweis dafür, dass ein Programm nicht ausgeführt wurde.
 - Listen geladener Dateien beschreiben Startabhängigkeiten und Zugriffe; sie beweisen nicht, dass jede aufgeführte Datei
   bösartig war, absichtlich geöffnet oder vollständig gelesen wurde.
-- Der Name der ausführbaren Datei im Prefetch-Header ist in der Länge begrenzt; Juntei ermittelt einen Pfad aus den geladenen
-  Dateien, sofern dies eindeutig möglich ist.
+- Der Name der ausführbaren Datei im Prefetch-Header ist in der Länge begrenzt. Juntei unterscheidet
+  gleichnamige geladene Pfade anhand des SCCA-Pfadhashes. Bleiben mehrere Kandidaten
+  ununterscheidbar, behält Juntei den Headernamen bei und setzt PathAmbiguous; die Liste der
+  geladenen Dateien bleibt verfügbar. Ein einzelner Kandidat ohne passenden Hash wird beibehalten
+  und PathValidated auf false gesetzt. Hosting-Prozesse können Befehlszeilendaten in den Hash
+  einbeziehen; ein nicht validierter Pfad ist daher nicht automatisch falsch.
 - Die Dateisystem-Zeitstempel einer `.pf`-Quelldatei sind unabhängig von den eingebetteten Ausführungszeiten.
 - `Findings` sind Beobachtungen für das Threat Hunting. Installationsprogramme und legitime Administration nutzen häufig Staging-Pfade.
 
@@ -66,6 +70,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Eingabe-`.pf`; behalten Sie dieses Feld bei, um Hosts und doppelte Namen ausführbarer Dateien zu unterscheiden. |
 | `ExecutableName` | Name der ausführbaren Datei aus dem Header. Für die meisten Suchen ohne Beachtung der Groß-/Kleinschreibung verwenden; die ursprüngliche Schreibweise bewahren. |
 | `ExecutablePath` | Von Juntei nach Möglichkeit ermittelter Ladepfad. Gleichen Sie ihn mit `Files` und anderen Artefakten ab. |
+| `PathValidated` | Der gewählte Pfad entspricht dem SCCA-Pfadhash. Dies bestätigt die Pfadzuordnung, nicht den Dateiinhalt oder die Vertrauenswürdigkeit. |
+| `PathAmbiguous` | Mehrere geladene Pfade bleiben möglich; `ExecutablePath` enthält den Headernamen. Prüfen Sie `Files` und weitere Artefakte. |
 | `PrefetchHash` | Hash, den Windows im `.pf`-Dateinamen verwendet; kein kryptografischer Hash des Dateiinhalts. |
 | `FormatVersion` | Version der Prefetch-Struktur; bestimmt die verfügbaren Felder und die Anzahl der Zeitstempel. |
 | `RunCount` | Von Windows aufgezeichneter kumulativer Zähler. Nützlich für die Häufigkeit, nicht für den genauen Verlauf. |
@@ -87,6 +93,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | Ein gespeicherter Prefetch-Ausführungszeitpunkt. |
 | `ExecutableName`, `ExecutablePath` | Identität des Programms bzw. Pfadkontext. |
+| `PathValidated` | Der gewählte Pfad entspricht dem SCCA-Pfadhash. Dies bestätigt die Pfadzuordnung, nicht den Dateiinhalt oder die Vertrauenswürdigkeit. |
+| `PathAmbiguous` | Mehrere geladene Pfade bleiben möglich; `ExecutablePath` enthält den Headernamen. Prüfen Sie `Files` und weitere Artefakte. |
 | `PrefetchHash` | Unterscheidet Varianten/Pfade, die denselben Namen der ausführbaren Datei haben. |
 | `RunCount` | Zähler aus der Prefetch-Datei; er wird in jeder Zeitleistenzeile wiederholt. |
 | `SourceFile` | Quell-`.pf` zur Überprüfung. |
@@ -108,4 +116,3 @@ Arrays statt als kommagetrennte CSV-Zellen.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [PECmd von Eric Zimmerman](https://github.com/EricZimmerman/PECmd)

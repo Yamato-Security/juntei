@@ -100,7 +100,6 @@ cache ပြဿနာများနှင့် recovery အသေးစိတ�
 ## နောက်ထပ် အသေးစိတ်များ { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [Eric Zimmerman ၏ AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Maxim Suhanov ၏ Windows registry ပုံစံ သတ်မှတ်ချက်](https://github.com/msuhanov/regf)

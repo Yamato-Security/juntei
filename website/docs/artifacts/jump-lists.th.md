@@ -100,5 +100,4 @@ JSON/JSONL จะเก็บรักษาข้อมูลเพิ่มเ
 - [Microsoft: รูปแบบ Compound Binary File (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: รูปแบบ Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [JLECmd โดย Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [โปรเจกต์ทดสอบ/อ้างอิงพาร์เซอร์ JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

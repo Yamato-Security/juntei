@@ -27,21 +27,15 @@
 
 ## 実行およびインベントリのアーティファクト { #execution-and-inventory-artifacts }
 
-- [エリック・ジマーマンの AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [libyal libscca](https://github.com/libyal/libscca) — Prefetch フォーマット/ライブラリ作品。
-- [エリック・ジマーマンの PECmd](https://github.com/EricZimmerman/PECmd)
 - [Mandiant: フォレンジック調査におけるアプリケーション互換性キャッシュの活用](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [エリック・ジマーマンの AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## ユーザーアクティビティのアーティファクト { #user-activity-artifacts }
 
 - [Microsoft オープン仕様: シェルリンク (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft オープン仕様: 複合ファイル バイナリ (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [エリック・ジマーマンのLECmd](https://github.com/EricZimmerman/LECmd)
-- [エリック・ジマーマンの JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [エリック・ジマーマンのスラムECmd](https://github.com/EricZimmerman/Srum)
 - [Microsoft: 拡張ストレージ エンジン](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## レジストリと永続性 { #registry-and-persistence }
@@ -49,7 +43,6 @@
 - [Microsoft: レジストリ値のタイプ](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Maxim Suhanov の Windows レジストリ形式仕様](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) および [libregf](https://github.com/libyal/libregf) — 低レベルのハイブ解析およびリカバリ参照。
-- [Eric Zimmerman のレジストリ エクスプローラー / RECmd ドキュメント](https://ericzimmerman.github.io/)
 - [Microsoft: サービス レジストリ ツリー](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: タスク スケジューラ スキーマ](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK: スケジュールされたタスク/ジョブ](https://attack.mitre.org/techniques/T1053/)

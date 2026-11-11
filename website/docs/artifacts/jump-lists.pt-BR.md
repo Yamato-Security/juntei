@@ -100,5 +100,4 @@ e os campos aninhados de cada LNK incorporado.
 - [Microsoft: formato Compound Binary File (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: formato Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [JLECmd de Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [Projeto de teste/referência de analisador de JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

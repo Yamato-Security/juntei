@@ -30,8 +30,11 @@ Windows 8+ फ़ाइलें भी शामिल हैं। पूर�
   प्रमाण नहीं है कि कोई प्रोग्राम नहीं चला।
 - Loaded-file lists startup dependencies और accesses का वर्णन करती हैं; ये सिद्ध नहीं करतीं कि हर सूचीबद्ध फ़ाइल
   दुर्भावनापूर्ण थी, जानबूझकर खोली गई थी, या पूरी पढ़ी गई थी।
-- Prefetch header में executable का नाम लंबाई-सीमित होता है; जहाँ अद्वितीय रूप से संभव हो, Juntei loaded
-  files से path resolve करता है।
+- Prefetch header में executable का नाम लंबाई-सीमित होता है। Juntei एक ही नाम वाले लोड किए गए पथों
+  को SCCA पथ हैश से अलग करता है। यदि कई उम्मीदवार अलग नहीं हो पाते, तो वह हेडर का नाम बनाए रखता है
+  और PathAmbiguous सेट करता है; लोड की गई फ़ाइलों की सूची उपलब्ध रहती है। जिस अकेले उम्मीदवार का हैश
+  मेल नहीं खाता, उसे बनाए रखा जाता है और PathValidated को false रखा जाता है। Hosting processes
+  command-line डेटा को हैश में शामिल कर सकते हैं, इसलिए असत्यापित पथ अपने-आप गलत नहीं होता।
 - किसी `.pf` स्रोत फ़ाइल के file-system timestamps embedded run times से अलग होते हैं।
 - `Findings` hunting के अवलोकन हैं। Installers और वैध administration अक्सर staging paths का उपयोग करते हैं।
 
@@ -66,6 +69,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Input `.pf`; hosts और duplicate executable नामों में अंतर करने के लिए इसे रखें। |
 | `ExecutableName` | Header में executable का नाम। अधिकांश hunting के लिए case-insensitive; मूल वर्तनी सुरक्षित रखें। |
 | `ExecutablePath` | जहाँ संभव हो, Juntei द्वारा resolve किया गया loaded path। इसकी पुष्टि `Files` और अन्य आर्टिफ़ैक्ट से करें। |
+| `PathValidated` | चुना गया पथ SCCA पथ हैश से मेल खाता है। यह पथ की पहचान की पुष्टि करता है, फ़ाइल की सामग्री या विश्वसनीयता की नहीं। |
+| `PathAmbiguous` | कई लोड किए गए पथ संभावित हैं; `ExecutablePath` में हेडर का नाम रहता है। `Files` और अन्य आर्टिफ़ैक्ट से पुष्टि करें। |
 | `PrefetchHash` | वह hash जिसे Windows `.pf` फ़ाइल नाम में उपयोग करता है; यह cryptographic file-content hash नहीं है। |
 | `FormatVersion` | Prefetch structure version; उपलब्ध fields और timestamp count निर्धारित करता है। |
 | `RunCount` | Windows द्वारा दर्ज संचयी counter। आवृत्ति के लिए उपयोगी, सटीक इतिहास के लिए नहीं। |
@@ -87,6 +92,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | एक रखा गया Prefetch execution समय। |
 | `ExecutableName`, `ExecutablePath` | प्रोग्राम की पहचान/path context। |
+| `PathValidated` | चुना गया पथ SCCA पथ हैश से मेल खाता है। यह पथ की पहचान की पुष्टि करता है, फ़ाइल की सामग्री या विश्वसनीयता की नहीं। |
+| `PathAmbiguous` | कई लोड किए गए पथ संभावित हैं; `ExecutablePath` में हेडर का नाम रहता है। `Files` और अन्य आर्टिफ़ैक्ट से पुष्टि करें। |
 | `PrefetchHash` | एक ही executable नाम साझा करने वाले variants/paths को अलग करता है। |
 | `RunCount` | Prefetch फ़ाइल से counter; हर timeline row पर दोहराया जाता है। |
 | `SourceFile` | सत्यापन के लिए स्रोत `.pf`। |
@@ -108,4 +115,3 @@ JSON/JSONL volumes, directories, loaded files और NTFS file references को
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [Eric Zimmerman का PECmd](https://github.com/EricZimmerman/PECmd)

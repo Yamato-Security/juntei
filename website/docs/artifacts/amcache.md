@@ -129,6 +129,5 @@ Array and raw-value columns in CSV use a `JSON` suffix (for example, `HWID-JSON`
 
 - [Juntei's ys-amcache-parser output schema](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [Eric Zimmerman's AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [Regipy Amcache plugin](https://github.com/mkorman90/regipy)

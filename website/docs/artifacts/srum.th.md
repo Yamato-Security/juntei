@@ -162,7 +162,6 @@ manifest ทั้งสองแสดงพาธของตารางจ�
 ## รายละเอียดเพิ่มเติม { #further-details }
 
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
-- [SrumECmd โดย Eric Zimmerman](https://github.com/EricZimmerman/Srum)
 - [dissect.esedb](https://github.com/fox-it/dissect.esedb)
 - [libyal libesedb](https://github.com/libyal/libesedb)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)

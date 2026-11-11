@@ -30,8 +30,12 @@ dibandingkan.
   bukti bahwa sebuah program tidak berjalan.
 - Daftar berkas yang dimuat mendeskripsikan dependensi dan akses saat startup; daftar ini tidak membuktikan bahwa setiap berkas yang tercantum
   berbahaya, sengaja dibuka, atau dibaca sepenuhnya.
-- Nama executable di header Prefetch memiliki batas panjang; Juntei menentukan path dari berkas
-  yang dimuat bila dapat dipastikan secara unik.
+- Nama executable di header Prefetch memiliki batas panjang. Juntei membedakan jalur termuat yang
+  bernama sama dengan hash jalur SCCA. Jika beberapa kandidat tetap tidak dapat dibedakan, Juntei
+  mempertahankan nama header dan menetapkan PathAmbiguous; daftar berkas yang dimuat tetap tersedia.
+  Satu-satunya kandidat yang hash-nya tidak cocok tetap dipertahankan, dengan PathValidated bernilai
+  false. Proses hosting dapat memasukkan data baris perintah ke dalam hash, sehingga jalur yang
+  tidak tervalidasi belum tentu salah.
 - Timestamp sistem berkas dari berkas sumber `.pf` terpisah dari waktu eksekusi yang tersimpan di dalamnya.
 - `Findings` adalah observasi untuk hunting. Installer dan administrasi yang sah sering menggunakan path staging.
 
@@ -66,6 +70,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | `.pf` input; pertahankan untuk membedakan host dan nama executable yang duplikat. |
 | `ExecutableName` | Nama executable di header. Tidak peka huruf besar/kecil untuk sebagian besar hunting; pertahankan ejaan aslinya. |
 | `ExecutablePath` | Path yang dimuat sebagaimana ditentukan Juntei bila memungkinkan. Konfirmasikan dengan `Files` dan artefak lain. |
+| `PathValidated` | Jalur terpilih cocok dengan hash jalur SCCA. Ini memvalidasi atribusi jalur, bukan isi atau keterpercayaan berkas. |
+| `PathAmbiguous` | Beberapa kandidat jalur belum dapat dibedakan; `ExecutablePath` mempertahankan nama header. Periksa `Files` dan artefak lain. |
 | `PrefetchHash` | Hash yang digunakan Windows dalam nama berkas `.pf`; ini bukan hash kriptografis dari konten berkas. |
 | `FormatVersion` | Versi struktur Prefetch; menentukan field yang tersedia dan jumlah timestamp. |
 | `RunCount` | Penghitung kumulatif yang dicatat Windows. Berguna untuk frekuensi, bukan riwayat yang persis. |
@@ -87,6 +93,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | Satu waktu eksekusi Prefetch yang tersimpan. |
 | `ExecutableName`, `ExecutablePath` | Konteks identitas/path program. |
+| `PathValidated` | Jalur terpilih cocok dengan hash jalur SCCA. Ini memvalidasi atribusi jalur, bukan isi atau keterpercayaan berkas. |
+| `PathAmbiguous` | Beberapa kandidat jalur belum dapat dibedakan; `ExecutablePath` mempertahankan nama header. Periksa `Files` dan artefak lain. |
 | `PrefetchHash` | Memisahkan varian/path yang memiliki nama executable yang sama. |
 | `RunCount` | Penghitung dari berkas Prefetch; diulang pada setiap baris timeline. |
 | `SourceFile` | `.pf` sumber untuk validasi. |
@@ -108,4 +116,3 @@ terstruktur alih-alih sel CSV yang digabung dengan koma.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [PECmd oleh Eric Zimmerman](https://github.com/EricZimmerman/PECmd)

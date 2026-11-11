@@ -31,8 +31,13 @@ Juntei သည် format ဗားရှင်း 17 မှ 31 အထိ (Windows
   မရှိခြင်းသည် ပရိုဂရမ် မ run ခဲ့ကြောင်း သက်သေ မဟုတ်ပါ။
 - Load လုပ်ထားသော ဖိုင်စာရင်းများသည် စတင်မှုဆိုင်ရာ မှီခိုမှုများနှင့် ဝင်ရောက်မှုများကို ဖော်ပြသည်။ ၎င်းတို့သည် ဖော်ပြထားသော
   ဖိုင်တိုင်း အန္တရာယ်ရှိကြောင်း၊ တမင်ဖွင့်ခဲ့ကြောင်း သို့မဟုတ် အပြည့်အဝ ဖတ်ခဲ့ကြောင်း သက်သေမပြပါ။
-- Prefetch header ရှိ executable အမည်သည် အရှည် ကန့်သတ်ထားသည်။ Juntei သည် တစ်ခုတည်းသော path ကို ဆုံးဖြတ်နိုင်သည့်အခါ
-  load လုပ်ထားသော ဖိုင်များမှ path ကို ဖြေရှင်းသည်။
+- Prefetch header ရှိ executable အမည်သည် အရှည် ကန့်သတ်ထားသည်။ Juntei သည် အမည်တူ တင်ထားသော
+  လမ်းကြောင်းများကို SCCA လမ်းကြောင်း hash ဖြင့် ခွဲခြားသည်။ ဖြစ်နိုင်သော လမ်းကြောင်း တစ်ခုထက်ပို၍
+  ခွဲခြား၍ မရလျှင် header အမည်ကို ထားရှိပြီး PathAmbiguous ကို သတ်မှတ်သည်။ တင်ထားသော ဖိုင်စာရင်းကို
+  ဆက်လက် ကြည့်ရှုနိုင်သည်။ hash မကိုက်ညီသော်လည်း ဖြစ်နိုင်သော လမ်းကြောင်း တစ်ခုတည်းသာ ရှိလျှင်
+  ထိုလမ်းကြောင်းကို ထားရှိပြီး PathValidated ကို false အဖြစ် သတ်မှတ်သည်။ Hosting process များသည်
+  command-line ဒေတာကို hash ထဲ ထည့်သွင်းနိုင်သဖြင့် အတည်မပြုရသေးသော လမ်းကြောင်းသည် မှားသည်ဟု
+  အလိုအလျောက် မဆိုနိုင်ပါ။
 - `.pf` source ဖိုင်၏ ဖိုင်စနစ် timestamp များသည် ထည့်သွင်းထားသော run ချိန်များနှင့် သီးခြားဖြစ်သည်။
 - `Findings` သည် hunting လေ့လာတွေ့ရှိချက်များ ဖြစ်သည်။ Installer များနှင့် တရားဝင် စီမံခန့်ခွဲမှုများသည် staging path များကို
   မကြာခဏ အသုံးပြုကြသည်။
@@ -68,6 +73,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Input `.pf`။ Host များနှင့် ထပ်နေသော executable အမည်များကို ခွဲခြားရန် ၎င်းကို ထိန်းသိမ်းထားပါ။ |
 | `ExecutableName` | Header ရှိ executable အမည်။ Hunting အများစုအတွက် စာလုံးအကြီးအသေး မခွဲခြားပါ။ မူရင်းစာလုံးပေါင်းကို ထိန်းသိမ်းထားပါ။ |
 | `ExecutablePath` | ဖြစ်နိုင်သည့်အခါ Juntei က ဖြေရှင်းထားသော load လုပ်ထားသည့် path။ ၎င်းကို `Files` နှင့် အခြားအထောက်အထားများနှင့် အတည်ပြုပါ။ |
+| `PathValidated` | ရွေးထားသော လမ်းကြောင်းသည် SCCA လမ်းကြောင်း hash နှင့် ကိုက်ညီသည်။ ဖိုင်အကြောင်းအရာ သို့မဟုတ် ယုံကြည်ရမှုကို အတည်ပြုခြင်း မဟုတ်ပါ။ |
+| `PathAmbiguous` | တင်ထားသော လမ်းကြောင်းတစ်ခုထက်ပို၍ ဖြစ်နိုင်သေးသောကြောင့် `ExecutablePath` တွင် header အမည်ကို ထားရှိသည်။ `Files` နှင့် အခြားအထောက်အထားများကို စစ်ဆေးပါ။ |
 | `PrefetchHash` | Windows က `.pf` ဖိုင်အမည်တွင် အသုံးပြုသော hash။ Cryptographic ဖိုင်အကြောင်းအရာ hash မဟုတ်ပါ။ |
 | `FormatVersion` | Prefetch ဖွဲ့စည်းပုံ ဗားရှင်း။ ရရှိနိုင်သော field များနှင့် timestamp အရေအတွက်ကို ဆုံးဖြတ်သည်။ |
 | `RunCount` | Windows က မှတ်တမ်းတင်ထားသော စုစုပေါင်း counter။ အကြိမ်ရေအတွက် အသုံးဝင်ပြီး မှတ်တမ်းအတိအကျ မဟုတ်ပါ။ |
@@ -89,6 +96,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | ထိန်းသိမ်းထားသော Prefetch execution အချိန် တစ်ခု။ |
 | `ExecutableName`, `ExecutablePath` | ပရိုဂရမ်၏ ကိုယ်ပိုင်အမှတ်အသား/path အခြေအနေ။ |
+| `PathValidated` | ရွေးထားသော လမ်းကြောင်းသည် SCCA လမ်းကြောင်း hash နှင့် ကိုက်ညီသည်။ ဖိုင်အကြောင်းအရာ သို့မဟုတ် ယုံကြည်ရမှုကို အတည်ပြုခြင်း မဟုတ်ပါ။ |
+| `PathAmbiguous` | တင်ထားသော လမ်းကြောင်းတစ်ခုထက်ပို၍ ဖြစ်နိုင်သေးသောကြောင့် `ExecutablePath` တွင် header အမည်ကို ထားရှိသည်။ `Files` နှင့် အခြားအထောက်အထားများကို စစ်ဆေးပါ။ |
 | `PrefetchHash` | Executable အမည်တူသော မူကွဲ/path များကို ခွဲခြားပေးသည်။ |
 | `RunCount` | Prefetch ဖိုင်မှ counter။ Timeline row တစ်ခုစီတွင် ထပ်ခါထပ်ခါ ပါဝင်သည်။ |
 | `SourceFile` | အတည်ပြုရန်အတွက် source `.pf`။ |
@@ -112,4 +121,3 @@ JSON/JSONL သည် volume များ၊ directory များ၊ load လ�
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [Eric Zimmerman ၏ PECmd](https://github.com/EricZimmerman/PECmd)

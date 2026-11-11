@@ -83,5 +83,4 @@ JSON/JSONL は、DestList ヘッダー、エントリごとのスコア/チェ�
 - [Microsoft: 複合バイナリ ファイル形式 (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: シェルリンク形式 (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-ジャンプリスト-パーサー](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [エリック・ジマーマンの JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [JumpList パーサー テスト/リファレンス プロジェクト](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

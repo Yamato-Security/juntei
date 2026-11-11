@@ -123,6 +123,5 @@ CSV 中的陣列與原始值欄位使用 `JSON` 後綴（例如 `HWID-JSON` 與
 
 - [Juntei 的 ys-amcache-parser 輸出結構描述](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [Eric Zimmerman 的 AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin 的 amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [Regipy Amcache 外掛程式](https://github.com/mkorman90/regipy)

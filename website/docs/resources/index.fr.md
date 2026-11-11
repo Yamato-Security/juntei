@@ -28,21 +28,15 @@ des artefacts. Les sections **Plus de détails** de chaque artefact contiennent 
 
 ## Artefacts d'exécution et d'inventaire { #execution-and-inventory-artifacts }
 
-- [AmcacheParser d'Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [amcache-forensic de Security Ronin](https://github.com/SecurityRonin/amcache-forensic)
 - [libscca de libyal](https://github.com/libyal/libscca) — travaux sur le format et la bibliothèque Prefetch.
-- [PECmd d'Eric Zimmerman](https://github.com/EricZimmerman/PECmd)
 - [Mandiant : Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [AppCompatCacheParser d'Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## Artefacts d'activité des utilisateurs { #user-activity-artifacts }
 
 - [Microsoft Open Specifications : Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft Open Specifications : Compound File Binary (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [LECmd d'Eric Zimmerman](https://github.com/EricZimmerman/LECmd)
-- [JLECmd d'Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [SrumECmd d'Eric Zimmerman](https://github.com/EricZimmerman/Srum)
 - [Microsoft : Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## Registre et persistance { #registry-and-persistence }
@@ -50,7 +44,6 @@ des artefacts. Les sections **Plus de détails** de chaque artefact contiennent 
 - [Microsoft : types de valeurs du Registre](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Spécification du format du Registre Windows de Maxim Suhanov](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) et [libregf](https://github.com/libyal/libregf) — références pour l'analyse de bas niveau et la récupération des ruches.
-- [Documentation de Registry Explorer / RECmd d'Eric Zimmerman](https://ericzimmerman.github.io/)
 - [Microsoft : arborescence du Registre des services](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft : schéma du Planificateur de tâches](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK : Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

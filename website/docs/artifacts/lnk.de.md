@@ -99,4 +99,3 @@ Die Ziel-FILETIMEs im LNK-Header und die Tracker-Zeiten bleiben umrechenbare abs
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [LECmd von Eric Zimmerman](https://github.com/EricZimmerman/LECmd)

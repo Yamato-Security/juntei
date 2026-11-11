@@ -30,8 +30,11 @@ be compared.
   proof a program did not run.
 - Loaded-file lists describe startup dependencies and accesses; they do not prove every listed file
   was malicious, deliberately opened, or fully read.
-- The executable name in a Prefetch header is length-limited; Juntei resolves a path from loaded
-  files when uniquely possible.
+- The executable name in a Prefetch header is length-limited. Juntei uses the SCCA path hash to
+  distinguish same-named loaded paths. If several candidates remain unresolved, it retains the
+  header name and sets PathAmbiguous; the loaded-file list remains available. A unique candidate
+  without a matching hash is retained with PathValidated set to false. Hosting processes can
+  incorporate command-line data into the hash, so an unvalidated path is not automatically wrong.
 - A `.pf` source file's file-system timestamps are separate from the embedded run times.
 - `Findings` are hunting observations. Installers and legitimate administration often use staging paths.
 
@@ -66,6 +69,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Input `.pf`; retain it to distinguish hosts and duplicate executable names. |
 | `ExecutableName` | Header executable name. Case-insensitive for most hunting; preserve original spelling. |
 | `ExecutablePath` | Juntei's resolved loaded path when possible. Confirm it against `Files` and other artifacts. |
+| `PathValidated` | The selected path reproduces the SCCA path hash. This validates path attribution, not file contents or trust. |
+| `PathAmbiguous` | More than one loaded candidate remains unresolved; `ExecutablePath` retains the header name. Inspect `Files` and corroborate with other artifacts. |
 | `PrefetchHash` | Hash Windows uses in the `.pf` file name; it is not a cryptographic file-content hash. |
 | `FormatVersion` | Prefetch structure version; determines available fields and timestamp count. |
 | `RunCount` | Cumulative counter recorded by Windows. Useful for frequency, not exact history. |
@@ -87,6 +92,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | One retained Prefetch execution time. |
 | `ExecutableName`, `ExecutablePath` | Program identity/path context. |
+| `PathValidated` | The selected path reproduces the SCCA path hash. This validates path attribution, not file contents or trust. |
+| `PathAmbiguous` | More than one loaded candidate remains unresolved; `ExecutablePath` retains the header name. Inspect `Files` and corroborate with other artifacts. |
 | `PrefetchHash` | Separates variants/paths that share an executable name. |
 | `RunCount` | Counter from the Prefetch file; it is repeated on each timeline row. |
 | `SourceFile` | Source `.pf` for validation. |
@@ -108,4 +115,3 @@ arrays instead of comma-joined CSV cells.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [Eric Zimmerman's PECmd](https://github.com/EricZimmerman/PECmd)

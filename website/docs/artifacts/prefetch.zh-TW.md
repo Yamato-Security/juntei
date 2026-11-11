@@ -27,7 +27,7 @@ Juntei 支援格式版本 17 至 31（Windows XP 至 Windows 11），包括 Wind
 - 在某些系統／角色上，Prefetch 可能被停用、清除、排除或無法使用。不存在並不能證明程式未曾執行。
 - 已載入檔案清單描述的是啟動時的相依性與存取；並不能證明所列出的每個檔案都是惡意的、
   被刻意開啟的，或被完整讀取的。
-- Prefetch 標頭中的執行檔名稱有長度限制；在可唯一判定時，Juntei 會從已載入的檔案解析出路徑。
+- Prefetch 標頭中的執行檔名稱有長度限制。Juntei 會使用 SCCA 路徑雜湊來區分同名的已載入路徑。若仍有多個候選路徑無法區分，則保留標頭名稱並設定 PathAmbiguous；已載入檔案清單仍可供查閱。若只有一個候選路徑但雜湊不符，仍會保留該路徑，並將 PathValidated 設為 false。代管處理程序可能會將命令列資料納入雜湊計算，因此未經驗證的路徑不一定是錯的。
 - `.pf` 來源檔案的檔案系統時間戳記與內嵌的執行時間是分開的。
 - `Findings` 是威脅獵捕的觀察結果。安裝程式與合法的系統管理作業也經常使用資料整備路徑。
 
@@ -62,6 +62,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | 輸入的 `.pf`；請保留它以區分主機與重複的執行檔名稱。 |
 | `ExecutableName` | 標頭中的執行檔名稱。大多數獵捕作業可不區分大小寫；但請保留原始拼寫。 |
 | `ExecutablePath` | 在可行時，Juntei 解析出的載入路徑。請以 `Files` 與其他跡證加以確認。 |
+| `PathValidated` | 所選路徑符合 SCCA 路徑雜湊；這僅確認路徑歸屬，不代表檔案內容或可信度。 |
+| `PathAmbiguous` | 多個載入候選路徑無法區分；`ExecutablePath` 保留標頭名稱。請檢查 `Files` 並以其他證據佐證。 |
 | `PrefetchHash` | Windows 用於 `.pf` 檔案名稱的雜湊；並非以密碼學方式計算的檔案內容雜湊。 |
 | `FormatVersion` | Prefetch 結構版本；決定可用的欄位與時間戳記數量。 |
 | `RunCount` | Windows 記錄的累計計數器。可用於判斷頻率，而非確切的歷程。 |
@@ -83,6 +85,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | 一個所保留的 Prefetch 執行時間。 |
 | `ExecutableName`、`ExecutablePath` | 程式身分／路徑脈絡。 |
+| `PathValidated` | 所選路徑符合 SCCA 路徑雜湊；這僅確認路徑歸屬，不代表檔案內容或可信度。 |
+| `PathAmbiguous` | 多個載入候選路徑無法區分；`ExecutablePath` 保留標頭名稱。請檢查 `Files` 並以其他證據佐證。 |
 | `PrefetchHash` | 區分共用相同執行檔名稱的變體／路徑。 |
 | `RunCount` | 來自 Prefetch 檔案的計數器；會在每一列時間軸中重複出現。 |
 | `SourceFile` | 用於驗證的來源 `.pf`。 |
@@ -103,4 +107,3 @@ JSON/JSONL 會以結構化陣列保留磁碟區、目錄、已載入檔案與 NT
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [Eric Zimmerman 的 PECmd](https://github.com/EricZimmerman/PECmd)

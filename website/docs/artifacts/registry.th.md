@@ -130,5 +130,4 @@ juntei parse-registry read -f SOFTWARE --raw-data -o software.jsonl -t jsonl
 - [ข้อกำหนดรูปแบบรีจิสทรีโดย Maxim Suhanov](https://github.com/msuhanov/regf)
 - [พาร์เซอร์รีจิสทรี yarp](https://github.com/msuhanov/yarp)
 - [libyal libregf](https://github.com/libyal/libregf)
-- [Registry โดย Eric Zimmerman](https://github.com/EricZimmerman/Registry)
 - [Microsoft: ชนิดของค่าในรีจิสทรี](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)

@@ -28,21 +28,15 @@ artefak. Bagian **Detail lebih lanjut** pada setiap artefak berisi tautan tingka
 
 ## Artefak eksekusi dan inventaris { #execution-and-inventory-artifacts }
 
-- [AmcacheParser oleh Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [libyal libscca](https://github.com/libyal/libscca) — kajian format/pustaka Prefetch.
-- [PECmd oleh Eric Zimmerman](https://github.com/EricZimmerman/PECmd)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [AppCompatCacheParser oleh Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## Artefak aktivitas pengguna { #user-activity-artifacts }
 
 - [Microsoft Open Specifications: Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft Open Specifications: Compound File Binary (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [LECmd oleh Eric Zimmerman](https://github.com/EricZimmerman/LECmd)
-- [JLECmd oleh Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [SrumECmd oleh Eric Zimmerman](https://github.com/EricZimmerman/Srum)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## Registry dan persistensi { #registry-and-persistence }
@@ -50,7 +44,6 @@ artefak. Bagian **Detail lebih lanjut** pada setiap artefak berisi tautan tingka
 - [Microsoft: Tipe nilai registry](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Spesifikasi format registry Windows oleh Maxim Suhanov](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) dan [libregf](https://github.com/libyal/libregf) — referensi penguraian dan pemulihan hive tingkat rendah.
-- [Dokumentasi Registry Explorer / RECmd oleh Eric Zimmerman](https://ericzimmerman.github.io/)
 - [Microsoft: Pohon registry Services](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: Skema Task Scheduler](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK: Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

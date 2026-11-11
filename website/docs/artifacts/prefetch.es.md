@@ -30,8 +30,12 @@ contiguos.
   demuestra que un programa no se ejecutara.
 - Las listas de archivos cargados describen las dependencias y los accesos durante el inicio; no demuestran que todos los archivos enumerados
   fueran maliciosos, se abrieran deliberadamente o se leyeran por completo.
-- El nombre del ejecutable en el encabezado de Prefetch tiene una longitud limitada; Juntei resuelve una ruta a partir de los archivos
-  cargados cuando es posible hacerlo de forma unívoca.
+- El nombre del ejecutable en el encabezado de Prefetch tiene una longitud limitada. Juntei
+  distingue las rutas cargadas con el mismo nombre mediante el hash de ruta SCCA. Si varios
+  candidatos siguen sin resolverse, conserva el nombre del encabezado y marca PathAmbiguous; la
+  lista de archivos cargados sigue disponible. Un único candidato cuyo hash no coincide se conserva
+  con PathValidated en false. Los procesos anfitriones pueden incluir datos de la línea de comandos
+  en el hash, por lo que una ruta no validada no es necesariamente incorrecta.
 - Las marcas de tiempo del sistema de archivos de un archivo de origen `.pf` son independientes de las horas de ejecución incrustadas.
 - Los `Findings` son observaciones para la búsqueda de amenazas. Los instaladores y la administración legítima suelen utilizar rutas de preparación.
 
@@ -66,6 +70,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | `.pf` de entrada; consérvelo para distinguir hosts y nombres de ejecutable duplicados. |
 | `ExecutableName` | Nombre del ejecutable en el encabezado. No distingue mayúsculas de minúsculas en la mayoría de las búsquedas; conserve la grafía original. |
 | `ExecutablePath` | Ruta cargada resuelta por Juntei cuando es posible. Confírmela con `Files` y con otros artefactos. |
+| `PathValidated` | La ruta seleccionada reproduce el hash de ruta SCCA. Valida la atribución de ruta, no el contenido ni la confianza del archivo. |
+| `PathAmbiguous` | Quedan varios candidatos cargados sin resolver; `ExecutablePath` conserva el nombre de la cabecera. Revise `Files` y otros artefactos. |
 | `PrefetchHash` | Hash que Windows utiliza en el nombre del archivo `.pf`; no es un hash criptográfico del contenido del archivo. |
 | `FormatVersion` | Versión de la estructura de Prefetch; determina los campos disponibles y el número de marcas de tiempo. |
 | `RunCount` | Contador acumulado registrado por Windows. Útil para la frecuencia, no para el historial exacto. |
@@ -87,6 +93,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | Una hora de ejecución conservada en Prefetch. |
 | `ExecutableName`, `ExecutablePath` | Identidad del programa y contexto de la ruta. |
+| `PathValidated` | La ruta seleccionada reproduce el hash de ruta SCCA. Valida la atribución de ruta, no el contenido ni la confianza del archivo. |
+| `PathAmbiguous` | Quedan varios candidatos cargados sin resolver; `ExecutablePath` conserva el nombre de la cabecera. Revise `Files` y otros artefactos. |
 | `PrefetchHash` | Separa variantes o rutas que comparten un nombre de ejecutable. |
 | `RunCount` | Contador del archivo Prefetch; se repite en cada fila de la línea de tiempo. |
 | `SourceFile` | `.pf` de origen para la validación. |
@@ -108,4 +116,3 @@ estructuradas, en lugar de celdas CSV unidas por comas.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [PECmd de Eric Zimmerman](https://github.com/EricZimmerman/PECmd)

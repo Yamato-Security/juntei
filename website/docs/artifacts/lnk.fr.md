@@ -99,4 +99,3 @@ Les FILETIME de la cible et les horodatages du tracker figurant dans l'en-tête 
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [LECmd d'Eric Zimmerman](https://github.com/EricZimmerman/LECmd)

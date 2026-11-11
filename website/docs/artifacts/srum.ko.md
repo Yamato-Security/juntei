@@ -160,7 +160,6 @@ SRUM은 카탈로그 기반이며 Windows가 공급자 열을 추가하기 때�
 ## 추가 정보 { #further-details }
 
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
-- [Eric Zimmerman의 SrumECmd](https://github.com/EricZimmerman/Srum)
 - [dissect.esedb](https://github.com/fox-it/dissect.esedb)
 - [libyal libesedb](https://github.com/libyal/libesedb)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)

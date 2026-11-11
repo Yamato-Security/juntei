@@ -194,6 +194,9 @@ pub fn run(opts: &PrefetchOptions) -> i32 {
 struct Parsed {
     source: String,
     pf: PrefetchFile,
+    executable_path: String,
+    path_validated: bool,
+    path_ambiguous: bool,
     findings: Vec<Finding>,
 }
 
@@ -213,10 +216,18 @@ fn parse_file(path: &Path) -> Result<Parsed, String> {
     for metric in &mut pf.metrics {
         metric.traces = Vec::new();
     }
-    let findings = findings(&pf);
+    // Resolve once: a timeline repeats this path for up to eight executions.
+    let resolved = pf.executable_path_info();
+    let executable_path = resolved.path.to_string();
+    let path_validated = resolved.hash_validated;
+    let path_ambiguous = resolved.ambiguous;
+    let findings = findings(&pf, &executable_path);
     Ok(Parsed {
         source: path.to_string_lossy().to_string(),
         pf,
+        executable_path,
+        path_validated,
+        path_ambiguous,
         findings,
     })
 }
@@ -231,9 +242,8 @@ struct Finding {
 }
 
 /// prefetch-forensic's two high-precision checks on the executable's own path.
-fn findings(pf: &PrefetchFile) -> Vec<Finding> {
+fn findings(pf: &PrefetchFile, path: &str) -> Vec<Finding> {
     let mut out = Vec::new();
-    let path = pf.executable_path();
     if path == pf.name {
         // the path of the executable is not among the loaded files
         return out;
@@ -317,6 +327,8 @@ const CSV_HEADER: &[&str] = &[
     "Findings",
     "Files",
     "Directories",
+    "PathValidated",
+    "PathAmbiguous",
 ];
 
 const TIMELINE_CSV_HEADER: &[&str] = &[
@@ -326,6 +338,8 @@ const TIMELINE_CSV_HEADER: &[&str] = &[
     "PrefetchHash",
     "RunCount",
     "SourceFile",
+    "PathValidated",
+    "PathAmbiguous",
 ];
 
 /// One CSV row per prefetch file, in the order of [`CSV_HEADER`]. Lists are joined with `, `.
@@ -342,7 +356,7 @@ fn csv_row(r: &Parsed) -> Vec<String> {
     let mut row = vec![
         r.source.clone(),
         pf.name.clone(),
-        pf.executable_path().to_string(),
+        r.executable_path.clone(),
         format!("{:08X}", pf.hash),
         pf.version.to_string(),
         pf.run_count.to_string(),
@@ -368,6 +382,8 @@ fn csv_row(r: &Parsed) -> Vec<String> {
         join(r.findings.iter().map(|f| f.code.to_string()).collect()),
         join(pf.metrics.iter().map(|m| m.file.clone()).collect()),
         join(directories),
+        r.path_validated.to_string(),
+        r.path_ambiguous.to_string(),
     ]);
     row
 }
@@ -379,7 +395,9 @@ fn json_record(r: &Parsed) -> Value {
     json!({
         "source_file": r.source,
         "executable_name": pf.name,
-        "executable_path": pf.executable_path(),
+        "executable_path": r.executable_path,
+        "path_validated": r.path_validated,
+        "path_ambiguous": r.path_ambiguous,
         "prefetch_hash": format!("{:08X}", pf.hash),
         "format_version": pf.version,
         "windows_version": windows_version(pf.version),
@@ -424,10 +442,12 @@ fn timeline_csv_row(time: u64, r: &Parsed) -> Vec<String> {
     vec![
         filetime(time),
         r.pf.name.clone(),
-        r.pf.executable_path().to_string(),
+        r.executable_path.clone(),
         format!("{:08X}", r.pf.hash),
         r.pf.run_count.to_string(),
         r.source.clone(),
+        r.path_validated.to_string(),
+        r.path_ambiguous.to_string(),
     ]
 }
 
@@ -435,7 +455,9 @@ fn timeline_json_record(time: u64, r: &Parsed) -> Value {
     json!({
         "run_time": filetime(time),
         "executable_name": r.pf.name,
-        "executable_path": r.pf.executable_path(),
+        "executable_path": r.executable_path,
+        "path_validated": r.path_validated,
+        "path_ambiguous": r.path_ambiguous,
         "prefetch_hash": format!("{:08X}", r.pf.hash),
         "run_count": r.pf.run_count,
         "source_file": r.source,

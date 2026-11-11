@@ -161,7 +161,6 @@ und den dekodierten Programm-/SID-/Objekttext, auf den die Provider-Zeilen verwe
 ## Weitere Informationen { #further-details }
 
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
-- [SrumECmd von Eric Zimmerman](https://github.com/EricZimmerman/Srum)
 - [dissect.esedb](https://github.com/fox-it/dissect.esedb)
 - [libyal libesedb](https://github.com/libyal/libesedb)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)

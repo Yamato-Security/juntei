@@ -99,7 +99,6 @@ JSON/JSONL ayrıca girdi verilerini, etiketleri, paketlenmiş uygulama alt kayı
 ## Daha fazla ayrıntı { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [Eric Zimmerman'ın AppCompatCacheParser aracı](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Maxim Suhanov'un Windows kayıt defteri biçim belirtimi](https://github.com/msuhanov/regf)

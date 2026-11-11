@@ -97,4 +97,3 @@ juntei parse-registry sam -d evidence/ -t jsonl \
 - [Microsoft Open Specifications：SAM Remote Protocol](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-samr/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
 - [dissect.target SAM 外掛程式](https://docs.dissect.tools/en/latest/projects/dissect.target/plugins/os/windows/sam.html)
-- [Eric Zimmerman 的 Registry Explorer](https://ericzimmerman.github.io/#!index.md)

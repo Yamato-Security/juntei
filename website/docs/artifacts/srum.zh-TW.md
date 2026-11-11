@@ -160,7 +160,6 @@ Juntei 的 PascalCase 欄位標籤**。下列欄位是穩定／共通的輸出�
 ## 延伸資訊 { #further-details }
 
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
-- [Eric Zimmerman 的 SrumECmd](https://github.com/EricZimmerman/Srum)
 - [dissect.esedb](https://github.com/fox-it/dissect.esedb)
 - [libyal libesedb](https://github.com/libyal/libesedb)
 - [Microsoft：Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)

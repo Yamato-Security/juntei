@@ -99,7 +99,6 @@ JSON／JSONL 另外會保留項目資料、標籤、封裝應用程式的子記�
 ## 延伸資訊 { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [Eric Zimmerman 的 AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [Security Ronin 的 shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant：在鑑識調查中運用應用程式相容性快取](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Maxim Suhanov 的 Windows 登錄格式規格](https://github.com/msuhanov/regf)
