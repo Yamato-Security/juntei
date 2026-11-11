@@ -62,6 +62,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | 輸入的 `.pf`；請保留它以區分主機與重複的執行檔名稱。 |
 | `ExecutableName` | 標頭中的執行檔名稱。大多數獵捕作業可不區分大小寫；但請保留原始拼寫。 |
 | `ExecutablePath` | 在可行時，Juntei 解析出的載入路徑。請以 `Files` 與其他跡證加以確認。 |
+| `PathValidated` | 所選路徑符合 SCCA 路徑雜湊；這僅確認路徑歸屬，不代表檔案內容或可信度。 |
+| `PathAmbiguous` | 多個載入候選路徑無法區分；`ExecutablePath` 保留標頭名稱。請檢查 `Files` 並以其他證據佐證。 |
 | `PrefetchHash` | Windows 用於 `.pf` 檔案名稱的雜湊；並非以密碼學方式計算的檔案內容雜湊。 |
 | `FormatVersion` | Prefetch 結構版本；決定可用的欄位與時間戳記數量。 |
 | `RunCount` | Windows 記錄的累計計數器。可用於判斷頻率，而非確切的歷程。 |
@@ -83,6 +85,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | 一個所保留的 Prefetch 執行時間。 |
 | `ExecutableName`、`ExecutablePath` | 程式身分／路徑脈絡。 |
+| `PathValidated` | 所選路徑符合 SCCA 路徑雜湊；這僅確認路徑歸屬，不代表檔案內容或可信度。 |
+| `PathAmbiguous` | 多個載入候選路徑無法區分；`ExecutablePath` 保留標頭名稱。請檢查 `Files` 並以其他證據佐證。 |
 | `PrefetchHash` | 區分共用相同執行檔名稱的變體／路徑。 |
 | `RunCount` | 來自 Prefetch 檔案的計數器；會在每一列時間軸中重複出現。 |
 | `SourceFile` | 用於驗證的來源 `.pf`。 |

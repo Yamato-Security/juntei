@@ -66,6 +66,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `SourceFile` | Input `.pf`; hosts और duplicate executable नामों में अंतर करने के लिए इसे रखें। |
 | `ExecutableName` | Header में executable का नाम। अधिकांश hunting के लिए case-insensitive; मूल वर्तनी सुरक्षित रखें। |
 | `ExecutablePath` | जहाँ संभव हो, Juntei द्वारा resolve किया गया loaded path। इसकी पुष्टि `Files` और अन्य आर्टिफ़ैक्ट से करें। |
+| `PathValidated` | चुना गया पथ SCCA पथ हैश से मेल खाता है। यह पथ की पहचान की पुष्टि करता है, फ़ाइल की सामग्री या विश्वसनीयता की नहीं। |
+| `PathAmbiguous` | कई लोड किए गए पथ संभावित हैं; `ExecutablePath` में हेडर का नाम रहता है। `Files` और अन्य आर्टिफ़ैक्ट से पुष्टि करें। |
 | `PrefetchHash` | वह hash जिसे Windows `.pf` फ़ाइल नाम में उपयोग करता है; यह cryptographic file-content hash नहीं है। |
 | `FormatVersion` | Prefetch structure version; उपलब्ध fields और timestamp count निर्धारित करता है। |
 | `RunCount` | Windows द्वारा दर्ज संचयी counter। आवृत्ति के लिए उपयोगी, सटीक इतिहास के लिए नहीं। |
@@ -87,6 +89,8 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 |---|---|
 | `RunTime` | एक रखा गया Prefetch execution समय। |
 | `ExecutableName`, `ExecutablePath` | प्रोग्राम की पहचान/path context। |
+| `PathValidated` | चुना गया पथ SCCA पथ हैश से मेल खाता है। यह पथ की पहचान की पुष्टि करता है, फ़ाइल की सामग्री या विश्वसनीयता की नहीं। |
+| `PathAmbiguous` | कई लोड किए गए पथ संभावित हैं; `ExecutablePath` में हेडर का नाम रहता है। `Files` और अन्य आर्टिफ़ैक्ट से पुष्टि करें। |
 | `PrefetchHash` | एक ही executable नाम साझा करने वाले variants/paths को अलग करता है। |
 | `RunCount` | Prefetch फ़ाइल से counter; हर timeline row पर दोहराया जाता है। |
 | `SourceFile` | सत्यापन के लिए स्रोत `.pf`। |

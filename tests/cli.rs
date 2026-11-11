@@ -3282,7 +3282,9 @@ fn prefetch_timeline_is_one_record_per_execution_sorted_by_time() {
             "ExecutablePath",
             "PrefetchHash",
             "RunCount",
-            "SourceFile"
+            "SourceFile",
+            "PathValidated",
+            "PathAmbiguous"
         ]
     );
     let times: Vec<String> = csv.records().map(|r| r.unwrap()[0].to_string()).collect();
@@ -21094,5 +21096,56 @@ fn srum_protects_software_logs_from_output_replacement() {
         ]);
         assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
         assert_eq!(std::fs::read(&log).unwrap(), original);
+    }
+}
+
+#[test]
+fn prefetch_hash_validation_is_explicit_in_csv_json_and_execution_timelines() {
+    for timeline in [false, true] {
+        for format in ["csv", "json", "jsonl"] {
+            let mut args = vec![
+                "parse-file",
+                "prefetch",
+                "-f",
+                "test_files/prefetch/CMD.EXE-6D6290C5.pf",
+                "-t",
+                format,
+                "-K",
+                "-q",
+            ];
+            if timeline {
+                args.push("-T");
+            }
+            let result = run(&args);
+            assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+            if format == "csv" {
+                let mut reader = csv::Reader::from_reader(result.stdout.as_bytes());
+                let headers = reader.headers().unwrap().clone();
+                let valid = headers.iter().position(|x| x == "PathValidated").unwrap();
+                let ambiguous = headers.iter().position(|x| x == "PathAmbiguous").unwrap();
+                let rows: Vec<_> = reader.records().map(Result::unwrap).collect();
+                assert!(!rows.is_empty());
+                for row in rows {
+                    assert_eq!(&row[valid], "true");
+                    assert_eq!(&row[ambiguous], "false");
+                }
+            } else {
+                let values: Vec<Value> = serde_json::Deserializer::from_str(&result.stdout)
+                    .into_iter()
+                    .map(Result::unwrap)
+                    .collect();
+                assert!(!values.is_empty());
+                for value in values {
+                    assert_eq!(value["PathValidated"], true);
+                    assert_eq!(value["PathAmbiguous"], false);
+                    assert!(
+                        value["ExecutablePath"]
+                            .as_str()
+                            .unwrap()
+                            .ends_with(r"\WINDOWS\SYSWOW64\CMD.EXE")
+                    );
+                }
+            }
+        }
     }
 }

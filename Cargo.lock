@@ -2509,7 +2509,7 @@ dependencies = [
 [[package]]
 name = "ys-lnk-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-lnk-parser#faf27e1c5b72557929997d34667680f8d20c4466"
+source = "git+https://github.com/Yamato-Security/ys-lnk-parser#cc25a7df6e8d190ffd9378d370a911d12e05d021"
 dependencies = [
  "codepage",
  "encoding_rs",
@@ -2623,7 +2623,7 @@ dependencies = [
 [[package]]
 name = "ys-prefetch-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-prefetch-parser#0b831d64fe7ba78f8908326350fe1ebb19e6c132"
+source = "git+https://github.com/Yamato-Security/ys-prefetch-parser#437fd8d60e9f711f037f309053eef397e2214af2"
 dependencies = [
  "crc32fast",
  "forensic-rs",
