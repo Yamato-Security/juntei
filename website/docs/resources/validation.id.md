@@ -167,6 +167,20 @@ publik, seluruh 13.057 sel perbandingan bersama—termasuk timestamp hingga 100 
 parser referensi. Enam berkas yang ditolak parser referensi (custom list kosong, footer yang hilang, atau berkas
 yang bukan Jump List) didekode atau dilaporkan secara eksplisit oleh Juntei.
 
+## Keranjang Sampah (Recycle Bin) { #recycle-bin }
+
+`parse-file recycle-bin` adalah parser milik Juntei sendiri. Pada sampel publik
+[rifiuti2](https://github.com/abelcheung/rifiuti2), setiap record yang dibaca rifiuti2 memiliki indeks,
+waktu penghapusan (hingga detik, sebagaimana ditampilkan rifiuti2), status keluar dari Recycle Bin,
+ukuran, dan path yang sama: 92 record, 67 di sebelas berkas INFO2 dari Windows 95 hingga Server 2003 dan
+25 di tiga folder berisi berkas `$I` Windows Vista dan Windows 10. Path ANSI INFO2 cocok pada code page
+yang digunakan pengujian rifiuti2 sendiri. Juntei juga membaca apa yang ditolak rifiuti2: folder yang
+mencampur kedua versi `$I`, header `$I` tanpa path, dan record yang terpotong, masing-masing dengan
+kerusakan yang dilaporkan. Berkas `$I` dan INFO2 dari data uji Plaso menghasilkan waktu, ukuran, path,
+indeks, dan drive yang diharapkan pengujian Plaso. Pada image disk publik M57-Jean dari Digital Corpora
+(Windows XP), yang dibaca dengan `auto-parse --e01`, record INFO2 cocok dengan rifiuti2, dan berkas di
+Recycle Bin di sebelahnya, `Dc1.jpg`, memiliki nama yang diberikan Juntei.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) adalah fork yang dikelola

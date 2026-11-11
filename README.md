@@ -23,7 +23,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
-Juntei currently supports 42 of the most popular Windows forensic artifacts and we continue to add more.
+Juntei currently supports 43 of the most popular Windows forensic artifacts and we continue to add more.
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
@@ -79,6 +79,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Boot sector** (`$Boot`) — Volume serial number (the one LNK and Prefetch files record), geometry, `$MFT` location, and a boot code hash to compare across hosts. | NTFS |
 | **Amcache** (`Amcache.hve`) — Inventory of executable paths, hashes, publisher metadata, and devices; an entry alone does not prove execution. | Registry |
 | **ShimCache / AppCompatCache** (`SYSTEM` hive) — Cached application paths, timestamps, and compatibility flags; an entry alone does not prove execution. | Registry |
+| **Recycle Bin** (`$I` files, `INFO2`) — The files and folders users deleted to the Recycle Bin: original path, size, deletion time and user, whether the deleted content is still in the bin, and on Windows XP and earlier, items since restored or purged. | File |
 
 ### File and Folder Opening
 

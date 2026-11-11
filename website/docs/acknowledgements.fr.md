@@ -60,6 +60,8 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
   des comportements de référence orientés collecte pour plusieurs artefacts.
 - **Hindsight** d'Obsidian Forensics et les définitions **SQLiteHunter** de Velocidex ont servi de références pour
   l'historique, les téléchargements, les cookies et l'historique des formulaires des navigateurs.
+- **rifiuti2** d'Abel Cheung a servi de référence pour les fichiers `$I` et INFO2 de la Corbeille, avec la
+  documentation **dtformats** de libyal sur ces deux formats.
 
 ## Spécifications et recherches { #specifications-and-research }
 
@@ -72,7 +74,7 @@ ces artefacts compréhensibles pour les praticiens.
 
 Les preuves publiques du
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) d'Andrew Rathbun, de NIST CFReDS, de Plaso,
-de Regipy, d'Artemis, des dépôts de test de parseurs et d'autres collections dûment licenciées permettent d'effectuer des tests
+de rifiuti2, de Regipy, d'Artemis, des dépôts de test de parseurs et d'autres collections dûment licenciées permettent d'effectuer des tests
 de non-régression sur de véritables données Windows. Juntei conserve les notes d'attribution et de licence à côté des fichiers
 de test inclus.
 

@@ -11,6 +11,7 @@ but the investigator must still interpret what each source means.
 | Did this executable run? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event logs |
 | Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
 | When was a file created, renamed, or deleted? | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender quarantine |
+| What did a user delete to the Recycle Bin, and when? | [Recycle Bin](recycle-bin.md) | [USN Journal](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | What name or timestamp existed before a metadata change? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [$I30](i30.md) |
 | Who owns a file, and who may change it? | [$Secure:$SDS](secure-sds.md) with [$MFT](mft.md) | [SAM](sam.md), Security event logs |
 | Which volume was a shortcut's or Prefetch file's target on? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB devices](usb.md) |

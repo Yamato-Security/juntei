@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
+Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်၊ Recycle Bin index ဖိုင်နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
 
 Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည် ပုံမှန် pipeline ကို သုံးသည်။ `manifest.json` ရှိ `Image` သည် မူရင်း image ဖြစ်ပြီး `EvidenceRoot` သည် အတွင်း relative path ဖြစ်သည်။ Read error နှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ထိန်းသိမ်းပြီး input မပြည့်စုံလျှင် exit code 1 ပြန်ပေးသည်။ မလုံခြုံသော သို့မဟုတ် မရှင်းလင်းသောအမည်များကို ပြောင်းမပေးပါ။ Named NTFS stream များကို နောက်ထပ်ဖိုင်အဖြစ် မထုတ်ပေးသော်လည်း သာမန်ဖိုင်အဖြစ် စုဆောင်းထားသော artifact များကို အသုံးပြုနိုင်သည်။
 
@@ -166,6 +166,7 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
   ပြက္ခဒိန် item များနှင့် task များ
 - LNK shortcut များ
 - Jump Lists
+- Recycle Bin: ဖျက်ထားသော item များ၏ မူလ path၊ အရွယ်အစား၊ ဖျက်ချိန်နှင့် အသုံးပြုသူ
 - ShimCache
 - Persistence Hunter (allow/block profile များပါသော ရင်းမြစ်ဖြတ်ကျော် persistence စစ်ဆေးချက် 131 ခု)
 - Defender quarantine metadata
@@ -262,6 +263,8 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -351,7 +354,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `Communication` | Outlook PST၊ OST၊ MSG နှင့် OFT ဖိုင်များ: ဖိုင်တွဲများ၊ item များ၊ လက်ခံသူများ၊ ပူးတွဲဖိုင်များ၊ contact များ၊ ပြက္ခဒိန် item များနှင့် task များ |
 | `ExternalDevices` | USB device များနှင့် volume များ |
 | `FileAndFolderOpening` | Jump Lists၊ LNK shortcut များ၊ Microsoft Office၊ MRU စာရင်းများ၊ Open နှင့် Save As dialog များ၊ RecentDocs၊ ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | ကွန်ရက် profile များ၊ interface များ၊ share များ၊ port proxy များနှင့် route များ၊ SRUM ချိတ်ဆက်မှုများ၊ traffic နှင့် push notification များ |
 | `LateralMovement` | အသုံးပြုသူများ၏ အပြင်ဘက်သို့ Remote Desktop၊ PuTTY နှင့် WinSCP ချိတ်ဆက်မှုများ၊ map လုပ်ထားသော drive များနှင့် share များ။ အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (server တစ်ခု၏ role များကို အသုံးပြုသော client များ) |
@@ -372,7 +375,7 @@ Amcache နှင့် Jump Lists တို့တွင် ၎င်းတိ�
 `NetworkActivity`၊ `ProcessExecution` နှင့် `SystemInformation` တွင် တိုက်ရိုက် ထားပြီး မျှဝေထားသော
 `SystemInformation/SRUM-logs.txt` ဖိုင် ရှိပါသည်။ `logs/` subdirectory များကို မဖန်တီးပါ။
 
-မူလ CSV ဖိုင်အမည်များမှာ `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+မူလ CSV ဖိုင်အမည်များမှာ `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` နှင့်

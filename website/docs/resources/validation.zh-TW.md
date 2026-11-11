@@ -158,6 +158,18 @@ Jump Lists 中，全部 13,057 個共同比較的儲存格——包括精確到 
 參考剖析器一致。參考剖析器拒絕處理的六個檔案（空白的自訂清單、缺少頁尾，或
 並非 Jump List 的檔案），Juntei 則加以解碼或明確地回報。
 
+## 資源回收筒 { #recycle-bin }
+
+`parse-file recycle-bin` 是 Juntei 自有的剖析器。在 [rifiuti2](https://github.com/abelcheung/rifiuti2)
+的公開樣本上，rifiuti2 能讀取的每一筆記錄，其索引、刪除時間（精確到秒，與 rifiuti2 的顯示方式相同）、
+移除狀態、大小與路徑都一致：共 92 筆記錄，其中 67 筆來自 Windows 95 至 Server 2003 的十一個 INFO2
+檔案，25 筆來自三個存放 Windows Vista 與 Windows 10 `$I` 檔案的資料夾。INFO2 的 ANSI 路徑在 rifiuti2
+自身測試所使用的字碼頁下皆一致。Juntei 也能讀取 rifiuti2 拒絕處理的內容：混用兩種 `$I` 版本的資料夾、
+沒有路徑的 `$I` 標頭，以及遭截斷的記錄，並逐一回報其損毀情形。Plaso 測試資料中的 `$I` 與 INFO2 檔案，
+得出的時間、大小、路徑、索引與磁碟機都與 Plaso 測試的預期值相同。在 Digital Corpora 公開的 M57-Jean
+磁碟映像檔（Windows XP）上以 `auto-parse --e01` 讀取時，INFO2 記錄與 rifiuti2 一致，而位於其旁的
+回收檔案 `Dc1.jpg`，也正是 Juntei 所給出的名稱。
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) 是

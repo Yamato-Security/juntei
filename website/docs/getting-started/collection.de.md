@@ -22,6 +22,7 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 | Webbrowser | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` und die Profilordner der anderen Browser |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` und weitere Benutzer-/Systemspeicherorte |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` und `CustomDestinations` |
+| Papierkorb | `$Recycle.Bin\<SID>\$I*` und `$R*` auf jedem Volume (`RECYCLER\<SID>\INFO2` und `D*` unter Windows XP und älter) |
 | ShimCache | `SYSTEM`-Hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender-Quarantäne | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Maschinen-Registry | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |

@@ -11,6 +11,7 @@ user-interface history, resource accounting और सुरक्षा उत�
 | क्या यह executable चला? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event logs |
 | क्या यह फ़ाइल कभी मौजूद थी? | [Amcache](amcache.md), [$MFT](mft.md) | [USN जर्नल](usn-journal.md), [$I30](i30.md), ShimCache |
 | कोई फ़ाइल कब बनाई गई, rename की गई या हटाई गई? | [USN जर्नल](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender क्वारंटीन |
+| उपयोगकर्ता ने रीसायकल बिन में क्या delete किया, और कब? | [रीसायकल बिन](recycle-bin.md) | [USN जर्नल](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Metadata बदलाव से पहले कौन-सा नाम या timestamp मौजूद था? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN जर्नल](usn-journal.md), [$I30](i30.md) |
 | किसी फ़ाइल का owner कौन है, और उसे कौन बदल सकता है? | [$MFT](mft.md) के साथ [$Secure:$SDS](secure-sds.md) | [SAM](sam.md), Security event logs |
 | किसी शॉर्टकट या Prefetch फ़ाइल का target किस volume पर था? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB डिवाइस](usb.md) |

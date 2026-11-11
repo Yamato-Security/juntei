@@ -11,6 +11,7 @@ mas o investigador ainda precisa interpretar o que cada fonte significa.
 | Este executável foi executado? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), logs de eventos |
 | Este arquivo chegou a existir? | [Amcache](amcache.md), [$MFT](mft.md) | [Diário USN](usn-journal.md), [$I30](i30.md), ShimCache |
 | Quando um arquivo foi criado, renomeado ou excluído? | [Diário USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), quarentena do Defender |
+| O que um usuário enviou para a Lixeira, e quando? | [Lixeira](recycle-bin.md) | [Diário USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Que nome ou carimbo de data/hora existia antes de uma alteração de metadados? | [$LogFile](logfile.md) | [$MFT](mft.md), [Diário USN](usn-journal.md), [$I30](i30.md) |
 | Quem é o proprietário de um arquivo, e quem pode alterá-lo? | [$Secure:$SDS](secure-sds.md) com [$MFT](mft.md) | [SAM](sam.md), logs de eventos Security |
 | Em qual volume estava o destino de um atalho ou de um arquivo Prefetch? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [dispositivos USB](usb.md) |

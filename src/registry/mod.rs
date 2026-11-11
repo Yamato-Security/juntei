@@ -444,7 +444,7 @@ pub fn sid_of_profile(profiles: &[(String, String)], user: &str) -> Option<Strin
 }
 
 /// A complete Windows SID, excluding ProfileList backup names such as `S-1-...bak`.
-fn valid_sid(sid: &str) -> bool {
+pub(crate) fn valid_sid(sid: &str) -> bool {
     let mut parts = sid.split('-');
     if !parts.next().is_some_and(|s| s.eq_ignore_ascii_case("S")) || parts.next() != Some("1") {
         return false;

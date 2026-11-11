@@ -630,6 +630,16 @@ pub enum FileCommands {
         disable_version_flag = true
     )]
     Prefetch(PrefetchOptions),
+
+    /// Parse Recycle Bin index files ($I files and INFO2)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file recycle-bin <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    RecycleBin(RecycleBinOptions),
 }
 
 /// What `auto-parse` writes.
@@ -1765,6 +1775,59 @@ pub struct LnkOptions {
 impl LnkOptions {
     pub fn output_type(&self) -> LnkOutputType {
         self.output_type.unwrap_or(LnkOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-file recycle-bin` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RecycleBinOutputType {
+    /// One row per deleted item
+    Csv,
+    /// One pretty-printed JSON object per deleted item
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RecycleBinOptions {
+    /// Directory to search recursively for Recycle Bin index files ($I files, INFO2)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one $I or INFO2 file
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Code page of INFO2's ANSI paths: the system's ANSI code page (932 for Japanese)
+    #[arg(help_heading = Some("Input"), long = "code-page", value_name = "CP", default_value_t = 1252, display_order = 102)]
+    pub code_page: u16,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RecycleBinOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RecycleBinOptions {
+    pub fn output_type(&self) -> RecycleBinOutputType {
+        self.output_type.unwrap_or(RecycleBinOutputType::Csv)
     }
 
     /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.

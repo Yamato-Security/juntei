@@ -59,6 +59,8 @@
   مرجعيًا موجهًا نحو الجمع عبر عدة آثار رقمية.
 - كانت أداة **Hindsight** من Obsidian Forensics وتعريفات **SQLiteHunter** من Velocidex مرجعين لسجل
   التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج.
+- كانت أداة **rifiuti2** من Abel Cheung المرجع لملفات `$I` وINFO2 في سلة المحذوفات، إلى جانب
+  توثيق libyal للتنسيقين في **dtformats**.
 
 ## المواصفات والأبحاث { #specifications-and-research }
 
@@ -71,7 +73,7 @@
 
 تتيح الأدلة العامة من
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) الخاص بـ Andrew Rathbun، وNIST CFReDS، وPlaso،
-وRegipy، وArtemis، ومستودعات اختبار المحللات، وغيرها من المجموعات المرخصة على النحو الصحيح، إجراءَ اختبارات
+وrifiuti2، وRegipy، وArtemis، ومستودعات اختبار المحللات، وغيرها من المجموعات المرخصة على النحو الصحيح، إجراءَ اختبارات
 الانحدار على بيانات Windows حقيقية. ويحتفظ Juntei بملاحظات الإسناد/الترخيص بجانب ملفات
 الاختبار المضمّنة.
 

@@ -22,6 +22,7 @@ Juntei は Windows から収集済みのファイルを解析します。信頼�
 | Web ブラウザ | `%LOCALAPPDATA%\Google\Chrome\User Data\`、`%LOCALAPPDATA%\Microsoft\Edge\User Data\`、`%APPDATA%\Mozilla\Firefox\Profiles\`、およびその他のブラウザのプロファイル フォルダー |
 | LNK / 最近 | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` およびその他のユーザー/システムの場所 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` および `CustomDestinations` |
+| ごみ箱 | すべてのボリュームの `$Recycle.Bin\<SID>\$I*` と `$R*` (Windows XP 以前は `RECYCLER\<SID>\INFO2` と `D*`) |
 | ShimCache | `SYSTEM` ハイブ: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender 隔離 | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | マシンレジストリ | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |

@@ -42,6 +42,7 @@ registros nativos.
 | `parse-file lnk` | `*.lnk` | [Accesos directos LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Papelera de reciclaje](../artifacts/recycle-bin.md) |
 
 ## [Comandos NTFS](filesystem.md) { #ntfs-commands }
 

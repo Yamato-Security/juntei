@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-تحتاج المحللات إلى مسارات، لذلك ينسخ Juntei الملفات التي تقرؤها المحللات إلى مساحة مؤقتة خاصة بمخازن قراءة محدودة: خلايا السجل وسجلات معاملاتها، وملفات بيانات NTFS الوصفية، وقواعد البيانات، وملفات Prefetch، والاختصارات، وJump Lists، وملفات Outlook، ومجلدات العزل في Defender. يصبح كل ملف آخر عنصراً نائباً فارغاً يحتفظ بوقت تعديله الأصلي، فتبدو المجلدات والمسارات كما هي على القرص. لا يقرأ persistence-hunter محتوى العنصر النائب من الصورة إلا عند الحاجة، مثل ملف تنفيذي يشير إليه إدخال استمرارية. **وفّر مساحة للملفات المنسوخة** إضافة إلى النتائج. تُكتب مناطق الأصفار كفجوات حيثما أمكن. تُحفظ الأسماء والبنية والروابط الصلبة وأوقات التعديل. تأتي أوقات مصادر LNK وJump Lists من لقطة بيانات NTFS الأصلية لا من النسخ المؤقتة. يحذف الانتهاء الطبيعي، بما فيه أخطاء المحللات، النسخ؛ وقد يتركها الإنهاء القسري. المصدر للقراءة فقط وتُطبّق سجلات VHDX المعلقة في الذاكرة وحدها.
+تحتاج المحللات إلى مسارات، لذلك ينسخ Juntei الملفات التي تقرؤها المحللات إلى مساحة مؤقتة خاصة بمخازن قراءة محدودة: خلايا السجل وسجلات معاملاتها، وملفات بيانات NTFS الوصفية، وقواعد البيانات، وملفات Prefetch، والاختصارات، وJump Lists، وملفات Outlook، وملفات الفهرس في سلة المحذوفات، ومجلدات العزل في Defender. يصبح كل ملف آخر عنصراً نائباً فارغاً يحتفظ بوقت تعديله الأصلي، فتبدو المجلدات والمسارات كما هي على القرص. لا يقرأ persistence-hunter محتوى العنصر النائب من الصورة إلا عند الحاجة، مثل ملف تنفيذي يشير إليه إدخال استمرارية. **وفّر مساحة للملفات المنسوخة** إضافة إلى النتائج. تُكتب مناطق الأصفار كفجوات حيثما أمكن. تُحفظ الأسماء والبنية والروابط الصلبة وأوقات التعديل. تأتي أوقات مصادر LNK وJump Lists من لقطة بيانات NTFS الأصلية لا من النسخ المؤقتة. يحذف الانتهاء الطبيعي، بما فيه أخطاء المحللات، النسخ؛ وقد يتركها الإنهاء القسري. المصدر للقراءة فقط وتُطبّق سجلات VHDX المعلقة في الذاكرة وحدها.
 
 يستخدم اكتشاف الأجهزة وCSV/JSON/JSONL و`-j` مسار المعالجة المعتاد. يحدد `Image` في `manifest.json` الصورة الأصلية، ويحدد `EvidenceRoot` المسار النسبي داخلها. تُسجّل أخطاء القراءة والأسماء غير الآمنة في `ImageErrors` وصفوف الفشل في `manifest.csv`. تُحفظ النتائج المقروءة ويُرجع الإدخال غير المكتمل الرمز 1. لا تُعاد تسمية الأسماء الخطرة أو الملتبسة. لا تُستخرج تدفقات NTFS المسماة كملفات إضافية؛ وتبقى الآثار المجموعة كملفات عادية متاحة.
 
@@ -166,6 +166,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - ملفات Outlook من نوع PST وOST وMSG وOFT: المجلدات والعناصر والمستلمون والمرفقات وجهات الاتصال وعناصر التقويم والمهام
 - اختصارات LNK
 - Jump Lists
+- سلة المحذوفات: المسارات الأصلية للعناصر المحذوفة وأحجامها وأوقات حذفها ومستخدموها
 - ShimCache
 - Persistence Hunter ‏(131 فحصًا للاستمرارية عبر المصادر مع ملفات تعريف السماح/الحظر)
 - البيانات الوصفية لحجر Defender
@@ -261,6 +262,8 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -350,7 +353,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 | `Communication` | ملفات Outlook من نوع PST وOST وMSG وOFT: المجلدات والعناصر والمستلمون والمرفقات وجهات الاتصال وعناصر التقويم والمهام |
 | `ExternalDevices` | أجهزة USB ووحدات التخزين |
 | `FileAndFolderOpening` | Jump Lists، واختصارات LNK، وMicrosoft Office، وقوائم MRU، ومربعات حوار الفتح والحفظ باسم، وRecentDocs، وShellBags |
-| `FileExistence` | Amcache، ShimCache |
+| `FileExistence` | Amcache، سلة المحذوفات، ShimCache |
 | `FileSystem` | `$Boot`، `$I30`، `$LogFile`، `$MFT`، `$Secure:$SDS`، دفتر يومية USN |
 | `NetworkActivity` | ملفات تعريف الشبكات، والواجهات، والمشاركات، ووكلاء المنافذ، والمسارات؛ واتصالات SRUM وحركة المرور والإشعارات الفورية |
 | `LateralMovement` | اتصالات المستخدمين الصادرة عبر سطح المكتب البعيد وPuTTY وWinSCP، ومحركات الأقراص المعيّنة والمشاركات؛ وتسجيل وصول المستخدمين (عملاء أدوار الخادم) |
@@ -371,7 +374,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 في `NetworkActivity` و`ProcessExecution` و`SystemInformation`، مع ملف مشترك هو
 `SystemInformation/SRUM-logs.txt`. ولا تُنشأ مجلدات فرعية `logs/`.
 
-أسماء ملفات CSV الافتراضية هي `Registry-SAM.csv`، `LNK.csv`، `Registry-RecentDocs.csv`، `Registry-ShimCache.csv`، `LogFile.csv`،
+أسماء ملفات CSV الافتراضية هي `Registry-SAM.csv`، `LNK.csv`، `RecycleBin.csv`، `Registry-RecentDocs.csv`، `Registry-ShimCache.csv`، `LogFile.csv`،
 `I30.csv`، `MFT.csv`، `UsnJournal.csv`، `Boot.csv`، `SecureSDS.csv`، `Registry-Networks.csv`، `Registry-Persistence.csv`، `Registry-Services.csv`، `Registry-TaskCache.csv`، `Registry-BCD.csv`،
 `Registry-SecuritySettings.csv`،
 `PrefetchTimeline.csv`، `Prefetch.csv`، `Registry-UserAssist.csv`، `Registry-AppCompat.csv`، `Registry-Office.csv`، `Registry-FeatureUsage.csv`، `Registry-AppHistory.csv`، `Registry-MRU.csv`، `Registry-SystemInfo.csv`، `Registry-RemoteAccess.csv`، `Registry-OpenSaveMRU.csv`، `Registry-InstalledPrograms.csv`، `Registry-BAM.csv`، `Registry-MuiCache.csv`، `Registry-ShellBags.csv`، `Registry-USB.csv`، `Registry-SecuritySettings.csv`، `Registry-AuditPolicy.csv`، `Registry-Dump.csv`، و

@@ -58,6 +58,8 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
   참조 동작을 제공했습니다.
 - Obsidian Forensics의 **Hindsight**와 Velocidex의 **SQLiteHunter** 정의는 브라우저 방문 기록, 다운로드, 쿠키 및
   양식 기록에 대한 참고 자료가 되었습니다.
+- Abel Cheung의 **rifiuti2**는 휴지통 `$I` 파일과 INFO2의 참고 자료가 되었으며, libyal의 **dtformats**
+  문서가 두 형식을 설명합니다.
 
 ## 사양과 연구 { #specifications-and-research }
 
@@ -68,7 +70,7 @@ Specifications와 API 문서를 공개한 Microsoft에 감사드립니다. 또�
 ## 테스트 증거 { #test-evidence }
 
 Andrew Rathbun의 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS,
-Plaso, Regipy, Artemis, 파서 테스트 저장소 및 기타 적절한 라이선스를 갖춘 컬렉션의 공개 증거 덕분에 실제
+Plaso, rifiuti2, Regipy, Artemis, 파서 테스트 저장소 및 기타 적절한 라이선스를 갖춘 컬렉션의 공개 증거 덕분에 실제
 Windows 데이터를 대상으로 한 회귀 테스트가 가능합니다. Juntei는 포함된 테스트 파일 옆에 출처/라이선스 고지를
 함께 보관합니다.
 

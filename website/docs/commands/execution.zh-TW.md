@@ -1,7 +1,7 @@
 # 檔案命令 { #file-commands }
 
-`parse-file` 處理特定跡證的檔案：Prefetch、捷徑、Jump Lists、Defender 隔離資料，以及
-Outlook 的 PST、OST、MSG 與 OFT 檔案。自動 Jump Lists 使用複合檔案容器；自訂 Jump Lists 則使用不同的
+`parse-file` 處理特定跡證的檔案：Prefetch、捷徑、Jump Lists、Defender 隔離資料、
+Outlook 的 PST、OST、MSG 與 OFT 檔案，以及資源回收筒的索引檔案。自動 Jump Lists 使用複合檔案容器；自訂 Jump Lists 則使用不同的
 二進位配置。兩者都屬於同一個跡證命令。
 
 ```text
@@ -18,6 +18,7 @@ Commands:
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
   prefetch             Parse Prefetch files
+  recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
 Options:
   -h, --help  Print help
@@ -200,3 +201,37 @@ juntei parse-file prefetch -d evidence/ -T -o prefetch-timeline.csv
 ```
 
 請參閱 [Prefetch](../artifacts/prefetch.md)。
+
+## `parse-file recycle-bin` { #parse-file-recycle-bin }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file recycle-bin <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Recycle Bin index files ($I files, INFO2)
+  -f, --file <FILE>      File path to one $I or INFO2 file
+      --code-page <CP>   Code page of INFO2's ANSI paths: the system's ANSI code page (932 for Japanese) [default: 1252]
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file recycle-bin -d evidence/ -o recycle-bin.csv
+juntei parse-file recycle-bin -f '$IABC123.docx' -t jsonl | jq .
+```
+
+請參閱 [資源回收筒](../artifacts/recycle-bin.md)。

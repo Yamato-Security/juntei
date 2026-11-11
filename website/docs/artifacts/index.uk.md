@@ -11,6 +11,7 @@ Windows зберігає сліди, що перетинаються, у фай�
 | Чи запускався цей виконуваний файл? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), журнали подій |
 | Чи був цей файл колись присутній? | [Amcache](amcache.md), [$MFT](mft.md) | [Журнал USN](usn-journal.md), [$I30](i30.md), ShimCache |
 | Коли файл було створено, перейменовано або видалено? | [Журнал USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), карантин Defender |
+| Що користувач видалив до кошика і коли? | [Кошик](recycle-bin.md) | [Журнал USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Яке ім'я або часова позначка існували до зміни метаданих? | [$LogFile](logfile.md) | [$MFT](mft.md), [журнал USN](usn-journal.md), [$I30](i30.md) |
 | Кому належить файл і хто може його змінювати? | [$Secure:$SDS](secure-sds.md) разом із [$MFT](mft.md) | [SAM](sam.md), журнали подій Security |
 | На якому томі була ціль ярлика або файлу Prefetch? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [пристрої USB](usb.md) |

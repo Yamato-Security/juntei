@@ -60,6 +60,8 @@ in Juntei eingebettet ist; die jeweilige Lizenz entnehmen Sie bitte dem einzelne
   sammlungsorientiertes Referenzverhalten für mehrere Artefakte.
 - **Hindsight** von Obsidian Forensics und die **SQLiteHunter**-Definitionen von Velocidex dienten als Referenz
   für Browserverlauf, Downloads, Cookies und Formularverlauf.
+- **rifiuti2** von Abel Cheung diente als Referenz für die `$I`-Dateien und INFO2 des Papierkorbs, ergänzt durch die
+  **dtformats**-Dokumentation von libyal zu beiden Formaten.
 
 ## Spezifikationen und Forschung { #specifications-and-research }
 
@@ -72,7 +74,7 @@ diese Artefakte für Praktiker verständlich gemacht hat.
 
 Öffentliches Beweismaterial aus Andrew Rathbuns
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS, Plaso,
-Regipy, Artemis, Testrepositorys von Parsern und weiteren ordnungsgemäß lizenzierten Sammlungen ermöglicht Regressionstests
+rifiuti2, Regipy, Artemis, Testrepositorys von Parsern und weiteren ordnungsgemäß lizenzierten Sammlungen ermöglicht Regressionstests
 mit echten Windows-Daten. Juntei hält Hinweise zu Urheberschaft und Lizenz neben den enthaltenen
 Testdateien vor.
 

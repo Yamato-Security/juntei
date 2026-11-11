@@ -101,6 +101,7 @@ Une date renseigne sur un objet enregistré ; elle ne prouve seule ni exécution
 | SRUM | Date/intervalle du fournisseur, début de connexion, bornes explicites et métadonnées d'application. Octets, durées et compteurs ne sont pas des dates. |
 | LNK | Dates MAC de la cible, création des identifiants de suivi et éléments shell : métadonnées stockées, pas forcément ouverture du raccourci. |
 | Jump Lists | Dernière utilisation, identifiant de suivi et dates de cible LNK intégrées. Les dates du conteneur sur le système de collecte sont omises par défaut. |
+| Corbeille | Date à laquelle chaque élément a été déplacé dans la Corbeille, avec l'utilisateur de la corbeille, le chemin d'origine et la présence ou non du contenu supprimé dans la collecte. Ce n'est ni la date à laquelle la Corbeille a été vidée, ni les dates de fichier propres à l'élément. |
 | Quarantaine Defender | Date de l'entrée et création/accès/écriture de la ressource. L'extraction n'est pas une activité du poste d'origine. |
 | BAM, UserAssist, FeatureUsage | Activité enregistrée et écriture de clé distinguées. Un compteur sans date ne produit aucun événement. |
 | RecentDocs, MRU, ouverture/enregistrement MRU, ShellBags, Office | Utilisation, confiance, éléments shell et contexte de clé. La date de la clé d'une liste n'est pas la dernière utilisation de chaque élément. |

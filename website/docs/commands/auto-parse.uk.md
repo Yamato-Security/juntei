@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Парсерам потрібні шляхи: Juntei копіює файли, які читають парсери, у приватний тимчасовий каталог з обмеженими буферами: кущі реєстру та їхні журнали транзакцій, файли метаданих NTFS, бази даних, файли Prefetch, ярлики, Jump Lists, файли Outlook і папки карантину Defender. Кожен інший файл стає порожнім заповнювачем з початковим часом зміни, тож каталоги й шляхи виглядають так само, як на диску. persistence-hunter читає вміст заповнювача з образу лише тоді, коли він потрібен, наприклад виконуваний файл, на який вказує запис персистентності. **Потрібне місце для скопійованих файлів**, окрім результатів. Нульові області записуються як розріджені, якщо це підтримується. Зберігаються імена, структура, жорсткі посилання та час зміни. Часи джерел LNK і Jump Lists беруться зі знімка оригінальних метаданих NTFS, ніколи з тимчасових копій. Нормальне завершення, навіть з помилками парсерів, видаляє копії; примусове завершення може залишити їх. Джерело лише для читання; незастосований журнал VHDX відтворюється тільки в пам’яті.
+Парсерам потрібні шляхи: Juntei копіює файли, які читають парсери, у приватний тимчасовий каталог з обмеженими буферами: кущі реєстру та їхні журнали транзакцій, файли метаданих NTFS, бази даних, файли Prefetch, ярлики, Jump Lists, файли Outlook, індексні файли кошика й папки карантину Defender. Кожен інший файл стає порожнім заповнювачем з початковим часом зміни, тож каталоги й шляхи виглядають так само, як на диску. persistence-hunter читає вміст заповнювача з образу лише тоді, коли він потрібен, наприклад виконуваний файл, на який вказує запис персистентності. **Потрібне місце для скопійованих файлів**, окрім результатів. Нульові області записуються як розріджені, якщо це підтримується. Зберігаються імена, структура, жорсткі посилання та час зміни. Часи джерел LNK і Jump Lists беруться зі знімка оригінальних метаданих NTFS, ніколи з тимчасових копій. Нормальне завершення, навіть з помилками парсерів, видаляє копії; примусове завершення може залишити їх. Джерело лише для читання; незастосований журнал VHDX відтворюється тільки в пам’яті.
 
 Пошук хостів, CSV/JSON/JSONL і `-j` використовують звичайний конвеєр. `Image` у `manifest.json` позначає оригінальний образ, `EvidenceRoot` — внутрішній відносний шлях. Помилки читання й небезпечні імена записуються в `ImageErrors` та рядки помилок `manifest.csv`. Читабельні результати зберігаються; неповний ввід повертає код 1. Небезпечні чи неоднозначні імена не перейменовуються. Іменовані потоки NTFS не видобуваються як окремі файли; артефакти, зібрані як звичайні файли, доступні.
 
@@ -166,6 +166,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - файли Outlook PST, OST, MSG і OFT: папки, елементи, одержувачі, вкладення, контакти, елементи календаря та завдання
 - ярлики LNK
 - Jump Lists
+- кошик: початкові шляхи, розміри, час видалення та користувачі видалених елементів
 - ShimCache
 - Persistence Hunter (131 перевірка закріплення за кількома джерелами з профілями дозволу/блокування)
 - метадані карантину Defender
@@ -262,6 +263,8 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -351,7 +354,7 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `Communication` | Файли Outlook PST, OST, MSG і OFT: папки, елементи, одержувачі, вкладення, контакти, елементи календаря та завдання |
 | `ExternalDevices` | Пристрої та томи USB |
 | `FileAndFolderOpening` | Jump Lists, ярлики LNK, Microsoft Office, списки MRU, діалоги відкриття та збереження файлів, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, кошик, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, журнал USN |
 | `NetworkActivity` | Мережеві профілі, інтерфейси, спільні ресурси, проксі портів і маршрути; підключення, трафік і push-сповіщення SRUM |
 | `LateralMovement` | Вихідні підключення користувачів через віддалений робочий стіл, PuTTY і WinSCP, підключені диски та спільні ресурси; журналювання доступу користувачів (клієнти ролей сервера) |
@@ -372,7 +375,7 @@ Amcache і Jump Lists мають по одному спільному журна
 в `NetworkActivity`, `ProcessExecution` і `SystemInformation` зі спільним
 файлом `SystemInformation/SRUM-logs.txt`. Підкаталоги `logs/` не створюються.
 
-Типові імена файлів CSV: `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Типові імена файлів CSV: `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` і

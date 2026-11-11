@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser memerlukan jalur: Juntei menyalin berkas yang dibaca parser ke ruang sementara privat dengan buffer terbatas: hive registri beserta log transaksinya, berkas metadata NTFS, basis data, berkas prefetch, pintasan, Jump List, berkas Outlook, dan folder karantina Defender. Berkas lain menjadi placeholder kosong dengan waktu modifikasi aslinya, sehingga direktori dan jalur terlihat sama seperti di disk. persistence-hunter membaca isi placeholder dari image hanya saat diperlukan, misalnya berkas eksekusi yang dirujuk entri persistensi. **Sediakan ruang untuk berkas yang disalin**, selain untuk hasil. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
+Parser memerlukan jalur: Juntei menyalin berkas yang dibaca parser ke ruang sementara privat dengan buffer terbatas: hive registri beserta log transaksinya, berkas metadata NTFS, basis data, berkas prefetch, pintasan, Jump List, berkas Outlook, berkas indeks Recycle Bin, dan folder karantina Defender. Berkas lain menjadi placeholder kosong dengan waktu modifikasi aslinya, sehingga direktori dan jalur terlihat sama seperti di disk. persistence-hunter membaca isi placeholder dari image hanya saat diperlukan, misalnya berkas eksekusi yang dirujuk entri persistensi. **Sediakan ruang untuk berkas yang disalin**, selain untuk hasil. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
 
 Penemuan host, CSV/JSON/JSONL, dan `-j` memakai alur biasa. `Image` dalam `manifest.json` menunjukkan image asli; `EvidenceRoot` menunjukkan jalur relatif di dalamnya. Kesalahan baca dan nama tidak aman dicatat dalam `ImageErrors` dan baris gagal `manifest.csv`. Hasil yang terbaca dipertahankan; input tidak lengkap mengembalikan 1. Nama berbahaya atau ambigu tidak diganti. Stream NTFS bernama tidak diekstrak sebagai berkas tambahan; artefak yang sudah dikumpulkan sebagai berkas biasa tetap tersedia.
 
@@ -166,6 +166,7 @@ yang ditemukan. Tugas-tugas ini menggunakan perintah yang dikelompokkan berdasar
 - Berkas PST, OST, MSG, dan OFT Outlook: folder, item, penerima, lampiran, kontak, item kalender, dan tugas
 - Pintasan LNK
 - Jump Lists
+- Recycle Bin: path asli, ukuran, waktu penghapusan, dan pengguna dari item yang dihapus
 - ShimCache
 - Persistence Hunter (131 pemeriksaan persistensi lintas sumber dengan profil allow/block)
 - Metadata karantina Defender
@@ -262,6 +263,8 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -351,7 +354,7 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 | `Communication` | Berkas PST, OST, MSG, dan OFT Outlook: folder, item, penerima, lampiran, kontak, item kalender, dan tugas |
 | `ExternalDevices` | Perangkat dan volume USB |
 | `FileAndFolderOpening` | Jump Lists, pintasan LNK, Microsoft Office, daftar MRU, dialog Open dan Save As, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Jurnal USN |
 | `NetworkActivity` | Profil jaringan, antarmuka, share, port proxy, dan route; koneksi, lalu lintas, dan push notification SRUM |
 | `LateralMovement` | Koneksi keluar Remote Desktop, PuTTY, dan WinSCP milik pengguna, mapped drive, dan share; Pencatatan Akses Pengguna (klien dari role-role sebuah server) |
@@ -372,7 +375,7 @@ Amcache dan Jump Lists masing-masing memiliki satu log bersama di samping tabel-
 di `NetworkActivity`, `ProcessExecution`, dan `SystemInformation`, dengan berkas
 `SystemInformation/SRUM-logs.txt` bersama. Tidak ada subdirektori `logs/` yang dibuat.
 
-Nama berkas CSV default adalah `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Nama berkas CSV default adalah `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, dan

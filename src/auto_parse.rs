@@ -71,7 +71,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
             "FileAndFolderOpening"
         }
-        "amcache" | "shimcache" => "FileExistence",
+        "amcache" | "recycle-bin" | "shimcache" => "FileExistence",
         "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
         "networks" => "NetworkActivity",
         "remote-access" | "ual" => "LateralMovement",
@@ -117,6 +117,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "Registry-RecentDocs",
+        "recycle-bin" => "RecycleBin",
         "registry" => "Registry-Dump",
         "remote-access" => "Registry-RemoteAccess",
         "sam" => "Registry-SAM",
@@ -1530,6 +1531,12 @@ fn build_tasks(
             &["--code-page", &code_page],
         );
         add(
+            "recycle-bin",
+            &["parse-file", "recycle-bin"],
+            OutputShape::File,
+            &["--code-page", &code_page],
+        );
+        add(
             "shimcache",
             &["parse-registry", "shimcache"],
             OutputShape::File,
@@ -1753,6 +1760,7 @@ pub(super) const NAMED_INPUTS: &[(&str, NamePredicate)] = &[
     ("outlook", crate::outlook::is_outlook_name),
     ("lnk", crate::lnk::is_lnk_name),
     ("jump-lists", crate::jump_lists::is_jump_list_name),
+    ("recycle-bin", crate::recycle_bin::is_index_name),
     ("shimcache", crate::shimcache::is_system_name),
     ("boot", crate::boot::is_boot_name),
     ("secure-sds", crate::secure_sds::is_sds_name),
@@ -1795,6 +1803,9 @@ impl InputInventory {
                 if matches(&name) {
                     found.add_size(artifact, size);
                 }
+            }
+            if name.eq_ignore_ascii_case("INFO") && crate::recycle_bin::is_legacy_info_path(&path) {
+                found.add_size("recycle-bin", size);
             }
             if crate::i30::is_i30_file(&path) {
                 found.add_size("i30", size);

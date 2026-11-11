@@ -166,6 +166,20 @@ Jump List 77 ခုတွင် 100 ns အထိ timestamp များ အပ�
 ကိုက်ညီခဲ့ပါသည်။ ကိုးကား parser က ငြင်းပယ်ခဲ့သော ဖိုင်ခြောက်ခု (ဗလာ custom list များ၊ footer ပျောက်နေခြင်း သို့မဟုတ်
 Jump List မဟုတ်သော ဖိုင်) ကို Juntei က decode လုပ်ခဲ့ခြင်း သို့မဟုတ် ရှင်းလင်းစွာ အစီရင်ခံခဲ့ခြင်း ဖြစ်ပါသည်။
 
+## အမှိုက်ပုံး (Recycle Bin) { #recycle-bin }
+
+`parse-file recycle-bin` သည် Juntei ၏ ကိုယ်ပိုင် parser ဖြစ်ပါသည်။ [rifiuti2](https://github.com/abelcheung/rifiuti2) ၏
+အများသုံး sample များပေါ်တွင် rifiuti2 ဖတ်နိုင်သော record တိုင်း၏ index၊ ဖျက်ချိန် (rifiuti2 ပြသသည့်အတိုင်း စက္ကန့်အထိ)၊
+bin မှ ဖယ်ရှားမှု အခြေအနေ၊ အရွယ်အစားနှင့် path တို့သည် တူညီခဲ့ပါသည်- record 92 ခု ဖြစ်ပြီး 67 ခုသည် Windows 95 မှ
+Server 2003 အထိ INFO2 ဖိုင် ဆယ့်တစ်ခုမှ ဖြစ်ကာ 25 ခုသည် Windows Vista နှင့် Windows 10 `$I` ဖိုင်များ ပါသော ဖိုင်တွဲ
+သုံးခုမှ ဖြစ်ပါသည်။ INFO2 ၏ ANSI path များသည် rifiuti2 ၏ ကိုယ်ပိုင် test များ အသုံးပြုသော code page များတွင်
+ကိုက်ညီခဲ့ပါသည်။ Juntei သည် rifiuti2 ငြင်းပယ်သည့်အရာများကိုလည်း ဖတ်ပါသည်- `$I` ဗားရှင်း နှစ်မျိုးလုံး ရောနှောနေသော
+ဖိုင်တွဲ၊ path မပါသော `$I` header နှင့် ဖြတ်တောက်ခံထားရသော record များ ဖြစ်ပြီး တစ်ခုချင်းစီ၏ ပျက်စီးမှုကို
+အစီရင်ခံပါသည်။ Plaso ၏ test ဒေတာရှိ `$I` နှင့် INFO2 ဖိုင်များသည် Plaso ၏ test များ မျှော်လင့်ထားသော အချိန်၊
+အရွယ်အစား၊ path၊ index နှင့် drive များကို ပေးပါသည်။ Digital Corpora ၏ အများသုံး M57-Jean disk image (Windows XP) ကို
+`auto-parse --e01` ဖြင့် ဖတ်သောအခါ INFO2 record သည် rifiuti2 နှင့် ကိုက်ညီပြီး ၎င်းဘေးရှိ recycle လုပ်ထားသော ဖိုင်
+`Dc1.jpg` ၏ အမည်သည်လည်း Juntei ပေးသော အမည်နှင့် တူညီပါသည်။
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) သည် Security Ronin ၏

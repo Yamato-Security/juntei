@@ -31,7 +31,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, 휴지통 인덱스 파일, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
 
 호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
 
@@ -158,6 +158,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업
 - LNK 바로 가기
 - Jump Lists
+- 휴지통: 삭제된 항목의 원래 경로, 크기, 삭제 시각, 사용자
 - ShimCache
 - Persistence Hunter(허용/차단 프로필을 갖춘 131개의 교차 소스 지속성 검사)
 - Defender 격리 메타데이터
@@ -252,6 +253,8 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -341,7 +344,7 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 | `Communication` | Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업 |
 | `ExternalDevices` | USB 장치와 볼륨 |
 | `FileAndFolderOpening` | Jump Lists, LNK 바로 가기, Microsoft Office, MRU 목록, 열기 및 다른 이름으로 저장 대화 상자, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, 휴지통, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN 저널 |
 | `NetworkActivity` | 네트워크 프로필, 인터페이스, 공유, 포트 프록시 및 경로. SRUM 연결, 트래픽 및 푸시 알림 |
 | `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유. 사용자 액세스 로깅(서버 역할의 클라이언트) |
@@ -362,7 +365,7 @@ Jump Lists는 각각 접두사가 붙은 테이블 옆에 하나의 공유 로�
 `NetworkActivity`, `ProcessExecution`, `SystemInformation`에 직접 배치되며, 공유 파일
 `SystemInformation/SRUM-logs.txt`가 있습니다. `logs/` 하위 디렉터리는 생성되지 않습니다.
 
-기본 CSV 파일 이름은 `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+기본 CSV 파일 이름은 `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`,

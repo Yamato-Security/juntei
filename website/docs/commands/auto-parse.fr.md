@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Les parseurs exigent des chemins : Juntei copie donc les fichiers que lisent les parseurs dans un espace temporaire privé avec des tampons bornés : ruches du registre et leurs journaux de transactions, fichiers de métadonnées NTFS, bases de données, fichiers prefetch, raccourcis, Jump Lists, fichiers Outlook et dossiers de quarantaine de Defender. Tout autre fichier devient un espace réservé vide qui garde sa date de modification d’origine, si bien que répertoires et chemins apparaissent comme sur le disque. persistence-hunter ne lit le contenu d’un espace réservé depuis l’image que lorsqu’il en a besoin, par exemple un exécutable désigné par une entrée de persistance. **Prévoyez de la place pour les fichiers copiés**, en plus des résultats. Les zones nulles sont écrites comme des trous si le système le permet. Noms, structure, liens physiques et dates de modification sont préservés. Les dates sources des LNK et Jump Lists viennent des métadonnées NTFS originales, jamais des copies temporaires. Une fin normale, même avec erreurs de parsing, supprime les copies ; un arrêt forcé peut les laisser. La source reste en lecture seule ; les journaux VHDX en attente sont appliqués en mémoire uniquement.
+Les parseurs exigent des chemins : Juntei copie donc les fichiers que lisent les parseurs dans un espace temporaire privé avec des tampons bornés : ruches du registre et leurs journaux de transactions, fichiers de métadonnées NTFS, bases de données, fichiers prefetch, raccourcis, Jump Lists, fichiers Outlook, fichiers d’index de la Corbeille et dossiers de quarantaine de Defender. Tout autre fichier devient un espace réservé vide qui garde sa date de modification d’origine, si bien que répertoires et chemins apparaissent comme sur le disque. persistence-hunter ne lit le contenu d’un espace réservé depuis l’image que lorsqu’il en a besoin, par exemple un exécutable désigné par une entrée de persistance. **Prévoyez de la place pour les fichiers copiés**, en plus des résultats. Les zones nulles sont écrites comme des trous si le système le permet. Noms, structure, liens physiques et dates de modification sont préservés. Les dates sources des LNK et Jump Lists viennent des métadonnées NTFS originales, jamais des copies temporaires. Une fin normale, même avec erreurs de parsing, supprime les copies ; un arrêt forcé peut les laisser. La source reste en lecture seule ; les journaux VHDX en attente sont appliqués en mémoire uniquement.
 
 La découverte des hôtes, CSV/JSON/JSONL et `-j` utilisent le traitement habituel. `Image` dans `manifest.json` identifie l’image originale, `EvidenceRoot` son chemin relatif interne. Les erreurs de lecture et noms dangereux figurent dans `ImageErrors` et les lignes en échec de `manifest.csv`. Les résultats lisibles sont conservés ; une entrée incomplète produit le code 1. Les noms dangereux ou ambigus ne sont pas renommés. Les flux NTFS nommés ne deviennent pas des fichiers supplémentaires ; les artefacts collectés comme fichiers ordinaires restent disponibles.
 
@@ -166,6 +166,7 @@ découvert. Les tâches utilisent les mêmes commandes regroupées par source qu
 - Fichiers PST, OST, MSG et OFT d'Outlook : dossiers, éléments, destinataires, pièces jointes, contacts, éléments de calendrier et tâches
 - Raccourcis LNK
 - Jump Lists
+- Corbeille : chemins d'origine, tailles, dates de suppression et utilisateurs des éléments supprimés
 - ShimCache
 - Persistence Hunter (131 vérifications de persistance multi-sources avec des profils d'autorisation/de blocage)
 - Métadonnées de quarantaine de Defender
@@ -262,6 +263,8 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -351,7 +354,7 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `Communication` | Fichiers PST, OST, MSG et OFT d'Outlook : dossiers, éléments, destinataires, pièces jointes, contacts, éléments de calendrier et tâches |
 | `ExternalDevices` | Périphériques et volumes USB |
 | `FileAndFolderOpening` | Jump Lists, raccourcis LNK, Microsoft Office, listes MRU, boîtes de dialogue Ouvrir et Enregistrer sous, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Corbeille, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Journal USN |
 | `NetworkActivity` | Profils réseau, interfaces, partages, proxys de ports et routes ; connexions, trafic et notifications push SRUM |
 | `LateralMovement` | Connexions sortantes Bureau à distance, PuTTY et WinSCP des utilisateurs, lecteurs mappés et partages ; journalisation des accès utilisateur (les clients des rôles d'un serveur) |
@@ -372,7 +375,7 @@ Amcache et Jump Lists disposent chacun d'un journal partagé à côté de leurs 
 dans `NetworkActivity`, `ProcessExecution` et `SystemInformation`, avec un fichier partagé
 `SystemInformation/SRUM-logs.txt`. Aucun sous-répertoire `logs/` n'est créé.
 
-Les noms de fichiers CSV par défaut sont `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Les noms de fichiers CSV par défaut sont `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` et

@@ -60,6 +60,8 @@ embedded in Juntei; consult each project for its license.
   collection-oriented reference behavior across several artifacts.
 - Obsidian Forensics' **Hindsight** and Velocidex's **SQLiteHunter** definitions were references
   for browser history, downloads, cookies and form history.
+- Abel Cheung's **rifiuti2** was the reference for Recycle Bin `$I` files and INFO2, with libyal's
+  **dtformats** documentation of both formats.
 
 ## Specifications and research
 
@@ -72,7 +74,7 @@ these artifacts understandable to practitioners.
 
 Public evidence from Andrew Rathbun's
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS, Plaso,
-Regipy, Artemis, parser test repositories, and other properly licensed collections makes regression
+rifiuti2, Regipy, Artemis, parser test repositories, and other properly licensed collections makes regression
 testing against real Windows data possible. Juntei keeps attribution/license notes beside included
 test files.
 

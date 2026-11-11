@@ -63,6 +63,8 @@ kendisine başvurun.
   karşılaştırmaları, test kanıtları veya toplama odaklı referans davranış sağlamıştır.
 - Obsidian Forensics'in **Hindsight** aracı ve Velocidex'in **SQLiteHunter** tanımları, tarayıcı
   geçmişi, indirmeler, çerezler ve form geçmişi için referans olmuştur.
+- Abel Cheung'un **rifiuti2** aracı, libyal'ın her iki biçimi belgeleyen **dtformats** belgeleriyle birlikte Geri Dönüşüm
+  Kutusu `$I` dosyaları ve INFO2 için referans olmuştur.
 
 ## Spesifikasyonlar ve araştırmalar { #specifications-and-research }
 
@@ -75,7 +77,7 @@ bilişim araştırmalarının yazarlarına da teşekkür ederiz.
 
 Andrew Rathbun'un
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) projesi, NIST CFReDS, Plaso,
-Regipy, Artemis, ayrıştırıcı test depoları ve uygun şekilde lisanslanmış diğer koleksiyonlardaki herkese
+rifiuti2, Regipy, Artemis, ayrıştırıcı test depoları ve uygun şekilde lisanslanmış diğer koleksiyonlardaki herkese
 açık kanıtlar, gerçek Windows verilerine karşı regresyon testini mümkün kılar. Juntei, dahil edilen test
 dosyalarının yanında atıf/lisans notlarını tutar.
 

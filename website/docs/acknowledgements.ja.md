@@ -40,6 +40,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 - **defender-dump** および dissect.target は、Defender 隔離構造と安全な抽出動作を理解するための個別の実装を提供します。
 - **Plaso**、**Chainsaw**、および **Velociraptor** は、複数のアーティファクトにわたるパーサー比較、テスト証拠、またはコレクション指向の参照動作を提供しました。
 - Obsidian Forensics の **Hindsight** と Velocidex の **SQLiteHunter** の定義は、ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴の参考資料となりました。
+- Abel Cheung の **rifiuti2** はごみ箱の `$I` ファイルと INFO2 の参考実装となり、libyal の **dtformats** の文書が両方の形式を説明しています。
 
 ## 仕様と研究 { #specifications-and-research }
 
@@ -47,7 +48,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 
 ## テスト証拠 { #test-evidence }
 
-Andrew Rathbun の [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、Regipy、Artemis、パーサー テスト リポジトリ、およびその他の適切にライセンスされたコレクションからの公開証拠により、実際の Windows データに対する回帰テストが可能になります。 Juntei は、付属のテスト ファイルの横に帰属/ライセンス ノートを保持します。
+Andrew Rathbun の [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、rifiuti2、Regipy、Artemis、パーサー テスト リポジトリ、およびその他の適切にライセンスされたコレクションからの公開証拠により、実際の Windows データに対する回帰テストが可能になります。 Juntei は、付属のテスト ファイルの横に帰属/ライセンス ノートを保持します。
 
 ## 貢献者 { #contributors }
 

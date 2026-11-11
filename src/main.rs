@@ -39,6 +39,7 @@ mod output_schema;
 mod persistence_hunter;
 mod prefetch;
 mod progress;
+mod recycle_bin;
 mod registry;
 mod secure_sds;
 mod security_descriptor;
@@ -64,7 +65,7 @@ use util::p;
 const LOGO: &str = include_str!("../art/logo.txt");
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<_> = env::args_os().collect();
     if args.len() == 1 || (args.len() == 2 && (args[1] == "-h" || args[1] == "--help")) {
         display_logo(false, false, false, true);
         Cli::command().print_help().ok();
@@ -259,6 +260,17 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = jump_lists::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::RecycleBin(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = recycle_bin::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }

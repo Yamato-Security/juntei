@@ -11,6 +11,7 @@ Windows သည် ဖိုင်စနစ်၊ registry၊ compatibility ဒ�
 | ဤ executable ကို run ခဲ့သလား။ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)၊ [SRUM](srum.md)၊ event log များ |
 | ဤဖိုင် တစ်ချိန်ချိန်တွင် တည်ရှိခဲ့သလား။ | [Amcache](amcache.md)၊ [$MFT](mft.md) | [USN ဂျာနယ်](usn-journal.md)၊ [$I30](i30.md)၊ ShimCache |
 | ဖိုင်တစ်ခုကို မည်သည့်အချိန်တွင် ဖန်တီး၊ အမည်ပြောင်း သို့မဟုတ် ဖျက်ခဲ့သနည်း။ | [USN ဂျာနယ်](usn-journal.md) | [$MFT](mft.md)၊ [$I30](i30.md)၊ Defender quarantine |
+| အသုံးပြုသူက မည်သည့်အရာကို Recycle Bin ထဲသို့ မည်သည့်အချိန်တွင် ဖျက်ခဲ့သနည်း။ | [အမှိုက်ပုံး (Recycle Bin)](recycle-bin.md) | [USN ဂျာနယ်](usn-journal.md)၊ [$MFT](mft.md)၊ [LNK](lnk.md)၊ [Jump Lists](jump-lists.md) |
 | Metadata ပြောင်းလဲမှုမတိုင်မီ မည်သည့်အမည် သို့မဟုတ် timestamp ရှိခဲ့သနည်း။ | [$LogFile](logfile.md) | [$MFT](mft.md)၊ [USN ဂျာနယ်](usn-journal.md)၊ [$I30](i30.md) |
 | ဖိုင်တစ်ခုကို မည်သူပိုင်ဆိုင်ပြီး မည်သူ ပြောင်းလဲနိုင်သနည်း။ | [$MFT](mft.md) နှင့်အတူ [$Secure:$SDS](secure-sds.md) | [SAM](sam.md)၊ Security event log များ |
 | ဖြတ်လမ်း သို့မဟုတ် Prefetch ဖိုင်၏ ပစ်မှတ်သည် မည်သည့် volume ပေါ်တွင် ရှိခဲ့သနည်း။ | [$Boot](boot.md) | [LNK](lnk.md)၊ [Prefetch](prefetch.md)၊ [USB စက်ပစ္စည်းများ](usb.md) |

@@ -41,6 +41,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file lnk` | `*.lnk` | [ทางลัด LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [ถังรีไซเคิล](../artifacts/recycle-bin.md) |
 
 ## [คำสั่ง NTFS](filesystem.md) { #ntfs-commands }
 

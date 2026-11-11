@@ -22,6 +22,7 @@ Juntei พาร์สไฟล์ที่รวบรวมจาก Windows �
 | เว็บเบราว์เซอร์ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` และโฟลเดอร์โปรไฟล์ของเบราว์เซอร์อื่น ๆ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` และตำแหน่งอื่นของผู้ใช้/ระบบ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` และ `CustomDestinations` |
+| ถังรีไซเคิล | `$Recycle.Bin\<SID>\$I*` และ `$R*` บนทุกวอลุ่ม (`RECYCLER\<SID>\INFO2` และ `D*` บน Windows XP และรุ่นก่อนหน้า) |
 | ShimCache | ไฮฟ์ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | การกักกันของ Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | รีจิสทรีระดับเครื่อง | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |

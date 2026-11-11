@@ -144,6 +144,7 @@ plugins:
         Boot Sector ($Boot): ブート セクタ ($Boot)
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: ごみ箱
         File and Folder Opening: ファイルとフォルダのオープン
         LNK Shortcuts: LNK のショートカット
         Microsoft Office: Microsoft Office
@@ -270,6 +271,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: 資源回收筒
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -359,6 +361,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: 휴지통
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -448,6 +451,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Papierkorb
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -537,6 +541,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Geri Dönüşüm Kutusu
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -626,6 +631,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Corbeille
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -715,6 +721,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Papelera de reciclaje
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -804,6 +811,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Lixeira
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -893,6 +901,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Кошик
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -982,6 +991,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: रीसायकल बिन
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1071,6 +1081,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Keranjang Sampah (Recycle Bin)
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1160,6 +1171,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: အမှိုက်ပုံး (Recycle Bin)
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1249,6 +1261,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: ถังรีไซเคิล
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1338,6 +1351,7 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: سلة المحذوفات
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1396,6 +1410,7 @@ nav:
           - Boot Sector ($Boot): artifacts/boot.md
           - Amcache: artifacts/amcache.md
           - ShimCache: artifacts/shimcache.md
+          - Recycle Bin: artifacts/recycle-bin.md
       - File and Folder Opening:
           - LNK Shortcuts: artifacts/lnk.md
           - Microsoft Office: artifacts/office.md

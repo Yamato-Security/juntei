@@ -38,6 +38,7 @@ Pour une chronologie des artefacts analysés, utilisez [`juntei super-timeline -
 | `parse-file lnk` | `*.lnk` | [Raccourcis LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Corbeille](../artifacts/recycle-bin.md) |
 
 ## [Commandes NTFS](filesystem.md) { #ntfs-commands }
 

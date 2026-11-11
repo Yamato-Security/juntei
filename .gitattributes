@@ -8,3 +8,7 @@ test_files/defender_quarantine/Quarantine/** binary
 # $Boot: a boot sector, whatever its name
 test_files/boot/Boot binary
 *.mdb binary
+# Recycle Bin index files and recycled content, whatever their name
+test_files/recycle_bin/**/$[IR]* binary
+test_files/recycle_bin/**/INFO* binary
+test_files/recycle_bin/**/desktop.ini binary

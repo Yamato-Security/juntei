@@ -68,6 +68,8 @@ que su código esté incluido en Juntei; consulte la licencia de cada proyecto.
   prueba o comportamientos de referencia orientados a la recopilación en varios artefactos.
 - **Hindsight** de Obsidian Forensics y las definiciones de **SQLiteHunter** de Velocidex sirvieron de referencia
   para el historial, las descargas, las cookies y el historial de formularios de los navegadores.
+- **rifiuti2** de Abel Cheung sirvió de referencia para los archivos `$I` e INFO2 de la Papelera de reciclaje, junto
+  con la documentación **dtformats** de libyal sobre ambos formatos.
 
 ## Especificaciones e investigación { #specifications-and-research }
 
@@ -81,7 +83,7 @@ comprensibles para los profesionales.
 
 Las evidencias públicas del
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) de Andrew Rathbun, NIST
-CFReDS, Plaso, Regipy, Artemis, los repositorios de pruebas de analizadores y otras colecciones con
+CFReDS, Plaso, rifiuti2, Regipy, Artemis, los repositorios de pruebas de analizadores y otras colecciones con
 licencias adecuadas permiten realizar pruebas de regresión con datos reales de Windows. Juntei
 conserva notas de atribución y licencia junto a los archivos de prueba incluidos.
 
