@@ -11,3 +11,6 @@
 /.venv-docs/
 /website/scripts/__pycache__/
 output*
+
+# Local environment files may contain secrets.
+.env
