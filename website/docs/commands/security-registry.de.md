@@ -48,7 +48,7 @@ als verborgene Aliase akzeptiert. Die automatische Analyse verwendet die kanonis
 Ergebnisschemata und Ausgabedateinamen bleiben unverändert.
 
 Registry-Befehle akzeptieren `-f <HIVE>` oder `-d <COLLECTION>` sowie Optionen für strukturierte Ausgabe.
-`amcache` liest Amcache-Registry-Hives derzeit ohne Einspielen von Transaktionsprotokollen. `shimcache`
+`amcache` spielt benachbarte Amcache-Transaktionsprotokolle bei einem nicht konsistent gespeicherten Hive automatisch ein, bietet aber keine Optionen, um Protokolle anzugeben oder das Einspielen zu überspringen. `shimcache`
 spielt benachbarte SYSTEM-Protokolle standardmäßig ein und akzeptiert auch einen exportierten rohen AppCompatCache-Wert.
 Die übrigen Registry-Befehle spielen benachbarte Protokolle automatisch ein; verwenden Sie `--log1` / `--log2`, um
 Protokolle explizit anzugeben, oder `--no-logs`, um den primären Hive ohne Einspielen zu untersuchen.

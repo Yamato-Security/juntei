@@ -43,7 +43,7 @@ Options:
 
 正規コマンドは、`app-compat`、`feature-usage`、`open-save-mru`、`recent-docs`、`user-assist`、および `shell-bags` です。以前のスペル (`appcompat`、`featureusage`、`opensavemru`、`recentdocs`、`userassist`、および `shellbags`) は、既存のスクリプトの隠しエイリアスとして引き続き受け入れられます。自動解析では正規名が使用されます。アーティファクト識別子、結果スキーマ、および出力ファイル名は変更されません。
 
-レジストリ コマンドは、`-f <HIVE>` または `-d <COLLECTION>` および構造化出力オプションを受け入れます。 `amcache` は現在、トランザクション ログの再生を行わずに Amcache レジストリ ハイブを読み取ります。 `shimcache` は、デフォルトで隣接する SYSTEM ログを再生し、エクスポートされた生の AppCompatCache 値も受け入れます。他のレジストリ コマンドは、隣接するログを自動的に再生します。 `--log1` / `--log2` を使用してログに明示的に名前を付けるか、`--no-logs` を使用して再生せずにプライマリ ハイブを検査します。
+レジストリ コマンドは、`-f <HIVE>` または `-d <COLLECTION>` および構造化出力オプションを受け入れます。 `amcache` は、ハイブがダーティ状態の場合、隣接する Amcache のトランザクション ログを自動的に再生します。ただし、ログを明示的に指定するオプションや、再生を省略するオプションはありません。 `shimcache` は、デフォルトで隣接する SYSTEM ログを再生し、エクスポートされた生の AppCompatCache 値も受け入れます。他のレジストリ コマンドは、隣接するログを自動的に再生します。 `--log1` / `--log2` を使用してログに明示的に名前を付けるか、`--no-logs` を使用して再生せずにプライマリ ハイブを検査します。
 
 ## `parse-registry amcache` { #parse-registry-amcache }
 

@@ -20,7 +20,12 @@ device. An executable record is **evidence of presence, not proof of execution**
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-Collect the hive and its adjacent `Amcache.hve.LOG`, `.LOG1` and `.LOG2` files from the affected installation. When the hive is dirty, `parse-registry amcache` automatically replays usable transaction logs in memory before parsing, without modifying the evidence. Recovery details are recorded in the parser log or terminal output; diagnostics go to stderr when records are streamed to stdout. Missing or unusable logs can leave records incomplete or make an inconsistent hive unreadable.
+Collect the hive and its adjacent `Amcache.hve.LOG`, `.LOG1` and `.LOG2` files from the affected
+installation. When the hive is dirty, `parse-registry amcache` automatically replays usable
+transaction logs in memory before parsing, without modifying the evidence. Recovery details are
+recorded in the parser log or terminal output; diagnostics go to stderr when records are streamed to
+stdout. Missing or unusable logs can leave records incomplete or make an inconsistent hive
+unreadable.
 
 ## Analyst cautions
 

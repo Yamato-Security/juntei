@@ -48,7 +48,7 @@ Canonical commands `app-compat`, `feature-usage`, `open-save-mru`, `recent-docs`
 result schemas और output filenames अपरिवर्तित हैं।
 
 Registry commands `-f <HIVE>` या `-d <COLLECTION>` और structured output options स्वीकार करते हैं।
-`amcache` वर्तमान में Amcache registry hives को transaction-log replay के बिना पढ़ता है। `shimcache`
+`amcache` hive dirty होने पर साथ वाले Amcache transaction logs को अपने-आप replay करता है, लेकिन logs को नामित करने या replay छोड़ने का कोई option नहीं देता। `shimcache`
 default रूप से साथ वाले SYSTEM logs replay करता है और export किया गया कच्चा AppCompatCache value भी स्वीकार करता है।
 अन्य registry commands साथ वाले logs को अपने-आप replay करते हैं; logs को स्पष्ट रूप से नामित करने के लिए `--log1` / `--log2` का,
 या replay के बिना primary hive की जाँच करने के लिए `--no-logs` का उपयोग करें।

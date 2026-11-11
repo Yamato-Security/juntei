@@ -48,7 +48,7 @@ para los scripts existentes. El análisis automático utiliza los nombres canón
 esquemas de resultados y nombres de archivo de salida no cambian.
 
 Los comandos del Registro aceptan `-f <HIVE>` o `-d <COLLECTION>` y opciones de salida estructurada.
-Actualmente, `amcache` lee los hives del Registro de Amcache sin reproducir los registros de transacciones. `shimcache`
+`amcache` reproduce automáticamente los registros de transacciones adyacentes de Amcache cuando el hive está sucio, pero no tiene opciones para indicar los registros ni para omitir la reproducción. `shimcache`
 reproduce de forma predeterminada los registros adyacentes de SYSTEM y también acepta un valor AppCompatCache sin procesar exportado.
 Los demás comandos del Registro reproducen automáticamente los registros adyacentes; utilice `--log1` / `--log2` para indicar
 los registros explícitamente o `--no-logs` para inspeccionar el hive principal sin reproducción.

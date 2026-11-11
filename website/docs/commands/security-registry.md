@@ -48,10 +48,11 @@ for existing scripts. Automatic parsing uses the canonical names; its artifact i
 result schemas and output filenames are unchanged.
 
 Registry commands accept `-f <HIVE>` or `-d <COLLECTION>` and structured output options.
-`amcache` currently reads Amcache registry hives without transaction-log replay. `shimcache`
-replays adjacent SYSTEM logs by default and also accepts an exported raw AppCompatCache value.
-The other registry commands replay adjacent logs automatically; use `--log1` / `--log2` to name
-logs explicitly or `--no-logs` to inspect the primary hive without replay.
+`amcache` replays adjacent Amcache transaction logs automatically when a hive is dirty, but has
+no options to name logs or skip replay. `shimcache` replays adjacent SYSTEM logs by default and
+also accepts an exported raw AppCompatCache value. The other registry commands replay adjacent
+logs automatically; use `--log1` / `--log2` to name logs explicitly or `--no-logs` to inspect the
+primary hive without replay.
 
 ## `parse-registry amcache`
 

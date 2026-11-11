@@ -48,7 +48,7 @@ pour les scripts existants. L'analyse automatique utilise les noms canoniques ;
 ses schémas de résultats et ses noms de fichiers de sortie sont inchangés.
 
 Les commandes du Registre acceptent `-f <HIVE>` ou `-d <COLLECTION>` ainsi que des options de sortie structurée.
-`amcache` lit actuellement les ruches du Registre Amcache sans rejouer les journaux de transactions. `shimcache`
+`amcache` rejoue automatiquement les journaux de transactions Amcache adjacents lorsque la ruche est non synchronisée, mais ne propose aucune option pour désigner les journaux ou ignorer le rejeu. `shimcache`
 rejoue par défaut les journaux SYSTEM adjacents et accepte également une valeur AppCompatCache brute exportée.
 Les autres commandes du Registre rejouent automatiquement les journaux adjacents ; utilisez `--log1` / `--log2` pour désigner
 explicitement les journaux, ou `--no-logs` pour examiner la ruche principale sans rejeu.
