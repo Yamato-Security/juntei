@@ -154,6 +154,8 @@ CSV peut aplatir profils système, montages utilisateur USB et éléments shell 
 
 Les entrées sont lues en flux et traitées en parallèle. Par défaut, chaque thread écrit un fragment d'événements formatés ; les fragments sont concaténés dans l'ordre des fichiers d'entrée, sans tri ni relecture de leurs structures d'événements. Le CSV n'a qu'un en-tête, même avec plusieurs fichiers. L'ordre de sortie est déterministe quel que soit le nombre de threads, mais n'implique aucune chronologie.
 
+`Input files` affiche la taille combinée des entrées analysées sélectionnées et des chronologies Hayabusa. `Results saved` indique la taille du fichier de chronologie enregistré. Les deux utilisent les mêmes unités `KiB`/`MiB`/`GiB` lisibles par l'homme que `auto-parse`.
+
 Avec `--sort`, les tampons débordent dans un répertoire temporaire privé, puis des passes de fusion bornées produisent une sortie chronologique. Le tri utilise secondes et nanosecondes entières, dates antérieures à 1970 comprises. L'ordre des égalités reste stable entre budgets et nombres de threads. Une barre de progression avance à chaque événement traité pendant les fusions intermédiaires et finales, passes répétées comprises. Elle s'affiche dans un terminal et est masquée quand la sortie est redirigée.
 
 `--memory-limit` ne s'applique qu'avec `--sort` : c'est le **budget total des tampons de tri**, pas une limite de mémoire RSS du processus. Enregistrements, objets/chaînes JSON, tampons CSV et fusions ajoutent de la mémoire ; les petits budgets réduisent les threads. `--max-record-size` limite un enregistrement à 16 MiB par défaut. Un tableau JSON formaté compte comme un document entier ; augmentez la limite ou préférez JSONL. La lecture anticipée CSV compte aussi.

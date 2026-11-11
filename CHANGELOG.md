@@ -22,6 +22,8 @@
 
 - `auto-parse --e01` reads physical E01/Ex01 images natively on Linux, macOS and Windows without FUSE, OS mounting or administrator privileges. Split images start at their first segment; whole disks and single NTFS volumes use the same read-only temporary-workspace pipeline as VHDX. `--vhdx --e01` accepts mixed input, and the separate Linux/FUSE `mount` command also accepts E01 images. Protect every split E01 segment, including damaged companions and hard-link aliases, from output replacement. Resolve first-segment case aliases without changing segment families, retain reader warnings discovered during parsing, and saturate acquisition-error counts instead of overflowing. Uses [ys-e01-parser](https://github.com/Yamato-Security/ys-e01-parser), a reader-only fork of [ewf-image](https://github.com/ebrig/ewf-image). (#140) (@YamatoSecurity)
 
+- `super-timeline`: show the combined selected input-file size beside `Input files` and the saved timeline size beside `Results saved`, using the same human-readable KiB/MiB/GiB formatter as `auto-parse`. (@YamatoSecurity)
+
 **Bug Fixes:**
 
 - `auto-parse`: label failed parser tasks as `Parsing error` in the results summary and link to their detailed logs, instead of showing a parser's elapsed-time footer as the error. (@YamatoSecurity)

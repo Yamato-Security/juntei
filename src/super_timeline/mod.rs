@@ -395,6 +395,22 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
     crate::interrupt::check()?;
     let started = Instant::now();
     let inventory = input::discover(opts)?;
+    let input_bytes = inventory.inputs.iter().try_fold(0u64, |total, input| {
+        let bytes = fs::metadata(&input.path)
+            .map_err(|error| {
+                io::Error::new(
+                    error.kind(),
+                    format!(
+                        "Could not read input size for {}: {error}",
+                        input.path.display()
+                    ),
+                )
+            })?
+            .len();
+        total
+            .checked_add(bytes)
+            .ok_or_else(|| io::Error::other("Total input size exceeds the supported range"))
+    })?;
     for artifact in opts.artifacts.iter().chain(opts.input_artifact.iter()) {
         if !adapters::ARTIFACTS.contains(&artifact.as_str()) {
             return Err(io::Error::other(format!(
@@ -434,7 +450,11 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
     util::p_label(
         opts.common.no_color,
         "Input files: ",
-        &util::fmt_num(inventory.inputs.len()),
+        &format!(
+            "{} ( {} )",
+            util::fmt_num(inventory.inputs.len()),
+            util::size_display(input_bytes)
+        ),
     );
     util::p_label(
         opts.common.no_color,
@@ -629,7 +649,11 @@ pub fn run(opts: &SuperTimelineOptions) -> i32 {
             util::p_label(
                 opts.common.no_color,
                 "Results saved: ",
-                &crate::auto_parse::shown(&opts.output),
+                &format!(
+                    "{} ( {} )",
+                    crate::auto_parse::shown(&opts.output),
+                    util::file_size_display(&opts.output)
+                ),
             );
             0
         }

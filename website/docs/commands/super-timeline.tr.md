@@ -154,6 +154,8 @@ CSV, sistem profilleri, USB kullanıcı bağlama noktaları ve shell yapıların
 
 Girdiler akışla paralel işlenir. Varsayılan olarak her işçi biçimlendirilmiş bir olay parçası yazar; parçalar sıralanmadan ve olay yapıları yeniden okunmadan girdi dosyası sırasıyla uç uca eklenir. Birden çok dosya işlense de CSV tek başlık içerir. Çıktı sırası işçi sayısından bağımsız olarak deterministiktir; kronolojik sıra anlamına gelmez.
 
+`Input files`, seçilen ayrıştırılmış girişlerin ve Hayabusa zaman çizelgelerinin birleşik boyutunu gösterir. `Results saved` kaydedilen zaman çizelgesi dosyasının boyutunu gösterir. Her ikisi de `auto-parse` ile aynı insan tarafından okunabilen `KiB`/`MiB`/`GiB` birimlerini kullanır.
+
 `--sort` ile tamponlar özel geçici dizine taşar, ardından sınırlı birleştirme geçişleri kronolojik çıktı üretir. Sıralama tam saniye/nanosaniye kullanır, 1970 öncesini de destekler. Eşit zamanların sırası işçi ve bütçeden bağımsızdır. İlerleme çubuğu, tekrarlanan geçişler dahil ara ve son birleştirmelerde işlenen her olayla ilerler; terminalde görünür, çıktı yönlendirildiğinde gizlenir.
 
 `--memory-limit` yalnızca `--sort` ile geçerlidir: toplam **sıralama tampon bütçesidir**, işlem RSS sınırı değildir. Kayıtlar, JSON nesneleri, CSV tamponları ve birleştirmeler ek bellek ister; küçük bütçe işçi sayısını azaltır. `--max-record-size` varsayılan 16 MiB kayıt sınırıdır. Biçimli JSON dizisi tek belge sayılır; gerekirse sınırı artırın veya JSONL kullanın. CSV ön okuması da sınıra dahildir.
