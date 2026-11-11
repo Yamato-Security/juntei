@@ -65,6 +65,8 @@ cada projeto para conhecer sua licença.
   de teste ou comportamento de referência orientado à coleta para vários artefatos.
 - O **Hindsight**, da Obsidian Forensics, e as definições do **SQLiteHunter**, da Velocidex, serviram de
   referência para histórico, downloads, cookies e histórico de formulários de navegadores.
+- O **rifiuti2**, de Abel Cheung, serviu de referência para os arquivos `$I` e o INFO2 da Lixeira, junto com a
+  documentação **dtformats** da libyal sobre os dois formatos.
 
 ## Especificações e pesquisas { #specifications-and-research }
 
@@ -77,7 +79,7 @@ NTFS que tornaram esses artefatos compreensíveis para os profissionais da área
 
 As evidências públicas do
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) de Andrew Rathbun, do NIST CFReDS, do Plaso,
-do Regipy, do Artemis, de repositórios de teste de analisadores e de outras coleções devidamente
+do rifiuti2, do Regipy, do Artemis, de repositórios de teste de analisadores e de outras coleções devidamente
 licenciadas tornam possíveis os testes de regressão com dados reais do Windows. O Juntei mantém notas
 de atribuição/licença ao lado dos arquivos de teste incluídos.
 

@@ -164,6 +164,19 @@ públicas, todas as 13.057 células de comparação em comum — incluindo carim
 analisador de referência. Seis arquivos que a referência recusou (listas personalizadas vazias, um rodapé ausente ou um arquivo
 que não era uma Jump List) foram decodificados ou relatados explicitamente pelo Juntei.
 
+## Lixeira { #recycle-bin }
+
+O `parse-file recycle-bin` é um analisador próprio do Juntei. Nas amostras públicas do
+[rifiuti2](https://github.com/abelcheung/rifiuti2), todo registro que o rifiuti2 lê teve o mesmo índice, horário de
+exclusão (ao segundo, como o rifiuti2 o exibe), estado de remoção da Lixeira, tamanho e caminho: 92 registros, 67 em
+onze arquivos INFO2 do Windows 95 ao Server 2003 e 25 em três pastas de arquivos `$I` do Windows Vista e do Windows 10.
+Os caminhos ANSI do INFO2 coincidiram nas páginas de código que os próprios testes do rifiuti2 usam. O Juntei também
+lê o que o rifiuti2 rejeita: uma pasta que mistura as duas versões de `$I`, um cabeçalho `$I` sem caminho e registros
+truncados, cada um com seu dano relatado. Os arquivos `$I` e INFO2 dos dados de teste do Plaso fornecem os horários,
+tamanhos, caminhos, índices e unidades que os testes do Plaso esperam. Na imagem de disco pública M57-Jean da Digital
+Corpora (Windows XP), lida com `auto-parse --e01`, o registro do INFO2 coincide com o rifiuti2, e o arquivo reciclado
+ao lado dele, `Dc1.jpg`, tem o nome que o Juntei lhe dá.
+
 ## ShimCache { #shimcache }
 
 O [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) é um fork mantido

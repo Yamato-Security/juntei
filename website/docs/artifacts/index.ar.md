@@ -11,6 +11,7 @@
 | هل شُغّل هذا الملف التنفيذي؟ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)، [SRUM](srum.md)، سجلات الأحداث |
 | هل كان هذا الملف موجودًا في أي وقت؟ | [Amcache](amcache.md)، [$MFT](mft.md) | [دفتر يومية USN](usn-journal.md)، [$I30](i30.md)، ShimCache |
 | متى أُنشئ ملف أو أُعيدت تسميته أو حُذف؟ | [دفتر يومية USN](usn-journal.md) | [$MFT](mft.md)، [$I30](i30.md)، حجر Defender |
+| ما الذي حذفه المستخدم إلى سلة المحذوفات، ومتى؟ | [سلة المحذوفات](recycle-bin.md) | [دفتر يومية USN](usn-journal.md)، [$MFT](mft.md)، [LNK](lnk.md)، [Jump Lists](jump-lists.md) |
 | ما الاسم أو الطابع الزمني الذي كان موجودًا قبل تغيير البيانات الوصفية؟ | [$LogFile](logfile.md) | [$MFT](mft.md)، [دفتر يومية USN](usn-journal.md)، [$I30](i30.md) |
 | من يملك الملف، ومن يحق له تغييره؟ | [$Secure:$SDS](secure-sds.md) مع [$MFT](mft.md) | [SAM](sam.md)، سجلات أحداث Security |
 | على أي وحدة تخزين كان هدف اختصار أو ملف Prefetch؟ | [$Boot](boot.md) | [LNK](lnk.md)، [Prefetch](prefetch.md)، [أجهزة USB](usb.md) |

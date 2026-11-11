@@ -31,7 +31,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-पार्सरों को पथ चाहिए; Juntei पार्सरों द्वारा पढ़ी जाने वाली फ़ाइलों को सीमित बफ़र से निजी अस्थायी स्थान में कॉपी करता है: रजिस्ट्री हाइव और उनके ट्रांज़ैक्शन लॉग, NTFS मेटाडेटा फ़ाइलें, डेटाबेस, Prefetch फ़ाइलें, शॉर्टकट, Jump List, Outlook फ़ाइलें और Defender क्वारंटीन फ़ोल्डर। बाकी हर फ़ाइल अपने मूल संशोधन समय वाली खाली प्लेसहोल्डर बनती है, इसलिए डायरेक्टरी और पथ डिस्क जैसे ही दिखते हैं। persistence-hunter किसी प्लेसहोल्डर की सामग्री इमेज से तभी पढ़ता है जब उसे ज़रूरत हो, जैसे किसी परसिस्टेंस प्रविष्टि द्वारा संदर्भित निष्पादन योग्य फ़ाइल। **परिणामों के अलावा कॉपी की गई फ़ाइलों के लिए पर्याप्त स्थान रखें।** समर्थित होने पर शून्य क्षेत्रों को स्पार्स रूप में लिखा जाता है। नाम, संरचना, हार्ड लिंक और संशोधन समय सुरक्षित रहते हैं। LNK और Jump List के स्रोत समय मूल NTFS मेटाडेटा स्नैपशॉट से आते हैं, अस्थायी फ़ाइलों से नहीं। पार्सर त्रुटियों सहित सामान्य समापन प्रतियाँ हटाता है; जबरन समाप्ति उन्हें छोड़ सकती है। स्रोत केवल पढ़ने योग्य रहता है; लंबित VHDX लॉग सिर्फ़ मेमोरी में लागू होते हैं।
+पार्सरों को पथ चाहिए; Juntei पार्सरों द्वारा पढ़ी जाने वाली फ़ाइलों को सीमित बफ़र से निजी अस्थायी स्थान में कॉपी करता है: रजिस्ट्री हाइव और उनके ट्रांज़ैक्शन लॉग, NTFS मेटाडेटा फ़ाइलें, डेटाबेस, Prefetch फ़ाइलें, शॉर्टकट, Jump List, Outlook फ़ाइलें, रीसायकल बिन की इंडेक्स फ़ाइलें और Defender क्वारंटीन फ़ोल्डर। बाकी हर फ़ाइल अपने मूल संशोधन समय वाली खाली प्लेसहोल्डर बनती है, इसलिए डायरेक्टरी और पथ डिस्क जैसे ही दिखते हैं। persistence-hunter किसी प्लेसहोल्डर की सामग्री इमेज से तभी पढ़ता है जब उसे ज़रूरत हो, जैसे किसी परसिस्टेंस प्रविष्टि द्वारा संदर्भित निष्पादन योग्य फ़ाइल। **परिणामों के अलावा कॉपी की गई फ़ाइलों के लिए पर्याप्त स्थान रखें।** समर्थित होने पर शून्य क्षेत्रों को स्पार्स रूप में लिखा जाता है। नाम, संरचना, हार्ड लिंक और संशोधन समय सुरक्षित रहते हैं। LNK और Jump List के स्रोत समय मूल NTFS मेटाडेटा स्नैपशॉट से आते हैं, अस्थायी फ़ाइलों से नहीं। पार्सर त्रुटियों सहित सामान्य समापन प्रतियाँ हटाता है; जबरन समाप्ति उन्हें छोड़ सकती है। स्रोत केवल पढ़ने योग्य रहता है; लंबित VHDX लॉग सिर्फ़ मेमोरी में लागू होते हैं।
 
 होस्ट खोज, CSV/JSON/JSONL और `-j` सामान्य पाइपलाइन इस्तेमाल करते हैं। `manifest.json` का `Image` मूल इमेज बताता है; `EvidenceRoot` अंदर का सापेक्ष पथ बताता है। पढ़ने की त्रुटियाँ और असुरक्षित नाम `ImageErrors` तथा `manifest.csv` की असफल पंक्तियों में दर्ज होते हैं। पढ़े जा सकने वाले परिणाम सुरक्षित रहते हैं; अधूरा इनपुट कोड 1 देता है। खतरनाक या अस्पष्ट नाम बदले नहीं जाते। नामित NTFS स्ट्रीम अतिरिक्त फ़ाइलों की तरह निकाली नहीं जातीं; सामान्य फ़ाइलों के रूप में एकत्र आर्टिफ़ैक्ट उपलब्ध रहते हैं।
 
@@ -166,6 +166,7 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
   items और tasks
 - LNK shortcuts
 - Jump Lists
+- Recycle Bin: deleted items के मूल paths, sizes, deletion times और users
 - ShimCache
 - Persistence Hunter (allow/block profiles के साथ 131 cross-source persistence checks)
 - Defender quarantine metadata
@@ -262,6 +263,8 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -351,7 +354,7 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `Communication` | Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar items और tasks |
 | `ExternalDevices` | USB devices और volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open और Save As संवाद, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies और routes; SRUM connections, traffic और push notifications |
 | `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares; User Access Logging (किसी server के roles के clients) |
@@ -372,7 +375,7 @@ Amcache और Jump Lists प्रत्येक के लिए उनकी
 `NetworkActivity`, `ProcessExecution` और `SystemInformation` में रखी जाती हैं, एक साझा
 `SystemInformation/SRUM-logs.txt` file के साथ। कोई `logs/` subdirectories नहीं बनाई जातीं।
 
-Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` और

@@ -175,6 +175,19 @@ hücresinin tümü referans ayrıştırıcıyla eşleşti. Referansın reddetti�
 eksik bir altbilgi veya Jump List olmayan bir dosya) Juntei tarafından ya kodu çözüldü ya da açıkça
 raporlandı.
 
+## Geri Dönüşüm Kutusu { #recycle-bin }
+
+`parse-file recycle-bin`, Juntei'nin kendi ayrıştırıcısıdır. [rifiuti2](https://github.com/abelcheung/rifiuti2)
+projesinin herkese açık örneklerinde, rifiuti2'nin okuduğu her kaydın indeksi, silinme zamanı (rifiuti2'nin gösterdiği
+gibi saniyesine kadar), Geri Dönüşüm Kutusu'ndan çıkarılma durumu, boyutu ve yolu aynıydı: 92 kayıt; bunların 67'si
+Windows 95 ile Server 2003 arasındaki on bir INFO2 dosyasında, 25'i ise Windows Vista ve Windows 10 `$I` dosyalarından
+oluşan üç klasördeydi. INFO2'nin ANSI yolları, rifiuti2'nin kendi testlerinin kullandığı kod sayfalarında eşleşti.
+Juntei, rifiuti2'nin reddettiklerini de okur: her iki `$I` sürümünü karıştıran bir klasör, yolu olmayan bir `$I`
+başlığı ve kesik kayıtlar; her birinin hasarı raporlanır. Plaso'nun test verilerindeki `$I` ve INFO2 dosyaları,
+Plaso testlerinin beklediği zamanları, boyutları, yolları, indeksleri ve sürücüleri verir. Digital Corpora'nın herkese
+açık M57-Jean disk imajında (Windows XP), `auto-parse --e01` ile okunduğunda INFO2 kaydı rifiuti2 ile eşleşir ve
+yanındaki silinmiş dosya `Dc1.jpg`, Juntei'nin ona verdiği adı taşır.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser), kayıt defteri kovanı

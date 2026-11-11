@@ -38,6 +38,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file lnk` | `*.lnk` | [Ярлики LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Кошик](../artifacts/recycle-bin.md) |
 
 ## [Команди NTFS](filesystem.md) { #ntfs-commands }
 

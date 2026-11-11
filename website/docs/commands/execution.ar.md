@@ -1,7 +1,7 @@
 # أوامر الملفات { #file-commands }
 
 يتعامل `parse-file` مع الملفات الخاصة بآثار رقمية محددة: Prefetch، والاختصارات، وJump Lists، وحجر
-Defender، وملفات PST وOST وMSG وOFT الخاصة بـ Outlook. تستخدم Jump Lists التلقائية حاوية ملف مركّب
+Defender، وملفات PST وOST وMSG وOFT الخاصة بـ Outlook، وملفات الفهرس في سلة المحذوفات. تستخدم Jump Lists التلقائية حاوية ملف مركّب
 (compound file)؛ بينما تستخدم Jump Lists المخصصة بنية ثنائية مختلفة. وكلتاهما تتبعان أمر الأثر
 الرقمي نفسه.
 
@@ -19,6 +19,7 @@ Commands:
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
   prefetch             Parse Prefetch files
+  recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
 Options:
   -h, --help  Print help
@@ -201,3 +202,37 @@ juntei parse-file prefetch -d evidence/ -T -o prefetch-timeline.csv
 ```
 
 راجع [Prefetch](../artifacts/prefetch.md).
+
+## `parse-file recycle-bin` { #parse-file-recycle-bin }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file recycle-bin <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Recycle Bin index files ($I files, INFO2)
+  -f, --file <FILE>      File path to one $I or INFO2 file
+      --code-page <CP>   Code page of INFO2's ANSI paths: the system's ANSI code page (932 for Japanese) [default: 1252]
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file recycle-bin -d evidence/ -o recycle-bin.csv
+juntei parse-file recycle-bin -f '$IABC123.docx' -t jsonl | jq .
+```
+
+راجع [سلة المحذوفات](../artifacts/recycle-bin.md).

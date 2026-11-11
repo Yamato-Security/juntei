@@ -63,6 +63,8 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   စမ်းသပ်အထောက်အထားများ သို့မဟုတ် စုဆောင်းမှုအခြေပြု ကိုးကားရန် အပြုအမူကို ပေးခဲ့ပါသည်။
 - Obsidian Forensics ၏ **Hindsight** နှင့် Velocidex ၏ **SQLiteHunter** definition များသည် ဘရောက်ဇာ history၊
   download များ၊ cookie များနှင့် form history အတွက် ကိုးကားချက်များ ဖြစ်ခဲ့ပါသည်။
+- Abel Cheung ၏ **rifiuti2** သည် Recycle Bin ၏ `$I` ဖိုင်များနှင့် INFO2 အတွက် ကိုးကားချက် ဖြစ်ခဲ့ပြီး libyal ၏
+  **dtformats** စာတမ်းက format နှစ်မျိုးလုံးကို ရှင်းပြထားပါသည်။
 
 ## Spec များနှင့် သုတေသန { #specifications-and-research }
 
@@ -75,7 +77,7 @@ registry နှင့် NTFS forensic သုတေသန စာရေးသူ�
 
 Andrew Rathbun ၏
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)၊ NIST CFReDS၊ Plaso၊
-Regipy၊ Artemis၊ parser စမ်းသပ် repository များနှင့် license မှန်ကန်စွာ ပါရှိသော အခြား collection များမှ
+rifiuti2၊ Regipy၊ Artemis၊ parser စမ်းသပ် repository များနှင့် license မှန်ကန်စွာ ပါရှိသော အခြား collection များမှ
 အများသုံး အထောက်အထားများကြောင့် တကယ့် Windows ဒေတာဖြင့် regression စမ်းသပ်ခြင်း ပြုလုပ်နိုင်ပါသည်။
 Juntei သည် ထည့်သွင်းထားသော စမ်းသပ်ဖိုင်များ၏ ဘေးတွင် attribution/license မှတ်စုများကို ထားရှိပါသည်။
 

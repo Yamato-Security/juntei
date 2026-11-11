@@ -22,6 +22,7 @@ Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisis
 | Browser web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\`, dan folder profil browser lainnya |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` dan lokasi pengguna/sistem lainnya |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` dan `CustomDestinations` |
+| Recycle Bin | `$Recycle.Bin\<SID>\$I*` dan `$R*` di setiap volume (`RECYCLER\<SID>\INFO2` dan `D*` pada Windows XP dan versi sebelumnya) |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Karantina Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Registry mesin | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |

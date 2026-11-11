@@ -22,6 +22,7 @@ Juntei 剖析已從 Windows 收集的檔案。請使用可信任的擷取工具�
 | 網頁瀏覽器 | `%LOCALAPPDATA%\Google\Chrome\User Data\`、`%LOCALAPPDATA%\Microsoft\Edge\User Data\`、`%APPDATA%\Mozilla\Firefox\Profiles\` 以及其他瀏覽器的設定檔資料夾 |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 以及其他使用者／系統位置 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 與 `CustomDestinations` |
+| 資源回收筒 | 每個磁碟區上的 `$Recycle.Bin\<SID>\$I*` 與 `$R*`（Windows XP 及更早版本為 `RECYCLER\<SID>\INFO2` 與 `D*`） |
 | ShimCache | `SYSTEM` 登錄區：`...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender 隔離資料 | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | 電腦登錄檔 | `C:\Windows\System32\config\SYSTEM`、`SOFTWARE`、`SAM`、`SECURITY` |

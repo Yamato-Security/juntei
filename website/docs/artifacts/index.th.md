@@ -11,6 +11,7 @@ Windows เก็บรักษาร่องรอยที่ซ้อนท
 | ไฟล์ปฏิบัติการนี้เคยทำงานหรือไม่ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event log |
 | ไฟล์นี้เคยมีอยู่หรือไม่ | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
 | ไฟล์ถูกสร้าง เปลี่ยนชื่อ หรือลบเมื่อใด | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), ข้อมูลที่ Defender กักกัน |
+| ผู้ใช้ลบอะไรลงถังรีไซเคิล และลบเมื่อใด | [ถังรีไซเคิล](recycle-bin.md) | [USN Journal](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | ชื่อหรือ timestamp ใดมีอยู่ก่อนเมทาดาทาจะเปลี่ยนแปลง | [$LogFile](logfile.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [$I30](i30.md) |
 | ใครเป็นเจ้าของไฟล์ และใครสามารถเปลี่ยนแปลงไฟล์ได้ | [$Secure:$SDS](secure-sds.md) ร่วมกับ [$MFT](mft.md) | [SAM](sam.md), Security event log |
 | เป้าหมายของทางลัดหรือไฟล์ Prefetch อยู่บนวอลุ่มใด | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [อุปกรณ์ USB](usb.md) |

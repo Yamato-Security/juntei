@@ -60,6 +60,8 @@ Juntei इसलिए अस्तित्व में है क्यों
   संग्रह-केंद्रित संदर्भ व्यवहार प्रदान किया।
 - Obsidian Forensics का **Hindsight** और Velocidex की **SQLiteHunter** definitions browser history,
   downloads, cookies और form history के लिए संदर्भ रहीं।
+- Abel Cheung का **rifiuti2**, libyal के **dtformats** में दोनों formats के documentation के साथ,
+  रीसायकल बिन की `$I` files और INFO2 के लिए संदर्भ रहा।
 
 ## Specification और शोध { #specifications-and-research }
 
@@ -72,7 +74,7 @@ AppCompatCache, Amcache, SRUM, Prefetch, registry और NTFS forensic शोध
 
 Andrew Rathbun के
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS, Plaso,
-Regipy, Artemis, parser test repositories और अन्य उचित रूप से licensed संग्रहों के सार्वजनिक साक्ष्य
+rifiuti2, Regipy, Artemis, parser test repositories और अन्य उचित रूप से licensed संग्रहों के सार्वजनिक साक्ष्य
 वास्तविक Windows डेटा के विरुद्ध regression testing को संभव बनाते हैं। Juntei शामिल की गई test files के
 साथ attribution/license notes रखता है।
 

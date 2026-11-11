@@ -10,6 +10,7 @@ Windows 會在檔案系統、登錄、相容性資料庫、使用者介面歷程
 | 這個執行檔是否曾經執行？ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)、[SRUM](srum.md)、事件記錄 |
 | 這個檔案是否曾經存在？ | [Amcache](amcache.md)、[$MFT](mft.md) | [USN Journal](usn-journal.md)、[$I30](i30.md)、ShimCache |
 | 檔案是何時被建立、重新命名或刪除的？ | [USN Journal](usn-journal.md) | [$MFT](mft.md)、[$I30](i30.md)、Defender 隔離資料 |
+| 使用者將哪些項目刪除到資源回收筒，又是何時刪除的？ | [資源回收筒](recycle-bin.md) | [USN Journal](usn-journal.md)、[$MFT](mft.md)、[LNK](lnk.md)、[Jump Lists](jump-lists.md) |
 | 中繼資料變更之前存在的是什麼名稱或時間戳記？ | [$LogFile](logfile.md) | [$MFT](mft.md)、[USN Journal](usn-journal.md)、[$I30](i30.md) |
 | 檔案的擁有者是誰，誰可以變更它？ | [$Secure:$SDS](secure-sds.md) 搭配 [$MFT](mft.md) | [SAM](sam.md)、Security 事件記錄 |
 | 捷徑或 Prefetch 檔案的目標位於哪個磁碟區？ | [$Boot](boot.md) | [LNK](lnk.md)、[Prefetch](prefetch.md)、[USB 裝置](usb.md) |

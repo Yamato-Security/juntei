@@ -22,6 +22,7 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
 | Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` y las carpetas de perfil de los demás navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` y otras ubicaciones de usuario/sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` y `CustomDestinations` |
+| Papelera de reciclaje | `$Recycle.Bin\<SID>\$I*` y `$R*` en cada volumen (`RECYCLER\<SID>\INFO2` y `D*` en Windows XP y versiones anteriores) |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Cuarentena de Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Registro del equipo | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |

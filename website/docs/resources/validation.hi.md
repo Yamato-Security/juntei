@@ -162,6 +162,20 @@ Jump Lists में, सभी 13,057 साझा तुलना cells—100 
 parser से मेल खाए। जिन छह files को संदर्भ ने अस्वीकार किया (खाली custom lists, अनुपस्थित footer, या ऐसी file
 जो Jump List नहीं थी), उन्हें Juntei ने या तो decode किया या स्पष्ट रूप से रिपोर्ट किया।
 
+## रीसायकल बिन { #recycle-bin }
+
+`parse-file recycle-bin` Juntei का अपना parser है। [rifiuti2](https://github.com/abelcheung/rifiuti2) के
+सार्वजनिक samples पर, rifiuti2 द्वारा पढ़े जाने वाले हर record का index, deletion time (seconds तक, जैसा
+rifiuti2 उसे दिखाता है), removal state, size और path समान थे: 92 records, जिनमें से 67 Windows 95 से
+Server 2003 तक की ग्यारह INFO2 files में और 25 Windows Vista और Windows 10 की `$I` files वाले तीन
+folders में थे। INFO2 के ANSI paths उन code pages में मेल खाए जिनका उपयोग rifiuti2 के अपने tests करते
+हैं। Juntei वह भी पढ़ता है जिसे rifiuti2 अस्वीकार करता है: दोनों `$I` versions को मिलाने वाला folder,
+बिना path वाला `$I` header, और truncated records, हर एक की क्षति की रिपोर्ट के साथ। Plaso के test data
+की `$I` और INFO2 files वही times, sizes, paths, indexes और drives देती हैं जिनकी Plaso के tests अपेक्षा
+करते हैं। Digital Corpora की सार्वजनिक M57-Jean disk image (Windows XP) पर, जिसे `auto-parse --e01` से
+पढ़ा गया, INFO2 record rifiuti2 से मेल खाता है, और उसके पास bin में रखी file, `Dc1.jpg`, का नाम वही है जो
+Juntei उसे देता है।
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) Security Ronin के

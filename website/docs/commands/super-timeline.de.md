@@ -101,6 +101,7 @@ Ein Zeitstempel beschreibt ein gespeichertes Objekt und beweist allein weder Aus
 | SRUM | Anbieterzeit/-intervall, Verbindungsbeginn, explizite Beginn-/Endfelder und Anwendungskennungen. Bytes, Dauer und Zähler sind keine Datumswerte. |
 | LNK | MAC-Zeiten des Ziels, Tracking-Kennungserstellung und Shell-Item-Zeiten beschreiben Zielmetadaten, nicht zwingend das Öffnen der Verknüpfung. |
 | Jump Lists | Letzte Eintragsnutzung, Tracking-Kennung und eingebettete LNK-Zielzeiten. Containerdateizeiten auf der Sammelseite sind standardmäßig ausgenommen. |
+| Papierkorb | Zeitpunkt, zu dem jedes Element in den Papierkorb verschoben wurde, mit dem Benutzer des Papierkorbs, dem ursprünglichen Pfad und der Angabe, ob der gelöschte Inhalt gesichert wurde. Nicht der Zeitpunkt, zu dem der Papierkorb geleert wurde, und nicht die eigenen Dateizeiten des Elements. |
 | Defender-Quarantäne | Eintragszeit und gespeicherte Ressourcen-Erstellungs-/Zugriffs-/Schreibzeiten. Extraktionszeiten beweisen keine Aktivität am Endpunkt. |
 | BAM, UserAssist, FeatureUsage | Gespeicherte Aktivität mit getrenntem Schlüssel-Schreibkontext. Zähler ohne Zeit erzeugen kein Ereignis. |
 | RecentDocs, MRU, Öffnen/Speichern-MRU, ShellBags, Office | Gespeicherte Nutzungs-/Vertrauens-/Shell-Item-Zeiten und Schlüsselkontext. Die Schlüsselzeit einer Liste ist nicht die letzte Nutzung jedes einzelnen Elements. |

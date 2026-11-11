@@ -165,6 +165,20 @@ Jump Lists hinweg stimmten alle 13.057 gemeinsamen Vergleichszellen – einschli
 Referenzparser überein. Sechs Dateien, die die Referenz ablehnte (leere benutzerdefinierte Listen, eine fehlende Fußzeile oder eine Datei,
 die keine Jump List war), wurden von Juntei entweder dekodiert oder ausdrücklich gemeldet.
 
+## Papierkorb { #recycle-bin }
+
+`parse-file recycle-bin` ist Junteis eigener Parser. Bei den öffentlichen Beispieldateien von
+[rifiuti2](https://github.com/abelcheung/rifiuti2) hatte jeder Datensatz, den rifiuti2 liest, denselben Index, dieselbe
+Löschzeit (sekundengenau, wie rifiuti2 sie anzeigt), denselben Entfernungsstatus, dieselbe Größe und denselben Pfad:
+92 Datensätze, davon 67 in elf INFO2-Dateien von Windows 95 bis Server 2003 und 25 in drei Ordnern mit `$I`-Dateien
+von Windows Vista und Windows 10. Die ANSI-Pfade in INFO2 stimmten in den Codepages überein, die die eigenen Tests von
+rifiuti2 verwenden. Juntei liest auch, was rifiuti2 ablehnt: einen Ordner, der beide `$I`-Versionen mischt, einen
+`$I`-Header ohne Pfad und abgeschnittene Datensätze, jeweils mit gemeldeter Beschädigung. Die `$I`- und INFO2-Dateien
+der Testdaten von Plaso liefern die Zeiten, Größen, Pfade, Indizes und Laufwerke, die die Tests von Plaso erwarten. Auf
+dem öffentlichen Datenträgerabbild M57-Jean von Digital Corpora (Windows XP), gelesen mit `auto-parse --e01`, stimmt
+der INFO2-Datensatz mit rifiuti2 überein, und die daneben liegende Papierkorbdatei `Dc1.jpg` trägt den Namen, den
+Juntei ihr gibt.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) ist ein gepflegter Fork

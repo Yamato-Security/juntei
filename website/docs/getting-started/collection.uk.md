@@ -22,6 +22,7 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 | Веб-браузери | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` та папки профілів інших браузерів |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` та інші розташування користувача/системи |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` і `CustomDestinations` |
+| Кошик | `$Recycle.Bin\<SID>\$I*` і `$R*` на кожному томі (`RECYCLER\<SID>\INFO2` і `D*` у Windows XP і старіших) |
 | ShimCache | Кущ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Карантин Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Реєстр машини | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |

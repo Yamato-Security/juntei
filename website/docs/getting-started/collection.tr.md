@@ -22,6 +22,7 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 | Web tarayıcıları | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` ve diğer tarayıcıların profil klasörleri |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ve diğer kullanıcı/sistem konumları |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` ve `CustomDestinations` |
+| Geri Dönüşüm Kutusu | Her birimde `$Recycle.Bin\<SID>\$I*` ve `$R*` (Windows XP ve öncesinde `RECYCLER\<SID>\INFO2` ve `D*`) |
 | ShimCache | `SYSTEM` kovanı: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender karantinası | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Makine kayıt defteri | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |

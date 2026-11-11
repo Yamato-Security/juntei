@@ -22,6 +22,7 @@
 | متصفحات الويب | `%LOCALAPPDATA%\Google\Chrome\User Data\`، و`%LOCALAPPDATA%\Microsoft\Edge\User Data\`، و`%APPDATA%\Mozilla\Firefox\Profiles\`، ومجلدات ملفات التعريف الخاصة بالمتصفحات الأخرى |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ومواقع أخرى للمستخدم/النظام |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` و`CustomDestinations` |
+| سلة المحذوفات | `$Recycle.Bin\<SID>\$I*` و`$R*` على كل وحدة تخزين (`RECYCLER\<SID>\INFO2` و`D*` في Windows XP والإصدارات الأقدم) |
 | ShimCache | خلية `SYSTEM`: ‏`...\Session Manager\AppCompatCache\AppCompatCache` |
 | حجر Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | سجل Windows للجهاز | `C:\Windows\System32\config\SYSTEM`، `SOFTWARE`، `SAM`، `SECURITY` |

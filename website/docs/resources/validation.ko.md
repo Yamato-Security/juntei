@@ -156,6 +156,18 @@ List 관련 작업을 사용하며, 포함된 링크는 `ys-lnk-parser`로 디�
 6개(빈 사용자 지정 목록, 바닥글 누락, 또는 Jump List가 아닌 파일)는 Juntei가 디코딩하거나 명시적으로
 보고했습니다.
 
+## 휴지통 { #recycle-bin }
+
+`parse-file recycle-bin`은 Juntei의 자체 파서입니다. [rifiuti2](https://github.com/abelcheung/rifiuti2)의 공개
+샘플에서 rifiuti2가 읽는 모든 레코드는 인덱스, 삭제 시각(rifiuti2가 표시하는 대로 초 단위까지), 제거 상태,
+크기, 경로가 모두 같았습니다. 총 92개 레코드로, 67개는 Windows 95부터 Server 2003까지의 INFO2 파일 11개에서,
+25개는 Windows Vista 및 Windows 10의 `$I` 파일이 들어 있는 폴더 3개에서 나왔습니다. INFO2의 ANSI 경로는
+rifiuti2 자체 테스트가 사용하는 코드 페이지에서 일치했습니다. Juntei는 rifiuti2가 거부하는 파일도 읽습니다.
+두 가지 `$I` 버전이 섞인 폴더, 경로가 없는 `$I` 헤더, 잘린 레코드가 그것이며, 각각의 손상 내용을 보고합니다.
+Plaso 테스트 데이터의 `$I` 및 INFO2 파일에서는 Plaso 테스트가 기대하는 시각, 크기, 경로, 인덱스, 드라이브를
+얻습니다. Digital Corpora의 공개 M57-Jean 디스크 이미지(Windows XP)를 `auto-parse --e01`로 읽었을 때 INFO2
+레코드는 rifiuti2와 일치했고, 그 옆에 있는 휴지통 파일 `Dc1.jpg`의 이름도 Juntei가 부여한 이름과 같았습니다.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)는 Security Ronin의

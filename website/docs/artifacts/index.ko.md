@@ -11,6 +11,7 @@ Windows는 파일 시스템, 레지스트리, 호환성 데이터베이스, 사�
 | 이 실행 파일이 실행되었는가? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), 이벤트 로그 |
 | 이 파일이 존재한 적이 있는가? | [Amcache](amcache.md), [$MFT](mft.md) | [USN 저널](usn-journal.md), [$I30](i30.md), ShimCache |
 | 파일이 언제 생성, 이름 변경 또는 삭제되었는가? | [USN 저널](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender 격리 데이터 |
+| 사용자가 무엇을 언제 휴지통으로 삭제했는가? | [휴지통](recycle-bin.md) | [USN 저널](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | 메타데이터가 변경되기 전에 어떤 이름 또는 타임스탬프가 존재했는가? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN 저널](usn-journal.md), [$I30](i30.md) |
 | 파일의 소유자는 누구이며, 누가 변경할 수 있는가? | [$Secure:$SDS](secure-sds.md) 및 [$MFT](mft.md) | [SAM](sam.md), Security 이벤트 로그 |
 | 바로 가기 또는 Prefetch 파일의 대상은 어느 볼륨에 있었는가? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB 장치](usb.md) |

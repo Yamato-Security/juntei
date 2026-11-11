@@ -60,6 +60,8 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   perilaku referensi yang berorientasi pengumpulan untuk berbagai artefak.
 - **Hindsight** dari Obsidian Forensics dan definisi **SQLiteHunter** dari Velocidex menjadi referensi untuk
   riwayat, unduhan, cookie, dan riwayat formulir browser.
+- **rifiuti2** dari Abel Cheung menjadi referensi untuk berkas `$I` dan INFO2 Recycle Bin, bersama
+  dokumentasi kedua format tersebut dalam **dtformats** milik libyal.
 
 ## Spesifikasi dan riset { #specifications-and-research }
 
@@ -72,7 +74,7 @@ artefak-artefak ini dapat dipahami oleh para praktisi.
 
 Bukti publik dari
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) karya Andrew Rathbun, NIST CFReDS, Plaso,
-Regipy, Artemis, repositori uji parser, dan koleksi lain dengan lisensi yang sesuai memungkinkan pengujian regresi
+rifiuti2, Regipy, Artemis, repositori uji parser, dan koleksi lain dengan lisensi yang sesuai memungkinkan pengujian regresi
 terhadap data Windows nyata. Juntei menyimpan catatan atribusi/lisensi di samping berkas uji
 yang disertakan.
 

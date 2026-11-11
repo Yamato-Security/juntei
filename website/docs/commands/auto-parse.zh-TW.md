@@ -30,7 +30,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案中解析器會讀取的檔案（登錄 Hive 及其交易記錄、NTFS 中繼資料檔、資料庫、Prefetch 檔、捷徑、Jump List、Outlook 檔案與 Defender 隔離資料夾）串流複製至專用暫存目錄。其他檔案則成為保留原始更新時刻的空白預留位置，因此目錄與路徑看起來與磁碟上相同。persistence-hunter 僅在需要時才從映像檔讀取預留位置的內容，例如持續性項目所指向的執行檔。**除結果外，請預留足夠空間容納複製的檔案。**讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
+解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案中解析器會讀取的檔案（登錄 Hive 及其交易記錄、NTFS 中繼資料檔、資料庫、Prefetch 檔、捷徑、Jump List、Outlook 檔案、資源回收筒索引檔與 Defender 隔離資料夾）串流複製至專用暫存目錄。其他檔案則成為保留原始更新時刻的空白預留位置，因此目錄與路徑看起來與磁碟上相同。persistence-hunter 僅在需要時才從映像檔讀取預留位置的內容，例如持續性項目所指向的執行檔。**除結果外，請預留足夠空間容納複製的檔案。**讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
 
 主機偵測、CSV/JSON/JSONL 和 `-j` 使用一般證據目錄的解析流程。`manifest.json` 中的 `Image` 識別原始映像；`EvidenceRoot` 識別內部相對路徑。讀取失敗或不安全的名稱會記錄在 `ImageErrors` 與 `manifest.csv` 的失敗列。保留可讀取資料的結果；輸入不完整時結束代碼為 1。不會擅自重新命名不安全或曖昧的名稱，也不會將具名 NTFS 串流抽取為額外檔案；初步蒐證映像中已收集為一般檔案的證據仍可使用。
 
@@ -164,6 +164,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - Outlook 的 PST、OST、MSG 與 OFT 檔案：資料夾、項目、收件者、附件、連絡人、行事曆項目與工作
 - LNK 捷徑
 - Jump Lists
+- 資源回收筒：已刪除項目的原始路徑、大小、刪除時間與使用者
 - ShimCache
 - Persistence Hunter（131 項跨來源的持續存取檢查，含允許／封鎖設定檔）
 - Defender 隔離中繼資料
@@ -259,6 +260,8 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -348,7 +351,7 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 | `Communication` | Outlook 的 PST、OST、MSG 與 OFT 檔案：資料夾、項目、收件者、附件、連絡人、行事曆項目與工作 |
 | `ExternalDevices` | USB 裝置與磁碟區 |
 | `FileAndFolderOpening` | Jump Lists、LNK 捷徑、Microsoft Office、MRU 清單、開啟與另存新檔對話方塊、RecentDocs、ShellBags |
-| `FileExistence` | Amcache、ShimCache |
+| `FileExistence` | Amcache、資源回收筒、ShimCache |
 | `FileSystem` | `$Boot`、`$I30`、`$LogFile`、`$MFT`、`$Secure:$SDS`、USN Journal |
 | `NetworkActivity` | 網路設定檔、介面、共用、連接埠 Proxy 與路由；SRUM 連線、流量與推播通知 |
 | `LateralMovement` | 使用者對外的遠端桌面、PuTTY 與 WinSCP 連線、對應的磁碟機與共用；使用者存取記錄（伺服器角色的用戶端） |
@@ -369,7 +372,7 @@ Amcache 與 Jump Lists 各有一個共用的記錄檔，放在其帶前綴的資
 `NetworkActivity`、`ProcessExecution` 與 `SystemInformation` 中，並共用一個
 `SystemInformation/SRUM-logs.txt` 檔案。不會建立 `logs/` 子目錄。
 
-預設的 CSV 檔名為 `Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、
+預設的 CSV 檔名為 `Registry-SAM.csv`、`LNK.csv`、`RecycleBin.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、
 `I30.csv`、`MFT.csv`、`UsnJournal.csv`、`Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、
 `Registry-SecuritySettings.csv`、
 `PrefetchTimeline.csv`、`Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、`Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv` 以及

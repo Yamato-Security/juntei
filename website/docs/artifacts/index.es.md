@@ -11,6 +11,7 @@ pero el investigador sigue teniendo que interpretar lo que significa cada una.
 | ¿Se ejecutó este ejecutable? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), registros de eventos |
 | ¿Estuvo presente alguna vez este archivo? | [Amcache](amcache.md), [$MFT](mft.md) | [Diario USN](usn-journal.md), [$I30](i30.md), ShimCache |
 | ¿Cuándo se creó, renombró o eliminó un archivo? | [Diario USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), cuarentena de Defender |
+| ¿Qué envió un usuario a la Papelera de reciclaje y cuándo? | [Papelera de reciclaje](recycle-bin.md) | [Diario USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | ¿Qué nombre o marca de tiempo existía antes de un cambio de metadatos? | [$LogFile](logfile.md) | [$MFT](mft.md), [Diario USN](usn-journal.md), [$I30](i30.md) |
 | ¿Quién es el propietario de un archivo y quién puede modificarlo? | [$Secure:$SDS](secure-sds.md) con [$MFT](mft.md) | [SAM](sam.md), registros de eventos Security |
 | ¿En qué volumen estaba el destino de un acceso directo o de un archivo Prefetch? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [dispositivos USB](usb.md) |

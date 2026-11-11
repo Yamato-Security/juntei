@@ -57,6 +57,8 @@ Juntei 中；授權條款請參閱各專案。
   或以收集為導向的參考行為。
 - Obsidian Forensics 的 **Hindsight** 與 Velocidex 的 **SQLiteHunter** 定義，是瀏覽歷程、下載、
   Cookie 與表單歷程的參考依據。
+- Abel Cheung 的 **rifiuti2** 是資源回收筒 `$I` 檔案與 INFO2 的參考依據，libyal 的 **dtformats**
+  文件則說明了這兩種格式。
 
 ## 規格與研究 { #specifications-and-research }
 
@@ -68,7 +70,7 @@ Open Specifications 以及 API 文件。同時也感謝 AppCompatCache、Amcache
 
 Andrew Rathbun 的
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、
-Regipy、Artemis、各剖析器測試儲存庫以及其他授權妥當的資料集所提供的公開證據，使得以真實 Windows
+rifiuti2、Regipy、Artemis、各剖析器測試儲存庫以及其他授權妥當的資料集所提供的公開證據，使得以真實 Windows
 資料進行回歸測試成為可能。Juntei 會在所收錄的測試檔案旁保留出處與授權說明。
 
 ## 貢獻者 { #contributors }

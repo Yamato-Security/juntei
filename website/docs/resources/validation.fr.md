@@ -166,6 +166,20 @@ publiques, les 13 057 cellules de comparaison partagées, y compris les horodat
 parseur de référence. Six fichiers refusés par la référence (listes personnalisées vides, pied de page manquant, ou fichier
 qui n'était pas une Jump List) ont été soit décodés, soit explicitement signalés par Juntei.
 
+## Corbeille { #recycle-bin }
+
+`parse-file recycle-bin` est le parseur propre à Juntei. Sur les échantillons publics de
+[rifiuti2](https://github.com/abelcheung/rifiuti2), chaque enregistrement lu par rifiuti2 avait le même index, la même
+date de suppression (à la seconde près, telle que rifiuti2 l'affiche), le même état de retrait de la Corbeille, la même
+taille et le même chemin : 92 enregistrements, dont 67 dans onze fichiers INFO2 de Windows 95 à Server 2003 et 25
+dans trois dossiers de fichiers `$I` de Windows Vista et Windows 10. Les chemins ANSI d'INFO2 correspondaient dans les
+pages de codes qu'utilisent les propres tests de rifiuti2. Juntei lit aussi ce que rifiuti2 rejette : un dossier
+mêlant les deux versions de `$I`, un en-tête `$I` sans chemin, et des enregistrements tronqués, chacun avec ses
+dommages signalés. Les fichiers `$I` et INFO2 des données de test de Plaso donnent les dates, tailles, chemins, index
+et lecteurs qu'attendent les tests de Plaso. Sur l'image disque publique M57-Jean de Digital Corpora (Windows XP), lue
+avec `auto-parse --e01`, l'enregistrement INFO2 correspond à rifiuti2, et le fichier recyclé situé à côté, `Dc1.jpg`,
+porte le nom que Juntei lui donne.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) est un fork maintenu

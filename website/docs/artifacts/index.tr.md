@@ -11,6 +11,7 @@ kaynakları ayrıştırır, ancak her kaynağın ne anlama geldiğini yine de in
 | Bu yürütülebilir dosya çalıştı mı? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), olay günlükleri |
 | Bu dosya hiç var oldu mu? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Günlüğü](usn-journal.md), [$I30](i30.md), ShimCache |
 | Bir dosya ne zaman oluşturuldu, yeniden adlandırıldı veya silindi? | [USN Günlüğü](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender karantinası |
+| Bir kullanıcı neyi ne zaman Geri Dönüşüm Kutusu'na taşıdı? | [Geri Dönüşüm Kutusu](recycle-bin.md) | [USN Günlüğü](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Bir meta veri değişikliğinden önce hangi ad veya zaman damgası vardı? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN Günlüğü](usn-journal.md), [$I30](i30.md) |
 | Bir dosyanın sahibi kim ve onu kim değiştirebilir? | [$MFT](mft.md) ile birlikte [$Secure:$SDS](secure-sds.md) | [SAM](sam.md), Security olay günlükleri |
 | Bir kısayolun veya Prefetch dosyasının hedefi hangi birimdeydi? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB aygıtları](usb.md) |

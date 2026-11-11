@@ -101,6 +101,7 @@ Zaman damgası kayıtlı nesneye ilişkin kanıttır; tek başına yürütme vey
 | SRUM | Sağlayıcı zamanı/aralığı, bağlantı başlangıcı, açık başlangıç/bitiş ve uygulama kimlikleri. Bayt, süre ve sayaçlar tarih değildir. |
 | LNK | Hedef MAC, izleme kimliği ve shell öğesi zamanları saklı hedef metaverisidir; kısayolun açılma zamanı olmayabilir. |
 | Jump Lists | Son kullanım, izleme kimliği ve gömülü LNK hedef zamanları. Toplama sistemindeki kapsayıcı dosya zamanları varsayılan olarak dışlanır. |
+| Geri Dönüşüm Kutusu | Her öğenin Geri Dönüşüm Kutusu'na taşındığı zaman; Geri Dönüşüm Kutusu klasörünün kullanıcısı, özgün yol ve silinen içeriğin toplanıp toplanmadığı da verilir. Kutunun boşaltıldığı zaman veya öğenin kendi dosya zamanları değildir. |
 | Defender karantinası | Kayıt zamanı ve kaynak oluşturma/erişim/yazma zamanları. Çıkarma saati uç nokta etkinliği değildir. |
 | BAM, UserAssist, FeatureUsage | Kayıtlı etkinlik ve ayrı anahtar yazma bağlamı. Zamansız sayaç olay üretmez. |
 | RecentDocs, MRU, Aç/Kaydet MRU, ShellBags, Office | Kullanım/güven/shell zamanları ve anahtar bağlamı. Liste anahtarının zamanı her öğenin son kullanımı değildir. |

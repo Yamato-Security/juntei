@@ -11,6 +11,7 @@ tetapi investigator tetap harus menginterpretasikan makna dari setiap sumber.
 | Apakah executable ini berjalan? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), log peristiwa |
 | Apakah berkas ini pernah ada? | [Amcache](amcache.md), [$MFT](mft.md) | [Jurnal USN](usn-journal.md), [$I30](i30.md), ShimCache |
 | Kapan sebuah berkas dibuat, diubah namanya, atau dihapus? | [Jurnal USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), karantina Defender |
+| Apa yang dihapus pengguna ke Recycle Bin, dan kapan? | [Keranjang Sampah (Recycle Bin)](recycle-bin.md) | [Jurnal USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Nama atau timestamp apa yang ada sebelum perubahan metadata? | [$LogFile](logfile.md) | [$MFT](mft.md), [Jurnal USN](usn-journal.md), [$I30](i30.md) |
 | Siapa pemilik sebuah berkas, dan siapa yang boleh mengubahnya? | [$Secure:$SDS](secure-sds.md) dengan [$MFT](mft.md) | [SAM](sam.md), log peristiwa Security |
 | Di volume mana target sebuah pintasan atau berkas Prefetch berada? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [perangkat USB](usb.md) |

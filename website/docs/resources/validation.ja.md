@@ -72,6 +72,10 @@ Juntei は、パブリック go-ntfs テスト ボリューム (2,129 レコー�
 
 [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) は、`ys-lnk-parser` によってデコードされた埋め込みリンクを使用して、Sootmark の複合ファイルとジャンプ リストの作業を使用します。 77 パブリック Jump Lists 全体で、100 ns までのタイムスタンプを含むすべての 13,057 共有比較セルが参照パーサーと一致しました。参照が拒否した 6 つのファイル (空のカスタム リスト、欠落しているフッター、またはジャンプ リストではないファイル) はデコードされたか、Juntei によって明示的に報告されました。
 
+## ごみ箱 { #recycle-bin }
+
+`parse-file recycle-bin` は Juntei 独自のパーサーです。[rifiuti2](https://github.com/abelcheung/rifiuti2) の公開サンプルでは、rifiuti2 が読み取るすべてのレコードで、インデックス、削除日時 (rifiuti2 の表示どおり秒単位)、削除状態、サイズ、パスが一致しました。対象は 92 レコードで、Windows 95 から Server 2003 の INFO2 ファイル 11 個の 67 レコードと、Windows Vista と Windows 10 の `$I` ファイルのフォルダー 3 つの 25 レコードです。INFO2 の ANSI パスも、rifiuti2 自身のテストが使うコード ページで一致しました。Juntei は rifiuti2 が拒否するもの、つまり両方の `$I` バージョンが混在するフォルダー、パスのない `$I` ヘッダー、切り詰められたレコードも読み取り、それぞれの破損を報告します。Plaso のテスト データにある `$I` ファイルと INFO2 では、Plaso のテストが期待する日時、サイズ、パス、インデックス、ドライブが得られます。Digital Corpora が公開している M57-Jean ディスク イメージ (Windows XP) を `auto-parse --e01` で読み取ると、INFO2 のレコードは rifiuti2 と一致し、その横にある復元対象のファイル `Dc1.jpg` は Juntei が付ける名前と同じでした。
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) は、Security Ronin の [shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) の保守フォークであり、レジストリ ハイブとトランザクション ログをサポートしています。 20 パブリック `SYSTEM` ハイブ (24 コントロール セットおよび 7,290 エントリ) と 17 スタンドアロン AppCompatCache 値では、すべてのエントリが参照パーサーによって出力されたパス、時間、実行フラグ、フラグ、位置と一致しました。

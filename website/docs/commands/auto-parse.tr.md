@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
+Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları, Geri Dönüşüm Kutusu indeks dosyaları ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
 
 Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `manifest.json` içindeki `Image` özgün imajı, `EvidenceRoot` iç göreli yolu tanımlar. Okuma hataları ve güvensiz adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara yazılır. Okunabilir sonuçlar korunur; eksik girdiler 1 döndürür. Güvensiz veya belirsiz adlar yeniden adlandırılmaz. Adlandırılmış NTFS akışları ek dosya olarak çıkarılmaz; normal dosya olarak toplanmış eserler kullanılabilir.
 
@@ -169,6 +169,7 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
 - Outlook PST, OST, MSG ve OFT dosyaları: klasörler, öğeler, alıcılar, ekler, kişiler, takvim öğeleri ve görevler
 - LNK kısayolları
 - Jump Lists
+- Geri Dönüşüm Kutusu: silinen öğelerin özgün yolları, boyutları, silinme zamanları ve kullanıcıları
 - ShimCache
 - Persistence Hunter (izin/engelleme profilleriyle 131 kaynaklar arası kalıcılık denetimi)
 - Defender karantina meta verileri
@@ -267,6 +268,8 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
 │   │   ├── Registry-Amcache-Findings.csv
@@ -356,7 +359,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `Communication` | Outlook PST, OST, MSG ve OFT dosyaları: klasörler, öğeler, alıcılar, ekler, kişiler, takvim öğeleri ve görevler |
 | `ExternalDevices` | USB aygıtları ve birimleri |
 | `FileAndFolderOpening` | Jump Lists, LNK kısayolları, Microsoft Office, MRU listeleri, Aç ve Farklı Kaydet iletişim kutuları, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Geri Dönüşüm Kutusu, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Ağ profilleri, arabirimler, paylaşımlar, bağlantı noktası proxy'leri ve yollar; SRUM bağlantıları, trafik ve anında iletme bildirimleri |
 | `LateralMovement` | Kullanıcıların giden Uzak Masaüstü, PuTTY ve WinSCP bağlantıları, eşlenmiş sürücüler ve paylaşımlar; Kullanıcı Erişim Günlüğü (bir sunucunun rollerinin istemcileri) |
@@ -378,7 +381,7 @@ sağlayıcı tabloları doğrudan `NetworkActivity`, `ProcessExecution` ve `Syst
 yerleştirilir ve ortak bir `SystemInformation/SRUM-logs.txt` dosyası bulunur. Hiçbir `logs/` alt
 dizini oluşturulmaz.
 
-Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` ve

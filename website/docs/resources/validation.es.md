@@ -176,6 +176,19 @@ las marcas de tiempo con precisión de 100 ns, coincidieron con el analizador de
 archivos que la referencia rechazó (listas personalizadas vacías, un pie ausente o un archivo que
 no era una Jump List) fueron decodificados o notificados explícitamente por Juntei.
 
+## Papelera de reciclaje { #recycle-bin }
+
+`parse-file recycle-bin` es un analizador propio de Juntei. En las muestras públicas de
+[rifiuti2](https://github.com/abelcheung/rifiuti2), cada registro que lee rifiuti2 tuvo el mismo índice, la misma hora
+de eliminación (al segundo, tal como la muestra rifiuti2), el mismo estado de retirada de la papelera, el mismo tamaño
+y la misma ruta: 92 registros, 67 en once archivos INFO2 de Windows 95 a Server 2003 y 25 en tres carpetas de archivos
+`$I` de Windows Vista y Windows 10. Las rutas ANSI de INFO2 coincidieron en las páginas de códigos que usan las propias
+pruebas de rifiuti2. Juntei también lee lo que rifiuti2 rechaza: una carpeta que mezcla ambas versiones de `$I`, un
+encabezado `$I` sin ruta y registros truncados, cada uno con sus daños notificados. Los archivos `$I` e INFO2 de los
+datos de prueba de Plaso dan las horas, tamaños, rutas, índices y unidades que esperan las pruebas de Plaso. En la
+imagen de disco pública M57-Jean de Digital Corpora (Windows XP), leída con `auto-parse --e01`, el registro de INFO2
+coincide con rifiuti2, y el archivo reciclado que está junto a él, `Dc1.jpg`, tiene el nombre que le da Juntei.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) es una bifurcación
