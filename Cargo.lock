@@ -2623,7 +2623,7 @@ dependencies = [
 [[package]]
 name = "ys-prefetch-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-prefetch-parser#437fd8d60e9f711f037f309053eef397e2214af2"
+source = "git+https://github.com/Yamato-Security/ys-prefetch-parser#1e334360686f2ecf8c01398547db23a54bd903f3"
 dependencies = [
  "crc32fast",
  "forensic-rs",
