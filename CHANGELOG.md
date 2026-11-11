@@ -1,5 +1,14 @@
 # Changes
 
+## Unreleased
+
+**Bug Fixes:**
+
+- Skip non-Outlook files that share Outlook extensions during directory scans, including Tcl
+  message catalogs. Keep explicit-file, unreadable-file and recognizable corrupt-container errors,
+  and report the actual parser failure in automatic-parser manifests instead of timing footers.
+  (@YamatoSecurity)
+
 ## 1.1.0 [2026/11/11] - CODE BLUE Release
 
 **New Features:**

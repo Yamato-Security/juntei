@@ -1792,7 +1792,9 @@ impl InputInventory {
             found.total += size;
             found.add_size("persistence-hunter", size);
             for (artifact, matches) in NAMED_INPUTS {
-                if matches(&name) {
+                if matches(&name)
+                    && (*artifact != "outlook" || crate::outlook::is_directory_input(&path))
+                {
                     found.add_size(artifact, size);
                 }
             }
@@ -2243,11 +2245,16 @@ fn useful_error_line(output: &str) -> Option<&str> {
     {
         return Some(error);
     }
-    output
+    if let Some(error) = output
         .lines()
-        .rev()
         .map(str::trim)
-        .find(|line| !line.is_empty())
+        .find(|line| line.to_ascii_lowercase().starts_with("could not "))
+    {
+        return Some(error);
+    }
+    output.lines().rev().map(str::trim).find(|line| {
+        !line.is_empty() && !line.starts_with("Elapsed time:") && !line.starts_with("End time:")
+    })
 }
 
 fn json_files(output: &Path, output_type: AutoOutputType) -> Vec<PathBuf> {
@@ -3047,6 +3054,24 @@ mod tests {
         let clap = "error: a value is required\n\nFor more information, try '--help'.\n";
         assert_eq!(useful_error_line(clap), Some("error: a value is required"));
         assert_eq!(useful_error_line("first\nlast\n"), Some("last"));
+        let damaged = "Could not parse ./broken.pst: truncated header\nNothing was saved: no file could be read.\nEnd time: 2026-11-11 00:00:00\nElapsed time: 00:00:00\n";
+        assert_eq!(
+            useful_error_line(damaged),
+            Some("Could not parse ./broken.pst: truncated header")
+        );
+        assert_eq!(
+            useful_error_line("End time: now\nElapsed time: 00:00:00\n"),
+            None
+        );
+    }
+
+    #[test]
+    fn outlook_inventory_ignores_unrelated_message_files() {
+        let root = tempfile::tempdir().unwrap();
+        fs::write(root.path().join("de.msg"), b"::msgcat::mcset de label text").unwrap();
+        fs::write(root.path().join("broken.pst"), b"!BDN").unwrap();
+        let inventory = InputInventory::scan(root.path(), None);
+        assert_eq!(inventory.sizes.get("outlook"), Some(&4));
     }
 
     #[test]

@@ -112,9 +112,7 @@ juntei parse-file outlook -f mailbox.ost -t jsonl \
 juntei parse-file outlook -f suspicious.msg -o msg-csv --properties --extract-attachments isolated/
 ```
 
-`-d`는 대소문자를 구분하지 않고 `.pst`, `.ost`, `.msg`, `.oft`로 끝나는 파일을 찾습니다. 파일을 어떤 방식으로
-지정하든, 파일의 종류는 첫 바이트로 판별합니다. PST 또는 OST는 `!BDN`, MSG 또는 OFT는 복합 파일 서명입니다. 그
-밖의 파일은 파싱할 수 없었던 파일로 보고됩니다. 읽을 수 있었던 파일이 하나도 없으면 종료 상태는 1입니다.
+`-d`는 대소문자를 구분하지 않고 `.pst`, `.ost`, `.msg`, `.oft` 이름을 찾은 뒤 헤더를 확인합니다. PST 또는 OST는 `!BDN`, MSG 또는 OFT는 복합 파일 서명입니다. 같은 확장자를 쓰는 무관한 파일(Tcl 메시지 카탈로그 등)은 건너뜁니다. 읽을 수 없는 파일과 서명은 식별되지만 손상된 컨테이너는 계속 오류로 보고합니다. `-f`는 이름과 관계없이 지정한 파일을 검증하며 잘못된 입력을 오류로 보고합니다. 어떤 파일도 읽지 못하면 종료 상태는 1입니다.
 
 `--extract-attachments`는 각 첨부 파일의 데이터를 한 번만 기록합니다. 파일 이름은 `<SHA-256>`이며, 첨부 파일의
 확장자가 1~10자의 ASCII 영문자와 숫자로 되어 있으면 그 확장자가 붙습니다(`0c7d…1311.jpg`). 항목에서 온 이름은
