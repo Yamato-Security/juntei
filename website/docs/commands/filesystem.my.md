@@ -5,7 +5,7 @@ directory index များ၊ boot sector နှင့် security descriptor 
 artifact တစ်ခုချင်းစီအလိုက် သီးသန့် ဖြစ်ပါသည်။
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -27,7 +27,7 @@ Options:
 ## `parse-ntfs boot` { #parse-ntfs-boot }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -61,7 +61,7 @@ juntei parse-ntfs boot -f volume.dd -t json
 ## `parse-ntfs i30` { #parse-ntfs-i30 }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -100,7 +100,7 @@ juntei parse-ntfs i30 -f disk.raw -o carved-i30.csv
 ## `parse-ntfs logfile` { #parse-ntfs-logfile }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -145,7 +145,7 @@ Field အဓိပ္ပာယ်များနှင့် forensic ကန့�
 ## `parse-ntfs mft` { #parse-ntfs-mft }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -203,7 +203,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Windows\System32'
 ## `parse-ntfs secure-sds` { #parse-ntfs-secure-sds }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -237,7 +237,7 @@ juntei parse-ntfs secure-sds -f '$Secure_$SDS' -t jsonl
 ## `parse-ntfs usn-journal` { #parse-ntfs-usn-journal }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

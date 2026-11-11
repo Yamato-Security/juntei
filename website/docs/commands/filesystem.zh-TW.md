@@ -4,7 +4,7 @@
 目錄索引、開機磁區以及安全性描述元。選項與輸出欄位則依各跡證而有所不同。
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -26,7 +26,7 @@ Options:
 ## `parse-ntfs boot` { #parse-ntfs-boot }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -60,7 +60,7 @@ juntei parse-ntfs boot -f volume.dd -t json
 ## `parse-ntfs i30` { #parse-ntfs-i30 }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -99,7 +99,7 @@ juntei parse-ntfs i30 -f disk.raw -o carved-i30.csv
 ## `parse-ntfs logfile` { #parse-ntfs-logfile }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -144,7 +144,7 @@ juntei parse-ntfs logfile -f '$LogFile' --raw-data -t jsonl
 ## `parse-ntfs mft` { #parse-ntfs-mft }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -202,7 +202,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Windows\System32'
 ## `parse-ntfs secure-sds` { #parse-ntfs-secure-sds }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -236,7 +236,7 @@ juntei parse-ntfs secure-sds -f '$Secure_$SDS' -t jsonl
 ## `parse-ntfs usn-journal` { #parse-ntfs-usn-journal }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

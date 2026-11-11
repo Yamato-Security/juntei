@@ -27,7 +27,7 @@ Options:
 ## `parse-file defender-quarantine` { #parse-file-defender-quarantine }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -62,7 +62,7 @@ kepemilikan, izin, dan SDDL. Lihat [Karantina Defender](../artifacts/defender-qu
 ## `parse-file jump-lists` { #parse-file-jump-lists }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -96,7 +96,7 @@ Lihat [Jump Lists](../artifacts/jump-lists.md).
 ## `parse-file lnk` { #parse-file-lnk }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -169,7 +169,7 @@ dan item yang tertanam di lampiran), penerima, lampiran, kontak, item kalender, 
 ## `parse-file prefetch` { #parse-file-prefetch }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:

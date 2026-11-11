@@ -1,7 +1,7 @@
 # Commandes du Registre { #registry-commands }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -56,7 +56,7 @@ explicitement les journaux, ou `--no-logs` pour examiner la ruche principale san
 ## `parse-registry amcache` { #parse-registry-amcache }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -95,7 +95,7 @@ Consultez [Amcache](../artifacts/amcache.md).
 ## `parse-registry bam` { #parse-registry-bam }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -130,7 +130,7 @@ Consultez [BAM / DAM](../artifacts/bam.md).
 ## `parse-registry installed-programs` { #parse-registry-installed-programs }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -163,7 +163,7 @@ L'utilisateur d'une ruche utilisateur est déterminé à partir de son dossier d
 ## `parse-registry muicache` { #parse-registry-muicache }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -195,7 +195,7 @@ d'un `UsrClass.dat` ou `SOFTWARE` (`ProfileList`) du système. Consultez [MuiCac
 ## `parse-registry open-save-mru` { #parse-registry-open-save-mru }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -228,7 +228,7 @@ Chaque liste d'éléments du shell est décodée avec ys-lnk-parser et assemblé
 ## `parse-registry remote-access` { #parse-registry-remote-access }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -262,7 +262,7 @@ stockés sont signalés comme présents, jamais décodés. Consultez
 ## `parse-registry system-info` { #parse-registry-system-info }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -295,7 +295,7 @@ Consultez [Informations système](../artifacts/system-info.md).
 ## `parse-registry mru` { #parse-registry-mru }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -330,7 +330,7 @@ Consultez [Listes MRU](../artifacts/mru.md).
 ## `parse-registry app-history` { #parse-registry-app-history }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -363,7 +363,7 @@ TeamViewer et CCleaner. Consultez [Historique des applications](../artifacts/app
 ## `parse-registry feature-usage` { #parse-registry-feature-usage }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -396,7 +396,7 @@ Lit `FeatureUsage`, `RecentApps`, `Taskband` et `ProgramsCache`. Consultez
 ## `parse-registry security-settings` { #parse-registry-security-settings }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -434,7 +434,7 @@ fait par défaut ; `--weakened-only` ne conserve que ceux qui l'affaiblissent. 
 ## `parse-registry office` { #parse-registry-office }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -485,7 +485,7 @@ Les options complètes et la sémantique des champs figurent dans [Ruches du Reg
 ## `parse-registry auditpol` { #parse-registry-auditpol }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -519,7 +519,7 @@ d'audit dans `Policy\PolAdtEv` : ce qu'elle journalise, son GUID et son ID de m
 ## `parse-registry app-compat` { #parse-registry-app-compat }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -553,7 +553,7 @@ de shims personnalisées. Le ShimCache relève de `parse-registry shimcache`. Co
 ## `parse-registry bcd` { #parse-registry-bcd }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -587,7 +587,7 @@ d'état de démarrage et le mode sans échec résolus par héritage. Consultez
 ## `parse-registry lsa-secrets` { #parse-registry-lsa-secrets }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -621,7 +621,7 @@ nomme, la date de définition de ses valeurs et l'indication qu'elles contiennen
 ## `parse-registry networks` { #parse-registry-networks }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -657,7 +657,7 @@ l'hôte, et sont également conservées telles quelles. Consultez [Réseaux](../
 ## `parse-registry persistence` { #parse-registry-persistence }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -689,7 +689,7 @@ Display Settings:
 ## `parse-registry read` { #parse-registry-read }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -735,7 +735,7 @@ juntei parse-registry read -f NTUSER.DAT --recover-deleted -t jsonl | jq .
 ## `parse-registry recent-docs` { #parse-registry-recent-docs }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -764,7 +764,7 @@ Display Settings:
 ## `parse-registry sam` { #parse-registry-sam }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -796,7 +796,7 @@ Display Settings:
 ## `parse-registry services` { #parse-registry-services }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -829,7 +829,7 @@ Display Settings:
 ## `parse-registry shell-bags` { #parse-registry-shell-bags }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -861,7 +861,7 @@ Display Settings:
 ## `parse-registry shimcache` { #parse-registry-shimcache }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -895,7 +895,7 @@ Consultez [ShimCache](../artifacts/shimcache.md).
 ## `parse-registry taskcache` { #parse-registry-taskcache }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -927,7 +927,7 @@ Display Settings:
 ## `parse-registry usb` { #parse-registry-usb }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
@@ -959,7 +959,7 @@ Display Settings:
 ## `parse-registry user-assist` { #parse-registry-user-assist }
 
 ```text
-Version: 1.0.0 (CODE BLUE Release)
+Version: 1.1.0 (CODE BLUE Release)
 Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
 
 Usage:
