@@ -99,4 +99,3 @@ FILETIME target dan waktu tracker di header LNK tetap merupakan timestamp absolu
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [LECmd oleh Eric Zimmerman](https://github.com/EricZimmerman/LECmd)

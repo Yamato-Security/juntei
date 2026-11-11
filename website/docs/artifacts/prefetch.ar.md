@@ -108,4 +108,3 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [أداة PECmd من Eric Zimmerman](https://github.com/EricZimmerman/PECmd)

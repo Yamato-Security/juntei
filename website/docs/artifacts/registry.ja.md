@@ -122,5 +122,4 @@ juntei parse-registry read -f SOFTWARE --raw-data -o software.jsonl -t jsonl
 - [マキシム・スハノフのレジストリ形式仕様](https://github.com/msuhanov/regf)
 - [yarp レジストリ パーサー](https://github.com/msuhanov/yarp)
 - [libyal libregf](https://github.com/libyal/libregf)
-- [エリック・ジマーマンのレジストリ](https://github.com/EricZimmerman/Registry)
 - [Microsoft: レジストリ値のタイプ](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)

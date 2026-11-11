@@ -101,7 +101,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 ## مزيد من التفاصيل { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [أداة AppCompatCacheParser من Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [shimcache-forensic من Security Ronin](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: الاستفادة من ذاكرة التخزين المؤقت لتوافق التطبيقات في التحقيقات الجنائية (Leveraging the Application Compatibility Cache in Forensic Investigations)](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [مواصفات تنسيق سجل Windows من Maxim Suhanov](https://github.com/msuhanov/regf)

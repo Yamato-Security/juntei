@@ -100,7 +100,6 @@ JSON/JSONL은 추가로 엔트리 데이터, 태그, 패키지 앱 하위 레코
 ## 추가 정보 { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [Eric Zimmerman의 AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: 포렌식 조사에서 애플리케이션 호환성 캐시 활용하기](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Maxim Suhanov의 Windows 레지스트리 형식 사양](https://github.com/msuhanov/regf)

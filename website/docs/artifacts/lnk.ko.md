@@ -99,4 +99,3 @@ LNK 헤더의 대상 FILETIME과 tracker 시간은 변환 가능한 절대 타�
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [Eric Zimmerman's LECmd](https://github.com/EricZimmerman/LECmd)

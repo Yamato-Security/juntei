@@ -124,6 +124,5 @@ Array- und Rohwertspalten in CSV verwenden ein `JSON`-Suffix (zum Beispiel `HWID
 
 - [Ausgabeschema von Junteis ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [AmcacheParser von Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [Regipy-Amcache-Plugin](https://github.com/mkorman90/regipy)

@@ -100,5 +100,4 @@ and every embedded LNK's nested fields.
 - [Microsoft: Compound Binary File format (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: Shell Link format (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [Eric Zimmerman's JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [JumpList parser test/reference project](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

@@ -124,6 +124,5 @@ Kolom array dan nilai mentah di CSV menggunakan sufiks `JSON` (misalnya, `HWID-J
 
 - [Skema keluaran ys-amcache-parser milik Juntei](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [AmcacheParser oleh Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [Plugin Amcache Regipy](https://github.com/mkorman90/regipy)

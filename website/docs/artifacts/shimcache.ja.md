@@ -90,7 +90,6 @@ JSON/JSONL はさらに、エントリ データ、タグ、パッケージ化�
 ## さらに詳しい情報 { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [エリック・ジマーマンの AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [セキュリティ Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: フォレンジック調査におけるアプリケーション互換性キャッシュの活用](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Maxim Suhanov の Windows レジストリ形式仕様](https://github.com/msuhanov/regf)

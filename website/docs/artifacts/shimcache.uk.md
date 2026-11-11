@@ -99,7 +99,6 @@ JSON/JSONL додатково зберігають дані записів, те
 ## Додаткові відомості { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [AppCompatCacheParser від Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Специфікація формату реєстру Windows від Maxim Suhanov](https://github.com/msuhanov/regf)

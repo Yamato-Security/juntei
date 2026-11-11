@@ -99,7 +99,6 @@ cache समस्याएँ और recovery विवरण सुरक्�
 ## अधिक जानकारी { #further-details }
 
 - [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)
-- [Eric Zimmerman द्वारा AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 - [Security Ronin shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
 - [Maxim Suhanov द्वारा Windows registry format specification](https://github.com/msuhanov/regf)

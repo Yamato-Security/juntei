@@ -107,5 +107,4 @@ baytları ve her gömülü LNK'nin iç içe alanlarını korur.
 - [Microsoft: Compound Binary File format (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: Shell Link format (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [Eric Zimmerman'ın JLECmd aracı](https://github.com/EricZimmerman/JLECmd)
 - [JumpList ayrıştırıcısı test/referans projesi](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

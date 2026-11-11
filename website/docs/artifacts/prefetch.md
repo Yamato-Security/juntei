@@ -108,4 +108,3 @@ arrays instead of comma-joined CSV cells.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [Eric Zimmerman's PECmd](https://github.com/EricZimmerman/PECmd)

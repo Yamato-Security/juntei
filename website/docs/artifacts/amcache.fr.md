@@ -124,6 +124,5 @@ Les colonnes de tableaux et de valeurs brutes en CSV utilisent un suffixe `JSON`
 
 - [Schéma de sortie de ys-amcache-parser utilisé par Juntei](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [AmcacheParser d'Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [amcache-forensic de Security Ronin](https://github.com/SecurityRonin/amcache-forensic)
 - [Plugin Amcache de Regipy](https://github.com/mkorman90/regipy)

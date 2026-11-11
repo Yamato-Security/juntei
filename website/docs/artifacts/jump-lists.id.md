@@ -100,5 +100,4 @@ dan field bersarang dari setiap LNK yang disematkan.
 - [Microsoft: Format Compound Binary File (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: Format Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [JLECmd oleh Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [Proyek uji/referensi parser JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

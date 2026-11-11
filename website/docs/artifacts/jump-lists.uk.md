@@ -100,5 +100,4 @@ JSON/JSONL додатково зберігає заголовок DestList, оц
 - [Microsoft: формат Compound Binary File (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: формат Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [JLECmd від Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [Тестовий/довідковий проєкт парсера JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

@@ -104,5 +104,4 @@ JSON/JSONL은 여기에 더해 DestList 헤더, 항목별 점수/체크섬/속�
 - [Microsoft: Compound Binary File 형식 (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: Shell Link 형식 (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [Eric Zimmerman의 JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [JumpList 파서 테스트/참조 프로젝트](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

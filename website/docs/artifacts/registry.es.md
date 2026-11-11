@@ -144,5 +144,4 @@ juntei parse-registry read -f SOFTWARE --raw-data -o software.jsonl -t jsonl
 - [Especificación del formato del Registro de Maxim Suhanov](https://github.com/msuhanov/regf)
 - [Analizador del Registro yarp](https://github.com/msuhanov/yarp)
 - [libyal libregf](https://github.com/libyal/libregf)
-- [Registry de Eric Zimmerman](https://github.com/EricZimmerman/Registry)
 - [Microsoft: tipos de valores del Registro](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)

@@ -124,6 +124,5 @@ As colunas de arrays e de valores brutos no CSV usam o sufixo `JSON` (por exempl
 
 - [Esquema de saída do ys-amcache-parser do Juntei](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [AmcacheParser de Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [amcache-forensic da Security Ronin](https://github.com/SecurityRonin/amcache-forensic)
 - [Plugin Amcache do Regipy](https://github.com/mkorman90/regipy)

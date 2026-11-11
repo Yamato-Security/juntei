@@ -137,7 +137,6 @@ CSV は、`SruDbIdMapTable` に対して `SRUM-IdentityMap.csv` を作成し、�
 ## さらに詳しい情報 { #further-details }
 
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
-- [エリック・ジマーマンのスラムECmd](https://github.com/EricZimmerman/Srum)
 - [dissect.esedb](https://github.com/fox-it/dissect.esedb)
 - [libyal libesedb](https://github.com/libyal/libesedb)
 - [Microsoft: 拡張ストレージ エンジン](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)

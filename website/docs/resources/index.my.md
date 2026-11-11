@@ -29,21 +29,15 @@ link များ ပါဝင်သည်။
 
 ## လုပ်ဆောင်မှုနှင့် စာရင်းကောက် အထောက်အထားများ { #execution-and-inventory-artifacts }
 
-- [Eric Zimmerman ၏ AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [libyal libscca](https://github.com/libyal/libscca) — Prefetch ပုံစံ/library လုပ်ငန်း။
-- [Eric Zimmerman ၏ PECmd](https://github.com/EricZimmerman/PECmd)
 - [Mandiant: Forensic စုံစမ်းစစ်ဆေးမှုများတွင် Application Compatibility Cache ကို အသုံးချခြင်း](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [Eric Zimmerman ၏ AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## အသုံးပြုသူ လှုပ်ရှားမှု အထောက်အထားများ { #user-activity-artifacts }
 
 - [Microsoft Open Specifications: Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft Open Specifications: Compound File Binary (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [Eric Zimmerman ၏ LECmd](https://github.com/EricZimmerman/LECmd)
-- [Eric Zimmerman ၏ JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [Eric Zimmerman ၏ SrumECmd](https://github.com/EricZimmerman/Srum)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## Registry နှင့် အမြဲတမ်းဝင်ရောက်နိုင်မှု { #registry-and-persistence }
@@ -51,7 +45,6 @@ link များ ပါဝင်သည်။
 - [Microsoft: Registry value type များ](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Maxim Suhanov ၏ Windows registry ပုံစံ သတ်မှတ်ချက်](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) နှင့် [libregf](https://github.com/libyal/libregf) — အဆင့်နိမ့် hive ခွဲခြမ်းစိတ်ဖြာမှုနှင့် ပြန်လည်ရယူမှု ကိုးကားချက်များ။
-- [Eric Zimmerman ၏ Registry Explorer / RECmd စာရွက်စာတမ်း](https://ericzimmerman.github.io/)
 - [Microsoft: Services registry tree](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: Task Scheduler schema](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK: Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

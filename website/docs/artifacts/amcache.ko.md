@@ -124,6 +124,5 @@ CSV의 배열 및 원시 값 열에는 `JSON` 접미사가 붙으며(예: `HWID-
 
 - [Juntei의 ys-amcache-parser 출력 스키마](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [Eric Zimmerman의 AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [Regipy Amcache 플러그인](https://github.com/mkorman90/regipy)

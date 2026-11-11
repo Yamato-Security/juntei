@@ -100,5 +100,4 @@ juntei parse-file jump-lists -f sample.automaticDestinations-ms -t jsonl | jq .
 - [Microsoft: تنسيق Compound Binary File ‏(MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
 - [Microsoft: تنسيق Shell Link ‏(MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
-- [أداة JLECmd من Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [مشروع اختبار/مرجع لمحلل JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)

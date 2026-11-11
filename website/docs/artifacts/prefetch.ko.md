@@ -110,4 +110,3 @@ JSON/JSONL은 볼륨, 디렉터리, 로드된 파일 및 NTFS 파일 참조를 �
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [Eric Zimmerman의 PECmd](https://github.com/EricZimmerman/PECmd)

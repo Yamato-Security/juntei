@@ -99,4 +99,3 @@ MFT), усі блоки додаткових даних, властивості 
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [LECmd від Eric Zimmerman](https://github.com/EricZimmerman/LECmd)

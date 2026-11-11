@@ -99,4 +99,3 @@ LNK başlığındaki hedef FILETIME değerleri ve izleyici zamanları dönüşt�
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [Eric Zimmerman's LECmd](https://github.com/EricZimmerman/LECmd)

@@ -104,4 +104,3 @@ LNK header ၏ ပစ်မှတ် FILETIME များနှင့် tracke
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [Eric Zimmerman ၏ LECmd](https://github.com/EricZimmerman/LECmd)

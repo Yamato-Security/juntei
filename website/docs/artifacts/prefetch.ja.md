@@ -97,4 +97,3 @@ JSON/JSONL は、ボリューム、ディレクトリ、ロードされたファ
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [セキュリティ Ronin プリフェッチ - フォレンジック](https://github.com/SecurityRonin/prefetch-forensic)
-- [エリック・ジマーマンの PECmd](https://github.com/EricZimmerman/PECmd)

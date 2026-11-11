@@ -28,21 +28,15 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 
 ## Execution and inventory artifacts
 
-- [Eric Zimmerman's AmcacheParser](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [libyal libscca](https://github.com/libyal/libscca) — Prefetch format/library work.
-- [Eric Zimmerman's PECmd](https://github.com/EricZimmerman/PECmd)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [Eric Zimmerman's AppCompatCacheParser](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## User-activity artifacts
 
 - [Microsoft Open Specifications: Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft Open Specifications: Compound File Binary (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [Eric Zimmerman's LECmd](https://github.com/EricZimmerman/LECmd)
-- [Eric Zimmerman's JLECmd](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [Eric Zimmerman's SrumECmd](https://github.com/EricZimmerman/Srum)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## Registry and persistence
@@ -50,7 +44,6 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 - [Microsoft: Registry value types](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Maxim Suhanov's Windows registry format specification](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) and [libregf](https://github.com/libyal/libregf) — low-level hive parsing and recovery references.
-- [Eric Zimmerman's Registry Explorer / RECmd documentation](https://ericzimmerman.github.io/)
 - [Microsoft: Services registry tree](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: Task Scheduler schema](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK: Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

@@ -124,6 +124,5 @@ Las columnas de matrices y de valores sin procesar en CSV utilizan el sufijo `JS
 
 - [Esquema de salida de ys-amcache-parser de Juntei](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [AmcacheParser de Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [amcache-forensic de Security Ronin](https://github.com/SecurityRonin/amcache-forensic)
 - [Complemento Amcache de Regipy](https://github.com/mkorman90/regipy)

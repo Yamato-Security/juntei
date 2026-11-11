@@ -99,4 +99,3 @@ Os FILETIMEs do destino no cabeçalho do LNK e os horários do rastreador contin
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [LECmd de Eric Zimmerman](https://github.com/EricZimmerman/LECmd)

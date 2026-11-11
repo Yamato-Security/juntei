@@ -108,4 +108,3 @@ structurés plutôt que de cellules CSV jointes par des virgules.
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [PECmd d'Eric Zimmerman](https://github.com/EricZimmerman/PECmd)

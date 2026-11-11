@@ -124,6 +124,5 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
 
 - [สคีมาเอาต์พุตของ ys-amcache-parser ของ Juntei](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [AmcacheParser โดย Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [ปลั๊กอิน Amcache ของ Regipy](https://github.com/mkorman90/regipy)

@@ -108,4 +108,3 @@ JSON/JSONL volumes, directories, loaded files और NTFS file references को
 - [ForensicRS frnsc-prefetch](https://github.com/ForensicRS/frnsc-prefetch)
 - [libyal libscca](https://github.com/libyal/libscca)
 - [Security Ronin prefetch-forensic](https://github.com/SecurityRonin/prefetch-forensic)
-- [Eric Zimmerman का PECmd](https://github.com/EricZimmerman/PECmd)

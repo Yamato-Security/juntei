@@ -28,21 +28,15 @@
 
 ## Артефакти виконання та інвентаризації { #execution-and-inventory-artifacts }
 
-- [AmcacheParser від Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [amcache-forensic від Security Ronin](https://github.com/SecurityRonin/amcache-forensic)
 - [libyal libscca](https://github.com/libyal/libscca) — дослідження формату Prefetch і бібліотека.
-- [PECmd від Eric Zimmerman](https://github.com/EricZimmerman/PECmd)
 - [Mandiant: Leveraging the Application Compatibility Cache in Forensic Investigations](https://www.mandiant.com/resources/blog/leveraging-application-compatibility-cache-forensic-investigations)
-- [AppCompatCacheParser від Eric Zimmerman](https://github.com/EricZimmerman/AppCompatCacheParser)
 
 ## Артефакти активності користувача { #user-activity-artifacts }
 
 - [Microsoft Open Specifications: Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [Microsoft Open Specifications: Compound File Binary (MS-CFB)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/)
-- [LECmd від Eric Zimmerman](https://github.com/EricZimmerman/LECmd)
-- [JLECmd від Eric Zimmerman](https://github.com/EricZimmerman/JLECmd)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
-- [SrumECmd від Eric Zimmerman](https://github.com/EricZimmerman/Srum)
 - [Microsoft: Extensible Storage Engine](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
 
 ## Реєстр і закріплення { #registry-and-persistence }
@@ -50,7 +44,6 @@
 - [Microsoft: типи значень реєстру](https://learn.microsoft.com/en-us/windows/win32/sysinfo/registry-value-types)
 - [Специфікація формату реєстру Windows від Maxim Suhanov](https://github.com/msuhanov/regf)
 - [yarp](https://github.com/msuhanov/yarp) і [libregf](https://github.com/libyal/libregf) — довідкові матеріали щодо низькорівневого розбору та відновлення кущів реєстру.
-- [Документація Registry Explorer / RECmd від Eric Zimmerman](https://ericzimmerman.github.io/)
 - [Microsoft: дерево реєстру служб](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: схема Task Scheduler](https://learn.microsoft.com/en-us/windows/win32/taskschd/task-scheduler-schema)
 - [MITRE ATT&CK: Scheduled Task/Job](https://attack.mitre.org/techniques/T1053/)

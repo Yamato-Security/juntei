@@ -124,6 +124,5 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
 
 - [Схема виводу ys-amcache-parser для Juntei](https://github.com/Yamato-Security/ys-amcache-parser/blob/main/docs/output.md)
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)
-- [AmcacheParser від Eric Zimmerman](https://github.com/EricZimmerman/AmcacheParser)
 - [Security Ronin amcache-forensic](https://github.com/SecurityRonin/amcache-forensic)
 - [Плагін Amcache для Regipy](https://github.com/mkorman90/regipy)

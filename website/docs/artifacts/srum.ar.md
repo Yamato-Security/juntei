@@ -161,7 +161,6 @@ juntei parse-ese srum -f SRUDB.dat -t jsonl --include-value-state \
 ## مزيد من التفاصيل { #further-details }
 
 - [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)
-- [أداة SrumECmd من Eric Zimmerman](https://github.com/EricZimmerman/Srum)
 - [dissect.esedb](https://github.com/fox-it/dissect.esedb)
 - [libyal libesedb](https://github.com/libyal/libesedb)
 - [Microsoft: محرك التخزين القابل للتوسيع (Extensible Storage Engine)](https://learn.microsoft.com/en-us/windows/win32/extensible-storage-engine/extensible-storage-engine)
