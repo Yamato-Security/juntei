@@ -25,6 +25,8 @@ C:\Windows\System32\config\SOFTWARE   (context for account and Wi-Fi names)
 SRUM 存在於 Windows 8 及更新版本。請以一致的方式複製 `SRUDB.dat`，最好從快照複製，或使用
 鑑識收集工具。也請收集 `SOFTWARE` 以及 `sru` 目錄中的 ESE 交易／記錄檔。
 
+對應的 SOFTWARE 登錄區與 ESE 資料庫不同：若登錄區處於 dirty 狀態，Juntei 會在記憶體中自動重播相鄰的登錄交易記錄 `SOFTWARE.LOG`、`.LOG1` 和 `.LOG2`，因此也請收集這些檔案。工具會顯示復原詳細資訊與警告；缺少記錄時，帳號或 Wi-Fi 名稱可能不完整或過時。這項處理不會重播 SRUM 資料庫的記錄。
+
 !!! warning "Dirty 資料庫"
     Juntei 會依收集時的狀態讀取 dirty 的 `SRUDB.dat` 並加以回報。它目前不會重播
     `SRU*.log`，因此僅存在於這些記錄檔中的變更將會缺漏。請勿在未說明的情況下將

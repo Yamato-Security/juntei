@@ -19,9 +19,7 @@ Windows 版本則使用舊式的 `Root\File` 配置。
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-請從受影響的安裝環境收集此登錄區。`parse-registry amcache` 目前會剖析主要登錄區，
-但**不會**重播相鄰的 Amcache 交易記錄，因此僅存在於這些記錄中的項目，在即時收集或
-不一致的收集中可能會遺漏。請在報告中註明此限制。
+請收集受影響系統的登錄區，以及相鄰的 `Amcache.hve.LOG`、`.LOG1` 和 `.LOG2`。若登錄區處於未同步的 dirty 狀態，`parse-registry amcache` 會先在記憶體中自動重播可用的交易記錄，再進行剖析，且不會修改證據。復原詳細資訊會記錄於剖析器日誌或終端機；若將記錄串流至標準輸出，診斷訊息會送至標準錯誤輸出。交易記錄缺失或無法使用時，資料可能不完整，或無法讀取不一致的登錄區。
 
 ## 分析注意事項 { #analyst-cautions }
 

@@ -20,9 +20,7 @@ dispositivo registrado. Un registro de ejecutable es **evidencia de presencia, n
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-Recopile el hive de la instalación afectada. Actualmente, `parse-registry amcache` analiza el hive
-principal, pero **no** reproduce los registros de transacciones de Amcache adyacentes, por lo que los registros presentes únicamente en esos
-registros de transacciones pueden faltar en una recopilación en vivo o incoherente. Indique esa limitación en el informe.
+Recopile el hive y los archivos adyacentes `Amcache.hve.LOG`, `.LOG1` y `.LOG2`. Si el hive está sucio, `parse-registry amcache` reproduce automáticamente en memoria los registros de transacciones utilizables antes del análisis, sin modificar la evidencia. Los detalles aparecen en el registro del parser o en la terminal; al transmitir registros a stdout, los diagnósticos van a stderr. Los registros ausentes o inutilizables pueden dejar datos incompletos o impedir leer un hive inconsistente.
 
 ## Precauciones para el analista { #analyst-cautions }
 

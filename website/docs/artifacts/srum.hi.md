@@ -26,6 +26,8 @@ SRUM Windows 8 और बाद के संस्करणों पर मौ
 forensic collector से। `sru` directory में मौजूद `SOFTWARE` और ESE transaction/log files भी
 संग्रहित करें।
 
+संबंधित SOFTWARE hive, ESE database से अलग है: hive dirty होने पर Juntei उसके पास के Registry transaction logs `SOFTWARE.LOG`, `.LOG1` और `.LOG2` को मेमोरी में स्वतः replay करता है। इन्हें भी एकत्र करें। Recovery विवरण और चेतावनियाँ दिखाई जाती हैं; logs न होने पर account या Wi-Fi नाम अधूरे या पुराने हो सकते हैं। इससे SRUM database logs replay नहीं होते।
+
 !!! warning "Dirty databases"
     Juntei dirty `SRUDB.dat` को जैसा संग्रहित किया गया वैसा पढ़ता है और इसकी रिपोर्ट करता है। यह वर्तमान में
     `SRU*.log` को replay नहीं करता, इसलिए केवल उन logs में मौजूद बदलाव अनुपस्थित रहते हैं। किसी

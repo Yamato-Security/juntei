@@ -28,6 +28,8 @@ SRUM existe en Windows 8 y versiones posteriores. Copie `SRUDB.dat` de forma coh
 idealmente desde una instantánea o con un recopilador forense. Recopile también `SOFTWARE` y los
 archivos de transacciones y de registro de ESE del directorio `sru`.
 
+El hive SOFTWARE correspondiente es independiente de la base ESE: si está sucio, Juntei reproduce automáticamente en memoria sus registros de transacciones del Registro adyacentes `SOFTWARE.LOG`, `.LOG1` y `.LOG2`. Recopílelos también. Se muestran detalles de recuperación y advertencias; sin estos registros, los nombres de cuentas o Wi-Fi pueden estar incompletos o desactualizados. Esto no reproduce los registros de la base SRUM.
+
 !!! warning "Bases de datos sucias"
     Juntei lee un `SRUDB.dat` sucio (dirty) tal como se recopiló e informa de ello. Actualmente no
     reproduce `SRU*.log`, por lo que faltan los cambios que solo existen en esos archivos de

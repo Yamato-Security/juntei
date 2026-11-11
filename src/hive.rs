@@ -32,6 +32,28 @@ const MIN_CELL: usize = 8;
 
 pub type Result<T> = std::result::Result<T, String>;
 
+/// Report recovery even when the caller writes structured records to stdout (the caller
+/// routes this note to stderr). Never label an unrecovered dirty hive as a clean snapshot.
+pub(crate) fn recovery_note(recovery: &registry::Recovery) -> Option<String> {
+    if !recovery.dirty {
+        return None;
+    }
+    let mut note = if recovery.recovered {
+        format!(
+            "Recovered dirty hive with transaction logs: {}.",
+            recovery.logs_applied.join(", ")
+        )
+    } else {
+        "Dirty hive without usable transaction logs; records may be missing or out of date."
+            .to_owned()
+    };
+    for message in &recovery.messages {
+        note.push(' ');
+        note.push_str(message);
+    }
+    Some(note)
+}
+
 /// A hive file, in memory.
 pub struct Hive {
     data: Vec<u8>,
@@ -43,8 +65,10 @@ pub struct Hive {
 }
 
 impl Hive {
-    pub fn from_path(path: &Path) -> Result<Self> {
-        Self::from_bytes(std::fs::read(path).map_err(|e| e.to_string())?)
+    pub fn from_path(path: &Path) -> Result<(Self, registry::Recovery)> {
+        let (hive, recovery) = registry::open(path).map_err(|e| e.to_string())?;
+        let parsed = Self::from_bytes(hive.bytes().to_vec())?;
+        Ok((parsed, recovery))
     }
 
     /// A hive: the `regf` signature and a root key. The base block's checksum is not checked

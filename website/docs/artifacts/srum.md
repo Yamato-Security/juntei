@@ -26,6 +26,11 @@ SRUM exists on Windows 8 and later. Copy `SRUDB.dat` consistently, ideally from 
 a forensic collector. Also collect `SOFTWARE` and the ESE transaction/log files in the `sru`
 directory.
 
+The matching SOFTWARE hive is separate from the ESE database: Juntei automatically replays its
+adjacent `SOFTWARE.LOG`, `.LOG1` and `.LOG2` registry transaction logs in memory when the hive is
+dirty. Collect those files too. Recovery details and warnings are reported; missing logs can leave
+account or Wi-Fi names incomplete or out of date. This does not replay the SRUM database logs.
+
 !!! warning "Dirty databases"
     Juntei reads a dirty `SRUDB.dat` as collected and reports it. It does not currently replay
     `SRU*.log`, so changes existing only in those logs are missing. Do not silently describe a

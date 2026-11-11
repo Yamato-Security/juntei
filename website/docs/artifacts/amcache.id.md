@@ -20,9 +20,7 @@ perangkat yang tercatat. Catatan executable adalah **bukti keberadaan, bukan buk
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-Kumpulkan hive dari instalasi yang terdampak. `parse-registry amcache` saat ini mengurai hive
-utama tetapi **tidak** memutar ulang log transaksi Amcache yang berdampingan, sehingga catatan yang hanya ada di log tersebut
-mungkin tidak muncul dari pengumpulan live atau yang tidak konsisten. Catat keterbatasan tersebut dalam laporan.
+Kumpulkan hive beserta berkas di sebelahnya: `Amcache.hve.LOG`, `.LOG1`, dan `.LOG2`. Jika hive berstatus dirty, `parse-registry amcache` otomatis memutar ulang log transaksi yang dapat digunakan di memori sebelum mengurai, tanpa mengubah bukti. Rincian pemulihan dicatat dalam log parser atau terminal; saat rekaman dikirim ke stdout, diagnostik dikirim ke stderr. Log yang hilang atau tidak dapat digunakan dapat menyebabkan rekaman tidak lengkap atau hive yang tidak konsisten tidak dapat dibaca.
 
 ## Peringatan bagi analis { #analyst-cautions }
 

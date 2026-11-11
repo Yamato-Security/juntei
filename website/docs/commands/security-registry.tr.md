@@ -48,7 +48,7 @@ devam eder. Otomatik ayrıştırma standart adları kullanır; artefakt tanımla
 sonuç şemaları ve çıktı dosya adları değişmemiştir.
 
 Kayıt defteri komutları `-f <HIVE>` veya `-d <COLLECTION>` ile yapılandırılmış çıktı seçeneklerini kabul eder.
-`amcache` şu anda Amcache kayıt defteri kovanlarını işlem günlüklerini yeniden oynatmadan okur. `shimcache`
+`amcache`, kovan dirty durumundaysa yanındaki Amcache işlem günlüklerini otomatik olarak yeniden oynatır; ancak günlükleri belirtme veya yeniden oynatmayı atlama seçeneği yoktur. `shimcache`
 varsayılan olarak yanındaki SYSTEM günlüklerini yeniden oynatır ve dışa aktarılmış ham bir AppCompatCache değerini de kabul eder.
 Diğer kayıt defteri komutları yanlarındaki günlükleri otomatik olarak yeniden oynatır; günlükleri açıkça belirtmek için
 `--log1` / `--log2`, birincil kovanı yeniden oynatma yapmadan incelemek için `--no-logs` kullanın.

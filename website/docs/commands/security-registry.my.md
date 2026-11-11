@@ -48,7 +48,7 @@ Options:
 ရလဒ် schema များနှင့် ထုတ်ယူမှု ဖိုင်အမည်များ မပြောင်းလဲပါ။
 
 Registry ညွှန်ကြားချက်များသည် `-f <HIVE>` သို့မဟုတ် `-d <COLLECTION>` နှင့် structured ထုတ်ယူမှု option များကို လက်ခံသည်။
-`amcache` သည် လက်ရှိတွင် Amcache registry hive များကို transaction-log replay မလုပ်ဘဲ ဖတ်သည်။ `shimcache`
+`amcache` သည် hive dirty ဖြစ်လျှင် ဘေးချင်းကပ်ရှိ Amcache transaction log များကို အလိုအလျောက် replay လုပ်သည်။ သို့သော် log များကို တိုက်ရိုက်သတ်မှတ်ရန် သို့မဟုတ် replay မလုပ်ဘဲ ဖတ်ရန် option မရှိပါ။ `shimcache`
 သည် ဘေးချင်းကပ်ရှိ SYSTEM log များကို မူလအားဖြင့် replay လုပ်ပြီး export လုပ်ထားသော raw AppCompatCache value ကိုလည်း လက်ခံသည်။
 အခြား registry ညွှန်ကြားချက်များသည် ဘေးချင်းကပ်ရှိ log များကို အလိုအလျောက် replay လုပ်သည်။ log များကို တိုက်ရိုက်
 သတ်မှတ်ရန် `--log1` / `--log2` ကို၊ replay မလုပ်ဘဲ primary hive ကို စစ်ဆေးရန် `--no-logs` ကို အသုံးပြုပါ။

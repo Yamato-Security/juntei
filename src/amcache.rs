@@ -86,6 +86,16 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
         report_error(None, &msg);
         return 1;
     }
+    // A structured output must not truncate the primary hive or a transaction log before
+    // recovery reads it, including aliases through symlinks and hard links.
+    if output_type != OutputType::Csv
+        && let Some(out) = &opts.output
+        && let Err(msg) =
+            crate::registry::check_not_read(out, || crate::registry::files_read(&hives, &[]))
+    {
+        report_error(None, &msg);
+        return 1;
+    }
 
     if !data_on_stdout {
         let total: u64 = hives
@@ -131,11 +141,23 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
             b.set_message(progress::message(hive));
         }
         let source = hive.to_string_lossy().to_string();
-        let report = match std::fs::read(hive)
-            .map_err(|e| e.to_string())
-            .and_then(|bytes| analyze_bytes(&bytes).map_err(|e| e.to_string()))
-        {
-            Ok(r) => r,
+        // Recover before the Amcache reader catalogues the hive bins: a dirty primary can
+        // reference a bin whose header and cells are still only in its transaction logs.
+        let report = match read_report(hive, |recovery| {
+            if let Some(note) = crate::hive::recovery_note(recovery) {
+                let message = format!("{source}: {note}");
+                if data_on_stdout {
+                    eprintln!("{message}");
+                } else {
+                    progress::suspended(bar.as_ref(), || p(None, &message, true));
+                }
+            }
+        }) {
+            Ok((report, recovery)) => {
+                totals.recovered += usize::from(recovery.recovered);
+                totals.unrecovered += usize::from(recovery.dirty && !recovery.recovered);
+                report
+            }
             Err(e) => {
                 totals.failed += 1;
                 report_error(bar.as_ref(), &format!("Could not parse {source}: {e}"));
@@ -238,6 +260,16 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
     i32::from(totals.parsed == 0)
 }
 
+fn read_report(
+    path: &Path,
+    note: impl FnOnce(&registry::Recovery),
+) -> Result<(AmcacheReport, registry::Recovery), String> {
+    let (hive, recovery) = registry::open(path).map_err(|e| e.to_string())?;
+    note(&recovery);
+    let report = analyze_bytes(hive.bytes()).map_err(|e| e.to_string())?;
+    Ok((report, recovery))
+}
+
 /// Counts for the results summary.
 #[derive(Default)]
 struct Totals {
@@ -247,6 +279,8 @@ struct Totals {
     legacy: usize,
     files: usize,
     devices: usize,
+    recovered: usize,
+    unrecovered: usize,
     /// severity (`HIGH`, `MEDIUM`, …) → findings
     findings: BTreeMap<String, usize>,
 }
@@ -280,6 +314,20 @@ fn print_summary(t: &Totals, no_color: bool) {
         parsed.push_str(&format!(" (could not parse: {})", fmt_num(t.failed)));
     }
     p_label(no_color, "Amcache hives parsed: ", &parsed);
+    if t.recovered > 0 {
+        p_label(
+            no_color,
+            "Dirty hives recovered with their transaction logs: ",
+            &fmt_num(t.recovered),
+        );
+    }
+    if t.unrecovered > 0 {
+        p_label(
+            no_color,
+            "Dirty hives whose transaction logs were not applied: ",
+            &fmt_num(t.unrecovered),
+        );
+    }
     p_label(
         no_color,
         "Schemas: ",

@@ -48,7 +48,7 @@ untuk skrip yang sudah ada. Penguraian otomatis menggunakan nama kanonis; pengen
 skema hasil, dan nama berkas keluarannya tidak berubah.
 
 Perintah registry menerima `-f <HIVE>` atau `-d <COLLECTION>` serta opsi keluaran terstruktur.
-`amcache` saat ini membaca hive registry Amcache tanpa pemutaran ulang log transaksi. `shimcache`
+`amcache` otomatis memutar ulang log transaksi Amcache yang berdampingan jika hive berstatus dirty, tetapi tidak memiliki opsi untuk menyebutkan log atau melewati pemutaran ulang. `shimcache`
 memutar ulang log SYSTEM yang berdampingan secara default dan juga menerima nilai AppCompatCache mentah yang diekspor.
 Perintah registry lainnya memutar ulang log yang berdampingan secara otomatis; gunakan `--log1` / `--log2` untuk menyebutkan
 log secara eksplisit atau `--no-logs` untuk memeriksa hive utama tanpa pemutaran ulang.

@@ -48,7 +48,7 @@ Options:
 結果結構描述與輸出檔名皆維持不變。
 
 登錄命令接受 `-f <HIVE>` 或 `-d <COLLECTION>` 以及結構化輸出選項。
-`amcache` 目前讀取 Amcache 登錄區時不會重播交易記錄。`shimcache`
+`amcache` 會在登錄區處於 dirty 狀態時自動重播相鄰的 Amcache 交易記錄，但沒有指定交易記錄或略過重播的選項。`shimcache`
 預設會重播相鄰的 SYSTEM 交易記錄，也接受匯出的原始 AppCompatCache 值。
 其他登錄命令會自動重播相鄰的交易記錄；請使用 `--log1` / `--log2` 明確指定
 交易記錄，或使用 `--no-logs` 在不重播的情況下檢視主要登錄區。

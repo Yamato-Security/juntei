@@ -26,6 +26,8 @@ SRUM ada di Windows 8 dan yang lebih baru. Salin `SRUDB.dat` secara konsisten, i
 collector forensik. Kumpulkan juga `SOFTWARE` dan berkas transaksi/log ESE di direktori
 `sru`.
 
+Hive SOFTWARE yang sesuai terpisah dari basis data ESE: jika hive berstatus dirty, Juntei otomatis memutar ulang log transaksi Registry di sebelahnya, yaitu `SOFTWARE.LOG`, `.LOG1`, dan `.LOG2`, di memori. Kumpulkan juga berkas tersebut. Rincian pemulihan dan peringatan ditampilkan; tanpa log, nama akun atau Wi-Fi dapat tidak lengkap atau kedaluwarsa. Ini tidak memutar ulang log basis data SRUM.
+
 !!! warning "Database dirty"
     Juntei membaca `SRUDB.dat` yang dirty apa adanya saat dikumpulkan dan melaporkannya. Saat ini Juntei tidak memutar ulang
     `SRU*.log`, sehingga perubahan yang hanya ada di log tersebut tidak akan muncul. Jangan diam-diam mendeskripsikan

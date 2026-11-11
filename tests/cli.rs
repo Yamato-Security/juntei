@@ -20677,3 +20677,422 @@ fn auto_parse_timezone_errors_give_quoted_examples_and_negative_offsets_are_acce
     );
     assert!(!result.stderr.contains("unexpected argument"));
 }
+
+// --- Dirty-hive recovery shared by artifact commands --------------------------------------------
+
+/// A public, synthetic Amcache hive. Its last declared bin is not flushed to the primary;
+/// only the adjacent log contains it. This reproduces strict hbin-catalogue failures without
+/// committing evidence from a case. The legacy schema must keep working as well.
+fn recovery_amcache(directory: &Path, legacy: bool) -> PathBuf {
+    let mut current = if legacy {
+        reg_tree(
+            "ROOT",
+            &[
+                (
+                    r"Root\File\{VOLUME}\00000001",
+                    "15",
+                    REG_SZ,
+                    utf16z(r"C:\Tools\example.exe"),
+                ),
+                (
+                    r"Root\File\{VOLUME}\00000001",
+                    "1",
+                    REG_SZ,
+                    utf16z("Example Publisher"),
+                ),
+            ],
+        )
+    } else {
+        reg_tree(
+            "ROOT",
+            &[
+                (
+                    r"Root\InventoryApplicationFile\example.exe|1234",
+                    "Name",
+                    REG_SZ,
+                    utf16z("example.exe"),
+                ),
+                (
+                    r"Root\InventoryApplicationFile\example.exe|1234",
+                    "LowerCaseLongPath",
+                    REG_SZ,
+                    utf16z(r"C:\Tools\example.exe"),
+                ),
+                (
+                    r"Root\InventoryApplicationFile\example.exe|1234",
+                    "Publisher",
+                    REG_SZ,
+                    utf16z("Example Publisher"),
+                ),
+            ],
+        )
+    };
+    let last = current.len();
+    let mut bin = vec![0u8; 4096];
+    bin[..4].copy_from_slice(b"hbin");
+    put_u32(&mut bin, 4, (last - 4096) as u32);
+    put_u32(&mut bin, 8, 4096);
+    put_u32(&mut bin, 32, 4096 - 32); // one free cell
+    current.extend(bin);
+    let bins = (current.len() - 4096) as u32;
+    put_u32(&mut current, 40, bins);
+    registry_header_checksum(&mut current);
+    let mut primary = current.clone();
+    primary[last..].fill(0);
+    write_replayed_registry_hive(directory, "Amcache.hve", primary, &current);
+    // Log discovery must be case-insensitive even on case-sensitive file systems.
+    std::fs::rename(
+        directory.join("Amcache.hve.LOG"),
+        directory.join("Amcache.hve.lOg"),
+    )
+    .unwrap();
+    directory.join("Amcache.hve")
+}
+
+fn registry_header_checksum(bytes: &mut [u8]) {
+    let checksum = bytes[..508]
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .fold(0u32, |sum, word| sum ^ u32::from_le_bytes(*word));
+    put_u32(
+        bytes,
+        508,
+        match checksum {
+            0 => 1,
+            u32::MAX => u32::MAX - 1,
+            x => x,
+        },
+    );
+}
+
+#[test]
+fn amcache_recovers_unflushed_bins_before_parsing_in_every_output_format() {
+    for legacy in [false, true] {
+        let input = tempfile::tempdir().unwrap();
+        let hive = recovery_amcache(input.path(), legacy);
+        let log = input.path().join("Amcache.hve.lOg");
+        let originals = [std::fs::read(&hive).unwrap(), std::fs::read(&log).unwrap()];
+        for format in ["csv", "json", "jsonl", "text"] {
+            let out = tempfile::tempdir().unwrap();
+            let output = out.path().join("report");
+            let r = run(&[
+                "parse-registry",
+                "amcache",
+                "-f",
+                hive.to_str().unwrap(),
+                "-o",
+                output.to_str().unwrap(),
+                "-t",
+                format,
+                "-a",
+                "-K",
+                "-q",
+            ]);
+            assert_eq!(r.code, 0, "{legacy} / {format}: {}\n{}", r.stdout, r.stderr);
+            assert!(
+                r.stdout
+                    .contains("Dirty hives recovered with their transaction logs: 1"),
+                "{}",
+                r.stdout
+            );
+            assert!(r.stdout.contains("Amcache.hve.lOg"));
+            if format == "csv" {
+                let (_, rows) = csv_rows(&output.join("Amcache_files.csv"));
+                assert_eq!(rows.len(), 1);
+                assert_eq!(rows[0]["FullPath"], r"C:\Tools\example.exe");
+                assert_eq!(rows[0]["Publisher"], "Example Publisher");
+            } else {
+                let text = std::fs::read_to_string(output).unwrap();
+                assert!(text.contains("example.exe"), "{text}");
+                if format != "text" {
+                    assert!(text.contains("Example Publisher"));
+                }
+            }
+            assert_eq!(std::fs::read(&hive).unwrap(), originals[0]);
+            assert_eq!(std::fs::read(&log).unwrap(), originals[1]);
+        }
+        // Recovery diagnostics must not contaminate a JSONL stream on stdout.
+        let r = run(&[
+            "parse-registry",
+            "amcache",
+            "-f",
+            hive.to_str().unwrap(),
+            "-t",
+            "jsonl",
+            "-a",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+        assert!(r.stderr.contains("Recovered dirty hive"));
+        let records: Vec<Value> = r
+            .stdout
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert!(
+            records
+                .iter()
+                .any(|row| row["RecordType"] == "file" && row["Publisher"] == "Example Publisher")
+        );
+    }
+}
+
+#[test]
+fn amcache_warns_and_fails_when_the_missing_bin_has_no_usable_log() {
+    for bad_log in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let hive = recovery_amcache(dir.path(), false);
+        let log = dir.path().join("Amcache.hve.lOg");
+        // A separate empty directory avoids deleting anything outside this test's TempDir.
+        if bad_log {
+            std::fs::write(&log, b"not a registry transaction log").unwrap();
+        } else {
+            std::fs::rename(&log, dir.path().join("unrelated.bin")).unwrap();
+        }
+        let original = std::fs::read(&hive).unwrap();
+        let r = run(&[
+            "parse-registry",
+            "amcache",
+            "-f",
+            hive.to_str().unwrap(),
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+        assert!(
+            r.stdout
+                .contains("Dirty hive without usable transaction logs"),
+            "{}",
+            r.stdout
+        );
+        assert!(r.stdout.contains("Invalid hbin"), "{}", r.stdout);
+        assert!(!r.stdout.contains("Recovered dirty hive"));
+        assert_eq!(std::fs::read(hive).unwrap(), original);
+    }
+}
+
+#[test]
+fn amcache_protects_primary_hives_and_logs_from_output_replacement() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = recovery_amcache(dir.path(), false);
+    let log = dir.path().join("Amcache.hve.lOg");
+    for input in [&hive, &log] {
+        let original = std::fs::read(input).unwrap();
+        for alias in [false, true] {
+            let dest = dir.path().join("alias.jsonl");
+            let out = if alias {
+                std::fs::hard_link(input, &dest).unwrap();
+                &dest
+            } else {
+                input
+            };
+            let r = run(&[
+                "parse-registry",
+                "amcache",
+                "-f",
+                hive.to_str().unwrap(),
+                "-o",
+                out.to_str().unwrap(),
+                "-t",
+                "jsonl",
+                "-C",
+                "-K",
+                "-q",
+            ]);
+            assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+            assert_eq!(std::fs::read(input).unwrap(), original);
+            // Rename the test-owned link out of the way before the next case.
+            if alias {
+                std::fs::rename(
+                    dest,
+                    dir.path().join(format!(
+                        "saved-{}",
+                        input.file_name().unwrap().to_string_lossy()
+                    )),
+                )
+                .unwrap();
+            }
+        }
+    }
+}
+
+#[test]
+fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
+    for format in ["csv", "jsonl"] {
+        let evidence = tempfile::tempdir().unwrap();
+        let programs = evidence.path().join("HOST/C/Windows/AppCompat/Programs");
+        std::fs::create_dir_all(&programs).unwrap();
+        let hive = recovery_amcache(&programs, false);
+        let original = std::fs::read(&hive).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().join("parsed");
+        let r = run(&[
+            "auto-parse",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+            "-t",
+            format,
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 0, "{format}: {}\n{}", r.stdout, r.stderr);
+        let manifest: Value =
+            serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+        let task = manifest["Tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["Artifact"] == "amcache" && row["Purpose"] == "artifact")
+            .unwrap();
+        assert_eq!(task["Status"], "succeeded", "{task}");
+        let log = std::fs::read_to_string(out.join(task["Log"].as_str().unwrap())).unwrap();
+        assert!(log.contains("Dirty hives recovered with their transaction logs: 1"));
+        if format == "csv" {
+            let (_, records) = csv_rows(&out.join("HOST/FileExistence/Registry-Amcache-Files.csv"));
+            assert_eq!(records.len(), 1);
+            assert_eq!(records[0]["Publisher"], "Example Publisher");
+        } else {
+            let data =
+                std::fs::read_to_string(out.join("HOST/FileExistence/Registry-Amcache.jsonl"))
+                    .unwrap();
+            assert!(
+                data.lines()
+                    .map(|line| serde_json::from_str::<Value>(line).unwrap())
+                    .any(|row| row["RecordType"] == "file"
+                        && row["Publisher"] == "Example Publisher")
+            );
+        }
+        assert_eq!(std::fs::read(hive).unwrap(), original);
+    }
+}
+
+#[test]
+fn srum_recovers_software_names_from_logs_for_csv_and_jsonl() {
+    for format in ["csv", "jsonl"] {
+        let input = tempfile::tempdir().unwrap();
+        let current = software_hive();
+        let mut primary = current.clone();
+        primary[4096..].fill(0);
+        write_replayed_registry_hive(input.path(), "SOFTWARE", primary, &current);
+        let hive = input.path().join("SOFTWARE");
+        let log = input.path().join("SOFTWARE.LOG");
+        let originals = [std::fs::read(&hive).unwrap(), std::fs::read(&log).unwrap()];
+        let output = tempfile::tempdir().unwrap();
+        let out = output.path().join("report");
+        let r = run(&[
+            "parse-ese",
+            "srum",
+            "-f",
+            SRUM_WIN10,
+            "-r",
+            hive.to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+            "-t",
+            format,
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 0, "{format}: {}\n{}", r.stdout, r.stderr);
+        assert!(r.stdout.contains("Recovered dirty hive"), "{}", r.stdout);
+        assert!(r.stdout.contains("SOFTWARE.LOG"));
+        if format == "csv" {
+            let (_, rows) = csv_rows(&out.join("SRUM-NetworkUsages.csv"));
+            let account: Vec<_> = rows.iter().filter(|r| r["SID"] == RATHBUN_SID).collect();
+            assert!(!account.is_empty());
+            assert!(account.iter().all(|row| row["User"] == "rathbun"));
+            assert!(rows.iter().any(|row| row["ProfileName"] == "CoffeeShop"));
+        } else {
+            let text = std::fs::read_to_string(out).unwrap();
+            let rows: Vec<Value> = text
+                .lines()
+                .map(|line| serde_json::from_str(line).unwrap())
+                .collect();
+            assert!(rows.iter().any(|row| row["User"] == "rathbun"));
+            assert!(rows.iter().any(|row| row["ProfileName"] == "CoffeeShop"));
+        }
+        assert_eq!(std::fs::read(hive).unwrap(), originals[0]);
+        assert_eq!(std::fs::read(log).unwrap(), originals[1]);
+    }
+}
+
+#[test]
+fn srum_recovery_notes_stay_off_structured_stdout_and_unusable_logs_are_reported() {
+    for usable in [true, false] {
+        let input = tempfile::tempdir().unwrap();
+        let current = software_hive();
+        write_replayed_registry_hive(input.path(), "SOFTWARE", current.clone(), &current);
+        if !usable {
+            std::fs::write(input.path().join("SOFTWARE.LOG"), b"invalid log").unwrap();
+        }
+        let r = run(&[
+            "parse-ese",
+            "srum",
+            "-f",
+            SRUM_WIN10,
+            "-r",
+            input.path().join("SOFTWARE").to_str().unwrap(),
+            "-t",
+            "jsonl",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+        assert!(
+            r.stderr.contains(if usable {
+                "Recovered dirty hive"
+            } else {
+                "Dirty hive without usable transaction logs"
+            }),
+            "{}",
+            r.stderr
+        );
+        let rows: Vec<Value> = r
+            .stdout
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert!(rows.iter().any(|row| row["User"] == "rathbun"));
+    }
+}
+
+#[test]
+fn srum_protects_software_logs_from_output_replacement() {
+    let input = tempfile::tempdir().unwrap();
+    let current = software_hive();
+    write_replayed_registry_hive(input.path(), "SOFTWARE", current.clone(), &current);
+    let log = input.path().join("SOFTWARE.LOG");
+    let original = std::fs::read(&log).unwrap();
+    for alias in [false, true] {
+        let dest = input.path().join("alias.jsonl");
+        let out = if alias {
+            std::fs::hard_link(&log, &dest).unwrap();
+            &dest
+        } else {
+            &log
+        };
+        let r = run(&[
+            "parse-ese",
+            "srum",
+            "-f",
+            SRUM_WIN10,
+            "-r",
+            input.path().join("SOFTWARE").to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+            "-t",
+            "jsonl",
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(r.code, 1, "{}\n{}", r.stdout, r.stderr);
+        assert_eq!(std::fs::read(&log).unwrap(), original);
+    }
+}

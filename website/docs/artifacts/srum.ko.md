@@ -24,6 +24,8 @@ C:\Windows\System32\config\SOFTWARE   (context for account and Wi-Fi names)
 SRUM은 Windows 8 이상에 존재합니다. `SRUDB.dat`는 일관된 상태로, 가능하면 스냅샷에서 또는 포렌식 수집 도구로
 복사하십시오. `SOFTWARE`와 `sru` 디렉터리의 ESE 트랜잭션/로그 파일도 수집하십시오.
 
+대응하는 SOFTWARE 하이브는 ESE 데이터베이스와 별개입니다. 하이브가 더티 상태이면 Juntei는 인접한 레지스트리 트랜잭션 로그 `SOFTWARE.LOG`, `.LOG1`, `.LOG2`를 메모리에서 자동 재생하므로 함께 수집하십시오. 복구 세부 정보와 경고가 표시되며, 로그가 없으면 계정 또는 Wi-Fi 이름이 불완전하거나 오래된 값일 수 있습니다. 이 처리는 SRUM 데이터베이스 로그를 재생하지 않습니다.
+
 !!! warning "더티 데이터베이스"
     Juntei는 더티 상태의 `SRUDB.dat`를 수집된 그대로 읽고 이를 보고합니다. 현재는 `SRU*.log`를 재생하지
     않으므로, 해당 로그에만 존재하는 변경 사항은 누락됩니다. 더티 데이터베이스를 아무 언급 없이 완전한 것으로
