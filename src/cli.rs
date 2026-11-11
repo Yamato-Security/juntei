@@ -217,7 +217,7 @@ pub struct SuperTimelineOptions {
     /// Offset for timestamps without a time zone; date-only values retain day precision
     #[arg(help_heading = "Input", long, value_name = "OFFSET", value_parser = parse_assumed_offset, allow_hyphen_values = true, display_order = 105)]
     pub assume_offset: Option<String>,
-    /// Write the timeline and companion diagnostics/summary
+    /// Write the timeline
     #[arg(
         help_heading = "Output",
         short = 'o',
@@ -226,7 +226,7 @@ pub struct SuperTimelineOptions {
         display_order = 200
     )]
     pub output: PathBuf,
-    /// Output type: csv or jsonl
+    /// Timeline output type: csv or jsonl
     #[arg(
         help_heading = "Output",
         short = 't',
@@ -245,7 +245,7 @@ pub struct SuperTimelineOptions {
         display_order = 202
     )]
     pub profile: TimelineProfile,
-    /// Replace existing timeline and companion files
+    /// Replace an existing timeline
     #[arg(help_heading = "Output", short = 'C', long, display_order = 203)]
     pub clobber: bool,
     /// Sort chronologically and consolidate duplicate timestamp projections

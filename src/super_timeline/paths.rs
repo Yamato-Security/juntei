@@ -12,7 +12,7 @@
 // and limitations under the RPL.
 
 //! Export references separately from canonical paths used for reading and overwrite protection.
-use super::model::{Diagnostic, Event, fingerprint};
+use super::model::{Event, fingerprint};
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -146,11 +146,6 @@ impl References {
         }
         // Other fields are evidence, including absolute Windows process/target paths. They are
         // deliberately left intact rather than recursively rewriting captured event details.
-    }
-
-    pub fn diagnostic(&self, diagnostic: &mut Diagnostic) {
-        diagnostic.parsed_file = self.parsed(Path::new(&diagnostic.parsed_file));
-        diagnostic.source_file = self.source(&diagnostic.source_file);
     }
 }
 

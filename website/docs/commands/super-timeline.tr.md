@@ -57,7 +57,7 @@ Güncel manifestler sonuç dizininin taşınmasını destekler; eski mutlak yoll
 
 Manifestteki VHDX/E01 görüntülerinde kaynak referansı görüntüyü ve iç yolu içerir; görüntü adı bağlamda korunur. Sonuçları okumak için geçici hazırlama dizini gerekmez.
 
-Kayıttan ham bir kaynak veya net bir bildirim komutu alınır. `-d` ile ham kaynak referansları kanıt dizinine göredir ve `Details.ParsedFile` ve özet `InputFiles` ayrıştırılan dizine göredir. Özet çıktı/rapor adları, zaman çizelgesinin çıktı dizinine göredir. SRUM CSV tabloları, yalnızca ana bilgisayarın benzersiz şekilde tanımlanabilen toplanmış bir SRUDB.dat dosyasına sahip olması durumunda bir veritabanına atanır. Aksi halde `SourceFile` ayrıştırılmış dosyayı işaret eder ve `Details.RawSourceAvailable`, `false`'tir.
+Kayıttan ham bir kaynak veya net bir bildirim komutu alınır. `-d` ile ham kaynak referansları kanıt dizinine göredir ve `Details.ParsedFile` ayrıştırılan dizine göredir. SRUM CSV tabloları, yalnızca ana bilgisayarın benzersiz şekilde tanımlanabilen toplanmış bir SRUDB.dat dosyasına sahip olması durumunda bir veritabanına atanır. Aksi halde `SourceFile` ayrıştırılmış dosyayı işaret eder ve `Details.RawSourceAvailable`, `false`'tir.
 
 Bağımsız bir girişe dosya adıyla başvurulur. Aynı dosya adına sahip girişler farklı `./Inputs/<ID>/<filename>` referanslarını kullanır. Bilinen kanıt köklerinin dışındaki mutlak ham kaynak yolları, `./Sources/<ID>/<filename>` tanımlayıcılarını kullanır. Bu şeffaf olmayan referanslar, analistin mutlak dizin adlarını dışa aktarmadan kaynak ayrımlarını korur; Orijinal kaynak için `ParsedFile` ve `InputRecord`'i kullanarak yerel kayda bakın. Kanıta kaydedilen Windows yürütülebilir yolları gibi yollar değişmeden kalır.
 
@@ -95,7 +95,7 @@ Zaman damgası kayıtlı nesneye ilişkin kanıttır; tek başına yürütme vey
 | Tarayıcı SQLite veritabanları | Ziyaretler, kurtarılan son ziyaretler, indirme başlangıç/bitişi, çerez zamanları ve form ilk/son kullanım ya da silme izleri. Bitiş başarı/yürütme kanıtı değildir; çerez son kullanımı yapılandırılmış süredir. Kurtarma durumu, güven ve köken korunur. |
 | Internet Explorer / eski Edge WebCache | Erişim, oluşturma/değiştirme, son kullanma, eşitleme, indirme, çerez ve kapsayıcı bakım zamanları. Önbellek bakımı kullanıcının sayfayı açtığını otomatik olarak kanıtlamaz. |
 | Outlook PST, OST, MSG ve OFT | İleti gönderimi/teslimi, klasör/öğe/ek oluşturma-değiştirme, takvim ve görev zamanları, hatırlatmalar ve açıkça zaman türündeki özellikler. Planlanan saat toplantı, hatırlatma veya yürütme kanıtı değildir; teslim, okuma kanıtı değildir. |
-| Kullanıcı Erişim Günlüğü (UAL) | İlk/son erişim, veritabanı ekleme/oluşturma, ilk/son görülme ve sistem açılışı. Rol, hesap, kaynak adresi ve günlük sayaçlar bağlamdır. Günlük sayılar gece yarısı oturumlarına dönüştürülmez; zamansız kimlik ve DNS satırları ek raporda kalır. |
+| Kullanıcı Erişim Günlüğü (UAL) | İlk/son erişim meta verileri, veritabanı ekleme/oluşturma, ilk/son görülme ve depolanan işletim sistemi önyükleme süresi. Rol, hesap, kaynak adresi ve günlük sayaçlar bağlam olarak kalır. Günlük tarihler/sayımlar gece yarısı oturum açmaları icat edilmemiştir; zamanlanmamış kimlik ve DNS satırları orijinal ayrıştırılmış sonuçlarda kalır. |
 | Amcache | Envanter anahtarı yazımı, üst birim bağlamı, kurulum ve PE bağlama metaverileri. Envanter veya LinkDate tek başına yürütme kanıtı değildir. |
 | ShimCache | Dosya değişikliği, önbellek güncellemesi ve anahtar son yazımı otomatik olarak yürütme zamanı değildir. |
 | SRUM | Sağlayıcı zamanı/aralığı, bağlantı başlangıcı, açık başlangıç/bitiş ve uygulama kimlikleri. Bayt, süre ve sayaçlar tarih değildir. |
@@ -120,7 +120,7 @@ Bilinen UTC alanları ve açık ofsetler UTC'ye çevrilir. 100 ns FILETIME dahil
 
 Bazı shell/FAT alanları `Z` ile yazılsa bile yerel saattir. Değer ve köken korunur ama eksik saat dilimi veya önceki dönüşüm doğrulanamaz. Kesin makineler arası ilişki için özgün artefaktı ve sistem ayarlarını inceleyin.
 
-Artefaktın saat dilimi tanımlamadığı zamanlar sessizce UTC sayılmaz, tanılanır. Kanıt uygunsa işaretli sabit ofset verin:
+Yapıt tanımlı saat dilimi olmayan saf bir zaman damgası, sessizce UTC olarak ele alınmak yerine çözümlenmemiş olarak sayılır. Kanıt bunu haklı çıkarıyorsa, imzalı bir sabit mahsup sağlayın:
 
 ```bash
 juntei super-timeline -f Amcache.jsonl --input-artifact amcache \
@@ -134,19 +134,15 @@ Yalnızca tarihler de bu seçeneği gerektirir; gece yarısı **gün hassasiyetl
 - `--include-collection-times`: toplama/analiz sistemindeki LNK/Jump List kaynak dosya zamanları, `collection_filesystem` olarak uç nokta etkinliğinden ayrılır.
 - `--include-interpreted-times`: okuyucunun FILETIME olarak yorumladığı genel kayıt defteri QWORD değerleri. Çoğu sayaç olduğundan `interpreted_value` etiketi taşır.
 
-## Ek raporlar { #companion-reports }
+## Çıktı ve atlanan kayıtlar { #output-and-skipped-records }
 
-`SuperTimeline.csv` için komut ayrıca şunu da yazar:
+Komut, **yalnızca `-o` ile seçilen zaman çizelgesini**, `-t` (varsayılan olarak `csv` veya `jsonl`) ile seçilen formatta yazar. Zamanlanmamış, tanılayıcı veya özet tamamlayıcı dosyalar ya da kayıt başına tanılama biriktiricileri oluşturmaz. Daha önceki çalıştırmalardan mevcut tamamlayıcı dosyalara dokunulmaz.
 
-- `SuperTimeline.csv-Untimed.jsonl`: kullanılabilir eşlenmiş olay zamanı olmayan yerel kayıt konumları.
-- `SuperTimeline.csv-Diagnostics.jsonl`: geçersiz/belirsiz zamanlar, bilerek atlanan ortak metaveriler ve özgün kaydı gerektiren sınırlamalar.
-- `SuperTimeline.csv-Summary.json`: dosyalar, artefakt sayıları, filtrelenen/aday/birleştirilen olaylar, çıktı, işçiler, sıralamanın etkin olup olmadığı, sıralama bütçesi/parçaları/geçişleri ve süre.
+Terminal özeti, zaman çizelgesi olaylarının ve zamanlanmamış kayıtların sayısını rapor eder. Sıfırdan farklı geçersiz zaman damgası ve çözümlenmemiş saat dilimi sayıları ayrı ayrı gösterilir. `--sort` ile birleştirilmiş kopyaların sayısını da rapor eder. Bir zaman çizelgesi olayı oluşturmayan kayıtlar ve tüm yapı bağlamı için orijinal ayrıştırılmış sonuçları saklayın.
 
-Tamamlayıcı adlar, çıktı dosya adının tamamını içerir. Örneğin, `SuperTimeline.jsonl`'in kendi `SuperTimeline.jsonl-Summary.json`'i ve karşılık gelen zamanlanmamış/tanılama raporları vardır. Aynı köke sahip CSV ve JSONL dışa aktarmaları bir arada bulunabilir; `-C` yalnızca mevcut bir sonuç kümesini değiştirmek için gereklidir.
+Gerekçeli bir saat dilimi varsayımını bekleyen geçerli tarihler, geçersiz zaman damgaları yerine çözümlenmemiş saat dilimleri olarak sayılır. Hiçbir zaman damgası icat edilmez ve kullanılabilir bir eşlenmiş zamanı olmayan kayıtlar, sentetik çağ olayları olarak zaman çizelgesine eklenmez.
 
-`InvalidTimestamps` yerine `UnresolvedTimeZones` gerekçeli saat dilimi varsayım artışını bekleyen geçerli tarihler. Her ikisi de tanılamada izlenebilir olmaya devam ediyor; hiçbir zaman damgası icat edilmedi.
-
-Geçerli ama aralık dışı zamanlar zamansız değil filtrelenmiş sayılır. Adaylar birleştirmeden önce sayılır. `Sorted` ve `DuplicateConsolidation` alanları `--sort` seçeneğinin etkin olup olmadığını kaydeder. Bu seçenek olmadan `DuplicateEvents`, `LargestSerializedSortRowBytes`, `InitialSortChunks` ve `MergePasses` sıfırdır; sıralama tamponu ayrılmadığından `SortMemoryBudgetMiB` değeri `null` olur. `Complete: true` tüm seçili girdilerin başarıyla işlendiğidir; eksiksiz toplama veya her saldırının saptanması değildir.
+Geçerli süreleri istenen aralığın dışında olan kayıtlar, süresiz değil, filtrelenmiş olarak sayılır. Başarılı bir dışa aktarma, seçilen ayrıştırılmış girişlerin başarıyla işlendiği anlamına gelir; bu, her eserin toplandığı, her alanın bir zaman damgası olduğu veya her saldırının tespit edilebildiği anlamına gelmez.
 
 CSV, sistem profilleri, USB kullanıcı bağlama noktaları ve shell yapılarını düzleştirebilir; yerel JSON/JSONL daha zengindir. CSV ile kaybolan veri geri üretilemez. Desteklenmeyen artefaktlar ve bozuk girdiler kısmi başarı değil hata verir.
 
@@ -160,9 +156,9 @@ Girdiler akışla paralel işlenir. Varsayılan olarak her işçi biçimlendiril
 
 Geçici disk, sonuçlara ek olarak biçimlendirilmiş olay parçalarını (varsayılan) veya genişletilmiş sıralama kayıtlarını ve birleştirme geçişlerini (`--sort`) karşılamalıdır. Her iki modda da çıktı geçici olarak hazırlanır ve girdi hatasında yayımlanmaz. Bir kayıt çok olay üretebilir; gerektiğinde zaman/artefakt filtreleyip yeterli boş alan seçin.
 
-Ctrl+C birlikte iptal eder, özel sıralama/hazırlama dizinlerini kaldırır ve `130` koduyla çıkar. Linux ve macOS'te bu aynı zamanda SIGTERM ve SIGHUP için de geçerlidir. Yayın başlamadan önce raporların okunması, normalleştirilmesi, birleştirilmesi ve yazılması sırasında iptal kontrolü yapılır. Yakalanamayan sonlandırma veya güç kaybı hala geçici dosyalar bırakabilir.
+Ctrl+C birlikte iptal eder, özel sıralama/hazırlama dizinlerini kaldırır ve `130` koduyla çıkar. Linux ve macOS'te bu aynı zamanda SIGTERM ve SIGHUP için de geçerlidir. İptal, yayın başlamadan önce zaman çizelgesinin okunması, normalleştirilmesi, birleştirilmesi ve yazılması sırasında kontrol edilir. Yakalanamayan sonlandırma veya güç kaybı hala geçici dosyalar bırakabilir.
 
-Mevcut çıktı için `-C` gerekir. Girdiler, manifestler ve korunan kanıtlar ezilemez. Girdi/sıralama hatası eski çıktıyı korur. Dosyalar hedef yanında hazırlanıp ayrı değiştirilir, çizelge en sondadır. Dört dosya **tek işlem değildir**; son G/Ç hatasında bazı ek raporlar değişmiş olabilir. Eski tam çıktıyı korumak için yeni temel ad kullanın.
+Mevcut çıkışlar `-C` gerektirir. Zaman çizelgesi girdilerin, bildirimlerin, başvurulan yerel kanıtların veya bunların korunan kanıt dizinlerinin üzerine yazılmamalıdır. Giriş hataları veya sıralama hataları mevcut zaman çizelgesine dokunulmaz. Tamamlanan zaman çizelgesi, varış yerinin yanına yerleştirilir ve atomik olarak onun yerine geçer. Daha önceki tam bir dışa aktarma işlemini korurken her çalıştırma için yeni bir çıktı dosya adı kullanın.
 
 ## Ayrıntılar { #further-details }
 
@@ -172,7 +168,7 @@ Mevcut çıktı için `-C` gerekir. Girdiler, manifestler ve korunan kanıtlar e
 - [Kanıt ve yorumlama](../overview/evidence-model.md)
 - [Çıktı biçimleri](../getting-started/output-formats.md)
 
-Güncel Juntei, `Comp`, `Filename`, `Args`, `Attr` gibi kısa adlar kullanır. MFT CSV ayrıca `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN`, `HasADS` alanlarını kabul edip sıra nesillerini ve DOS/ADS ayrımını korur. Eski adlar desteklenir; `SourceField` özgün yazımı tutar. Hayabusa kendi `Computer` alanını korur. Önyükleme sektörü/güvenlik tanımlayıcısı olay zamanı taşımadığından zamansız rapordadır.
+Akım Juntei girişler aşağıdaki gibi kısaltılmış etiketleri kullanır: `Comp`, `Filename`, `Args` Ve `Attr`. MFT CSV aynı zamanda mevcut durumu da kabul eder `File`, `SN`, `ParentEntryNum`, `ParentSN`, `Type`, `USN`, `LogfileSN` Ve `HasADS` başlıklar, sıra numarası nesillerini tutarak ve DOS/ADS ayrımlar bozulmadan. Dışa aktarılan eski etiketler kabul edilmeye devam eder ve `SourceField` gerçek girişteki yazımı korur. Hayabusa girdi kendi değerini korur `Computer` alan. Etkinlik zaman damgaları olmayan önyükleme sektörü ve güvenlik tanımlayıcı meta verileri, orijinal ayrıştırılmış sonuçlarda kalır; zaman çizelgesi olayları yaratmaz.
 
 ## Yeni çok tablolu ayrıştırıcılar { #newer-multi-table-parsers }
 

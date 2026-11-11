@@ -24,10 +24,10 @@ mod tests;
 use crate::cli::SuperTimelineOptions;
 use crate::color::JunteiColor;
 use crate::{progress, util};
-use model::{ArtifactCounts, Counts, Diagnostic, SortRow};
+use model::{ArtifactCounts, Counts, SortRow};
 use serde_json::{Value, json};
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, BufReader, BufWriter, Read, Write};
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -78,9 +78,6 @@ impl Drop for Scratch {
 
 struct Targets {
     timeline: PathBuf,
-    untimed: PathBuf,
-    diagnostics: PathBuf,
-    summary: PathBuf,
 }
 impl Targets {
     fn new(path: &Path) -> io::Result<Self> {
@@ -90,28 +87,16 @@ impl Targets {
             ));
         }
         let path = crate::auto_parse::absolute_candidate(path)?;
-        let stem = path
-            .file_name()
+        path.file_name()
             .and_then(|s| s.to_str())
             .filter(|s| !s.is_empty())
             .ok_or_else(|| io::Error::other("Timeline output needs a filename"))?;
-        let parent = path
-            .parent()
+        path.parent()
             .ok_or_else(|| io::Error::other("Timeline output needs a parent directory"))?;
-        Ok(Self {
-            untimed: parent.join(format!("{stem}-Untimed.jsonl")),
-            diagnostics: parent.join(format!("{stem}-Diagnostics.jsonl")),
-            summary: parent.join(format!("{stem}-Summary.json")),
-            timeline: path,
-        })
+        Ok(Self { timeline: path })
     }
-    fn all(&self) -> [&Path; 4] {
-        [
-            &self.timeline,
-            &self.untimed,
-            &self.diagnostics,
-            &self.summary,
-        ]
+    fn all(&self) -> [&Path; 1] {
+        [&self.timeline]
     }
     fn check(&self, inventory: &input::Inventory, clobber: bool) -> io::Result<()> {
         for target in self.all() {
@@ -124,7 +109,7 @@ impl Targets {
                 }
                 if !clobber {
                     return Err(io::Error::other(format!(
-                        "Output exists: {}. Use -C to replace generated files.",
+                        "Output exists: {}. Use -C to replace the timeline.",
                         target.display()
                     )));
                 }
@@ -175,7 +160,6 @@ impl Targets {
 struct Completed {
     chunks: Vec<PathBuf>,
     event_file: Option<PathBuf>,
-    diagnostic_file: PathBuf,
     counts: ArtifactCounts,
     largest: usize,
 }
@@ -203,13 +187,6 @@ fn process(
             )
         })
         .transpose()?;
-    let diagnostic_file = folder.join(format!("input-{}-diagnostics.jsonl", input.index));
-    let mut diagnostics = BufWriter::new(
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&diagnostic_file)?,
-    );
     let mut counts = ArtifactCounts::new();
     let mut previous_source = String::new();
     input::records(input, opts.max_record_size * 1024 * 1024, |value, ctx| {
@@ -259,11 +236,9 @@ fn process(
                         writer.event(&event.event)?;
                     }
                 }
-                adapters::Item::Diagnostic(mut diagnostic) => {
-                    references.diagnostic(&mut diagnostic);
-                    serde_json::to_writer(&mut diagnostics, &diagnostic)?;
-                    diagnostics.write_all(b"\n")?;
-                }
+                // The original parsed records retain untimed data and diagnostic context.
+                // Aggregate counts below, without creating a second copy on disk.
+                adapters::Item::Diagnostic(_) => {}
             }
             Ok(())
         })?;
@@ -275,7 +250,6 @@ fn process(
         counts.entry(name.into()).or_default().add(&projected);
         Ok(())
     })?;
-    diagnostics.flush()?;
     if let Some(buffer) = &mut buffer {
         buffer.flush()?;
     }
@@ -288,7 +262,6 @@ fn process(
     Ok(Completed {
         chunks,
         event_file,
-        diagnostic_file,
         counts,
         largest,
     })
@@ -493,7 +466,7 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
             .map(|e| e.to_string())
             .collect::<Vec<_>>();
         return Err(io::Error::other(format!(
-            "{}; no timeline or companions were replaced",
+            "{}; no timeline was replaced",
             errors.join("\n")
         )));
     }
@@ -520,41 +493,6 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
     } else {
         (write_unsorted(&completed, opts, &timeline)?, 0)
     };
-    let untimed = staged.0.join("untimed");
-    let diagnostics = staged.0.join("diagnostics");
-    let mut untimed_writer = BufWriter::new(
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&untimed)?,
-    );
-    let mut diagnostic_writer = BufWriter::new(
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&diagnostics)?,
-    );
-    for result in &completed {
-        for diagnostic in serde_json::Deserializer::from_reader(BufReader::new(File::open(
-            &result.diagnostic_file,
-        )?))
-        .into_iter::<Diagnostic>()
-        {
-            crate::interrupt::check()?;
-            let diagnostic = diagnostic?;
-            let writer = if diagnostic.reason.starts_with("No usable mapped") {
-                &mut untimed_writer
-            } else {
-                &mut diagnostic_writer
-            };
-            serde_json::to_writer(&mut *writer, &diagnostic)?;
-            writer.write_all(b"\n")?;
-        }
-    }
-    untimed_writer.flush()?;
-    diagnostic_writer.flush()?;
-    drop(untimed_writer);
-    drop(diagnostic_writer);
     let mut total = Counts::default();
     for value in counts.values() {
         total.add(value);
@@ -562,8 +500,6 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
     let summary = json!({
         "SchemaVersion":1,"Complete":true,"JunteiVersion":env!("CARGO_PKG_VERSION"),
         "Output":format!("./{}",targets.timeline.file_name().unwrap().to_string_lossy()),
-        "Untimed":format!("./{}",targets.untimed.file_name().unwrap().to_string_lossy()),
-        "Diagnostics":format!("./{}",targets.diagnostics.file_name().unwrap().to_string_lossy()),
         "Format":match opts.output_type { crate::cli::TimelineOutputType::Csv=>"csv",crate::cli::TimelineOutputType::Jsonl=>"jsonl" },
         "Profile":match opts.profile { crate::cli::TimelineProfile::Native=>"native",crate::cli::TimelineProfile::Timesketch=>"timesketch" },
         "Workers":workers,"Sorted":opts.sort,"DuplicateConsolidation":opts.sort,
@@ -573,31 +509,13 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
         "SourceRecordsRetainedInInput":true,"InputFiles":inventory.inputs.iter().map(|i|inventory.references.parsed(&i.path)).collect::<Vec<_>>(),
         "TimestampSemantics":"Typed timestamps are recorded evidence, not a verdict that an action or attack occurred"
     });
-    let summary_path = staged.0.join("summary");
-    let mut summary_writer = BufWriter::new(
-        OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&summary_path)?,
-    );
-    serde_json::to_writer_pretty(&mut summary_writer, &summary)?;
-    summary_writer.write_all(b"\n")?;
-    summary_writer.flush()?;
-    drop(summary_writer);
     targets.check(&inventory, opts.clobber)?;
     crate::interrupt::check()?;
-    // Each file is atomically replaced; the timeline is published last. A malformed input or
-    // failed sort never replaces any previous output. This is not a multi-file transaction.
-    for (source, target) in [
-        (&untimed, &targets.untimed),
-        (&diagnostics, &targets.diagnostics),
-        (&summary_path, &targets.summary),
-        (&timeline, &targets.timeline),
-    ] {
-        crate::registry::check_not_read(target, || inventory.protected.clone())
-            .map_err(io::Error::other)?;
-        fs::rename(source, target)?;
-    }
+    // Publish only the completed timeline. Failed inputs, sorting or cancellation leave an
+    // existing result intact; prior companion files are never touched.
+    crate::registry::check_not_read(&targets.timeline, || inventory.protected.clone())
+        .map_err(io::Error::other)?;
+    fs::rename(&timeline, &targets.timeline)?;
     Ok(summary)
 }
 
@@ -626,6 +544,18 @@ pub fn run(opts: &SuperTimelineOptions) -> i32 {
                 "Untimed records: ",
                 &summary["Counts"]["UntimedRecords"].to_string(),
             );
+            for (key, label) in [
+                ("InvalidTimestamps", "Invalid timestamps: "),
+                ("UnresolvedTimeZones", "Unresolved time zones: "),
+            ] {
+                if summary["Counts"][key].as_u64().unwrap_or(0) > 0 {
+                    util::p_label(
+                        opts.common.no_color,
+                        label,
+                        &summary["Counts"][key].to_string(),
+                    );
+                }
+            }
             util::p_label(
                 opts.common.no_color,
                 "Results saved: ",
