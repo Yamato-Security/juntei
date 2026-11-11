@@ -49,8 +49,7 @@ C:\RECYCLED\INFO2                Windows 95, 98 and ME, and FAT volumes (INFO on
   시간과 경로를 읽고 `FileSize`는 비워 두며, 이를 문제로 보고합니다.
 - `RecycledFileFound`는 엔드포인트가 아니라 수집본을 설명합니다. `false`는 수집 도구가 `$R` 파일을
   가져오지 않았거나, 항목이 더 이상 휴지통에 없다는 뜻일 수 있습니다.
-- Windows가 설치되지 않은 볼륨의 휴지통은, 수집본에 Windows 설치가 정확히 하나만 있을 때 그 설치에서
-  사용자 이름을 가져옵니다.
+- 비시스템 볼륨의 휴지통은 수집 메타데이터나 알려진 드라이브/볼륨 폴더 구조로 같은 컴퓨터임을 확인할 수 있을 때만 프로필을 사용합니다. 대응 관계가 모호하면 사용자는 알 수 없는 상태로 남으며 다른 호스트의 프로필을 가져오지 않습니다.
 
 ## Juntei로 파싱하기 { #parse-with-juntei }
 
@@ -94,6 +93,8 @@ juntei parse-file recycle-bin -f '$IABC123.docx' -t jsonl | jq .
 
 JSON과 JSONL에는 같은 필드가 있으며, 숫자와 부울 값은 타입이 지정되고, 레코드에 없는 값은 `null`,
 `Problems`는 목록입니다.
+
+휴지통 디렉터리를 나열할 수 없거나 콘텐츠 이름이 모호하면 `RecycledFileFound`는 알 수 없음(CSV 빈 셀 또는 JSON `null`)이며 원인은 `Problems`에 기록됩니다. 하드 링크를 통한 경우를 포함해 휴지통 콘텐츠를 덮어쓰거나 삭제된 폴더 안에 출력할 수 없습니다. 어떤 인덱스도 읽지 못하면 기존 결과를 보존합니다.
 
 ## 자동 분석 { #automatic-parsing }
 

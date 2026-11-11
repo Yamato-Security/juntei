@@ -52,8 +52,7 @@ volume တိုင်း၏ bin မှ `$I` ဖိုင်များ သိ�
   ၎င်းတို့၏ အချိန်နှင့် path ကို ဖတ်ပြီး `FileSize` ကို ဗလာထားကာ problem တစ်ခုအဖြစ် မှတ်သားသည်။
 - `RecycledFileFound` သည် endpoint ကို မဟုတ်ဘဲ စုဆောင်းထားသော collection ကို ဖော်ပြသည်- `false` ဆိုသည်မှာ
   collector က `$R` ဖိုင်များကို မယူခဲ့ခြင်း သို့မဟုတ် item သည် bin ထဲတွင် မရှိတော့ခြင်း ဖြစ်နိုင်သည်။
-- Windows ထည့်သွင်းထားခြင်း မရှိသော volume များပေါ်ရှိ bin များသည် collection ထဲတွင် Windows installation
-  တစ်ခုတည်းသာ အတိအကျ ရှိလျှင် ထို installation မှ အသုံးပြုသူအမည်များကို ယူသည်။
+- စနစ်မဟုတ်သော volume များရှိ bin များအတွက် collection metadata သို့မဟုတ် သိရှိထားသော drive/volume folder ဖွဲ့စည်းပုံအရ တူညီသော ကွန်ပျူတာ၏ profile ကိုသာ အသုံးပြုသည်။ သက်ဆိုင်မှု မရှင်းလင်းလျှင် အသုံးပြုသူကို မသိရှိဟု ထားပြီး အခြား host ၏ profile ကို မယူပါ။
 
 ## Juntei ဖြင့် ခွဲခြမ်းစိတ်ဖြာခြင်း { #parse-with-juntei }
 
@@ -98,6 +97,8 @@ juntei parse-file recycle-bin -f '$IABC123.docx' -t jsonl | jq .
 
 JSON နှင့် JSONL တွင် တူညီသော field များ ပါရှိပြီး ဂဏန်းများနှင့် boolean များကို ၎င်းတို့၏ type အတိုင်း ဖော်ပြကာ
 record တွင် မရှိသော value များအတွက် `null` ကို သုံးပြီး `Problems` ကို list အဖြစ် ထားသည်။
+
+Bin directory ကို စာရင်းမပြုနိုင်လျှင် သို့မဟုတ် content အမည် မရှင်းလင်းလျှင် `RecycledFileFound` သည် မသိရှိ (CSV cell အလွတ် သို့မဟုတ် JSON `null`) ဖြစ်ပြီး အကြောင်းရင်းကို `Problems` တွင် မှတ်တမ်းတင်သည်။ Hard link မှတစ်ဆင့် အပါအဝင် bin content ကို output ဖြင့် အစားမထိုးနိုင်သကဲ့သို့ ဖျက်ထားသော folder အတွင်းသို့လည်း မရေးနိုင်ပါ။ Index တစ်ခုမျှ မဖတ်နိုင်လျှင် ရှိပြီးသားရလဒ်များကို ထိန်းသိမ်းထားသည်။
 
 ## အလိုအလျောက် ခွဲခြမ်းစိတ်ဖြာခြင်း { #automatic-parsing }
 

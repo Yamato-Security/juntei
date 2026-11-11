@@ -47,8 +47,7 @@ C:\RECYCLED\INFO2                Windows 95, 98 and ME, and FAT volumes (INFO on
   其時間與路徑，並將 `FileSize` 留空，同時回報一項問題。
 - `RecycledFileFound` 描述的是收集內容，而非端點：`false` 可能表示收集工具未取得 `$R` 檔案，或該
   項目已不在回收筒中。
-- 未安裝 Windows 的磁碟區上的回收筒，若收集內容中恰好只有一個 Windows 安裝，就會從該安裝取得
-  使用者名稱。
+- 非系統磁碟區上的回收筒，僅使用由收集資訊或已知磁碟機／磁碟區資料夾結構確認屬於同一電腦的設定檔。若無法明確對應，使用者名稱維持未知，不會借用其他主機的設定檔。
 
 ## 使用 Juntei 剖析 { #parse-with-juntei }
 
@@ -92,6 +91,8 @@ juntei parse-file recycle-bin -f '$IABC123.docx' -t jsonl | jq .
 
 JSON 與 JSONL 具有相同的欄位，但數字與布林值帶有型別，記錄中沒有的值為 `null`，`Problems` 則為
 清單。
+
+若無法列出回收筒目錄，或對應的內容檔名有歧義，`RecycledFileFound` 為未知（CSV 空白或 JSON `null`），原因記錄於 `Problems`。輸出不得覆寫回收內容（包括透過硬連結），也不得寫入已刪除的資料夾。若所有索引均無法讀取，既有結果會保留。
 
 ## 自動剖析 { #automatic-parsing }
 

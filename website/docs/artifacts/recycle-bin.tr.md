@@ -50,8 +50,7 @@ toplamak, silinen öğelerden hangilerinin hâlâ orada olduğunu gösterir; bun
   zamanını ve yolunu okur, `FileSize` alanını boş bırakır ve bir sorun bildirir.
 - `RecycledFileFound` uç noktayı değil toplamayı tanımlar: `false`, toplayıcının `$R` dosyalarını almadığı ya da öğenin
   artık Geri Dönüşüm Kutusu'nda olmadığı anlamına gelebilir.
-- Windows kurulumu olmayan birimlerdeki Geri Dönüşüm Kutusu klasörleri, kullanıcı adlarını toplamadaki tek Windows
-  kurulumundan alır (tam olarak bir kurulum varsa).
+- Sistem dışı birimlerdeki kutular yalnızca aynı toplanan bilgisayarın profillerini kullanır; ilişki toplama meta verileri veya tanınan sürücü/birim klasör yapısıyla belirlenir. İlişki belirsizse kullanıcı bilinmez kalır; başka bir ana bilgisayarın profili kullanılmaz.
 
 ## Juntei ile ayrıştırma { #parse-with-juntei }
 
@@ -95,6 +94,8 @@ dosyalarını ve bir `RECYCLED` klasöründeki `INFO` dosyalarını okur. `-f` i
 
 JSON ve JSONL aynı alanlara sahiptir; sayılar ve boole değerleri kendi türleriyle, bir kayıtta bulunmayan değerler
 `null` olarak ve `Problems` bir liste olarak verilir.
+
+Kutu dizini listelenemiyorsa veya içerik adı belirsizse `RecycledFileFound` bilinmez olur (boş CSV hücresi veya JSON `null`); neden `Problems` alanındadır. Çıktı, sabit bağlantılar üzerinden de olsa geri dönüştürülen içeriği değiştiremez veya silinmiş bir klasörün içine yazılamaz. Hiçbir dizin dosyası okunamazsa mevcut sonuçlar korunur.
 
 ## Otomatik ayrıştırma { #automatic-parsing }
 

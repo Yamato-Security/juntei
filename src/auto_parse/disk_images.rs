@@ -583,8 +583,12 @@ enum Plan {
     Placeholder(Stat),
 }
 
-fn plan(image: &Arc<Image>, volume: usize, entry: &Entry, copy_all: bool) -> Plan {
-    if copy_all || named_input(&entry.name) {
+fn plan(image: &Arc<Image>, volume: usize, entry: &Entry, copy_all: bool, parent: &Path) -> Plan {
+    if copy_all
+        || named_input(&entry.name)
+        || (entry.name.eq_ignore_ascii_case("INFO")
+            && crate::recycle_bin::is_legacy_info_path(&parent.join(&entry.name)))
+    {
         return Plan::Copy;
     }
     // Copying reports a file that can't be read, as it always has.
@@ -695,7 +699,8 @@ fn stage_volume(
         let mut plans = Vec::with_capacity(accepted.len());
         for (entry, _) in &accepted {
             crate::interrupt::check()?;
-            plans.push((!entry.directory).then(|| plan(image, volume, entry, copy_all)));
+            plans
+                .push((!entry.directory).then(|| plan(image, volume, entry, copy_all, &directory)));
         }
         let copied: HashSet<String> = accepted
             .iter()
@@ -942,6 +947,39 @@ mod tests {
         for name in ["other.LOG1", "setupapi.log", "History", "Historywal"] {
             assert!(!is_companion(name, &copied), "{name}");
         }
+    }
+
+    #[test]
+    fn recycle_bin_review_stages_windows95_info_indexes() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root = tempfile::tempdir().unwrap();
+        let image_path = root.path().join("sample.vhdx");
+        let gz = File::open(repo.join("test_files/vhdx/sample.vhdx.gz")).unwrap();
+        io::copy(
+            &mut flate2::read::GzDecoder::new(gz),
+            &mut File::create(&image_path).unwrap(),
+        )
+        .unwrap();
+        let image = Arc::new(Image::open(&image_path).unwrap());
+        let mut record = ROOT_RECORD;
+        let mut entry = None;
+        for name in ["C", "Users", "sample", "Data", "small.txt"] {
+            let next = image.volumes[0].lookup(record, name).unwrap().unwrap();
+            record = next.record;
+            entry = Some(next);
+        }
+        let mut entry = entry.unwrap();
+        entry.name = "INFO".into();
+        let header = fs::read(repo.join("test_files/recycle_bin/rifiuti2/INFO-95-ja-1")).unwrap();
+        assert!(!content_input("INFO", &header));
+        assert!(matches!(
+            plan(&image, 0, &entry, false, Path::new("C/RECYCLED")),
+            Plan::Copy
+        ));
+        assert!(matches!(
+            plan(&image, 0, &entry, false, Path::new("C/Documents")),
+            Plan::Placeholder(_)
+        ));
     }
 
     #[test]

@@ -65,7 +65,7 @@ use util::p;
 const LOGO: &str = include_str!("../art/logo.txt");
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<_> = env::args_os().collect();
     if args.len() == 1 || (args.len() == 2 && (args[1] == "-h" || args[1] == "--help")) {
         display_logo(false, false, false, true);
         Cli::command().print_help().ok();

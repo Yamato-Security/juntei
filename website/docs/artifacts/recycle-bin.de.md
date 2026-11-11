@@ -53,8 +53,7 @@ entsprechend.
   liest daraus Zeit und Pfad, lässt `FileSize` leer und meldet ein Problem.
 - `RecycledFileFound` beschreibt die Sicherung, nicht den Endpunkt: `false` kann bedeuten, dass das Sicherungswerkzeug
   keine `$R`-Dateien erfasst hat oder dass sich das Element nicht mehr im Papierkorb befindet.
-- Papierkörbe auf Volumes ohne Windows-Installation übernehmen die Benutzernamen von der einzigen Windows-Installation
-  der Sicherung, sofern es genau eine gibt.
+- Papierkörbe auf Nicht-Systemvolumes verwenden Profile nur desselben erfassten Computers, erkennbar an Erfassungsmetadaten oder bekannten Laufwerks-/Volumeordnern. Bei mehrdeutiger Zuordnung bleibt der Benutzer unbekannt; Profile eines anderen Hosts werden nicht übernommen.
 
 ## Mit Juntei parsen { #parse-with-juntei }
 
@@ -99,6 +98,8 @@ ihrem Namen.
 
 JSON und JSONL haben dieselben Felder, mit typisierten Zahlen und booleschen Werten, `null` für Werte, die ein Datensatz
 nicht hat, und `Problems` als Liste.
+
+Kann ein Papierkorbverzeichnis nicht aufgelistet werden oder ist ein Inhaltsname mehrdeutig, bleibt `RecycledFileFound` unbekannt (leere CSV-Zelle oder JSON `null`); die Ursache steht in `Problems`. Ausgaben dürfen recycelte Inhalte auch über Hardlinks nicht ersetzen oder in einen recycelten Ordner schreiben. Ist kein Index lesbar, bleiben vorhandene Ergebnisse erhalten.
 
 ## Automatisches Parsen { #automatic-parsing }
 

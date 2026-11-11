@@ -52,8 +52,7 @@ C:\RECYCLED\INFO2                Windows 95, 98 and ME, and FAT volumes (INFO on
   समय और path पढ़ता है, और `FileSize` को खाली छोड़कर एक problem दर्ज करता है।
 - `RecycledFileFound` संग्रह का वर्णन करता है, endpoint का नहीं: `false` का अर्थ यह हो सकता है कि संग्रह के
   दौरान `$R` फ़ाइलें नहीं ली गईं, या यह कि item अब bin में नहीं है।
-- जिन volumes पर Windows installation नहीं है, उनके bins user names संग्रह के एकमात्र Windows installation
-  से लेते हैं, बशर्ते ठीक एक ही installation हो।
+- गैर-सिस्टम वॉल्यूम के bins केवल उसी संग्रहित कंप्यूटर की प्रोफ़ाइल का उपयोग करते हैं, जिसे collection metadata या पहचाने गए drive/volume folder ढाँचे से पहचाना जाता है। संबंध अस्पष्ट हो तो उपयोगकर्ता अज्ञात रहता है; दूसरे host की प्रोफ़ाइल नहीं ली जाती।
 
 ## Juntei से parse करें { #parse-with-juntei }
 
@@ -97,6 +96,8 @@ juntei parse-file recycle-bin -f '$IABC123.docx' -t jsonl | jq .
 
 JSON और JSONL में यही fields होते हैं: numbers और booleans typed होते हैं, जो values किसी record में नहीं हैं
 उनके लिए `null` होता है, और `Problems` एक list होती है।
+
+यदि bin directory सूचीबद्ध नहीं हो सकती या content का नाम अस्पष्ट है, तो `RecycledFileFound` अज्ञात रहता है (खाली CSV cell या JSON `null`), और कारण `Problems` में दर्ज होता है। Output hard link के माध्यम से भी recycled content को बदल नहीं सकता और हटाए गए folder में नहीं लिखा जा सकता। कोई index न पढ़ा जा सके तो पुराने परिणाम सुरक्षित रहते हैं।
 
 ## स्वचालित विश्लेषण { #automatic-parsing }
 

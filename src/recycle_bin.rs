@@ -24,7 +24,7 @@
 //!   path and keeps the record.
 //!
 //! The user is the bin folder's SID, named from `ProfileList` in the SOFTWARE hive of the volume's
-//! Windows installation (or of the only one found, for bins on other volumes).
+//! Windows installation, or its own collected computer's only installation for other volumes.
 
 use crate::cli::{RecycleBinOptions, RecycleBinOutputType};
 use crate::color::JunteiColor;
@@ -63,9 +63,18 @@ const BIN_FOLDERS: [&str; 3] = ["$Recycle.Bin", "RECYCLER", "RECYCLED"];
 
 /// The index files `auto-parse` and disk-image staging select by name: `$I` followed by six
 /// letters or digits and any extension (`$IKEGS1G`, `$IQ7LAXT.png`), and `INFO2`. Windows 95's
-/// `INFO` is found only in a `RECYCLED` folder ([`find_inputs`]).
+/// `INFO` is selected by its `RECYCLED` parent ([`is_legacy_info_path`]).
 pub fn is_index_name(name: &str) -> bool {
     is_i_name(name) || name.eq_ignore_ascii_case("INFO2")
+}
+
+/// Windows 95's generic `INFO` name is an index only inside a `RECYCLED` folder.
+pub(crate) fn is_legacy_info_path(path: &Path) -> bool {
+    file_name(path).eq_ignore_ascii_case("INFO")
+        && path
+            .parent()
+            .and_then(Path::file_name)
+            .is_some_and(|d| d.to_string_lossy().eq_ignore_ascii_case("RECYCLED"))
 }
 
 fn is_i_name(name: &str) -> bool {
@@ -93,11 +102,7 @@ fn find_inputs(dir: &Path) -> (Vec<PathBuf>, Vec<PathBuf>) {
         .into_iter()
         .filter(|path| {
             let name = file_name(path);
-            !name.eq_ignore_ascii_case("INFO")
-                || path
-                    .parent()
-                    .and_then(Path::file_name)
-                    .is_some_and(|d| d.to_string_lossy().eq_ignore_ascii_case("RECYCLED"))
+            !name.eq_ignore_ascii_case("INFO") || is_legacy_info_path(path)
         })
         .collect();
     let software = software
@@ -230,9 +235,19 @@ pub fn run(opts: &RecycleBinOptions) -> i32 {
                     item.sid.clone_from(&sid);
                     item.user.clone_from(&user);
                     if let Some(name) = item.recycled_name.as_deref() {
-                        let found = listings.find(path, name);
-                        item.recycled = Some(sibling(path, found.as_deref().unwrap_or(name)));
-                        item.recycled_found = Some(found.is_some());
+                        match listings.find(path, name) {
+                            Ok(found) => {
+                                item.recycled =
+                                    Some(sibling(path, found.as_deref().unwrap_or(name)));
+                                item.recycled_found = Some(found.is_some());
+                            }
+                            Err(error) => {
+                                item.recycled = Some(sibling(path, name));
+                                item.problems.push(error);
+                                // A failed listing cannot establish absence.
+                                item.recycled_found = None;
+                            }
+                        }
                     }
                 }
                 for problem in &index.problems {
@@ -266,8 +281,20 @@ pub fn run(opts: &RecycleBinOptions) -> i32 {
     if let Some(b) = &bar {
         b.finish_with_message(progress::finished_message(no_color));
     }
+    if parsed.is_empty() {
+        if !data_on_stdout {
+            print_summary(&parsed, failed, no_color);
+        }
+        return 1;
+    }
 
     // --- write -----------------------------------------------------------------------------
+    if let Some(output) = &opts.output
+        && let Err(message) = protect_recycled_content(output, &parsed, &files, &mut listings)
+    {
+        report_error(None, &message);
+        return 1;
+    }
     let sink: Option<Box<dyn Write>> = match (&opts.output, data_on_stdout) {
         (Some(path), _) => {
             if let Some(parent) = path.parent().filter(|d| !d.as_os_str().is_empty())
@@ -393,8 +420,115 @@ fn parse_file(path: &Path, code_page: u16) -> Result<Index, String> {
     };
     for item in &mut index.items {
         item.source.clone_from(&source);
+        if path.to_str().is_none() {
+            item.problems.push(
+                "The source path contains non-Unicode bytes; its displayed spelling uses U+FFFD"
+                    .into(),
+            );
+        }
     }
     Ok(index)
+}
+
+/// Recycled payloads are evidence too, including files inside a deleted folder and aliases
+/// outside the bin. Check before opening the destination, even when `--clobber` is given.
+fn protect_recycled_content(
+    output: &Path,
+    parsed: &[Index],
+    indexes: &[PathBuf],
+    listings: &mut Listings,
+) -> Result<(), String> {
+    let destination = crate::auto_parse::absolute_candidate(output).map_err(|error| {
+        format!(
+            "Could not resolve the output file {}: {error}",
+            output.display()
+        )
+    })?;
+    let existing = output.try_exists().map_err(|error| {
+        format!(
+            "Could not inspect the output file {}: {error}",
+            output.display()
+        )
+    })?;
+    let mut roots: BTreeSet<PathBuf> = parsed
+        .iter()
+        .flat_map(|index| &index.items)
+        .filter(|item| item.recycled_found == Some(true))
+        .filter_map(|item| item.recycled.as_ref().map(PathBuf::from))
+        .collect();
+    let mut seen = BTreeSet::new();
+    for index in indexes {
+        if !seen.insert(bin_directory(index).to_path_buf()) {
+            continue;
+        }
+        match listings.names(index) {
+            Ok(names) => {
+                // Include orphaned payloads and payloads whose index could not be decoded.
+                roots.extend(
+                    names
+                        .values()
+                        .flatten()
+                        .filter(|path| is_payload_name(&file_name(path)))
+                        .cloned(),
+                );
+            }
+            Err(error) => {
+                let parent = bin_directory(index);
+                let same_tree = parent
+                    .canonicalize()
+                    .is_ok_and(|p| destination.starts_with(p));
+                if existing || same_tree {
+                    return Err(format!("{error}; the output is not overwritten"));
+                }
+            }
+        }
+    }
+    let mut files = Vec::new();
+    let mut directories = Vec::new();
+    for root in roots {
+        if root.is_dir() {
+            let canonical = root.canonicalize().map_err(|error| {
+                format!(
+                    "Could not inspect recycled evidence {}: {error}",
+                    root.display()
+                )
+            })?;
+            if destination.starts_with(&canonical) {
+                return Err(format!(
+                    "The output file is inside recycled evidence and cannot be written: {}",
+                    output.display()
+                ));
+            }
+            if existing {
+                directories.push(root);
+            }
+        } else {
+            files.push(root);
+        }
+    }
+    // A fresh destination outside the payload directories cannot alias an existing file.
+    if !existing {
+        return Ok(());
+    }
+    while let Some(directory) = directories.pop() {
+        let read_error = |error| {
+            format!(
+                "Could not inspect recycled evidence {}; the output is not overwritten: {error}",
+                directory.display()
+            )
+        };
+        for entry in std::fs::read_dir(&directory).map_err(read_error)? {
+            let entry = entry.map_err(read_error)?;
+            let kind = entry.file_type().map_err(read_error)?;
+            if kind.is_dir() {
+                directories.push(entry.path());
+            } else {
+                // Do not follow directory symlinks out of the collected tree.
+                files.push(entry.path());
+            }
+        }
+    }
+    crate::registry::check_not_read(output, || files)
 }
 
 /// The format of an index file: from its name when it has an index file's name, else from
@@ -703,9 +837,6 @@ fn u64_at(data: &[u8], at: usize) -> Option<u64> {
 struct Users {
     /// Per index file: the SID of its folder and the SOFTWARE hive of its volume.
     bins: HashMap<PathBuf, (Option<String>, Option<PathBuf>)>,
-    /// The only SOFTWARE hive found (beside the bins, or in the directory searched), for bins
-    /// on volumes without Windows.
-    only: Option<PathBuf>,
     profiles: HashMap<PathBuf, HashMap<String, String>>,
 }
 
@@ -723,29 +854,36 @@ impl Users {
             hives.extend(software.clone());
             bins.insert(path.clone(), (sid, software));
         }
+        let mut scopes: HashMap<PathBuf, BTreeSet<PathBuf>> = HashMap::new();
+        for hive in hives {
+            if let Some(volume) = hive.ancestors().nth(4) {
+                scopes.entry(volume_scope(volume)).or_default().insert(hive);
+            }
+        }
+        for (path, (sid, software)) in &mut bins {
+            if sid.is_none() || software.is_some() {
+                continue;
+            }
+            if let Some(candidates) = volume_of(path)
+                .and_then(|volume| scopes.get(&volume_scope(&volume)))
+                .filter(|candidates| candidates.len() == 1)
+            {
+                *software = candidates.iter().next().cloned();
+            }
+        }
         Users {
             bins,
-            only: (hives.len() == 1)
-                .then(|| hives.into_iter().next())
-                .flatten(),
             profiles: HashMap::new(),
         }
     }
 
     /// The SOFTWARE hives read.
     fn hives(&self) -> Vec<PathBuf> {
-        let mut hives: BTreeSet<PathBuf> = self
+        let hives: BTreeSet<PathBuf> = self
             .bins
             .values()
             .filter_map(|(sid, software)| sid.as_ref().and(software.clone()))
             .collect();
-        if self
-            .bins
-            .values()
-            .any(|(sid, software)| sid.is_some() && software.is_none())
-        {
-            hives.extend(self.only.clone());
-        }
         hives.into_iter().collect()
     }
 
@@ -753,7 +891,7 @@ impl Users {
         let Some((Some(sid), software)) = self.bins.get(path).cloned() else {
             return (None, None);
         };
-        let user = software.or_else(|| self.only.clone()).and_then(|software| {
+        let user = software.and_then(|software| {
             self.profiles
                 .entry(software)
                 .or_insert_with_key(|software| profile_users(software))
@@ -762,6 +900,48 @@ impl Users {
         });
         (Some(sid), user)
     }
+}
+
+/// Bound cross-volume profile enrichment to one collected computer. Flat host roots stay
+/// separate; C/D drive folders and native VolumeN folders share their containing host.
+fn volume_scope(volume: &Path) -> PathBuf {
+    let normalize = |path: &Path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+    if let Some(root) = volume.ancestors().find(|root| {
+        std::fs::symlink_metadata(root.join("client_info.json"))
+            .is_ok_and(|metadata| metadata.file_type().is_file())
+    }) {
+        return normalize(root);
+    }
+    let name = file_name(volume).to_ascii_lowercase();
+    let drive = name.strip_prefix("%5c%5c.%5c").unwrap_or(&name);
+    let is_drive = drive
+        .as_bytes()
+        .first()
+        .is_some_and(u8::is_ascii_alphabetic)
+        && matches!(drive.get(1..), Some("" | ":" | "%3a"));
+    let is_volume = name
+        .strip_prefix("volume")
+        .is_some_and(|number| !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit()));
+    if (is_drive || is_volume)
+        && let Some(parent) = volume.parent()
+    {
+        // Velociraptor separates auto and NTFS uploads of the same computer.
+        if matches!(
+            file_name(parent).to_ascii_lowercase().as_str(),
+            "auto" | "ntfs"
+        ) && let Some(uploads) = parent.parent()
+            && file_name(uploads).eq_ignore_ascii_case("uploads")
+            && let Some(host) = uploads.parent()
+        {
+            return normalize(host);
+        }
+        return normalize(if parent.as_os_str().is_empty() {
+            Path::new(".")
+        } else {
+            parent
+        });
+    }
+    normalize(volume)
 }
 
 /// The volume a bin is on: the folder holding `$Recycle.Bin`, `RECYCLER` or `RECYCLED`.
@@ -811,36 +991,72 @@ fn profile_users(software: &Path) -> HashMap<String, String> {
         .collect()
 }
 
-/// The names in each bin folder, read once, to find items in any case.
+type DirectoryNames = HashMap<String, Vec<PathBuf>>;
+
+fn bin_directory(index: &Path) -> &Path {
+    index
+        .parent()
+        .filter(|dir| !dir.as_os_str().is_empty())
+        .unwrap_or(Path::new("."))
+}
+
+/// The names in each bin folder, read once, to find items in any case. Preserve case-folded
+/// collisions in a copied collection instead of choosing one arbitrarily.
 #[derive(Default)]
-struct Listings(HashMap<PathBuf, HashMap<String, String>>);
+struct Listings(HashMap<PathBuf, Result<DirectoryNames, String>>);
 
 impl Listings {
     /// The name of the entry beside `index` called `name` in any case.
-    fn find(&mut self, index: &Path, name: &str) -> Option<String> {
-        let dir = index
-            .parent()
-            .filter(|d| !d.as_os_str().is_empty())
-            .unwrap_or(Path::new("."))
-            .to_path_buf();
+    fn find(&mut self, index: &Path, name: &str) -> Result<Option<String>, String> {
+        match self.names(index)?.get(&name.to_lowercase()) {
+            None => Ok(None),
+            Some(names) if names.len() == 1 => Ok(names.first().map(|path| file_name(path))),
+            Some(_) => Err(format!(
+                "Ambiguous recycled content name {name}: multiple case-insensitive matches"
+            )),
+        }
+    }
+
+    fn names(&mut self, index: &Path) -> Result<&DirectoryNames, String> {
+        let dir = bin_directory(index).to_path_buf();
         self.0
             .entry(dir)
             .or_insert_with_key(|dir| {
                 std::fs::read_dir(dir)
-                    .map(|entries| {
-                        entries
-                            .flatten()
-                            .map(|e| {
-                                let name = e.file_name().to_string_lossy().into_owned();
-                                (name.to_lowercase(), name)
-                            })
-                            .collect()
+                    .and_then(|entries| {
+                        let mut names = DirectoryNames::new();
+                        for entry in entries {
+                            let entry = entry?;
+                            let name = entry.file_name().to_string_lossy().into_owned();
+                            // Preserve the native path for overwrite protection. Display strings
+                            // can lose bytes on Unix or unpaired UTF-16 surrogates on Windows.
+                            names
+                                .entry(name.to_lowercase())
+                                .or_default()
+                                .push(entry.path());
+                        }
+                        Ok(names)
                     })
-                    .unwrap_or_default()
+                    .map_err(|error| {
+                        format!("Could not list bin directory {}: {error}", dir.display())
+                    })
             })
-            .get(&name.to_lowercase())
-            .cloned()
+            .as_ref()
+            .map_err(Clone::clone)
     }
+}
+
+/// Modern `$R` payloads and legacy D<drive><index><extension> payloads, including orphans.
+fn is_payload_name(name: &str) -> bool {
+    let bytes = name.as_bytes();
+    if bytes.first() == Some(&b'$') && bytes.get(1).is_some_and(|b| b.eq_ignore_ascii_case(&b'R')) {
+        return is_i_name(&format!("$I{}", &name[2..]));
+    }
+    if bytes.len() < 3 || !bytes[0].eq_ignore_ascii_case(&b'D') || !bytes[1].is_ascii_alphabetic() {
+        return false;
+    }
+    let digits = bytes[2..].iter().take_while(|b| b.is_ascii_digit()).count();
+    digits > 0 && (bytes.len() == 2 + digits || bytes[2 + digits] == b'.')
 }
 
 /// `name` beside the file at `path`, written as `path` is.

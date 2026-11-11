@@ -53,8 +53,7 @@ tel.
   octet. Juntei en lit la date et le chemin, laisse `FileSize` vide et signale un problème.
 - `RecycledFileFound` décrit la collecte, pas le poste d'origine : `false` peut signifier que le collecteur n'a pas récupéré
   les fichiers `$R`, ou que l'élément n'est plus dans la Corbeille.
-- Les corbeilles des volumes sans installation de Windows prennent les noms d'utilisateur de l'unique installation de
-  Windows de la collecte, s'il y en a exactement une.
+- Les corbeilles des volumes non système utilisent uniquement les profils du même ordinateur collecté, identifié par les métadonnées ou une structure connue de dossiers de lecteurs/volumes. Si l’attribution est ambiguë, l’utilisateur reste inconnu ; aucun profil d’un autre hôte n’est emprunté.
 
 ## Analyser avec Juntei { #parse-with-juntei }
 
@@ -98,6 +97,8 @@ quelconque), `INFO2`, ainsi que `INFO` dans un dossier `RECYCLED`. Avec `-f`, il
 
 Les sorties JSON et JSONL comportent les mêmes champs, avec les nombres et les booléens typés, `null` pour les valeurs
 qu'un enregistrement ne possède pas, et `Problems` sous forme de liste.
+
+Si un répertoire de corbeille ne peut être listé ou si un nom de contenu est ambigu, `RecycledFileFound` reste inconnu (cellule CSV vide ou JSON `null`), avec la cause dans `Problems`. La sortie ne peut remplacer le contenu recyclé, même via un lien physique, ni être écrite dans un dossier recyclé. Les résultats existants sont conservés si aucun index n’est lisible.
 
 ## Analyse automatique { #automatic-parsing }
 

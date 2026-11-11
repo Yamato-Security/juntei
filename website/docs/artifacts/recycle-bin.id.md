@@ -57,8 +57,7 @@ malware: tangani sebagaimana mestinya.
   masalahnya.
 - `RecycledFileFound` menggambarkan hasil pengumpulan, bukan endpoint: `false` dapat berarti berkas
   `$R` tidak ikut dikumpulkan, atau item tersebut sudah tidak ada di Recycle Bin.
-- Recycle Bin pada volume tanpa instalasi Windows mengambil nama pengguna dari satu-satunya
-  instalasi Windows dalam hasil pengumpulan, jika memang hanya ada satu.
+- Recycle Bin pada volume non-sistem hanya memakai profil dari komputer hasil koleksi yang sama, berdasarkan metadata atau struktur folder drive/volume yang dikenali. Jika atribusi ambigu, pengguna tetap tidak diketahui; profil host lain tidak dipakai.
 
 ## Mengurai dengan Juntei { #parse-with-juntei }
 
@@ -103,6 +102,8 @@ apa pun namanya.
 
 JSON dan JSONL memiliki field yang sama, dengan angka dan boolean yang bertipe, `null` untuk nilai
 yang tidak dimiliki record, dan `Problems` sebagai daftar.
+
+Jika direktori tidak dapat didaftar atau nama konten ambigu, `RecycledFileFound` tidak diketahui (sel CSV kosong atau JSON `null`), dengan penyebab di `Problems`. Output tidak boleh menimpa konten Recycle Bin, termasuk melalui hard link, atau ditulis di dalam folder yang dihapus. Hasil lama dipertahankan jika tidak ada indeks yang dapat dibaca.
 
 ## Penguraian otomatis { #automatic-parsing }
 

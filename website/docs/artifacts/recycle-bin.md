@@ -52,8 +52,9 @@ item. The deleted content is evidence in its own right and can be malware: handl
   reads their time and path and leaves `FileSize` empty, with a problem.
 - `RecycledFileFound` describes the collection, not the endpoint: `false` can mean the collector
   did not take `$R` files, or that the item is no longer in the bin.
-- Bins on volumes without a Windows installation take user names from the collection's only
-  Windows installation, if there is exactly one.
+- Bins on non-system volumes use profiles only from the same collected computer, identified by
+  collection metadata or recognized drive/volume folders. If attribution is ambiguous, the user
+  remains unknown; profiles are never borrowed from another host.
 
 ## Parse with Juntei
 
@@ -97,6 +98,11 @@ With `-d`, Juntei reads files named `$I` followed by six letters or digits (and 
 
 JSON and JSONL have the same fields, with numbers and booleans typed, `null` for values a record
 does not have, and `Problems` as a list.
+
+If a bin directory cannot be listed or a payload name is ambiguous, `RecycledFileFound` is unknown
+(an empty CSV cell or JSON `null`), with the cause recorded in `Problems`. Output cannot replace
+recycled content, including through hard links, or be written inside a recycled folder. Existing
+results are preserved when no index can be read.
 
 ## Automatic parsing
 

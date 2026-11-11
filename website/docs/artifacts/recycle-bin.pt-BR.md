@@ -49,8 +49,7 @@ evidência por si só e pode ser malware: trate-o como tal.
   Juntei lê o horário e o caminho deles e deixa `FileSize` vazio e relata um problema.
 - `RecycledFileFound` descreve a coleta, não o endpoint: `false` pode significar que o coletor não coletou os arquivos
   `$R`, ou que o item não está mais na Lixeira.
-- Lixeiras em volumes sem uma instalação do Windows obtêm os nomes de usuário da única instalação do Windows da
-  coleta, se houver exatamente uma.
+- Lixeiras em volumes não pertencentes ao sistema usam apenas perfis do mesmo computador coletado, identificado por metadados ou pela estrutura conhecida de pastas de unidades/volumes. Se a atribuição for ambígua, o usuário permanece desconhecido; perfis de outro host não são usados.
 
 ## Analisar com o Juntei { #parse-with-juntei }
 
@@ -94,6 +93,8 @@ e `INFO` em uma pasta `RECYCLED`. Com `-f`, lê o arquivo qualquer que seja o no
 
 JSON e JSONL têm os mesmos campos, com números e booleanos tipados, `null` para valores que um registro não tem e
 `Problems` como uma lista.
+
+Se o diretório não puder ser listado ou o nome do conteúdo for ambíguo, `RecycledFileFound` fica desconhecido (célula CSV vazia ou JSON `null`), com a causa em `Problems`. A saída não pode substituir conteúdo reciclado, inclusive por links físicos, nem ser gravada dentro de uma pasta reciclada. Se nenhum índice puder ser lido, os resultados existentes são preservados.
 
 ## Análise automática { #automatic-parsing }
 

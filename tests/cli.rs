@@ -21566,3 +21566,361 @@ fn auto_parse_saves_recycle_bin_items_for_the_timelines() {
         .unwrap();
     assert_eq!(task["Status"], "skipped", "{}\n{task}", r.stdout);
 }
+
+#[test]
+fn recycle_bin_review_protects_recycled_content_and_hard_links() {
+    for (fixture, index_name, content_name) in [
+        ("plaso/$I103S5F.jpg", "$IABC123.jpg", "$RABC123.jpg"),
+        ("plaso/INFO2", "INFO2", "Dc1.exe"),
+    ] {
+        for alias in [false, true] {
+            let dir = tempfile::tempdir().unwrap();
+            let bin = dir.path().join("bin");
+            std::fs::create_dir(&bin).unwrap();
+            let index = bin.join(index_name);
+            std::fs::copy(repo(&format!("{RECYCLE}/{fixture}")), &index).unwrap();
+            let content = bin.join(content_name);
+            let bytes = b"original recycled evidence; must not be replaced by CSV";
+            std::fs::write(&content, bytes).unwrap();
+            let output = if alias {
+                let alias = dir.path().join("result.csv");
+                std::fs::hard_link(&content, &alias).unwrap();
+                alias
+            } else {
+                content.clone()
+            };
+            let result = run(&[
+                "parse-file",
+                "recycle-bin",
+                "-f",
+                index.to_str().unwrap(),
+                "-o",
+                output.to_str().unwrap(),
+                "-C",
+                "-K",
+                "-q",
+            ]);
+            assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+            assert!(
+                result.stdout.contains("also an input file"),
+                "{}",
+                result.stdout
+            );
+            assert_eq!(std::fs::read(&content).unwrap(), bytes);
+        }
+    }
+}
+
+#[test]
+fn recycle_bin_review_does_not_take_user_names_from_another_host() {
+    for flat in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let known = if flat {
+            dir.path().join("KNOWN")
+        } else {
+            dir.path().join("KNOWN/C")
+        };
+        let unknown = if flat {
+            dir.path().join("UNKNOWN")
+        } else {
+            dir.path().join("UNKNOWN/D")
+        };
+        let config = known.join("Windows/System32/config");
+        std::fs::create_dir_all(&config).unwrap();
+        std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+        let bin = unknown.join("$Recycle.Bin").join(RATHBUN_SID);
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::copy(
+            repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")),
+            bin.join("$IABC123.jpg"),
+        )
+        .unwrap();
+        let rows = recycle_rows(&["-d", dir.path().to_str().unwrap()]);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["SID"], RATHBUN_SID);
+        assert_eq!(rows[0]["User"], Value::Null, "flat={flat}: {}", rows[0]);
+    }
+}
+
+#[test]
+fn recycle_bin_review_protects_recycled_folder_contents() {
+    for hard_link in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let index = dir.path().join("$IABC123");
+        std::fs::copy(repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")), &index).unwrap();
+        let folder = dir.path().join("$RABC123/nested");
+        std::fs::create_dir_all(&folder).unwrap();
+        let content = folder.join("important.txt");
+        let bytes = b"deleted folder evidence";
+        std::fs::write(&content, bytes).unwrap();
+        let output = if hard_link {
+            let path = dir.path().join("result.csv");
+            std::fs::hard_link(&content, &path).unwrap();
+            path
+        } else {
+            content.clone()
+        };
+        let result = run(&[
+            "parse-file",
+            "recycle-bin",
+            "-f",
+            index.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+        assert_eq!(std::fs::read(&content).unwrap(), bytes);
+    }
+}
+
+#[test]
+fn recycle_bin_review_preserves_payloads_when_an_index_is_damaged() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::copy(
+        repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")),
+        dir.path().join("$IABC123.jpg"),
+    )
+    .unwrap();
+    std::fs::write(dir.path().join("$IDEF456.txt"), b"damaged index").unwrap();
+    let content = dir.path().join("$RDEF456.txt");
+    std::fs::write(&content, b"original evidence").unwrap();
+    let result = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        content.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+    assert_eq!(std::fs::read(&content).unwrap(), b"original evidence");
+}
+
+#[test]
+fn recycle_bin_review_does_not_replace_output_when_no_index_can_be_read() {
+    let dir = tempfile::tempdir().unwrap();
+    let index = dir.path().join("$IABC123.txt");
+    let output = dir.path().join("old-results.csv");
+    std::fs::write(&index, b"damaged index").unwrap();
+    std::fs::write(&output, b"previous results").unwrap();
+    let result = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        index.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+    assert_eq!(std::fs::read(&output).unwrap(), b"previous results");
+}
+
+#[test]
+fn recycle_bin_review_enriches_only_related_collector_uploads() {
+    let dir = tempfile::tempdir().unwrap();
+    let host = dir.path().join("HOST");
+    let config = host.join("uploads/auto/C%3A/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    for (root, expected) in [(&host, "rathbun"), (&dir.path().join("OTHER"), "")] {
+        let bin = root
+            .join("uploads/ntfs/%5C%5C.%5CD%3A/$Recycle.Bin")
+            .join(RATHBUN_SID);
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::copy(
+            repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")),
+            bin.join("$IABC123.jpg"),
+        )
+        .unwrap();
+        let rows = recycle_rows(&["-d", dir.path().to_str().unwrap()]);
+        let row = rows
+            .iter()
+            .find(|v| {
+                v["SourceFile"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with(root.to_str().unwrap())
+            })
+            .unwrap();
+        assert_eq!(row["User"].as_str().unwrap_or(""), expected, "{row}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn recycle_bin_review_listing_errors_are_unknown_and_cannot_destroy_payloads() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let bin = dir.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    let index = bin.join("$IABC123.jpg");
+    let payload = bin.join("$RABC123.jpg");
+    std::fs::copy(repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")), &index).unwrap();
+    std::fs::write(&payload, b"original evidence").unwrap();
+    std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o111)).unwrap();
+    if std::fs::read_dir(&bin).is_ok() {
+        // A privileged test runner can bypass directory permissions.
+        std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
+        return;
+    }
+    let json = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        index.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    let overwrite = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        index.to_str().unwrap(),
+        "-o",
+        payload.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert_eq!(json.code, 0, "{}\n{}", json.stdout, json.stderr);
+    let value: Value = serde_json::from_str(&json.stdout).unwrap();
+    assert_eq!(value["RecycledFileFound"], Value::Null);
+    assert!(
+        value["Problems"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|v| v.as_str().unwrap().contains("Could not list"))
+    );
+    assert_eq!(
+        overwrite.code, 1,
+        "{}\n{}",
+        overwrite.stdout, overwrite.stderr
+    );
+    assert_eq!(std::fs::read(&payload).unwrap(), b"original evidence");
+}
+
+#[test]
+fn recycle_bin_review_case_collisions_are_unknown_and_both_payloads_are_protected() {
+    let dir = tempfile::tempdir().unwrap();
+    let index = dir.path().join("$IABC123.jpg");
+    std::fs::copy(repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")), &index).unwrap();
+    let upper = dir.path().join("$RABC123.jpg");
+    let lower = dir.path().join("$rabc123.jpg");
+    std::fs::write(&upper, b"uppercase evidence").unwrap();
+    if lower.exists() {
+        // Case-insensitive filesystems cannot represent this collection ambiguity.
+        return;
+    }
+    std::fs::write(&lower, b"lowercase evidence").unwrap();
+    let rows = recycle_rows(&["-f", index.to_str().unwrap()]);
+    assert_eq!(rows[0]["RecycledFileFound"], Value::Null);
+    assert!(
+        rows[0]["Problems"][0]
+            .as_str()
+            .unwrap()
+            .contains("Ambiguous")
+    );
+    for output in [&upper, &lower] {
+        let result = run(&[
+            "parse-file",
+            "recycle-bin",
+            "-f",
+            index.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+    }
+    assert_eq!(std::fs::read(&upper).unwrap(), b"uppercase evidence");
+    assert_eq!(std::fs::read(&lower).unwrap(), b"lowercase evidence");
+}
+
+#[cfg(unix)]
+#[test]
+fn recycle_bin_review_protects_native_paths_with_non_unicode_extensions() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+    let dir = tempfile::tempdir().unwrap();
+    let index = dir
+        .path()
+        .join(OsString::from_vec(b"$IABC123.\xff".to_vec()));
+    let payload = dir
+        .path()
+        .join(OsString::from_vec(b"$RABC123.\xff".to_vec()));
+    std::fs::copy(repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")), &index).unwrap();
+    std::fs::write(&payload, b"original evidence").unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args(["parse-file", "recycle-bin", "-f"])
+        .arg(&index)
+        .arg("-o")
+        .arg(&payload)
+        .args(["-C", "-K", "-q"])
+        .output()
+        .unwrap();
+    assert_eq!(
+        result.status.code(),
+        Some(1),
+        "{}",
+        String::from_utf8_lossy(&result.stdout)
+    );
+    assert_eq!(std::fs::read(&payload).unwrap(), b"original evidence");
+}
+
+#[test]
+fn recycle_bin_review_auto_parse_discovers_windows95_info() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let config = evidence.join("HOST/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    let bin = evidence.join("HOST/C/RECYCLED");
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::copy(
+        repo(&format!("{RECYCLE}/rifiuti2/INFO-95-ja-1")),
+        bin.join("INFO"),
+    )
+    .unwrap();
+    let out = dir.path().join("parsed");
+    let result = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "--code-page",
+        "932",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["Artifact"] == "recycle-bin")
+        .unwrap();
+    assert_eq!(task["Status"], "succeeded", "{}\n{task}", result.stdout);
+    let (_, rows) = csv_rows(&out.join("HOST/FileExistence/RecycleBin.csv"));
+    assert_eq!(rows.len(), 11);
+    assert_eq!(
+        rows[0]["OriginalPath"],
+        r"D:\WINDOWS\ﾃﾞｽｸﾄｯﾌﾟ\The Microsoft Network のｾｯﾄｱｯﾌﾟ.lnk"
+    );
+}

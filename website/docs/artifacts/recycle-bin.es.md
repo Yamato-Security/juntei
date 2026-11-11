@@ -52,8 +52,7 @@ El contenido eliminado es una evidencia por sí mismo y puede ser malware: trát
   Juntei lee su hora y su ruta y deja `FileSize` vacío y notifica un problema.
 - `RecycledFileFound` describe la recopilación, no el equipo investigado: `false` puede significar que el recopilador
   no tomó los archivos `$R` o que el elemento ya no está en la papelera.
-- Las papeleras de volúmenes sin una instalación de Windows toman los nombres de usuario de la única instalación de
-  Windows de la recopilación, si hay exactamente una.
+- Las papeleras de volúmenes no pertenecientes al sistema solo usan perfiles del mismo equipo recopilado, identificado por los metadatos o una estructura conocida de carpetas de unidades/volúmenes. Si la atribución es ambigua, el usuario permanece desconocido; no se toman perfiles de otro host.
 
 ## Análisis con Juntei { #parse-with-juntei }
 
@@ -97,6 +96,8 @@ Con `-d`, Juntei lee los archivos cuyo nombre es `$I` seguido de seis letras o d
 
 JSON y JSONL tienen los mismos campos, con los números y los booleanos tipados, `null` para los valores que un
 registro no tiene y `Problems` como lista.
+
+Si no se puede listar el directorio o el nombre del contenido es ambiguo, `RecycledFileFound` es desconocido (celda CSV vacía o JSON `null`); la causa figura en `Problems`. La salida no puede sobrescribir contenido reciclado, ni mediante enlaces físicos, ni escribirse dentro de una carpeta reciclada. Si no se puede leer ningún índice, se conservan los resultados existentes.
 
 ## Análisis automático { #automatic-parsing }
 

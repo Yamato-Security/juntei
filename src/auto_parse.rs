@@ -1804,6 +1804,9 @@ impl InputInventory {
                     found.add_size(artifact, size);
                 }
             }
+            if name.eq_ignore_ascii_case("INFO") && crate::recycle_bin::is_legacy_info_path(&path) {
+                found.add_size("recycle-bin", size);
+            }
             if crate::i30::is_i30_file(&path) {
                 found.add_size("i30", size);
             }
