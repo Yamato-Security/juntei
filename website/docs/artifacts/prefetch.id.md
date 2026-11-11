@@ -30,8 +30,12 @@ dibandingkan.
   bukti bahwa sebuah program tidak berjalan.
 - Daftar berkas yang dimuat mendeskripsikan dependensi dan akses saat startup; daftar ini tidak membuktikan bahwa setiap berkas yang tercantum
   berbahaya, sengaja dibuka, atau dibaca sepenuhnya.
-- Nama executable di header Prefetch memiliki batas panjang; Juntei menentukan path dari berkas
-  yang dimuat bila dapat dipastikan secara unik.
+- Nama executable di header Prefetch memiliki batas panjang. Juntei membedakan jalur termuat yang
+  bernama sama dengan hash jalur SCCA. Jika beberapa kandidat tetap tidak dapat dibedakan, Juntei
+  mempertahankan nama header dan menetapkan PathAmbiguous; daftar berkas yang dimuat tetap tersedia.
+  Satu-satunya kandidat yang hash-nya tidak cocok tetap dipertahankan, dengan PathValidated bernilai
+  false. Proses hosting dapat memasukkan data baris perintah ke dalam hash, sehingga jalur yang
+  tidak tervalidasi belum tentu salah.
 - Timestamp sistem berkas dari berkas sumber `.pf` terpisah dari waktu eksekusi yang tersimpan di dalamnya.
 - `Findings` adalah observasi untuk hunting. Installer dan administrasi yang sah sering menggunakan path staging.
 

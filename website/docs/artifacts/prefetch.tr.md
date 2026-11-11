@@ -31,8 +31,12 @@ karşılaştırılabilmesi için dizinin tamamını toplayın.
   olabilir. Yokluğu, bir programın çalışmadığının kanıtı değildir.
 - Yüklenen dosya listeleri başlatma bağımlılıklarını ve erişimleri tanımlar; listelenen her dosyanın kötü
   amaçlı olduğunu, bilerek açıldığını veya tamamen okunduğunu kanıtlamaz.
-- Prefetch başlığındaki yürütülebilir dosya adının uzunluğu sınırlıdır; Juntei, benzersiz olarak mümkün
-  olduğunda yüklenen dosyalardan bir yol çözümler.
+- Prefetch başlığındaki yürütülebilir dosya adının uzunluğu sınırlıdır. Juntei, aynı adlı yüklenen
+  yolları SCCA yol karmasıyla ayırt eder. Birden fazla aday çözümlenemezse başlık adını korur ve
+  PathAmbiguous değerini ayarlar; yüklenen dosyaların listesi kullanılabilir olmaya devam eder.
+  Karması eşleşmeyen tek bir aday korunur ve PathValidated değeri false olur. Barındırma süreçleri
+  komut satırı verilerini karmaya katabilir; bu nedenle doğrulanmamış bir yol kendiliğinden yanlış
+  değildir.
 - Bir `.pf` kaynak dosyasının dosya sistemi zaman damgaları, içine gömülü çalıştırma zamanlarından ayrıdır.
 - `Findings` tehdit avı gözlemleridir. Yükleyiciler ve meşru yönetim işlemleri sıklıkla hazırlık yollarını
   kullanır.

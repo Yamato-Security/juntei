@@ -30,8 +30,12 @@ contiguos.
   demuestra que un programa no se ejecutara.
 - Las listas de archivos cargados describen las dependencias y los accesos durante el inicio; no demuestran que todos los archivos enumerados
   fueran maliciosos, se abrieran deliberadamente o se leyeran por completo.
-- El nombre del ejecutable en el encabezado de Prefetch tiene una longitud limitada; Juntei resuelve una ruta a partir de los archivos
-  cargados cuando es posible hacerlo de forma unívoca.
+- El nombre del ejecutable en el encabezado de Prefetch tiene una longitud limitada. Juntei
+  distingue las rutas cargadas con el mismo nombre mediante el hash de ruta SCCA. Si varios
+  candidatos siguen sin resolverse, conserva el nombre del encabezado y marca PathAmbiguous; la
+  lista de archivos cargados sigue disponible. Un único candidato cuyo hash no coincide se conserva
+  con PathValidated en false. Los procesos anfitriones pueden incluir datos de la línea de comandos
+  en el hash, por lo que una ruta no validada no es necesariamente incorrecta.
 - Las marcas de tiempo del sistema de archivos de un archivo de origen `.pf` son independientes de las horas de ejecución incrustadas.
 - Los `Findings` son observaciones para la búsqueda de amenazas. Los instaladores y la administración legítima suelen utilizar rutas de preparación.
 

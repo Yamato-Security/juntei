@@ -30,8 +30,12 @@ voisins.
   prouve pas qu'un programme n'a pas été exécuté.
 - Les listes de fichiers chargés décrivent les dépendances et les accès au démarrage ; elles ne prouvent pas que chaque fichier listé
   était malveillant, ouvert délibérément ou entièrement lu.
-- La longueur du nom de l'exécutable dans l'en-tête Prefetch est limitée ; Juntei résout un chemin à partir des fichiers
-  chargés lorsque cela est possible sans ambiguïté.
+- La longueur du nom de l'exécutable dans l'en-tête Prefetch est limitée. Juntei distingue les
+  chemins chargés portant le même nom grâce au hachage de chemin SCCA. Si plusieurs candidats
+  restent indiscernables, il conserve le nom de l'en-tête et définit PathAmbiguous ; la liste des
+  fichiers chargés reste disponible. Un candidat unique dont le hachage ne correspond pas est
+  conservé, avec PathValidated à false. Les processus hôtes peuvent intégrer des données de ligne de
+  commande au hachage : un chemin non validé n'est donc pas forcément erroné.
 - Les horodatages du système de fichiers d'un fichier source `.pf` sont distincts des heures d'exécution incorporées.
 - `Findings` sont des observations de chasse. Les programmes d'installation et l'administration légitime utilisent souvent des chemins de préparation (staging).
 

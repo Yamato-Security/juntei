@@ -30,8 +30,11 @@ Windows 8+ फ़ाइलें भी शामिल हैं। पूर�
   प्रमाण नहीं है कि कोई प्रोग्राम नहीं चला।
 - Loaded-file lists startup dependencies और accesses का वर्णन करती हैं; ये सिद्ध नहीं करतीं कि हर सूचीबद्ध फ़ाइल
   दुर्भावनापूर्ण थी, जानबूझकर खोली गई थी, या पूरी पढ़ी गई थी।
-- Prefetch header में executable का नाम लंबाई-सीमित होता है; जहाँ अद्वितीय रूप से संभव हो, Juntei loaded
-  files से path resolve करता है।
+- Prefetch header में executable का नाम लंबाई-सीमित होता है। Juntei एक ही नाम वाले लोड किए गए पथों
+  को SCCA पथ हैश से अलग करता है। यदि कई उम्मीदवार अलग नहीं हो पाते, तो वह हेडर का नाम बनाए रखता है
+  और PathAmbiguous सेट करता है; लोड की गई फ़ाइलों की सूची उपलब्ध रहती है। जिस अकेले उम्मीदवार का हैश
+  मेल नहीं खाता, उसे बनाए रखा जाता है और PathValidated को false रखा जाता है। Hosting processes
+  command-line डेटा को हैश में शामिल कर सकते हैं, इसलिए असत्यापित पथ अपने-आप गलत नहीं होता।
 - किसी `.pf` स्रोत फ़ाइल के file-system timestamps embedded run times से अलग होते हैं।
 - `Findings` hunting के अवलोकन हैं। Installers और वैध administration अक्सर staging paths का उपयोग करते हैं।
 

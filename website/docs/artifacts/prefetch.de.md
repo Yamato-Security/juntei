@@ -30,8 +30,12 @@ verglichen werden können.
   Beweis dafür, dass ein Programm nicht ausgeführt wurde.
 - Listen geladener Dateien beschreiben Startabhängigkeiten und Zugriffe; sie beweisen nicht, dass jede aufgeführte Datei
   bösartig war, absichtlich geöffnet oder vollständig gelesen wurde.
-- Der Name der ausführbaren Datei im Prefetch-Header ist in der Länge begrenzt; Juntei ermittelt einen Pfad aus den geladenen
-  Dateien, sofern dies eindeutig möglich ist.
+- Der Name der ausführbaren Datei im Prefetch-Header ist in der Länge begrenzt. Juntei unterscheidet
+  gleichnamige geladene Pfade anhand des SCCA-Pfadhashes. Bleiben mehrere Kandidaten
+  ununterscheidbar, behält Juntei den Headernamen bei und setzt PathAmbiguous; die Liste der
+  geladenen Dateien bleibt verfügbar. Ein einzelner Kandidat ohne passenden Hash wird beibehalten
+  und PathValidated auf false gesetzt. Hosting-Prozesse können Befehlszeilendaten in den Hash
+  einbeziehen; ein nicht validierter Pfad ist daher nicht automatisch falsch.
 - Die Dateisystem-Zeitstempel einer `.pf`-Quelldatei sind unabhängig von den eingebetteten Ausführungszeiten.
 - `Findings` sind Beobachtungen für das Threat Hunting. Installationsprogramme und legitime Administration nutzen häufig Staging-Pfade.
 
