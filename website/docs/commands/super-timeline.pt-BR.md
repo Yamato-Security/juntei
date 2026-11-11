@@ -204,6 +204,8 @@ eventos já formatados; os fragmentos são concatenados na ordem dos arquivos de
 suas estruturas de eventos. O CSV tem um único cabeçalho mesmo quando vários arquivos são processados. A ordem
 da saída é determinística, seja qual for o número de workers; ela não implica cronologia.
 
+`Input files` mostra o tamanho combinado das entradas analisadas selecionadas e dos cronogramas Hayabusa. `Results saved` mostra o tamanho do arquivo de linha do tempo salvo. Ambos usam as mesmas unidades `KiB`/`MiB`/`GiB` legíveis por humanos que `auto-parse`.
+
 Com `--sort`, os buffers são descarregados em um diretório temporário privado e, em seguida, passagens de
 mesclagem limitadas produzem a saída cronológica. A ordenação usa segundos inteiros completos e nanossegundos,
 incluindo datas anteriores a 1970. A ordem entre horários iguais é determinística, independentemente do número

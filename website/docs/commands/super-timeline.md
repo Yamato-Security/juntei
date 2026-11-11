@@ -213,6 +213,10 @@ fragment; fragments are concatenated in input-file order without sorting or re-r
 structures. CSV has one header even when multiple files are processed. Output order is deterministic
 across worker counts; it does not imply chronology.
 
+`Input files` shows the combined size of the selected parsed inputs and Hayabusa timelines.
+`Results saved` shows the size of the saved timeline file. Both use the same human-readable
+`KiB`/`MiB`/`GiB` units as `auto-parse`.
+
 With `--sort`, buffers spill to a private temporary directory, then bounded merge passes produce
 chronological output. Sorting uses full integer seconds and nanoseconds, including dates before 1970.
 Equal-time ordering is deterministic across worker counts and sort budgets. A progress bar advances

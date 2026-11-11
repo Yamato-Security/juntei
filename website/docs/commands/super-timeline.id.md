@@ -150,6 +150,8 @@ CSV bisa meratakan profil sistem, mount point pengguna USB dan shell item; JSON/
 
 Masukan dialirkan dan diproses paralel. Secara default, setiap pekerja menulis fragmen peristiwa berformat; fragmen disambung sesuai urutan berkas masukan tanpa pengurutan dan tanpa membaca ulang struktur peristiwanya. CSV tetap memiliki satu header meskipun banyak berkas diproses. Urutan keluaran deterministik lintas jumlah pekerja, tetapi tidak menandakan urutan kronologis.
 
+`Input files` menunjukkan ukuran gabungan dari input parsing yang dipilih dan garis waktu Hayabusa. `Results saved` menunjukkan ukuran file timeline yang disimpan. Keduanya menggunakan unit `KiB`/`MiB`/`GiB` yang dapat dibaca manusia seperti `auto-parse`.
+
 Dengan `--sort`, buffer pengurutan meluap ke direktori sementara privat, lalu pass penggabungan terbatas menghasilkan keluaran kronologis. Pengurutan memakai detik dan nanodetik bilangan bulat utuh, termasuk tanggal sebelum 1970. Urutan peristiwa berwaktu sama deterministik lintas jumlah pekerja dan anggaran pengurutan. Bilah progres bertambah untuk setiap peristiwa yang diproses selama penggabungan perantara dan akhir, termasuk pass berulang. Bilah ini tampil di terminal dan disembunyikan jika keluaran dialihkan.
 
 `--memory-limit` hanya berlaku dengan `--sort`: nilainya adalah **anggaran total buffer pengurutan**, bukan batas RSS proses. Rekaman, objek JSON, buffer CSV dan penggabungan memerlukan memori tambahan; anggaran kecil mengurangi pekerja. `--max-record-size` membatasi rekaman, default 16 MiB. Array JSON berformat dianggap satu dokumen; naikkan batas atau gunakan JSONL. Read-ahead CSV juga dihitung.
