@@ -20,10 +20,7 @@ Executable စုံစမ်းစစ်ဆေးမှုအတွက် Amcac
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-သက်ရောက်ခံရသော installation မှ hive ကို စုဆောင်းပါ။ `parse-registry amcache` သည် လက်ရှိတွင် primary hive ကို
-ခွဲခြမ်းစိတ်ဖြာသော်လည်း ကပ်လျက်ရှိသော Amcache transaction log များကို replay **မလုပ်ပါ**။ ထို့ကြောင့် ထို log
-များတွင်သာ ရှိသော record များသည် live သို့မဟုတ် မညီညွတ်သော စုဆောင်းမှုမှ ပျောက်နေနိုင်သည်။ ထိုကန့်သတ်ချက်ကို
-အစီရင်ခံစာတွင် မှတ်သားပါ။
+Hive နှင့် ၎င်းဘေးရှိ `Amcache.hve.LOG`၊ `.LOG1`၊ `.LOG2` ဖိုင်များကို အတူစုဆောင်းပါ။ Hive သည် dirty ဖြစ်လျှင် `parse-registry amcache` က သုံးနိုင်သော transaction logs များကို မခွဲခြမ်းမီ memory ထဲတွင် အလိုအလျောက် replay လုပ်ပြီး မူရင်းအထောက်အထားကို မပြင်ပါ။ Recovery အသေးစိတ်ကို parser log သို့မဟုတ် terminal တွင် ဖော်ပြသည်။ Records ကို stdout သို့ပို့သည့်အခါ diagnostics ကို stderr သို့ပို့သည်။ Logs ပျောက်ဆုံးခြင်း သို့မဟုတ် သုံးမရခြင်းကြောင့် records မပြည့်စုံနိုင်သလို မညီညွတ်သော hive ကိုလည်း ဖတ်မရနိုင်ပါ။
 
 ## စိစစ်သူများ သတိပြုရန် { #analyst-cautions }
 

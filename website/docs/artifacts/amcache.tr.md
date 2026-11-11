@@ -20,9 +20,7 @@ envantere almıştır. Bir yürütülebilir dosya kaydı **varlığın kanıtıd
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-Kovanı etkilenen kurulumdan toplayın. `parse-registry amcache` şu anda birincil kovanı ayrıştırır,
-ancak yanındaki Amcache işlem günlüklerini **yeniden oynatmaz**; bu nedenle yalnızca bu günlüklerde
-bulunan kayıtlar, canlı veya tutarsız bir toplamada eksik olabilir. Bu sınırlamayı raporda belirtin.
+Kovanı, yanındaki `Amcache.hve.LOG`, `.LOG1` ve `.LOG2` dosyalarıyla birlikte toplayın. Kovan dirty durumundaysa `parse-registry amcache`, kullanılabilir işlem günlüklerini ayrıştırmadan önce bellekte otomatik olarak yeniden oynatır; kanıtı değiştirmez. Kurtarma ayrıntıları ayrıştırıcı günlüğünde veya terminalde yer alır; kayıtlar stdout üzerinden aktarılırken tanı iletileri stderr üzerinden gönderilir. Eksik veya kullanılamayan günlükler eksik kayıtlara ya da tutarsız kovanın okunamamasına yol açabilir.
 
 ## Analist için uyarılar { #analyst-cautions }
 

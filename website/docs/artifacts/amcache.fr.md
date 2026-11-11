@@ -20,9 +20,7 @@ périphérique enregistré. Un enregistrement d'exécutable est une **preuve de 
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-Collectez la ruche depuis l'installation concernée. `parse-registry amcache` analyse actuellement la ruche
-principale mais ne rejoue **pas** les journaux de transactions Amcache adjacents ; les enregistrements présents uniquement dans ces
-journaux peuvent donc manquer dans une collecte à chaud ou incohérente. Mentionnez cette limitation dans le rapport.
+Collectez la ruche et les fichiers voisins `Amcache.hve.LOG`, `.LOG1` et `.LOG2`. Si la ruche est marquée comme non synchronisée, `parse-registry amcache` rejoue automatiquement les journaux de transactions utilisables en mémoire avant analyse, sans modifier les preuves. Les détails figurent dans le journal du parseur ou le terminal ; si les enregistrements sont envoyés sur stdout, les diagnostics vont sur stderr. Des journaux absents ou inutilisables peuvent laisser des données incomplètes ou rendre une ruche incohérente illisible.
 
 ## Précautions d'analyse { #analyst-cautions }
 

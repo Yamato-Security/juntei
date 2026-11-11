@@ -26,6 +26,8 @@ SRUM သည် Windows 8 နှင့် နောက်ပိုင်းတွ
 forensic collector ဖြင့် ကူးယူခြင်းက အကောင်းဆုံး ဖြစ်ပါသည်။ `SOFTWARE` နှင့် `sru` ဖိုင်တွဲရှိ ESE transaction/log ဖိုင်များကိုလည်း
 စုဆောင်းပါ။
 
+သက်ဆိုင်ရာ SOFTWARE hive သည် ESE database နှင့် သီးခြားဖြစ်သည်။ Hive သည် dirty ဖြစ်လျှင် Juntei က ၎င်းဘေးရှိ Registry transaction logs `SOFTWARE.LOG`၊ `.LOG1`၊ `.LOG2` ကို memory ထဲတွင် အလိုအလျောက် replay လုပ်သည်။ ထိုဖိုင်များကိုပါ စုဆောင်းပါ။ Recovery အသေးစိတ်နှင့် သတိပေးချက်များကို ဖော်ပြသည်။ Logs မရှိလျှင် account သို့မဟုတ် Wi-Fi အမည်များ မပြည့်စုံခြင်း သို့မဟုတ် ဟောင်းနေခြင်း ဖြစ်နိုင်သည်။ ဤလုပ်ဆောင်ချက်သည် SRUM database logs ကို replay မလုပ်ပါ။
+
 !!! warning "Dirty database များ"
     Juntei သည် dirty `SRUDB.dat` ကို စုဆောင်းထားသည့်အတိုင်း ဖတ်ပြီး ၎င်းကို အစီရင်ခံပါသည်။ လက်ရှိတွင်
     `SRU*.log` ကို replay မလုပ်သောကြောင့် ထို log များတွင်သာ ရှိသော ပြောင်းလဲမှုများ ပျောက်နေပါသည်။ Dirty database ကို

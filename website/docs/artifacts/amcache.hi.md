@@ -20,9 +20,7 @@ inventory में शामिल किया। Executable record **उप�
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-प्रभावित installation से hive एकत्र करें। `parse-registry amcache` वर्तमान में primary hive को पार्स करता है,
-लेकिन साथ वाले Amcache transaction logs को replay **नहीं** करता, इसलिए जो records केवल उन logs में मौजूद हैं वे
-live या असंगत collection में छूट सकते हैं। Report में इस सीमा का उल्लेख करें।
+प्रभावित सिस्टम से hive के साथ उसके पास मौजूद `Amcache.hve.LOG`, `.LOG1` और `.LOG2` फ़ाइलें भी एकत्र करें। Hive dirty होने पर `parse-registry amcache` विश्लेषण से पहले उपयोग योग्य transaction logs को मेमोरी में स्वतः replay करता है; साक्ष्य फ़ाइलें नहीं बदलतीं। Recovery विवरण parser log या terminal में मिलता है; records stdout पर भेजने पर diagnostics stderr पर जाते हैं। Logs गुम या अनुपयोगी होने पर records अधूरे रह सकते हैं या असंगत hive पढ़ा नहीं जा सकता।
 
 ## विश्लेषक के लिए सावधानियाँ { #analyst-cautions }
 

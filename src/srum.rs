@@ -123,6 +123,8 @@ pub fn run(opts: &SrumOptions) -> i32 {
             .iter()
             .filter_map(|database| software_hive(database)),
     );
+    // The SOFTWARE hive's transaction logs are inputs too, including path aliases.
+    protected = crate::registry::files_read(&protected, &[]);
     // CSV tables always go to a directory; JSON / JSONL with -d too (one file per database).
     let out_is_dir = output_type == SrumOutputType::Csv || root.is_some();
     if let Some(out) = &opts.output
@@ -170,7 +172,15 @@ pub fn run(opts: &SrumOptions) -> i32 {
         // the names of the SOFTWARE hive, when there is one that can be read
         let context = match opts.software.clone().or_else(|| software_hive(database)) {
             Some(hive) => match read_software(&hive) {
-                Ok((context, problems)) => {
+                Ok((context, problems, recovery)) => {
+                    if let Some(note) = crate::hive::recovery_note(&recovery) {
+                        let message = format!("{}: {note}", hive.display());
+                        if data_on_stdout {
+                            eprintln!("{message}");
+                        } else {
+                            progress::suspended(bar.as_ref(), || p(None, &message, true));
+                        }
+                    }
                     for problem in problems.iter().take(MAX_PRINTED_PROBLEMS) {
                         report_error(bar.as_ref(), &format!("{}: {problem}", hive.display()));
                     }
@@ -295,8 +305,8 @@ pub fn run(opts: &SrumOptions) -> i32 {
 /// Wi-Fi network names (each `WlanSvc` profile's `ProfileIndex`, with the SSID in its
 /// `MetaData\Channel Hints`; the first profile with an index wins). A profile that can't be read
 /// is a problem, not an error.
-fn read_software(path: &Path) -> Result<(Context, Vec<String>), String> {
-    let hive = Hive::from_path(path)?;
+fn read_software(path: &Path) -> Result<(Context, Vec<String>, registry::Recovery), String> {
+    let (hive, recovery) = Hive::from_path(path)?;
     let mut context = Context::default();
     let mut problems = Vec::new();
     let profiles = r"Microsoft\Windows NT\CurrentVersion\ProfileList";
@@ -356,7 +366,7 @@ fn read_software(path: &Path) -> Result<(Context, Vec<String>), String> {
         }
         Err(e) => problems.push(format!("{interfaces}: {e}")),
     }
-    Ok((context, problems))
+    Ok((context, problems, recovery))
 }
 
 /// A Wi-Fi profile's index and SSID; `None` for a profile without them.

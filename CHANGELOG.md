@@ -26,6 +26,8 @@
 
 **Bug Fixes:**
 
+- Replay adjacent registry transaction logs before parsing Amcache and SRUM SOFTWARE-hive enrichment, including `auto-parse` and disk-image collections. Report recovery and missing-log limitations without contaminating structured stdout, and protect source hives and logs from output replacement. (@YamatoSecurity)
+
 - `auto-parse`: label failed parser tasks as `Parsing error` in the results summary and link to their detailed logs, instead of showing a parser's elapsed-time footer as the error. (@YamatoSecurity)
 
 - Disk-image mounting checks GPT offset and length arithmetic, rejects cyclic extended-partition chains, preserves valid FILETIMEs beyond 2554, and reads compressed-file metadata without decompressing content. Bound the decompression cache, report unreadable NTFS partitions while retaining readable volumes, and preserve the original evidence directory when `auto-parse --vhdx` receives a bare image filename. (@YamatoSecurity)

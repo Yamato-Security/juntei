@@ -26,6 +26,8 @@ O SRUM existe no Windows 8 e posteriores. Copie o `SRUDB.dat` de forma consisten
 um coletor forense. Colete também o `SOFTWARE` e os arquivos de transação/log do ESE no diretório
 `sru`.
 
+O hive SOFTWARE correspondente é separado do banco ESE: quando está sujo, o Juntei reaplica automaticamente em memória seus logs de transações do Registro adjacentes `SOFTWARE.LOG`, `.LOG1` e `.LOG2`. Colete-os também. Os detalhes da recuperação e avisos são exibidos; sem esses logs, nomes de contas ou Wi-Fi podem estar incompletos ou desatualizados. Isso não reaplica os logs do banco SRUM.
+
 !!! warning "Bancos de dados sujos"
     O Juntei lê um `SRUDB.dat` sujo (dirty) como foi coletado e relata essa condição. Atualmente, ele não reproduz
     os `SRU*.log`, de modo que as alterações existentes apenas nesses logs ficam de fora. Não descreva silenciosamente um

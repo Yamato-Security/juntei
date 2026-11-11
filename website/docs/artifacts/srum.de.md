@@ -25,6 +25,8 @@ C:\Windows\System32\config\SOFTWARE   (context for account and Wi-Fi names)
 SRUM gibt es ab Windows 8. Kopieren Sie `SRUDB.dat` konsistent, idealerweise aus einem Snapshot oder mit
 einem forensischen Sicherungswerkzeug. Sichern Sie außerdem `SOFTWARE` sowie die ESE-Transaktions-/Protokolldateien im Verzeichnis `sru`.
 
+Der zugehörige SOFTWARE-Hive ist von der ESE-Datenbank getrennt: Juntei spielt bei einem nicht konsistent gespeicherten Hive dessen benachbarte Registry-Protokolle `SOFTWARE.LOG`, `.LOG1` und `.LOG2` automatisch im Arbeitsspeicher ein. Sichern Sie diese ebenfalls. Wiederherstellungsdetails und Warnungen werden angezeigt; ohne Protokolle können Konto- oder WLAN-Namen fehlen oder veraltet sein. Die SRUM-Datenbankprotokolle werden dadurch nicht eingespielt.
+
 !!! warning "„Dirty“-Datenbanken"
     Juntei liest eine „dirty“ `SRUDB.dat` so, wie sie gesichert wurde, und meldet dies. Derzeit spielt es
     `SRU*.log` nicht ein, sodass Änderungen, die nur in diesen Protokollen existieren, fehlen. Beschreiben Sie eine

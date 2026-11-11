@@ -26,6 +26,8 @@ SRUM existe sous Windows 8 et versions ultérieures. Copiez `SRUDB.dat` de mani�
 un collecteur forensique. Collectez également `SOFTWARE` ainsi que les fichiers de transactions/journaux ESE du répertoire
 `sru`.
 
+La ruche SOFTWARE correspondante est distincte de la base ESE : lorsqu’elle est non synchronisée, Juntei rejoue automatiquement en mémoire ses journaux de transactions du Registre voisins `SOFTWARE.LOG`, `.LOG1` et `.LOG2`. Collectez-les également. Les détails de récupération et avertissements sont affichés ; sans ces journaux, les noms de comptes ou Wi-Fi peuvent être incomplets ou anciens. Cela ne rejoue pas les journaux de la base SRUM.
+
 !!! warning "Bases de données « dirty »"
     Juntei lit un `SRUDB.dat` dans un état « dirty » tel qu'il a été collecté et le signale. Il ne rejoue pas actuellement
     `SRU*.log` ; les modifications présentes uniquement dans ces journaux sont donc absentes. Ne décrivez pas implicitement une

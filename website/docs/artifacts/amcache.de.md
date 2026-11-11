@@ -20,9 +20,7 @@ Gerät inventarisiert. Ein Datensatz zu einer ausführbaren Datei ist ein **Bele
 C:\Windows\AppCompat\Programs\Amcache.hve
 ```
 
-Sichern Sie den Hive aus der betroffenen Installation. `parse-registry amcache` parst derzeit den primären
-Hive, spielt aber benachbarte Amcache-Transaktionsprotokolle **nicht** ein; Datensätze, die nur in diesen
-Protokollen vorhanden sind, können daher in einer Live- oder inkonsistenten Sicherung fehlen. Vermerken Sie diese Einschränkung im Bericht.
+Sichern Sie den Hive und die benachbarten Dateien `Amcache.hve.LOG`, `.LOG1` und `.LOG2`. Bei einem nicht konsistent gespeicherten Hive spielt `parse-registry amcache` verwendbare Transaktionsprotokolle vor dem Parsen automatisch im Arbeitsspeicher ein, ohne die Beweise zu ändern. Wiederherstellungsdetails stehen im Parserprotokoll oder Terminal; bei Datenausgabe auf stdout gehen Diagnosen an stderr. Fehlende oder unbrauchbare Protokolle können unvollständige Datensätze oder einen nicht lesbaren Hive verursachen.
 
 ## Hinweise für die Analyse { #analyst-cautions }
 

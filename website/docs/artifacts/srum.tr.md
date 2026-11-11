@@ -27,6 +27,8 @@ SRUM, Windows 8 ve sonraki sürümlerde bulunur. `SRUDB.dat` dosyasını tutarl�
 anlık görüntüden veya bir adli bilişim toplayıcısıyla kopyalayın. Ayrıca `SOFTWARE` kovanını ve `sru`
 dizinindeki ESE işlem/günlük dosyalarını da toplayın.
 
+Eşleşen SOFTWARE kovanı ESE veritabanından ayrıdır: kovan dirty durumundaysa Juntei, yanındaki Registry işlem günlüklerini (`SOFTWARE.LOG`, `.LOG1`, `.LOG2`) bellekte otomatik olarak yeniden oynatır. Bu dosyaları da toplayın. Kurtarma ayrıntıları ve uyarılar gösterilir; günlükler yoksa hesap veya Wi-Fi adları eksik ya da eski olabilir. Bu işlem SRUM veritabanı günlüklerini yeniden oynatmaz.
+
 !!! warning "Kirli veritabanları"
     Juntei, kirli bir `SRUDB.dat` dosyasını toplandığı haliyle okur ve bunu raporlar. Şu anda
     `SRU*.log` dosyalarını yeniden oynatmaz; bu nedenle yalnızca bu günlüklerde bulunan değişiklikler
