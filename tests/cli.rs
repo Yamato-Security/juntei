@@ -21849,7 +21849,8 @@ fn recycle_bin_review_case_collisions_are_unknown_and_both_payloads_are_protecte
     assert_eq!(std::fs::read(&lower).unwrap(), b"lowercase evidence");
 }
 
-#[cfg(unix)]
+// Linux filesystems can retain invalid UTF-8 names; macOS APFS normally rejects them.
+#[cfg(target_os = "linux")]
 #[test]
 fn recycle_bin_review_protects_native_paths_with_non_unicode_extensions() {
     use std::ffi::OsString;
