@@ -590,6 +590,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "ProcessExecution",
         "Registry",
         "SecurityProducts",
+        "ShellHistory",
         "SystemInformation",
     ] {
         assert!(csv.join("HOST1").join(category).is_dir());
@@ -755,6 +756,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             | "prefetch-timeline" | "userassist" => "ProcessExecution",
             "registry" => "Registry",
             "defender-quarantine" | "security-settings" => "SecurityProducts",
+            "powershell-history" => "ShellHistory",
             "system-info" | "srum" => "SystemInformation",
             "auditpol" => "SystemInformation",
             _ => panic!("unexpected artifact: {artifact}"),
@@ -796,6 +798,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             | "jump-lists"
             | "defender-quarantine"
             | "outlook"
+            | "powershell-history"
             | "recycle-bin" => ("parse-file", artifact),
             "registry" => ("parse-registry", "read"),
             "appcompat" => ("parse-registry", "app-compat"),
@@ -1293,7 +1296,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 90);
+    assert_eq!(tasks.len(), 91);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()

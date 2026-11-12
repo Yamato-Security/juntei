@@ -1,6 +1,6 @@
 # ファイルコマンド { #file-commands }
 
-`parse-file` は、アーティファクト固有のファイル (Prefetch、ショートカット、Jump Lists、Defender 隔離、Outlook の PST、OST、MSG、OFT ファイル、およびごみ箱のインデックス ファイル) を処理します。自動 Jump Lists は複合ファイル コンテナーを使用します。カスタム Jump Lists は異なるバイナリ レイアウトを使用します。両方とも同じアーティファクト コマンドに属します。
+`parse-file` は、アーティファクト固有のファイル (Prefetch、ショートカット、Jump Lists、Defender 隔離、PowerShell 履歴、Outlook の PST、OST、MSG、OFT ファイル、およびごみ箱のインデックス ファイル) を処理します。自動 Jump Lists は複合ファイル コンテナーを使用します。カスタム Jump Lists は異なるバイナリ レイアウトを使用します。両方とも同じアーティファクト コマンドに属します。
 
 ```text
 Version: 1.1.0 (CODE BLUE Release)
@@ -15,6 +15,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -160,6 +161,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 ```
 
 テーブルは、読み取ったファイル、そのフォルダー、すべてのアイテム (フォルダーの非表示アイテムと、添付ファイルに埋め込まれたアイテムを含む)、受信者、添付ファイル、連絡先、予定表アイテム、タスクで、`--properties` を指定すると、保存されているとおりのすべてのプロパティも含まれます。[Outlook](../artifacts/outlook.md)を参照してください。
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+`-o` を省略してレコードを標準出力に書くには `-t` を指定します。両方とも省略すると概要を表示します。`json` は個別に整形したオブジェクト、`jsonl` は 1 行に 1 オブジェクトを書き込みます。単独のコマンドには `-Z` オプションがありません。エンコーディング、CSV 保護、解釈については [PowerShell 履歴](../artifacts/powershell-history.md)を参照してください。
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

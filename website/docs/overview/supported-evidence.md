@@ -19,6 +19,7 @@
 | Outlook (PST, OST, MSG, OFT) | `parse-file outlook` | E-mail with its senders, recipients, times and attachments; contacts, calendar items and tasks; folders, hidden settings items and every property as stored | A sender's address can be forged; items no longer in any folder are not recovered; offline address books, autocomplete and other Outlook files are not read yet |
 | LNK shortcuts | `parse-file lnk` | Opened targets, arguments, volumes, shares, source machine | A shortcut can be created without the target running |
 | Jump Lists | `parse-file jump-lists` | Application-opened items, pinning, usage and embedded LNK data | Application-specific behavior and retention |
+| PowerShell PSReadLine history | `parse-file powershell-history` | Saved command lines, user, host and source line numbers | No per-command timestamps; file modification time is metadata only |
 | Recycle Bin (`$I` files, INFO2) | `parse-file recycle-bin` | Items users deleted to the bin: original path, size, deletion time, user, and whether the deleted content is still there | Shift+Delete and most programs bypass the bin; emptying it deletes `$I` files (INFO2 keeps marked records) |
 | ShimCache | `parse-registry shimcache` | Historical executable paths and compatibility checks | Cache may not be flushed until shutdown; entry alone is not execution |
 | Defender quarantine | `parse-file defender-quarantine` | Detection, original path, hashes, download origin, recovered bytes | Detection name is a product verdict; extraction is hazardous |

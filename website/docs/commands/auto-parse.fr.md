@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Les parseurs exigent des chemins : Juntei copie donc les fichiers que lisent les parseurs dans un espace temporaire privé avec des tampons bornés : ruches du registre et leurs journaux de transactions, fichiers de métadonnées NTFS, bases de données, fichiers prefetch, raccourcis, Jump Lists, fichiers Outlook, fichiers d’index de la Corbeille et dossiers de quarantaine de Defender. Tout autre fichier devient un espace réservé vide qui garde sa date de modification d’origine, si bien que répertoires et chemins apparaissent comme sur le disque. persistence-hunter ne lit le contenu d’un espace réservé depuis l’image que lorsqu’il en a besoin, par exemple un exécutable désigné par une entrée de persistance. **Prévoyez de la place pour les fichiers copiés**, en plus des résultats. Les zones nulles sont écrites comme des trous si le système le permet. Noms, structure, liens physiques et dates de modification sont préservés. Les dates sources des LNK et Jump Lists viennent des métadonnées NTFS originales, jamais des copies temporaires. Une fin normale, même avec erreurs de parsing, supprime les copies ; un arrêt forcé peut les laisser. La source reste en lecture seule ; les journaux VHDX en attente sont appliqués en mémoire uniquement.
+Les parseurs exigent des chemins : Juntei copie donc les fichiers que lisent les parseurs dans un espace temporaire privé avec des tampons bornés : ruches du registre et leurs journaux de transactions, fichiers de métadonnées NTFS, bases de données, fichiers prefetch, raccourcis, Jump Lists, fichiers Outlook, fichiers d’historique PSReadLine, fichiers d’index de la Corbeille et dossiers de quarantaine de Defender. Tout autre fichier devient un espace réservé vide qui garde sa date de modification d’origine, si bien que répertoires et chemins apparaissent comme sur le disque. persistence-hunter ne lit le contenu d’un espace réservé depuis l’image que lorsqu’il en a besoin, par exemple un exécutable désigné par une entrée de persistance. **Prévoyez de la place pour les fichiers copiés**, en plus des résultats. Les zones nulles sont écrites comme des trous si le système le permet. Noms, structure, liens physiques et dates de modification sont préservés. Les dates sources des LNK et Jump Lists et les dates de modification des fichiers sources d’historique PowerShell viennent du cliché des métadonnées NTFS originales, jamais des copies temporaires. Une fin normale, même avec erreurs de parsing, supprime les copies ; un arrêt forcé peut les laisser. La source reste en lecture seule ; les journaux VHDX en attente sont appliqués en mémoire uniquement.
 
 La découverte des hôtes, CSV/JSON/JSONL et `-j` utilisent le traitement habituel. `Image` dans `manifest.json` identifie l’image originale, `EvidenceRoot` son chemin relatif interne. Les erreurs de lecture et noms dangereux figurent dans `ImageErrors` et les lignes en échec de `manifest.csv`. Les résultats lisibles sont conservés ; une entrée incomplète produit le code 1. Les noms dangereux ou ambigus ne sont pas renommés. Les flux NTFS nommés ne deviennent pas des fichiers supplémentaires ; les artefacts collectés comme fichiers ordinaires restent disponibles.
 
@@ -333,6 +333,9 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -362,6 +365,7 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `ProcessExecution` | Compatibilité des applications, BAM et DAM, FeatureUsage et éléments épinglés, MuiCache, Prefetch, chronologie Prefetch, activité des applications/du CPU SRUM, UserAssist |
 | `Registry` | Clés et valeurs générales des ruches, y compris les enregistrements récupérés |
 | `SecurityProducts` | Métadonnées de quarantaine de Defender et contenu extrait facultatif ; paramètres de sécurité (Defender, UAC, protection des identifiants, RDP, pare-feu, journalisation) |
+| `ShellHistory` | Historique des commandes PowerShell PSReadLine ; la date de modification du fichier est une métadonnée, sans dates d’exécution des commandes |
 | `SystemInformation` | Noms, version de Windows, fuseau horaire, dernier arrêt, profils, SID et stratégie d'audit ; énergie/capacité SRUM, tables de correspondance des identités et fournisseurs inconnus |
 
 Les catégories aident à organiser les investigations ; elles ne prouvent pas une activité particulière. Par exemple,
@@ -606,3 +610,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 L'export `-j, --json-timeline` reste un fichier JSONL de données natives : il conserve les schémas sans développer ni trier les dates. Conservez-le avec les résultats individuels pour examiner les preuves.
+
+## Historique PowerShell { #powershell-history }
+
+Les fichiers `<Host>_history.txt` directement dans un dossier `PSReadLine` sont découverts récursivement et copiés lors du staging VHDX/E01. Les fichiers portant le même suffixe hors de ce dossier sont exclus ; analysez explicitement les copies renommées ou à un emplacement personnalisé avec `parse-file powershell-history -f <FILE>`.
+
+Les résultats sont enregistrés dans `ShellHistory/PowerShellHistory.csv` (ou `.json`/`.jsonl` selon le format choisi), avec les entrées habituelles du manifeste et du journal du parseur. `FileLastWriteTime` est la date de modification du fichier source, y compris les métadonnées d’image originales, jamais une date d’exécution de commande. `auto-parse -Z` change son décalage d’affichage avec les autres dates de sortie ; le parseur autonome n’a pas d’option `-Z`. Les enregistrements restent dans la sortie de catégorie, mais n’entrent ni dans la chronologie `-j` ni dans `super-timeline`. Voir [Historique PowerShell](../artifacts/powershell-history.md).

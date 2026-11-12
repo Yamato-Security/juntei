@@ -225,6 +225,10 @@ pub fn discover(opts: &SuperTimelineOptions) -> io::Result<Inventory> {
                 continue;
             }
             let artifact = text(task, &["Artifact"]);
+            // Parsed, but without a time for any record: not an input of the timeline.
+            if super::untimed_artifact(&artifact) {
+                continue;
+            }
             let computer = text(task, &["Computer"]);
             if artifact.is_empty() || computer.is_empty() {
                 return Err(io::Error::other(

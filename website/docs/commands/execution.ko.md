@@ -1,7 +1,7 @@
 # 파일 명령어 { #file-commands }
 
 `parse-file`는 아티팩트별 파일을 처리합니다: Prefetch, 바로 가기, Jump Lists, Defender
-격리 데이터, Outlook의 PST, OST, MSG 및 OFT 파일, 그리고 휴지통의 인덱스 파일. 자동(Automatic) Jump Lists는 복합 파일(compound file) 컨테이너를 사용하고, 사용자 지정(Custom)
+격리 데이터, PowerShell 기록, Outlook의 PST, OST, MSG 및 OFT 파일, 그리고 휴지통의 인덱스 파일. 자동(Automatic) Jump Lists는 복합 파일(compound file) 컨테이너를 사용하고, 사용자 지정(Custom)
 Jump Lists는 다른 바이너리 레이아웃을 사용합니다. 두 가지 모두 같은 아티팩트 명령어에 속합니다.
 
 ```text
@@ -17,6 +17,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -165,6 +166,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 테이블은 읽은 파일, 그 폴더, 모든 항목(폴더의 숨겨진 항목과 첨부 파일에 포함된 항목 포함), 받는 사람,
 첨부 파일, 연락처, 일정 항목, 작업이며, `--properties`를 사용하면 저장된 그대로의 모든 속성도 포함됩니다.
 [Outlook](../artifacts/outlook.md)을 참조하십시오.
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+`-o` 없이 레코드를 stdout으로 쓰려면 `-t`를 지정하세요. 둘 다 없으면 요약을 표시합니다. `json`은 읽기 좋게 정렬된 개별 객체를 쓰고 `jsonl`은 한 줄에 객체 하나를 씁니다. 독립 실행 명령에는 `-Z` 옵션이 없습니다. 인코딩, CSV 보호 및 해석은 [PowerShell 기록](../artifacts/powershell-history.md)을 참조하세요.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

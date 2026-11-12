@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်၊ Recycle Bin index ဖိုင်နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
+Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်၊ PSReadLine မှတ်တမ်းဖိုင်၊ Recycle Bin index ဖိုင်နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များနှင့် PowerShell မှတ်တမ်း၏ မူရင်းပြင်ဆင်ချိန်များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
 
 Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည် ပုံမှန် pipeline ကို သုံးသည်။ `manifest.json` ရှိ `Image` သည် မူရင်း image ဖြစ်ပြီး `EvidenceRoot` သည် အတွင်း relative path ဖြစ်သည်။ Read error နှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ထိန်းသိမ်းပြီး input မပြည့်စုံလျှင် exit code 1 ပြန်ပေးသည်။ မလုံခြုံသော သို့မဟုတ် မရှင်းလင်းသောအမည်များကို ပြောင်းမပေးပါ။ Named NTFS stream များကို နောက်ထပ်ဖိုင်အဖြစ် မထုတ်ပေးသော်လည်း သာမန်ဖိုင်အဖြစ် စုဆောင်းထားသော artifact များကို အသုံးပြုနိုင်သည်။
 
@@ -333,6 +333,9 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -362,6 +365,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `ProcessExecution` | Application compatibility၊ BAM နှင့် DAM၊ FeatureUsage နှင့် pin များ၊ MuiCache၊ Prefetch၊ Prefetch timeline၊ SRUM application/CPU လှုပ်ရှားမှု၊ UserAssist |
 | `Registry` | ပြန်လည်ရယူထားသော record များ အပါအဝင် ယေဘုယျ hive key များနှင့် value များ |
 | `SecurityProducts` | Defender quarantine metadata နှင့် ရွေးချယ်နိုင်သော ထုတ်ယူထားသည့် အကြောင်းအရာ၊ လုံခြုံရေးဆက်တင်များ (Defender၊ UAC၊ credential ကာကွယ်မှု၊ RDP၊ firewall၊ logging) |
+| `ShellHistory` | PowerShell PSReadLine command မှတ်တမ်း။ ဖိုင်ပြင်ဆင်ချိန်သည် metadata သာဖြစ်ပြီး command လုပ်ဆောင်ချိန်များ မပါဝင်ပါ |
 | `SystemInformation` | အမည်များ၊ Windows ဗားရှင်း၊ time zone၊ နောက်ဆုံး shutdown၊ profile များ၊ SID များနှင့် audit policy၊ SRUM စွမ်းအင်/capacity၊ identity map များနှင့် မသိသော provider များ |
 
 အမျိုးအစားများသည် စုံစမ်းစစ်ဆေးမှုများကို စီစဉ်ရာတွင် ကူညီသော်လည်း သီးခြားလှုပ်ရှားမှုတစ်ခု၏ သက်သေ မဟုတ်ပါ။ ဥပမာ
@@ -609,3 +613,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ရှိပြီးသား `-j, --json-timeline` export သည် native record များကို ပေါင်းစပ်ထားသော JSONL ဖိုင်အဖြစ် ဆက်လက် ရှိနေပါသည်။
 ၎င်းသည် parser schema များကို ထိန်းထားပြီး timestamp field များကို မချဲ့ထွင်သကဲ့သို့ event များကိုလည်း မစီပါ။
 အထောက်အထားအဆင့် ပြန်လည်သုံးသပ်ရန်အတွက် ၎င်းနှင့် parser တစ်ခုချင်းစီ၏ ရလဒ်များကို ထိန်းသိမ်းထားပါ။
+
+## PowerShell မှတ်တမ်း { #powershell-history }
+
+`PSReadLine` folder အတွင်း တိုက်ရိုက်ရှိသော `<Host>_history.txt` ဖိုင်များကို directory အဆင့်ဆင့် ရှာဖွေပြီး VHDX/E01 staging လုပ်စဉ် ကူးယူသည်။ Folder ပြင်ပရှိ တူညီသောနောက်ဆက်ပါဖိုင်များကို ချန်လှပ်သည်။ အမည်ပြောင်းထားသော သို့မဟုတ် စိတ်ကြိုက်နေရာရှိ မိတ္တူများကို `parse-file powershell-history -f <FILE>` ဖြင့် တိတိကျကျ ခွဲခြမ်းစိတ်ဖြာပါ။
+
+ရလဒ်များကို `ShellHistory/PowerShellHistory.csv` (သို့မဟုတ် ရွေးထားသည့်ပုံစံအလိုက် `.json`/`.jsonl`) အဖြစ် သိမ်းပြီး ပုံမှန် manifest နှင့် parser log entry များ ပါဝင်သည်။ `FileLastWriteTime` သည် မူရင်း image metadata အပါအဝင် မူရင်းဖိုင်ပြင်ဆင်ချိန်ဖြစ်ပြီး command လုပ်ဆောင်ချိန် လုံးဝမဟုတ်ပါ။ `auto-parse -Z` သည် အခြား output အချိန်များနှင့်အတူ ၎င်း၏ပြသသည့်အချိန်ကွာဟချက်ကို ပြောင်းသည်။ သီးခြား parser တွင် `-Z` ရွေးချယ်စရာ မရှိပါ။ မှတ်တမ်း record များသည် အမျိုးအစား output တွင် ကျန်သော်လည်း `-j` timeline သို့မဟုတ် `super-timeline` ထဲသို့ မဝင်ပါ။ [PowerShell မှတ်တမ်း](../artifacts/powershell-history.md) ကို ကြည့်ပါ။

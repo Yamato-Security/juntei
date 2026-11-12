@@ -40,6 +40,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK 바로 가기](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell 기록](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [휴지통](../artifacts/recycle-bin.md) |
 

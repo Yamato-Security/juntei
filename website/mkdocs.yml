@@ -101,6 +101,8 @@ plugins:
       build: true
       site_name: Juntei ドキュメント
       nav_translations:
+        Shell History: "シェル履歴"
+        PowerShell History: "PowerShell 履歴"
         Super Timeline: "統合タイムライン"
         Home: ホーム
         Overview: 概要
@@ -191,6 +193,8 @@ plugins:
       name: 繁體中文
       build: true
       nav_translations:
+        Shell History: "Shell 歷程記錄"
+        PowerShell History: "PowerShell 歷程記錄"
         Super Timeline: "超級時間軸"
         Home: 首頁
         Overview: 概觀
@@ -281,6 +285,8 @@ plugins:
       name: 한국어
       build: true
       nav_translations:
+        Shell History: "셸 기록"
+        PowerShell History: "PowerShell 기록"
         Super Timeline: "슈퍼 타임라인"
         Home: 홈
         Overview: 개요
@@ -371,6 +377,8 @@ plugins:
       name: Deutsch
       build: true
       nav_translations:
+        Shell History: "Shell-Verlauf"
+        PowerShell History: "PowerShell-Verlauf"
         Super Timeline: "Gesamttimeline"
         Home: Startseite
         Overview: Übersicht
@@ -461,6 +469,8 @@ plugins:
       name: Türkçe
       build: true
       nav_translations:
+        Shell History: "Kabuk geçmişi"
+        PowerShell History: "PowerShell geçmişi"
         Super Timeline: "Birleşik zaman çizelgesi"
         Home: Ana Sayfa
         Overview: Genel Bakış
@@ -551,6 +561,8 @@ plugins:
       name: Français
       build: true
       nav_translations:
+        Shell History: "Historique du shell"
+        PowerShell History: "Historique PowerShell"
         Super Timeline: "Chronologie globale"
         Home: Accueil
         Overview: Vue d'ensemble
@@ -641,6 +653,8 @@ plugins:
       name: Español
       build: true
       nav_translations:
+        Shell History: "Historial del shell"
+        PowerShell History: "Historial de PowerShell"
         Super Timeline: "Súper línea de tiempo"
         Home: Inicio
         Overview: Visión general
@@ -731,6 +745,8 @@ plugins:
       name: Português (Brasil)
       build: true
       nav_translations:
+        Shell History: "Histórico do shell"
+        PowerShell History: "Histórico do PowerShell"
         Super Timeline: "Super linha do tempo"
         Home: Início
         Overview: Visão geral
@@ -821,6 +837,8 @@ plugins:
       name: Українська
       build: true
       nav_translations:
+        Shell History: "Історія оболонки"
+        PowerShell History: "Історія PowerShell"
         Super Timeline: "Суперхронологія"
         Home: Головна
         Overview: Огляд
@@ -911,6 +929,8 @@ plugins:
       name: हिन्दी
       build: true
       nav_translations:
+        Shell History: "शेल इतिहास"
+        PowerShell History: "PowerShell इतिहास"
         Super Timeline: "सुपर टाइमलाइन"
         Home: होम
         Overview: अवलोकन
@@ -1001,6 +1021,8 @@ plugins:
       name: Bahasa Indonesia
       build: true
       nav_translations:
+        Shell History: "Riwayat shell"
+        PowerShell History: "Riwayat PowerShell"
         Super Timeline: "Linimasa gabungan"
         Home: Beranda
         Overview: Ikhtisar
@@ -1091,6 +1113,8 @@ plugins:
       name: မြန်မာဘာသာ
       build: true
       nav_translations:
+        Shell History: "Shell မှတ်တမ်း"
+        PowerShell History: "PowerShell မှတ်တမ်း"
         Super Timeline: "စူပါအချိန်လိုင်း"
         Home: ပင်မစာမျက်နှာ
         Overview: ခြုံငုံသုံးသပ်ချက်
@@ -1181,6 +1205,8 @@ plugins:
       name: ไทย
       build: true
       nav_translations:
+        Shell History: "ประวัติเชลล์"
+        PowerShell History: "ประวัติ PowerShell"
         Super Timeline: "ซุปเปอร์ไทม์ไลน์"
         Home: หน้าแรก
         Overview: ภาพรวม
@@ -1271,6 +1297,8 @@ plugins:
       name: العربية
       build: true
       nav_translations:
+        Shell History: "سجل الصدفة"
+        PowerShell History: "سجل PowerShell"
         Super Timeline: "الجدول الزمني الشامل"
         Home: الرئيسية
         Overview: نظرة عامة
@@ -1420,6 +1448,8 @@ nav:
       - Browser Activity:
           - Web Browsers: artifacts/browser.md
           - Internet Explorer and Legacy Edge: artifacts/webcache.md
+      - Shell History:
+          - PowerShell History: artifacts/powershell-history.md
       - Communication:
           - Outlook: artifacts/outlook.md
       - Network Activity:

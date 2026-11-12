@@ -8,6 +8,7 @@ tetapi investigator tetap harus menginterpretasikan makna dari setiap sumber.
 
 | Pertanyaan investigasi | Mulai di sini | Dukung dengan |
 |---|---|---|
+| Baris perintah PowerShell apa yang disimpan? | [Riwayat PowerShell](powershell-history.md) | Log peristiwa PowerShell, telemetri proses, Prefetch |
 | Apakah executable ini berjalan? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), log peristiwa |
 | Apakah berkas ini pernah ada? | [Amcache](amcache.md), [$MFT](mft.md) | [Jurnal USN](usn-journal.md), [$I30](i30.md), ShimCache |
 | Kapan sebuah berkas dibuat, diubah namanya, atau dihapus? | [Jurnal USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), karantina Defender |

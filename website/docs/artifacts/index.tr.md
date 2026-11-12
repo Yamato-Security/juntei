@@ -8,6 +8,7 @@ kaynakları ayrıştırır, ancak her kaynağın ne anlama geldiğini yine de in
 
 | İnceleme sorusu | Buradan başlayın | Şunlarla doğrulayın |
 |---|---|---|
+| Hangi PowerShell komut satırları kaydedilmiş? | [PowerShell geçmişi](powershell-history.md) | PowerShell olay günlükleri, süreç telemetrisi, Prefetch |
 | Bu yürütülebilir dosya çalıştı mı? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), olay günlükleri |
 | Bu dosya hiç var oldu mu? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Günlüğü](usn-journal.md), [$I30](i30.md), ShimCache |
 | Bir dosya ne zaman oluşturuldu, yeniden adlandırıldı veya silindi? | [USN Günlüğü](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender karantinası |

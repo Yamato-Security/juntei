@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Los parsers necesitan rutas: Juntei copia los archivos que leen los parsers a un espacio temporal privado con búferes limitados: hives del registro y sus registros de transacciones, archivos de metadatos NTFS, bases de datos, archivos de prefetch, accesos directos, Jump Lists, archivos de Outlook, archivos de índice de la Papelera de reciclaje y carpetas de cuarentena de Defender. Cualquier otro archivo queda como un marcador vacío con su fecha de modificación original, de modo que directorios y rutas se ven como en el disco. persistence-hunter lee el contenido de un marcador desde la imagen solo cuando lo necesita, por ejemplo un ejecutable al que apunta una entrada de persistencia. **Reserve espacio para los archivos copiados**, además de los resultados. Las regiones nulas se escriben como huecos cuando se admite. Se conservan nombres, estructura, enlaces físicos y fechas de modificación. Las fechas de origen de LNK y Jump Lists provienen de los metadatos NTFS originales, nunca de las copias temporales. La finalización normal, incluso con errores de parser, elimina las copias; una terminación forzada puede dejarlas. La fuente es solo lectura y los registros VHDX pendientes se aplican únicamente en memoria.
+Los parsers necesitan rutas: Juntei copia los archivos que leen los parsers a un espacio temporal privado con búferes limitados: hives del registro y sus registros de transacciones, archivos de metadatos NTFS, bases de datos, archivos de prefetch, accesos directos, Jump Lists, archivos de Outlook, archivos de historial de PSReadLine, archivos de índice de la Papelera de reciclaje y carpetas de cuarentena de Defender. Cualquier otro archivo queda como un marcador vacío con su fecha de modificación original, de modo que directorios y rutas se ven como en el disco. persistence-hunter lee el contenido de un marcador desde la imagen solo cuando lo necesita, por ejemplo un ejecutable al que apunta una entrada de persistencia. **Reserve espacio para los archivos copiados**, además de los resultados. Las regiones nulas se escriben como huecos cuando se admite. Se conservan nombres, estructura, enlaces físicos y fechas de modificación. Las fechas de origen de LNK y Jump Lists y las fechas de modificación de los archivos de origen del historial de PowerShell provienen de la instantánea de metadatos NTFS originales, nunca de las copias temporales. La finalización normal, incluso con errores de parser, elimina las copias; una terminación forzada puede dejarlas. La fuente es solo lectura y los registros VHDX pendientes se aplican únicamente en memoria.
 
 La detección de hosts, CSV/JSON/JSONL y `-j` usan el flujo habitual. `Image` en `manifest.json` identifica la imagen original; `EvidenceRoot`, la ruta relativa interna. Los errores de lectura y nombres inseguros se registran en `ImageErrors` y filas fallidas de `manifest.csv`. Se conservan los resultados legibles; una entrada incompleta devuelve 1. No se renombran nombres peligrosos o ambiguos. Los flujos NTFS con nombre no se extraen como archivos adicionales; los artefactos recogidos como archivos normales siguen disponibles.
 
@@ -347,6 +347,9 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -376,6 +379,7 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 | `ProcessExecution` | Compatibilidad de aplicaciones, BAM y DAM, FeatureUsage y elementos anclados, MuiCache, Prefetch, línea de tiempo de Prefetch, actividad de aplicaciones/CPU de SRUM, UserAssist |
 | `Registry` | Claves y valores generales de los hives, incluidos los registros recuperados |
 | `SecurityProducts` | Metadatos de la cuarentena de Defender y contenido extraído opcional; configuración de seguridad (Defender, UAC, protección de credenciales, RDP, cortafuegos, registro) |
+| `ShellHistory` | Historial de comandos de PowerShell PSReadLine; la fecha de modificación del archivo es metadatos, sin horas de ejecución de comandos |
 | `SystemInformation` | Nombres, versión de Windows, zona horaria, último apagado, perfiles, SID y directiva de auditoría; energía/capacidad de SRUM, mapas de identidades y proveedores desconocidos |
 
 Las categorías ayudan a organizar las investigaciones; no son una prueba de una actividad
@@ -647,3 +651,9 @@ La exportación `-j, --json-timeline` existente sigue siendo un archivo JSONL qu
 registros nativos. Conserva los esquemas de los analizadores; no expande los campos de marca de
 tiempo ni ordena los eventos. Consérvela junto con los resultados de cada analizador para la
 revisión a nivel de evidencia.
+
+## Historial de PowerShell { #powershell-history }
+
+Los archivos `<Host>_history.txt` directamente dentro de una carpeta `PSReadLine` se descubren recursivamente y se copian durante el staging de VHDX/E01. Se excluyen los archivos con el mismo sufijo fuera de esa carpeta; analice explícitamente las copias renombradas o en ubicaciones personalizadas con `parse-file powershell-history -f <FILE>`.
+
+Los resultados se guardan como `ShellHistory/PowerShellHistory.csv` (o `.json`/`.jsonl` según el formato elegido), con las entradas habituales del manifiesto y del registro del parser. `FileLastWriteTime` es la fecha de modificación del archivo de origen, incluidos los metadatos originales de la imagen, nunca la hora de ejecución de un comando. `auto-parse -Z` cambia su desfase mostrado junto con las otras horas de salida; el parser independiente no tiene opción `-Z`. Los registros del historial permanecen en la salida de categoría, pero no entran en la cronología `-j` ni en `super-timeline`. Véase [Historial de PowerShell](../artifacts/powershell-history.md).

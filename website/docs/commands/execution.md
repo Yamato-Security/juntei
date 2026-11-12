@@ -1,7 +1,7 @@
 # File Commands
 
 `parse-file` handles artifact-specific files: Prefetch, shortcuts, Jump Lists, Defender
-quarantine, Outlook's PST, OST, MSG and OFT files, and the Recycle Bin's index files. Automatic Jump Lists use a compound-file
+quarantine, PowerShell history, Outlook's PST, OST, MSG and OFT files, and the Recycle Bin's index files. Automatic Jump Lists use a compound-file
 container; custom Jump Lists use a different binary layout. Both belong to the same artifact
 command.
 
@@ -18,6 +18,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -166,6 +167,35 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 The tables are the files read, their folders, every item (with the hidden items of the folders and
 the items embedded in attachments), recipients, attachments, contacts, calendar items and tasks,
 and with `--properties` every property as stored. See [Outlook](../artifacts/outlook.md).
+
+## `parse-file powershell-history`
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+Without `-o`, specify `-t` to write records to stdout; without either option, the command displays
+a summary. `json` writes separate pretty-printed objects; `jsonl` writes one object per line.
+The standalone command has no `-Z` option. See [PowerShell History](../artifacts/powershell-history.md)
+for encoding, CSV safeguards and interpretation.
 
 ## `parse-file prefetch`
 

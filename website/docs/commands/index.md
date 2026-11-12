@@ -40,6 +40,7 @@ chronological order and duplicate consolidation. `auto-parse -j` continues to re
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell History](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Recycle Bin](../artifacts/recycle-bin.md) |
 

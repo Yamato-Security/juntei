@@ -19,6 +19,7 @@
 | Outlook（PST、OST、MSG、OFT） | `parse-file outlook` | 電子郵件及其寄件者、收件者、時間與附件；連絡人、行事曆項目與工作；資料夾、隱藏的設定項目，以及依原樣儲存的每一個屬性 | 寄件者的地址可能遭偽造；已不在任何資料夾中的項目不會被復原；尚不讀取離線通訊錄、自動完成與其他 Outlook 檔案 |
 | LNK 捷徑 | `parse-file lnk` | 開啟過的目標、參數、磁碟區、共用資料夾、來源機器 | 即使目標從未執行，也可以建立捷徑 |
 | Jump Lists | `parse-file jump-lists` | 應用程式開啟過的項目、釘選、使用情形與內嵌的 LNK 資料 | 行為與保留方式因應用程式而異 |
+| PowerShell PSReadLine 歷程記錄 | `parse-file powershell-history` | 儲存的命令列、使用者、主機及來源行號 | 沒有逐一命令的時間戳記；檔案修改時間僅為中繼資料 |
 | 資源回收筒（`$I` 檔案、INFO2） | `parse-file recycle-bin` | 使用者刪除到回收筒的項目：原始路徑、大小、刪除時間、使用者，以及已刪除的內容是否仍在 | Shift+Delete 與大多數程式會略過回收筒；清空回收筒會刪除 `$I` 檔案（INFO2 會保留已標記的記錄） |
 | ShimCache | `parse-registry shimcache` | 歷史執行檔路徑與相容性檢查 | 快取可能要到關機時才寫出；單一項目不等於執行 |
 | Defender 隔離資料 | `parse-file defender-quarantine` | 偵測、原始路徑、雜湊值、下載來源、復原的位元組 | 偵測名稱是產品的判定；擷取具有危險性 |

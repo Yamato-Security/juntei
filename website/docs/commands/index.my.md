@@ -41,6 +41,7 @@ record များကို ဆက်လက် ထိန်းသိမ်း�
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK ဖြတ်လမ်းများ](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell မှတ်တမ်း](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [အမှိုက်ပုံး (Recycle Bin)](../artifacts/recycle-bin.md) |
 

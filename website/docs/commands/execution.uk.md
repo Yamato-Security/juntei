@@ -1,6 +1,6 @@
 # Команди для файлів { #file-commands }
 
-`parse-file` обробляє файли окремих артефактів: Prefetch, ярлики, Jump Lists, карантин Defender,
+`parse-file` обробляє файли окремих артефактів: Prefetch, ярлики, Jump Lists, карантин Defender, історію PowerShell,
 файли PST, OST, MSG і OFT Outlook, а також індексні файли кошика. Автоматичні Jump Lists використовують контейнер складеного
 файлу (compound file); користувацькі Jump Lists мають інший двійковий формат. Обидва типи належать
 до тієї самої команди артефакту.
@@ -18,6 +18,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -166,6 +167,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 Таблиці містять прочитані файли, їхні папки, кожен елемент (разом із прихованими елементами папок і
 елементами, вбудованими у вкладення), одержувачів, вкладення, контакти, елементи календаря та завдання,
 а з `--properties` — усі властивості в збереженому вигляді. Див. [Outlook](../artifacts/outlook.md).
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+Без `-o` задайте `-t`, щоб писати записи у stdout; без обох параметрів команда показує підсумок. `json` записує окремі форматовані об’єкти, `jsonl` — один об’єкт на рядок. Окрема команда не має параметра `-Z`. Про кодування, захист CSV і тлумачення див. [Історія PowerShell](../artifacts/powershell-history.md).
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

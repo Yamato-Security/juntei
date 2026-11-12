@@ -1,6 +1,6 @@
 # Dosya Komutları { #file-commands }
 
-`parse-file`, artefakta özgü dosyaları işler: Prefetch, kısayollar, Jump Lists, Defender karantinası,
+`parse-file`, artefakta özgü dosyaları işler: Prefetch, kısayollar, Jump Lists, Defender karantinası, PowerShell geçmişi,
 Outlook'un PST, OST, MSG ve OFT dosyaları ve Geri Dönüşüm Kutusu'nun indeks dosyaları. Otomatik Jump Lists bileşik dosya (compound file)
 kapsayıcısı kullanır; özel Jump Lists farklı bir ikili düzen kullanır. Her ikisi de aynı artefakt
 komutuna aittir.
@@ -18,6 +18,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -166,6 +167,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 Tablolar şunlardır: okunan dosyalar, bunların klasörleri, her öğe (klasörlerin gizli öğeleri ve
 eklere gömülü öğelerle birlikte), alıcılar, ekler, kişiler, takvim öğeleri ve görevler; `--properties`
 ile de saklandığı haliyle her özellik. Bkz. [Outlook](../artifacts/outlook.md).
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+`-o` olmadan kayıtları stdout'a yazmak için `-t` belirtin; ikisi de yoksa komut özet gösterir. `json` ayrı, okunabilir biçimlendirilmiş nesneler; `jsonl` satır başına bir nesne yazar. Bağımsız komutta `-Z` seçeneği yoktur. Kodlama, CSV korumaları ve yorumlama için [PowerShell geçmişi](../artifacts/powershell-history.md) sayfasına bakın.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

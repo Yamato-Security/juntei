@@ -621,6 +621,17 @@ pub enum FileCommands {
     )]
     Outlook(OutlookOptions),
 
+    /// Parse PowerShell command history (PSReadLine)
+    #[command(
+        name = "powershell-history",
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file powershell-history <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    PowerShellHistory(PowerShellHistoryOptions),
+
     /// Parse Prefetch files
     #[command(
         author = AUTHOR,
@@ -1775,6 +1786,59 @@ pub struct LnkOptions {
 impl LnkOptions {
     pub fn output_type(&self) -> LnkOutputType {
         self.output_type.unwrap_or(LnkOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-file powershell-history` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PowerShellHistoryOutputType {
+    /// One row per line of each history file; a cell a spreadsheet would run as a formula starts with an added '
+    Csv,
+    /// One pretty-printed JSON object per line, with the command unchanged
+    Json,
+    /// One JSON object per line, with the command unchanged
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct PowerShellHistoryOptions {
+    /// Internal snapshot of original source timestamps for image parsing.
+    #[arg(long = "image-source-metadata", hide = true)]
+    pub image_source_metadata: Option<PathBuf>,
+
+    /// Directory to search recursively for PSReadLine history files (PSReadLine\*_history.txt)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one history file (ConsoleHost_history.txt)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<PowerShellHistoryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl PowerShellHistoryOptions {
+    pub fn output_type(&self) -> PowerShellHistoryOutputType {
+        self.output_type.unwrap_or(PowerShellHistoryOutputType::Csv)
     }
 
     /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.

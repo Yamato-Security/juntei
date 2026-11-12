@@ -23,7 +23,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
-Juntei currently supports 43 of the most popular Windows forensic artifacts and we continue to add more.
+Juntei currently supports 44 of the most popular Windows forensic artifacts and we continue to add more.
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
@@ -151,6 +151,19 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Audit policy** (`SECURITY` `PolAdtEv`) — Which security events the system was set to log, per subcategory, and so which missing events say nothing. | Registry |
+
+### Shell History
+
+| Artifact | Type |
+| --- | --- |
+| **PowerShell history** (`PSReadLine\*_history.txt`) — Saved command lines with user, host, source line numbers and file modification time. Commands have no execution timestamps. | File |
+
+`juntei parse-file powershell-history -d <EVIDENCE> -o powershell-history.csv` recursively finds
+history files in `PSReadLine` folders. Use `-f <FILE>` for renamed files or copies outside those
+folders. CSV, JSON and JSONL are supported. `auto-parse` saves results in `ShellHistory`;
+history records are excluded from both `auto-parse -j` and `super-timeline`.
+See the [PowerShell history guide](website/docs/artifacts/powershell-history.md) for paths,
+encoding, continuation lines and CSV safeguards.
 
 ### Browser Activity
 

@@ -8,6 +8,7 @@ Windows зберігає сліди, що перетинаються, у фай�
 
 | Запитання розслідування | Почніть тут | Підтвердьте за допомогою |
 |---|---|---|
+| Які командні рядки PowerShell було збережено? | [Історія PowerShell](powershell-history.md) | Журнали подій PowerShell, телеметрія процесів, Prefetch |
 | Чи запускався цей виконуваний файл? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), журнали подій |
 | Чи був цей файл колись присутній? | [Amcache](amcache.md), [$MFT](mft.md) | [Журнал USN](usn-journal.md), [$I30](i30.md), ShimCache |
 | Коли файл було створено, перейменовано або видалено? | [Журнал USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), карантин Defender |
