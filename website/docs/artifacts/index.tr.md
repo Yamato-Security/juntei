@@ -20,6 +20,7 @@ kaynakları ayrıştırır, ancak her kaynağın ne anlama geldiğini yine de in
 | Bir kullanıcı hangi web sitelerini ziyaret etti ve neler indirdi? | [Web Tarayıcıları](browser.md), [Internet Explorer ve Eski Edge](webcache.md) | Proxy ve DNS günlükleri, `$MFT` ve USN Günlüğü, Defender, SRUM |
 | Bir kullanıcı kimlerle e-posta alışverişinde bulundu ve iletilere neler eklenmişti? | [Outlook](outlook.md) | Posta sunucusu ve ağ geçidi günlükleri, `$MFT` ve USN Günlüğü, Defender, LNK ve Jump Lists |
 | Bu sunucuyu hangi istemciler ve hesaplar, hangi günlerde kullandı? | [Kullanıcı Erişim Günlüğü (UAL)](ual.md) | Security olay günlükleri, SMB ve RDP günlükleri, güvenlik duvarı günlükleri |
+| Bir kullanıcı Uzak Masaüstü ile ulaştığı bilgisayarlarda ne gördü? | [RDP Bitmap Önbelleği](rdp-cache.md) | [Uzaktan Erişim (Kullanıcı Tarafı)](remote-access.md), [Jump Lists](jump-lists.md), uzak bilgisayarların oturum açma olayları ve [UAL](ual.md) |
 | Kalıcılık yapılandırıldı mı? | [Hizmetler](services.md), [TaskCache](taskcache.md), [Kayıt Defteri](registry.md) | Olay günlükleri, Prefetch, `$MFT` |
 | Defender neyi kaldırdı? | [Defender Karantinası](defender-quarantine.md) | Olay günlükleri, `$MFT`, USN Journal |
 | Yerel hesaplar eklendi veya değiştirildi mi? | [SAM](sam.md) | Security olay günlükleri ve kayıt defteri işlem geçmişi |

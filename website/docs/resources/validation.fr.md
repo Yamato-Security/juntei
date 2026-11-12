@@ -180,6 +180,25 @@ et lecteurs qu'attendent les tests de Plaso. Sur l'image disque publique M57-Jea
 avec `auto-parse --e01`, l'enregistrement INFO2 correspond à rifiuti2, et le fichier recyclé situé à côté, `Dc1.jpg`,
 porte le nom que Juntei lui donne.
 
+## Cache bitmap RDP { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` est le parseur propre à Juntei. Sur kofu, l'un des six hôtes de la collecte du CODE BLUE 2026 CTF,
+chacune des 1 911 tuiles de ses trois fichiers `Cache????.bin` est, pixel pour pixel, l'image que produit
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools). Il en va de même des 1 980 tuiles du fichier public
+`Cache0000.bin` du défi « Phantom Connection » d'ApoorvCTF 2025, dont 105 font 64 × 48 pixels. bmc-tools lit chaque
+tuile comme si elle faisait 64 pixels de large ; les tuiles plus étroites du bord droit d'un écran ressortent donc
+déformées. Juntei, lui, lit chaque tuile à sa propre largeur.
+
+Aucun cache `.bmc` public contenant des tuiles n'a été trouvé : les échantillons ci-dessus, comme ceux des autres clients
+Windows 10 et versions ultérieures, ne contiennent qu'un fichier `bcache24.bmc` vide. La lecture des fichiers `.bmc` a
+donc été testée avec des fichiers construits selon le format : tuiles non compressées des quatre profondeurs de couleur,
+petites tuiles suivies de la fin d'une tuile antérieure, emplacements endommagés, et 3 000 tuiles 16 bits aléatoires
+compressées en RLE qui utilisent tous les ordres de MS-RDPBCGR 3.1.9, sans qu'aucun ordre ne dépasse la fin de la
+première ligne d'une tuile. Juntei et bmc-tools décodent les 3 000 tuiles en pixels identiques. Lorsqu'un ordre
+commence sur la première ligne et la dépasse, les deux divergent : Juntei suit la spécification et le décodeur de
+FreeRDP, qui conservent les règles de la première ligne pour tout l'ordre, tandis que bmc-tools change de règles au
+milieu de celui-ci.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) est un fork maintenu

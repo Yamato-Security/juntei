@@ -62,11 +62,14 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
   для історії, завантажень, файлів cookie та історії форм браузерів.
 - **rifiuti2** Абеля Чеунга разом з документацією обох форматів у **dtformats** від libyal слугував
   еталоном для файлів `$I` і INFO2 кошика.
+- **bmc-tools** від ANSSI та бюлетень CERT-FR про цей формат, **RdpCacheStitcher** від BSI, артефакт RDPCache
+  у **Velociraptor** і плагін кешу RDP у **dissect.target** слугували еталонами для кешів растрових зображень RDP
+  разом із постійним кешем растрових зображень і декодером перемежованого (interleaved) RLE у **FreeRDP**.
 
 ## Специфікації та дослідження { #specifications-and-research }
 
 Дякуємо Microsoft за публікацію Open Specifications для Shell Links, Compound Binary Files,
-протоколів NTFS/SAM, структур реєстру/служб/завдань і документації API. Також дякуємо
+протоколів NTFS/SAM, структур реєстру/служб/завдань, Remote Desktop Protocol і документації API. Також дякуємо
 авторам криміналістичних досліджень AppCompatCache, Amcache, SRUM, Prefetch, реєстру та NTFS, завдяки яким
 ці артефакти стали зрозумілими для практиків.
 

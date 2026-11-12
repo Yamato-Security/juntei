@@ -31,7 +31,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, 휴지통 인덱스 파일, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, 휴지통 인덱스 파일, RDP 비트맵 캐시, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
 
 호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
 
@@ -159,6 +159,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - LNK 바로 가기
 - Jump Lists
 - 휴지통: 삭제된 항목의 원래 경로, 크기, 삭제 시각, 사용자
+- RDP 비트맵 캐시: 사용자가 본 원격 화면의 타일과 캐시 파일마다 하나의 콜라주 이미지
 - ShimCache
 - Persistence Hunter(허용/차단 프로필을 갖춘 131개의 교차 소스 지속성 검사)
 - Defender 격리 메타데이터
@@ -282,6 +283,9 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -347,7 +351,7 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 | `FileExistence` | Amcache, 휴지통, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN 저널 |
 | `NetworkActivity` | 네트워크 프로필, 인터페이스, 공유, 포트 프록시 및 경로. SRUM 연결, 트래픽 및 푸시 알림 |
-| `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유. 사용자 액세스 로깅(서버 역할의 클라이언트) |
+| `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유. RDP 비트맵 캐시(원격 화면의 타일). 사용자 액세스 로깅(서버 역할의 클라이언트) |
 | `Persistence` | 부팅 구성(BCD), 레지스트리 자동 실행, 서비스, TaskCache |
 | `ProcessExecution` | 애플리케이션 호환성, BAM 및 DAM, FeatureUsage 및 고정 항목, MuiCache, Prefetch, Prefetch 타임라인, SRUM 애플리케이션/CPU 활동, UserAssist |
 | `Registry` | 복구된 레코드를 포함한 일반 하이브 키와 값 |
@@ -365,7 +369,7 @@ Jump Lists는 각각 접두사가 붙은 테이블 옆에 하나의 공유 로�
 `NetworkActivity`, `ProcessExecution`, `SystemInformation`에 직접 배치되며, 공유 파일
 `SystemInformation/SRUM-logs.txt`가 있습니다. `logs/` 하위 디렉터리는 생성되지 않습니다.
 
-기본 CSV 파일 이름은 `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+기본 CSV 파일 이름은 `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`,
@@ -379,6 +383,9 @@ Amcache나 Jump Lists의 하위 디렉터리는 없습니다. SRUM 테이블은 
 사용자 액세스 로깅 테이블은 `LateralMovement`에 테이블마다 하나의 파일로 있으며(예: `UAL-Clients.csv`,
 `UAL-SystemIdentity.csv`), `UAL-logs.txt`도 함께 있습니다.
 [사용자 액세스 로깅 (UAL)](../artifacts/ual.md#automatic-parsing)을 참조하십시오.
+RDP 비트맵 캐시 레코드는 `LateralMovement/RdpCache.csv`에 있고, 각 캐시 파일의 콜라주는
+`LateralMovement/RdpCache/<user>/<cache file>/`에 있으며, `--extract-rdp-tiles`를 지정하면 모든 타일이
+그 옆에 저장됩니다. [RDP 비트맵 캐시](../artifacts/rdp-cache.md#automatic-parsing)를 참조하십시오.
 웹 브라우저 테이블은 `BrowserActivity`에 있으며(`Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv`, `Browser-FormHistory.csv`), `Browser-logs.txt`도 함께 있습니다.
 [웹 브라우저](../artifacts/browser.md#automatic-parsing)를 참조하십시오.
@@ -538,6 +545,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -556,8 +564,9 @@ Display Settings:
 
 가능하면 새 출력 디렉터리를 사용하십시오. `-C`는 이번 실행에서 생성되는 정확한 대상만 제거하거나 덮어쓰므로,
 이제는 없는 아티팩트가 오래된 결과를 남기지 않습니다. 관련 없는 파일이나 출력 트리 전체를 삭제하지는 않습니다.
-또한 새 실행에서 `-x`를 사용하는지와 관계없이, 파싱 전에 각 컴퓨터의 `SecurityProducts/DefenderQuarantined/`
-디렉터리와 이전 평면 레이아웃의 예약된 `defender-quarantined/` 디렉터리를 제거합니다.
+또한 새 실행에서 `-x`나 `--extract-rdp-tiles`를 사용하는지와 관계없이, 파싱 전에 각 컴퓨터의
+`SecurityProducts/DefenderQuarantined/` 및 `LateralMovement/RdpCache/` 디렉터리와 이전 평면 레이아웃의
+예약된 `defender-quarantined/` 디렉터리를 제거합니다.
 
 이전 평면 레이아웃에서 전환할 때는 새 출력 디렉터리를 사용하십시오. 이전 CSV/JSON 파일은 자동으로 이동되거나
 삭제되지 않습니다.

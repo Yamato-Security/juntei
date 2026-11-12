@@ -178,6 +178,24 @@ data give the times, sizes, paths, indexes and drives Plaso's tests expect. On D
 public M57-Jean disk image (Windows XP), read with `auto-parse --e01`, the INFO2 record matches
 rifiuti2, and the recycled file beside it, `Dc1.jpg`, has the name Juntei gives it.
 
+## RDP Bitmap Cache
+
+`parse-file rdp-cache` is Juntei's own parser. On kofu, one of the six hosts of the CODE BLUE 2026
+CTF collection, every one of the 1,911 tiles of its three `Cache????.bin` files is, pixel for
+pixel, the image [bmc-tools](https://github.com/ANSSI-FR/bmc-tools) makes. So are the 1,980 tiles
+of the public `Cache0000.bin` of ApoorvCTF 2025's "Phantom Connection" challenge, 105 of them
+64 × 48 pixels. bmc-tools reads every tile as 64 pixels wide, so the narrower tiles at a screen's
+right edge come out skewed; Juntei reads each tile at its own width.
+
+No public `.bmc` cache with tiles was found: the samples above, like other Windows 10 and later
+clients, have only an empty `bcache24.bmc`. `.bmc` reading was therefore tested with files built to
+the format: uncompressed tiles of all four color depths, small tiles followed by the end of an
+earlier tile, damaged slots, and 3,000 random RLE-compressed 16-bit tiles that use every order of
+MS-RDPBCGR 3.1.9, with no order running past the end of a tile's first row. Juntei and bmc-tools
+decode all 3,000 to the same pixels. When an order starts on the first row and runs past it, the two
+differ: Juntei follows the specification and FreeRDP's decoder, which keep the first row's rules for
+the whole order, while bmc-tools changes rules in the middle of it.
+
 ## ShimCache
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) is a maintained fork

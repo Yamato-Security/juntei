@@ -62,11 +62,14 @@ Juntei इसलिए अस्तित्व में है क्यों
   downloads, cookies और form history के लिए संदर्भ रहीं।
 - Abel Cheung का **rifiuti2**, libyal के **dtformats** में दोनों formats के documentation के साथ,
   रीसायकल बिन की `$I` files और INFO2 के लिए संदर्भ रहा।
+- ANSSI का **bmc-tools** और इस format पर उसका CERT-FR bulletin, BSI का **RdpCacheStitcher**,
+  **Velociraptor** का RDPCache artifact और **dissect.target** का RDP cache plugin, **FreeRDP** के
+  persistent bitmap cache और interleaved RLE decoder के साथ, RDP bitmap caches के लिए संदर्भ रहे।
 
 ## Specification और शोध { #specifications-and-research }
 
-हम Shell Links, Compound Binary Files, NTFS/SAM protocols, registry/service/task संरचनाओं और API
-documentation के लिए Open Specifications प्रकाशित करने हेतु Microsoft का धन्यवाद करते हैं। हम
+हम Shell Links, Compound Binary Files, NTFS/SAM protocols, registry/service/task संरचनाओं, Remote Desktop
+Protocol और API documentation के लिए Open Specifications प्रकाशित करने हेतु Microsoft का धन्यवाद करते हैं। हम
 AppCompatCache, Amcache, SRUM, Prefetch, registry और NTFS forensic शोध के उन लेखकों का भी धन्यवाद करते हैं
 जिन्होंने इन आर्टिफ़ैक्ट को practitioners के लिए समझने योग्य बनाया।
 

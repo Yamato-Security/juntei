@@ -20,6 +20,7 @@ Windows သည် ဖိုင်စနစ်၊ registry၊ compatibility ဒ�
 | အသုံးပြုသူက မည်သည့် website များကို ကြည့်ရှုခဲ့ပြီး မည်သည့်အရာများကို download လုပ်ခဲ့သနည်း။ | [ဝဘ် ဘရောက်ဇာများ](browser.md)၊ [Internet Explorer နှင့် legacy Edge](webcache.md) | Proxy နှင့် DNS log များ၊ `$MFT` နှင့် USN Journal၊ Defender၊ SRUM |
 | အသုံးပြုသူက မည်သူနှင့် e-mail အပြန်အလှန် ပေးပို့ခဲ့ပြီး မည်သည့်အရာများကို ပူးတွဲထားခဲ့သနည်း။ | [Outlook](outlook.md) | Mail server နှင့် gateway log များ၊ `$MFT` နှင့် USN Journal၊ Defender၊ LNK နှင့် Jump Lists |
 | ဤ server ကို မည်သည့် client များနှင့် account များက မည်သည့်နေ့များတွင် အသုံးပြုခဲ့သနည်း။ | [အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](ual.md) | Security event log များ၊ SMB နှင့် RDP log များ၊ firewall log များ |
+| အသုံးပြုသူက Remote Desktop ဖြင့် ရောက်ရှိခဲ့သော ကွန်ပျူတာများပေါ်တွင် မည်သည့်အရာများကို မြင်ခဲ့သနည်း။ | [RDP ဘစ်မက် ကက်ရှ်](rdp-cache.md) | [အဝေးမှ ဝင်ရောက်မှု (အသုံးပြုသူဘက်)](remote-access.md)၊ [Jump Lists](jump-lists.md)၊ အဝေးရှိ ကွန်ပျူတာများ၏ logon event များနှင့် [UAL](ual.md) |
 | အမြဲတမ်းဝင်ရောက်နိုင်မှု (persistence) ကို ပြင်ဆင်ထားခဲ့သလား။ | [ဝန်ဆောင်မှုများ](services.md)၊ [TaskCache](taskcache.md)၊ [Registry](registry.md) | Event log များ၊ Prefetch၊ `$MFT` |
 | Defender က မည်သည့်အရာကို ဖယ်ရှားခဲ့သနည်း။ | [Defender သီးခြားခွဲထားသော ဒေတာ](defender-quarantine.md) | Event log များ၊ `$MFT`၊ USN Journal |
 | Local အကောင့်များကို ထပ်ထည့်ခဲ့ သို့မဟုတ် ပြောင်းလဲခဲ့သလား။ | [SAM](sam.md) | Security event log များနှင့် registry transaction မှတ်တမ်း |

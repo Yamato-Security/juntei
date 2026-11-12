@@ -113,12 +113,13 @@ vhdx_mount = { package = "ys-vhdx-mount", git = "https://github.com/Yamato-Secur
 tempfile = "3"
 ewf_image = { package = "ys-e01-parser", git = "https://github.com/Yamato-Security/ys-e01-parser", branch = "main" }
 ctrlc = { version = "3.5", features = ["termination"] }
+# Deflate and CRC-32 for the PNG collages of RDP bitmap caches (already used by the E01 and
+# Outlook parsers); the tests also read the gzipped SYSTEM hive of test_files/shimcache/.
+flate2 = "1"
 
 [dev-dependencies]
 # Build synthetic Outlook files for end-to-end export regressions.
 cfb = "0.16"
-# The SYSTEM hive of test_files/shimcache/ is kept gzipped.
-flate2 = "1"
 
 [profile.release]
 lto = "fat"
