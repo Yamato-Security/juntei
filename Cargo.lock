@@ -2664,7 +2664,7 @@ source = "git+https://github.com/Yamato-Security/ys-srum-parser#5be24a59a619c016
 [[package]]
 name = "ys-vhdx-mount"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#2ed3526aa52aa559db947ba69d6299c9e4d25288"
+source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#39a4b64679733905d65a1189efcd5b5e8d850cbb"
 dependencies = [
  "ctrlc",
  "fuser",
@@ -2675,7 +2675,7 @@ dependencies = [
 [[package]]
 name = "ys-vhdx-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#2ed3526aa52aa559db947ba69d6299c9e4d25288"
+source = "git+https://github.com/Yamato-Security/ys-vhdx-parser?branch=main#39a4b64679733905d65a1189efcd5b5e8d850cbb"
 dependencies = [
  "thiserror 2.0.21",
 ]
