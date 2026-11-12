@@ -62,7 +62,7 @@ rayon = "1.12"
 # Native persistence hunting: stream file hashes, parse bounded task XML and
 # YAML profiles, and inspect embedded PE certificate metadata without a runtime.
 sha2 = "0.11"
-quick-xml = "0.38"
+quick-xml = "0.42"
 serde_yaml_ng = "0.10"
 cms = "0.2"
 x509-cert = "0.2"
