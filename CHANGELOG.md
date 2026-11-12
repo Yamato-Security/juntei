@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+**New Features:**
+
+- `parse-file recycle-bin` parses Recycle Bin deletion metadata: the `$I` files of Windows Vista
+  and later (format versions 1 and 2) and the `INFO2` files of Windows 95 to Server 2003. Each
+  deleted item has its deletion time, original path, size, the user named by the bin's SID, and
+  whether the recycled content was collected. `INFO2` records of items removed from the bin are
+  marked and their paths restored. Damaged files keep what can be read and report the damage.
+  `auto-parse` saves the results in `FileExistence` and adds them to the `-j` timeline, and
+  `super-timeline` makes one event per deleted item. (#157) (@YamatoSecurity)
+
 **Improvements:**
 
 - Upgrade `quick-xml` to 0.42.0, preserving Persistence Hunter's XML evidence values,
@@ -13,6 +23,12 @@
   message catalogs. Keep explicit-file, unreadable-file and recognizable corrupt-container errors,
   and report the actual parser failure in automatic-parser manifests instead of timing footers.
   (@YamatoSecurity)
+
+- Disk-image reads (`mount`, `auto-parse --e01`/`--vhdx` and Persistence Hunter) list directories
+  whose index is in MFT extension records. Such directories, for example `Windows\System32` on
+  Windows XP, were listed with only a few entries, so the live registry hives and other files in
+  them were missed. An index that can't be read whole is reported as an image read problem.
+  (#160) (@YamatoSecurity)
 
 ## 1.1.0 [2026/11/11] - CODE BLUE Release
 
