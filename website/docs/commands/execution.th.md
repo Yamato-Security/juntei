@@ -1,7 +1,7 @@
 # คำสั่งสำหรับไฟล์ { #file-commands }
 
 `parse-file` จัดการไฟล์เฉพาะของแต่ละอาร์ติแฟกต์ ได้แก่ Prefetch, ทางลัด, Jump Lists, ข้อมูลที่ Defender
-กักกัน ไฟล์ PST, OST, MSG และ OFT ของ Outlook และไฟล์ดัชนีของถังรีไซเคิล Automatic Jump Lists ใช้คอนเทนเนอร์แบบ compound file
+กักกัน ประวัติ PowerShell ไฟล์ PST, OST, MSG และ OFT ของ Outlook และไฟล์ดัชนีของถังรีไซเคิล Automatic Jump Lists ใช้คอนเทนเนอร์แบบ compound file
 ส่วน custom Jump Lists ใช้โครงสร้างไบนารีที่ต่างออกไป ทั้งสองแบบอยู่ภายใต้คำสั่งอาร์ติแฟกต์เดียวกัน
 
 ```text
@@ -17,6 +17,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -165,6 +166,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 ตารางที่ได้คือ ไฟล์ที่อ่าน โฟลเดอร์ของไฟล์เหล่านั้น รายการทุกรายการ (รวมถึงรายการที่ซ่อนอยู่ของโฟลเดอร์
 และรายการที่ฝังอยู่ในสิ่งที่แนบ) ผู้รับ สิ่งที่แนบ ผู้ติดต่อ รายการปฏิทิน และงาน และเมื่อใช้ `--properties`
 จะได้คุณสมบัติทุกตัวตามที่จัดเก็บไว้ ดู [Outlook](../artifacts/outlook.md)
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+เมื่อไม่มี `-o` ให้ระบุ `-t` เพื่อเขียนระเบียนไปยัง stdout หากไม่มีทั้งสองตัวเลือก คำสั่งจะแสดงสรุป `json` เขียนอ็อบเจ็กต์แยกกันที่จัดรูปแบบให้อ่านง่าย ส่วน `jsonl` เขียนหนึ่งอ็อบเจ็กต์ต่อบรรทัด คำสั่งเดี่ยวไม่มีตัวเลือก `-Z` ดูการเข้ารหัส การป้องกัน CSV และการตีความได้ที่ [ประวัติ PowerShell](../artifacts/powershell-history.md)
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

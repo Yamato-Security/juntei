@@ -7,6 +7,7 @@ Windows 會在檔案系統、登錄、相容性資料庫、使用者介面歷程
 
 | 調查問題 | 從這裡開始 | 佐證來源 |
 |---|---|---|
+| 儲存了哪些 PowerShell 命令列？ | [PowerShell 歷程記錄](powershell-history.md) | PowerShell 事件記錄、程序遙測、Prefetch |
 | 這個執行檔是否曾經執行？ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)、[SRUM](srum.md)、事件記錄 |
 | 這個檔案是否曾經存在？ | [Amcache](amcache.md)、[$MFT](mft.md) | [USN Journal](usn-journal.md)、[$I30](i30.md)、ShimCache |
 | 檔案是何時被建立、重新命名或刪除的？ | [USN Journal](usn-journal.md) | [$MFT](mft.md)、[$I30](i30.md)、Defender 隔離資料 |

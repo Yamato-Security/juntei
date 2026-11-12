@@ -23,7 +23,7 @@ Juntei という名前は、深い慈悲の心を持つ仏教の尊格「准胝�
 
 ## 対応アーティファクト
 
-Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 43 種類に対応しており、今後も対応範囲を拡大していきます。
+Juntei は現在、広く利用されている Windows フォレンジックアーティファクト 44 種類に対応しており、今後も対応範囲を拡大していきます。
 
 `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` を実行すると、収集済みの複数の Windows システムを
 自動検出し、対応するすべてのアーティファクトを並列に解析します。結果はコンピュータと証拠のカテゴリ別に
@@ -149,6 +149,19 @@ E01 も同じ読み取り専用のネイティブ処理と専用一時領域を�
 | アーティファクト | 種類 |
 | --- | --- |
 | **監査ポリシー** (`SECURITY` の `PolAdtEv`) — セキュリティイベントの記録設定をサブカテゴリ別に示します。記録がないことを判断材料にできない場合の把握に役立ちます。 | Registry |
+
+### シェル履歴
+
+| アーティファクト | 種類 |
+| --- | --- |
+| **PowerShell 履歴** (`PSReadLine\*_history.txt`) — 保存されたコマンドラインとユーザー、ホスト、ソース行番号、ファイル更新時刻。コマンドの実行タイムスタンプはありません。 | File |
+
+`juntei parse-file powershell-history -d <EVIDENCE> -o powershell-history.csv` は、
+`PSReadLine` フォルダ内の履歴ファイルを再帰的に検出します。名前を変更したファイルや、
+これらのフォルダ外のコピーには `-f <FILE>` を使用します。CSV、JSON、JSONL に対応します。
+`auto-parse` は結果を `ShellHistory` に保存します。履歴レコードは `auto-parse -j` と
+`super-timeline` の両方から除外します。パス、エンコーディング、継続行、CSV 保護については
+[PowerShell 履歴ガイド](website/docs/artifacts/powershell-history.md)を参照してください。
 
 ### ブラウザの活動
 

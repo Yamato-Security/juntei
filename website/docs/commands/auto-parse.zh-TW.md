@@ -30,7 +30,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案中解析器會讀取的檔案（登錄 Hive 及其交易記錄、NTFS 中繼資料檔、資料庫、Prefetch 檔、捷徑、Jump List、Outlook 檔案、資源回收筒索引檔與 Defender 隔離資料夾）串流複製至專用暫存目錄。其他檔案則成為保留原始更新時刻的空白預留位置，因此目錄與路徑看起來與磁碟上相同。persistence-hunter 僅在需要時才從映像檔讀取預留位置的內容，例如持續性項目所指向的執行檔。**除結果外，請預留足夠空間容納複製的檔案。**讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
+解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案中解析器會讀取的檔案（登錄 Hive 及其交易記錄、NTFS 中繼資料檔、資料庫、Prefetch 檔、捷徑、Jump List、Outlook 檔案、PSReadLine 歷程記錄檔案、資源回收筒索引檔與 Defender 隔離資料夾）串流複製至專用暫存目錄。其他檔案則成為保留原始更新時刻的空白預留位置，因此目錄與路徑看起來與磁碟上相同。persistence-hunter 僅在需要時才從映像檔讀取預留位置的內容，例如持續性項目所指向的執行檔。**除結果外，請預留足夠空間容納複製的檔案。**讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻，以及 PowerShell 歷程記錄來源檔案的修改時間，使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
 
 主機偵測、CSV/JSON/JSONL 和 `-j` 使用一般證據目錄的解析流程。`manifest.json` 中的 `Image` 識別原始映像；`EvidenceRoot` 識別內部相對路徑。讀取失敗或不安全的名稱會記錄在 `ImageErrors` 與 `manifest.csv` 的失敗列。保留可讀取資料的結果；輸入不完整時結束代碼為 1。不會擅自重新命名不安全或曖昧的名稱，也不會將具名 NTFS 串流抽取為額外檔案；初步蒐證映像中已收集為一般檔案的證據仍可使用。
 
@@ -330,6 +330,9 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -359,6 +362,7 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 | `ProcessExecution` | 應用程式相容性、BAM 與 DAM、FeatureUsage 與釘選項目、MuiCache、Prefetch、Prefetch 時間軸、SRUM 應用程式／CPU 活動、UserAssist |
 | `Registry` | 一般的登錄區機碼與值，包括復原的記錄 |
 | `SecurityProducts` | Defender 隔離中繼資料與選擇性擷取的內容；安全性設定（Defender、UAC、認證保護、RDP、防火牆、記錄） |
+| `ShellHistory` | PowerShell PSReadLine 命令歷程記錄；檔案修改時間是中繼資料，沒有命令執行時間 |
 | `SystemInformation` | 名稱、Windows 版本、時區、最後一次關機、設定檔、SID 與稽核原則；SRUM 能源／容量、身分對應表與未知提供者 |
 
 類別有助於整理調查工作；但並不能證明特定活動。例如，
@@ -602,3 +606,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 既有的 `-j, --json-timeline` 匯出仍是合併所有原生記錄的單一 JSONL 檔案。它保留各剖析器的結構描述；不會展開時間戳記欄位，也不會排序事件。請保留它與各剖析器的個別結果，以供證據層級的檢閱。
+
+## PowerShell 歷程記錄 { #powershell-history }
+
+會遞迴探索直接位於 `PSReadLine` 資料夾內的 `<Host>_history.txt`，並在 VHDX/E01 暫存作業期間複製。同樣後綴但位於該資料夾外的檔案會排除；自訂位置或重新命名的副本請明確使用 `parse-file powershell-history -f <FILE>` 解析。
+
+結果儲存為 `ShellHistory/PowerShellHistory.csv`（依所選格式也可為 `.json`/`.jsonl`），並產生一般的資訊清單與解析器日誌項目。`FileLastWriteTime` 是來源檔案修改時間，包含原始映像檔中繼資料，絕非命令執行時間。`auto-parse -Z` 會與其他輸出時間一起變更其顯示時差；獨立解析器沒有 `-Z` 選項。歷程記錄仍保留在類別輸出中，但不會進入 `-j` 時間軸或 `super-timeline`。請參閱 [PowerShell 歷程記錄](../artifacts/powershell-history.md)。

@@ -8,6 +8,7 @@ doch die Ermittlerin oder der Ermittler muss weiterhin interpretieren, was jede 
 
 | Fragestellung der Untersuchung | Hier beginnen | Untermauern mit |
 |---|---|---|
+| Welche PowerShell-Befehlszeilen wurden gespeichert? | [PowerShell-Verlauf](powershell-history.md) | PowerShell-Ereignisprotokolle, Prozesstelemetrie, Prefetch |
 | Wurde diese ausführbare Datei ausgeführt? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), Ereignisprotokolle |
 | War diese Datei jemals vorhanden? | [Amcache](amcache.md), [$MFT](mft.md) | [USN-Journal](usn-journal.md), [$I30](i30.md), ShimCache |
 | Wann wurde eine Datei erstellt, umbenannt oder gelöscht? | [USN-Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender-Quarantäne |

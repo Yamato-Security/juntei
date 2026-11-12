@@ -1,7 +1,7 @@
 # أوامر الملفات { #file-commands }
 
 يتعامل `parse-file` مع الملفات الخاصة بآثار رقمية محددة: Prefetch، والاختصارات، وJump Lists، وحجر
-Defender، وملفات PST وOST وMSG وOFT الخاصة بـ Outlook، وملفات الفهرس في سلة المحذوفات. تستخدم Jump Lists التلقائية حاوية ملف مركّب
+Defender، وسجل PowerShell، وملفات PST وOST وMSG وOFT الخاصة بـ Outlook، وملفات الفهرس في سلة المحذوفات. تستخدم Jump Lists التلقائية حاوية ملف مركّب
 (compound file)؛ بينما تستخدم Jump Lists المخصصة بنية ثنائية مختلفة. وكلتاهما تتبعان أمر الأثر
 الرقمي نفسه.
 
@@ -18,6 +18,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -166,6 +167,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 الجداول هي الملفات المقروءة، ومجلداتها، وكل عنصر (مع العناصر المخفية في المجلدات والعناصر المضمّنة في
 المرفقات)، والمستلمون، والمرفقات، وجهات الاتصال، وعناصر التقويم، والمهام، ومع `--properties` كل خاصية
 كما خُزّنت. راجع [Outlook](../artifacts/outlook.md).
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+دون `-o`، حدد `-t` لكتابة السجلات إلى stdout؛ ودون الخيارين يعرض الأمر ملخصاً. يكتب `json` كائنات منفصلة منسقة للقراءة، ويكتب `jsonl` كائناً واحداً في كل سطر. لا يملك الأمر المستقل خيار `-Z`. انظر [سجل PowerShell](../artifacts/powershell-history.md) للترميز وحماية CSV والتفسير.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

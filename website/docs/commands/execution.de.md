@@ -1,6 +1,7 @@
 # Dateibefehle { #file-commands }
 
 `parse-file` verarbeitet artefaktspezifische Dateien: Prefetch, Verknüpfungen, Jump Lists, die Defender-Quarantäne,
+den PowerShell-Verlauf,
 die PST-, OST-, MSG- und OFT-Dateien von Outlook sowie die Indexdateien des Papierkorbs. Automatische Jump Lists verwenden einen Compound-File-Container; benutzerdefinierte Jump Lists verwenden ein anderes
 binäres Layout. Beide gehören zum selben Artefaktbefehl.
 
@@ -17,6 +18,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -165,6 +167,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 Die Tabellen sind die gelesenen Dateien, ihre Ordner, jedes Element (mit den versteckten Elementen der Ordner und
 den in Anhängen eingebetteten Elementen), Empfänger, Anhänge, Kontakte, Kalenderelemente und Aufgaben sowie mit
 `--properties` jede Eigenschaft, wie gespeichert. Siehe [Outlook](../artifacts/outlook.md).
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+Geben Sie ohne `-o` die Option `-t` an, um Datensätze auf stdout zu schreiben; ohne beide Optionen erscheint eine Zusammenfassung. `json` schreibt einzelne formatierte Objekte, `jsonl` ein Objekt pro Zeile. Der eigenständige Befehl hat keine `-Z`-Option. Kodierung, CSV-Schutz und Interpretation erläutert [PowerShell-Verlauf](../artifacts/powershell-history.md).
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

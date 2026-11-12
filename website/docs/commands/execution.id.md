@@ -1,7 +1,7 @@
 # Perintah berkas { #file-commands }
 
 `parse-file` menangani berkas yang khusus untuk artefak tertentu: Prefetch, pintasan, Jump Lists,
-karantina Defender, berkas PST, OST, MSG, dan OFT milik Outlook, serta berkas indeks Recycle Bin. Jump List otomatis
+karantina Defender, riwayat PowerShell, berkas PST, OST, MSG, dan OFT milik Outlook, serta berkas indeks Recycle Bin. Jump List otomatis
 menggunakan kontainer compound-file; Jump List kustom menggunakan tata letak biner yang berbeda.
 Keduanya termasuk dalam perintah artefak yang sama.
 
@@ -18,6 +18,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -166,6 +167,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 Tabelnya adalah berkas yang dibaca, folder-foldernya, setiap item (termasuk item tersembunyi di folder
 dan item yang tertanam di lampiran), penerima, lampiran, kontak, item kalender, dan tugas, serta, dengan
 `--properties`, setiap properti sebagaimana tersimpan. Lihat [Outlook](../artifacts/outlook.md).
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+Tanpa `-o`, tentukan `-t` untuk menulis rekaman ke stdout; tanpa kedua opsi tersebut, perintah menampilkan ringkasan. `json` menulis objek terpisah dengan format yang mudah dibaca; `jsonl` menulis satu objek per baris. Perintah mandiri tidak memiliki opsi `-Z`. Lihat [Riwayat PowerShell](../artifacts/powershell-history.md) untuk encoding, pelindung CSV, dan interpretasi.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

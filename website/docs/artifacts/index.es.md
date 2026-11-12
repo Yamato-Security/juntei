@@ -8,6 +8,7 @@ pero el investigador sigue teniendo que interpretar lo que significa cada una.
 
 | Pregunta de la investigación | Empiece aquí | Corrobore con |
 |---|---|---|
+| ¿Qué líneas de comandos de PowerShell se guardaron? | [Historial de PowerShell](powershell-history.md) | Registros de eventos de PowerShell, telemetría de procesos, Prefetch |
 | ¿Se ejecutó este ejecutable? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), registros de eventos |
 | ¿Estuvo presente alguna vez este archivo? | [Amcache](amcache.md), [$MFT](mft.md) | [Diario USN](usn-journal.md), [$I30](i30.md), ShimCache |
 | ¿Cuándo se creó, renombró o eliminó un archivo? | [Diario USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), cuarentena de Defender |

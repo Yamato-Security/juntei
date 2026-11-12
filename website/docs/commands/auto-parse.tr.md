@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları, Geri Dönüşüm Kutusu indeks dosyaları ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
+Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları, PSReadLine geçmiş dosyaları, Geri Dönüşüm Kutusu indeks dosyaları ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları ile PowerShell geçmişi kaynak dosyalarının değiştirme zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
 
 Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `manifest.json` içindeki `Image` özgün imajı, `EvidenceRoot` iç göreli yolu tanımlar. Okuma hataları ve güvensiz adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara yazılır. Okunabilir sonuçlar korunur; eksik girdiler 1 döndürür. Güvensiz veya belirsiz adlar yeniden adlandırılmaz. Adlandırılmış NTFS akışları ek dosya olarak çıkarılmaz; normal dosya olarak toplanmış eserler kullanılabilir.
 
@@ -338,6 +338,9 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -367,6 +370,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `ProcessExecution` | Uygulama uyumluluğu, BAM ve DAM, FeatureUsage ve sabitlenmiş öğeler, MuiCache, Prefetch, Prefetch zaman çizelgesi, SRUM uygulama/CPU etkinliği, UserAssist |
 | `Registry` | Kurtarılmış kayıtlar dahil genel kovan anahtarları ve değerleri |
 | `SecurityProducts` | Defender karantina meta verileri ve isteğe bağlı çıkarılmış içerik; güvenlik ayarları (Defender, UAC, kimlik bilgisi koruması, RDP, güvenlik duvarı, günlük kaydı) |
+| `ShellHistory` | PowerShell PSReadLine komut geçmişi; dosya değiştirme zamanı meta veridir, komut yürütme zamanları yoktur |
 | `SystemInformation` | Adlar, Windows sürümü, saat dilimi, son kapatma, profiller, SID'ler ve denetim ilkesi; SRUM enerji/kapasite, kimlik eşlemeleri ve bilinmeyen sağlayıcılar |
 
 Kategoriler incelemeleri düzenlemeye yardımcı olur; belirli bir etkinliğin kanıtı değildir. Örneğin,
@@ -622,3 +626,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 `-j, --json-timeline` dışa aktarımı, şemaları koruyan yerel kayıtların birleşik JSONL dosyasıdır; zamanları genişletmez veya sıralamaz. Kanıt incelemesi için bunu ve ayrı ayrıştırıcı çıktılarını saklayın.
+
+## PowerShell geçmişi { #powershell-history }
+
+Doğrudan bir `PSReadLine` klasöründeki `<Host>_history.txt` dosyaları özyinelemeli olarak keşfedilir ve VHDX/E01 hazırlığı sırasında kopyalanır. Klasör dışındaki aynı son ekli dosyalar hariç tutulur; özel konumdaki veya yeniden adlandırılmış kopyaları açıkça `parse-file powershell-history -f <FILE>` ile ayrıştırın.
+
+Sonuçlar, olağan manifest ve ayrıştırıcı günlük kayıtlarıyla birlikte `ShellHistory/PowerShellHistory.csv` (veya seçilen biçime göre `.json`/`.jsonl`) olarak kaydedilir. `FileLastWriteTime`, özgün imaj meta verileri dahil kaynak dosyanın değiştirme zamanıdır, asla komut yürütme zamanı değildir. `auto-parse -Z`, diğer çıktı zamanlarıyla birlikte bunun görüntüleme farkını değiştirir; bağımsız ayrıştırıcıda `-Z` seçeneği yoktur. Geçmiş kayıtları kategori çıktısında kalır, ancak `-j` zaman çizelgesine veya `super-timeline` içine girmez. Bkz. [PowerShell geçmişi](../artifacts/powershell-history.md).

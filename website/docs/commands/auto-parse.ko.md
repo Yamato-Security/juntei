@@ -31,7 +31,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, 휴지통 인덱스 파일, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, PSReadLine 기록 파일, 휴지통 인덱스 파일, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각과 PowerShell 기록 소스의 수정 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
 
 호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
 
@@ -323,6 +323,9 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -352,6 +355,7 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 | `ProcessExecution` | 애플리케이션 호환성, BAM 및 DAM, FeatureUsage 및 고정 항목, MuiCache, Prefetch, Prefetch 타임라인, SRUM 애플리케이션/CPU 활동, UserAssist |
 | `Registry` | 복구된 레코드를 포함한 일반 하이브 키와 값 |
 | `SecurityProducts` | Defender 격리 메타데이터 및 선택적으로 추출된 콘텐츠. 보안 설정(Defender, UAC, 자격 증명 보호, RDP, 방화벽, 로깅) |
+| `ShellHistory` | PowerShell PSReadLine 명령 기록. 파일 수정 시각은 메타데이터이며 명령 실행 시각은 없음 |
 | `SystemInformation` | 이름, Windows 버전, 표준 시간대, 마지막 종료, 프로필, SID 및 감사 정책. SRUM 에너지/용량, ID 맵 및 알 수 없는 공급자 |
 
 범주는 조사를 정리하는 데 도움을 주지만, 특정 활동의 증거는 아닙니다. 예를 들어 Amcache와 ShimCache 항목만으로는
@@ -588,3 +592,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 기존 `-j, --json-timeline` 내보내기는 여전히 네이티브 레코드를 하나로 합친 JSONL 파일입니다. 파서 스키마를 그대로
 보존하며, 타임스탬프 필드를 확장하거나 이벤트를 정렬하지 않습니다. 증거 수준의 검토를 위해 이 파일과 개별 파서
 결과를 보관하십시오.
+
+## PowerShell 기록 { #powershell-history }
+
+`PSReadLine` 폴더 바로 아래의 `<Host>_history.txt` 파일을 재귀적으로 탐색하고 VHDX/E01 준비 과정에서 복사합니다. 해당 폴더 밖의 동일한 접미사 파일은 제외합니다. 사용자 지정 위치나 이름을 바꾼 사본은 `parse-file powershell-history -f <FILE>`로 명시적으로 파싱하세요.
+
+결과는 `ShellHistory/PowerShellHistory.csv` 또는 선택한 형식의 `.json`/`.jsonl`로 저장하며 일반적인 매니페스트와 파서 로그 항목도 생성합니다. `FileLastWriteTime`은 원래 이미지 메타데이터를 포함한 소스 파일 수정 시각이며 명령 실행 시각이 아닙니다. `auto-parse -Z`는 다른 출력 시각과 함께 표시 오프셋을 변경합니다. 독립 실행 파서에는 `-Z` 옵션이 없습니다. 기록 레코드는 범주 출력에 남지만 `-j` 타임라인이나 `super-timeline`에는 포함되지 않습니다. [PowerShell 기록](../artifacts/powershell-history.md)을 참조하세요.

@@ -1,7 +1,7 @@
 # ဖိုင် ညွှန်ကြားချက်များ { #file-commands }
 
 `parse-file` သည် အထောက်အထားအမျိုးအစား သီးသန့်ဖိုင်များကို ကိုင်တွယ်သည်- Prefetch၊ ဖြတ်လမ်းများ၊ Jump Lists၊ Defender
-quarantine၊ Outlook ၏ PST၊ OST၊ MSG နှင့် OFT ဖိုင်များနှင့် Recycle Bin ၏ index ဖိုင်များ။ Automatic Jump Lists သည် compound-file container ကို
+quarantine၊ PowerShell မှတ်တမ်း၊ Outlook ၏ PST၊ OST၊ MSG နှင့် OFT ဖိုင်များနှင့် Recycle Bin ၏ index ဖိုင်များ။ Automatic Jump Lists သည် compound-file container ကို
 အသုံးပြုပြီး custom Jump Lists သည် မတူညီသော binary layout ကို အသုံးပြုသည်။ နှစ်မျိုးစလုံးသည် တူညီသော အထောက်အထား
 ညွှန်ကြားချက်တစ်ခုတည်းတွင် ပါဝင်သည်။
 
@@ -18,6 +18,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -166,6 +167,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 Table များမှာ ဖတ်ခဲ့သော ဖိုင်များ၊ ၎င်းတို့၏ ဖိုင်တွဲများ၊ item တိုင်း (ဖိုင်တွဲများ၏ ဝှက်ထားသော item များနှင့်
 ပူးတွဲဖိုင်များတွင် ထည့်သွင်းထားသော item များ အပါအဝင်)၊ လက်ခံသူများ၊ ပူးတွဲဖိုင်များ၊ contact များ၊ ပြက္ခဒိန် item များနှင့်
 task များ ဖြစ်ပြီး `--properties` ဖြင့် သိမ်းဆည်းထားသည့်အတိုင်း property တိုင်း ဖြစ်သည်။ [Outlook](../artifacts/outlook.md) ကို ကြည့်ပါ။
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+`-o` မပါဘဲ record များကို stdout သို့ရေးရန် `-t` သတ်မှတ်ပါ။ နှစ်ခုလုံး မပါလျှင် command က အနှစ်ချုပ်ပြသည်။ `json` သည် ဖတ်ရလွယ်အောင် ပုံစံချထားသည့် သီးခြား object များကို ရေးပြီး `jsonl` သည် တစ်ကြောင်းလျှင် object တစ်ခု ရေးသည်။ သီးခြား command တွင် `-Z` ရွေးချယ်စရာ မရှိပါ။ စာသားကုဒ်၊ CSV ကာကွယ်မှုနှင့် အဓိပ္ပာယ်ဖော်ပုံအတွက် [PowerShell မှတ်တမ်း](../artifacts/powershell-history.md) ကို ကြည့်ပါ။
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

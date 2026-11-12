@@ -27,13 +27,13 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-各パーサーはファイルパスを必要とするため、リーダーが公開する NTFS ボリュームから、パーサーが読み取るファイル（レジストリハイブとそのトランザクションログ、NTFS メタデータファイル、データベース、Prefetch、ショートカット、Jump List、Outlook ファイル、ごみ箱のインデックス ファイル、Defender の検疫フォルダー）を専用の一時作業領域にコピーしてから通常の解析を行います。
+各パーサーはファイルパスを必要とするため、リーダーが公開する NTFS ボリュームから、パーサーが読み取るファイル（レジストリハイブとそのトランザクションログ、NTFS メタデータファイル、データベース、Prefetch、ショートカット、Jump List、Outlook ファイル、PSReadLine 履歴ファイル、ごみ箱のインデックス ファイル、Defender の検疫フォルダー）を専用の一時作業領域にコピーしてから通常の解析を行います。
 それ以外のファイルは、元の更新時刻を持つ空のプレースホルダーになるため、ディレクトリとパスはディスク上と同じに見えます。
 persistence-hunter は、永続化エントリが参照する実行ファイルなど、必要になったプレースホルダーの内容だけをイメージから読み取ります。
 **出力結果に加えて、コピーするファイルを保存する一時ディスク容量が必要です。**
 読み取りバッファーは固定サイズです。ホストのファイルシステムが対応している場合、ゼロ領域はスパース領域として書き込みます。
 元のファイル名、ディレクトリ構造、ハードリンク、ファイル更新時刻を保持します。
-LNK と Jump List のソース作成・更新・アクセス時刻は、一時ファイルではなく元の NTFS メタデータのスナップショットから取得します。
+LNK と Jump List のソース作成・更新・アクセス時刻、および PowerShell 履歴のソース更新時刻は、一時ファイルではなく元の NTFS メタデータのスナップショットから取得します。
 一時ディレクトリは、パーサーエラーが報告された場合を含めて正常な終了処理で削除されますが、強制終了時には残る場合があります。
 元のイメージは読み取り専用で開き、未反映の VHDX ログもメモリ上でのみ適用します。
 
@@ -291,6 +291,9 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -320,6 +323,7 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 | `ProcessExecution` | アプリケーションの互換性、BAM および DAM、FeatureUsage とピン、MuiCache、Prefetch、Prefetch タイムライン、SRUM アプリケーション/CPU アクティビティ、UserAssist |
 | `Registry` | 一般的なハイブキーと値 (回復されたレコードを含む) |
 | `SecurityProducts` | Defender 隔離メタデータとオプションの抽出コンテンツ。セキュリティ設定 (Defender、UAC、資格情報の保護、RDP、ファイアウォール、ログ) |
+| `ShellHistory` | PowerShell PSReadLine のコマンド履歴。ファイル更新時刻はメタデータであり、コマンド実行時刻はありません |
 | `SystemInformation` | 名前、Windows バージョン、タイムゾーン、最終シャットダウン、プロファイル、SID、監査ポリシー。 SRUM エネルギー/容量、ID マップ、および不明なプロバイダー |
 
 カテゴリは調査を整理するのに役立ちます。それらは特定の活動の証拠ではありません。たとえば、Amcache および ShimCache エントリだけでは実行は確立されません。 SRUM はリソースの使用状況を記録します。実行中のプログラムについて結論を出す前に、アーティファクト ガイドを参照してください。
@@ -456,3 +460,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 既存の `-j, --json-timeline` は、各パーサーのスキーマを保ったネイティブレコードを JSONL にまとめる機能です。時刻の展開や並べ替えは行いません。詳細な証拠確認のため、このファイルと各パーサーの結果も保管してください。
+
+## PowerShell 履歴 { #powershell-history }
+
+`PSReadLine` フォルダ直下の `<Host>_history.txt` を再帰的に検出し、VHDX/E01 のステージング時にコピーします。このフォルダ外にある同じ接尾辞のファイルは対象外です。独自の保存場所や名前を変更したコピーは、`parse-file powershell-history -f <FILE>` で明示的に解析してください。
+
+結果は `ShellHistory/PowerShellHistory.csv`（選択した形式に応じて `.json`/`.jsonl`）に保存し、通常のマニフェストとパーサーログにも記録します。`FileLastWriteTime` は元のイメージメタデータを含むソースファイルの更新時刻であり、コマンド実行時刻ではありません。`auto-parse -Z` は他の出力時刻とともに表示オフセットを変更しますが、単独のパーサーには `-Z` オプションがありません。履歴レコードはカテゴリ出力に残り、`-j` タイムラインや `super-timeline` には入りません。[PowerShell 履歴](../artifacts/powershell-history.md)を参照してください。

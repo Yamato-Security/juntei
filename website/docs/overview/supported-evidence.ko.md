@@ -19,6 +19,7 @@
 | Outlook(PST, OST, MSG, OFT) | `parse-file outlook` | 보낸 사람, 받는 사람, 시각, 첨부 파일이 포함된 이메일. 연락처, 일정 항목, 작업. 폴더, 숨겨진 설정 항목, 저장된 그대로의 모든 속성 | 보낸 사람의 주소는 위조될 수 있음, 더 이상 어느 폴더에도 없는 항목은 복구되지 않음, 오프라인 주소록, 자동 완성 및 기타 Outlook 파일은 아직 읽지 않음 |
 | LNK 바로 가기 | `parse-file lnk` | 열린 대상, 인수, 볼륨, 공유, 원본 머신 | 대상이 실행되지 않아도 바로 가기가 생성될 수 있음 |
 | Jump Lists | `parse-file jump-lists` | 애플리케이션이 연 항목, 고정, 사용 내역 및 포함된 LNK 데이터 | 애플리케이션별로 동작과 보존 방식이 다름 |
+| PowerShell PSReadLine 기록 | `parse-file powershell-history` | 저장된 명령줄, 사용자, 호스트 및 소스 줄 번호 | 명령별 타임스탬프 없음. 파일 수정 시각은 메타데이터일 뿐임 |
 | 휴지통(`$I` 파일, INFO2) | `parse-file recycle-bin` | 사용자가 휴지통으로 삭제한 항목: 원래 경로, 크기, 삭제 시각, 사용자, 삭제된 콘텐츠가 아직 남아 있는지 여부 | Shift+Delete와 대부분의 프로그램은 휴지통을 거치지 않음, 휴지통을 비우면 `$I` 파일이 삭제됨(INFO2는 표시된 레코드를 유지함) |
 | ShimCache | `parse-registry shimcache` | 과거 실행 파일 경로와 호환성 검사 | 종료될 때까지 캐시가 플러시되지 않을 수 있음, 엔트리만으로는 실행이 아님 |
 | Defender 격리 데이터 | `parse-file defender-quarantine` | 탐지, 원래 경로, 해시, 다운로드 출처, 복구된 바이트 | 탐지 이름은 제품의 판정임, 추출은 위험함 |

@@ -1,6 +1,6 @@
 # 檔案命令 { #file-commands }
 
-`parse-file` 處理特定跡證的檔案：Prefetch、捷徑、Jump Lists、Defender 隔離資料、
+`parse-file` 處理特定跡證的檔案：Prefetch、捷徑、Jump Lists、Defender 隔離資料、PowerShell 歷程記錄、
 Outlook 的 PST、OST、MSG 與 OFT 檔案，以及資源回收筒的索引檔案。自動 Jump Lists 使用複合檔案容器；自訂 Jump Lists 則使用不同的
 二進位配置。兩者都屬於同一個跡證命令。
 
@@ -17,6 +17,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -165,6 +166,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 這些資料表包括讀取的檔案、其資料夾、每一個項目（含資料夾的隱藏項目與內嵌於附件中的項目）、
 收件者、附件、連絡人、行事曆項目與工作；使用 `--properties` 時，另含依原樣儲存的每一個屬性。
 請參閱 [Outlook](../artifacts/outlook.md)。
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+不指定 `-o` 時，請指定 `-t` 將記錄寫至標準輸出；兩者都不指定則顯示摘要。`json` 寫入分別排版的獨立物件；`jsonl` 每行寫入一個物件。獨立命令沒有 `-Z` 選項。編碼、CSV 防護及解讀請參閱 [PowerShell 歷程記錄](../artifacts/powershell-history.md)。
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

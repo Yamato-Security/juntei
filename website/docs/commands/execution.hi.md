@@ -1,7 +1,7 @@
 # फ़ाइल कमांड { #file-commands }
 
 `parse-file` आर्टिफ़ैक्ट-विशिष्ट फ़ाइलों को संभालता है: Prefetch, शॉर्टकट, Jump Lists, Defender
-क्वारंटीन, Outlook की PST, OST, MSG और OFT फ़ाइलें, और रीसायकल बिन की index फ़ाइलें। Automatic Jump Lists एक compound-file
+क्वारंटीन, PowerShell इतिहास, Outlook की PST, OST, MSG और OFT फ़ाइलें, और रीसायकल बिन की index फ़ाइलें। Automatic Jump Lists एक compound-file
 container का उपयोग करती हैं; custom Jump Lists एक अलग binary layout का उपयोग करती हैं। दोनों एक ही
 आर्टिफ़ैक्ट command के अंतर्गत आती हैं।
 
@@ -18,6 +18,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -166,6 +167,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 Tables ये हैं: पढ़ी गई फ़ाइलें, उनके folders, हर item (folders के छिपे हुए items और attachments में
 embedded items सहित), recipients, attachments, contacts, calendar items और tasks, और `--properties` के
 साथ हर property, जैसी stored है। [Outlook](../artifacts/outlook.md) देखें।
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+`-o` के बिना रिकॉर्ड stdout पर लिखने के लिए `-t` दें; दोनों के बिना कमांड सारांश दिखाती है। `json` अलग-अलग, पढ़ने योग्य स्वरूपित ऑब्जेक्ट लिखता है; `jsonl` प्रति पंक्ति एक ऑब्जेक्ट लिखता है। स्वतंत्र कमांड में `-Z` विकल्प नहीं है। एन्कोडिंग, CSV सुरक्षा और अर्थ के लिए [PowerShell इतिहास](../artifacts/powershell-history.md) देखें।
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

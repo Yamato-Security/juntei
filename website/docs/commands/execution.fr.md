@@ -1,7 +1,7 @@
 # Commandes de fichiers { #file-commands }
 
 `parse-file` traite les fichiers propres à certains artefacts : Prefetch, raccourcis, Jump Lists, quarantaine
-Defender, fichiers PST, OST, MSG et OFT d'Outlook, et fichiers d'index de la Corbeille. Les Jump Lists automatiques utilisent un conteneur de fichier composé (compound file) ; les Jump Lists personnalisées utilisent une
+Defender, historique PowerShell, fichiers PST, OST, MSG et OFT d'Outlook, et fichiers d'index de la Corbeille. Les Jump Lists automatiques utilisent un conteneur de fichier composé (compound file) ; les Jump Lists personnalisées utilisent une
 disposition binaire différente. Les deux relèvent de la même commande d'artefact.
 
 ```text
@@ -17,6 +17,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -166,6 +167,32 @@ Les tables sont les fichiers lus, leurs dossiers, chaque élément (avec les él
 éléments incorporés dans des pièces jointes), les destinataires, les pièces jointes, les contacts, les éléments de
 calendrier et les tâches, et, avec `--properties`, chaque propriété telle qu'elle est stockée. Voir
 [Outlook](../artifacts/outlook.md).
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+Sans `-o`, précisez `-t` pour écrire les enregistrements sur stdout ; sans ces deux options, la commande affiche un résumé. `json` écrit des objets distincts mis en forme ; `jsonl` écrit un objet par ligne. La commande autonome n’a pas d’option `-Z`. Voir [Historique PowerShell](../artifacts/powershell-history.md) pour l’encodage, les protections CSV et l’interprétation.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

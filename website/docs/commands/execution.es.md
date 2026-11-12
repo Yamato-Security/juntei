@@ -1,7 +1,7 @@
 # Comandos de archivos { #file-commands }
 
 `parse-file` procesa archivos específicos de artefactos: Prefetch, accesos directos, Jump Lists, la cuarentena de
-Defender, los archivos PST, OST, MSG y OFT de Outlook y los archivos de índice de la Papelera de reciclaje. Los Jump Lists automáticos utilizan un contenedor de archivo compuesto; los Jump Lists personalizados utilizan una
+Defender, el historial de PowerShell, los archivos PST, OST, MSG y OFT de Outlook y los archivos de índice de la Papelera de reciclaje. Los Jump Lists automáticos utilizan un contenedor de archivo compuesto; los Jump Lists personalizados utilizan una
 estructura binaria diferente. Ambos pertenecen al mismo comando de artefacto.
 
 ```text
@@ -17,6 +17,7 @@ Commands:
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
@@ -165,6 +166,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 Las tablas son los archivos leídos, sus carpetas, todos los elementos (con los elementos ocultos de las carpetas y
 los elementos incrustados en adjuntos), los destinatarios, los adjuntos, los contactos, los elementos de calendario y
 las tareas, y, con `--properties`, cada propiedad tal como está almacenada. Consulte [Outlook](../artifacts/outlook.md).
+
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+Sin `-o`, indique `-t` para escribir registros en stdout; sin ambas opciones, el comando muestra un resumen. `json` escribe objetos separados con formato legible; `jsonl` escribe un objeto por línea. El comando independiente no tiene opción `-Z`. Véase [Historial de PowerShell](../artifacts/powershell-history.md) para la codificación, las protecciones CSV y la interpretación.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 
