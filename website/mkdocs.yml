@@ -1420,6 +1420,8 @@ nav:
       - Browser Activity:
           - Web Browsers: artifacts/browser.md
           - Internet Explorer and Legacy Edge: artifacts/webcache.md
+      - Shell History:
+          - PowerShell History: artifacts/powershell-history.md
       - Communication:
           - Outlook: artifacts/outlook.md
       - Network Activity:

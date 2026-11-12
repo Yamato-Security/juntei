@@ -56,6 +56,7 @@ const CATEGORIES: &[&str] = &[
     "ProcessExecution",
     "Registry",
     "SecurityProducts",
+    "ShellHistory",
     "SystemInformation",
 ];
 
@@ -80,6 +81,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         | "userassist" => "ProcessExecution",
         "registry" => "Registry",
         "defender-quarantine" | "security-settings" => "SecurityProducts",
+        "powershell-history" => "ShellHistory",
         "system-info" | "srum" => "SystemInformation",
         "auditpol" => "SystemInformation",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
@@ -114,6 +116,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "opensavemru" => "Registry-OpenSaveMRU",
         "persistence" => "Registry-Persistence",
         "persistence-hunter" => "PersistenceHunter",
+        "powershell-history" => "PowerShellHistory",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "Registry-RecentDocs",
@@ -653,6 +656,8 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             json_opts.output_type = AutoOutputType::Jsonl;
             json_opts.extract_defender_quarantined = false;
             let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
+            // Records without a time of their own are not events: no export task for them.
+            extra.retain(|task| !crate::super_timeline::untimed_artifact(task.artifact));
             for task in &mut extra {
                 task.timeline_only = true;
                 let name = task.log.file_stem().unwrap_or_default().to_string_lossy();
@@ -886,7 +891,11 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
                     artifact: task.artifact,
                 });
             }
-            if result.status == TaskStatus::Succeeded {
+            // The category output keeps its Comp and Artifact fields; only the timeline leaves
+            // out records that have no time of their own.
+            if result.status == TaskStatus::Succeeded
+                && !crate::super_timeline::untimed_artifact(task.artifact)
+            {
                 data_files.extend(annotated);
             }
         }
@@ -1432,7 +1441,7 @@ fn build_tasks(
                     args.push("--extract-shown-as".into());
                     args.push(dot_relative(&parser_output, &extract).into_os_string());
                 }
-                if matches!(artifact, "lnk" | "jump-lists")
+                if matches!(artifact, "lnk" | "jump-lists" | "powershell-history")
                     && let Some(path) = &opts.image_source_metadata
                 {
                     args.push("--image-source-metadata".into());
@@ -1535,6 +1544,12 @@ fn build_tasks(
             &["parse-file", "recycle-bin"],
             OutputShape::File,
             &["--code-page", &code_page],
+        );
+        add(
+            "powershell-history",
+            &["parse-file", "powershell-history"],
+            OutputShape::File,
+            &[],
         );
         add(
             "shimcache",
@@ -1808,6 +1823,9 @@ impl InputInventory {
             }
             if name.eq_ignore_ascii_case("INFO") && crate::recycle_bin::is_legacy_info_path(&path) {
                 found.add_size("recycle-bin", size);
+            }
+            if crate::powershell_history::is_history_path(&path) {
+                found.add_size("powershell-history", size);
             }
             if crate::i30::is_i30_file(&path) {
                 found.add_size("i30", size);
@@ -2701,13 +2719,30 @@ mod tests {
         )
         .unwrap();
         assert!(tasks.len() >= 40, "{} tasks", tasks.len());
+        assert!(
+            tasks
+                .iter()
+                .any(|task| task.artifact == "powershell-history")
+        );
         for task in tasks {
-            assert!(
+            // An artifact is either projected onto the timeline or left out of it on purpose,
+            // never both and never by omission.
+            assert_ne!(
                 crate::super_timeline::supports_artifact(task.artifact),
+                crate::super_timeline::untimed_artifact(task.artifact),
                 "Missing timeline adapter: {}",
                 task.artifact
             );
+            assert!(CATEGORIES.contains(&artifact_category(task.artifact)));
         }
+        assert!(crate::super_timeline::untimed_artifact(
+            "powershell-history"
+        ));
+        assert_eq!(artifact_category("powershell-history"), "ShellHistory");
+        assert_eq!(artifact_filename("powershell-history"), "PowerShellHistory");
+        let mut sorted = CATEGORIES.to_vec();
+        sorted.sort_unstable();
+        assert_eq!(CATEGORIES, sorted);
     }
 
     #[test]

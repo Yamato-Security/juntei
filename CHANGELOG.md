@@ -4,6 +4,14 @@
 
 **New Features:**
 
+- `parse-file powershell-history` streams PSReadLine history to CSV, JSON or JSONL, retaining
+  raw continuation lines with source line numbers and `EntryStartLine`, user, shell host and
+  clearly named file metadata. UTF-8 and BOM-marked UTF-16 are supported; damaged text and
+  truncated lines are reported in `Problems`. CSV text cells receive formula guards while
+  JSON text stays unchanged. `auto-parse` discovers and stages history files from directories,
+  VHDX and E01 images into `ShellHistory`. Commands have no execution timestamps and are
+  excluded from `auto-parse -j` and `super-timeline`. (@tuttimann)
+
 - `parse-file recycle-bin` parses Recycle Bin deletion metadata: the `$I` files of Windows Vista
   and later (format versions 1 and 2) and the `INFO2` files of Windows 95 to Server 2003. Each
   deleted item has its deletion time, original path, size, the user named by the bin's SID, and

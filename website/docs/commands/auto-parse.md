@@ -37,14 +37,14 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
 reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
 hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
-lists, Outlook files, Recycle Bin index files and Defender quarantine folders. Every other file is an empty placeholder
+lists, Outlook files, PSReadLine history files, Recycle Bin index files and Defender quarantine folders. Every other file is an empty placeholder
 with its original modification time, so directories and paths look as they do on the disk.
 persistence-hunter reads a placeholder's content from the image only when it needs it, such as
 an executable that a persistence entry refers to.
 **Allow enough temporary disk space for the copied files**, in addition to the results.
 Reads use bounded buffers; zero-filled regions are written as holes where the host filesystem
 supports them. Original filenames, directory structure, hard links, and file modification times
-are preserved. LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
+are preserved. PowerShell history source modification times and LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
 a forced termination can leave temporary files. The source image is opened read-only, and pending
 VHDX log updates are applied in memory only.
 
@@ -359,6 +359,9 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -388,6 +391,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU activity, UserAssist |
 | `Registry` | General hive keys and values, including recovered records |
 | `SecurityProducts` | Defender quarantine metadata and optional extracted content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
+| `ShellHistory` | PowerShell PSReadLine command history; file modification time is metadata, with no command execution times |
 | `SystemInformation` | Names, Windows version, time zone, last shutdown, profiles, SIDs and audit policy; SRUM energy/capacity, identity maps and unknown providers |
 
 Categories help organize investigations; they are not proof of a particular activity. For example,
@@ -635,3 +639,17 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 The existing `-j, --json-timeline` export remains a combined native-record JSONL file.
 It preserves parser schemas; it does not expand timestamp fields or sort events. Keep it and
 the individual parser results for evidence-level review.
+
+## PowerShell history
+
+History files named `<Host>_history.txt` directly inside a `PSReadLine` folder are discovered
+recursively and copied during VHDX/E01 staging. Other files with the same suffix outside that
+folder are excluded; parse custom-location or renamed copies explicitly with
+`parse-file powershell-history -f <FILE>`.
+
+Results are saved as `ShellHistory/PowerShellHistory.csv` (or `.json`/`.jsonl` for the selected
+format), with the usual manifest and parser log entries. `FileLastWriteTime` is the source
+file's modification time, including original image metadata, never a command execution time.
+`auto-parse -Z` changes its display offset along with other output times; the standalone parser
+has no `-Z` option. History records remain in category output but do not enter the `-j` timeline
+or `super-timeline`. See [PowerShell History](../artifacts/powershell-history.md).

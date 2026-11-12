@@ -38,6 +38,23 @@ pub(crate) fn supports_artifact(artifact: &str) -> bool {
     adapters::ARTIFACTS.contains(&artifact)
 }
 
+/// Artifacts whose records have no time of their own, so they are never timeline events: a
+/// PowerShell history line says what was typed, not when, and its file's modification time is
+/// not the time of any command. `auto-parse -j` and `super-timeline` leave them out instead of
+/// dating them by a generic fallback.
+const UNTIMED_ARTIFACTS: &[&str] = &["powershell-history"];
+
+pub(crate) fn untimed_artifact(artifact: &str) -> bool {
+    UNTIMED_ARTIFACTS.contains(&artifact)
+}
+
+/// Why an untimed artifact cannot be asked for.
+fn untimed_error(artifact: &str) -> io::Error {
+    io::Error::other(format!(
+        "'{artifact}' records have no time of their own and are not timeline events"
+    ))
+}
+
 struct Scratch(PathBuf);
 impl Scratch {
     fn new(parent: &Path) -> io::Result<Self> {
@@ -203,6 +220,9 @@ fn process(
             return Err(io::Error::other(
                 "Untagged records need --input-artifact; use native auto-parse JSONL with Artifact/Comp metadata",
             ));
+        }
+        if untimed_artifact(&ctx.artifact) {
+            return Err(untimed_error(&ctx.artifact));
         }
         if !adapters::ARTIFACTS.contains(&ctx.artifact.as_str()) {
             return Err(io::Error::other(format!(
@@ -385,6 +405,9 @@ fn execute(opts: &SuperTimelineOptions) -> io::Result<Value> {
             .ok_or_else(|| io::Error::other("Total input size exceeds the supported range"))
     })?;
     for artifact in opts.artifacts.iter().chain(opts.input_artifact.iter()) {
+        if untimed_artifact(artifact) {
+            return Err(untimed_error(artifact));
+        }
         if !adapters::ARTIFACTS.contains(&artifact.as_str()) {
             return Err(io::Error::other(format!(
                 "Unknown --artifact/--input-artifact '{artifact}'"
