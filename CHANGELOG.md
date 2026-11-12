@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+**Improvements:**
+
+- Upgrade `quick-xml` to 0.42.0, preserving Persistence Hunter's XML evidence values,
+  line endings and principal/context attribute matching. (@YamatoSecurity)
+
 **Bug Fixes:**
 
 - Skip non-Outlook files that share Outlook extensions during directory scans, including Tcl

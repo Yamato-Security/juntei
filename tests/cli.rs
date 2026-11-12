@@ -3883,6 +3883,87 @@ fn persistence_hunter_selected_check_has_csv_json_and_jsonl_parity() {
 }
 
 #[test]
+fn persistence_hunter_xml_upgrade_preserves_evidence_across_formats() {
+    let evidence = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let tasks = evidence.path().join("Windows/System32/Tasks");
+    let menu = evidence
+        .path()
+        .join("Users/alice/AppData/Roaming/Microsoft/Windows/Start Menu/Programs");
+    std::fs::create_dir_all(&tasks).unwrap();
+    std::fs::create_dir_all(&menu).unwrap();
+    let task = concat!(
+        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">",
+        "<Principals><Principal id=\"Author\t\r\n&amp;\"><UserId>S-1-5-18</UserId>",
+        "</Principal><Principal id=\"Other\"><UserId>LAB\\alice</UserId></Principal>",
+        "</Principals><Actions Context=\"Author&#9;&#13;&#10;&amp;\"><Exec>",
+        "<Command>C:\\Temp\\調査.exe</Command><Arguments>--escaped &amp;lt; ",
+        "&quot;A&amp;B&quot;\r\n<![CDATA[<raw>&literal;\r\n]]>end</Arguments>",
+        "<WorkingDirectory>C:\\A &amp; B</WorkingDirectory></Exec></Actions></Task>"
+    );
+    std::fs::write(tasks.join("ExampleTask"), task).unwrap();
+    let clsid = "{00112233-4455-6677-8899-AABBCCDDEEFF}";
+    let library = format!(
+        "<libraryDescription xmlns=\"http://schemas.microsoft.com/windows/2009/library\"><searchConnectorDescription><simpleLocation><url>\r\n<![CDATA[shell:::]]>{clsid}\r\n</url></simpleLocation></searchConnectorDescription></libraryDescription>"
+    );
+    let mut utf16 = vec![0xff, 0xfe];
+    utf16.extend(library.encode_utf16().flat_map(u16::to_le_bytes));
+    std::fs::write(menu.join("Example.library-ms"), utf16).unwrap();
+    let expected = "C:\\Temp\\調査.exe --escaped &lt; \"A&B\"\r\n<raw>&literal;\r\nend";
+    for format in ["csv", "json", "jsonl"] {
+        let path = output.path().join(format!("findings.{format}"));
+        let result = run(&[
+            "persistence-hunter",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "--check",
+            "scheduled_task_files,start_menu_com",
+            "--no-timeline",
+            "--min-severity",
+            "info",
+            "-t",
+            format,
+            "-o",
+            path.to_str().unwrap(),
+            "-q",
+            "-K",
+        ]);
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+        // Compare serialized values after reading them through each output format's own parser.
+        let rows: Vec<std::collections::HashMap<String, String>> = if format == "csv" {
+            csv_rows(&path).1
+        } else {
+            json_documents(&std::fs::read_to_string(&path).unwrap())
+                .into_iter()
+                .map(|row| {
+                    row.as_object()
+                        .unwrap()
+                        .iter()
+                        .map(|(key, value)| {
+                            (key.clone(), value.as_str().unwrap_or_default().to_owned())
+                        })
+                        .collect()
+                })
+                .collect()
+        };
+        assert_eq!(rows.len(), 2, "{rows:?}");
+        let task = rows
+            .iter()
+            .find(|row| row["CheckID"] == "scheduled_task_files")
+            .unwrap();
+        assert_eq!(task["Value"], expected);
+        assert_eq!(task["AccessGained"], "SYSTEM");
+        assert!(task["Description"].contains("working directory: C:\\A & B"));
+        let library = rows
+            .iter()
+            .find(|row| row["CheckID"] == "start_menu_com")
+            .unwrap();
+        assert_eq!(library["Value"], clsid);
+        assert_eq!(library["ResolutionStatus"], "unresolved_com_class");
+    }
+}
+
+#[test]
 fn persistence_hunter_names_com_registrations_as_the_input_was_given() {
     // a task's COM handler registered in the machine's SOFTWARE hive: the finding names the hive,
     // from the evidence directory as given, not where it is on the analyst's system

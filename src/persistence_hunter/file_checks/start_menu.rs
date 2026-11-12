@@ -48,7 +48,7 @@ fn library_classes(bytes: &[u8]) -> Result<BTreeSet<String>, String> {
         let own = match namespace {
             ResolveResult::Unbound => true,
             ResolveResult::Bound(ns) => {
-                ns.as_ref() == b"http://schemas.microsoft.com/windows/2009/library"
+                ns.as_ref() == "http://schemas.microsoft.com/windows/2009/library"
             }
             ResolveResult::Unknown(_) => return Err("unbound library XML namespace".into()),
         };
@@ -58,7 +58,7 @@ fn library_classes(bytes: &[u8]) -> Result<BTreeSet<String>, String> {
             }
             Event::Start(e) => {
                 let tag = if own {
-                    String::from_utf8_lossy(e.local_name().as_ref()).into_owned()
+                    e.local_name().as_ref().to_owned()
                 } else {
                     "__foreign".into()
                 };
@@ -77,20 +77,21 @@ fn library_classes(bytes: &[u8]) -> Result<BTreeSet<String>, String> {
                 stack.push(tag);
             }
             Event::Empty(e) if stack.is_empty() => {
-                if root_seen || !own || e.local_name().as_ref() != b"libraryDescription" {
+                if root_seen || !own || e.local_name().as_ref() != "libraryDescription" {
                     return Err("expected one libraryDescription root".into());
                 }
                 root_seen = true;
             }
             Event::Text(e) if stack.last().is_some_and(|s| s == "url") => {
-                let text = e.decode().map_err(|e| e.to_string())?;
+                // Match the original decoder: preserve literal line endings in evidence.
+                let text = e.into_inner();
                 url.push_str(&quick_xml::escape::unescape(&text).map_err(|e| e.to_string())?);
             }
             Event::CData(e) if stack.last().is_some_and(|s| s == "url") => {
-                url.push_str(&e.decode().map_err(|e| e.to_string())?)
+                url.push_str(&e.into_inner())
             }
             Event::GeneralRef(e) if stack.last().is_some_and(|s| s == "url") => {
-                let text = format!("&{};", e.decode().map_err(|e| e.to_string())?);
+                let text = format!("&{};", e.as_ref());
                 url.push_str(&quick_xml::escape::unescape(&text).map_err(|e| e.to_string())?);
             }
             Event::End(_) => {
@@ -205,6 +206,34 @@ pub(super) fn run(check: &mut Check<'_>) {
 mod tests {
     use super::*;
     const ID: &str = "{00112233-4455-6677-8899-AABBCCDDEEFF}";
+    #[test]
+    fn xml_upgrade_preserves_library_urls_from_text_cdata_and_references() {
+        for url in [
+            format!("shell:::{ID}"),
+            format!("&#x73;hell&#58;::{ID}"),
+            format!("\r\n\t<![CDATA[shell:::]]>{ID}\r\n"),
+            format!("C:/A &amp; B/准胝.{ID}"),
+        ] {
+            let xml = format!(
+                "<l:libraryDescription xmlns:l=\"http://schemas.microsoft.com/windows/2009/library\"><l:searchConnectorDescription><l:simpleLocation><l:url>{url}</l:url></l:simpleLocation></l:searchConnectorDescription></l:libraryDescription>"
+            );
+            let mut utf16 = vec![0xff, 0xfe];
+            utf16.extend(xml.encode_utf16().flat_map(u16::to_le_bytes));
+            for input in [xml.as_bytes(), utf16.as_slice()] {
+                assert_eq!(
+                    library_classes(input).unwrap(),
+                    BTreeSet::from([ID.into()]),
+                    "{url}"
+                );
+            }
+        }
+        assert!(library_classes(b"<l:libraryDescription/>").is_err());
+        assert!(
+            library_classes(b"<libraryDescription><url>&unknown;</url></libraryDescription>")
+                .is_err()
+        );
+    }
+
     #[test]
     fn urls_and_folders_require_real_guids() {
         for prefix in ["shell:::", "KNOWNFOLDER:::", "C:/Start/Name."] {
