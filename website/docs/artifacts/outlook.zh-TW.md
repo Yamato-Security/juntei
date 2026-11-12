@@ -104,9 +104,7 @@ juntei parse-file outlook -f mailbox.ost -t jsonl \
 juntei parse-file outlook -f suspicious.msg -o msg-csv --properties --extract-attachments isolated/
 ```
 
-`-d` 會尋找名稱以 `.pst`、`.ost`、`.msg` 與 `.oft` 結尾的檔案，不區分大小寫。無論以何種方式指定
-檔案，都由其開頭的位元組判斷其類型：PST 或 OST 為 `!BDN`，MSG 或 OFT 為複合檔案的簽章。其他任何
-檔案都會回報為無法剖析的檔案。若沒有任何檔案能夠讀取，結束狀態為 1。
+`-d` 會尋找 `.pst`、`.ost`、`.msg` 與 `.oft` 名稱（不區分大小寫），再檢查標頭：PST 或 OST 為 `!BDN`，MSG 或 OFT 為複合檔案簽章。同樣使用這些副檔名的無關檔案（例如 Tcl 訊息目錄）會略過。無法讀取的檔案，以及簽章可辨識但已損壞的容器，仍會回報錯誤。`-f` 一律驗證指定檔案，不受名稱影響，無效輸入會回報錯誤。若沒有任何檔案能夠讀取，結束狀態為 1。
 
 `--extract-attachments` 會將每個附件的資料只寫入一次，檔名為 `<SHA-256>`，若附件的副檔名由 1 至 10 個
 ASCII 字母與數字組成，則附加該副檔名（`0c7d…1311.jpg`）；路徑中不會使用任何來自項目的名稱。除非

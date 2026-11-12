@@ -950,7 +950,7 @@ fn outlook_input_and_output_errors() {
     assert_eq!(r.code, 0, "{}", r.all());
     assert!(
         r.all()
-            .contains("Outlook files parsed: 1 (could not parse: 2)"),
+            .contains("Outlook files parsed: 1 (could not parse: 1)"),
         "{}",
         r.all()
     );
@@ -1031,6 +1031,176 @@ fn outlook_input_and_output_errors() {
         r.all().contains("is a file, not a directory"),
         "{}",
         r.all()
+    );
+}
+
+#[test]
+fn issue143_directory_search_skips_non_outlook_name_collisions() {
+    let dir = tempfile::tempdir().unwrap();
+    for (name, content) in [
+        (
+            "de.msg",
+            b"::msgcat::mcset de DAYS_OF_WEEK_ABBREV [list So Mo]\n".as_slice(),
+        ),
+        ("FPEXT.MSG", b"FrontPage message resources".as_slice()),
+        ("text.oft", b"not a compound file".as_slice()),
+        ("text.pst", b"not a personal store".as_slice()),
+        ("empty.ost", b"".as_slice()),
+    ] {
+        std::fs::write(dir.path().join(name), content).unwrap();
+    }
+    let out = dir.path().join("results");
+    let result = run(&[
+        "parse-file",
+        "outlook",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(result.code, 1, "{}", result.all());
+    assert!(
+        result
+            .all()
+            .contains("No Outlook files (*.pst, *.ost, *.msg, *.oft) were found"),
+        "{}",
+        result.all()
+    );
+    assert!(
+        !result.all().contains("Could not parse"),
+        "{}",
+        result.all()
+    );
+    assert!(!out.exists());
+
+    // Explicit input remains an error rather than a skipped artifact.
+    let explicit = run(&[
+        "parse-file",
+        "outlook",
+        "-f",
+        dir.path().join("de.msg").to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(explicit.code, 1);
+    assert!(
+        explicit.all().contains("Could not parse"),
+        "{}",
+        explicit.all()
+    );
+    assert!(!explicit.all().contains("No Outlook files"));
+
+    // A real compound-format message remains selected next to those collisions.
+    unpack("apache-poi/msgClassTask.msg", dir.path(), "task.MSG");
+    let mixed = run(&[
+        "parse-file",
+        "outlook",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(mixed.code, 0, "{}", mixed.all());
+    assert!(mixed.stdout.contains("Outlook files: 1"), "{}", mixed.all());
+    assert!(mixed.stdout.contains("Outlook files parsed: 1"));
+    assert!(!mixed.all().contains("could not parse"));
+}
+
+#[test]
+fn issue143_auto_parse_skips_catalogs_but_reports_real_corruption() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let windows = evidence.join("HOST1/C/Windows/AppCompat/Programs");
+    std::fs::create_dir_all(&windows).unwrap();
+    std::fs::copy(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("test_files/amcache/amcache_win10.hve"),
+        windows.join("Amcache.hve"),
+    )
+    .unwrap();
+    let catalogs = evidence.join("HOST1/C/Python26/tcl/tcl8.5/msgs");
+    std::fs::create_dir_all(&catalogs).unwrap();
+    std::fs::write(
+        catalogs.join("de.msg"),
+        b"::msgcat::mcset de DAYS_OF_WEEK_ABBREV [list So Mo]\n",
+    )
+    .unwrap();
+    for damaged in [false, true] {
+        if damaged {
+            // The signature is intact: this is a corrupt store, not a name collision.
+            std::fs::write(catalogs.join("broken.pst"), b"!BDN").unwrap();
+        }
+        let output = dir
+            .path()
+            .join(if damaged { "damaged" } else { "catalogs" });
+        let result = run(&[
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-T",
+            "2",
+            "-K",
+            "-q",
+        ]);
+        let manifest: Value =
+            serde_json::from_slice(&std::fs::read(output.join("manifest.json")).unwrap()).unwrap();
+        let tasks = manifest["Tasks"].as_array().unwrap();
+        let task = tasks
+            .iter()
+            .find(|task| task["Artifact"] == "outlook")
+            .unwrap();
+        if damaged {
+            assert_eq!(result.code, 1, "{}", result.all());
+            assert_eq!(task["Status"], "failed", "{task}");
+            let error = task["Error"].as_str().unwrap();
+            assert!(
+                error.contains("Could not parse") && error.contains("broken.pst"),
+                "{error}"
+            );
+            assert!(!error.contains("Elapsed time:"));
+        } else {
+            assert_eq!(result.code, 0, "{}", result.all());
+            assert_eq!(task["Status"], "skipped", "{task}");
+            assert!(
+                tasks
+                    .iter()
+                    .any(|task| task["Artifact"] == "amcache" && task["Status"] == "succeeded")
+            );
+        }
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn issue143_unreadable_candidates_are_not_silently_skipped() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let candidate = dir.path().join("unreadable.msg");
+    std::fs::write(&candidate, b"unavailable message data").unwrap();
+    let original = std::fs::metadata(&candidate).unwrap().permissions();
+    std::fs::set_permissions(&candidate, std::fs::Permissions::from_mode(0o0)).unwrap();
+    if std::fs::File::open(&candidate).is_ok() {
+        std::fs::set_permissions(&candidate, original).unwrap();
+        return; // A privileged runner can bypass the permissions.
+    }
+    let result = run(&[
+        "parse-file",
+        "outlook",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    std::fs::set_permissions(&candidate, original).unwrap();
+    assert_eq!(result.code, 1, "{}", result.all());
+    assert!(result.all().contains("Could not parse"), "{}", result.all());
+    assert!(
+        !result.all().contains("No Outlook files"),
+        "{}",
+        result.all()
     );
 }
 
