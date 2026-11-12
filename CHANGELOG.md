@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+**New Features:**
+
+- `parse-file recycle-bin` parses Recycle Bin deletion metadata: the `$I` files of Windows Vista
+  and later (format versions 1 and 2) and the `INFO2` files of Windows 95 to Server 2003. Each
+  deleted item has its deletion time, original path, size, the user named by the bin's SID, and
+  whether the recycled content was collected. `INFO2` records of items removed from the bin are
+  marked and their paths restored. Damaged files keep what can be read and report the damage.
+  `auto-parse` saves the results in `FileExistence` and adds them to the `-j` timeline, and
+  `super-timeline` makes one event per deleted item. (#157) (@YamatoSecurity)
+
 **Improvements:**
 
 - Upgrade `quick-xml` to 0.42.0, preserving Persistence Hunter's XML evidence values,
