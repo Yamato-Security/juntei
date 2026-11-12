@@ -20,7 +20,7 @@ use std::path::PathBuf;
 
 /// The version that the banner, every help screen and `--version` show: the version from
 /// Cargo.toml and the release name after it. Change the release name with each release.
-pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (CODE BLUE Release)");
+pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (Dev Build)");
 const AUTHOR: &str =
     "Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)";
 
