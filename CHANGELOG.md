@@ -9,6 +9,12 @@
   and report the actual parser failure in automatic-parser manifests instead of timing footers.
   (@YamatoSecurity)
 
+- Disk-image reads (`mount`, `auto-parse --e01`/`--vhdx` and Persistence Hunter) list directories
+  whose index is in MFT extension records. Such directories, for example `Windows\System32` on
+  Windows XP, were listed with only a few entries, so the live registry hives and other files in
+  them were missed. An index that can't be read whole is reported as an image read problem.
+  (#160) (@YamatoSecurity)
+
 ## 1.1.0 [2026/11/11] - CODE BLUE Release
 
 **New Features:**
