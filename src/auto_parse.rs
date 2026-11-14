@@ -660,8 +660,8 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             fs::create_dir_all(&path)?;
             let mut json_opts = opts.clone();
             json_opts.output_type = AutoOutputType::Jsonl;
-            json_opts.extract_defender_quarantined = false;
             json_opts.rdp_cache_images = false;
+            json_opts.extract_defender_quarantined = false;
             let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
             for task in &mut extra {
                 task.timeline_only = true;
