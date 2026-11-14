@@ -42,6 +42,7 @@ continua mantendo os registros nativos.
 | `parse-file lnk` | `*.lnk` | [Atalhos LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [Cache de bitmaps do RDP](../artifacts/rdp-cache.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Lixeira](../artifacts/recycle-bin.md) |
 
 ## [Comandos NTFS](filesystem.md) { #ntfs-commands }

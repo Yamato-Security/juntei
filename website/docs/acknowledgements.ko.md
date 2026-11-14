@@ -60,11 +60,14 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
   양식 기록에 대한 참고 자료가 되었습니다.
 - Abel Cheung의 **rifiuti2**는 휴지통 `$I` 파일과 INFO2의 참고 자료가 되었으며, libyal의 **dtformats**
   문서가 두 형식을 설명합니다.
+- ANSSI의 **bmc-tools**와 이 형식에 관한 CERT-FR 공지, BSI의 **RdpCacheStitcher**, **Velociraptor**의
+  RDPCache 아티팩트, **dissect.target**의 RDP 캐시 플러그인은 RDP 비트맵 캐시의 참고 자료가 되었으며,
+  **FreeRDP**의 영구 비트맵 캐시와 인터리브 RLE 디코더도 참고했습니다.
 
 ## 사양과 연구 { #specifications-and-research }
 
-Shell Links, Compound Binary Files, NTFS/SAM 프로토콜, 레지스트리/서비스/작업 구조에 대한 Open
-Specifications와 API 문서를 공개한 Microsoft에 감사드립니다. 또한 이러한 아티팩트를 실무자가 이해할 수 있도록
+Shell Links, Compound Binary Files, NTFS/SAM 프로토콜, 레지스트리/서비스/작업 구조, 원격 데스크톱
+프로토콜에 대한 Open Specifications와 API 문서를 공개한 Microsoft에 감사드립니다. 또한 이러한 아티팩트를 실무자가 이해할 수 있도록
 해 준 AppCompatCache, Amcache, SRUM, Prefetch, 레지스트리 및 NTFS 포렌식 연구의 저자들에게도 감사드립니다.
 
 ## 테스트 증거 { #test-evidence }

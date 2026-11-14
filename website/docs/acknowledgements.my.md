@@ -65,11 +65,15 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   download များ၊ cookie များနှင့် form history အတွက် ကိုးကားချက်များ ဖြစ်ခဲ့ပါသည်။
 - Abel Cheung ၏ **rifiuti2** သည် Recycle Bin ၏ `$I` ဖိုင်များနှင့် INFO2 အတွက် ကိုးကားချက် ဖြစ်ခဲ့ပြီး libyal ၏
   **dtformats** စာတမ်းက format နှစ်မျိုးလုံးကို ရှင်းပြထားပါသည်။
+- ANSSI ၏ **bmc-tools** နှင့် format အကြောင်း ၎င်း၏ CERT-FR bulletin၊ BSI ၏ **RdpCacheStitcher**၊
+  **Velociraptor** ၏ RDPCache artifact နှင့် **dissect.target** ၏ RDP cache plugin တို့သည် RDP bitmap cache
+  များအတွက် ကိုးကားချက်များ ဖြစ်ခဲ့ပြီး **FreeRDP** ၏ persistent bitmap cache နှင့် interleaved RLE decoder
+  တို့ကိုလည်း ကိုးကားခဲ့ပါသည်။
 
 ## Spec များနှင့် သုတေသန { #specifications-and-research }
 
-Shell Links၊ Compound Binary Files၊ NTFS/SAM protocol များ၊ registry/service/task ဖွဲ့စည်းပုံများနှင့်
-API စာတမ်းများအတွက် Open Specifications ကို ထုတ်ဝေပေးသည့် Microsoft ကို ကျေးဇူးတင်ပါသည်။ ထို့အပြင်
+Shell Links၊ Compound Binary Files၊ NTFS/SAM protocol များ၊ registry/service/task ဖွဲ့စည်းပုံများ၊
+Remote Desktop Protocol နှင့် API စာတမ်းများအတွက် Open Specifications ကို ထုတ်ဝေပေးသည့် Microsoft ကို ကျေးဇူးတင်ပါသည်။ ထို့အပြင်
 ဤ artifact များကို လက်တွေ့လုပ်ကိုင်သူများ နားလည်နိုင်စေခဲ့သော AppCompatCache၊ Amcache၊ SRUM၊ Prefetch၊
 registry နှင့် NTFS forensic သုတေသန စာရေးသူများကိုလည်း ကျေးဇူးတင်ပါသည်။
 

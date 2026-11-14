@@ -20,6 +20,7 @@ pero el investigador sigue teniendo que interpretar lo que significa cada una.
 | ¿Qué sitios web visitó un usuario y qué descargó? | [Navegadores web](browser.md), [Internet Explorer y Edge heredado](webcache.md) | Registros de proxy y DNS, `$MFT` y Diario USN, Defender, SRUM |
 | ¿Con quién intercambió correos electrónicos un usuario y qué se adjuntó? | [Outlook](outlook.md) | Registros de servidores y pasarelas de correo, `$MFT` y Diario USN, Defender, LNK y Jump Lists |
 | ¿Qué clientes y cuentas usaron este servidor, y en qué días? | [Registro de acceso de usuarios (UAL)](ual.md) | Registros de eventos Security, registros de SMB y RDP, registros del cortafuegos |
+| ¿Qué vio un usuario en los equipos a los que accedió con Escritorio remoto? | [Caché de mapas de bits de RDP](rdp-cache.md) | [Acceso remoto (lado del usuario)](remote-access.md), [Jump Lists](jump-lists.md), los eventos de inicio de sesión de los equipos remotos y [UAL](ual.md) |
 | ¿Se configuró persistencia? | [Servicios](services.md), [TaskCache](taskcache.md), [Registro](registry.md) | Registros de eventos, Prefetch, `$MFT` |
 | ¿Qué eliminó Defender? | [Cuarentena de Defender](defender-quarantine.md) | Registros de eventos, `$MFT`, Diario USN |
 | ¿Se añadieron o modificaron cuentas locales? | [SAM](sam.md) | Registros de eventos Security e historial de transacciones del Registro |

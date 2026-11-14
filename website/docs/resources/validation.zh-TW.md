@@ -170,6 +170,21 @@ Jump Lists 中，全部 13,057 個共同比較的儲存格——包括精確到 
 磁碟映像檔（Windows XP）上以 `auto-parse --e01` 讀取時，INFO2 記錄與 rifiuti2 一致，而位於其旁的
 回收檔案 `Dc1.jpg`，也正是 Juntei 所給出的名稱。
 
+## RDP 點陣圖快取 { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` 是 Juntei 自有的剖析器。在 CODE BLUE 2026 CTF 收集資料的六台主機之一 kofu 上，其三個
+`Cache????.bin` 檔案中的 1,911 個圖塊，每一個都與 [bmc-tools](https://github.com/ANSSI-FR/bmc-tools) 產生的
+影像逐像素相同。ApoorvCTF 2025「Phantom Connection」題目公開的 `Cache0000.bin` 中的 1,980 個圖塊也是如此，
+其中 105 個為 64 × 48 像素。bmc-tools 將每個圖塊都當成 64 像素寬來讀取，因此位於畫面右緣、較窄的圖塊
+輸出後會變形；Juntei 則依各圖塊本身的寬度讀取。
+
+目前找不到含有圖塊的公開 `.bmc` 快取：上述樣本與其他 Windows 10 及更新版本的用戶端一樣，只有一個空的
+`bcache24.bmc`。因此，`.bmc` 的讀取是以依照該格式建構的檔案來測試：四種色彩深度的未壓縮圖塊、後面接著
+較早圖塊尾端的較小圖塊、損毀的槽位，以及 3,000 個隨機產生、以 RLE 壓縮的 16 位元圖塊，涵蓋 MS-RDPBCGR 3.1.9
+的每一種指令（order），且沒有任何指令延續超過圖塊第一列的結尾。Juntei 與 bmc-tools 將這 3,000 個圖塊全部
+解碼為相同的像素。當某個指令從第一列開始並延續到該列之後時，兩者的結果就會不同：Juntei 遵循規格與
+FreeRDP 的解碼器，在整個指令中沿用第一列的規則，而 bmc-tools 則會在指令中途改變規則。
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) 是

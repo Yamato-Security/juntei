@@ -30,7 +30,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案中解析器會讀取的檔案（登錄 Hive 及其交易記錄、NTFS 中繼資料檔、資料庫、Prefetch 檔、捷徑、Jump List、Outlook 檔案、資源回收筒索引檔與 Defender 隔離資料夾）串流複製至專用暫存目錄。其他檔案則成為保留原始更新時刻的空白預留位置，因此目錄與路徑看起來與磁碟上相同。persistence-hunter 僅在需要時才從映像檔讀取預留位置的內容，例如持續性項目所指向的執行檔。**除結果外，請預留足夠空間容納複製的檔案。**讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
+解析器需要檔案路徑，因此會將讀取器公開的 NTFS 檔案中解析器會讀取的檔案（登錄 Hive 及其交易記錄、NTFS 中繼資料檔、資料庫、Prefetch 檔、捷徑、Jump List、Outlook 檔案、資源回收筒索引檔、RDP 點陣圖快取與 Defender 隔離資料夾）串流複製至專用暫存目錄。其他檔案則成為保留原始更新時刻的空白預留位置，因此目錄與路徑看起來與磁碟上相同。persistence-hunter 僅在需要時才從映像檔讀取預留位置的內容，例如持續性項目所指向的執行檔。**除結果外，請預留足夠空間容納複製的檔案。**讀取緩衝區有大小限制；若主機支援，零區域會保留為稀疏區域。保留名稱、目錄、硬連結和更新時刻；LNK 與 Jump List 的來源建立、更新、存取時刻使用原始 NTFS 中繼資料快照，絕不採用暫存副本的時刻。正常結束（包含解析器錯誤）會刪除副本，強制終止可能留下檔案。來源維持唯讀，未反映的 VHDX 日誌僅套用至記憶體。
 
 主機偵測、CSV/JSON/JSONL 和 `-j` 使用一般證據目錄的解析流程。`manifest.json` 中的 `Image` 識別原始映像；`EvidenceRoot` 識別內部相對路徑。讀取失敗或不安全的名稱會記錄在 `ImageErrors` 與 `manifest.csv` 的失敗列。保留可讀取資料的結果；輸入不完整時結束代碼為 1。不會擅自重新命名不安全或曖昧的名稱，也不會將具名 NTFS 串流抽取為額外檔案；初步蒐證映像中已收集為一般檔案的證據仍可使用。
 
@@ -165,6 +165,8 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - LNK 捷徑
 - Jump Lists
 - 資源回收筒：已刪除項目的原始路徑、大小、刪除時間與使用者
+- RDP 點陣圖快取：使用者看過的遠端畫面圖塊，以及每個快取檔案的
+  拼貼圖
 - ShimCache
 - Persistence Hunter（131 項跨來源的持續存取檢查，含允許／封鎖設定檔）
 - Defender 隔離中繼資料
@@ -289,6 +291,9 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -354,7 +359,7 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 | `FileExistence` | Amcache、資源回收筒、ShimCache |
 | `FileSystem` | `$Boot`、`$I30`、`$LogFile`、`$MFT`、`$Secure:$SDS`、USN Journal |
 | `NetworkActivity` | 網路設定檔、介面、共用、連接埠 Proxy 與路由；SRUM 連線、流量與推播通知 |
-| `LateralMovement` | 使用者對外的遠端桌面、PuTTY 與 WinSCP 連線、對應的磁碟機與共用；使用者存取記錄（伺服器角色的用戶端） |
+| `LateralMovement` | 使用者對外的遠端桌面、PuTTY 與 WinSCP 連線、對應的磁碟機與共用；RDP 點陣圖快取（遠端畫面的圖塊）；使用者存取記錄（伺服器角色的用戶端） |
 | `Persistence` | 開機設定（BCD）、登錄自動啟動項目、服務、TaskCache |
 | `ProcessExecution` | 應用程式相容性、BAM 與 DAM、FeatureUsage 與釘選項目、MuiCache、Prefetch、Prefetch 時間軸、SRUM 應用程式／CPU 活動、UserAssist |
 | `Registry` | 一般的登錄區機碼與值，包括復原的記錄 |
@@ -372,7 +377,7 @@ Amcache 與 Jump Lists 各有一個共用的記錄檔，放在其帶前綴的資
 `NetworkActivity`、`ProcessExecution` 與 `SystemInformation` 中，並共用一個
 `SystemInformation/SRUM-logs.txt` 檔案。不會建立 `logs/` 子目錄。
 
-預設的 CSV 檔名為 `Registry-SAM.csv`、`LNK.csv`、`RecycleBin.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、
+預設的 CSV 檔名為 `Registry-SAM.csv`、`LNK.csv`、`RecycleBin.csv`、`RdpCache.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、
 `I30.csv`、`MFT.csv`、`UsnJournal.csv`、`Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、
 `Registry-SecuritySettings.csv`、
 `PrefetchTimeline.csv`、`Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、`Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv` 以及
@@ -388,6 +393,9 @@ SRUM 資料表以 `SRUM-` 檔名直接放在其類別之下，例如
 使用者存取記錄的資料表位於 `LateralMovement`，每個資料表一個檔案，例如
 `UAL-Clients.csv` 與 `UAL-SystemIdentity.csv`，並附有 `UAL-logs.txt`；請參閱
 [使用者存取記錄 (UAL)](../artifacts/ual.md#automatic-parsing)。
+RDP 點陣圖快取的記錄位於 `LateralMovement/RdpCache.csv`，每個快取檔案的拼貼圖則位於
+`LateralMovement/RdpCache/<user>/<cache file>/`；指定 `--extract-rdp-tiles` 時，每個圖塊也會存放在
+旁邊；請參閱 [RDP 點陣圖快取](../artifacts/rdp-cache.md#automatic-parsing)。
 網頁瀏覽器的資料表位於 `BrowserActivity`：`Browser-History.csv`、`Browser-Downloads.csv`、
 `Browser-Cookies.csv` 與 `Browser-FormHistory.csv`，並附有 `Browser-logs.txt`；請參閱
 [網頁瀏覽器](../artifacts/browser.md#automatic-parsing)。
@@ -557,6 +565,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -576,8 +585,8 @@ Display Settings:
 可行時請使用新的輸出目錄。`-C` 只會移除或覆寫此次執行所產生的確切
 目標，因此現已不存在的跡證不會留下過時的結果。它不會刪除
 不相關的檔案或整個輸出樹狀結構。它也會在剖析之前，移除每台電腦的
-`SecurityProducts/DefenderQuarantined/` 目錄，以及先前扁平配置中保留的 `defender-quarantined/`
-目錄，無論新的執行是否使用 `-x`。
+`SecurityProducts/DefenderQuarantined/` 與 `LateralMovement/RdpCache/` 目錄，以及先前扁平配置中
+保留的 `defender-quarantined/` 目錄，無論新的執行是否使用 `-x` 或 `--extract-rdp-tiles`。
 
 從較舊的扁平配置切換時，請使用全新的輸出目錄。先前的 CSV/JSON 檔案
 不會被自動搬移或刪除。

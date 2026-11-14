@@ -59,11 +59,14 @@ Juntei 中；授權條款請參閱各專案。
   Cookie 與表單歷程的參考依據。
 - Abel Cheung 的 **rifiuti2** 是資源回收筒 `$I` 檔案與 INFO2 的參考依據，libyal 的 **dtformats**
   文件則說明了這兩種格式。
+- ANSSI 的 **bmc-tools** 及其關於此格式的 CERT-FR 公告、BSI 的 **RdpCacheStitcher**、**Velociraptor** 的
+  RDPCache 跡證定義，以及 **dissect.target** 的 RDP 快取外掛程式，是 RDP 點陣圖快取的參考依據；
+  **FreeRDP** 的持續性點陣圖快取與交錯式 RLE 解碼器亦然。
 
 ## 規格與研究 { #specifications-and-research }
 
-感謝 Microsoft 公開 Shell Links、Compound Binary Files、NTFS／SAM 協定、登錄檔／服務／工作結構的
-Open Specifications 以及 API 文件。同時也感謝 AppCompatCache、Amcache、SRUM、Prefetch、登錄檔與 NTFS
+感謝 Microsoft 公開 Shell Links、Compound Binary Files、NTFS／SAM 協定、登錄檔／服務／工作結構、
+遠端桌面通訊協定的 Open Specifications 以及 API 文件。同時也感謝 AppCompatCache、Amcache、SRUM、Prefetch、登錄檔與 NTFS
 鑑識研究的作者們，讓實務人員得以理解這些跡證。
 
 ## 測試證據 { #test-evidence }

@@ -61,11 +61,15 @@
   التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج.
 - كانت أداة **rifiuti2** من Abel Cheung المرجع لملفات `$I` وINFO2 في سلة المحذوفات، إلى جانب
   توثيق libyal للتنسيقين في **dtformats**.
+- كانت أداة **bmc-tools** من ANSSI ونشرة CERT-FR عن التنسيق، وأداة **RdpCacheStitcher** من BSI، وأثر
+  RDPCache في **Velociraptor**، ومكوّن ذاكرة التخزين المؤقت لـ RDP الإضافي في **dissect.target**، مراجعَ لذاكرات
+  التخزين المؤقت لصور RDP النقطية، إلى جانب ذاكرة التخزين المؤقت الدائمة للصور النقطية ومفكك ضغط interleaved RLE
+  في **FreeRDP**.
 
 ## المواصفات والأبحاث { #specifications-and-research }
 
 نشكر Microsoft على نشر المواصفات المفتوحة (Open Specifications) الخاصة بـ Shell Links، والملفات الثنائية المركبة،
-وبروتوكولات NTFS/SAM، وبنى سجل Windows/الخدمات/المهام، ووثائق واجهات API. كما نشكر
+وبروتوكولات NTFS/SAM، وبنى سجل Windows/الخدمات/المهام، وبروتوكول سطح المكتب البعيد (Remote Desktop Protocol)، ووثائق واجهات API. كما نشكر
 مؤلفي الأبحاث الجنائية حول AppCompatCache وAmcache وSRUM وPrefetch وسجل Windows وNTFS، التي جعلت
 هذه الآثار الرقمية مفهومة للممارسين.
 

@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-تحتاج المحللات إلى مسارات، لذلك ينسخ Juntei الملفات التي تقرؤها المحللات إلى مساحة مؤقتة خاصة بمخازن قراءة محدودة: خلايا السجل وسجلات معاملاتها، وملفات بيانات NTFS الوصفية، وقواعد البيانات، وملفات Prefetch، والاختصارات، وJump Lists، وملفات Outlook، وملفات الفهرس في سلة المحذوفات، ومجلدات العزل في Defender. يصبح كل ملف آخر عنصراً نائباً فارغاً يحتفظ بوقت تعديله الأصلي، فتبدو المجلدات والمسارات كما هي على القرص. لا يقرأ persistence-hunter محتوى العنصر النائب من الصورة إلا عند الحاجة، مثل ملف تنفيذي يشير إليه إدخال استمرارية. **وفّر مساحة للملفات المنسوخة** إضافة إلى النتائج. تُكتب مناطق الأصفار كفجوات حيثما أمكن. تُحفظ الأسماء والبنية والروابط الصلبة وأوقات التعديل. تأتي أوقات مصادر LNK وJump Lists من لقطة بيانات NTFS الأصلية لا من النسخ المؤقتة. يحذف الانتهاء الطبيعي، بما فيه أخطاء المحللات، النسخ؛ وقد يتركها الإنهاء القسري. المصدر للقراءة فقط وتُطبّق سجلات VHDX المعلقة في الذاكرة وحدها.
+تحتاج المحللات إلى مسارات، لذلك ينسخ Juntei الملفات التي تقرؤها المحللات إلى مساحة مؤقتة خاصة بمخازن قراءة محدودة: خلايا السجل وسجلات معاملاتها، وملفات بيانات NTFS الوصفية، وقواعد البيانات، وملفات Prefetch، والاختصارات، وJump Lists، وملفات Outlook، وملفات الفهرس في سلة المحذوفات، وذاكرات التخزين المؤقت لصور RDP النقطية، ومجلدات العزل في Defender. يصبح كل ملف آخر عنصراً نائباً فارغاً يحتفظ بوقت تعديله الأصلي، فتبدو المجلدات والمسارات كما هي على القرص. لا يقرأ persistence-hunter محتوى العنصر النائب من الصورة إلا عند الحاجة، مثل ملف تنفيذي يشير إليه إدخال استمرارية. **وفّر مساحة للملفات المنسوخة** إضافة إلى النتائج. تُكتب مناطق الأصفار كفجوات حيثما أمكن. تُحفظ الأسماء والبنية والروابط الصلبة وأوقات التعديل. تأتي أوقات مصادر LNK وJump Lists من لقطة بيانات NTFS الأصلية لا من النسخ المؤقتة. يحذف الانتهاء الطبيعي، بما فيه أخطاء المحللات، النسخ؛ وقد يتركها الإنهاء القسري. المصدر للقراءة فقط وتُطبّق سجلات VHDX المعلقة في الذاكرة وحدها.
 
 يستخدم اكتشاف الأجهزة وCSV/JSON/JSONL و`-j` مسار المعالجة المعتاد. يحدد `Image` في `manifest.json` الصورة الأصلية، ويحدد `EvidenceRoot` المسار النسبي داخلها. تُسجّل أخطاء القراءة والأسماء غير الآمنة في `ImageErrors` وصفوف الفشل في `manifest.csv`. تُحفظ النتائج المقروءة ويُرجع الإدخال غير المكتمل الرمز 1. لا تُعاد تسمية الأسماء الخطرة أو الملتبسة. لا تُستخرج تدفقات NTFS المسماة كملفات إضافية؛ وتبقى الآثار المجموعة كملفات عادية متاحة.
 
@@ -167,6 +167,8 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - اختصارات LNK
 - Jump Lists
 - سلة المحذوفات: المسارات الأصلية للعناصر المحذوفة وأحجامها وأوقات حذفها ومستخدموها
+- ذاكرات التخزين المؤقت لصور RDP النقطية: مربعات الشاشات البعيدة التي رآها المستخدم، مع صورة مجمّعة
+  (collage) لكل ملف من ملفات ذاكرة التخزين المؤقت
 - ShimCache
 - Persistence Hunter ‏(131 فحصًا للاستمرارية عبر المصادر مع ملفات تعريف السماح/الحظر)
 - البيانات الوصفية لحجر Defender
@@ -291,6 +293,9 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -356,7 +361,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 | `FileExistence` | Amcache، سلة المحذوفات، ShimCache |
 | `FileSystem` | `$Boot`، `$I30`، `$LogFile`، `$MFT`، `$Secure:$SDS`، دفتر يومية USN |
 | `NetworkActivity` | ملفات تعريف الشبكات، والواجهات، والمشاركات، ووكلاء المنافذ، والمسارات؛ واتصالات SRUM وحركة المرور والإشعارات الفورية |
-| `LateralMovement` | اتصالات المستخدمين الصادرة عبر سطح المكتب البعيد وPuTTY وWinSCP، ومحركات الأقراص المعيّنة والمشاركات؛ وتسجيل وصول المستخدمين (عملاء أدوار الخادم) |
+| `LateralMovement` | اتصالات المستخدمين الصادرة عبر سطح المكتب البعيد وPuTTY وWinSCP، ومحركات الأقراص المعيّنة والمشاركات؛ وذاكرات التخزين المؤقت لصور RDP النقطية (مربعات الشاشات البعيدة)؛ وتسجيل وصول المستخدمين (عملاء أدوار الخادم) |
 | `Persistence` | تكوين الإقلاع (BCD)، والتشغيل التلقائي عبر سجل Windows، والخدمات، وTaskCache |
 | `ProcessExecution` | توافق التطبيقات، وBAM وDAM، وFeatureUsage والعناصر المثبتة، وMuiCache، وPrefetch، والجدول الزمني لـ Prefetch، ونشاط التطبيقات/CPU في SRUM، وUserAssist |
 | `Registry` | مفاتيح الخلايا وقيمها العامة، بما في ذلك السجلات المستعادة |
@@ -374,7 +379,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 في `NetworkActivity` و`ProcessExecution` و`SystemInformation`، مع ملف مشترك هو
 `SystemInformation/SRUM-logs.txt`. ولا تُنشأ مجلدات فرعية `logs/`.
 
-أسماء ملفات CSV الافتراضية هي `Registry-SAM.csv`، `LNK.csv`، `RecycleBin.csv`، `Registry-RecentDocs.csv`، `Registry-ShimCache.csv`، `LogFile.csv`،
+أسماء ملفات CSV الافتراضية هي `Registry-SAM.csv`، `LNK.csv`، `RecycleBin.csv`، `RdpCache.csv`، `Registry-RecentDocs.csv`، `Registry-ShimCache.csv`، `LogFile.csv`،
 `I30.csv`، `MFT.csv`، `UsnJournal.csv`، `Boot.csv`، `SecureSDS.csv`، `Registry-Networks.csv`، `Registry-Persistence.csv`، `Registry-Services.csv`، `Registry-TaskCache.csv`، `Registry-BCD.csv`،
 `Registry-SecuritySettings.csv`،
 `PrefetchTimeline.csv`، `Prefetch.csv`، `Registry-UserAssist.csv`، `Registry-AppCompat.csv`، `Registry-Office.csv`، `Registry-FeatureUsage.csv`، `Registry-AppHistory.csv`، `Registry-MRU.csv`، `Registry-SystemInfo.csv`، `Registry-RemoteAccess.csv`، `Registry-OpenSaveMRU.csv`، `Registry-InstalledPrograms.csv`، `Registry-BAM.csv`، `Registry-MuiCache.csv`، `Registry-ShellBags.csv`، `Registry-USB.csv`، `Registry-SecuritySettings.csv`، `Registry-AuditPolicy.csv`، `Registry-Dump.csv`، و
@@ -390,6 +395,9 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 وتوجد جداول تسجيل وصول المستخدمين في `LateralMovement`، بملف واحد لكل جدول، مثل
 `UAL-Clients.csv` و`UAL-SystemIdentity.csv`، مع `UAL-logs.txt`؛ راجع
 [تسجيل وصول المستخدمين (UAL)](../artifacts/ual.md#automatic-parsing).
+وتوجد سجلات ذاكرة التخزين المؤقت لصور RDP النقطية في `LateralMovement/RdpCache.csv`، والصورة المجمّعة لكل
+ملف من ملفات ذاكرة التخزين المؤقت في `LateralMovement/RdpCache/<user>/<cache file>/`، ومعها كل المربعات
+عند تحديد `--extract-rdp-tiles`؛ راجع [ذاكرة التخزين المؤقت لصور RDP النقطية](../artifacts/rdp-cache.md#automatic-parsing).
 وتوجد جداول متصفحات الويب في `BrowserActivity`: ‏`Browser-History.csv` و`Browser-Downloads.csv`
 و`Browser-Cookies.csv` و`Browser-FormHistory.csv`، مع `Browser-logs.txt`؛ راجع
 [متصفحات الويب](../artifacts/browser.md#automatic-parsing). وتوجد هناك أيضًا جداول WebCache الخاصة
@@ -559,6 +567,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -577,9 +586,10 @@ Display Settings:
 
 استخدم مجلد إخراج جديدًا متى كان ذلك عمليًا. يزيل `-C` الأهداف المولَّدة الدقيقة لهذا التشغيل فقط أو يكتب فوقها،
 لذا لا يمكن لأثر رقمي أصبح مفقودًا الآن أن يترك نتيجة قديمة. ولا يحذف
-الملفات غير ذات الصلة ولا شجرة الإخراج بأكملها. كما يزيل مجلد
-`SecurityProducts/DefenderQuarantined/` لكل حاسوب، والمجلد المحجوز `defender-quarantined/`
-من التخطيط المسطح السابق، قبل التحليل، سواء استخدم التشغيل الجديد `-x` أم لا.
+الملفات غير ذات الصلة ولا شجرة الإخراج بأكملها. كما يزيل مجلدي
+`SecurityProducts/DefenderQuarantined/` و`LateralMovement/RdpCache/` لكل حاسوب، والمجلد المحجوز
+`defender-quarantined/` من التخطيط المسطح السابق، قبل التحليل، سواء استخدم التشغيل الجديد `-x` أو
+`--extract-rdp-tiles` أم لا.
 
 استخدم مجلد إخراج جديدًا عند الانتقال من تخطيط مسطح أقدم. فلا تُنقل ملفات CSV/JSON الأقدم
 ولا تُحذف تلقائيًا.

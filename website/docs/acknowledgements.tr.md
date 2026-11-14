@@ -65,11 +65,15 @@ kendisine başvurun.
   geçmişi, indirmeler, çerezler ve form geçmişi için referans olmuştur.
 - Abel Cheung'un **rifiuti2** aracı, libyal'ın her iki biçimi belgeleyen **dtformats** belgeleriyle birlikte Geri Dönüşüm
   Kutusu `$I` dosyaları ve INFO2 için referans olmuştur.
+- ANSSI'nin **bmc-tools** aracı ve biçim hakkındaki CERT-FR bülteni, BSI'nin **RdpCacheStitcher** aracı,
+  **Velociraptor**'ın RDPCache artefaktı ve **dissect.target**'ın RDP önbelleği eklentisi, **FreeRDP**'nin kalıcı
+  bitmap önbelleği ve serpiştirmeli (interleaved) RLE kod çözücüsüyle birlikte RDP bitmap önbellekleri için referans
+  olmuştur.
 
 ## Spesifikasyonlar ve araştırmalar { #specifications-and-research }
 
-Shell Links, Compound Binary Files, NTFS/SAM protokolleri, kayıt defteri/hizmet/görev yapıları ve API
-belgeleri için Open Specifications yayımladığı için Microsoft'a teşekkür ederiz. Bu artefaktları
+Shell Links, Compound Binary Files, NTFS/SAM protokolleri, kayıt defteri/hizmet/görev yapıları, Remote Desktop
+Protocol ve API belgeleri için Open Specifications yayımladığı için Microsoft'a teşekkür ederiz. Bu artefaktları
 uygulayıcılar için anlaşılır kılan AppCompatCache, Amcache, SRUM, Prefetch, kayıt defteri ve NTFS adli
 bilişim araştırmalarının yazarlarına da teşekkür ederiz.
 

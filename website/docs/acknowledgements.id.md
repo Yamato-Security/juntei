@@ -62,11 +62,15 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   riwayat, unduhan, cookie, dan riwayat formulir browser.
 - **rifiuti2** dari Abel Cheung menjadi referensi untuk berkas `$I` dan INFO2 Recycle Bin, bersama
   dokumentasi kedua format tersebut dalam **dtformats** milik libyal.
+- **bmc-tools** milik ANSSI beserta buletin CERT-FR-nya tentang format tersebut, **RdpCacheStitcher**
+  milik BSI, artefak RDPCache milik **Velociraptor**, dan plugin RDP cache milik **dissect.target**
+  menjadi referensi untuk cache bitmap RDP, bersama persistent bitmap cache dan dekoder interleaved
+  RLE milik **FreeRDP**.
 
 ## Spesifikasi dan riset { #specifications-and-research }
 
 Kami berterima kasih kepada Microsoft karena telah memublikasikan Open Specifications untuk Shell Links, Compound Binary Files,
-protokol NTFS/SAM, struktur registry/layanan/tugas, dan dokumentasi API. Kami juga berterima kasih kepada para
+protokol NTFS/SAM, struktur registry/layanan/tugas, Remote Desktop Protocol, dan dokumentasi API. Kami juga berterima kasih kepada para
 penulis riset forensik AppCompatCache, Amcache, SRUM, Prefetch, registry, dan NTFS yang membuat
 artefak-artefak ini dapat dipahami oleh para praktisi.
 

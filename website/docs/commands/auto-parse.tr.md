@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları, Geri Dönüşüm Kutusu indeks dosyaları ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
+Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları, Geri Dönüşüm Kutusu indeks dosyaları, RDP bitmap önbellekleri ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
 
 Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `manifest.json` içindeki `Image` özgün imajı, `EvidenceRoot` iç göreli yolu tanımlar. Okuma hataları ve güvensiz adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara yazılır. Okunabilir sonuçlar korunur; eksik girdiler 1 döndürür. Güvensiz veya belirsiz adlar yeniden adlandırılmaz. Adlandırılmış NTFS akışları ek dosya olarak çıkarılmaz; normal dosya olarak toplanmış eserler kullanılabilir.
 
@@ -170,6 +170,8 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
 - LNK kısayolları
 - Jump Lists
 - Geri Dönüşüm Kutusu: silinen öğelerin özgün yolları, boyutları, silinme zamanları ve kullanıcıları
+- RDP bitmap önbellekleri: bir kullanıcının gördüğü uzak ekranların karoları ve her önbellek dosyasının bir kolaj
+  görüntüsü
 - ShimCache
 - Persistence Hunter (izin/engelleme profilleriyle 131 kaynaklar arası kalıcılık denetimi)
 - Defender karantina meta verileri
@@ -297,6 +299,9 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -362,7 +367,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `FileExistence` | Amcache, Geri Dönüşüm Kutusu, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Ağ profilleri, arabirimler, paylaşımlar, bağlantı noktası proxy'leri ve yollar; SRUM bağlantıları, trafik ve anında iletme bildirimleri |
-| `LateralMovement` | Kullanıcıların giden Uzak Masaüstü, PuTTY ve WinSCP bağlantıları, eşlenmiş sürücüler ve paylaşımlar; Kullanıcı Erişim Günlüğü (bir sunucunun rollerinin istemcileri) |
+| `LateralMovement` | Kullanıcıların giden Uzak Masaüstü, PuTTY ve WinSCP bağlantıları, eşlenmiş sürücüler ve paylaşımlar; RDP bitmap önbellekleri (uzak ekranların karoları); Kullanıcı Erişim Günlüğü (bir sunucunun rollerinin istemcileri) |
 | `Persistence` | Önyükleme yapılandırması (BCD), kayıt defteri otomatik başlatmaları, hizmetler, TaskCache |
 | `ProcessExecution` | Uygulama uyumluluğu, BAM ve DAM, FeatureUsage ve sabitlenmiş öğeler, MuiCache, Prefetch, Prefetch zaman çizelgesi, SRUM uygulama/CPU etkinliği, UserAssist |
 | `Registry` | Kurtarılmış kayıtlar dahil genel kovan anahtarları ve değerleri |
@@ -381,7 +386,7 @@ sağlayıcı tabloları doğrudan `NetworkActivity`, `ProcessExecution` ve `Syst
 yerleştirilir ve ortak bir `SystemInformation/SRUM-logs.txt` dosyası bulunur. Hiçbir `logs/` alt
 dizini oluşturulmaz.
 
-Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` ve
@@ -397,6 +402,9 @@ SRUM tabloları, kategorilerinin hemen altında `SRUM-` dosya adlarını kullan�
 Kullanıcı Erişim Günlüğü tabloları `LateralMovement` içindedir; her tablo için bir dosya vardır, örneğin
 `UAL-Clients.csv` ve `UAL-SystemIdentity.csv`, bunlarla birlikte `UAL-logs.txt` bulunur; bkz.
 [Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md#automatic-parsing).
+RDP bitmap önbelleği kayıtları `LateralMovement/RdpCache.csv` içindedir; her önbellek dosyasının kolajı
+`LateralMovement/RdpCache/<user>/<cache file>/` içindedir ve `--extract-rdp-tiles` verildiğinde tüm karolar da
+yanında bulunur; bkz. [RDP Bitmap Önbelleği](../artifacts/rdp-cache.md#automatic-parsing).
 Web tarayıcısı tabloları `BrowserActivity` içindedir: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` ve `Browser-FormHistory.csv`, bunlarla birlikte `Browser-logs.txt` bulunur; bkz.
 [Web Tarayıcıları](../artifacts/browser.md#automatic-parsing). Internet Explorer'ın ve eski Edge'in
@@ -572,6 +580,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -591,9 +600,9 @@ Display Settings:
 Mümkün olduğunda yeni bir çıktı dizini kullanın. `-C`, yalnızca bu çalışma için üretilen tam hedefleri
 kaldırır veya üzerine yazar; böylece artık bulunmayan bir artefakt güncelliğini yitirmiş bir sonuç
 bırakamaz. İlgisiz dosyaları veya çıktı ağacının tamamını silmez. Ayrıca ayrıştırmadan önce, yeni
-çalışma `-x` kullansın ya da kullanmasın, her bilgisayarın
-`SecurityProducts/DefenderQuarantined/` dizinini ve önceki düz düzenden kalan ayrılmış
-`defender-quarantined/` dizinini kaldırır.
+çalışma `-x` veya `--extract-rdp-tiles` kullansın ya da kullanmasın, her bilgisayarın
+`SecurityProducts/DefenderQuarantined/` ve `LateralMovement/RdpCache/` dizinlerini ve önceki düz düzenden kalan
+ayrılmış `defender-quarantined/` dizinini kaldırır.
 
 Eski düz bir düzenden geçerken yeni bir çıktı dizini kullanın. Önceki CSV/JSON dosyaları otomatik olarak
 taşınmaz veya silinmez.

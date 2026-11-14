@@ -22,6 +22,7 @@ Juntei Windows से पहले ही एकत्र की गई files �
 | वेब ब्राउज़र | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` और अन्य browsers के profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` और अन्य उपयोगकर्ता/system स्थान |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` और `CustomDestinations` |
+| RDP बिटमैप कैश | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (Windows XP और उससे पहले `%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\`) |
 | Recycle Bin | हर volume पर `$Recycle.Bin\<SID>\$I*` और `$R*` (Windows XP और उससे पहले `RECYCLER\<SID>\INFO2` और `D*`) |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender quarantine | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |

@@ -189,6 +189,24 @@ datos de prueba de Plaso dan las horas, tamaños, rutas, índices y unidades que
 imagen de disco pública M57-Jean de Digital Corpora (Windows XP), leída con `auto-parse --e01`, el registro de INFO2
 coincide con rifiuti2, y el archivo reciclado que está junto a él, `Dc1.jpg`, tiene el nombre que le da Juntei.
 
+## Caché de mapas de bits de RDP { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` es un analizador propio de Juntei. En kofu, uno de los seis hosts de la colección del
+CODE BLUE 2026 CTF, cada una de las 1911 teselas de sus tres archivos `Cache????.bin` es, píxel a píxel, la imagen que
+genera [bmc-tools](https://github.com/ANSSI-FR/bmc-tools). Lo mismo ocurre con las 1980 teselas del `Cache0000.bin`
+público del reto «Phantom Connection» de ApoorvCTF 2025, 105 de ellas de 64 × 48 píxeles. bmc-tools lee todas las
+teselas como si tuvieran 64 píxeles de ancho, por lo que las teselas más estrechas del borde derecho de una pantalla
+salen deformadas; Juntei lee cada tesela con su propio ancho.
+
+No se encontró ninguna caché `.bmc` pública con teselas: las muestras anteriores, como las de otros clientes de
+Windows 10 y posteriores, solo tienen un `bcache24.bmc` vacío. Por ello, la lectura de `.bmc` se probó con archivos
+creados según el formato: teselas sin comprimir de las cuatro profundidades de color, teselas pequeñas seguidas del
+final de una tesela anterior, ranuras dañadas y 3000 teselas aleatorias de 16 bits comprimidas con RLE que usan todas
+las órdenes de MS-RDPBCGR 3.1.9, sin que ninguna orden pase del final de la primera fila de una tesela. Juntei y
+bmc-tools decodifican las 3000 en píxeles idénticos. Cuando una orden empieza en la primera fila y continúa más allá
+de ella, ambos difieren: Juntei sigue la especificación y el decodificador de FreeRDP, que mantienen las reglas de la
+primera fila durante toda la orden, mientras que bmc-tools cambia de reglas a mitad de ella.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) es una bifurcación

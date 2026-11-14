@@ -38,6 +38,7 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 | `parse-file lnk` | `*.lnk` | [LNK-Verknüpfungen](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP-Bitmap-Cache](../artifacts/rdp-cache.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Papierkorb](../artifacts/recycle-bin.md) |
 
 ## [NTFS-Befehle](filesystem.md) { #ntfs-commands }

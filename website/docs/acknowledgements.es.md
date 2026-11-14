@@ -70,11 +70,15 @@ que su código esté incluido en Juntei; consulte la licencia de cada proyecto.
   para el historial, las descargas, las cookies y el historial de formularios de los navegadores.
 - **rifiuti2** de Abel Cheung sirvió de referencia para los archivos `$I` e INFO2 de la Papelera de reciclaje, junto
   con la documentación **dtformats** de libyal sobre ambos formatos.
+- **bmc-tools** de la ANSSI y su boletín del CERT-FR sobre el formato, **RdpCacheStitcher** del BSI, el artefacto
+  RDPCache de **Velociraptor** y el plugin de caché de RDP de **dissect.target** sirvieron de referencia para las
+  cachés de mapas de bits de RDP, junto con la caché persistente de mapas de bits y el decodificador de RLE
+  entrelazado de **FreeRDP**.
 
 ## Especificaciones e investigación { #specifications-and-research }
 
 Agradecemos a Microsoft la publicación de las Open Specifications para Shell Links, Compound Binary
-Files, los protocolos NTFS/SAM, las estructuras de Registro, servicios y tareas, y la documentación
+Files, los protocolos NTFS/SAM, las estructuras de Registro, servicios y tareas, el Remote Desktop Protocol y la documentación
 de las API. También agradecemos a los autores de las investigaciones forenses sobre AppCompatCache,
 Amcache, SRUM, Prefetch, el Registro y NTFS, que han hecho que estos artefactos resulten
 comprensibles para los profesionales.

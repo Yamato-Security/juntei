@@ -20,6 +20,7 @@ Windows เก็บรักษาร่องรอยที่ซ้อนท
 | ผู้ใช้เข้าชมเว็บไซต์ใดบ้าง และดาวน์โหลดอะไร | [เว็บเบราว์เซอร์](browser.md), [Internet Explorer และ Edge รุ่นเก่า](webcache.md) | บันทึกของพร็อกซีและ DNS, `$MFT` และ USN Journal, Defender, SRUM |
 | ผู้ใช้รับส่งอีเมลกับใคร และมีอะไรแนบมาบ้าง | [Outlook](outlook.md) | บันทึกของเมลเซิร์ฟเวอร์และเกตเวย์, `$MFT` และ USN Journal, Defender, LNK และ Jump Lists |
 | ไคลเอนต์และบัญชีใดใช้งานเซิร์ฟเวอร์นี้ และในวันใดบ้าง | [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](ual.md) | Security event log, บันทึกของ SMB และ RDP, บันทึกของไฟร์วอลล์ |
+| ผู้ใช้เห็นอะไรบนคอมพิวเตอร์ที่เชื่อมต่อด้วย Remote Desktop | [แคชบิตแมปของ RDP](rdp-cache.md) | [การเข้าถึงระยะไกล (ฝั่งผู้ใช้)](remote-access.md), [Jump Lists](jump-lists.md), เหตุการณ์การเข้าสู่ระบบบนคอมพิวเตอร์ระยะไกล และ [UAL](ual.md) |
 | มีการกำหนดค่าการคงอยู่ (persistence) หรือไม่ | [บริการ](services.md), [TaskCache](taskcache.md), [รีจิสทรี](registry.md) | Event log, Prefetch, `$MFT` |
 | Defender ลบอะไรออกไปบ้าง | [ข้อมูลที่ Defender กักกัน](defender-quarantine.md) | Event log, `$MFT`, USN Journal |
 | มีการเพิ่มหรือเปลี่ยนแปลงบัญชีภายในเครื่องหรือไม่ | [SAM](sam.md) | Security event log และประวัติ transaction ของรีจิสทรี |

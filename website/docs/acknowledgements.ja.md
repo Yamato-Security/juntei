@@ -41,10 +41,11 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 - **Plaso**、**Chainsaw**、および **Velociraptor** は、複数のアーティファクトにわたるパーサー比較、テスト証拠、またはコレクション指向の参照動作を提供しました。
 - Obsidian Forensics の **Hindsight** と Velocidex の **SQLiteHunter** の定義は、ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴の参考資料となりました。
 - Abel Cheung の **rifiuti2** はごみ箱の `$I` ファイルと INFO2 の参考実装となり、libyal の **dtformats** の文書が両方の形式を説明しています。
+- ANSSI の **bmc-tools** と、その形式に関する CERT-FR の文書、BSI の **RdpCacheStitcher**、**Velociraptor** の RDPCache アーティファクト、**dissect.target** の RDP キャッシュ プラグインは、RDP ビットマップキャッシュの参考となりました。**FreeRDP** の永続ビットマップキャッシュとインターリーブ RLE デコーダーも参考にしています。
 
 ## 仕様と研究 { #specifications-and-research }
 
-シェル リンク、複合バイナリ ファイル、NTFS/SAM プロトコル、レジストリ/サービス/タスク構造、および API ドキュメントのオープン仕様を公開してくださった Microsoft に感謝します。また、これらのアーティファクトを実務者に理解できるようにした AppCompatCache、Amcache、SRUM、Prefetch、レジストリ、および NTFS フォレンジック研究の作成者にも感謝します。
+シェル リンク、複合バイナリ ファイル、NTFS/SAM プロトコル、レジストリ/サービス/タスク構造、リモート デスクトップ プロトコル、および API ドキュメントのオープン仕様を公開してくださった Microsoft に感謝します。また、これらのアーティファクトを実務者に理解できるようにした AppCompatCache、Amcache、SRUM、Prefetch、レジストリ、および NTFS フォレンジック研究の作成者にも感謝します。
 
 ## テスト証拠 { #test-evidence }
 

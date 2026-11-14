@@ -19,6 +19,7 @@ Commands:
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
   prefetch             Parse Prefetch files
+  rdp-cache            Parse RDP bitmap caches (Cache????.bin and bcache*.bmc) and save their screen tiles as images
   recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
 Options:
@@ -202,6 +203,42 @@ juntei parse-file prefetch -d evidence/ -T -o prefetch-timeline.csv
 ```
 
 Див. [Prefetch](../artifacts/prefetch.md).
+
+## `parse-file rdp-cache` { #parse-file-rdp-cache }
+
+```text
+Version: 1.2.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file rdp-cache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for RDP bitmap caches (Cache????.bin, bcache*.bmc)
+  -f, --file <FILE>      File path to one RDP bitmap cache file
+
+Output:
+  -o, --output <FILE>       Save every tile's record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -x, --extract <DIR>       Save each cache file's tiles as BMP images (for RdpCacheStitcher) and a PNG collage, a folder per cache file
+      --collage-only        With --extract, save only the collages
+      --collage-width <N>   Tiles per row of the collages [default: 64]
+  -C, --clobber             Overwrite files when saving or extracting
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file rdp-cache -d evidence/ -o rdp-cache.csv --extract rdp-cache/
+juntei parse-file rdp-cache -f Cache0000.bin --extract rdp-cache/ --collage-only
+```
+
+Див. [Кеш растрових зображень RDP](../artifacts/rdp-cache.md).
 
 ## `parse-file recycle-bin` { #parse-file-recycle-bin }
 

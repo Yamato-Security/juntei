@@ -180,6 +180,26 @@ Server 2003 အထိ INFO2 ဖိုင် ဆယ့်တစ်ခုမှ �
 `auto-parse --e01` ဖြင့် ဖတ်သောအခါ INFO2 record သည် rifiuti2 နှင့် ကိုက်ညီပြီး ၎င်းဘေးရှိ recycle လုပ်ထားသော ဖိုင်
 `Dc1.jpg` ၏ အမည်သည်လည်း Juntei ပေးသော အမည်နှင့် တူညီပါသည်။
 
+## RDP ဘစ်မက် ကက်ရှ် { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` သည် Juntei ၏ ကိုယ်ပိုင် parser ဖြစ်ပါသည်။ CODE BLUE 2026 CTF collection ၏ host ခြောက်ခုအနက်
+တစ်ခုဖြစ်သော kofu ပေါ်တွင် ၎င်း၏ `Cache????.bin` ဖိုင် သုံးခုမှ tile 1,911 ခုစလုံးသည်
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) ထုတ်ပေးသော ပုံနှင့် pixel တိုင်း တူညီပါသည်။ ApoorvCTF 2025 ၏
+"Phantom Connection" challenge ၏ အများသုံး `Cache0000.bin` မှ tile 1,980 ခုလည်း ထိုနည်းတူ ဖြစ်ပြီး ၎င်းတို့အနက်
+105 ခုသည် 64 × 48 pixel ဖြစ်ပါသည်။ bmc-tools သည် tile တိုင်းကို 64 pixel အကျယ်ဟု ယူဆ၍ ဖတ်သောကြောင့် မျက်နှာပြင်၏
+ညာဘက်အစွန်းရှိ ပိုကျဉ်းသော tile များသည် စောင်းနေသကဲ့သို့ ထွက်လာပါသည်။ Juntei မူ tile တစ်ခုစီကို ၎င်း၏ ကိုယ်ပိုင်
+အကျယ်ဖြင့် ဖတ်ပါသည်။
+
+tile များ ပါဝင်သော အများသုံး `.bmc` cache ကို မတွေ့ရှိခဲ့ပါ- အထက်ပါ sample များတွင် Windows 10 နှင့် နောက်ပိုင်း
+အခြား client များကဲ့သို့ ဗလာ `bcache24.bmc` တစ်ခုသာ ရှိပါသည်။ ထို့ကြောင့် `.bmc` ဖတ်ခြင်းကို format အတိုင်း
+တည်ဆောက်ထားသော ဖိုင်များဖြင့် စမ်းသပ်ခဲ့ပါသည်- color depth လေးမျိုးလုံး၏ compress မလုပ်ထားသော tile များ၊ နောက်တွင်
+ယခင် tile ၏ အဆုံးပိုင်း လိုက်ပါလာသော သေးငယ်သည့် tile များ၊ ပျက်စီးနေသော slot များနှင့် MS-RDPBCGR 3.1.9 ၏ order
+တိုင်းကို အသုံးပြုသော ကျပန်း RLE-compressed 16-bit tile 3,000 ခု ဖြစ်ပါသည်။ ထို tile များတွင် tile ၏ ပထမ row ၏
+အဆုံးကို ကျော်လွန်သွားသော order မရှိပါ။ Juntei နှင့် bmc-tools တို့သည် 3,000 ခုစလုံးကို တူညီသော pixel များအဖြစ်
+decode လုပ်ပါသည်။ order တစ်ခုသည် ပထမ row တွင် စတင်ပြီး ထို row ကို ကျော်လွန်၍ ဆက်သွားသည့်အခါ နှစ်ခု၏ ရလဒ်
+ကွဲပြားပါသည်- Juntei သည် order တစ်ခုလုံးအတွက် ပထမ row ၏ စည်းမျဉ်းများကို ဆက်ထိန်းထားသော specification နှင့်
+FreeRDP ၏ decoder ကို လိုက်နာပြီး bmc-tools မူ order ၏ အလယ်တွင် စည်းမျဉ်းကို ပြောင်းလဲပါသည်။
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) သည် Security Ronin ၏

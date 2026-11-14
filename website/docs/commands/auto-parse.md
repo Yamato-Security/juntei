@@ -37,7 +37,7 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
 reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
 hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
-lists, Outlook files, Recycle Bin index files and Defender quarantine folders. Every other file is an empty placeholder
+lists, Outlook files, Recycle Bin index files, RDP bitmap caches and Defender quarantine folders. Every other file is an empty placeholder
 with its original modification time, so directories and paths look as they do on the disk.
 persistence-hunter reads a placeholder's content from the image only when it needs it, such as
 an executable that a persistence entry refers to.
@@ -190,6 +190,8 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - LNK shortcuts
 - Jump Lists
 - Recycle Bin: deleted items' original paths, sizes, deletion times and users
+- RDP bitmap caches: the tiles of the remote screens a user saw, with a collage image of each cache
+  file
 - ShimCache
 - Persistence Hunter (131 cross-source persistence checks with allow/block profiles)
 - Defender quarantine metadata
@@ -318,6 +320,9 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -383,7 +388,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `FileExistence` | Amcache, Recycle Bin, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
-| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; User Access Logging (the clients of a server's roles) |
+| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; RDP bitmap caches (the remote screens' tiles); User Access Logging (the clients of a server's roles) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU activity, UserAssist |
 | `Registry` | General hive keys and values, including recovered records |
@@ -401,7 +406,7 @@ Amcache and Jump Lists each have one shared log beside their prefixed tables. SR
 in `NetworkActivity`, `ProcessExecution` and `SystemInformation`, with a shared
 `SystemInformation/SRUM-logs.txt` file. No `logs/` subdirectories are created.
 
-Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, and
@@ -417,6 +422,9 @@ SRUM tables use `SRUM-` filenames directly under their category, for example
 User Access Logging tables are in `LateralMovement`, one file per table, such as
 `UAL-Clients.csv` and `UAL-SystemIdentity.csv`, with `UAL-logs.txt`; see
 [User Access Logging (UAL)](../artifacts/ual.md#automatic-parsing).
+RDP bitmap cache records are in `LateralMovement/RdpCache.csv`, and each cache file's collage is in
+`LateralMovement/RdpCache/<user>/<cache file>/`, with every tile beside it when
+`--extract-rdp-tiles` is given; see [RDP Bitmap Cache](../artifacts/rdp-cache.md#automatic-parsing).
 Web browser tables are in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` and `Browser-FormHistory.csv`, with `Browser-logs.txt`; see
 [Web Browsers](../artifacts/browser.md#automatic-parsing). Internet Explorer and legacy Edge's
@@ -586,6 +594,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -605,8 +614,9 @@ Display Settings:
 Use a new output directory when practical. `-C` removes or overwrites only the exact generated
 targets for this run, so a now-missing artifact cannot leave a stale result. It does not delete
 unrelated files or the complete output tree. It also removes each computer's
-`SecurityProducts/DefenderQuarantined/` directory, and the reserved `defender-quarantined/`
-directory from the previous flat layout, before parsing, whether or not the new run uses `-x`.
+`SecurityProducts/DefenderQuarantined/` and `LateralMovement/RdpCache/` directories, and the
+reserved `defender-quarantined/` directory from the previous flat layout, before parsing, whether
+or not the new run uses `-x` or `--extract-rdp-tiles`.
 
 Use a fresh output directory when switching from an older flat layout. Earlier CSV/JSON files
 are not relocated or deleted automatically.
