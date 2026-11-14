@@ -200,7 +200,7 @@ Artefak yang tidak dikumpulkan merupakan tugas `skipped` yang normal, bukan kega
 
 ## Rekonstruksi sistem berkas { #filesystem-reconstruction }
 
-Setiap MFT yang dikumpulkan juga menghasilkan pohon yang dapat ditelusuri. Tabel lama tetap sama dalam mode CSV, JSON dan JSONL.
+Rekonstruksi sistem berkas **dinonaktifkan secara default**. Aktifkan `-R, --reconstruct-filesystem` untuk menambahkan pohon yang dapat ditelusuri bagi setiap MFT yang dikumpulkan. Nama dan isi tabel tetap sama dalam mode CSV, JSON, dan JSONL.
 
 Pohon dibuat di ruang privat di sebelah tujuan dan diterbitkan hanya setelah lengkap. Kesalahan dan interupsi tertangani membersihkannya serta menjaga pohon lama. Penghentian paksa dapat meninggalkan direktori `.juntei-reconstruction-*`; direktori itu tidak menghalangi percobaan ulang atau menjadi volume aktif.
 
@@ -220,10 +220,11 @@ Masukan I30 opsional yang tidak terbaca atau rusak dicatat sebagai `i30_input_er
 
 Berkas dengan isi residen pulihan yang tidak kosong diberi `.dontrun` sebelum byte ditulis. Nama asli tetap di inventaris; berkas kosong mempertahankan namanya. Jangan jalankan isi pulihan. Reparse point, ACL, waktu asli dan izin eksekusi tidak dipulihkan. Ekstrak stream bernama secara terpisah.
 
-Berkas kosong pun memakai inode dan metadata direktori. Untuk melewati rekonstruksi:
+Rekonstruksi dapat membuat ratusan ribu berkas; berkas kosong pun memakai inode dan metadata direktori. Aktifkan hanya jika Anda memerlukan pohon tersebut:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 Penimpaan hanya mengganti pohon lengkap yang sesuai inventaris tanpa objek hilang, tambahan atau link. Pohon parsial dan tambahan seperti `.DS_Store` dipertahankan. Auto-parse hanya melewati rekonstruksi, mencatat direktori dan alasan di log serta kedua manifest, dan meneruskan parser lain. Kegagalan tulis dilaporkan terpisah dengan status keseluruhan gagal tetapi hasil parsing tetap disimpan. Perintah mandiri tetap menolak tujuan terblokir.
@@ -592,6 +593,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -599,7 +601,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

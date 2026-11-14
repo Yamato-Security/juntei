@@ -193,13 +193,64 @@ fn collection(tmp: &Path) -> PathBuf {
 }
 
 #[test]
-fn automatic_csv_json_and_jsonl_build_one_tree_and_leave_raw_files_out_of_siem() {
+fn default_auto_parse_keeps_reconstruction_disabled_in_every_output_format() {
     let tmp = tempfile::tempdir().unwrap();
     let evidence = collection(tmp.path());
     for format in ["csv", "json", "jsonl"] {
         let output = tmp.path().join(format);
-        let timeline = output.join("timeline.jsonl");
         success(&run(&[
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-t",
+            format,
+            "-T",
+            "2",
+        ]));
+        assert!(!output.join("HOST/FileSystem/C").exists());
+        let manifest: Value =
+            serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
+        for task in manifest["Tasks"].as_array().unwrap() {
+            for key in [
+                "ReconstructionRoot",
+                "ReconstructionInventory",
+                "ReconstructionStatus",
+                "ReconstructionError",
+            ] {
+                assert!(task.get(key).is_none(), "{format}: {key}");
+            }
+            assert!(
+                !task["Command"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|arg| arg == "--reconstruct-filesystem")
+            );
+        }
+        let table = output.join(format!("HOST/FileSystem/MFT.{format}"));
+        assert!(fs::metadata(table).unwrap().len() > 0);
+        assert!(
+            rows(&output.join("manifest.csv"))
+                .iter()
+                .all(|task| task["ReconstructionRoot"].is_empty())
+        );
+    }
+}
+
+#[test]
+fn automatic_csv_json_and_jsonl_build_one_tree_and_leave_raw_files_out_of_siem() {
+    let tmp = tempfile::tempdir().unwrap();
+    let evidence = collection(tmp.path());
+    for (format, flag) in [
+        ("csv", "-R"),
+        ("json", "--reconstruct-filesystem"),
+        ("jsonl", "-R"),
+    ] {
+        let output = tmp.path().join(format);
+        let timeline = output.join("timeline.jsonl");
+        let mut args = vec![
             "auto-parse",
             "-d",
             evidence.to_str().unwrap(),
@@ -211,7 +262,25 @@ fn automatic_csv_json_and_jsonl_build_one_tree_and_leave_raw_files_out_of_siem()
             timeline.to_str().unwrap(),
             "-T",
             "2",
-        ]));
+        ];
+        success(&run(&args));
+        assert!(!output.join("HOST/FileSystem/C").exists());
+        let table = output.join(format!("HOST/FileSystem/MFT.{format}"));
+        let original_table = fs::read(&table).unwrap();
+        let original_timeline = fs::read(&timeline).unwrap();
+        let initial: Value =
+            serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
+        assert!(
+            initial["Tasks"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|task| task.get("ReconstructionRoot").is_none())
+        );
+        args.extend([flag, "-C"]);
+        success(&run(&args));
+        assert_eq!(fs::read(table).unwrap(), original_table);
+        assert_eq!(fs::read(&timeline).unwrap(), original_timeline);
         let manifest: Value =
             serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
         let mft = manifest["Tasks"]
@@ -255,7 +324,56 @@ fn automatic_csv_json_and_jsonl_build_one_tree_and_leave_raw_files_out_of_siem()
 }
 
 #[test]
-fn auto_parse_can_opt_out_and_skips_blocked_reconstruction_without_losing_tables() {
+fn default_clobber_preserves_an_existing_reconstruction_without_rebuilding_it() {
+    let tmp = tempfile::tempdir().unwrap();
+    let evidence = collection(tmp.path());
+    let output = tmp.path().join("parsed");
+    let args = [
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+    ];
+    let mut enabled = args.to_vec();
+    enabled.push("-R");
+    success(&run(&enabled));
+    let root = output.join("HOST/FileSystem/C");
+    let inventory = root.join("_Juntei-Reconstruction.csv");
+    let original = fs::read(&inventory).unwrap();
+    let record = rows(&inventory)
+        .into_iter()
+        .find(|r| r["DataStatus"] == "resident_recovered")
+        .unwrap();
+    let recovered = root.join(&record["OutputPath"]);
+    let bytes = fs::read(&recovered).unwrap();
+    let extra = root.join(".DS_Store");
+    fs::write(&extra, b"analyst metadata").unwrap();
+    let mut disabled = args.to_vec();
+    disabled.push("-C");
+    let out = run(&disabled);
+    success(&out);
+    assert!(!String::from_utf8_lossy(&out.stdout).contains("requires a new directory"));
+    assert_eq!(fs::read(inventory).unwrap(), original);
+    assert_eq!(fs::read(recovered).unwrap(), bytes);
+    assert_eq!(fs::read(extra).unwrap(), b"analyst metadata");
+    let manifest: Value =
+        serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let mft = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|task| task["Artifact"] == "mft")
+        .unwrap();
+    assert_eq!(mft["Status"], "succeeded");
+    assert!(mft.get("ReconstructionRoot").is_none());
+    assert!(mft.get("ReconstructionStatus").is_none());
+}
+
+#[test]
+fn auto_parse_is_opt_in_and_skips_blocked_reconstruction_without_losing_tables() {
     let tmp = tempfile::tempdir().unwrap();
     let evidence = collection(tmp.path());
     let output = tmp.path().join("results");
@@ -267,7 +385,6 @@ fn auto_parse_can_opt_out_and_skips_blocked_reconstruction_without_losing_tables
         output.to_str().unwrap(),
         "-T",
         "2",
-        "--no-reconstruct-filesystem",
     ]));
     assert!(!output.join("HOST/FileSystem/C").exists());
     let mft = output.join("HOST/FileSystem/MFT.csv");
@@ -277,6 +394,7 @@ fn auto_parse_can_opt_out_and_skips_blocked_reconstruction_without_losing_tables
     fs::write(&sentinel, b"keep").unwrap();
     let out = run(&[
         "auto-parse",
+        "-R",
         "-d",
         evidence.to_str().unwrap(),
         "-o",
@@ -357,6 +475,7 @@ fn multiple_volumes_and_duplicate_computer_names_never_share_reconstruction_task
     let output = tmp.path().join("parsed");
     success(&run(&[
         "auto-parse",
+        "-R",
         "-d",
         evidence.to_str().unwrap(),
         "-o",
@@ -452,8 +571,8 @@ fn partial_trees_and_finder_metadata_skip_only_reconstruction_and_keep_siem_resu
             "-T",
             "2",
         ];
-        if mode == "partial" {
-            args.push("--no-reconstruct-filesystem");
+        if mode == "finder" {
+            args.push("-R");
         }
         success(&run(&args));
         let root = output.join("HOST/FileSystem/C");
@@ -467,6 +586,7 @@ fn partial_trees_and_finder_metadata_skip_only_reconstruction_and_keep_siem_resu
         let original = fs::read(output.join("HOST/FileSystem/MFT.csv")).unwrap();
         success(&run(&[
             "auto-parse",
+            "-R",
             "-d",
             evidence.to_str().unwrap(),
             "-o",
@@ -530,6 +650,7 @@ fn one_letter_i30_parent_names_do_not_change_the_owning_volume() {
     let output = tmp.path().join("parsed");
     success(&run(&[
         "auto-parse",
+        "-R",
         "-d",
         evidence.to_str().unwrap(),
         "-o",
@@ -589,6 +710,7 @@ fn nested_volumes_never_share_external_indexes_with_an_unknown_parent_volume() {
     let output = tmp.path().join("parsed");
     success(&run(&[
         "auto-parse",
+        "-R",
         "-d",
         evidence.to_str().unwrap(),
         "-o",

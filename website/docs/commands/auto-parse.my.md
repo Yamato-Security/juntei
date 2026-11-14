@@ -200,7 +200,7 @@ metadata ပါဝင်ပါသည်။ Defender quarantine extraction ကိ
 
 ## ဖိုင်စနစ် ပြန်လည်တည်ဆောက်ခြင်း { #filesystem-reconstruction }
 
-စုဆောင်းထားသော MFT တစ်ခုစီအတွက် ကြည့်ရှုနိုင်သည့် ဖိုင်တွဲပင်ကိုလည်း ဖန်တီးသည်။ CSV၊ JSON နှင့် JSONL ရှိ မူလဇယားများ မပြောင်းလဲပါ။
+ဖိုင်စနစ်ပြန်တည်ဆောက်မှုကို **မူလအတိုင်း ပိတ်ထားသည်**။ စုဆောင်းထားသော MFT တစ်ခုစီအတွက် ကြည့်ရှုနိုင်သည့် ဖိုင်တွဲပင်ကို ထည့်ရန် `-R, --reconstruct-filesystem` ကို ဖွင့်ပါ။ CSV၊ JSON နှင့် JSONL ရှိ မူလဇယားအမည်နှင့် အကြောင်းအရာများ မပြောင်းလဲပါ။
 
 ပင်ကို ဘေးချင်းကပ် ကိုယ်ပိုင် workspace တွင်တည်ဆောက်ပြီး ပြည့်စုံမှသာ ဖော်ပြသည်။ ထိန်းချုပ်နိုင်သော error နှင့် interruption တွင် workspace ကိုရှင်းပြီး ယခင်ပင်ကိုထိန်းထားသည်။ Force stop ကြောင့် `.juntei-reconstruction-*` ဖိုင်တွဲကျန်နိုင်သော်လည်း retry ကိုမပိတ်ဘဲ active volume မဖြစ်စေပါ။
 
@@ -220,10 +220,11 @@ metadata ပါဝင်ပါသည်။ Defender quarantine extraction ကိ
 
 ပြန်ရသော resident content သုညမဟုတ်သည့်ဖိုင်ကို byte မရေးမီ `.dontrun` ထည့်သည်။ မူရင်းအမည်သည်စာရင်းတွင်ကျန်ပြီး ဖိုင်အလွတ်သည် မူရင်းအမည်သုံးသည်။ Content ကိုမလုပ်ဆောင်ပါနှင့်။ Reparse point၊ ACL၊ မူရင်းအချိန်နှင့် execute permission မပြန်ထားပါ။ အမည်ပါ stream ကို သီးခြားထုတ်ပါ။
 
-ဖိုင်အလွတ်များလည်း inode နှင့် ဖိုင်တွဲ metadata ကိုသုံးသည်။ မလိုလျှင် ပြန်တည်ဆောက်မှုကို ကျော်နိုင်သည်:
+ပြန်တည်ဆောက်မှုသည် ဖိုင်သိန်းနှင့်ချီ ဖန်တီးနိုင်ပြီး ဖိုင်အလွတ်များလည်း inode နှင့် ဖိုင်တွဲ metadata ကိုသုံးသည်။ ဖိုင်တွဲပင် လိုအပ်မှသာ ဖွင့်ပါ:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 ပြည့်စုံသောစာရင်းနှင့်ကိုက်ပြီး ပျောက်နေသော၊ အပိုအရာ သို့မဟုတ် link မရှိသည့်ပင်ကိုသာ clobber ပြုလုပ်သည်။ Partial tree နှင့် `.DS_Store` ကဲ့သို့အပိုဖိုင်ကိုထိန်းထားသည်။ Auto-parse သည် reconstruction ကိုသာကျော်ပြီး ဖိုင်တွဲနှင့်အကြောင်းကို log နှင့် manifest နှစ်ခုတွင်မှတ်ကာ အခြား parser များဆက်လုပ်သည်။ Write failure ကို သီးခြားပြပြီး စုစုပေါင်း failure status ပေးသော်လည်း parsing result ကိုထိန်းထားသည်။ Standalone command က ပိတ်ထားသည့် output ကိုငြင်းသည်။
@@ -591,6 +592,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -598,7 +600,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

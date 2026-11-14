@@ -201,7 +201,7 @@ hunter ใช้ worker หนึ่งตัวภายในโพรเซ�
 
 ## การสร้างระบบไฟล์ขึ้นใหม่ { #filesystem-reconstruction }
 
-MFT ที่เก็บมาทุกไฟล์จะสร้างต้นไม้โฟลเดอร์ที่เปิดดูได้เพิ่มด้วย ตารางเดิมไม่เปลี่ยนในโหมด CSV, JSON และ JSONL
+การสร้างระบบไฟล์ขึ้นใหม่ **ปิดไว้โดยค่าเริ่มต้น** ใช้ `-R, --reconstruct-filesystem` เพื่อเพิ่มต้นไม้โฟลเดอร์ที่เปิดดูได้สำหรับ MFT แต่ละไฟล์ที่เก็บมา ชื่อและเนื้อหาของตารางเดิมไม่เปลี่ยนในโหมด CSV, JSON และ JSONL
 
 สร้างต้นไม้ในพื้นที่ส่วนตัวข้างปลายทางและเผยแพร่เมื่อเสร็จเท่านั้น ข้อผิดพลาดหรือการขัดจังหวะที่จัดการได้จะล้างพื้นที่และเก็บต้นไม้เดิม การบังคับปิดอาจเหลือโฟลเดอร์ `.juntei-reconstruction-*` แต่ไม่ขวางการลองใหม่หรือกลายเป็นโวลุ่มปัจจุบัน
 
@@ -221,10 +221,11 @@ MFT ที่เก็บมาทุกไฟล์จะสร้างต้�
 
 ไฟล์ที่มีเนื้อหา resident ที่กู้ได้และไม่ว่างจะเติม `.dontrun` ก่อนเขียนไบต์ ชื่อเดิมอยู่ในรายการ ส่วนไฟล์ว่างคงชื่อเดิม ห้ามรันเนื้อหาที่กู้ได้ ไม่คืนค่า reparse point, ACL, เวลาเดิม หรือสิทธิ์รัน สตรีมที่มีชื่อต้องแยกออกต่างหาก
 
-แม้ไฟล์ว่างก็ใช้ inode และเมทาดาทาโฟลเดอร์ หากไม่ต้องการให้ข้ามการสร้างใหม่:
+การสร้างใหม่อาจเพิ่มไฟล์หลายแสนไฟล์ แม้ไฟล์ว่างก็ใช้ inode และเมทาดาทาโฟลเดอร์ เปิดใช้เฉพาะเมื่อต้องการต้นไม้โฟลเดอร์:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 การเขียนทับจะแทนที่เฉพาะต้นไม้ที่มีรายการครบและไม่มีสิ่งที่หาย เพิ่ม หรือลิงก์ เก็บต้นไม้บางส่วนและไฟล์เพิ่ม เช่น `.DS_Store` ไว้ Auto-parse ข้ามเฉพาะการสร้างใหม่ บันทึกโฟลเดอร์และเหตุผลใน log กับ manifest ทั้งสองและทำ parser อื่นต่อ ข้อผิดพลาดเขียนรายงานแยกและคืนสถานะล้มเหลวโดยเก็บผลที่แยกไว้ คำสั่งเดี่ยวยังปฏิเสธปลายทางที่ถูกขวาง
@@ -594,6 +595,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -601,7 +603,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

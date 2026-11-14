@@ -200,7 +200,7 @@ Un artefact qui n'a pas été collecté constitue une tâche `skipped` normale, 
 
 ## Reconstruction du système de fichiers { #filesystem-reconstruction }
 
-Chaque MFT collectée produit aussi une arborescence consultable. Les tables existantes restent inchangées en CSV, JSON et JSONL.
+La reconstruction du système de fichiers est **désactivée par défaut**. Activez `-R, --reconstruct-filesystem` pour ajouter une arborescence consultable pour chaque MFT collectée. Les noms et contenus des tables existantes restent inchangés en CSV, JSON et JSONL.
 
 Les arbres sont construits dans un espace privé voisin et publiés uniquement une fois complets. Les erreurs et interruptions traitées nettoient cet espace et préservent l’ancien arbre. Un arrêt forcé peut laisser des dossiers `.juntei-reconstruction-*` ; ils ne bloquent pas une nouvelle tentative et ne deviennent pas le volume actif.
 
@@ -220,10 +220,11 @@ Les entrées I30 facultatives illisibles ou endommagées sont signalées par `i3
 
 Les fichiers au contenu résident récupéré non vide reçoivent `.dontrun` avant toute écriture. Les noms originaux restent dans l’inventaire ; les fichiers vides conservent leur nom. Ne jamais exécuter le contenu récupéré. Aucun point de réanalyse, ACL, horodatage original ou droit d’exécution n’est restauré. Extraire séparément les flux nommés.
 
-Même vides, les fichiers occupent des inodes et des métadonnées. Pour désactiver la reconstruction :
+La reconstruction peut créer des centaines de milliers de fichiers ; même vides, ils occupent des inodes et des métadonnées de répertoire. Activez-la uniquement si vous avez besoin de cette arborescence :
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 L’écrasement remplace uniquement les arbres complets inventoriés sans objet manquant, inconnu ou lien. Les arbres partiels et ajouts comme `.DS_Store` sont conservés. Auto-parse ignore seulement la reconstruction et note le dossier et le motif dans le journal et les deux manifestes ; les autres analyses continuent. Les échecs d’écriture sont signalés séparément avec un statut global d’échec tout en conservant les résultats. La commande individuelle refuse toujours les destinations bloquées.
@@ -592,6 +593,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -599,7 +601,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

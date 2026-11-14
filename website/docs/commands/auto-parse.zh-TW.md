@@ -197,7 +197,7 @@ CSV 的 `$MFT` 輸出包含所有時間戳記與短檔名。登錄檔輸出包�
 
 ## 重建檔案系統 { #filesystem-reconstruction }
 
-每份收集的 MFT 也會建立可瀏覽的目錄樹。CSV、JSON 與 JSONL 模式的原有解析表格保持不變。
+檔案系統重建**預設停用**。指定 `-R, --reconstruct-filesystem` 才會為每份收集的 MFT 加入可瀏覽的目錄樹。CSV、JSON 與 JSONL 模式的原有解析表格名稱與內容保持不變。
 
 目錄樹先在相鄰的私有工作區建立，完成後才公開。已處理的錯誤與中斷會清理工作區並保留原有樹。強制終止可能留下 `.juntei-reconstruction-*` 工作區，但不會阻止重試，也不會把不完整樹當作目前磁碟區。
 
@@ -217,10 +217,11 @@ MFT 中未配置的檔案與目錄加上 `-deleted`，子項路徑中的已刪�
 
 具有非空還原常駐內容的檔案，會在寫入前加上 `.dontrun`。清單保留原始名稱；空白預留檔維持原名。絕不可執行還原內容。不還原重新解析點、ACL、原始時間或執行權限。具名資料流需另外擷取。
 
-即使空檔也使用 inode 與目錄中繼資料。若不需要重建可停用：
+重建可能建立數十萬個檔案，即使空白預留檔也會使用 inode 與目錄中繼資料。僅在需要目錄樹時啟用：
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 覆寫只取代清單完整且沒有缺漏、額外物件或連結的樹。既有部分樹與 `.DS_Store` 等新增檔案會保留。Auto-parse 只跳過重建，在日誌與兩種清單記錄目錄和原因，MFT 與其他解析繼續執行。寫入失敗另行回報並讓整體退出狀態失敗，但保留解析結果。單獨的重建命令仍拒絕被阻擋的目的地。
@@ -589,6 +590,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -596,7 +598,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

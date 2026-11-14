@@ -56,7 +56,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -98,7 +98,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 下例重建可瀏覽的檔案路徑。非常駐內容會建立為空白預留檔。詳見： [重建檔案系統](../commands/auto-parse.md#filesystem-reconstruction).
 
 ```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
 ```
 
 ## CSV 輸出欄位 { #csv-output-fields }

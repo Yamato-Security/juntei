@@ -163,7 +163,7 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 
 ## ファイルシステムの再構成 { #filesystem-reconstruction }
 
-収集した MFT ごとに、フォルダーをたどれる再構成ツリーも作成します。既存の解析テーブルの名前と内容は変わらず、CSV・JSON・JSONL のどのモードでも追加の出力になります。
+ファイルシステムの再構成は**既定では無効**です。`-R, --reconstruct-filesystem` を指定すると、収集した MFT ごとにフォルダーをたどれるツリーを追加します。CSV・JSON・JSONL の解析テーブルの名前と内容は変わりません。
 
 ツリーは隣接する非公開の一時作業領域で作り、完成してから公開します。処理できるエラーや中断では作業領域を削除し、以前のツリーは残します。強制終了や電源断では `.juntei-reconstruction-*` の作業領域が残る場合がありますが、再実行を妨げることはなく、不完全なツリーを現在のボリュームとして公開することもありません。
 
@@ -183,10 +183,11 @@ MFT で未割り当てのファイルとディレクトリには `-deleted` を�
 
 空でないレジデントデータを復元したファイルには、内容を書き込む前に `.dontrun` を付けます。元の名前は一覧に残し、空のプレースホルダーは元の名前のままです。復元した内容は絶対に実行しないでください。リパースポイント、ACL、元のタイムスタンプ、実行権限は復元しません。名前付き代替ストリームには、MFT のストリーム抽出を別途使ってください。
 
-再構成では数十万個のファイルを作る場合があり、空のプレースホルダーでも inode とディレクトリのメタデータ領域を使います。不要な場合は、次のように無効にします。
+再構成では数十万個のファイルを作る場合があり、空のプレースホルダーでも inode とディレクトリのメタデータ領域を使います。ツリーが必要な場合だけ、次のように有効にします。
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 上書きできるのは、完成済みの一覧と一致し、欠落・未記録の項目やリンクがないツリーだけです。既存の未完成ツリーや `.DS_Store` などの追加ファイルは削除せずに残します。auto-parse では再構成だけをスキップし、対象ディレクトリと理由をログと両方のマニフェストに記録します。MFT の解析と他のパーサーは続行します。再構成の書き込みに失敗した場合は別途報告し、全体の終了状態を失敗にしますが、解析結果は残します。単独の再構成では、問題のある出力先を引き続き拒否します。
@@ -452,6 +453,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -459,7 +461,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

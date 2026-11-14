@@ -200,7 +200,7 @@ Hunter використовує один робочий потік у кожно
 
 ## Відтворення файлової системи { #filesystem-reconstruction }
 
-Кожна зібрана MFT також створює дерево для перегляду. Наявні таблиці не змінюються в режимах CSV, JSON та JSONL.
+Відтворення файлової системи **типово вимкнене**. Увімкніть `-R, --reconstruct-filesystem`, щоб додати дерево для перегляду для кожної зібраної MFT. Назви й вміст наявних таблиць не змінюються в режимах CSV, JSON та JSONL.
 
 Дерева будуються в приватній сусідній робочій теці й публікуються лише завершеними. Оброблені помилки та переривання очищають її та зберігають попереднє дерево. Примусове завершення може залишити теки `.juntei-reconstruction-*`; вони не блокують повтор і не стають активним томом.
 
@@ -220,10 +220,11 @@ Hunter використовує один робочий потік у кожно
 
 Файли з непорожнім відновленим резидентним вмістом отримують `.dontrun` до запису байтів. Оригінальні імена залишаються в інвентарі; порожні файли зберігають імена. Не запускайте вміст. Точки повторного аналізу, ACL, оригінальні часи й права виконання не відновлюються. Іменовані потоки витягуються окремо.
 
-Навіть порожні файли витрачають inode та метадані. Щоб пропустити відтворення:
+Відтворення може створити сотні тисяч файлів; навіть порожні файли витрачають inode та метадані каталогів. Увімкніть його лише за потреби в дереві:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 Перезапис замінює лише завершені інвентаризовані дерева без відсутніх чи сторонніх об’єктів і посилань. Часткові дерева й додані файли на кшталт `.DS_Store` зберігаються. Auto-parse пропускає лише відтворення, записує теку й причину в журнал і обидва маніфести та продовжує інші парсери. Помилки запису повідомляються окремо з невдалим загальним статусом, але результати зберігаються. Окрема команда й надалі відхиляє заблоковані виходи.
@@ -592,6 +593,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -599,7 +601,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

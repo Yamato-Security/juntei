@@ -60,7 +60,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -102,7 +102,7 @@ entry (`30`, `0x1E`, `30-1`) या path (`\Windows\System32`, `C:/Windows`; cas
 यह उदाहरण नेविगेट करने योग्य फ़ाइल पथ बनाता है। गैर-निवासी सामग्री खाली फ़ाइल बनती है। विवरण: [फ़ाइल सिस्टम का पुनर्निर्माण](../commands/auto-parse.md#filesystem-reconstruction).
 
 ```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
 ```
 
 ## CSV आउटपुट fields { #csv-output-fields }

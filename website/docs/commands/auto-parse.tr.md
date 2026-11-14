@@ -204,7 +204,7 @@ Toplanmamış bir artefakt, başarısızlık değil, normal bir `skipped` görev
 
 ## Dosya sistemi yeniden oluşturma { #filesystem-reconstruction }
 
-Toplanan her MFT ayrıca gezilebilir bir ağaç üretir. Mevcut tablolar CSV, JSON ve JSONL kiplerinde değişmez.
+Dosya sistemi yeniden oluşturma **varsayılan olarak kapalıdır**. Toplanan her MFT için gezilebilir bir ağaç eklemek üzere `-R, --reconstruct-filesystem` seçeneğini etkinleştirin. Mevcut tabloların adları ve içerikleri CSV, JSON ve JSONL kiplerinde değişmez.
 
 Ağaçlar komşu özel çalışma alanında oluşturulur ve yalnızca tamamlanınca yayımlanır. İşlenen hata ve kesintiler alanı temizler, eski ağacı korur. Zorla sonlandırma `.juntei-reconstruction-*` dizinleri bırakabilir; bunlar yeniden denemeyi engellemez veya etkin birim olmaz.
 
@@ -224,10 +224,11 @@ Okunamayan veya hasarlı isteğe bağlı I30 girdileri `i30_input_error` olarak 
 
 Boş olmayan kurtarılmış yerleşik içerik taşıyan dosyalar yazılmadan önce `.dontrun` alır. Özgün adlar envanterde kalır; boş dosyalar adlarını korur. İçeriği çalıştırmayın. Reparse noktaları, ACL, özgün zamanlar ve yürütme izinleri geri yüklenmez. Adlandırılmış akışları ayrıca çıkarın.
 
-Boş dosyalar bile inode ve dizin metaverisi tüketir. Yeniden oluşturmayı atlamak için:
+Yeniden oluşturma yüz binlerce dosya yaratabilir; boş dosyalar bile inode ve dizin metaverisi tüketir. Yalnızca ağaca ihtiyacınız olduğunda etkinleştirin:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 Üzerine yazma yalnızca eksik, ek nesne veya bağlantı içermeyen tam envanterli ağacı değiştirir. Kısmi ağaçlar ve `.DS_Store` gibi ekler korunur. Auto-parse yalnızca yeniden oluşturmayı atlar; dizini ve nedeni günlük ve iki manifeste kaydeder, diğer ayrıştırıcılar sürer. Yazma hataları ayrı bildirilir ve genel hata durumu döndürür; ayrıştırılmış sonuçlar korunur. Tekil komut engelli hedefleri reddetmeye devam eder.
@@ -603,6 +604,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -610,7 +612,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

@@ -199,7 +199,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 
 ## إعادة بناء نظام الملفات { #filesystem-reconstruction }
 
-تنشئ كل MFT مجمعة شجرة قابلة للتصفح أيضًا. تبقى الجداول الحالية دون تغيير في أوضاع CSV وJSON وJSONL.
+إعادة بناء نظام الملفات **معطّلة افتراضيًا**. فعّل `-R, --reconstruct-filesystem` لإضافة شجرة قابلة للتصفح لكل MFT مجمعة. تبقى أسماء الجداول الحالية ومحتوياتها دون تغيير في أوضاع CSV وJSON وJSONL.
 
 تُبنى الأشجار في مساحة خاصة مجاورة ولا تُنشر إلا مكتملة. تنظف الأخطاء والمقاطعات المعالجة المساحة وتحفظ الشجرة السابقة. قد يترك الإنهاء القسري مجلدات `.juntei-reconstruction-*`، لكنها لا تمنع إعادة المحاولة ولا تصبح وحدة التخزين النشطة.
 
@@ -219,10 +219,11 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 
 تأخذ الملفات ذات المحتوى المقيم المستعاد غير الفارغ `.dontrun` قبل كتابة البايتات. تبقى الأسماء الأصلية في الجرد؛ وتحافظ الملفات الفارغة على أسمائها. لا تنفذ المحتوى. لا تُستعاد نقاط إعادة التحليل أو ACL أو الأوقات الأصلية أو أذونات التنفيذ. استخرج التدفقات المسماة منفصلة.
 
-تستهلك الملفات الفارغة أيضًا inode وبيانات المجلدات الوصفية. لتجاوز إعادة البناء:
+قد تنشئ إعادة البناء مئات الآلاف من الملفات؛ وتستهلك الملفات الفارغة أيضًا inode وبيانات المجلدات الوصفية. فعّلها فقط عند الحاجة إلى الشجرة:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 لا يستبدل الكتابة فوق الشجرة إلا إذا كان جردها مكتملًا دون كائنات مفقودة أو إضافية أو روابط. تُحفظ الأشجار الجزئية والإضافات مثل `.DS_Store`. يتجاوز auto-parse إعادة البناء فقط ويسجل المجلد والسبب في السجل وكلا المانيفستين وتستمر المحللات الأخرى. تُبلغ أخطاء الكتابة منفصلة مع حالة عامة فاشلة مع حفظ النتائج. يظل الأمر المستقل يرفض الوجهات المحجوبة.
@@ -591,6 +592,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -598,7 +600,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

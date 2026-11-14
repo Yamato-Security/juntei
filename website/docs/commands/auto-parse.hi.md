@@ -200,7 +200,7 @@ metadata शामिल होता है। Defender क्वारंट�
 
 ## फ़ाइल सिस्टम का पुनर्निर्माण { #filesystem-reconstruction }
 
-प्रत्येक एकत्रित MFT से नेविगेट करने योग्य ट्री भी बनता है। CSV, JSON और JSONL में मौजूदा तालिकाएँ नहीं बदलतीं।
+फ़ाइल सिस्टम पुनर्निर्माण **डिफ़ॉल्ट रूप से बंद** है। हर एकत्रित MFT के लिए नेविगेट करने योग्य ट्री जोड़ने के लिए `-R, --reconstruct-filesystem` सक्षम करें। CSV, JSON और JSONL में मौजूदा तालिकाओं के नाम और सामग्री नहीं बदलते।
 
 ट्री पास के निजी कार्यक्षेत्र में बनते हैं और पूरे होने पर ही प्रकाशित होते हैं। संभाली गई त्रुटि या रुकावट कार्यक्षेत्र साफ करती है और पुराना ट्री बचाती है। जबरन बंद करने पर `.juntei-reconstruction-*` फ़ोल्डर रह सकते हैं, लेकिन वे दोबारा प्रयास नहीं रोकते और सक्रिय वॉल्यूम नहीं बनते।
 
@@ -220,10 +220,11 @@ metadata शामिल होता है। Defender क्वारंट�
 
 गैर-खाली पुनर्प्राप्त निवासी सामग्री वाली फ़ाइल में बाइट लिखने से पहले `.dontrun` लगता है। मूल नाम सूची में रहते हैं; खाली फ़ाइलें मूल नाम रखती हैं। सामग्री कभी न चलाएँ। Reparse point, ACL, मूल समय और निष्पादन अनुमति बहाल नहीं होते। नाम वाले स्ट्रीम अलग निकालें।
 
-खाली फ़ाइलें भी inode और निर्देशिका मेटाडेटा लेती हैं। पुनर्निर्माण छोड़ने के लिए:
+पुनर्निर्माण लाखों फ़ाइलें बना सकता है; खाली फ़ाइलें भी inode और निर्देशिका मेटाडेटा लेती हैं। ट्री की आवश्यकता होने पर ही इसे सक्षम करें:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 ओवरराइट केवल पूर्ण सूची वाले ट्री को बदलता है जिसमें गायब या अतिरिक्त वस्तु या लिंक न हों। अधूरे ट्री और `.DS_Store` जैसी अतिरिक्त फ़ाइलें बचती हैं। Auto-parse केवल पुनर्निर्माण छोड़ता है, लॉग और दोनों मैनिफेस्ट में निर्देशिका तथा कारण लिखता है और अन्य पार्सर जारी रखता है। लिखने की विफलता अलग बताकर कुल विफल स्थिति देता है, पर परिणाम बचते हैं। अकेला कमांड अवरुद्ध गंतव्य अस्वीकार करता है।
@@ -592,6 +593,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -599,7 +601,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

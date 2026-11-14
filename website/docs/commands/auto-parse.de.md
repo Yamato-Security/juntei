@@ -199,7 +199,7 @@ Ein nicht gesichertes Artefakt ist eine normale Aufgabe mit dem Status `skipped`
 
 ## Dateisystemrekonstruktion { #filesystem-reconstruction }
 
-Jede gesammelte MFT erzeugt zusätzlich einen durchsuchbaren Verzeichnisbaum. Bestehende Tabellen bleiben unverändert; CSV, JSON und JSONL werden unterstützt.
+Die Dateisystemrekonstruktion ist **standardmäßig deaktiviert**. Mit `-R, --reconstruct-filesystem` wird für jede gesammelte MFT ein durchsuchbarer Verzeichnisbaum hinzugefügt. Namen und Inhalte der vorhandenen Tabellen bleiben in CSV, JSON und JSONL unverändert.
 
 Bäume entstehen in einem privaten benachbarten Arbeitsverzeichnis und werden erst vollständig veröffentlicht. Behandelte Fehler und Unterbrechungen räumen es auf und erhalten den alten Baum. Erzwungenes Beenden kann `.juntei-reconstruction-*`-Verzeichnisse zurücklassen; diese blockieren keinen neuen Versuch und werden kein aktiver Volume-Baum.
 
@@ -219,10 +219,11 @@ Unlesbare oder beschädigte optionale I30-Eingaben werden als `i30_input_error` 
 
 Dateien mit wiederhergestelltem nicht leerem residentem Inhalt erhalten vor dem Schreiben `.dontrun`. Originalnamen bleiben im Inventar; leere Platzhalter behalten ihre Namen. Inhalte niemals ausführen. Reparse Points, ACLs, Originalzeiten und Ausführungsrechte werden nicht wiederhergestellt. Benannte Streams separat extrahieren.
 
-Auch leere Platzhalter benötigen Inodes und Verzeichnismetadaten. Bei Bedarf die Rekonstruktion überspringen:
+Die Rekonstruktion kann Hunderttausende Dateien erzeugen; auch leere Platzhalter benötigen Inodes und Verzeichnismetadaten. Aktivieren Sie sie nur, wenn Sie den Baum benötigen:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 Überschreiben ersetzt nur vollständige inventarisierte Bäume ohne fehlende, unbekannte Objekte oder Links. Teilbäume und Zusatzdateien wie `.DS_Store` bleiben erhalten. Auto-parse überspringt nur die Rekonstruktion und protokolliert Verzeichnis und Grund im Log und beiden Manifesten; MFT und andere Parser laufen weiter. Schreibfehler werden separat gemeldet, führen insgesamt zu Fehlerstatus und erhalten geparste Ergebnisse. Der Einzelbefehl lehnt blockierte Ziele weiterhin ab.
@@ -591,6 +592,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -598,7 +600,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

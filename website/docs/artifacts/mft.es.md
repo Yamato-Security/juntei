@@ -60,7 +60,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -102,7 +102,7 @@ entrada (`30`, `0x1E`, `30-1`) o por ruta (`\Windows\System32`, `C:/Windows`; si
 El ejemplo reconstruye rutas navegables. El contenido no residente se representa con archivos vacíos. Más información: [Reconstrucción del sistema de archivos](../commands/auto-parse.md#filesystem-reconstruction).
 
 ```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
 ```
 
 ## Campos de salida CSV { #csv-output-fields }

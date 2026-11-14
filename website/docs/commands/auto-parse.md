@@ -226,7 +226,7 @@ An artifact that was not collected is a normal `skipped` task, not a failure.
 
 ## Filesystem reconstruction
 
-Each collected MFT also produces a browsable reconstruction. Existing parsed tables keep their names and contents; the reconstruction is an additional output in CSV, JSON and JSONL modes.
+Filesystem reconstruction is **disabled by default**. Enable `-R, --reconstruct-filesystem` to add a browsable tree for each collected MFT. Existing parsed tables keep their names and contents in CSV, JSON and JSONL modes.
 
 Trees are built in a private sibling workspace and published only when complete. Handled errors and interruptions remove that workspace and preserve any prior tree. Forced termination or power loss can leave `.juntei-reconstruction-*` workspaces, but these do not block a retry or become the active volume tree.
 
@@ -246,10 +246,11 @@ Unreadable or damaged optional I30 inputs are recorded as `i30_input_error` with
 
 Files with recovered non-empty resident content receive `.dontrun` before any content is written. Original names remain in the inventory; empty placeholders retain their names. Never execute recovered content. Reparse points, ACLs, original timestamps and executable permissions are not restored. Named alternate streams require the separate MFT resident-stream extraction option.
 
-Creating a tree can add hundreds of thousands of files and consume inodes and directory metadata even when the placeholders are empty. Skip reconstruction when that is unnecessary:
+Reconstruction can create hundreds of thousands of files and consume inodes and directory metadata even when placeholders are empty. Enable it only when you need the tree:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 Clobber replaces only a complete inventoried tree without missing or untracked objects or links. Existing partial trees or extra files such as `.DS_Store` are preserved. In auto-parse, only reconstruction is skipped, with its directory and reason recorded in the parser log and both manifests; MFT tables and other parsers continue. Reconstruction write failures are reported separately and return an unsuccessful overall status while retaining parsed results. Standalone reconstruction still refuses blocked destinations.
@@ -618,6 +619,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -625,7 +627,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

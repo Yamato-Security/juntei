@@ -44,7 +44,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -82,7 +82,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 閲覧できるファイルパスを再構成するには、次の例を使います。非レジデントの内容は空のプレースホルダーになります。詳細と制限については、[ファイルシステムの再構成](../commands/auto-parse.md#filesystem-reconstruction) を参照してください。
 
 ```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
 ```
 
 ## CSV 出力フィールド { #csv-output-fields }

@@ -190,7 +190,7 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 
 ## 파일 시스템 재구성 { #filesystem-reconstruction }
 
-수집한 MFT마다 탐색 가능한 트리도 생성합니다. 기존 표는 CSV, JSON 및 JSONL 모드에서 그대로 유지됩니다.
+파일 시스템 재구성은 **기본적으로 비활성화**되어 있습니다. `-R, --reconstruct-filesystem`을 지정하면 수집한 MFT마다 탐색 가능한 트리를 추가합니다. CSV, JSON 및 JSONL 모드의 기존 표 이름과 내용은 변경되지 않습니다.
 
 트리는 인접한 비공개 임시 작업 공간에서 만들고 완성된 후 게시합니다. 처리된 오류와 중단은 작업 공간을 정리하고 이전 트리를 보존합니다. 강제 종료나 전원 손실 시 `.juntei-reconstruction-*` 작업 공간이 남을 수 있지만 재시도를 막거나 불완전한 트리를 현재 볼륨으로 게시하지 않습니다.
 
@@ -210,10 +210,11 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 
 비어 있지 않은 상주 내용을 복구한 파일에는 쓰기 전에 `.dontrun`을 붙입니다. 원래 이름은 목록에 보존하며 빈 자리표시자는 원래 이름을 유지합니다. 복구 내용을 실행하지 마십시오. 재분석 지점, ACL, 원래 시간과 실행 권한은 복원하지 않습니다. 이름 있는 대체 스트림은 별도 MFT 스트림 추출 옵션을 사용합니다.
 
-빈 파일도 inode와 디렉터리 메타데이터를 사용합니다. 불필요하면 재구성을 끕니다:
+재구성은 수십만 개의 파일을 만들 수 있으며 빈 파일도 inode와 디렉터리 메타데이터를 사용합니다. 트리가 필요할 때만 활성화합니다:
 
 ```bash
-juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
 ```
 
 덮어쓰기는 완료된 목록과 일치하고 누락·미등록 항목이나 링크가 없는 트리만 교체합니다. 기존 부분 트리와 `.DS_Store` 등의 추가 파일은 보존합니다. auto-parse는 재구성만 건너뛰고 디렉터리와 이유를 로그 및 두 매니페스트에 기록합니다. MFT와 다른 파서는 계속 실행됩니다. 재구성 쓰기 실패는 별도로 보고하고 전체 실패 상태를 반환하되 파싱 결과를 보존합니다. 단독 재구성은 여전히 차단된 출력을 거부합니다.
@@ -569,6 +570,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -576,7 +578,6 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
-      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

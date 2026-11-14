@@ -671,7 +671,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             let mut json_opts = opts.clone();
             json_opts.output_type = AutoOutputType::Jsonl;
             json_opts.extract_defender_quarantined = false;
-            json_opts.no_reconstruct_filesystem = true;
+            json_opts.reconstruct_filesystem = false;
             let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
             for task in &mut extra {
                 task.timeline_only = true;
@@ -1759,7 +1759,7 @@ fn build_tasks(
             inputs.mfts.clone(),
             &mft_extra,
         );
-        if !opts.no_reconstruct_filesystem {
+        if opts.reconstruct_filesystem {
             let mut labels = HashMap::<String, usize>::new();
             let reconstruction_indexes = reconstruction_index_inputs(&inputs.mfts, &inputs.i30s);
             for ((task, input), indexes) in tasks[mft_tasks_start..]

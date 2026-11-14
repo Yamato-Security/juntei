@@ -60,7 +60,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -102,7 +102,7 @@ entri (`30`, `0x1E`, `30-1`) atau dengan path (`\Windows\System32`, `C:/Windows`
 Contoh berikut merekonstruksi jalur yang dapat ditelusuri. Konten nonresiden menjadi berkas kosong. Rincian: [Rekonstruksi sistem berkas](../commands/auto-parse.md#filesystem-reconstruction).
 
 ```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
 ```
 
 ## Field keluaran CSV { #csv-output-fields }
