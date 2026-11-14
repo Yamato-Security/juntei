@@ -567,6 +567,88 @@ fn one_letter_i30_parent_names_do_not_change_the_owning_volume() {
     );
 }
 
+#[test]
+fn nested_volumes_never_share_external_indexes_with_an_unknown_parent_volume() {
+    let tmp = tempfile::tempdir().unwrap();
+    let evidence = collection(tmp.path());
+    let host = evidence.join("HOST_F.TEST");
+    fs::copy(repo("test_files/mft/MFT"), host.join("$MFT")).unwrap();
+    fs::create_dir_all(host.join("D/Data")).unwrap();
+    fs::copy(repo("test_files/mft/MFT"), host.join("D/$MFT")).unwrap();
+    for relative in ["$I30", "D/$I30", "D/Data/$I30"] {
+        let fixture = if relative == "D/Data/$I30" {
+            "test_files/i30/Photos_I30"
+        } else {
+            "test_files/i30/Logs_I30"
+        };
+        fs::copy(repo(fixture), host.join(relative)).unwrap();
+    }
+    let output = tmp.path().join("parsed");
+    success(&run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+    ]));
+    let manifest: Value =
+        serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let mut assigned = HashMap::new();
+    for task in manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|r| r["Artifact"] == "mft")
+    {
+        assert_eq!(task["Status"], "succeeded");
+        assert_eq!(task["ReconstructionStatus"], "succeeded");
+        let root = task["ReconstructionRoot"].as_str().unwrap();
+        let volume = Path::new(root).file_name().unwrap().to_str().unwrap();
+        let args = task["Command"].as_array().unwrap();
+        let indexes: Vec<_> = args
+            .windows(2)
+            .filter(|p| p[0] == "--reconstruction-i30")
+            .map(|p| p[1].as_str().unwrap().replace('\\', "/"))
+            .collect();
+        let expected: &[&str] = match volume {
+            "UnknownVolume" => &["./HOST_F.TEST/$I30"],
+            "D" => &["./HOST_F.TEST/D/$I30", "./HOST_F.TEST/D/Data/$I30"],
+            // Keep the auto/ntfs cross-branch volume match even when an unlabelled MFT
+            // at the host root would otherwise claim every path below it.
+            "C" => &["./HOST_F.TEST/uploads/auto/C%3A/Photos_I30"],
+            other => panic!("unexpected reconstruction volume: {other}"),
+        };
+        assert_eq!(indexes.len(), expected.len(), "{volume}: {indexes:?}");
+        for index in &indexes {
+            assert!(expected.contains(&index.as_str()), "{volume}: {index}");
+            assert!(assigned.insert(index.clone(), volume.to_string()).is_none());
+        }
+        let inventory = rows(&output.join(task["ReconstructionInventory"].as_str().unwrap()));
+        let external: std::collections::HashSet<_> = inventory
+            .iter()
+            .map(|r| r["Source"].replace('\\', "/"))
+            .filter(|source| !source.starts_with("$MFT"))
+            .collect();
+        // Inventory sources are relative to their MFT's parent, not the host root.
+        let expected_sources: &[&str] = match volume {
+            "UnknownVolume" => &["$I30"],
+            "D" => &["$I30", "Data/$I30"],
+            "C" => &["../../auto/C%3A/Photos_I30"],
+            _ => unreachable!(),
+        };
+        assert_eq!(external.len(), expected.len(), "{volume}: {external:?}");
+        assert!(
+            external
+                .iter()
+                .all(|source| expected_sources.contains(&source.as_str())),
+            "{volume}: {external:?}"
+        );
+    }
+    assert_eq!(assigned.len(), 4);
+}
+
 #[cfg(unix)]
 #[test]
 fn interrupting_reconstruction_does_not_publish_a_partial_tree_and_clobber_can_retry() {

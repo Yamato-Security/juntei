@@ -1761,8 +1761,13 @@ fn build_tasks(
         );
         if !opts.no_reconstruct_filesystem {
             let mut labels = HashMap::<String, usize>::new();
-            for (task, input) in tasks[mft_tasks_start..].iter_mut().zip(&inputs.mfts) {
-                let (drive, anchor) = crate::mft_reconstruct::volume_hint(input);
+            let reconstruction_indexes = reconstruction_index_inputs(&inputs.mfts, &inputs.i30s);
+            for ((task, input), indexes) in tasks[mft_tasks_start..]
+                .iter_mut()
+                .zip(&inputs.mfts)
+                .zip(reconstruction_indexes)
+            {
+                let (drive, _) = crate::mft_reconstruct::volume_hint(input);
                 let label = drive.map_or_else(|| "UnknownVolume".to_string(), |c| c.to_string());
                 let ordinal = labels.entry(label.clone()).or_default();
                 *ordinal += 1;
@@ -1775,22 +1780,6 @@ fn build_tasks(
                     .join(&host.folder)
                     .join("FileSystem")
                     .join(label);
-                let same_drive_inputs = inputs
-                    .mfts
-                    .iter()
-                    .filter(|p| crate::mft_reconstruct::volume_hint(p).0 == drive)
-                    .count();
-                let indexes: Vec<PathBuf> = inputs
-                    .i30s
-                    .iter()
-                    .filter(|p| {
-                        let (index_drive, index_anchor) = crate::mft_reconstruct::volume_hint(p);
-                        index_anchor == anchor
-                            || p.starts_with(&anchor)
-                            || (same_drive_inputs == 1 && drive.is_some() && index_drive == drive)
-                    })
-                    .cloned()
-                    .collect();
                 task.args.push("--reconstruction-optional".into());
                 task.args.push("--reconstruct-filesystem".into());
                 task.args.push(destination.into_os_string());
@@ -1830,6 +1819,66 @@ fn build_tasks(
     }
     prioritize_long_tasks(&mut tasks);
     Ok(tasks)
+}
+
+/// Assign each external index to at most one MFT. Entry/sequence references are only unique
+/// within a volume: matching them against another MFT can fabricate convincing file paths.
+fn reconstruction_index_inputs(mfts: &[PathBuf], indexes: &[PathBuf]) -> Vec<Vec<PathBuf>> {
+    let anchors: Vec<_> = mfts
+        .iter()
+        .map(|path| crate::mft_reconstruct::volume_hint(path))
+        .collect();
+    let mut assigned = vec![Vec::new(); mfts.len()];
+    for path in indexes {
+        let mut longest = None;
+        let mut owner = None;
+        for (i, (_, anchor)) in anchors.iter().enumerate() {
+            if !path.starts_with(anchor) {
+                continue;
+            }
+            let depth = anchor.components().count();
+            match longest {
+                None => {
+                    longest = Some(depth);
+                    owner = Some(i);
+                }
+                Some(previous) if depth > previous => {
+                    longest = Some(depth);
+                    owner = Some(i);
+                }
+                Some(previous) if depth == previous => owner = None,
+                _ => {}
+            }
+        }
+        // An equally specific scope shared by multiple MFTs is ambiguous. Do not choose
+        // according to traversal order or attach the same index to every candidate.
+        if longest.is_some() && owner.is_none() {
+            continue;
+        }
+        let (index_drive, index_anchor) = crate::mft_reconstruct::volume_hint(path);
+        // A known physical volume wins over directory-name hints (for example Users/j).
+        // Split auto/ntfs collections can still use a unique drive match. A generic unknown
+        // parent MFT must not swallow their labelled volume, but a deeper unknown MFT keeps
+        // its own indexes rather than losing them to a broader drive-labelled ancestor.
+        if owner.is_none_or(|i| {
+            anchors[i].0.is_none()
+                && index_anchor != anchors[i].1
+                && index_anchor.starts_with(&anchors[i].1)
+        }) && let Some(drive) = index_drive
+        {
+            let mut matches = anchors
+                .iter()
+                .enumerate()
+                .filter(|(_, (letter, _))| *letter == Some(drive));
+            if let Some((i, _)) = matches.next() {
+                owner = matches.next().is_none().then_some(i);
+            }
+        }
+        if let Some(i) = owner {
+            assigned[i].push(path.clone());
+        }
+    }
+    assigned
 }
 
 type NamePredicate = fn(&str) -> bool;
@@ -2787,6 +2836,92 @@ fn normalize_absolute(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn nested_mft_anchors_own_their_indexes_exclusively() {
+        let mfts = ["host/$MFT", "host/D/$MFT", "host/NestedVolume/$MFT"].map(PathBuf::from);
+        let indexes = [
+            "host/$I30",
+            "host/D/$I30",
+            "host/D/Data/$I30",
+            "host/NestedVolume/Documents/$I30",
+        ]
+        .map(PathBuf::from);
+        let expected = vec![
+            vec![indexes[0].clone()],
+            vec![indexes[1].clone(), indexes[2].clone()],
+            vec![indexes[3].clone()],
+        ];
+        assert_eq!(reconstruction_index_inputs(&mfts, &indexes), expected);
+        let reversed: Vec<_> = mfts.iter().cloned().rev().collect();
+        assert_eq!(
+            reconstruction_index_inputs(&reversed, &indexes),
+            expected.into_iter().rev().collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn i30_drive_fallback_preserves_split_collections_under_an_unknown_mft() {
+        let mfts = ["host/$MFT", "host/uploads/ntfs/%5C%5C.%5CC%3A/$MFT"].map(PathBuf::from);
+        let indexes = [
+            "host/$I30",
+            "host/uploads/auto/C%3A/$I30",
+            "host/uploads/auto/C%3A/Users/j/$I30",
+        ]
+        .map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![
+                vec![indexes[0].clone()],
+                vec![indexes[1].clone(), indexes[2].clone()],
+            ]
+        );
+        assert_eq!(
+            reconstruction_index_inputs(&mfts[1..], &indexes),
+            vec![vec![indexes[1].clone(), indexes[2].clone()]]
+        );
+    }
+
+    #[test]
+    fn a_deeper_unknown_mft_keeps_its_indexes_over_a_drive_labelled_ancestor() {
+        let mfts = ["host/C/$MFT", "host/C/NestedVolume/$MFT"].map(PathBuf::from);
+        let indexes = ["host/C/$I30", "host/C/NestedVolume/Documents/$I30"].map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![vec![indexes[0].clone()], vec![indexes[1].clone()]]
+        );
+    }
+
+    #[test]
+    fn ambiguous_i30_owners_are_not_guessed() {
+        let mfts = ["host/$MFT", "host/one/C/$MFT", "host/two/C/$MFT"].map(PathBuf::from);
+        let indexes = [
+            "host/one/C/$I30",
+            "host/two/C/$I30",
+            "host/uploads/auto/C%3A/$I30",
+        ]
+        .map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![vec![], vec![indexes[0].clone()], vec![indexes[1].clone()]]
+        );
+        let same_scope = ["host/C/$MFT", "host/C/MFT"].map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&same_scope, &[PathBuf::from("host/C/$I30")]),
+            vec![Vec::<PathBuf>::new(), Vec::new()]
+        );
+        assert!(reconstruction_index_inputs(&[], &indexes).is_empty());
+    }
+
+    #[test]
+    fn physical_mft_anchor_outweighs_one_character_i30_directory_hints() {
+        let mfts = ["host/$MFT", "host/C/$MFT", "host/J/$MFT"].map(PathBuf::from);
+        let indexes = ["host/C/Users/j/$I30", "host/J/Users/c/$I30"].map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![vec![], vec![indexes[0].clone()], vec![indexes[1].clone()]]
+        );
+    }
 
     #[test]
     fn super_timeline_supports_every_scheduled_parser_artifact() {
