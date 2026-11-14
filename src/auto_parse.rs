@@ -146,7 +146,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
 /// `path` relative to `base`, both resolved through the file system as the containment checks
 /// resolve them (a symbolic link's `..` is beside its target): `HOST/C`, `.` for `base` itself,
 /// `../other` outside it, and only the name when they share no root (two Windows drives).
-fn relative_path(base: &Path, path: &Path) -> PathBuf {
+pub(crate) fn relative_path(base: &Path, path: &Path) -> PathBuf {
     let resolve = |p: &Path| {
         absolute_candidate(p).unwrap_or_else(|_| {
             normalize_absolute(&std::path::absolute(p).unwrap_or_else(|_| p.to_path_buf()))
@@ -367,6 +367,13 @@ struct TaskResult {
     log: String,
     #[serde(rename = "Error")]
     error: Option<String>,
+    #[serde(rename = "ReconstructionRoot", skip_serializing_if = "Option::is_none")]
+    reconstruction_root: Option<String>,
+    #[serde(
+        rename = "ReconstructionInventory",
+        skip_serializing_if = "Option::is_none"
+    )]
+    reconstruction_inventory: Option<String>,
     /// Structured diagnostics emitted by a child while reading a staged placeholder.
     #[serde(skip)]
     image_errors: Vec<ImageProblem>,
@@ -384,6 +391,8 @@ impl TaskResult {
             output: self.output.as_deref().map(path),
             output_files: self.output_files.iter().map(|p| path(p)).collect(),
             log: path(&self.log),
+            reconstruction_root: self.reconstruction_root.as_deref().map(path),
+            reconstruction_inventory: self.reconstruction_inventory.as_deref().map(path),
             ..self.clone()
         }
     }
@@ -652,6 +661,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             let mut json_opts = opts.clone();
             json_opts.output_type = AutoOutputType::Jsonl;
             json_opts.extract_defender_quarantined = false;
+            json_opts.no_reconstruct_filesystem = true;
             let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
             for task in &mut extra {
                 task.timeline_only = true;
@@ -1700,6 +1710,7 @@ fn build_tasks(
         if opts.mft_slack {
             mft_extra.push("--recover-slack");
         }
+        let mft_tasks_start = tasks.len();
         add_file_artifact_tasks(
             &mut tasks,
             host,
@@ -1713,6 +1724,51 @@ fn build_tasks(
             inputs.mfts.clone(),
             &mft_extra,
         );
+        if !opts.no_reconstruct_filesystem {
+            let mut labels = HashMap::<String, usize>::new();
+            for (task, input) in tasks[mft_tasks_start..].iter_mut().zip(&inputs.mfts) {
+                let (drive, anchor) = crate::mft_reconstruct::volume_hint(input);
+                let label = drive.map_or_else(|| "UnknownVolume".to_string(), |c| c.to_string());
+                let ordinal = labels.entry(label.clone()).or_default();
+                *ordinal += 1;
+                let label = if *ordinal == 1 {
+                    label
+                } else {
+                    format!("{label}-MFT-{ordinal}")
+                };
+                let destination = parser_output
+                    .join(&host.folder)
+                    .join("FileSystem")
+                    .join(label);
+                let same_drive_inputs = inputs
+                    .mfts
+                    .iter()
+                    .filter(|p| crate::mft_reconstruct::volume_hint(p).0 == drive)
+                    .count();
+                let indexes: Vec<PathBuf> = inputs
+                    .i30s
+                    .iter()
+                    .filter(|p| {
+                        let (index_drive, index_anchor) = crate::mft_reconstruct::volume_hint(p);
+                        index_anchor == anchor
+                            || (index_drive == drive && p.starts_with(&anchor))
+                            || (index_drive.is_none() && p.starts_with(&anchor))
+                            || (same_drive_inputs == 1 && drive.is_some() && index_drive == drive)
+                    })
+                    .cloned()
+                    .collect();
+                let mut sources = vec![input.clone()];
+                sources.extend(indexes.iter().cloned());
+                crate::mft_reconstruct::validate(&destination, &sources, &[], opts.clobber)?;
+                task.args.push("--reconstruct-filesystem".into());
+                task.args.push(destination.into_os_string());
+                for path in indexes {
+                    task.args.push("--reconstruction-i30".into());
+                    task.args
+                        .push(dot_relative(evidence, &path).into_os_string());
+                }
+            }
+        }
         add_file_artifact_tasks(
             &mut tasks,
             host,
@@ -1776,6 +1832,7 @@ struct InputInventory {
     mfts: Vec<PathBuf>,
     journals: Vec<PathBuf>,
     logfiles: Vec<PathBuf>,
+    i30s: Vec<PathBuf>,
 }
 
 impl InputInventory {
@@ -1810,6 +1867,7 @@ impl InputInventory {
                 found.add_size("recycle-bin", size);
             }
             if crate::i30::is_i30_file(&path) {
+                found.i30s.push(path.clone());
                 found.add_size("i30", size);
             }
             if crate::registry::is_hive_file(&path) {
@@ -2186,6 +2244,15 @@ fn run_task(
     if let Err(e) = fs::write(&task.log, log) {
         error = Some(format!("could not write {}: {e}", shown(&task.log)));
     }
+    let reconstruction_root = task
+        .args
+        .iter()
+        .position(|a| a == "--reconstruct-filesystem")
+        .and_then(|at| task.args.get(at + 1))
+        .map(PathBuf::from);
+    let reconstruction_inventory = reconstruction_root
+        .as_ref()
+        .map(|root| root.join(crate::mft_reconstruct::INVENTORY));
     TaskResult {
         computer: task.computer.clone(),
         artifact: task.artifact.to_string(),
@@ -2207,6 +2274,10 @@ fn run_task(
         output: (status == TaskStatus::Succeeded)
             .then(|| task.output.to_string_lossy().to_string()),
         output_files: Vec::new(),
+        reconstruction_root: reconstruction_root.map(|p| p.to_string_lossy().into_owned()),
+        reconstruction_inventory: reconstruction_inventory
+            .filter(|p| p.is_file())
+            .map(|p| p.to_string_lossy().into_owned()),
         log: task.log.to_string_lossy().to_string(),
         error,
         image_errors,
@@ -2516,6 +2587,8 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "Log",
         "Error",
         "Command",
+        "ReconstructionRoot",
+        "ReconstructionInventory",
     ])?;
     for task in manifest.tasks {
         let host = manifest
@@ -2542,10 +2615,12 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             task.log.clone(),
             task.error.clone().unwrap_or_default(),
             serde_json::to_string(&task.command).map_err(io::Error::other)?,
+            task.reconstruction_root.clone().unwrap_or_default(),
+            task.reconstruction_inventory.clone().unwrap_or_default(),
         ])?;
     }
     for problem in manifest.image_errors {
-        let mut row = vec![String::new(); 18];
+        let mut row = vec![String::new(); 20];
         row[4] = format!("{}!/{}", problem.image, problem.path);
         row[5] = "disk-image".into();
         row[10] = "failed".into();

@@ -285,6 +285,34 @@ fn read_file(
     Ok(found)
 }
 
+/// Share the bounded INDX reader with filesystem reconstruction. The caller decides whether
+/// damaged records or slack names are suitable; parsing and fixup validation stay identical.
+pub(crate) fn visit_records(
+    path: &Path,
+    mut visit: impl FnMut(u64, &IndexRecord) -> io::Result<()>,
+) -> io::Result<()> {
+    let mut file = File::open(path)?;
+    let len = file.metadata()?.len();
+    let mut found = 0;
+    each_chunk(&mut file, len, CHUNK, |base, records| {
+        for record in &records {
+            found += 1;
+            visit(base, record).map_err(Failure::Write)?;
+        }
+        Ok(())
+    })
+    .map_err(|e| match e {
+        Failure::Read(e) | Failure::Write(e) => e,
+    })?;
+    if found == 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "No INDX records in reconstruction input",
+        ));
+    }
+    Ok(())
+}
+
 /// Read `file` (of `len` bytes) `chunk` bytes at a time, handing `each` a chunk's offset and the
 /// INDX records that start in it (read with the bytes after it, for those that end in the next).
 fn each_chunk(

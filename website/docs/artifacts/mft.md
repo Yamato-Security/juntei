@@ -60,6 +60,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -169,3 +171,9 @@ investigative CSV omits low-level structure. With `-x`, each JSON entry also has
 - [ys-ntfs-parser's mft crate](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram's mft parser](https://github.com/omerbenamram/mft)
 - [libfsntfs format documentation](https://github.com/libyal/libfsntfs/tree/main/documentation)
+
+To reconstruct browsable file paths, use the example below. Non-resident content becomes empty placeholders. See [Filesystem reconstruction](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```

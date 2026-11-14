@@ -191,11 +191,39 @@ yang dijalankan secara mandiri mengendalikan thread worker milik hunter itu send
 
 Keluaran CSV `$MFT` menyertakan semua timestamp dan nama pendek. Keluaran registry menyertakan data mentah dan
 interpretasi FILETIME untuk nilai `REG_QWORD`. Keluaran SRUM JSON dan JSONL menyertakan metadata
-value-state. Berkas Defender dan stream `$MFT` residen **tidak diekstrak** secara otomatis.
+value-state. Ekstraksi karantina Defender tetap opsional.
 
 Dengan `--mft-slack`, keluaran `$MFT` juga menyertakan nama berkas yang tersisa di slack record FILE, sama seperti yang ditulis oleh [`parse-ntfs mft -x`](../artifacts/mft.md): baris bertanda `FromSlack` dalam CSV, dan `SlackFileNames` dalam JSON dan JSONL. `--code-page` berlaku untuk berkas LNK, Jump List, ShellBags, dan OpenSaveMRU.
 
 Artefak yang tidak dikumpulkan merupakan tugas `skipped` yang normal, bukan kegagalan.
+
+
+## Rekonstruksi sistem berkas { #filesystem-reconstruction }
+
+Setiap MFT yang dikumpulkan juga menghasilkan pohon yang dapat ditelusuri. Tabel lama tetap sama dalam mode CSV, JSON dan JSONL.
+
+Huruf drive dari jalur pengumpulan menghasilkan direktori seperti `FileSystem/C`. MFT sendiri tidak menyimpan huruf drive. Tanpa label yang dikenali digunakan `UnknownVolume`; beberapa MFT tetap terpisah, misalnya `C-MFT-2`.
+
+Berkas dan direktori yang tidak dialokasikan mendapat `-deleted`, termasuk induk terhapus pada jalur turunannya. DATA residen tanpa nama dipulihkan jika masih ada. Konten nonresiden atau tidak tersedia menjadi berkas kosong; ukuran logis bukan jumlah byte yang dipulihkan.
+
+`-i30` menandai nama indeks tambahan tanpa penghapusan terkonfirmasi. Indeks residen MFT dan I30 yang dikumpulkan dari volume sama digunakan. Slack juga dapat menyimpan pergantian nama atau salinan penyeimbangan. Konten generasi lain tidak digunakan.
+
+`_Juntei-Unresolved` berisi jalur dengan induk hilang, digunakan ulang, bersiklus atau terlalu dalam. Nama tidak aman di-escape dan benturan disimpan terpisah; nama asli tetap dicatat. Alias DOS diabaikan jika nama panjang ada; hard link menjadi salinan mandiri.
+
+`_Juntei-Reconstruction.csv` mencatat rekonstruksi: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Asal data: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Drive perkiraan, penghapusan dan jenis direktori juga dicatat. Inventaris parsial berakhiran .partial.csv; nama akhir hanya terbit setelah berhasil.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+Berkas pulihan mempertahankan ekstensi asli dan dapat berisi malware: jangan dijalankan. Reparse point, ACL, waktu asli dan izin eksekusi tidak dipulihkan. Stream alternatif bernama memerlukan ekstraksi stream residen secara terpisah.
+
+Berkas kosong pun memakai inode dan metadata direktori. Untuk melewati rekonstruksi:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+Dengan penimpaan, rekonstruksi lengkap hanya dapat diganti jika semua objek cocok dengan inventaris. Berkas tambahan atau hilang, link, junction atau inventaris tidak lengkap menyebabkan penolakan sebelum hasil berubah. Gunakan keluaran baru untuk kasus tersebut.
+
 
 ## Tata letak keluaran { #output-layout }
 
@@ -567,6 +595,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

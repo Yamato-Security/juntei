@@ -56,6 +56,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -162,3 +164,9 @@ CSV 省略了底層結構時，請使用它。使用 `-x` 時，每個 JSON 項�
 - [ys-ntfs-parser 的 mft crate](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram 的 mft 剖析器](https://github.com/omerbenamram/mft)
 - [libfsntfs 格式文件](https://github.com/libyal/libfsntfs/tree/main/documentation)
+
+下例重建可瀏覽的檔案路徑。非常駐內容會建立為空白預留檔。詳見： [重建檔案系統](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```

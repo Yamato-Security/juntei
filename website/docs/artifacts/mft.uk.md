@@ -60,6 +60,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -169,3 +171,9 @@ CSV для розслідування бракує низькорівневої 
 - [Крейт mft у ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Парсер mft від Omer Ben-Amram](https://github.com/omerbenamram/mft)
 - [Документація формату libfsntfs](https://github.com/libyal/libfsntfs/tree/main/documentation)
+
+Приклад відтворює шляхи для перегляду. Нерезидентний вміст стає порожніми файлами. Докладніше: [Відтворення файлової системи](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```

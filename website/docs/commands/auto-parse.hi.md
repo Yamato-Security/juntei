@@ -191,11 +191,39 @@ Hunter प्रत्येक स्वचालित parser process के �
 
 CSV `$MFT` आउटपुट में सभी timestamps और short names शामिल होते हैं। Registry आउटपुट में raw डेटा और
 `REG_QWORD` values की FILETIME व्याख्या शामिल होती है। JSON और JSONL SRUM आउटपुट में value-state
-metadata शामिल होता है। Defender files और resident `$MFT` streams स्वचालित रूप से **extract नहीं** किए जाते।
+metadata शामिल होता है। Defender क्वारंटीन निष्कर्षण वैकल्पिक रहता है।
 
 `--mft-slack` के साथ, `$MFT` आउटपुट में FILE records के slack में बचे file names भी शामिल होते हैं, उसी रूप में जैसे [`parse-ntfs mft -x`](../artifacts/mft.md) उन्हें लिखता है: CSV में `FromSlack` से चिह्नित rows, और JSON तथा JSONL में `SlackFileNames`। `--code-page` LNK files, Jump Lists, ShellBags और OpenSaveMRU पर लागू होता है।
 
 जो आर्टिफ़ैक्ट संग्रहित नहीं किया गया, वह एक सामान्य `skipped` task है, विफलता नहीं।
+
+
+## फ़ाइल सिस्टम का पुनर्निर्माण { #filesystem-reconstruction }
+
+प्रत्येक एकत्रित MFT से नेविगेट करने योग्य ट्री भी बनता है। CSV, JSON और JSONL में मौजूदा तालिकाएँ नहीं बदलतीं।
+
+संग्रह पथ से अनुमानित ड्राइव के लिए `FileSystem/C` जैसा फ़ोल्डर बनता है। MFT में ड्राइव अक्षर नहीं होता। पहचान न हो तो `UnknownVolume`; कई MFT अलग रहती हैं, जैसे `C-MFT-2`।
+
+अनावंटित फ़ाइलों और फ़ोल्डरों में `-deleted` लगता है; हटे हुए पैरेंट भी वंशज के पथ में इसी तरह दिखते हैं। बचा हुआ नामरहित निवासी DATA पुनर्प्राप्त होता है। गैर-निवासी या अनुपलब्ध सामग्री खाली फ़ाइल बनती है; तार्किक आकार पुनर्प्राप्त बाइट नहीं है।
+
+`-i30` अतिरिक्त इंडेक्स नाम दिखाता है जिनका हटना पुष्ट नहीं है। निवासी MFT इंडेक्स और उसी वॉल्यूम से एकत्रित I30 उपयोग होते हैं। Slack में नाम परिवर्तन या पुनर्संतुलन की प्रतियाँ भी हो सकती हैं। अन्य फ़ाइल पीढ़ी की सामग्री इस्तेमाल नहीं होती।
+
+`_Juntei-Unresolved` में गायब, पुनः उपयोग किए गए, चक्रीय या बहुत गहरे पैरेंट वाले पथ रहते हैं। असुरक्षित नाम एस्केप होते हैं; टकराव अलग सुरक्षित रहते हैं और मूल नाम सूची में रहता है। लंबे नाम होने पर DOS उपनाम छोड़े जाते हैं; हार्ड लिंक स्वतंत्र प्रतियाँ बनते हैं।
+
+`_Juntei-Reconstruction.csv` पुनर्निर्माण की सूची है: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`। स्रोत: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`। अनुमानित ड्राइव, हटने की स्थिति और निर्देशिका प्रकार भी दर्ज हैं। अधूरी सूची .partial.csv पर समाप्त होती है; अंतिम नाम सफलता के बाद मिलता है।
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+पुनर्प्राप्त फ़ाइलों का मूल एक्सटेंशन रहता है और वे मैलवेयर हो सकती हैं: कभी न चलाएँ। Reparse point, ACL, मूल समय या निष्पादन अनुमति बहाल नहीं होते। नाम वाले वैकल्पिक स्ट्रीम के लिए निवासी स्ट्रीम निष्कर्षण अलग चलाएँ।
+
+खाली फ़ाइलें भी inode और निर्देशिका मेटाडेटा लेती हैं। पुनर्निर्माण छोड़ने के लिए:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+ओवरराइट चालू होने पर पूर्ण पुराने ट्री को तभी बदलते हैं जब सभी वस्तुएँ सूची से मेल खाएँ। अतिरिक्त या गायब फ़ाइल, लिंक, junction या अधूरी सूची मिलने पर परिणाम बदलने से पहले रोकते हैं। तब नया आउटपुट चुनें।
+
 
 ## आउटपुट layout { #output-layout }
 
@@ -567,6 +595,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

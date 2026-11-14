@@ -190,11 +190,39 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 
 يتضمن إخراج `$MFT` بصيغة CSV كل الطوابع الزمنية والأسماء المختصرة. ويتضمن إخراج سجل Windows البيانات الخام و
 تفسيرًا بصيغة FILETIME لقيم `REG_QWORD`. ويتضمن إخراج SRUM بصيغتي JSON وJSONL البيانات الوصفية
-لحالة القيم. ولا **تُستخرج** ملفات Defender ودفقات `$MFT` المقيمة تلقائيًا.
+لحالة القيم. يظل استخراج حجر Defender اختياريًا.
 
 مع `--mft-slack`، يتضمن إخراج `$MFT` أيضًا أسماء الملفات المتبقية في المساحة الراكدة (slack) لسجلات FILE، كما يكتبها [`parse-ntfs mft -x`](../artifacts/mft.md): صفوف معلَّمة بـ `FromSlack` في CSV، و`SlackFileNames` في JSON وJSONL. ويُطبَّق `--code-page` على ملفات LNK وJump Lists وShellBags وOpenSaveMRU.
 
 الأثر الرقمي الذي لم يُجمع هو مهمة `skipped` عادية، وليس فشلًا.
+
+
+## إعادة بناء نظام الملفات { #filesystem-reconstruction }
+
+تنشئ كل MFT مجمعة شجرة قابلة للتصفح أيضًا. تبقى الجداول الحالية دون تغيير في أوضاع CSV وJSON وJSONL.
+
+يُستخدم حرف القرص المستنتج من مسار الجمع في مجلد مثل `FileSystem/C`. لا تخزن MFT حرف القرص. عند غياب تسمية معروفة يُستخدم `UnknownVolume` وتبقى ملفات MFT المتعددة منفصلة، مثل `C-MFT-2`.
+
+تُضاف `-deleted` للملفات والمجلدات غير المخصصة، بما فيها الآباء المحذوفون في مسارات الأبناء. تُستعاد DATA المقيمة غير المسماة المتبقية. تصبح المحتويات غير المقيمة أو غير المتاحة ملفات فارغة؛ الحجم المنطقي ليس عدد البايتات المستعادة.
+
+تشير `-i30` إلى أسماء فهرس إضافية لم يتأكد حذفها. تُستخدم فهارس MFT المقيمة وملفات I30 المجمعة من نفس وحدة التخزين. قد يحتفظ slack بإعادة تسمية أو نسخ إعادة موازنة. لا يُستعار محتوى من جيل آخر للملف.
+
+تحتوي `_Juntei-Unresolved` على المسارات ذات الآباء المفقودين أو المعاد استخدامهم أو الدورات أو العمق المفرط. تُهَرّب الأسماء غير الآمنة وتُحفظ التصادمات منفصلة مع الأسماء الأصلية في الجرد. تُهمل أسماء DOS البديلة عند بقاء الاسم الطويل؛ الروابط الصلبة تصبح نسخًا مستقلة.
+
+توثق `_Juntei-Reconstruction.csv` إعادة البناء: `DataStatus` و`LogicalSize` و`RecoveredBytes` و`OriginalPath` و`OutputPath`. حقول المصدر: `EntryNum` و`SN` و`ParentEntryNum` و`ParentSN` و`Source` و`FromSlack` و`Offset`. يُسجل القرص المستنتج وحالة الحذف ونوع المجلد أيضًا. ينتهي الجرد الجزئي بـ .partial.csv ولا يُعتمد الاسم النهائي إلا عند النجاح.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+تحتفظ الملفات المستعادة بامتداداتها الأصلية وقد تحتوي على برمجيات خبيثة: لا تنفذها. لا تُستعاد نقاط إعادة التحليل أو ACL أو الأوقات الأصلية أو أذونات التنفيذ. استخدم استخراج التدفقات المقيمة منفصلًا للتدفقات البديلة المسماة.
+
+تستهلك الملفات الفارغة أيضًا inode وبيانات المجلدات الوصفية. لتجاوز إعادة البناء:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+مع تفعيل الاستبدال لا تُستبدل الشجرة الكاملة السابقة إلا إذا طابقت كل الكائنات الجرد. تؤدي الملفات الإضافية أو المفقودة والروابط وjunction والجرد الناقص إلى الرفض قبل تغيير النتائج. استخدم مخرجًا جديدًا في هذه الحالات.
+
 
 ## تخطيط الإخراج { #output-layout }
 
@@ -566,6 +594,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

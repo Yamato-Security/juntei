@@ -33,6 +33,7 @@ mod logfile;
 mod mft;
 mod mft_csv;
 mod mft_inspect;
+mod mft_reconstruct;
 mod mount;
 mod outlook;
 mod output_schema;

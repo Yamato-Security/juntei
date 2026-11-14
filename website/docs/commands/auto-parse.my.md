@@ -191,11 +191,39 @@ Hunter သည် အလိုအလျောက် parser process တစ်ခ�
 
 CSV `$MFT` output တွင် timestamp အားလုံးနှင့် short name များ ပါဝင်ပါသည်။ Registry output တွင် raw ဒေတာနှင့်
 `REG_QWORD` value များ၏ FILETIME အဓိပ္ပာယ်ဖော်ချက် ပါဝင်ပါသည်။ JSON နှင့် JSONL SRUM output တွင် value-state
-metadata ပါဝင်ပါသည်။ Defender ဖိုင်များနှင့် resident `$MFT` stream များကို အလိုအလျောက် **မထုတ်ယူပါ**။
+metadata ပါဝင်ပါသည်။ Defender quarantine extraction ကို ကိုယ်တိုင်ဖွင့်မှသာ လုပ်သည်။
 
 `--mft-slack` ဖြင့် `$MFT` output တွင် FILE record များ၏ slack ၌ ကျန်ရှိနေသော file name များကိုလည်း [`parse-ntfs mft -x`](../artifacts/mft.md) ရေးသည့်အတိုင်း ထည့်သွင်းပါသည်- CSV တွင် `FromSlack` အမှတ်အသားပါ row များ၊ JSON နှင့် JSONL တွင် `SlackFileNames` ဖြစ်ပါသည်။ `--code-page` ကို LNK ဖိုင်များ၊ Jump List များ၊ ShellBags နှင့် OpenSaveMRU တို့တွင် အသုံးပြုပါသည်။
 
 စုဆောင်းမထားသော artifact သည် ပုံမှန် `skipped` task ဖြစ်ပြီး မအောင်မြင်မှု မဟုတ်ပါ။
+
+
+## ဖိုင်စနစ် ပြန်လည်တည်ဆောက်ခြင်း { #filesystem-reconstruction }
+
+စုဆောင်းထားသော MFT တစ်ခုစီအတွက် ကြည့်ရှုနိုင်သည့် ဖိုင်တွဲပင်ကိုလည်း ဖန်တီးသည်။ CSV၊ JSON နှင့် JSONL ရှိ မူလဇယားများ မပြောင်းလဲပါ။
+
+စုဆောင်းသည့်လမ်းကြောင်းမှ drive ကို ခန့်မှန်းပြီး `FileSystem/C` ကဲ့သို့ ဖိုင်တွဲကို သုံးသည်။ MFT တွင် drive အက္ခရာ မပါပါ။ မသိလျှင် `UnknownVolume` ကိုသုံးပြီး MFT အများအပြားကို `C-MFT-2` ကဲ့သို့ ခွဲထားသည်။
+
+နေရာမသတ်မှတ်ထားသော ဖိုင်နှင့်ဖိုင်တွဲများ၊ ဖျက်ပြီးမိဘဖိုင်တွဲများတွင် `-deleted` ထည့်သည်။ ကျန်ရှိသော အမည်မဲ့ resident DATA ကို ပြန်ရယူသည်။ non-resident သို့မဟုတ် မရနိုင်သောအကြောင်းအရာကို ဖိုင်အလွတ်အဖြစ် ဖန်တီးသည်။ logical size သည် ပြန်ရသော byte အရေအတွက် မဟုတ်ပါ။
+
+`-i30` သည် ဖျက်ခဲ့ကြောင်း မသေချာသော အပို index အမည်ဖြစ်သည်။ MFT resident index နှင့် တူညီသော volume မှ စုဆောင်းထားသည့် I30 ကိုသုံးသည်။ Slack တွင် အမည်ပြောင်းခြင်းနှင့် index ပြန်စီခြင်း မိတ္တူများလည်း ပါနိုင်သည်။ အခြားဖိုင်မျိုးဆက်မှ အကြောင်းအရာကို မယူပါ။
+
+`_Juntei-Unresolved` တွင် မိဘပျောက်၊ ပြန်သုံးထား၊ စက်ဝိုင်းဖြစ် သို့မဟုတ် နက်လွန်းသော လမ်းကြောင်းများရှိသည်။ မလုံခြုံသောအမည်ကို escape လုပ်ပြီး တိုက်ဆိုင်သောအမည်များကို ခွဲထားကာ မူရင်းအမည်ကို စာရင်းတွင် ထိန်းထားသည်။ အမည်ရှည်ရှိပါက DOS alias ကိုချန်ပြီး hard link ကို သီးခြားမိတ္တူအဖြစ် ဖန်တီးသည်။
+
+`_Juntei-Reconstruction.csv` တွင် ပြန်တည်ဆောက်မှုကို မှတ်တမ်းတင်သည်: `DataStatus`၊ `LogicalSize`၊ `RecoveredBytes`၊ `OriginalPath`၊ `OutputPath`။ ရင်းမြစ်အချက်အလက်များမှာ `EntryNum`၊ `SN`၊ `ParentEntryNum`၊ `ParentSN`၊ `Source`၊ `FromSlack`၊ `Offset` ဖြစ်သည်။ drive ခန့်မှန်းချက်၊ ဖျက်မှုနှင့် ဖိုင်တွဲအမျိုးအစားကိုလည်း မှတ်တမ်းတင်သည်။ မပြည့်စုံသောစာရင်းသည် .partial.csv ဖြင့်ဆုံးပြီး အောင်မြင်မှသာ နောက်ဆုံးအမည်သုံးသည်။
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+ပြန်ရသောဖိုင်များတွင် မူလ extension ရှိပြီး malware ဖြစ်နိုင်သဖြင့် မဖွင့်မလုပ်ဆောင်ပါနှင့်။ Reparse point၊ ACL၊ မူလအချိန်နှင့် လုပ်ဆောင်ခွင့်များကို မပြန်ထားပါ။ အမည်ပါ alternate stream အတွက် resident stream extraction ကို သီးခြားသုံးပါ။
+
+ဖိုင်အလွတ်များလည်း inode နှင့် ဖိုင်တွဲ metadata ကိုသုံးသည်။ မလိုလျှင် ပြန်တည်ဆောက်မှုကို ကျော်နိုင်သည်:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+Overwrite ဖွင့်လျှင် ပြည့်စုံသောစာရင်းနှင့် အရာအားလုံးကိုက်ညီမှသာ ယခင်ပင်ကို အစားထိုးသည်။ အပို သို့မဟုတ် ပျောက်ဖိုင်၊ link၊ junction နှင့် မပြည့်စုံသောစာရင်းရှိပါက ရလဒ်မပြောင်းမီ ငြင်းပယ်သည်။ ထိုအခါ output အသစ်ကို သုံးပါ။
+
 
 ## Output layout { #output-layout }
 
@@ -566,6 +594,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

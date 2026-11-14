@@ -181,12 +181,39 @@ Persistence Hunter는 부분 허용 일치를 포함하여 모든 심각도(`--m
 `persistence-hunter -T <N>`은 헌터 자체의 작업자 스레드를 제어합니다.
 
 CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니다. 레지스트리 출력에는 원시 데이터와 `REG_QWORD`
-값의 FILETIME 해석이 포함됩니다. JSON 및 JSONL SRUM 출력에는 값 상태 메타데이터가 포함됩니다. Defender 파일과
-상주 `$MFT` 스트림은 자동으로 **추출되지 않습니다**.
+값의 FILETIME 해석이 포함됩니다. JSON 및 JSONL SRUM 출력에는 값 상태 메타데이터가 포함됩니다. Defender 격리 파일 추출은 계속 선택 기능이다.
 
 `--mft-slack`를 사용하면 `$MFT` 출력에 FILE 레코드의 슬랙에 남은 파일 이름도 [`parse-ntfs mft -x`](../artifacts/mft.md)와 같은 형식으로 포함됩니다. CSV에서는 `FromSlack`로 표시된 행, JSON 및 JSONL에서는 `SlackFileNames`입니다. `--code-page`는 LNK 파일, Jump List, ShellBags 및 OpenSaveMRU에 적용됩니다.
 
 수집되지 않은 아티팩트는 실패가 아니라 정상적인 `skipped` 작업입니다.
+
+
+## 파일 시스템 재구성 { #filesystem-reconstruction }
+
+수집한 MFT마다 탐색 가능한 트리도 생성한다. 기존 표는 CSV, JSON 및 JSONL 모드에서 그대로 유지된다.
+
+수집 경로에서 추정한 드라이브는 `FileSystem/C` 같은 디렉터리를 쓴다. MFT 자체에는 드라이브 문자가 없다. 알 수 없으면 `UnknownVolume`을 사용하고 같은 문자의 여러 MFT는 `C-MFT-2`처럼 분리한다.
+
+할당되지 않은 파일과 디렉터리에는 `-deleted`를 붙이며 삭제된 부모도 자손 경로에 반영한다. 남아 있는 이름 없는 상주 DATA는 복구한다. 비상주 또는 사용 불가 내용은 빈 파일로 만들며 논리 크기와 복구 바이트 수는 다르다.
+
+`-i30`는 삭제가 확인되지 않은 추가 인덱스 이름이다. MFT 상주 인덱스와 같은 볼륨에서 따로 수집한 I30을 사용한다. Slack에는 이름 변경이나 재균형 복사본도 남는다. 다른 파일 세대의 내용은 재사용하지 않는다.
+
+`_Juntei-Unresolved`에는 부모 참조 누락·재사용·순환 또는 과도한 깊이로 해석하지 못한 경로를 둔다. 안전하지 않은 이름은 이스케이프하고 충돌은 별도 저장하며 원래 이름은 목록에 남긴다. 긴 이름이 있으면 DOS 별칭은 생략하고 하드 링크는 독립 복사본으로 만든다.
+
+`_Juntei-Reconstruction.csv`에서 재구성을 확인한다: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. 출처 필드는 `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`다. 추정 드라이브, 삭제 상태와 디렉터리 유형도 기록한다. 부분 목록은 .partial.csv로 끝나며 성공한 후 최종 이름으로 바뀐다.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+복구 파일은 원래 확장자를 유지하고 악성코드일 수 있으므로 실행하지 않는다. 재분석 지점, ACL, 원래 시간이나 실행 권한은 복원하지 않는다. 이름 있는 대체 스트림은 상주 스트림 추출 기능을 별도로 사용한다.
+
+빈 파일도 inode와 디렉터리 메타데이터를 사용한다. 불필요하면 재구성을 끈다:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+덮어쓰기를 켜면 모든 객체가 완료된 목록과 일치할 때만 기존 재구성을 교체한다. 추가·누락 파일, 링크, 정션 또는 불완전한 목록이 있으면 결과를 바꾸기 전에 거부한다. 이때는 새 출력 경로를 사용한다.
+
 
 ## 출력 레이아웃 { #output-layout }
 
@@ -545,6 +572,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

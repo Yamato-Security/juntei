@@ -188,11 +188,39 @@ Persistence Hunter 會保留所有嚴重性等級（`--min-severity info`），�
 
 CSV 的 `$MFT` 輸出包含所有時間戳記與短檔名。登錄檔輸出包含原始資料，以及
 `REG_QWORD` 值的 FILETIME 解讀。JSON 與 JSONL 的 SRUM 輸出包含值狀態
-中繼資料。Defender 檔案與常駐的 `$MFT` 資料流**不會**自動**擷取**。
+中繼資料。Defender 隔離檔案擷取仍需自行啟用。
 
 使用 `--mft-slack` 時，`$MFT` 輸出也會包含殘留在 FILE 記錄 slack 中的檔名，形式與 [`parse-ntfs mft -x`](../artifacts/mft.md) 相同：CSV 中標記為 `FromSlack` 的列，以及 JSON 與 JSONL 中的 `SlackFileNames`。`--code-page` 適用於 LNK 檔案、Jump List、ShellBags 與 OpenSaveMRU。
 
 未被收集的跡證屬於正常的 `skipped` 工作，而非失敗。
+
+
+## 重建檔案系統 { #filesystem-reconstruction }
+
+每份收集的 MFT 也會建立可瀏覽的目錄樹。CSV、JSON 與 JSONL 模式的原有解析表格保持不變。
+
+從收集路徑推測的磁碟機會使用例如 `FileSystem/C` 的目錄。MFT 本身沒有磁碟機代號。無法辨認時使用 `UnknownVolume`；同一代號的多份 MFT 仍分開，例如 `C-MFT-2`。
+
+MFT 中未配置的檔案與目錄加上 `-deleted`，子項路徑中的已刪除父目錄也一樣。仍存在的無名常駐 DATA 會還原。非常駐或無法取得的內容建立為空白預留檔；邏輯大小不代表還原的位元組數。
+
+`-i30` 表示無法確認刪除的額外索引名稱。使用 MFT 的常駐目錄索引與同一磁碟區另行收集的 I30。Slack 也可能留下重新命名或索引重整的副本，不會借用其他世代的內容。
+
+`_Juntei-Unresolved` 放置父參照缺失、被重用、循環或過深的路徑。不安全名稱會跳脫，衝突名稱分開儲存，原名保留在清單。有長檔名時省略 DOS 別名；硬連結建立為獨立副本。
+
+`_Juntei-Reconstruction.csv` 記錄重建結果：`DataStatus`、`LogicalSize`、`RecoveredBytes`、`OriginalPath`、`OutputPath`。來源包含 `EntryNum`、`SN`、`ParentEntryNum`、`ParentSN`、`Source`、`FromSlack`、`Offset`，另記錄推測磁碟機、刪除狀態與目錄類型。未完成清單以 .partial.csv 結尾，成功後才使用最終檔名。
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+還原檔案保留原副檔名，可能含惡意程式，絕不可執行。不還原重新解析點、ACL、原始時間戳記或執行權限。具名替代資料流需要另外使用常駐資料流擷取功能。
+
+即使空檔也使用 inode 與目錄中繼資料。若不需要重建可停用：
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+啟用覆寫後，只有所有物件都符合已完成清單，才能取代之前的重建。額外或缺失的檔案、連結、junction 或未完成清單都會在變更解析結果前拒絕處理。此時請使用新的輸出目錄。
+
 
 ## 輸出配置 { #output-layout }
 
@@ -564,6 +592,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

@@ -191,11 +191,39 @@ multiplique seu orçamento de processos por outro pool do tamanho do número de 
 
 A saída CSV do `$MFT` inclui todos os carimbos de data/hora e os nomes curtos. A saída do Registro inclui os dados brutos e uma
 interpretação como FILETIME dos valores `REG_QWORD`. A saída JSON e JSONL do SRUM inclui metadados de estado
-dos valores. Os arquivos do Defender e os fluxos residentes do `$MFT` **não são extraídos** automaticamente.
+dos valores. A extração da quarentena do Defender continua opcional.
 
 Com `--mft-slack`, a saída do `$MFT` também inclui os nomes de arquivo que restaram no slack dos registros FILE, como [`parse-ntfs mft -x`](../artifacts/mft.md) os grava: linhas marcadas com `FromSlack` em CSV e `SlackFileNames` em JSON e JSONL. `--code-page` se aplica a arquivos LNK, Jump Lists, ShellBags e OpenSaveMRU.
 
 Um artefato que não foi coletado gera uma tarefa `skipped` normal, não uma falha.
+
+
+## Reconstrução do sistema de arquivos { #filesystem-reconstruction }
+
+Cada MFT coletada também gera uma árvore navegável. As tabelas existentes não mudam nos modos CSV, JSON e JSONL.
+
+A unidade inferida do caminho de coleta recebe, por exemplo, `FileSystem/C`. A MFT não armazena letras de unidade. Sem uma indicação reconhecida usa-se `UnknownVolume`; várias MFT permanecem separadas, por exemplo `C-MFT-2`.
+
+Arquivos e diretórios não alocados recebem `-deleted`, inclusive os pais excluídos nos caminhos descendentes. DATA residente sem nome é recuperada quando preservada. Conteúdo não residente ou indisponível vira arquivo vazio; tamanho lógico e bytes recuperados são diferentes.
+
+`-i30` marca nomes adicionais de índice sem exclusão confirmada. São usados índices residentes da MFT e arquivos I30 coletados do mesmo volume. O slack também pode preservar renomeações ou cópias de reorganização. Conteúdo de outra geração nunca é reaproveitado.
+
+`_Juntei-Unresolved` reúne caminhos com pais ausentes, reutilizados, cíclicos ou profundos demais. Nomes inseguros são escapados, colisões mantêm arquivos separados e o inventário preserva os originais. Aliases DOS são omitidos quando há nome longo; hard links viram cópias independentes.
+
+`_Juntei-Reconstruction.csv` registra a reconstrução: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Proveniência: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Unidade inferida, exclusão e diretórios também são registrados. O inventário parcial termina em .partial.csv; o nome final aparece apenas após sucesso.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+Os arquivos recuperados mantêm suas extensões e podem conter malware: nunca execute. Pontos de nova análise, ACLs, horários originais e permissões de execução não são restaurados. Fluxos alternativos nomeados exigem extração separada dos fluxos residentes.
+
+Até arquivos vazios consomem inodes e metadados. Para pular a reconstrução:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+Com sobrescrita, uma reconstrução completa só é substituída quando todos os objetos correspondem ao inventário. Arquivos extras ou ausentes, links, junctions ou inventário incompleto causam recusa antes de alterar resultados. Nesses casos use uma saída nova.
+
 
 ## Layout da saída { #output-layout }
 
@@ -567,6 +595,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

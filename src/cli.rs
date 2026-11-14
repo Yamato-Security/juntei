@@ -746,6 +746,10 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Parsing"), long, value_name = "NUMBER", default_value_t = 1252, display_order = 400)]
     pub code_page: u16,
 
+    /// Skip the browsable MFT/I30 filesystem reconstruction
+    #[arg(help_heading = Some("Parsing"), long, display_order = 402)]
+    pub no_reconstruct_filesystem: bool,
+
     /// Recover the file names left in the slack of $MFT records
     #[arg(help_heading = Some("Parsing"), long, display_order = 401)]
     pub mft_slack: bool,
@@ -985,6 +989,14 @@ pub struct MftOptions {
     /// Write the resident $DATA streams (the content of small files and alternate data streams) to files in DIR
     #[arg(help_heading = Some("Output"), short = 'e', long = "extract-resident-streams", value_name = "DIR", display_order = 302)]
     pub extract: Option<PathBuf>,
+
+    /// Recreate names and resident content in a new filesystem tree (one -f input; non-resident files are empty)
+    #[arg(help_heading = Some("Output"), long, value_name = "DIR", requires = "filepath", conflicts_with_all = ["ranges", "dump_entry", "list_directory", "cutoff"], display_order = 304)]
+    pub reconstruct_filesystem: Option<PathBuf>,
+
+    /// Supplement --reconstruct-filesystem with a directory index from the same volume (repeatable)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", requires = "reconstruct_filesystem", display_order = 102)]
+    pub reconstruction_i30: Vec<PathBuf>,
 
     /// Overwrite files when saving
     #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 303)]

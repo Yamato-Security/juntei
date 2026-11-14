@@ -44,6 +44,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -135,3 +137,9 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 - [ys-ntfs-parser の mft クレート](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram の mft パーサー](https://github.com/omerbenamram/mft)
 - [libfsntfs 形式のドキュメント](https://github.com/libyal/libfsntfs/tree/main/documentation)
+
+ファイルパスを再構成する例。非レジデントの内容は空のプレースホルダーになる。詳細と制限は次を参照する： [ファイルシステムの再構成](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```

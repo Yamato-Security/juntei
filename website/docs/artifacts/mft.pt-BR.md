@@ -60,6 +60,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -169,3 +171,9 @@ investigativo plano omitir a estrutura de baixo nível. Com `-x`, cada entrada J
 - [Crate mft do ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Analisador mft de Omer Ben-Amram](https://github.com/omerbenamram/mft)
 - [Documentação de formato do libfsntfs](https://github.com/libyal/libfsntfs/tree/main/documentation)
+
+O exemplo reconstrói caminhos navegáveis. Conteúdo não residente vira arquivo vazio. Detalhes: [Reconstrução do sistema de arquivos](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```

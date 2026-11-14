@@ -190,11 +190,39 @@ sein Prozessbudget in jedem Kindprozess um einen weiteren Pool in Größe der CP
 
 Die CSV-Ausgabe von `$MFT` enthält alle Zeitstempel und Kurznamen. Die Registry-Ausgabe enthält Rohdaten und eine
 FILETIME-Interpretation von `REG_QWORD`-Werten. Die JSON- und JSONL-Ausgabe von SRUM enthält Metadaten zum
-Wertzustand. Defender-Dateien und residente `$MFT`-Streams werden **nicht automatisch extrahiert**.
+Wertzustand. Die Defender-Quarantäneextraktion bleibt optional.
 
 Mit `--mft-slack` enthält die `$MFT`-Ausgabe auch die Dateinamen, die im Slack von FILE-Datensätzen verblieben sind, so wie [`parse-ntfs mft -x`](../artifacts/mft.md) sie schreibt: in CSV mit `FromSlack` markierte Zeilen, in JSON und JSONL `SlackFileNames`. `--code-page` gilt für LNK-Dateien, Jump Lists, ShellBags und OpenSaveMRU.
 
 Ein nicht gesichertes Artefakt ist eine normale Aufgabe mit dem Status `skipped`, kein Fehler.
+
+
+## Dateisystemrekonstruktion { #filesystem-reconstruction }
+
+Jede gesammelte MFT erzeugt zusätzlich einen durchsuchbaren Verzeichnisbaum. Bestehende Tabellen bleiben unverändert; CSV, JSON und JSONL werden unterstützt.
+
+Ein aus dem Sammlungspfad abgeleitetes Laufwerk erhält etwa `FileSystem/C`. Die MFT selbst speichert keinen Laufwerksbuchstaben. Ohne erkennbare Bezeichnung gilt `UnknownVolume`; mehrere MFTs desselben Laufwerks bleiben getrennt, etwa `C-MFT-2`.
+
+Nicht zugewiesene Dateien und Verzeichnisse erhalten `-deleted`, einschließlich gelöschter Elternverzeichnisse. Erhaltene residente unbenannte DATA-Inhalte werden wiederhergestellt. Nicht residente oder unbekannte Inhalte werden leere Platzhalter; logische Größe und wiederhergestellte Bytes sind verschieden.
+
+`-i30` kennzeichnet zusätzliche Indexnamen ohne bestätigte Löschung. Residente MFT-Indizes und separat gesammelte I30-Dateien desselben Volumes werden verwendet. Slack kann Umbenennungen oder Kopien enthalten. Historische Namen übernehmen keine Inhalte anderer Dateigenerationen.
+
+`_Juntei-Unresolved` enthält Einträge mit fehlenden, wiederverwendeten, zyklischen oder zu tiefen Elternpfaden. Unsichere Namen werden maskiert, Kollisionen getrennt gespeichert und Originalnamen protokolliert. DOS-Aliasse entfallen bei erhaltenem Langnamen; Hardlinks werden unabhängige Kopien.
+
+`_Juntei-Reconstruction.csv` dokumentiert die Rekonstruktion: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Die Herkunft enthalten `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Laufwerk, Löschzustand und Verzeichnistyp werden ebenfalls erfasst. Ein unvollständiges Inventar endet auf .partial.csv; der endgültige Name entsteht erst nach Erfolg.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+Wiederhergestellte Dateien behalten ihre Erweiterung und können Schadsoftware enthalten: niemals ausführen. Reparse Points, ACLs, Originalzeiten und Ausführungsrechte werden nicht wiederhergestellt. Benannte alternative Streams sind keine normalen Dateien; dafür separat die residente Stream-Extraktion nutzen.
+
+Auch leere Platzhalter benötigen Inodes und Verzeichnismetadaten. Bei Bedarf die Rekonstruktion überspringen:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+Mit Überschreiben kann Juntei eine vollständige frühere Rekonstruktion ersetzen, wenn alle Objekte zum Inventar passen. Unbekannte oder fehlende Dateien, Links, Junctions und unvollständige Inventare führen vor Änderungen zur Ablehnung. Dann ein neues Ausgabeziel verwenden.
+
 
 ## Ausgabestruktur { #output-layout }
 
@@ -566,6 +594,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

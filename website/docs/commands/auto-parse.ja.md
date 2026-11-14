@@ -154,11 +154,39 @@ Persistence Hunter は、部分的な許可一致を含むすべての重大度 
 
 ハンターは、各自動パーサー プロセス内で 1 人のワーカーを使用します。これにより、`auto-parse -T <N>` のプロセス バジェットがすべての子内の CPU サイズの別のプールで増加することがなくなります。スタンドアロン `persistence-hunter -T <N>` は、ハンター自身のワーカー スレッドを制御します。
 
-CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含まれます。レジストリの出力には、生データと `REG_QWORD` 値の FILETIME としての解釈が含まれます。SRUM の JSON・JSONL 出力には、値の状態を示すメタデータが含まれます。Defender のファイルや `$MFT` のレジデントストリームは、**自動では抽出されません**。
+CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含まれます。レジストリの出力には、生データと `REG_QWORD` 値の FILETIME としての解釈が含まれます。SRUM の JSON・JSONL 出力には、値の状態を示すメタデータが含まれます。Defender の隔離ファイル抽出は引き続き明示的に有効にする。
 
 `--mft-slack` を指定すると、`$MFT` の出力には FILE レコードのスラックに残ったファイル名も、[`parse-ntfs mft -x`](../artifacts/mft.md) と同じ形で含まれます。CSV では `FromSlack` が付いた行、JSON・JSONL では `SlackFileNames` です。`--code-page` は LNK ファイル、ジャンプ リスト、ShellBags、OpenSaveMRU に適用されます。
 
 収集されなかったアーティファクトは通常の `skipped` タスクであり、失敗ではありません。
+
+
+## ファイルシステムの再構成 { #filesystem-reconstruction }
+
+収集した MFT ごとに、フォルダーをたどれる再構成ツリーも作成する。既存の解析テーブルの名前と内容は変わらず、CSV・JSON・JSONL のどのモードでも追加の出力になる。
+
+収集パスからドライブを推定できる場合は `FileSystem/C` のようなディレクトリを使う。MFT 自体にはドライブ文字は記録されない。推定できなければ `UnknownVolume` を使い、同じ文字の MFT が複数あれば `C-MFT-2` のように分離する。
+
+MFT で未割り当てのファイルとディレクトリには `-deleted` を付ける。削除済みの親ディレクトリも子孫のパスに同じ接尾辞で表示する。残存する無名のレジデント DATA は復元し、非レジデントまたは内容を取得できないファイルは空のプレースホルダーにする。元の論理サイズと復元したバイト数は別の情報だ。
+
+`-i30` は削除を断定できない追加のディレクトリインデックス名を示す。MFT 内のレジデントインデックスと、同じボリュームから別途収集した I30 の両方を使う。スラックには削除だけでなくリネームやインデックス再編成のコピーも残る。古い名前に、再利用された MFT レコードや別の名前の内容を流用しない。
+
+`_Juntei-Unresolved` には、親参照の欠落・再利用・循環や過度に深い階層のため位置を安全に決められない項目を置く。保存先で危険な名前はエスケープし、衝突した名前は別々に保存する。元の名前は一覧に残す。長い名前がある場合は DOS の別名を省き、ファイルのハードリンクは独立したコピーとして作る。
+
+`_Juntei-Reconstruction.csv` が再構成の一覧だ。内容とパスの状態を `DataStatus`、`LogicalSize`、`RecoveredBytes`、`OriginalPath`、`OutputPath` で区別する。出所は `EntryNum`、`SN`、`ParentEntryNum`、`ParentSN`、`Source`、`FromSlack`、`Offset` で追跡できる。推定ドライブ、削除状態、ディレクトリかどうかも記録する。途中の一覧は .partial.csv で終わり、再構成が正常終了した場合だけ最終名にする。
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+復元ファイルには元の拡張子が付き、マルウェアが含まれる可能性がある。絶対に実行しない。リパースポイント、ACL、元のタイムスタンプ、実行権限は復元しない。名前付きの代替データストリームは通常のファイルに変換しない。必要なら MFT のレジデントストリーム抽出を別途使う。
+
+再構成では数十万個のファイルを作る場合があり、空のプレースホルダーでも inode とディレクトリのメタデータ領域を使う。不要なら次のように無効にする。
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+上書きが有効なら、すべてのファイルとディレクトリが完成済みの一覧と一致する場合だけ、以前の再構成を置き換える。未記録のファイル、欠落、リンク、ジャンクション、未完成の一覧があれば、解析結果を書き換える前に拒否する。その場合は新しい出力先を使う。
+
 
 ## 出力レイアウト { #output-layout }
 
@@ -427,6 +455,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

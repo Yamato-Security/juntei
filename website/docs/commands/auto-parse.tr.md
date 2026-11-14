@@ -195,12 +195,39 @@ komutunun işlem bütçesini her alt işlemde CPU boyutunda bir başka havuzla �
 
 CSV `$MFT` çıktısı tüm zaman damgalarını ve kısa adları içerir. Kayıt defteri çıktısı ham verileri ve
 `REG_QWORD` değerlerinin FILETIME yorumunu içerir. JSON ve JSONL SRUM çıktısı değer durumu meta
-verilerini içerir. Defender dosyaları ve yerleşik (resident) `$MFT` akışları otomatik olarak
-**çıkarılmaz**.
+verilerini içerir. Defender karantina çıkarımı isteğe bağlı kalır.
 
 `--mft-slack` ile `$MFT` çıktısı, FILE kayıtlarının slack alanında kalan dosya adlarını da [`parse-ntfs mft -x`](../artifacts/mft.md) ile aynı biçimde içerir: CSV'de `FromSlack` ile işaretlenmiş satırlar, JSON ve JSONL'de `SlackFileNames`. `--code-page`, LNK dosyalarına, Jump List'lere, ShellBags ve OpenSaveMRU'ya uygulanır.
 
 Toplanmamış bir artefakt, başarısızlık değil, normal bir `skipped` görevidir.
+
+
+## Dosya sistemi yeniden oluşturma { #filesystem-reconstruction }
+
+Toplanan her MFT ayrıca gezilebilir bir ağaç üretir. Mevcut tablolar CSV, JSON ve JSONL kiplerinde değişmez.
+
+Toplama yolundan çıkarılan sürücü `FileSystem/C` gibi bir dizin kullanır. MFT sürücü harfini saklamaz. Tanınan etiket yoksa `UnknownVolume` kullanılır; birden çok MFT ayrı kalır, örneğin `C-MFT-2`.
+
+Ayrılmamış dosya ve dizinlere, silinmiş üst dizinler dahil, `-deleted` eklenir. Kalan adsız yerleşik DATA içeriği kurtarılır. Yerleşik olmayan veya ulaşılamayan içerik boş dosya olur; mantıksal boyut kurtarılan bayt sayısı değildir.
+
+`-i30`, silindiği doğrulanmamış ek indeks adlarını gösterir. MFT yerleşik indeksleri ve aynı birimden toplanmış I30 dosyaları kullanılır. Slack, yeniden adlandırma ve dengeleme kopyaları içerebilir. Başka dosya nesillerinden içerik alınmaz.
+
+`_Juntei-Unresolved`, üst başvuruları eksik, yeniden kullanılmış, döngüsel veya çok derin yolları içerir. Güvensiz adlar kaçırılır, çakışmalar ayrı saklanır ve özgün adlar envanterde kalır. Uzun ad varsa DOS takma adları atlanır; sabit bağlantılar bağımsız kopyalara dönüşür.
+
+`_Juntei-Reconstruction.csv` yeniden oluşturmayı kaydeder: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Kaynak alanları: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Tahmini sürücü, silinme durumu ve dizin türü de kaydedilir. Kısmi envanter .partial.csv ile biter; son ad yalnızca başarıdan sonra oluşur.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+Kurtarılan dosyalar uzantılarını korur ve zararlı olabilir: çalıştırmayın. Reparse noktaları, ACL, özgün zamanlar veya yürütme izinleri geri yüklenmez. Adlandırılmış alternatif akışlar için yerleşik akış çıkarımını ayrıca kullanın.
+
+Boş dosyalar bile inode ve dizin metaverisi tüketir. Yeniden oluşturmayı atlamak için:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+Üzerine yazma açıkken eski tam ağaç yalnızca tüm nesneler envanterle eşleşirse değiştirilir. Ek veya eksik dosya, bağlantı, junction ya da eksik envanter sonuçlar değişmeden reddedilir. Bu durumda yeni çıktı kullanın.
+
 
 ## Çıktı düzeni { #output-layout }
 
@@ -579,6 +606,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu

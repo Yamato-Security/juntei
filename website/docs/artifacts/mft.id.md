@@ -60,6 +60,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -169,3 +171,9 @@ investigatif yang datar menghilangkan struktur tingkat rendah. Dengan `-x`, seti
 - [Crate mft milik ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Parser mft oleh Omer Ben-Amram](https://github.com/omerbenamram/mft)
 - [Dokumentasi format libfsntfs](https://github.com/libyal/libfsntfs/tree/main/documentation)
+
+Contoh berikut merekonstruksi jalur yang dapat ditelusuri. Konten nonresiden menjadi berkas kosong. Rincian: [Rekonstruksi sistem berkas](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```

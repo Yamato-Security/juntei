@@ -63,6 +63,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -173,3 +175,9 @@ output နှင့် သက်ဆိုင်သည်။ JSON/JSONL သည်
 - [ys-ntfs-parser ၏ mft crate](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram ၏ mft parser](https://github.com/omerbenamram/mft)
 - [libfsntfs format စာရွက်စာတမ်း](https://github.com/libyal/libfsntfs/tree/main/documentation)
+
+ဥပမာသည် ကြည့်ရှုနိုင်သော ဖိုင်လမ်းကြောင်းကို ပြန်တည်ဆောက်သည်။ Non-resident အကြောင်းအရာသည် ဖိုင်အလွတ်ဖြစ်သည်။ အသေးစိတ်: [ဖိုင်စနစ် ပြန်လည်တည်ဆောက်ခြင်း](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```

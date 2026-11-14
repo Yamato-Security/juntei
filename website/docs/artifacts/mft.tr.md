@@ -63,6 +63,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -172,3 +174,9 @@ bunu kullanın. `-x` ile her JSON girdisinde ayrıca `SlackFileNames` bulunur.
 - [ys-ntfs-parser'ın mft crate'i](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram'ın mft ayrıştırıcısı](https://github.com/omerbenamram/mft)
 - [libfsntfs biçim belgeleri](https://github.com/libyal/libfsntfs/tree/main/documentation)
+
+Örnek, gezilebilir dosya yollarını yeniden oluşturur. Yerleşik olmayan içerik boş dosya olur. Ayrıntılar: [Dosya sistemi yeniden oluşturma](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```

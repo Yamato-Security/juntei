@@ -192,11 +192,39 @@ hunter ใช้ worker หนึ่งตัวภายในโพรเซ�
 
 เอาต์พุต `$MFT` แบบ CSV มี timestamp และชื่อสั้นทั้งหมด เอาต์พุตรีจิสทรีมีข้อมูลดิบและ
 การตีความค่า `REG_QWORD` เป็น FILETIME เอาต์พุต SRUM แบบ JSON และ JSONL มีเมทาดาทา
-สถานะของค่า ไฟล์ของ Defender และสตรีม resident ของ `$MFT` **จะไม่ถูกแยกออกมา** โดยอัตโนมัติ
+สถานะของค่า การดึงไฟล์จาก Defender quarantine ยังคงต้องเปิดใช้เอง
 
 เมื่อใช้ `--mft-slack` เอาต์พุต `$MFT` จะรวมชื่อไฟล์ที่หลงเหลืออยู่ใน slack ของระเบียน FILE ด้วย ในรูปแบบเดียวกับที่ [`parse-ntfs mft -x`](../artifacts/mft.md) เขียน: แถวที่ทำเครื่องหมาย `FromSlack` ใน CSV และ `SlackFileNames` ใน JSON และ JSONL ส่วน `--code-page` ใช้กับไฟล์ LNK, Jump List, ShellBags และ OpenSaveMRU
 
 อาร์ติแฟกต์ที่ไม่ได้ถูกเก็บรวบรวมจะเป็นงานที่ `skipped` ตามปกติ ไม่ใช่ความล้มเหลว
+
+
+## การสร้างระบบไฟล์ขึ้นใหม่ { #filesystem-reconstruction }
+
+MFT ที่เก็บมาทุกไฟล์จะสร้างต้นไม้โฟลเดอร์ที่เปิดดูได้เพิ่มด้วย ตารางเดิมไม่เปลี่ยนในโหมด CSV, JSON และ JSONL
+
+อักษรไดรฟ์ที่อนุมานจากพาธที่เก็บจะใช้โฟลเดอร์ เช่น `FileSystem/C` ตัว MFT ไม่เก็บอักษรไดรฟ์ หากระบุไม่ได้ใช้ `UnknownVolume` และแยก MFT หลายไฟล์ เช่น `C-MFT-2`
+
+ไฟล์และโฟลเดอร์ที่ไม่ได้จัดสรรจะต่อท้ายด้วย `-deleted` รวมถึงโฟลเดอร์แม่ที่ลบแล้วในพาธลูก กู้ DATA แบบ resident ไม่มีชื่อที่ยังเหลืออยู่ ส่วน non-resident หรือเนื้อหาที่อ่านไม่ได้สร้างเป็นไฟล์ว่าง ขนาดเชิงตรรกะไม่ใช่จำนวนไบต์ที่กู้ได้
+
+`-i30` ระบุชื่อดัชนีเพิ่มเติมที่ยังยืนยันการลบไม่ได้ ใช้ดัชนี resident ใน MFT และ I30 ที่เก็บจากโวลุ่มเดียวกัน Slack อาจเหลือชื่อก่อนเปลี่ยนหรือสำเนาจากการปรับสมดุล ไม่ดึงเนื้อหาจากไฟล์คนละรุ่น
+
+`_Juntei-Unresolved` เก็บพาธที่แม่หาย ถูกใช้ซ้ำ วนเป็นวง หรืออยู่ลึกเกินไป ชื่อไม่ปลอดภัยจะ escape และเก็บชื่อชนกันแยกกัน ชื่อเดิมยังอยู่ในรายการ ละชื่อ DOS เมื่อมีชื่อยาว และสร้าง hard link เป็นสำเนาอิสระ
+
+`_Juntei-Reconstruction.csv` บันทึกการสร้างใหม่: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath` แหล่งที่มา: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset` รวมไดรฟ์ที่อนุมาน สถานะลบ และชนิดโฟลเดอร์ รายการที่ยังไม่เสร็จลงท้าย .partial.csv และใช้ชื่อสุดท้ายเมื่อสำเร็จ
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+
+ไฟล์ที่กู้ยังมีนามสกุลเดิมและอาจเป็นมัลแวร์ ห้ามรัน ไม่คืนค่า reparse point, ACL, เวลาเดิม หรือสิทธิ์รัน สำหรับ alternate stream ที่มีชื่อให้ใช้การดึง resident stream แยกต่างหาก
+
+แม้ไฟล์ว่างก็ใช้ inode และเมทาดาทาโฟลเดอร์ หากไม่ต้องการให้ข้ามการสร้างใหม่:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
+```
+
+เมื่อเปิดเขียนทับ จะเปลี่ยนต้นไม้เดิมที่สมบูรณ์ได้เมื่อทุกอย่างตรงกับรายการเท่านั้น ไฟล์เพิ่มหรือหาย ลิงก์ junction หรือรายการไม่ครบทำให้ปฏิเสธก่อนแก้ผลลัพธ์ ให้เลือกปลายทางใหม่ในกรณีนี้
+
 
 ## โครงสร้างเอาต์พุต { #output-layout }
 
@@ -569,6 +597,7 @@ Performance:
 Parsing:
       --code-page <NUMBER>  Windows code page for ANSI strings in LNK files, Jump Lists, ShellBags and OpenSaveMRU [default: 1252]
       --mft-slack           Recover the file names left in the slack of $MFT records
+      --no-reconstruct-filesystem  Skip the browsable MFT/I30 filesystem reconstruction
 
 General Options:
   -h, --help  Show the help menu
