@@ -79,7 +79,7 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 
 `-D` は 1 つのエントリを出力します。ヘッダー、すべての属性 (データ実行を含む)、および `-t json -x` が書き込む際のスラック内の名前、そしてレコードのバイトです。 `-L` は、ディレクトリ内の使用中および削除されたすべての名前を、そのエントリとシーケンス番号、タイプ、サイズ、および変更時刻とともにリストします。ディレクトリは、エントリ (`30`、`0x1E`、`30-1`) またはパス (`\Windows\System32`、`C:/Windows`、大文字と小文字は区別されません) によって指定されます。
 
-ファイルパスを再構成する例。非レジデントの内容は空のプレースホルダーになる。詳細と制限は次を参照する： [ファイルシステムの再構成](../commands/auto-parse.md#filesystem-reconstruction).
+閲覧できるファイルパスを再構成するには、次の例を使います。非レジデントの内容は空のプレースホルダーになります。詳細と制限については、[ファイルシステムの再構成](../commands/auto-parse.md#filesystem-reconstruction) を参照してください。
 
 ```bash
 juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
