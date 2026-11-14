@@ -60,6 +60,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -96,6 +98,12 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 як їх записує `-t json -x`, а потім байти запису. `-L` перелічує кожне ім'я в каталозі, як використовуване, так і
 видалене, з його номером запису та порядковим номером, типом, розміром і часом зміни. Каталог задається
 номером запису (`30`, `0x1E`, `30-1`) або шляхом (`\Windows\System32`, `C:/Windows`; без урахування регістру).
+
+Приклад відтворює шляхи для перегляду. Нерезидентний вміст стає порожніми файлами. Докладніше: [Відтворення файлової системи](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
+```
 
 ## Поля виводу CSV { #csv-output-fields }
 

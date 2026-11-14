@@ -146,7 +146,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
 /// `path` relative to `base`, both resolved through the file system as the containment checks
 /// resolve them (a symbolic link's `..` is beside its target): `HOST/C`, `.` for `base` itself,
 /// `../other` outside it, and only the name when they share no root (two Windows drives).
-fn relative_path(base: &Path, path: &Path) -> PathBuf {
+pub(crate) fn relative_path(base: &Path, path: &Path) -> PathBuf {
     let resolve = |p: &Path| {
         absolute_candidate(p).unwrap_or_else(|_| {
             normalize_absolute(&std::path::absolute(p).unwrap_or_else(|_| p.to_path_buf()))
@@ -367,6 +367,23 @@ struct TaskResult {
     log: String,
     #[serde(rename = "Error")]
     error: Option<String>,
+    #[serde(rename = "ReconstructionRoot", skip_serializing_if = "Option::is_none")]
+    reconstruction_root: Option<String>,
+    #[serde(
+        rename = "ReconstructionInventory",
+        skip_serializing_if = "Option::is_none"
+    )]
+    reconstruction_inventory: Option<String>,
+    #[serde(
+        rename = "ReconstructionStatus",
+        skip_serializing_if = "Option::is_none"
+    )]
+    reconstruction_status: Option<&'static str>,
+    #[serde(
+        rename = "ReconstructionError",
+        skip_serializing_if = "Option::is_none"
+    )]
+    reconstruction_error: Option<String>,
     /// Structured diagnostics emitted by a child while reading a staged placeholder.
     #[serde(skip)]
     image_errors: Vec<ImageProblem>,
@@ -384,6 +401,8 @@ impl TaskResult {
             output: self.output.as_deref().map(path),
             output_files: self.output_files.iter().map(|p| path(p)).collect(),
             log: path(&self.log),
+            reconstruction_root: self.reconstruction_root.as_deref().map(path),
+            reconstruction_inventory: self.reconstruction_inventory.as_deref().map(path),
             ..self.clone()
         }
     }
@@ -652,6 +671,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             let mut json_opts = opts.clone();
             json_opts.output_type = AutoOutputType::Jsonl;
             json_opts.extract_defender_quarantined = false;
+            json_opts.reconstruct_filesystem = false;
             let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
             for task in &mut extra {
                 task.timeline_only = true;
@@ -1052,6 +1072,25 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         }
     }
 
+    let mut reconstruction_failures = 0;
+    for result in &results {
+        if let Some(state @ ("skipped" | "failed")) = result.reconstruction_status {
+            reconstruction_failures += usize::from(state == "failed");
+            p(
+                JunteiColor::Orange.rdg(no_color),
+                &format!(
+                    "  {} / filesystem reconstruction: {state}: {} (log: {})",
+                    result.computer,
+                    result
+                        .reconstruction_error
+                        .as_deref()
+                        .unwrap_or("see parser log"),
+                    shown(Path::new(&result.log))
+                ),
+                true,
+            );
+        }
+    }
     if image_errors.len() > staged_errors {
         error_msg(
             no_color,
@@ -1061,7 +1100,13 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             ),
         );
     }
-    i32::from(failed > 0 || succeeded == 0 || timeline_failed || !image_errors.is_empty())
+    i32::from(
+        failed > 0
+            || reconstruction_failures > 0
+            || succeeded == 0
+            || timeline_failed
+            || !image_errors.is_empty(),
+    )
 }
 
 fn discovered_roots(input: &Path, max_depth: usize) -> io::Result<BTreeMap<PathBuf, Vec<PathBuf>>> {
@@ -1700,6 +1745,7 @@ fn build_tasks(
         if opts.mft_slack {
             mft_extra.push("--recover-slack");
         }
+        let mft_tasks_start = tasks.len();
         add_file_artifact_tasks(
             &mut tasks,
             host,
@@ -1713,6 +1759,37 @@ fn build_tasks(
             inputs.mfts.clone(),
             &mft_extra,
         );
+        if opts.reconstruct_filesystem {
+            let mut labels = HashMap::<String, usize>::new();
+            let reconstruction_indexes = reconstruction_index_inputs(&inputs.mfts, &inputs.i30s);
+            for ((task, input), indexes) in tasks[mft_tasks_start..]
+                .iter_mut()
+                .zip(&inputs.mfts)
+                .zip(reconstruction_indexes)
+            {
+                let (drive, _) = crate::mft_reconstruct::volume_hint(input);
+                let label = drive.map_or_else(|| "UnknownVolume".to_string(), |c| c.to_string());
+                let ordinal = labels.entry(label.clone()).or_default();
+                *ordinal += 1;
+                let label = if *ordinal == 1 {
+                    label
+                } else {
+                    format!("{label}-MFT-{ordinal}")
+                };
+                let destination = parser_output
+                    .join(&host.folder)
+                    .join("FileSystem")
+                    .join(label);
+                task.args.push("--reconstruction-optional".into());
+                task.args.push("--reconstruct-filesystem".into());
+                task.args.push(destination.into_os_string());
+                for path in indexes {
+                    task.args.push("--reconstruction-i30".into());
+                    task.args
+                        .push(dot_relative(evidence, &path).into_os_string());
+                }
+            }
+        }
         add_file_artifact_tasks(
             &mut tasks,
             host,
@@ -1742,6 +1819,84 @@ fn build_tasks(
     }
     prioritize_long_tasks(&mut tasks);
     Ok(tasks)
+}
+
+/// Assign each external index to at most one MFT. Entry/sequence references are only unique
+/// within a volume: matching them against another MFT can fabricate convincing file paths.
+fn reconstruction_index_inputs(mfts: &[PathBuf], indexes: &[PathBuf]) -> Vec<Vec<PathBuf>> {
+    let anchors: Vec<_> = mfts
+        .iter()
+        .map(|path| crate::mft_reconstruct::volume_hint(path))
+        .collect();
+    let mut assigned = vec![Vec::new(); mfts.len()];
+    for path in indexes {
+        let mut longest = None;
+        let mut owner = None;
+        for (i, (_, anchor)) in anchors.iter().enumerate() {
+            if !path.starts_with(anchor) {
+                continue;
+            }
+            let depth = anchor.components().count();
+            match longest {
+                None => {
+                    longest = Some(depth);
+                    owner = Some(i);
+                }
+                Some(previous) if depth > previous => {
+                    longest = Some(depth);
+                    owner = Some(i);
+                }
+                Some(previous) if depth == previous => owner = None,
+                _ => {}
+            }
+        }
+        // An equally specific scope shared by multiple MFTs is ambiguous. Do not choose
+        // according to traversal order or attach the same index to every candidate.
+        if longest.is_some() && owner.is_none() {
+            continue;
+        }
+        let (index_drive, index_anchor) = crate::mft_reconstruct::volume_hint(path);
+        // A known physical volume wins over directory-name hints (for example Users/j).
+        // Split auto/ntfs collections can still use a unique drive match. A generic unknown
+        // parent MFT must not swallow their labelled volume, but a deeper unknown MFT keeps
+        // its own indexes rather than losing them to a broader drive-labelled ancestor.
+        if owner.is_none_or(|i| {
+            anchors[i].0.is_none()
+                && index_anchor != anchors[i].1
+                && index_anchor.starts_with(&anchors[i].1)
+                && (index_anchor.parent() == Some(anchors[i].1.as_path())
+                    || explicit_index_volume_anchor(&index_anchor))
+        }) && let Some(drive) = index_drive
+        {
+            let mut matches = anchors
+                .iter()
+                .enumerate()
+                .filter(|(_, (letter, _))| *letter == Some(drive));
+            if let Some((i, _)) = matches.next() {
+                owner = matches.next().is_none().then_some(i);
+            }
+        }
+        if let Some(i) = owner {
+            assigned[i].push(path.clone());
+        }
+    }
+    assigned
+}
+
+/// A one-letter leaf below a user directory is not collection metadata. Only promote it
+/// above an unknown physical owner when the label is explicit or in a collector's drive slot.
+fn explicit_index_volume_anchor(anchor: &Path) -> bool {
+    let name = anchor.file_name().unwrap_or_default().to_string_lossy();
+    let name = name.to_ascii_lowercase();
+    name.ends_with([':', '$'])
+        || name.ends_with("%3a")
+        || name.ends_with("%24")
+        || anchor
+            .parent()
+            .and_then(Path::file_name)
+            .is_some_and(|parent| {
+                parent.eq_ignore_ascii_case("auto") || parent.eq_ignore_ascii_case("ntfs")
+            })
 }
 
 type NamePredicate = fn(&str) -> bool;
@@ -1776,6 +1931,7 @@ struct InputInventory {
     mfts: Vec<PathBuf>,
     journals: Vec<PathBuf>,
     logfiles: Vec<PathBuf>,
+    i30s: Vec<PathBuf>,
 }
 
 impl InputInventory {
@@ -1810,6 +1966,7 @@ impl InputInventory {
                 found.add_size("recycle-bin", size);
             }
             if crate::i30::is_i30_file(&path) {
+                found.i30s.push(path.clone());
                 found.add_size("i30", size);
             }
             if crate::registry::is_hive_file(&path) {
@@ -2131,11 +2288,14 @@ fn run_task(
     );
     let mut error = None;
     let mut image_errors = Vec::new();
+    let mut reconstruction = None;
     let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
             let stdout = paths.text(&String::from_utf8_lossy(&output.stdout));
-            let (stderr, problems) =
-                image_diagnostics(&String::from_utf8_lossy(&output.stderr), paths);
+            let (raw_stderr, outcome) =
+                crate::mft_reconstruct::take_outcome(&String::from_utf8_lossy(&output.stderr));
+            reconstruction = outcome;
+            let (stderr, problems) = image_diagnostics(&raw_stderr, paths);
             image_errors = problems;
             let combined = format!("{stdout}{stderr}");
             let skipped = !output.status.success() && no_artifact_message(&combined);
@@ -2186,6 +2346,15 @@ fn run_task(
     if let Err(e) = fs::write(&task.log, log) {
         error = Some(format!("could not write {}: {e}", shown(&task.log)));
     }
+    let reconstruction_root = task
+        .args
+        .iter()
+        .position(|a| a == "--reconstruct-filesystem")
+        .and_then(|at| task.args.get(at + 1))
+        .map(PathBuf::from);
+    let reconstruction_inventory = reconstruction_root
+        .as_ref()
+        .map(|root| root.join(crate::mft_reconstruct::INVENTORY));
     TaskResult {
         computer: task.computer.clone(),
         artifact: task.artifact.to_string(),
@@ -2207,6 +2376,19 @@ fn run_task(
         output: (status == TaskStatus::Succeeded)
             .then(|| task.output.to_string_lossy().to_string()),
         output_files: Vec::new(),
+        reconstruction_root: reconstruction_root.map(|p| p.to_string_lossy().into_owned()),
+        reconstruction_inventory: reconstruction_inventory
+            .filter(|p| {
+                p.is_file()
+                    && reconstruction.as_ref().is_some_and(|r| {
+                        r.status == crate::mft_reconstruct::ReconstructionStatus::Succeeded
+                    })
+            })
+            .map(|p| p.to_string_lossy().into_owned()),
+        reconstruction_status: reconstruction.as_ref().map(|r| r.status.as_str()),
+        reconstruction_error: reconstruction
+            .and_then(|r| r.error)
+            .map(|error| paths.text(&error)),
         log: task.log.to_string_lossy().to_string(),
         error,
         image_errors,
@@ -2516,6 +2698,10 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "Log",
         "Error",
         "Command",
+        "ReconstructionRoot",
+        "ReconstructionInventory",
+        "ReconstructionStatus",
+        "ReconstructionError",
     ])?;
     for task in manifest.tasks {
         let host = manifest
@@ -2542,10 +2728,14 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             task.log.clone(),
             task.error.clone().unwrap_or_default(),
             serde_json::to_string(&task.command).map_err(io::Error::other)?,
+            task.reconstruction_root.clone().unwrap_or_default(),
+            task.reconstruction_inventory.clone().unwrap_or_default(),
+            task.reconstruction_status.unwrap_or_default().to_string(),
+            task.reconstruction_error.clone().unwrap_or_default(),
         ])?;
     }
     for problem in manifest.image_errors {
-        let mut row = vec![String::new(); 18];
+        let mut row = vec![String::new(); 22];
         row[4] = format!("{}!/{}", problem.image, problem.path);
         row[5] = "disk-image".into();
         row[10] = "failed".into();
@@ -2664,6 +2854,102 @@ fn normalize_absolute(path: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn nested_mft_anchors_own_their_indexes_exclusively() {
+        let mfts = ["host/$MFT", "host/D/$MFT", "host/NestedVolume/$MFT"].map(PathBuf::from);
+        let indexes = [
+            "host/$I30",
+            "host/D/$I30",
+            "host/D/Data/$I30",
+            "host/NestedVolume/Documents/$I30",
+        ]
+        .map(PathBuf::from);
+        let expected = vec![
+            vec![indexes[0].clone()],
+            vec![indexes[1].clone(), indexes[2].clone()],
+            vec![indexes[3].clone()],
+        ];
+        assert_eq!(reconstruction_index_inputs(&mfts, &indexes), expected);
+        let reversed: Vec<_> = mfts.iter().cloned().rev().collect();
+        assert_eq!(
+            reconstruction_index_inputs(&reversed, &indexes),
+            expected.into_iter().rev().collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn i30_drive_fallback_preserves_split_collections_under_an_unknown_mft() {
+        let mfts = ["host/$MFT", "host/uploads/ntfs/%5C%5C.%5CC%3A/$MFT"].map(PathBuf::from);
+        let indexes = [
+            "host/$I30",
+            "host/uploads/auto/C%3A/$I30",
+            "host/uploads/auto/C%3A/Users/j/$I30",
+        ]
+        .map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![
+                vec![indexes[0].clone()],
+                vec![indexes[1].clone(), indexes[2].clone()],
+            ]
+        );
+        assert_eq!(
+            reconstruction_index_inputs(&mfts[1..], &indexes),
+            vec![vec![indexes[1].clone(), indexes[2].clone()]]
+        );
+    }
+
+    #[test]
+    fn a_deeper_unknown_mft_keeps_its_indexes_over_a_drive_labelled_ancestor() {
+        let mfts = ["host/C/$MFT", "host/C/NestedVolume/$MFT"].map(PathBuf::from);
+        let indexes = ["host/C/$I30", "host/C/NestedVolume/Documents/$I30"].map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![vec![indexes[0].clone()], vec![indexes[1].clone()]]
+        );
+    }
+
+    #[test]
+    fn ambiguous_i30_owners_are_not_guessed() {
+        let mfts = ["host/$MFT", "host/one/C/$MFT", "host/two/C/$MFT"].map(PathBuf::from);
+        let indexes = [
+            "host/one/C/$I30",
+            "host/two/C/$I30",
+            "host/uploads/auto/C%3A/$I30",
+        ]
+        .map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![vec![], vec![indexes[0].clone()], vec![indexes[1].clone()]]
+        );
+        let same_scope = ["host/C/$MFT", "host/C/MFT"].map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&same_scope, &[PathBuf::from("host/C/$I30")]),
+            vec![Vec::<PathBuf>::new(), Vec::new()]
+        );
+        assert!(reconstruction_index_inputs(&[], &indexes).is_empty());
+    }
+
+    #[test]
+    fn physical_mft_anchor_outweighs_one_character_i30_directory_hints() {
+        let mfts = ["host/$MFT", "host/C/$MFT", "host/J/$MFT"].map(PathBuf::from);
+        let indexes = ["host/C/Users/j/$I30", "host/J/Users/c/$I30"].map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![vec![], vec![indexes[0].clone()], vec![indexes[1].clone()]]
+        );
+    }
+
+    #[test]
+    fn unknown_mft_does_not_lose_one_character_subfolders_to_another_drive() {
+        let mfts = ["host/$MFT", "host/J/$MFT"].map(PathBuf::from);
+        let indexes = ["host/Users/j/$I30", "host/Users/%6A/$I30"].map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![indexes.to_vec(), vec![]]
+        );
+    }
 
     #[test]
     fn super_timeline_supports_every_scheduled_parser_artifact() {

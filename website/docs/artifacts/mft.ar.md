@@ -59,6 +59,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -95,6 +97,12 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 الراكدة كما يكتبها `-t json -x`، ثم بايتات السجل. ويسرد `-L` كل اسم في مجلد ما، المستخدم منها
 والمحذوف، مع رقم الإدخال ورقم التسلسل، والنوع، والحجم، ووقت التعديل. ويُحدَّد المجلد برقم الإدخال
 (`30`، `0x1E`، `30-1`) أو بالمسار (`\Windows\System32`، `C:/Windows`؛ دون تمييز لحالة الأحرف).
+
+يعيد المثال بناء مسارات قابلة للتصفح. تصبح المحتويات غير المقيمة ملفات فارغة. التفاصيل: [إعادة بناء نظام الملفات](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
+```
 
 ## حقول إخراج CSV { #csv-output-fields }
 

@@ -181,12 +181,44 @@ Persistence Hunter는 부분 허용 일치를 포함하여 모든 심각도(`--m
 `persistence-hunter -T <N>`은 헌터 자체의 작업자 스레드를 제어합니다.
 
 CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니다. 레지스트리 출력에는 원시 데이터와 `REG_QWORD`
-값의 FILETIME 해석이 포함됩니다. JSON 및 JSONL SRUM 출력에는 값 상태 메타데이터가 포함됩니다. Defender 파일과
-상주 `$MFT` 스트림은 자동으로 **추출되지 않습니다**.
+값의 FILETIME 해석이 포함됩니다. JSON 및 JSONL SRUM 출력에는 값 상태 메타데이터가 포함됩니다. Defender 격리 파일 추출은 계속 선택 기능이다.
 
 `--mft-slack`를 사용하면 `$MFT` 출력에 FILE 레코드의 슬랙에 남은 파일 이름도 [`parse-ntfs mft -x`](../artifacts/mft.md)와 같은 형식으로 포함됩니다. CSV에서는 `FromSlack`로 표시된 행, JSON 및 JSONL에서는 `SlackFileNames`입니다. `--code-page`는 LNK 파일, Jump List, ShellBags 및 OpenSaveMRU에 적용됩니다.
 
 수집되지 않은 아티팩트는 실패가 아니라 정상적인 `skipped` 작업입니다.
+
+
+## 파일 시스템 재구성 { #filesystem-reconstruction }
+
+파일 시스템 재구성은 **기본적으로 비활성화**되어 있습니다. `-R, --reconstruct-filesystem`을 지정하면 수집한 MFT마다 탐색 가능한 트리를 추가합니다. CSV, JSON 및 JSONL 모드의 기존 표 이름과 내용은 변경되지 않습니다.
+
+트리는 인접한 비공개 임시 작업 공간에서 만들고 완성된 후 게시합니다. 처리된 오류와 중단은 작업 공간을 정리하고 이전 트리를 보존합니다. 강제 종료나 전원 손실 시 `.juntei-reconstruction-*` 작업 공간이 남을 수 있지만 재시도를 막거나 불완전한 트리를 현재 볼륨으로 게시하지 않습니다.
+
+수집 경로에서 추정한 드라이브는 `FileSystem/C` 같은 디렉터리를 사용합니다. MFT 자체에는 드라이브 문자가 없습니다. 알 수 없으면 `UnknownVolume`을 사용하고 같은 문자의 여러 MFT는 `C-MFT-2`처럼 분리합니다.
+
+할당되지 않은 파일과 디렉터리에는 `-deleted`를 붙이며 삭제된 부모도 자손 경로에 반영합니다. 남아 있는 이름 없는 상주 DATA는 복구합니다. 비상주 또는 사용 불가 내용은 빈 파일로 만들며 논리 크기와 복구 바이트 수는 다릅니다.
+
+`-i30`는 삭제가 확인되지 않은 추가 인덱스 이름입니다. MFT 상주 인덱스와 같은 볼륨에서 따로 수집한 I30을 사용합니다. Slack에는 이름 변경이나 재균형 복사본도 남습니다. 다른 파일 세대의 내용은 재사용하지 않습니다.
+
+`_Juntei-Unresolved`에는 부모 참조 누락·재사용·순환 또는 과도한 깊이로 해석하지 못한 경로를 둡니다. 안전하지 않은 이름은 이스케이프하고 충돌은 별도 저장하며 원래 이름은 목록에 남깁니다. 긴 이름이 있으면 DOS 별칭은 생략하고 하드 링크는 독립 복사본으로 만듭니다.
+
+`_Juntei-Reconstruction.csv`에서 재구성을 확인합니다: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. 출처 필드는 `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`입니다. 추정 드라이브, 삭제 상태와 디렉터리 유형도 기록합니다. 부분 목록은 .partial.csv로 끝나며 성공한 후 최종 이름으로 바뀝니다.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+읽을 수 없거나 손상된 선택 I30 입력은 `i30_input_error`로 기록하며 유효한 MFT 결과는 보존합니다.
+
+비어 있지 않은 상주 내용을 복구한 파일에는 쓰기 전에 `.dontrun`을 붙입니다. 원래 이름은 목록에 보존하며 빈 자리표시자는 원래 이름을 유지합니다. 복구 내용을 실행하지 마십시오. 재분석 지점, ACL, 원래 시간과 실행 권한은 복원하지 않습니다. 이름 있는 대체 스트림은 별도 MFT 스트림 추출 옵션을 사용합니다.
+
+재구성은 수십만 개의 파일을 만들 수 있으며 빈 파일도 inode와 디렉터리 메타데이터를 사용합니다. 트리가 필요할 때만 활성화합니다:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+덮어쓰기는 완료된 목록과 일치하고 누락·미등록 항목이나 링크가 없는 트리만 교체합니다. 기존 부분 트리와 `.DS_Store` 등의 추가 파일은 보존합니다. auto-parse는 재구성만 건너뛰고 디렉터리와 이유를 로그 및 두 매니페스트에 기록합니다. MFT와 다른 파서는 계속 실행됩니다. 재구성 쓰기 실패는 별도로 보고하고 전체 실패 상태를 반환하되 파싱 결과를 보존합니다. 단독 재구성은 여전히 차단된 출력을 거부합니다.
+
 
 ## 출력 레이아웃 { #output-layout }
 
@@ -538,6 +570,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

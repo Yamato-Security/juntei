@@ -188,11 +188,44 @@ Persistence Hunter 會保留所有嚴重性等級（`--min-severity info`），�
 
 CSV 的 `$MFT` 輸出包含所有時間戳記與短檔名。登錄檔輸出包含原始資料，以及
 `REG_QWORD` 值的 FILETIME 解讀。JSON 與 JSONL 的 SRUM 輸出包含值狀態
-中繼資料。Defender 檔案與常駐的 `$MFT` 資料流**不會**自動**擷取**。
+中繼資料。Defender 隔離檔案擷取仍需自行啟用。
 
 使用 `--mft-slack` 時，`$MFT` 輸出也會包含殘留在 FILE 記錄 slack 中的檔名，形式與 [`parse-ntfs mft -x`](../artifacts/mft.md) 相同：CSV 中標記為 `FromSlack` 的列，以及 JSON 與 JSONL 中的 `SlackFileNames`。`--code-page` 適用於 LNK 檔案、Jump List、ShellBags 與 OpenSaveMRU。
 
 未被收集的跡證屬於正常的 `skipped` 工作，而非失敗。
+
+
+## 重建檔案系統 { #filesystem-reconstruction }
+
+檔案系統重建**預設停用**。指定 `-R, --reconstruct-filesystem` 才會為每份收集的 MFT 加入可瀏覽的目錄樹。CSV、JSON 與 JSONL 模式的原有解析表格名稱與內容保持不變。
+
+目錄樹先在相鄰的私有工作區建立，完成後才公開。已處理的錯誤與中斷會清理工作區並保留原有樹。強制終止可能留下 `.juntei-reconstruction-*` 工作區，但不會阻止重試，也不會把不完整樹當作目前磁碟區。
+
+從收集路徑推測的磁碟機會使用例如 `FileSystem/C` 的目錄。MFT 本身沒有磁碟機代號。無法辨認時使用 `UnknownVolume`；同一代號的多份 MFT 仍分開，例如 `C-MFT-2`。
+
+MFT 中未配置的檔案與目錄加上 `-deleted`，子項路徑中的已刪除父目錄也一樣。仍存在的無名常駐 DATA 會還原。非常駐或無法取得的內容建立為空白預留檔；邏輯大小不代表還原的位元組數。
+
+`-i30` 表示無法確認刪除的額外索引名稱。使用 MFT 的常駐目錄索引與同一磁碟區另行收集的 I30。Slack 也可能留下重新命名或索引重整的副本，不會借用其他世代的內容。
+
+`_Juntei-Unresolved` 放置父參照缺失、被重用、循環或過深的路徑。不安全名稱會跳脫，衝突名稱分開儲存，原名保留在清單。有長檔名時省略 DOS 別名；硬連結建立為獨立副本。
+
+`_Juntei-Reconstruction.csv` 記錄重建結果：`DataStatus`、`LogicalSize`、`RecoveredBytes`、`OriginalPath`、`OutputPath`。來源包含 `EntryNum`、`SN`、`ParentEntryNum`、`ParentSN`、`Source`、`FromSlack`、`Offset`，另記錄推測磁碟機、刪除狀態與目錄類型。未完成清單以 .partial.csv 結尾，成功後才使用最終檔名。
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+無法讀取或損壞的選用 I30 輸入會記錄為 `i30_input_error`，有效的 MFT 結果仍予保留。
+
+具有非空還原常駐內容的檔案，會在寫入前加上 `.dontrun`。清單保留原始名稱；空白預留檔維持原名。絕不可執行還原內容。不還原重新解析點、ACL、原始時間或執行權限。具名資料流需另外擷取。
+
+重建可能建立數十萬個檔案，即使空白預留檔也會使用 inode 與目錄中繼資料。僅在需要目錄樹時啟用：
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+覆寫只取代清單完整且沒有缺漏、額外物件或連結的樹。既有部分樹與 `.DS_Store` 等新增檔案會保留。Auto-parse 只跳過重建，在日誌與兩種清單記錄目錄和原因，MFT 與其他解析繼續執行。寫入失敗另行回報並讓整體退出狀態失敗，但保留解析結果。單獨的重建命令仍拒絕被阻擋的目的地。
+
 
 ## 輸出配置 { #output-layout }
 
@@ -557,6 +590,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

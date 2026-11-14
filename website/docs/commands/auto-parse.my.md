@@ -191,11 +191,44 @@ Hunter သည် အလိုအလျောက် parser process တစ်ခ�
 
 CSV `$MFT` output တွင် timestamp အားလုံးနှင့် short name များ ပါဝင်ပါသည်။ Registry output တွင် raw ဒေတာနှင့်
 `REG_QWORD` value များ၏ FILETIME အဓိပ္ပာယ်ဖော်ချက် ပါဝင်ပါသည်။ JSON နှင့် JSONL SRUM output တွင် value-state
-metadata ပါဝင်ပါသည်။ Defender ဖိုင်များနှင့် resident `$MFT` stream များကို အလိုအလျောက် **မထုတ်ယူပါ**။
+metadata ပါဝင်ပါသည်။ Defender quarantine extraction ကို ကိုယ်တိုင်ဖွင့်မှသာ လုပ်သည်။
 
 `--mft-slack` ဖြင့် `$MFT` output တွင် FILE record များ၏ slack ၌ ကျန်ရှိနေသော file name များကိုလည်း [`parse-ntfs mft -x`](../artifacts/mft.md) ရေးသည့်အတိုင်း ထည့်သွင်းပါသည်- CSV တွင် `FromSlack` အမှတ်အသားပါ row များ၊ JSON နှင့် JSONL တွင် `SlackFileNames` ဖြစ်ပါသည်။ `--code-page` ကို LNK ဖိုင်များ၊ Jump List များ၊ ShellBags နှင့် OpenSaveMRU တို့တွင် အသုံးပြုပါသည်။
 
 စုဆောင်းမထားသော artifact သည် ပုံမှန် `skipped` task ဖြစ်ပြီး မအောင်မြင်မှု မဟုတ်ပါ။
+
+
+## ဖိုင်စနစ် ပြန်လည်တည်ဆောက်ခြင်း { #filesystem-reconstruction }
+
+ဖိုင်စနစ်ပြန်တည်ဆောက်မှုကို **မူလအတိုင်း ပိတ်ထားသည်**။ စုဆောင်းထားသော MFT တစ်ခုစီအတွက် ကြည့်ရှုနိုင်သည့် ဖိုင်တွဲပင်ကို ထည့်ရန် `-R, --reconstruct-filesystem` ကို ဖွင့်ပါ။ CSV၊ JSON နှင့် JSONL ရှိ မူလဇယားအမည်နှင့် အကြောင်းအရာများ မပြောင်းလဲပါ။
+
+ပင်ကို ဘေးချင်းကပ် ကိုယ်ပိုင် workspace တွင်တည်ဆောက်ပြီး ပြည့်စုံမှသာ ဖော်ပြသည်။ ထိန်းချုပ်နိုင်သော error နှင့် interruption တွင် workspace ကိုရှင်းပြီး ယခင်ပင်ကိုထိန်းထားသည်။ Force stop ကြောင့် `.juntei-reconstruction-*` ဖိုင်တွဲကျန်နိုင်သော်လည်း retry ကိုမပိတ်ဘဲ active volume မဖြစ်စေပါ။
+
+စုဆောင်းသည့်လမ်းကြောင်းမှ drive ကို ခန့်မှန်းပြီး `FileSystem/C` ကဲ့သို့ ဖိုင်တွဲကို သုံးသည်။ MFT တွင် drive အက္ခရာ မပါပါ။ မသိလျှင် `UnknownVolume` ကိုသုံးပြီး MFT အများအပြားကို `C-MFT-2` ကဲ့သို့ ခွဲထားသည်။
+
+နေရာမသတ်မှတ်ထားသော ဖိုင်နှင့်ဖိုင်တွဲများ၊ ဖျက်ပြီးမိဘဖိုင်တွဲများတွင် `-deleted` ထည့်သည်။ ကျန်ရှိသော အမည်မဲ့ resident DATA ကို ပြန်ရယူသည်။ non-resident သို့မဟုတ် မရနိုင်သောအကြောင်းအရာကို ဖိုင်အလွတ်အဖြစ် ဖန်တီးသည်။ logical size သည် ပြန်ရသော byte အရေအတွက် မဟုတ်ပါ။
+
+`-i30` သည် ဖျက်ခဲ့ကြောင်း မသေချာသော အပို index အမည်ဖြစ်သည်။ MFT resident index နှင့် တူညီသော volume မှ စုဆောင်းထားသည့် I30 ကိုသုံးသည်။ Slack တွင် အမည်ပြောင်းခြင်းနှင့် index ပြန်စီခြင်း မိတ္တူများလည်း ပါနိုင်သည်။ အခြားဖိုင်မျိုးဆက်မှ အကြောင်းအရာကို မယူပါ။
+
+`_Juntei-Unresolved` တွင် မိဘပျောက်၊ ပြန်သုံးထား၊ စက်ဝိုင်းဖြစ် သို့မဟုတ် နက်လွန်းသော လမ်းကြောင်းများရှိသည်။ မလုံခြုံသောအမည်ကို escape လုပ်ပြီး တိုက်ဆိုင်သောအမည်များကို ခွဲထားကာ မူရင်းအမည်ကို စာရင်းတွင် ထိန်းထားသည်။ အမည်ရှည်ရှိပါက DOS alias ကိုချန်ပြီး hard link ကို သီးခြားမိတ္တူအဖြစ် ဖန်တီးသည်။
+
+`_Juntei-Reconstruction.csv` တွင် ပြန်တည်ဆောက်မှုကို မှတ်တမ်းတင်သည်: `DataStatus`၊ `LogicalSize`၊ `RecoveredBytes`၊ `OriginalPath`၊ `OutputPath`။ ရင်းမြစ်အချက်အလက်များမှာ `EntryNum`၊ `SN`၊ `ParentEntryNum`၊ `ParentSN`၊ `Source`၊ `FromSlack`၊ `Offset` ဖြစ်သည်။ drive ခန့်မှန်းချက်၊ ဖျက်မှုနှင့် ဖိုင်တွဲအမျိုးအစားကိုလည်း မှတ်တမ်းတင်သည်။ မပြည့်စုံသောစာရင်းသည် .partial.csv ဖြင့်ဆုံးပြီး အောင်မြင်မှသာ နောက်ဆုံးအမည်သုံးသည်။
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+ဖတ်မရသော သို့မဟုတ် ပျက်စီးသော optional I30 ကို `i30_input_error` အဖြစ် မှတ်တမ်းတင်ပြီး မှန်ကန်သော MFT ရလဒ်ကို ဆက်ထိန်းထားသည်။
+
+ပြန်ရသော resident content သုညမဟုတ်သည့်ဖိုင်ကို byte မရေးမီ `.dontrun` ထည့်သည်။ မူရင်းအမည်သည်စာရင်းတွင်ကျန်ပြီး ဖိုင်အလွတ်သည် မူရင်းအမည်သုံးသည်။ Content ကိုမလုပ်ဆောင်ပါနှင့်။ Reparse point၊ ACL၊ မူရင်းအချိန်နှင့် execute permission မပြန်ထားပါ။ အမည်ပါ stream ကို သီးခြားထုတ်ပါ။
+
+ပြန်တည်ဆောက်မှုသည် ဖိုင်သိန်းနှင့်ချီ ဖန်တီးနိုင်ပြီး ဖိုင်အလွတ်များလည်း inode နှင့် ဖိုင်တွဲ metadata ကိုသုံးသည်။ ဖိုင်တွဲပင် လိုအပ်မှသာ ဖွင့်ပါ:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+ပြည့်စုံသောစာရင်းနှင့်ကိုက်ပြီး ပျောက်နေသော၊ အပိုအရာ သို့မဟုတ် link မရှိသည့်ပင်ကိုသာ clobber ပြုလုပ်သည်။ Partial tree နှင့် `.DS_Store` ကဲ့သို့အပိုဖိုင်ကိုထိန်းထားသည်။ Auto-parse သည် reconstruction ကိုသာကျော်ပြီး ဖိုင်တွဲနှင့်အကြောင်းကို log နှင့် manifest နှစ်ခုတွင်မှတ်ကာ အခြား parser များဆက်လုပ်သည်။ Write failure ကို သီးခြားပြပြီး စုစုပေါင်း failure status ပေးသော်လည်း parsing result ကိုထိန်းထားသည်။ Standalone command က ပိတ်ထားသည့် output ကိုငြင်းသည်။
+
 
 ## Output layout { #output-layout }
 
@@ -559,6 +592,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

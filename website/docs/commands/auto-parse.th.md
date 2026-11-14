@@ -192,11 +192,44 @@ hunter ใช้ worker หนึ่งตัวภายในโพรเซ�
 
 เอาต์พุต `$MFT` แบบ CSV มี timestamp และชื่อสั้นทั้งหมด เอาต์พุตรีจิสทรีมีข้อมูลดิบและ
 การตีความค่า `REG_QWORD` เป็น FILETIME เอาต์พุต SRUM แบบ JSON และ JSONL มีเมทาดาทา
-สถานะของค่า ไฟล์ของ Defender และสตรีม resident ของ `$MFT` **จะไม่ถูกแยกออกมา** โดยอัตโนมัติ
+สถานะของค่า การดึงไฟล์จาก Defender quarantine ยังคงต้องเปิดใช้เอง
 
 เมื่อใช้ `--mft-slack` เอาต์พุต `$MFT` จะรวมชื่อไฟล์ที่หลงเหลืออยู่ใน slack ของระเบียน FILE ด้วย ในรูปแบบเดียวกับที่ [`parse-ntfs mft -x`](../artifacts/mft.md) เขียน: แถวที่ทำเครื่องหมาย `FromSlack` ใน CSV และ `SlackFileNames` ใน JSON และ JSONL ส่วน `--code-page` ใช้กับไฟล์ LNK, Jump List, ShellBags และ OpenSaveMRU
 
 อาร์ติแฟกต์ที่ไม่ได้ถูกเก็บรวบรวมจะเป็นงานที่ `skipped` ตามปกติ ไม่ใช่ความล้มเหลว
+
+
+## การสร้างระบบไฟล์ขึ้นใหม่ { #filesystem-reconstruction }
+
+การสร้างระบบไฟล์ขึ้นใหม่ **ปิดไว้โดยค่าเริ่มต้น** ใช้ `-R, --reconstruct-filesystem` เพื่อเพิ่มต้นไม้โฟลเดอร์ที่เปิดดูได้สำหรับ MFT แต่ละไฟล์ที่เก็บมา ชื่อและเนื้อหาของตารางเดิมไม่เปลี่ยนในโหมด CSV, JSON และ JSONL
+
+สร้างต้นไม้ในพื้นที่ส่วนตัวข้างปลายทางและเผยแพร่เมื่อเสร็จเท่านั้น ข้อผิดพลาดหรือการขัดจังหวะที่จัดการได้จะล้างพื้นที่และเก็บต้นไม้เดิม การบังคับปิดอาจเหลือโฟลเดอร์ `.juntei-reconstruction-*` แต่ไม่ขวางการลองใหม่หรือกลายเป็นโวลุ่มปัจจุบัน
+
+อักษรไดรฟ์ที่อนุมานจากพาธที่เก็บจะใช้โฟลเดอร์ เช่น `FileSystem/C` ตัว MFT ไม่เก็บอักษรไดรฟ์ หากระบุไม่ได้ใช้ `UnknownVolume` และแยก MFT หลายไฟล์ เช่น `C-MFT-2`
+
+ไฟล์และโฟลเดอร์ที่ไม่ได้จัดสรรจะต่อท้ายด้วย `-deleted` รวมถึงโฟลเดอร์แม่ที่ลบแล้วในพาธลูก กู้ DATA แบบ resident ไม่มีชื่อที่ยังเหลืออยู่ ส่วน non-resident หรือเนื้อหาที่อ่านไม่ได้สร้างเป็นไฟล์ว่าง ขนาดเชิงตรรกะไม่ใช่จำนวนไบต์ที่กู้ได้
+
+`-i30` ระบุชื่อดัชนีเพิ่มเติมที่ยังยืนยันการลบไม่ได้ ใช้ดัชนี resident ใน MFT และ I30 ที่เก็บจากโวลุ่มเดียวกัน Slack อาจเหลือชื่อก่อนเปลี่ยนหรือสำเนาจากการปรับสมดุล ไม่ดึงเนื้อหาจากไฟล์คนละรุ่น
+
+`_Juntei-Unresolved` เก็บพาธที่แม่หาย ถูกใช้ซ้ำ วนเป็นวง หรืออยู่ลึกเกินไป ชื่อไม่ปลอดภัยจะ escape และเก็บชื่อชนกันแยกกัน ชื่อเดิมยังอยู่ในรายการ ละชื่อ DOS เมื่อมีชื่อยาว และสร้าง hard link เป็นสำเนาอิสระ
+
+`_Juntei-Reconstruction.csv` บันทึกการสร้างใหม่: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath` แหล่งที่มา: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset` รวมไดรฟ์ที่อนุมาน สถานะลบ และชนิดโฟลเดอร์ รายการที่ยังไม่เสร็จลงท้าย .partial.csv และใช้ชื่อสุดท้ายเมื่อสำเร็จ
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+อินพุต I30 เสริมที่อ่านไม่ได้หรือเสียหายจะบันทึกเป็น `i30_input_error` โดยยังเก็บผล MFT ที่ถูกต้องไว้
+
+ไฟล์ที่มีเนื้อหา resident ที่กู้ได้และไม่ว่างจะเติม `.dontrun` ก่อนเขียนไบต์ ชื่อเดิมอยู่ในรายการ ส่วนไฟล์ว่างคงชื่อเดิม ห้ามรันเนื้อหาที่กู้ได้ ไม่คืนค่า reparse point, ACL, เวลาเดิม หรือสิทธิ์รัน สตรีมที่มีชื่อต้องแยกออกต่างหาก
+
+การสร้างใหม่อาจเพิ่มไฟล์หลายแสนไฟล์ แม้ไฟล์ว่างก็ใช้ inode และเมทาดาทาโฟลเดอร์ เปิดใช้เฉพาะเมื่อต้องการต้นไม้โฟลเดอร์:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+การเขียนทับจะแทนที่เฉพาะต้นไม้ที่มีรายการครบและไม่มีสิ่งที่หาย เพิ่ม หรือลิงก์ เก็บต้นไม้บางส่วนและไฟล์เพิ่ม เช่น `.DS_Store` ไว้ Auto-parse ข้ามเฉพาะการสร้างใหม่ บันทึกโฟลเดอร์และเหตุผลใน log กับ manifest ทั้งสองและทำ parser อื่นต่อ ข้อผิดพลาดเขียนรายงานแยกและคืนสถานะล้มเหลวโดยเก็บผลที่แยกไว้ คำสั่งเดี่ยวยังปฏิเสธปลายทางที่ถูกขวาง
+
 
 ## โครงสร้างเอาต์พุต { #output-layout }
 
@@ -562,6 +595,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

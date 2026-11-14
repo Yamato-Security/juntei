@@ -191,11 +191,44 @@ ne multiplie son budget de processus par un autre pool dimensionné selon le nom
 
 La sortie CSV de `$MFT` inclut tous les horodatages et les noms courts. La sortie du Registre inclut les données brutes et une
 interprétation FILETIME des valeurs `REG_QWORD`. La sortie SRUM JSON et JSONL inclut les métadonnées d'état
-des valeurs. Les fichiers Defender et les flux résidents de `$MFT` ne sont **pas extraits** automatiquement.
+des valeurs. L’extraction de la quarantaine Defender reste facultative.
 
 Avec `--mft-slack`, la sortie de `$MFT` inclut aussi les noms de fichiers restés dans le slack des enregistrements FILE, comme les écrit [`parse-ntfs mft -x`](../artifacts/mft.md) : des lignes marquées `FromSlack` en CSV, et `SlackFileNames` en JSON et JSONL. `--code-page` s'applique aux fichiers LNK, aux Jump Lists, aux ShellBags et à OpenSaveMRU.
 
 Un artefact qui n'a pas été collecté constitue une tâche `skipped` normale, et non un échec.
+
+
+## Reconstruction du système de fichiers { #filesystem-reconstruction }
+
+La reconstruction du système de fichiers est **désactivée par défaut**. Activez `-R, --reconstruct-filesystem` pour ajouter une arborescence consultable pour chaque MFT collectée. Les noms et contenus des tables existantes restent inchangés en CSV, JSON et JSONL.
+
+Les arbres sont construits dans un espace privé voisin et publiés uniquement une fois complets. Les erreurs et interruptions traitées nettoient cet espace et préservent l’ancien arbre. Un arrêt forcé peut laisser des dossiers `.juntei-reconstruction-*` ; ils ne bloquent pas une nouvelle tentative et ne deviennent pas le volume actif.
+
+Le lecteur déduit du chemin de collecte donne par exemple `FileSystem/C`. La MFT ne stocke pas de lettre de lecteur. Sans indication reconnue, `UnknownVolume` est utilisé ; plusieurs MFT restent séparées, par exemple `C-MFT-2`.
+
+Les fichiers et dossiers non alloués reçoivent `-deleted`, y compris les parents supprimés dans les chemins descendants. Les DATA résidentes sans nom sont récupérées si elles subsistent. Les contenus non résidents ou indisponibles deviennent des fichiers vides ; taille logique et octets récupérés sont distincts.
+
+`-i30` marque les noms supplémentaires d’index sans suppression confirmée. Les index résidents de la MFT et les fichiers I30 collectés sur le même volume sont exploités. Le slack peut aussi conserver des renommages ou copies de rééquilibrage. Aucun contenu d’une autre génération n’est réutilisé.
+
+`_Juntei-Unresolved` contient les chemins aux parents absents, réutilisés, cycliques ou trop profonds. Les noms dangereux sont échappés et les collisions gardent des fichiers distincts. Les noms originaux restent dans l’inventaire. Les alias DOS sont omis si un nom long subsiste ; les liens physiques deviennent des copies indépendantes.
+
+`_Juntei-Reconstruction.csv` décrit la reconstruction : `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Provenance : `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Le lecteur déduit, la suppression et le type dossier sont également enregistrés. L’inventaire partiel finit par .partial.csv ; le nom final n’apparaît qu’après réussite.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+Les entrées I30 facultatives illisibles ou endommagées sont signalées par `i30_input_error` ; les résultats MFT valides sont conservés.
+
+Les fichiers au contenu résident récupéré non vide reçoivent `.dontrun` avant toute écriture. Les noms originaux restent dans l’inventaire ; les fichiers vides conservent leur nom. Ne jamais exécuter le contenu récupéré. Aucun point de réanalyse, ACL, horodatage original ou droit d’exécution n’est restauré. Extraire séparément les flux nommés.
+
+La reconstruction peut créer des centaines de milliers de fichiers ; même vides, ils occupent des inodes et des métadonnées de répertoire. Activez-la uniquement si vous avez besoin de cette arborescence :
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+L’écrasement remplace uniquement les arbres complets inventoriés sans objet manquant, inconnu ou lien. Les arbres partiels et ajouts comme `.DS_Store` sont conservés. Auto-parse ignore seulement la reconstruction et note le dossier et le motif dans le journal et les deux manifestes ; les autres analyses continuent. Les échecs d’écriture sont signalés séparément avec un statut global d’échec tout en conservant les résultats. La commande individuelle refuse toujours les destinations bloquées.
+
 
 ## Organisation de la sortie { #output-layout }
 
@@ -560,6 +593,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

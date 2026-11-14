@@ -738,6 +738,10 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Output"), short = 'x', long, display_order = 204)]
     pub extract_defender_quarantined: bool,
 
+    /// Reconstruct filesystem trees from MFT and I30
+    #[arg(help_heading = Some("Output"), short = 'R', long, display_order = 205)]
+    pub reconstruct_filesystem: bool,
+
     /// Parser processes to run at once (default: logical CPU count)
     #[arg(help_heading = Some("Performance"), short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 300)]
     pub threads: Option<usize>,
@@ -985,6 +989,17 @@ pub struct MftOptions {
     /// Write the resident $DATA streams (the content of small files and alternate data streams) to files in DIR
     #[arg(help_heading = Some("Output"), short = 'e', long = "extract-resident-streams", value_name = "DIR", display_order = 302)]
     pub extract: Option<PathBuf>,
+
+    /// Recreate a filesystem tree (recovered content gets .dontrun; non-resident files are empty)
+    #[arg(help_heading = Some("Output"), short = 'R', long, value_name = "DIR", requires = "filepath", conflicts_with_all = ["ranges", "dump_entry", "list_directory", "cutoff"], display_order = 304)]
+    pub reconstruct_filesystem: Option<PathBuf>,
+
+    #[arg(long, hide = true, requires = "reconstruct_filesystem")]
+    pub(crate) reconstruction_optional: bool,
+
+    /// Supplement --reconstruct-filesystem with a directory index from the same volume (repeatable)
+    #[arg(help_heading = Some("Input"), long, value_name = "FILE", requires = "reconstruct_filesystem", display_order = 102)]
+    pub reconstruction_i30: Vec<PathBuf>,
 
     /// Overwrite files when saving
     #[arg(help_heading = Some("Output"), short = 'C', long, display_order = 303)]
@@ -3731,6 +3746,25 @@ mod tests {
         assert_eq!(options.threads, None);
         assert_eq!(options.json_timeline, None);
         assert!(!options.extract_defender_quarantined);
+        assert!(!options.reconstruct_filesystem);
+        for flag in ["-R", "--reconstruct-filesystem"] {
+            assert!(
+                parse(&["-d", "evidence", "-o", "results", flag])
+                    .unwrap()
+                    .reconstruct_filesystem
+            );
+            assert!(parse(&["-d", "evidence", "-o", "results", flag, "tree"]).is_err());
+        }
+        assert!(
+            parse(&[
+                "-d",
+                "evidence",
+                "-o",
+                "results",
+                "--no-reconstruct-filesystem"
+            ])
+            .is_err()
+        );
 
         let options = parse(&[
             "-d",
@@ -3833,6 +3867,16 @@ mod tests {
         let o = parse(&["-f", "MFT"]);
         assert_eq!(o.output_type(), MftOutputType::Csv);
         assert!(!o.data_on_stdout());
+        assert!(o.reconstruct_filesystem.is_none());
+        for flag in ["-R", "--reconstruct-filesystem"] {
+            assert_eq!(
+                parse(&["-f", "MFT", flag, "reconstructed"]).reconstruct_filesystem,
+                Some(PathBuf::from("reconstructed"))
+            );
+            assert!(
+                Cli::try_parse_from(["juntei", "parse-ntfs", "mft", "-f", "MFT", flag]).is_err()
+            );
+        }
         assert!(parse(&["-f", "MFT", "-t", "jsonl"]).data_on_stdout());
         assert!(!parse(&["-f", "MFT", "-o", "x.json", "-t", "json"]).data_on_stdout());
         assert_eq!(parse(&["-f", "MFT", "-r", "0-3"]).ranges.unwrap().len(), 4);

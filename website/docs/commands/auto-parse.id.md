@@ -191,11 +191,44 @@ yang dijalankan secara mandiri mengendalikan thread worker milik hunter itu send
 
 Keluaran CSV `$MFT` menyertakan semua timestamp dan nama pendek. Keluaran registry menyertakan data mentah dan
 interpretasi FILETIME untuk nilai `REG_QWORD`. Keluaran SRUM JSON dan JSONL menyertakan metadata
-value-state. Berkas Defender dan stream `$MFT` residen **tidak diekstrak** secara otomatis.
+value-state. Ekstraksi karantina Defender tetap opsional.
 
 Dengan `--mft-slack`, keluaran `$MFT` juga menyertakan nama berkas yang tersisa di slack record FILE, sama seperti yang ditulis oleh [`parse-ntfs mft -x`](../artifacts/mft.md): baris bertanda `FromSlack` dalam CSV, dan `SlackFileNames` dalam JSON dan JSONL. `--code-page` berlaku untuk berkas LNK, Jump List, ShellBags, dan OpenSaveMRU.
 
 Artefak yang tidak dikumpulkan merupakan tugas `skipped` yang normal, bukan kegagalan.
+
+
+## Rekonstruksi sistem berkas { #filesystem-reconstruction }
+
+Rekonstruksi sistem berkas **dinonaktifkan secara default**. Aktifkan `-R, --reconstruct-filesystem` untuk menambahkan pohon yang dapat ditelusuri bagi setiap MFT yang dikumpulkan. Nama dan isi tabel tetap sama dalam mode CSV, JSON, dan JSONL.
+
+Pohon dibuat di ruang privat di sebelah tujuan dan diterbitkan hanya setelah lengkap. Kesalahan dan interupsi tertangani membersihkannya serta menjaga pohon lama. Penghentian paksa dapat meninggalkan direktori `.juntei-reconstruction-*`; direktori itu tidak menghalangi percobaan ulang atau menjadi volume aktif.
+
+Huruf drive dari jalur pengumpulan menghasilkan direktori seperti `FileSystem/C`. MFT sendiri tidak menyimpan huruf drive. Tanpa label yang dikenali digunakan `UnknownVolume`; beberapa MFT tetap terpisah, misalnya `C-MFT-2`.
+
+Berkas dan direktori yang tidak dialokasikan mendapat `-deleted`, termasuk induk terhapus pada jalur turunannya. DATA residen tanpa nama dipulihkan jika masih ada. Konten nonresiden atau tidak tersedia menjadi berkas kosong; ukuran logis bukan jumlah byte yang dipulihkan.
+
+`-i30` menandai nama indeks tambahan tanpa penghapusan terkonfirmasi. Indeks residen MFT dan I30 yang dikumpulkan dari volume sama digunakan. Slack juga dapat menyimpan pergantian nama atau salinan penyeimbangan. Konten generasi lain tidak digunakan.
+
+`_Juntei-Unresolved` berisi jalur dengan induk hilang, digunakan ulang, bersiklus atau terlalu dalam. Nama tidak aman di-escape dan benturan disimpan terpisah; nama asli tetap dicatat. Alias DOS diabaikan jika nama panjang ada; hard link menjadi salinan mandiri.
+
+`_Juntei-Reconstruction.csv` mencatat rekonstruksi: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Asal data: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Drive perkiraan, penghapusan dan jenis direktori juga dicatat. Inventaris parsial berakhiran .partial.csv; nama akhir hanya terbit setelah berhasil.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+Masukan I30 opsional yang tidak terbaca atau rusak dicatat sebagai `i30_input_error` tanpa membuang hasil MFT yang valid.
+
+Berkas dengan isi residen pulihan yang tidak kosong diberi `.dontrun` sebelum byte ditulis. Nama asli tetap di inventaris; berkas kosong mempertahankan namanya. Jangan jalankan isi pulihan. Reparse point, ACL, waktu asli dan izin eksekusi tidak dipulihkan. Ekstrak stream bernama secara terpisah.
+
+Rekonstruksi dapat membuat ratusan ribu berkas; berkas kosong pun memakai inode dan metadata direktori. Aktifkan hanya jika Anda memerlukan pohon tersebut:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+Penimpaan hanya mengganti pohon lengkap yang sesuai inventaris tanpa objek hilang, tambahan atau link. Pohon parsial dan tambahan seperti `.DS_Store` dipertahankan. Auto-parse hanya melewati rekonstruksi, mencatat direktori dan alasan di log serta kedua manifest, dan meneruskan parser lain. Kegagalan tulis dilaporkan terpisah dengan status keseluruhan gagal tetapi hasil parsing tetap disimpan. Perintah mandiri tetap menolak tujuan terblokir.
+
 
 ## Tata letak keluaran { #output-layout }
 
@@ -560,6 +593,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

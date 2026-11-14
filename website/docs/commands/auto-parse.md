@@ -214,7 +214,7 @@ from multiplying its process budget by another CPU-sized pool in every child. St
 
 CSV `$MFT` output includes all timestamps and short names. Registry output includes raw data and a
 FILETIME interpretation of `REG_QWORD` values. JSON and JSONL SRUM output includes value-state
-metadata. Defender files and resident `$MFT` streams are **not extracted** automatically.
+metadata. Defender quarantine extraction remains opt-in.
 
 With `--mft-slack`, the `$MFT` output also includes the file names left in the slack of FILE
 records, as [`parse-ntfs mft -x`](../artifacts/mft.md) writes them: rows marked `FromSlack` in
@@ -222,6 +222,39 @@ CSV, and `SlackFileNames` in JSON and JSONL. `--code-page` applies to LNK files,
 ShellBags and OpenSaveMRU.
 
 An artifact that was not collected is a normal `skipped` task, not a failure.
+
+
+## Filesystem reconstruction
+
+Filesystem reconstruction is **disabled by default**. Enable `-R, --reconstruct-filesystem` to add a browsable tree for each collected MFT. Existing parsed tables keep their names and contents in CSV, JSON and JSONL modes.
+
+Trees are built in a private sibling workspace and published only when complete. Handled errors and interruptions remove that workspace and preserve any prior tree. Forced termination or power loss can leave `.juntei-reconstruction-*` workspaces, but these do not block a retry or become the active volume tree.
+
+A drive inferred from the collection path is used as the volume directory, for example `FileSystem/C`. An MFT does not store its drive letter. Without a recognizable drive label, the directory is `UnknownVolume`; multiple MFT inputs with the same inferred letter remain separate, for example `C-MFT-2`.
+
+Files and directories whose MFT records are unallocated gain `-deleted`. A deleted parent directory gets the same suffix in its descendants' paths. Surviving resident unnamed DATA bytes are recovered; non-resident or unavailable content becomes a zero-byte placeholder. The recorded logical size is not the size of recovered content.
+
+`-i30` marks additional directory-index names whose deletion is unconfirmed. Both resident MFT directory indexes and separately collected I30 files from the same volume are used. Index slack can preserve renames and rebalancing copies, not just deletions. Historical names never borrow content from a reused MFT record or a different name.
+
+`_Juntei-Unresolved` contains paths whose parent references are missing, reused, cyclic or too deep for safe reconstruction. Names unsafe on the destination filesystem are escaped; collisions retain separate files. The inventory preserves original names. DOS-only aliases are omitted when a long name survives; file hard links become independent copies, not host hard links.
+
+`_Juntei-Reconstruction.csv` inventories the reconstruction. Content and path status are explicit: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath` and `OutputPath`. Provenance includes `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack` and `Offset`. Additional fields distinguish the inferred drive, source, deletion state and directory entries. A partial inventory has a .partial.csv suffix; the final name is published only after a successful reconstruction.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+Unreadable or damaged optional I30 inputs are recorded as `i30_input_error` without discarding valid MFT results.
+
+Files with recovered non-empty resident content receive `.dontrun` before any content is written. Original names remain in the inventory; empty placeholders retain their names. Never execute recovered content. Reparse points, ACLs, original timestamps and executable permissions are not restored. Named alternate streams require the separate MFT resident-stream extraction option.
+
+Reconstruction can create hundreds of thousands of files and consume inodes and directory metadata even when placeholders are empty. Enable it only when you need the tree:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+Clobber replaces only a complete inventoried tree without missing or untracked objects or links. Existing partial trees or extra files such as `.DS_Store` are preserved. In auto-parse, only reconstruction is skipped, with its directory and reason recorded in the parser log and both manifests; MFT tables and other parsers continue. Reconstruction write failures are reported separately and return an unsuccessful overall status while retaining parsed results. Standalone reconstruction still refuses blocked destinations.
+
 
 ## Output layout
 
@@ -586,6 +619,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

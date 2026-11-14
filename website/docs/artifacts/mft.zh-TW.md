@@ -56,6 +56,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -92,6 +94,12 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 `-t json -x` 寫出的形式），接著是記錄的位元組。`-L` 會列出目錄中的每個名稱（使用中與已刪除），
 並附上其項目與序號、類型、大小與修改時間。目錄可以依項目指定（`30`、`0x1E`、`30-1`），
 也可以依路徑指定（`\Windows\System32`、`C:/Windows`；不區分大小寫）。
+
+下例重建可瀏覽的檔案路徑。非常駐內容會建立為空白預留檔。詳見： [重建檔案系統](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
+```
 
 ## CSV 輸出欄位 { #csv-output-fields }
 

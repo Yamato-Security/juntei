@@ -190,11 +190,44 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 
 يتضمن إخراج `$MFT` بصيغة CSV كل الطوابع الزمنية والأسماء المختصرة. ويتضمن إخراج سجل Windows البيانات الخام و
 تفسيرًا بصيغة FILETIME لقيم `REG_QWORD`. ويتضمن إخراج SRUM بصيغتي JSON وJSONL البيانات الوصفية
-لحالة القيم. ولا **تُستخرج** ملفات Defender ودفقات `$MFT` المقيمة تلقائيًا.
+لحالة القيم. يظل استخراج حجر Defender اختياريًا.
 
 مع `--mft-slack`، يتضمن إخراج `$MFT` أيضًا أسماء الملفات المتبقية في المساحة الراكدة (slack) لسجلات FILE، كما يكتبها [`parse-ntfs mft -x`](../artifacts/mft.md): صفوف معلَّمة بـ `FromSlack` في CSV، و`SlackFileNames` في JSON وJSONL. ويُطبَّق `--code-page` على ملفات LNK وJump Lists وShellBags وOpenSaveMRU.
 
 الأثر الرقمي الذي لم يُجمع هو مهمة `skipped` عادية، وليس فشلًا.
+
+
+## إعادة بناء نظام الملفات { #filesystem-reconstruction }
+
+إعادة بناء نظام الملفات **معطّلة افتراضيًا**. فعّل `-R, --reconstruct-filesystem` لإضافة شجرة قابلة للتصفح لكل MFT مجمعة. تبقى أسماء الجداول الحالية ومحتوياتها دون تغيير في أوضاع CSV وJSON وJSONL.
+
+تُبنى الأشجار في مساحة خاصة مجاورة ولا تُنشر إلا مكتملة. تنظف الأخطاء والمقاطعات المعالجة المساحة وتحفظ الشجرة السابقة. قد يترك الإنهاء القسري مجلدات `.juntei-reconstruction-*`، لكنها لا تمنع إعادة المحاولة ولا تصبح وحدة التخزين النشطة.
+
+يُستخدم حرف القرص المستنتج من مسار الجمع في مجلد مثل `FileSystem/C`. لا تخزن MFT حرف القرص. عند غياب تسمية معروفة يُستخدم `UnknownVolume` وتبقى ملفات MFT المتعددة منفصلة، مثل `C-MFT-2`.
+
+تُضاف `-deleted` للملفات والمجلدات غير المخصصة، بما فيها الآباء المحذوفون في مسارات الأبناء. تُستعاد DATA المقيمة غير المسماة المتبقية. تصبح المحتويات غير المقيمة أو غير المتاحة ملفات فارغة؛ الحجم المنطقي ليس عدد البايتات المستعادة.
+
+تشير `-i30` إلى أسماء فهرس إضافية لم يتأكد حذفها. تُستخدم فهارس MFT المقيمة وملفات I30 المجمعة من نفس وحدة التخزين. قد يحتفظ slack بإعادة تسمية أو نسخ إعادة موازنة. لا يُستعار محتوى من جيل آخر للملف.
+
+تحتوي `_Juntei-Unresolved` على المسارات ذات الآباء المفقودين أو المعاد استخدامهم أو الدورات أو العمق المفرط. تُهَرّب الأسماء غير الآمنة وتُحفظ التصادمات منفصلة مع الأسماء الأصلية في الجرد. تُهمل أسماء DOS البديلة عند بقاء الاسم الطويل؛ الروابط الصلبة تصبح نسخًا مستقلة.
+
+توثق `_Juntei-Reconstruction.csv` إعادة البناء: `DataStatus` و`LogicalSize` و`RecoveredBytes` و`OriginalPath` و`OutputPath`. حقول المصدر: `EntryNum` و`SN` و`ParentEntryNum` و`ParentSN` و`Source` و`FromSlack` و`Offset`. يُسجل القرص المستنتج وحالة الحذف ونوع المجلد أيضًا. ينتهي الجرد الجزئي بـ .partial.csv ولا يُعتمد الاسم النهائي إلا عند النجاح.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+تُسجل مدخلات I30 الاختيارية غير المقروءة أو التالفة بوصفها `i30_input_error` مع الاحتفاظ بنتائج MFT الصالحة.
+
+تأخذ الملفات ذات المحتوى المقيم المستعاد غير الفارغ `.dontrun` قبل كتابة البايتات. تبقى الأسماء الأصلية في الجرد؛ وتحافظ الملفات الفارغة على أسمائها. لا تنفذ المحتوى. لا تُستعاد نقاط إعادة التحليل أو ACL أو الأوقات الأصلية أو أذونات التنفيذ. استخرج التدفقات المسماة منفصلة.
+
+قد تنشئ إعادة البناء مئات الآلاف من الملفات؛ وتستهلك الملفات الفارغة أيضًا inode وبيانات المجلدات الوصفية. فعّلها فقط عند الحاجة إلى الشجرة:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+لا يستبدل الكتابة فوق الشجرة إلا إذا كان جردها مكتملًا دون كائنات مفقودة أو إضافية أو روابط. تُحفظ الأشجار الجزئية والإضافات مثل `.DS_Store`. يتجاوز auto-parse إعادة البناء فقط ويسجل المجلد والسبب في السجل وكلا المانيفستين وتستمر المحللات الأخرى. تُبلغ أخطاء الكتابة منفصلة مع حالة عامة فاشلة مع حفظ النتائج. يظل الأمر المستقل يرفض الوجهات المحجوبة.
+
 
 ## تخطيط الإخراج { #output-layout }
 
@@ -559,6 +592,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

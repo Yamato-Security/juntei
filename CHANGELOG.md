@@ -4,6 +4,22 @@
 
 **New Features:**
 
+- `auto-parse -R` (`--reconstruct-filesystem`) optionally reconstructs a browsable filesystem
+  below each computer's `FileSystem` directory from collected MFT records and available I30
+  directory indexes; reconstruction is disabled by default. Collection paths supply inferred
+  drive labels; unknown volumes and additional captures remain separate. Deleted MFT names gain
+  `-deleted`; unconfirmed index names gain `-i30`. Valid resident unnamed data is recovered, while
+  non-resident content becomes empty placeholders. Recovered non-empty content gets `.dontrun`
+  before being written, while original names remain in the inventory. Build privately and publish
+  only complete trees, so handled failures and interruptions leave no partial active volume.
+  Blocked automatic reconstruction is recorded separately without discarding MFT tables or
+  stopping other parsers. A reconstruction inventory records provenance,
+  original paths, logical sizes and recovery status. Guard source paths, unsafe names, sequence
+  reuse and output collisions; clobber replaces only complete inventoried trees without unrelated
+  files or links. Standalone parsing supports `parse-ntfs mft -R <DIR>`
+  (`--reconstruct-filesystem <DIR>`). (#173) (@YamatoSecurity)
+
+
 - `parse-file recycle-bin` parses Recycle Bin deletion metadata: the `$I` files of Windows Vista
   and later (format versions 1 and 2) and the `INFO2` files of Windows 95 to Server 2003. Each
   deleted item has its deletion time, original path, size, the user named by the bin's SID, and

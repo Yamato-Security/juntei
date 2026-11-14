@@ -44,6 +44,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -76,6 +78,12 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 `-e` で抽出された常駐ストリームを決して実行しないでください。 Juntei が `.dontrun` という名前を付けているのには理由があります。 `-i` の常駐データ列は同じバイトであるため、信頼できないコンテンツとして扱います。
 
 `-D` は 1 つのエントリを出力します。ヘッダー、すべての属性 (データ実行を含む)、および `-t json -x` が書き込む際のスラック内の名前、そしてレコードのバイトです。 `-L` は、ディレクトリ内の使用中および削除されたすべての名前を、そのエントリとシーケンス番号、タイプ、サイズ、および変更時刻とともにリストします。ディレクトリは、エントリ (`30`、`0x1E`、`30-1`) またはパス (`\Windows\System32`、`C:/Windows`、大文字と小文字は区別されません) によって指定されます。
+
+閲覧できるファイルパスを再構成するには、次の例を使います。非レジデントの内容は空のプレースホルダーになります。詳細と制限については、[ファイルシステムの再構成](../commands/auto-parse.md#filesystem-reconstruction) を参照してください。
+
+```bash
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
+```
 
 ## CSV 出力フィールド { #csv-output-fields }
 

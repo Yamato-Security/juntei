@@ -60,6 +60,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -96,6 +98,12 @@ The resident data columns of `-i` are the same bytes: treat them as untrusted co
 `-t json -x` writes them, then the record's bytes. `-L` lists every name in a directory, in use and
 deleted, with its entry and sequence number, type, size and modified time. A directory is given by
 entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case-insensitive).
+
+To reconstruct browsable file paths, use the example below. Non-resident content becomes empty placeholders. See [Filesystem reconstruction](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
+```
 
 ## CSV output fields
 

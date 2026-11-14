@@ -60,6 +60,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -96,6 +98,12 @@ Die Spalten für residente Daten von `-i` enthalten dieselben Bytes: Behandeln S
 `-t json -x` sie schreibt, danach die Bytes des Datensatzes. `-L` listet jeden Namen in einem Verzeichnis auf, verwendete und
 gelöschte, mit Eintrags- und Sequenznummer, Typ, Größe und Änderungszeit. Ein Verzeichnis wird über den
 Eintrag (`30`, `0x1E`, `30-1`) oder über den Pfad (`\Windows\System32`, `C:/Windows`; ohne Beachtung der Groß-/Kleinschreibung) angegeben.
+
+Das folgende Beispiel rekonstruiert Dateipfade. Nicht residente Inhalte werden leere Platzhalter. Details: [Dateisystemrekonstruktion](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
+```
 
 ## CSV-Ausgabefelder { #csv-output-fields }
 

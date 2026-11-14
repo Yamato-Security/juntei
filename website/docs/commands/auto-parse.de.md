@@ -190,11 +190,44 @@ sein Prozessbudget in jedem Kindprozess um einen weiteren Pool in Größe der CP
 
 Die CSV-Ausgabe von `$MFT` enthält alle Zeitstempel und Kurznamen. Die Registry-Ausgabe enthält Rohdaten und eine
 FILETIME-Interpretation von `REG_QWORD`-Werten. Die JSON- und JSONL-Ausgabe von SRUM enthält Metadaten zum
-Wertzustand. Defender-Dateien und residente `$MFT`-Streams werden **nicht automatisch extrahiert**.
+Wertzustand. Die Defender-Quarantäneextraktion bleibt optional.
 
 Mit `--mft-slack` enthält die `$MFT`-Ausgabe auch die Dateinamen, die im Slack von FILE-Datensätzen verblieben sind, so wie [`parse-ntfs mft -x`](../artifacts/mft.md) sie schreibt: in CSV mit `FromSlack` markierte Zeilen, in JSON und JSONL `SlackFileNames`. `--code-page` gilt für LNK-Dateien, Jump Lists, ShellBags und OpenSaveMRU.
 
 Ein nicht gesichertes Artefakt ist eine normale Aufgabe mit dem Status `skipped`, kein Fehler.
+
+
+## Dateisystemrekonstruktion { #filesystem-reconstruction }
+
+Die Dateisystemrekonstruktion ist **standardmäßig deaktiviert**. Mit `-R, --reconstruct-filesystem` wird für jede gesammelte MFT ein durchsuchbarer Verzeichnisbaum hinzugefügt. Namen und Inhalte der vorhandenen Tabellen bleiben in CSV, JSON und JSONL unverändert.
+
+Bäume entstehen in einem privaten benachbarten Arbeitsverzeichnis und werden erst vollständig veröffentlicht. Behandelte Fehler und Unterbrechungen räumen es auf und erhalten den alten Baum. Erzwungenes Beenden kann `.juntei-reconstruction-*`-Verzeichnisse zurücklassen; diese blockieren keinen neuen Versuch und werden kein aktiver Volume-Baum.
+
+Ein aus dem Sammlungspfad abgeleitetes Laufwerk erhält etwa `FileSystem/C`. Die MFT selbst speichert keinen Laufwerksbuchstaben. Ohne erkennbare Bezeichnung gilt `UnknownVolume`; mehrere MFTs desselben Laufwerks bleiben getrennt, etwa `C-MFT-2`.
+
+Nicht zugewiesene Dateien und Verzeichnisse erhalten `-deleted`, einschließlich gelöschter Elternverzeichnisse. Erhaltene residente unbenannte DATA-Inhalte werden wiederhergestellt. Nicht residente oder unbekannte Inhalte werden leere Platzhalter; logische Größe und wiederhergestellte Bytes sind verschieden.
+
+`-i30` kennzeichnet zusätzliche Indexnamen ohne bestätigte Löschung. Residente MFT-Indizes und separat gesammelte I30-Dateien desselben Volumes werden verwendet. Slack kann Umbenennungen oder Kopien enthalten. Historische Namen übernehmen keine Inhalte anderer Dateigenerationen.
+
+`_Juntei-Unresolved` enthält Einträge mit fehlenden, wiederverwendeten, zyklischen oder zu tiefen Elternpfaden. Unsichere Namen werden maskiert, Kollisionen getrennt gespeichert und Originalnamen protokolliert. DOS-Aliasse entfallen bei erhaltenem Langnamen; Hardlinks werden unabhängige Kopien.
+
+`_Juntei-Reconstruction.csv` dokumentiert die Rekonstruktion: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Die Herkunft enthalten `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Laufwerk, Löschzustand und Verzeichnistyp werden ebenfalls erfasst. Ein unvollständiges Inventar endet auf .partial.csv; der endgültige Name entsteht erst nach Erfolg.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+Unlesbare oder beschädigte optionale I30-Eingaben werden als `i30_input_error` protokolliert; gültige MFT-Ergebnisse bleiben erhalten.
+
+Dateien mit wiederhergestelltem nicht leerem residentem Inhalt erhalten vor dem Schreiben `.dontrun`. Originalnamen bleiben im Inventar; leere Platzhalter behalten ihre Namen. Inhalte niemals ausführen. Reparse Points, ACLs, Originalzeiten und Ausführungsrechte werden nicht wiederhergestellt. Benannte Streams separat extrahieren.
+
+Die Rekonstruktion kann Hunderttausende Dateien erzeugen; auch leere Platzhalter benötigen Inodes und Verzeichnismetadaten. Aktivieren Sie sie nur, wenn Sie den Baum benötigen:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+Überschreiben ersetzt nur vollständige inventarisierte Bäume ohne fehlende, unbekannte Objekte oder Links. Teilbäume und Zusatzdateien wie `.DS_Store` bleiben erhalten. Auto-parse überspringt nur die Rekonstruktion und protokolliert Verzeichnis und Grund im Log und beiden Manifesten; MFT und andere Parser laufen weiter. Schreibfehler werden separat gemeldet, führen insgesamt zu Fehlerstatus und erhalten geparste Ergebnisse. Der Einzelbefehl lehnt blockierte Ziele weiterhin ab.
+
 
 ## Ausgabestruktur { #output-layout }
 
@@ -559,6 +592,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

@@ -195,12 +195,44 @@ komutunun işlem bütçesini her alt işlemde CPU boyutunda bir başka havuzla �
 
 CSV `$MFT` çıktısı tüm zaman damgalarını ve kısa adları içerir. Kayıt defteri çıktısı ham verileri ve
 `REG_QWORD` değerlerinin FILETIME yorumunu içerir. JSON ve JSONL SRUM çıktısı değer durumu meta
-verilerini içerir. Defender dosyaları ve yerleşik (resident) `$MFT` akışları otomatik olarak
-**çıkarılmaz**.
+verilerini içerir. Defender karantina çıkarımı isteğe bağlı kalır.
 
 `--mft-slack` ile `$MFT` çıktısı, FILE kayıtlarının slack alanında kalan dosya adlarını da [`parse-ntfs mft -x`](../artifacts/mft.md) ile aynı biçimde içerir: CSV'de `FromSlack` ile işaretlenmiş satırlar, JSON ve JSONL'de `SlackFileNames`. `--code-page`, LNK dosyalarına, Jump List'lere, ShellBags ve OpenSaveMRU'ya uygulanır.
 
 Toplanmamış bir artefakt, başarısızlık değil, normal bir `skipped` görevidir.
+
+
+## Dosya sistemi yeniden oluşturma { #filesystem-reconstruction }
+
+Dosya sistemi yeniden oluşturma **varsayılan olarak kapalıdır**. Toplanan her MFT için gezilebilir bir ağaç eklemek üzere `-R, --reconstruct-filesystem` seçeneğini etkinleştirin. Mevcut tabloların adları ve içerikleri CSV, JSON ve JSONL kiplerinde değişmez.
+
+Ağaçlar komşu özel çalışma alanında oluşturulur ve yalnızca tamamlanınca yayımlanır. İşlenen hata ve kesintiler alanı temizler, eski ağacı korur. Zorla sonlandırma `.juntei-reconstruction-*` dizinleri bırakabilir; bunlar yeniden denemeyi engellemez veya etkin birim olmaz.
+
+Toplama yolundan çıkarılan sürücü `FileSystem/C` gibi bir dizin kullanır. MFT sürücü harfini saklamaz. Tanınan etiket yoksa `UnknownVolume` kullanılır; birden çok MFT ayrı kalır, örneğin `C-MFT-2`.
+
+Ayrılmamış dosya ve dizinlere, silinmiş üst dizinler dahil, `-deleted` eklenir. Kalan adsız yerleşik DATA içeriği kurtarılır. Yerleşik olmayan veya ulaşılamayan içerik boş dosya olur; mantıksal boyut kurtarılan bayt sayısı değildir.
+
+`-i30`, silindiği doğrulanmamış ek indeks adlarını gösterir. MFT yerleşik indeksleri ve aynı birimden toplanmış I30 dosyaları kullanılır. Slack, yeniden adlandırma ve dengeleme kopyaları içerebilir. Başka dosya nesillerinden içerik alınmaz.
+
+`_Juntei-Unresolved`, üst başvuruları eksik, yeniden kullanılmış, döngüsel veya çok derin yolları içerir. Güvensiz adlar kaçırılır, çakışmalar ayrı saklanır ve özgün adlar envanterde kalır. Uzun ad varsa DOS takma adları atlanır; sabit bağlantılar bağımsız kopyalara dönüşür.
+
+`_Juntei-Reconstruction.csv` yeniden oluşturmayı kaydeder: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Kaynak alanları: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Tahmini sürücü, silinme durumu ve dizin türü de kaydedilir. Kısmi envanter .partial.csv ile biter; son ad yalnızca başarıdan sonra oluşur.
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+Okunamayan veya hasarlı isteğe bağlı I30 girdileri `i30_input_error` olarak kaydedilir; geçerli MFT sonuçları korunur.
+
+Boş olmayan kurtarılmış yerleşik içerik taşıyan dosyalar yazılmadan önce `.dontrun` alır. Özgün adlar envanterde kalır; boş dosyalar adlarını korur. İçeriği çalıştırmayın. Reparse noktaları, ACL, özgün zamanlar ve yürütme izinleri geri yüklenmez. Adlandırılmış akışları ayrıca çıkarın.
+
+Yeniden oluşturma yüz binlerce dosya yaratabilir; boş dosyalar bile inode ve dizin metaverisi tüketir. Yalnızca ağaca ihtiyacınız olduğunda etkinleştirin:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+Üzerine yazma yalnızca eksik, ek nesne veya bağlantı içermeyen tam envanterli ağacı değiştirir. Kısmi ağaçlar ve `.DS_Store` gibi ekler korunur. Auto-parse yalnızca yeniden oluşturmayı atlar; dizini ve nedeni günlük ve iki manifeste kaydeder, diğer ayrıştırıcılar sürer. Yazma hataları ayrı bildirilir ve genel hata durumu döndürür; ayrıştırılmış sonuçlar korunur. Tekil komut engelli hedefleri reddetmeye devam eder.
+
 
 ## Çıktı düzeni { #output-layout }
 
@@ -572,6 +604,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

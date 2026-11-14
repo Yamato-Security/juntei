@@ -63,6 +63,8 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
+  -R, --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
+      --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
   -a, --all-times      Include every $FILE_NAME time
@@ -100,6 +102,12 @@ adları `-t json -x` çıktısının yazdığı biçimde, ardından kaydın bayt
 olan ve silinmiş her adı; girdi ve sıra numarası, türü, boyutu ve değiştirilme zamanıyla birlikte listeler.
 Dizin, girdiyle (`30`, `0x1E`, `30-1`) veya yolla (`\Windows\System32`, `C:/Windows`; büyük/küçük harf
 duyarsız) verilir.
+
+Örnek, gezilebilir dosya yollarını yeniden oluşturur. Yerleşik olmayan içerik boş dosya olur. Ayrıntılar: [Dosya sistemi yeniden oluşturma](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' -R reconstructed
+```
 
 ## CSV çıktı alanları { #csv-output-fields }
 

@@ -191,11 +191,44 @@ Hunter प्रत्येक स्वचालित parser process के �
 
 CSV `$MFT` आउटपुट में सभी timestamps और short names शामिल होते हैं। Registry आउटपुट में raw डेटा और
 `REG_QWORD` values की FILETIME व्याख्या शामिल होती है। JSON और JSONL SRUM आउटपुट में value-state
-metadata शामिल होता है। Defender files और resident `$MFT` streams स्वचालित रूप से **extract नहीं** किए जाते।
+metadata शामिल होता है। Defender क्वारंटीन निष्कर्षण वैकल्पिक रहता है।
 
 `--mft-slack` के साथ, `$MFT` आउटपुट में FILE records के slack में बचे file names भी शामिल होते हैं, उसी रूप में जैसे [`parse-ntfs mft -x`](../artifacts/mft.md) उन्हें लिखता है: CSV में `FromSlack` से चिह्नित rows, और JSON तथा JSONL में `SlackFileNames`। `--code-page` LNK files, Jump Lists, ShellBags और OpenSaveMRU पर लागू होता है।
 
 जो आर्टिफ़ैक्ट संग्रहित नहीं किया गया, वह एक सामान्य `skipped` task है, विफलता नहीं।
+
+
+## फ़ाइल सिस्टम का पुनर्निर्माण { #filesystem-reconstruction }
+
+फ़ाइल सिस्टम पुनर्निर्माण **डिफ़ॉल्ट रूप से बंद** है। हर एकत्रित MFT के लिए नेविगेट करने योग्य ट्री जोड़ने के लिए `-R, --reconstruct-filesystem` सक्षम करें। CSV, JSON और JSONL में मौजूदा तालिकाओं के नाम और सामग्री नहीं बदलते।
+
+ट्री पास के निजी कार्यक्षेत्र में बनते हैं और पूरे होने पर ही प्रकाशित होते हैं। संभाली गई त्रुटि या रुकावट कार्यक्षेत्र साफ करती है और पुराना ट्री बचाती है। जबरन बंद करने पर `.juntei-reconstruction-*` फ़ोल्डर रह सकते हैं, लेकिन वे दोबारा प्रयास नहीं रोकते और सक्रिय वॉल्यूम नहीं बनते।
+
+संग्रह पथ से अनुमानित ड्राइव के लिए `FileSystem/C` जैसा फ़ोल्डर बनता है। MFT में ड्राइव अक्षर नहीं होता। पहचान न हो तो `UnknownVolume`; कई MFT अलग रहती हैं, जैसे `C-MFT-2`।
+
+अनावंटित फ़ाइलों और फ़ोल्डरों में `-deleted` लगता है; हटे हुए पैरेंट भी वंशज के पथ में इसी तरह दिखते हैं। बचा हुआ नामरहित निवासी DATA पुनर्प्राप्त होता है। गैर-निवासी या अनुपलब्ध सामग्री खाली फ़ाइल बनती है; तार्किक आकार पुनर्प्राप्त बाइट नहीं है।
+
+`-i30` अतिरिक्त इंडेक्स नाम दिखाता है जिनका हटना पुष्ट नहीं है। निवासी MFT इंडेक्स और उसी वॉल्यूम से एकत्रित I30 उपयोग होते हैं। Slack में नाम परिवर्तन या पुनर्संतुलन की प्रतियाँ भी हो सकती हैं। अन्य फ़ाइल पीढ़ी की सामग्री इस्तेमाल नहीं होती।
+
+`_Juntei-Unresolved` में गायब, पुनः उपयोग किए गए, चक्रीय या बहुत गहरे पैरेंट वाले पथ रहते हैं। असुरक्षित नाम एस्केप होते हैं; टकराव अलग सुरक्षित रहते हैं और मूल नाम सूची में रहता है। लंबे नाम होने पर DOS उपनाम छोड़े जाते हैं; हार्ड लिंक स्वतंत्र प्रतियाँ बनते हैं।
+
+`_Juntei-Reconstruction.csv` पुनर्निर्माण की सूची है: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`। स्रोत: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`। अनुमानित ड्राइव, हटने की स्थिति और निर्देशिका प्रकार भी दर्ज हैं। अधूरी सूची .partial.csv पर समाप्त होती है; अंतिम नाम सफलता के बाद मिलता है।
+
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
+
+अपठनीय या क्षतिग्रस्त वैकल्पिक I30 इनपुट `i30_input_error` के रूप में दर्ज होते हैं और वैध MFT परिणाम सुरक्षित रहते हैं।
+
+गैर-खाली पुनर्प्राप्त निवासी सामग्री वाली फ़ाइल में बाइट लिखने से पहले `.dontrun` लगता है। मूल नाम सूची में रहते हैं; खाली फ़ाइलें मूल नाम रखती हैं। सामग्री कभी न चलाएँ। Reparse point, ACL, मूल समय और निष्पादन अनुमति बहाल नहीं होते। नाम वाले स्ट्रीम अलग निकालें।
+
+पुनर्निर्माण लाखों फ़ाइलें बना सकता है; खाली फ़ाइलें भी inode और निर्देशिका मेटाडेटा लेती हैं। ट्री की आवश्यकता होने पर ही इसे सक्षम करें:
+
+```bash
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --reconstruct-filesystem
+juntei auto-parse -d <EVIDENCE> -o <OUTPUT> -R
+```
+
+ओवरराइट केवल पूर्ण सूची वाले ट्री को बदलता है जिसमें गायब या अतिरिक्त वस्तु या लिंक न हों। अधूरे ट्री और `.DS_Store` जैसी अतिरिक्त फ़ाइलें बचती हैं। Auto-parse केवल पुनर्निर्माण छोड़ता है, लॉग और दोनों मैनिफेस्ट में निर्देशिका तथा कारण लिखता है और अन्य पार्सर जारी रखता है। लिखने की विफलता अलग बताकर कुल विफल स्थिति देता है, पर परिणाम बचते हैं। अकेला कमांड अवरुद्ध गंतव्य अस्वीकार करता है।
+
 
 ## आउटपुट layout { #output-layout }
 
@@ -560,6 +593,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+  -R, --reconstruct-filesystem        Reconstruct filesystem trees from MFT and I30
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)

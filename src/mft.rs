@@ -50,6 +50,16 @@ pub fn run(opts: &MftOptions) -> i32 {
         }
     };
 
+    if opts.reconstruct_filesystem.is_some()
+        && let Err(error) = crate::interrupt::install()
+    {
+        report_error(
+            None,
+            &format!("Could not install reconstruction interrupt handler: {error}"),
+        );
+        return 1;
+    }
+
     // --- inputs ---------------------------------------------------------------------------
     let (mfts, root) = match (&opts.filepath, &opts.directory) {
         (Some(f), _) => {
@@ -112,6 +122,48 @@ pub fn run(opts: &MftOptions) -> i32 {
         report_error(None, &msg);
         return 1;
     }
+
+    let mut without_reconstruction = None;
+    if let Some(destination) = &opts.reconstruct_filesystem {
+        let mut sources = mfts.clone();
+        sources.extend(opts.reconstruction_i30.iter().cloned());
+        let outputs: Vec<&Path> = opts
+            .output
+            .iter()
+            .chain(opts.extract.iter())
+            .map(PathBuf::as_path)
+            .collect();
+        let prepared = (|| -> io::Result<()> {
+            crate::mft_reconstruct::validate(destination, &sources, &outputs, opts.clobber)?;
+            if let Some(parent) = destination.parent().filter(|p| !p.as_os_str().is_empty()) {
+                std::fs::create_dir_all(parent)?;
+            }
+            Ok(())
+        })();
+        if let Err(e) = prepared {
+            let message = format!(
+                "Could not prepare filesystem reconstruction {}: {e}",
+                destination.display()
+            );
+            if !opts.reconstruction_optional || e.kind() == io::ErrorKind::Interrupted {
+                report_error(None, &message);
+                return 1;
+            }
+            report_error(
+                None,
+                &format!("Warning: {message}; parsed MFT results will still be saved"),
+            );
+            crate::mft_reconstruct::report(
+                crate::mft_reconstruct::ReconstructionStatus::Skipped,
+                Some(&message),
+            );
+            let mut adjusted = opts.clone();
+            adjusted.reconstruct_filesystem = None;
+            adjusted.reconstruction_i30.clear();
+            without_reconstruction = Some(adjusted);
+        }
+    }
+    let opts = without_reconstruction.as_ref().unwrap_or(opts);
 
     // Check every header first: the progress bar counts entries. The CSV
     // reads every entry twice more: once for the directories, once for the rows.
@@ -294,6 +346,10 @@ fn parse_one(
     if let Some(dir) = extract_dir {
         std::fs::create_dir_all(dir)?;
     }
+    let mut reconstruction = opts
+        .reconstruct_filesystem
+        .as_ref()
+        .map(|_| crate::mft_reconstruct::Builder::default());
     let count = parser.get_entry_count();
     // The CSV finds the names in slack when it writes its rows; JSON (and the summary without an
     // output) here, with whether a file in use has the same name.
@@ -305,6 +361,7 @@ fn parse_one(
     };
     let mut printed = 0usize;
     for id in ids {
+        crate::interrupt::check()?;
         if let Some(b) = bar {
             b.inc(1);
         }
@@ -327,6 +384,9 @@ fn parse_one(
         // CSV rows and exported streams describe a file rather than one record, so they include
         // the attributes stored in its extension records.
         let extensions = parser.get_extension_entries(&entry);
+        if let Some(tree) = &mut reconstruction {
+            tree.add(id, &entry, &extensions);
+        }
         let row = FlatMftEntryWithName::from_entry_with_path(
             &entry,
             &extensions,
@@ -371,6 +431,61 @@ fn parse_one(
         stats.csv_rows += written.rows;
         stats.slack += written.slack;
         stats.slack_copies += written.slack_copies;
+    }
+    if let Some(tree) = reconstruction {
+        let destination = opts
+            .reconstruct_filesystem
+            .as_ref()
+            .expect("enabled reconstruction");
+        let summary = match tree.write(destination, path, &opts.reconstruction_i30, opts.clobber) {
+            Ok(summary) => {
+                if opts.reconstruction_optional {
+                    crate::mft_reconstruct::report(
+                        crate::mft_reconstruct::ReconstructionStatus::Succeeded,
+                        None,
+                    );
+                }
+                summary
+            }
+            Err(error)
+                if opts.reconstruction_optional && error.kind() != io::ErrorKind::Interrupted =>
+            {
+                let status = if error.kind() == io::ErrorKind::AlreadyExists {
+                    crate::mft_reconstruct::ReconstructionStatus::Skipped
+                } else {
+                    crate::mft_reconstruct::ReconstructionStatus::Failed
+                };
+                let message = format!("Could not reconstruct {}: {error}", destination.display());
+                report_error(
+                    bar,
+                    &format!("Warning: {message}; parsed MFT results retained"),
+                );
+                crate::mft_reconstruct::report(status, Some(&message));
+                return Ok(());
+            }
+            Err(error) => return Err(error),
+        };
+        for warning in &summary.warnings {
+            report_error(bar, &format!("Warning: {warning}"));
+        }
+        if !opts.data_on_stdout() {
+            progress::suspended(bar, || {
+                p_label(
+                    opts.common.no_color,
+                    "Filesystem reconstructed: ",
+                    &format!(
+                        "{} ({} files / {} directories / {} resident files / {} I30 additions / {} rejected records / {} unnamed records)",
+                        destination.display(),
+                        fmt_num(summary.files as usize),
+                        fmt_num(summary.directories as usize),
+                        fmt_num(summary.resident as usize),
+                        fmt_num(summary.i30 as usize),
+                        fmt_num(summary.rejected as usize),
+                        fmt_num(summary.unnamed as usize),
+                    ),
+                );
+            });
+        }
     }
     if printed < stats.unreadable && stats.unreadable > MAX_PRINTED_ERRORS {
         report_error(
