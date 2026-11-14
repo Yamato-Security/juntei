@@ -14,7 +14,7 @@
 //! A browsable, explicitly incomplete reconstruction, never a restored live NTFS volume.
 //! Names are individual evidence components, not host paths. No links, ACLs, original timestamps
 //! or executable permissions are restored. The CSV inventory distinguishes content from placeholders.
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
@@ -22,6 +22,137 @@ use std::path::{Path, PathBuf};
 use ys_ntfs_parser::mft::attribute::x30::FileNamespace;
 use ys_ntfs_parser::mft::i30::IndexEntry;
 use ys_ntfs_parser::mft::{MftEntry, attribute::MftAttributeType};
+
+const RESULT_PREFIX: &str = "JUNTEI_RECONSTRUCTION_RESULT:";
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum ReconstructionStatus {
+    Succeeded,
+    Skipped,
+    Failed,
+}
+impl ReconstructionStatus {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Succeeded => "succeeded",
+            Self::Skipped => "skipped",
+            Self::Failed => "failed",
+        }
+    }
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct Outcome {
+    pub(crate) status: ReconstructionStatus,
+    pub(crate) error: Option<String>,
+}
+
+/// Only auto-parse requests this protocol. Keep diagnostics separate from parsed CSV/JSON data.
+pub(crate) fn report(status: ReconstructionStatus, error: Option<&str>) {
+    let outcome = Outcome {
+        status,
+        error: error.map(str::to_owned),
+    };
+    eprintln!(
+        "{RESULT_PREFIX}{}",
+        serde_json::to_string(&outcome).expect("serializable diagnostic")
+    );
+}
+
+pub(crate) fn take_outcome(stderr: &str) -> (String, Option<Outcome>) {
+    let mut text = String::new();
+    let mut outcome = None;
+    for line in stderr.split_inclusive('\n') {
+        let parsed = line
+            .trim_end_matches(['\r', '\n'])
+            .strip_prefix(RESULT_PREFIX)
+            .and_then(|json| serde_json::from_str::<Outcome>(json).ok());
+        if let Some(parsed) = parsed {
+            outcome = Some(parsed);
+        } else {
+            text.push_str(line);
+        }
+    }
+    (text, outcome)
+}
+
+/// Publish only a completed tree. Ordinary errors/interrupts drop the private workspace; forced
+/// process termination can leave it behind, but never installs an incomplete destination tree.
+struct Transaction {
+    destination: PathBuf,
+    workspace: Option<tempfile::TempDir>,
+    clobber: bool,
+}
+impl Transaction {
+    fn new(destination: &Path, clobber: bool) -> io::Result<Self> {
+        if let Ok(metadata) = fs::symlink_metadata(destination)
+            && (!clobber || reparse(&metadata))
+        {
+            return Err(existing_tree(destination));
+        }
+        // Resolve directory aliases before choosing a sibling workspace: '.' or '..' must
+        // never place staging inside the very tree that will be replaced.
+        let destination = crate::auto_parse::absolute_candidate(destination)?;
+        let parent = destination
+            .parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        let workspace = tempfile::Builder::new()
+            .prefix(".juntei-reconstruction-")
+            .tempdir_in(parent)?;
+        Ok(Self {
+            destination,
+            workspace: Some(workspace),
+            clobber,
+        })
+    }
+    fn stage(&self) -> PathBuf {
+        self.workspace
+            .as_ref()
+            .expect("active transaction")
+            .path()
+            .join("Tree")
+    }
+    fn commit(mut self) -> io::Result<()> {
+        crate::interrupt::check()?;
+        let stage = self.stage();
+        let backup = self
+            .workspace
+            .as_ref()
+            .expect("active transaction")
+            .path()
+            .join("Previous");
+        let previous = match fs::symlink_metadata(&self.destination) {
+            Ok(_) => {
+                if !self.clobber {
+                    return Err(existing_tree(&self.destination));
+                }
+                // Recheck immediately before replacement: Finder or an analyst might have added
+                // files while the new tree was being built. Never erase those additions.
+                owned_tree(&self.destination).map_err(|e| contextual(&self.destination, e))?;
+                fs::rename(&self.destination, &backup)?;
+                true
+            }
+            Err(e) if e.kind() == io::ErrorKind::NotFound => false,
+            Err(e) => return Err(e),
+        };
+        if let Err(error) = fs::rename(&stage, &self.destination) {
+            if previous && let Err(restore) = fs::rename(&backup, &self.destination) {
+                // Preserve the previous output even if an external writer blocks rollback.
+                let kept = self.workspace.take().expect("active transaction").keep();
+                return Err(io::Error::other(format!(
+                    "Could not publish {}: {error}; rollback failed: {restore}; previous output preserved at {}",
+                    self.destination.display(),
+                    kept.join("Previous").display()
+                )));
+            }
+            return Err(error);
+        }
+        // The completed destination is outside the workspace. Its former inventoried version,
+        // if any, is disposable only after the replacement has been successfully published.
+        Ok(())
+    }
+}
 
 pub(crate) const INVENTORY: &str = "_Juntei-Reconstruction.csv";
 const INVENTORY_HEADER: &[&str] = &[
@@ -78,9 +209,8 @@ pub(crate) fn volume_hint(path: &Path) -> (Option<char>, PathBuf) {
         let bytes = name.as_bytes();
         let plain_label = bytes.len() == 1
             && (i + 1 == parts.len() || matches!(previous.as_str(), "auto" | "ntfs"));
-        if (plain_label || (bytes.len() == 2 && matches!(bytes[1], b':' | b'$')))
-            && bytes[0].is_ascii_alphabetic()
-        {
+        let explicit_label = bytes.len() == 2 && matches!(bytes[1], b':' | b'$');
+        if (explicit_label || (plain_label && result.is_none())) && bytes[0].is_ascii_alphabetic() {
             result = Some((bytes[0].to_ascii_uppercase() as char, anchor.clone()));
         }
         previous = raw.to_ascii_lowercase();
@@ -312,6 +442,35 @@ impl Builder {
         i30_files: &[PathBuf],
         clobber: bool,
     ) -> io::Result<Summary> {
+        let mut sources = vec![source.to_path_buf()];
+        sources.extend(i30_files.iter().cloned());
+        check_overlap(destination, &sources, &[])?;
+        let transaction = Transaction::new(destination, clobber)?;
+        let volume = transaction
+            .destination
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .into_owned();
+        let result = self.write_staged(
+            &transaction.stage(),
+            destination,
+            &volume,
+            source,
+            i30_files,
+        )?;
+        transaction.commit()?;
+        Ok(result)
+    }
+
+    fn write_staged(
+        self,
+        destination: &Path,
+        published: &Path,
+        volume: &str,
+        source: &Path,
+        i30_files: &[PathBuf],
+    ) -> io::Result<Summary> {
         let mut this = self;
         let mut input_errors = Vec::new();
         for file in i30_files {
@@ -327,7 +486,12 @@ impl Builder {
                 input_errors.push((shown, error.to_string()));
             }
         }
-        let mut disk = Disk::new(destination, clobber)?;
+        let mut disk = Disk::new(destination)?;
+        disk.path_prefix_len = disk.path_prefix_len.max(
+            crate::auto_parse::absolute_candidate(published)?
+                .as_os_str()
+                .len(),
+        );
         let mut manifest = csv::WriterBuilder::new().has_headers(false).from_writer(
             OpenOptions::new()
                 .write(true)
@@ -341,10 +505,6 @@ impl Builder {
             ..Summary::default()
         };
         let (drive, _) = volume_hint(source);
-        let volume = destination
-            .file_name()
-            .unwrap_or_default()
-            .to_string_lossy();
         let source_name = source.file_name().unwrap_or_default().to_string_lossy();
         // Index-only directory references can supply otherwise missing ancestors. Never replace
         // a current MFT generation with a historical index reference.
@@ -365,7 +525,7 @@ impl Builder {
                 .warnings
                 .push(format!("Skipped reconstruction index {source}: {message}"));
             inventory(Row {
-                volume: &volume,
+                volume,
                 drive,
                 source,
                 entry: None,
@@ -402,11 +562,11 @@ impl Builder {
                     )?
                 } else {
                     let parent = disk.unresolved_parent()?;
-                    disk.child(
+                    disk.content_file(
                         &parent,
                         &format!("MFT-{id}-{}", node.sequence),
                         if node.deleted { "-deleted" } else { "" },
-                        false,
+                        content(&node.content).2,
                     )?
                 };
                 let (status, size, bytes) = if node.directory {
@@ -415,7 +575,6 @@ impl Builder {
                     content(&node.content)
                 };
                 if !node.directory {
-                    disk.file(&location.path, bytes)?;
                     summary.files += 1;
                     if !bytes.is_empty() {
                         summary.resident += 1;
@@ -423,7 +582,7 @@ impl Builder {
                     summary.bytes += bytes.len() as u64;
                 }
                 inventory(Row {
-                    volume: &volume,
+                    volume,
                     drive,
                     source: &source_name,
                     entry: Some(id),
@@ -476,14 +635,13 @@ impl Builder {
                         &indexed_directories,
                         &mut disk,
                     )?;
-                    let location = disk.child(
+                    let (status, size, bytes) = content(&node.content);
+                    let location = disk.content_file(
                         &parent,
                         &name.text,
                         if node.deleted { "-deleted" } else { "" },
-                        false,
+                        bytes,
                     )?;
-                    let (status, size, bytes) = content(&node.content);
-                    disk.file(&location.path, bytes)?;
                     summary.files += 1;
                     if !bytes.is_empty() {
                         summary.resident += 1;
@@ -492,7 +650,7 @@ impl Builder {
                     (location, status, size, bytes.len() as u64)
                 };
                 inventory(Row {
-                    volume: &volume,
+                    volume,
                     drive,
                     source: &source_name,
                     entry: Some(id),
@@ -558,7 +716,7 @@ impl Builder {
             };
             let original = join_original(&parent.original, &entry.name.text);
             inventory(Row {
-                volume: &volume,
+                volume,
                 drive,
                 source: &entry.source,
                 entry: entry.reference.map(|r| r.0),
@@ -774,21 +932,14 @@ struct Disk {
     root: PathBuf,
     used: HashSet<String>,
     directories: u64,
+    path_prefix_len: usize,
 }
 impl Disk {
-    fn new(root: &Path, clobber: bool) -> io::Result<Self> {
-        // Never write through a populated tree. Explicit clobber can replace only a complete,
-        // inventoried Juntei tree with no untracked files, links or special filesystem objects.
-        if fs::symlink_metadata(root).is_ok() {
-            if !clobber {
-                return Err(existing_tree());
-            }
-            owned_tree(root)?;
-            fs::remove_dir_all(root)?;
-        }
+    fn new(root: &Path) -> io::Result<Self> {
         fs::create_dir(root)?;
         Ok(Self {
             root: fs::canonicalize(root)?,
+            path_prefix_len: fs::canonicalize(root)?.as_os_str().len(),
             used: HashSet::from([
                 INVENTORY.to_lowercase(),
                 PARTIAL_INVENTORY.to_lowercase(),
@@ -804,11 +955,38 @@ impl Disk {
         suffix: &str,
         directory: bool,
     ) -> io::Result<Location> {
+        self.child_with_extension(parent, name, suffix, directory, "")
+    }
+    fn content_file(
+        &mut self,
+        parent: &Location,
+        name: &str,
+        suffix: &str,
+        bytes: &[u8],
+    ) -> io::Result<Location> {
+        let location = self.child_with_extension(
+            parent,
+            name,
+            suffix,
+            false,
+            if bytes.is_empty() { "" } else { ".dontrun" },
+        )?;
+        self.file(&location.path, bytes)?;
+        Ok(location)
+    }
+    fn child_with_extension(
+        &mut self,
+        parent: &Location,
+        name: &str,
+        suffix: &str,
+        directory: bool,
+        extension: &str,
+    ) -> io::Result<Location> {
         let original = name;
         let name = component(name);
         let mut stem = format!("{name}{suffix}");
         let mut parent = parent.clone();
-        if self.root.as_os_str().len() + parent.path.as_os_str().len() + stem.len()
+        if self.path_prefix_len + parent.path.as_os_str().len() + stem.len() + extension.len()
             > MAX_HOST_PATH_BYTES
         {
             let full = join_original(&parent.original, original);
@@ -824,7 +1002,7 @@ impl Disk {
             parent.status = "unresolved";
             stem.push_str(&format!("-path-{hash:016x}"));
         }
-        let mut path = parent.path.join(&stem);
+        let mut path = parent.path.join(format!("{stem}{extension}"));
         let mut collision = 1u64;
         loop {
             let key = portable(&path).to_lowercase();
@@ -839,7 +1017,9 @@ impl Disk {
                 break;
             }
             collision += 1;
-            path = parent.path.join(format!("{stem}-collision-{collision}"));
+            path = parent
+                .path
+                .join(format!("{stem}-collision-{collision}{extension}"));
         }
         if directory {
             fs::create_dir(self.root.join(&path))?;
@@ -960,7 +1140,19 @@ fn component(name: &str) -> String {
     encoded
 }
 
-fn existing_tree() -> io::Error {
+fn existing_tree(root: &Path) -> io::Error {
+    io::Error::new(
+        io::ErrorKind::AlreadyExists,
+        format!(
+            "Filesystem reconstruction {} requires a new directory or --clobber with a complete matching Juntei inventory and no unrelated files or links",
+            root.display()
+        ),
+    )
+}
+fn contextual(root: &Path, error: io::Error) -> io::Error {
+    io::Error::new(error.kind(), format!("{}: {error}", root.display()))
+}
+fn invalid_tree() -> io::Error {
     io::Error::new(
         io::ErrorKind::AlreadyExists,
         "Filesystem reconstruction requires a new directory or --clobber with a complete matching Juntei inventory and no unrelated files or links",
@@ -984,12 +1176,12 @@ fn reparse(metadata: &fs::Metadata) -> bool {
 fn owned_tree(root: &Path) -> io::Result<()> {
     let metadata = fs::symlink_metadata(root)?;
     if reparse(&metadata) || !metadata.is_dir() {
-        return Err(existing_tree());
+        return Err(invalid_tree());
     }
     let manifest = root.join(INVENTORY);
-    let metadata = fs::symlink_metadata(&manifest).map_err(|_| existing_tree())?;
+    let metadata = fs::symlink_metadata(&manifest).map_err(|_| invalid_tree())?;
     if reparse(&metadata) || !metadata.is_file() {
-        return Err(existing_tree());
+        return Err(invalid_tree());
     }
     let mut reader = csv::Reader::from_path(&manifest)?;
     if reader
@@ -997,13 +1189,13 @@ fn owned_tree(root: &Path) -> io::Result<()> {
         .iter()
         .ne(INVENTORY_HEADER.iter().copied())
     {
-        return Err(existing_tree());
+        return Err(invalid_tree());
     }
     let mut expected = BTreeMap::<PathBuf, bool>::from([(PathBuf::from(INVENTORY), false)]);
     for record in reader.records() {
         crate::interrupt::check()?;
         let row = record?;
-        let path = row.get(8).ok_or_else(existing_tree)?;
+        let path = row.get(8).ok_or_else(invalid_tree)?;
         if path.is_empty() {
             continue;
         }
@@ -1014,18 +1206,18 @@ fn owned_tree(root: &Path) -> io::Result<()> {
                 .components()
                 .all(|c| matches!(c, std::path::Component::Normal(_)))
         {
-            return Err(existing_tree());
+            return Err(invalid_tree());
         }
         let directory = match row.get(9) {
             Some("true") => true,
             Some("false") => false,
-            _ => return Err(existing_tree()),
+            _ => return Err(invalid_tree()),
         };
         if expected
             .insert(path.to_path_buf(), directory)
             .is_some_and(|old| old != directory)
         {
-            return Err(existing_tree());
+            return Err(invalid_tree());
         }
         for parent in path
             .ancestors()
@@ -1033,7 +1225,7 @@ fn owned_tree(root: &Path) -> io::Result<()> {
             .filter(|p| !p.as_os_str().is_empty())
         {
             if expected.insert(parent.to_path_buf(), true) == Some(false) {
-                return Err(existing_tree());
+                return Err(invalid_tree());
             }
         }
     }
@@ -1045,11 +1237,11 @@ fn owned_tree(root: &Path) -> io::Result<()> {
             let path = entry?.path();
             let metadata = fs::symlink_metadata(&path)?;
             if reparse(&metadata) || (!metadata.is_dir() && !metadata.is_file()) {
-                return Err(existing_tree());
+                return Err(invalid_tree());
             }
-            let relative = path.strip_prefix(root).map_err(|_| existing_tree())?;
+            let relative = path.strip_prefix(root).map_err(|_| invalid_tree())?;
             if expected.get(relative) != Some(&metadata.is_dir()) {
-                return Err(existing_tree());
+                return Err(invalid_tree());
             }
             found.insert(relative.to_path_buf());
             if metadata.is_dir() {
@@ -1058,7 +1250,7 @@ fn owned_tree(root: &Path) -> io::Result<()> {
         }
     }
     if found.len() != expected.len() {
-        return Err(existing_tree());
+        return Err(invalid_tree());
     }
     Ok(())
 }
@@ -1070,6 +1262,21 @@ pub(crate) fn validate(
     sources: &[PathBuf],
     other_outputs: &[&Path],
     clobber: bool,
+) -> io::Result<()> {
+    check_overlap(destination, sources, other_outputs)?;
+    if fs::symlink_metadata(destination).is_ok() {
+        if !clobber {
+            return Err(existing_tree(destination));
+        }
+        owned_tree(destination).map_err(|e| contextual(destination, e))?;
+    }
+    Ok(())
+}
+
+fn check_overlap(
+    destination: &Path,
+    sources: &[PathBuf],
+    other_outputs: &[&Path],
 ) -> io::Result<()> {
     let resolved = crate::auto_parse::absolute_candidate(destination)?;
     for source in sources
@@ -1084,12 +1291,6 @@ pub(crate) fn validate(
                 "Filesystem reconstruction must not contain or overlap input or other output paths",
             ));
         }
-    }
-    if fs::symlink_metadata(destination).is_ok() {
-        if !clobber {
-            return Err(existing_tree());
-        }
-        owned_tree(destination)?;
     }
     Ok(())
 }
@@ -1191,7 +1392,7 @@ mod tests {
         );
         let summary = write(b, &root);
         assert_eq!(
-            fs::read(root.join("Users/binary.dat")).unwrap(),
+            fs::read(root.join("Users/binary.dat.dontrun")).unwrap(),
             [0, 255, 1, 0]
         );
         assert_eq!(fs::metadata(root.join("Users/large.bin")).unwrap().len(), 0);
@@ -1208,7 +1409,7 @@ mod tests {
         {
             use std::os::unix::fs::PermissionsExt;
             assert_eq!(
-                fs::metadata(root.join("Users/binary.dat"))
+                fs::metadata(root.join("Users/binary.dat.dontrun"))
                     .unwrap()
                     .permissions()
                     .mode()
@@ -1255,7 +1456,7 @@ mod tests {
         );
         write(b, &root);
         assert_eq!(
-            fs::read(root.join("Old-deleted/note.txt-deleted")).unwrap(),
+            fs::read(root.join("Old-deleted/note.txt-deleted.dontrun")).unwrap(),
             b"deleted content"
         );
         assert!(root.join("Old-deleted/other.txt").is_file());
@@ -1292,9 +1493,13 @@ mod tests {
             ),
         );
         write(b, &root);
-        assert!(!root.join("NewOwner/old.txt-deleted").exists());
+        assert!(!root.join("NewOwner/old.txt-deleted.dontrun").exists());
         assert_eq!(
-            fs::read(root.join(UNRESOLVED).join("MFT-10-6/old.txt-deleted")).unwrap(),
+            fs::read(
+                root.join(UNRESOLVED)
+                    .join("MFT-10-6/old.txt-deleted.dontrun")
+            )
+            .unwrap(),
             b"old"
         );
     }
@@ -1331,7 +1536,7 @@ mod tests {
         }
         write(b, &root);
         assert_eq!(
-            fs::read(root.join("current.txt")).unwrap(),
+            fs::read(root.join("current.txt.dontrun")).unwrap(),
             b"new generation"
         );
         assert_eq!(fs::metadata(root.join("older.txt-i30")).unwrap().len(), 0);
@@ -1382,7 +1587,7 @@ mod tests {
         }
         write(b, &root);
         assert_eq!(
-            fs::read(root.join("Missing-i30/child.txt")).unwrap(),
+            fs::read(root.join("Missing-i30/child.txt.dontrun")).unwrap(),
             b"child"
         );
         assert!(root.join("Current").is_dir());
@@ -1444,7 +1649,7 @@ mod tests {
             );
         }
         assert_eq!(records.len(), names.len());
-        assert!(root.join("victim.txt-deleted-collision-2").exists());
+        assert!(root.join("victim.txt-deleted-collision-2.dontrun").exists());
     }
 
     #[test]
@@ -1634,11 +1839,11 @@ mod tests {
         );
         write(b, &root);
         assert_eq!(
-            fs::read(root.join(UNRESOLVED).join("MFT-11-3-deleted")).unwrap(),
+            fs::read(root.join(UNRESOLVED).join("MFT-11-3-deleted.dontrun")).unwrap(),
             b"unnamed"
         );
         assert_eq!(
-            fs::read(root.join(UNRESOLVED).join("MFT-10-2-deleted/child")).unwrap(),
+            fs::read(root.join(UNRESOLVED).join("MFT-10-2-deleted/child.dontrun")).unwrap(),
             b"child"
         );
         let records = rows(&root);
@@ -1677,8 +1882,8 @@ mod tests {
             ),
         );
         b.write(&root, Path::new("C/$MFT"), &[], true).unwrap();
-        assert!(!root.join("old.txt").exists());
-        assert_eq!(fs::read(root.join("new.txt")).unwrap(), b"new");
+        assert!(!root.join("old.txt.dontrun").exists());
+        assert_eq!(fs::read(root.join("new.txt.dontrun")).unwrap(), b"new");
         fs::write(root.join("analyst-note.txt"), b"do not erase").unwrap();
         assert!(validate(&root, &[], &[], true).is_err());
         assert!(
@@ -1690,7 +1895,7 @@ mod tests {
             fs::read(root.join("analyst-note.txt")).unwrap(),
             b"do not erase"
         );
-        assert_eq!(fs::read(root.join("new.txt")).unwrap(), b"new");
+        assert_eq!(fs::read(root.join("new.txt.dontrun")).unwrap(), b"new");
     }
 
     #[test]
@@ -1738,7 +1943,7 @@ mod tests {
     fn destination_name_collisions_are_detected_even_without_a_string_cache_match() {
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path().join("C");
-        let mut disk = Disk::new(&root, false).unwrap();
+        let mut disk = Disk::new(&root).unwrap();
         fs::write(root.join("name.txt"), b"existing").unwrap();
         let location = disk
             .child(
@@ -1755,6 +1960,148 @@ mod tests {
         disk.file(&location.path, b"new").unwrap();
         assert_eq!(fs::read(root.join("name.txt")).unwrap(), b"existing");
         assert_eq!(fs::read(root.join(location.path)).unwrap(), b"new");
+    }
+
+    #[test]
+    fn recovered_script_and_shell_metadata_names_always_end_in_dontrun() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("C");
+        let mut b = tree();
+        for (i, file) in [
+            "payload.ps1",
+            "shortcut.lnk",
+            "remote.url",
+            "remote.library-ms",
+            "desktop.ini",
+            "normal.txt",
+            "empty.lnk",
+        ]
+        .iter()
+        .enumerate()
+        {
+            b.nodes.insert(
+                30 + i as u64,
+                node(
+                    1,
+                    false,
+                    false,
+                    vec![name((5, 5), file)],
+                    Content::Resident(if *file == "empty.lnk" {
+                        vec![]
+                    } else {
+                        b"untrusted bytes".to_vec()
+                    }),
+                ),
+            );
+        }
+        // Force a collision with a name that already contains the safety suffix.
+        b.nodes.insert(
+            20,
+            node(
+                1,
+                false,
+                false,
+                vec![name((5, 5), "payload.ps1.dontrun")],
+                Content::NonResident(10),
+            ),
+        );
+        let result = write(b, &root);
+        assert_eq!(result.resident, 6);
+        for r in rows(&root)
+            .iter()
+            .filter(|r| r["DataStatus"] == "resident_recovered")
+        {
+            assert!(r["OutputPath"].ends_with(".dontrun"), "{r:?}");
+            assert_eq!(
+                fs::read(root.join(&r["OutputPath"])).unwrap(),
+                b"untrusted bytes"
+            );
+            assert_ne!(r["OutputPath"], r["File"]);
+        }
+        assert!(
+            rows(&root)
+                .iter()
+                .any(|r| r["DataStatus"] == "resident_recovered"
+                    && r["OutputPath"].contains("-collision-")
+                    && r["OutputPath"].ends_with(".dontrun"))
+        );
+        assert!(!root.join("payload.ps1").exists());
+        assert!(!root.join("shortcut.lnk").exists());
+        assert_eq!(fs::metadata(root.join("empty.lnk")).unwrap().len(), 0);
+    }
+
+    #[test]
+    fn dropping_a_failed_transaction_preserves_the_prior_tree_and_cleans_staging() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("C");
+        let mut b = tree();
+        b.nodes.insert(
+            10,
+            node(
+                1,
+                false,
+                false,
+                vec![name((5, 5), "old.txt")],
+                Content::Resident(b"old".to_vec()),
+            ),
+        );
+        write(b, &root);
+        let result = (|| -> io::Result<()> {
+            let transaction = Transaction::new(&root, true)?;
+            fs::create_dir(transaction.stage())?;
+            fs::write(transaction.stage().join(PARTIAL_INVENTORY), b"unfinished")?;
+            fs::write(transaction.stage().join("new.ps1.dontrun"), b"new")?;
+            Err(io::Error::new(io::ErrorKind::Interrupted, "cancelled"))
+        })();
+        assert_eq!(result.unwrap_err().kind(), io::ErrorKind::Interrupted);
+        assert_eq!(fs::read(root.join("old.txt.dontrun")).unwrap(), b"old");
+        assert!(
+            fs::read_dir(tmp.path())
+                .unwrap()
+                .all(|e| e.unwrap().file_name() == "C")
+        );
+    }
+
+    #[test]
+    fn finder_files_added_during_staging_prevent_replacement_without_losing_either_input() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("C");
+        write(tree(), &root);
+        let transaction = Transaction::new(&root, true).unwrap();
+        Builder::default()
+            .write_staged(&transaction.stage(), &root, "C", Path::new("$MFT"), &[])
+            .unwrap();
+        fs::write(root.join(".DS_Store"), b"keep").unwrap();
+        assert!(transaction.commit().is_err());
+        assert_eq!(fs::read(root.join(".DS_Store")).unwrap(), b"keep");
+        assert!(root.join(INVENTORY).is_file());
+        assert!(
+            fs::read_dir(tmp.path())
+                .unwrap()
+                .all(|e| e.unwrap().file_name() == "C")
+        );
+    }
+
+    #[test]
+    fn encoded_drive_cues_are_not_overwritten_by_a_one_letter_user_directory() {
+        for path in [
+            "host/uploads/auto/C%3A/Users/j/$I30",
+            "host/uploads/auto/C/Users/j/$I30",
+        ] {
+            assert_eq!(volume_hint(Path::new(path)).0, Some('C'));
+        }
+    }
+
+    #[test]
+    fn staging_remains_a_sibling_when_destination_contains_parent_components() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("C");
+        write(tree(), &root);
+        fs::create_dir(root.join("child")).unwrap();
+        let alias = root.join("child/..");
+        let transaction = Transaction::new(&alias, true).unwrap();
+        assert_eq!(transaction.destination, fs::canonicalize(&root).unwrap());
+        assert!(!transaction.stage().starts_with(&transaction.destination));
     }
 
     #[test]

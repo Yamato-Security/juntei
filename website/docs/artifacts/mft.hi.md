@@ -60,7 +60,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -98,6 +98,12 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 `-t json -x` उन्हें लिखता है, फिर record के bytes। `-L` किसी directory का हर नाम सूचीबद्ध करता है, उपयोग में और
 हटाए गए दोनों, उसकी entry और sequence number, type, size और modified समय के साथ। Directory को
 entry (`30`, `0x1E`, `30-1`) या path (`\Windows\System32`, `C:/Windows`; case-insensitive) से दिया जाता है।
+
+यह उदाहरण नेविगेट करने योग्य फ़ाइल पथ बनाता है। गैर-निवासी सामग्री खाली फ़ाइल बनती है। विवरण: [फ़ाइल सिस्टम का पुनर्निर्माण](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```
 
 ## CSV आउटपुट fields { #csv-output-fields }
 
@@ -171,9 +177,3 @@ investigative CSV low-level structure छोड़ देता है तब �
 - [ys-ntfs-parser का mft crate](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram का mft parser](https://github.com/omerbenamram/mft)
 - [libfsntfs format documentation](https://github.com/libyal/libfsntfs/tree/main/documentation)
-
-यह उदाहरण नेविगेट करने योग्य फ़ाइल पथ बनाता है। गैर-निवासी सामग्री खाली फ़ाइल बनती है। विवरण: [फ़ाइल सिस्टम का पुनर्निर्माण](../commands/auto-parse.md#filesystem-reconstruction).
-
-```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
-```

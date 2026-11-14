@@ -202,6 +202,8 @@ metadata ပါဝင်ပါသည်။ Defender quarantine extraction ကိ
 
 စုဆောင်းထားသော MFT တစ်ခုစီအတွက် ကြည့်ရှုနိုင်သည့် ဖိုင်တွဲပင်ကိုလည်း ဖန်တီးသည်။ CSV၊ JSON နှင့် JSONL ရှိ မူလဇယားများ မပြောင်းလဲပါ။
 
+ပင်ကို ဘေးချင်းကပ် ကိုယ်ပိုင် workspace တွင်တည်ဆောက်ပြီး ပြည့်စုံမှသာ ဖော်ပြသည်။ ထိန်းချုပ်နိုင်သော error နှင့် interruption တွင် workspace ကိုရှင်းပြီး ယခင်ပင်ကိုထိန်းထားသည်။ Force stop ကြောင့် `.juntei-reconstruction-*` ဖိုင်တွဲကျန်နိုင်သော်လည်း retry ကိုမပိတ်ဘဲ active volume မဖြစ်စေပါ။
+
 စုဆောင်းသည့်လမ်းကြောင်းမှ drive ကို ခန့်မှန်းပြီး `FileSystem/C` ကဲ့သို့ ဖိုင်တွဲကို သုံးသည်။ MFT တွင် drive အက္ခရာ မပါပါ။ မသိလျှင် `UnknownVolume` ကိုသုံးပြီး MFT အများအပြားကို `C-MFT-2` ကဲ့သို့ ခွဲထားသည်။
 
 နေရာမသတ်မှတ်ထားသော ဖိုင်နှင့်ဖိုင်တွဲများ၊ ဖျက်ပြီးမိဘဖိုင်တွဲများတွင် `-deleted` ထည့်သည်။ ကျန်ရှိသော အမည်မဲ့ resident DATA ကို ပြန်ရယူသည်။ non-resident သို့မဟုတ် မရနိုင်သောအကြောင်းအရာကို ဖိုင်အလွတ်အဖြစ် ဖန်တီးသည်။ logical size သည် ပြန်ရသော byte အရေအတွက် မဟုတ်ပါ။
@@ -212,11 +214,11 @@ metadata ပါဝင်ပါသည်။ Defender quarantine extraction ကိ
 
 `_Juntei-Reconstruction.csv` တွင် ပြန်တည်ဆောက်မှုကို မှတ်တမ်းတင်သည်: `DataStatus`၊ `LogicalSize`၊ `RecoveredBytes`၊ `OriginalPath`၊ `OutputPath`။ ရင်းမြစ်အချက်အလက်များမှာ `EntryNum`၊ `SN`၊ `ParentEntryNum`၊ `ParentSN`၊ `Source`၊ `FromSlack`၊ `Offset` ဖြစ်သည်။ drive ခန့်မှန်းချက်၊ ဖျက်မှုနှင့် ဖိုင်တွဲအမျိုးအစားကိုလည်း မှတ်တမ်းတင်သည်။ မပြည့်စုံသောစာရင်းသည် .partial.csv ဖြင့်ဆုံးပြီး အောင်မြင်မှသာ နောက်ဆုံးအမည်သုံးသည်။
 
-`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
 
 ဖတ်မရသော သို့မဟုတ် ပျက်စီးသော optional I30 ကို `i30_input_error` အဖြစ် မှတ်တမ်းတင်ပြီး မှန်ကန်သော MFT ရလဒ်ကို ဆက်ထိန်းထားသည်။
 
-ပြန်ရသောဖိုင်များတွင် မူလ extension ရှိပြီး malware ဖြစ်နိုင်သဖြင့် မဖွင့်မလုပ်ဆောင်ပါနှင့်။ Reparse point၊ ACL၊ မူလအချိန်နှင့် လုပ်ဆောင်ခွင့်များကို မပြန်ထားပါ။ အမည်ပါ alternate stream အတွက် resident stream extraction ကို သီးခြားသုံးပါ။
+ပြန်ရသော resident content သုညမဟုတ်သည့်ဖိုင်ကို byte မရေးမီ `.dontrun` ထည့်သည်။ မူရင်းအမည်သည်စာရင်းတွင်ကျန်ပြီး ဖိုင်အလွတ်သည် မူရင်းအမည်သုံးသည်။ Content ကိုမလုပ်ဆောင်ပါနှင့်။ Reparse point၊ ACL၊ မူရင်းအချိန်နှင့် execute permission မပြန်ထားပါ။ အမည်ပါ stream ကို သီးခြားထုတ်ပါ။
 
 ဖိုင်အလွတ်များလည်း inode နှင့် ဖိုင်တွဲ metadata ကိုသုံးသည်။ မလိုလျှင် ပြန်တည်ဆောက်မှုကို ကျော်နိုင်သည်:
 
@@ -224,7 +226,7 @@ metadata ပါဝင်ပါသည်။ Defender quarantine extraction ကိ
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
 ```
 
-Overwrite ဖွင့်လျှင် ပြည့်စုံသောစာရင်းနှင့် အရာအားလုံးကိုက်ညီမှသာ ယခင်ပင်ကို အစားထိုးသည်။ အပို သို့မဟုတ် ပျောက်ဖိုင်၊ link၊ junction နှင့် မပြည့်စုံသောစာရင်းရှိပါက ရလဒ်မပြောင်းမီ ငြင်းပယ်သည်။ ထိုအခါ output အသစ်ကို သုံးပါ။
+ပြည့်စုံသောစာရင်းနှင့်ကိုက်ပြီး ပျောက်နေသော၊ အပိုအရာ သို့မဟုတ် link မရှိသည့်ပင်ကိုသာ clobber ပြုလုပ်သည်။ Partial tree နှင့် `.DS_Store` ကဲ့သို့အပိုဖိုင်ကိုထိန်းထားသည်။ Auto-parse သည် reconstruction ကိုသာကျော်ပြီး ဖိုင်တွဲနှင့်အကြောင်းကို log နှင့် manifest နှစ်ခုတွင်မှတ်ကာ အခြား parser များဆက်လုပ်သည်။ Write failure ကို သီးခြားပြပြီး စုစုပေါင်း failure status ပေးသော်လည်း parsing result ကိုထိန်းထားသည်။ Standalone command က ပိတ်ထားသည့် output ကိုငြင်းသည်။
 
 
 ## Output layout { #output-layout }

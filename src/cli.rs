@@ -990,9 +990,12 @@ pub struct MftOptions {
     #[arg(help_heading = Some("Output"), short = 'e', long = "extract-resident-streams", value_name = "DIR", display_order = 302)]
     pub extract: Option<PathBuf>,
 
-    /// Recreate names and resident content in a new filesystem tree (one -f input; non-resident files are empty)
+    /// Recreate a filesystem tree (recovered content gets .dontrun; non-resident files are empty)
     #[arg(help_heading = Some("Output"), long, value_name = "DIR", requires = "filepath", conflicts_with_all = ["ranges", "dump_entry", "list_directory", "cutoff"], display_order = 304)]
     pub reconstruct_filesystem: Option<PathBuf>,
+
+    #[arg(long, hide = true, requires = "reconstruct_filesystem")]
+    pub(crate) reconstruction_optional: bool,
 
     /// Supplement --reconstruct-filesystem with a directory index from the same volume (repeatable)
     #[arg(help_heading = Some("Input"), long, value_name = "FILE", requires = "reconstruct_filesystem", display_order = 102)]

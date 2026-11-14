@@ -201,6 +201,8 @@ Ein nicht gesichertes Artefakt ist eine normale Aufgabe mit dem Status `skipped`
 
 Jede gesammelte MFT erzeugt zusätzlich einen durchsuchbaren Verzeichnisbaum. Bestehende Tabellen bleiben unverändert; CSV, JSON und JSONL werden unterstützt.
 
+Bäume entstehen in einem privaten benachbarten Arbeitsverzeichnis und werden erst vollständig veröffentlicht. Behandelte Fehler und Unterbrechungen räumen es auf und erhalten den alten Baum. Erzwungenes Beenden kann `.juntei-reconstruction-*`-Verzeichnisse zurücklassen; diese blockieren keinen neuen Versuch und werden kein aktiver Volume-Baum.
+
 Ein aus dem Sammlungspfad abgeleitetes Laufwerk erhält etwa `FileSystem/C`. Die MFT selbst speichert keinen Laufwerksbuchstaben. Ohne erkennbare Bezeichnung gilt `UnknownVolume`; mehrere MFTs desselben Laufwerks bleiben getrennt, etwa `C-MFT-2`.
 
 Nicht zugewiesene Dateien und Verzeichnisse erhalten `-deleted`, einschließlich gelöschter Elternverzeichnisse. Erhaltene residente unbenannte DATA-Inhalte werden wiederhergestellt. Nicht residente oder unbekannte Inhalte werden leere Platzhalter; logische Größe und wiederhergestellte Bytes sind verschieden.
@@ -211,11 +213,11 @@ Nicht zugewiesene Dateien und Verzeichnisse erhalten `-deleted`, einschließlich
 
 `_Juntei-Reconstruction.csv` dokumentiert die Rekonstruktion: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Die Herkunft enthalten `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Laufwerk, Löschzustand und Verzeichnistyp werden ebenfalls erfasst. Ein unvollständiges Inventar endet auf .partial.csv; der endgültige Name entsteht erst nach Erfolg.
 
-`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
 
 Unlesbare oder beschädigte optionale I30-Eingaben werden als `i30_input_error` protokolliert; gültige MFT-Ergebnisse bleiben erhalten.
 
-Wiederhergestellte Dateien behalten ihre Erweiterung und können Schadsoftware enthalten: niemals ausführen. Reparse Points, ACLs, Originalzeiten und Ausführungsrechte werden nicht wiederhergestellt. Benannte alternative Streams sind keine normalen Dateien; dafür separat die residente Stream-Extraktion nutzen.
+Dateien mit wiederhergestelltem nicht leerem residentem Inhalt erhalten vor dem Schreiben `.dontrun`. Originalnamen bleiben im Inventar; leere Platzhalter behalten ihre Namen. Inhalte niemals ausführen. Reparse Points, ACLs, Originalzeiten und Ausführungsrechte werden nicht wiederhergestellt. Benannte Streams separat extrahieren.
 
 Auch leere Platzhalter benötigen Inodes und Verzeichnismetadaten. Bei Bedarf die Rekonstruktion überspringen:
 
@@ -223,7 +225,7 @@ Auch leere Platzhalter benötigen Inodes und Verzeichnismetadaten. Bei Bedarf di
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
 ```
 
-Mit Überschreiben kann Juntei eine vollständige frühere Rekonstruktion ersetzen, wenn alle Objekte zum Inventar passen. Unbekannte oder fehlende Dateien, Links, Junctions und unvollständige Inventare führen vor Änderungen zur Ablehnung. Dann ein neues Ausgabeziel verwenden.
+Überschreiben ersetzt nur vollständige inventarisierte Bäume ohne fehlende, unbekannte Objekte oder Links. Teilbäume und Zusatzdateien wie `.DS_Store` bleiben erhalten. Auto-parse überspringt nur die Rekonstruktion und protokolliert Verzeichnis und Grund im Log und beiden Manifesten; MFT und andere Parser laufen weiter. Schreibfehler werden separat gemeldet, führen insgesamt zu Fehlerstatus und erhalten geparste Ergebnisse. Der Einzelbefehl lehnt blockierte Ziele weiterhin ab.
 
 
 ## Ausgabestruktur { #output-layout }

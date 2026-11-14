@@ -374,6 +374,16 @@ struct TaskResult {
         skip_serializing_if = "Option::is_none"
     )]
     reconstruction_inventory: Option<String>,
+    #[serde(
+        rename = "ReconstructionStatus",
+        skip_serializing_if = "Option::is_none"
+    )]
+    reconstruction_status: Option<&'static str>,
+    #[serde(
+        rename = "ReconstructionError",
+        skip_serializing_if = "Option::is_none"
+    )]
+    reconstruction_error: Option<String>,
     /// Structured diagnostics emitted by a child while reading a staged placeholder.
     #[serde(skip)]
     image_errors: Vec<ImageProblem>,
@@ -1062,6 +1072,25 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         }
     }
 
+    let mut reconstruction_failures = 0;
+    for result in &results {
+        if let Some(state @ ("skipped" | "failed")) = result.reconstruction_status {
+            reconstruction_failures += usize::from(state == "failed");
+            p(
+                JunteiColor::Orange.rdg(no_color),
+                &format!(
+                    "  {} / filesystem reconstruction: {state}: {} (log: {})",
+                    result.computer,
+                    result
+                        .reconstruction_error
+                        .as_deref()
+                        .unwrap_or("see parser log"),
+                    shown(Path::new(&result.log))
+                ),
+                true,
+            );
+        }
+    }
     if image_errors.len() > staged_errors {
         error_msg(
             no_color,
@@ -1071,7 +1100,13 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             ),
         );
     }
-    i32::from(failed > 0 || succeeded == 0 || timeline_failed || !image_errors.is_empty())
+    i32::from(
+        failed > 0
+            || reconstruction_failures > 0
+            || succeeded == 0
+            || timeline_failed
+            || !image_errors.is_empty(),
+    )
 }
 
 fn discovered_roots(input: &Path, max_depth: usize) -> io::Result<BTreeMap<PathBuf, Vec<PathBuf>>> {
@@ -1751,15 +1786,12 @@ fn build_tasks(
                     .filter(|p| {
                         let (index_drive, index_anchor) = crate::mft_reconstruct::volume_hint(p);
                         index_anchor == anchor
-                            || (index_drive == drive && p.starts_with(&anchor))
-                            || (index_drive.is_none() && p.starts_with(&anchor))
+                            || p.starts_with(&anchor)
                             || (same_drive_inputs == 1 && drive.is_some() && index_drive == drive)
                     })
                     .cloned()
                     .collect();
-                let mut sources = vec![input.clone()];
-                sources.extend(indexes.iter().cloned());
-                crate::mft_reconstruct::validate(&destination, &sources, &[], opts.clobber)?;
+                task.args.push("--reconstruction-optional".into());
                 task.args.push("--reconstruct-filesystem".into());
                 task.args.push(destination.into_os_string());
                 for path in indexes {
@@ -2189,11 +2221,14 @@ fn run_task(
     );
     let mut error = None;
     let mut image_errors = Vec::new();
+    let mut reconstruction = None;
     let (mut status, exit_code, stdout, stderr) = match output {
         Ok(output) => {
             let stdout = paths.text(&String::from_utf8_lossy(&output.stdout));
-            let (stderr, problems) =
-                image_diagnostics(&String::from_utf8_lossy(&output.stderr), paths);
+            let (raw_stderr, outcome) =
+                crate::mft_reconstruct::take_outcome(&String::from_utf8_lossy(&output.stderr));
+            reconstruction = outcome;
+            let (stderr, problems) = image_diagnostics(&raw_stderr, paths);
             image_errors = problems;
             let combined = format!("{stdout}{stderr}");
             let skipped = !output.status.success() && no_artifact_message(&combined);
@@ -2276,8 +2311,17 @@ fn run_task(
         output_files: Vec::new(),
         reconstruction_root: reconstruction_root.map(|p| p.to_string_lossy().into_owned()),
         reconstruction_inventory: reconstruction_inventory
-            .filter(|p| p.is_file())
+            .filter(|p| {
+                p.is_file()
+                    && reconstruction.as_ref().is_some_and(|r| {
+                        r.status == crate::mft_reconstruct::ReconstructionStatus::Succeeded
+                    })
+            })
             .map(|p| p.to_string_lossy().into_owned()),
+        reconstruction_status: reconstruction.as_ref().map(|r| r.status.as_str()),
+        reconstruction_error: reconstruction
+            .and_then(|r| r.error)
+            .map(|error| paths.text(&error)),
         log: task.log.to_string_lossy().to_string(),
         error,
         image_errors,
@@ -2589,6 +2633,8 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
         "Command",
         "ReconstructionRoot",
         "ReconstructionInventory",
+        "ReconstructionStatus",
+        "ReconstructionError",
     ])?;
     for task in manifest.tasks {
         let host = manifest
@@ -2617,10 +2663,12 @@ fn write_manifest_csv(path: &Path, manifest: &Manifest<'_>) -> io::Result<()> {
             serde_json::to_string(&task.command).map_err(io::Error::other)?,
             task.reconstruction_root.clone().unwrap_or_default(),
             task.reconstruction_inventory.clone().unwrap_or_default(),
+            task.reconstruction_status.unwrap_or_default().to_string(),
+            task.reconstruction_error.clone().unwrap_or_default(),
         ])?;
     }
     for problem in manifest.image_errors {
-        let mut row = vec![String::new(); 20];
+        let mut row = vec![String::new(); 22];
         row[4] = format!("{}!/{}", problem.image, problem.path);
         row[5] = "disk-image".into();
         row[10] = "failed".into();

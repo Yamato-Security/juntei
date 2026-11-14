@@ -199,6 +199,8 @@ CSV 的 `$MFT` 輸出包含所有時間戳記與短檔名。登錄檔輸出包�
 
 每份收集的 MFT 也會建立可瀏覽的目錄樹。CSV、JSON 與 JSONL 模式的原有解析表格保持不變。
 
+目錄樹先在相鄰的私有工作區建立，完成後才公開。已處理的錯誤與中斷會清理工作區並保留原有樹。強制終止可能留下 `.juntei-reconstruction-*` 工作區，但不會阻止重試，也不會把不完整樹當作目前磁碟區。
+
 從收集路徑推測的磁碟機會使用例如 `FileSystem/C` 的目錄。MFT 本身沒有磁碟機代號。無法辨認時使用 `UnknownVolume`；同一代號的多份 MFT 仍分開，例如 `C-MFT-2`。
 
 MFT 中未配置的檔案與目錄加上 `-deleted`，子項路徑中的已刪除父目錄也一樣。仍存在的無名常駐 DATA 會還原。非常駐或無法取得的內容建立為空白預留檔；邏輯大小不代表還原的位元組數。
@@ -209,11 +211,11 @@ MFT 中未配置的檔案與目錄加上 `-deleted`，子項路徑中的已刪�
 
 `_Juntei-Reconstruction.csv` 記錄重建結果：`DataStatus`、`LogicalSize`、`RecoveredBytes`、`OriginalPath`、`OutputPath`。來源包含 `EntryNum`、`SN`、`ParentEntryNum`、`ParentSN`、`Source`、`FromSlack`、`Offset`，另記錄推測磁碟機、刪除狀態與目錄類型。未完成清單以 .partial.csv 結尾，成功後才使用最終檔名。
 
-`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
 
 無法讀取或損壞的選用 I30 輸入會記錄為 `i30_input_error`，有效的 MFT 結果仍予保留。
 
-還原檔案保留原副檔名，可能含惡意程式，絕不可執行。不還原重新解析點、ACL、原始時間戳記或執行權限。具名替代資料流需要另外使用常駐資料流擷取功能。
+具有非空還原常駐內容的檔案，會在寫入前加上 `.dontrun`。清單保留原始名稱；空白預留檔維持原名。絕不可執行還原內容。不還原重新解析點、ACL、原始時間或執行權限。具名資料流需另外擷取。
 
 即使空檔也使用 inode 與目錄中繼資料。若不需要重建可停用：
 
@@ -221,7 +223,7 @@ MFT 中未配置的檔案與目錄加上 `-deleted`，子項路徑中的已刪�
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
 ```
 
-啟用覆寫後，只有所有物件都符合已完成清單，才能取代之前的重建。額外或缺失的檔案、連結、junction 或未完成清單都會在變更解析結果前拒絕處理。此時請使用新的輸出目錄。
+覆寫只取代清單完整且沒有缺漏、額外物件或連結的樹。既有部分樹與 `.DS_Store` 等新增檔案會保留。Auto-parse 只跳過重建，在日誌與兩種清單記錄目錄和原因，MFT 與其他解析繼續執行。寫入失敗另行回報並讓整體退出狀態失敗，但保留解析結果。單獨的重建命令仍拒絕被阻擋的目的地。
 
 
 ## 輸出配置 { #output-layout }

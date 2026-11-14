@@ -190,31 +190,33 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 
 ## 파일 시스템 재구성 { #filesystem-reconstruction }
 
-수집한 MFT마다 탐색 가능한 트리도 생성한다. 기존 표는 CSV, JSON 및 JSONL 모드에서 그대로 유지된다.
+수집한 MFT마다 탐색 가능한 트리도 생성합니다. 기존 표는 CSV, JSON 및 JSONL 모드에서 그대로 유지됩니다.
 
-수집 경로에서 추정한 드라이브는 `FileSystem/C` 같은 디렉터리를 쓴다. MFT 자체에는 드라이브 문자가 없다. 알 수 없으면 `UnknownVolume`을 사용하고 같은 문자의 여러 MFT는 `C-MFT-2`처럼 분리한다.
+트리는 인접한 비공개 임시 작업 공간에서 만들고 완성된 후 게시합니다. 처리된 오류와 중단은 작업 공간을 정리하고 이전 트리를 보존합니다. 강제 종료나 전원 손실 시 `.juntei-reconstruction-*` 작업 공간이 남을 수 있지만 재시도를 막거나 불완전한 트리를 현재 볼륨으로 게시하지 않습니다.
 
-할당되지 않은 파일과 디렉터리에는 `-deleted`를 붙이며 삭제된 부모도 자손 경로에 반영한다. 남아 있는 이름 없는 상주 DATA는 복구한다. 비상주 또는 사용 불가 내용은 빈 파일로 만들며 논리 크기와 복구 바이트 수는 다르다.
+수집 경로에서 추정한 드라이브는 `FileSystem/C` 같은 디렉터리를 사용합니다. MFT 자체에는 드라이브 문자가 없습니다. 알 수 없으면 `UnknownVolume`을 사용하고 같은 문자의 여러 MFT는 `C-MFT-2`처럼 분리합니다.
 
-`-i30`는 삭제가 확인되지 않은 추가 인덱스 이름이다. MFT 상주 인덱스와 같은 볼륨에서 따로 수집한 I30을 사용한다. Slack에는 이름 변경이나 재균형 복사본도 남는다. 다른 파일 세대의 내용은 재사용하지 않는다.
+할당되지 않은 파일과 디렉터리에는 `-deleted`를 붙이며 삭제된 부모도 자손 경로에 반영합니다. 남아 있는 이름 없는 상주 DATA는 복구합니다. 비상주 또는 사용 불가 내용은 빈 파일로 만들며 논리 크기와 복구 바이트 수는 다릅니다.
 
-`_Juntei-Unresolved`에는 부모 참조 누락·재사용·순환 또는 과도한 깊이로 해석하지 못한 경로를 둔다. 안전하지 않은 이름은 이스케이프하고 충돌은 별도 저장하며 원래 이름은 목록에 남긴다. 긴 이름이 있으면 DOS 별칭은 생략하고 하드 링크는 독립 복사본으로 만든다.
+`-i30`는 삭제가 확인되지 않은 추가 인덱스 이름입니다. MFT 상주 인덱스와 같은 볼륨에서 따로 수집한 I30을 사용합니다. Slack에는 이름 변경이나 재균형 복사본도 남습니다. 다른 파일 세대의 내용은 재사용하지 않습니다.
 
-`_Juntei-Reconstruction.csv`에서 재구성을 확인한다: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. 출처 필드는 `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`다. 추정 드라이브, 삭제 상태와 디렉터리 유형도 기록한다. 부분 목록은 .partial.csv로 끝나며 성공한 후 최종 이름으로 바뀐다.
+`_Juntei-Unresolved`에는 부모 참조 누락·재사용·순환 또는 과도한 깊이로 해석하지 못한 경로를 둡니다. 안전하지 않은 이름은 이스케이프하고 충돌은 별도 저장하며 원래 이름은 목록에 남깁니다. 긴 이름이 있으면 DOS 별칭은 생략하고 하드 링크는 독립 복사본으로 만듭니다.
 
-`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+`_Juntei-Reconstruction.csv`에서 재구성을 확인합니다: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. 출처 필드는 `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`입니다. 추정 드라이브, 삭제 상태와 디렉터리 유형도 기록합니다. 부분 목록은 .partial.csv로 끝나며 성공한 후 최종 이름으로 바뀝니다.
 
-읽을 수 없거나 손상된 선택 I30 입력은 `i30_input_error`로 기록하며 유효한 MFT 결과는 보존한다.
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
 
-복구 파일은 원래 확장자를 유지하고 악성코드일 수 있으므로 실행하지 않는다. 재분석 지점, ACL, 원래 시간이나 실행 권한은 복원하지 않는다. 이름 있는 대체 스트림은 상주 스트림 추출 기능을 별도로 사용한다.
+읽을 수 없거나 손상된 선택 I30 입력은 `i30_input_error`로 기록하며 유효한 MFT 결과는 보존합니다.
 
-빈 파일도 inode와 디렉터리 메타데이터를 사용한다. 불필요하면 재구성을 끈다:
+비어 있지 않은 상주 내용을 복구한 파일에는 쓰기 전에 `.dontrun`을 붙입니다. 원래 이름은 목록에 보존하며 빈 자리표시자는 원래 이름을 유지합니다. 복구 내용을 실행하지 마십시오. 재분석 지점, ACL, 원래 시간과 실행 권한은 복원하지 않습니다. 이름 있는 대체 스트림은 별도 MFT 스트림 추출 옵션을 사용합니다.
+
+빈 파일도 inode와 디렉터리 메타데이터를 사용합니다. 불필요하면 재구성을 끕니다:
 
 ```bash
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
 ```
 
-덮어쓰기를 켜면 모든 객체가 완료된 목록과 일치할 때만 기존 재구성을 교체한다. 추가·누락 파일, 링크, 정션 또는 불완전한 목록이 있으면 결과를 바꾸기 전에 거부한다. 이때는 새 출력 경로를 사용한다.
+덮어쓰기는 완료된 목록과 일치하고 누락·미등록 항목이나 링크가 없는 트리만 교체합니다. 기존 부분 트리와 `.DS_Store` 등의 추가 파일은 보존합니다. auto-parse는 재구성만 건너뛰고 디렉터리와 이유를 로그 및 두 매니페스트에 기록합니다. MFT와 다른 파서는 계속 실행됩니다. 재구성 쓰기 실패는 별도로 보고하고 전체 실패 상태를 반환하되 파싱 결과를 보존합니다. 단독 재구성은 여전히 차단된 출력을 거부합니다.
 
 
 ## 출력 레이아웃 { #output-layout }

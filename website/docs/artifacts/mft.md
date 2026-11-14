@@ -60,7 +60,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -98,6 +98,12 @@ The resident data columns of `-i` are the same bytes: treat them as untrusted co
 `-t json -x` writes them, then the record's bytes. `-L` lists every name in a directory, in use and
 deleted, with its entry and sequence number, type, size and modified time. A directory is given by
 entry (`30`, `0x1E`, `30-1`) or by path (`\Windows\System32`, `C:/Windows`; case-insensitive).
+
+To reconstruct browsable file paths, use the example below. Non-resident content becomes empty placeholders. See [Filesystem reconstruction](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```
 
 ## CSV output fields
 
@@ -171,9 +177,3 @@ investigative CSV omits low-level structure. With `-x`, each JSON entry also has
 - [ys-ntfs-parser's mft crate](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram's mft parser](https://github.com/omerbenamram/mft)
 - [libfsntfs format documentation](https://github.com/libyal/libfsntfs/tree/main/documentation)
-
-To reconstruct browsable file paths, use the example below. Non-resident content becomes empty placeholders. See [Filesystem reconstruction](../commands/auto-parse.md#filesystem-reconstruction).
-
-```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
-```

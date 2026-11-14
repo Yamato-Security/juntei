@@ -202,6 +202,8 @@ Um artefato que não foi coletado gera uma tarefa `skipped` normal, não uma fal
 
 Cada MFT coletada também gera uma árvore navegável. As tabelas existentes não mudam nos modos CSV, JSON e JSONL.
 
+As árvores são criadas em um espaço privado adjacente e publicadas apenas completas. Erros e interrupções tratados limpam esse espaço e preservam a árvore anterior. Encerramentos forçados podem deixar pastas `.juntei-reconstruction-*`, mas elas não bloqueiam novas tentativas nem se tornam o volume ativo.
+
 A unidade inferida do caminho de coleta recebe, por exemplo, `FileSystem/C`. A MFT não armazena letras de unidade. Sem uma indicação reconhecida usa-se `UnknownVolume`; várias MFT permanecem separadas, por exemplo `C-MFT-2`.
 
 Arquivos e diretórios não alocados recebem `-deleted`, inclusive os pais excluídos nos caminhos descendentes. DATA residente sem nome é recuperada quando preservada. Conteúdo não residente ou indisponível vira arquivo vazio; tamanho lógico e bytes recuperados são diferentes.
@@ -212,11 +214,11 @@ Arquivos e diretórios não alocados recebem `-deleted`, inclusive os pais exclu
 
 `_Juntei-Reconstruction.csv` registra a reconstrução: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Proveniência: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Unidade inferida, exclusão e diretórios também são registrados. O inventário parcial termina em .partial.csv; o nome final aparece apenas após sucesso.
 
-`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
 
 Entradas I30 opcionais ilegíveis ou danificadas são registradas como `i30_input_error`, preservando os resultados MFT válidos.
 
-Os arquivos recuperados mantêm suas extensões e podem conter malware: nunca execute. Pontos de nova análise, ACLs, horários originais e permissões de execução não são restaurados. Fluxos alternativos nomeados exigem extração separada dos fluxos residentes.
+Arquivos com conteúdo residente recuperado não vazio recebem `.dontrun` antes da escrita. O inventário mantém os nomes originais; arquivos vazios conservam seus nomes. Nunca execute o conteúdo. Pontos de nova análise, ACLs, horários originais e permissões de execução não são restaurados. Extraia fluxos nomeados separadamente.
 
 Até arquivos vazios consomem inodes e metadados. Para pular a reconstrução:
 
@@ -224,7 +226,7 @@ Até arquivos vazios consomem inodes e metadados. Para pular a reconstrução:
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
 ```
 
-Com sobrescrita, uma reconstrução completa só é substituída quando todos os objetos correspondem ao inventário. Arquivos extras ou ausentes, links, junctions ou inventário incompleto causam recusa antes de alterar resultados. Nesses casos use uma saída nova.
+A sobrescrita substitui somente árvores completas inventariadas sem objetos ausentes, extras ou links. Árvores parciais e arquivos extras como `.DS_Store` são preservados. Auto-parse ignora apenas a reconstrução, registra diretório e motivo no log e nos dois manifestos e continua os outros parsers. Falhas de escrita são relatadas separadamente, retornam falha geral e preservam resultados analisados. O comando individual continua recusando destinos bloqueados.
 
 
 ## Layout da saída { #output-layout }

@@ -61,7 +61,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -99,6 +99,12 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 슬랙 내 이름을 출력한 다음 레코드의 바이트를 출력합니다. `-L`은 디렉터리의 모든 이름(사용 중인 것과 삭제된
 것)을 엔트리 및 시퀀스 번호, 유형, 크기, 수정 시간과 함께 나열합니다. 디렉터리는 엔트리(`30`, `0x1E`,
 `30-1`) 또는 경로(`\Windows\System32`, `C:/Windows`, 대소문자 구분 없음)로 지정합니다.
+
+다음 예제는 탐색 가능한 파일 경로를 재구성한다. 비상주 내용은 빈 파일로 만든다. 자세한 내용: [파일 시스템 재구성](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```
 
 ## CSV 출력 필드 { #csv-output-fields }
 
@@ -170,9 +176,3 @@ CSV에서 저수준 구조가 생략되는 경우 이를 사용하십시오. `-x
 - [ys-ntfs-parser의 mft 크레이트](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Omer Ben-Amram의 mft 파서](https://github.com/omerbenamram/mft)
 - [libfsntfs 형식 문서](https://github.com/libyal/libfsntfs/tree/main/documentation)
-
-다음 예제는 탐색 가능한 파일 경로를 재구성한다. 비상주 내용은 빈 파일로 만든다. 자세한 내용: [파일 시스템 재구성](../commands/auto-parse.md#filesystem-reconstruction).
-
-```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
-```

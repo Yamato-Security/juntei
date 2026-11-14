@@ -60,7 +60,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -98,6 +98,12 @@ juntei parse-ntfs mft -f '$MFT' -L '\Users\alice\Downloads'
 `-t json -x` เขียน แล้วตามด้วยไบต์ของเรคคอร์ด `-L` แสดงรายการทุกชื่อในไดเรกทอรี ทั้งที่ใช้งานอยู่และ
 ถูกลบ พร้อมหมายเลข entry และ sequence ชนิด ขนาด และเวลาที่แก้ไข ไดเรกทอรีระบุได้ด้วย
 entry (`30`, `0x1E`, `30-1`) หรือพาธ (`\Windows\System32`, `C:/Windows`; ไม่สนใจตัวพิมพ์เล็ก/ใหญ่)
+
+ตัวอย่างนี้สร้างพาธไฟล์ที่เปิดดูได้ เนื้อหา non-resident เป็นไฟล์ว่าง รายละเอียด: [การสร้างระบบไฟล์ขึ้นใหม่](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```
 
 ## ฟิลด์เอาต์พุต CSV { #csv-output-fields }
 
@@ -171,9 +177,3 @@ fallback ที่มีอยู่จะใส่เวลาสร้าง�
 - [mft crate ของ ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [mft parser โดย Omer Ben-Amram](https://github.com/omerbenamram/mft)
 - [เอกสารรูปแบบของ libfsntfs](https://github.com/libyal/libfsntfs/tree/main/documentation)
-
-ตัวอย่างนี้สร้างพาธไฟล์ที่เปิดดูได้ เนื้อหา non-resident เป็นไฟล์ว่าง รายละเอียด: [การสร้างระบบไฟล์ขึ้นใหม่](../commands/auto-parse.md#filesystem-reconstruction).
-
-```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
-```

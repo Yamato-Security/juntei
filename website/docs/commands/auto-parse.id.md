@@ -202,6 +202,8 @@ Artefak yang tidak dikumpulkan merupakan tugas `skipped` yang normal, bukan kega
 
 Setiap MFT yang dikumpulkan juga menghasilkan pohon yang dapat ditelusuri. Tabel lama tetap sama dalam mode CSV, JSON dan JSONL.
 
+Pohon dibuat di ruang privat di sebelah tujuan dan diterbitkan hanya setelah lengkap. Kesalahan dan interupsi tertangani membersihkannya serta menjaga pohon lama. Penghentian paksa dapat meninggalkan direktori `.juntei-reconstruction-*`; direktori itu tidak menghalangi percobaan ulang atau menjadi volume aktif.
+
 Huruf drive dari jalur pengumpulan menghasilkan direktori seperti `FileSystem/C`. MFT sendiri tidak menyimpan huruf drive. Tanpa label yang dikenali digunakan `UnknownVolume`; beberapa MFT tetap terpisah, misalnya `C-MFT-2`.
 
 Berkas dan direktori yang tidak dialokasikan mendapat `-deleted`, termasuk induk terhapus pada jalur turunannya. DATA residen tanpa nama dipulihkan jika masih ada. Konten nonresiden atau tidak tersedia menjadi berkas kosong; ukuran logis bukan jumlah byte yang dipulihkan.
@@ -212,11 +214,11 @@ Berkas dan direktori yang tidak dialokasikan mendapat `-deleted`, termasuk induk
 
 `_Juntei-Reconstruction.csv` mencatat rekonstruksi: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Asal data: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Drive perkiraan, penghapusan dan jenis direktori juga dicatat. Inventaris parsial berakhiran .partial.csv; nama akhir hanya terbit setelah berhasil.
 
-`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
 
 Masukan I30 opsional yang tidak terbaca atau rusak dicatat sebagai `i30_input_error` tanpa membuang hasil MFT yang valid.
 
-Berkas pulihan mempertahankan ekstensi asli dan dapat berisi malware: jangan dijalankan. Reparse point, ACL, waktu asli dan izin eksekusi tidak dipulihkan. Stream alternatif bernama memerlukan ekstraksi stream residen secara terpisah.
+Berkas dengan isi residen pulihan yang tidak kosong diberi `.dontrun` sebelum byte ditulis. Nama asli tetap di inventaris; berkas kosong mempertahankan namanya. Jangan jalankan isi pulihan. Reparse point, ACL, waktu asli dan izin eksekusi tidak dipulihkan. Ekstrak stream bernama secara terpisah.
 
 Berkas kosong pun memakai inode dan metadata direktori. Untuk melewati rekonstruksi:
 
@@ -224,7 +226,7 @@ Berkas kosong pun memakai inode dan metadata direktori. Untuk melewati rekonstru
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
 ```
 
-Dengan penimpaan, rekonstruksi lengkap hanya dapat diganti jika semua objek cocok dengan inventaris. Berkas tambahan atau hilang, link, junction atau inventaris tidak lengkap menyebabkan penolakan sebelum hasil berubah. Gunakan keluaran baru untuk kasus tersebut.
+Penimpaan hanya mengganti pohon lengkap yang sesuai inventaris tanpa objek hilang, tambahan atau link. Pohon parsial dan tambahan seperti `.DS_Store` dipertahankan. Auto-parse hanya melewati rekonstruksi, mencatat direktori dan alasan di log serta kedua manifest, dan meneruskan parser lain. Kegagalan tulis dilaporkan terpisah dengan status keseluruhan gagal tetapi hasil parsing tetap disimpan. Perintah mandiri tetap menolak tujuan terblokir.
 
 
 ## Tata letak keluaran { #output-layout }

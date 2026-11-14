@@ -60,7 +60,7 @@ Output:
   -o, --output <PATH>                   Save records
   -t, --output-type <TYPE>              csv, ys-ntfs-parser-csv, json, jsonl
   -e, --extract-resident-streams <DIR>  Extract resident $DATA streams
-      --reconstruct-filesystem <DIR>  Recreate names and resident content in a new tree
+      --reconstruct-filesystem <DIR>  Recreate a tree; recovered content gets .dontrun
       --reconstruction-i30 <FILE>      Supplement the tree with an I30 file (repeatable)
 
 CSV Output:
@@ -98,6 +98,12 @@ Les colonnes de données résidentes de `-i` contiennent les mêmes octets : tr
 `-t json -x` les écrit, puis les octets de l'enregistrement. `-L` liste chaque nom d'un répertoire, utilisé ou
 supprimé, avec son numéro d'entrée et de séquence, son type, sa taille et son heure de modification. Un répertoire est désigné par
 son entrée (`30`, `0x1E`, `30-1`) ou par son chemin (`\Windows\System32`, `C:/Windows` ; insensible à la casse).
+
+Cet exemple reconstruit des chemins consultables. Les contenus non résidents deviennent des fichiers vides. Détails : [Reconstruction du système de fichiers](../commands/auto-parse.md#filesystem-reconstruction).
+
+```bash
+juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
+```
 
 ## Champs de sortie CSV { #csv-output-fields }
 
@@ -171,9 +177,3 @@ d'investigation aplati omet la structure de bas niveau. Avec `-x`, chaque entré
 - [Crate mft de ys-ntfs-parser](https://github.com/Yamato-Security/ys-ntfs-parser/tree/main/mft)
 - [Parseur mft d'Omer Ben-Amram](https://github.com/omerbenamram/mft)
 - [Documentation du format libfsntfs](https://github.com/libyal/libfsntfs/tree/main/documentation)
-
-Cet exemple reconstruit des chemins consultables. Les contenus non résidents deviennent des fichiers vides. Détails : [Reconstruction du système de fichiers](../commands/auto-parse.md#filesystem-reconstruction).
-
-```bash
-juntei parse-ntfs mft -f '$MFT' --reconstruct-filesystem reconstructed
-```

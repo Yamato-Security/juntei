@@ -8,7 +8,11 @@
   from collected MFT records and available I30 directory indexes. Collection paths supply inferred
   drive labels; unknown volumes and additional captures remain separate. Deleted MFT names gain
   `-deleted`; unconfirmed index names gain `-i30`. Valid resident unnamed data is recovered, while
-  non-resident content becomes empty placeholders. A reconstruction inventory records provenance,
+  non-resident content becomes empty placeholders. Recovered non-empty content gets `.dontrun`
+  before being written, while original names remain in the inventory. Build privately and publish
+  only complete trees, so handled failures and interruptions leave no partial active volume.
+  Blocked automatic reconstruction is recorded separately without discarding MFT tables or
+  stopping other parsers. A reconstruction inventory records provenance,
   original paths, logical sizes and recovery status. Guard source paths, unsafe names, sequence
   reuse and output collisions; clobber replaces only complete inventoried trees without unrelated
   files or links. Add `--no-reconstruct-filesystem` to opt out, or use `parse-ntfs mft

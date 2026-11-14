@@ -68,6 +68,7 @@ fn public_mft_reconstruction_bytes_agree_with_independent_csv_resident_exports()
         root.to_str().unwrap(),
     ]));
     let records = rows(&root.join("_Juntei-Reconstruction.csv"));
+    assert!(records.iter().all(|r| r["Volume"] == "C"));
     let native = rows(&csv);
     let mut recovered = 0;
     for record in records
@@ -90,6 +91,7 @@ fn public_mft_reconstruction_bytes_agree_with_independent_csv_resident_exports()
             fs::read(root.join(&record["OutputPath"])).unwrap(),
             expected
         );
+        assert!(record["OutputPath"].ends_with(".dontrun"));
         recovered += 1;
     }
     assert_eq!(recovered, 22);
@@ -253,7 +255,7 @@ fn automatic_csv_json_and_jsonl_build_one_tree_and_leave_raw_files_out_of_siem()
 }
 
 #[test]
-fn auto_parse_can_opt_out_and_refuses_preexisting_trees_before_clobbering() {
+fn auto_parse_can_opt_out_and_skips_blocked_reconstruction_without_losing_tables() {
     let tmp = tempfile::tempdir().unwrap();
     let evidence = collection(tmp.path());
     let output = tmp.path().join("results");
@@ -283,8 +285,19 @@ fn auto_parse_can_opt_out_and_refuses_preexisting_trees_before_clobbering() {
         "2",
         "-C",
     ]);
-    assert!(!out.status.success());
+    success(&out);
     assert!(String::from_utf8_lossy(&out.stdout).contains("requires a new directory"));
+    let manifest: Value =
+        serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["Artifact"] == "mft")
+        .unwrap();
+    assert_eq!(task["Status"], "succeeded");
+    assert_eq!(task["ReconstructionStatus"], "skipped");
+    assert!(task.get("ReconstructionInventory").is_none());
     assert_eq!(fs::read(sentinel).unwrap(), b"keep");
     assert_eq!(fs::read(mft).unwrap(), before);
 }
@@ -421,4 +434,230 @@ fn an_unreadable_or_damaged_optional_index_does_not_discard_valid_mft_results() 
         .unwrap();
     assert!(problem["Notes"].contains("No INDX records"));
     assert!(problem["OutputPath"].is_empty());
+}
+
+#[test]
+fn partial_trees_and_finder_metadata_skip_only_reconstruction_and_keep_siem_results() {
+    let tmp = tempfile::tempdir().unwrap();
+    let evidence = collection(tmp.path());
+    for mode in ["partial", "finder"] {
+        let output = tmp.path().join(mode);
+        let timeline = output.join("timeline.jsonl");
+        let mut args = vec![
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-T",
+            "2",
+        ];
+        if mode == "partial" {
+            args.push("--no-reconstruct-filesystem");
+        }
+        success(&run(&args));
+        let root = output.join("HOST/FileSystem/C");
+        fs::create_dir_all(&root).unwrap();
+        let keep = root.join(if mode == "partial" {
+            "_Juntei-Reconstruction.partial.csv"
+        } else {
+            ".DS_Store"
+        });
+        fs::write(&keep, b"keep this existing file").unwrap();
+        let original = fs::read(output.join("HOST/FileSystem/MFT.csv")).unwrap();
+        success(&run(&[
+            "auto-parse",
+            "-d",
+            evidence.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-T",
+            "2",
+            "-C",
+            "-j",
+            timeline.to_str().unwrap(),
+        ]));
+        assert_eq!(fs::read(&keep).unwrap(), b"keep this existing file");
+        assert_eq!(
+            fs::read(output.join("HOST/FileSystem/MFT.csv")).unwrap(),
+            original
+        );
+        let manifest: Value =
+            serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
+        let task = manifest["Tasks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|r| r["Artifact"] == "mft" && r["Purpose"] == "artifact")
+            .unwrap();
+        assert_eq!(task["Status"], "succeeded");
+        assert_eq!(task["ReconstructionStatus"], "skipped");
+        assert!(task.get("ReconstructionInventory").is_none());
+        let error = task["ReconstructionError"]
+            .as_str()
+            .unwrap()
+            .replace('\\', "/");
+        assert!(error.contains("FileSystem/C"), "{error}");
+        assert!(
+            fs::read_to_string(timeline)
+                .unwrap()
+                .lines()
+                .any(|s| serde_json::from_str::<Value>(s).unwrap()["Artifact"] == "mft")
+        );
+        let csv = rows(&output.join("manifest.csv"));
+        let task = csv
+            .iter()
+            .find(|r| r["Artifact"] == "mft" && r["Purpose"] == "artifact")
+            .unwrap();
+        assert_eq!(task["ReconstructionStatus"], "skipped");
+        assert!(task["ReconstructionInventory"].is_empty());
+    }
+}
+
+#[test]
+fn one_letter_i30_parent_names_do_not_change_the_owning_volume() {
+    let tmp = tempfile::tempdir().unwrap();
+    let evidence = collection(tmp.path());
+    let host = evidence.join("HOST_F.TEST");
+    for relative in [
+        "uploads/ntfs/%5C%5C.%5CC%3A/Users/j",
+        "uploads/auto/C%3A/Users/j",
+    ] {
+        let dir = host.join(relative);
+        fs::create_dir_all(&dir).unwrap();
+        fs::copy(repo("test_files/i30/Logs_I30"), dir.join("$I30")).unwrap();
+    }
+    let output = tmp.path().join("parsed");
+    success(&run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-T",
+        "2",
+    ]));
+    let manifest: Value =
+        serde_json::from_slice(&fs::read(output.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|r| r["Artifact"] == "mft")
+        .unwrap();
+    let args = task["Command"].as_array().unwrap();
+    let inputs: Vec<_> = args
+        .windows(2)
+        .filter(|p| p[0] == "--reconstruction-i30")
+        .map(|p| p[1].as_str().unwrap().replace('\\', "/"))
+        .collect();
+    assert_eq!(
+        inputs
+            .iter()
+            .filter(|p| p.ends_with("/Users/j/$I30"))
+            .count(),
+        2,
+        "{inputs:?}"
+    );
+    let inventory = rows(&output.join(task["ReconstructionInventory"].as_str().unwrap()));
+    assert!(
+        inventory
+            .iter()
+            .any(|r| r["Source"].replace('\\', "/").contains("Users/j/$I30"))
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn interrupting_reconstruction_does_not_publish_a_partial_tree_and_clobber_can_retry() {
+    use std::time::{Duration, Instant};
+    let tmp = tempfile::tempdir().unwrap();
+    let source = tmp.path().join("$MFT");
+    let root = tmp.path().join("C");
+    let sample = fs::read(repo("test_files/mft/MFT")).unwrap();
+    {
+        use std::io::Write;
+        let mut out = fs::File::create(&source).unwrap();
+        for _ in 0..32 {
+            out.write_all(&sample).unwrap();
+        }
+    }
+    let mut child = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args([
+            "parse-ntfs",
+            "mft",
+            "-f",
+            source.to_str().unwrap(),
+            "--reconstruct-filesystem",
+            root.to_str().unwrap(),
+            "-q",
+            "-K",
+        ])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()
+        .unwrap();
+    let start = Instant::now();
+    loop {
+        let active = fs::read_dir(tmp.path())
+            .unwrap()
+            .filter_map(Result::ok)
+            .any(|e| {
+                e.file_name()
+                    .to_string_lossy()
+                    .starts_with(".juntei-reconstruction-")
+                    && e.path()
+                        .join("Tree/_Juntei-Reconstruction.partial.csv")
+                        .is_file()
+            });
+        if active {
+            break;
+        }
+        if start.elapsed() > Duration::from_secs(30) || child.try_wait().unwrap().is_some() {
+            let _ = child.kill();
+            let _ = child.wait();
+            panic!("did not reach reconstruction staging");
+        }
+        std::thread::sleep(Duration::from_millis(1));
+    }
+    assert!(!root.exists());
+    success(
+        &Command::new("kill")
+            .args(["-INT", &child.id().to_string()])
+            .output()
+            .unwrap(),
+    );
+    let start = Instant::now();
+    loop {
+        if let Some(status) = child.try_wait().unwrap() {
+            assert!(!status.success());
+            break;
+        }
+        if start.elapsed() > Duration::from_secs(20) {
+            let _ = child.kill();
+            let _ = child.wait();
+            panic!("interrupted reconstruction did not exit");
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert!(!root.exists());
+    assert!(
+        !fs::read_dir(tmp.path())
+            .unwrap()
+            .filter_map(Result::ok)
+            .any(|e| e
+                .file_name()
+                .to_string_lossy()
+                .starts_with(".juntei-reconstruction-"))
+    );
+    success(&run(&[
+        "parse-ntfs",
+        "mft",
+        "-f",
+        repo("test_files/mft/MFT").to_str().unwrap(),
+        "--reconstruct-filesystem",
+        root.to_str().unwrap(),
+        "-C",
+    ]));
+    assert!(root.join("_Juntei-Reconstruction.csv").is_file());
 }

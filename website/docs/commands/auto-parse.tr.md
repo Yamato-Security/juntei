@@ -206,6 +206,8 @@ Toplanmamış bir artefakt, başarısızlık değil, normal bir `skipped` görev
 
 Toplanan her MFT ayrıca gezilebilir bir ağaç üretir. Mevcut tablolar CSV, JSON ve JSONL kiplerinde değişmez.
 
+Ağaçlar komşu özel çalışma alanında oluşturulur ve yalnızca tamamlanınca yayımlanır. İşlenen hata ve kesintiler alanı temizler, eski ağacı korur. Zorla sonlandırma `.juntei-reconstruction-*` dizinleri bırakabilir; bunlar yeniden denemeyi engellemez veya etkin birim olmaz.
+
 Toplama yolundan çıkarılan sürücü `FileSystem/C` gibi bir dizin kullanır. MFT sürücü harfini saklamaz. Tanınan etiket yoksa `UnknownVolume` kullanılır; birden çok MFT ayrı kalır, örneğin `C-MFT-2`.
 
 Ayrılmamış dosya ve dizinlere, silinmiş üst dizinler dahil, `-deleted` eklenir. Kalan adsız yerleşik DATA içeriği kurtarılır. Yerleşik olmayan veya ulaşılamayan içerik boş dosya olur; mantıksal boyut kurtarılan bayt sayısı değildir.
@@ -216,11 +218,11 @@ Ayrılmamış dosya ve dizinlere, silinmiş üst dizinler dahil, `-deleted` ekle
 
 `_Juntei-Reconstruction.csv` yeniden oluşturmayı kaydeder: `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Kaynak alanları: `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Tahmini sürücü, silinme durumu ve dizin türü de kaydedilir. Kısmi envanter .partial.csv ile biter; son ad yalnızca başarıdan sonra oluşur.
 
-`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
 
 Okunamayan veya hasarlı isteğe bağlı I30 girdileri `i30_input_error` olarak kaydedilir; geçerli MFT sonuçları korunur.
 
-Kurtarılan dosyalar uzantılarını korur ve zararlı olabilir: çalıştırmayın. Reparse noktaları, ACL, özgün zamanlar veya yürütme izinleri geri yüklenmez. Adlandırılmış alternatif akışlar için yerleşik akış çıkarımını ayrıca kullanın.
+Boş olmayan kurtarılmış yerleşik içerik taşıyan dosyalar yazılmadan önce `.dontrun` alır. Özgün adlar envanterde kalır; boş dosyalar adlarını korur. İçeriği çalıştırmayın. Reparse noktaları, ACL, özgün zamanlar ve yürütme izinleri geri yüklenmez. Adlandırılmış akışları ayrıca çıkarın.
 
 Boş dosyalar bile inode ve dizin metaverisi tüketir. Yeniden oluşturmayı atlamak için:
 
@@ -228,7 +230,7 @@ Boş dosyalar bile inode ve dizin metaverisi tüketir. Yeniden oluşturmayı atl
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
 ```
 
-Üzerine yazma açıkken eski tam ağaç yalnızca tüm nesneler envanterle eşleşirse değiştirilir. Ek veya eksik dosya, bağlantı, junction ya da eksik envanter sonuçlar değişmeden reddedilir. Bu durumda yeni çıktı kullanın.
+Üzerine yazma yalnızca eksik, ek nesne veya bağlantı içermeyen tam envanterli ağacı değiştirir. Kısmi ağaçlar ve `.DS_Store` gibi ekler korunur. Auto-parse yalnızca yeniden oluşturmayı atlar; dizini ve nedeni günlük ve iki manifeste kaydeder, diğer ayrıştırıcılar sürer. Yazma hataları ayrı bildirilir ve genel hata durumu döndürür; ayrıştırılmış sonuçlar korunur. Tekil komut engelli hedefleri reddetmeye devam eder.
 
 
 ## Çıktı düzeni { #output-layout }

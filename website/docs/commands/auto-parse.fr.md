@@ -202,6 +202,8 @@ Un artefact qui n'a pas été collecté constitue une tâche `skipped` normale, 
 
 Chaque MFT collectée produit aussi une arborescence consultable. Les tables existantes restent inchangées en CSV, JSON et JSONL.
 
+Les arbres sont construits dans un espace privé voisin et publiés uniquement une fois complets. Les erreurs et interruptions traitées nettoient cet espace et préservent l’ancien arbre. Un arrêt forcé peut laisser des dossiers `.juntei-reconstruction-*` ; ils ne bloquent pas une nouvelle tentative et ne deviennent pas le volume actif.
+
 Le lecteur déduit du chemin de collecte donne par exemple `FileSystem/C`. La MFT ne stocke pas de lettre de lecteur. Sans indication reconnue, `UnknownVolume` est utilisé ; plusieurs MFT restent séparées, par exemple `C-MFT-2`.
 
 Les fichiers et dossiers non alloués reçoivent `-deleted`, y compris les parents supprimés dans les chemins descendants. Les DATA résidentes sans nom sont récupérées si elles subsistent. Les contenus non résidents ou indisponibles deviennent des fichiers vides ; taille logique et octets récupérés sont distincts.
@@ -212,11 +214,11 @@ Les fichiers et dossiers non alloués reçoivent `-deleted`, y compris les paren
 
 `_Juntei-Reconstruction.csv` décrit la reconstruction : `DataStatus`, `LogicalSize`, `RecoveredBytes`, `OriginalPath`, `OutputPath`. Provenance : `EntryNum`, `SN`, `ParentEntryNum`, `ParentSN`, `Source`, `FromSlack`, `Offset`. Le lecteur déduit, la suppression et le type dossier sont également enregistrés. L’inventaire partiel finit par .partial.csv ; le nom final n’apparaît qu’après réussite.
 
-`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
+`manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`, `ReconstructionStatus`, `ReconstructionError`.
 
 Les entrées I30 facultatives illisibles ou endommagées sont signalées par `i30_input_error` ; les résultats MFT valides sont conservés.
 
-Les fichiers récupérés gardent leur extension et peuvent contenir des logiciels malveillants : ne jamais les exécuter. Aucun point de réanalyse, ACL, horodatage original ou droit d’exécution n’est restauré. Extraire séparément les flux résidents pour les flux alternatifs nommés.
+Les fichiers au contenu résident récupéré non vide reçoivent `.dontrun` avant toute écriture. Les noms originaux restent dans l’inventaire ; les fichiers vides conservent leur nom. Ne jamais exécuter le contenu récupéré. Aucun point de réanalyse, ACL, horodatage original ou droit d’exécution n’est restauré. Extraire séparément les flux nommés.
 
 Même vides, les fichiers occupent des inodes et des métadonnées. Pour désactiver la reconstruction :
 
@@ -224,7 +226,7 @@ Même vides, les fichiers occupent des inodes et des métadonnées. Pour désact
 juntei auto-parse -d <EVIDENCE> -o <OUTPUT> --no-reconstruct-filesystem
 ```
 
-Avec l’écrasement activé, une reconstruction complète peut être remplacée uniquement si tous les objets correspondent à l’inventaire. Fichiers inconnus ou manquants, liens, jonctions ou inventaire incomplet entraînent un refus avant toute modification. Choisir alors une nouvelle sortie.
+L’écrasement remplace uniquement les arbres complets inventoriés sans objet manquant, inconnu ou lien. Les arbres partiels et ajouts comme `.DS_Store` sont conservés. Auto-parse ignore seulement la reconstruction et note le dossier et le motif dans le journal et les deux manifestes ; les autres analyses continuent. Les échecs d’écriture sont signalés séparément avec un statut global d’échec tout en conservant les résultats. La commande individuelle refuse toujours les destinations bloquées.
 
 
 ## Organisation de la sortie { #output-layout }
