@@ -213,6 +213,8 @@ Nicht zugewiesene Dateien und Verzeichnisse erhalten `-deleted`, einschließlich
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+Unlesbare oder beschädigte optionale I30-Eingaben werden als `i30_input_error` protokolliert; gültige MFT-Ergebnisse bleiben erhalten.
+
 Wiederhergestellte Dateien behalten ihre Erweiterung und können Schadsoftware enthalten: niemals ausführen. Reparse Points, ACLs, Originalzeiten und Ausführungsrechte werden nicht wiederhergestellt. Benannte alternative Streams sind keine normalen Dateien; dafür separat die residente Stream-Extraktion nutzen.
 
 Auch leere Platzhalter benötigen Inodes und Verzeichnismetadaten. Bei Bedarf die Rekonstruktion überspringen:

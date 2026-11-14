@@ -414,6 +414,9 @@ fn parse_one(
             .as_ref()
             .expect("enabled reconstruction");
         let summary = tree.write(destination, path, &opts.reconstruction_i30, opts.clobber)?;
+        for warning in &summary.warnings {
+            report_error(bar, &format!("Warning: {warning}"));
+        }
         if !opts.data_on_stdout() {
             progress::suspended(bar, || {
                 p_label(

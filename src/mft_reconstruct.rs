@@ -48,6 +48,8 @@ const INVENTORY_HEADER: &[&str] = &[
 const UNRESOLVED: &str = "_Juntei-Unresolved";
 const PARTIAL_INVENTORY: &str = "_Juntei-Reconstruction.partial.csv";
 const MAX_DEPTH: usize = 128;
+// macOS PATH_MAX is 1024 bytes; Linux permits 4096. Leave space for collision suffixes.
+const MAX_HOST_PATH_BYTES: usize = if cfg!(target_os = "macos") { 900 } else { 3500 };
 type Reference = (u64, u16);
 
 /// Only collection metadata can establish a drive letter; an MFT does not contain one.
@@ -311,10 +313,19 @@ impl Builder {
         clobber: bool,
     ) -> io::Result<Summary> {
         let mut this = self;
+        let mut input_errors = Vec::new();
         for file in i30_files {
             let shown =
-                crate::auto_parse::relative_path(source.parent().unwrap_or(Path::new(".")), file);
-            this.add_i30(file, &shown.to_string_lossy())?;
+                crate::auto_parse::relative_path(source.parent().unwrap_or(Path::new(".")), file)
+                    .to_string_lossy()
+                    .into_owned();
+            if let Err(error) = this.add_i30(file, &shown) {
+                if error.kind() == io::ErrorKind::Interrupted {
+                    return Err(error);
+                }
+                this.rejected += 1;
+                input_errors.push((shown, error.to_string()));
+            }
         }
         let mut disk = Disk::new(destination, clobber)?;
         let mut manifest = csv::WriterBuilder::new().has_headers(false).from_writer(
@@ -349,6 +360,32 @@ impl Builder {
         }
         let mut inventory =
             |row: Row<'_>| -> io::Result<()> { manifest.serialize(row).map_err(io::Error::other) };
+        for (source, message) in &input_errors {
+            summary
+                .warnings
+                .push(format!("Skipped reconstruction index {source}: {message}"));
+            inventory(Row {
+                volume: &volume,
+                drive,
+                source,
+                entry: None,
+                sequence: None,
+                parent_entry: None,
+                parent_sequence: None,
+                original: "",
+                output: "",
+                directory: false,
+                deletion: "unconfirmed",
+                data: "i30_input_error",
+                logical_size: None,
+                recovered: 0,
+                path_status: "unavailable",
+                from_slack: false,
+                offset: None,
+                notes: message,
+                file: "",
+            })?;
+        }
         for (&id, node) in &this.nodes {
             crate::interrupt::check()?;
             if id == 5 {
@@ -609,6 +646,7 @@ pub(crate) struct Summary {
     pub(crate) i30: u64,
     pub(crate) rejected: u64,
     pub(crate) unnamed: u64,
+    pub(crate) warnings: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -770,7 +808,9 @@ impl Disk {
         let name = component(name);
         let mut stem = format!("{name}{suffix}");
         let mut parent = parent.clone();
-        if self.root.as_os_str().len() + parent.path.as_os_str().len() + stem.len() > 3500 {
+        if self.root.as_os_str().len() + parent.path.as_os_str().len() + stem.len()
+            > MAX_HOST_PATH_BYTES
+        {
             let full = join_original(&parent.original, original);
             let hash = full.bytes().fold(0xcbf29ce484222325u64, |h, b| {
                 (h ^ u64::from(b)).wrapping_mul(0x100000001b3)

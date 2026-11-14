@@ -211,6 +211,8 @@ MFT 中未配置的檔案與目錄加上 `-deleted`，子項路徑中的已刪�
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+無法讀取或損壞的選用 I30 輸入會記錄為 `i30_input_error`，有效的 MFT 結果仍予保留。
+
 還原檔案保留原副檔名，可能含惡意程式，絕不可執行。不還原重新解析點、ACL、原始時間戳記或執行權限。具名替代資料流需要另外使用常駐資料流擷取功能。
 
 即使空檔也使用 inode 與目錄中繼資料。若不需要重建可停用：

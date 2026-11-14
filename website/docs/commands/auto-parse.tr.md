@@ -218,6 +218,8 @@ Ayrılmamış dosya ve dizinlere, silinmiş üst dizinler dahil, `-deleted` ekle
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+Okunamayan veya hasarlı isteğe bağlı I30 girdileri `i30_input_error` olarak kaydedilir; geçerli MFT sonuçları korunur.
+
 Kurtarılan dosyalar uzantılarını korur ve zararlı olabilir: çalıştırmayın. Reparse noktaları, ACL, özgün zamanlar veya yürütme izinleri geri yüklenmez. Adlandırılmış alternatif akışlar için yerleşik akış çıkarımını ayrıca kullanın.
 
 Boş dosyalar bile inode ve dizin metaverisi tüketir. Yeniden oluşturmayı atlamak için:

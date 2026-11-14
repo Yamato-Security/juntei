@@ -214,6 +214,8 @@ Berkas dan direktori yang tidak dialokasikan mendapat `-deleted`, termasuk induk
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+Masukan I30 opsional yang tidak terbaca atau rusak dicatat sebagai `i30_input_error` tanpa membuang hasil MFT yang valid.
+
 Berkas pulihan mempertahankan ekstensi asli dan dapat berisi malware: jangan dijalankan. Reparse point, ACL, waktu asli dan izin eksekusi tidak dipulihkan. Stream alternatif bernama memerlukan ekstraksi stream residen secara terpisah.
 
 Berkas kosong pun memakai inode dan metadata direktori. Untuk melewati rekonstruksi:

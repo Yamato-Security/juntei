@@ -220,7 +220,11 @@ fn automatic_csv_json_and_jsonl_build_one_tree_and_leave_raw_files_out_of_siem()
             .unwrap();
         assert_eq!(mft["Status"], "succeeded");
         let inventory = mft["ReconstructionInventory"].as_str().unwrap();
-        assert!(inventory.ends_with("/FileSystem/C/_Juntei-Reconstruction.csv"));
+        assert!(
+            inventory
+                .replace('\\', "/")
+                .ends_with("/FileSystem/C/_Juntei-Reconstruction.csv")
+        );
         assert!(!inventory.contains(tmp.path().to_str().unwrap()));
         let csv_manifest = rows(&output.join("manifest.csv"));
         let csv_mft = csv_manifest
@@ -377,6 +381,44 @@ fn multiple_volumes_and_duplicate_computer_names_never_share_reconstruction_task
                 .is_file()
         );
     }
-    assert!(roots.iter().any(|r| r.ends_with("/UnknownVolume")));
-    assert!(roots.iter().any(|r| r.ends_with("/D")));
+    assert!(
+        roots
+            .iter()
+            .any(|r| r.replace('\\', "/").ends_with("/UnknownVolume"))
+    );
+    assert!(roots.iter().any(|r| r.replace('\\', "/").ends_with("/D")));
+}
+
+#[test]
+fn an_unreadable_or_damaged_optional_index_does_not_discard_valid_mft_results() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path().join("C");
+    let damaged = tmp.path().join("$I30");
+    fs::write(&damaged, b"damaged").unwrap();
+    let out = run(&[
+        "parse-ntfs",
+        "mft",
+        "-f",
+        repo("test_files/mft/MFT").to_str().unwrap(),
+        "--reconstruct-filesystem",
+        root.to_str().unwrap(),
+        "--reconstruction-i30",
+        damaged.to_str().unwrap(),
+    ]);
+    success(&out);
+    assert!(String::from_utf8_lossy(&out.stdout).contains("Skipped reconstruction index"));
+    let inventory = rows(&root.join("_Juntei-Reconstruction.csv"));
+    assert_eq!(
+        inventory
+            .iter()
+            .filter(|r| r["DataStatus"] == "resident_recovered")
+            .count(),
+        22
+    );
+    let problem = inventory
+        .iter()
+        .find(|r| r["DataStatus"] == "i30_input_error")
+        .unwrap();
+    assert!(problem["Notes"].contains("No INDX records"));
+    assert!(problem["OutputPath"].is_empty());
 }

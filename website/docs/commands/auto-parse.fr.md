@@ -214,6 +214,8 @@ Les fichiers et dossiers non alloués reçoivent `-deleted`, y compris les paren
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+Les entrées I30 facultatives illisibles ou endommagées sont signalées par `i30_input_error` ; les résultats MFT valides sont conservés.
+
 Les fichiers récupérés gardent leur extension et peuvent contenir des logiciels malveillants : ne jamais les exécuter. Aucun point de réanalyse, ACL, horodatage original ou droit d’exécution n’est restauré. Extraire séparément les flux résidents pour les flux alternatifs nommés.
 
 Même vides, les fichiers occupent des inodes et des métadonnées. Pour désactiver la reconstruction :

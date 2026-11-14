@@ -240,6 +240,8 @@ Files and directories whose MFT records are unallocated gain `-deleted`. A delet
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+Unreadable or damaged optional I30 inputs are recorded as `i30_input_error` without discarding valid MFT results.
+
 Recovered files retain their original extensions and can contain malware: never execute them. Juntei does not restore reparse points, ACLs, original timestamps or executable permissions. Named alternate streams are not materialized as ordinary files; use the MFT resident-stream extraction option separately when needed.
 
 Creating a tree can add hundreds of thousands of files and consume inodes and directory metadata even when the placeholders are empty. Skip reconstruction when that is unnecessary:

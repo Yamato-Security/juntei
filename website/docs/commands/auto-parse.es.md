@@ -227,6 +227,8 @@ Los archivos y directorios no asignados reciben `-deleted`, también en las ruta
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+Las entradas I30 opcionales ilegibles o dañadas se registran como `i30_input_error` sin descartar resultados MFT válidos.
+
 Los archivos recuperados mantienen sus extensiones y pueden contener malware: no ejecutarlos. No se restauran puntos de reanálisis, ACL, tiempos originales ni permisos de ejecución. Los flujos alternativos con nombre requieren la extracción de flujos residentes por separado.
 
 Los archivos vacíos también consumen inodos y metadatos. Para omitir la reconstrucción:

@@ -204,6 +204,8 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+읽을 수 없거나 손상된 선택 I30 입력은 `i30_input_error`로 기록하며 유효한 MFT 결과는 보존한다.
+
 복구 파일은 원래 확장자를 유지하고 악성코드일 수 있으므로 실행하지 않는다. 재분석 지점, ACL, 원래 시간이나 실행 권한은 복원하지 않는다. 이름 있는 대체 스트림은 상주 스트림 추출 기능을 별도로 사용한다.
 
 빈 파일도 inode와 디렉터리 메타데이터를 사용한다. 불필요하면 재구성을 끈다:

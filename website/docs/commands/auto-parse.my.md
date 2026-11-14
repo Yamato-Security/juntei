@@ -214,6 +214,8 @@ metadata ပါဝင်ပါသည်။ Defender quarantine extraction ကိ
 
 `manifest.json` / `manifest.csv`: `ReconstructionRoot`, `ReconstructionInventory`.
 
+ဖတ်မရသော သို့မဟုတ် ပျက်စီးသော optional I30 ကို `i30_input_error` အဖြစ် မှတ်တမ်းတင်ပြီး မှန်ကန်သော MFT ရလဒ်ကို ဆက်ထိန်းထားသည်။
+
 ပြန်ရသောဖိုင်များတွင် မူလ extension ရှိပြီး malware ဖြစ်နိုင်သဖြင့် မဖွင့်မလုပ်ဆောင်ပါနှင့်။ Reparse point၊ ACL၊ မူလအချိန်နှင့် လုပ်ဆောင်ခွင့်များကို မပြန်ထားပါ။ အမည်ပါ alternate stream အတွက် resident stream extraction ကို သီးခြားသုံးပါ။
 
 ဖိုင်အလွတ်များလည်း inode နှင့် ဖိုင်တွဲ metadata ကိုသုံးသည်။ မလိုလျှင် ပြန်တည်ဆောက်မှုကို ကျော်နိုင်သည်:
