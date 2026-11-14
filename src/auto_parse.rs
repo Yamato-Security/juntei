@@ -1864,6 +1864,8 @@ fn reconstruction_index_inputs(mfts: &[PathBuf], indexes: &[PathBuf]) -> Vec<Vec
             anchors[i].0.is_none()
                 && index_anchor != anchors[i].1
                 && index_anchor.starts_with(&anchors[i].1)
+                && (index_anchor.parent() == Some(anchors[i].1.as_path())
+                    || explicit_index_volume_anchor(&index_anchor))
         }) && let Some(drive) = index_drive
         {
             let mut matches = anchors
@@ -1879,6 +1881,22 @@ fn reconstruction_index_inputs(mfts: &[PathBuf], indexes: &[PathBuf]) -> Vec<Vec
         }
     }
     assigned
+}
+
+/// A one-letter leaf below a user directory is not collection metadata. Only promote it
+/// above an unknown physical owner when the label is explicit or in a collector's drive slot.
+fn explicit_index_volume_anchor(anchor: &Path) -> bool {
+    let name = anchor.file_name().unwrap_or_default().to_string_lossy();
+    let name = name.to_ascii_lowercase();
+    name.ends_with([':', '$'])
+        || name.ends_with("%3a")
+        || name.ends_with("%24")
+        || anchor
+            .parent()
+            .and_then(Path::file_name)
+            .is_some_and(|parent| {
+                parent.eq_ignore_ascii_case("auto") || parent.eq_ignore_ascii_case("ntfs")
+            })
 }
 
 type NamePredicate = fn(&str) -> bool;
@@ -2920,6 +2938,16 @@ mod tests {
         assert_eq!(
             reconstruction_index_inputs(&mfts, &indexes),
             vec![vec![], vec![indexes[0].clone()], vec![indexes[1].clone()]]
+        );
+    }
+
+    #[test]
+    fn unknown_mft_does_not_lose_one_character_subfolders_to_another_drive() {
+        let mfts = ["host/$MFT", "host/J/$MFT"].map(PathBuf::from);
+        let indexes = ["host/Users/j/$I30", "host/Users/%6A/$I30"].map(PathBuf::from);
+        assert_eq!(
+            reconstruction_index_inputs(&mfts, &indexes),
+            vec![indexes.to_vec(), vec![]]
         );
     }
 

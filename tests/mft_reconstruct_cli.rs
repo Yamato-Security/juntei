@@ -575,8 +575,11 @@ fn nested_volumes_never_share_external_indexes_with_an_unknown_parent_volume() {
     fs::copy(repo("test_files/mft/MFT"), host.join("$MFT")).unwrap();
     fs::create_dir_all(host.join("D/Data")).unwrap();
     fs::copy(repo("test_files/mft/MFT"), host.join("D/$MFT")).unwrap();
-    for relative in ["$I30", "D/$I30", "D/Data/$I30"] {
-        let fixture = if relative == "D/Data/$I30" {
+    fs::create_dir_all(host.join("J")).unwrap();
+    fs::copy(repo("test_files/mft/MFT"), host.join("J/$MFT")).unwrap();
+    fs::create_dir_all(host.join("Users/j")).unwrap();
+    for relative in ["$I30", "D/$I30", "D/Data/$I30", "J/$I30", "Users/j/$I30"] {
+        let fixture = if matches!(relative, "D/Data/$I30" | "Users/j/$I30") {
             "test_files/i30/Photos_I30"
         } else {
             "test_files/i30/Logs_I30"
@@ -613,8 +616,9 @@ fn nested_volumes_never_share_external_indexes_with_an_unknown_parent_volume() {
             .map(|p| p[1].as_str().unwrap().replace('\\', "/"))
             .collect();
         let expected: &[&str] = match volume {
-            "UnknownVolume" => &["./HOST_F.TEST/$I30"],
+            "UnknownVolume" => &["./HOST_F.TEST/$I30", "./HOST_F.TEST/Users/j/$I30"],
             "D" => &["./HOST_F.TEST/D/$I30", "./HOST_F.TEST/D/Data/$I30"],
+            "J" => &["./HOST_F.TEST/J/$I30"],
             // Keep the auto/ntfs cross-branch volume match even when an unlabelled MFT
             // at the host root would otherwise claim every path below it.
             "C" => &["./HOST_F.TEST/uploads/auto/C%3A/Photos_I30"],
@@ -633,8 +637,9 @@ fn nested_volumes_never_share_external_indexes_with_an_unknown_parent_volume() {
             .collect();
         // Inventory sources are relative to their MFT's parent, not the host root.
         let expected_sources: &[&str] = match volume {
-            "UnknownVolume" => &["$I30"],
+            "UnknownVolume" => &["$I30", "Users/j/$I30"],
             "D" => &["$I30", "Data/$I30"],
+            "J" => &["$I30"],
             "C" => &["../../auto/C%3A/Photos_I30"],
             _ => unreachable!(),
         };
@@ -646,7 +651,7 @@ fn nested_volumes_never_share_external_indexes_with_an_unknown_parent_volume() {
             "{volume}: {external:?}"
         );
     }
-    assert_eq!(assigned.len(), 4);
+    assert_eq!(assigned.len(), 6);
 }
 
 #[cfg(unix)]
