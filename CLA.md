@@ -2,9 +2,11 @@
 
 **Version 1.0 — November 16, 2026**
 
-Juntei welcomes contributions. Before a contribution can be merged, its rights
-holders must agree to this Contributor License Agreement (CLA). Read the legal
-terms below and follow the signing instructions in [CONTRIBUTING.md](CONTRIBUTING.md).
+Juntei welcomes contributions. Before a contribution can be merged, we require
+acceptance of this Contributor License Agreement (CLA) covering the rights being
+licensed, along with any additional authorizations or consents required by
+section 5. Read the legal terms below and follow the signing instructions in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Summary
 
@@ -59,7 +61,10 @@ perpetual, irrevocable, royalty-free, fully paid-up, transferable, and sublicens
 through multiple tiers. The license permits reproduction, modification, creation
 of derivative works, public display and performance, distribution, and other use
 of the Contributions in source, binary, or other form, alone or combined with
-other material.
+other material. It expressly includes translation and adaptation, and the
+exploitation of derivative works, including the rights described in Articles 27
+and 28 of Japan's Copyright Act to the extent applicable. You consent to the
+transfer and sublicensing of this license as described above.
 
 Each Recipient may incorporate the Contributions and derivative works into
 Juntei or other products and services; distribute, sell, rent, host, or otherwise
@@ -111,6 +116,12 @@ rights. If an employer, client, or other party owns relevant rights, You must
 have its authorization covering these grants or arrange a separate agreement
 signed by an authorized representative. Signing in a personal capacity does
 not license someone else's rights.
+
+If another person retains moral rights in a Contribution whose copyright You
+own or are authorized to license, identify that person and obtain their consent
+or non-assertion undertaking covering the uses authorized by this agreement,
+to the extent permitted by applicable law. Your acceptance cannot waive,
+transfer, or restrict another person's moral rights.
 
 You identify third-party material separately, with its source, rights holder,
 license, required notices, and any known restrictions. Do not present such
@@ -168,6 +179,12 @@ in Japan as the court of first instance, to the extent permitted by mandatory
 applicable law. This section applies to this agreement; it does not amend the
 governing-law or jurisdiction terms of the repository's public license or any
 third-party license.
+
+### 10. Severability
+
+If a provision of this agreement is invalid or unenforceable, it is ineffective
+only to that extent. The remaining provisions continue in effect to the extent
+permitted by applicable law.
 
 ## Reference
 

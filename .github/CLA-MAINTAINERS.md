@@ -23,24 +23,29 @@ already signed. The repository has no CLA bot or required CLA status check.
 ## For each pull request
 
 1. Identify the PR author, commit authors and co-authors, patch-providing reviewers,
-   and the actual rights holders. Confirm who owns employee or contractor work.
+   and the actual rights holders. Confirm who owns employee or contractor work
+   and whether an individual retains moral rights separately from the copyright.
    A GitHub username, authorship field, bot commit, or DCO sign-off alone is not
    proof of ownership or agreement. Automated dependency updates still require
    review of the dependency's license.
-2. Find a verified acceptance for every rights holder or obtain one. Check that
+2. Verify that CLA acceptances cover the licensable rights in each contribution,
+   with any additional author consents required by section 5. Check that
    the authenticated signer posted their own statement, used their legal name,
    and named a full commit permalink to an adopted CLA version: `CLA.md` at a
    commit that is on `main` or `dev`, not a commit that exists only in a pull
    request or another branch. If the signer represents an entity, verify their
-   authority and which people and submissions the acceptance covers. A copied
-   statement posted by somebody else is not a signature.
+   authority and which people and submissions the acceptance covers. If someone
+   else retains moral rights, verify that person's required consent or
+   non-assertion undertaking; do not treat a company's signature as an exercise
+   of an individual's personal rights. A copied statement posted by somebody
+   else is not a signature.
 3. Archive the evidence outside contributor-editable PR content: the exact
    signed text, signer account login and numeric GitHub user ID, comment ID and
    permalink, UTC acceptance time, rights-holder and signatory names, capacity,
    contributors covered for an entity, CLA version, repository commit SHA, and a
-   copy and SHA-256 digest of that version's `CLA.md`. Keep corporate
-   authorization privately. Never merge a contributor-provided signature ledger
-   as proof that another person signed.
+   copy and SHA-256 digest of that version's `CLA.md`. Keep corporate authorization
+   and any separate moral-rights consents privately. Never merge a contributor-provided signature ledger as
+   proof that another person signed.
 4. Keep a retrievable, access-controlled backup. A public comment may be edited
    or deleted; its URL alone is not an adequate archive. Retain the original
    acceptance and any later correction separately. Record which PRs/commits and

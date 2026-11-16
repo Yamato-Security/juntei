@@ -7,10 +7,12 @@ credentials, or data You do not have permission to share.
 
 ## Contributor License Agreement
 
-Before we merge contributed material, every relevant rights holder must accept
-the [Juntei Contributor License Agreement](CLA.md) (CLA). This includes code,
-documentation, tests, and artwork. A bug report that only describes a problem and
-does not supply material for incorporation does not require a signature.
+Before we merge contributed material, we require acceptance of the
+[Juntei Contributor License Agreement](CLA.md) (CLA) covering the rights being
+licensed, along with any additional authorizations or author consents required
+by section 5. This includes code, documentation, tests, and artwork. A bug report
+that only describes a problem and does not supply material for incorporation
+does not require a signature.
 
 The CLA gives **Zachary Mathis** and **Shirofune Security Co., Ltd.** independent
 permission to use and relicense Your Contributions, including in **paid,
@@ -45,19 +47,20 @@ sign, or provide written authorization that covers this agreement.
    information should not be public.
 
 ```text
-I have read and agree to the Juntei Contributor License Agreement, version 1.0,
-at [full commit permalink to CLA.md]. I intend this comment as my electronic
-signature. I have authority to grant the rights in that agreement, including
-the right for Zachary Mathis and Shirofune Security Co., Ltd. to use and
-relicense my covered contributions in paid, proprietary, closed-source products
-and services. My acceptance covers my past and future contributions to
-Yamato-Security/juntei to the extent I own or am authorized to license them.
-I also agree to the Japanese governing law and exclusive first-instance
-jurisdiction of the Tokyo District Court specified in the agreement, subject
-to its mandatory-law qualification. If the rights holder named below is a legal
-entity, I accept on its behalf as its authorized representative. The entity is
-then the party granting the rights, and references to my contributions above
-mean its contributions, including those of the contributors listed below.
+I have read the Juntei Contributor License Agreement, version 1.0,
+at [full commit permalink to CLA.md]. I accept that agreement on behalf of the
+rights holder identified below, either for myself or as its authorized
+representative. I have authority to make this acceptance and intend this
+comment as my electronic signature of it.
+
+The rights holder grants the rights in that agreement, including permission
+for Zachary Mathis and Shirofune Security Co., Ltd. to use and relicense its
+covered contributions in paid, proprietary, closed-source products and services.
+This acceptance covers the rights holder's past and future contributions to
+Yamato-Security/juntei to the extent it owns or is authorized to license them.
+The rights holder also agrees to the Japanese governing law and exclusive
+first-instance jurisdiction of the Tokyo District Court specified in the
+agreement, subject to its mandatory-law qualification.
 
 Legal name of the rights holder: [individual's full name or legal entity name]
 Signer's full name: [full name]
@@ -83,6 +86,12 @@ Obtain permission before signing when an employer or client owns Your work.
 An authorized representative may use the same statement on behalf of the legal
 entity and identify the contributors and contributions covered. Merely listing
 a company name or having a company email address does not establish authority.
+
+If an individual author retains moral rights while a company owns the
+copyright, the company's acceptance alone cannot waive or restrict that
+individual's rights. Identify that situation and arrange the necessary consent
+or non-assertion undertaking from the actual author. An existing authorization
+may suffice if it covers the uses under this CLA; a maintainer must verify it.
 
 ### Private acceptance
 
