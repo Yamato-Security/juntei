@@ -17,6 +17,10 @@ permission to use and relicense Your Contributions, including in **paid,
 proprietary, closed-source products and services**. You keep ownership of Your
 work. Read the full agreement before signing.
 
+The CLA selects Japanese law and the Tokyo District Court as the exclusive court
+of first instance for disputes under the agreement, subject to mandatory
+applicable law.
+
 The CLA is separate from Juntei's public [RPL 1.5 license](LICENSE). It grants
 additional rights to the named recipients; it does not change existing public
 releases or remove third-party license obligations.
@@ -48,6 +52,9 @@ the right for Zachary Mathis and Shirofune Security Co., Ltd. to use and
 relicense my covered contributions in paid, proprietary, closed-source products
 and services. My acceptance covers my past and future contributions to
 Yamato-Security/juntei to the extent I own or am authorized to license them.
+I also agree to the Japanese governing law and exclusive first-instance
+jurisdiction of the Tokyo District Court specified in the agreement, subject
+to its mandatory-law qualification.
 
 Legal name of the rights holder: [individual's full name or legal entity name]
 Signer's full name: [full name]

@@ -22,6 +22,9 @@ This summary explains the intent; the legal terms govern the agreement.
   including your employer when applicable.
 - The public repository's license stays in effect. This CLA does not remove
   existing public-license rights or override third-party licenses.
+- Japanese law governs this agreement, and disputes are assigned to the Tokyo
+  District Court as the exclusive court of first instance, subject to mandatory
+  applicable law.
 - Posting a pull request or checking a box alone does not sign this agreement.
 
 ## Legal terms
@@ -153,6 +156,16 @@ The grants take effect upon Your acceptance and survive the end of Your
 participation. A later edit or removal of a signature record does not revoke a
 grant already made. A later version of this agreement does not amend the version
 You accepted without Your further agreement.
+
+### 9. Governing law and jurisdiction
+
+This agreement is governed by the laws of Japan, excluding its conflict-of-laws
+rules. For any dispute arising out of or relating to this agreement, You and
+each Recipient agree to the exclusive jurisdiction of the Tokyo District Court
+in Japan as the court of first instance, to the extent permitted by mandatory
+applicable law. This section applies to this agreement; it does not amend the
+governing-law or jurisdiction terms of the repository's public license or any
+third-party license.
 
 ## Reference
 

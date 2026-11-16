@@ -11,11 +11,15 @@ already signed. The repository has no CLA bot or required CLA status check.
 - Verify the recipients' legal names: Zachary Mathis and Shirofune Security
   Co., Ltd. Each receives its own license; do not substitute a GitHub organization
   name for a legal person or entity.
+- Review the Japanese governing-law and exclusive first-instance Tokyo District
+  Court jurisdiction clause, including its application to overseas contributors
+  and any mandatory-law limits. Confirm that the signing statement includes it.
 - Merge the agreed document into `main` or `dev` before requesting signatures.
   Signers link `CLA.md` at a commit on one of those branches, whichever branch
   their pull request targets, so a pull request to any branch can be covered.
   Future changes to the legal terms require a new version and fresh assent; do
   not silently change the text associated with a recorded acceptance.
+
 
 ## For each pull request
 
