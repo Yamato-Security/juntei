@@ -1,6 +1,6 @@
 # Juntei Contributor License Agreement
 
-**Version 1.0 — November 16, 2026**
+**Version 1.1 — November 17, 2026**
 
 Juntei welcomes contributions. Before a contribution can be merged, we require
 acceptance of this Contributor License Agreement (CLA) covering the rights being
@@ -16,8 +16,12 @@ This summary explains the intent; the legal terms govern the agreement.
 - You give **Zachary Mathis** and **Shirofune Security Co., Ltd.** permission to use,
   modify, distribute, sublicense, and relicense your contribution. Each receives
   these rights independently.
-- This explicitly includes paid, proprietary, closed-source products and services,
-  with no obligation under this CLA to publish their source or pay you royalties.
+- Your accepted contributions will remain available in the free, open-source
+  Juntei community edition, as described in section 7.
+- The same contributions may also be sold and used in paid, proprietary,
+  closed-source products and services. Their proprietary additions and
+  modifications need not be published under this CLA, and no royalties are owed
+  to You. The community copy remains free and open source.
 - You agree not to assert moral rights, such as the right to be named as an
   author, against these uses, to the extent the law allows.
 - You must have permission from anyone who owns rights in the contribution,
@@ -76,8 +80,12 @@ This is a separate grant directly from You. For rights that You grant under this
 agreement, the Recipients need not comply with the source-disclosure,
 reciprocity, or licensing requirements that would otherwise apply solely because
 Your Contribution was also offered under the repository's public license.
-This CLA imposes no requirement to disclose source code, publish modifications,
-offer a free edition, or pay royalties or other compensation to You.
+Except for the community-availability commitment in section 7, this CLA imposes
+no requirement to disclose the source of commercial products or services,
+publish their proprietary additions or modifications, offer those commercial
+products or services free of charge, or pay royalties or other compensation to
+You. Keeping the accepted community contribution open does not require making
+every commercial edition or its subsequent modifications open source.
 
 ### 3. Patent permission
 
@@ -142,12 +150,35 @@ extent applicable law allows, the Contributions are supplied as-is without
 warranties, including warranties of performance, merchantability, fitness for a
 particular purpose, or non-infringement.
 
-### 7. Public releases and earlier contributions
+### 7. Community edition, commercial reuse, and earlier contributions
+
+Each Recipient commits to keeping Your accepted Contributions publicly
+available, free of charge in source form, as part of the open-source Juntei
+community edition under its public [RPL 1.5 license](LICENSE), with separately
+identified third-party material remaining under its applicable licenses. If a
+Contribution is removed from an active release, its accepted source will remain
+available through the community edition's public release history or source
+archive. The community copy's public-license permissions remain in effect under
+that license's terms, and the Recipients will not make access to that copy
+conditional on purchasing a commercial product. This commitment applies to
+material that can lawfully be published; it does not require publication in
+violation of applicable law or a court order.
+
+The same Contributions may also be sold, sublicensed, or incorporated into
+paid, proprietary, closed-source products or services under section 2. Those
+commercial editions, their proprietary additions, and their subsequent
+modifications need not be published under this agreement. It is the accepted
+community contribution that remains freely available; this is not a promise
+that every edition, feature, or future modification will be free or open source.
+Each Recipient must require a successor or assignee that takes over its rights
+and position under this agreement to honor the community-availability
+commitment. This does not require commercial customers or sublicensees to
+publish their proprietary source.
 
 This agreement does not replace the [repository LICENSE](LICENSE), withdraw any
 rights already granted under it, or change the licenses of existing releases.
-The Recipients may use the separate rights granted here when licensing Your
-Contributions differently, including in a paid, closed-source edition.
+Commercial reuse does not turn the already published community contribution
+into closed-source-only software.
 
 Your acceptance covers Your own earlier Contributions under section 1. Adding
 this document to the repository does not bind a person who has not agreed to it.
@@ -169,6 +200,13 @@ The grants take effect upon Your acceptance and survive the end of Your
 participation. A later edit or removal of a signature record does not revoke a
 grant already made. A later version of this agreement does not amend the version
 You accepted without Your further agreement.
+
+Version 1.1 adds the community-availability commitment while retaining the
+commercial licensing rights. A signature to
+[version 1.0](https://github.com/Yamato-Security/juntei/blob/24d1568ffa896c26e0f27f993968e80d89e11674/CLA.md)
+is not automatically a signature to this version. Keep the earlier acceptance
+record and obtain fresh acceptance before recording a contributor as having
+agreed to version 1.1.
 
 ### 9. Governing law and jurisdiction
 

@@ -12,7 +12,11 @@ Read [CONTRIBUTING.md](https://github.com/Yamato-Security/juntei/blob/main/CONTR
 and the [CLA](https://github.com/Yamato-Security/juntei/blob/main/CLA.md).
 The CLA explicitly permits Zachary Mathis and Shirofune Security Co., Ltd. to
 use covered contributions in paid, proprietary, closed-source products and
-services. This checklist is not a signature; follow the signing instructions.
+services. Your accepted contributions will also remain available in the free,
+open-source community edition. Commercial editions and their proprietary
+additions or subsequent modifications need not be published under the CLA.
+This checklist is not a signature; follow the signing instructions for version
+1.1.
 
 - [ ] I have identified all contributors and rights holders, including relevant
       employer or client ownership.

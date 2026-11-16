@@ -17,7 +17,11 @@ does not require a signature.
 The CLA gives **Zachary Mathis** and **Shirofune Security Co., Ltd.** independent
 permission to use and relicense Your Contributions, including in **paid,
 proprietary, closed-source products and services**. You keep ownership of Your
-work. Read the full agreement before signing.
+work. **Your accepted contributions will also remain available in the free,
+open-source Juntei community edition.** The commercial copy may be sold or
+distributed under a closed-source license without withdrawing the community
+copy. Proprietary additions and later modifications to commercial editions need
+not be published under the CLA. Read the full agreement before signing.
 
 The CLA selects Japanese law and the Tokyo District Court as the exclusive court
 of first instance for disputes under the agreement, subject to mandatory
@@ -29,7 +33,7 @@ releases or remove third-party license obligations.
 
 ## How to sign
 
-Sign once for version 1.0; it covers Your own past and future contributions to
+Sign once for version 1.1; it covers Your own past and future contributions to
 this repository. Each contributor signs for their own rights. If You do not own
 the relevant rights, an authorized representative of the rights holder must
 sign, or provide written authorization that covers this agreement.
@@ -47,7 +51,7 @@ sign, or provide written authorization that covers this agreement.
    information should not be public.
 
 ```text
-I have read the Juntei Contributor License Agreement, version 1.0,
+I have read the Juntei Contributor License Agreement, version 1.1,
 at [full commit permalink to CLA.md]. I accept that agreement on behalf of the
 rights holder identified below, either for myself or as its authorized
 representative. I have authority to make this acceptance and intend this
@@ -56,6 +60,9 @@ comment as my electronic signature of it.
 The rights holder grants the rights in that agreement, including permission
 for Zachary Mathis and Shirofune Security Co., Ltd. to use and relicense its
 covered contributions in paid, proprietary, closed-source products and services.
+I understand that the accepted contributions will also remain available in the
+free, open-source community edition under section 7; commercial editions and
+their proprietary additions or later modifications need not be published.
 This acceptance covers the rights holder's past and future contributions to
 Yamato-Security/juntei to the extent it owns or is authorized to license them.
 The rights holder also agrees to the Japanese governing law and exclusive
@@ -73,6 +80,11 @@ Contributors covered: [entity only: GitHub accounts of covered contributors]
    link the previously verified signature or ask the maintainer to check the
    retained record. Re-sign if the rights holder changes or if You agree to a
    different version.
+
+Version 1.1 adds the community-availability commitment and keeps the commercial
+licensing rights. If You signed version 1.0, that signature remains a record of
+the earlier agreement; sign version 1.1 before we record acceptance of this
+version. Do not edit an old signature or substitute a new CLA URL into it.
 
 **A PR-template checkbox, a `Signed-off-by` line, a maintainer's comment on Your
 behalf, or opening a pull request alone is not the required acceptance.** For a
