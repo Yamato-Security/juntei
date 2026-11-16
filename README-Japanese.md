@@ -175,6 +175,13 @@ E01 も同じ読み取り専用のネイティブ処理と専用一時領域を�
 | **Microsoft Defender の隔離データ** (`Quarantine\Entries`、`ResourceData`、`Resources`) — 脅威の記録、元のパス、ハッシュ、ダウンロード元、復元可能な隔離コンテンツ。 | File |
 | **セキュリティ設定** (`SOFTWARE`、`SYSTEM`、`NTUSER.DAT`) — Defender と除外設定、UAC、WDigest・LSA の保護、RDP、ファイアウォール、SMBv1、PowerShell ログ、AMSI、イベントログ設定。既定の保護を弱める設定にフラグを付けます。 | Registry |
 
+## コントリビューション
+
+変更を提出する前に[コントリビューションガイド](CONTRIBUTING.md)を確認してください。
+コントリビューターは[Contributor License Agreement（CLA、英語）](CLA.md)への署名が必要です。
+この契約は、対象となる貢献を Zachary Mathis と Shirofune Security Co., Ltd. が有料の
+プロプライエタリ・クローズドソース版で使用する権利を与えます。貢献者は所有権を保持します。
+
 ## ライセンス
 
 Juntei は [Reciprocal Public License 1.5](LICENSE)（RPL-1.5）で公開されており、著作権は

@@ -1,0 +1,63 @@
+# CLA review and recordkeeping
+
+This checklist implements the manual acceptance process in
+[CONTRIBUTING.md](../CONTRIBUTING.md). It does not establish that anyone has
+already signed. The repository has no CLA bot or required CLA status check.
+
+## Before adoption
+
+- Have counsel review [CLA.md](../CLA.md) and this signing process, including
+  enforceability for the contributors and jurisdictions involved.
+- Verify the recipients' legal names: Zachary Mathis and Shirofune Security
+  Co., Ltd. Each receives its own license; do not substitute a GitHub organization
+  name for a legal person or entity.
+- Merge the agreed document before requesting signatures against its base-branch
+  permalink. Future changes to the legal terms require a new version and fresh
+  assent; do not silently change the text associated with a recorded acceptance.
+
+## For each pull request
+
+1. Identify the PR author, commit authors and co-authors, patch-providing reviewers,
+   and the actual rights holders. Confirm who owns employee or contractor work.
+   A GitHub username, authorship field, bot commit, or DCO sign-off alone is not
+   proof of ownership or agreement. Automated dependency updates still require
+   review of the dependency's license.
+2. Find a verified acceptance for every rights holder or obtain one. Check that
+   the authenticated signer posted their own statement, used their legal name,
+   and named a full commit permalink to an adopted CLA version. If the signer
+   represents an entity, verify their authority and which people and submissions
+   the acceptance covers. A copied statement posted by somebody else is not a
+   signature.
+3. Archive the evidence outside contributor-editable PR content: the exact
+   signed text, signer account login and numeric GitHub user ID, comment ID and
+   permalink, UTC acceptance time, rights-holder and signatory names, capacity,
+   CLA version, repository commit SHA, and a copy and SHA-256 digest of that
+   version's `CLA.md`. Keep corporate authorization privately. Never merge a
+   contributor-provided signature ledger as proof that another person signed.
+4. Keep a retrievable, access-controlled backup. A public comment may be edited
+   or deleted; its URL alone is not an adequate archive. Retain the original
+   acceptance and any later correction separately. Record which PRs/commits and
+   contributors were reviewed, the reviewing maintainer, and the review date.
+5. Review all third-party notices and restrictions. The CLA covers only rights
+   that the signer can grant. Track imported code, fixtures, dependencies, and
+   other independently licensed content separately.
+6. Record on the PR that the necessary acceptances were verified, referencing
+   the public signature or a private record identifier without disclosing private
+   details. Only then may the contribution be merged. If authorship or ownership
+   changes before merge, repeat the affected checks.
+
+Use records only for contribution licensing, provenance, and related legal
+administration; restrict access to private identifying material.
+
+## Earlier contributions and proprietary editions
+
+Introducing the CLA does not relicense unsigned contributors' existing work.
+Before a paid, closed-source release, inventory the relevant code, documentation,
+assets, and dependencies and confirm that each is covered by an accepted CLA,
+ownership, or another sufficient license. Obtain missing permissions or omit or
+replace the affected material. Preserve notices and other obligations that still
+apply. This Juntei CLA does not automatically apply to contributions made to
+separate Yamato Security parser repositories.
+
+The signed grant is irrevocable within its stated terms, but that does not cure
+an invalid signature or a signer who lacked the necessary rights or authority.
