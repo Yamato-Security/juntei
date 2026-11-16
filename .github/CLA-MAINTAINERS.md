@@ -6,6 +6,12 @@ already signed. The repository has no CLA bot or required CLA status check.
 
 ## Before adoption
 
+- Version 1.1 keeps the commercial licensing rights and adds the community-source
+  availability commitment in section 7. Review and honor both parts: accepted
+  community contributions stay publicly available free of charge under RPL 1.5,
+  while the same code may also be sold and used in proprietary editions. Keep a
+  public release-history or source-archive copy when removing a contribution
+  from the active branch, unless publication is prohibited by law or court order.
 - Have counsel review [CLA.md](../CLA.md) and this signing process, including
   enforceability for the contributors and jurisdictions involved.
 - Verify the recipients' legal names: Zachary Mathis and Shirofune Security
@@ -19,6 +25,10 @@ already signed. The repository has no CLA bot or required CLA status check.
   their pull request targets, so a pull request to any branch can be covered.
   Future changes to the legal terms require a new version and fresh assent; do
   not silently change the text associated with a recorded acceptance.
+- Preserve version 1.0 records. Request fresh acceptance of version 1.1 rather
+  than treating an earlier signature as assent to the new text. Continue making
+  earlier accepted community contributions available as project policy; do not
+  represent that this policy retroactively amends signed agreements.
 
 ## For each pull request
 
@@ -68,8 +78,13 @@ Before a paid, closed-source release, inventory the relevant code, documentation
 assets, and dependencies and confirm that each is covered by an accepted CLA,
 ownership, or another sufficient license. Obtain missing permissions or omit or
 replace the affected material. Preserve notices and other obligations that still
-apply. This Juntei CLA does not automatically apply to contributions made to
-separate Yamato Security parser repositories.
+apply. Keep the accepted community contributions publicly available as promised
+in section 7; selling a proprietary edition does not satisfy that commitment by
+itself. The commitment covers the accepted community contribution, not every
+subsequent commercial modification. If transferring a Recipient's rights and
+position under the agreement, require the successor or assignee to honor this
+commitment. This Juntei CLA does not automatically apply to contributions made
+to separate Yamato Security parser repositories.
 
 The signed grant is irrevocable within its stated terms, but that does not cure
 an invalid signature or a signer who lacked the necessary rights or authority.

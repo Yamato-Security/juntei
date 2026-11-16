@@ -183,6 +183,9 @@ Read the [contribution guide](CONTRIBUTING.md) before submitting changes.
 Contributors must sign the [Contributor License Agreement](CLA.md), which lets
 Zachary Mathis and Shirofune Security Co., Ltd. use covered contributions in
 paid, proprietary, closed-source editions while contributors retain ownership.
+**Accepted contributions will also remain available in the free, open-source
+community edition.** Commercial editions may include the same code alongside
+proprietary additions or modifications that need not be published under the CLA.
 
 ## License
 
