@@ -177,6 +177,13 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Microsoft Defender quarantine** (`Quarantine\Entries`, `ResourceData`, `Resources`) — Threat records, original paths, hashes, download origins, and recoverable quarantined content. | File |
 | **Security settings** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`) — Defender and its exclusions, UAC, WDigest and LSA protection, RDP, the firewall, SMBv1, PowerShell logging and AMSI, and event log settings, flagged where they weaken the default. | Registry |
 
+## Contributing
+
+Read the [contribution guide](CONTRIBUTING.md) before submitting changes.
+Contributors must sign the [Contributor License Agreement](CLA.md), which lets
+Zachary Mathis and Shirofune Security Co., Ltd. use covered contributions in
+paid, proprietary, closed-source editions while contributors retain ownership.
+
 ## License
 
 Juntei is released under the [Reciprocal Public License 1.5](LICENSE) (RPL-1.5) and copyright
