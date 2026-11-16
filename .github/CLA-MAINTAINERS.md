@@ -2,7 +2,10 @@
 
 This checklist implements the manual acceptance process in
 [CONTRIBUTING.md](../CONTRIBUTING.md). It does not establish that anyone has
-already signed. The repository has no CLA bot or required CLA status check.
+already signed. The [CLA action](cla/README.md) checks records in
+[signatures.json](cla/signatures.json) and publishes `cla/required`. It does not
+replace your first-time signature and authority review. A repository admin must
+configure that status as required before it blocks merges.
 
 ## Before adoption
 
@@ -65,8 +68,11 @@ already signed. The repository has no CLA bot or required CLA status check.
    other independently licensed content separately.
 6. Record on the PR that the necessary acceptances were verified, referencing
    the public signature or a private record identifier without disclosing private
-   details. Only then may the contribution be merged. If authorship or ownership
-   changes before merge, repeat the affected checks.
+   details. Add a verified entry to the default branch's
+   [signature registry](cla/signatures.json) through maintainer review. The bot
+   can then reuse it for later PRs; records proposed in the contributor's own PR
+   do not count. Only then may the contribution be merged. If authorship or
+   ownership changes before merge, repeat the affected checks.
 
 Use records only for contribution licensing, provenance, and related legal
 administration; restrict access to private identifying material.

@@ -18,6 +18,10 @@ additions or subsequent modifications need not be published under the CLA.
 This checklist is not a signature; follow the signing instructions for version
 1.1.
 
+The `cla/required` action checks the [verified signer registry](https://github.com/Yamato-Security/juntei/blob/main/.github/cla/signatures.json).
+First-time signatures need maintainer verification and registration before the
+check passes. Existing PRs do not need reopening.
+
 - [ ] I have identified all contributors and rights holders, including relevant
       employer or client ownership.
 - [ ] The necessary CLA signatures are linked below, will be posted in a comment
