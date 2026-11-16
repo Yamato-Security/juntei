@@ -77,9 +77,12 @@ Contributors covered: [entity only: GitHub accounts of covered contributors]
 ```
 
 4. A maintainer verifies and archives the acceptance. On later pull requests,
-   link the previously verified signature or ask the maintainer to check the
-   retained record. Re-sign if the rights holder changes or if You agree to a
-   different version.
+   the **`cla/required` GitHub Actions check** reuses the verified record in
+   [.github/cla/signatures.json](.github/cla/signatures.json). A missing record
+   fails the check; signing alone does not pass it before maintainer verification
+   and registration. Re-sign if the rights holder changes or if You agree to a
+   different version. Existing PRs do not need reopening; comment `/cla recheck`
+   after registration if needed.
 
 Version 1.1 adds the community-availability commitment and keeps the commercial
 licensing rights. If You signed version 1.0, that signature remains a record of
@@ -111,7 +114,8 @@ If Your legal name, corporate authorization, or signature must be private, ask a
 maintainer to arrange a private signing channel. Do not post addresses, identity
 documents, or confidential employment paperwork in a public issue or PR. The
 maintainer must retain the signed agreement and confirm coverage on the PR
-before merging. No signature service or CLA bot is currently configured.
+before merging and register an opaque private reference for the automated
+check. No private signed documents or legal names belong in the public registry.
 
 ## Third-party and earlier material
 
@@ -129,6 +133,9 @@ a proprietary edition.
 ## Before merging
 
 Maintainers must follow the [CLA review and recordkeeping checklist](.github/CLA-MAINTAINERS.md).
-It is a **manual merge requirement**, not an automated GitHub status check.
-Do not merge contributed material until the necessary acceptances and any
-third-party restrictions have been reviewed.
+The **`cla/required` check** verifies recorded acceptance for the current CLA and
+listed PR authors. A repository administrator must make it a required status
+check for it to block merging. Maintainers still manually verify first-time
+acceptances, rights-holder authority, author consents, and third-party
+restrictions. See [bot setup and the verified signer list](.github/cla/README.md).
+Do not merge contributed material until those reviews are complete.

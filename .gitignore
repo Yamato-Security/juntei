@@ -2,6 +2,8 @@
 *.csv
 *.json
 *.jsonl
+!.github/cla/policy.json
+!.github/cla/signatures.json
 !test_files/**
 .DS_Store
 .idea/
@@ -10,6 +12,7 @@
 /website/site/
 /.venv-docs/
 /website/scripts/__pycache__/
+__pycache__/
 output*
 
 # Local environment files may contain secrets.
