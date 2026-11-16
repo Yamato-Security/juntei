@@ -54,12 +54,16 @@ and services. My acceptance covers my past and future contributions to
 Yamato-Security/juntei to the extent I own or am authorized to license them.
 I also agree to the Japanese governing law and exclusive first-instance
 jurisdiction of the Tokyo District Court specified in the agreement, subject
-to its mandatory-law qualification.
+to its mandatory-law qualification. If the rights holder named below is a legal
+entity, I accept on its behalf as its authorized representative. The entity is
+then the party granting the rights, and references to my contributions above
+mean its contributions, including those of the contributors listed below.
 
 Legal name of the rights holder: [individual's full name or legal entity name]
 Signer's full name: [full name]
 GitHub account: @[username]
 Capacity: [signing for myself, or role and authority to sign for the entity]
+Contributors covered: [entity only: GitHub accounts of covered contributors]
 ```
 
 4. A maintainer verifies and archives the acceptance. On later pull requests,

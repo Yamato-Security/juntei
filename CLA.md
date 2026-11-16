@@ -45,7 +45,9 @@ successors, assignees, and sublicensees.
 that You intentionally submit to the
 [Yamato-Security/juntei repository](https://github.com/Yamato-Security/juntei),
 including its pull requests and issues, for incorporation into or improvement of
-Juntei, to the extent You own or are authorized to license that material. Material
+Juntei, to the extent You own or are authorized to license that material. For a
+legal entity, this includes material submitted on its behalf by the people it
+identifies when accepting this agreement or by later written notice. Material
 clearly designated "Not a Contribution" is excluded. The agreement covers Your
 previously submitted Contributions as well as those You submit in the future.
 It does not cover unrelated work merely because You own it.
