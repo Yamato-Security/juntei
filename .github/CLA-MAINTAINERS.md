@@ -11,9 +11,11 @@ already signed. The repository has no CLA bot or required CLA status check.
 - Verify the recipients' legal names: Zachary Mathis and Shirofune Security
   Co., Ltd. Each receives its own license; do not substitute a GitHub organization
   name for a legal person or entity.
-- Merge the agreed document before requesting signatures against its base-branch
-  permalink. Future changes to the legal terms require a new version and fresh
-  assent; do not silently change the text associated with a recorded acceptance.
+- Merge the agreed document into `main` or `dev` before requesting signatures.
+  Signers link `CLA.md` at a commit on one of those branches, whichever branch
+  their pull request targets, so a pull request to any branch can be covered.
+  Future changes to the legal terms require a new version and fresh assent; do
+  not silently change the text associated with a recorded acceptance.
 
 ## For each pull request
 
@@ -24,9 +26,10 @@ already signed. The repository has no CLA bot or required CLA status check.
    review of the dependency's license.
 2. Find a verified acceptance for every rights holder or obtain one. Check that
    the authenticated signer posted their own statement, used their legal name,
-   and named a full commit permalink to an adopted CLA version. If the signer
-   represents an entity, verify their authority and which people and submissions
-   the acceptance covers. A copied statement posted by somebody else is not a
+   and named a full commit permalink to an adopted CLA version: `CLA.md` at a
+   commit that is on `main` or `dev`, not a commit that exists only in a pull
+   request or another branch. If the signer represents an entity, verify their
+   authority and which people and submissions the acceptance covers. A copied statement posted by somebody else is not a
    signature.
 3. Archive the evidence outside contributor-editable PR content: the exact
    signed text, signer account login and numeric GitHub user ID, comment ID and

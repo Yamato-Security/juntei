@@ -29,10 +29,13 @@ the relevant rights, an authorized representative of the rights holder must
 sign, or provide written authorization that covers this agreement.
 
 1. Open a pull request and read [CLA.md](CLA.md).
-2. Open `CLA.md` on the pull request's **base branch**, press **Y** in GitHub to
+2. Open [`CLA.md` on `main`](https://github.com/Yamato-Security/juntei/blob/main/CLA.md),
+   whichever branch Your pull request targets. If the version You are signing
+   has not reached `main` yet, open it on `dev` instead. Press **Y** in GitHub to
    obtain its permalink, and copy that URL. It must identify a full commit SHA,
-   not a moving branch name. The agreement must have been adopted on the base
-   branch; a proposed replacement in Your pull request is not sufficient.
+   not a moving branch name. Sign only a version that has been merged into
+   `main` or `dev`; a copy or proposed change in a pull request, including Your
+   own, is not sufficient.
 3. Post the following statement as a new comment **from Your own GitHub account**.
    Replace the bracketed fields. Use the private process below if the identifying
    information should not be public.
