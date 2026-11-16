@@ -179,8 +179,8 @@ E01 も同じ読み取り専用のネイティブ処理と専用一時領域を�
 
 変更を提出する前に[コントリビューションガイド](CONTRIBUTING.md)を確認してください。
 コントリビューターは[Contributor License Agreement（CLA、英語）](CLA.md)への署名が必要です。
-この契約は、対象となる貢献を Zachary Mathis と Shirofune Security Co., Ltd. が有料の
-プロプライエタリ・クローズドソース版で使用する権利を与えます。貢献者は所有権を保持します。
+この契約により、Zachary Mathis と Shirofune Security Co., Ltd. は、対象となる貢献を有料の
+プロプライエタリ・クローズドソース版でも使用できます。貢献の著作権は貢献者に残ります。
 
 ## ライセンス
 

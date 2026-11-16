@@ -16,6 +16,8 @@ This summary explains the intent; the legal terms govern the agreement.
   these rights independently.
 - This explicitly includes paid, proprietary, closed-source products and services,
   with no obligation under this CLA to publish their source or pay you royalties.
+- You agree not to assert moral rights, such as the right to be named as an
+  author, against these uses, to the extent the law allows.
 - You must have permission from anyone who owns rights in the contribution,
   including your employer when applicable.
 - The public repository's license stays in effect. This CLA does not remove
@@ -27,7 +29,9 @@ This summary explains the intent; the legal terms govern the agreement.
 ### 1. Parties and scope
 
 "You" means the individual or legal entity that owns the relevant rights and
-accepts this agreement, or its authorized representative acting on its behalf.
+accepts this agreement. An individual may accept for a legal entity as its
+authorized representative; the entity, not the representative, is then the
+party granting the rights and making the representations in this agreement.
 
 "Recipients" means **Zachary Mathis** (GitHub: [@YamatoSecurity](https://github.com/YamatoSecurity))
 and **Shirofune Security Co., Ltd.** Each Recipient is a separate licensee and may
@@ -88,9 +92,12 @@ own work elsewhere. No trademark license is granted except permission to use
 Your name in reasonable authorship and contribution acknowledgements.
 
 To the extent permitted by applicable law, You consent to modifications and uses
-of Your Contributions authorized by this agreement and waive moral rights only
-to the extent necessary to allow those modifications and uses. Rights that
-cannot lawfully be waived remain unaffected.
+of Your Contributions authorized by this agreement, waive moral rights to the
+extent necessary to allow those modifications and uses, and agree not to assert
+any moral rights, including rights of attribution and integrity, against the
+Recipients or anyone who receives the Contributions through them. Where moral
+rights cannot be waived, this agreement not to assert them still applies to the
+extent permitted by applicable law.
 
 ### 5. Authority and third-party material
 
@@ -137,8 +144,9 @@ license terms.
 You accept by signing the statement described in
 [CONTRIBUTING.md](CONTRIBUTING.md), identifying this version and an immutable
 copy of its text, or by signing a separate written acceptance identifying the
-same agreement. An electronic acceptance made through Your authenticated GitHub
-account is intended as Your electronic signature. A representative must identify
+same agreement. An electronic acceptance posted from the signer's own
+authenticated GitHub account is intended as an electronic signature, made by You
+or by Your representative on Your behalf. A representative must identify
 the rights holder and their authority to sign for it.
 
 The grants take effect upon Your acceptance and survive the end of Your

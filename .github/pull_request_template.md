@@ -16,8 +16,8 @@ services. This checklist is not a signature; follow the signing instructions.
 
 - [ ] I have identified all contributors and rights holders, including relevant
       employer or client ownership.
-- [ ] I have linked the verified CLA acceptance(s) below or arranged private
-      acceptance with a maintainer.
+- [ ] I have linked each rights holder's CLA signature below, or arranged
+      private acceptance with a maintainer.
 - [ ] I have disclosed third-party sources, licenses, and required notices.
 
 CLA acceptance link(s) or private-record reference:
