@@ -747,7 +747,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "amcache" | "recycle-bin" | "shimcache" => "FileExistence",
             "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
             "networks" => "NetworkActivity",
-            "remote-access" | "ual" => "LateralMovement",
+            "rdp-cache" | "remote-access" | "ual" => "LateralMovement",
             "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => {
                 "Persistence"
             }
@@ -796,6 +796,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             | "jump-lists"
             | "defender-quarantine"
             | "outlook"
+            | "rdp-cache"
             | "recycle-bin" => ("parse-file", artifact),
             "registry" => ("parse-registry", "read"),
             "appcompat" => ("parse-registry", "app-compat"),
@@ -1147,7 +1148,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["Purpose"] == "json_timeline")
                     .count(),
-                45
+                46
             );
             assert!(
                 output
@@ -1293,7 +1294,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 90);
+    assert_eq!(tasks.len(), 92);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -22058,4 +22059,480 @@ fn prefetch_hash_validation_is_explicit_in_csv_json_and_execution_timelines() {
             }
         }
     }
+}
+
+// --- parse-file rdp-cache --------------------------------------------------------------------
+
+/// A `Cache????.bin` file: `RDP8bmp`, version 6, then `tiles` of (key, width, height), each a
+/// gradient (BGRA: blue x, green y, red key), top row first.
+fn rdp_bin(tiles: &[(u64, u16, u16)]) -> Vec<u8> {
+    let mut out = b"RDP8bmp\0".to_vec();
+    out.extend_from_slice(&6u32.to_le_bytes());
+    for &(key, width, height) in tiles {
+        out.extend_from_slice(&key.to_le_bytes());
+        out.extend_from_slice(&width.to_le_bytes());
+        out.extend_from_slice(&height.to_le_bytes());
+        for y in 0..height {
+            for x in 0..width {
+                out.extend_from_slice(&[x as u8 * 4, y as u8 * 4, key as u8, 0xFF]);
+            }
+        }
+    }
+    out
+}
+
+/// A 16-bit `bcache22.bmc` slot: the header, `data`, and the rest of the 64 × 64 slot `fill`.
+fn rdp_bmc22_slot(key: u64, width: u16, height: u16, flags: u32, data: &[u8], fill: u8) -> Vec<u8> {
+    let mut out = key.to_le_bytes().to_vec();
+    out.extend_from_slice(&width.to_le_bytes());
+    out.extend_from_slice(&height.to_le_bytes());
+    out.extend_from_slice(&(data.len() as u32).to_le_bytes());
+    out.extend_from_slice(&flags.to_le_bytes());
+    out.extend_from_slice(data);
+    out.resize(20 + 64 * 64 * 2, fill);
+    out
+}
+
+/// A BMP's width, height and the RGB of its top-left and bottom-right pixels.
+fn rdp_bmp(path: &Path) -> (u32, u32, [u8; 3], [u8; 3]) {
+    let b = std::fs::read(path).unwrap();
+    assert_eq!(&b[..2], b"BM", "{}", path.display());
+    let at = |i: usize| u32::from_le_bytes(b[i..i + 4].try_into().unwrap());
+    let (width, height) = (at(18), at(22));
+    assert_eq!(u16::from_le_bytes([b[28], b[29]]), 24);
+    let row = (width as usize * 3).div_ceil(4) * 4;
+    let pixel = |x: usize, stored_row: usize| {
+        let i = 54 + stored_row * row + x * 3;
+        [b[i + 2], b[i + 1], b[i]]
+    };
+    // Rows are stored bottom row first.
+    (
+        width,
+        height,
+        pixel(0, height as usize - 1),
+        pixel(width as usize - 1, 0),
+    )
+}
+
+/// One user's RDP cache folder in a collection: two `Cache????.bin` files, a 16-bit `.bmc`
+/// file of one uncompressed and one RLE-compressed tile, Windows 10's empty `bcache24.bmc`, and
+/// another program's `Cache0009.bin`.
+fn rdp_cache_collection(root: &Path) -> PathBuf {
+    let cache = root.join("C/Users/alice/AppData/Local/Microsoft/Terminal Server Client/Cache");
+    std::fs::create_dir_all(&cache).unwrap();
+    std::fs::write(
+        cache.join("Cache0000.bin"),
+        rdp_bin(&[(0x10, 64, 64), (0x20, 58, 28), (0x30, 64, 64)]),
+    )
+    .unwrap();
+    std::fs::write(cache.join("Cache0001.bin"), rdp_bin(&[(0x40, 62, 35)])).unwrap();
+    // Uncompressed 64 × 48 white over an earlier tile's gray rows; then a compressed 4 × 2 tile:
+    // a color run of red (the bottom row), then one of blue (the top row).
+    let mut bmc = rdp_bmc22_slot(0x50, 64, 48, 0x11, &[0xFF; 64 * 48 * 2], 0x84);
+    bmc.extend(rdp_bmc22_slot(
+        0x60,
+        4,
+        2,
+        0x19,
+        &[0x64, 0x00, 0xF8, 0x64, 0x1F, 0x00],
+        0,
+    ));
+    std::fs::write(cache.join("bcache22.bmc"), bmc).unwrap();
+    std::fs::write(cache.join("bcache24.bmc"), b"").unwrap();
+    std::fs::write(root.join("C/Cache0009.bin"), b"a game's shader cache").unwrap();
+    cache
+}
+
+#[test]
+fn rdp_cache_reads_bin_and_bmc_tiles_and_saves_images() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let cache = rdp_cache_collection(&evidence);
+    let out = dir.path().join("out");
+    let images = out.join("images");
+    let csv = out.join("tiles.csv");
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        csv.to_str().unwrap(),
+        "--extract",
+        images.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout
+            .contains("Cache files parsed: 4 (Cache????.bin: 2, bcache*.bmc: 2) (empty: 1)"),
+        "{}",
+        r.stdout
+    );
+    assert!(
+        r.stdout
+            .contains("Other files with cache names (not RDP bitmap caches): 1"),
+        "{}",
+        r.stdout
+    );
+    assert!(
+        r.stdout.contains("Tiles: 6 (single-color: 1)"),
+        "{}",
+        r.stdout
+    );
+    assert!(r.stdout.contains("Tiles by user: alice: 6"), "{}", r.stdout);
+    assert!(
+        r.stdout
+            .contains("(collages: 3, tiles: 6, ends of earlier tiles: 1)"),
+        "{}",
+        r.stdout
+    );
+    let (header, rows) = csv_rows(&csv);
+    assert_eq!(
+        header,
+        [
+            "SourceFile",
+            "User",
+            "TileIndex",
+            "Width",
+            "Height",
+            "SingleColor",
+            "TileImage",
+            "Collage",
+            "RemnantImage",
+            "Key",
+            "Format",
+            "FormatVersion",
+            "BitsPerPixel",
+            "Compressed",
+            "Flags",
+            "Offset",
+            "Problems"
+        ]
+    );
+    assert_eq!(rows.len(), 6);
+    let tile = |file: &str, index: &str| {
+        rows.iter()
+            .find(|r| r["SourceFile"].ends_with(file) && r["TileIndex"] == index)
+            .unwrap()
+    };
+    let narrow = tile("Cache0000.bin", "1");
+    assert_eq!(narrow["User"], "alice");
+    assert_eq!(
+        (narrow["Width"].as_str(), narrow["Height"].as_str()),
+        ("58", "28")
+    );
+    assert_eq!(narrow["Key"], "0000000000000020");
+    assert_eq!(narrow["Format"], "bin");
+    assert_eq!(narrow["FormatVersion"], "6");
+    assert_eq!(narrow["BitsPerPixel"], "32");
+    assert_eq!(narrow["Offset"], (12 + 12 + 64 * 64 * 4).to_string());
+    assert_eq!(narrow["Compressed"], "");
+    assert_eq!(narrow["SingleColor"], "false");
+    let folder = images.join("alice").join("Cache0000.bin");
+    assert_eq!(
+        Path::new(&narrow["TileImage"]),
+        folder.join("Cache0000.bin_0001.bmp")
+    );
+    assert_eq!(
+        Path::new(&narrow["Collage"]),
+        folder.join("Cache0000.bin_collage.png")
+    );
+    // The 58-pixel tile is 58 pixels wide, top row first: blue x × 4, green y × 4, red the key.
+    assert_eq!(
+        rdp_bmp(Path::new(&narrow["TileImage"])),
+        (58, 28, [0x20, 0, 0], [0x20, 27 * 4, 57 * 4])
+    );
+    let png = std::fs::read(folder.join("Cache0000.bin_collage.png")).unwrap();
+    assert_eq!(&png[1..4], b"PNG");
+    // 3 tiles: 3 columns of 64 pixels, one row.
+    assert_eq!(u32::from_be_bytes(png[16..20].try_into().unwrap()), 192);
+    assert_eq!(u32::from_be_bytes(png[20..24].try_into().unwrap()), 64);
+
+    let white = tile("bcache22.bmc", "0");
+    assert_eq!(white["Format"], "bmc");
+    assert_eq!(white["BitsPerPixel"], "16");
+    assert_eq!(white["Compressed"], "false");
+    assert_eq!(white["Flags"], "0x00000011");
+    assert_eq!(white["SingleColor"], "true");
+    // The 16 rows after the 48-row tile keep the earlier tile's gray (0x8484 in RGB565).
+    let remnant = Path::new(&white["RemnantImage"]);
+    assert!(remnant.ends_with("bcache22.bmc_old_0000.bmp"), "{white:?}");
+    assert_eq!(rdp_bmp(remnant), (64, 16, [132, 146, 33], [132, 146, 33]));
+    let compressed = tile("bcache22.bmc", "1");
+    assert_eq!(compressed["Compressed"], "true");
+    assert_eq!(compressed["RemnantImage"], "");
+    assert_eq!(
+        rdp_bmp(Path::new(&compressed["TileImage"])),
+        (4, 2, [0, 0, 255], [255, 0, 0]),
+        "the first row decoded is the bottom one"
+    );
+    assert!(rows.iter().all(|r| r["Problems"].is_empty()));
+    // RdpCacheStitcher reads a folder of BMP tiles: the collage is a PNG beside them.
+    let mut names: Vec<String> = std::fs::read_dir(&folder)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    assert_eq!(
+        names,
+        [
+            "Cache0000.bin_0000.bmp",
+            "Cache0000.bin_0001.bmp",
+            "Cache0000.bin_0002.bmp",
+            "Cache0000.bin_collage.png"
+        ]
+    );
+    // Nothing was written into the evidence.
+    assert_eq!(std::fs::read_dir(&cache).unwrap().count(), 4);
+
+    // JSON and JSONL: the same records, typed.
+    for format in ["json", "jsonl"] {
+        let r = run(&[
+            "parse-file",
+            "rdp-cache",
+            "-f",
+            cache.join("bcache22.bmc").to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        let records = json_documents(&r.stdout);
+        assert_eq!(records.len(), 2, "{format}");
+        assert_eq!(records[1]["Compressed"], true);
+        assert_eq!(records[1]["Width"], 4);
+        assert_eq!(records[1]["TileImage"], Value::Null);
+        assert!(!r.stdout.contains("Results Summary"), "data only on stdout");
+    }
+    // --collage-only and --collage-width.
+    let collages = dir.path().join("collages");
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-f",
+        cache.join("Cache0000.bin").to_str().unwrap(),
+        "--extract",
+        collages.to_str().unwrap(),
+        "--collage-only",
+        "--collage-width",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let png =
+        std::fs::read(collages.join("alice/Cache0000.bin/Cache0000.bin_collage.png")).unwrap();
+    assert_eq!(u32::from_be_bytes(png[16..20].try_into().unwrap()), 128);
+    assert_eq!(u32::from_be_bytes(png[20..24].try_into().unwrap()), 128);
+    assert_eq!(
+        std::fs::read_dir(collages.join("alice/Cache0000.bin"))
+            .unwrap()
+            .count(),
+        1
+    );
+    // Another program's file given with -f is an error.
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-f",
+        evidence.join("C/Cache0009.bin").to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        format!("{}{}", r.stdout, r.stderr).contains("does not start with RDP8bmp"),
+        "{}{}",
+        r.stdout,
+        r.stderr
+    );
+}
+
+#[test]
+fn rdp_cache_damage_is_reported_and_inputs_and_images_are_protected() {
+    let dir = tempfile::tempdir().unwrap();
+    let cache = rdp_cache_collection(dir.path());
+    let mut damaged = rdp_bin(&[(1, 64, 64), (2, 64, 64)]);
+    damaged.truncate(damaged.len() - 1000);
+    std::fs::write(cache.join("Cache0002.bin"), &damaged).unwrap();
+    let out = dir.path().join("out.csv");
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-f",
+        cache.join("Cache0002.bin").to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(r.stdout.contains("With problems: 1"), "{}", r.stdout);
+    let (_, rows) = csv_rows(&out);
+    assert_eq!(rows.len(), 2);
+    assert!(rows[0]["Problems"].is_empty());
+    assert_eq!(
+        rows[1]["Problems"],
+        "The file ends inside the tile's pixels (15384 of 16384 bytes)"
+    );
+    assert_eq!(rows[1]["SingleColor"], "");
+
+    // The records never replace a cache file, even with -C.
+    let input = cache.join("Cache0001.bin");
+    let before = std::fs::read(&input).unwrap();
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-f",
+        input.to_str().unwrap(),
+        "-o",
+        input.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&input).unwrap(), before);
+
+    // Images already there are kept without -C, and reported.
+    let images = dir.path().join("images");
+    let args = |clobber: bool| {
+        let mut args = vec![
+            "parse-file",
+            "rdp-cache",
+            "-f",
+            input.to_str().unwrap(),
+            "--extract",
+            images.to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+            "-K",
+            "-q",
+        ];
+        if clobber {
+            args.push("-C");
+        }
+        args
+    };
+    let mut first = args(false);
+    first.push("-C");
+    assert_eq!(run(&first).code, 0);
+    let tile = images.join("alice/Cache0001.bin/Cache0001.bin_0000.bmp");
+    std::fs::write(&tile, b"kept").unwrap();
+    std::fs::remove_file(&out).unwrap();
+    let r = run(&args(false));
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert_eq!(std::fs::read(&tile).unwrap(), b"kept");
+    let (_, rows) = csv_rows(&out);
+    assert!(rows[0]["Problems"].contains("already exists"), "{rows:?}");
+    assert_eq!(rows[0]["TileImage"], "");
+    let r = run(&args(true));
+    assert_eq!(r.code, 0);
+    assert_ne!(std::fs::read(&tile).unwrap(), b"kept");
+}
+
+#[test]
+fn auto_parse_saves_rdp_cache_collages_and_tiles_on_request() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let host = evidence.join("HOST");
+    rdp_cache_collection(&host);
+    let config = host.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    std::fs::write(host.join("client_info.json"), br#"{"hostname":"HOST"}"#).unwrap();
+    let out = dir.path().join("parsed");
+    let timeline = dir.path().join("all.jsonl");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-j",
+        timeline.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+    let tasks: Vec<&Value> = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|t| t["Artifact"] == "rdp-cache")
+        .collect();
+    assert_eq!(tasks.len(), 2, "the records, and their -j run");
+    assert!(
+        tasks.iter().all(|t| t["Status"] == "succeeded"),
+        "{tasks:?}"
+    );
+    let images = out.join("HOST/LateralMovement/RdpCache");
+    let (_, rows) = csv_rows(&out.join("HOST/LateralMovement/RdpCache.csv"));
+    assert_eq!(rows.len(), 6);
+    let row = rows
+        .iter()
+        .find(|r| r["SourceFile"].ends_with("Cache0000.bin"))
+        .unwrap();
+    // Paths from the output directory, never absolute; collages only by default.
+    assert_eq!(
+        Path::new(&row["Collage"]),
+        Path::new(".")
+            .join("HOST/LateralMovement/RdpCache/alice/Cache0000.bin/Cache0000.bin_collage.png")
+    );
+    assert_eq!(row["TileImage"], "");
+    let files = walk_files(&images);
+    assert_eq!(files.len(), 3, "{files:?}");
+    assert!(files.iter().all(|f| f.extension().unwrap() == "png"));
+    // The -j run writes no images of its own; the timeline has the tiles' records.
+    let records = std::fs::read_to_string(&timeline).unwrap();
+    assert_eq!(
+        records
+            .lines()
+            .filter(|l| l.contains(r#""Artifact":"rdp-cache""#))
+            .count(),
+        6
+    );
+    // super-timeline takes them as records without times.
+    let st = dir.path().join("st.jsonl");
+    let r = run(&[
+        "super-timeline",
+        "-f",
+        timeline.to_str().unwrap(),
+        "-o",
+        st.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+
+    // --extract-rdp-tiles adds the tiles; -C first clears the earlier images.
+    std::fs::write(images.join("stale.png"), b"x").unwrap();
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "--extract-rdp-tiles",
+        "-C",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(!images.join("stale.png").exists());
+    let files = walk_files(&images);
+    assert_eq!(
+        files
+            .iter()
+            .filter(|f| f.extension().unwrap() == "bmp")
+            .count(),
+        7,
+        "6 tiles and the end of an earlier one: {files:?}"
+    );
 }

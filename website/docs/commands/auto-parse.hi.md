@@ -31,7 +31,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-पार्सरों को पथ चाहिए; Juntei पार्सरों द्वारा पढ़ी जाने वाली फ़ाइलों को सीमित बफ़र से निजी अस्थायी स्थान में कॉपी करता है: रजिस्ट्री हाइव और उनके ट्रांज़ैक्शन लॉग, NTFS मेटाडेटा फ़ाइलें, डेटाबेस, Prefetch फ़ाइलें, शॉर्टकट, Jump List, Outlook फ़ाइलें, रीसायकल बिन की इंडेक्स फ़ाइलें और Defender क्वारंटीन फ़ोल्डर। बाकी हर फ़ाइल अपने मूल संशोधन समय वाली खाली प्लेसहोल्डर बनती है, इसलिए डायरेक्टरी और पथ डिस्क जैसे ही दिखते हैं। persistence-hunter किसी प्लेसहोल्डर की सामग्री इमेज से तभी पढ़ता है जब उसे ज़रूरत हो, जैसे किसी परसिस्टेंस प्रविष्टि द्वारा संदर्भित निष्पादन योग्य फ़ाइल। **परिणामों के अलावा कॉपी की गई फ़ाइलों के लिए पर्याप्त स्थान रखें।** समर्थित होने पर शून्य क्षेत्रों को स्पार्स रूप में लिखा जाता है। नाम, संरचना, हार्ड लिंक और संशोधन समय सुरक्षित रहते हैं। LNK और Jump List के स्रोत समय मूल NTFS मेटाडेटा स्नैपशॉट से आते हैं, अस्थायी फ़ाइलों से नहीं। पार्सर त्रुटियों सहित सामान्य समापन प्रतियाँ हटाता है; जबरन समाप्ति उन्हें छोड़ सकती है। स्रोत केवल पढ़ने योग्य रहता है; लंबित VHDX लॉग सिर्फ़ मेमोरी में लागू होते हैं।
+पार्सरों को पथ चाहिए; Juntei पार्सरों द्वारा पढ़ी जाने वाली फ़ाइलों को सीमित बफ़र से निजी अस्थायी स्थान में कॉपी करता है: रजिस्ट्री हाइव और उनके ट्रांज़ैक्शन लॉग, NTFS मेटाडेटा फ़ाइलें, डेटाबेस, Prefetch फ़ाइलें, शॉर्टकट, Jump List, Outlook फ़ाइलें, रीसायकल बिन की इंडेक्स फ़ाइलें, RDP बिटमैप कैश और Defender क्वारंटीन फ़ोल्डर। बाकी हर फ़ाइल अपने मूल संशोधन समय वाली खाली प्लेसहोल्डर बनती है, इसलिए डायरेक्टरी और पथ डिस्क जैसे ही दिखते हैं। persistence-hunter किसी प्लेसहोल्डर की सामग्री इमेज से तभी पढ़ता है जब उसे ज़रूरत हो, जैसे किसी परसिस्टेंस प्रविष्टि द्वारा संदर्भित निष्पादन योग्य फ़ाइल। **परिणामों के अलावा कॉपी की गई फ़ाइलों के लिए पर्याप्त स्थान रखें।** समर्थित होने पर शून्य क्षेत्रों को स्पार्स रूप में लिखा जाता है। नाम, संरचना, हार्ड लिंक और संशोधन समय सुरक्षित रहते हैं। LNK और Jump List के स्रोत समय मूल NTFS मेटाडेटा स्नैपशॉट से आते हैं, अस्थायी फ़ाइलों से नहीं। पार्सर त्रुटियों सहित सामान्य समापन प्रतियाँ हटाता है; जबरन समाप्ति उन्हें छोड़ सकती है। स्रोत केवल पढ़ने योग्य रहता है; लंबित VHDX लॉग सिर्फ़ मेमोरी में लागू होते हैं।
 
 होस्ट खोज, CSV/JSON/JSONL और `-j` सामान्य पाइपलाइन इस्तेमाल करते हैं। `manifest.json` का `Image` मूल इमेज बताता है; `EvidenceRoot` अंदर का सापेक्ष पथ बताता है। पढ़ने की त्रुटियाँ और असुरक्षित नाम `ImageErrors` तथा `manifest.csv` की असफल पंक्तियों में दर्ज होते हैं। पढ़े जा सकने वाले परिणाम सुरक्षित रहते हैं; अधूरा इनपुट कोड 1 देता है। खतरनाक या अस्पष्ट नाम बदले नहीं जाते। नामित NTFS स्ट्रीम अतिरिक्त फ़ाइलों की तरह निकाली नहीं जातीं; सामान्य फ़ाइलों के रूप में एकत्र आर्टिफ़ैक्ट उपलब्ध रहते हैं।
 
@@ -167,6 +167,8 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
 - LNK shortcuts
 - Jump Lists
 - Recycle Bin: deleted items के मूल paths, sizes, deletion times और users
+- RDP bitmap caches: उपयोगकर्ता द्वारा देखी गई remote screens के tiles, हर cache file की collage
+  image के साथ
 - ShimCache
 - Persistence Hunter (allow/block profiles के साथ 131 cross-source persistence checks)
 - Defender quarantine metadata
@@ -292,6 +294,9 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -357,7 +362,7 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `FileExistence` | Amcache, Recycle Bin, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies और routes; SRUM connections, traffic और push notifications |
-| `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares; User Access Logging (किसी server के roles के clients) |
+| `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares; RDP bitmap caches (remote screens के tiles); User Access Logging (किसी server के roles के clients) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM और DAM, FeatureUsage और pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU गतिविधि, UserAssist |
 | `Registry` | सामान्य hive keys और values, recover किए गए records सहित |
@@ -375,7 +380,7 @@ Amcache और Jump Lists प्रत्येक के लिए उनकी
 `NetworkActivity`, `ProcessExecution` और `SystemInformation` में रखी जाती हैं, एक साझा
 `SystemInformation/SRUM-logs.txt` file के साथ। कोई `logs/` subdirectories नहीं बनाई जातीं।
 
-Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` और
@@ -391,6 +396,9 @@ SRUM tables अपनी श्रेणी के ठीक अंतर्ग�
 User Access Logging tables `LateralMovement` में होती हैं, हर table के लिए एक file, जैसे
 `UAL-Clients.csv` और `UAL-SystemIdentity.csv`, साथ में `UAL-logs.txt`;
 [उपयोगकर्ता एक्सेस लॉगिंग (UAL)](../artifacts/ual.md#automatic-parsing) देखें।
+RDP bitmap cache records `LateralMovement/RdpCache.csv` में होते हैं, और हर cache file का collage
+`LateralMovement/RdpCache/<user>/<cache file>/` में होता है, और `--extract-rdp-tiles` दिए जाने पर उसके पास
+हर tile भी; [RDP बिटमैप कैश](../artifacts/rdp-cache.md#automatic-parsing) देखें।
 Web browser tables `BrowserActivity` में होती हैं: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` और `Browser-FormHistory.csv`, साथ में `Browser-logs.txt`;
 [वेब ब्राउज़र](../artifacts/browser.md#automatic-parsing) देखें।
@@ -560,6 +568,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -579,8 +588,9 @@ Display Settings:
 जहाँ व्यावहारिक हो, नई output directory का उपयोग करें। `-C` इस run के लिए केवल सटीक उत्पन्न
 targets को हटाता या overwrite करता है, ताकि अब अनुपस्थित कोई आर्टिफ़ैक्ट पुराना परिणाम न छोड़ सके। यह
 असंबंधित files या पूरे output tree को delete नहीं करता। यह parsing से पहले प्रत्येक computer की
-`SecurityProducts/DefenderQuarantined/` directory, और पिछले flat layout की आरक्षित `defender-quarantined/`
-directory को भी हटाता है, चाहे नया run `-x` का उपयोग करे या नहीं।
+`SecurityProducts/DefenderQuarantined/` और `LateralMovement/RdpCache/` directories, और पिछले flat layout की
+आरक्षित `defender-quarantined/` directory को भी हटाता है, चाहे नया run `-x` या `--extract-rdp-tiles` का
+उपयोग करे या नहीं।
 
 पुराने flat layout से बदलते समय नई output directory का उपयोग करें। पुरानी CSV/JSON files
 स्वचालित रूप से स्थानांतरित या delete नहीं की जातीं।

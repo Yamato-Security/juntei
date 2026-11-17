@@ -131,6 +131,7 @@ attack. The adapters intentionally keep these distinctions:
 | SRUM | Provider timestamp/bucket, connection start, explicit start/end interval fields and application-identifier metadata. Bytes, duration and other counters are not dates. |
 | LNK | Target MAC timestamps, tracking-identifier creation and shell-item times. They describe stored target metadata, not necessarily when the shortcut was opened. |
 | Jump Lists | Entry last-use metadata, tracking-identifier creation and embedded LNK target times. The default omits collection-side container file times. |
+| RDP bitmap cache | No events: cached tiles have no times. Their records stay in the parsed input. |
 | Recycle Bin | When each item was moved to the bin, with the bin's user, the original path and whether the deleted content was collected. It is not when the bin was emptied, and not the item's own file times. |
 | Defender quarantine | Entry timestamp and stored resource creation/access/write times. Extraction times are not evidence of endpoint activity. |
 | BAM, UserAssist, FeatureUsage | Recorded activity fields where present, with key last-write context kept distinct. A counter without a time does not create an event. |

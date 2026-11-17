@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Парсерам потрібні шляхи: Juntei копіює файли, які читають парсери, у приватний тимчасовий каталог з обмеженими буферами: кущі реєстру та їхні журнали транзакцій, файли метаданих NTFS, бази даних, файли Prefetch, ярлики, Jump Lists, файли Outlook, індексні файли кошика й папки карантину Defender. Кожен інший файл стає порожнім заповнювачем з початковим часом зміни, тож каталоги й шляхи виглядають так само, як на диску. persistence-hunter читає вміст заповнювача з образу лише тоді, коли він потрібен, наприклад виконуваний файл, на який вказує запис персистентності. **Потрібне місце для скопійованих файлів**, окрім результатів. Нульові області записуються як розріджені, якщо це підтримується. Зберігаються імена, структура, жорсткі посилання та час зміни. Часи джерел LNK і Jump Lists беруться зі знімка оригінальних метаданих NTFS, ніколи з тимчасових копій. Нормальне завершення, навіть з помилками парсерів, видаляє копії; примусове завершення може залишити їх. Джерело лише для читання; незастосований журнал VHDX відтворюється тільки в пам’яті.
+Парсерам потрібні шляхи: Juntei копіює файли, які читають парсери, у приватний тимчасовий каталог з обмеженими буферами: кущі реєстру та їхні журнали транзакцій, файли метаданих NTFS, бази даних, файли Prefetch, ярлики, Jump Lists, файли Outlook, індексні файли кошика, кеші растрових зображень RDP і папки карантину Defender. Кожен інший файл стає порожнім заповнювачем з початковим часом зміни, тож каталоги й шляхи виглядають так само, як на диску. persistence-hunter читає вміст заповнювача з образу лише тоді, коли він потрібен, наприклад виконуваний файл, на який вказує запис персистентності. **Потрібне місце для скопійованих файлів**, окрім результатів. Нульові області записуються як розріджені, якщо це підтримується. Зберігаються імена, структура, жорсткі посилання та час зміни. Часи джерел LNK і Jump Lists беруться зі знімка оригінальних метаданих NTFS, ніколи з тимчасових копій. Нормальне завершення, навіть з помилками парсерів, видаляє копії; примусове завершення може залишити їх. Джерело лише для читання; незастосований журнал VHDX відтворюється тільки в пам’яті.
 
 Пошук хостів, CSV/JSON/JSONL і `-j` використовують звичайний конвеєр. `Image` у `manifest.json` позначає оригінальний образ, `EvidenceRoot` — внутрішній відносний шлях. Помилки читання й небезпечні імена записуються в `ImageErrors` та рядки помилок `manifest.csv`. Читабельні результати зберігаються; неповний ввід повертає код 1. Небезпечні чи неоднозначні імена не перейменовуються. Іменовані потоки NTFS не видобуваються як окремі файли; артефакти, зібрані як звичайні файли, доступні.
 
@@ -167,6 +167,8 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - ярлики LNK
 - Jump Lists
 - кошик: початкові шляхи, розміри, час видалення та користувачі видалених елементів
+- кеші растрових зображень RDP: плитки віддалених екранів, які бачив користувач, і зображення-колаж кожного
+  файлу кешу
 - ShimCache
 - Persistence Hunter (131 перевірка закріплення за кількома джерелами з профілями дозволу/блокування)
 - метадані карантину Defender
@@ -292,6 +294,9 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -357,7 +362,7 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `FileExistence` | Amcache, кошик, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, журнал USN |
 | `NetworkActivity` | Мережеві профілі, інтерфейси, спільні ресурси, проксі портів і маршрути; підключення, трафік і push-сповіщення SRUM |
-| `LateralMovement` | Вихідні підключення користувачів через віддалений робочий стіл, PuTTY і WinSCP, підключені диски та спільні ресурси; журналювання доступу користувачів (клієнти ролей сервера) |
+| `LateralMovement` | Вихідні підключення користувачів через віддалений робочий стіл, PuTTY і WinSCP, підключені диски та спільні ресурси; кеші растрових зображень RDP (плитки віддалених екранів); журналювання доступу користувачів (клієнти ролей сервера) |
 | `Persistence` | Конфігурація завантаження (BCD), автозапуск через реєстр, служби, TaskCache |
 | `ProcessExecution` | Сумісність програм, BAM і DAM, FeatureUsage і закріплені елементи, MuiCache, Prefetch, хронологія Prefetch, активність програм/CPU у SRUM, UserAssist |
 | `Registry` | Загальні ключі та значення кущів, включно з відновленими записами |
@@ -375,7 +380,7 @@ Amcache і Jump Lists мають по одному спільному журна
 в `NetworkActivity`, `ProcessExecution` і `SystemInformation` зі спільним
 файлом `SystemInformation/SRUM-logs.txt`. Підкаталоги `logs/` не створюються.
 
-Типові імена файлів CSV: `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Типові імена файлів CSV: `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` і
@@ -391,6 +396,9 @@ Amcache і Jump Lists мають по одному спільному журна
 Таблиці журналювання доступу користувачів розміщуються в `LateralMovement`, по одному файлу на таблицю, наприклад
 `UAL-Clients.csv` і `UAL-SystemIdentity.csv`, разом із `UAL-logs.txt`; див.
 [Журналювання доступу користувачів (UAL)](../artifacts/ual.md#automatic-parsing).
+Записи кешу растрових зображень RDP розміщуються в `LateralMovement/RdpCache.csv`, а колаж кожного файлу кешу —
+у `LateralMovement/RdpCache/<user>/<cache file>/`, поруч з усіма плитками, якщо задано
+`--extract-rdp-tiles`; див. [Кеш растрових зображень RDP](../artifacts/rdp-cache.md#automatic-parsing).
 Таблиці веб-браузерів розміщуються в `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` і `Browser-FormHistory.csv`, разом із `Browser-logs.txt`; див.
 [Веб-браузери](../artifacts/browser.md#automatic-parsing). Там само розміщуються й таблиці WebCache
@@ -560,6 +568,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -578,9 +587,10 @@ Display Settings:
 
 За можливості використовуйте новий каталог виводу. `-C` видаляє або перезаписує лише точні згенеровані
 цілі цього запуску, тому артефакт, якого тепер немає, не може залишити застарілий результат. Він не видаляє
-не пов'язані файли чи все дерево виводу. Перед аналізом він також видаляє каталог
-`SecurityProducts/DefenderQuarantined/` кожного комп'ютера та зарезервований каталог `defender-quarantined/`
-з попередньої пласкої структури, незалежно від того, чи використовує новий запуск `-x`.
+не пов'язані файли чи все дерево виводу. Перед аналізом він також видаляє каталоги
+`SecurityProducts/DefenderQuarantined/` і `LateralMovement/RdpCache/` кожного комп'ютера та зарезервований
+каталог `defender-quarantined/` з попередньої пласкої структури, незалежно від того, чи використовує новий
+запуск `-x` або `--extract-rdp-tiles`.
 
 Під час переходу зі старішої пласкої структури використовуйте новий каталог виводу. Попередні файли CSV/JSON
 автоматично не переміщуються і не видаляються.

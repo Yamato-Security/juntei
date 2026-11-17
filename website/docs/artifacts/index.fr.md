@@ -20,6 +20,7 @@ mais l'enquêteur doit toujours interpréter ce que signifie chacune d'elles.
 | Quels sites web un utilisateur a-t-il visités, et qu'a-t-il téléchargé ? | [Navigateurs web](browser.md), [Internet Explorer et l'ancien Edge](webcache.md) | Journaux du proxy et DNS, `$MFT` et journal USN, Defender, SRUM |
 | Avec qui un utilisateur a-t-il échangé des e-mails, et qu'est-ce qui y était joint ? | [Outlook](outlook.md) | Journaux des serveurs et passerelles de messagerie, `$MFT` et journal USN, Defender, LNK et Jump Lists |
 | Quels clients et quels comptes ont utilisé ce serveur, et quels jours ? | [Journalisation des accès utilisateur (UAL)](ual.md) | Journaux d'événements Security, journaux SMB et RDP, journaux du pare-feu |
+| Qu'a vu un utilisateur sur les ordinateurs auxquels il a accédé par le Bureau à distance ? | [Cache bitmap RDP](rdp-cache.md) | [Accès à distance (côté utilisateur)](remote-access.md), [Jump Lists](jump-lists.md), les événements d'ouverture de session des ordinateurs distants et [UAL](ual.md) |
 | Une persistance a-t-elle été configurée ? | [Services](services.md), [TaskCache](taskcache.md), [Registre](registry.md) | Journaux d'événements, Prefetch, `$MFT` |
 | Qu'a supprimé Defender ? | [Quarantaine Defender](defender-quarantine.md) | Journaux d'événements, `$MFT`, journal USN |
 | Des comptes locaux ont-ils été ajoutés ou modifiés ? | [SAM](sam.md) | Journaux d'événements Security et historique des transactions du Registre |

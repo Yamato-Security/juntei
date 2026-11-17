@@ -74,7 +74,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "amcache" | "recycle-bin" | "shimcache" => "FileExistence",
         "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
         "networks" => "NetworkActivity",
-        "remote-access" | "ual" => "LateralMovement",
+        "rdp-cache" | "remote-access" | "ual" => "LateralMovement",
         "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "Persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
         | "userassist" => "ProcessExecution",
@@ -117,6 +117,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "Registry-RecentDocs",
+        "rdp-cache" => "RdpCache",
         "recycle-bin" => "RecycleBin",
         "registry" => "Registry-Dump",
         "remote-access" => "Registry-RemoteAccess",
@@ -289,6 +290,14 @@ fn defender_extraction_directory(output: &Path, computer_folder: &str) -> PathBu
         .join(computer_folder)
         .join(artifact_category("defender-quarantine"))
         .join("DefenderQuarantined")
+}
+
+/// Where `rdp-cache` saves its collages and tiles: a folder beside its records.
+fn rdp_cache_image_directory(output: &Path, computer_folder: &str) -> PathBuf {
+    output
+        .join(computer_folder)
+        .join(artifact_category("rdp-cache"))
+        .join(artifact_filename("rdp-cache"))
 }
 
 #[derive(Clone)]
@@ -651,6 +660,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             fs::create_dir_all(&path)?;
             let mut json_opts = opts.clone();
             json_opts.output_type = AutoOutputType::Jsonl;
+            json_opts.rdp_cache_images = false;
             json_opts.extract_defender_quarantined = false;
             let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
             for task in &mut extra {
@@ -698,11 +708,11 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         return 1;
     }
     if opts.clobber
-        && let Err(e) = clear_defender_extractions(&hosts, &opts.output)
+        && let Err(e) = clear_extractions(&hosts, &opts.output)
     {
         error_msg(
             no_color,
-            &format!("Could not clear earlier Defender extraction output: {e}"),
+            &format!("Could not clear earlier extracted output: {e}"),
         );
         return 1;
     }
@@ -1432,6 +1442,18 @@ fn build_tasks(
                     args.push("--extract-shown-as".into());
                     args.push(dot_relative(&parser_output, &extract).into_os_string());
                 }
+                if artifact == "rdp-cache" && opts.rdp_cache_images {
+                    let images = rdp_cache_image_directory(&parser_output, &host.folder);
+                    args.push("--extract".into());
+                    args.push(images.clone().into_os_string());
+                    // `TileImage` and `Collage` from the output directory, as the manifests
+                    // write paths
+                    args.push("--extract-shown-as".into());
+                    args.push(dot_relative(&parser_output, &images).into_os_string());
+                    if !opts.extract_rdp_tiles {
+                        args.push("--collage-only".into());
+                    }
+                }
                 if matches!(artifact, "lnk" | "jump-lists")
                     && let Some(path) = &opts.image_source_metadata
                 {
@@ -1535,6 +1557,12 @@ fn build_tasks(
             &["parse-file", "recycle-bin"],
             OutputShape::File,
             &["--code-page", &code_page],
+        );
+        add(
+            "rdp-cache",
+            &["parse-file", "rdp-cache"],
+            OutputShape::File,
+            &[],
         );
         add(
             "shimcache",
@@ -1761,6 +1789,7 @@ pub(super) const NAMED_INPUTS: &[(&str, NamePredicate)] = &[
     ("lnk", crate::lnk::is_lnk_name),
     ("jump-lists", crate::jump_lists::is_jump_list_name),
     ("recycle-bin", crate::recycle_bin::is_index_name),
+    ("rdp-cache", crate::rdp_cache::is_cache_name),
     ("shimcache", crate::shimcache::is_system_name),
     ("boot", crate::boot::is_boot_name),
     ("secure-sds", crate::secure_sds::is_sds_name),
@@ -2011,9 +2040,11 @@ fn clear_generated_outputs(tasks: &[Task], work: &Path) -> io::Result<()> {
 
 /// Defender extraction is an opt-in side output rather than a parser task target. Clear it on
 /// every clobber run—even when `-x` is absent—so malware from an earlier run cannot survive as an
-/// unrecorded stale result.
-fn clear_defender_extractions(hosts: &[Host], output: &Path) -> io::Result<()> {
+/// unrecorded stale result. The RDP bitmap cache images are cleared the same way, so that no
+/// collage or tile of an earlier run is left beside new records.
+fn clear_extractions(hosts: &[Host], output: &Path) -> io::Result<()> {
     for host in hosts {
+        remove_generated_path(&rdp_cache_image_directory(output, &host.folder), output)?;
         // Keep clobber protection for the previous category and flat extraction locations.
         for path in [
             defender_extraction_directory(output, &host.folder),

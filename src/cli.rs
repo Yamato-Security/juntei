@@ -631,6 +631,16 @@ pub enum FileCommands {
     )]
     Prefetch(PrefetchOptions),
 
+    /// Parse RDP bitmap caches (Cache????.bin and bcache*.bmc) and save their screen tiles as images
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file rdp-cache <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    RdpCache(RdpCacheOptions),
+
     /// Parse Recycle Bin index files ($I files and INFO2)
     #[command(
         author = AUTHOR,
@@ -695,6 +705,10 @@ pub struct AutoParseOptions {
     #[arg(skip)]
     pub(crate) image_files: Option<PathBuf>,
 
+    /// Save RDP bitmap cache collages (off for the JSONL timeline's second run of the parsers)
+    #[arg(skip = true)]
+    pub(crate) rdp_cache_images: bool,
+
     /// Evidence directory containing one or more collected Windows systems
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "EVIDENCE", display_order = 100)]
     pub directory: PathBuf,
@@ -737,6 +751,10 @@ pub struct AutoParseOptions {
     /// Extract Defender-quarantined files
     #[arg(help_heading = Some("Output"), short = 'x', long, display_order = 204)]
     pub extract_defender_quarantined: bool,
+
+    /// Save each RDP bitmap cache tile as a BMP image too, not only the collages
+    #[arg(help_heading = Some("Output"), long, display_order = 205)]
+    pub extract_rdp_tiles: bool,
 
     /// Parser processes to run at once (default: logical CPU count)
     #[arg(help_heading = Some("Performance"), short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 300)]
@@ -1775,6 +1793,78 @@ pub struct LnkOptions {
 impl LnkOptions {
     pub fn output_type(&self) -> LnkOutputType {
         self.output_type.unwrap_or(LnkOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-file rdp-cache` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RdpCacheOutputType {
+    /// One row per tile
+    Csv,
+    /// One pretty-printed JSON object per tile
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+#[clap(group(ArgGroup::new("destination").args(["output", "extract"]).multiple(true)))]
+pub struct RdpCacheOptions {
+    /// Directory to search recursively for RDP bitmap caches (Cache????.bin, bcache*.bmc)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one RDP bitmap cache file
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every tile's record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RdpCacheOutputType>,
+
+    /// Save each cache file's tiles as BMP images (for RdpCacheStitcher) and a PNG collage, a folder per cache file
+    #[arg(help_heading = Some("Output"), short = 'x', long, value_name = "DIR", display_order = 302)]
+    pub extract: Option<PathBuf>,
+
+    /// With --extract, save only the collages
+    #[arg(help_heading = Some("Output"), long, requires = "extract", display_order = 303)]
+    pub collage_only: bool,
+
+    /// Tiles per row of the collages
+    #[arg(help_heading = Some("Output"), long, value_name = "N", requires = "extract", default_value_t = 64, value_parser = clap::value_parser!(u16).range(1..=1024), display_order = 304)]
+    pub collage_width: u16,
+
+    /// The directory as TileImage, RemnantImage and Collage show it, in place of --extract's
+    /// (auto-parse gives it from its output directory, so that its results name no absolute path)
+    #[arg(
+        long = "extract-shown-as",
+        value_name = "DIR",
+        requires = "extract",
+        hide = true
+    )]
+    pub extract_shown_as: Option<PathBuf>,
+
+    /// Overwrite files when saving or extracting
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "destination", display_order = 305)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RdpCacheOptions {
+    pub fn output_type(&self) -> RdpCacheOutputType {
+        self.output_type.unwrap_or(RdpCacheOutputType::Csv)
     }
 
     /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.

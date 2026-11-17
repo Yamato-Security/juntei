@@ -22,6 +22,7 @@ Juntei analyse des fichiers déjà collectés sur Windows. Utilisez un outil d'a
 | Navigateurs web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` et les dossiers de profil des autres navigateurs |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` et d'autres emplacements utilisateur/système |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` et `CustomDestinations` |
+| Cache bitmap RDP | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (`%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\` sous Windows XP et versions antérieures) |
 | Corbeille | `$Recycle.Bin\<SID>\$I*` et `$R*` sur chaque volume (`RECYCLER\<SID>\INFO2` et `D*` sous Windows XP et versions antérieures) |
 | ShimCache | Ruche `SYSTEM` : `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Quarantaine Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |

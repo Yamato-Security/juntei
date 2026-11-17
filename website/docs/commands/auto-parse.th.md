@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-พาร์เซอร์ต้องใช้พาธ Juntei จึงคัดลอกไฟล์ที่พาร์เซอร์อ่านไปยังพื้นที่ชั่วคราวส่วนตัวด้วยบัฟเฟอร์จำกัด ได้แก่ ไฮฟ์รีจิสทรีและล็อกธุรกรรม ไฟล์เมทาดาทา NTFS ฐานข้อมูล ไฟล์ Prefetch ช็อตคัต Jump List ไฟล์ Outlook ไฟล์ดัชนีของถังรีไซเคิล และโฟลเดอร์กักกันของ Defender ไฟล์อื่นทั้งหมดจะเป็นไฟล์แทนที่ว่างที่คงเวลาแก้ไขเดิมไว้ ไดเรกทอรีและพาธจึงดูเหมือนบนดิสก์ persistence-hunter จะอ่านเนื้อหาของไฟล์แทนที่จากอิมเมจเฉพาะเมื่อจำเป็น เช่น ไฟล์ปฏิบัติการที่รายการ persistence อ้างถึง **ต้องมีพื้นที่สำหรับไฟล์ที่คัดลอก** นอกเหนือจากผลลัพธ์ หากรองรับจะเขียนพื้นที่ศูนย์เป็นพื้นที่ sparse โดยรักษาชื่อ โครงสร้าง ฮาร์ดลิงก์ และเวลาแก้ไข เวลาแหล่งข้อมูล LNK และ Jump List มาจากสแนปช็อตเมทาดาทา NTFS เดิม ไม่ใช่สำเนาชั่วคราว เมื่อจบตามปกติรวมถึงกรณีพาร์เซอร์ผิดพลาดจะลบสำเนา แต่การบังคับหยุดอาจทิ้งไฟล์ไว้ ต้นฉบับอ่านอย่างเดียวและใช้ล็อก VHDX ที่ค้างในหน่วยความจำเท่านั้น
+พาร์เซอร์ต้องใช้พาธ Juntei จึงคัดลอกไฟล์ที่พาร์เซอร์อ่านไปยังพื้นที่ชั่วคราวส่วนตัวด้วยบัฟเฟอร์จำกัด ได้แก่ ไฮฟ์รีจิสทรีและล็อกธุรกรรม ไฟล์เมทาดาทา NTFS ฐานข้อมูล ไฟล์ Prefetch ช็อตคัต Jump List ไฟล์ Outlook ไฟล์ดัชนีของถังรีไซเคิล แคชบิตแมปของ RDP และโฟลเดอร์กักกันของ Defender ไฟล์อื่นทั้งหมดจะเป็นไฟล์แทนที่ว่างที่คงเวลาแก้ไขเดิมไว้ ไดเรกทอรีและพาธจึงดูเหมือนบนดิสก์ persistence-hunter จะอ่านเนื้อหาของไฟล์แทนที่จากอิมเมจเฉพาะเมื่อจำเป็น เช่น ไฟล์ปฏิบัติการที่รายการ persistence อ้างถึง **ต้องมีพื้นที่สำหรับไฟล์ที่คัดลอก** นอกเหนือจากผลลัพธ์ หากรองรับจะเขียนพื้นที่ศูนย์เป็นพื้นที่ sparse โดยรักษาชื่อ โครงสร้าง ฮาร์ดลิงก์ และเวลาแก้ไข เวลาแหล่งข้อมูล LNK และ Jump List มาจากสแนปช็อตเมทาดาทา NTFS เดิม ไม่ใช่สำเนาชั่วคราว เมื่อจบตามปกติรวมถึงกรณีพาร์เซอร์ผิดพลาดจะลบสำเนา แต่การบังคับหยุดอาจทิ้งไฟล์ไว้ ต้นฉบับอ่านอย่างเดียวและใช้ล็อก VHDX ที่ค้างในหน่วยความจำเท่านั้น
 
 การค้นหาโฮสต์ CSV/JSON/JSONL และ `-j` ใช้ขั้นตอนปกติ `Image` ใน `manifest.json` ระบุอิมเมจต้นฉบับ ส่วน `EvidenceRoot` ระบุพาธสัมพัทธ์ภายใน ข้อผิดพลาดการอ่านและชื่อไม่ปลอดภัยอยู่ใน `ImageErrors` และแถวล้มเหลวของ `manifest.csv` จะเก็บผลที่อ่านได้และคืนรหัส 1 หากอินพุตไม่สมบูรณ์ ไม่เปลี่ยนชื่ออันตรายหรือกำกวม และไม่แยกสตรีม NTFS ที่มีชื่อเป็นไฟล์เพิ่มเติม อาร์ติแฟกต์ที่รวบรวมเป็นไฟล์ปกติยังใช้ได้
 
@@ -168,6 +168,7 @@ manifest จะเก็บชื่อโฮสต์ตามที่ค้�
 - ทางลัด LNK
 - Jump Lists
 - ถังรีไซเคิล: พาธเดิม ขนาด เวลาที่ลบ และผู้ใช้ของรายการที่ถูกลบ
+- แคชบิตแมปของ RDP: ไทล์ของหน้าจอระยะไกลที่ผู้ใช้เห็น พร้อมภาพคอลลาจของแคชแต่ละไฟล์
 - ShimCache
 - Persistence Hunter (การตรวจสอบการคงอยู่ข้ามแหล่งข้อมูล 131 รายการพร้อมโปรไฟล์ allow/block)
 - เมทาดาทาการกักกันของ Defender
@@ -293,6 +294,9 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -359,7 +363,7 @@ CSV แยกตารางออกจากกันเพราะแต่�
 | `FileExistence` | Amcache, ถังรีไซเคิล, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | โปรไฟล์เครือข่าย อินเทอร์เฟซ แชร์ port proxy และเส้นทาง; การเชื่อมต่อ ปริมาณการรับส่งข้อมูล และ push notification ของ SRUM |
-| `LateralMovement` | การเชื่อมต่อขาออกของผู้ใช้ผ่าน Remote Desktop, PuTTY และ WinSCP, ไดรฟ์ที่แมปและแชร์ รวมถึงการบันทึกการเข้าถึงของผู้ใช้ (ไคลเอนต์ของบทบาทต่าง ๆ บนเซิร์ฟเวอร์) |
+| `LateralMovement` | การเชื่อมต่อขาออกของผู้ใช้ผ่าน Remote Desktop, PuTTY และ WinSCP, ไดรฟ์ที่แมปและแชร์; แคชบิตแมปของ RDP (ไทล์ของหน้าจอระยะไกล); รวมถึงการบันทึกการเข้าถึงของผู้ใช้ (ไคลเอนต์ของบทบาทต่าง ๆ บนเซิร์ฟเวอร์) |
 | `Persistence` | การกำหนดค่าบูต (BCD), การเริ่มอัตโนมัติผ่านรีจิสทรี, บริการ, TaskCache |
 | `ProcessExecution` | ความเข้ากันได้ของแอปพลิเคชัน, BAM และ DAM, FeatureUsage และรายการที่ปักหมุด, MuiCache, Prefetch, ไทม์ไลน์ Prefetch, กิจกรรมแอปพลิเคชัน/CPU ของ SRUM, UserAssist |
 | `Registry` | คีย์และค่าของไฮฟ์ทั่วไป รวมถึงเรคคอร์ดที่กู้คืน |
@@ -377,7 +381,7 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 ใน `NetworkActivity`, `ProcessExecution` และ `SystemInformation` พร้อมไฟล์
 `SystemInformation/SRUM-logs.txt` ที่ใช้ร่วมกัน ไม่มีการสร้างไดเรกทอรีย่อย `logs/`
 
-ชื่อไฟล์ CSV เริ่มต้นได้แก่ `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+ชื่อไฟล์ CSV เริ่มต้นได้แก่ `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` และ
@@ -393,6 +397,9 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 ตารางของการบันทึกการเข้าถึงของผู้ใช้อยู่ใน `LateralMovement` โดยแยกหนึ่งไฟล์ต่อหนึ่งตาราง เช่น
 `UAL-Clients.csv` และ `UAL-SystemIdentity.csv` พร้อม `UAL-logs.txt` ดู
 [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](../artifacts/ual.md#automatic-parsing)
+เรคคอร์ดของแคชบิตแมปของ RDP อยู่ใน `LateralMovement/RdpCache.csv` และภาพคอลลาจของแคชแต่ละไฟล์อยู่ใน
+`LateralMovement/RdpCache/<user>/<cache file>/` โดยมีไทล์ทุกไทล์อยู่ข้างกันเมื่อระบุ
+`--extract-rdp-tiles` ดู [แคชบิตแมปของ RDP](../artifacts/rdp-cache.md#automatic-parsing)
 ตารางของเว็บเบราว์เซอร์อยู่ใน `BrowserActivity` ได้แก่ `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` และ `Browser-FormHistory.csv` พร้อม `Browser-logs.txt` ดู
 [เว็บเบราว์เซอร์](../artifacts/browser.md#automatic-parsing)
@@ -562,6 +569,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -581,8 +589,9 @@ Display Settings:
 ควรใช้ไดเรกทอรีเอาต์พุตใหม่เมื่อทำได้ `-C` จะลบหรือเขียนทับเฉพาะเป้าหมายที่สร้างขึ้น
 สำหรับการทำงานครั้งนี้เท่านั้น ดังนั้นอาร์ติแฟกต์ที่ไม่มีอยู่แล้วจะไม่ทิ้งผลลัพธ์ที่ล้าสมัยไว้ คำสั่งนี้ไม่ลบ
 ไฟล์ที่ไม่เกี่ยวข้องหรือโครงสร้างเอาต์พุตทั้งหมด นอกจากนี้ยังลบไดเรกทอรี
-`SecurityProducts/DefenderQuarantined/` ของแต่ละคอมพิวเตอร์ และไดเรกทอรี `defender-quarantined/` ที่สงวนไว้
-จากโครงสร้างแบบแบนเดิม ก่อนการพาร์ส ไม่ว่าการทำงานครั้งใหม่จะใช้ `-x` หรือไม่
+`SecurityProducts/DefenderQuarantined/` และ `LateralMovement/RdpCache/` ของแต่ละคอมพิวเตอร์ และไดเรกทอรี
+`defender-quarantined/` ที่สงวนไว้จากโครงสร้างแบบแบนเดิม ก่อนการพาร์ส ไม่ว่าการทำงานครั้งใหม่จะใช้ `-x` หรือ
+`--extract-rdp-tiles` หรือไม่
 
 ให้ใช้ไดเรกทอรีเอาต์พุตใหม่เมื่อเปลี่ยนจากโครงสร้างแบบแบนแบบเก่า ไฟล์ CSV/JSON เดิม
 จะไม่ถูกย้ายหรือลบโดยอัตโนมัติ

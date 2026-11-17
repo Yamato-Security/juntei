@@ -12,6 +12,15 @@
   `auto-parse` saves the results in `FileExistence` and adds them to the `-j` timeline, and
   `super-timeline` makes one event per deleted item. (#157) (@YamatoSecurity)
 
+- `parse-file rdp-cache` parses the Remote Desktop client's persistent bitmap caches: the
+  `Cache????.bin` files of Windows 7 and later and the `bcache*.bmc` files of Windows XP and
+  earlier (8, 16, 24 and 32 bits per pixel, with RLE-compressed tiles decompressed as
+  MS-RDPBCGR specifies). One record per tile with its user, size, key and whether it is a single
+  color; `--extract` saves each tile as a BMP image at its own size, named for RdpCacheStitcher,
+  a PNG collage of each cache file, and the ends of earlier tiles left in `.bmc` slots.
+  `auto-parse` saves the records and collages in `LateralMovement`, and every tile with
+  `--extract-rdp-tiles`. (#169) (@YamatoSecurity)
+
 **Improvements:**
 
 - Upgrade `quick-xml` to 0.42.0, preserving Persistence Hunter's XML evidence values,

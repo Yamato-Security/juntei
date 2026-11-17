@@ -22,6 +22,7 @@ Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 �
 | 웹 브라우저 | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` 및 기타 브라우저의 프로필 폴더 |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 및 기타 사용자/시스템 위치 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 및 `CustomDestinations` |
+| RDP 비트맵 캐시 | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\`(Windows XP 이하에서는 `%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\`) |
 | 휴지통 | 모든 볼륨의 `$Recycle.Bin\<SID>\$I*` 및 `$R*`(Windows XP 이하에서는 `RECYCLER\<SID>\INFO2` 및 `D*`) |
 | ShimCache | `SYSTEM` 하이브: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender 격리 | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |

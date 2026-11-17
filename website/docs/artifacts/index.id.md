@@ -20,6 +20,7 @@ tetapi investigator tetap harus menginterpretasikan makna dari setiap sumber.
 | Situs web mana yang dikunjungi pengguna, dan apa yang diunduhnya? | [Browser web](browser.md), [Internet Explorer dan Edge lama](webcache.md) | Log proxy dan DNS, `$MFT` dan Jurnal USN, Defender, SRUM |
 | Dengan siapa pengguna bertukar e-mail, dan apa yang dilampirkan? | [Outlook](outlook.md) | Log server dan gateway e-mail, `$MFT` dan Jurnal USN, Defender, LNK dan Jump Lists |
 | Klien dan akun mana yang menggunakan server ini, dan pada hari apa saja? | [Pencatatan Akses Pengguna (UAL)](ual.md) | Log peristiwa Security, log SMB dan RDP, log firewall |
+| Apa yang dilihat pengguna di komputer yang dijangkaunya dengan Remote Desktop? | [Cache Bitmap RDP](rdp-cache.md) | [Akses jarak jauh (sisi pengguna)](remote-access.md), [Jump Lists](jump-lists.md), peristiwa logon di komputer jarak jauh, dan [UAL](ual.md) |
 | Apakah persistensi dikonfigurasi? | [Layanan](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Log peristiwa, Prefetch, `$MFT` |
 | Apa yang dihapus oleh Defender? | [Karantina Defender](defender-quarantine.md) | Log peristiwa, `$MFT`, Jurnal USN |
 | Apakah akun lokal ditambahkan atau diubah? | [SAM](sam.md) | Log peristiwa Security dan riwayat transaksi registry |

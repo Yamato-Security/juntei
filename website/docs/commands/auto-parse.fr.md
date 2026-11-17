@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Les parseurs exigent des chemins : Juntei copie donc les fichiers que lisent les parseurs dans un espace temporaire privé avec des tampons bornés : ruches du registre et leurs journaux de transactions, fichiers de métadonnées NTFS, bases de données, fichiers prefetch, raccourcis, Jump Lists, fichiers Outlook, fichiers d’index de la Corbeille et dossiers de quarantaine de Defender. Tout autre fichier devient un espace réservé vide qui garde sa date de modification d’origine, si bien que répertoires et chemins apparaissent comme sur le disque. persistence-hunter ne lit le contenu d’un espace réservé depuis l’image que lorsqu’il en a besoin, par exemple un exécutable désigné par une entrée de persistance. **Prévoyez de la place pour les fichiers copiés**, en plus des résultats. Les zones nulles sont écrites comme des trous si le système le permet. Noms, structure, liens physiques et dates de modification sont préservés. Les dates sources des LNK et Jump Lists viennent des métadonnées NTFS originales, jamais des copies temporaires. Une fin normale, même avec erreurs de parsing, supprime les copies ; un arrêt forcé peut les laisser. La source reste en lecture seule ; les journaux VHDX en attente sont appliqués en mémoire uniquement.
+Les parseurs exigent des chemins : Juntei copie donc les fichiers que lisent les parseurs dans un espace temporaire privé avec des tampons bornés : ruches du registre et leurs journaux de transactions, fichiers de métadonnées NTFS, bases de données, fichiers prefetch, raccourcis, Jump Lists, fichiers Outlook, fichiers d’index de la Corbeille, caches bitmap RDP et dossiers de quarantaine de Defender. Tout autre fichier devient un espace réservé vide qui garde sa date de modification d’origine, si bien que répertoires et chemins apparaissent comme sur le disque. persistence-hunter ne lit le contenu d’un espace réservé depuis l’image que lorsqu’il en a besoin, par exemple un exécutable désigné par une entrée de persistance. **Prévoyez de la place pour les fichiers copiés**, en plus des résultats. Les zones nulles sont écrites comme des trous si le système le permet. Noms, structure, liens physiques et dates de modification sont préservés. Les dates sources des LNK et Jump Lists viennent des métadonnées NTFS originales, jamais des copies temporaires. Une fin normale, même avec erreurs de parsing, supprime les copies ; un arrêt forcé peut les laisser. La source reste en lecture seule ; les journaux VHDX en attente sont appliqués en mémoire uniquement.
 
 La découverte des hôtes, CSV/JSON/JSONL et `-j` utilisent le traitement habituel. `Image` dans `manifest.json` identifie l’image originale, `EvidenceRoot` son chemin relatif interne. Les erreurs de lecture et noms dangereux figurent dans `ImageErrors` et les lignes en échec de `manifest.csv`. Les résultats lisibles sont conservés ; une entrée incomplète produit le code 1. Les noms dangereux ou ambigus ne sont pas renommés. Les flux NTFS nommés ne deviennent pas des fichiers supplémentaires ; les artefacts collectés comme fichiers ordinaires restent disponibles.
 
@@ -167,6 +167,8 @@ découvert. Les tâches utilisent les mêmes commandes regroupées par source qu
 - Raccourcis LNK
 - Jump Lists
 - Corbeille : chemins d'origine, tailles, dates de suppression et utilisateurs des éléments supprimés
+- Caches bitmap RDP : les tuiles des écrans distants qu'un utilisateur a vus, avec une image de collage de chaque
+  fichier de cache
 - ShimCache
 - Persistence Hunter (131 vérifications de persistance multi-sources avec des profils d'autorisation/de blocage)
 - Métadonnées de quarantaine de Defender
@@ -292,6 +294,9 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -357,7 +362,7 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `FileExistence` | Amcache, Corbeille, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Journal USN |
 | `NetworkActivity` | Profils réseau, interfaces, partages, proxys de ports et routes ; connexions, trafic et notifications push SRUM |
-| `LateralMovement` | Connexions sortantes Bureau à distance, PuTTY et WinSCP des utilisateurs, lecteurs mappés et partages ; journalisation des accès utilisateur (les clients des rôles d'un serveur) |
+| `LateralMovement` | Connexions sortantes Bureau à distance, PuTTY et WinSCP des utilisateurs, lecteurs mappés et partages ; caches bitmap RDP (les tuiles des écrans distants) ; journalisation des accès utilisateur (les clients des rôles d'un serveur) |
 | `Persistence` | Configuration de démarrage (BCD), démarrages automatiques du Registre, services, TaskCache |
 | `ProcessExecution` | Compatibilité des applications, BAM et DAM, FeatureUsage et éléments épinglés, MuiCache, Prefetch, chronologie Prefetch, activité des applications/du CPU SRUM, UserAssist |
 | `Registry` | Clés et valeurs générales des ruches, y compris les enregistrements récupérés |
@@ -375,7 +380,7 @@ Amcache et Jump Lists disposent chacun d'un journal partagé à côté de leurs 
 dans `NetworkActivity`, `ProcessExecution` et `SystemInformation`, avec un fichier partagé
 `SystemInformation/SRUM-logs.txt`. Aucun sous-répertoire `logs/` n'est créé.
 
-Les noms de fichiers CSV par défaut sont `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Les noms de fichiers CSV par défaut sont `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` et
@@ -391,6 +396,9 @@ Les tables SRUM utilisent des noms de fichiers `SRUM-` directement sous leur cat
 Les tables de la journalisation des accès utilisateur se trouvent dans `LateralMovement`, à raison d'un fichier par
 table, par exemple `UAL-Clients.csv` et `UAL-SystemIdentity.csv`, avec `UAL-logs.txt` ; consultez
 [Journalisation des accès utilisateur (UAL)](../artifacts/ual.md#automatic-parsing).
+Les enregistrements du cache bitmap RDP se trouvent dans `LateralMovement/RdpCache.csv`, et le collage de chaque
+fichier de cache dans `LateralMovement/RdpCache/<user>/<cache file>/`, avec chaque tuile à côté lorsque
+`--extract-rdp-tiles` est indiqué ; consultez [Cache bitmap RDP](../artifacts/rdp-cache.md#automatic-parsing).
 Les tables des navigateurs web se trouvent dans `BrowserActivity` : `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` et `Browser-FormHistory.csv`, avec `Browser-logs.txt` ; consultez
 [Navigateurs web](../artifacts/browser.md#automatic-parsing). Les tables WebCache d'Internet Explorer et de
@@ -560,6 +568,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -578,9 +587,10 @@ Display Settings:
 
 Utilisez un nouveau répertoire de sortie lorsque c'est possible. `-C` supprime ou écrase uniquement les cibles générées exactes
 de cette exécution, de sorte qu'un artefact désormais absent ne peut pas laisser un résultat obsolète. Il ne supprime pas
-les fichiers sans rapport ni l'arborescence de sortie complète. Il supprime également, avant l'analyse, le répertoire
-`SecurityProducts/DefenderQuarantined/` de chaque ordinateur, ainsi que le répertoire réservé `defender-quarantined/`
-de l'ancienne organisation à plat, que la nouvelle exécution utilise `-x` ou non.
+les fichiers sans rapport ni l'arborescence de sortie complète. Il supprime également, avant l'analyse, les répertoires
+`SecurityProducts/DefenderQuarantined/` et `LateralMovement/RdpCache/` de chaque ordinateur, ainsi que le répertoire
+réservé `defender-quarantined/` de l'ancienne organisation à plat, que la nouvelle exécution utilise ou non `-x` ou
+`--extract-rdp-tiles`.
 
 Utilisez un nouveau répertoire de sortie lorsque vous abandonnez une ancienne organisation à plat. Les anciens fichiers CSV/JSON
 ne sont ni déplacés ni supprimés automatiquement.

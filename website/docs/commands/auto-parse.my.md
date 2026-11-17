@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်၊ Recycle Bin index ဖိုင်နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
+Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်၊ Recycle Bin index ဖိုင်၊ RDP bitmap cache နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
 
 Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည် ပုံမှန် pipeline ကို သုံးသည်။ `manifest.json` ရှိ `Image` သည် မူရင်း image ဖြစ်ပြီး `EvidenceRoot` သည် အတွင်း relative path ဖြစ်သည်။ Read error နှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ထိန်းသိမ်းပြီး input မပြည့်စုံလျှင် exit code 1 ပြန်ပေးသည်။ မလုံခြုံသော သို့မဟုတ် မရှင်းလင်းသောအမည်များကို ပြောင်းမပေးပါ။ Named NTFS stream များကို နောက်ထပ်ဖိုင်အဖြစ် မထုတ်ပေးသော်လည်း သာမန်ဖိုင်အဖြစ် စုဆောင်းထားသော artifact များကို အသုံးပြုနိုင်သည်။
 
@@ -167,6 +167,8 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
 - LNK shortcut များ
 - Jump Lists
 - Recycle Bin: ဖျက်ထားသော item များ၏ မူလ path၊ အရွယ်အစား၊ ဖျက်ချိန်နှင့် အသုံးပြုသူ
+- RDP bitmap cache များ: အသုံးပြုသူ မြင်ခဲ့သော အဝေးရှိ မျက်နှာပြင်များ၏ tile များ၊ cache ဖိုင်တစ်ခုစီ၏
+  collage ပုံနှင့်အတူ
 - ShimCache
 - Persistence Hunter (allow/block profile များပါသော ရင်းမြစ်ဖြတ်ကျော် persistence စစ်ဆေးချက် 131 ခု)
 - Defender quarantine metadata
@@ -292,6 +294,9 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -357,7 +362,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `FileExistence` | Amcache, Recycle Bin, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | ကွန်ရက် profile များ၊ interface များ၊ share များ၊ port proxy များနှင့် route များ၊ SRUM ချိတ်ဆက်မှုများ၊ traffic နှင့် push notification များ |
-| `LateralMovement` | အသုံးပြုသူများ၏ အပြင်ဘက်သို့ Remote Desktop၊ PuTTY နှင့် WinSCP ချိတ်ဆက်မှုများ၊ map လုပ်ထားသော drive များနှင့် share များ။ အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (server တစ်ခု၏ role များကို အသုံးပြုသော client များ) |
+| `LateralMovement` | အသုံးပြုသူများ၏ အပြင်ဘက်သို့ Remote Desktop၊ PuTTY နှင့် WinSCP ချိတ်ဆက်မှုများ၊ map လုပ်ထားသော drive များနှင့် share များ။ RDP bitmap cache များ (အဝေးရှိ မျက်နှာပြင်များ၏ tile များ)။ အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (server တစ်ခု၏ role များကို အသုံးပြုသော client များ) |
 | `Persistence` | Boot ပြင်ဆင်မှု (BCD)၊ registry autostart များ၊ service များ၊ TaskCache |
 | `ProcessExecution` | Application compatibility၊ BAM နှင့် DAM၊ FeatureUsage နှင့် pin များ၊ MuiCache၊ Prefetch၊ Prefetch timeline၊ SRUM application/CPU လှုပ်ရှားမှု၊ UserAssist |
 | `Registry` | ပြန်လည်ရယူထားသော record များ အပါအဝင် ယေဘုယျ hive key များနှင့် value များ |
@@ -375,7 +380,7 @@ Amcache နှင့် Jump Lists တို့တွင် ၎င်းတိ�
 `NetworkActivity`၊ `ProcessExecution` နှင့် `SystemInformation` တွင် တိုက်ရိုက် ထားပြီး မျှဝေထားသော
 `SystemInformation/SRUM-logs.txt` ဖိုင် ရှိပါသည်။ `logs/` subdirectory များကို မဖန်တီးပါ။
 
-မူလ CSV ဖိုင်အမည်များမှာ `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+မူလ CSV ဖိုင်အမည်များမှာ `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` နှင့်
@@ -391,6 +396,9 @@ SRUM table များသည် ၎င်းတို့၏ အမျိုး�
 အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း table များသည် `LateralMovement` တွင် table တစ်ခုလျှင် ဖိုင်တစ်ခုစီ ရှိပါသည်၊ ဥပမာ
 `UAL-Clients.csv` နှင့် `UAL-SystemIdentity.csv` တို့ကို `UAL-logs.txt` နှင့်အတူ ထားပါသည်။
 [အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](../artifacts/ual.md#automatic-parsing) ကို ကြည့်ပါ။
+RDP bitmap cache record များသည် `LateralMovement/RdpCache.csv` တွင် ရှိပြီး cache ဖိုင်တစ်ခုစီ၏ collage သည်
+`LateralMovement/RdpCache/<user>/<cache file>/` တွင် ရှိပါသည်။ `--extract-rdp-tiles` ကို ပေးထားလျှင် tile
+တိုင်းကိုလည်း ၎င်း၏ဘေးတွင် ထားပါသည်။ [RDP ဘစ်မက် ကက်ရှ်](../artifacts/rdp-cache.md#automatic-parsing) ကို ကြည့်ပါ။
 ဝဘ် ဘရောက်ဇာ table များသည် `BrowserActivity` တွင် ရှိပါသည်: `Browser-History.csv`၊ `Browser-Downloads.csv`၊
 `Browser-Cookies.csv` နှင့် `Browser-FormHistory.csv` တို့ကို `Browser-logs.txt` နှင့်အတူ ထားပါသည်။
 [ဝဘ် ဘရောက်ဇာများ](../artifacts/browser.md#automatic-parsing) ကို ကြည့်ပါ။
@@ -559,6 +567,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -578,8 +587,9 @@ Display Settings:
 ဖြစ်နိုင်သည့်အခါ output ဖိုင်တွဲအသစ်ကို အသုံးပြုပါ။ `-C` သည် ဤ run အတွက် ထုတ်လုပ်ထားသော တိကျသည့် target များကိုသာ
 ဖယ်ရှားခြင်း သို့မဟုတ် ထပ်ရေးခြင်း ပြုလုပ်သောကြောင့် ယခု မရှိတော့သော artifact သည် ခေတ်မမီသော ရလဒ်ကို မချန်ထားနိုင်ပါ။ ၎င်းသည်
 မသက်ဆိုင်သော ဖိုင်များ သို့မဟုတ် output tree တစ်ခုလုံးကို မဖျက်ပါ။ ၎င်းသည် parse မလုပ်မီ ကွန်ပျူတာတစ်ခုစီ၏
-`SecurityProducts/DefenderQuarantined/` ဖိုင်တွဲနှင့် ယခင် flat layout မှ reserve လုပ်ထားသော `defender-quarantined/`
-ဖိုင်တွဲကိုလည်း run အသစ်က `-x` ကို အသုံးပြုသည်ဖြစ်စေ မပြုသည်ဖြစ်စေ ဖယ်ရှားပါသည်။
+`SecurityProducts/DefenderQuarantined/` နှင့် `LateralMovement/RdpCache/` ဖိုင်တွဲများကိုလည်းကောင်း၊ ယခင် flat
+layout မှ reserve လုပ်ထားသော `defender-quarantined/` ဖိုင်တွဲကိုလည်းကောင်း run အသစ်က `-x` သို့မဟုတ်
+`--extract-rdp-tiles` ကို အသုံးပြုသည်ဖြစ်စေ မပြုသည်ဖြစ်စေ ဖယ်ရှားပါသည်။
 
 ယခင် flat layout မှ ပြောင်းသည့်အခါ output ဖိုင်တွဲအသစ်ကို အသုံးပြုပါ။ ယခင် CSV/JSON ဖိုင်များကို
 အလိုအလျောက် နေရာမရွှေ့ မဖျက်ပါ။

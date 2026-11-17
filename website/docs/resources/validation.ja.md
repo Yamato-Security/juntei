@@ -76,6 +76,12 @@ Juntei は、パブリック go-ntfs テスト ボリューム (2,129 レコー�
 
 `parse-file recycle-bin` は Juntei 独自のパーサーです。[rifiuti2](https://github.com/abelcheung/rifiuti2) の公開サンプルでは、rifiuti2 が読み取るすべてのレコードで、インデックス、削除日時 (rifiuti2 の表示どおり秒単位)、削除状態、サイズ、パスが一致しました。対象は 92 レコードで、Windows 95 から Server 2003 の INFO2 ファイル 11 個の 67 レコードと、Windows Vista と Windows 10 の `$I` ファイルのフォルダー 3 つの 25 レコードです。INFO2 の ANSI パスも、rifiuti2 自身のテストが使うコード ページで一致しました。Juntei は rifiuti2 が拒否するもの、つまり両方の `$I` バージョンが混在するフォルダー、パスのない `$I` ヘッダー、切り詰められたレコードも読み取り、それぞれの破損を報告します。Plaso のテスト データにある `$I` ファイルと INFO2 では、Plaso のテストが期待する日時、サイズ、パス、インデックス、ドライブが得られます。Digital Corpora が公開している M57-Jean ディスク イメージ (Windows XP) を `auto-parse --e01` で読み取ると、INFO2 のレコードは rifiuti2 と一致し、その横にある復元対象のファイル `Dc1.jpg` は Juntei が付ける名前と同じでした。
 
+## RDP ビットマップキャッシュ { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` は Juntei 独自のパーサーです。CODE BLUE 2026 CTF のコレクションに含まれる 6 台のホストの 1 つである kofu では、3 つの `Cache????.bin` ファイルにある 1,911 個のタイルのすべてが、[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) が作成する画像とピクセル単位で一致します。ApoorvCTF 2025 の「Phantom Connection」チャレンジで公開されている `Cache0000.bin` の 1,980 個のタイルも同様で、そのうち 105 個は 64 × 48 ピクセルです。bmc-tools はすべてのタイルを幅 64 ピクセルとして読み取るため、画面の右端にある幅の狭いタイルは歪んで出力されます。Juntei は各タイルをそれぞれの幅で読み取ります。
+
+タイルを含む公開の `.bmc` キャッシュは見つかりませんでした。上記のサンプルは、ほかの Windows 10 以降のクライアントと同様に、空の `bcache24.bmc` しか持っていません。そのため `.bmc` の読み取りは、形式どおりに作成したファイルでテストしました。4 種類すべての色深度の非圧縮タイル、小さいタイルの後に以前のタイルの末尾が続くもの、破損したスロット、そして MS-RDPBCGR 3.1.9 のすべてのオーダーを使う、RLE 圧縮されたランダムな 16 ビット タイル 3,000 個です。この 3,000 個では、タイルの最初の行の終わりを越えて続くオーダーはありません。Juntei と bmc-tools は 3,000 個すべてを同じピクセルにデコードします。オーダーが最初の行で始まり、その行を越えて続く場合は、両者の結果が異なります。Juntei は仕様と FreeRDP のデコーダーに従ってオーダー全体で最初の行の規則を使い続けますが、bmc-tools はオーダーの途中で規則を切り替えます。
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) は、Security Ronin の [shimcache-forensic](https://github.com/SecurityRonin/shimcache-forensic) の保守フォークであり、レジストリ ハイブとトランザクション ログをサポートしています。 20 パブリック `SYSTEM` ハイブ (24 コントロール セットおよび 7,290 エントリ) と 17 スタンドアロン AppCompatCache 値では、すべてのエントリが参照パーサーによって出力されたパス、時間、実行フラグ、フラグ、位置と一致しました。

@@ -177,6 +177,24 @@ tamanhos, caminhos, índices e unidades que os testes do Plaso esperam. Na image
 Corpora (Windows XP), lida com `auto-parse --e01`, o registro do INFO2 coincide com o rifiuti2, e o arquivo reciclado
 ao lado dele, `Dc1.jpg`, tem o nome que o Juntei lhe dá.
 
+## Cache de bitmaps do RDP { #rdp-bitmap-cache }
+
+O `parse-file rdp-cache` é um analisador próprio do Juntei. Em kofu, um dos seis hosts da coleta do CODE BLUE 2026
+CTF, cada um dos 1.911 blocos dos seus três arquivos `Cache????.bin` é, pixel a pixel, a imagem que o
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) gera. O mesmo vale para os 1.980 blocos do `Cache0000.bin` público
+do desafio "Phantom Connection" do ApoorvCTF 2025, 105 deles com 64 × 48 pixels. O bmc-tools lê todos os blocos como
+se tivessem 64 pixels de largura, então os blocos mais estreitos da borda direita de uma tela saem distorcidos; o
+Juntei lê cada bloco com a sua própria largura.
+
+Não foi encontrado nenhum cache `.bmc` público com blocos: as amostras acima, como outros clientes do Windows 10 e
+posteriores, têm apenas um `bcache24.bmc` vazio. Por isso, a leitura de `.bmc` foi testada com arquivos construídos
+conforme o formato: blocos não compactados das quatro profundidades de cor, blocos pequenos seguidos do final de um
+bloco anterior, slots danificados e 3.000 blocos aleatórios de 16 bits compactados com RLE que usam todas as ordens
+(orders) do MS-RDPBCGR 3.1.9, sem nenhuma ordem que continue além do final da primeira linha de um bloco. O Juntei e o
+bmc-tools decodificam todos os 3.000 para os mesmos pixels. Quando uma ordem começa na primeira linha e continua além
+dela, os dois diferem: o Juntei segue a especificação e o decodificador do FreeRDP, que mantêm as regras da primeira
+linha durante toda a ordem, enquanto o bmc-tools muda de regras no meio dela.
+
 ## ShimCache { #shimcache }
 
 O [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) é um fork mantido

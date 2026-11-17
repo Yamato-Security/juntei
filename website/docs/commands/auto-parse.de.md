@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Die Parser benötigen Dateipfade. Daher kopiert Juntei die Dateien, die die Parser lesen, mit begrenzten Puffern in ein privates temporäres Verzeichnis: Registry-Hives und ihre Transaktionsprotokolle, NTFS-Metadatendateien, Datenbanken, Prefetch-Dateien, Verknüpfungen, Sprunglisten, Outlook-Dateien, Indexdateien des Papierkorbs und Defender-Quarantäneordner. Jede andere Datei wird ein leerer Platzhalter mit ihrer ursprünglichen Änderungszeit, sodass Verzeichnisse und Pfade wie auf dem Datenträger aussehen. persistence-hunter liest den Inhalt eines Platzhalters nur bei Bedarf aus dem Abbild, etwa eine ausführbare Datei, auf die ein Persistenzeintrag verweist. **Es muss Platz für die kopierten Dateien vorhanden sein**, zusätzlich zu den Ergebnissen. Nullbereiche werden, soweit unterstützt, als Löcher geschrieben. Namen, Struktur, Hardlinks und Änderungszeiten bleiben erhalten. LNK- und Sprunglisten-Quellzeiten stammen aus einem Snapshot der ursprünglichen NTFS-Metadaten, niemals aus den temporären Dateien. Regulärer Abschluss, auch mit Parserfehlern, entfernt die Kopien; erzwungene Beendigung kann sie zurücklassen. Die Quelle bleibt schreibgeschützt; ausstehende VHDX-Logs werden nur im Speicher angewendet.
+Die Parser benötigen Dateipfade. Daher kopiert Juntei die Dateien, die die Parser lesen, mit begrenzten Puffern in ein privates temporäres Verzeichnis: Registry-Hives und ihre Transaktionsprotokolle, NTFS-Metadatendateien, Datenbanken, Prefetch-Dateien, Verknüpfungen, Sprunglisten, Outlook-Dateien, Indexdateien des Papierkorbs, RDP-Bitmap-Caches und Defender-Quarantäneordner. Jede andere Datei wird ein leerer Platzhalter mit ihrer ursprünglichen Änderungszeit, sodass Verzeichnisse und Pfade wie auf dem Datenträger aussehen. persistence-hunter liest den Inhalt eines Platzhalters nur bei Bedarf aus dem Abbild, etwa eine ausführbare Datei, auf die ein Persistenzeintrag verweist. **Es muss Platz für die kopierten Dateien vorhanden sein**, zusätzlich zu den Ergebnissen. Nullbereiche werden, soweit unterstützt, als Löcher geschrieben. Namen, Struktur, Hardlinks und Änderungszeiten bleiben erhalten. LNK- und Sprunglisten-Quellzeiten stammen aus einem Snapshot der ursprünglichen NTFS-Metadaten, niemals aus den temporären Dateien. Regulärer Abschluss, auch mit Parserfehlern, entfernt die Kopien; erzwungene Beendigung kann sie zurücklassen. Die Quelle bleibt schreibgeschützt; ausstehende VHDX-Logs werden nur im Speicher angewendet.
 
 Hosterkennung, CSV/JSON/JSONL und `-j` nutzen dieselbe Verarbeitung wie normale Beweisverzeichnisse. `Image` in `manifest.json` bezeichnet das Originalimage, `EvidenceRoot` den internen relativen Pfad. Lesefehler und unsichere Namen erscheinen in `ImageErrors` sowie Fehlerzeilen von `manifest.csv`. Lesbare Ergebnisse bleiben erhalten; unvollständige Eingaben ergeben Exitcode 1. Unsichere oder mehrdeutige Namen werden nicht umbenannt. Benannte NTFS-Streams werden nicht als zusätzliche Dateien extrahiert; als normale Dateien gesammelte Artefakte bleiben verfügbar.
 
@@ -166,6 +166,8 @@ Computer diese Jobs aus. Die Jobs verwenden dieselben nach Quelle gruppierten Be
 - LNK-Verknüpfungen
 - Jump Lists
 - Papierkorb: ursprüngliche Pfade, Größen, Löschzeiten und Benutzer gelöschter Elemente
+- RDP-Bitmap-Caches: die Kacheln der entfernten Bildschirme, die ein Benutzer gesehen hat, mit einem Collagebild
+  jeder Cachedatei
 - ShimCache
 - Persistence Hunter (131 quellenübergreifende Persistenzprüfungen mit Allow-/Block-Profilen)
 - Metadaten der Defender-Quarantäne
@@ -291,6 +293,9 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -356,7 +361,7 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 | `FileExistence` | Amcache, Papierkorb, ShimCache |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN-Journal |
 | `NetworkActivity` | Netzwerkprofile, Schnittstellen, Freigaben, Portproxys und Routen; SRUM-Verbindungen, -Datenverkehr und -Push-Benachrichtigungen |
-| `LateralMovement` | Ausgehende Remotedesktop-, PuTTY- und WinSCP-Verbindungen der Benutzer, zugeordnete Laufwerke und Freigaben; Benutzerzugriffsprotokollierung (die Clients der Rollen eines Servers) |
+| `LateralMovement` | Ausgehende Remotedesktop-, PuTTY- und WinSCP-Verbindungen der Benutzer, zugeordnete Laufwerke und Freigaben; RDP-Bitmap-Caches (die Kacheln der entfernten Bildschirme); Benutzerzugriffsprotokollierung (die Clients der Rollen eines Servers) |
 | `Persistence` | Startkonfiguration (BCD), Registry-Autostarts, Dienste, TaskCache |
 | `ProcessExecution` | Anwendungskompatibilität, BAM und DAM, FeatureUsage und angeheftete Elemente, MuiCache, Prefetch, Prefetch-Zeitleiste, SRUM-Anwendungs-/CPU-Aktivität, UserAssist |
 | `Registry` | Allgemeine Hive-Schlüssel und -Werte, einschließlich wiederhergestellter Datensätze |
@@ -374,7 +379,7 @@ Amcache und Jump Lists haben jeweils ein gemeinsames Protokoll neben ihren Tabel
 in `NetworkActivity`, `ProcessExecution` und `SystemInformation`, mit einer gemeinsamen
 Datei `SystemInformation/SRUM-logs.txt`. Es werden keine Unterverzeichnisse `logs/` angelegt.
 
-Die standardmäßigen CSV-Dateinamen sind `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Die standardmäßigen CSV-Dateinamen sind `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` und
@@ -390,6 +395,9 @@ SRUM-Tabellen verwenden `SRUM-`-Dateinamen direkt unter ihrer Kategorie, zum Bei
 Die Tabellen der Benutzerzugriffsprotokollierung liegen in `LateralMovement`, eine Datei pro Tabelle, etwa
 `UAL-Clients.csv` und `UAL-SystemIdentity.csv`, zusammen mit `UAL-logs.txt`; siehe
 [Benutzerzugriffsprotokollierung (UAL)](../artifacts/ual.md#automatic-parsing).
+Die Datensätze des RDP-Bitmap-Caches liegen in `LateralMovement/RdpCache.csv`, die Collage jeder Cachedatei liegt in
+`LateralMovement/RdpCache/<user>/<cache file>/`, daneben jede Kachel, wenn `--extract-rdp-tiles` angegeben ist; siehe
+[RDP-Bitmap-Cache](../artifacts/rdp-cache.md#automatic-parsing).
 Die Tabellen der Webbrowser liegen in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` und `Browser-FormHistory.csv`, zusammen mit `Browser-logs.txt`; siehe
 [Webbrowser](../artifacts/browser.md#automatic-parsing). Die WebCache-Tabellen von Internet Explorer und dem alten
@@ -559,6 +567,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -577,9 +586,10 @@ Display Settings:
 
 Verwenden Sie nach Möglichkeit ein neues Ausgabeverzeichnis. `-C` entfernt oder überschreibt nur die exakten erzeugten
 Ziele dieses Laufs, sodass ein inzwischen fehlendes Artefakt kein veraltetes Ergebnis hinterlassen kann. Es löscht keine
-nicht zugehörigen Dateien und nicht den gesamten Ausgabebaum. Außerdem entfernt es vor dem Parsen das Verzeichnis
-`SecurityProducts/DefenderQuarantined/` jedes Computers sowie das reservierte Verzeichnis `defender-quarantined/`
-aus der früheren flachen Struktur, unabhängig davon, ob der neue Lauf `-x` verwendet.
+nicht zugehörigen Dateien und nicht den gesamten Ausgabebaum. Außerdem entfernt es vor dem Parsen die Verzeichnisse
+`SecurityProducts/DefenderQuarantined/` und `LateralMovement/RdpCache/` jedes Computers sowie das reservierte
+Verzeichnis `defender-quarantined/` aus der früheren flachen Struktur, unabhängig davon, ob der neue Lauf `-x` oder
+`--extract-rdp-tiles` verwendet.
 
 Verwenden Sie beim Wechsel von einer älteren flachen Struktur ein neues Ausgabeverzeichnis. Frühere CSV-/JSON-Dateien
 werden nicht automatisch verschoben oder gelöscht.
