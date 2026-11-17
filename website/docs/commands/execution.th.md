@@ -192,7 +192,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-เมื่อไม่มี `-o` ให้ระบุ `-t` เพื่อเขียนระเบียนไปยัง stdout หากไม่มีทั้งสองตัวเลือก คำสั่งจะแสดงสรุป `json` เขียนอ็อบเจ็กต์แยกกันที่จัดรูปแบบให้อ่านง่าย ส่วน `jsonl` เขียนหนึ่งอ็อบเจ็กต์ต่อบรรทัด คำสั่งเดี่ยวไม่มีตัวเลือก `-Z` ดูการเข้ารหัส การป้องกัน CSV และการตีความได้ที่ [ประวัติ PowerShell](../artifacts/powershell-history.md)
+เมื่อไม่มี `-o` ให้ระบุ `-t` เพื่อเขียนระเบียนไปยัง stdout หากไม่มีทั้งสองตัวเลือก คำสั่งจะแสดงสรุป `json` เขียนอ็อบเจ็กต์แยกกันที่จัดรูปแบบให้อ่านง่าย ส่วน `jsonl` เขียนหนึ่งอ็อบเจ็กต์ต่อบรรทัด คำสั่งเดี่ยวไม่มีตัวเลือก `-Z` ดูการเข้ารหัสและการตีความได้ที่ [ประวัติ PowerShell](../artifacts/powershell-history.md)
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

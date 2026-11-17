@@ -34,7 +34,6 @@ use crate::progress;
 use crate::util::{self, error_msg, fmt_num, p, p_label};
 use indicatif::ProgressBar;
 use serde_json::json;
-use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -126,24 +125,36 @@ struct Source {
     host: String,
 }
 
+/// The user that the folders PSReadLine keeps `path` in name, read from its absolute path, so
+/// that it is the same whichever folder the input names. No other folder above the input is
+/// used, since it may be the analyst's own.
+fn layout_user(path: &Path) -> Option<String> {
+    let absolute = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
+    profile_user(&parts(&absolute))
+}
+
 impl Source {
-    /// A file found under the directory `root`. Its user is read from the path below `root`
-    /// only, never from the analyst's own folders above it.
+    /// A file found under the directory `root`. Its user is read from the path below `root`,
+    /// or else, as for a file given with `-f`, from the folders PSReadLine keeps it in: `-d`
+    /// given a user's profile folder or the `PSReadLine` folder itself still names the user.
     fn under(root: &Path, path: PathBuf) -> Self {
         let parts = parts(path.strip_prefix(root).unwrap_or(&path));
-        let user = profile_user(&parts).or_else(|| {
-            crate::browser::path_user(&parts.iter().collect::<PathBuf>())
-                .filter(|user| !user.is_empty())
-        });
+        let user = profile_user(&parts)
+            .or_else(|| {
+                crate::browser::path_user(&parts.iter().collect::<PathBuf>())
+                    .filter(|user| !user.is_empty())
+            })
+            .or_else(|| layout_user(&path));
         Self::new(path, parts.join("/"), user, &parts)
     }
 
     /// A file given with `-f`: shown by its name. Its user is named only by the folders
-    /// PSReadLine keeps the file in, since any other folder may be the analyst's own.
+    /// PSReadLine keeps the file in.
     fn given(path: PathBuf) -> Self {
         let parts = parts(&path);
         let name = parts.last().cloned().unwrap_or_default();
-        Self::new(path, name, profile_user(&parts), &parts)
+        let user = layout_user(&path);
+        Self::new(path, name, user, &parts)
     }
 
     fn new(path: PathBuf, shown: String, user: Option<String>, parts: &[String]) -> Self {
@@ -161,11 +172,12 @@ impl Source {
     }
 }
 
-/// The history files under `dir`, recursively, in path order.
+/// The history files under `dir`, recursively, in path order. The `PSReadLine` folder is looked
+/// for in the absolute path, so that `-d .` inside that folder finds its files too.
 fn find_histories(dir: &Path) -> Vec<Source> {
     util::find_files(dir, is_history_name)
         .into_iter()
-        .filter(|path| is_history_path(path))
+        .filter(|path| is_history_path(&std::path::absolute(path).unwrap_or(path.clone())))
         .map(|path| Source::under(dir, path))
         .collect()
 }
@@ -791,39 +803,6 @@ struct FileInfo<'a> {
     size: u64,
 }
 
-/// Characters a spreadsheet takes as the start of a formula, with the full-width forms that
-/// East Asian versions accept.
-const FORMULA_STARTS: [char; 8] = ['=', '+', '-', '@', '＝', '＋', '－', '＠'];
-
-/// Characters a spreadsheet may skip before deciding that a cell is a formula.
-fn skipped_by_spreadsheets(c: char) -> bool {
-    c.is_whitespace()
-        || c.is_control()
-        || matches!(
-            c,
-            '\u{00AD}' | '\u{200B}'..='\u{200F}' | '\u{2060}' | '\u{FEFF}'
-        )
-}
-
-/// A CSV cell that a spreadsheet shows as text. A command line is whatever was typed, and a
-/// path or user name whatever the evidence holds: a cell that starts with `=`, `+`, `-` or `@`
-/// (after any spaces, tabs or control characters), or with a control character such as a tab or
-/// carriage return, would be run as a formula by a spreadsheet opening the CSV. Such a cell gets
-/// a `'` in front. JSON and JSONL always hold the text unchanged.
-pub(crate) fn csv_cell(text: &str) -> Cow<'_, str> {
-    let Some(first) = text.chars().next() else {
-        return Cow::Borrowed(text);
-    };
-    let formula = text
-        .trim_start_matches(skipped_by_spreadsheets)
-        .starts_with(FORMULA_STARTS);
-    if formula || first.is_control() {
-        Cow::Owned(format!("'{text}"))
-    } else {
-        Cow::Borrowed(text)
-    }
-}
-
 /// Where the rows go, written one at a time.
 enum Records {
     Csv(Box<csv::Writer<Box<dyn Write>>>),
@@ -848,8 +827,7 @@ impl Records {
     fn write(&mut self, file: &FileInfo<'_>, line: &Line) -> io::Result<()> {
         match self {
             Records::Csv(csv) => {
-                let row = csv_row(file, line);
-                csv.write_record(row.iter().map(|cell| csv_cell(cell).into_owned()))?;
+                csv.write_record(csv_row(file, line))?;
                 Ok(())
             }
             Records::Json(out, pretty) => {
@@ -1075,14 +1053,24 @@ mod tests {
         );
         assert_eq!(unix.user.as_deref(), Some("carol"));
 
-        // Nothing below the input names a user: the analyst's own folders never do.
+        // Nothing below the input names a user, and the folders above it are not PSReadLine's:
+        // they may be the analyst's own, so they never name one.
         let bare = Source::under(root, root.join("PSReadLine/ConsoleHost_history.txt"));
         assert_eq!(bare.user, None);
         assert_eq!(bare.shown, "PSReadLine/ConsoleHost_history.txt");
-        let profile = Path::new("/cases/Users/analyst");
+
+        // The input is a user's profile folder, or the PSReadLine folder itself: the folders
+        // PSReadLine keeps the file in name the user, as they do for a file given with -f.
+        let profile = Path::new("/cases/C/Users/alice");
         let inside = Source::under(profile, profile.join(tail).join("ConsoleHost_history.txt"));
-        assert_eq!(inside.user, None);
-        assert!(!inside.shown.contains("analyst"));
+        assert_eq!(inside.user.as_deref(), Some("alice"));
+        assert_eq!(inside.shown, format!("{tail}/ConsoleHost_history.txt"));
+        let folder = profile.join(tail);
+        let direct = Source::under(&folder, folder.join("ConsoleHost_history.txt"));
+        assert_eq!(direct.user.as_deref(), Some("alice"));
+        assert_eq!(direct.shown, "ConsoleHost_history.txt");
+        let given = Source::given(folder.join("ConsoleHost_history.txt"));
+        assert_eq!(given.user, direct.user);
     }
 
     #[test]
@@ -1421,53 +1409,7 @@ mod tests {
     }
 
     #[test]
-    fn cells_a_spreadsheet_would_run_get_an_apostrophe() {
-        for text in [
-            "=cmd|' /C calc'!A0",
-            "+1+1",
-            "-2+3+cmd|' /C calc'!A0",
-            "@SUM(1+1)*cmd|' /C calc'!A0",
-            "-Path C:\\Temp `",
-            " =1+1",
-            "\t=1+1",
-            "\r\n=1+1",
-            "\u{a0}\u{3000}@x",
-            "\u{feff}=x",
-            "\u{200b}+x",
-            "\0=x",
-            "＝1+1",
-            "＋1",
-            "－1",
-            "＠x",
-            "\tdir",
-            "\rdir",
-            "\ndir",
-            "\u{1b}[31m",
-            "\0",
-        ] {
-            assert_eq!(csv_cell(text), format!("'{text}"), "{text:?}");
-        }
-        for text in [
-            "",
-            "whoami",
-            "  cd ..",
-            "'=already quoted",
-            "a=b",
-            "Get-Content -Path x",
-            "1+1",
-            "$x = 1",
-            "& cmd /c x",
-            "|=",
-            "`",
-            "\u{fffd}",
-            "日本語",
-        ] {
-            assert!(matches!(csv_cell(text), Cow::Borrowed(_)), "{text:?}");
-        }
-    }
-
-    #[test]
-    fn csv_guards_every_text_cell_and_json_keeps_the_original() {
+    fn csv_and_json_keep_every_cell_as_it_is() {
         let source = Source::under(
             Path::new("in"),
             PathBuf::from(
@@ -1489,9 +1431,7 @@ mod tests {
         let mut out = Vec::new();
         {
             let mut csv = csv::Writer::from_writer(&mut out);
-            let row = csv_row(&file, &line);
-            csv.write_record(row.iter().map(|cell| csv_cell(cell).into_owned()))
-                .unwrap();
+            csv.write_record(csv_row(&file, &line)).unwrap();
             csv.flush().unwrap();
         }
         let mut reader = csv::ReaderBuilder::new()
@@ -1503,16 +1443,16 @@ mod tests {
         assert_eq!(
             cells,
             [
-                "'=evil/Users/@admin/AppData/Roaming/Microsoft/Windows/PowerShell/PSReadLine/+calc_history.txt",
-                "'@admin",
-                "'+calc",
+                "=evil/Users/@admin/AppData/Roaming/Microsoft/Windows/PowerShell/PSReadLine/+calc_history.txt",
+                "@admin",
+                "+calc",
                 "7",
                 "6",
-                "'=HYPERLINK(\"http://example.test\",\"x\")",
+                "=HYPERLINK(\"http://example.test\",\"x\")",
                 "2026-10-20T08:46:38.5Z",
                 "12",
                 "UTF-8",
-                "'-odd; second",
+                "-odd; second",
             ]
         );
 

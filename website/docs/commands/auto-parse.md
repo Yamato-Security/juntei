@@ -661,5 +661,6 @@ Results are saved as `ShellHistory/PowerShellHistory.csv` (or `.json`/`.jsonl` f
 format), with the usual manifest and parser log entries. `FileLastWriteTime` is the source
 file's modification time, including original image metadata, never a command execution time.
 `auto-parse -Z` changes its display offset along with other output times; the standalone parser
-has no `-Z` option. History records remain in category output but do not enter the `-j` timeline
-or `super-timeline`. See [PowerShell History](../artifacts/powershell-history.md).
+has no `-Z` option. The combined `-j` timeline includes the history rows. They have no times, so
+`super-timeline` makes no events from them and counts them as untimed records. See
+[PowerShell History](../artifacts/powershell-history.md).

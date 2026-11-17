@@ -193,7 +193,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-Без `-o` задайте `-t`, щоб писати записи у stdout; без обох параметрів команда показує підсумок. `json` записує окремі форматовані об’єкти, `jsonl` — один об’єкт на рядок. Окрема команда не має параметра `-Z`. Про кодування, захист CSV і тлумачення див. [Історія PowerShell](../artifacts/powershell-history.md).
+Без `-o` задайте `-t`, щоб писати записи у stdout; без обох параметрів команда показує підсумок. `json` записує окремі форматовані об’єкти, `jsonl` — один об’єкт на рядок. Окрема команда не має параметра `-Z`. Про кодування й тлумачення див. [Історія PowerShell](../artifacts/powershell-history.md).
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

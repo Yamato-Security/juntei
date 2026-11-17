@@ -666,8 +666,6 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             json_opts.rdp_cache_images = false;
             json_opts.extract_defender_quarantined = false;
             let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
-            // Records without a time of their own are not events: no export task for them.
-            extra.retain(|task| !crate::super_timeline::untimed_artifact(task.artifact));
             for task in &mut extra {
                 task.timeline_only = true;
                 let name = task.log.file_stem().unwrap_or_default().to_string_lossy();
@@ -901,11 +899,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
                     artifact: task.artifact,
                 });
             }
-            // The category output keeps its Comp and Artifact fields; only the timeline leaves
-            // out records that have no time of their own.
-            if result.status == TaskStatus::Succeeded
-                && !crate::super_timeline::untimed_artifact(task.artifact)
-            {
+            if result.status == TaskStatus::Succeeded {
                 data_files.extend(annotated);
             }
         }
@@ -2756,19 +2750,13 @@ mod tests {
                 .any(|task| task.artifact == "powershell-history")
         );
         for task in tasks {
-            // An artifact is either projected onto the timeline or left out of it on purpose,
-            // never both and never by omission.
-            assert_ne!(
+            assert!(
                 crate::super_timeline::supports_artifact(task.artifact),
-                crate::super_timeline::untimed_artifact(task.artifact),
                 "Missing timeline adapter: {}",
                 task.artifact
             );
             assert!(CATEGORIES.contains(&artifact_category(task.artifact)));
         }
-        assert!(crate::super_timeline::untimed_artifact(
-            "powershell-history"
-        ));
         assert_eq!(artifact_category("powershell-history"), "ShellHistory");
         assert_eq!(artifact_filename("powershell-history"), "PowerShellHistory");
         let mut sorted = CATEGORIES.to_vec();

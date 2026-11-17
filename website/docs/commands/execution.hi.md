@@ -193,7 +193,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-`-o` के बिना रिकॉर्ड stdout पर लिखने के लिए `-t` दें; दोनों के बिना कमांड सारांश दिखाती है। `json` अलग-अलग, पढ़ने योग्य स्वरूपित ऑब्जेक्ट लिखता है; `jsonl` प्रति पंक्ति एक ऑब्जेक्ट लिखता है। स्वतंत्र कमांड में `-Z` विकल्प नहीं है। एन्कोडिंग, CSV सुरक्षा और अर्थ के लिए [PowerShell इतिहास](../artifacts/powershell-history.md) देखें।
+`-o` के बिना रिकॉर्ड stdout पर लिखने के लिए `-t` दें; दोनों के बिना कमांड सारांश दिखाती है। `json` अलग-अलग, पढ़ने योग्य स्वरूपित ऑब्जेक्ट लिखता है; `jsonl` प्रति पंक्ति एक ऑब्जेक्ट लिखता है। स्वतंत्र कमांड में `-Z` विकल्प नहीं है। एन्कोडिंग और अर्थ के लिए [PowerShell इतिहास](../artifacts/powershell-history.md) देखें।
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

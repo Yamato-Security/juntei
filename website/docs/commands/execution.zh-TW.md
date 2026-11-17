@@ -192,7 +192,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-不指定 `-o` 時，請指定 `-t` 將記錄寫至標準輸出；兩者都不指定則顯示摘要。`json` 寫入分別排版的獨立物件；`jsonl` 每行寫入一個物件。獨立命令沒有 `-Z` 選項。編碼、CSV 防護及解讀請參閱 [PowerShell 歷程記錄](../artifacts/powershell-history.md)。
+不指定 `-o` 時，請指定 `-t` 將記錄寫至標準輸出；兩者都不指定則顯示摘要。`json` 寫入分別排版的獨立物件；`jsonl` 每行寫入一個物件。獨立命令沒有 `-Z` 選項。編碼及解讀請參閱 [PowerShell 歷程記錄](../artifacts/powershell-history.md)。
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

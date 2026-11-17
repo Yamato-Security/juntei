@@ -192,7 +192,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-`-o` 없이 레코드를 stdout으로 쓰려면 `-t`를 지정하세요. 둘 다 없으면 요약을 표시합니다. `json`은 읽기 좋게 정렬된 개별 객체를 쓰고 `jsonl`은 한 줄에 객체 하나를 씁니다. 독립 실행 명령에는 `-Z` 옵션이 없습니다. 인코딩, CSV 보호 및 해석은 [PowerShell 기록](../artifacts/powershell-history.md)을 참조하세요.
+`-o` 없이 레코드를 stdout으로 쓰려면 `-t`를 지정하세요. 둘 다 없으면 요약을 표시합니다. `json`은 읽기 좋게 정렬된 개별 객체를 쓰고 `jsonl`은 한 줄에 객체 하나를 씁니다. 독립 실행 명령에는 `-Z` 옵션이 없습니다. 인코딩 및 해석은 [PowerShell 기록](../artifacts/powershell-history.md)을 참조하세요.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

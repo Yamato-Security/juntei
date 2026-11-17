@@ -1815,11 +1815,11 @@ impl LnkOptions {
 /// What `parse-file powershell-history` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PowerShellHistoryOutputType {
-    /// One row per line of each history file; a cell a spreadsheet would run as a formula starts with an added '
+    /// One row per line of each history file
     Csv,
-    /// One pretty-printed JSON object per line, with the command unchanged
+    /// One pretty-printed JSON object per line of each history file
     Json,
-    /// One JSON object per line, with the command unchanged
+    /// One JSON object per line
     Jsonl,
 }
 

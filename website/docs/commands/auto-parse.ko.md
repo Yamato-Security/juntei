@@ -606,4 +606,4 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 
 `PSReadLine` 폴더 바로 아래의 `<Host>_history.txt` 파일을 재귀적으로 탐색하고 VHDX/E01 준비 과정에서 복사합니다. 해당 폴더 밖의 동일한 접미사 파일은 제외합니다. 사용자 지정 위치나 이름을 바꾼 사본은 `parse-file powershell-history -f <FILE>`로 명시적으로 파싱하세요.
 
-결과는 `ShellHistory/PowerShellHistory.csv` 또는 선택한 형식의 `.json`/`.jsonl`로 저장하며 일반적인 매니페스트와 파서 로그 항목도 생성합니다. `FileLastWriteTime`은 원래 이미지 메타데이터를 포함한 소스 파일 수정 시각이며 명령 실행 시각이 아닙니다. `auto-parse -Z`는 다른 출력 시각과 함께 표시 오프셋을 변경합니다. 독립 실행 파서에는 `-Z` 옵션이 없습니다. 기록 레코드는 범주 출력에 남지만 `-j` 타임라인이나 `super-timeline`에는 포함되지 않습니다. [PowerShell 기록](../artifacts/powershell-history.md)을 참조하세요.
+결과는 `ShellHistory/PowerShellHistory.csv` 또는 선택한 형식의 `.json`/`.jsonl`로 저장하며 일반적인 매니페스트와 파서 로그 항목도 생성합니다. `FileLastWriteTime`은 원래 이미지 메타데이터를 포함한 소스 파일 수정 시각이며 명령 실행 시각이 아닙니다. `auto-parse -Z`는 다른 출력 시각과 함께 표시 오프셋을 변경합니다. 독립 실행 파서에는 `-Z` 옵션이 없습니다. 결합된 `-j` 타임라인에는 기록 행이 포함됩니다. 이 행에는 시간이 없으므로 `super-timeline`은 이 행으로 이벤트를 만들지 않고 시간이 없는 레코드로 셉니다. [PowerShell 기록](../artifacts/powershell-history.md)을 참조하세요.

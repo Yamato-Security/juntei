@@ -129,6 +129,7 @@ um ataque. Os adaptadores preservam intencionalmente estas distinções:
 | LNK | Carimbos de data/hora MAC (modificação, acesso e criação) do destino, criação do identificador de rastreamento e horários dos itens de shell. Eles descrevem os metadados armazenados sobre o destino, e não necessariamente quando o atalho foi aberto. |
 | Jump Lists | Metadados de último uso das entradas, criação do identificador de rastreamento e horários do destino dos LNK embutidos. Por padrão, os horários do próprio arquivo contêiner no lado da coleta são omitidos. |
 | Cache de bitmaps do RDP | Nenhum evento: os blocos em cache não têm horários. Seus registros permanecem na entrada analisada. |
+| Histórico do PowerShell | Nenhum evento: as linhas do histórico não têm horários, e `FileLastWriteTime` é o horário do arquivo, não o de um comando. Seus registros permanecem na entrada analisada. |
 | Lixeira | Quando cada item foi movido para a Lixeira, com o usuário da lixeira, o caminho original e se o conteúdo excluído foi coletado. Não é quando a Lixeira foi esvaziada, nem os horários de arquivo do próprio item. |
 | Quarentena do Defender | Carimbo de data/hora da entrada e horários armazenados de criação/acesso/gravação do recurso. Os horários de extração não são evidência de atividade no endpoint. |
 | BAM, UserAssist, FeatureUsage | Campos de atividade registrados, quando existem, com o contexto da última gravação da chave mantido à parte. Um contador sem horário não gera evento. |

@@ -193,7 +193,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-Sans `-o`, précisez `-t` pour écrire les enregistrements sur stdout ; sans ces deux options, la commande affiche un résumé. `json` écrit des objets distincts mis en forme ; `jsonl` écrit un objet par ligne. La commande autonome n’a pas d’option `-Z`. Voir [Historique PowerShell](../artifacts/powershell-history.md) pour l’encodage, les protections CSV et l’interprétation.
+Sans `-o`, précisez `-t` pour écrire les enregistrements sur stdout ; sans ces deux options, la commande affiche un résumé. `json` écrit des objets distincts mis en forme ; `jsonl` écrit un objet par ligne. La commande autonome n’a pas d’option `-Z`. Voir [Historique PowerShell](../artifacts/powershell-history.md) pour l’encodage et l’interprétation.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

@@ -620,4 +620,4 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 
 會遞迴探索直接位於 `PSReadLine` 資料夾內的 `<Host>_history.txt`，並在 VHDX/E01 暫存作業期間複製。同樣後綴但位於該資料夾外的檔案會排除；自訂位置或重新命名的副本請明確使用 `parse-file powershell-history -f <FILE>` 解析。
 
-結果儲存為 `ShellHistory/PowerShellHistory.csv`（依所選格式也可為 `.json`/`.jsonl`），並產生一般的資訊清單與解析器日誌項目。`FileLastWriteTime` 是來源檔案修改時間，包含原始映像檔中繼資料，絕非命令執行時間。`auto-parse -Z` 會與其他輸出時間一起變更其顯示時差；獨立解析器沒有 `-Z` 選項。歷程記錄仍保留在類別輸出中，但不會進入 `-j` 時間軸或 `super-timeline`。請參閱 [PowerShell 歷程記錄](../artifacts/powershell-history.md)。
+結果儲存為 `ShellHistory/PowerShellHistory.csv`（依所選格式也可為 `.json`/`.jsonl`），並產生一般的資訊清單與解析器日誌項目。`FileLastWriteTime` 是來源檔案修改時間，包含原始映像檔中繼資料，絕非命令執行時間。`auto-parse -Z` 會與其他輸出時間一起變更其顯示時差；獨立解析器沒有 `-Z` 選項。合併的 `-j` 時間軸會包含歷程記錄的資料列。由於這些資料列沒有時間，`super-timeline` 不會從中產生事件，而是將其計為無時間的記錄。請參閱 [PowerShell 歷程記錄](../artifacts/powershell-history.md)。

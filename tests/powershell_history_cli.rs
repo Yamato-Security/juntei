@@ -421,6 +421,33 @@ fn a_single_file_is_named_without_its_folders() {
 }
 
 #[test]
+fn a_directory_inside_the_profile_still_names_the_user() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = write_history(dir.path(), "heidi", CONSOLE, b"Get-Help\n", 0);
+    let profile = dir.path().join("Users/heidi");
+    let folder = path.parent().unwrap();
+    // The user's profile folder, and the PSReadLine folder itself: -d names the user as -f does.
+    for (input, shown) in [
+        (profile.as_path(), format!("{PSREADLINE}/{CONSOLE}")),
+        (folder, CONSOLE.to_owned()),
+    ] {
+        let all = rows(&["-d", input.to_str().unwrap()]);
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0]["SourceFile"], shown);
+        assert_eq!(all[0]["User"], "heidi");
+    }
+    // Also a relative input given from inside the PSReadLine folder.
+    let r = run_at(
+        folder,
+        &["parse-file", "powershell-history", "-d", ".", "-t", "jsonl"],
+    );
+    assert_eq!(r.code, 0, "{}", r.all());
+    let all = jsonl(&r.stdout);
+    assert_eq!(all[0]["SourceFile"], CONSOLE);
+    assert_eq!(all[0]["User"], "heidi");
+}
+
+#[test]
 fn a_folder_kept_in_one_file_name_is_normalized() {
     // A path with backslashes is one file name outside Windows, and nested folders on it:
     // either way the source is written with `/` and the user is found.
@@ -445,7 +472,7 @@ fn a_folder_kept_in_one_file_name_is_normalized() {
 }
 
 #[test]
-fn formula_cells_are_guarded_in_csv_and_unchanged_in_json() {
+fn csv_and_json_keep_the_saved_text_of_every_cell() {
     let dir = tempfile::tempdir().unwrap();
     let commands = [
         "=cmd|' /C calc'!A0",
@@ -453,7 +480,7 @@ fn formula_cells_are_guarded_in_csv_and_unchanged_in_json() {
         "-2+3",
         "@SUM(1+1)",
         "\t=1+1",
-        "  =HYPERLINK(\"http://example.test\")",
+        "  -Path C:\\Temp `",
         "\u{feff}=1",
         "＝1+1",
         "\tGet-Date",
@@ -481,39 +508,11 @@ fn formula_cells_are_guarded_in_csv_and_unchanged_in_json() {
     assert_eq!(r.code, 0, "{}", r.all());
     let (_, csv) = csv_rows(&out);
     let cells: Vec<&str> = csv.iter().map(|row| row["Command"].as_str()).collect();
-    assert_eq!(
-        cells,
-        [
-            "'=cmd|' /C calc'!A0",
-            "'+1+cmd|' /C calc'!A0",
-            "'-2+3",
-            "'@SUM(1+1)",
-            "'\t=1+1",
-            "'  =HYPERLINK(\"http://example.test\")",
-            "'\u{feff}=1",
-            "'＝1+1",
-            "'\tGet-Date",
-            "a,b;\"quoted\" = fine",
-            "'=typed with an apostrophe",
-            "Get-Content -Path x",
-        ]
-    );
+    assert_eq!(cells, commands);
     for row in &csv {
-        assert_eq!(row["User"], "'=mallory");
-        assert_eq!(row["ShellHost"], "'@host");
+        assert_eq!(row["User"], "=mallory");
+        assert_eq!(row["ShellHost"], "@host");
         assert!(row["SourceFile"].starts_with("Users/=mallory/"));
-    }
-    // No cell of the file starts with a character a spreadsheet takes for a formula.
-    let mut reader = csv::ReaderBuilder::new()
-        .has_headers(false)
-        .from_path(&out)
-        .unwrap();
-    for record in reader.records() {
-        for cell in record.unwrap().iter() {
-            let shown = cell.trim_start_matches(|c: char| c.is_whitespace() || c.is_control());
-            assert!(!shown.starts_with(['=', '+', '-', '@', '＝']), "{cell:?}");
-            assert!(!cell.starts_with(['\t', '\r', '\n']), "{cell:?}");
-        }
     }
 
     for output_type in ["jsonl", "json"] {
@@ -789,7 +788,7 @@ fn evidence(root: &Path) -> PathBuf {
         &one,
         "alice",
         CONSOLE,
-        // A command that looks like a time, and one a spreadsheet would run.
+        // A command that looks like a time, and one that starts with `=`.
         b"whoami\r\nGet-Date 2026-10-20T08:46:38Z\r\n=cmd|' /C calc'!A0\r\n",
         0,
     );
@@ -863,7 +862,7 @@ fn assert_no_absolute_paths(output: &Path, directories: &[&Path]) {
 }
 
 #[test]
-fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelines() {
+fn auto_parse_saves_histories_under_shell_history_and_counts_them_as_untimed() {
     let dir = tempfile::tempdir().unwrap();
     let evidence = evidence(dir.path());
     let output = dir.path().join("parsed");
@@ -913,7 +912,7 @@ fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelin
                 "2",
                 "Get-Date 2026-10-20T08:46:38Z"
             ),
-            ("alice", "ConsoleHost", "3", "3", "'=cmd|' /C calc'!A0"),
+            ("alice", "ConsoleHost", "3", "3", "=cmd|' /C calc'!A0"),
             ("bob", "Visual Studio Code Host", "1", "1", "Get-Process |`"),
             ("bob", "Visual Studio Code Host", "2", "1", "  Out-Null"),
         ]
@@ -942,9 +941,18 @@ fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelin
     // --- manifests and logs ---------------------------------------------------------------
     let manifest = manifest(&output);
     assert_eq!(manifest["OutputTimeZone"], "+09:00");
-    let history = tasks(&manifest, "powershell-history");
-    // One task per computer, and none that exports to the JSONL timeline.
+    let (history, exports): (Vec<_>, Vec<_>) = tasks(&manifest, "powershell-history")
+        .into_iter()
+        .partition(|task| task["Purpose"] == "artifact");
+    // One task per computer, and a JSONL export for the combined timeline beside each, as
+    // for every other artifact.
     assert_eq!(history.len(), 3);
+    assert_eq!(exports.len(), 3);
+    assert!(
+        exports
+            .iter()
+            .all(|task| task["Purpose"] == "json_timeline")
+    );
     for task in &history {
         assert_eq!(task["Category"], "ShellHistory");
         assert_eq!(task["Purpose"], "artifact");
@@ -982,16 +990,10 @@ fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelin
             );
         }
     }
-    // Other parsers do get a timeline task: the exclusion is this artifact's alone.
-    assert!(
-        tasks(&manifest, "prefetch")
-            .iter()
-            .any(|task| task["Purpose"] == "json_timeline")
-    );
     let (_, index) = csv_rows(&output.join("manifest.csv"));
     let listed: Vec<_> = index
         .iter()
-        .filter(|row| row["Artifact"] == "powershell-history")
+        .filter(|row| row["Artifact"] == "powershell-history" && row["Purpose"] == "artifact")
         .collect();
     assert_eq!(listed.len(), 3);
     assert!(listed.iter().all(|row| row["Category"] == "ShellHistory"
@@ -1007,17 +1009,34 @@ fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelin
     assert_no_absolute_paths(&output, &[dir.path()]);
 
     // --- the timelines ----------------------------------------------------------------------
-    let events = std::fs::read_to_string(&timeline).unwrap();
-    assert!(events.contains("\"Artifact\":\"prefetch\""), "{events}");
-    for needle in [
-        "powershell-history",
-        "whoami",
-        "hostname",
-        "Out-Null",
-        PSREADLINE,
-    ] {
-        assert!(!events.contains(needle), "{needle}");
-    }
+    // The combined -j output has every history row, with its computer and artifact.
+    let records: Vec<Value> = std::fs::read_to_string(&timeline)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert!(
+        records
+            .iter()
+            .any(|record| record["Artifact"] == "prefetch")
+    );
+    let history: Vec<_> = records
+        .iter()
+        .filter(|record| record["Artifact"] == "powershell-history")
+        .collect();
+    assert_eq!(history.len(), 6);
+    assert_eq!(
+        history
+            .iter()
+            .filter(|record| record["Comp"] == "HOST1")
+            .count(),
+        5
+    );
+    assert!(history.iter().any(|record| record["Command"] == "whoami"));
+    assert!(history.iter().any(|record| record["Command"] == "hostname"));
+
+    // super-timeline makes no events from them: no line has a time, and the file's time is not
+    // a command's. They are counted as untimed records.
     let super_timeline = dir.path().join("super.jsonl");
     let r = run(&[
         "super-timeline",
@@ -1041,44 +1060,47 @@ fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelin
     ] {
         assert!(!events.contains(needle), "{needle}");
     }
-    // Asked for by name, the history is refused rather than dated by its file's time.
     let csv = output.join("HOST1/ShellHistory/PowerShellHistory.csv");
-    let refused = dir.path().join("refused.csv");
-    for args in [
-        vec![
-            "super-timeline",
-            "-f",
-            csv.to_str().unwrap(),
-            "--input-artifact",
-            "powershell-history",
-            "-o",
-            refused.to_str().unwrap(),
-        ],
-        vec![
-            "super-timeline",
-            "-d",
-            output.to_str().unwrap(),
-            "--artifact",
-            "powershell-history",
-            "-o",
-            refused.to_str().unwrap(),
-        ],
+    for (args, untimed) in [
+        (
+            vec![
+                "super-timeline",
+                "-d",
+                output.to_str().unwrap(),
+                "--artifact",
+                "powershell-history",
+            ],
+            6,
+        ),
+        (
+            vec![
+                "super-timeline",
+                "-f",
+                csv.to_str().unwrap(),
+                "--input-artifact",
+                "powershell-history",
+                "--computer",
+                "HOST1",
+            ],
+            5,
+        ),
     ] {
+        let only = dir.path().join("only-history.csv");
+        let mut args = args;
+        args.extend(["-o", only.to_str().unwrap(), "-C", "-K", "-q"]);
         let r = run(&args);
-        assert_ne!(r.code, 0, "{}", r.all());
+        assert_eq!(r.code, 0, "{}", r.all());
+        assert!(r.stdout.contains("Timeline events: 0"), "{}", r.stdout);
         assert!(
-            r.all().contains(
-                "'powershell-history' records have no time of their own and are not timeline events"
-            ),
+            r.stdout.contains(&format!("Untimed records: {untimed}")),
             "{}",
-            r.all()
+            r.stdout
         );
-        assert!(!refused.exists());
     }
 }
 
 #[test]
-fn auto_parse_json_outputs_keep_the_commands_and_stay_off_the_timeline() {
+fn auto_parse_json_outputs_keep_the_commands_and_join_the_combined_timeline() {
     let dir = tempfile::tempdir().unwrap();
     evidence(dir.path());
     for output_type in ["jsonl", "json"] {
@@ -1134,13 +1156,15 @@ fn auto_parse_json_outputs_keep_the_commands_and_stay_off_the_timeline() {
         assert!(history.iter().all(|task| task["Purpose"] == "artifact"));
         let events = std::fs::read_to_string(&timeline).unwrap();
         assert!(events.contains("\"Artifact\":\"prefetch\""), "{events}");
-        for needle in ["powershell-history", "whoami", PSREADLINE] {
-            assert!(!events.contains(needle), "{output_type}: {needle}");
-        }
+        let history = events
+            .lines()
+            .filter(|line| line.contains("\"Artifact\":\"powershell-history\""))
+            .count();
+        assert_eq!(history, 6, "{output_type}");
         assert_no_absolute_paths(&output, &[dir.path()]);
 
-        // The saved records, given to super-timeline as a file, are refused too.
-        let refused = dir.path().join(format!("refused-{output_type}.csv"));
+        // The saved records, given to super-timeline as a file, are counted as untimed.
+        let untimed = dir.path().join(format!("untimed-{output_type}.csv"));
         let r = run(&[
             "super-timeline",
             "-f",
@@ -1151,10 +1175,13 @@ fn auto_parse_json_outputs_keep_the_commands_and_stay_off_the_timeline() {
                 .to_str()
                 .unwrap(),
             "-o",
-            refused.to_str().unwrap(),
+            untimed.to_str().unwrap(),
+            "-K",
+            "-q",
         ]);
-        assert_ne!(r.code, 0, "{}", r.all());
-        assert!(r.all().contains("are not timeline events"), "{}", r.all());
+        assert_eq!(r.code, 0, "{}", r.all());
+        assert!(r.stdout.contains("Timeline events: 0"), "{}", r.stdout);
+        assert!(r.stdout.contains("Untimed records: 5"), "{}", r.stdout);
     }
 }
 

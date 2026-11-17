@@ -193,7 +193,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-Tanpa `-o`, tentukan `-t` untuk menulis rekaman ke stdout; tanpa kedua opsi tersebut, perintah menampilkan ringkasan. `json` menulis objek terpisah dengan format yang mudah dibaca; `jsonl` menulis satu objek per baris. Perintah mandiri tidak memiliki opsi `-Z`. Lihat [Riwayat PowerShell](../artifacts/powershell-history.md) untuk encoding, pelindung CSV, dan interpretasi.
+Tanpa `-o`, tentukan `-t` untuk menulis rekaman ke stdout; tanpa kedua opsi tersebut, perintah menampilkan ringkasan. `json` menulis objek terpisah dengan format yang mudah dibaca; `jsonl` menulis satu objek per baris. Perintah mandiri tidak memiliki opsi `-Z`. Lihat [Riwayat PowerShell](../artifacts/powershell-history.md) untuk encoding dan interpretasi.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

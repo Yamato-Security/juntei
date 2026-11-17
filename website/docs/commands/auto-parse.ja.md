@@ -470,4 +470,4 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 
 `PSReadLine` フォルダ直下の `<Host>_history.txt` を再帰的に検出し、VHDX/E01 のステージング時にコピーします。このフォルダ外にある同じ接尾辞のファイルは対象外です。独自の保存場所や名前を変更したコピーは、`parse-file powershell-history -f <FILE>` で明示的に解析してください。
 
-結果は `ShellHistory/PowerShellHistory.csv`（選択した形式に応じて `.json`/`.jsonl`）に保存し、通常のマニフェストとパーサーログにも記録します。`FileLastWriteTime` は元のイメージメタデータを含むソースファイルの更新時刻であり、コマンド実行時刻ではありません。`auto-parse -Z` は他の出力時刻とともに表示オフセットを変更しますが、単独のパーサーには `-Z` オプションがありません。履歴レコードはカテゴリ出力に残り、`-j` タイムラインや `super-timeline` には入りません。[PowerShell 履歴](../artifacts/powershell-history.md)を参照してください。
+結果は `ShellHistory/PowerShellHistory.csv`（選択した形式に応じて `.json`/`.jsonl`）に保存し、通常のマニフェストとパーサーログにも記録します。`FileLastWriteTime` は元のイメージメタデータを含むソースファイルの更新時刻であり、コマンド実行時刻ではありません。`auto-parse -Z` は他の出力時刻とともに表示オフセットを変更しますが、単独のパーサーには `-Z` オプションがありません。結合された `-j` タイムラインには履歴の行が含まれます。これらの行には日時がないため、`super-timeline` はそこからイベントを作成せず、時刻なしレコードとして数えます。[PowerShell 履歴](../artifacts/powershell-history.md)を参照してください。

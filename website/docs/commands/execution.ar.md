@@ -193,7 +193,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-دون `-o`، حدد `-t` لكتابة السجلات إلى stdout؛ ودون الخيارين يعرض الأمر ملخصاً. يكتب `json` كائنات منفصلة منسقة للقراءة، ويكتب `jsonl` كائناً واحداً في كل سطر. لا يملك الأمر المستقل خيار `-Z`. انظر [سجل PowerShell](../artifacts/powershell-history.md) للترميز وحماية CSV والتفسير.
+دون `-o`، حدد `-t` لكتابة السجلات إلى stdout؛ ودون الخيارين يعرض الأمر ملخصاً. يكتب `json` كائنات منفصلة منسقة للقراءة، ويكتب `jsonl` كائناً واحداً في كل سطر. لا يملك الأمر المستقل خيار `-Z`. انظر [سجل PowerShell](../artifacts/powershell-history.md) للترميز والتفسير.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

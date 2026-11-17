@@ -187,7 +187,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-`-o` を省略してレコードを標準出力に書くには `-t` を指定します。両方とも省略すると概要を表示します。`json` は個別に整形したオブジェクト、`jsonl` は 1 行に 1 オブジェクトを書き込みます。単独のコマンドには `-Z` オプションがありません。エンコーディング、CSV 保護、解釈については [PowerShell 履歴](../artifacts/powershell-history.md)を参照してください。
+`-o` を省略してレコードを標準出力に書くには `-t` を指定します。両方とも省略すると概要を表示します。`json` は個別に整形したオブジェクト、`jsonl` は 1 行に 1 オブジェクトを書き込みます。単独のコマンドには `-Z` オプションがありません。エンコーディングと解釈については [PowerShell 履歴](../artifacts/powershell-history.md)を参照してください。
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

@@ -196,7 +196,7 @@ juntei parse-file powershell-history -f copied-history.txt -t jsonl
 Without `-o`, specify `-t` to write records to stdout; without either option, the command displays
 a summary. `json` writes separate pretty-printed objects; `jsonl` writes one object per line.
 The standalone command has no `-Z` option. See [PowerShell History](../artifacts/powershell-history.md)
-for encoding, CSV safeguards and interpretation.
+for encoding and interpretation.
 
 ## `parse-file prefetch`
 

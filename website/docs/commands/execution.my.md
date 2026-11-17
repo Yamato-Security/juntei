@@ -193,7 +193,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-`-o` မပါဘဲ record များကို stdout သို့ရေးရန် `-t` သတ်မှတ်ပါ။ နှစ်ခုလုံး မပါလျှင် command က အနှစ်ချုပ်ပြသည်။ `json` သည် ဖတ်ရလွယ်အောင် ပုံစံချထားသည့် သီးခြား object များကို ရေးပြီး `jsonl` သည် တစ်ကြောင်းလျှင် object တစ်ခု ရေးသည်။ သီးခြား command တွင် `-Z` ရွေးချယ်စရာ မရှိပါ။ စာသားကုဒ်၊ CSV ကာကွယ်မှုနှင့် အဓိပ္ပာယ်ဖော်ပုံအတွက် [PowerShell မှတ်တမ်း](../artifacts/powershell-history.md) ကို ကြည့်ပါ။
+`-o` မပါဘဲ record များကို stdout သို့ရေးရန် `-t` သတ်မှတ်ပါ။ နှစ်ခုလုံး မပါလျှင် command က အနှစ်ချုပ်ပြသည်။ `json` သည် ဖတ်ရလွယ်အောင် ပုံစံချထားသည့် သီးခြား object များကို ရေးပြီး `jsonl` သည် တစ်ကြောင်းလျှင် object တစ်ခု ရေးသည်။ သီးခြား command တွင် `-Z` ရွေးချယ်စရာ မရှိပါ။ စာသားကုဒ်နှင့် အဓိပ္ပာယ်ဖော်ပုံအတွက် [PowerShell မှတ်တမ်း](../artifacts/powershell-history.md) ကို ကြည့်ပါ။
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 

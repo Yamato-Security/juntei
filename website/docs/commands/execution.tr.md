@@ -193,7 +193,7 @@ juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
 juntei parse-file powershell-history -f copied-history.txt -t jsonl
 ```
 
-`-o` olmadan kayıtları stdout'a yazmak için `-t` belirtin; ikisi de yoksa komut özet gösterir. `json` ayrı, okunabilir biçimlendirilmiş nesneler; `jsonl` satır başına bir nesne yazar. Bağımsız komutta `-Z` seçeneği yoktur. Kodlama, CSV korumaları ve yorumlama için [PowerShell geçmişi](../artifacts/powershell-history.md) sayfasına bakın.
+`-o` olmadan kayıtları stdout'a yazmak için `-t` belirtin; ikisi de yoksa komut özet gösterir. `json` ayrı, okunabilir biçimlendirilmiş nesneler; `jsonl` satır başına bir nesne yazar. Bağımsız komutta `-Z` seçeneği yoktur. Kodlama ve yorumlama için [PowerShell geçmişi](../artifacts/powershell-history.md) sayfasına bakın.
 
 ## `parse-file prefetch` { #parse-file-prefetch }
 
