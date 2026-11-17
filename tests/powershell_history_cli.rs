@@ -1001,8 +1001,17 @@ fn auto_parse_saves_histories_under_shell_history_and_counts_them_as_untimed() {
         && row["OutputTimeZone"] == "+09:00"));
     let log = std::fs::read_to_string(output.join("HOST1/ShellHistory/PowerShellHistory-logs.txt"))
         .unwrap();
+    // The log names the executable as run: `juntei.exe` on Windows.
+    let expected = format!(
+        "Command: juntei{} parse-file powershell-history -d ./HOST1/C -o ./HOST1/ShellHistory/PowerShellHistory.csv -t csv",
+        std::env::consts::EXE_SUFFIX
+    );
     assert!(
-        log.lines().next().unwrap().replace('\\', "/").starts_with("Command: juntei parse-file powershell-history -d ./HOST1/C -o ./HOST1/ShellHistory/PowerShellHistory.csv -t csv"),
+        log.lines()
+            .next()
+            .unwrap()
+            .replace('\\', "/")
+            .starts_with(&expected),
         "{log}"
     );
     assert!(log.contains("History files read: 2"), "{log}");
