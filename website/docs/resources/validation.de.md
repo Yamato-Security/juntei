@@ -179,6 +179,24 @@ dem öffentlichen Datenträgerabbild M57-Jean von Digital Corpora (Windows XP), 
 der INFO2-Datensatz mit rifiuti2 überein, und die daneben liegende Papierkorbdatei `Dc1.jpg` trägt den Namen, den
 Juntei ihr gibt.
 
+## RDP-Bitmap-Cache { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` ist Junteis eigener Parser. Auf kofu, einem der sechs Hosts der Sammlung des CODE BLUE 2026 CTF,
+ist jede der 1.911 Kacheln seiner drei `Cache????.bin`-Dateien Pixel für Pixel das Bild, das
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) erzeugt. Dasselbe gilt für die 1.980 Kacheln der öffentlichen
+`Cache0000.bin` der Challenge „Phantom Connection“ von ApoorvCTF 2025, darunter 105 mit 64 × 48 Pixeln. bmc-tools liest
+jede Kachel als 64 Pixel breit, sodass die schmaleren Kacheln am rechten Bildschirmrand verzerrt herauskommen; Juntei
+liest jede Kachel in ihrer eigenen Breite.
+
+Es wurde kein öffentlicher `.bmc`-Cache mit Kacheln gefunden: Die obigen Beispiele haben, wie die Caches anderer Clients
+ab Windows 10, nur eine leere `bcache24.bmc`. Das Lesen von `.bmc` wurde daher mit Dateien getestet, die nach dem
+Format erstellt wurden: unkomprimierte Kacheln aller vier Farbtiefen, kleine Kacheln, auf die das Ende einer früheren
+Kachel folgt, beschädigte Slots und 3.000 zufällige RLE-komprimierte 16-Bit-Kacheln, die jeden Befehl (Order) von
+MS-RDPBCGR 3.1.9 verwenden, wobei kein Befehl über das Ende der ersten Zeile einer Kachel hinausreicht. Juntei und
+bmc-tools dekodieren alle 3.000 zu denselben Pixeln. Beginnt ein Befehl in der ersten Zeile und reicht über sie hinaus,
+unterscheiden sich die beiden: Juntei folgt der Spezifikation und dem Decoder von FreeRDP, die die Regeln der ersten
+Zeile für den gesamten Befehl beibehalten, während bmc-tools die Regeln mitten im Befehl wechselt.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) ist ein gepflegter Fork

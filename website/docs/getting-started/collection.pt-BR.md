@@ -22,6 +22,7 @@ Juntei analisa arquivos já coletados do Windows. Use uma ferramenta de aquisiç
 | Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` e as pastas de perfil dos outros navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` e outros locais do usuário/do sistema |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` e `CustomDestinations` |
+| Cache de bitmaps do RDP | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (`%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\` no Windows XP e anteriores) |
 | Lixeira | `$Recycle.Bin\<SID>\$I*` e `$R*` em cada volume (`RECYCLER\<SID>\INFO2` e `D*` no Windows XP e anteriores) |
 | ShimCache | Hive `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Quarentena do Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |

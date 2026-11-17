@@ -101,6 +101,7 @@ Waktu menggambarkan objek tercatat, bukan bukti eksekusi atau serangan dengan se
 | SRUM | Waktu/bucket penyedia, awal koneksi, interval eksplisit dan ID aplikasi. Byte, durasi dan penghitung bukan tanggal. |
 | LNK | Waktu target MAC, pembuatan ID pelacakan dan shell item adalah metadata target, bukan pasti pembukaan shortcut. |
 | Jump Lists | Penggunaan terakhir, ID pelacakan dan waktu target LNK tertanam. Waktu kontainer pada sistem koleksi diabaikan secara default. |
+| Cache bitmap RDP | Tidak ada peristiwa: tile yang di-cache tidak memiliki waktu. Record-nya tetap ada di input yang diurai. |
 | Recycle Bin | Waktu setiap item dipindahkan ke Recycle Bin, beserta pengguna Recycle Bin, path asli, dan apakah konten yang dihapus ikut dikumpulkan. Bukan waktu Recycle Bin dikosongkan, dan bukan waktu berkas milik item itu sendiri. |
 | Karantina Defender | Waktu entri dan pembuatan/akses/penulisan sumber daya. Waktu ekstraksi bukan aktivitas endpoint. |
 | BAM, UserAssist, FeatureUsage | Aktivitas tercatat dipisahkan dari penulisan kunci. Penghitung tanpa waktu tidak menghasilkan peristiwa. |

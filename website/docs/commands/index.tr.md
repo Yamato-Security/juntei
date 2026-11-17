@@ -39,6 +39,7 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell geçmişi](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP Bitmap Önbelleği](../artifacts/rdp-cache.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Geri Dönüşüm Kutusu](../artifacts/recycle-bin.md) |
 
 ## [NTFS Komutları](filesystem.md) { #ntfs-commands }

@@ -40,6 +40,7 @@ mod persistence_hunter;
 mod powershell_history;
 mod prefetch;
 mod progress;
+mod rdp_cache;
 mod recycle_bin;
 mod registry;
 mod secure_sds;
@@ -272,6 +273,17 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = powershell_history::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::RdpCache(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = rdp_cache::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }

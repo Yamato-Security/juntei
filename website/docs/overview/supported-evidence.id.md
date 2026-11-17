@@ -20,6 +20,7 @@
 | Pintasan LNK | `parse-file lnk` | Target yang dibuka, argumen, volume, share, mesin sumber | Pintasan dapat dibuat tanpa targetnya dijalankan |
 | Jump Lists | `parse-file jump-lists` | Item yang dibuka aplikasi, penyematan, penggunaan, dan data LNK yang tertanam | Perilaku dan retensi bergantung pada aplikasi |
 | Riwayat PowerShell PSReadLine | `parse-file powershell-history` | Baris perintah tersimpan, pengguna, host, dan nomor baris sumber | Tidak ada stempel waktu per perintah; waktu modifikasi berkas hanya metadata |
+| Cache bitmap RDP (`Cache????.bin`, `bcache*.bmc`) | `parse-file rdp-cache` | Tile dari layar jarak jauh yang dilihat pengguna dengan klien Remote Desktop, disimpan sebagai gambar dan sebagai kolase untuk setiap berkas cache | Tidak ada waktu atau nama komputer; satu cache mencampur banyak sesi; tile adalah potongan layar, bukan layar utuh |
 | Recycle Bin (berkas `$I`, INFO2) | `parse-file recycle-bin` | Item yang dihapus pengguna ke Recycle Bin: path asli, ukuran, waktu penghapusan, pengguna, dan apakah konten yang dihapus masih ada | Shift+Delete dan sebagian besar program tidak melalui Recycle Bin; mengosongkannya menghapus berkas `$I` (INFO2 menyimpan record yang ditandai) |
 | ShimCache | `parse-registry shimcache` | Path executable historis dan pemeriksaan kompatibilitas | Cache mungkin belum di-flush hingga shutdown; entri saja bukan eksekusi |
 | Karantina Defender | `parse-file defender-quarantine` | Deteksi, path asli, hash, asal unduhan, byte yang dipulihkan | Nama deteksi adalah putusan produk; ekstraksi berbahaya |

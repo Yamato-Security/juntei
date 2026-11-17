@@ -131,6 +131,7 @@ E01 も同じ読み取り専用のネイティブ処理と専用一時領域を�
 | --- | --- |
 | **リモートアクセス（ユーザー側）** (`NTUSER.DAT`) — ユーザーが Remote Desktop、PuTTY、WinSCP で接続したコンピュータ、使用アカウント、承認した SSH ホスト鍵とフィンガープリント、割り当てたドライブと共有。 | Registry |
 | **ユーザーアクセスログ (UAL)** (`Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb`) — Windows Server の役割（ファイル共有、Active Directory、DHCP、IIS など）を使用したクライアントのアドレスとアカウント、日ごとの要求回数。 | ESE |
+| **RDP ビットマップキャッシュ** (`Cache????.bin`、`bcache*.bmc`) — ユーザーがリモートデスクトップクライアントで見たリモート画面のタイル。RdpCacheStitcher 用の画像と、キャッシュファイルごとのコラージュ画像として保存します。Windows XP の圧縮タイルにも対応します。 | File |
 
 ### システム情報
 

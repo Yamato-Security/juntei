@@ -67,13 +67,16 @@ cada projeto para conhecer sua licença.
   referência para histórico, downloads, cookies e histórico de formulários de navegadores.
 - O **rifiuti2**, de Abel Cheung, serviu de referência para os arquivos `$I` e o INFO2 da Lixeira, junto com a
   documentação **dtformats** da libyal sobre os dois formatos.
+- O **bmc-tools** da ANSSI e seu boletim do CERT-FR sobre o formato, o **RdpCacheStitcher** do BSI, o artefato
+  RDPCache do **Velociraptor** e o plugin de cache RDP do **dissect.target** serviram de referência para os caches
+  de bitmaps do RDP, junto com o cache persistente de bitmaps e o decodificador de RLE intercalado do **FreeRDP**.
 
 ## Especificações e pesquisas { #specifications-and-research }
 
 Agradecemos à Microsoft por publicar as Open Specifications para Shell Links, Compound Binary Files,
-protocolos NTFS/SAM, estruturas de Registro/serviços/tarefas e a documentação de APIs. Agradecemos
-também aos autores das pesquisas forenses sobre AppCompatCache, Amcache, SRUM, Prefetch, Registro e
-NTFS que tornaram esses artefatos compreensíveis para os profissionais da área.
+protocolos NTFS/SAM, estruturas de Registro/serviços/tarefas, o Remote Desktop Protocol e a documentação de
+APIs. Agradecemos também aos autores das pesquisas forenses sobre AppCompatCache, Amcache, SRUM, Prefetch,
+Registro e NTFS que tornaram esses artefatos compreensíveis para os profissionais da área.
 
 ## Evidências de teste { #test-evidence }
 

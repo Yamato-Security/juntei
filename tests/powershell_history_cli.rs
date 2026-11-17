@@ -958,10 +958,14 @@ fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelin
         assert_eq!(command[1..3], ["parse-file", "powershell-history"]);
         let host = task["Comp"].as_str().unwrap();
         // The parser is given the computer's evidence root, which SourceFile is relative to.
-        assert_eq!(command[3..5], ["-d", &format!("./{host}/C")]);
+        assert_eq!(command[3], "-d");
+        assert_eq!(Path::new(command[4]), Path::new(".").join(host).join("C"));
         assert_eq!(
-            task["Log"],
-            format!("./{host}/ShellHistory/PowerShellHistory-logs.txt")
+            Path::new(task["Log"].as_str().unwrap()),
+            Path::new(".")
+                .join(host)
+                .join("ShellHistory")
+                .join("PowerShellHistory-logs.txt")
         );
         assert!(output.join(task["Log"].as_str().unwrap()).is_file());
         if host == "HOST3" {
@@ -970,8 +974,11 @@ fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelin
         } else {
             assert_eq!(task["Status"], "succeeded", "{task}");
             assert_eq!(
-                task["Output"],
-                format!("./{host}/ShellHistory/PowerShellHistory.csv")
+                Path::new(task["Output"].as_str().unwrap()),
+                Path::new(".")
+                    .join(host)
+                    .join("ShellHistory")
+                    .join("PowerShellHistory.csv")
             );
         }
     }
@@ -993,7 +1000,7 @@ fn auto_parse_saves_histories_under_shell_history_and_keeps_them_off_the_timelin
     let log = std::fs::read_to_string(output.join("HOST1/ShellHistory/PowerShellHistory-logs.txt"))
         .unwrap();
     assert!(
-        log.starts_with("Command: juntei parse-file powershell-history -d ./HOST1/C -o ./HOST1/ShellHistory/PowerShellHistory.csv -t csv"),
+        log.lines().next().unwrap().replace('\\', "/").starts_with("Command: juntei parse-file powershell-history -d ./HOST1/C -o ./HOST1/ShellHistory/PowerShellHistory.csv -t csv"),
         "{log}"
     );
     assert!(log.contains("History files read: 2"), "{log}");

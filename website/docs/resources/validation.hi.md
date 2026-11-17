@@ -176,6 +176,24 @@ folders में थे। INFO2 के ANSI paths उन code pages में 
 पढ़ा गया, INFO2 record rifiuti2 से मेल खाता है, और उसके पास bin में रखी file, `Dc1.jpg`, का नाम वही है जो
 Juntei उसे देता है।
 
+## RDP बिटमैप कैश { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` Juntei का अपना parser है। CODE BLUE 2026 CTF collection के छह hosts में से एक, kofu
+पर, उसकी तीन `Cache????.bin` files के सभी 1,911 tiles pixel-दर-pixel वही image हैं जो
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) बनाता है। ApoorvCTF 2025 के "Phantom Connection"
+challenge की सार्वजनिक `Cache0000.bin` के 1,980 tiles भी ऐसे ही हैं, जिनमें से 105 tiles 64 × 48 pixels के
+हैं। bmc-tools हर tile को 64 pixels चौड़ा मानकर पढ़ता है, इसलिए screen के दाएँ किनारे वाले संकरे tiles तिरछे
+निकलते हैं; Juntei हर tile को उसकी अपनी चौड़ाई में पढ़ता है।
+
+tiles वाला कोई सार्वजनिक `.bmc` cache नहीं मिला: ऊपर के samples में, Windows 10 और बाद के संस्करणों के दूसरे
+clients की तरह, केवल एक खाली `bcache24.bmc` है। इसलिए `.bmc` reading का परीक्षण format के अनुसार बनाई गई
+files से किया गया: चारों color depths के uncompressed tiles, ऐसे छोटे tiles जिनके बाद किसी पहले वाले tile का
+अंतिम हिस्सा आता है, क्षतिग्रस्त slots, और 3,000 random RLE-compressed 16-bit tiles जो MS-RDPBCGR 3.1.9 के
+हर order का उपयोग करते हैं, और जिनमें कोई भी order tile की पहली row के अंत से आगे नहीं जाता। Juntei और
+bmc-tools सभी 3,000 को समान pixels में decode करते हैं। जब कोई order पहली row पर शुरू होकर उससे आगे चला
+जाता है, तब दोनों के परिणाम अलग होते हैं: Juntei specification और FreeRDP के decoder का पालन करता है, जो
+पूरे order के लिए पहली row के नियम बनाए रखते हैं, जबकि bmc-tools order के बीच में ही नियम बदल देता है।
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) Security Ronin के

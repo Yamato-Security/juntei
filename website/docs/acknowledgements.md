@@ -62,11 +62,15 @@ embedded in Juntei; consult each project for its license.
   for browser history, downloads, cookies and form history.
 - Abel Cheung's **rifiuti2** was the reference for Recycle Bin `$I` files and INFO2, with libyal's
   **dtformats** documentation of both formats.
+- ANSSI's **bmc-tools** and its CERT-FR bulletin on the format, BSI's **RdpCacheStitcher**,
+  **Velociraptor**'s RDPCache artifact and **dissect.target**'s RDP cache plugin were references for
+  RDP bitmap caches, with **FreeRDP**'s persistent bitmap cache and interleaved RLE decoder.
 
 ## Specifications and research
 
 We thank Microsoft for publishing Open Specifications for Shell Links, Compound Binary Files,
-NTFS/SAM protocols, registry/service/task structures, and API documentation. We also thank the
+NTFS/SAM protocols, registry/service/task structures, the Remote Desktop Protocol, and API
+documentation. We also thank the
 authors of AppCompatCache, Amcache, SRUM, Prefetch, registry, and NTFS forensic research that made
 these artifacts understandable to practitioners.
 

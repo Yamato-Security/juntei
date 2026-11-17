@@ -103,6 +103,7 @@ pub const ARTIFACTS: &[&str] = &[
     "persistence-hunter",
     "prefetch",
     "prefetch-timeline",
+    "rdp-cache",
     "recentdocs",
     "recycle-bin",
     "registry",
@@ -1559,6 +1560,8 @@ fn build(
         "browser" => activity::browser(&mut b),
         "outlook" => activity::outlook(&mut b),
         "recycle-bin" => activity::recycle_bin(&mut b),
+        // Cached screen tiles have no times: their records stay in the parsed input only.
+        "rdp-cache" => {}
         "ual" => activity::ual(&mut b),
         "webcache" => activity::webcache(&mut b),
         "lnk" | "jump-lists" => links(&mut b),

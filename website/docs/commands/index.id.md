@@ -39,6 +39,7 @@ Gunakan [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timelin
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file powershell-history` | `PSReadLine\*_history.txt` | [Riwayat PowerShell](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [Cache Bitmap RDP](../artifacts/rdp-cache.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Keranjang Sampah (Recycle Bin)](../artifacts/recycle-bin.md) |
 
 ## [Perintah NTFS](filesystem.md) { #ntfs-commands }

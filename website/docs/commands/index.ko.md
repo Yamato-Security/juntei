@@ -42,6 +42,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell 기록](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP 비트맵 캐시](../artifacts/rdp-cache.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [휴지통](../artifacts/recycle-bin.md) |
 
 ## [NTFS 명령어](filesystem.md) { #ntfs-commands }

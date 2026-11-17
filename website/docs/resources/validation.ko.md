@@ -168,6 +168,24 @@ Plaso 테스트 데이터의 `$I` 및 INFO2 파일에서는 Plaso 테스트가 �
 얻습니다. Digital Corpora의 공개 M57-Jean 디스크 이미지(Windows XP)를 `auto-parse --e01`로 읽었을 때 INFO2
 레코드는 rifiuti2와 일치했고, 그 옆에 있는 휴지통 파일 `Dc1.jpg`의 이름도 Juntei가 부여한 이름과 같았습니다.
 
+## RDP 비트맵 캐시 { #rdp-bitmap-cache }
+
+`parse-file rdp-cache`는 Juntei의 자체 파서입니다. CODE BLUE 2026 CTF 수집 데이터의 호스트 6대 중 하나인
+kofu에서는 `Cache????.bin` 파일 3개에 들어 있는 타일 1,911개가 모두
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools)가 만드는 이미지와 픽셀 단위로 같습니다. ApoorvCTF 2025의
+"Phantom Connection" 문제에서 공개된 `Cache0000.bin`의 타일 1,980개도 마찬가지이며, 그중 105개는
+64 × 48픽셀입니다. bmc-tools는 모든 타일을 너비 64픽셀로 읽기 때문에 화면 오른쪽 가장자리의 더 좁은 타일이
+비뚤어져 나옵니다. Juntei는 각 타일을 그 타일의 너비대로 읽습니다.
+
+타일이 들어 있는 공개 `.bmc` 캐시는 찾지 못했습니다. 위 샘플들도 다른 Windows 10 이상 클라이언트와
+마찬가지로 빈 `bcache24.bmc`만 가지고 있습니다. 따라서 `.bmc` 읽기는 형식에 맞춰 만든 파일로
+테스트했습니다. 네 가지 색 깊이 모두의 비압축 타일, 작은 타일 뒤에 이전 타일의 끝부분이 이어지는 경우,
+손상된 슬롯, 그리고 MS-RDPBCGR 3.1.9의 모든 오더(order)를 사용하는 무작위 RLE 압축 16비트 타일
+3,000개이며, 이 타일들에서는 어떤 오더도 타일의 첫 행 끝을 넘어 이어지지 않습니다. Juntei와 bmc-tools는
+3,000개 모두를 같은 픽셀로 디코딩합니다. 오더가 첫 행에서 시작해 그 행을 넘어 이어지면 둘의 결과가
+달라집니다. Juntei는 사양과 FreeRDP 디코더를 따라 오더 전체에 첫 행의 규칙을 유지하지만, bmc-tools는 오더
+중간에 규칙을 바꿉니다.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser)는 Security Ronin의

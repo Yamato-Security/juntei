@@ -62,11 +62,14 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
   l'historique, les téléchargements, les cookies et l'historique des formulaires des navigateurs.
 - **rifiuti2** d'Abel Cheung a servi de référence pour les fichiers `$I` et INFO2 de la Corbeille, avec la
   documentation **dtformats** de libyal sur ces deux formats.
+- **bmc-tools** de l'ANSSI et son bulletin du CERT-FR sur le format, **RdpCacheStitcher** du BSI, l'artefact RDPCache
+  de **Velociraptor** et le plugin de cache RDP de **dissect.target** ont servi de références pour les caches bitmap
+  RDP, avec le cache bitmap persistant et le décodeur RLE entrelacé de **FreeRDP**.
 
 ## Spécifications et recherches { #specifications-and-research }
 
 Nous remercions Microsoft d'avoir publié les Open Specifications relatives aux Shell Links, aux Compound Binary Files,
-aux protocoles NTFS/SAM, aux structures du Registre, des services et des tâches, ainsi que la documentation des API. Nous remercions également les
+aux protocoles NTFS/SAM, aux structures du Registre, des services et des tâches, au Remote Desktop Protocol, ainsi que la documentation des API. Nous remercions également les
 auteurs des recherches forensiques sur AppCompatCache, Amcache, SRUM, Prefetch, le Registre et NTFS, qui ont rendu
 ces artefacts compréhensibles pour les praticiens.
 

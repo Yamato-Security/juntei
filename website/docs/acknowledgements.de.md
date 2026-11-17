@@ -62,11 +62,14 @@ in Juntei eingebettet ist; die jeweilige Lizenz entnehmen Sie bitte dem einzelne
   für Browserverlauf, Downloads, Cookies und Formularverlauf.
 - **rifiuti2** von Abel Cheung diente als Referenz für die `$I`-Dateien und INFO2 des Papierkorbs, ergänzt durch die
   **dtformats**-Dokumentation von libyal zu beiden Formaten.
+- **bmc-tools** der ANSSI und ihr CERT-FR-Bulletin zum Format, **RdpCacheStitcher** des BSI, das RDPCache-Artefakt
+  von **Velociraptor** und das RDP-Cache-Plugin von **dissect.target** dienten als Referenzen für RDP-Bitmap-Caches,
+  ergänzt durch den persistenten Bitmap-Cache und den Interleaved-RLE-Decoder von **FreeRDP**.
 
 ## Spezifikationen und Forschung { #specifications-and-research }
 
 Wir danken Microsoft für die Veröffentlichung der Open Specifications zu Shell Links, Compound Binary Files,
-NTFS-/SAM-Protokollen, Registry-, Dienst- und Aufgabenstrukturen sowie der API-Dokumentation. Ebenso danken wir den
+NTFS-/SAM-Protokollen, Registry-, Dienst- und Aufgabenstrukturen, dem Remote Desktop Protocol sowie der API-Dokumentation. Ebenso danken wir den
 Autorinnen und Autoren der forensischen Forschung zu AppCompatCache, Amcache, SRUM, Prefetch, Registry und NTFS, die
 diese Artefakte für Praktiker verständlich gemacht hat.
 

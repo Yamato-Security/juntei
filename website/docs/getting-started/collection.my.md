@@ -22,6 +22,7 @@ Juntei သည် Windows မှ စုဆောင်းထားပြီးသ
 | ဝဘ် ဘရောက်ဇာများ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` နှင့် အခြား ဘရောက်ဇာများ၏ profile ဖိုင်တွဲများ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` နှင့် အခြား အသုံးပြုသူ/စနစ် တည်နေရာများ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` နှင့် `CustomDestinations` |
+| RDP ဘစ်မက် ကက်ရှ် | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (Windows XP နှင့် ယခင်ဗားရှင်းများတွင် `%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\`) |
 | Recycle Bin | volume တိုင်းပေါ်ရှိ `$Recycle.Bin\<SID>\$I*` နှင့် `$R*` (Windows XP နှင့် ယခင်ဗားရှင်းများတွင် `RECYCLER\<SID>\INFO2` နှင့် `D*`) |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender quarantine | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |

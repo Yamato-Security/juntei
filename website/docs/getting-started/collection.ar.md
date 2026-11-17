@@ -22,6 +22,7 @@
 | متصفحات الويب | `%LOCALAPPDATA%\Google\Chrome\User Data\`، و`%LOCALAPPDATA%\Microsoft\Edge\User Data\`، و`%APPDATA%\Mozilla\Firefox\Profiles\`، ومجلدات ملفات التعريف الخاصة بالمتصفحات الأخرى |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ومواقع أخرى للمستخدم/النظام |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` و`CustomDestinations` |
+| ذاكرة التخزين المؤقت لصور RDP النقطية | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (`%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\` في Windows XP والإصدارات الأقدم) |
 | سلة المحذوفات | `$Recycle.Bin\<SID>\$I*` و`$R*` على كل وحدة تخزين (`RECYCLER\<SID>\INFO2` و`D*` في Windows XP والإصدارات الأقدم) |
 | ShimCache | خلية `SYSTEM`: ‏`...\Session Manager\AppCompatCache\AppCompatCache` |
 | حجر Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |

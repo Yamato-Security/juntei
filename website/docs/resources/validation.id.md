@@ -181,6 +181,25 @@ indeks, dan drive yang diharapkan pengujian Plaso. Pada image disk publik M57-Je
 (Windows XP), yang dibaca dengan `auto-parse --e01`, record INFO2 cocok dengan rifiuti2, dan berkas di
 Recycle Bin di sebelahnya, `Dc1.jpg`, memiliki nama yang diberikan Juntei.
 
+## Cache Bitmap RDP { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` adalah parser milik Juntei sendiri. Pada kofu, salah satu dari enam host dalam koleksi
+CODE BLUE 2026 CTF, setiap tile dari 1.911 tile di tiga berkas `Cache????.bin`-nya sama, piksel demi piksel,
+dengan gambar yang dibuat [bmc-tools](https://github.com/ANSSI-FR/bmc-tools). Begitu pula 1.980 tile dari
+`Cache0000.bin` publik milik tantangan "Phantom Connection" ApoorvCTF 2025, 105 di antaranya berukuran
+64 × 48 piksel. bmc-tools membaca setiap tile selebar 64 piksel, sehingga tile yang lebih sempit di tepi kanan
+layar tampak miring; Juntei membaca setiap tile sesuai lebarnya sendiri.
+
+Tidak ditemukan cache `.bmc` publik yang berisi tile: sampel di atas, seperti klien Windows 10 dan yang lebih
+baru lainnya, hanya memiliki `bcache24.bmc` yang kosong. Karena itu, pembacaan `.bmc` diuji dengan berkas yang
+dibuat sesuai format: tile tanpa kompresi dari keempat kedalaman warna, tile kecil yang diikuti bagian akhir
+tile sebelumnya, slot yang rusak, dan 3.000 tile 16-bit acak terkompresi RLE yang menggunakan setiap order
+MS-RDPBCGR 3.1.9, tanpa ada order yang berlanjut melewati akhir baris pertama tile. Juntei dan bmc-tools
+mendekode seluruh 3.000 tile tersebut menjadi piksel yang sama. Ketika sebuah order dimulai di baris pertama
+dan berlanjut melewatinya, hasil keduanya berbeda: Juntei mengikuti spesifikasi dan dekoder FreeRDP, yang
+mempertahankan aturan baris pertama untuk seluruh order, sedangkan bmc-tools mengganti aturan di tengah
+order tersebut.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser) adalah fork yang dikelola

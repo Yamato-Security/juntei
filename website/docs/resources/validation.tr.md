@@ -188,6 +188,24 @@ Plaso testlerinin beklediği zamanları, boyutları, yolları, indeksleri ve sü
 açık M57-Jean disk imajında (Windows XP), `auto-parse --e01` ile okunduğunda INFO2 kaydı rifiuti2 ile eşleşir ve
 yanındaki silinmiş dosya `Dc1.jpg`, Juntei'nin ona verdiği adı taşır.
 
+## RDP Bitmap Önbelleği { #rdp-bitmap-cache }
+
+`parse-file rdp-cache`, Juntei'nin kendi ayrıştırıcısıdır. CODE BLUE 2026 CTF koleksiyonunun altı ana bilgisayarından
+biri olan kofu'da, üç `Cache????.bin` dosyasındaki 1.911 karonun her biri, piksel piksel,
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) aracının oluşturduğu görüntünün aynısıdır. ApoorvCTF 2025'in
+"Phantom Connection" görevindeki herkese açık `Cache0000.bin` dosyasının 1.980 karosu için de durum aynıdır; bunların
+105'i 64 × 48 pikseldir. bmc-tools her karoyu 64 piksel genişliğinde okur, bu yüzden ekranın sağ kenarındaki daha dar
+karolar çarpık çıkar; Juntei her karoyu kendi genişliğinde okur.
+
+Karo içeren herkese açık bir `.bmc` önbelleği bulunamadı: yukarıdaki örnekler, Windows 10 ve sonrasındaki diğer
+istemciler gibi, yalnızca boş bir `bcache24.bmc` içerir. Bu nedenle `.bmc` okuma, biçime uygun olarak oluşturulmuş
+dosyalarla test edildi: dört renk derinliğinin hepsinde sıkıştırılmamış karolar, ardından daha önceki bir karonun sonu
+gelen küçük karolar, hasarlı yuvalar ve MS-RDPBCGR 3.1.9'daki her komutu (order) kullanan, RLE ile sıkıştırılmış 3.000
+rastgele 16 bitlik karo; bu karolarda hiçbir komut karonun ilk satırının sonunu aşmaz. Juntei ve bmc-tools 3.000
+karonun hepsini aynı piksellere çözer. Bir komut ilk satırda başlayıp bu satırın ötesine geçtiğinde ikisi ayrışır:
+Juntei, komutun tamamı boyunca ilk satırın kurallarını koruyan spesifikasyonu ve FreeRDP'nin kod çözücüsünü izler;
+bmc-tools ise komutun ortasında kural değiştirir.
+
 ## ShimCache { #shimcache }
 
 [ys-shimcache-parser](https://github.com/Yamato-Security/ys-shimcache-parser), kayıt defteri kovanı

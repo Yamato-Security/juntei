@@ -43,6 +43,7 @@ record များကို ဆက်လက် ထိန်းသိမ်း�
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
 | `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell မှတ်တမ်း](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP ဘစ်မက် ကက်ရှ်](../artifacts/rdp-cache.md) |
 | `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [အမှိုက်ပုံး (Recycle Bin)](../artifacts/recycle-bin.md) |
 
 ## [NTFS ညွှန်ကြားချက်များ](filesystem.md) { #ntfs-commands }

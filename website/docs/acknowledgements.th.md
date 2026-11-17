@@ -61,11 +61,14 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
   ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเบราว์เซอร์
 - **rifiuti2** ของ Abel Cheung เป็นข้อมูลอ้างอิงสำหรับไฟล์ `$I` และ INFO2 ของถังรีไซเคิล ร่วมกับเอกสาร
   **dtformats** ของ libyal ที่อธิบายทั้งสองรูปแบบ
+- **bmc-tools** ของ ANSSI และประกาศของ CERT-FR เกี่ยวกับรูปแบบนี้, **RdpCacheStitcher** ของ BSI,
+  อาร์ติแฟกต์ RDPCache ของ **Velociraptor** และปลั๊กอินแคช RDP ของ **dissect.target** เป็นข้อมูลอ้างอิง
+  สำหรับแคชบิตแมปของ RDP ร่วมกับแคชบิตแมปแบบถาวรและตัวถอดรหัส interleaved RLE ของ **FreeRDP**
 
 ## ข้อกำหนดและงานวิจัย { #specifications-and-research }
 
 เราขอขอบคุณ Microsoft ที่เผยแพร่ Open Specifications สำหรับ Shell Links, Compound Binary Files,
-โปรโตคอล NTFS/SAM, โครงสร้างรีจิสทรี/บริการ/งานตามกำหนดเวลา และเอกสาร API นอกจากนี้เรายังขอขอบคุณ
+โปรโตคอล NTFS/SAM, โครงสร้างรีจิสทรี/บริการ/งานตามกำหนดเวลา, Remote Desktop Protocol และเอกสาร API นอกจากนี้เรายังขอขอบคุณ
 ผู้เขียนงานวิจัยด้านนิติวิทยาศาสตร์ดิจิทัลเกี่ยวกับ AppCompatCache, Amcache, SRUM, Prefetch, รีจิสทรี และ NTFS ที่ทำให้
 ผู้ปฏิบัติงานสามารถเข้าใจอาร์ติแฟกต์เหล่านี้ได้
 
