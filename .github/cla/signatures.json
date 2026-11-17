@@ -14,6 +14,20 @@
       "verified_by_github_user_id": 43838376,
       "verified_at": "2026-11-17T00:02:50Z",
       "evidence_ref": "https://github.com/Yamato-Security/juntei/pull/174#issuecomment-6933218267"
+    },
+    {
+      "record_id": "cla-1.1-tuttimann-20261117",
+      "cla_version": "1.1",
+      "cla_sha256": "10b0f786491e6b6528a6c92cc2093810d51268a3eda5bb115bdb6679170d819b",
+      "github_user_ids": [
+        35948670
+      ],
+      "github_logins": {
+        "35948670": "tuttimann"
+      },
+      "verified_by_github_user_id": 43838376,
+      "verified_at": "2026-11-17T06:50:15Z",
+      "evidence_ref": "https://github.com/Yamato-Security/juntei/pull/172#issuecomment-6939725646"
     }
   ]
 }
