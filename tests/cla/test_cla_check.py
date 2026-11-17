@@ -25,7 +25,8 @@ SPEC = importlib.util.spec_from_file_location("cla_check", ROOT / ".github/scrip
 cla = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(cla)
 VERSION, DIGEST = cla.document_identity(ROOT)
-POLICY = {"status_context": "cla/required", "ignored_coauthor_emails": ["noreply@anthropic.com"]}
+POLICY = {"status_context": "cla/required", "ignored_coauthor_emails": ["noreply@anthropic.com"],
+          "ignored_coauthor_account_ids": [81847]}
 
 
 def actor(user_id=10, email="a@example.org", login=None):
@@ -136,7 +137,8 @@ class RegistryTests(unittest.TestCase):
 class AuthorTests(unittest.TestCase):
     def check(self, commits=None, records=(), opener=None):
         return cla.assess(opener or {"id": 10, "login": "user10"}, commits or [commit()],
-                          registry(*records), set(POLICY["ignored_coauthor_emails"]))
+                          registry(*records), set(POLICY["ignored_coauthor_emails"]),
+                          set(POLICY["ignored_coauthor_account_ids"]))
 
     def test_signed_author_passes(self):
         self.assertTrue(self.check(records=[agreement()])["ok"])
@@ -162,6 +164,18 @@ class AuthorTests(unittest.TestCase):
     def test_identified_account_is_not_exempted_by_synthetic_email(self):
         result = self.check([commit(coauthors=[actor(20, "noreply@anthropic.com")])], [agreement()])
         self.assertIn(20, result["missing"])
+
+    def test_ai_service_account_linked_to_trailer_is_skipped_only_as_coauthor(self):
+        ai = actor(81847, "noreply@anthropic.com", "claude")
+        self.assertTrue(self.check([commit(coauthors=[ai])], [agreement()])["ok"])
+        self.assertFalse(self.check([commit(ai)], [agreement()])["ok"])
+        self.assertFalse(self.check([commit(coauthors=[ai])])["ok"])
+        result = self.check([commit(coauthors=[ai])], [agreement()], opener={"id": 81847, "login": "claude"})
+        self.assertEqual(result["missing"], {81847: "claude"})
+
+    def test_ai_service_account_needs_the_trailer_email(self):
+        result = self.check([commit(coauthors=[actor(81847, "person@example.org", "claude")])], [agreement()])
+        self.assertEqual(result["missing"], {81847: "claude"})
 
     def test_unknown_authors_fail_even_if_every_known_user_signed(self):
         result = self.check([commit(coauthors=[actor(None)])], [agreement()])
@@ -285,6 +299,25 @@ class WorkflowResultTests(unittest.TestCase):
                 with self.assertRaises(cla.GateError):
                     cla.main()
         self.assertEqual(api.states(), ["error", "error"])
+
+    def test_bad_ignored_account_ids_fail_closed(self):
+        for bad in (["81847"], [True], [0], 81847):
+            api = FakeGitHub()
+            api.related = [{"number": 7}]
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / ".github/cla").mkdir(parents=True)
+                (root / "CLA.md").write_bytes((ROOT / "CLA.md").read_bytes())
+                policy = {"schema_version": 1, **POLICY, "ignored_coauthor_account_ids": bad}
+                (root / ".github/cla/policy.json").write_text(json.dumps(policy))
+                (root / ".github/cla/signatures.json").write_text('{"schema_version":1,"agreements":[]}')
+                with patch.object(cla, "ROOT", root), patch.object(cla, "GitHub", return_value=api), \
+                     patch.object(cla.subprocess, "check_output", return_value="f" * 40), \
+                     patch.object(cla.sys, "argv", ["cla_check.py", "--all-open"]), \
+                     patch.dict(os.environ, {"GITHUB_TOKEN": "fake", "GITHUB_REPOSITORY": "owner/repo", "GITHUB_EVENT_PATH": ""}):
+                    with self.assertRaises(cla.GateError):
+                        cla.main()
+            self.assertEqual(api.states(), ["error"])
 
     def check(self, api, records=()):
         return cla.check_pr(api, "owner/repo", 7, registry(*records), POLICY, VERSION, "https://example.org/cla")

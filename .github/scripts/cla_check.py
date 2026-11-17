@@ -120,7 +120,7 @@ def read_registry(data, version, digest):
     return accounts, aliases
 
 
-def required_accounts(opener, commits, aliases, ignored_coauthors):
+def required_accounts(opener, commits, aliases, ignored_coauthors, ignored_coauthor_ids=frozenset()):
     """Include the PR opener, every primary author, and all human co-authors."""
     if not positive_id(opener.get("id")):
         raise GateError("Could not identify the PR opener")
@@ -135,7 +135,11 @@ def required_accounts(opener, commits, aliases, ignored_coauthors):
         user = actor.get("user") or {}
         # An AI service's synthetic trailer is not a rights holder. This never
         # exempts a primary author or PR opener, and does not allow whole domains.
-        if coauthor and email in ignored_coauthors and not positive_id(user.get("databaseId")):
+        # GitHub may link the trailer's email to the AI service's own account, so
+        # that exact account is skipped too, but only together with that email.
+        linked_id = user.get("databaseId")
+        if (coauthor and email in ignored_coauthors
+                and (not positive_id(linked_id) or linked_id in ignored_coauthor_ids)):
             return
         user_id = user.get("databaseId")
         if not positive_id(user_id):
@@ -166,9 +170,10 @@ def required_accounts(opener, commits, aliases, ignored_coauthors):
     return accounts, sorted(set(unresolved))
 
 
-def assess(opener, commits, registry, ignored_coauthors):
+def assess(opener, commits, registry, ignored_coauthors, ignored_coauthor_ids=frozenset()):
     approved, aliases = registry
-    required, unresolved = required_accounts(opener, commits, aliases, ignored_coauthors)
+    required, unresolved = required_accounts(opener, commits, aliases, ignored_coauthors,
+                                             ignored_coauthor_ids)
     missing = {user_id: login for user_id, login in required.items() if user_id not in approved}
     return {"ok": not missing and not unresolved, "missing": missing,
             "unresolved": unresolved, "required": required}
@@ -297,7 +302,8 @@ def check_pr(api, repo, number, registry, policy, version, document_url):
         if not commits or len(commits) != pr.get("commits") or len({c["oid"] for c in commits}) != len(commits):
             raise GateError("Incomplete or changing PR commit list; recheck required")
         result = assess(pr["user"], commits, registry,
-                        set(policy["ignored_coauthor_emails"]))
+                        set(policy["ignored_coauthor_emails"]),
+                        set(policy.get("ignored_coauthor_account_ids", [])))
         # Commit statuses are shared by PRs with the same head SHA. Do not let
         # a signed opener's PR silently give an unsigned duplicate PR a green.
         for other in api.pages(f"/repos/{repo}/pulls?state=open"):
@@ -367,6 +373,9 @@ def main():
         if (not isinstance(policy.get("ignored_coauthor_emails"), list)
                 or not all(isinstance(x, str) and re.fullmatch(r"[^\s@*]+@[^\s@*]+", x) for x in policy["ignored_coauthor_emails"])):
             raise GateError("Ignored co-author metadata must use exact email addresses")
+        ignored_ids = policy.get("ignored_coauthor_account_ids", [])
+        if not isinstance(ignored_ids, list) or not all(positive_id(x) for x in ignored_ids):
+            raise GateError("Ignored co-author accounts must be numeric GitHub account IDs")
         raw_registry = json.loads((ROOT / ".github/cla/signatures.json").read_text())
         registry = read_registry(raw_registry, version, digest)
     except (GateError, OSError, ValueError, TypeError, AttributeError) as error:

@@ -120,9 +120,12 @@ finish this settings step.
 - Author and commit pagination is checked. Missing/unlinked authors, incomplete
   responses, a changed CLA digest, and invalid registry data do not pass. The
   exact synthetic AI co-author email in [policy.json](policy.json) is metadata
-  only; it never exempts a primary author or PR opener. Do not add human authors
-  or wildcards to that list. AI-assisted code still needs its actual rights
-  holder's acceptance and provenance review.
+  only; it never exempts a primary author or PR opener. GitHub links Claude's
+  `noreply@anthropic.com` trailer to Anthropic's `claude` account, so that
+  account's numeric ID is listed too and is skipped only for a co-author entry
+  with that exact email. Do not add human authors, their accounts, or wildcards
+  to either list. AI-assisted code still needs its actual rights holder's
+  acceptance and provenance review.
 - GitHub statuses are commit-wide. Openers of other open PRs with the same head
   also need coverage, preventing a signed duplicate PR from granting a green
   status to an unsigned opener. Closing such a PR triggers a recheck.
