@@ -8,6 +8,7 @@ Windows เก็บรักษาร่องรอยที่ซ้อนท
 
 | คำถามในการตรวจสอบ | เริ่มต้นที่ | ยืนยันด้วย |
 |---|---|---|
+| บันทึกบรรทัดคำสั่ง PowerShell ใดไว้บ้าง? | [ประวัติ PowerShell](powershell-history.md) | ล็อกเหตุการณ์ PowerShell, เทเลเมทรีของโปรเซส, Prefetch |
 | ไฟล์ปฏิบัติการนี้เคยทำงานหรือไม่ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event log |
 | ไฟล์นี้เคยมีอยู่หรือไม่ | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
 | ไฟล์ถูกสร้าง เปลี่ยนชื่อ หรือลบเมื่อใด | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), ข้อมูลที่ Defender กักกัน |

@@ -8,6 +8,7 @@ user-interface history, resource accounting और सुरक्षा उत�
 
 | जाँच का प्रश्न | यहाँ से शुरू करें | इनसे पुष्टि करें |
 |---|---|---|
+| कौन-सी PowerShell कमांड लाइनें सहेजी गई थीं? | [PowerShell इतिहास](powershell-history.md) | PowerShell इवेंट लॉग, प्रोसेस टेलीमेट्री, Prefetch |
 | क्या यह executable चला? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event logs |
 | क्या यह फ़ाइल कभी मौजूद थी? | [Amcache](amcache.md), [$MFT](mft.md) | [USN जर्नल](usn-journal.md), [$I30](i30.md), ShimCache |
 | कोई फ़ाइल कब बनाई गई, rename की गई या हटाई गई? | [USN जर्नल](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender क्वारंटीन |

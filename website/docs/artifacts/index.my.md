@@ -8,6 +8,7 @@ Windows သည် ဖိုင်စနစ်၊ registry၊ compatibility ဒ�
 
 | စုံစမ်းစစ်ဆေးရေး မေးခွန်း | ဤနေရာမှ စတင်ပါ | အတည်ပြုရန် |
 |---|---|---|
+| မည်သည့် PowerShell command စာကြောင်းများကို သိမ်းထားသနည်း။ | [PowerShell မှတ်တမ်း](powershell-history.md) | PowerShell event log၊ process telemetry၊ Prefetch |
 | ဤ executable ကို run ခဲ့သလား။ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)၊ [SRUM](srum.md)၊ event log များ |
 | ဤဖိုင် တစ်ချိန်ချိန်တွင် တည်ရှိခဲ့သလား။ | [Amcache](amcache.md)၊ [$MFT](mft.md) | [USN ဂျာနယ်](usn-journal.md)၊ [$I30](i30.md)၊ ShimCache |
 | ဖိုင်တစ်ခုကို မည်သည့်အချိန်တွင် ဖန်တီး၊ အမည်ပြောင်း သို့မဟုတ် ဖျက်ခဲ့သနည်း။ | [USN ဂျာနယ်](usn-journal.md) | [$MFT](mft.md)၊ [$I30](i30.md)၊ Defender quarantine |

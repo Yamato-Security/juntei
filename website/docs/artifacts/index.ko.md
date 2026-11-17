@@ -8,6 +8,7 @@ Windows는 파일 시스템, 레지스트리, 호환성 데이터베이스, 사�
 
 | 조사 질문 | 시작점 | 교차 검증 |
 |---|---|---|
+| 어떤 PowerShell 명령줄이 저장되었는가? | [PowerShell 기록](powershell-history.md) | PowerShell 이벤트 로그, 프로세스 원격 분석, Prefetch |
 | 이 실행 파일이 실행되었는가? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), 이벤트 로그 |
 | 이 파일이 존재한 적이 있는가? | [Amcache](amcache.md), [$MFT](mft.md) | [USN 저널](usn-journal.md), [$I30](i30.md), ShimCache |
 | 파일이 언제 생성, 이름 변경 또는 삭제되었는가? | [USN 저널](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender 격리 데이터 |

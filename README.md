@@ -23,7 +23,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
-Juntei currently supports 44 of the most popular Windows forensic artifacts and we continue to add more.
+Juntei currently supports 45 of the most popular Windows forensic artifacts and we continue to add more.
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
@@ -152,6 +152,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Audit policy** (`SECURITY` `PolAdtEv`) — Which security events the system was set to log, per subcategory, and so which missing events say nothing. | Registry |
+
+### Shell History
+
+| Artifact | Type |
+| --- | --- |
+| **PowerShell history** (`PSReadLine\*_history.txt`) — Saved command lines with user, host, source line numbers and file modification time. Commands have no execution timestamps. | File |
 
 ### Browser Activity
 

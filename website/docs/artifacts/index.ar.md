@@ -8,6 +8,7 @@
 
 | سؤال التحقيق | ابدأ من هنا | أكّد باستخدام |
 |---|---|---|
+| ما أسطر أوامر PowerShell التي حُفظت؟ | [سجل PowerShell](powershell-history.md) | سجلات أحداث PowerShell، بيانات مراقبة العمليات، Prefetch |
 | هل شُغّل هذا الملف التنفيذي؟ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)، [SRUM](srum.md)، سجلات الأحداث |
 | هل كان هذا الملف موجودًا في أي وقت؟ | [Amcache](amcache.md)، [$MFT](mft.md) | [دفتر يومية USN](usn-journal.md)، [$I30](i30.md)، ShimCache |
 | متى أُنشئ ملف أو أُعيدت تسميته أو حُذف؟ | [دفتر يومية USN](usn-journal.md) | [$MFT](mft.md)، [$I30](i30.md)، حجر Defender |

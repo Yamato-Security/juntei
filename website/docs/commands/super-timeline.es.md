@@ -102,6 +102,7 @@ Una marca de tiempo es una evidencia sobre un objeto registrado. Por sí sola, n
 | LNK | Marcas de tiempo MAC del destino, creación del identificador de seguimiento y horas de los elementos del shell. Describen metadatos almacenados del destino, no necesariamente cuándo se abrió el acceso directo. |
 | Jump Lists | Metadatos de último uso de las entradas, creación del identificador de seguimiento y horas del destino de los LNK incrustados. De forma predeterminada se omiten las horas de los archivos contenedores en el sistema de recopilación. |
 | Caché de mapas de bits de RDP | Ningún evento: las teselas almacenadas en caché no tienen horas. Sus registros permanecen en la entrada analizada. |
+| Historial de PowerShell | Ningún evento: las líneas del historial no tienen horas, y `FileLastWriteTime` es la hora del archivo, no la de un comando. Sus registros permanecen en la entrada analizada. |
 | Papelera de reciclaje | Cuándo se movió cada elemento a la papelera, con el usuario de la papelera, la ruta original y si se recopiló el contenido eliminado. No es cuándo se vació la papelera ni las horas de archivo propias del elemento. |
 | Cuarentena de Defender | Marca de tiempo de la entrada y horas almacenadas de creación, acceso y escritura del recurso. Las horas de extracción no son evidencia de actividad en el equipo investigado. |
 | BAM, UserAssist, FeatureUsage | Campos de actividad registrados, cuando existen, con el contexto de la última escritura de la clave diferenciado. Un contador sin hora no genera un evento. |

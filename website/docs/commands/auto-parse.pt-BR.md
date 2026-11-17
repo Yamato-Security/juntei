@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Os parsers precisam de caminhos: o Juntei copia os arquivos que os parsers leem para um espaço temporário privado com buffers limitados: hives do registro e seus logs de transação, arquivos de metadados NTFS, bancos de dados, arquivos de prefetch, atalhos, Jump Lists, arquivos do Outlook, arquivos de índice da Lixeira, caches de bitmaps do RDP e pastas de quarentena do Defender. Qualquer outro arquivo vira um marcador vazio com o horário de modificação original, de modo que diretórios e caminhos aparecem como no disco. O persistence-hunter lê o conteúdo de um marcador a partir da imagem só quando precisa, por exemplo um executável indicado por uma entrada de persistência. **Reserve espaço para os arquivos copiados**, além dos resultados. Regiões nulas são gravadas como lacunas quando permitido. Nomes, estrutura, hard links e horários de modificação são preservados. Os horários de origem de LNK e Jump Lists vêm dos metadados NTFS originais, nunca dos arquivos temporários. O término normal, mesmo com erros de parser, remove as cópias; uma interrupção forçada pode deixá-las. A origem permanece somente leitura; logs VHDX pendentes são aplicados apenas na memória.
+Os parsers precisam de caminhos: o Juntei copia os arquivos que os parsers leem para um espaço temporário privado com buffers limitados: hives do registro e seus logs de transação, arquivos de metadados NTFS, bancos de dados, arquivos de prefetch, atalhos, Jump Lists, arquivos do Outlook, arquivos de histórico do PSReadLine, arquivos de índice da Lixeira, caches de bitmaps do RDP e pastas de quarentena do Defender. Qualquer outro arquivo vira um marcador vazio com o horário de modificação original, de modo que diretórios e caminhos aparecem como no disco. O persistence-hunter lê o conteúdo de um marcador a partir da imagem só quando precisa, por exemplo um executável indicado por uma entrada de persistência. **Reserve espaço para os arquivos copiados**, além dos resultados. Regiões nulas são gravadas como lacunas quando permitido. Nomes, estrutura, hard links e horários de modificação são preservados. Os horários de origem de LNK e Jump Lists vêm dos metadados NTFS originais, nunca dos arquivos temporários. O término normal, mesmo com erros de parser, remove as cópias; uma interrupção forçada pode deixá-las. A origem permanece somente leitura; logs VHDX pendentes são aplicados apenas na memória.
 
 A descoberta de hosts, CSV/JSON/JSONL e `-j` usam o fluxo habitual. `Image` em `manifest.json` identifica a imagem original; `EvidenceRoot`, o caminho relativo interno. Erros de leitura e nomes inseguros aparecem em `ImageErrors` e nas linhas com falha de `manifest.csv`. Resultados legíveis são preservados; entradas incompletas retornam 1. Nomes perigosos ou ambíguos não são renomeados. Streams NTFS nomeados não são extraídos como arquivos adicionais; artefatos coletados como arquivos comuns continuam disponíveis.
 
@@ -338,6 +338,9 @@ O CSV mantém tabelas separadas porque cada artefato tem colunas diferentes:
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -367,6 +370,7 @@ O CSV mantém tabelas separadas porque cada artefato tem colunas diferentes:
 | `ProcessExecution` | Compatibilidade de aplicativos, BAM e DAM, FeatureUsage e itens fixados, MuiCache, Prefetch, linha do tempo do Prefetch, atividade de aplicativos/CPU do SRUM, UserAssist |
 | `Registry` | Chaves e valores gerais dos hives, incluindo registros recuperados |
 | `SecurityProducts` | Metadados da quarentena do Defender e conteúdo extraído opcional; configurações de segurança (Defender, UAC, proteção de credenciais, RDP, firewall, registro em log) |
+| `ShellHistory` | Histórico de comandos do PowerShell PSReadLine; o horário de modificação do arquivo é metadado, sem horários de execução dos comandos |
 | `SystemInformation` | Nomes, versão do Windows, fuso horário, último desligamento, perfis, SIDs e política de auditoria; energia/capacidade, mapas de identidade e provedores desconhecidos do SRUM |
 
 As categorias ajudam a organizar as investigações; não são prova de uma atividade específica. Por exemplo,
@@ -621,3 +625,9 @@ A exportação `-j, --json-timeline` já existente continua sendo um arquivo JSO
 nativos. Ela preserva os esquemas dos analisadores; não expande campos de carimbo de data/hora nem ordena
 eventos. Guarde-a, junto com os resultados individuais dos analisadores, para a revisão no nível das
 evidências.
+
+## Histórico do PowerShell { #powershell-history }
+
+Arquivos `<Host>_history.txt` diretamente em uma pasta `PSReadLine` são descobertos recursivamente e copiados durante o staging de VHDX/E01. Arquivos com o mesmo sufixo fora dessa pasta são excluídos; analise explicitamente cópias renomeadas ou em locais personalizados com `parse-file powershell-history -f <FILE>`.
+
+Os resultados são salvos como `ShellHistory/PowerShellHistory.csv` (ou `.json`/`.jsonl` conforme o formato escolhido), com as entradas habituais do manifesto e do log do parser. `FileLastWriteTime` é o horário de modificação do arquivo de origem, incluindo metadados originais da imagem, nunca um horário de execução de comando. `auto-parse -Z` altera seu deslocamento de exibição junto com os outros horários de saída; o parser independente não tem opção `-Z`. A linha do tempo combinada de `-j` inclui as linhas do histórico. Elas não têm horários; por isso, o `super-timeline` não gera eventos a partir delas e as conta como registros sem horário. Veja [Histórico do PowerShell](../artifacts/powershell-history.md).

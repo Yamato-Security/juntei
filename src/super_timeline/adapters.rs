@@ -101,6 +101,7 @@ pub const ARTIFACTS: &[&str] = &[
     "outlook",
     "persistence",
     "persistence-hunter",
+    "powershell-history",
     "prefetch",
     "prefetch-timeline",
     "rdp-cache",
@@ -1562,6 +1563,8 @@ fn build(
         "recycle-bin" => activity::recycle_bin(&mut b),
         // Cached screen tiles have no times: their records stay in the parsed input only.
         "rdp-cache" => {}
+        // A history line has no time either: FileLastWriteTime is the file's, not a command's.
+        "powershell-history" => {}
         "ual" => activity::ual(&mut b),
         "webcache" => activity::webcache(&mut b),
         "lnk" | "jump-lists" => links(&mut b),

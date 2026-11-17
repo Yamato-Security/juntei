@@ -8,6 +8,7 @@ but the investigator must still interpret what each source means.
 
 | Investigation question | Start here | Corroborate with |
 |---|---|---|
+| Which PowerShell command lines were saved? | [PowerShell History](powershell-history.md) | PowerShell event logs, process telemetry, Prefetch |
 | Did this executable run? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event logs |
 | Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
 | When was a file created, renamed, or deleted? | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender quarantine |

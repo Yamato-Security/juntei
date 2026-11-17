@@ -6,6 +6,7 @@ Windows は、ファイル システム、レジストリ、互換性データ�
 
 | 調査質問 | ここから始めましょう | と裏付ける |
 |---|---|---|
+| どの PowerShell コマンドラインが保存されたか？ | [PowerShell 履歴](powershell-history.md) | PowerShell イベントログ、プロセステレメトリ、Prefetch |
 | この実行可能ファイルは実行されましたか? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)、[SRUM](srum.md)、イベント ログ |
 | このファイルは存在したことがありますか? | [Amcache](amcache.md), [$MFT](mft.md) | [USN ジャーナル](usn-journal.md)、[$I30](i30.md)、ShimCache |
 | ファイルが作成、名前変更、または削除されたのはいつですか? | [USN ジャーナル](usn-journal.md) | [$MFT](mft.md)、[$I30](i30.md)、Defender 隔離 |

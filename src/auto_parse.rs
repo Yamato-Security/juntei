@@ -56,6 +56,7 @@ const CATEGORIES: &[&str] = &[
     "ProcessExecution",
     "Registry",
     "SecurityProducts",
+    "ShellHistory",
     "SystemInformation",
 ];
 
@@ -80,6 +81,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         | "userassist" => "ProcessExecution",
         "registry" => "Registry",
         "defender-quarantine" | "security-settings" => "SecurityProducts",
+        "powershell-history" => "ShellHistory",
         "system-info" | "srum" => "SystemInformation",
         "auditpol" => "SystemInformation",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
@@ -114,6 +116,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "opensavemru" => "Registry-OpenSaveMRU",
         "persistence" => "Registry-Persistence",
         "persistence-hunter" => "PersistenceHunter",
+        "powershell-history" => "PowerShellHistory",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "Registry-RecentDocs",
@@ -1454,7 +1457,7 @@ fn build_tasks(
                         args.push("--collage-only".into());
                     }
                 }
-                if matches!(artifact, "lnk" | "jump-lists")
+                if matches!(artifact, "lnk" | "jump-lists" | "powershell-history")
                     && let Some(path) = &opts.image_source_metadata
                 {
                     args.push("--image-source-metadata".into());
@@ -1557,6 +1560,12 @@ fn build_tasks(
             &["parse-file", "recycle-bin"],
             OutputShape::File,
             &["--code-page", &code_page],
+        );
+        add(
+            "powershell-history",
+            &["parse-file", "powershell-history"],
+            OutputShape::File,
+            &[],
         );
         add(
             "rdp-cache",
@@ -1837,6 +1846,9 @@ impl InputInventory {
             }
             if name.eq_ignore_ascii_case("INFO") && crate::recycle_bin::is_legacy_info_path(&path) {
                 found.add_size("recycle-bin", size);
+            }
+            if crate::powershell_history::is_history_path(&path) {
+                found.add_size("powershell-history", size);
             }
             if crate::i30::is_i30_file(&path) {
                 found.add_size("i30", size);
@@ -2732,13 +2744,24 @@ mod tests {
         )
         .unwrap();
         assert!(tasks.len() >= 40, "{} tasks", tasks.len());
+        assert!(
+            tasks
+                .iter()
+                .any(|task| task.artifact == "powershell-history")
+        );
         for task in tasks {
             assert!(
                 crate::super_timeline::supports_artifact(task.artifact),
                 "Missing timeline adapter: {}",
                 task.artifact
             );
+            assert!(CATEGORIES.contains(&artifact_category(task.artifact)));
         }
+        assert_eq!(artifact_category("powershell-history"), "ShellHistory");
+        assert_eq!(artifact_filename("powershell-history"), "PowerShellHistory");
+        let mut sorted = CATEGORIES.to_vec();
+        sorted.sort_unstable();
+        assert_eq!(CATEGORIES, sorted);
     }
 
     #[test]

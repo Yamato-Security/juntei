@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser memerlukan jalur: Juntei menyalin berkas yang dibaca parser ke ruang sementara privat dengan buffer terbatas: hive registri beserta log transaksinya, berkas metadata NTFS, basis data, berkas prefetch, pintasan, Jump List, berkas Outlook, berkas indeks Recycle Bin, cache bitmap RDP, dan folder karantina Defender. Berkas lain menjadi placeholder kosong dengan waktu modifikasi aslinya, sehingga direktori dan jalur terlihat sama seperti di disk. persistence-hunter membaca isi placeholder dari image hanya saat diperlukan, misalnya berkas eksekusi yang dirujuk entri persistensi. **Sediakan ruang untuk berkas yang disalin**, selain untuk hasil. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
+Parser memerlukan jalur: Juntei menyalin berkas yang dibaca parser ke ruang sementara privat dengan buffer terbatas: hive registri beserta log transaksinya, berkas metadata NTFS, basis data, berkas prefetch, pintasan, Jump List, berkas Outlook, berkas riwayat PSReadLine, berkas indeks Recycle Bin, cache bitmap RDP, dan folder karantina Defender. Berkas lain menjadi placeholder kosong dengan waktu modifikasi aslinya, sehingga direktori dan jalur terlihat sama seperti di disk. persistence-hunter membaca isi placeholder dari image hanya saat diperlukan, misalnya berkas eksekusi yang dirujuk entri persistensi. **Sediakan ruang untuk berkas yang disalin**, selain untuk hasil. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
 
 Penemuan host, CSV/JSON/JSONL, dan `-j` memakai alur biasa. `Image` dalam `manifest.json` menunjukkan image asli; `EvidenceRoot` menunjukkan jalur relatif di dalamnya. Kesalahan baca dan nama tidak aman dicatat dalam `ImageErrors` dan baris gagal `manifest.csv`. Hasil yang terbaca dipertahankan; input tidak lengkap mengembalikan 1. Nama berbahaya atau ambigu tidak diganti. Stream NTFS bernama tidak diekstrak sebagai berkas tambahan; artefak yang sudah dikumpulkan sebagai berkas biasa tetap tersedia.
 
@@ -338,6 +338,9 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -367,6 +370,7 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 | `ProcessExecution` | Kompatibilitas aplikasi, BAM dan DAM, FeatureUsage dan item yang disematkan, MuiCache, Prefetch, timeline Prefetch, aktivitas aplikasi/CPU SRUM, UserAssist |
 | `Registry` | Key dan nilai hive umum, termasuk record yang dipulihkan |
 | `SecurityProducts` | Metadata karantina Defender dan konten hasil ekstraksi opsional; pengaturan keamanan (Defender, UAC, perlindungan kredensial, RDP, firewall, logging) |
+| `ShellHistory` | Riwayat perintah PowerShell PSReadLine; waktu modifikasi berkas adalah metadata, tanpa waktu eksekusi perintah |
 | `SystemInformation` | Nama, versi Windows, zona waktu, shutdown terakhir, profil, SID, dan kebijakan audit; energi/kapasitas SRUM, identity map, dan provider yang tidak dikenal |
 
 Kategori membantu mengorganisasikan investigasi; kategori bukan bukti adanya aktivitas tertentu. Misalnya,
@@ -616,3 +620,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 Ekspor `-j, --json-timeline` tetap berupa gabungan rekaman asli JSONL, mempertahankan skema tanpa memperluas atau mengurutkan waktu. Simpan bersama hasil masing-masing parser untuk pemeriksaan bukti.
+
+## Riwayat PowerShell { #powershell-history }
+
+Berkas `<Host>_history.txt` yang berada langsung dalam folder `PSReadLine` ditemukan secara rekursif dan disalin saat staging VHDX/E01. Berkas dengan akhiran yang sama di luar folder tersebut dikecualikan; uraikan salinan dengan nama atau lokasi kustom secara eksplisit memakai `parse-file powershell-history -f <FILE>`.
+
+Hasil disimpan sebagai `ShellHistory/PowerShellHistory.csv` (atau `.json`/`.jsonl` sesuai format pilihan), dengan entri manifes dan log parser seperti biasa. `FileLastWriteTime` adalah waktu modifikasi berkas sumber, termasuk metadata image asli, bukan waktu eksekusi perintah. `auto-parse -Z` mengubah offset tampilannya bersama waktu keluaran lain; parser mandiri tidak memiliki opsi `-Z`. Timeline gabungan `-j` menyertakan baris riwayat. Baris tersebut tidak memiliki waktu, sehingga `super-timeline` tidak membuat peristiwa darinya dan menghitungnya sebagai rekaman tanpa waktu. Lihat [Riwayat PowerShell](../artifacts/powershell-history.md).
