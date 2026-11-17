@@ -258,7 +258,6 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -380,7 +379,7 @@ Jump Lists는 각각 접두사가 붙은 테이블 옆에 하나의 공유 로�
 `DefenderQuarantine.csv`입니다. 레지스트리에서 파생된 테이블은 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`,
 `Registry-BAM.csv`, `Registry-SystemInfo.csv`를 포함하여 `Registry-` 접두사를 사용합니다. 일반 하이브 키와 값은
 `Registry-Dump.csv`에 있습니다. Amcache 테이블은 `FileExistence/Registry-Amcache-Devices.csv`,
-`Registry-Amcache-Files.csv`, `Registry-Amcache-Findings.csv`, `Registry-Amcache-Summary.csv`입니다. Jump Lists는
+`Registry-Amcache-Files.csv`, `Registry-Amcache-Summary.csv`입니다. Jump Lists는
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv`와 `JumpLists-CustomDestinations.csv`를 사용합니다.
 Amcache나 Jump Lists의 하위 디렉터리는 없습니다. SRUM 테이블은 범주 바로 아래에 `SRUM-` 파일 이름을 사용합니다.
 예를 들어 `NetworkActivity/SRUM-NetworkConnections.csv`입니다.

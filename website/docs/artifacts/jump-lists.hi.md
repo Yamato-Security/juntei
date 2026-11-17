@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei आर्टिफ़ैक्ट रिकॉर्ड, मेटाडेटा और पार्सिंग निदान सुरक्षित रखता है। पार्सर-विशिष्ट पहचान नियमों का मूल्यांकन Juntei Pro में होता है। Persistence Hunter की मौजूदा जाँच और नीति प्रोफ़ाइल उपलब्ध रहती हैं।
+
 ## Jump Lists क्या हैं { #what-jump-lists-are }
 
 Jump Lists taskbar और Start-menu की application entries से दिखाए जाने वाले menus का आधार हैं। Automatic Jump
@@ -101,3 +103,5 @@ JSON/JSONL इसके अतिरिक्त DestList header, प्रत�
 - [Microsoft: Shell Link format (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [JumpList parser test/reference project](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

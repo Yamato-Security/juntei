@@ -1,5 +1,7 @@
 # LNK のショートカット { #lnk-shortcuts }
 
+Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持する。パーサー固有の検知ルールは Juntei Pro で評価する。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できる。
+
 ## LNK ファイルとは { #what-lnk-files-are }
 
 Windows シェル リンク (`.lnk`) ファイルには、ターゲットと起動引数、作業ディレクトリ、アイコン、ウィンドウ状態、ターゲット メタデータ、ボリューム/ネットワーク情報、シェル名前空間項目、およびオプションの分散リンク追跡識別子が記述されます。 Windows とアプリケーションは、最近使ったアイテム、デスクトップ、スタート メニュー、その他の場所にそれらを作成します。攻撃者は悪意のあるショートカットを直接配布することもあります。
@@ -85,3 +87,5 @@ JSON/JSONL は、すべてのターゲット ID 項目 (種類、名前、GUID�
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark シェル](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

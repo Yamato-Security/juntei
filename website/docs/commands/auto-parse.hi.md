@@ -269,7 +269,6 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` और `Registry-SystemInfo.csv` शामिल हैं।
 सामान्य hive keys और values `Registry-Dump.csv` में होते हैं। Amcache tables
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` और `Registry-Amcache-Summary.csv` हैं। Jump Lists
+Registry-Amcache-Files.csv और `Registry-Amcache-Summary.csv` हैं। Jump Lists
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` और
 `JumpLists-CustomDestinations.csv` का उपयोग करती हैं। Amcache या Jump Lists की कोई subdirectories नहीं होतीं।
 SRUM tables अपनी श्रेणी के ठीक अंतर्गत `SRUM-` filenames का उपयोग करती हैं, उदाहरण के लिए

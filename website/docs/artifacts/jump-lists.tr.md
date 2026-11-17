@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei, artefakt kayıtlarını, meta verileri ve ayrıştırma tanılarını korur. Ayrıştırıcıya özgü tespit kuralları Juntei Pro içinde değerlendirilir. Persistence Hunter mevcut kontrollerini ve politika profillerini korur.
+
 ## Jump Lists nedir { #what-jump-lists-are }
 
 Jump Lists, görev çubuğundaki ve Başlat menüsündeki uygulama girdilerinden açılan menülerin arkasındaki
@@ -108,3 +110,5 @@ baytları ve her gömülü LNK'nin iç içe alanlarını korur.
 - [Microsoft: Shell Link format (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [JumpList ayrıştırıcısı test/referans projesi](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

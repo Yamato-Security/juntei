@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持する。パーサー固有の検知ルールは Juntei Pro で評価する。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できる。
+
 ## Jump Listsとは { #what-jump-lists-are }
 
 Jump Lists は、タスクバーとスタート メニューのアプリケーション エントリから表示されるメニューに戻ります。自動 Jump Lists は、アプリケーションによって使用されるアイテムの Windows 管理の履歴です。カスタム Jump Lists は、アプリケーション定義のカテゴリとタスクです。どちらも、ターゲット パス、時刻、ボリューム/ネットワーク コンテキスト、MFT 参照、起動引数を含む LNK 構造を埋め込むことができます。
@@ -84,3 +86,5 @@ JSON/JSONL は、DestList ヘッダー、エントリごとのスコア/チェ�
 - [Microsoft: シェルリンク形式 (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-ジャンプリスト-パーサー](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [JumpList パーサー テスト/リファレンス プロジェクト](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

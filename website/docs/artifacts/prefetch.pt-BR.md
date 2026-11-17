@@ -1,5 +1,7 @@
 # Prefetch { #prefetch }
 
+O Juntei preserva registros, metadados e diagnósticos de análise. As regras de detecção específicas dos parsers são avaliadas no Juntei Pro. As verificações e os perfis de política existentes do Persistence Hunter continuam disponíveis.
+
 ## O que é o Prefetch { #what-prefetch-is }
 
 Os arquivos Prefetch do Windows registram informações usadas para otimizar a inicialização de aplicativos. Um arquivo `.pf`
@@ -37,7 +39,6 @@ ser comparados.
   PathValidated como false. Processos hospedeiros podem incluir dados da linha de comando no hash,
   portanto um caminho não validado não está necessariamente errado.
 - Os carimbos de data/hora do sistema de arquivos de um arquivo de origem `.pf` são distintos dos horários de execução incorporados.
-- `Findings` são observações de caça a ameaças. Instaladores e a administração legítima usam frequentemente caminhos de preparação.
 
 ## Analisar com o Juntei { #parse-with-juntei }
 
@@ -83,7 +84,6 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `VolumeCreated` | Horários de criação de volume registrados, não horários de criação do executável. |
 | `DirectoryCount` | Número de strings de diretório registradas. |
 | `FileCount` | Número de referências a arquivos carregados registradas. |
-| `Findings` | Observações do Juntei, como binários do sistema realocados ou caminhos de execução suspeitos. Revise manualmente. |
 | `Files` | Arquivos carregados/referenciados com as referências NTFS disponíveis. Excelente pivô de DLL/caminho, não prova de intenção sobre o arquivo. |
 | `Dir` | Strings de diretório associadas à inicialização. Úteis quando os caminhos individuais dos arquivos carregados estão incompletos. |
 

@@ -1,5 +1,7 @@
 # Amcache { #amcache }
 
+Juntei, artefakt kayıtlarını, meta verileri ve ayrıştırma tanılarını korur. Ayrıştırıcıya özgü tespit kuralları Juntei Pro içinde değerlendirilir. Persistence Hunter mevcut kontrollerini ve politika profillerini korur.
+
 ## Amcache nedir { #what-amcache-is }
 
 Amcache, bir kayıt defteri kovanında saklanan Windows uygulama uyumluluğu envanteridir. Modern sistemler
@@ -53,7 +55,7 @@ Output:
 ```
 
 ```bash
-# Inspect the summary and findings
+# Inspect the inventory summary
 juntei parse-registry amcache -f Amcache.hve
 
 # Save all record types as CSV tables
@@ -64,13 +66,11 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
   | jq 'select(.RecordType == "file" and .SHA1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
-CSV çıktısı özet, bulgular, dosyalar ve aygıtlar tablolarını içerir. `auto-parse` ile bunlar,
-her bilgisayarın `FileExistence/` dizininin hemen altında bulunan `Registry-Amcache-Summary.csv`,
-`Registry-Amcache-Findings.csv`, `Registry-Amcache-Files.csv` ve `Registry-Amcache-Devices.csv`
-dosyalarıdır; `Registry-Amcache-logs.txt` de tabloların yanında yer alır. Birden fazla kovan olduğunda uzantıdan
-önce `-Source1`, `-Source2` vb. eklenir; manifestlerdeki `OutputFiles` tam yolları listeler. Bağımsız CSV
-dışa aktarımları kendi tablo adlarını ve istenen çıktı konumunu korur. JSONL kayıtları
-`summary`, `finding`, `file` ve `device` değerlerine sahip `RecordType` kullanır.
+`auto-parse`: `FileExistence/Registry-Amcache-Summary.csv`, `FileExistence/Registry-Amcache-Files.csv`, `FileExistence/Registry-Amcache-Devices.csv`; `Registry-Amcache-logs.txt`.
+
+JSONL `RecordType`: `summary`, `file`, `device`.
+
+`-Source1`, `-Source2`, …; `manifest.json` → `OutputFiles`.
 
 ## Dosya çıktı alanları { #file-output-fields }
 

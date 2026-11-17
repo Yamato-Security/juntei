@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+**Changes:**
+
+- Move parser-specific Prefetch, Amcache, ShimCache, LNK and Jump List detections and security-setting classification to Juntei Pro. Preserve source records, parser diagnostics, metadata and timestamps. Amcache exports Summary, Files and Devices without a Findings table; Prefetch/ShimCache omit Findings; security settings omit WeakensDefault and the --weakened-only filter. Expose shortcut shell-item types in CSV for downstream analysis. Persistence Hunter checks and policy profiles remain unchanged. (@YamatoSecurity)
+
 **New Features:**
 
 - `parse-file powershell-history` streams PSReadLine history to CSV, JSON or JSONL, retaining

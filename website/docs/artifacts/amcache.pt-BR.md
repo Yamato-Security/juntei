@@ -1,5 +1,7 @@
 # Amcache { #amcache }
 
+O Juntei preserva registros, metadados e diagnósticos de análise. As regras de detecção específicas dos parsers são avaliadas no Juntei Pro. As verificações e os perfis de política existentes do Persistence Hunter continuam disponíveis.
+
 ## O que é o Amcache { #what-amcache-is }
 
 O Amcache é um inventário de compatibilidade de aplicativos do Windows armazenado em um hive do Registro. Sistemas modernos
@@ -53,7 +55,7 @@ Output:
 ```
 
 ```bash
-# Inspect the summary and findings
+# Inspect the inventory summary
 juntei parse-registry amcache -f Amcache.hve
 
 # Save all record types as CSV tables
@@ -64,13 +66,11 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
   | jq 'select(.RecordType == "file" and .SHA1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
-A saída CSV contém as tabelas de resumo, achados, arquivos e dispositivos. Com `auto-parse`, elas são
-`Registry-Amcache-Summary.csv`, `Registry-Amcache-Findings.csv`, `Registry-Amcache-Files.csv` e
-`Registry-Amcache-Devices.csv`, diretamente no diretório `FileExistence/` de cada computador, com
-`Registry-Amcache-logs.txt` ao lado das tabelas. Vários hives acrescentam `-Source1`, `-Source2` etc.
-antes da extensão; `OutputFiles` nos manifestos lista os caminhos exatos. As exportações CSV
-independentes mantêm seus nomes de tabela nativos e o local de saída solicitado. Os registros JSONL usam
-os valores de `RecordType` `summary`, `finding`, `file` e `device`.
+`auto-parse`: `FileExistence/Registry-Amcache-Summary.csv`, `FileExistence/Registry-Amcache-Files.csv`, `FileExistence/Registry-Amcache-Devices.csv`; `Registry-Amcache-logs.txt`.
+
+JSONL `RecordType`: `summary`, `file`, `device`.
+
+`-Source1`, `-Source2`, …; `manifest.json` → `OutputFiles`.
 
 ## Campos de saída de arquivos { #file-output-fields }
 

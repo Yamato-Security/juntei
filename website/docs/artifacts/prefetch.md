@@ -1,5 +1,7 @@
 # Prefetch
 
+Juntei preserves artifact records, metadata, and parsing diagnostics. Parser-specific detection rules are evaluated in Juntei Pro. Persistence Hunter remains available with its existing checks and policy profiles.
+
 ## What Prefetch is
 
 Windows Prefetch files record information used to optimize application startup. A program-specific
@@ -36,7 +38,6 @@ be compared.
   without a matching hash is retained with PathValidated set to false. Hosting processes can
   incorporate command-line data into the hash, so an unvalidated path is not automatically wrong.
 - A `.pf` source file's file-system timestamps are separate from the embedded run times.
-- `Findings` are hunting observations. Installers and legitimate administration often use staging paths.
 
 ## Parse with Juntei
 
@@ -82,7 +83,6 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `VolumeCreated` | Recorded volume creation times, not executable creation times. |
 | `DirectoryCount` | Number of directory strings recorded. |
 | `FileCount` | Number of loaded-file references recorded. |
-| `Findings` | Juntei observations such as relocated system binaries or suspicious execution paths. Review manually. |
 | `Files` | Loaded/referenced files with available NTFS references. Excellent DLL/path pivot, not proof of file intent. |
 | `Dir` | Directory strings associated with startup. Useful when individual loaded-file paths are incomplete. |
 
@@ -105,7 +105,7 @@ arrays instead of comma-joined CSV cells.
 
 1. Use `-T` to add retained runs to a timeline.
 2. Group on executable name plus Prefetch hash; the same name can have different paths/hashes.
-3. Review `ExecutablePath`, staging paths, relocated system-binary findings, and loaded DLLs.
+3. Review `ExecutablePath`, staging paths, system-binary locations, and loaded DLLs.
 4. Match target MFT references and file paths to `$MFT`/USN records.
 5. Correlate run times with event logs, SRUM, network telemetry, services, tasks, and user artifacts.
 

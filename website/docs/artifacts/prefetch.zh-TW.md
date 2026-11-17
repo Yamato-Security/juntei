@@ -1,5 +1,7 @@
 # Prefetch { #prefetch }
 
+Juntei 保留鑑識成品記錄、中繼資料及剖析診斷資訊。各剖析器的偵測規則由 Juntei Pro 評估。Persistence Hunter 的現有檢查與原則設定檔仍可使用。
+
 ## 什麼是 Prefetch { #what-prefetch-is }
 
 Windows Prefetch 檔案記錄用來最佳化應用程式啟動的資訊。程式專屬的 `.pf` 檔案通常會儲存
@@ -29,7 +31,6 @@ Juntei 支援格式版本 17 至 31（Windows XP 至 Windows 11），包括 Wind
   被刻意開啟的，或被完整讀取的。
 - Prefetch 標頭中的執行檔名稱有長度限制。Juntei 會使用 SCCA 路徑雜湊來區分同名的已載入路徑。若仍有多個候選路徑無法區分，則保留標頭名稱並設定 PathAmbiguous；已載入檔案清單仍可供查閱。若只有一個候選路徑但雜湊不符，仍會保留該路徑，並將 PathValidated 設為 false。代管處理程序可能會將命令列資料納入雜湊計算，因此未經驗證的路徑不一定是錯的。
 - `.pf` 來源檔案的檔案系統時間戳記與內嵌的執行時間是分開的。
-- `Findings` 是威脅獵捕的觀察結果。安裝程式與合法的系統管理作業也經常使用資料整備路徑。
 
 ## 使用 Juntei 剖析 { #parse-with-juntei }
 
@@ -75,7 +76,6 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `VolumeCreated` | 所記錄的磁碟區建立時間，而非執行檔的建立時間。 |
 | `DirectoryCount` | 所記錄的目錄字串數量。 |
 | `FileCount` | 所記錄的已載入檔案參照數量。 |
-| `Findings` | Juntei 的觀察結果，例如被移置的系統二進位檔或可疑的執行路徑。請以人工檢視。 |
 | `Files` | 已載入／被參照的檔案，以及可用的 NTFS 參照。是極佳的 DLL／路徑樞紐，但並非檔案意圖的證明。 |
 | `Dir` | 與啟動相關的目錄字串。當個別已載入檔案的路徑不完整時很有用。 |
 

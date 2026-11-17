@@ -1,5 +1,7 @@
 # Prefetch { #prefetch }
 
+Juntei သည် artifact မှတ်တမ်းများ၊ metadata နှင့် parsing စစ်ဆေးချက်များကို ထိန်းသိမ်းထားသည်။ Parser ဆိုင်ရာ detection rules များကို Juntei Pro တွင် စစ်ဆေးသည်။ Persistence Hunter ၏ လက်ရှိ checks နှင့် policy profiles များကို ဆက်လက်အသုံးပြုနိုင်သည်။
+
 ## Prefetch ဆိုသည်မှာ { #what-prefetch-is }
 
 Windows Prefetch ဖိုင်များသည် အပလီကေးရှင်း စတင်မှုကို ပိုမိုမြန်ဆန်စေရန် အသုံးပြုသော အချက်အလက်များကို မှတ်တမ်းတင်သည်။
@@ -39,7 +41,6 @@ Juntei သည် format ဗားရှင်း 17 မှ 31 အထိ (Windows
   command-line ဒေတာကို hash ထဲ ထည့်သွင်းနိုင်သဖြင့် အတည်မပြုရသေးသော လမ်းကြောင်းသည် မှားသည်ဟု
   အလိုအလျောက် မဆိုနိုင်ပါ။
 - `.pf` source ဖိုင်၏ ဖိုင်စနစ် timestamp များသည် ထည့်သွင်းထားသော run ချိန်များနှင့် သီးခြားဖြစ်သည်။
-- `Findings` သည် hunting လေ့လာတွေ့ရှိချက်များ ဖြစ်သည်။ Installer များနှင့် တရားဝင် စီမံခန့်ခွဲမှုများသည် staging path များကို
   မကြာခဏ အသုံးပြုကြသည်။
 
 ## Juntei ဖြင့် ခွဲခြမ်းစိတ်ဖြာခြင်း { #parse-with-juntei }
@@ -86,7 +87,6 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `VolumeCreated` | မှတ်တမ်းတင်ထားသော volume ဖန်တီးချိန်များ၊ executable ဖန်တီးချိန်များ မဟုတ်ပါ။ |
 | `DirectoryCount` | မှတ်တမ်းတင်ထားသော directory string အရေအတွက်။ |
 | `FileCount` | မှတ်တမ်းတင်ထားသော load လုပ်ထားသည့် ဖိုင် reference အရေအတွက်။ |
-| `Findings` | နေရာပြောင်းထားသော system binary များ သို့မဟုတ် သံသယဖြစ်ဖွယ် execution path များကဲ့သို့ Juntei ၏ လေ့လာတွေ့ရှိချက်များ။ ကိုယ်တိုင် ပြန်လည်သုံးသပ်ပါ။ |
 | `Files` | ရရှိနိုင်သော NTFS reference များနှင့်အတူ load လုပ်ထားသော/ကိုးကားထားသော ဖိုင်များ။ အလွန်ကောင်းမွန်သော DLL/path pivot ဖြစ်ပြီး ဖိုင်ရည်ရွယ်ချက်၏ သက်သေ မဟုတ်ပါ။ |
 | `Dir` | စတင်မှုနှင့် ဆက်စပ်သော directory string များ။ Load လုပ်ထားသော ဖိုင် path တစ်ခုချင်းစီ မပြည့်စုံသည့်အခါ အသုံးဝင်သည်။ |
 

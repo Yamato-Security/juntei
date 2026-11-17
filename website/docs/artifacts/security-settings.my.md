@@ -1,5 +1,7 @@
 # လုံခြုံရေးဆက်တင်များ { #security-settings }
 
+Juntei သည် artifact မှတ်တမ်းများ၊ metadata နှင့် parsing စစ်ဆေးချက်များကို ထိန်းသိမ်းထားသည်။ Parser ဆိုင်ရာ detection rules များကို Juntei Pro တွင် စစ်ဆေးသည်။ Persistence Hunter ၏ လက်ရှိ checks နှင့် policy profiles များကို ဆက်လက်အသုံးပြုနိုင်သည်။
+
 ## ၎င်းတို့ ဆိုသည်မှာ { #what-they-are }
 
 တိုက်ခိုက်သူများသည် ပုန်းအောင်းနေရန်နှင့် credential များဆီ ရောက်ရှိရန် Windows ၏ လုံခြုံရေးဆက်တင်များကို ပြောင်းလဲကြသည်။
@@ -60,8 +62,7 @@ log များထဲတွင်သာ ရှိနိုင်သည်။
 - **သိမ်းဆည်းထားသော ပြင်ဆင်သတ်မှတ်ချက်သည် ထိရောက်သော ကာကွယ်မှု အခြေအနေ မဟုတ်ပါ။** စုဆောင်းထားသော registry value များနှင့်
   ပျက်စီးနေသော value စာရင်းများအတွက် diagnostic row များကို အစီရင်ခံသည်။ ပျောက်နေသော ဒေတာသည် မူလသတ်မှတ်ချက်များ၊
   မစုဆောင်းရသေးသော source များ သို့မဟုတ် အခြား စီမံခန့်ခွဲမှု နည်းလမ်းတစ်ခုကို ထင်ဟပ်နိုင်သည်။ ၎င်းသည် ကာကွယ်မှု ဖွင့်ထား
-  သို့မဟုတ် ပိတ်ထားကြောင်း သက်သေ မဟုတ်ပါ။ `WeakensDefault` သည် လိုက်နာဆောင်ရွက်ခံရသည့်အခါ ဖော်ပြထားသော baseline ကို
-  လျှော့ချနိုင်သည့် ဆက်တင်များကို အမှတ်အသားပြုသည်။
+  သို့မဟုတ် ပိတ်ထားကြောင်း သက်သေ မဟုတ်ပါ။
 - **Legacy Defender flag များကို လျစ်လျူရှုနိုင်သည်။** `DisableAntiSpyware` နှင့် `DisableAntivirus` သည် Defender
   ရပ်တန့်သွားကြောင်း သက်သေမပြပါ။ သက်ဆိုင်မှုသည် platform ဗားရှင်း၊ onboarding နှင့် tamper protection ပေါ်
   မူတည်သည်။ [Microsoft က ဤ legacy ဆက်တင်များကို ရှင်းပြထားသည်](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware)။
@@ -104,7 +105,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -113,7 +113,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -131,7 +131,6 @@ exclusion တိုင်းကို စာရင်းပြသည်။
 | `Setting` | ၎င်းသည် ဘာဖြစ်သနည်း- `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Value- ဒဿမ နံပါတ်၊ string သို့မဟုတ် exclusion ကိုယ်တိုင်။ Value သည် ဆက်တင်၏ အမျိုးအစား မဟုတ်ပါက ဗလာ။ |
 | `Meaning` | Value ၏ အဓိပ္ပာယ်။ |
-| `WeakensDefault` | Value က ၎င်းမရှိဘဲ လက်ရှိ Windows လုပ်ဆောင်သည့်အရာကို အားနည်းစေပါက `True`၊ အားမနည်းစေပါက `False`၊ မသက်ဆိုင်ပါက (အရွယ်အစား၊ port၊ AMSI provider) သို့မဟုတ် ဆုံးဖြတ်၍ မရပါက ဗလာ။ |
 | `Policy` | Key သည် `Policies` key အောက်တွင် ရှိ/မရှိ။ |
 | `KeyPath`, `ValueName` | Key နှင့် value။ Exclusion ၏ value အမည်သည် ချန်လှပ်ထားသော item ဖြစ်သည်။ AMSI provider တွင် value အမည် မရှိပါ။ |
 | `KeyLastWrittenUTC` | Key ၏ နောက်ဆုံး ရေးသားချိန်။ |
@@ -141,7 +140,7 @@ exclusion တိုင်းကို စာရင်းပြသည်။
 
 ## စုံစမ်းစစ်ဆေးမှု ဗျူဟာ { #investigation-strategy }
 
-1. Host တိုင်းတွင် `--weakened-only` ဖြင့် run ပြီး host များကို အချင်းချင်း နှိုင်းယှဉ်ပါ- host တစ်ခုတည်းတွင်သာ ရှိသော
+1. Host တိုင်းတွင် Juntei ဖြင့် run ပြီး host များကို အချင်းချင်း နှိုင်းယှဉ်ပါ- host တစ်ခုတည်းတွင်သာ ရှိသော
    ဆက်တင်သည် ထင်ရှားစွာ ပေါ်လွင်သည်။
 2. Defender exclusion တစ်ခုစီကို host ပေါ်တွင် တွေ့ရှိရသော tool များနှင့် Defender ၏ log များ (Event 5007 က
    ပြင်ဆင်သတ်မှတ်ချက် ပြောင်းလဲမှုများကို မှတ်တမ်းတင်သည်) နှင့် တိုက်ဆိုင်စစ်ဆေးပါ။

@@ -266,7 +266,6 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -389,7 +388,7 @@ Amcache 與 Jump Lists 各有一個共用的記錄檔，放在其帶前綴的資
 `Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv` 與 `Registry-SystemInfo.csv`。
 一般的登錄區機碼與值位於 `Registry-Dump.csv`。Amcache 資料表為
 `FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、
-`Registry-Amcache-Findings.csv` 與 `Registry-Amcache-Summary.csv`。Jump Lists 使用
+Registry-Amcache-Files.csv 與 `Registry-Amcache-Summary.csv`。Jump Lists 使用
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` 與
 `JumpLists-CustomDestinations.csv`。不會有 Amcache 或 Jump Lists 子目錄。
 SRUM 資料表以 `SRUM-` 檔名直接放在其類別之下，例如

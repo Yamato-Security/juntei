@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei သည် artifact မှတ်တမ်းများ၊ metadata နှင့် parsing စစ်ဆေးချက်များကို ထိန်းသိမ်းထားသည်။ Parser ဆိုင်ရာ detection rules များကို Juntei Pro တွင် စစ်ဆေးသည်။ Persistence Hunter ၏ လက်ရှိ checks နှင့် policy profiles များကို ဆက်လက်အသုံးပြုနိုင်သည်။
+
 ## ShimCache ဆိုသည်မှာ { #what-shimcache-is }
 
 Windows ၏ Application Compatibility subsystem သည် လိုက်ဖက်မှု/shim အပြုအမူကို အကဲဖြတ်နေစဉ် executable path များနှင့်
@@ -58,7 +60,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## ထုတ်ယူမှု field များ { #output-fields }
@@ -80,7 +82,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | ပုံစံအသစ်များက မှတ်တမ်းတင်ထားသော architecture (`x64`, `x86`, `ARM64`)။ |
 | `FileSize`, `LastUpdateTimeUTC` | ရှိပါက Windows XP အတွက်သာ cache လုပ်ထားသော metadata။ |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | ပံ့ပိုးထားသော entry များရှိ packaged-application ကိုယ်ပိုင်အမှတ်အသား။ Publisher ID သည် အခြေအနေသာဖြစ်ပြီး signature သက်သေ မဟုတ်ပါ။ |
-| `Findings` | နေရာရွှေ့ထားသော system binary သို့မဟုတ် သံသယဖြစ်ဖွယ် staging path ကဲ့သို့သော Juntei ၏ ပုံမှန်မဟုတ်မှု code များ။ သဲလွန်စများသာ။ |
 | `RegistryPath`, `RegistryValueName` | Hive key/value source အတိအကျ။ မှန်ကန်မှု စစ်ဆေးရန် ထိန်းသိမ်းပါ။ |
 | `CacheValueSize` | Registry value တစ်ခုလုံး၏ အရွယ်အစား၊ entry တစ်ခုချင်း၏ `DataSize` မဟုတ်ပါ။ |
 | `IsCurrent` | ဤ entry ၏ control set သည် `SYSTEM\Select\Current` နှင့် တူညီခြင်း ရှိ/မရှိ။ ဘေးကင်းစွာ မသိရှိနိုင်ပါက ဗလာ။ |

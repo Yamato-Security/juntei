@@ -1,5 +1,7 @@
 # Параметри безпеки { #security-settings }
 
+Juntei зберігає записи артефактів, метадані та діагностику розбору. Правила виявлення для окремих парсерів виконуються в Juntei Pro. Наявні перевірки й профілі політик Persistence Hunter залишаються доступними.
+
 ## Що це таке { #what-they-are }
 
 Зловмисники змінюють параметри безпеки Windows, щоб залишатися непоміченими та отримати доступ до облікових даних. Вони
@@ -61,8 +63,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **Збережена конфігурація — це не фактичний стан захисту.** Повідомляються зібрані значення реєстру та діагностичні рядки для пошкоджених списків значень.
   Відсутність даних може відображати значення за замовчуванням, незібрані джерела або інший механізм
-  керування; це не доводить, що захист увімкнено чи вимкнено. `WeakensDefault` позначає
-  параметри, які можуть знизити вказаний базовий рівень, якщо вони враховуються.
+  керування; це не доводить, що захист увімкнено чи вимкнено.
 - **Застарілі прапорці Defender можуть ігноруватися.** `DisableAntiSpyware` і `DisableAntivirus` не
   доводять, що Defender зупинено. Їхня дія залежить від версії платформи, підключення (onboarding) і захисту від
   втручання (tamper protection). [Microsoft пояснює ці застарілі параметри](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -105,7 +106,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +114,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +132,6 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 | `Setting` | Що це за параметр: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Значення: десяткове число, рядок або саме виключення. Порожнє, якщо значення не відповідає типу параметра. |
 | `Meaning` | Що означає значення. |
-| `WeakensDefault` | `True`, якщо значення послаблює те, що поточна Windows робить без нього, `False`, якщо ні, порожнє, якщо це не застосовується (розмір, порт, постачальник AMSI) або визначити неможливо. |
 | `Policy` | Чи розташований ключ у ключі `Policies`. |
 | `KeyPath`, `ValueName` | Ключ і значення. Назва значення виключення — це виключений елемент; постачальник AMSI не має назви значення. |
 | `KeyLastWrittenUTC` | Останній запис ключа. |
@@ -142,7 +141,7 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 
 ## Стратегія розслідування { #investigation-strategy }
 
-1. Запустіть із `--weakened-only` на кожному хості й порівняйте хости між собою: параметр,
+1. Запустіть із Juntei на кожному хості й порівняйте хости між собою: параметр,
    який має лише один хост, привертає увагу.
 2. Перевірте кожне виключення Defender щодо інструментів, знайдених на хості та в журналах Defender
    (подія 5007 фіксує зміни конфігурації).

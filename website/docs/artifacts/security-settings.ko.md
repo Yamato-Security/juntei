@@ -1,5 +1,7 @@
 # 보안 설정 { #security-settings }
 
+Juntei는 아티팩트 레코드, 메타데이터 및 파싱 진단 정보를 보존합니다. 파서별 탐지 규칙은 Juntei Pro에서 평가합니다. Persistence Hunter의 기존 검사와 정책 프로필은 계속 사용할 수 있습니다.
+
 ## 개요 { #what-they-are }
 
 공격자는 탐지를 피하고 자격 증명에 접근하기 위해 Windows의 보안 설정을 변경합니다. Microsoft Defender를
@@ -56,8 +58,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **저장된 구성은 실제로 적용되는 보호 상태가 아닙니다.** 수집된 레지스트리 값과 손상된 값 목록에 대한 진단
   행이 보고됩니다. 데이터가 없다는 것은 기본값, 수집되지 않은 출처, 또는 다른 관리 메커니즘을 반영할 수
-  있으며, 보호 기능이 활성화되었거나 비활성화되었다는 증명이 아닙니다. `WeakensDefault`는 해당 설정이
-  적용될 경우 명시된 기준을 낮출 수 있는 설정을 표시합니다.
+  있으며, 보호 기능이 활성화되었거나 비활성화되었다는 증명이 아닙니다.
 - **레거시 Defender 플래그는 무시될 수 있습니다.** `DisableAntiSpyware`와 `DisableAntivirus`는 Defender가
   중지되었음을 증명하지 않습니다. 적용 여부는 플랫폼 버전, 온보딩 및 변조 방지(tamper protection)에 따라
   달라집니다. [Microsoft의 레거시 설정 설명](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware)을 참조하십시오.
@@ -100,7 +101,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -109,7 +109,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -126,7 +126,6 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 | `Setting` | 설정의 종류입니다: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | 값입니다: 10진수 숫자, 문자열, 또는 제외 항목 자체입니다. 값이 설정의 유형과 다르면 비어 있습니다. |
 | `Meaning` | 값의 의미입니다. |
-| `WeakensDefault` | 해당 값이 없을 때 현재 Windows가 하는 동작을 약화시키면 `True`, 그렇지 않으면 `False`이며, 해당되지 않거나(크기, 포트, AMSI 공급자) 판단할 수 없으면 비어 있습니다. |
 | `Policy` | 키가 `Policies` 키 아래에 있는지 여부입니다. |
 | `KeyPath`, `ValueName` | 키와 값입니다. 제외 항목의 값 이름은 제외된 항목 자체이며, AMSI 공급자에는 값 이름이 없습니다. |
 | `KeyLastWrittenUTC` | 키의 마지막 쓰기 시간입니다. |
@@ -136,7 +135,7 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 
 ## 조사 전략 { #investigation-strategy }
 
-1. 모든 호스트에서 `--weakened-only`로 실행하고 호스트끼리 비교하십시오. 한 호스트에만 있는 설정이
+1. 모든 호스트에서 Juntei로 실행하고 호스트끼리 비교하십시오. 한 호스트에만 있는 설정이
    두드러집니다.
 2. 각 Defender 제외 항목을 호스트에서 발견된 도구 및 Defender 로그(이벤트 5007은 구성 변경을 기록함)와
    대조하십시오.

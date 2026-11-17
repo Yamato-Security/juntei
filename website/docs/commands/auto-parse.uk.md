@@ -269,7 +269,6 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Amcache і Jump Lists мають по одному спільному журна
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` і `Registry-SystemInfo.csv`.
 Загальні ключі та значення кущів містяться в `Registry-Dump.csv`. Таблиці Amcache:
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` і `Registry-Amcache-Summary.csv`. Jump Lists використовують
+Registry-Amcache-Files.csv і `Registry-Amcache-Summary.csv`. Jump Lists використовують
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` і
 `JumpLists-CustomDestinations.csv`. Підкаталогів Amcache або Jump Lists немає.
 Таблиці SRUM використовують імена файлів `SRUM-` безпосередньо у своїй категорії, наприклад

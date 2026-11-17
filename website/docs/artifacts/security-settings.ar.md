@@ -1,5 +1,7 @@
 # إعدادات الأمان { #security-settings }
 
+يحتفظ Juntei بسجلات الأدلة والبيانات الوصفية وتشخيصات التحليل. تُقيَّم قواعد الكشف الخاصة بالمحللات في Juntei Pro. تظل فحوص Persistence Hunter وملفات سياسته الحالية متاحة.
+
 ## ما هي { #what-they-are }
 
 يغيّر المهاجمون إعدادات الأمان في Windows للبقاء مخفيين وللوصول إلى بيانات الاعتماد. فهم يوقفون
@@ -58,8 +60,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **التكوين المخزن ليس حالة الحماية الفعلية.** يُبلَّغ عن قيم سجل Windows المجمّعة وعن صفوف التشخيص
   لقوائم القيم التالفة. وقد تعكس البيانات المفقودة القيمَ الافتراضية، أو مصادر لم تُجمع، أو آلية إدارة
-  أخرى؛ وهي ليست دليلًا على أن الحماية مفعّلة أو معطّلة. ويضع `WeakensDefault` علامة على الإعدادات التي
-  يمكن أن تخفّض خط الأساس المذكور عند الالتزام بها.
+  أخرى؛ وهي ليست دليلًا على أن الحماية مفعّلة أو معطّلة.
 - **قد تُتجاهل علامات Defender القديمة.** لا يثبت `DisableAntiSpyware` و`DisableAntivirus` أن Defender
   توقف. إذ تعتمد قابلية التطبيق على إصدار المنصة، والإلحاق (onboarding)، والحماية من العبث (tamper
   protection). [توضح Microsoft هذه الإعدادات القديمة](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -102,7 +103,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -111,7 +111,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -129,7 +129,6 @@ Defender.
 | `Setting` | ماهية الإعداد: `defender_disable_realtime_monitoring`، `defender_exclusion_path`، `uac_local_account_token_filter_policy`، `wdigest_use_logon_credential`، `rdp_deny_connections`، `powershell_script_block_logging`، `event_channel_enabled`، … |
 | `Value` | القيمة: رقم بالنظام العشري، أو سلسلة نصية، أو الاستثناء نفسه. وتكون فارغة عندما لا تكون القيمة من نوع الإعداد. |
 | `Meaning` | ما تعنيه القيمة. |
-| `WeakensDefault` | `True` عندما تُضعف القيمة ما يفعله Windows الحالي في غيابها، و`False` عندما لا تُضعفه، وفارغة عندما لا ينطبق ذلك (حجم، أو منفذ، أو موفّر AMSI) أو تعذّر تحديده. |
 | `Policy` | ما إذا كان المفتاح تحت مفتاح `Policies`. |
 | `KeyPath`، `ValueName` | المفتاح والقيمة. واسم قيمة الاستثناء هو العنصر المستثنى؛ وليس لموفّر AMSI اسم قيمة. |
 | `KeyLastWrittenUTC` | آخر كتابة للمفتاح. |
@@ -139,7 +138,7 @@ Defender.
 
 ## استراتيجية التحقيق { #investigation-strategy }
 
-1. شغّله مع `--weakened-only` على كل مضيف، وقارن المضيفات بعضها ببعض: فالإعداد الذي لا يوجد إلا على
+1. شغّله مع Juntei على كل مضيف، وقارن المضيفات بعضها ببعض: فالإعداد الذي لا يوجد إلا على
    مضيف واحد يبرز.
 2. افحص كل استثناء من استثناءات Defender مقابل الأدوات الموجودة على المضيف وفي سجلات Defender
    (يسجّل الحدث 5007 تغييرات التكوين).

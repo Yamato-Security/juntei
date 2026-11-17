@@ -1034,7 +1034,6 @@ dependencies = [
  "der",
  "evtx",
  "flate2",
- "forensicnomicon",
  "goblin",
  "indicatif",
  "quick-xml",
@@ -2426,7 +2425,7 @@ dependencies = [
 [[package]]
 name = "ys-amcache-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-amcache-parser#32964097ef2aea421940a465f447b2f60017449b"
+source = "git+https://github.com/Yamato-Security/ys-amcache-parser?rev=60366b569052c9a0301424e6d2f5e8969ac9081b#60366b569052c9a0301424e6d2f5e8969ac9081b"
 dependencies = [
  "csv",
  "forensicnomicon",
@@ -2440,7 +2439,7 @@ dependencies = [
 [[package]]
 name = "ys-amcache-parser-core"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-amcache-parser#32964097ef2aea421940a465f447b2f60017449b"
+source = "git+https://github.com/Yamato-Security/ys-amcache-parser?rev=60366b569052c9a0301424e6d2f5e8969ac9081b#60366b569052c9a0301424e6d2f5e8969ac9081b"
 dependencies = [
  "winreg-core",
 ]

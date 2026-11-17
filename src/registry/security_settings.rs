@@ -18,7 +18,7 @@
 //! protection, Credential Guard, Restricted Admin, NTLM), Remote Desktop, the firewall and SMBv1,
 //! PowerShell (execution policy, logging, AMSI) and what keeps evidence (last access times, System
 //! Restore, event logs), each with what its value means and whether it weakens what Windows does
-//! by default. The summary lists the weakened settings and the Defender exclusions.
+//! by default. Detection classification is evaluated in Juntei Pro.
 
 use super::{
     Hosts, Opened, Profiles, RecordWriter, choose_logs, files_read, filetime, find_hives,
@@ -293,8 +293,6 @@ struct Record<'a> {
     value: Option<&'a str>,
     #[serde(rename = "Meaning")]
     meaning: &'a str,
-    #[serde(rename = "WeakensDefault")]
-    weakens_default: Option<bool>,
     #[serde(rename = "Policy")]
     policy: bool,
     #[serde(rename = "KeyPath")]
@@ -313,7 +311,7 @@ struct Record<'a> {
     problems: &'a [String],
 }
 
-const CSV_HEADER: [&str; 20] = [
+const CSV_HEADER: [&str; 19] = [
     "Host",
     "SourcePath",
     "HiveType",
@@ -325,7 +323,6 @@ const CSV_HEADER: [&str; 20] = [
     "Setting",
     "Value",
     "Meaning",
-    "WeakensDefault",
     "Policy",
     "KeyPath",
     "ValueName",
@@ -360,7 +357,6 @@ impl<'a> Record<'a> {
             setting: setting.setting,
             value: setting.value.as_deref(),
             meaning: &setting.meaning,
-            weakens_default: setting.weakens_default,
             policy: setting.policy,
             key_path: &setting.key_path,
             value_name: &setting.value_name,
@@ -388,7 +384,6 @@ impl<'a> Record<'a> {
             self.setting.to_string(),
             text(self.value),
             self.meaning.to_string(),
-            maybe(self.weakens_default),
             flag(self.policy),
             self.key_path.to_string(),
             self.value_name.to_string(),
@@ -418,8 +413,6 @@ struct Stats {
     control_sets: usize,
     settings: usize,
     by_area: BTreeMap<&'static str, usize>,
-    /// Weakened settings: lines, each once (the same value in several control sets once).
-    weakened: BTreeSet<String>,
     /// Defender exclusions: lines, each once.
     exclusions: BTreeSet<String>,
     problems: Vec<String>,
@@ -432,7 +425,7 @@ impl Stats {
         &mut self,
         opened: &Opened,
         read: &Read,
-        opts: &RegistrySecuritySettingsOptions,
+        _opts: &RegistrySecuritySettingsOptions,
         mut writer: Option<&mut RecordWriter>,
     ) -> io::Result<()> {
         *self.hives.entry(opened.hive_type.clone()).or_default() += 1;
@@ -459,18 +452,11 @@ impl Stats {
             self.problem(&opened.source, problem);
         }
         let host = opened.host.as_deref().unwrap_or(&opened.source);
-        let user = read
-            .user
-            .as_deref()
-            .map_or_else(String::new, |u| format!("{u}  "));
         for (set, current, settings) in &read.sets {
             if set.is_some() {
                 self.control_sets += 1;
             }
             for setting in settings {
-                if opts.weakened_only && setting.weakens_default != Some(true) {
-                    continue;
-                }
                 self.settings += 1;
                 *self.by_area.entry(setting.area.name()).or_default() += 1;
                 for problem in &setting.problems {
@@ -480,25 +466,11 @@ impl Stats {
                     );
                 }
                 let value = setting.value.as_deref().unwrap_or("?");
-                // the key path without its control set: one line for the same value in several
-                let key = set.map_or(setting.key_path.as_str(), |_| {
-                    setting
-                        .key_path
-                        .split_once('\\')
-                        .map_or(setting.key_path.as_str(), |(_, rest)| rest)
-                });
                 if setting.setting.starts_with("defender_exclusion") {
                     self.exclusions.insert(format!(
                         "{host}  {}  {value}{}",
                         setting.setting.trim_start_matches("defender_exclusion_"),
                         if setting.policy { "  (policy)" } else { "" }
-                    ));
-                } else if setting.weakens_default == Some(true) {
-                    self.weakened.insert(format!(
-                        r"{host}  {user}{}  {key}\{} = {value}: {}",
-                        setting.area.name(),
-                        setting.value_name,
-                        setting.meaning
                     ));
                 }
                 let record = Record::new(opened, read, *set, *current, setting);
@@ -593,35 +565,13 @@ impl Stats {
             .collect();
         p_label(
             no_color,
-            if opts.weakened_only {
-                "Weakened settings: "
-            } else {
-                "Settings: "
-            },
+            "Settings: ",
             &if areas.is_empty() {
                 fmt_num(self.settings)
             } else {
                 format!("{} ({})", fmt_num(self.settings), areas.join(", "))
             },
         );
-        p_label(
-            no_color,
-            "Settings that weaken the default (exclusions below; not proof of compromise): ",
-            &fmt_num(self.weakened.len()),
-        );
-        for line in self.weakened.iter().take(MAX_PRINTED) {
-            p(None, &format!("  {line}"), true);
-        }
-        if self.weakened.len() > MAX_PRINTED {
-            p(
-                None,
-                &format!(
-                    "  … {} more (WeakensDefault in -o <FILE>)",
-                    fmt_num(self.weakened.len() - MAX_PRINTED)
-                ),
-                true,
-            );
-        }
         p_label(
             no_color,
             "Microsoft Defender exclusions: ",

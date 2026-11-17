@@ -1,5 +1,7 @@
 # Güvenlik Ayarları { #security-settings }
 
+Juntei, artefakt kayıtlarını, meta verileri ve ayrıştırma tanılarını korur. Ayrıştırıcıya özgü tespit kuralları Juntei Pro içinde değerlendirilir. Persistence Hunter mevcut kontrollerini ve politika profillerini korur.
+
 ## Bunlar nedir { #what-they-are }
 
 Saldırganlar gizli kalmak ve kimlik bilgilerine ulaşmak için Windows'un güvenlik ayarlarını değiştirir. Microsoft Defender'ı
@@ -61,8 +63,7 @@ yalnızca günlüklerde bulunabilir.
 
 - **Saklanan yapılandırma, etkin koruma durumu değildir.** Toplanan kayıt defteri değerleri ve hasarlı değer listeleri için tanılama satırları
   raporlanır. Eksik veriler varsayılanları, toplanmamış kaynakları veya başka bir yönetim
-  mekanizmasını yansıtabilir; korumanın etkin veya devre dışı olduğunun kanıtı değildir. `WeakensDefault`, uygulandıklarında
-  belirtilen temel düzeyi düşürebilecek ayarları işaretler.
+  mekanizmasını yansıtabilir; korumanın etkin veya devre dışı olduğunun kanıtı değildir.
 - **Eski Defender bayrakları yok sayılabilir.** `DisableAntiSpyware` ve `DisableAntivirus`, Defender'ın durduğunu
   kanıtlamaz. Uygulanabilirlik platform sürümüne, eklemeye (onboarding) ve kurcalama korumasına (tamper
   protection) bağlıdır. [Microsoft bu eski ayarları açıklar](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -105,7 +106,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +114,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +132,6 @@ Defender dışlamalarını listeler.
 | `Setting` | Ayarın ne olduğu: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Değer: ondalık bir sayı, bir dize veya dışlamanın kendisi. Değer ayarın türünde değilse boştur. |
 | `Meaning` | Değerin ne anlama geldiği. |
-| `WeakensDefault` | Değer, güncel Windows'un o değer olmadan yaptığını zayıflatıyorsa `True`, zayıflatmıyorsa `False`; bu uygulanamıyorsa (bir boyut, bir bağlantı noktası, bir AMSI sağlayıcısı) veya belirlenemiyorsa boş. |
 | `Policy` | Anahtarın bir `Policies` anahtarı altında olup olmadığı. |
 | `KeyPath`, `ValueName` | Anahtar ve değer. Bir dışlamanın değer adı dışlanan öğedir; bir AMSI sağlayıcısının değer adı yoktur. |
 | `KeyLastWrittenUTC` | Anahtarın son yazılma zamanı. |
@@ -142,7 +141,7 @@ Defender dışlamalarını listeler.
 
 ## İnceleme stratejisi { #investigation-strategy }
 
-1. Her ana bilgisayarda `--weakened-only` ile çalıştırın ve ana bilgisayarları birbiriyle karşılaştırın: yalnızca
+1. Her ana bilgisayarda Juntei ile çalıştırın ve ana bilgisayarları birbiriyle karşılaştırın: yalnızca
    tek bir ana bilgisayarda bulunan bir ayar dikkat çeker.
 2. Her Defender dışlamasını ana bilgisayarda ve Defender günlüklerinde bulunan araçlarla karşılaştırın
    (Olay 5007 yapılandırma değişikliklerini kaydeder).

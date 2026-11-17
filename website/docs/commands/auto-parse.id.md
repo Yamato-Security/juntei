@@ -269,7 +269,6 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Nama berkas CSV default adalah `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, 
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv`, dan `Registry-SystemInfo.csv`.
 Key dan nilai hive umum ada di `Registry-Dump.csv`. Tabel Amcache adalah
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv`, dan `Registry-Amcache-Summary.csv`. Jump Lists menggunakan
+dan `Registry-Amcache-Summary.csv`. Jump Lists menggunakan
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` dan
 `JumpLists-CustomDestinations.csv`. Tidak ada subdirektori Amcache atau Jump Lists.
 Tabel SRUM menggunakan nama berkas `SRUM-` langsung di bawah kategorinya, misalnya

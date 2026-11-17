@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei mempertahankan rekaman artefak, metadata, dan diagnostik penguraian. Aturan deteksi khusus parser dievaluasi di Juntei Pro. Pemeriksaan dan profil kebijakan Persistence Hunter yang ada tetap tersedia.
+
 ## Apa itu ShimCache { #what-shimcache-is }
 
 Subsistem Application Compatibility Windows menyimpan path executable dan metadata dalam cache saat mengevaluasi
@@ -57,7 +59,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## Field keluaran { #output-fields }
@@ -79,7 +81,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | Arsitektur yang dicatat oleh format yang lebih baru (`x64`, `x86`, `ARM64`). |
 | `FileSize`, `LastUpdateTimeUTC` | Metadata cache khusus Windows XP bila ada. |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | Identitas aplikasi terpaket pada entri yang didukung. Publisher ID adalah konteks, bukan bukti tanda tangan. |
-| `Findings` | Kode anomali Juntei seperti biner sistem yang dipindahkan atau path staging yang mencurigakan. Hanya petunjuk. |
 | `RegistryPath`, `RegistryValueName` | Sumber kunci/nilai hive yang persis. Pertahankan untuk validasi. |
 | `CacheValueSize` | Ukuran seluruh nilai registry, bukan `DataSize` entri individual. |
 | `IsCurrent` | Apakah control set entri ini sama dengan `SYSTEM\Select\Current`; kosong jika tidak dapat diketahui dengan pasti. |

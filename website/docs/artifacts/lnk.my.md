@@ -1,5 +1,7 @@
 # LNK ဖြတ်လမ်းများ { #lnk-shortcuts }
 
+Juntei သည် artifact မှတ်တမ်းများ၊ metadata နှင့် parsing စစ်ဆေးချက်များကို ထိန်းသိမ်းထားသည်။ Parser ဆိုင်ရာ detection rules များကို Juntei Pro တွင် စစ်ဆေးသည်။ Persistence Hunter ၏ လက်ရှိ checks နှင့် policy profiles များကို ဆက်လက်အသုံးပြုနိုင်သည်။
+
 ## LNK ဖိုင်များ ဆိုသည်မှာ { #what-lnk-files-are }
 
 Windows Shell Link (`.lnk`) ဖိုင်များသည် ပစ်မှတ် (target) တစ်ခုနှင့်အတူ စတင်ဖွင့်ရာတွင် သုံးသော argument များ၊
@@ -104,3 +106,5 @@ LNK header ၏ ပစ်မှတ် FILETIME များနှင့် tracke
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

@@ -1,5 +1,7 @@
 # セキュリティ設定 { #security-settings }
 
+Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持する。パーサー固有の検知ルールは Juntei Pro で評価する。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できる。
+
 ## 彼らは何ですか { #what-they-are }
 
 攻撃者が変わる Windows の 非表示のままにして資格情報にアクセスするためのセキュリティ設定。彼らはオフになります Microsoft Defender またはツールをそこから除外するか、 Windows 平文のパスワードを保持し、リモート デスクトップを開き、ファイアウォールをオフにし、沈黙させます。 PowerShell ロギング。レジストリには次の設定が保存されます。
@@ -45,7 +47,7 @@ C:\Users\<user>\NTUSER.DAT
 
 ## 分析時の注意点 { #analyst-cautions }
 
-- **Stored 構成は有効な保護状態ではありません。** 収集されたレジストリ値と、破損した値リストの診断行が報告されます。欠落したデータは、デフォルト、未収集のソース、または別の管理メカニズムを反映している可能性があります。保護が有効か無効かを証明するものではありません。 `WeakensDefault` フラグ設定が適用されると、指定されたベースラインが削減される可能性があります。
+- **Stored 構成は有効な保護状態ではありません。** 収集されたレジストリ値と、破損した値リストの診断行が報告されます。欠落したデータは、デフォルト、未収集のソース、または別の管理メカニズムを反映している可能性があります。保護が有効か無効かを証明するものではありません。
 - **レガシー Defender フラグは無視される場合があります。** `DisableAntiSpyware` および `DisableAntivirus` は、Defender が停止したことを証明しません。適用可能性は、プラットフォームのバージョン、オンボーディング、および改ざん保護によって異なります。 [Microsoft では、これらの従来の設定 ](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware) について説明します。
 - **最新の管理対象除外はレジストリ キャプチャでは使用できない場合があります。** プラットフォーム 4.18.25110.6 以降、エンドポイント構成管理に Defender を使用するデバイスでは、除外構成を取得するためにサポートされている Defender PowerShell コマンドレットが必要です。したがって、オフラインのレジストリが存在しないことは、除外が存在しないことを証明するものではありません。 [Microsoft 構成ガイダンス](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-settings)。
 - **Weakened は悪意のあるものではありません。** 例:
@@ -74,7 +76,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -83,7 +84,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -100,7 +101,6 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 | `Setting` | それは何ですか: `defender_disable_realtime_monitoring`、`defender_exclusion_path`、`uac_local_account_token_filter_policy`、`wdigest_use_logon_credential`、`rdp_deny_connections`、`powershell_script_block_logging`、`event_channel_enabled`、… |
 | `Value` | 値: 10 進数の数値、文字列、または除外そのもの。値が設定のタイプではない場合は空です。 |
 | `Meaning` | 値の意味。 |
-| `WeakensDefault` | `True` 値が弱まる場合は現在の Windows がそれなしで行うこと、`False` がそうでない場合、空である場合はそれが適用されない (サイズ、ポート、AMSI プロバイダー)、または伝えることができない。 |
 | `Policy` | キーが `Policies` キーの下にあるかどうか。 |
 | `KeyPath`, `ValueName` | キーと値。除外の値の名前は除外される項目です。 AMSI プロバイダーには何もありません。 |
 | `KeyLastWrittenUTC` | キーの最後の書き込み。 |
@@ -110,7 +110,7 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 
 ## 調査戦略 { #investigation-strategy }
 
-1. すべてのホストで `--weakened-only` を実行し、ホスト間を比較すると、1 つのホストのみの設定が目立ちます。
+1. すべてのホストで Juntei を実行し、ホスト間を比較すると、1 つのホストのみの設定が目立ちます。
 2. ホスト上および Defender のログで見つかったツールに対して各 Defender 除外を確認します (イベント 5007 は構成変更を記録します)。
 3. 重要な時間をログオン、サービスのインストール、プロセスの作成と関連付けます。 `reg.exe`、`Set-MpPreference`、`netsh advfirewall`、および `powershell` コマンド ラインを探します (イベント 4688、Sysmon 1 および 13、PowerShell) 4104）。
 4. 資格情報設定 (`WDigest`、`RunAsPPL`、`LocalAccountTokenFilterPolicy`、`DisableRestrictedAdmin`) については、資格情報のダンプを探し、その後ハッシュを渡します。

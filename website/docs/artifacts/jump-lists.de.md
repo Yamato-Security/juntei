@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei bewahrt Artefaktdatensätze, Metadaten und Parserdiagnosen. Parserspezifische Erkennungsregeln werden in Juntei Pro ausgewertet. Die bestehenden Prüfungen und Richtlinienprofile von Persistence Hunter bleiben verfügbar.
+
 ## Was Jump Lists sind { #what-jump-lists-are }
 
 Jump Lists liefern die Menüs, die an Anwendungseinträgen in der Taskleiste und im Startmenü angezeigt werden. Automatische Jump
@@ -101,3 +103,5 @@ und die verschachtelten Felder jeder eingebetteten LNK.
 - [Microsoft: Shell-Link-Format (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [JumpList-Parser als Test-/Referenzprojekt](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

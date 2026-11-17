@@ -269,7 +269,6 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -393,7 +392,7 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` และ `Registry-SystemInfo.csv`
 คีย์และค่าของไฮฟ์ทั่วไปอยู่ใน `Registry-Dump.csv` ตาราง Amcache ได้แก่
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` และ `Registry-Amcache-Summary.csv` Jump Lists ใช้
+Registry-Amcache-Files.csv และ `Registry-Amcache-Summary.csv` Jump Lists ใช้
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` และ
 `JumpLists-CustomDestinations.csv` ไม่มีไดเรกทอรีย่อยสำหรับ Amcache หรือ Jump Lists
 ตาราง SRUM ใช้ชื่อไฟล์ `SRUM-` ไว้ใต้หมวดหมู่ของตนโดยตรง เช่น

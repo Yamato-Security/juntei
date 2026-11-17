@@ -1,5 +1,7 @@
 # 安全性設定 { #security-settings }
 
+Juntei 保留鑑識成品記錄、中繼資料及剖析診斷資訊。各剖析器的偵測規則由 Juntei Pro 評估。Persistence Hunter 的現有檢查與原則設定檔仍可使用。
+
 ## 這些是什麼 { #what-they-are }
 
 攻擊者會變更 Windows 的安全性設定，以隱藏自身並取得認證資訊。他們會
@@ -61,8 +63,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **儲存的設定並非實際生效的保護狀態。**會回報所收集的登錄值，以及損毀之值清單的診斷資料列。
   缺少的資料可能反映的是預設值、未收集的來源或其他管理
-  機制；它並不能證明保護已啟用或已停用。`WeakensDefault` 標示的是
-  在被遵循時可能使保護低於所述基準的設定。
+  機制；它並不能證明保護已啟用或已停用。
 - **舊式的 Defender 旗標可能被忽略。**`DisableAntiSpyware` 與 `DisableAntivirus` 並不能
   證明 Defender 已停止。是否適用取決於平台版本、上線（onboarding）狀態與竄改
   防護。[Microsoft 說明了這些舊式設定](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware)。
@@ -105,7 +106,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +114,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +132,6 @@ Defender 排除項目。
 | `Setting` | 設定的種類：`defender_disable_realtime_monitoring`、`defender_exclusion_path`、`uac_local_account_token_filter_policy`、`wdigest_use_logon_credential`、`rdp_deny_connections`、`powershell_script_block_logging`、`event_channel_enabled`…… |
 | `Value` | 值：十進位數字、字串或排除項目本身。當值不屬於該設定的類型時為空。 |
 | `Meaning` | 該值的意義。 |
-| `WeakensDefault` | 當該值削弱了目前的 Windows 在沒有此值時的行為時為 `True`，未削弱時為 `False`；不適用（大小、連接埠、AMSI 提供者）或無法判斷時為空。 |
 | `Policy` | 該機碼是否位於 `Policies` 機碼之下。 |
 | `KeyPath`、`ValueName` | 機碼與值。排除項目的值名稱即為被排除的項目；AMSI 提供者則沒有值名稱。 |
 | `KeyLastWrittenUTC` | 機碼的最後寫入時間。 |
@@ -142,7 +141,7 @@ Defender 排除項目。
 
 ## 調查策略 { #investigation-strategy }
 
-1. 在每台主機上以 `--weakened-only` 執行，並將主機彼此比較：只有一台主機
+1. 在每台主機上以 Juntei 執行，並將主機彼此比較：只有一台主機
    具有的設定會格外醒目。
 2. 將每個 Defender 排除項目與在主機上及 Defender 記錄中找到的工具互相核對
    （事件 5007 會記錄設定變更）。

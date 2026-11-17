@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei зберігає записи артефактів, метадані та діагностику розбору. Правила виявлення для окремих парсерів виконуються в Juntei Pro. Наявні перевірки й профілі політик Persistence Hunter залишаються доступними.
+
 ## Що таке Jump Lists { #what-jump-lists-are }
 
 Jump Lists лежать в основі меню, які відображаються для записів програм на панелі завдань і в меню «Пуск». Автоматичні Jump
@@ -101,3 +103,5 @@ JSON/JSONL додатково зберігає заголовок DestList, оц
 - [Microsoft: формат Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [Тестовий/довідковий проєкт парсера JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

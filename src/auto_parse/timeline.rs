@@ -186,6 +186,11 @@ fn amcache_records(value: Value, writer: &mut impl Write) -> io::Result<()> {
         ("Files", "file"),
         ("Devices", "device"),
     ] {
+        if field == "Findings" && !common.contains_key(field) {
+            // Parser-only Amcache reports omit this former detection table;
+            // preserve it when reading historical analyzed reports.
+            continue;
+        }
         let value = common
             .remove(field)
             .ok_or_else(|| io::Error::other(format!("Amcache JSON report is missing {field}")))?;

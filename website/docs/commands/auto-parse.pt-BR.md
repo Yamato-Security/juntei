@@ -269,7 +269,6 @@ O CSV mantém tabelas separadas porque cada artefato tem colunas diferentes:
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Os nomes de arquivo CSV padrão são `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` e `Registry-SystemInfo.csv`.
 As chaves e valores gerais dos hives ficam em `Registry-Dump.csv`. As tabelas do Amcache são
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` e `Registry-Amcache-Summary.csv`. As Jump Lists usam
+Registry-Amcache-Files.csv e `Registry-Amcache-Summary.csv`. As Jump Lists usam
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` e
 `JumpLists-CustomDestinations.csv`. Não há subdiretórios para o Amcache nem para as Jump Lists.
 As tabelas do SRUM usam nomes de arquivo `SRUM-` diretamente sob sua categoria, por exemplo

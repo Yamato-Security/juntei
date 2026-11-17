@@ -1814,7 +1814,7 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
     let category = output.join("HOST3/FileExistence");
     assert!(!category.join("Registry-Amcache").exists());
     for source in [1, 2] {
-        for table in ["Devices", "Files", "Findings", "Summary"] {
+        for table in ["Devices", "Files", "Summary"] {
             assert!(
                 category
                     .join(format!("Registry-Amcache-{table}-Source{source}.csv"))
@@ -1868,7 +1868,7 @@ fn auto_parse_accepts_a_new_relative_output_directory() {
 }
 
 #[test]
-fn terminal_report_has_the_summary_and_findings() {
+fn terminal_report_preserves_inventory_without_detection_policy() {
     let r = run(&["parse-registry", "amcache", "-f", WIN10, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stdout.contains("Start time: "));
@@ -1876,10 +1876,8 @@ fn terminal_report_has_the_summary_and_findings() {
         r.stdout
             .contains("Amcache: 123 file entries, 189 device entries")
     );
-    assert!(r.stdout.contains("Findings (4):"));
-    assert!(r.stdout.contains(
-        "[MEDIUM] AMCACHE-SUSPICIOUS-PATH  c:\\users\\testuser\\downloads\\sysmon\\sysmon64.exe"
-    ));
+    assert!(!r.stdout.contains("Findings"));
+
     // no detailed records on the terminal unless asked for
     assert!(
         !r.stdout.contains("Inventoried executables:\n"),
@@ -1889,7 +1887,7 @@ fn terminal_report_has_the_summary_and_findings() {
     assert!(r.stdout.contains("Results Summary:"));
     assert!(r.stdout.contains("Inventoried executables: 123"));
     assert!(r.stdout.contains("Inventoried devices: 189"));
-    assert!(r.stdout.contains("Findings: 4 (medium: 4)"));
+    assert!(!r.stdout.contains("Findings:"));
     assert!(r.stdout.contains("Elapsed time: "));
     let r = run(&[
         "parse-registry",
@@ -1919,7 +1917,7 @@ fn legacy_hives_are_read() {
         r.stdout
             .contains("Schemas: modern (Windows 10/11) 0, legacy (Windows 8/8.1/2012 R2) 1")
     );
-    assert!(r.stdout.contains("Findings: 2 (medium: 2)"));
+    assert!(!r.stdout.contains("Findings:"));
 }
 
 #[test]
@@ -1947,7 +1945,8 @@ fn json_and_jsonl_files_hold_every_record() {
     assert_eq!(doc["Summary"]["FileCount"], 123);
     assert_eq!(doc["Files"].as_array().unwrap().len(), 123);
     assert_eq!(doc["Devices"].as_array().unwrap().len(), 189);
-    assert_eq!(doc["Findings"].as_array().unwrap().len(), 4);
+    assert!(doc.get("Findings").is_none());
+    assert!(doc["Summary"].get("FindingCount").is_none());
     let sevenzip = doc["Files"]
         .as_array()
         .unwrap()
@@ -1970,8 +1969,8 @@ fn json_and_jsonl_files_hold_every_record() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let text = std::fs::read_to_string(&jsonl).unwrap();
-    // summary + 4 findings + 123 files + 189 devices
-    assert_eq!(text.lines().count(), 317);
+    // summary + 123 files + 189 devices; no detection rows
+    assert_eq!(text.lines().count(), 313);
     // --files narrows the default of every record
     let r = run(&[
         "parse-registry",
@@ -1989,7 +1988,7 @@ fn json_and_jsonl_files_hold_every_record() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert_eq!(
         std::fs::read_to_string(&jsonl).unwrap().lines().count(),
-        128
+        124
     );
 }
 
@@ -2018,8 +2017,8 @@ fn csv_tables_go_into_one_directory_per_hive() {
             .contains("Amcache hives parsed: 2 (could not parse: 1)")
     );
     assert!(r.stdout.contains("Inventoried executables: 259"));
-    assert!(r.stdout.contains("Findings: 6 (medium: 6)"));
-    assert!(r.stdout.contains("(8 CSV files)"));
+    assert!(!r.stdout.contains("Findings:"));
+    assert!(r.stdout.contains("(6 CSV files)"));
     for (sub, rows) in [
         ("HOST1_C_Windows_AppCompat_Programs_Amcache", 123),
         ("HOST2_Amcache", 136),
@@ -2029,7 +2028,7 @@ fn csv_tables_go_into_one_directory_per_hive() {
             std::fs::read_to_string(&files).unwrap_or_else(|e| panic!("{}: {e}", files.display()));
         let mut rdr = csv::Reader::from_reader(text.as_bytes());
         assert_eq!(rdr.records().count(), rows, "{sub}");
-        for table in ["summary", "findings", "devices"] {
+        for table in ["summary", "devices"] {
             assert!(
                 out_dir
                     .join(sub)
@@ -3185,7 +3184,7 @@ fn prefetch_summary_on_the_terminal() {
     assert!(r.stdout.contains(
         "Run times recorded: 15 (2013-03-10T10:11:49.281250Z - 2024-02-05T06:17:41.144014200Z)"
     ));
-    assert!(r.stdout.contains("Findings: 1 (medium: 1)"));
+    assert!(!r.stdout.contains("Findings:"));
     assert!(r.stdout.contains("To save every record, add -o <FILE>"));
 }
 
@@ -3217,7 +3216,7 @@ fn prefetch_csv_json_and_jsonl() {
     assert_eq!(field("PreviousRun4"), "");
     assert!(field("ExecutablePath").ends_with(r"\WINDOWS\SYSWOW64\CMD.EXE"));
     assert_eq!(field("FileCount"), "25");
-    assert_eq!(field("Findings"), "");
+    assert!(!header.iter().any(|h| h == "Findings"));
 
     // one pretty JSON document per file, with every field
     let json_path = dir.path().join("prefetch.json");
@@ -3238,8 +3237,13 @@ fn prefetch_csv_json_and_jsonl() {
         .iter()
         .find(|d| d["ExecutableName"] == "RUST_OUT.EXE")
         .unwrap();
-    assert_eq!(rust_out["Findings"][0]["Code"], "SuspiciousExecutionPath");
-    assert_eq!(rust_out["Findings"][0]["Severity"], "medium");
+    assert!(rust_out.get("Findings").is_none());
+    assert!(
+        rust_out["ExecutablePath"]
+            .as_str()
+            .unwrap()
+            .ends_with("RUST_OUT.EXE")
+    );
     let consent = docs
         .iter()
         .find(|d| d["ExecutableName"] == "CONSENT.EXE")
@@ -3333,11 +3337,25 @@ fn prefetch_system_binary_outside_system32_is_a_high_finding() {
 
     let r = run(&["parse-file", "prefetch", "-f", pf.to_str().unwrap(), "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
-    assert!(r.stdout.contains("Findings: 1 (high: 1)"), "{}", r.stdout);
-    assert!(r.stdout.contains(
-        r"[HIGH] SVCHOST.EXE is a Windows system binary but was loaded from \DEVICE\HARDDISKVOLUME2\WINDOWS\TEMPDIR1\SVCHOST.EXE"
-    ), "{}", r.stdout);
-    assert!(r.stdout.contains("(T1036.005)"));
+    assert!(!r.stdout.contains("Findings:"));
+    assert!(!r.stdout.contains("T1036.005"));
+    let records = json_documents(
+        &run(&[
+            "parse-file",
+            "prefetch",
+            "-f",
+            pf.to_str().unwrap(),
+            "-t",
+            "json",
+        ])
+        .stdout,
+    );
+    assert!(
+        records[0]["ExecutablePath"]
+            .as_str()
+            .unwrap()
+            .ends_with(r"\WINDOWS\TEMPDIR1\SVCHOST.EXE")
+    );
 }
 
 #[test]
@@ -6676,24 +6694,17 @@ const LNK_DIR: &str = "test_files/lnk";
 fn lnk_summary_on_the_terminal() {
     let r = run(&["parse-file", "lnk", "-d", LNK_DIR, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
-    // found under -d, so with the platform's separator
-    let found = |name: &str| format!("  {} -> ", Path::new(LNK_DIR).join(name).display());
     for line in [
         "Shortcuts parsed: 6".to_owned(),
         "Targets: fixed drives 2, removable drives 1, CD/DVD 0, network shares 1".to_owned(),
         "Machines that made them: 2 (pc, win-3qmdjgkf3g9)".to_owned(),
         "With problems: 1".to_owned(),
-        "Hidden command line (string data over 260 characters): 1".to_owned(),
-        found("padded_cli_arguments.lnk") + r#"This PC\C:\Windows\System32\cmd.exe /c "set PATH="#,
-        "Data after the end of the link: 1".to_owned(),
-        found("appended_data.lnk") + r"This PC\All Control Panel Items\" + "\n",
-        "Shell or script host started with arguments: 2".to_owned(),
-        found("cmd_powershell.lnk")
-            + r#"C:\Windows\System32\cmd.exe /c powershell.exe -c "Write-Host This is a test""#,
         "To save every record, add -o <FILE>".to_owned(),
     ] {
         assert!(r.stdout.contains(&line), "{line}\n{}", r.stdout);
     }
+    assert!(!r.stdout.contains("Hidden command line"));
+    assert!(!r.stdout.contains("Shell or script host started"));
 }
 
 #[test]
@@ -6721,7 +6732,7 @@ fn lnk_csv_has_the_common_columns() {
             "TargetCreated"
         ]
     );
-    assert_eq!(header.len(), 46);
+    assert_eq!(header.len(), 47);
     assert_eq!(rows.len(), 6);
     let row = |name: &str| {
         rows.iter()
@@ -6926,7 +6937,6 @@ fn jump_list_summary_on_the_terminal() {
     let r = run(&["parse-file", "jump-lists", "-d", JUMP_LIST_DIR, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     // found under -d, so with the platform's separator
-    let found = |name: &str| format!("  {} (", Path::new(JUMP_LIST_DIR).join(name).display());
     for line in [
         "Jump lists parsed: 4 (automatic 3, custom 1)".to_owned(),
         "Entries: 51 (pinned 4), custom list links 6".to_owned(),
@@ -6935,17 +6945,11 @@ fn jump_list_summary_on_the_terminal() {
         "Machines in the entries: 3 (citadel-dc01, desktop-gnccvrk, pc)".to_owned(),
         "Targets: fixed drives 58, removable drives 0, CD/DVD 1, network shares 5".to_owned(),
         "With problems: 0".to_owned(),
-        "Links left over from an earlier version of a custom list: 2".to_owned(),
-        found("5d696d521de238c3.customDestinations-ms")
-            + r"at 11472) -> C:\Program Files\Google\Chrome\Application\chrome.exe --win-jumplist-action=most-visited http://192.168.50.33:5000/",
-        "Link streams no DestList entry names (removed or damaged entries): 0".to_owned(),
-        "Items staged for a CD or DVD burn: 1".to_owned(),
-        found("5f7b5f1e01b83767.automaticDestinations-ms") + r"entry 1) -> D:\autorun.inf",
-        "Shell or script host started with arguments: 0".to_owned(),
         "To save every entry, add -o <DIR> (CSV tables)".to_owned(),
     ] {
         assert!(r.stdout.contains(&line), "{line}\n{}", r.stdout);
     }
+    assert!(!r.stdout.contains("Shell or script host started"));
 }
 
 #[test]
@@ -6977,8 +6981,16 @@ fn jump_list_csv_has_the_common_columns() {
         ]
     );
     assert_eq!(header[43], "Notes");
-    assert_eq!(header.len(), 50);
+    assert_eq!(header.len(), 51);
     assert_eq!(rows.len(), 51);
+    assert_eq!(
+        rows.iter()
+            .filter(|row| row["TargetItemTypes"]
+                .split('|')
+                .any(|kind| kind == "CdBurn"))
+            .count(),
+        1
+    );
     let row = |file: &str, mru: &str| {
         rows.iter()
             .find(|r| r["SourceFile"].ends_with(file) && r["MRU"] == mru)
@@ -7056,7 +7068,7 @@ fn jump_list_csv_has_the_common_columns() {
 
     let (header, rows) = csv_rows(&out.join("CustomDestinations.csv"));
     assert_eq!(header[6], "EntryName");
-    assert_eq!(header.len(), 33);
+    assert_eq!(header.len(), 34);
     assert_eq!(rows.len(), 8);
     let chrome: Vec<_> = rows
         .iter()
@@ -7193,12 +7205,7 @@ fn jump_list_streams_no_entry_names() {
         "-K",
     ]);
     assert_eq!(r.code, 0, "{}", r.stdout);
-    for line in [
-        "entry 7 has no stream",
-        "With problems: 1",
-        "Link streams no DestList entry names (removed or damaged entries): 1",
-        r"(stream 99) -> C:\Users\AndrewRathbun\Desktop\Targets",
-    ] {
+    for line in ["entry 7 has no stream", "With problems: 1"] {
         assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
     }
     let (_, rows) = csv_rows(&out.join("AutomaticDestinations.csv"));
@@ -7390,9 +7397,6 @@ fn shimcache_summary_on_the_terminal() {
         "Recovered from slack: 0",
         "Last-modified times: 2021-05-20T08:51:57.791182Z - 2022-02-07T07:37:13.434150800Z",
         "Damaged entries: 0",
-        "Findings: 27 (medium: 27)",
-        r"  [MEDIUM] SHIMCACHE-SUSPICIOUS-PATH C:\Users\ANDREW~1\AppData\Local\Temp\DA15D340-2806-4EF5-BB3C-C787E4CD384B\dismhost.exe",
-        "  … 17 more in the Findings column",
         "To save every entry, add -o <FILE>",
     ] {
         assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
@@ -7500,7 +7504,7 @@ fn shimcache_csv_has_the_common_columns() {
         "FromSlack",
     ];
     assert_eq!(&header[..8], common_columns);
-    assert_eq!(header.len(), 28);
+    assert_eq!(header.len(), 27);
     // every entry as the reference writes it (its times to the second)
     let (_, expected) = csv_rows(&repo(&format!("{SHIMCACHE_DIR}/SYSTEM.expected.csv")));
     assert_eq!(rows.len(), 359);
@@ -7528,7 +7532,6 @@ fn shimcache_csv_has_the_common_columns() {
         ("DataSize", "72"),
         ("Machine", "x64"),
         ("InsertFlags", ""),
-        ("Findings", ""),
         (
             "RegistryPath",
             r"ControlSet001\Control\Session Manager\AppCompatCache",
@@ -7544,11 +7547,7 @@ fn shimcache_csv_has_the_common_columns() {
     ] {
         assert_eq!(first[column], value, "{column}");
     }
-    let flagged: Vec<_> = rows
-        .iter()
-        .filter(|r| r["Findings"] == "SHIMCACHE-SUSPICIOUS-PATH")
-        .collect();
-    assert_eq!(flagged.len(), 27);
+    assert!(rows.iter().all(|row| !row.contains_key("Findings")));
 }
 
 /// regipy's 32-bit Windows 7 SYSTEM hive: two control sets, `Select\Current` 1 and
@@ -17435,7 +17434,7 @@ fn registry_featureusage_errors() {
 // --- parse-registry security-settings -----------------------------------------------------------
 
 /// `parse-registry security-settings`' CSV columns.
-const SECURITY_SETTINGS_COLUMNS: [&str; 20] = [
+const SECURITY_SETTINGS_COLUMNS: [&str; 19] = [
     "Host",
     "SourcePath",
     "HiveType",
@@ -17447,7 +17446,6 @@ const SECURITY_SETTINGS_COLUMNS: [&str; 20] = [
     "Setting",
     "Value",
     "Meaning",
-    "WeakensDefault",
     "Policy",
     "KeyPath",
     "ValueName",
@@ -17574,22 +17572,17 @@ fn security_settings_read(args: &[&str]) -> Vec<Value> {
     jsonl_records(&r.stdout)
 }
 
-/// Each record as `hive area setting value weakened`.
+/// Each record's original hive, area, setting identifier and value.
 fn security_settings_lines(records: &[Value]) -> Vec<String> {
     records
         .iter()
         .map(|r| {
             format!(
-                "{} {} {} {} {}",
+                "{} {} {} {}",
                 r["HiveType"].as_str().unwrap(),
                 r["Area"].as_str().unwrap(),
                 r["Setting"].as_str().unwrap(),
-                r["Value"].as_str().unwrap_or("-"),
-                match r["WeakensDefault"].as_bool() {
-                    Some(true) => "weakened",
-                    Some(false) => "ok",
-                    None => "-",
-                }
+                r["Value"].as_str().unwrap_or("-")
             )
         })
         .collect()
@@ -17603,16 +17596,16 @@ fn registry_security_settings_of_a_collection() {
     assert_eq!(
         security_settings_lines(&records),
         [
-            "NTUSER.DAT powershell wsh_amsi_enable 0 weakened",
-            "SOFTWARE defender defender_disable_realtime_monitoring 1 weakened",
-            "SOFTWARE uac uac_enable_lua 1 ok",
-            "SOFTWARE uac uac_local_account_token_filter_policy 1 weakened",
-            "SOFTWARE powershell powershell_execution_policy Bypass weakened",
-            r"SOFTWARE defender defender_exclusion_path C:\Users\Public\Tools weakened",
-            "SOFTWARE defender defender_exclusion_extension .ps1 weakened",
-            "SYSTEM credentials wdigest_use_logon_credential 1 weakened",
-            "SYSTEM remote_access rdp_deny_connections 0 weakened",
-            "SYSTEM network firewall_public_profile 0 weakened",
+            "NTUSER.DAT powershell wsh_amsi_enable 0",
+            "SOFTWARE defender defender_disable_realtime_monitoring 1",
+            "SOFTWARE uac uac_enable_lua 1",
+            "SOFTWARE uac uac_local_account_token_filter_policy 1",
+            "SOFTWARE powershell powershell_execution_policy Bypass",
+            r"SOFTWARE defender defender_exclusion_path C:\Users\Public\Tools",
+            "SOFTWARE defender defender_exclusion_extension .ps1",
+            "SYSTEM credentials wdigest_use_logon_credential 1",
+            "SYSTEM remote_access rdp_deny_connections 0",
+            "SYSTEM network firewall_public_profile 0",
         ]
     );
     for r in &records {
@@ -17648,15 +17641,16 @@ fn registry_security_settings_of_a_collection() {
     );
     assert_eq!(records[2]["ControlSet"], Value::Null);
 
-    // only what weakens the default; every control set
-    let weakened = security_settings_read(&[
+    // Classification belongs to Pro; all original values remain available.
+    assert!(records.iter().all(|r| r.get("WeakensDefault").is_none()));
+    let removed = run(&[
+        "parse-registry",
+        "security-settings",
         "-d",
         dir.path().to_str().unwrap(),
         "--weakened-only",
-        "--all-control-sets",
     ]);
-    assert_eq!(weakened.len(), 9);
-    assert!(weakened.iter().all(|r| r["WeakensDefault"] == true));
+    assert_ne!(removed.code, 0);
     let all = security_settings_read(&["-d", dir.path().to_str().unwrap(), "--all-control-sets"]);
     let other = all.last().unwrap();
     assert_eq!(
@@ -17694,9 +17688,6 @@ fn registry_security_settings_csv_and_summary() {
         "Users: alice",
         "SYSTEM control sets read: 1 (the one in use; --all-control-sets for every one)",
         "Settings: 10 (credentials 1, defender 3, network 1, powershell 2, remote_access 1, uac 2)",
-        "Settings that weaken the default (exclusions below; not proof of compromise): 7",
-        r"HOST1  credentials  Control\SecurityProviders\WDigest\UseLogonCredential = 1: WDigest keeps cleartext passwords in LSASS memory",
-        r"HOST1  alice  powershell  Software\Microsoft\Windows Script\Settings\AmsiEnable = 0: AMSI for Windows Script Host (VBScript and JScript) turned off",
         "Microsoft Defender exclusions: 2",
         r"HOST1  path  C:\Users\Public\Tools",
         "HOST1  extension  .ps1",
@@ -17718,9 +17709,9 @@ fn registry_security_settings_csv_and_summary() {
     assert_eq!(&rows[7][3], "ControlSet001");
     assert_eq!(&rows[7][4], "True");
     assert_eq!(&rows[7][8], "wdigest_use_logon_credential");
-    assert_eq!(&rows[7][11], "True");
-    assert_eq!(&rows[2][11], "False");
-    assert_eq!(&rows[1][12], "True");
+    assert_eq!(&rows[7][9], "1");
+    assert_eq!(&rows[2][9], "1");
+    assert_eq!(&rows[1][11], "True");
     assert_eq!(&rows[0][5], "alice");
 }
 
@@ -17729,28 +17720,30 @@ fn registry_security_settings_of_public_hives() {
     // regipy's Windows 7 SYSTEM: WDigest keeping passwords, Remote Desktop without NLA, small
     // event logs; what regipy's wdigest and disable_last_access give
     let regipy = regipy_system();
-    let records =
-        security_settings_read(&["-d", regipy.path().to_str().unwrap(), "--weakened-only"]);
+    let records = security_settings_read(&["-d", regipy.path().to_str().unwrap()]);
+    assert!(records.iter().all(|r| r.get("WeakensDefault").is_none()));
+    let wdigest = records
+        .iter()
+        .find(|r| r["Setting"] == "wdigest_use_logon_credential")
+        .unwrap();
+    assert_eq!(wdigest["Value"], "1");
+    let application = records
+        .iter()
+        .find(|r| {
+            r["Setting"] == "event_log_max_size"
+                && r["KeyPath"].as_str().unwrap().ends_with("Application")
+        })
+        .unwrap();
+    assert_eq!(application["Value"], "4194304");
     assert_eq!(
-        security_settings_lines(&records),
-        [
-            "SYSTEM credentials wdigest_use_logon_credential 1 weakened",
-            "SYSTEM remote_access rdp_deny_connections 0 weakened",
-            "SYSTEM remote_access rdp_network_level_authentication 0 weakened",
-            "SYSTEM evidence event_log_max_size 4194304 weakened",
-            "SYSTEM evidence event_log_max_size 4194304 weakened",
-            "SYSTEM evidence event_log_max_size 4194304 weakened",
-        ]
-    );
-    assert_eq!(
-        records[3]["Meaning"],
+        application["Meaning"],
         "the Application log keeps up to 4 MiB, less than the default 20 MiB"
     );
-    // the DFIR Artifact Museum's dirty Windows 11 SYSTEM with its logs: Windows' defaults
+
     let w11 = system_hive();
     let records = security_settings_read(&["-d", w11.path().to_str().unwrap()]);
     assert_eq!(records.len(), 13);
-    assert!(records.iter().all(|r| r["WeakensDefault"] != true
+    assert!(records.iter().all(|r| r.get("WeakensDefault").is_none()
         && r["Host"] == "GOLDPAPERW11"
         && r["TransactionLogStatus"] == "unchanged"
         && r["Problems"] == json!([])));

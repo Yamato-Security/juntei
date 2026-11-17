@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei conserve les enregistrements, les métadonnées et les diagnostics d’analyse. Les règles de détection propres aux analyseurs sont évaluées dans Juntei Pro. Les vérifications et profils de politique existants de Persistence Hunter restent disponibles.
+
 ## Qu'est-ce que ShimCache { #what-shimcache-is }
 
 Le sous-système de compatibilité des applications de Windows met en cache des chemins d'exécutables et des métadonnées lors de l'évaluation
@@ -57,7 +59,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## Champs de sortie { #output-fields }
@@ -79,7 +81,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | Architecture enregistrée par les formats récents (`x64`, `x86`, `ARM64`). |
 | `FileSize`, `LastUpdateTimeUTC` | Métadonnées mises en cache propres à Windows XP, lorsqu'elles sont présentes. |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | Identité de l'application empaquetée dans les entrées prises en charge. L'ID d'éditeur est un contexte, et non une preuve de signature. |
-| `Findings` | Codes d'anomalie de Juntei, tels qu'un binaire système déplacé ou un chemin de préparation (staging) suspect. Simples pistes. |
 | `RegistryPath`, `RegistryValueName` | Clé/valeur exacte de la ruche source. À conserver pour la validation. |
 | `CacheValueSize` | Taille de la valeur de Registre entière, et non le `DataSize` de l'entrée individuelle. |
 | `IsCurrent` | Indique si le jeu de contrôles de cette entrée est égal à `SYSTEM\Select\Current` ; vide si cela n'est pas connu de manière sûre. |

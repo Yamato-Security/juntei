@@ -274,7 +274,6 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -398,7 +397,7 @@ Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `Recyc
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` ve `Registry-SystemInfo.csv`
 dahildir. Genel kovan anahtarları ve değerleri `Registry-Dump.csv` içindedir. Amcache tabloları
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` ve `Registry-Amcache-Summary.csv` dosyalarıdır. Jump Lists,
+Registry-Amcache-Files.csv ve `Registry-Amcache-Summary.csv` dosyalarıdır. Jump Lists,
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` ve
 `JumpLists-CustomDestinations.csv` dosyalarını kullanır. Amcache veya Jump Lists alt dizini yoktur.
 SRUM tabloları, kategorilerinin hemen altında `SRUM-` dosya adlarını kullanır; örneğin

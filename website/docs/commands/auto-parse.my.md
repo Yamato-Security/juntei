@@ -269,7 +269,6 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Amcache နှင့် Jump Lists တို့တွင် ၎င်းတိ�
 `Registry-ShimCache.csv`၊ `Registry-UserAssist.csv`၊ `Registry-BAM.csv` နှင့် `Registry-SystemInfo.csv` အပါအဝင် `Registry-` prefix ကို အသုံးပြုပါသည်။
 ယေဘုယျ hive key များနှင့် value များသည် `Registry-Dump.csv` တွင် ရှိပါသည်။ Amcache table များမှာ
 `FileExistence/Registry-Amcache-Devices.csv`၊ `Registry-Amcache-Files.csv`၊
-`Registry-Amcache-Findings.csv` နှင့် `Registry-Amcache-Summary.csv` ဖြစ်ပါသည်။ Jump Lists သည်
+Registry-Amcache-Files.csv နှင့် `Registry-Amcache-Summary.csv` ဖြစ်ပါသည်။ Jump Lists သည်
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` နှင့်
 `JumpLists-CustomDestinations.csv` ကို အသုံးပြုပါသည်။ Amcache သို့မဟုတ် Jump Lists subdirectory များ မရှိပါ။
 SRUM table များသည် ၎င်းတို့၏ အမျိုးအစားအောက်တွင် တိုက်ရိုက် `SRUM-` ဖိုင်အမည်များကို အသုံးပြုပါသည်၊ ဥပမာ

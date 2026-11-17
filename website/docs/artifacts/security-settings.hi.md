@@ -1,5 +1,7 @@
 # सुरक्षा सेटिंग { #security-settings }
 
+Juntei आर्टिफ़ैक्ट रिकॉर्ड, मेटाडेटा और पार्सिंग निदान सुरक्षित रखता है। पार्सर-विशिष्ट पहचान नियमों का मूल्यांकन Juntei Pro में होता है। Persistence Hunter की मौजूदा जाँच और नीति प्रोफ़ाइल उपलब्ध रहती हैं।
+
 ## ये क्या हैं { #what-they-are }
 
 हमलावर छिपे रहने और credentials तक पहुँचने के लिए Windows की security settings बदलते हैं। वे
@@ -61,8 +63,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **संग्रहीत configuration प्रभावी protection स्थिति नहीं है।** एकत्र की गई registry values और क्षतिग्रस्त value सूचियों के लिए diagnostic rows
   report की जाती हैं। लापता data defaults, एकत्र न किए गए स्रोतों या किसी अन्य management
-  तंत्र को दर्शा सकता है; यह इस बात का प्रमाण नहीं कि protection enabled या disabled है। `WeakensDefault` उन
-  settings को flag करता है जो लागू किए जाने पर बताए गए baseline को घटा सकती हैं।
+  तंत्र को दर्शा सकता है; यह इस बात का प्रमाण नहीं कि protection enabled या disabled है।
 - **Legacy Defender flags को अनदेखा किया जा सकता है।** `DisableAntiSpyware` और `DisableAntivirus` यह
   सिद्ध नहीं करते कि Defender रुक गया। लागू होना platform version, onboarding और tamper
   protection पर निर्भर करता है। [Microsoft इन legacy settings की व्याख्या करता है](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware)।
@@ -105,7 +106,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +114,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +132,6 @@ Defender exclusion सूचीबद्ध करती है।
 | `Setting` | यह क्या है: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Value: decimal में एक number, एक string, या स्वयं exclusion। जब value setting के type का न हो तो खाली। |
 | `Meaning` | Value का क्या अर्थ है। |
-| `WeakensDefault` | `True` जब value उसे कमज़ोर करता है जो वर्तमान Windows उसके बिना करता है, `False` जब नहीं करता, खाली जब यह लागू नहीं होता (आकार, port, AMSI provider) या बताया नहीं जा सकता। |
 | `Policy` | क्या key किसी `Policies` key के अंतर्गत है। |
 | `KeyPath`, `ValueName` | Key और value। किसी exclusion का value नाम excluded item होता है; AMSI provider का कोई नहीं होता। |
 | `KeyLastWrittenUTC` | Key का last write। |
@@ -142,7 +141,7 @@ Defender exclusion सूचीबद्ध करती है।
 
 ## जाँच की रणनीति { #investigation-strategy }
 
-1. हर host पर `--weakened-only` के साथ चलाएँ, और hosts की एक-दूसरे से तुलना करें: ऐसी setting
+1. हर host पर Juntei के साथ चलाएँ, और hosts की एक-दूसरे से तुलना करें: ऐसी setting
    जो केवल एक host पर है, अलग से दिखती है।
 2. हर Defender exclusion को host पर मिले tools और Defender के logs से जाँचें
    (Event 5007 configuration बदलाव दर्ज करता है)।

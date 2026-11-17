@@ -1,5 +1,7 @@
 # Prefetch { #prefetch }
 
+Juntei, artefakt kayıtlarını, meta verileri ve ayrıştırma tanılarını korur. Ayrıştırıcıya özgü tespit kuralları Juntei Pro içinde değerlendirilir. Persistence Hunter mevcut kontrollerini ve politika profillerini korur.
+
 ## Prefetch nedir { #what-prefetch-is }
 
 Windows Prefetch dosyaları, uygulama başlatmayı optimize etmek için kullanılan bilgileri kaydeder.
@@ -38,7 +40,6 @@ karşılaştırılabilmesi için dizinin tamamını toplayın.
   komut satırı verilerini karmaya katabilir; bu nedenle doğrulanmamış bir yol kendiliğinden yanlış
   değildir.
 - Bir `.pf` kaynak dosyasının dosya sistemi zaman damgaları, içine gömülü çalıştırma zamanlarından ayrıdır.
-- `Findings` tehdit avı gözlemleridir. Yükleyiciler ve meşru yönetim işlemleri sıklıkla hazırlık yollarını
   kullanır.
 
 ## Juntei ile ayrıştırma { #parse-with-juntei }
@@ -85,7 +86,6 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `VolumeCreated` | Kaydedilen birim oluşturma zamanları; yürütülebilir dosyanın oluşturulma zamanı değildir. |
 | `DirectoryCount` | Kaydedilen dizin dizelerinin sayısı. |
 | `FileCount` | Kaydedilen yüklenen dosya referanslarının sayısı. |
-| `Findings` | Yeri değiştirilmiş sistem ikili dosyaları veya şüpheli yürütme yolları gibi Juntei gözlemleri. Elle gözden geçirin. |
 | `Files` | Mevcut NTFS referanslarıyla birlikte yüklenen/başvurulan dosyalar. Mükemmel bir DLL/yol pivot noktasıdır; dosyaya yönelik niyetin kanıtı değildir. |
 | `Dir` | Başlatmayla ilişkili dizin dizeleri. Tek tek yüklenen dosya yolları eksik olduğunda faydalıdır. |
 

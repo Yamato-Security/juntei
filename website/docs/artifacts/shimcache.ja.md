@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持する。パーサー固有の検知ルールは Juntei Pro で評価する。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できる。
+
 ## ShimCacheとは { #what-shimcache-is }
 
 Windows ' アプリケーション互換性サブシステムは、互換性/シムの動作を評価する際に、実行可能パスとメタデータをキャッシュします。キャッシュは、ファイルの名前変更、削除、またはリムーバブル ボリュームとの接続が切断されても存続します。そのレイアウトと使用可能なフィールドは、Windows XP から Windows 11 までで異なります。
@@ -49,7 +51,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## 出力フィールド { #output-fields }
@@ -71,7 +73,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | 新しい形式 (`x64`、`x86`、`ARM64`) で記録されたアーキテクチャ。 |
 | `FileSize`, `LastUpdateTimeUTC` | Windows XP 固有のキャッシュされたメタデータ (存在する場合)。 |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | サポートされているエントリのパッケージ化されたアプリケーション ID。発行元 ID はコンテキストであり、署名証明ではありません。 |
-| `Findings` | 再配置されたシステム バイナリや疑わしいステージング パスなどの Juntei 異常コード。リードのみ。 |
 | `RegistryPath`, `RegistryValueName` | 正確なハイブのキー/値のソース。検証のために保存します。 |
 | `CacheValueSize` | 個々のエントリの `DataSize` ではなく、レジストリ値全体のサイズ。 |
 | `IsCurrent` | このエントリのコントロール セットが `SYSTEM\Select\Current` に等しいかどうか。安全に知られていない場合は空です。 |

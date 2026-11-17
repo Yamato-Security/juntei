@@ -1,5 +1,7 @@
 # Sicherheitseinstellungen { #security-settings }
 
+Juntei bewahrt Artefaktdatensätze, Metadaten und Parserdiagnosen. Parserspezifische Erkennungsregeln werden in Juntei Pro ausgewertet. Die bestehenden Prüfungen und Richtlinienprofile von Persistence Hunter bleiben verfügbar.
+
 ## Was sie sind { #what-they-are }
 
 Angreifer ändern die Sicherheitseinstellungen von Windows, um verborgen zu bleiben und an Anmeldeinformationen zu gelangen. Sie schalten
@@ -61,8 +63,7 @@ befindet sich möglicherweise nur in den Protokollen.
 
 - **Gespeicherte Konfiguration ist nicht der wirksame Schutzzustand.** Gesicherte Registry-Werte und Diagnosezeilen für beschädigte Wertlisten
   werden gemeldet. Fehlende Daten können auf Standardwerte, nicht gesicherte Quellen oder einen anderen Verwaltungsmechanismus
-  zurückgehen; sie beweisen nicht, dass ein Schutz aktiviert oder deaktiviert ist. `WeakensDefault` kennzeichnet
-  Einstellungen, die die angegebene Basislinie senken können, wenn sie berücksichtigt werden.
+  zurückgehen; sie beweisen nicht, dass ein Schutz aktiviert oder deaktiviert ist.
 - **Veraltete Defender-Flags werden möglicherweise ignoriert.** `DisableAntiSpyware` und `DisableAntivirus` beweisen nicht,
   dass Defender angehalten wurde. Ob sie gelten, hängt von Plattformversion, Onboarding und Manipulationsschutz
   ab. [Microsoft erläutert diese veralteten Einstellungen](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -105,7 +106,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +114,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +132,6 @@ Defender-Ausschluss.
 | `Setting` | Um welche Einstellung es sich handelt: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Der Wert: eine Dezimalzahl, eine Zeichenfolge oder der Ausschluss selbst. Leer, wenn der Wert nicht den Typ der Einstellung hat. |
 | `Meaning` | Was der Wert bedeutet. |
-| `WeakensDefault` | `True`, wenn der Wert abschwächt, was aktuelles Windows ohne ihn tut, `False`, wenn nicht, leer, wenn dies nicht zutrifft (eine Größe, ein Port, ein AMSI-Anbieter) oder nicht feststellbar ist. |
 | `Policy` | Ob der Schlüssel unter einem `Policies`-Schlüssel liegt. |
 | `KeyPath`, `ValueName` | Schlüssel und Wert. Der Wertname eines Ausschlusses ist das ausgeschlossene Element; ein AMSI-Anbieter hat keinen. |
 | `KeyLastWrittenUTC` | Der letzte Schreibzugriff auf den Schlüssel. |
@@ -142,7 +141,7 @@ Defender-Ausschluss.
 
 ## Untersuchungsstrategie { #investigation-strategy }
 
-1. Führen Sie das Kommando mit `--weakened-only` auf jedem Host aus und vergleichen Sie die Hosts miteinander: Eine Einstellung,
+1. Führen Sie das Kommando mit Juntei auf jedem Host aus und vergleichen Sie die Hosts miteinander: Eine Einstellung,
    die nur ein Host hat, fällt auf.
 2. Prüfen Sie jeden Defender-Ausschluss anhand der auf dem Host und in den Defender-Protokollen gefundenen Werkzeuge
    (Ereignis 5007 zeichnet Konfigurationsänderungen auf).

@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei आर्टिफ़ैक्ट रिकॉर्ड, मेटाडेटा और पार्सिंग निदान सुरक्षित रखता है। पार्सर-विशिष्ट पहचान नियमों का मूल्यांकन Juntei Pro में होता है। Persistence Hunter की मौजूदा जाँच और नीति प्रोफ़ाइल उपलब्ध रहती हैं।
+
 ## ShimCache क्या है { #what-shimcache-is }
 
 Windows का Application Compatibility subsystem compatibility/shim व्यवहार का मूल्यांकन करते समय executable paths और metadata
@@ -37,7 +39,6 @@ ControlSet00N\Control\Session Manager\AppCompatCache\AppCompatCache
 - क्रम उपयोगी है लेकिन सार्वभौमिक सटीक timeline नहीं; control sets/slack में duplicates होते हैं।
 - `FromSlack` entries सक्रिय cache के बाहर से recover की गई थीं और अतिरिक्त सावधानी की माँग करती हैं।
 - उपयोग योग्य logs के बिना dirty `SYSTEM` वर्तमान records छोड़ सकता है। Recovery summary पढ़ें।
-- Findings संदिग्ध naming/path patterns दर्शाते हैं, malware के निर्णय नहीं।
 
 ## Juntei से parse करें { #parse-with-juntei }
 
@@ -57,7 +58,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## आउटपुट fields { #output-fields }
@@ -79,7 +80,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | नए formats द्वारा दर्ज architecture (`x64`, `x86`, `ARM64`)। |
 | `FileSize`, `LastUpdateTimeUTC` | जहाँ मौजूद हो, Windows XP-विशिष्ट cache किया गया metadata। |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | समर्थित entries में packaged-application की पहचान। Publisher ID संदर्भ है, signature का प्रमाण नहीं। |
-| `Findings` | Juntei anomaly codes, जैसे स्थानांतरित system binary या संदिग्ध staging path। केवल सुराग। |
 | `RegistryPath`, `RegistryValueName` | सटीक hive key/value स्रोत। सत्यापन के लिए सुरक्षित रखें। |
 | `CacheValueSize` | पूरी registry value का आकार, अलग entry का `DataSize` नहीं। |
 | `IsCurrent` | क्या इस entry का control set `SYSTEM\Select\Current` के बराबर है; सुरक्षित रूप से ज्ञात न होने पर खाली। |

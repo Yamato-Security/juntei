@@ -1,5 +1,7 @@
 # LNK Kısayolları { #lnk-shortcuts }
 
+Juntei, artefakt kayıtlarını, meta verileri ve ayrıştırma tanılarını korur. Ayrıştırıcıya özgü tespit kuralları Juntei Pro içinde değerlendirilir. Persistence Hunter mevcut kontrollerini ve politika profillerini korur.
+
 ## LNK dosyaları nedir { #what-lnk-files-are }
 
 Windows Shell Link (`.lnk`) dosyaları bir hedefi; başlatma bağımsız değişkenleri, çalışma dizini, simge,
@@ -99,3 +101,5 @@ LNK başlığındaki hedef FILETIME değerleri ve izleyici zamanları dönüşt�
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

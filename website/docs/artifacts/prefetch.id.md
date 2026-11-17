@@ -1,5 +1,7 @@
 # Prefetch { #prefetch }
 
+Juntei mempertahankan rekaman artefak, metadata, dan diagnostik penguraian. Aturan deteksi khusus parser dievaluasi di Juntei Pro. Pemeriksaan dan profil kebijakan Persistence Hunter yang ada tetap tersedia.
+
 ## Apa itu Prefetch { #what-prefetch-is }
 
 Berkas Prefetch Windows mencatat informasi yang digunakan untuk mengoptimalkan startup aplikasi. Berkas `.pf`
@@ -37,7 +39,6 @@ dibandingkan.
   false. Proses hosting dapat memasukkan data baris perintah ke dalam hash, sehingga jalur yang
   tidak tervalidasi belum tentu salah.
 - Timestamp sistem berkas dari berkas sumber `.pf` terpisah dari waktu eksekusi yang tersimpan di dalamnya.
-- `Findings` adalah observasi untuk hunting. Installer dan administrasi yang sah sering menggunakan path staging.
 
 ## Mengurai dengan Juntei { #parse-with-juntei }
 
@@ -83,7 +84,6 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `VolumeCreated` | Waktu pembuatan volume yang tercatat, bukan waktu pembuatan executable. |
 | `DirectoryCount` | Jumlah string direktori yang tercatat. |
 | `FileCount` | Jumlah referensi berkas yang dimuat yang tercatat. |
-| `Findings` | Observasi Juntei seperti binary sistem yang dipindahkan atau path eksekusi yang mencurigakan. Tinjau secara manual. |
 | `Files` | Berkas yang dimuat/dirujuk beserta referensi NTFS yang tersedia. Titik pivot DLL/path yang sangat baik, bukan bukti niat terhadap berkas. |
 | `Dir` | String direktori yang terkait dengan startup. Berguna bila path berkas yang dimuat secara individual tidak lengkap. |
 

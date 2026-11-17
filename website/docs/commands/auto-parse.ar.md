@@ -268,7 +268,6 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -391,7 +390,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 `Registry-ShimCache.csv` و`Registry-UserAssist.csv` و`Registry-BAM.csv` و`Registry-SystemInfo.csv`.
 وتوجد مفاتيح الخلايا وقيمها العامة في `Registry-Dump.csv`. وجداول Amcache هي
 `FileExistence/Registry-Amcache-Devices.csv` و`Registry-Amcache-Files.csv`
-و`Registry-Amcache-Findings.csv` و`Registry-Amcache-Summary.csv`. وتستخدم Jump Lists
+وRegistry-Amcache-Files.csv و`Registry-Amcache-Summary.csv`. وتستخدم Jump Lists
 ‏`FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` و
 `JumpLists-CustomDestinations.csv`. ولا توجد مجلدات فرعية لـ Amcache أو Jump Lists.
 وتستخدم جداول SRUM أسماء ملفات تبدأ بـ `SRUM-` مباشرة تحت فئتها، مثل
