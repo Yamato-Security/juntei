@@ -1,5 +1,7 @@
 # การตั้งค่าความปลอดภัย { #security-settings }
 
+Juntei เก็บรักษาระเบียนอาร์ติแฟกต์ เมทาดาทา และข้อมูลวินิจฉัยการแยกวิเคราะห์ กฎตรวจจับเฉพาะตัวแยกวิเคราะห์จะประเมินใน Juntei Pro ส่วนการตรวจสอบและโปรไฟล์นโยบายเดิมของ Persistence Hunter ยังคงใช้งานได้
+
 ## สิ่งเหล่านี้คืออะไร { #what-they-are }
 
 ผู้โจมตีเปลี่ยนการตั้งค่าความปลอดภัยของ Windows เพื่อซ่อนตัวและเพื่อเข้าถึงข้อมูลรับรอง พวกเขาปิด
@@ -16,9 +18,7 @@ Microsoft Defender หรือยกเว้นเครื่องมือ�
   Windows Script Host
 
 `parse-registry security-settings` รายงานการตั้งค่าแต่ละรายการที่พบเป็นหนึ่งระเบียน แต่ละระเบียนมี
-ค่าของการตั้งค่า ความหมายของค่า และค่านั้น **ลดระดับจากค่าเริ่มต้น (weakens the default)** หรือไม่: กล่าวคือ ปิด
-การป้องกันหรือแหล่งหลักฐาน หรือลดระดับให้ต่ำกว่าสิ่งที่ Windows ปัจจุบัน (10 และ 11) ทำเมื่อ
-ไม่มีค่านั้นหรือไม่
+ค่าของการตั้งค่าและความหมายของค่า
 
 <span class="evidence-strength">ข้อสรุปที่ดีที่สุด:</span> การตั้งค่านี้มีค่านี้ ณ เวลาที่ไฮฟ์
 ถูกบันทึก และคีย์ถูกเขียนครั้งล่าสุด ณ เวลานี้ การตั้งค่าที่ถูกลดระดับเป็นเบาะแส ไม่ใช่ข้อพิสูจน์ว่า
@@ -61,8 +61,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **การกำหนดค่าที่จัดเก็บไว้ไม่ใช่สถานะการป้องกันที่มีผลจริง** ค่ารีจิสทรีที่เก็บรวบรวมมาและแถววินิจฉัยสำหรับรายการค่าที่เสียหาย
   จะถูกรายงาน ข้อมูลที่ขาดหายอาจสะท้อนค่าเริ่มต้น แหล่งข้อมูลที่ไม่ได้เก็บรวบรวม หรือกลไก
-  การจัดการอื่น ไม่ใช่ข้อพิสูจน์ว่าการป้องกันเปิดหรือปิดอยู่ `WeakensDefault` ระบุ
-  การตั้งค่าที่อาจลดระดับต่ำกว่า baseline ที่ระบุไว้เมื่อการตั้งค่านั้นมีผล
+  การจัดการอื่น ไม่ใช่ข้อพิสูจน์ว่าการป้องกันเปิดหรือปิดอยู่
 - **แฟล็กแบบเดิมของ Defender อาจถูกละเลย** `DisableAntiSpyware` และ `DisableAntivirus` ไม่ได้
   พิสูจน์ว่า Defender หยุดทำงาน การมีผลขึ้นอยู่กับเวอร์ชันของแพลตฟอร์ม การ onboarding และ tamper
   protection [Microsoft อธิบายการตั้งค่าแบบเดิมเหล่านี้](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware)
@@ -76,12 +75,10 @@ C:\Users\<user>\NTUSER.DAT
   - Remote Desktop ถูกเปิดโดยเจตนาบนเซิร์ฟเวอร์
   - Windows 7 เก็บ event log ขนาดเล็กกว่าและไม่ได้อัปเดตเวลาเข้าถึงล่าสุด
 - **ค่าเริ่มต้นขึ้นอยู่กับเวอร์ชัน** บางค่าเคยเป็นค่าเริ่มต้นมาก่อน:
-  - `NtfsDisableLastAccessUpdate` = 1 เป็นค่าเริ่มต้นก่อน Windows 10 1803 จึงถูกรายงาน
-    โดยไม่มีคำตัดสิน แต่ `0x80000001` ที่ตั้งด้วยมือบนเวอร์ชันที่ใหม่กว่าถือว่าถูกลดระดับ
-  - `RunAsPPL`, `LsaCfgFlags` และ `UseLogonCredential` ถูกเปรียบเทียบกับ Windows ปัจจุบัน
-- **ข้อยกเว้นของ Defender:** แต่ละพาธ นามสกุล โพรเซส หรือที่อยู่เป็นหนึ่งระเบียน ข้อยกเว้นทุกรายการ
-  ลดระดับ Defender `TemporaryPaths` ซึ่ง Defender เพิ่มเอง ไม่มีคำตัดสิน ให้มองหาโฟลเดอร์ที่ผู้ใช้เขียนได้
-  นามสกุล `.ps1`/`.exe` และ LOLBin (`rundll32.exe`, `powershell.exe`)
+  - ตีความ `NtfsDisableLastAccessUpdate` ตามเวอร์ชัน Windows และบริบทของนโยบาย ใน Windows 10 1803 และใหม่กว่า `0x80000001` หมายถึงโหมดที่ผู้ใช้จัดการและปิดการอัปเดตเวลาเข้าถึงล่าสุด ค่านี้เพียงอย่างเดียวไม่ระบุว่าใครตั้งค่า หรือพิสูจน์ว่าเปลี่ยนผ่านการโต้ตอบโดยตรง
+  - ค่าเริ่มต้นของ `RunAsPPL`, `LsaCfgFlags` และ `UseLogonCredential` เปลี่ยนไปตามเวอร์ชันของ Windows
+    จึงควรอ่านค่าตามเวอร์ชันของโฮสต์
+- **ข้อยกเว้นของ Defender:** แต่ละพาธ นามสกุล โพรเซส หรือที่อยู่เป็นหนึ่งระเบียน ข้อยกเว้นอาจลดการป้องกัน จึงควรตรวจสอบขอบเขตและที่มา รวมถึง `TemporaryPaths` ชื่อคีย์เพียงอย่างเดียวไม่พิสูจน์ว่าเป็นข้อยกเว้นที่ปลอดภัยหรือกิจกรรมของผู้โจมตี ให้มองหาโฟลเดอร์ที่ผู้ใช้เขียนได้ นามสกุล `.ps1`/`.exe` และ LOLBin (`rundll32.exe`, `powershell.exe`)
 - **คีย์นโยบาย** (`Policy` = True) ถูกเขียนโดย Group Policy โดยเครื่องมือ และโดยผู้โจมตีที่
   รู้ว่านโยบายมีลำดับความสำคัญเหนือการตั้งค่าภายในเครื่อง ให้เชื่อมโยงกับ GPO ของโดเมน
 - **ช่องทางของ event log:** รายงานเฉพาะ 25 ช่องทางที่เกี่ยวข้องกับความปลอดภัย พร้อมระบุว่า Windows
@@ -105,7 +102,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +110,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +128,6 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 | `Setting` | การตั้งค่านั้นคืออะไร: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | ค่า: ตัวเลขฐานสิบ สตริง หรือตัวข้อยกเว้นเอง ว่างเปล่าเมื่อค่าไม่ได้มีชนิดตรงกับการตั้งค่า |
 | `Meaning` | ความหมายของค่า |
-| `WeakensDefault` | `True` เมื่อค่าลดระดับจากสิ่งที่ Windows ปัจจุบันทำเมื่อไม่มีค่านั้น `False` เมื่อไม่ได้ลดระดับ ว่างเปล่าเมื่อไม่เกี่ยวข้อง (ขนาด พอร์ต ผู้ให้บริการ AMSI) หรือไม่สามารถบอกได้ |
 | `Policy` | คีย์อยู่ใต้คีย์ `Policies` หรือไม่ |
 | `KeyPath`, `ValueName` | คีย์และค่า ชื่อค่าของข้อยกเว้นคือรายการที่ถูกยกเว้น ผู้ให้บริการ AMSI ไม่มีชื่อค่า |
 | `KeyLastWrittenUTC` | เวลาเขียนล่าสุดของคีย์ |
@@ -142,7 +137,7 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 
 ## กลยุทธ์การตรวจสอบ { #investigation-strategy }
 
-1. เรียกใช้ด้วย `--weakened-only` บนทุกโฮสต์ และเปรียบเทียบโฮสต์ต่าง ๆ เข้าด้วยกัน: การตั้งค่า
+1. เรียกใช้ด้วย Juntei บนทุกโฮสต์ และเปรียบเทียบโฮสต์ต่าง ๆ เข้าด้วยกัน: การตั้งค่า
    ที่มีเพียงโฮสต์เดียวจะโดดเด่นขึ้นมา
 2. ตรวจสอบข้อยกเว้นแต่ละรายการของ Defender เทียบกับเครื่องมือที่พบบนโฮสต์และใน log ของ Defender
    (Event 5007 บันทึกการเปลี่ยนแปลงการกำหนดค่า)
@@ -162,3 +157,5 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

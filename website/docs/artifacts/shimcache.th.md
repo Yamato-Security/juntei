@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei เก็บรักษาระเบียนอาร์ติแฟกต์ เมทาดาทา และข้อมูลวินิจฉัยการแยกวิเคราะห์ กฎตรวจจับเฉพาะตัวแยกวิเคราะห์จะประเมินใน Juntei Pro ส่วนการตรวจสอบและโปรไฟล์นโยบายเดิมของ Persistence Hunter ยังคงใช้งานได้
+
 ## ShimCache คืออะไร { #what-shimcache-is }
 
 ระบบย่อย Application Compatibility ของ Windows แคชพาธและเมทาดาทาของไฟล์ปฏิบัติการไว้ขณะประเมิน
@@ -57,7 +59,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## ฟิลด์เอาต์พุต { #output-fields }
@@ -79,7 +81,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | สถาปัตยกรรมที่รูปแบบใหม่บันทึกไว้ (`x64`, `x86`, `ARM64`) |
 | `FileSize`, `LastUpdateTimeUTC` | เมทาดาทาที่แคชไว้เฉพาะของ Windows XP เมื่อมีอยู่ |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | ตัวตนของแอปพลิเคชันแบบแพ็กเกจใน entry ที่รองรับ Publisher ID เป็นบริบท ไม่ใช่ข้อพิสูจน์ลายเซ็น |
-| `Findings` | รหัสความผิดปกติของ Juntei เช่น ไบนารีระบบที่ถูกย้ายตำแหน่งหรือพาธ staging ที่น่าสงสัย เป็นเพียงเบาะแส |
 | `RegistryPath`, `RegistryValueName` | แหล่งคีย์/ค่าในไฮฟ์ที่แน่นอน เก็บรักษาไว้เพื่อการตรวจสอบ |
 | `CacheValueSize` | ขนาดของค่ารีจิสทรีทั้งหมด ไม่ใช่ `DataSize` ของ entry แต่ละรายการ |
 | `IsCurrent` | control set ของ entry นี้ตรงกับ `SYSTEM\Select\Current` หรือไม่ ว่างเปล่าหากไม่สามารถทราบได้อย่างแน่ชัด |

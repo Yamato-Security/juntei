@@ -411,7 +411,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
-      --weakened-only     Only settings whose value weakens what Windows does by default
 
 Output:
   -o, --output <FILE>       Save every record to a file
@@ -426,9 +425,7 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-كل إعداد يُعثر عليه سجلٌ بقيمته ومعناه وما إذا كان يُضعف ما يفعله Windows
-افتراضيًا؛ ويُبقي `--weakened-only` على الإعدادات التي تُضعفه. راجع
-[إعدادات الأمان](../artifacts/security-settings.md).
+يُخرَج كل إعداد يُعثر عليه كسجل يتضمن قيمته المخزنة ومعناها. راجع [إعدادات الأمان](../artifacts/security-settings.md).
 
 
 ## `parse-registry office` { #parse-registry-office }

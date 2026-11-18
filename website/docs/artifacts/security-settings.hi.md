@@ -1,5 +1,7 @@
 # सुरक्षा सेटिंग { #security-settings }
 
+Juntei आर्टिफ़ैक्ट रिकॉर्ड, मेटाडेटा और पार्सिंग निदान सुरक्षित रखता है। पार्सर-विशिष्ट पहचान नियमों का मूल्यांकन Juntei Pro में होता है। Persistence Hunter की मौजूदा जाँच और नीति प्रोफ़ाइल उपलब्ध रहती हैं।
+
 ## ये क्या हैं { #what-they-are }
 
 हमलावर छिपे रहने और credentials तक पहुँचने के लिए Windows की security settings बदलते हैं। वे
@@ -16,9 +18,7 @@ Remote Desktop खोलते हैं, firewall बंद करते है
   Windows Script Host के लिए AMSI।
 
 `parse-registry security-settings` हर मिली setting को एक record के रूप में report करता है। हर record में
-setting का value, उस value का अर्थ, और यह होता है कि क्या यह **default को कमज़ोर करता है**: क्या यह किसी
-protection या साक्ष्य स्रोत को बंद करता है, या उसे उस स्तर से नीचे ले जाता है जो वर्तमान Windows (10 और 11)
-उस value के बिना करता है।
+setting का value और उस value का अर्थ होता है।
 
 <span class="evidence-strength">सर्वोत्तम निष्कर्ष:</span> जब hive सहेजा गया था तब इस setting का यह value था,
 और key आख़िरी बार इस समय लिखी गई थी। कमज़ोर की गई setting एक सुराग है, compromise का प्रमाण नहीं।
@@ -61,8 +61,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **संग्रहीत configuration प्रभावी protection स्थिति नहीं है।** एकत्र की गई registry values और क्षतिग्रस्त value सूचियों के लिए diagnostic rows
   report की जाती हैं। लापता data defaults, एकत्र न किए गए स्रोतों या किसी अन्य management
-  तंत्र को दर्शा सकता है; यह इस बात का प्रमाण नहीं कि protection enabled या disabled है। `WeakensDefault` उन
-  settings को flag करता है जो लागू किए जाने पर बताए गए baseline को घटा सकती हैं।
+  तंत्र को दर्शा सकता है; यह इस बात का प्रमाण नहीं कि protection enabled या disabled है।
 - **Legacy Defender flags को अनदेखा किया जा सकता है।** `DisableAntiSpyware` और `DisableAntivirus` यह
   सिद्ध नहीं करते कि Defender रुक गया। लागू होना platform version, onboarding और tamper
   protection पर निर्भर करता है। [Microsoft इन legacy settings की व्याख्या करता है](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware)।
@@ -76,12 +75,10 @@ C:\Users\<user>\NTUSER.DAT
   - Servers पर Remote Desktop जानबूझकर खोला जाता है।
   - Windows 7 छोटे event logs रखता था और last access times update नहीं करता था।
 - **Defaults version पर निर्भर करते हैं।** कुछ values पहले default थीं:
-  - `NtfsDisableLastAccessUpdate` = 1 Windows 10 1803 से पहले default था। इसे बिना निर्णय के report
-    किया जाता है, लेकिन बाद के version पर हाथ से सेट किया गया `0x80000001` कमज़ोर माना जाता है।
-  - `RunAsPPL`, `LsaCfgFlags` और `UseLogonCredential` की तुलना वर्तमान Windows से की जाती है।
-- **Defender exclusions:** हर path, extension, process या address एक record है। हर exclusion
-  Defender को कमज़ोर करती है। `TemporaryPaths`, जिसे Defender स्वयं जोड़ता है, पर कोई निर्णय नहीं दिया जाता। User-writable folders,
-  `.ps1`/`.exe` extensions और LOLBins (`rundll32.exe`, `powershell.exe`) खोजें।
+  - `NtfsDisableLastAccessUpdate` को Windows संस्करण और नीति के संदर्भ में समझें। Windows 10 1803 और बाद के संस्करणों में `0x80000001` उपयोगकर्ता-प्रबंधित मोड को दर्शाता है जिसमें अंतिम एक्सेस समय का अपडेट बंद है। केवल इस मान से यह पता नहीं चलता कि इसे किसने सेट किया या बदलाव इंटरैक्टिव था।
+  - `RunAsPPL`, `LsaCfgFlags` और `UseLogonCredential` के default Windows versions के बीच बदले हैं,
+    इसलिए इन्हें host के version के अनुसार पढ़ें।
+- **Defender exclusions:** हर पथ, एक्सटेंशन, प्रक्रिया या पता एक रिकॉर्ड है। एक्सक्लूज़न सुरक्षा कम कर सकते हैं; `TemporaryPaths` सहित उनके दायरे और स्रोत की जाँच करें। केवल कुंजी का नाम न तो हानिरहित अपवाद और न ही हमलावर गतिविधि का प्रमाण है। उपयोगकर्ता द्वारा लिखे जा सकने वाले फ़ोल्डर, `.ps1`/`.exe` एक्सटेंशन और LOLBins (`rundll32.exe`, `powershell.exe`) देखें।
 - **Policy keys** (`Policy` = True) Group Policy, tools, और उन हमलावरों द्वारा लिखी जाती हैं जो
   जानते हैं कि policies local settings पर भारी पड़ती हैं। इन्हें domain के GPOs से correlate करें।
 - **Event log channels:** केवल 25 security-प्रासंगिक channels report किए जाते हैं, साथ में यह कि Windows
@@ -105,7 +102,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +110,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +128,6 @@ Defender exclusion सूचीबद्ध करती है।
 | `Setting` | यह क्या है: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Value: decimal में एक number, एक string, या स्वयं exclusion। जब value setting के type का न हो तो खाली। |
 | `Meaning` | Value का क्या अर्थ है। |
-| `WeakensDefault` | `True` जब value उसे कमज़ोर करता है जो वर्तमान Windows उसके बिना करता है, `False` जब नहीं करता, खाली जब यह लागू नहीं होता (आकार, port, AMSI provider) या बताया नहीं जा सकता। |
 | `Policy` | क्या key किसी `Policies` key के अंतर्गत है। |
 | `KeyPath`, `ValueName` | Key और value। किसी exclusion का value नाम excluded item होता है; AMSI provider का कोई नहीं होता। |
 | `KeyLastWrittenUTC` | Key का last write। |
@@ -142,7 +137,7 @@ Defender exclusion सूचीबद्ध करती है।
 
 ## जाँच की रणनीति { #investigation-strategy }
 
-1. हर host पर `--weakened-only` के साथ चलाएँ, और hosts की एक-दूसरे से तुलना करें: ऐसी setting
+1. हर host पर Juntei के साथ चलाएँ, और hosts की एक-दूसरे से तुलना करें: ऐसी setting
    जो केवल एक host पर है, अलग से दिखती है।
 2. हर Defender exclusion को host पर मिले tools और Defender के logs से जाँचें
    (Event 5007 configuration बदलाव दर्ज करता है)।
@@ -162,3 +157,5 @@ Defender exclusion सूचीबद्ध करती है।
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

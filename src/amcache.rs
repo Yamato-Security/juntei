@@ -19,11 +19,12 @@ use crate::cli::{AmcacheOptions, OutputType};
 use crate::color::JunteiColor;
 use crate::progress;
 use crate::util::{self, error_msg, fmt_num, p, p_label};
-use amcache_forensic::output::{OutputOptions, write_csv_directory, write_jsonl, write_text};
-use amcache_forensic::{AmcacheReport, AmcacheSchema, analyze_bytes};
-use forensicnomicon::report::Observation;
+use amcache_forensic::output::{
+    OutputOptions, write_inventory_csv_directory, write_inventory_jsonl, write_inventory_text,
+};
+use amcache_forensic::{AmcacheReport, AmcacheSchema, parse_bytes};
 use indicatif::ProgressBar;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -43,7 +44,7 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
     if output_type == OutputType::Csv && opts.output.is_none() {
         report_error(
             None,
-            "CSV output needs -o <DIR>: the summary, findings, files and devices are separate tables.",
+            "CSV output needs -o <DIR>: the summary, files and devices are separate tables.",
         );
         return 1;
     }
@@ -180,20 +181,22 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
                 } else {
                     out.to_path_buf()
                 };
-                write_csv_directory(&dir, &source, &report, options).and_then(|mut paths| {
-                    for path in &paths {
-                        crate::amcache_output::csv(path)?;
-                    }
-                    saved.append(&mut paths);
-                    Ok(())
-                })
+                write_inventory_csv_directory(&dir, &source, &report, options).and_then(
+                    |mut paths| {
+                        for path in &paths {
+                            crate::amcache_output::csv(path)?;
+                        }
+                        saved.append(&mut paths);
+                        Ok(())
+                    },
+                )
             }
             (OutputType::Json | OutputType::Jsonl, Some(w)) => {
                 let mut adapter = crate::amcache_output::JsonOutput::new(
                     &mut **w,
                     output_type == OutputType::Json,
                 );
-                write_jsonl(&mut adapter, &source, &report, options)
+                write_inventory_jsonl(&mut adapter, &source, &report, options)
                     .and_then(|()| adapter.finish().map_err(Into::into))
             }
             (OutputType::Text, Some(w)) => {
@@ -204,13 +207,13 @@ pub fn run(opts: &AmcacheOptions) -> i32 {
                 };
                 writeln!(w, "{header}")
                     .map_err(Into::into)
-                    .and_then(|()| write_text(&mut *w, &report, options))
+                    .and_then(|()| write_inventory_text(&mut *w, &report, options))
             }
             (_, None) => {
                 // the text report on the terminal
                 p_label(no_color, "Amcache hive: ", &source);
                 let mut out = io::stdout().lock();
-                let res = write_text(&mut out, &report, options);
+                let res = write_inventory_text(&mut out, &report, options);
                 out.flush().ok();
                 p(None, "", true);
                 res
@@ -266,7 +269,10 @@ fn read_report(
 ) -> Result<(AmcacheReport, registry::Recovery), String> {
     let (hive, recovery) = registry::open(path).map_err(|e| e.to_string())?;
     note(&recovery);
-    let report = analyze_bytes(hive.bytes()).map_err(|e| e.to_string())?;
+    let report = AmcacheReport {
+        amcache: parse_bytes(hive.bytes()).map_err(|e| e.to_string())?,
+        anomalies: Vec::new(),
+    };
     Ok((report, recovery))
 }
 
@@ -281,8 +287,6 @@ struct Totals {
     devices: usize,
     recovered: usize,
     unrecovered: usize,
-    /// severity (`HIGH`, `MEDIUM`, …) → findings
-    findings: BTreeMap<String, usize>,
 }
 
 impl Totals {
@@ -294,16 +298,6 @@ impl Totals {
         }
         self.files += report.amcache.file_entries.len();
         self.devices += report.amcache.device_entries.len();
-        for anomaly in &report.anomalies {
-            let severity = anomaly
-                .severity()
-                .map_or_else(|| "INFO".to_string(), |s| s.to_string());
-            *self.findings.entry(severity).or_default() += 1;
-        }
-    }
-
-    fn finding_count(&self) -> usize {
-        self.findings.values().sum()
     }
 }
 
@@ -339,24 +333,6 @@ fn print_summary(t: &Totals, no_color: bool) {
     );
     p_label(no_color, "Inventoried executables: ", &fmt_num(t.files));
     p_label(no_color, "Inventoried devices: ", &fmt_num(t.devices));
-    p(JunteiColor::Green.rdg(no_color), "Findings: ", false);
-    p(None, &fmt_num(t.finding_count()), false);
-    // most severe first, each in its color
-    let order = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"];
-    let mut first = true;
-    for severity in order {
-        let Some(n) = t.findings.get(severity) else {
-            continue;
-        };
-        p(None, if first { " (" } else { ", " }, false);
-        first = false;
-        p(
-            JunteiColor::for_severity(severity).and_then(|c| c.rdg(no_color)),
-            &format!("{}: {}", severity.to_ascii_lowercase(), fmt_num(*n)),
-            false,
-        );
-    }
-    p(None, if first { "" } else { ")" }, true);
 }
 
 /// Refuse to overwrite existing results without `-C`, and a CSV directory that is a file.

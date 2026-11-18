@@ -269,7 +269,6 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` और `Registry-SystemInfo.csv` शामिल हैं।
 सामान्य hive keys और values `Registry-Dump.csv` में होते हैं। Amcache tables
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` और `Registry-Amcache-Summary.csv` हैं। Jump Lists
+Registry-Amcache-Files.csv और `Registry-Amcache-Summary.csv` हैं। Jump Lists
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` और
 `JumpLists-CustomDestinations.csv` का उपयोग करती हैं। Amcache या Jump Lists की कोई subdirectories नहीं होतीं।
 SRUM tables अपनी श्रेणी के ठीक अंतर्गत `SRUM-` filenames का उपयोग करती हैं, उदाहरण के लिए
@@ -522,10 +521,12 @@ output format में भेद करते हैं। सफल run के
 parser या export विफल हो तो उन्हें बनाए रखा जाता है। अतिरिक्त processing समय और अस्थायी disk space की योजना बनाएँ।
 
 **JSON mode** में, Juntei साक्ष्य को फिर से parse किए बिना मौजूदा परिणामों को compact JSONL में stream करता है।
-Amcache reports को native JSONL जैसे ही अलग-अलग summary, finding, file और device
+Amcache reports को native JSONL जैसे ही अलग-अलग summary, file और device
 records में विस्तारित किया जाता है। **JSONL mode** में, मौजूदा annotated records को सीधे संयुक्त किया जाता है।
 सभी modes समान SIEM record संरचना का उपयोग करते हैं। Dataset native timestamps और आर्टिफ़ैक्ट
 fields बनाए रखता है; यह कोई सामान्य event timestamp नहीं गढ़ता और न ही विषम आर्टिफ़ैक्ट को वैश्विक रूप से sort करता है।
+
+`Findings` तालिका केवल पुराने रिपोर्ट में मौजूद होने पर सुरक्षित रखी जाती है; नया पार्सर आउटपुट इसे नहीं बनाता।
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

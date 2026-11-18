@@ -38,7 +38,5 @@ Todas las páginas de artefactos siguen la misma secuencia:
 6. **Cómo correlacionarlo** con evidencias independientes.
 7. **Más información** para la investigación a bajo nivel.
 
-!!! danger "No equipare un hallazgo del analizador con malicia"
-    Los hallazgos de Juntei identifican patrones que merece la pena revisar, como un nombre de binario del sistema fuera de
-    `System32`. Los instaladores, los administradores, las capas de compatibilidad y las actualizaciones de software pueden generar
-    registros inusuales. Valídelos con contexto y evidencias independientes.
+!!! danger "No considere los registros inusuales como prueba de actividad maliciosa"
+    Juntei analiza evidencias que el analista debe interpretar. Las comprobaciones de Persistence Hunter siguen disponibles, pero una entrada de inicio configurada también puede corresponder a una administración legítima. Correlacione las observaciones con el contexto y evidencias independientes antes de considerarlas maliciosas.

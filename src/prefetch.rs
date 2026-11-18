@@ -14,9 +14,8 @@
 //! `parse-file prefetch`: Windows Prefetch parsing with Yamato Security's ys-prefetch-parser (a fork of
 //! Samuel Garcés Marín's frnsc-prefetch that matches libscca and does not crash on damaged files):
 //! one record per prefetch file, or per execution with `-T`, as CSV, JSON or JSONL, with
-//! Hayabusa's input options, progress bar and results summary. The findings follow
-//! prefetch-forensic's audit: a Windows system binary loaded from outside `System32`, and an
-//! executable run from a staging directory.
+//! Hayabusa's input options, progress bar and results summary. Detection policy is handled
+//! by Juntei Pro; this parser preserves execution metadata and parsing diagnostics.
 
 use crate::cli::{PrefetchOptions, PrefetchOutputType};
 use crate::color::JunteiColor;
@@ -33,9 +32,6 @@ use std::path::{Path, PathBuf};
 
 /// Parse errors printed; the rest are only counted.
 const MAX_PRINTED_ERRORS: usize = 20;
-/// High findings listed in the summary; the rest (and every medium finding, which installers in
-/// Temp and ProgramData raise often) are only counted.
-const MAX_PRINTED_FINDINGS: usize = 20;
 /// Larger files are not prefetch files (the parser's own limit).
 const MAX_PREFETCH_SIZE: u64 = 64 * 1024 * 1024;
 /// Prefetch keeps the last eight run times.
@@ -197,7 +193,6 @@ struct Parsed {
     executable_path: String,
     path_validated: bool,
     path_ambiguous: bool,
-    findings: Vec<Finding>,
 }
 
 fn parse_file(path: &Path) -> Result<Parsed, String> {
@@ -221,58 +216,13 @@ fn parse_file(path: &Path) -> Result<Parsed, String> {
     let executable_path = resolved.path.to_string();
     let path_validated = resolved.hash_validated;
     let path_ambiguous = resolved.ambiguous;
-    let findings = findings(&pf, &executable_path);
     Ok(Parsed {
         source: path.to_string_lossy().to_string(),
         pf,
         executable_path,
         path_validated,
         path_ambiguous,
-        findings,
     })
-}
-
-/// A triage observation about one prefetch file.
-struct Finding {
-    /// `high` or `medium`
-    severity: &'static str,
-    code: &'static str,
-    mitre: &'static str,
-    description: String,
-}
-
-/// prefetch-forensic's two high-precision checks on the executable's own path.
-fn findings(pf: &PrefetchFile, path: &str) -> Vec<Finding> {
-    let mut out = Vec::new();
-    if path == pf.name {
-        // the path of the executable is not among the loaded files
-        return out;
-    }
-    let upper = path.to_ascii_uppercase();
-    let in_system32 = upper.contains(r"\SYSTEM32\") || upper.contains(r"\SYSWOW64\");
-    if forensicnomicon::processes::is_system32_binary(&pf.name) && !in_system32 {
-        out.push(Finding {
-            severity: "high",
-            code: "SystemBinaryRelocated",
-            mitre: "T1036.005",
-            description: format!(
-                "{} is a Windows system binary but was loaded from {path} (masquerading?)",
-                pf.name
-            ),
-        });
-    }
-    if forensicnomicon::heuristics::paths::is_suspicious_exec_path(path) {
-        out.push(Finding {
-            severity: "medium",
-            code: "SuspiciousExecutionPath",
-            mitre: "T1204",
-            description: format!(
-                "{} was run from {path}, a directory commonly used to stage malware",
-                pf.name
-            ),
-        });
-    }
-    out
 }
 
 /// A FILETIME as an RFC 3339 UTC time, like the timestamps of `parse-ntfs mft`; empty when it is 0.
@@ -324,7 +274,6 @@ const CSV_HEADER: &[&str] = &[
     "VolumeCreated",
     "DirectoryCount",
     "FileCount",
-    "Findings",
     "Files",
     "Directories",
     "PathValidated",
@@ -379,7 +328,6 @@ fn csv_row(r: &Parsed) -> Vec<String> {
         ),
         directories.len().to_string(),
         pf.metrics.len().to_string(),
-        join(r.findings.iter().map(|f| f.code.to_string()).collect()),
         join(pf.metrics.iter().map(|m| m.file.clone()).collect()),
         join(directories),
         r.path_validated.to_string(),
@@ -419,12 +367,6 @@ fn json_record(r: &Parsed) -> Value {
             }
             file
         }).collect::<Vec<_>>(),
-        "findings": r.findings.iter().map(|f| json!({
-            "severity": f.severity,
-            "code": f.code,
-            "mitre": f.mitre,
-            "description": f.description,
-        })).collect::<Vec<_>>(),
     })
 }
 
@@ -543,58 +485,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
                 filetime(*first),
                 filetime(*last)
             ),
-        );
-    }
-
-    let findings: Vec<(&Parsed, &Finding)> = parsed
-        .iter()
-        .flat_map(|r| r.findings.iter().map(move |f| (r, f)))
-        .collect();
-    p(JunteiColor::Green.rdg(no_color), "Findings: ", false);
-    p(None, &fmt_num(findings.len()), false);
-    let mut first = true;
-    for severity in ["high", "medium"] {
-        let n = findings
-            .iter()
-            .filter(|(_, f)| f.severity == severity)
-            .count();
-        if n == 0 {
-            continue;
-        }
-        p(None, if first { " (" } else { ", " }, false);
-        first = false;
-        p(
-            JunteiColor::for_severity(severity).and_then(|c| c.rdg(no_color)),
-            &format!("{severity}: {}", fmt_num(n)),
-            false,
-        );
-    }
-    p(None, if first { "" } else { ")" }, true);
-    let high: Vec<_> = findings
-        .iter()
-        .filter(|(_, f)| f.severity == "high")
-        .collect();
-    for (r, f) in high.iter().take(MAX_PRINTED_FINDINGS) {
-        p(None, "  ", false);
-        p(
-            JunteiColor::for_severity(f.severity).and_then(|c| c.rdg(no_color)),
-            &format!("[{}]", f.severity.to_ascii_uppercase()),
-            false,
-        );
-        p(
-            None,
-            &format!(" {} ({}) - {}", f.description, f.mitre, r.source),
-            true,
-        );
-    }
-    if high.len() > MAX_PRINTED_FINDINGS {
-        p(
-            None,
-            &format!(
-                "  ... {} more (saved with -o)",
-                fmt_num(high.len() - MAX_PRINTED_FINDINGS)
-            ),
-            true,
         );
     }
 }

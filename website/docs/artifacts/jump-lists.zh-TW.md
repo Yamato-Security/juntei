@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei 保留鑑識成品記錄、中繼資料及剖析診斷資訊。各剖析器的偵測規則由 Juntei Pro 評估。Persistence Hunter 的現有檢查與原則設定檔仍可使用。
+
 ## 什麼是 Jump Lists { #what-jump-lists-are }
 
 Jump Lists 是從工作列與「開始」功能表的應用程式項目所顯示之選單背後的資料。自動 Jump
@@ -100,3 +102,5 @@ JSON/JSONL 另外保留 DestList 標頭、每個項目的分數／檢查碼／�
 - [Microsoft：Shell Link 格式（MS-SHLLINK）](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [JumpList 剖析器測試／參考專案](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

@@ -269,7 +269,6 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Les noms de fichiers CSV par défaut sont `Registry-SAM.csv`, `LNK.csv`, `Recycl
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` et `Registry-SystemInfo.csv`.
 Les clés et valeurs générales des ruches se trouvent dans `Registry-Dump.csv`. Les tables Amcache sont
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` et `Registry-Amcache-Summary.csv`. Les Jump Lists utilisent
+Registry-Amcache-Files.csv et `Registry-Amcache-Summary.csv`. Les Jump Lists utilisent
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` et
 `JumpLists-CustomDestinations.csv`. Il n'existe pas de sous-répertoires Amcache ou Jump Lists.
 Les tables SRUM utilisent des noms de fichiers `SRUM-` directement sous leur catégorie, par exemple
@@ -522,10 +521,12 @@ leur format de sortie. Les fichiers JSONL temporaires sont supprimés après une
 parseur ou l'export échoue. Prévoyez le temps de traitement et l'espace disque temporaire supplémentaires.
 
 En **mode JSON**, Juntei transforme en flux les résultats existants en JSONL compact sans réanalyser les
-preuves. Les rapports Amcache sont développés en enregistrements individuels de résumé, de constat, de fichier et de périphérique,
+preuves. Les rapports Amcache sont développés en enregistrements individuels de résumé, de fichier et de périphérique,
 identiques à ceux du JSONL natif. En **mode JSONL**, les enregistrements annotés existants sont combinés directement.
 Tous les modes utilisent la même structure d'enregistrement SIEM. Le jeu de données conserve les horodatages natifs et les champs
 des artefacts ; il n'invente pas d'horodatage d'événement commun et ne trie pas globalement des artefacts hétérogènes.
+
+Une table `Findings` est conservée uniquement si elle figure dans un ancien rapport ; les nouvelles sorties du parseur n’en créent pas.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

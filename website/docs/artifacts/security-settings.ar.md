@@ -1,5 +1,7 @@
 # إعدادات الأمان { #security-settings }
 
+يحتفظ Juntei بسجلات الأدلة والبيانات الوصفية وتشخيصات التحليل. تُقيَّم قواعد الكشف الخاصة بالمحللات في Juntei Pro. تظل فحوص Persistence Hunter وملفات سياسته الحالية متاحة.
+
 ## ما هي { #what-they-are }
 
 يغيّر المهاجمون إعدادات الأمان في Windows للبقاء مخفيين وللوصول إلى بيانات الاعتماد. فهم يوقفون
@@ -14,8 +16,7 @@ Remote Desktop، ويوقفون جدار الحماية، ويُسكتون تس�
   Windows Script Host.
 
 يُبلغ `parse-registry security-settings` عن كل إعداد يعثر عليه بوصفه سجلًا. ولكل سجل قيمة الإعداد، وما
-تعنيه القيمة، وما إذا كانت **تُضعف الوضع الافتراضي**: أي ما إذا كانت توقف حمايةً أو مصدرًا للأدلة، أو
-تخفّضه إلى ما دون ما يفعله Windows الحالي (10 و11) في غياب هذه القيمة.
+تعنيه القيمة.
 
 <span class="evidence-strength">أفضل استنتاج:</span> كانت لهذا الإعداد هذه القيمة عند حفظ الخلية،
 وكُتب المفتاح آخر مرة في هذا الوقت. والإعداد المُضعَف خيط للتحقيق، لا دليل على الاختراق. إذ يضبط
@@ -58,8 +59,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **التكوين المخزن ليس حالة الحماية الفعلية.** يُبلَّغ عن قيم سجل Windows المجمّعة وعن صفوف التشخيص
   لقوائم القيم التالفة. وقد تعكس البيانات المفقودة القيمَ الافتراضية، أو مصادر لم تُجمع، أو آلية إدارة
-  أخرى؛ وهي ليست دليلًا على أن الحماية مفعّلة أو معطّلة. ويضع `WeakensDefault` علامة على الإعدادات التي
-  يمكن أن تخفّض خط الأساس المذكور عند الالتزام بها.
+  أخرى؛ وهي ليست دليلًا على أن الحماية مفعّلة أو معطّلة.
 - **قد تُتجاهل علامات Defender القديمة.** لا يثبت `DisableAntiSpyware` و`DisableAntivirus` أن Defender
   توقف. إذ تعتمد قابلية التطبيق على إصدار المنصة، والإلحاق (onboarding)، والحماية من العبث (tamper
   protection). [توضح Microsoft هذه الإعدادات القديمة](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -73,12 +73,10 @@ C:\Users\<user>\NTUSER.DAT
   - يُفتح Remote Desktop عمدًا على الخوادم.
   - كان Windows 7 يحتفظ بسجلات أحداث أصغر ولم يكن يحدّث أوقات آخر وصول.
 - **تعتمد القيم الافتراضية على الإصدار.** كانت بعض القيم هي الافتراضية سابقًا:
-  - كانت `NtfsDisableLastAccessUpdate` = 1 هي القيمة الافتراضية قبل Windows 10 1803. ويُبلَّغ عنها
-    دون حكم، لكن `0x80000001`، إذا ضُبطت يدويًا على إصدار لاحق، تُعد مُضعِفة.
-  - تُقارن `RunAsPPL` و`LsaCfgFlags` و`UseLogonCredential` بإصدار Windows الحالي.
-- **استثناءات Defender:** كل مسار أو امتداد أو عملية أو عنوان يمثّل سجلًا. وكل استثناء يُضعف Defender.
-  وليس لـ `TemporaryPaths`، التي يضيفها Defender بنفسه، حكم. ابحث عن المجلدات القابلة للكتابة من قِبل
-  المستخدم، والامتدادات `.ps1`/`.exe`، وLOLBins (`rundll32.exe`، `powershell.exe`).
+  - فسّر `NtfsDisableLastAccessUpdate` وفق إصدار Windows وسياق السياسات. في Windows 10 1803 والإصدارات الأحدث، تمثل `0x80000001` وضع إدارة المستخدم مع تعطيل تحديث وقت آخر وصول. هذه القيمة وحدها لا تحدد من ضبطها ولا تثبت أن التغيير تم تفاعليًا.
+  - تغيّرت القيم الافتراضية لـ `RunAsPPL` و`LsaCfgFlags` و`UseLogonCredential` بين إصدارات Windows،
+    لذا اقرأها وفق إصدار الجهاز.
+- **استثناءات Defender:** كل مسار أو امتداد أو عملية أو عنوان يمثّل سجلًا. قد تقلل الاستثناءات الحماية؛ راجع نطاقها ومصدرها، بما في ذلك `TemporaryPaths`. اسم المفتاح وحده لا يثبت أن الاستثناء غير ضار ولا أنه نشاط لمهاجم. ابحث عن المجلدات القابلة للكتابة من المستخدم، والامتدادات `.ps1`/`.exe`، وLOLBins (`rundll32.exe`، `powershell.exe`).
 - **مفاتيح النُهُج** (`Policy` = True) تكتبها Group Policy، والأدوات، والمهاجمون الذين يعرفون أن النُهُج
   تتغلب على الإعدادات المحلية. اربطها بكائنات GPO الخاصة بالمجال.
 - **قنوات سجل الأحداث:** لا يُبلَّغ إلا عن 25 قناة ذات صلة بالأمان، مع بيان ما إذا كان Windows يفعّل كلًا
@@ -102,7 +100,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -111,7 +108,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -129,7 +126,6 @@ Defender.
 | `Setting` | ماهية الإعداد: `defender_disable_realtime_monitoring`، `defender_exclusion_path`، `uac_local_account_token_filter_policy`، `wdigest_use_logon_credential`، `rdp_deny_connections`، `powershell_script_block_logging`، `event_channel_enabled`، … |
 | `Value` | القيمة: رقم بالنظام العشري، أو سلسلة نصية، أو الاستثناء نفسه. وتكون فارغة عندما لا تكون القيمة من نوع الإعداد. |
 | `Meaning` | ما تعنيه القيمة. |
-| `WeakensDefault` | `True` عندما تُضعف القيمة ما يفعله Windows الحالي في غيابها، و`False` عندما لا تُضعفه، وفارغة عندما لا ينطبق ذلك (حجم، أو منفذ، أو موفّر AMSI) أو تعذّر تحديده. |
 | `Policy` | ما إذا كان المفتاح تحت مفتاح `Policies`. |
 | `KeyPath`، `ValueName` | المفتاح والقيمة. واسم قيمة الاستثناء هو العنصر المستثنى؛ وليس لموفّر AMSI اسم قيمة. |
 | `KeyLastWrittenUTC` | آخر كتابة للمفتاح. |
@@ -139,7 +135,7 @@ Defender.
 
 ## استراتيجية التحقيق { #investigation-strategy }
 
-1. شغّله مع `--weakened-only` على كل مضيف، وقارن المضيفات بعضها ببعض: فالإعداد الذي لا يوجد إلا على
+1. شغّله مع Juntei على كل مضيف، وقارن المضيفات بعضها ببعض: فالإعداد الذي لا يوجد إلا على
    مضيف واحد يبرز.
 2. افحص كل استثناء من استثناءات Defender مقابل الأدوات الموجودة على المضيف وفي سجلات Defender
    (يسجّل الحدث 5007 تغييرات التكوين).
@@ -159,3 +155,5 @@ Defender.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

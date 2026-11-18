@@ -1,5 +1,7 @@
 # Prefetch { #prefetch }
 
+Juntei आर्टिफ़ैक्ट रिकॉर्ड, मेटाडेटा और पार्सिंग निदान सुरक्षित रखता है। पार्सर-विशिष्ट पहचान नियमों का मूल्यांकन Juntei Pro में होता है। Persistence Hunter की मौजूदा जाँच और नीति प्रोफ़ाइल उपलब्ध रहती हैं।
+
 ## Prefetch क्या है { #what-prefetch-is }
 
 Windows Prefetch फ़ाइलें ऐप्लिकेशन के startup को optimize करने के लिए उपयोग की जाने वाली जानकारी दर्ज करती हैं। किसी प्रोग्राम-विशिष्ट
@@ -36,7 +38,6 @@ Windows 8+ फ़ाइलें भी शामिल हैं। पूर�
   मेल नहीं खाता, उसे बनाए रखा जाता है और PathValidated को false रखा जाता है। Hosting processes
   command-line डेटा को हैश में शामिल कर सकते हैं, इसलिए असत्यापित पथ अपने-आप गलत नहीं होता।
 - किसी `.pf` स्रोत फ़ाइल के file-system timestamps embedded run times से अलग होते हैं।
-- `Findings` hunting के अवलोकन हैं। Installers और वैध administration अक्सर staging paths का उपयोग करते हैं।
 
 ## Juntei से parse करें { #parse-with-juntei }
 
@@ -82,7 +83,6 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `VolumeCreated` | दर्ज volume creation times, executable creation times नहीं। |
 | `DirectoryCount` | दर्ज directory strings की संख्या। |
 | `FileCount` | दर्ज loaded-file references की संख्या। |
-| `Findings` | Juntei के अवलोकन, जैसे स्थानांतरित system binaries या संदिग्ध execution paths। मैन्युअल रूप से समीक्षा करें। |
 | `Files` | उपलब्ध NTFS references के साथ loaded/संदर्भित फ़ाइलें। DLL/path pivot के लिए उत्कृष्ट, फ़ाइल की मंशा का प्रमाण नहीं। |
 | `Dir` | Startup से जुड़े directory strings। तब उपयोगी जब अलग-अलग loaded-file paths अधूरे हों। |
 

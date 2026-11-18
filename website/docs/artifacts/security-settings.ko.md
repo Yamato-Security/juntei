@@ -1,5 +1,7 @@
 # 보안 설정 { #security-settings }
 
+Juntei는 아티팩트 레코드, 메타데이터 및 파싱 진단 정보를 보존합니다. 파서별 탐지 규칙은 Juntei Pro에서 평가합니다. Persistence Hunter의 기존 검사와 정책 프로필은 계속 사용할 수 있습니다.
+
 ## 개요 { #what-they-are }
 
 공격자는 탐지를 피하고 자격 증명에 접근하기 위해 Windows의 보안 설정을 변경합니다. Microsoft Defender를
@@ -12,9 +14,8 @@
   데스크톱, 방화벽 프로필, SMBv1, 마지막 액세스 시간, 각 이벤트 로그의 크기.
 - **`NTUSER.DAT`:** 사용자의 PowerShell 실행 정책 및 로깅 정책, 그리고 Windows Script Host의 AMSI.
 
-`parse-registry security-settings`는 발견한 각 설정을 하나의 레코드로 보고합니다. 각 레코드에는 설정 값,
-그 값의 의미, 그리고 해당 값이 **기본값을 약화시키는지** 여부가 포함됩니다. 즉, 보호 기능이나 증거 출처를
-끄는지, 또는 해당 값이 없을 때 현재 Windows(10 및 11)가 동작하는 수준보다 낮추는지를 나타냅니다.
+`parse-registry security-settings`는 발견한 각 설정을 하나의 레코드로 보고합니다. 각 레코드에는 설정 값과
+그 값의 의미가 포함됩니다.
 
 <span class="evidence-strength">가장 타당한 결론:</span> 하이브가 저장된 시점에 이 설정은 이 값을 가지고
 있었으며, 키는 이 시간에 마지막으로 기록되었습니다. 약화된 설정은 단서이지 침해의 증명이 아닙니다.
@@ -56,8 +57,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **저장된 구성은 실제로 적용되는 보호 상태가 아닙니다.** 수집된 레지스트리 값과 손상된 값 목록에 대한 진단
   행이 보고됩니다. 데이터가 없다는 것은 기본값, 수집되지 않은 출처, 또는 다른 관리 메커니즘을 반영할 수
-  있으며, 보호 기능이 활성화되었거나 비활성화되었다는 증명이 아닙니다. `WeakensDefault`는 해당 설정이
-  적용될 경우 명시된 기준을 낮출 수 있는 설정을 표시합니다.
+  있으며, 보호 기능이 활성화되었거나 비활성화되었다는 증명이 아닙니다.
 - **레거시 Defender 플래그는 무시될 수 있습니다.** `DisableAntiSpyware`와 `DisableAntivirus`는 Defender가
   중지되었음을 증명하지 않습니다. 적용 여부는 플랫폼 버전, 온보딩 및 변조 방지(tamper protection)에 따라
   달라집니다. [Microsoft의 레거시 설정 설명](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware)을 참조하십시오.
@@ -71,12 +71,10 @@ C:\Users\<user>\NTUSER.DAT
   - 서버에서는 원격 데스크톱을 의도적으로 열어 둡니다.
   - Windows 7은 이벤트 로그 크기가 더 작았고 마지막 액세스 시간을 업데이트하지 않았습니다.
 - **기본값은 버전에 따라 다릅니다.** 일부 값은 예전에는 기본값이었습니다.
-  - `NtfsDisableLastAccessUpdate` = 1은 Windows 10 1803 이전의 기본값이었습니다. 이 값은 판정 없이
-    보고되지만, 이후 버전에서 수동으로 설정한 `0x80000001`은 약화된 것으로 판정됩니다.
-  - `RunAsPPL`, `LsaCfgFlags` 및 `UseLogonCredential`은 현재 Windows와 비교됩니다.
-- **Defender 제외 항목:** 각 경로, 확장자, 프로세스 또는 주소가 하나의 레코드입니다. 모든 제외 항목은
-  Defender를 약화시킵니다. Defender가 스스로 추가하는 `TemporaryPaths`에는 판정이 없습니다. 사용자가 쓰기
-  가능한 폴더, `.ps1`/`.exe` 확장자 및 LOLBin(`rundll32.exe`, `powershell.exe`)을 찾으십시오.
+  - `NtfsDisableLastAccessUpdate`는 Windows 버전과 정책 맥락에 따라 해석하십시오. Windows 10 1803 이상에서 `0x80000001`은 마지막 액세스 시간 업데이트가 비활성화된 사용자 관리 모드를 나타냅니다. 이 값만으로 누가 설정했는지 또는 대화형 작업으로 변경했는지는 알 수 없습니다.
+  - `RunAsPPL`, `LsaCfgFlags` 및 `UseLogonCredential`의 기본값은 Windows 버전마다 바뀌었으므로
+    호스트의 버전에 맞춰 해석하십시오.
+- **Defender 제외 항목:** 각 경로, 확장자, 프로세스 또는 주소가 하나의 레코드입니다. 제외 항목은 보호 수준을 낮출 수 있으므로 `TemporaryPaths`를 포함하여 범위와 출처를 검토하십시오. 키 이름만으로 무해한 예외나 공격자 활동을 판단할 수 없습니다. 사용자가 쓰기 가능한 폴더, `.ps1`/`.exe` 확장자 및 LOLBin(`rundll32.exe`, `powershell.exe`)을 확인하십시오.
 - **정책 키**(`Policy` = True)는 그룹 정책, 도구, 그리고 정책이 로컬 설정보다 우선한다는 것을 아는 공격자가
   기록합니다. 도메인의 GPO와 상관 분석하십시오.
 - **이벤트 로그 채널:** 보안 관련 채널 25개만 보고되며, Windows가 각 채널을 기본적으로 켜는지 여부도 함께
@@ -100,7 +98,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -109,7 +106,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -126,7 +123,6 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 | `Setting` | 설정의 종류입니다: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | 값입니다: 10진수 숫자, 문자열, 또는 제외 항목 자체입니다. 값이 설정의 유형과 다르면 비어 있습니다. |
 | `Meaning` | 값의 의미입니다. |
-| `WeakensDefault` | 해당 값이 없을 때 현재 Windows가 하는 동작을 약화시키면 `True`, 그렇지 않으면 `False`이며, 해당되지 않거나(크기, 포트, AMSI 공급자) 판단할 수 없으면 비어 있습니다. |
 | `Policy` | 키가 `Policies` 키 아래에 있는지 여부입니다. |
 | `KeyPath`, `ValueName` | 키와 값입니다. 제외 항목의 값 이름은 제외된 항목 자체이며, AMSI 공급자에는 값 이름이 없습니다. |
 | `KeyLastWrittenUTC` | 키의 마지막 쓰기 시간입니다. |
@@ -136,7 +132,7 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 
 ## 조사 전략 { #investigation-strategy }
 
-1. 모든 호스트에서 `--weakened-only`로 실행하고 호스트끼리 비교하십시오. 한 호스트에만 있는 설정이
+1. 모든 호스트에서 Juntei로 실행하고 호스트끼리 비교하십시오. 한 호스트에만 있는 설정이
    두드러집니다.
 2. 각 Defender 제외 항목을 호스트에서 발견된 도구 및 Defender 로그(이벤트 5007은 구성 변경을 기록함)와
    대조하십시오.
@@ -156,3 +152,5 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

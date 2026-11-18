@@ -18,22 +18,20 @@
 //! identifiers of the target, its path and its link. A custom jump list
 //! (`*.customDestinations-ms`) is the application's own menu: its categories, tasks and links.
 //! Written as two CSV tables, or every field as JSON / JSONL,
-//! with Hayabusa's input options, progress bar and results summary. The summary flags links left
-//! over from an earlier version of a custom list, streams no `DestList` entry names, items staged
-//! for a CD or DVD burn, and shells or script hosts started with arguments.
+//! with Hayabusa's input options, progress bar and results summary. Leftover and unlisted links,
+//! shell-item types and full command arguments remain in the parsed records.
 
 use crate::cli::{JumpListOptions, JumpListOutputType};
 use crate::color::JunteiColor;
 use crate::lnk::{
-    attributes, block_names, drive_type, droid, filetime, flags, launches, link_json, link_target,
-    properties_json, system_time, target_mft,
+    attributes, block_names, drive_type, droid, filetime, flags, link_json, properties_json,
+    system_time, target_item_types, target_mft,
 };
 use crate::progress;
 use crate::util::{self, check_output, error_msg, fmt_num, p, p_label};
 use indicatif::ProgressBar;
 use jumplist::{Automatic, Custom, Destination, JumpList, Kind};
 use serde_json::{Value, json};
-use shell::item::Kind as ItemKind;
 use shell::lnk::Link;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
@@ -43,8 +41,6 @@ use std::time::SystemTime;
 
 /// Parse errors and jump list problems printed; the rest are only counted.
 const MAX_PRINTED_ERRORS: usize = 20;
-/// Items listed per finding in the summary.
-const MAX_PRINTED_FINDINGS: usize = 10;
 /// Applications listed in the summary.
 const MAX_PRINTED_APPS: usize = 5;
 /// Larger files are not jump lists (Windows keeps a few hundred entries per application).
@@ -373,13 +369,14 @@ fn link_columns(l: Option<&Link>, automatic: bool) -> Vec<String> {
 /// The link columns after the common ones.
 fn extra_link_columns(l: Option<&Link>) -> Vec<String> {
     l.map_or_else(
-        || vec![String::new(); 4],
+        || vec![String::new(); 5],
         |l| {
             vec![
                 l.network_path.clone(),
                 l.name.clone(),
                 l.icon_location.clone(),
                 l.problems.join("; "),
+                target_item_types(l).join("|"),
             ]
         },
     )
@@ -455,8 +452,16 @@ const AUTOMATIC_EXTRA: &[&str] = &[
     "Name",
     "IconLocation",
     "Problems",
+    "TargetItemTypes",
 ];
-const CUSTOM_EXTRA: &[&str] = &["Notes", "NetworkPath", "Name", "IconLocation", "Problems"];
+const CUSTOM_EXTRA: &[&str] = &[
+    "Notes",
+    "NetworkPath",
+    "Name",
+    "IconLocation",
+    "Problems",
+    "TargetItemTypes",
+];
 
 fn header(before: &[&str], after: &[&str]) -> Vec<String> {
     before
@@ -823,58 +828,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
     );
     let damaged = parsed.iter().filter(|r| !r.problems().is_empty()).count();
     p_label(no_color, "With problems: ", &fmt_num(damaged));
-
-    let line = |r: &Parsed, what: &str, l: &Link| {
-        let args: String = l.arguments.trim().chars().take(80).collect();
-        format!("  {} ({what}) -> {} {args}", r.source, link_target(l))
-            .trim_end()
-            .to_owned()
-    };
-    let leftover: Vec<String> = custom
-        .iter()
-        .flat_map(|(r, c)| {
-            c.leftover
-                .iter()
-                .map(|o| line(r, &format!("at {}", o.offset), &o.link))
-        })
-        .collect();
-    let unlisted: Vec<String> = automatic
-        .iter()
-        .flat_map(|(r, a)| {
-            a.unlisted.iter().map(|u| match &u.link {
-                Some(l) => line(r, &format!("stream {}", u.name), l),
-                None => format!("  {} (stream {})", r.source, u.name),
-            })
-        })
-        .collect();
-    let burned: Vec<String> = links
-        .iter()
-        .filter(|(_, _, l)| l.target.iter().any(|i| i.kind == ItemKind::CdBurn))
-        .map(|(r, what, l)| line(r, what, l))
-        .collect();
-    let launched: Vec<String> = links
-        .iter()
-        .filter(|(_, _, l)| launches(&link_target(l), &l.arguments))
-        .map(|(r, what, l)| line(r, what, l))
-        .collect();
-    let findings: [(&str, Vec<String>); 4] = [
-        (
-            "Links left over from an earlier version of a custom list: ",
-            leftover,
-        ),
-        (
-            "Link streams no DestList entry names (removed or damaged entries): ",
-            unlisted,
-        ),
-        ("Items staged for a CD or DVD burn: ", burned),
-        ("Shell or script host started with arguments: ", launched),
-    ];
-    for (label, found) in &findings {
-        p_label(no_color, label, &fmt_num(found.len()));
-        for l in found.iter().take(MAX_PRINTED_FINDINGS) {
-            p(None, l, true);
-        }
-    }
 }
 
 /// Whether a file name is a jump list: `*.automaticDestinations-ms` or `*.customDestinations-ms`.

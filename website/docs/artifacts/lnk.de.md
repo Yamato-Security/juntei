@@ -1,5 +1,7 @@
 # LNK-Verknüpfungen { #lnk-shortcuts }
 
+Juntei bewahrt Artefaktdatensätze, Metadaten und Parserdiagnosen. Parserspezifische Erkennungsregeln werden in Juntei Pro ausgewertet. Die bestehenden Prüfungen und Richtlinienprofile von Persistence Hunter bleiben verfügbar.
+
 ## Was LNK-Dateien sind { #what-lnk-files-are }
 
 Windows-Shell-Link-Dateien (`.lnk`) beschreiben ein Ziel sowie Startargumente, Arbeitsverzeichnis, Symbol,
@@ -99,3 +101,5 @@ Die Ziel-FILETIMEs im LNK-Header und die Tracker-Zeiten bleiben umrechenbare abs
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

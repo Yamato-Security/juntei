@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei, artefakt kayıtlarını, meta verileri ve ayrıştırma tanılarını korur. Ayrıştırıcıya özgü tespit kuralları Juntei Pro içinde değerlendirilir. Persistence Hunter mevcut kontrollerini ve politika profillerini korur.
+
 ## ShimCache nedir { #what-shimcache-is }
 
 Windows'un Uygulama Uyumluluğu alt sistemi, uyumluluk/shim davranışını değerlendirirken yürütülebilir dosya yollarını
@@ -57,7 +59,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## Çıktı alanları { #output-fields }
@@ -79,7 +81,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | Yeni biçimlerin kaydettiği mimari (`x64`, `x86`, `ARM64`). |
 | `FileSize`, `LastUpdateTimeUTC` | Mevcut olduğunda Windows XP'ye özgü önbelleğe alınmış meta veriler. |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | Desteklenen girdilerde paketlenmiş uygulama kimliği. Yayımcı kimliği bağlamdır, imza kanıtı değildir. |
-| `Findings` | Yeri değiştirilmiş sistem ikili dosyası veya şüpheli hazırlık (staging) yolu gibi Juntei anomali kodları. Yalnızca ipuçlarıdır. |
 | `RegistryPath`, `RegistryValueName` | Tam kovan anahtarı/değer kaynağı. Doğrulama için koruyun. |
 | `CacheValueSize` | Tek bir girdinin `DataSize` değeri değil, kayıt defteri değerinin tamamının boyutu. |
 | `IsCurrent` | Bu girdinin denetim kümesinin `SYSTEM\Select\Current` değerine eşit olup olmadığı; güvenli biçimde bilinmiyorsa boş. |

@@ -1,5 +1,7 @@
 # Sicherheitseinstellungen { #security-settings }
 
+Juntei bewahrt Artefaktdatensätze, Metadaten und Parserdiagnosen. Parserspezifische Erkennungsregeln werden in Juntei Pro ausgewertet. Die bestehenden Prüfungen und Richtlinienprofile von Persistence Hunter bleiben verfügbar.
+
 ## Was sie sind { #what-they-are }
 
 Angreifer ändern die Sicherheitseinstellungen von Windows, um verborgen zu bleiben und an Anmeldeinformationen zu gelangen. Sie schalten
@@ -16,9 +18,7 @@ diese Einstellungen auf:
   Windows Script Host.
 
 `parse-registry security-settings` meldet jede gefundene Einstellung als Datensatz. Jeder Datensatz enthält den
-Wert der Einstellung, was der Wert bedeutet und ob er den **Standard abschwächt**: ob er einen
-Schutz oder eine Beweisquelle abschaltet oder unter das Niveau senkt, das aktuelles Windows (10 und 11)
-ohne diesen Wert bietet.
+Wert der Einstellung und was der Wert bedeutet.
 
 <span class="evidence-strength">Bestmögliche Schlussfolgerung:</span> Diese Einstellung hatte diesen Wert, als der Hive
 gespeichert wurde, und der Schlüssel wurde zuletzt zu diesem Zeitpunkt geschrieben. Eine abgeschwächte Einstellung ist ein Ansatzpunkt, kein Beweis für eine
@@ -61,8 +61,7 @@ befindet sich möglicherweise nur in den Protokollen.
 
 - **Gespeicherte Konfiguration ist nicht der wirksame Schutzzustand.** Gesicherte Registry-Werte und Diagnosezeilen für beschädigte Wertlisten
   werden gemeldet. Fehlende Daten können auf Standardwerte, nicht gesicherte Quellen oder einen anderen Verwaltungsmechanismus
-  zurückgehen; sie beweisen nicht, dass ein Schutz aktiviert oder deaktiviert ist. `WeakensDefault` kennzeichnet
-  Einstellungen, die die angegebene Basislinie senken können, wenn sie berücksichtigt werden.
+  zurückgehen; sie beweisen nicht, dass ein Schutz aktiviert oder deaktiviert ist.
 - **Veraltete Defender-Flags werden möglicherweise ignoriert.** `DisableAntiSpyware` und `DisableAntivirus` beweisen nicht,
   dass Defender angehalten wurde. Ob sie gelten, hängt von Plattformversion, Onboarding und Manipulationsschutz
   ab. [Microsoft erläutert diese veralteten Einstellungen](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -76,12 +75,10 @@ befindet sich möglicherweise nur in den Protokollen.
   - Remotedesktop wird auf Servern absichtlich geöffnet.
   - Windows 7 hatte kleinere Ereignisprotokolle und aktualisierte die letzten Zugriffszeiten nicht.
 - **Standardwerte hängen von der Version ab.** Einige Werte waren früher der Standard:
-  - `NtfsDisableLastAccessUpdate` = 1 war vor Windows 10 1803 der Standard. Es wird
-    ohne Bewertung gemeldet, doch `0x80000001`, manuell auf einer späteren Version gesetzt, gilt als abgeschwächt.
-  - `RunAsPPL`, `LsaCfgFlags` und `UseLogonCredential` werden mit aktuellem Windows verglichen.
-- **Defender-Ausschlüsse:** Jeder Pfad, jede Erweiterung, jeder Prozess und jede Adresse ist ein Datensatz. Jeder Ausschluss
-  schwächt Defender ab. `TemporaryPaths`, die Defender selbst hinzufügt, erhalten keine Bewertung. Suchen Sie nach für Benutzer beschreibbaren Ordnern,
-  `.ps1`-/`.exe`-Erweiterungen und LOLBins (`rundll32.exe`, `powershell.exe`).
+  - Interpretieren Sie `NtfsDisableLastAccessUpdate` im Kontext der Windows-Version und Richtlinien. Ab Windows 10 1803 steht `0x80000001` für den benutzerverwalteten Modus mit deaktivierten Aktualisierungen der letzten Zugriffszeit. Dieser Wert allein identifiziert weder den Urheber noch belegt er eine interaktive Änderung.
+  - Die Standardwerte von `RunAsPPL`, `LsaCfgFlags` und `UseLogonCredential` haben sich zwischen
+    Windows-Versionen geändert; bewerten Sie sie anhand der Version des Hosts.
+- **Defender-Ausschlüsse:** Jeder Pfad, jede Erweiterung, jeder Prozess und jede Adresse ist ein Datensatz. Ausschlüsse können den Schutz reduzieren; prüfen Sie ihren Umfang und Ursprung, einschließlich `TemporaryPaths`. Der Schlüsselname allein belegt weder eine harmlose Ausnahme noch Angreiferaktivität. Suchen Sie nach benutzerbeschreibbaren Ordnern, `.ps1`-/`.exe`-Erweiterungen und LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Richtlinienschlüssel** (`Policy` = True) werden von Gruppenrichtlinien, von Werkzeugen und von Angreifern geschrieben, die
   wissen, dass Richtlinien Vorrang vor den lokalen Einstellungen haben. Korrelieren Sie sie mit den GPOs der Domäne.
 - **Ereignisprotokollkanäle:** Nur 25 sicherheitsrelevante Kanäle werden gemeldet, jeweils mit der Angabe, ob Windows
@@ -105,7 +102,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +110,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +128,6 @@ Defender-Ausschluss.
 | `Setting` | Um welche Einstellung es sich handelt: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Der Wert: eine Dezimalzahl, eine Zeichenfolge oder der Ausschluss selbst. Leer, wenn der Wert nicht den Typ der Einstellung hat. |
 | `Meaning` | Was der Wert bedeutet. |
-| `WeakensDefault` | `True`, wenn der Wert abschwächt, was aktuelles Windows ohne ihn tut, `False`, wenn nicht, leer, wenn dies nicht zutrifft (eine Größe, ein Port, ein AMSI-Anbieter) oder nicht feststellbar ist. |
 | `Policy` | Ob der Schlüssel unter einem `Policies`-Schlüssel liegt. |
 | `KeyPath`, `ValueName` | Schlüssel und Wert. Der Wertname eines Ausschlusses ist das ausgeschlossene Element; ein AMSI-Anbieter hat keinen. |
 | `KeyLastWrittenUTC` | Der letzte Schreibzugriff auf den Schlüssel. |
@@ -142,7 +137,7 @@ Defender-Ausschluss.
 
 ## Untersuchungsstrategie { #investigation-strategy }
 
-1. Führen Sie das Kommando mit `--weakened-only` auf jedem Host aus und vergleichen Sie die Hosts miteinander: Eine Einstellung,
+1. Führen Sie das Kommando mit Juntei auf jedem Host aus und vergleichen Sie die Hosts miteinander: Eine Einstellung,
    die nur ein Host hat, fällt auf.
 2. Prüfen Sie jeden Defender-Ausschluss anhand der auf dem Host und in den Defender-Protokollen gefundenen Werkzeuge
    (Ereignis 5007 zeichnet Konfigurationsänderungen auf).
@@ -162,3 +157,5 @@ Defender-Ausschluss.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

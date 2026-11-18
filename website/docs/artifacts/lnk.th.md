@@ -1,5 +1,7 @@
 # ทางลัด LNK { #lnk-shortcuts }
 
+Juntei เก็บรักษาระเบียนอาร์ติแฟกต์ เมทาดาทา และข้อมูลวินิจฉัยการแยกวิเคราะห์ กฎตรวจจับเฉพาะตัวแยกวิเคราะห์จะประเมินใน Juntei Pro ส่วนการตรวจสอบและโปรไฟล์นโยบายเดิมของ Persistence Hunter ยังคงใช้งานได้
+
 ## ไฟล์ LNK คืออะไร { #what-lnk-files-are }
 
 ไฟล์ Windows Shell Link (`.lnk`) อธิบายเป้าหมาย (target) พร้อมอาร์กิวเมนต์สำหรับเรียกใช้ ไดเรกทอรีทำงาน ไอคอน
@@ -99,3 +101,5 @@ reference) extra-data block ทั้งหมด คุณสมบัติใ
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

@@ -38,7 +38,5 @@ Chaque page d'artefact suit la même séquence :
 6. **Comment le corréler** avec des preuves indépendantes.
 7. **Plus de détails** pour la recherche de bas niveau.
 
-!!! danger "N'assimilez pas une constatation du parseur à de la malveillance"
-    Les constatations de Juntei identifient des motifs qui méritent un examen, comme un nom de binaire système en dehors de
-    `System32`. Les programmes d'installation, les administrateurs, les couches de compatibilité et les mises à jour logicielles peuvent produire
-    des enregistrements inhabituels. Validez à l'aide du contexte et de preuves indépendantes.
+!!! danger "Ne considérez pas les enregistrements inhabituels comme une preuve de malveillance"
+    Juntei analyse les preuves que doit interpréter un analyste. Les contrôles de Persistence Hunter restent disponibles, mais une entrée de démarrage configurée peut aussi relever d’une administration légitime. Corrélez les observations avec le contexte et des preuves indépendantes avant de conclure à la malveillance.

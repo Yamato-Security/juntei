@@ -1,5 +1,7 @@
 # Amcache { #amcache }
 
+Juntei mempertahankan rekaman artefak, metadata, dan diagnostik penguraian. Aturan deteksi khusus parser dievaluasi di Juntei Pro. Pemeriksaan dan profil kebijakan Persistence Hunter yang ada tetap tersedia.
+
 ## Apa itu Amcache { #what-amcache-is }
 
 Amcache adalah inventaris kompatibilitas aplikasi Windows yang disimpan dalam sebuah hive registry. Sistem modern
@@ -53,7 +55,7 @@ Output:
 ```
 
 ```bash
-# Inspect the summary and findings
+# Inspect the inventory summary
 juntei parse-registry amcache -f Amcache.hve
 
 # Save all record types as CSV tables
@@ -64,13 +66,11 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
   | jq 'select(.RecordType == "file" and .SHA1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
-Keluaran CSV berisi tabel ringkasan, temuan, berkas, dan perangkat. Dengan `auto-parse`, tabel-tabel ini adalah
-`Registry-Amcache-Summary.csv`, `Registry-Amcache-Findings.csv`, `Registry-Amcache-Files.csv`, dan
-`Registry-Amcache-Devices.csv` langsung di bawah direktori `FileExistence/` milik setiap komputer, dengan
-`Registry-Amcache-logs.txt` di samping tabel-tabel tersebut. Beberapa hive menambahkan `-Source1`, `-Source2`, dst.
-sebelum ekstensi; `OutputFiles` di manifest mencantumkan path yang persis. Ekspor CSV mandiri
-mempertahankan nama tabel aslinya dan lokasi keluaran yang diminta. Catatan JSONL menggunakan
-nilai `RecordType` `summary`, `finding`, `file`, dan `device`.
+`auto-parse`: `FileExistence/Registry-Amcache-Summary.csv`, `FileExistence/Registry-Amcache-Files.csv`, `FileExistence/Registry-Amcache-Devices.csv`; `Registry-Amcache-logs.txt`.
+
+JSONL `RecordType`: `summary`, `file`, `device`.
+
+`-Source1`, `-Source2`, …; `manifest.json` → `OutputFiles`.
 
 ## Field keluaran berkas { #file-output-fields }
 

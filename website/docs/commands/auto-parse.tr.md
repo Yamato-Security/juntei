@@ -274,7 +274,6 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -398,7 +397,7 @@ Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `Recyc
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` ve `Registry-SystemInfo.csv`
 dahildir. Genel kovan anahtarları ve değerleri `Registry-Dump.csv` içindedir. Amcache tabloları
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` ve `Registry-Amcache-Summary.csv` dosyalarıdır. Jump Lists,
+Registry-Amcache-Files.csv ve `Registry-Amcache-Summary.csv` dosyalarıdır. Jump Lists,
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` ve
 `JumpLists-CustomDestinations.csv` dosyalarını kullanır. Amcache veya Jump Lists alt dizini yoktur.
 SRUM tabloları, kategorilerinin hemen altında `SRUM-` dosya adlarını kullanır; örneğin
@@ -533,10 +532,12 @@ ayrıştırıcı veya dışa aktarma başarısız olursa korunur. Ek işlem sür
 hesaba katın.
 
 **JSON modunda** Juntei, kanıtı yeniden ayrıştırmadan mevcut sonuçları sıkıştırılmış JSONL'ye akış
-olarak aktarır. Amcache raporları, yerel JSONL ile aynı tek tek özet, bulgu, dosya ve aygıt kayıtlarına
+olarak aktarır. Amcache raporları, yerel JSONL ile aynı tek tek özet, dosya ve aygıt kayıtlarına
 genişletilir. **JSONL modunda** mevcut açıklamalı kayıtlar doğrudan birleştirilir. Tüm modlar aynı SIEM
 kayıt yapısını kullanır. Veri kümesi yerel zaman damgalarını ve artefakt alanlarını korur; ortak bir olay
 zaman damgası uydurmaz veya farklı türdeki artefaktları genel olarak sıralamaz.
+
+`Findings` tablosu yalnızca eski bir raporda mevcutsa korunur; yeni ayrıştırıcı çıktısı bu tabloyu oluşturmaz.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

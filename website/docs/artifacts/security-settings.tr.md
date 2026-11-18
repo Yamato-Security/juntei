@@ -1,5 +1,7 @@
 # Güvenlik Ayarları { #security-settings }
 
+Juntei, artefakt kayıtlarını, meta verileri ve ayrıştırma tanılarını korur. Ayrıştırıcıya özgü tespit kuralları Juntei Pro içinde değerlendirilir. Persistence Hunter mevcut kontrollerini ve politika profillerini korur.
+
 ## Bunlar nedir { #what-they-are }
 
 Saldırganlar gizli kalmak ve kimlik bilgilerine ulaşmak için Windows'un güvenlik ayarlarını değiştirir. Microsoft Defender'ı
@@ -16,9 +18,7 @@ bu ayarları tutar:
   Windows Script Host için AMSI.
 
 `parse-registry security-settings`, bulduğu her ayarı bir kayıt olarak raporlar. Her kayıt
-ayarın değerini, değerin ne anlama geldiğini ve **varsayılanı zayıflatıp zayıflatmadığını** içerir: yani bir
-korumayı veya kanıt kaynağını kapatıp kapatmadığını ya da onu güncel Windows'un (10 ve 11) bu değer
-olmadan yaptığının altına düşürüp düşürmediğini.
+ayarın değerini ve değerin ne anlama geldiğini içerir.
 
 <span class="evidence-strength">En iyi sonuç:</span> kovan kaydedildiğinde bu ayar bu değere
 sahipti ve anahtar en son bu zamanda yazıldı. Zayıflatılmış bir ayar bir ipucudur, ele geçirilmenin kanıtı değildir.
@@ -61,8 +61,7 @@ yalnızca günlüklerde bulunabilir.
 
 - **Saklanan yapılandırma, etkin koruma durumu değildir.** Toplanan kayıt defteri değerleri ve hasarlı değer listeleri için tanılama satırları
   raporlanır. Eksik veriler varsayılanları, toplanmamış kaynakları veya başka bir yönetim
-  mekanizmasını yansıtabilir; korumanın etkin veya devre dışı olduğunun kanıtı değildir. `WeakensDefault`, uygulandıklarında
-  belirtilen temel düzeyi düşürebilecek ayarları işaretler.
+  mekanizmasını yansıtabilir; korumanın etkin veya devre dışı olduğunun kanıtı değildir.
 - **Eski Defender bayrakları yok sayılabilir.** `DisableAntiSpyware` ve `DisableAntivirus`, Defender'ın durduğunu
   kanıtlamaz. Uygulanabilirlik platform sürümüne, eklemeye (onboarding) ve kurcalama korumasına (tamper
   protection) bağlıdır. [Microsoft bu eski ayarları açıklar](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -76,12 +75,10 @@ yalnızca günlüklerde bulunabilir.
   - Uzak Masaüstü sunucularda bilinçli olarak açılır.
   - Windows 7 daha küçük olay günlükleri tutardı ve son erişim zamanlarını güncellemezdi.
 - **Varsayılanlar sürüme bağlıdır.** Bazı değerler eskiden varsayılandı:
-  - `NtfsDisableLastAccessUpdate` = 1, Windows 10 1803'ten önce varsayılandı. Bir hüküm olmadan
-    raporlanır; ancak daha sonraki bir sürümde elle ayarlanan `0x80000001` zayıflatılmış sayılır.
-  - `RunAsPPL`, `LsaCfgFlags` ve `UseLogonCredential` güncel Windows ile karşılaştırılır.
-- **Defender dışlamaları:** her yol, uzantı, işlem veya adres bir kayıttır. Her dışlama
-  Defender'ı zayıflatır. Defender'ın kendisinin eklediği `TemporaryPaths` için hüküm verilmez. Kullanıcının yazabildiği klasörleri,
-  `.ps1`/`.exe` uzantılarını ve LOLBin'leri (`rundll32.exe`, `powershell.exe`) arayın.
+  - `NtfsDisableLastAccessUpdate` değerini Windows sürümü ve ilke bağlamında yorumlayın. Windows 10 1803 ve sonrasında `0x80000001`, son erişim güncellemelerinin kapalı olduğu kullanıcı yönetimli modu belirtir. Bu değer tek başına ayarı kimin yaptığını veya değişikliğin etkileşimli olduğunu kanıtlamaz.
+  - `RunAsPPL`, `LsaCfgFlags` ve `UseLogonCredential` varsayılanları Windows sürümleri arasında değişti;
+    bunları ana bilgisayarın sürümüne göre yorumlayın.
+- **Defender dışlamaları:** Her yol, uzantı, işlem veya adres bir kayıttır. Dışlamalar korumayı azaltabilir; `TemporaryPaths` dahil kapsamlarını ve kaynaklarını inceleyin. Anahtar adı tek başına zararsız bir istisnayı veya saldırgan faaliyetini kanıtlamaz. Kullanıcının yazabildiği klasörleri, `.ps1`/`.exe` uzantılarını ve LOLBin’leri (`rundll32.exe`, `powershell.exe`) arayın.
 - **İlke anahtarları** (`Policy` = True) Grup İlkesi, araçlar ve ilkelerin yerel ayarlara üstün geldiğini bilen
   saldırganlar tarafından yazılır. Bunları etki alanının GPO'larıyla ilişkilendirin.
 - **Olay günlüğü kanalları:** yalnızca güvenlikle ilgili 25 kanal, Windows'un her birini varsayılan olarak
@@ -105,7 +102,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +110,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +128,6 @@ Defender dışlamalarını listeler.
 | `Setting` | Ayarın ne olduğu: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Değer: ondalık bir sayı, bir dize veya dışlamanın kendisi. Değer ayarın türünde değilse boştur. |
 | `Meaning` | Değerin ne anlama geldiği. |
-| `WeakensDefault` | Değer, güncel Windows'un o değer olmadan yaptığını zayıflatıyorsa `True`, zayıflatmıyorsa `False`; bu uygulanamıyorsa (bir boyut, bir bağlantı noktası, bir AMSI sağlayıcısı) veya belirlenemiyorsa boş. |
 | `Policy` | Anahtarın bir `Policies` anahtarı altında olup olmadığı. |
 | `KeyPath`, `ValueName` | Anahtar ve değer. Bir dışlamanın değer adı dışlanan öğedir; bir AMSI sağlayıcısının değer adı yoktur. |
 | `KeyLastWrittenUTC` | Anahtarın son yazılma zamanı. |
@@ -142,7 +137,7 @@ Defender dışlamalarını listeler.
 
 ## İnceleme stratejisi { #investigation-strategy }
 
-1. Her ana bilgisayarda `--weakened-only` ile çalıştırın ve ana bilgisayarları birbiriyle karşılaştırın: yalnızca
+1. Her ana bilgisayarda Juntei ile çalıştırın ve ana bilgisayarları birbiriyle karşılaştırın: yalnızca
    tek bir ana bilgisayarda bulunan bir ayar dikkat çeker.
 2. Her Defender dışlamasını ana bilgisayarda ve Defender günlüklerinde bulunan araçlarla karşılaştırın
    (Olay 5007 yapılandırma değişikliklerini kaydeder).
@@ -162,3 +157,5 @@ Defender dışlamalarını listeler.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

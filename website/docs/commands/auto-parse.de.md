@@ -268,7 +268,6 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -391,7 +390,7 @@ Die standardmäßigen CSV-Dateinamen sind `Registry-SAM.csv`, `LNK.csv`, `Recycl
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` und `Registry-SystemInfo.csv`.
 Allgemeine Hive-Schlüssel und -Werte stehen in `Registry-Dump.csv`. Die Amcache-Tabellen sind
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` und `Registry-Amcache-Summary.csv`. Jump Lists verwenden
+Registry-Amcache-Files.csv und `Registry-Amcache-Summary.csv`. Jump Lists verwenden
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` und
 `JumpLists-CustomDestinations.csv`. Es gibt keine Unterverzeichnisse für Amcache oder Jump Lists.
 SRUM-Tabellen verwenden `SRUM-`-Dateinamen direkt unter ihrer Kategorie, zum Beispiel
@@ -521,10 +520,12 @@ Ausgabeformat. Temporäre JSONL-Dateien werden nach einem erfolgreichen Lauf ent
 Parser oder der Export fehlschlägt. Planen Sie die zusätzliche Verarbeitungszeit und den temporären Speicherplatz ein.
 
 Im **JSON-Modus** streamt Juntei die vorhandenen Ergebnisse in kompaktes JSONL, ohne die Beweise
-erneut zu parsen. Amcache-Berichte werden in dieselben einzelnen Zusammenfassungs-, Befund-, Datei- und Gerätedatensätze
+erneut zu parsen. Amcache-Berichte werden in dieselben einzelnen Zusammenfassungs-, Datei- und Gerätedatensätze
 wie bei nativem JSONL aufgeteilt. Im **JSONL-Modus** werden die vorhandenen annotierten Datensätze direkt zusammengeführt.
 Alle Modi verwenden dieselbe SIEM-Datensatzstruktur. Der Datensatz behält native Zeitstempel und Artefaktfelder bei;
 er erfindet keinen gemeinsamen Ereigniszeitstempel und sortiert heterogene Artefakte nicht global.
+
+Eine `Findings`-Tabelle wird nur übernommen, wenn sie in einem historischen Bericht vorhanden ist; neue Parserausgaben erzeugen keine.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

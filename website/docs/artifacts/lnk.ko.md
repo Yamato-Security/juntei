@@ -1,5 +1,7 @@
 # LNK 바로 가기 { #lnk-shortcuts }
 
+Juntei는 아티팩트 레코드, 메타데이터 및 파싱 진단 정보를 보존합니다. 파서별 탐지 규칙은 Juntei Pro에서 평가합니다. Persistence Hunter의 기존 검사와 정책 프로필은 계속 사용할 수 있습니다.
+
 ## LNK 파일이란 { #what-lnk-files-are }
 
 Windows Shell Link(`.lnk`) 파일은 대상과 함께 실행 인수, 작업 디렉터리, 아이콘, 창 상태, 대상
@@ -99,3 +101,5 @@ LNK 헤더의 대상 FILETIME과 tracker 시간은 변환 가능한 절대 타�
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

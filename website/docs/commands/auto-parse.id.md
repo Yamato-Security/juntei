@@ -269,7 +269,6 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Nama berkas CSV default adalah `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, 
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv`, dan `Registry-SystemInfo.csv`.
 Key dan nilai hive umum ada di `Registry-Dump.csv`. Tabel Amcache adalah
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv`, dan `Registry-Amcache-Summary.csv`. Jump Lists menggunakan
+dan `Registry-Amcache-Summary.csv`. Jump Lists menggunakan
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` dan
 `JumpLists-CustomDestinations.csv`. Tidak ada subdirektori Amcache atau Jump Lists.
 Tabel SRUM menggunakan nama berkas `SRUM-` langsung di bawah kategorinya, misalnya
@@ -522,10 +521,12 @@ format keluarannya. Berkas JSONL sementara dihapus setelah eksekusi berhasil; be
 parser atau ekspor gagal. Perhitungkan waktu pemrosesan tambahan dan ruang disk sementara.
 
 Dalam **mode JSON**, Juntei mengalirkan hasil yang ada ke JSONL ringkas tanpa mengurai ulang
-bukti. Laporan Amcache diperluas menjadi record summary, finding, file, dan device individual yang sama
+bukti. Laporan Amcache diperluas menjadi record summary, file, dan device individual yang sama
 seperti JSONL native. Dalam **mode JSONL**, record beranotasi yang ada digabungkan secara langsung.
 Semua mode menggunakan struktur record SIEM yang sama. Dataset mempertahankan timestamp dan field artefak
 native; dataset tidak menciptakan timestamp peristiwa bersama atau mengurutkan artefak yang heterogen secara global.
+
+Tabel `Findings` dipertahankan hanya jika ada dalam laporan lama; keluaran parser baru tidak membuatnya.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

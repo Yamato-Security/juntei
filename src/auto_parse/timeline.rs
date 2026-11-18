@@ -173,8 +173,8 @@ fn line(value: &Value, writer: &mut impl Write) -> io::Result<()> {
 }
 
 /// Amcache's pretty JSON is a report containing record arrays; its native JSONL flattens those
-/// arrays into individual summary/finding/file/device envelopes. Preserve that SIEM schema in
-/// JSON mode too, without reparsing the source hive.
+/// arrays into individual summary/file/device envelopes. Preserve that SIEM schema in JSON mode
+/// too, without reparsing the source hive; keep finding rows from historical reports if present.
 fn amcache_records(value: Value, writer: &mut impl Write) -> io::Result<()> {
     let Value::Object(mut common) = value else {
         return Err(io::Error::other("Amcache JSON report is not an object"));
@@ -186,6 +186,11 @@ fn amcache_records(value: Value, writer: &mut impl Write) -> io::Result<()> {
         ("Files", "file"),
         ("Devices", "device"),
     ] {
+        if field == "Findings" && !common.contains_key(field) {
+            // Parser-only Amcache reports omit this former detection table;
+            // preserve it when reading historical analyzed reports.
+            continue;
+        }
         let value = common
             .remove(field)
             .ok_or_else(|| io::Error::other(format!("Amcache JSON report is missing {field}")))?;
@@ -241,6 +246,58 @@ mod tests {
         fs::write(source, "{\"value\":1}\n").unwrap();
         write(&files, &output, true).unwrap();
         assert_eq!(fs::read_to_string(output).unwrap(), "{\"value\":1}\n");
+    }
+
+    #[test]
+    fn amcache_inventory_and_historical_reports_keep_their_original_records() {
+        use serde_json::json;
+        let inventory = json!({"Comp":"HOST", "Artifact":"amcache", "Summary":{"FileCount":1},
+            "Files":[{"FullPath":"C:/Temp/a.exe", "Publisher":"Example Publisher"}], "Devices":[]});
+        for finding in [
+            None,
+            Some(json!([])),
+            Some(json!([{"Code":"historical-observation"}])),
+        ] {
+            let mut report = inventory.clone();
+            if let Some(finding) = finding {
+                report["Findings"] = finding;
+            }
+            let mut bytes = Vec::new();
+            amcache_records(report.clone(), &mut bytes).unwrap();
+            let rows: Vec<Value> = String::from_utf8(bytes)
+                .unwrap()
+                .lines()
+                .map(|line| serde_json::from_str(line).unwrap())
+                .collect();
+            assert!(
+                rows.iter()
+                    .all(|row| row["Comp"] == "HOST" && row["Artifact"] == "amcache")
+            );
+            let kinds: Vec<_> = rows
+                .iter()
+                .map(|row| row["RecordType"].as_str().unwrap())
+                .collect();
+            let has_finding = report["Findings"]
+                .as_array()
+                .is_some_and(|values| !values.is_empty());
+            assert_eq!(
+                kinds,
+                if has_finding {
+                    vec!["summary", "finding", "file"]
+                } else {
+                    vec!["summary", "file"]
+                }
+            );
+            let file = rows.iter().find(|row| row["RecordType"] == "file").unwrap();
+            assert_eq!(file["FullPath"], report["Files"][0]["FullPath"]);
+            assert_eq!(file["Publisher"], report["Files"][0]["Publisher"]);
+            if has_finding {
+                assert_eq!(rows[1]["Code"], "historical-observation");
+            }
+        }
+        let mut invalid = inventory;
+        invalid["Findings"] = json!({"Code":"not-an-array"});
+        assert!(amcache_records(invalid, &mut Vec::new()).is_err());
     }
 
     #[cfg(unix)]

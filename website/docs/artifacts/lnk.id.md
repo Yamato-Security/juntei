@@ -1,5 +1,7 @@
 # Pintasan LNK { #lnk-shortcuts }
 
+Juntei mempertahankan rekaman artefak, metadata, dan diagnostik penguraian. Aturan deteksi khusus parser dievaluasi di Juntei Pro. Pemeriksaan dan profil kebijakan Persistence Hunter yang ada tetap tersedia.
+
 ## Apa itu berkas LNK { #what-lnk-files-are }
 
 Berkas Windows Shell Link (`.lnk`) mendeskripsikan sebuah target beserta argumen peluncuran, direktori kerja, ikon,
@@ -99,3 +101,5 @@ FILETIME target dan waktu tracker di header LNK tetap merupakan timestamp absolu
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

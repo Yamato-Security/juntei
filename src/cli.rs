@@ -801,11 +801,11 @@ pub struct CommonOptions {
 /// What `parse-registry amcache` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OutputType {
-    /// One CSV table per record type (summary, findings, files, devices); needs -o <DIR>
+    /// One CSV table per record type (summary, files, devices); needs -o <DIR>
     Csv,
     /// One pretty-printed JSON document per hive
     Json,
-    /// One JSON object per line: summary, findings, files, devices
+    /// One JSON object per line: summary, files, devices
     Jsonl,
     /// The human-readable report
     Text,
@@ -861,7 +861,7 @@ impl AmcacheOptions {
     }
 
     /// Which detailed records to include: the selectors, otherwise every record except for the
-    /// text report on the terminal (summary and findings only, like ys-amcache-parser).
+    /// text report on the terminal (inventory summary).
     pub fn records(&self) -> (bool, bool) {
         if self.all || (!self.files && !self.devices && self.saves_records_by_default()) {
             (true, true)
@@ -3486,10 +3486,6 @@ pub struct RegistrySecuritySettingsOptions {
     /// Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
     #[arg(help_heading = Some("Filtering"), long, display_order = 200)]
     pub all_control_sets: bool,
-
-    /// Only settings whose value weakens what Windows does by default
-    #[arg(help_heading = Some("Filtering"), long, display_order = 201)]
-    pub weakened_only: bool,
 
     /// Save every record to a file
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]

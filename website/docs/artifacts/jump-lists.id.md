@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei mempertahankan rekaman artefak, metadata, dan diagnostik penguraian. Aturan deteksi khusus parser dievaluasi di Juntei Pro. Pemeriksaan dan profil kebijakan Persistence Hunter yang ada tetap tersedia.
+
 ## Apa itu Jump Lists { #what-jump-lists-are }
 
 Jump Lists menjadi dasar menu yang ditampilkan dari entri aplikasi di taskbar dan Start menu. Automatic Jump
@@ -101,3 +103,5 @@ dan field bersarang dari setiap LNK yang disematkan.
 - [Microsoft: Format Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [Proyek uji/referensi parser JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

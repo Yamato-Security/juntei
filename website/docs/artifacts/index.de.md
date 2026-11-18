@@ -38,7 +38,5 @@ Jede Artefaktseite folgt demselben Ablauf:
 6. **Wie es** mit unabhängigen Beweisen korreliert wird.
 7. **Weitere Informationen** für tiefergehende Recherche.
 
-!!! danger "Setzen Sie einen Parserbefund nicht mit Bösartigkeit gleich"
-    Befunde von Juntei kennzeichnen Muster, die eine Prüfung wert sind, etwa den Namen einer Systembinärdatei außerhalb von
-    `System32`. Installationsprogramme, Administratoren, Kompatibilitätsebenen und Softwareupdates können
-    ungewöhnliche Datensätze erzeugen. Validieren Sie anhand des Kontexts und unabhängiger Beweise.
+!!! danger "Ungewöhnliche Datensätze sind kein Beweis für Bösartigkeit"
+    Juntei parst Beweise, die ein Analyst interpretieren muss. Die Prüfungen von Persistence Hunter bleiben verfügbar, aber ein konfigurierter Autostarteintrag kann auch legitimer Administration dienen. Korrelieren Sie Beobachtungen mit Kontext und unabhängigen Beweisen, bevor Sie sie als bösartig bewerten.

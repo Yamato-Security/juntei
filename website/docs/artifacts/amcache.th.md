@@ -1,5 +1,7 @@
 # Amcache { #amcache }
 
+Juntei เก็บรักษาระเบียนอาร์ติแฟกต์ เมทาดาทา และข้อมูลวินิจฉัยการแยกวิเคราะห์ กฎตรวจจับเฉพาะตัวแยกวิเคราะห์จะประเมินใน Juntei Pro ส่วนการตรวจสอบและโปรไฟล์นโยบายเดิมของ Persistence Hunter ยังคงใช้งานได้
+
 ## Amcache คืออะไร { #what-amcache-is }
 
 Amcache คือบัญชีรายการด้านความเข้ากันได้ของแอปพลิเคชันของ Windows ที่จัดเก็บอยู่ในไฮฟ์รีจิสทรี ระบบรุ่นใหม่
@@ -53,7 +55,7 @@ Output:
 ```
 
 ```bash
-# Inspect the summary and findings
+# Inspect the inventory summary
 juntei parse-registry amcache -f Amcache.hve
 
 # Save all record types as CSV tables
@@ -64,13 +66,11 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
   | jq 'select(.RecordType == "file" and .SHA1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
-เอาต์พุต CSV ประกอบด้วยตารางสรุป (summary) สิ่งที่พบ (findings) ไฟล์ (files) และอุปกรณ์ (devices) เมื่อใช้ `auto-parse` ตารางเหล่านี้คือ
-`Registry-Amcache-Summary.csv`, `Registry-Amcache-Findings.csv`, `Registry-Amcache-Files.csv` และ
-`Registry-Amcache-Devices.csv` ซึ่งอยู่ใต้ไดเรกทอรี `FileExistence/` ของแต่ละคอมพิวเตอร์โดยตรง โดยมี
-`Registry-Amcache-logs.txt` อยู่ข้างตาราง หากมีหลายไฮฟ์จะเพิ่ม `-Source1`, `-Source2` เป็นต้น
-ไว้ก่อนนามสกุลไฟล์ และ `OutputFiles` ใน manifest จะแสดงพาธที่แน่นอน การส่งออก CSV แบบเรียกใช้คำสั่งเดี่ยว
-จะคงชื่อตารางเดิมและตำแหน่งเอาต์พุตที่ระบุไว้ ระเบียน JSONL ใช้ค่า `RecordType` ได้แก่
-`summary`, `finding`, `file` และ `device`
+`auto-parse`: `FileExistence/Registry-Amcache-Summary.csv`, `FileExistence/Registry-Amcache-Files.csv`, `FileExistence/Registry-Amcache-Devices.csv`; `Registry-Amcache-logs.txt`.
+
+JSONL `RecordType`: `summary`, `file`, `device`.
+
+`-Source1`, `-Source2`, …; `manifest.json` → `OutputFiles`.
 
 ## ฟิลด์เอาต์พุตของไฟล์ { #file-output-fields }
 

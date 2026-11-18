@@ -269,7 +269,6 @@ O CSV mantém tabelas separadas porque cada artefato tem colunas diferentes:
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -392,7 +391,7 @@ Os nomes de arquivo CSV padrão são `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` e `Registry-SystemInfo.csv`.
 As chaves e valores gerais dos hives ficam em `Registry-Dump.csv`. As tabelas do Amcache são
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` e `Registry-Amcache-Summary.csv`. As Jump Lists usam
+Registry-Amcache-Files.csv e `Registry-Amcache-Summary.csv`. As Jump Lists usam
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` e
 `JumpLists-CustomDestinations.csv`. Não há subdiretórios para o Amcache nem para as Jump Lists.
 As tabelas do SRUM usam nomes de arquivo `SRUM-` diretamente sob sua categoria, por exemplo
@@ -522,10 +521,12 @@ seu formato de saída. Os arquivos JSONL temporários são removidos após uma e
 analisador ou a exportação falhar. Planeje o tempo de processamento extra e o espaço temporário em disco.
 
 No **modo JSON**, o Juntei transmite os resultados existentes para um JSONL compacto sem analisar novamente as
-evidências. Os relatórios do Amcache são expandidos nos mesmos registros individuais de resumo, constatação, arquivo e dispositivo
+evidências. Os relatórios do Amcache são expandidos nos mesmos registros individuais de resumo, arquivo e dispositivo
 do JSONL nativo. No **modo JSONL**, os registros anotados existentes são combinados diretamente.
 Todos os modos usam a mesma estrutura de registro para SIEM. O conjunto de dados mantém os carimbos de data/hora e os campos
 nativos dos artefatos; ele não inventa um carimbo de data/hora de evento comum nem ordena globalmente artefatos heterogêneos.
+
+Uma tabela `Findings` é preservada apenas se estiver presente em um relatório antigo; as novas saídas do analisador não a criam.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

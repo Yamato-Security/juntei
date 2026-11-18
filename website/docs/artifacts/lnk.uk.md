@@ -1,5 +1,7 @@
 # Ярлики LNK { #lnk-shortcuts }
 
+Juntei зберігає записи артефактів, метадані та діагностику розбору. Правила виявлення для окремих парсерів виконуються в Juntei Pro. Наявні перевірки й профілі політик Persistence Hunter залишаються доступними.
+
 ## Що таке файли LNK { #what-lnk-files-are }
 
 Файли Windows Shell Link (`.lnk`) описують ціль разом з аргументами запуску, робочим каталогом, значком,
@@ -99,3 +101,5 @@ MFT), усі блоки додаткових даних, властивості 
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei는 아티팩트 레코드, 메타데이터 및 파싱 진단 정보를 보존합니다. 파서별 탐지 규칙은 Juntei Pro에서 평가합니다. Persistence Hunter의 기존 검사와 정책 프로필은 계속 사용할 수 있습니다.
+
 ## ShimCache란 { #what-shimcache-is }
 
 Windows의 애플리케이션 호환성 하위 시스템은 호환성/shim 동작을 평가하는 동안 실행 파일 경로와 메타데이터를
@@ -58,7 +60,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## 출력 필드 { #output-fields }
@@ -80,7 +82,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | 최신 형식에 기록된 아키텍처(`x64`, `x86`, `ARM64`)입니다. |
 | `FileSize`, `LastUpdateTimeUTC` | 존재하는 경우 Windows XP 고유의 캐시된 메타데이터입니다. |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | 지원되는 엔트리의 패키지 애플리케이션 식별 정보입니다. 게시자 ID는 컨텍스트이며 서명의 증명이 아닙니다. |
-| `Findings` | 위치가 바뀐 시스템 바이너리나 의심스러운 스테이징 경로 같은 Juntei 이상 징후 코드입니다. 단서로만 사용하십시오. |
 | `RegistryPath`, `RegistryValueName` | 정확한 하이브 키/값 출처입니다. 검증을 위해 보존하십시오. |
 | `CacheValueSize` | 레지스트리 값 전체의 크기이며, 개별 엔트리의 `DataSize`가 아닙니다. |
 | `IsCurrent` | 이 엔트리의 제어 집합이 `SYSTEM\Select\Current`와 같은지 여부입니다. 확실히 알 수 없으면 비어 있습니다. |

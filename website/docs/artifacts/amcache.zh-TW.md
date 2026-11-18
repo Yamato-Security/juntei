@@ -1,5 +1,7 @@
 # Amcache { #amcache }
 
+Juntei 保留鑑識成品記錄、中繼資料及剖析診斷資訊。各剖析器的偵測規則由 Juntei Pro 評估。Persistence Hunter 的現有檢查與原則設定檔仍可使用。
+
 ## 什麼是 Amcache { #what-amcache-is }
 
 Amcache 是儲存在登錄區中的 Windows 應用程式相容性清單。新版系統會將執行檔記錄在
@@ -52,7 +54,7 @@ Output:
 ```
 
 ```bash
-# Inspect the summary and findings
+# Inspect the inventory summary
 juntei parse-registry amcache -f Amcache.hve
 
 # Save all record types as CSV tables
@@ -63,13 +65,11 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
   | jq 'select(.RecordType == "file" and .SHA1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
-CSV 輸出包含摘要、發現項目、檔案與裝置資料表。使用 `auto-parse` 時，這些資料表為
-`Registry-Amcache-Summary.csv`、`Registry-Amcache-Findings.csv`、`Registry-Amcache-Files.csv` 與
-`Registry-Amcache-Devices.csv`，直接位於每台電腦的 `FileExistence/` 目錄下，
-`Registry-Amcache-logs.txt` 則位於資料表旁。若有多個登錄區，會在副檔名前加上 `-Source1`、`-Source2` 等；
-清單檔中的 `OutputFiles` 會列出確切的路徑。獨立匯出的 CSV
-會保留其原生資料表名稱與所指定的輸出位置。JSONL 記錄使用
-`RecordType` 值 `summary`、`finding`、`file` 與 `device`。
+`auto-parse`: `FileExistence/Registry-Amcache-Summary.csv`, `FileExistence/Registry-Amcache-Files.csv`, `FileExistence/Registry-Amcache-Devices.csv`; `Registry-Amcache-logs.txt`.
+
+JSONL `RecordType`: `summary`, `file`, `device`.
+
+`-Source1`, `-Source2`, …; `manifest.json` → `OutputFiles`.
 
 ## 檔案輸出欄位 { #file-output-fields }
 

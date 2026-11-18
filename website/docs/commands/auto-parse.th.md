@@ -269,7 +269,6 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -393,7 +392,7 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` และ `Registry-SystemInfo.csv`
 คีย์และค่าของไฮฟ์ทั่วไปอยู่ใน `Registry-Dump.csv` ตาราง Amcache ได้แก่
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` และ `Registry-Amcache-Summary.csv` Jump Lists ใช้
+Registry-Amcache-Files.csv และ `Registry-Amcache-Summary.csv` Jump Lists ใช้
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` และ
 `JumpLists-CustomDestinations.csv` ไม่มีไดเรกทอรีย่อยสำหรับ Amcache หรือ Jump Lists
 ตาราง SRUM ใช้ชื่อไฟล์ `SRUM-` ไว้ใต้หมวดหมู่ของตนโดยตรง เช่น
@@ -523,10 +522,12 @@ juntei auto-parse -d evidence -o parsed-jsonl -t jsonl -j parsed-jsonl/timeline.
 พาร์เซอร์หรือการส่งออกล้มเหลว ให้วางแผนเผื่อเวลาประมวลผลและพื้นที่ดิสก์ชั่วคราวที่เพิ่มขึ้น
 
 ใน **โหมด JSON** Juntei จะสตรีมผลลัพธ์ที่มีอยู่ให้เป็น JSONL แบบกะทัดรัดโดยไม่พาร์ส
-หลักฐานซ้ำ รายงาน Amcache จะถูกขยายเป็นเรคคอร์ดสรุป ข้อค้นพบ ไฟล์ และอุปกรณ์แยกรายการ
+หลักฐานซ้ำ รายงาน Amcache จะถูกขยายเป็นเรคคอร์ดสรุป ไฟล์ และอุปกรณ์แยกรายการ
 แบบเดียวกับ JSONL แบบเนทีฟ ใน **โหมด JSONL** เรคคอร์ดที่มีคำอธิบายประกอบอยู่แล้วจะถูกรวมเข้าด้วยกันโดยตรง
 ทุกโหมดใช้โครงสร้างเรคคอร์ด SIEM เดียวกัน ชุดข้อมูลเก็บ timestamp และฟิลด์ของอาร์ติแฟกต์
 แบบเนทีฟไว้ โดยไม่สร้าง timestamp เหตุการณ์ร่วมขึ้นมาเอง หรือเรียงลำดับอาร์ติแฟกต์ต่างชนิดกันแบบรวมทั้งหมด
+
+จะเก็บตาราง `Findings` ไว้เฉพาะเมื่อมีอยู่ในรายงานเก่าเท่านั้น เอาต์พุตจากพาร์เซอร์ใหม่จะไม่สร้างตารางนี้
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

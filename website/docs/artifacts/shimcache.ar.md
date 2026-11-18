@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+يحتفظ Juntei بسجلات الأدلة والبيانات الوصفية وتشخيصات التحليل. تُقيَّم قواعد الكشف الخاصة بالمحللات في Juntei Pro. تظل فحوص Persistence Hunter وملفات سياسته الحالية متاحة.
+
 ## ما هو ShimCache { #what-shimcache-is }
 
 يخزّن النظام الفرعي لتوافق التطبيقات في Windows مسارات الملفات التنفيذية وبياناتها الوصفية مؤقتًا
@@ -38,7 +40,6 @@ ControlSet00N\Control\Session Manager\AppCompatCache\AppCompatCache
 - الترتيب مفيد، لكنه ليس جدولًا زمنيًا دقيقًا عامًا؛ وتحدث تكرارات عبر مجموعات التحكم/المساحة الراكدة.
 - استُردت إدخالات `FromSlack` من خارج ذاكرة التخزين المؤقت النشطة وتتطلب حذرًا إضافيًا.
 - قد تُغفل خلية `SYSTEM` غير النظيفة (dirty) دون سجلات قابلة للاستخدام السجلاتِ الحالية. اقرأ ملخص الاسترداد.
-- تشير النتائج (Findings) إلى أنماط تسمية/مسارات مريبة، لا إلى أحكام بوجود برمجيات خبيثة.
 
 ## التحليل باستخدام Juntei { #parse-with-juntei }
 
@@ -58,7 +59,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## حقول الإخراج { #output-fields }
@@ -80,7 +81,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | البنية المعمارية التي تسجلها التنسيقات الأحدث (`x64`، `x86`، `ARM64`). |
 | `FileSize`، `LastUpdateTimeUTC` | بيانات وصفية مخزنة مؤقتًا خاصة بـ Windows XP حيثما وُجدت. |
 | `PackageName`، `PackageVersion`، `PackagePublisherID` | هوية التطبيق المحزّم في الإدخالات المدعومة. ومعرّف الناشر سياق، لا دليل على التوقيع. |
-| `Findings` | رموز الحالات الشاذة في Juntei، مثل ملف ثنائي للنظام منقول أو مسار تجهيز (staging) مريب. خيوط للتحقيق فقط. |
 | `RegistryPath`، `RegistryValueName` | مصدر المفتاح/القيمة الدقيق في الخلية. احتفظ به للتحقق. |
 | `CacheValueSize` | حجم قيمة سجل Windows بأكملها، لا `DataSize` الخاص بالإدخال الفردي. |
 | `IsCurrent` | ما إذا كانت مجموعة التحكم لهذا الإدخال تساوي `SYSTEM\Select\Current`؛ ويكون فارغًا إذا لم يُعرف ذلك بأمان. |

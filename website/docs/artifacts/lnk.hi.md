@@ -1,5 +1,7 @@
 # LNK शॉर्टकट { #lnk-shortcuts }
 
+Juntei आर्टिफ़ैक्ट रिकॉर्ड, मेटाडेटा और पार्सिंग निदान सुरक्षित रखता है। पार्सर-विशिष्ट पहचान नियमों का मूल्यांकन Juntei Pro में होता है। Persistence Hunter की मौजूदा जाँच और नीति प्रोफ़ाइल उपलब्ध रहती हैं।
+
 ## LNK फ़ाइलें क्या हैं { #what-lnk-files-are }
 
 Windows Shell Link (`.lnk`) फ़ाइलें एक target के साथ-साथ launch arguments, working directory, icon,
@@ -99,3 +101,5 @@ LNK header के target FILETIMEs और tracker times convert किए जा
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

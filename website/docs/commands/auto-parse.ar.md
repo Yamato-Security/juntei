@@ -268,7 +268,6 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
@@ -391,7 +390,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 `Registry-ShimCache.csv` و`Registry-UserAssist.csv` و`Registry-BAM.csv` و`Registry-SystemInfo.csv`.
 وتوجد مفاتيح الخلايا وقيمها العامة في `Registry-Dump.csv`. وجداول Amcache هي
 `FileExistence/Registry-Amcache-Devices.csv` و`Registry-Amcache-Files.csv`
-و`Registry-Amcache-Findings.csv` و`Registry-Amcache-Summary.csv`. وتستخدم Jump Lists
+وRegistry-Amcache-Files.csv و`Registry-Amcache-Summary.csv`. وتستخدم Jump Lists
 ‏`FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` و
 `JumpLists-CustomDestinations.csv`. ولا توجد مجلدات فرعية لـ Amcache أو Jump Lists.
 وتستخدم جداول SRUM أسماء ملفات تبدأ بـ `SRUM-` مباشرة تحت فئتها، مثل
@@ -521,10 +520,12 @@ juntei auto-parse -d evidence -o parsed-jsonl -t jsonl -j parsed-jsonl/timeline.
 محلل أو تصدير. فخطّط للوقت الإضافي للمعالجة ولمساحة القرص المؤقتة.
 
 في **وضع JSON**، يدفق Juntei النتائج الموجودة إلى JSONL مضغوط دون إعادة تحليل
-الأدلة. وتُوسَّع تقارير Amcache إلى سجلات الملخص والنتائج والملفات والأجهزة الفردية نفسها
+الأدلة. وتُوسَّع تقارير Amcache إلى سجلات الملخص والملفات والأجهزة الفردية نفسها
 الموجودة في JSONL الأصلي. وفي **وضع JSONL**، تُدمج السجلات المشروحة الموجودة مباشرة.
 وتستخدم كل الأوضاع بنية سجل SIEM نفسها. وتحتفظ مجموعة البيانات بالطوابع الزمنية الأصلية وحقول
 الآثار الرقمية؛ ولا تخترع طابعًا زمنيًا مشتركًا للأحداث ولا ترتب الآثار الرقمية غير المتجانسة ترتيبًا شاملًا.
+
+يُحتفَظ بجدول `Findings` فقط إذا كان موجودًا في تقرير قديم؛ ولا يُنشئه إخراج المحلل الجديد.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
