@@ -74,13 +74,10 @@ log များထဲတွင်သာ ရှိနိုင်သည်။
   - Server များတွင် Remote Desktop ကို ရည်ရွယ်ချက်ရှိရှိ ဖွင့်ထားကြသည်။
   - Windows 7 သည် event log များကို ပိုသေးငယ်စွာ ထားရှိပြီး last access အချိန်များကို အပ်ဒိတ်မလုပ်ခဲ့ပါ။
 - **မူလသတ်မှတ်ချက်များသည် ဗားရှင်းပေါ် မူတည်သည်။** အချို့ value များသည် ယခင်က မူလသတ်မှတ်ချက် ဖြစ်ခဲ့သည်-
-  - `NtfsDisableLastAccessUpdate` = 1 သည် Windows 10 1803 မတိုင်မီ မူလသတ်မှတ်ချက် ဖြစ်ခဲ့သည်။ နောက်ပိုင်းဗားရှင်းရှိ
-    `0x80000001` ကိုမူ လက်ဖြင့် သတ်မှတ်ထားခြင်း (user managed) ဖြစ်သည်။
+  - `NtfsDisableLastAccessUpdate` ကို Windows ဗားရှင်းနှင့် policy အခြေအနေအလိုက် အဓိပ္ပာယ်ဖော်ပါ။ Windows 10 1803 နှင့် နောက်ပိုင်းတွင် `0x80000001` သည် နောက်ဆုံးဝင်ရောက်ချိန် အပ်ဒိတ်များ ပိတ်ထားသော user-managed mode ကို ဆိုလိုသည်။ ဤတန်ဖိုးတစ်ခုတည်းဖြင့် မည်သူက သတ်မှတ်ခဲ့သည် သို့မဟုတ် တိုက်ရိုက်အပြန်အလှန် လုပ်ဆောင်၍ ပြောင်းလဲခဲ့သည်ဟု မသက်သေပြနိုင်ပါ။
   - `RunAsPPL`၊ `LsaCfgFlags` နှင့် `UseLogonCredential` ၏ မူလတန်ဖိုးများသည် Windows ဗားရှင်းအလိုက်
     ပြောင်းလဲခဲ့သဖြင့် host ၏ ဗားရှင်းနှင့်အညီ ဖတ်ပါ။
-- **Defender exclusion များ:** path၊ extension၊ process သို့မဟုတ် လိပ်စာ တစ်ခုစီသည် record တစ်ခု ဖြစ်သည်။ Defender ကိုယ်တိုင် ထည့်သွင်းသော
-  `TemporaryPaths` မှလွဲ၍ exclusion တိုင်းက Defender ကို အားနည်းစေသည်။ အသုံးပြုသူ ရေးသားနိုင်သော ဖိုင်တွဲများ၊
-  `.ps1`/`.exe` extension များနှင့် LOLBin များ (`rundll32.exe`, `powershell.exe`) ကို ရှာပါ။
+- **Defender exclusion များ:** Path၊ extension၊ process သို့မဟုတ် လိပ်စာ တစ်ခုစီသည် မှတ်တမ်းတစ်ခု ဖြစ်သည်။ Exclusion များက ကာကွယ်မှုကို လျော့နည်းစေနိုင်သဖြင့် `TemporaryPaths` အပါအဝင် ၎င်းတို့၏ သက်ရောက်မှုအပိုင်းအခြားနှင့် မူလရင်းမြစ်ကို စစ်ဆေးပါ။ Key အမည်တစ်ခုတည်းက အန္တရာယ်ကင်းသော ခြွင်းချက် သို့မဟုတ် တိုက်ခိုက်သူ၏ လုပ်ဆောင်မှုဖြစ်ကြောင်း မသက်သေပြနိုင်ပါ။ အသုံးပြုသူ ရေးသားနိုင်သော folder များ၊ `.ps1`/`.exe` extension များနှင့် LOLBin များ (`rundll32.exe`, `powershell.exe`) ကို ရှာပါ။
 - **Policy key များ** (`Policy` = True) ကို Group Policy၊ tool များနှင့် မူဝါဒများက local ဆက်တင်များထက် အနိုင်ရကြောင်း
   သိသော တိုက်ခိုက်သူများက ရေးသားကြသည်။ ၎င်းတို့ကို domain ၏ GPO များနှင့် ချိတ်ဆက်စစ်ဆေးပါ။
 - **Event log channel များ:** လုံခြုံရေးနှင့် သက်ဆိုင်သော channel 25 ခုကိုသာ Windows က တစ်ခုစီကို မူလအားဖြင့်
@@ -159,3 +156,5 @@ exclusion တိုင်းကို စာရင်းပြသည်။
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

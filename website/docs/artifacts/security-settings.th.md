@@ -75,13 +75,10 @@ C:\Users\<user>\NTUSER.DAT
   - Remote Desktop ถูกเปิดโดยเจตนาบนเซิร์ฟเวอร์
   - Windows 7 เก็บ event log ขนาดเล็กกว่าและไม่ได้อัปเดตเวลาเข้าถึงล่าสุด
 - **ค่าเริ่มต้นขึ้นอยู่กับเวอร์ชัน** บางค่าเคยเป็นค่าเริ่มต้นมาก่อน:
-  - `NtfsDisableLastAccessUpdate` = 1 เป็นค่าเริ่มต้นก่อน Windows 10 1803 ส่วน `0x80000001`
-    บนเวอร์ชันที่ใหม่กว่าถูกตั้งด้วยมือ (ผู้ใช้จัดการเอง)
+  - ตีความ `NtfsDisableLastAccessUpdate` ตามเวอร์ชัน Windows และบริบทของนโยบาย ใน Windows 10 1803 และใหม่กว่า `0x80000001` หมายถึงโหมดที่ผู้ใช้จัดการและปิดการอัปเดตเวลาเข้าถึงล่าสุด ค่านี้เพียงอย่างเดียวไม่ระบุว่าใครตั้งค่า หรือพิสูจน์ว่าเปลี่ยนผ่านการโต้ตอบโดยตรง
   - ค่าเริ่มต้นของ `RunAsPPL`, `LsaCfgFlags` และ `UseLogonCredential` เปลี่ยนไปตามเวอร์ชันของ Windows
     จึงควรอ่านค่าตามเวอร์ชันของโฮสต์
-- **ข้อยกเว้นของ Defender:** แต่ละพาธ นามสกุล โพรเซส หรือที่อยู่เป็นหนึ่งระเบียน ข้อยกเว้นทุกรายการ
-  ลดระดับ Defender ยกเว้น `TemporaryPaths` ซึ่ง Defender เพิ่มเอง ให้มองหาโฟลเดอร์ที่ผู้ใช้เขียนได้
-  นามสกุล `.ps1`/`.exe` และ LOLBin (`rundll32.exe`, `powershell.exe`)
+- **ข้อยกเว้นของ Defender:** แต่ละพาธ นามสกุล โพรเซส หรือที่อยู่เป็นหนึ่งระเบียน ข้อยกเว้นอาจลดการป้องกัน จึงควรตรวจสอบขอบเขตและที่มา รวมถึง `TemporaryPaths` ชื่อคีย์เพียงอย่างเดียวไม่พิสูจน์ว่าเป็นข้อยกเว้นที่ปลอดภัยหรือกิจกรรมของผู้โจมตี ให้มองหาโฟลเดอร์ที่ผู้ใช้เขียนได้ นามสกุล `.ps1`/`.exe` และ LOLBin (`rundll32.exe`, `powershell.exe`)
 - **คีย์นโยบาย** (`Policy` = True) ถูกเขียนโดย Group Policy โดยเครื่องมือ และโดยผู้โจมตีที่
   รู้ว่านโยบายมีลำดับความสำคัญเหนือการตั้งค่าภายในเครื่อง ให้เชื่อมโยงกับ GPO ของโดเมน
 - **ช่องทางของ event log:** รายงานเฉพาะ 25 ช่องทางที่เกี่ยวข้องกับความปลอดภัย พร้อมระบุว่า Windows
@@ -160,3 +157,5 @@ juntei parse-registry security-settings -d evidence/ -t jsonl \
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

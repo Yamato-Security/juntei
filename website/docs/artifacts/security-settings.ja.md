@@ -55,9 +55,9 @@ C:\Users\<user>\NTUSER.DAT
   - リモート デスクトップはサーバー上で意図的に開かれます。
   - Windows 7 は、より小さなイベント ログを保持し、最終アクセス時刻を更新しませんでした。
 - **デフォルトはバージョンによって異なります。** 一部の値は以前はデフォルトでした。
-  - `NtfsDisableLastAccessUpdate` = 1 は、Windows 10 1803 より前のデフォルトでした。それ以降のバージョンの `0x80000001` は手動で設定されたもの (ユーザー管理) です。
+  - `NtfsDisableLastAccessUpdate` は、Windows のバージョンとポリシーに応じて解釈します。Windows 10 1803 以降では、`0x80000001` は最終アクセス時刻の更新が無効なユーザー管理モードを表します。この値だけでは、誰が設定したかや、対話操作で変更したかは判断できません。
   - `RunAsPPL`、`LsaCfgFlags`、`UseLogonCredential` のデフォルトは Windows のバージョンによって変わったため、ホストのバージョンに合わせて解釈してください。
-- **Defender 除外:** 各パス、拡張子、プロセス、またはアドレスはレコードです。Defender 自身が追加する `TemporaryPaths` を除き、各除外は Defender を弱めます。ユーザーが書き込み可能なフォルダー、`.ps1`/`.exe` 拡張機能、および LOLBins (`rundll32.exe`、`powershell.exe`) を探します。
+- **Defender 除外:** 各パス、拡張子、プロセス、アドレスをレコードとして出力します。除外は保護を低下させる可能性があるため、`TemporaryPaths` を含めて範囲と設定元を確認します。キー名だけで無害な除外や攻撃者の活動とは判断できません。ユーザーが書き込み可能なフォルダー、`.ps1`/`.exe` 拡張子、LOLBins (`rundll32.exe`、`powershell.exe`) を確認してください。
 - **ポリシー キー** (`Policy` = True) は、グループ ポリシー、ツール、およびポリシーがローカル設定に影響を与えることを知っている攻撃者によって書き込まれます。それらをドメインの GPO と関連付けます。
 - **イベント ログ チャネル:** のみ 25 セキュリティ関連チャネルが報告され、Windows がデフォルトで各チャネルをオンにするかどうかが報告されます。たとえば、`TaskScheduler/Operational` と `DNS-Client/Operational` はデフォルトではオフになっています。その他には `parse-registry read` を使用してください。
 - **Key 回:** `KeyLastWrittenUTC` はキーのものなので、この値がいつ変更されたかというと必ずしもそうではありません。 `Policies` キー全体が一度に書き込まれるのが一般的です。
@@ -124,3 +124,5 @@ juntei parse-registry security-settings -d evidence/ -t jsonl \
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: 防御力の低下: ツールの無効化または変更](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-レジストリ-パーサー](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

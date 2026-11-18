@@ -75,13 +75,10 @@ yalnızca günlüklerde bulunabilir.
   - Uzak Masaüstü sunucularda bilinçli olarak açılır.
   - Windows 7 daha küçük olay günlükleri tutardı ve son erişim zamanlarını güncellemezdi.
 - **Varsayılanlar sürüme bağlıdır.** Bazı değerler eskiden varsayılandı:
-  - `NtfsDisableLastAccessUpdate` = 1, Windows 10 1803'ten önce varsayılandı. Daha sonraki bir sürümde
-    `0x80000001` elle ayarlanmıştır (kullanıcı tarafından yönetilir).
+  - `NtfsDisableLastAccessUpdate` değerini Windows sürümü ve ilke bağlamında yorumlayın. Windows 10 1803 ve sonrasında `0x80000001`, son erişim güncellemelerinin kapalı olduğu kullanıcı yönetimli modu belirtir. Bu değer tek başına ayarı kimin yaptığını veya değişikliğin etkileşimli olduğunu kanıtlamaz.
   - `RunAsPPL`, `LsaCfgFlags` ve `UseLogonCredential` varsayılanları Windows sürümleri arasında değişti;
     bunları ana bilgisayarın sürümüne göre yorumlayın.
-- **Defender dışlamaları:** her yol, uzantı, işlem veya adres bir kayıttır. Defender'ın kendisinin eklediği
-  `TemporaryPaths` dışında her dışlama Defender'ı zayıflatır. Kullanıcının yazabildiği klasörleri,
-  `.ps1`/`.exe` uzantılarını ve LOLBin'leri (`rundll32.exe`, `powershell.exe`) arayın.
+- **Defender dışlamaları:** Her yol, uzantı, işlem veya adres bir kayıttır. Dışlamalar korumayı azaltabilir; `TemporaryPaths` dahil kapsamlarını ve kaynaklarını inceleyin. Anahtar adı tek başına zararsız bir istisnayı veya saldırgan faaliyetini kanıtlamaz. Kullanıcının yazabildiği klasörleri, `.ps1`/`.exe` uzantılarını ve LOLBin’leri (`rundll32.exe`, `powershell.exe`) arayın.
 - **İlke anahtarları** (`Policy` = True) Grup İlkesi, araçlar ve ilkelerin yerel ayarlara üstün geldiğini bilen
   saldırganlar tarafından yazılır. Bunları etki alanının GPO'larıyla ilişkilendirin.
 - **Olay günlüğü kanalları:** yalnızca güvenlikle ilgili 25 kanal, Windows'un her birini varsayılan olarak
@@ -160,3 +157,5 @@ Defender dışlamalarını listeler.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

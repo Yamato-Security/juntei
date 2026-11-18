@@ -75,13 +75,10 @@ C:\Users\<user>\NTUSER.DAT
   - Remote Desktop навмисно відкривають на серверах.
   - Windows 7 зберігала менші журнали подій і не оновлювала час останнього доступу.
 - **Значення за замовчуванням залежать від версії.** Деякі значення раніше були стандартними:
-  - `NtfsDisableLastAccessUpdate` = 1 було значенням за замовчуванням до Windows 10 1803. `0x80000001`
-    у пізнішій версії встановлено вручну (керується користувачем).
+  - Інтерпретуйте `NtfsDisableLastAccessUpdate` з урахуванням версії Windows і політик. У Windows 10 1803 і новіших версіях `0x80000001` означає режим керування користувачем із вимкненим оновленням часу останнього доступу. Саме значення не визначає, хто його налаштував, і не доводить інтерактивну зміну.
   - Значення за замовчуванням `RunAsPPL`, `LsaCfgFlags` і `UseLogonCredential` змінювалися між
     версіями Windows, тож тлумачте їх відповідно до версії хоста.
-- **Виключення Defender:** кожен шлях, розширення, процес або адреса є окремим записом. Кожне виключення
-  послаблює Defender, крім `TemporaryPaths`, які Defender додає сам. Шукайте папки, доступні користувачу для запису,
-  розширення `.ps1`/`.exe` і LOLBins (`rundll32.exe`, `powershell.exe`).
+- **Виключення Defender:** Кожен шлях, розширення, процес або адреса є окремим записом. Виключення можуть знижувати захист; перевіряйте їхню область дії та походження, зокрема `TemporaryPaths`. Назва ключа сама по собі не доводить ні безпечність виключення, ні активність нападника. Шукайте доступні користувачу для запису папки, розширення `.ps1`/`.exe` і LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Ключі політик** (`Policy` = True) записують групова політика, інструменти та зловмисники, які
   знають, що політики мають пріоритет над локальними параметрами. Зіставляйте їх з об'єктами групової політики (GPO) домену.
 - **Канали журналів подій:** повідомляється лише 25 каналів, важливих для безпеки, із зазначенням того, чи вмикає Windows
@@ -160,3 +157,5 @@ juntei parse-registry security-settings -d evidence/ -t jsonl \
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

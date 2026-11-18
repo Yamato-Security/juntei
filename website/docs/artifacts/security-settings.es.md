@@ -75,13 +75,10 @@ puede encontrarse únicamente en los registros de transacciones.
   - Escritorio remoto se habilita deliberadamente en los servidores.
   - Windows 7 conservaba registros de eventos más pequeños y no actualizaba las horas de último acceso.
 - **Los valores predeterminados dependen de la versión.** Algunos valores eran los predeterminados anteriormente:
-  - `NtfsDisableLastAccessUpdate` = 1 era el valor predeterminado antes de Windows 10 1803. `0x80000001`
-    en una versión posterior se estableció manualmente (administrado por el usuario).
+  - Interprete `NtfsDisableLastAccessUpdate` según la versión de Windows y las directivas. En Windows 10 1803 y posteriores, `0x80000001` representa el modo administrado por el usuario con las actualizaciones del último acceso deshabilitadas. Este valor por sí solo no identifica quién lo configuró ni demuestra un cambio interactivo.
   - Los valores predeterminados de `RunAsPPL`, `LsaCfgFlags` y `UseLogonCredential` cambiaron entre
     versiones de Windows; interprételos según la versión del equipo.
-- **Exclusiones de Defender:** cada ruta, extensión, proceso o dirección es un registro. Toda exclusión
-  debilita Defender, excepto `TemporaryPaths`, que Defender añade por sí mismo. Busque carpetas con permisos de escritura para el usuario,
-  extensiones `.ps1`/`.exe` y LOLBins (`rundll32.exe`, `powershell.exe`).
+- **Exclusiones de Defender:** Cada ruta, extensión, proceso o dirección es un registro. Las exclusiones pueden reducir la protección; revise su alcance y origen, incluido `TemporaryPaths`. El nombre de la clave por sí solo no demuestra una excepción inocua ni actividad del atacante. Busque carpetas donde el usuario pueda escribir, extensiones `.ps1`/`.exe` y LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Las claves de directiva** (`Policy` = True) las escriben la directiva de grupo, las herramientas y los atacantes que
   saben que las directivas prevalecen sobre la configuración local. Correlaciónelas con los GPO del dominio.
 - **Canales del registro de eventos:** solo se notifican 25 canales relevantes para la seguridad, indicando si Windows
@@ -160,3 +157,5 @@ las exclusiones de Defender.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

@@ -75,13 +75,10 @@ peut ne figurer que dans les journaux.
   - Le Bureau à distance est délibérément ouvert sur les serveurs.
   - Windows 7 conservait des journaux d'événements plus petits et ne mettait pas à jour les heures de dernier accès.
 - **Les valeurs par défaut dépendent de la version.** Certaines valeurs étaient auparavant la valeur par défaut :
-  - `NtfsDisableLastAccessUpdate` = 1 était la valeur par défaut avant Windows 10 1803. `0x80000001`
-    sur une version ultérieure a été défini manuellement (géré par l'utilisateur).
+  - Interprétez `NtfsDisableLastAccessUpdate` selon la version de Windows et les stratégies. À partir de Windows 10 1803, `0x80000001` représente le mode géré par l’utilisateur avec les mises à jour du dernier accès désactivées. Cette valeur seule n’identifie pas son auteur et ne prouve pas une modification interactive.
   - Les valeurs par défaut de `RunAsPPL`, `LsaCfgFlags` et `UseLogonCredential` ont changé selon les
     versions de Windows ; interprétez-les selon la version de l'hôte.
-- **Exclusions de Defender :** chaque chemin, extension, processus ou adresse constitue un enregistrement. Chaque exclusion
-  affaiblit Defender, sauf `TemporaryPaths`, que Defender ajoute lui-même. Recherchez des dossiers accessibles en écriture par l'utilisateur,
-  des extensions `.ps1`/`.exe` et des LOLBins (`rundll32.exe`, `powershell.exe`).
+- **Exclusions de Defender :** Chaque chemin, extension, processus ou adresse constitue un enregistrement. Les exclusions peuvent réduire la protection ; vérifiez leur portée et leur origine, y compris `TemporaryPaths`. Le nom de la clé seul ne prouve ni une exception inoffensive ni une activité malveillante. Recherchez les dossiers accessibles en écriture par l’utilisateur, les extensions `.ps1`/`.exe` et les LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Les clés de stratégie** (`Policy` = True) sont écrites par les stratégies de groupe, par des outils et par des attaquants qui
   savent que les stratégies l'emportent sur les paramètres locaux. Corrélez-les avec les GPO du domaine.
 - **Canaux du journal des événements :** seuls 25 canaux pertinents pour la sécurité sont signalés, avec l'indication que Windows
@@ -160,3 +157,5 @@ exclusion de Defender.
 - [Microsoft : about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001 : Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

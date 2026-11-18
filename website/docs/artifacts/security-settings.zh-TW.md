@@ -75,13 +75,10 @@ C:\Users\<user>\NTUSER.DAT
   - 伺服器上會刻意開放遠端桌面。
   - Windows 7 保存的事件記錄較小，且不會更新上次存取時間。
 - **預設值取決於版本。**有些值在過去是預設值：
-  - `NtfsDisableLastAccessUpdate` = 1 在 Windows 10 1803 之前是預設值。較新版本上的
-    `0x80000001` 則是手動設定的（由使用者管理）。
+  - 請依 Windows 版本與原則脈絡解讀 `NtfsDisableLastAccessUpdate`。在 Windows 10 1803 及更新版本中，`0x80000001` 表示由使用者管理且停用上次存取時間更新的模式。單憑此值無法確定由誰設定，也無法證明是互動式操作造成的變更。
   - `RunAsPPL`、`LsaCfgFlags` 與 `UseLogonCredential` 的預設值隨 Windows 版本而改變，請依主機的
     版本解讀。
-- **Defender 排除項目：**每個路徑、副檔名、處理程序或位址都是一筆記錄。除了由 Defender 自行加入的
-  `TemporaryPaths` 之外，每個排除項目都會削弱 Defender。請留意使用者可寫入的資料夾、
-  `.ps1`／`.exe` 副檔名以及 LOLBin（`rundll32.exe`、`powershell.exe`）。
+- **Defender 排除項目：** 每個路徑、副檔名、處理程序或位址都是一筆記錄。排除項目可能降低保護，請檢視其範圍與來源，包括 `TemporaryPaths`。單憑機碼名稱無法判定排除項目無害，也無法證明是攻擊者活動。請留意使用者可寫入的資料夾、`.ps1`/`.exe` 副檔名與 LOLBin（`rundll32.exe`、`powershell.exe`）。
 - **原則機碼**（`Policy` = True）會由群組原則、工具，以及知道
   原則優先於本機設定的攻擊者寫入。請與網域的 GPO 交叉比對。
 - **事件記錄通道：**只會回報 25 個與資安相關的通道，並標示 Windows
@@ -160,3 +157,5 @@ Defender 排除項目。
 - [Microsoft：about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001：Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

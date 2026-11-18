@@ -73,13 +73,10 @@ C:\Users\<user>\NTUSER.DAT
   - يُفتح Remote Desktop عمدًا على الخوادم.
   - كان Windows 7 يحتفظ بسجلات أحداث أصغر ولم يكن يحدّث أوقات آخر وصول.
 - **تعتمد القيم الافتراضية على الإصدار.** كانت بعض القيم هي الافتراضية سابقًا:
-  - كانت `NtfsDisableLastAccessUpdate` = 1 هي القيمة الافتراضية قبل Windows 10 1803. أما `0x80000001`
-    على إصدار لاحق فقد ضُبطت يدويًا (يديرها المستخدم).
+  - فسّر `NtfsDisableLastAccessUpdate` وفق إصدار Windows وسياق السياسات. في Windows 10 1803 والإصدارات الأحدث، تمثل `0x80000001` وضع إدارة المستخدم مع تعطيل تحديث وقت آخر وصول. هذه القيمة وحدها لا تحدد من ضبطها ولا تثبت أن التغيير تم تفاعليًا.
   - تغيّرت القيم الافتراضية لـ `RunAsPPL` و`LsaCfgFlags` و`UseLogonCredential` بين إصدارات Windows،
     لذا اقرأها وفق إصدار الجهاز.
-- **استثناءات Defender:** كل مسار أو امتداد أو عملية أو عنوان يمثّل سجلًا. وكل استثناء يُضعف Defender،
-  باستثناء `TemporaryPaths` التي يضيفها Defender بنفسه. ابحث عن المجلدات القابلة للكتابة من قِبل
-  المستخدم، والامتدادات `.ps1`/`.exe`، وLOLBins (`rundll32.exe`، `powershell.exe`).
+- **استثناءات Defender:** كل مسار أو امتداد أو عملية أو عنوان يمثّل سجلًا. قد تقلل الاستثناءات الحماية؛ راجع نطاقها ومصدرها، بما في ذلك `TemporaryPaths`. اسم المفتاح وحده لا يثبت أن الاستثناء غير ضار ولا أنه نشاط لمهاجم. ابحث عن المجلدات القابلة للكتابة من المستخدم، والامتدادات `.ps1`/`.exe`، وLOLBins (`rundll32.exe`، `powershell.exe`).
 - **مفاتيح النُهُج** (`Policy` = True) تكتبها Group Policy، والأدوات، والمهاجمون الذين يعرفون أن النُهُج
   تتغلب على الإعدادات المحلية. اربطها بكائنات GPO الخاصة بالمجال.
 - **قنوات سجل الأحداث:** لا يُبلَّغ إلا عن 25 قناة ذات صلة بالأمان، مع بيان ما إذا كان Windows يفعّل كلًا
@@ -158,3 +155,5 @@ Defender.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

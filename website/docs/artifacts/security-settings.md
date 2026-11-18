@@ -76,13 +76,10 @@ may only be in the logs.
   - Remote Desktop is opened deliberately on servers.
   - Windows 7 kept smaller event logs and didn't update last access times.
 - **Defaults depend on the version.** Some values were the default before:
-  - `NtfsDisableLastAccessUpdate` = 1 was the default before Windows 10 1803. `0x80000001` on a
-    later version was set by hand (user managed).
+  - Interpret `NtfsDisableLastAccessUpdate` using the Windows version and policy context. On Windows 10 1803 and later, `0x80000001` represents user-managed mode with last-access updates disabled. This value alone does not identify who configured it or prove an interactive change.
   - `RunAsPPL`, `LsaCfgFlags` and `UseLogonCredential` changed their defaults between Windows
     versions: read them with the host's version.
-- **Defender exclusions:** each path, extension, process or address is a record. Every exclusion
-  weakens Defender, except `TemporaryPaths`, which Defender adds itself. Look for user-writable folders,
-  `.ps1`/`.exe` extensions and LOLBins (`rundll32.exe`, `powershell.exe`).
+- **Defender exclusions:** Each path, extension, process or address is a record. Exclusions can reduce protection; review their scope and origin, including `TemporaryPaths`. The key name alone establishes neither a harmless exemption nor attacker activity. Look for user-writable folders, `.ps1`/`.exe` extensions and LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Policy keys** (`Policy` = True) are written by Group Policy, by tools, and by attackers who
   know policies win over the local settings. Correlate them with the domain's GPOs.
 - **Event log channels:** only 25 security-relevant channels are reported, with whether Windows
@@ -160,3 +157,5 @@ The summary counts settings by area and lists the captured Defender exclusions.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

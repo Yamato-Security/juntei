@@ -75,13 +75,10 @@ befindet sich möglicherweise nur in den Protokollen.
   - Remotedesktop wird auf Servern absichtlich geöffnet.
   - Windows 7 hatte kleinere Ereignisprotokolle und aktualisierte die letzten Zugriffszeiten nicht.
 - **Standardwerte hängen von der Version ab.** Einige Werte waren früher der Standard:
-  - `NtfsDisableLastAccessUpdate` = 1 war vor Windows 10 1803 der Standard. `0x80000001` auf einer
-    späteren Version wurde manuell gesetzt (benutzerverwaltet).
+  - Interpretieren Sie `NtfsDisableLastAccessUpdate` im Kontext der Windows-Version und Richtlinien. Ab Windows 10 1803 steht `0x80000001` für den benutzerverwalteten Modus mit deaktivierten Aktualisierungen der letzten Zugriffszeit. Dieser Wert allein identifiziert weder den Urheber noch belegt er eine interaktive Änderung.
   - Die Standardwerte von `RunAsPPL`, `LsaCfgFlags` und `UseLogonCredential` haben sich zwischen
     Windows-Versionen geändert; bewerten Sie sie anhand der Version des Hosts.
-- **Defender-Ausschlüsse:** Jeder Pfad, jede Erweiterung, jeder Prozess und jede Adresse ist ein Datensatz. Jeder Ausschluss
-  schwächt Defender ab, außer `TemporaryPaths`, die Defender selbst hinzufügt. Suchen Sie nach für Benutzer beschreibbaren Ordnern,
-  `.ps1`-/`.exe`-Erweiterungen und LOLBins (`rundll32.exe`, `powershell.exe`).
+- **Defender-Ausschlüsse:** Jeder Pfad, jede Erweiterung, jeder Prozess und jede Adresse ist ein Datensatz. Ausschlüsse können den Schutz reduzieren; prüfen Sie ihren Umfang und Ursprung, einschließlich `TemporaryPaths`. Der Schlüsselname allein belegt weder eine harmlose Ausnahme noch Angreiferaktivität. Suchen Sie nach benutzerbeschreibbaren Ordnern, `.ps1`-/`.exe`-Erweiterungen und LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Richtlinienschlüssel** (`Policy` = True) werden von Gruppenrichtlinien, von Werkzeugen und von Angreifern geschrieben, die
   wissen, dass Richtlinien Vorrang vor den lokalen Einstellungen haben. Korrelieren Sie sie mit den GPOs der Domäne.
 - **Ereignisprotokollkanäle:** Nur 25 sicherheitsrelevante Kanäle werden gemeldet, jeweils mit der Angabe, ob Windows
@@ -160,3 +157,5 @@ Defender-Ausschluss.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

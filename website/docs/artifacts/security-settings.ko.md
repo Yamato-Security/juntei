@@ -71,13 +71,10 @@ C:\Users\<user>\NTUSER.DAT
   - 서버에서는 원격 데스크톱을 의도적으로 열어 둡니다.
   - Windows 7은 이벤트 로그 크기가 더 작았고 마지막 액세스 시간을 업데이트하지 않았습니다.
 - **기본값은 버전에 따라 다릅니다.** 일부 값은 예전에는 기본값이었습니다.
-  - `NtfsDisableLastAccessUpdate` = 1은 Windows 10 1803 이전의 기본값이었습니다. 이후 버전의
-    `0x80000001`은 수동으로 설정된 값(사용자 관리)입니다.
+  - `NtfsDisableLastAccessUpdate`는 Windows 버전과 정책 맥락에 따라 해석하십시오. Windows 10 1803 이상에서 `0x80000001`은 마지막 액세스 시간 업데이트가 비활성화된 사용자 관리 모드를 나타냅니다. 이 값만으로 누가 설정했는지 또는 대화형 작업으로 변경했는지는 알 수 없습니다.
   - `RunAsPPL`, `LsaCfgFlags` 및 `UseLogonCredential`의 기본값은 Windows 버전마다 바뀌었으므로
     호스트의 버전에 맞춰 해석하십시오.
-- **Defender 제외 항목:** 각 경로, 확장자, 프로세스 또는 주소가 하나의 레코드입니다. Defender가 스스로 추가하는
-  `TemporaryPaths`를 제외한 모든 제외 항목은 Defender를 약화시킵니다. 사용자가 쓰기
-  가능한 폴더, `.ps1`/`.exe` 확장자 및 LOLBin(`rundll32.exe`, `powershell.exe`)을 찾으십시오.
+- **Defender 제외 항목:** 각 경로, 확장자, 프로세스 또는 주소가 하나의 레코드입니다. 제외 항목은 보호 수준을 낮출 수 있으므로 `TemporaryPaths`를 포함하여 범위와 출처를 검토하십시오. 키 이름만으로 무해한 예외나 공격자 활동을 판단할 수 없습니다. 사용자가 쓰기 가능한 폴더, `.ps1`/`.exe` 확장자 및 LOLBin(`rundll32.exe`, `powershell.exe`)을 확인하십시오.
 - **정책 키**(`Policy` = True)는 그룹 정책, 도구, 그리고 정책이 로컬 설정보다 우선한다는 것을 아는 공격자가
   기록합니다. 도메인의 GPO와 상관 분석하십시오.
 - **이벤트 로그 채널:** 보안 관련 채널 25개만 보고되며, Windows가 각 채널을 기본적으로 켜는지 여부도 함께
@@ -155,3 +152,5 @@ juntei parse-registry security-settings -d evidence/ -t jsonl \
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

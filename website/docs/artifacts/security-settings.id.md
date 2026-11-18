@@ -75,13 +75,10 @@ mungkin hanya ada di log.
   - Remote Desktop dibuka secara sengaja di server.
   - Windows 7 menyimpan log peristiwa yang lebih kecil dan tidak memperbarui waktu akses terakhir.
 - **Default bergantung pada versi.** Beberapa nilai dahulu merupakan default:
-  - `NtfsDisableLastAccessUpdate` = 1 adalah default sebelum Windows 10 1803. `0x80000001` pada
-    versi yang lebih baru ditetapkan secara manual (dikelola pengguna).
+  - Tafsirkan `NtfsDisableLastAccessUpdate` sesuai versi Windows dan konteks kebijakan. Pada Windows 10 1803 dan sesudahnya, `0x80000001` menunjukkan mode yang dikelola pengguna dengan pembaruan waktu akses terakhir dinonaktifkan. Nilai ini saja tidak mengidentifikasi siapa yang mengaturnya atau membuktikan perubahan interaktif.
   - Default `RunAsPPL`, `LsaCfgFlags`, dan `UseLogonCredential` berubah antarversi Windows; baca
     nilainya sesuai versi host.
-- **Pengecualian Defender:** setiap path, ekstensi, proses, atau alamat adalah sebuah catatan. Setiap pengecualian
-  melemahkan Defender, kecuali `TemporaryPaths`, yang ditambahkan Defender sendiri. Cari folder yang dapat ditulisi pengguna,
-  ekstensi `.ps1`/`.exe`, dan LOLBin (`rundll32.exe`, `powershell.exe`).
+- **Pengecualian Defender:** Setiap path, ekstensi, proses atau alamat adalah sebuah catatan. Pengecualian dapat mengurangi perlindungan; tinjau cakupan dan asalnya, termasuk `TemporaryPaths`. Nama kunci saja tidak membuktikan pengecualian yang aman maupun aktivitas penyerang. Cari folder yang dapat ditulisi pengguna, ekstensi `.ps1`/`.exe`, dan LOLBin (`rundll32.exe`, `powershell.exe`).
 - **Kunci kebijakan** (`Policy` = True) ditulis oleh Group Policy, oleh alat, dan oleh penyerang yang
   tahu bahwa kebijakan mengalahkan pengaturan lokal. Korelasikan dengan GPO domain.
 - **Channel log peristiwa:** hanya 25 channel yang relevan dengan keamanan yang dilaporkan, beserta apakah Windows
@@ -160,3 +157,5 @@ pengecualian Defender.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)
