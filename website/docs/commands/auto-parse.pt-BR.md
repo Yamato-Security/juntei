@@ -521,10 +521,12 @@ seu formato de saída. Os arquivos JSONL temporários são removidos após uma e
 analisador ou a exportação falhar. Planeje o tempo de processamento extra e o espaço temporário em disco.
 
 No **modo JSON**, o Juntei transmite os resultados existentes para um JSONL compacto sem analisar novamente as
-evidências. Os relatórios do Amcache são expandidos nos mesmos registros individuais de resumo, constatação, arquivo e dispositivo
+evidências. Os relatórios do Amcache são expandidos nos mesmos registros individuais de resumo, arquivo e dispositivo
 do JSONL nativo. No **modo JSONL**, os registros anotados existentes são combinados diretamente.
 Todos os modos usam a mesma estrutura de registro para SIEM. O conjunto de dados mantém os carimbos de data/hora e os campos
 nativos dos artefatos; ele não inventa um carimbo de data/hora de evento comum nem ordena globalmente artefatos heterogêneos.
+
+Uma tabela `Findings` é preservada apenas se estiver presente em um relatório antigo; as novas saídas do analisador não a criam.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

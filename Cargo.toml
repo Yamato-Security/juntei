@@ -31,7 +31,7 @@ winresource = "0.1.34"
 # moves to the latest.
 [dependencies]
 # Amcache parsing and output: Yamato Security's ys-amcache-parser (Apache-2.0).
-amcache-forensic = { package = "ys-amcache-parser", git = "https://github.com/Yamato-Security/ys-amcache-parser", rev = "60366b569052c9a0301424e6d2f5e8969ac9081b" }
+amcache-forensic = { package = "ys-amcache-parser", git = "https://github.com/Yamato-Security/ys-amcache-parser" }
 bytesize = "2"
 chrono = { version = "0.4", features = ["clock"] }
 clap = { version = "4.5", features = ["derive"] }
@@ -75,7 +75,7 @@ shell = { package = "ys-lnk-parser", git = "https://github.com/Yamato-Security/y
 jumplist = { package = "ys-jump-lists-parser", git = "https://github.com/Yamato-Security/ys-jump-lists-parser", features = ["codepages"] }
 # ShimCache parsing: Yamato Security's ys-shimcache-parser, a fork of Security Ronin's
 # shimcache-forensic (Apache-2.0): its own SYSTEM hive reader with transaction log replay, every
-# control set, and the findings.
+# control set, with recovery metadata.
 shimcache-forensic = { package = "ys-shimcache-parser", git = "https://github.com/Yamato-Security/ys-shimcache-parser" }
 # Registry hives for parse-registry: Yamato Security's ys-registry-parser (Apache-2.0): keys and
 # values, transaction log replay, deleted keys and values, registry autostart locations, UserAssist,

@@ -21002,8 +21002,8 @@ fn amcache_protects_primary_hives_and_logs_from_output_replacement() {
 }
 
 #[test]
-fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
-    for format in ["csv", "jsonl"] {
+fn auto_parse_uses_recovered_amcache_without_findings_in_all_output_formats() {
+    for format in ["csv", "json", "jsonl"] {
         let evidence = tempfile::tempdir().unwrap();
         let programs = evidence.path().join("HOST/C/Windows/AppCompat/Programs");
         std::fs::create_dir_all(&programs).unwrap();
@@ -21011,6 +21011,7 @@ fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
         let original = std::fs::read(&hive).unwrap();
         let dir = tempfile::tempdir().unwrap();
         let out = dir.path().join("parsed");
+        let combined = dir.path().join("combined.jsonl");
         let r = run(&[
             "auto-parse",
             "-d",
@@ -21021,6 +21022,8 @@ fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
             format,
             "-T",
             "2",
+            "-j",
+            combined.to_str().unwrap(),
             "-K",
             "-q",
         ]);
@@ -21040,6 +21043,17 @@ fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
             let (_, records) = csv_rows(&out.join("HOST/FileExistence/Registry-Amcache-Files.csv"));
             assert_eq!(records.len(), 1);
             assert_eq!(records[0]["Publisher"], "Example Publisher");
+            assert!(
+                !out.join("HOST/FileExistence/Registry-Amcache-Findings.csv")
+                    .exists()
+            );
+        } else if format == "json" {
+            let report: Value = serde_json::from_slice(
+                &std::fs::read(out.join("HOST/FileExistence/Registry-Amcache.json")).unwrap(),
+            )
+            .unwrap();
+            assert!(report.get("Findings").is_none());
+            assert_eq!(report["Files"][0]["Publisher"], "Example Publisher");
         } else {
             let data =
                 std::fs::read_to_string(out.join("HOST/FileExistence/Registry-Amcache.jsonl"))
@@ -21051,6 +21065,23 @@ fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
                         && row["Publisher"] == "Example Publisher")
             );
         }
+        let timeline: Vec<Value> = std::fs::read_to_string(combined)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .filter(|row: &Value| row["Artifact"] == "amcache")
+            .collect();
+        assert_eq!(
+            timeline.len(),
+            2,
+            "{format}: expected one summary and one file"
+        );
+        assert!(timeline.iter().all(|row| row["RecordType"] != "finding"));
+        assert!(
+            timeline
+                .iter()
+                .any(|row| row["RecordType"] == "file" && row["Publisher"] == "Example Publisher")
+        );
         assert_eq!(std::fs::read(hive).unwrap(), original);
     }
 }

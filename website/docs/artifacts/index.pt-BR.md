@@ -38,7 +38,5 @@ Toda página de artefato segue a mesma sequência:
 6. **Como correlacioná-lo** com evidências independentes.
 7. **Mais detalhes** para pesquisa de baixo nível.
 
-!!! danger "Não equipare um achado do analisador a atividade maliciosa"
-    Os achados do Juntei identificam padrões que merecem revisão, como o nome de um binário do sistema fora de
-    `System32`. Instaladores, administradores, camadas de compatibilidade e atualizações de software podem produzir
-    registros incomuns. Valide com contexto e evidências independentes.
+!!! danger "Não trate registros incomuns como prova de atividade maliciosa"
+    O Juntei analisa evidências para interpretação por um analista. As verificações do Persistence Hunter continuam disponíveis, mas uma entrada de inicialização configurada também pode fazer parte de uma administração legítima. Correlacione as observações com o contexto e evidências independentes antes de classificá-las como maliciosas.

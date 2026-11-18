@@ -38,7 +38,5 @@ Setiap halaman artefak mengikuti urutan yang sama:
 6. **Cara mengorelasikannya** dengan bukti independen.
 7. **Detail lebih lanjut** untuk riset tingkat rendah.
 
-!!! danger "Jangan menyamakan temuan parser dengan keberbahayaan"
-    Temuan Juntei mengidentifikasi pola yang layak ditinjau, seperti nama binary sistem di luar
-    `System32`. Installer, administrator, lapisan kompatibilitas, dan pembaruan perangkat lunak dapat menghasilkan
-    record yang tidak biasa. Validasi dengan konteks dan bukti independen.
+!!! danger "Jangan anggap catatan yang tidak biasa sebagai bukti aktivitas berbahaya"
+    Juntei mem-parsing bukti untuk ditafsirkan analis. Pemeriksaan Persistence Hunter tetap tersedia, tetapi entri startup yang dikonfigurasi juga dapat berasal dari administrasi yang sah. Korelasikan pengamatan dengan konteks dan bukti independen sebelum menilainya sebagai aktivitas berbahaya.

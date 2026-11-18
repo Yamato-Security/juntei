@@ -518,10 +518,12 @@ juntei auto-parse -d evidence -o parsed-jsonl -t jsonl -j parsed-jsonl/timeline.
 請預留額外的處理時間與暫存磁碟空間。
 
 在 **JSON 模式**下，Juntei 會將既有的結果串流轉換為精簡的 JSONL，而不會重新剖析
-證據。Amcache 報告會展開為與原生 JSONL 相同的個別摘要、發現、檔案與裝置
+證據。Amcache 報告會展開為與原生 JSONL 相同的個別摘要、檔案與裝置
 記錄。在 **JSONL 模式**下，既有的帶註記記錄會被直接合併。
 所有模式都使用相同的 SIEM 記錄結構。此資料集保留原生的時間戳記與跡證
 欄位；它不會自行建立共通的事件時間戳記，也不會對異質的跡證進行全域排序。
+
+只有舊報告中存在 `Findings` 資料表時才會保留；新的剖析器輸出不會建立此資料表。
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

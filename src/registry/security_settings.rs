@@ -17,8 +17,8 @@
 //! Microsoft Defender (each exclusion a record), UAC, credential protection (WDigest, LSA
 //! protection, Credential Guard, Restricted Admin, NTLM), Remote Desktop, the firewall and SMBv1,
 //! PowerShell (execution policy, logging, AMSI) and what keeps evidence (last access times, System
-//! Restore, event logs), each with what its value means and whether it weakens what Windows does
-//! by default. Detection classification is evaluated in Juntei Pro.
+//! Restore, event logs), each with its stored value and meaning. Detection classification is
+//! evaluated in Juntei Pro.
 
 use super::{
     Hosts, Opened, Profiles, RecordWriter, choose_logs, files_read, filetime, find_hives,
@@ -39,7 +39,7 @@ use std::path::{Path, PathBuf};
 
 /// Parse errors printed; the rest are only counted.
 const MAX_PRINTED_ERRORS: usize = 20;
-/// Problems, weakened settings and exclusions listed in the summary.
+/// Parser problems and configured exclusions listed in the summary.
 const MAX_PRINTED: usize = 20;
 /// The hives read, as their base blocks name them.
 const HIVE_TYPES: [&str; 3] = ["SOFTWARE", "SYSTEM", "NTUSER.DAT"];

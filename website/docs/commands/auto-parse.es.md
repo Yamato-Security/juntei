@@ -551,11 +551,13 @@ espacio temporal en disco.
 
 En **modo JSON**, Juntei transmite los resultados existentes a JSONL compacto sin volver a analizar
 las evidencias. Los informes de Amcache se expanden en los mismos registros individuales de
-resumen, hallazgo, archivo y dispositivo que el JSONL nativo. En **modo JSONL**, los registros
+resumen, archivo y dispositivo que el JSONL nativo. En **modo JSONL**, los registros
 anotados existentes se combinan directamente. Todos los modos usan la misma estructura de registro
 para el SIEM. El conjunto de datos conserva las marcas de tiempo nativas y los campos de cada
 artefacto; no inventa una marca de tiempo de evento común ni ordena globalmente artefactos
 heterogéneos.
+
+La tabla `Findings` solo se conserva si está presente en un informe histórico; la nueva salida del analizador no la crea.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

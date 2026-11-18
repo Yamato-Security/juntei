@@ -520,10 +520,12 @@ field များနှင့် metadata ကို ထိန်းသိမ်
 ထိန်းထားပါသည်။ ထပ်ဆောင်း လုပ်ဆောင်ချိန်နှင့် ယာယီ disk နေရာအတွက် စီစဉ်ထားပါ။
 
 **JSON mode** တွင် Juntei သည် အထောက်အထားကို ပြန်လည် parse မလုပ်ဘဲ ရှိပြီးသား ရလဒ်များကို compact JSONL အဖြစ် stream လုပ်ပါသည်။
-Amcache အစီရင်ခံစာများကို native JSONL ကဲ့သို့ တူညီသော တစ်ခုချင်း summary၊ finding၊ file နှင့် device record များအဖြစ်
+Amcache အစီရင်ခံစာများကို native JSONL ကဲ့သို့ တူညီသော တစ်ခုချင်း summary၊ file နှင့် device record များအဖြစ်
 ချဲ့ထွင်ပါသည်။ **JSONL mode** တွင် ရှိပြီးသား annotate လုပ်ထားသော record များကို တိုက်ရိုက် ပေါင်းစပ်ပါသည်။
 Mode အားလုံးသည် တူညီသော SIEM record ဖွဲ့စည်းပုံကို အသုံးပြုပါသည်။ Dataset သည် native timestamp များနှင့် artifact
 field များကို ထိန်းထားပြီး ဘုံ event timestamp တစ်ခုကို တီထွင်ခြင်း သို့မဟုတ် မတူညီသော artifact များကို တစ်ကမ္ဘာလုံးဆိုင်ရာ စီခြင်း မပြုလုပ်ပါ။
+
+ယခင်အစီရင်ခံစာတွင် `Findings` ဇယား ပါရှိမှသာ ထိန်းသိမ်းထားပြီး parser အသစ်၏ output တွင် ၎င်းကို မဖန်တီးပါ။
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

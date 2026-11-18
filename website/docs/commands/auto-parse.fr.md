@@ -521,10 +521,12 @@ leur format de sortie. Les fichiers JSONL temporaires sont supprimés après une
 parseur ou l'export échoue. Prévoyez le temps de traitement et l'espace disque temporaire supplémentaires.
 
 En **mode JSON**, Juntei transforme en flux les résultats existants en JSONL compact sans réanalyser les
-preuves. Les rapports Amcache sont développés en enregistrements individuels de résumé, de constat, de fichier et de périphérique,
+preuves. Les rapports Amcache sont développés en enregistrements individuels de résumé, de fichier et de périphérique,
 identiques à ceux du JSONL natif. En **mode JSONL**, les enregistrements annotés existants sont combinés directement.
 Tous les modes utilisent la même structure d'enregistrement SIEM. Le jeu de données conserve les horodatages natifs et les champs
 des artefacts ; il n'invente pas d'horodatage d'événement commun et ne trie pas globalement des artefacts hétérogènes.
+
+Une table `Findings` est conservée uniquement si elle figure dans un ancien rapport ; les nouvelles sorties du parseur n’en créent pas.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

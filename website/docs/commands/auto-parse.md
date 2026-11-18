@@ -547,10 +547,12 @@ output format. Temporary JSONL files are removed after a successful run; they ar
 parser or export fails. Plan for the extra processing time and temporary disk space.
 
 In **JSON mode**, Juntei streams the existing results into compact JSONL without reparsing the
-evidence. Amcache reports are expanded into the same individual summary, finding, file, and device
+evidence. Amcache reports are expanded into the same individual summary, file, and device
 records as native JSONL. In **JSONL mode**, the existing annotated records are combined directly.
 All modes use the same SIEM record structure. The dataset keeps native timestamps and artifact
 fields; it does not invent a common event timestamp or globally sort heterogeneous artifacts.
+
+A `Findings` table is preserved only when present in a historical report; new parser output does not create one.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

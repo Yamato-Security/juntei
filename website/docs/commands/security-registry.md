@@ -412,7 +412,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
-      --weakened-only     Only settings whose value weakens what Windows does by default
 
 Output:
   -o, --output <FILE>       Save every record to a file
@@ -427,9 +426,7 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-Each setting found is a record with its value, its meaning and whether it weakens what Windows
-does by default; `--weakened-only` keeps those that do. See
-[Security Settings](../artifacts/security-settings.md).
+Each setting found is a record with its stored value and its meaning. See [Security Settings](../artifacts/security-settings.md).
 
 
 ## `parse-registry office`

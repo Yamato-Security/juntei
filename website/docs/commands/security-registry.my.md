@@ -411,7 +411,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
-      --weakened-only     Only settings whose value weakens what Windows does by default
 
 Output:
   -o, --output <FILE>       Save every record to a file
@@ -426,9 +425,7 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-တွေ့ရှိသော ဆက်တင်တစ်ခုစီသည် ၎င်း၏ value၊ ၎င်း၏ အဓိပ္ပာယ်နှင့် Windows ၏ မူလအပြုအမူကို အားနည်းစေခြင်း ရှိ/မရှိ
-ပါဝင်သော record တစ်ခု ဖြစ်သည်။ `--weakened-only` က အားနည်းစေသည့် ဆက်တင်များကိုသာ ထားရှိသည်။
-[လုံခြုံရေးဆက်တင်များ](../artifacts/security-settings.md) ကို ကြည့်ပါ။
+တွေ့ရှိသော ဆက်တင်တစ်ခုစီကို သိမ်းဆည်းထားသော တန်ဖိုးနှင့် ၎င်း၏အဓိပ္ပာယ် ပါဝင်သော မှတ်တမ်းအဖြစ် ထုတ်ပေးသည်။ [လုံခြုံရေးဆက်တင်များ](../artifacts/security-settings.md) ကို ကြည့်ပါ။
 
 
 ## `parse-registry office` { #parse-registry-office }

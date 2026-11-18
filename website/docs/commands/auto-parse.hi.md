@@ -521,10 +521,12 @@ output format में भेद करते हैं। सफल run के
 parser या export विफल हो तो उन्हें बनाए रखा जाता है। अतिरिक्त processing समय और अस्थायी disk space की योजना बनाएँ।
 
 **JSON mode** में, Juntei साक्ष्य को फिर से parse किए बिना मौजूदा परिणामों को compact JSONL में stream करता है।
-Amcache reports को native JSONL जैसे ही अलग-अलग summary, finding, file और device
+Amcache reports को native JSONL जैसे ही अलग-अलग summary, file और device
 records में विस्तारित किया जाता है। **JSONL mode** में, मौजूदा annotated records को सीधे संयुक्त किया जाता है।
 सभी modes समान SIEM record संरचना का उपयोग करते हैं। Dataset native timestamps और आर्टिफ़ैक्ट
 fields बनाए रखता है; यह कोई सामान्य event timestamp नहीं गढ़ता और न ही विषम आर्टिफ़ैक्ट को वैश्विक रूप से sort करता है।
+
+`Findings` तालिका केवल पुराने रिपोर्ट में मौजूद होने पर सुरक्षित रखी जाती है; नया पार्सर आउटपुट इसे नहीं बनाता।
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

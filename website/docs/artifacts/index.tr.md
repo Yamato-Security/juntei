@@ -38,7 +38,5 @@ Her artefakt sayfası aynı sırayı izler:
 6. Bağımsız kanıtlarla **nasıl ilişkilendirilir**.
 7. Düşük seviyeli araştırma için **Daha fazla ayrıntı**.
 
-!!! danger "Bir ayrıştırıcı bulgusunu kötü amaçlı olmakla eşdeğer saymayın"
-    Juntei bulguları, `System32` dışındaki bir sistem ikili dosyası adı gibi incelemeye değer kalıpları
-    belirler. Yükleyiciler, yöneticiler, uyumluluk katmanları ve yazılım güncellemeleri olağandışı kayıtlar
-    üretebilir. Bağlam ve bağımsız kanıtlarla doğrulayın.
+!!! danger "Olağandışı kayıtları kötü amaçlı faaliyetin kanıtı saymayın"
+    Juntei, analistin yorumlayacağı kanıtları ayrıştırır. Persistence Hunter denetimleri kullanılabilir olmaya devam eder; ancak yapılandırılmış bir başlangıç girdisi meşru yönetimin parçası da olabilir. Kötü amaçlı olduğuna karar vermeden önce gözlemleri bağlam ve bağımsız kanıtlarla ilişkilendirin.

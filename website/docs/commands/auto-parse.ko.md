@@ -499,10 +499,12 @@ juntei auto-parse -d evidence -o parsed-jsonl -t jsonl -j parsed-jsonl/timeline.
 실패하면 유지됩니다. 추가 처리 시간과 임시 디스크 공간을 고려하십시오.
 
 **JSON 모드**에서 Juntei는 증거를 다시 파싱하지 않고 기존 결과를 간결한 JSONL로 스트리밍합니다. Amcache
-보고서는 네이티브 JSONL과 동일한 개별 요약, 발견 사항, 파일, 장치 레코드로 확장됩니다. **JSONL 모드**에서는
+보고서는 네이티브 JSONL과 동일한 개별 요약, 파일, 장치 레코드로 확장됩니다. **JSONL 모드**에서는
 기존의 주석이 추가된 레코드가 그대로 결합됩니다. 모든 모드는 같은 SIEM 레코드 구조를 사용합니다. 데이터 세트는
 네이티브 타임스탬프와 아티팩트 필드를 유지하며, 공통 이벤트 타임스탬프를 만들어 내거나 서로 다른 아티팩트를
 전역적으로 정렬하지 않습니다.
+
+과거 보고서에 `Findings` 테이블이 있으면 보존하지만, 새로운 파서 출력에서는 생성하지 않습니다.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

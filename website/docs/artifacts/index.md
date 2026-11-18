@@ -38,7 +38,5 @@ Every artifact page follows the same sequence:
 6. **How to correlate it** with independent evidence.
 7. **Further Details** for low-level research.
 
-!!! danger "Do not equate a parser finding with maliciousness"
-    Juntei findings identify patterns worth review, such as a system-binary name outside
-    `System32`. Installers, administrators, compatibility layers, and software updates can produce
-    unusual records. Validate with context and independent evidence.
+!!! danger "Do not treat unusual records as proof of maliciousness"
+    Juntei parses evidence for an analyst to interpret. Persistence Hunter checks remain available, but a configured startup entry can also be legitimate administration. Correlate observations with context and independent evidence before deciding they are malicious.

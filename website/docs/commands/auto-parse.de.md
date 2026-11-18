@@ -520,10 +520,12 @@ Ausgabeformat. Temporäre JSONL-Dateien werden nach einem erfolgreichen Lauf ent
 Parser oder der Export fehlschlägt. Planen Sie die zusätzliche Verarbeitungszeit und den temporären Speicherplatz ein.
 
 Im **JSON-Modus** streamt Juntei die vorhandenen Ergebnisse in kompaktes JSONL, ohne die Beweise
-erneut zu parsen. Amcache-Berichte werden in dieselben einzelnen Zusammenfassungs-, Befund-, Datei- und Gerätedatensätze
+erneut zu parsen. Amcache-Berichte werden in dieselben einzelnen Zusammenfassungs-, Datei- und Gerätedatensätze
 wie bei nativem JSONL aufgeteilt. Im **JSONL-Modus** werden die vorhandenen annotierten Datensätze direkt zusammengeführt.
 Alle Modi verwenden dieselbe SIEM-Datensatzstruktur. Der Datensatz behält native Zeitstempel und Artefaktfelder bei;
 er erfindet keinen gemeinsamen Ereigniszeitstempel und sortiert heterogene Artefakte nicht global.
+
+Eine `Findings`-Tabelle wird nur übernommen, wenn sie in einem historischen Bericht vorhanden ist; neue Parserausgaben erzeugen keine.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl

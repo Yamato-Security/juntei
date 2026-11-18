@@ -521,10 +521,12 @@ format keluarannya. Berkas JSONL sementara dihapus setelah eksekusi berhasil; be
 parser atau ekspor gagal. Perhitungkan waktu pemrosesan tambahan dan ruang disk sementara.
 
 Dalam **mode JSON**, Juntei mengalirkan hasil yang ada ke JSONL ringkas tanpa mengurai ulang
-bukti. Laporan Amcache diperluas menjadi record summary, finding, file, dan device individual yang sama
+bukti. Laporan Amcache diperluas menjadi record summary, file, dan device individual yang sama
 seperti JSONL native. Dalam **mode JSONL**, record beranotasi yang ada digabungkan secara langsung.
 Semua mode menggunakan struktur record SIEM yang sama. Dataset mempertahankan timestamp dan field artefak
 native; dataset tidak menciptakan timestamp peristiwa bersama atau mengurutkan artefak yang heterogen secara global.
+
+Tabel `Findings` dipertahankan hanya jika ada dalam laporan lama; keluaran parser baru tidak membuatnya.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
