@@ -18,9 +18,7 @@ pengaturan-pengaturan ini:
   Windows Script Host.
 
 `parse-registry security-settings` melaporkan setiap pengaturan yang ditemukannya sebagai sebuah catatan. Setiap catatan berisi
-nilai pengaturan, makna nilai tersebut, dan apakah nilai itu **melemahkan default**: apakah nilai itu mematikan
-suatu proteksi atau sumber bukti, atau menurunkannya di bawah apa yang dilakukan Windows saat ini (10 dan 11)
-tanpa nilai tersebut.
+nilai pengaturan dan makna nilai tersebut.
 
 <span class="evidence-strength">Kesimpulan terbaik:</span> pengaturan ini memiliki nilai ini ketika hive
 disimpan, dan kunci tersebut terakhir ditulis pada waktu ini. Pengaturan yang dilemahkan adalah petunjuk, bukan bukti
@@ -77,11 +75,12 @@ mungkin hanya ada di log.
   - Remote Desktop dibuka secara sengaja di server.
   - Windows 7 menyimpan log peristiwa yang lebih kecil dan tidak memperbarui waktu akses terakhir.
 - **Default bergantung pada versi.** Beberapa nilai dahulu merupakan default:
-  - `NtfsDisableLastAccessUpdate` = 1 adalah default sebelum Windows 10 1803. Nilai ini dilaporkan
-    tanpa putusan, tetapi `0x80000001`, yang ditetapkan secara manual pada versi yang lebih baru, dianggap melemahkan.
-  - `RunAsPPL`, `LsaCfgFlags`, dan `UseLogonCredential` dibandingkan dengan Windows saat ini.
+  - `NtfsDisableLastAccessUpdate` = 1 adalah default sebelum Windows 10 1803. `0x80000001` pada
+    versi yang lebih baru ditetapkan secara manual (dikelola pengguna).
+  - Default `RunAsPPL`, `LsaCfgFlags`, dan `UseLogonCredential` berubah antarversi Windows; baca
+    nilainya sesuai versi host.
 - **Pengecualian Defender:** setiap path, ekstensi, proses, atau alamat adalah sebuah catatan. Setiap pengecualian
-  melemahkan Defender. `TemporaryPaths`, yang ditambahkan Defender sendiri, tidak memiliki putusan. Cari folder yang dapat ditulisi pengguna,
+  melemahkan Defender, kecuali `TemporaryPaths`, yang ditambahkan Defender sendiri. Cari folder yang dapat ditulisi pengguna,
   ekstensi `.ps1`/`.exe`, dan LOLBin (`rundll32.exe`, `powershell.exe`).
 - **Kunci kebijakan** (`Policy` = True) ditulis oleh Group Policy, oleh alat, dan oleh penyerang yang
   tahu bahwa kebijakan mengalahkan pengaturan lokal. Korelasikan dengan GPO domain.

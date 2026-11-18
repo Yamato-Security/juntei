@@ -18,9 +18,7 @@ Remote Desktop खोलते हैं, firewall बंद करते है
   Windows Script Host के लिए AMSI।
 
 `parse-registry security-settings` हर मिली setting को एक record के रूप में report करता है। हर record में
-setting का value, उस value का अर्थ, और यह होता है कि क्या यह **default को कमज़ोर करता है**: क्या यह किसी
-protection या साक्ष्य स्रोत को बंद करता है, या उसे उस स्तर से नीचे ले जाता है जो वर्तमान Windows (10 और 11)
-उस value के बिना करता है।
+setting का value और उस value का अर्थ होता है।
 
 <span class="evidence-strength">सर्वोत्तम निष्कर्ष:</span> जब hive सहेजा गया था तब इस setting का यह value था,
 और key आख़िरी बार इस समय लिखी गई थी। कमज़ोर की गई setting एक सुराग है, compromise का प्रमाण नहीं।
@@ -77,11 +75,12 @@ C:\Users\<user>\NTUSER.DAT
   - Servers पर Remote Desktop जानबूझकर खोला जाता है।
   - Windows 7 छोटे event logs रखता था और last access times update नहीं करता था।
 - **Defaults version पर निर्भर करते हैं।** कुछ values पहले default थीं:
-  - `NtfsDisableLastAccessUpdate` = 1 Windows 10 1803 से पहले default था। इसे बिना निर्णय के report
-    किया जाता है, लेकिन बाद के version पर हाथ से सेट किया गया `0x80000001` कमज़ोर माना जाता है।
-  - `RunAsPPL`, `LsaCfgFlags` और `UseLogonCredential` की तुलना वर्तमान Windows से की जाती है।
+  - `NtfsDisableLastAccessUpdate` = 1 Windows 10 1803 से पहले default था। बाद के version पर
+    `0x80000001` हाथ से सेट किया गया था (user managed)।
+  - `RunAsPPL`, `LsaCfgFlags` और `UseLogonCredential` के default Windows versions के बीच बदले हैं,
+    इसलिए इन्हें host के version के अनुसार पढ़ें।
 - **Defender exclusions:** हर path, extension, process या address एक record है। हर exclusion
-  Defender को कमज़ोर करती है। `TemporaryPaths`, जिसे Defender स्वयं जोड़ता है, पर कोई निर्णय नहीं दिया जाता। User-writable folders,
+  Defender को कमज़ोर करती है, सिवाय `TemporaryPaths` के, जिसे Defender स्वयं जोड़ता है। User-writable folders,
   `.ps1`/`.exe` extensions और LOLBins (`rundll32.exe`, `powershell.exe`) खोजें।
 - **Policy keys** (`Policy` = True) Group Policy, tools, और उन हमलावरों द्वारा लिखी जाती हैं जो
   जानते हैं कि policies local settings पर भारी पड़ती हैं। इन्हें domain के GPOs से correlate करें।

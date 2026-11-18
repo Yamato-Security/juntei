@@ -1,6 +1,6 @@
 # Prefetch { #prefetch }
 
-Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持する。パーサー固有の検知ルールは Juntei Pro で評価する。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できる。
+Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持します。パーサー固有の検知ルールは Juntei Pro で評価します。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できます。
 
 ## Prefetchとは { #what-prefetch-is }
 

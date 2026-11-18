@@ -14,9 +14,8 @@ Juntei는 아티팩트 레코드, 메타데이터 및 파싱 진단 정보를 �
   데스크톱, 방화벽 프로필, SMBv1, 마지막 액세스 시간, 각 이벤트 로그의 크기.
 - **`NTUSER.DAT`:** 사용자의 PowerShell 실행 정책 및 로깅 정책, 그리고 Windows Script Host의 AMSI.
 
-`parse-registry security-settings`는 발견한 각 설정을 하나의 레코드로 보고합니다. 각 레코드에는 설정 값,
-그 값의 의미, 그리고 해당 값이 **기본값을 약화시키는지** 여부가 포함됩니다. 즉, 보호 기능이나 증거 출처를
-끄는지, 또는 해당 값이 없을 때 현재 Windows(10 및 11)가 동작하는 수준보다 낮추는지를 나타냅니다.
+`parse-registry security-settings`는 발견한 각 설정을 하나의 레코드로 보고합니다. 각 레코드에는 설정 값과
+그 값의 의미가 포함됩니다.
 
 <span class="evidence-strength">가장 타당한 결론:</span> 하이브가 저장된 시점에 이 설정은 이 값을 가지고
 있었으며, 키는 이 시간에 마지막으로 기록되었습니다. 약화된 설정은 단서이지 침해의 증명이 아닙니다.
@@ -72,11 +71,12 @@ C:\Users\<user>\NTUSER.DAT
   - 서버에서는 원격 데스크톱을 의도적으로 열어 둡니다.
   - Windows 7은 이벤트 로그 크기가 더 작았고 마지막 액세스 시간을 업데이트하지 않았습니다.
 - **기본값은 버전에 따라 다릅니다.** 일부 값은 예전에는 기본값이었습니다.
-  - `NtfsDisableLastAccessUpdate` = 1은 Windows 10 1803 이전의 기본값이었습니다. 이 값은 판정 없이
-    보고되지만, 이후 버전에서 수동으로 설정한 `0x80000001`은 약화된 것으로 판정됩니다.
-  - `RunAsPPL`, `LsaCfgFlags` 및 `UseLogonCredential`은 현재 Windows와 비교됩니다.
-- **Defender 제외 항목:** 각 경로, 확장자, 프로세스 또는 주소가 하나의 레코드입니다. 모든 제외 항목은
-  Defender를 약화시킵니다. Defender가 스스로 추가하는 `TemporaryPaths`에는 판정이 없습니다. 사용자가 쓰기
+  - `NtfsDisableLastAccessUpdate` = 1은 Windows 10 1803 이전의 기본값이었습니다. 이후 버전의
+    `0x80000001`은 수동으로 설정된 값(사용자 관리)입니다.
+  - `RunAsPPL`, `LsaCfgFlags` 및 `UseLogonCredential`의 기본값은 Windows 버전마다 바뀌었으므로
+    호스트의 버전에 맞춰 해석하십시오.
+- **Defender 제외 항목:** 각 경로, 확장자, 프로세스 또는 주소가 하나의 레코드입니다. Defender가 스스로 추가하는
+  `TemporaryPaths`를 제외한 모든 제외 항목은 Defender를 약화시킵니다. 사용자가 쓰기
   가능한 폴더, `.ps1`/`.exe` 확장자 및 LOLBin(`rundll32.exe`, `powershell.exe`)을 찾으십시오.
 - **정책 키**(`Policy` = True)는 그룹 정책, 도구, 그리고 정책이 로컬 설정보다 우선한다는 것을 아는 공격자가
   기록합니다. 도메인의 GPO와 상관 분석하십시오.

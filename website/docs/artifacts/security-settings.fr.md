@@ -18,9 +18,7 @@ ces paramètres :
   Windows Script Host.
 
 `parse-registry security-settings` signale chaque paramètre trouvé sous forme d'enregistrement. Chaque enregistrement contient
-la valeur du paramètre, sa signification, et indique s'il **affaiblit la configuration par défaut** : s'il désactive une
-protection ou une source de preuves, ou s'il l'abaisse en deçà de ce que fait la version actuelle de Windows (10 et 11)
-en l'absence de cette valeur.
+la valeur du paramètre et sa signification.
 
 <span class="evidence-strength">Meilleure conclusion :</span> ce paramètre avait cette valeur lorsque la ruche
 a été enregistrée, et la clé a été écrite pour la dernière fois à cette heure. Un paramètre affaibli est une piste, et non une preuve de
@@ -77,11 +75,12 @@ peut ne figurer que dans les journaux.
   - Le Bureau à distance est délibérément ouvert sur les serveurs.
   - Windows 7 conservait des journaux d'événements plus petits et ne mettait pas à jour les heures de dernier accès.
 - **Les valeurs par défaut dépendent de la version.** Certaines valeurs étaient auparavant la valeur par défaut :
-  - `NtfsDisableLastAccessUpdate` = 1 était la valeur par défaut avant Windows 10 1803. Elle est signalée
-    sans verdict, mais `0x80000001`, défini manuellement sur une version ultérieure, est considéré comme affaibli.
-  - `RunAsPPL`, `LsaCfgFlags` et `UseLogonCredential` sont comparés à la version actuelle de Windows.
+  - `NtfsDisableLastAccessUpdate` = 1 était la valeur par défaut avant Windows 10 1803. `0x80000001`
+    sur une version ultérieure a été défini manuellement (géré par l'utilisateur).
+  - Les valeurs par défaut de `RunAsPPL`, `LsaCfgFlags` et `UseLogonCredential` ont changé selon les
+    versions de Windows ; interprétez-les selon la version de l'hôte.
 - **Exclusions de Defender :** chaque chemin, extension, processus ou adresse constitue un enregistrement. Chaque exclusion
-  affaiblit Defender. `TemporaryPaths`, que Defender ajoute lui-même, n'a pas de verdict. Recherchez des dossiers accessibles en écriture par l'utilisateur,
+  affaiblit Defender, sauf `TemporaryPaths`, que Defender ajoute lui-même. Recherchez des dossiers accessibles en écriture par l'utilisateur,
   des extensions `.ps1`/`.exe` et des LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Les clés de stratégie** (`Policy` = True) sont écrites par les stratégies de groupe, par des outils et par des attaquants qui
   savent que les stratégies l'emportent sur les paramètres locaux. Corrélez-les avec les GPO du domaine.

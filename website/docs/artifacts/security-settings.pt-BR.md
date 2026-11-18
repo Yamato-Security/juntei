@@ -18,9 +18,7 @@ essas configurações:
   Windows Script Host.
 
 `parse-registry security-settings` relata cada configuração que encontra como um registro. Cada registro tem o
-valor da configuração, o que o valor significa e se ele **enfraquece o padrão**: se desativa uma
-proteção ou uma fonte de evidências, ou a reduz abaixo do que o Windows atual (10 e 11) faz
-sem o valor.
+valor da configuração e o que o valor significa.
 
 <span class="evidence-strength">Melhor conclusão:</span> esta configuração tinha este valor quando o hive
 foi salvo, e a chave foi gravada pela última vez neste horário. Uma configuração enfraquecida é uma pista, não prova de
@@ -77,11 +75,12 @@ pode estar apenas nos logs.
   - A Área de Trabalho Remota é aberta deliberadamente em servidores.
   - O Windows 7 mantinha logs de eventos menores e não atualizava os horários de último acesso.
 - **Os padrões dependem da versão.** Alguns valores eram o padrão anteriormente:
-  - `NtfsDisableLastAccessUpdate` = 1 era o padrão antes do Windows 10 1803. Ele é relatado
-    sem veredito, mas `0x80000001`, definido manualmente em uma versão posterior, é considerado enfraquecido.
-  - `RunAsPPL`, `LsaCfgFlags` e `UseLogonCredential` são comparados com o Windows atual.
+  - `NtfsDisableLastAccessUpdate` = 1 era o padrão antes do Windows 10 1803. `0x80000001` em uma
+    versão posterior foi definido manualmente (gerenciado pelo usuário).
+  - Os padrões de `RunAsPPL`, `LsaCfgFlags` e `UseLogonCredential` mudaram entre versões do Windows;
+    interprete-os de acordo com a versão do host.
 - **Exclusões do Defender:** cada caminho, extensão, processo ou endereço é um registro. Toda exclusão
-  enfraquece o Defender. `TemporaryPaths`, que o próprio Defender adiciona, não tem veredito. Procure pastas graváveis pelo usuário,
+  enfraquece o Defender, exceto `TemporaryPaths`, que o próprio Defender adiciona. Procure pastas graváveis pelo usuário,
   extensões `.ps1`/`.exe` e LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Chaves de política** (`Policy` = True) são gravadas pela Política de Grupo, por ferramentas e por atacantes que
   sabem que as políticas prevalecem sobre as configurações locais. Correlacione-as com os GPOs do domínio.

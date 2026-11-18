@@ -18,9 +18,7 @@ Juntei 保留鑑識成品記錄、中繼資料及剖析診斷資訊。各剖析�
   AMSI。
 
 `parse-registry security-settings` 會將找到的每個設定回報為一筆記錄。每筆記錄包含
-設定的值、該值的意義，以及它是否**削弱了預設值**：也就是它是否關閉了某項
-保護或證據來源，或將其降低到低於目前的 Windows（10 與 11）在沒有此值時的
-行為。
+設定的值與該值的意義。
 
 <span class="evidence-strength">最佳結論：</span>在儲存登錄區時，此設定具有此值，
 且該機碼最後一次寫入是在此時間。被削弱的設定是線索，而非遭入侵的
@@ -77,11 +75,12 @@ C:\Users\<user>\NTUSER.DAT
   - 伺服器上會刻意開放遠端桌面。
   - Windows 7 保存的事件記錄較小，且不會更新上次存取時間。
 - **預設值取決於版本。**有些值在過去是預設值：
-  - `NtfsDisableLastAccessUpdate` = 1 在 Windows 10 1803 之前是預設值。它會被回報
-    但不附判定；然而在較新版本上手動設定的 `0x80000001` 會被判定為削弱。
-  - `RunAsPPL`、`LsaCfgFlags` 與 `UseLogonCredential` 是與目前的 Windows 比較。
-- **Defender 排除項目：**每個路徑、副檔名、處理程序或位址都是一筆記錄。每個排除項目
-  都會削弱 Defender。由 Defender 自行加入的 `TemporaryPaths` 不附判定。請留意使用者可寫入的資料夾、
+  - `NtfsDisableLastAccessUpdate` = 1 在 Windows 10 1803 之前是預設值。較新版本上的
+    `0x80000001` 則是手動設定的（由使用者管理）。
+  - `RunAsPPL`、`LsaCfgFlags` 與 `UseLogonCredential` 的預設值隨 Windows 版本而改變，請依主機的
+    版本解讀。
+- **Defender 排除項目：**每個路徑、副檔名、處理程序或位址都是一筆記錄。除了由 Defender 自行加入的
+  `TemporaryPaths` 之外，每個排除項目都會削弱 Defender。請留意使用者可寫入的資料夾、
   `.ps1`／`.exe` 副檔名以及 LOLBin（`rundll32.exe`、`powershell.exe`）。
 - **原則機碼**（`Policy` = True）會由群組原則、工具，以及知道
   原則優先於本機設定的攻擊者寫入。請與網域的 GPO 交叉比對。

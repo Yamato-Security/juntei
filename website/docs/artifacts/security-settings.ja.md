@@ -1,6 +1,6 @@
 # セキュリティ設定 { #security-settings }
 
-Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持する。パーサー固有の検知ルールは Juntei Pro で評価する。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できる。
+Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持します。パーサー固有の検知ルールは Juntei Pro で評価します。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できます。
 
 ## 彼らは何ですか { #what-they-are }
 
@@ -10,7 +10,7 @@ Juntei はアーティファクトのレコード、メタデータ、解析時�
 - **`SYSTEM`** (コントロール セットごと): `WDigest`、LSA 保護、Credential Guard、制限付き管理者、NTLM。リモートデスクトップ。ファイアウォールプロファイル。 SMBv1;最終アクセス時間。各イベント ログのサイズ。
 - **`NTUSER.DAT`:** ユーザーの PowerShell 実行ポリシーとログ ポリシー、および Windows スクリプト ホストの AMSI。
 
-`parse-registry security-settings` は、検出した各設定をレコードとして報告します。各レコードには、設定の値、値の意味、および **がデフォルトの** を弱めるかどうか (保護または証拠ソースをオフにするか、値を指定しない場合の現在の Windows (10 および 11) よりも低くするかどうか) が含まれます。
+`parse-registry security-settings` は、検出した各設定をレコードとして報告します。各レコードには、設定の値と値の意味が含まれます。
 
 <span class="evidence-strength">この証拠から判断できること:</span> ハイブの保存時点で、この設定はこの値であり、キーの最終書き込み時刻はこの時刻でした。保護を弱める設定は調査の手掛かりであり、侵害の証明ではありません。管理者、グループポリシー、他のセキュリティ製品、古い Windows バージョンでも設定される値があり、一般的な場合は説明に記載しています。
 
@@ -55,9 +55,9 @@ C:\Users\<user>\NTUSER.DAT
   - リモート デスクトップはサーバー上で意図的に開かれます。
   - Windows 7 は、より小さなイベント ログを保持し、最終アクセス時刻を更新しませんでした。
 - **デフォルトはバージョンによって異なります。** 一部の値は以前はデフォルトでした。
-  - `NtfsDisableLastAccessUpdate` = 1 は、Windows 10 1803 より前のデフォルトでした。評決なしで報告されていますが、後のバージョンで手動で設定された `0x80000001` は弱体化されています。
-  - `RunAsPPL`、`LsaCfgFlags`、`UseLogonCredential` を現在の Windows と比較します。
-- **Defender 除外:** 各パス、拡張子、プロセス、またはアドレスはレコードです。除外するたびに Defender が弱まります。 Defender 自体を追加する `TemporaryPaths` には評決がありません。ユーザーが書き込み可能なフォルダー、`.ps1`/`.exe` 拡張機能、および LOLBins (`rundll32.exe`、`powershell.exe`) を探します。
+  - `NtfsDisableLastAccessUpdate` = 1 は、Windows 10 1803 より前のデフォルトでした。それ以降のバージョンの `0x80000001` は手動で設定されたもの (ユーザー管理) です。
+  - `RunAsPPL`、`LsaCfgFlags`、`UseLogonCredential` のデフォルトは Windows のバージョンによって変わったため、ホストのバージョンに合わせて解釈してください。
+- **Defender 除外:** 各パス、拡張子、プロセス、またはアドレスはレコードです。Defender 自身が追加する `TemporaryPaths` を除き、各除外は Defender を弱めます。ユーザーが書き込み可能なフォルダー、`.ps1`/`.exe` 拡張機能、および LOLBins (`rundll32.exe`、`powershell.exe`) を探します。
 - **ポリシー キー** (`Policy` = True) は、グループ ポリシー、ツール、およびポリシーがローカル設定に影響を与えることを知っている攻撃者によって書き込まれます。それらをドメインの GPO と関連付けます。
 - **イベント ログ チャネル:** のみ 25 セキュリティ関連チャネルが報告され、Windows がデフォルトで各チャネルをオンにするかどうかが報告されます。たとえば、`TaskScheduler/Operational` と `DNS-Client/Operational` はデフォルトではオフになっています。その他には `parse-registry read` を使用してください。
 - **Key 回:** `KeyLastWrittenUTC` はキーのものなので、この値がいつ変更されたかというと必ずしもそうではありません。 `Policies` キー全体が一度に書き込まれるのが一般的です。

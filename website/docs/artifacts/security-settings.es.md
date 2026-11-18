@@ -18,9 +18,7 @@ esta configuración:
   Windows Script Host.
 
 `parse-registry security-settings` notifica como registro cada ajuste que encuentra. Cada registro contiene el
-valor del ajuste, lo que significa el valor y si **debilita la configuración predeterminada**: si desactiva una
-protección o una fuente de evidencias, o la reduce por debajo de lo que hace Windows actual (10 y 11)
-sin el valor.
+valor del ajuste y lo que significa el valor.
 
 <span class="evidence-strength">Mejor conclusión:</span> este ajuste tenía este valor cuando se guardó el
 hive, y la clave se escribió por última vez a esta hora. Un ajuste debilitado es una pista, no una prueba de
@@ -77,11 +75,12 @@ puede encontrarse únicamente en los registros de transacciones.
   - Escritorio remoto se habilita deliberadamente en los servidores.
   - Windows 7 conservaba registros de eventos más pequeños y no actualizaba las horas de último acceso.
 - **Los valores predeterminados dependen de la versión.** Algunos valores eran los predeterminados anteriormente:
-  - `NtfsDisableLastAccessUpdate` = 1 era el valor predeterminado antes de Windows 10 1803. Se notifica
-    sin veredicto, pero `0x80000001`, establecido manualmente en una versión posterior, se considera debilitado.
-  - `RunAsPPL`, `LsaCfgFlags` y `UseLogonCredential` se comparan con Windows actual.
+  - `NtfsDisableLastAccessUpdate` = 1 era el valor predeterminado antes de Windows 10 1803. `0x80000001`
+    en una versión posterior se estableció manualmente (administrado por el usuario).
+  - Los valores predeterminados de `RunAsPPL`, `LsaCfgFlags` y `UseLogonCredential` cambiaron entre
+    versiones de Windows; interprételos según la versión del equipo.
 - **Exclusiones de Defender:** cada ruta, extensión, proceso o dirección es un registro. Toda exclusión
-  debilita Defender. `TemporaryPaths`, que Defender añade por sí mismo, no tiene veredicto. Busque carpetas con permisos de escritura para el usuario,
+  debilita Defender, excepto `TemporaryPaths`, que Defender añade por sí mismo. Busque carpetas con permisos de escritura para el usuario,
   extensiones `.ps1`/`.exe` y LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Las claves de directiva** (`Policy` = True) las escriben la directiva de grupo, las herramientas y los atacantes que
   saben que las directivas prevalecen sobre la configuración local. Correlaciónelas con los GPO del dominio.

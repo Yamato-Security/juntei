@@ -18,7 +18,7 @@ these settings:
   Windows Script Host.
 
 `parse-registry security-settings` reports each setting it finds as a record. Each record has the
-setting's value, what the value means, and the stored value and its documented meaning. Detection policy is handled by Juntei Pro.
+setting's value and what the value means.
 
 <span class="evidence-strength">Best conclusion:</span> this setting had this value when the hive
 was saved, and the key was last written at this time. A weakened setting is a lead, not proof of
@@ -76,11 +76,12 @@ may only be in the logs.
   - Remote Desktop is opened deliberately on servers.
   - Windows 7 kept smaller event logs and didn't update last access times.
 - **Defaults depend on the version.** Some values were the default before:
-  - `NtfsDisableLastAccessUpdate` = 1 was the default before Windows 10 1803. It is reported
-    without a verdict, but `0x80000001`, set by hand on a later version, is weakened.
-  - `RunAsPPL`, `LsaCfgFlags` and `UseLogonCredential` are compared with current Windows.
+  - `NtfsDisableLastAccessUpdate` = 1 was the default before Windows 10 1803. `0x80000001` on a
+    later version was set by hand (user managed).
+  - `RunAsPPL`, `LsaCfgFlags` and `UseLogonCredential` changed their defaults between Windows
+    versions: read them with the host's version.
 - **Defender exclusions:** each path, extension, process or address is a record. Every exclusion
-  weakens Defender. `TemporaryPaths`, which Defender adds itself, has no verdict. Look for user-writable folders,
+  weakens Defender, except `TemporaryPaths`, which Defender adds itself. Look for user-writable folders,
   `.ps1`/`.exe` extensions and LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Policy keys** (`Policy` = True) are written by Group Policy, by tools, and by attackers who
   know policies win over the local settings. Correlate them with the domain's GPOs.

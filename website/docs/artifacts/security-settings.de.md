@@ -18,9 +18,7 @@ diese Einstellungen auf:
   Windows Script Host.
 
 `parse-registry security-settings` meldet jede gefundene Einstellung als Datensatz. Jeder Datensatz enthält den
-Wert der Einstellung, was der Wert bedeutet und ob er den **Standard abschwächt**: ob er einen
-Schutz oder eine Beweisquelle abschaltet oder unter das Niveau senkt, das aktuelles Windows (10 und 11)
-ohne diesen Wert bietet.
+Wert der Einstellung und was der Wert bedeutet.
 
 <span class="evidence-strength">Bestmögliche Schlussfolgerung:</span> Diese Einstellung hatte diesen Wert, als der Hive
 gespeichert wurde, und der Schlüssel wurde zuletzt zu diesem Zeitpunkt geschrieben. Eine abgeschwächte Einstellung ist ein Ansatzpunkt, kein Beweis für eine
@@ -77,11 +75,12 @@ befindet sich möglicherweise nur in den Protokollen.
   - Remotedesktop wird auf Servern absichtlich geöffnet.
   - Windows 7 hatte kleinere Ereignisprotokolle und aktualisierte die letzten Zugriffszeiten nicht.
 - **Standardwerte hängen von der Version ab.** Einige Werte waren früher der Standard:
-  - `NtfsDisableLastAccessUpdate` = 1 war vor Windows 10 1803 der Standard. Es wird
-    ohne Bewertung gemeldet, doch `0x80000001`, manuell auf einer späteren Version gesetzt, gilt als abgeschwächt.
-  - `RunAsPPL`, `LsaCfgFlags` und `UseLogonCredential` werden mit aktuellem Windows verglichen.
+  - `NtfsDisableLastAccessUpdate` = 1 war vor Windows 10 1803 der Standard. `0x80000001` auf einer
+    späteren Version wurde manuell gesetzt (benutzerverwaltet).
+  - Die Standardwerte von `RunAsPPL`, `LsaCfgFlags` und `UseLogonCredential` haben sich zwischen
+    Windows-Versionen geändert; bewerten Sie sie anhand der Version des Hosts.
 - **Defender-Ausschlüsse:** Jeder Pfad, jede Erweiterung, jeder Prozess und jede Adresse ist ein Datensatz. Jeder Ausschluss
-  schwächt Defender ab. `TemporaryPaths`, die Defender selbst hinzufügt, erhalten keine Bewertung. Suchen Sie nach für Benutzer beschreibbaren Ordnern,
+  schwächt Defender ab, außer `TemporaryPaths`, die Defender selbst hinzufügt. Suchen Sie nach für Benutzer beschreibbaren Ordnern,
   `.ps1`-/`.exe`-Erweiterungen und LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Richtlinienschlüssel** (`Policy` = True) werden von Gruppenrichtlinien, von Werkzeugen und von Angreifern geschrieben, die
   wissen, dass Richtlinien Vorrang vor den lokalen Einstellungen haben. Korrelieren Sie sie mit den GPOs der Domäne.

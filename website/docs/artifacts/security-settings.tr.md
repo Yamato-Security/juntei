@@ -18,9 +18,7 @@ bu ayarları tutar:
   Windows Script Host için AMSI.
 
 `parse-registry security-settings`, bulduğu her ayarı bir kayıt olarak raporlar. Her kayıt
-ayarın değerini, değerin ne anlama geldiğini ve **varsayılanı zayıflatıp zayıflatmadığını** içerir: yani bir
-korumayı veya kanıt kaynağını kapatıp kapatmadığını ya da onu güncel Windows'un (10 ve 11) bu değer
-olmadan yaptığının altına düşürüp düşürmediğini.
+ayarın değerini ve değerin ne anlama geldiğini içerir.
 
 <span class="evidence-strength">En iyi sonuç:</span> kovan kaydedildiğinde bu ayar bu değere
 sahipti ve anahtar en son bu zamanda yazıldı. Zayıflatılmış bir ayar bir ipucudur, ele geçirilmenin kanıtı değildir.
@@ -77,11 +75,12 @@ yalnızca günlüklerde bulunabilir.
   - Uzak Masaüstü sunucularda bilinçli olarak açılır.
   - Windows 7 daha küçük olay günlükleri tutardı ve son erişim zamanlarını güncellemezdi.
 - **Varsayılanlar sürüme bağlıdır.** Bazı değerler eskiden varsayılandı:
-  - `NtfsDisableLastAccessUpdate` = 1, Windows 10 1803'ten önce varsayılandı. Bir hüküm olmadan
-    raporlanır; ancak daha sonraki bir sürümde elle ayarlanan `0x80000001` zayıflatılmış sayılır.
-  - `RunAsPPL`, `LsaCfgFlags` ve `UseLogonCredential` güncel Windows ile karşılaştırılır.
-- **Defender dışlamaları:** her yol, uzantı, işlem veya adres bir kayıttır. Her dışlama
-  Defender'ı zayıflatır. Defender'ın kendisinin eklediği `TemporaryPaths` için hüküm verilmez. Kullanıcının yazabildiği klasörleri,
+  - `NtfsDisableLastAccessUpdate` = 1, Windows 10 1803'ten önce varsayılandı. Daha sonraki bir sürümde
+    `0x80000001` elle ayarlanmıştır (kullanıcı tarafından yönetilir).
+  - `RunAsPPL`, `LsaCfgFlags` ve `UseLogonCredential` varsayılanları Windows sürümleri arasında değişti;
+    bunları ana bilgisayarın sürümüne göre yorumlayın.
+- **Defender dışlamaları:** her yol, uzantı, işlem veya adres bir kayıttır. Defender'ın kendisinin eklediği
+  `TemporaryPaths` dışında her dışlama Defender'ı zayıflatır. Kullanıcının yazabildiği klasörleri,
   `.ps1`/`.exe` uzantılarını ve LOLBin'leri (`rundll32.exe`, `powershell.exe`) arayın.
 - **İlke anahtarları** (`Policy` = True) Grup İlkesi, araçlar ve ilkelerin yerel ayarlara üstün geldiğini bilen
   saldırganlar tarafından yazılır. Bunları etki alanının GPO'larıyla ilişkilendirin.
