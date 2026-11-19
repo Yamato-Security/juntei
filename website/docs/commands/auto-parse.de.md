@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Die Parser benötigen Dateipfade. Daher kopiert Juntei die Dateien, die die Parser lesen, mit begrenzten Puffern in ein privates temporäres Verzeichnis: Registry-Hives und ihre Transaktionsprotokolle, NTFS-Metadatendateien, Datenbanken, Prefetch-Dateien, Verknüpfungen, Sprunglisten, Outlook-Dateien, PSReadLine-Verlaufsdateien, Indexdateien des Papierkorbs, RDP-Bitmap-Caches und Defender-Quarantäneordner. Jede andere Datei wird ein leerer Platzhalter mit ihrer ursprünglichen Änderungszeit, sodass Verzeichnisse und Pfade wie auf dem Datenträger aussehen. persistence-hunter liest den Inhalt eines Platzhalters nur bei Bedarf aus dem Abbild, etwa eine ausführbare Datei, auf die ein Persistenzeintrag verweist. **Es muss Platz für die kopierten Dateien vorhanden sein**, zusätzlich zu den Ergebnissen. Nullbereiche werden, soweit unterstützt, als Löcher geschrieben. Namen, Struktur, Hardlinks und Änderungszeiten bleiben erhalten. LNK- und Sprunglisten-Quellzeiten stammen aus einem Snapshot der ursprünglichen NTFS-Metadaten, niemals aus den temporären Dateien. Regulärer Abschluss, auch mit Parserfehlern, entfernt die Kopien; erzwungene Beendigung kann sie zurücklassen. Die Quelle bleibt schreibgeschützt; ausstehende VHDX-Logs werden nur im Speicher angewendet.
+Die Parser benötigen Dateipfade. Daher kopiert Juntei die Dateien, die die Parser lesen, mit begrenzten Puffern in ein privates temporäres Verzeichnis: Registry-Hives und ihre Transaktionsprotokolle, NTFS-Metadatendateien, Datenbanken, Prefetch-Dateien, Verknüpfungen, Sprunglisten, Outlook-Dateien, PSReadLine-Verlaufsdateien, Indexdateien des Papierkorbs, RDP-Bitmap-Caches, Dateien des Defender-Erkennungsverlaufs und Defender-Quarantäneordner. Jede andere Datei wird ein leerer Platzhalter mit ihrer ursprünglichen Änderungszeit, sodass Verzeichnisse und Pfade wie auf dem Datenträger aussehen. persistence-hunter liest den Inhalt eines Platzhalters nur bei Bedarf aus dem Abbild, etwa eine ausführbare Datei, auf die ein Persistenzeintrag verweist. **Es muss Platz für die kopierten Dateien vorhanden sein**, zusätzlich zu den Ergebnissen. Nullbereiche werden, soweit unterstützt, als Löcher geschrieben. Namen, Struktur, Hardlinks und Änderungszeiten bleiben erhalten. LNK- und Sprunglisten-Quellzeiten stammen aus einem Snapshot der ursprünglichen NTFS-Metadaten, niemals aus den temporären Dateien. Regulärer Abschluss, auch mit Parserfehlern, entfernt die Kopien; erzwungene Beendigung kann sie zurücklassen. Die Quelle bleibt schreibgeschützt; ausstehende VHDX-Logs werden nur im Speicher angewendet.
 
 Hosterkennung, CSV/JSON/JSONL und `-j` nutzen dieselbe Verarbeitung wie normale Beweisverzeichnisse. `Image` in `manifest.json` bezeichnet das Originalimage, `EvidenceRoot` den internen relativen Pfad. Lesefehler und unsichere Namen erscheinen in `ImageErrors` sowie Fehlerzeilen von `manifest.csv`. Lesbare Ergebnisse bleiben erhalten; unvollständige Eingaben ergeben Exitcode 1. Unsichere oder mehrdeutige Namen werden nicht umbenannt. Benannte NTFS-Streams werden nicht als zusätzliche Dateien extrahiert; als normale Dateien gesammelte Artefakte bleiben verfügbar.
 
@@ -170,6 +170,8 @@ Computer diese Jobs aus. Die Jobs verwenden dieselben nach Quelle gruppierten Be
   jeder Cachedatei
 - ShimCache
 - Persistence Hunter (131 quellenübergreifende Persistenzprüfungen mit Allow-/Block-Profilen)
+- Defender-Erkennungsverlauf: jede Erkennung mit Status, Benutzer, Prozess und Ressourcen,
+  einschließlich Bedrohungen, die nie unter Quarantäne gestellt wurden
 - Metadaten der Defender-Quarantäne
 - Verlauf der Dialoge „Öffnen“ und „Speichern unter“
 - alle Registry-Schlüssel und -Werte, einschließlich wiederherstellbarer gelöschter Daten
@@ -333,6 +335,8 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
@@ -367,7 +371,7 @@ CSV behält getrennte Tabellen bei, da jedes Artefakt andere Spalten hat:
 | `Persistence` | Startkonfiguration (BCD), Registry-Autostarts, Dienste, TaskCache |
 | `ProcessExecution` | Anwendungskompatibilität, BAM und DAM, FeatureUsage und angeheftete Elemente, MuiCache, Prefetch, Prefetch-Zeitleiste, SRUM-Anwendungs-/CPU-Aktivität, UserAssist |
 | `Registry` | Allgemeine Hive-Schlüssel und -Werte, einschließlich wiederhergestellter Datensätze |
-| `SecurityProducts` | Metadaten der Defender-Quarantäne und optional extrahierte Inhalte; Sicherheitseinstellungen (Defender, UAC, Schutz von Anmeldeinformationen, RDP, Firewall, Protokollierung) |
+| `SecurityProducts` | Defender-Erkennungsverlauf; Metadaten der Defender-Quarantäne und optional extrahierte Inhalte; Sicherheitseinstellungen (Defender, UAC, Schutz von Anmeldeinformationen, RDP, Firewall, Protokollierung) |
 | `ShellHistory` | PowerShell-PSReadLine-Befehlsverlauf; die Dateiänderungszeit ist Metadatum, Befehlsausführungszeiten fehlen |
 | `SystemInformation` | Namen, Windows-Version, Zeitzone, letztes Herunterfahren, Profile, SIDs und Überwachungsrichtlinie; SRUM-Energie/-Kapazität, Identitätszuordnungen und unbekannte Provider |
 
@@ -386,7 +390,7 @@ Die standardmäßigen CSV-Dateinamen sind `Registry-SAM.csv`, `LNK.csv`, `Recycl
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` und
-`DefenderQuarantine.csv`. Aus der Registry abgeleitete Tabellen verwenden das Präfix `Registry-`, darunter
+`DefenderHistory.csv`, `DefenderQuarantine.csv`. Aus der Registry abgeleitete Tabellen verwenden das Präfix `Registry-`, darunter
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` und `Registry-SystemInfo.csv`.
 Allgemeine Hive-Schlüssel und -Werte stehen in `Registry-Dump.csv`. Die Amcache-Tabellen sind
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

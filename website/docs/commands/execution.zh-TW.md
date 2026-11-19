@@ -1,6 +1,6 @@
 # 檔案命令 { #file-commands }
 
-`parse-file` 處理特定跡證的檔案：Prefetch、捷徑、Jump Lists、Defender 隔離資料、PowerShell 歷程記錄、
+`parse-file` 處理特定跡證的檔案：Prefetch、捷徑、Jump Lists、Defender 偵測歷程記錄與隔離資料、PowerShell 歷程記錄、
 Outlook 的 PST、OST、MSG 與 OFT 檔案，以及資源回收筒的索引檔案。自動 Jump Lists 使用複合檔案容器；自訂 Jump Lists 則使用不同的
 二進位配置。兩者都屬於同一個跡證命令。
 
@@ -12,6 +12,7 @@ Usage:
   juntei parse-file <COMMAND> [OPTIONS]
 
 Commands:
+  defender-history     Parse Defender detection history
   defender-quarantine  Parse Defender quarantine
   help                 Print this message or the help of the given subcommand(s)
   jump-lists           Parse Jump Lists
@@ -25,6 +26,40 @@ Commands:
 Options:
   -h, --help  Print help
 ```
+
+## `parse-file defender-history` { #parse-file-defender-history }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file defender-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for detection history files (Scans\History\Service\DetectionHistory\<nn>\<GUID>)
+  -f, --file <FILE>      File path to one detection history file (DetectionHistory\<nn>\<GUID>)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file defender-history -d evidence/ -o defender-history.csv
+juntei parse-file defender-history -f DetectionHistory/02/6AFE33A0-19BA-4FFF-892F-B700539D7D63 -t jsonl
+```
+
+每次偵測的每個資源各輸出一筆記錄，包括 Defender 從未隔離的威脅。請參閱
+[Defender 偵測歷程記錄](../artifacts/defender-history.md)。
 
 ## `parse-file defender-quarantine` { #parse-file-defender-quarantine }
 

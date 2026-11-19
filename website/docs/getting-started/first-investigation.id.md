@@ -20,6 +20,7 @@ Banyak perintah mencetak ringkasan singkat ketika tidak ada berkas keluaran yang
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ Gunakan [Investigasi lintas artefak](../resources/workflows.md). Urutan yang pra
 3. Amcache dan ShimCache untuk keberadaan historis dan metadata.
 4. LNK, Jump Lists, RecentDocs, dan SRUM untuk konteks pengguna/aplikasi.
 5. Layanan registry dan TaskCache untuk persistensi.
-6. Karantina Defender untuk deteksi, penghapusan, asal, dan hash.
+6. Riwayat deteksi dan karantina Defender untuk deteksi, penghapusan, asal, dan hash.
 
 ## 7. Dokumentasikan reprodusibilitas { #7-document-reproducibility }
 

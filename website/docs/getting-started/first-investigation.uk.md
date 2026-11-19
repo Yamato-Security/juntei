@@ -20,6 +20,7 @@
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ juntei parse-file prefetch -d evidence/ -t jsonl \
 3. Amcache і ShimCache — для історичної наявності та метаданих.
 4. LNK, Jump Lists, RecentDocs і SRUM — для контексту користувача/програми.
 5. Служби в реєстрі та TaskCache — для закріплення.
-6. Карантин Defender — для виявлення, видалення, походження та хешів.
+6. Історія виявлень і карантин Defender — для виявлення, видалення, походження та хешів.
 
 ## 7. Задокументуйте відтворюваність { #7-document-reproducibility }
 

@@ -168,6 +168,7 @@ plugins:
         External Devices: 外部デバイス
         USB Devices: USB デバイス
         Security Products: セキュリティ製品
+        Defender Detection History: Defender の検出履歴
         Defender Quarantine: Defender の隔離データ
         Security Settings: セキュリティ設定
         Registry and Persistence: レジストリと永続化
@@ -246,6 +247,7 @@ plugins:
         External Devices: 外部裝置
         USB Devices: USB 裝置
         Security Products: 資安產品
+        Defender Detection History: Defender 偵測歷程記錄
         Defender Quarantine: Defender 隔離資料
         Security Settings: 安全性設定
         Registry and Persistence: 登錄與持續存取
@@ -339,6 +341,7 @@ plugins:
         External Devices: 외부 장치
         USB Devices: USB 장치
         Security Products: 보안 제품
+        Defender Detection History: Defender 탐지 기록
         Defender Quarantine: Defender 격리 데이터
         Security Settings: 보안 설정
         Registry and Persistence: 레지스트리와 지속성
@@ -432,6 +435,7 @@ plugins:
         External Devices: Externe Geräte
         USB Devices: USB-Geräte
         Security Products: Sicherheitsprodukte
+        Defender Detection History: Defender-Erkennungsverlauf
         Defender Quarantine: Defender-Quarantäne
         Security Settings: Sicherheitseinstellungen
         Registry and Persistence: Registry und Persistenz
@@ -525,6 +529,7 @@ plugins:
         External Devices: Harici Aygıtlar
         USB Devices: USB Aygıtları
         Security Products: Güvenlik Ürünleri
+        Defender Detection History: Defender Tespit Geçmişi
         Defender Quarantine: Defender Karantinası
         Security Settings: Güvenlik Ayarları
         Registry and Persistence: Kayıt Defteri ve Kalıcılık
@@ -618,6 +623,7 @@ plugins:
         External Devices: Périphériques externes
         USB Devices: Périphériques USB
         Security Products: Produits de sécurité
+        Defender Detection History: Historique des détections Defender
         Defender Quarantine: Quarantaine Defender
         Security Settings: Paramètres de sécurité
         Registry and Persistence: Registre et persistance
@@ -711,6 +717,7 @@ plugins:
         External Devices: Dispositivos externos
         USB Devices: Dispositivos USB
         Security Products: Productos de seguridad
+        Defender Detection History: Historial de detecciones de Defender
         Defender Quarantine: Cuarentena de Defender
         Security Settings: Configuración de seguridad
         Registry and Persistence: Registro y persistencia
@@ -804,6 +811,7 @@ plugins:
         External Devices: Dispositivos externos
         USB Devices: Dispositivos USB
         Security Products: Produtos de segurança
+        Defender Detection History: Histórico de detecções do Defender
         Defender Quarantine: Quarentena do Defender
         Security Settings: Configurações de segurança
         Registry and Persistence: Registro e persistência
@@ -897,6 +905,7 @@ plugins:
         External Devices: Зовнішні пристрої
         USB Devices: Пристрої USB
         Security Products: Засоби захисту
+        Defender Detection History: Історія виявлень Defender
         Defender Quarantine: Карантин Defender
         Security Settings: Параметри безпеки
         Registry and Persistence: Реєстр і закріплення
@@ -990,6 +999,7 @@ plugins:
         External Devices: बाहरी डिवाइस
         USB Devices: USB डिवाइस
         Security Products: सुरक्षा उत्पाद
+        Defender Detection History: Defender पहचान इतिहास
         Defender Quarantine: Defender क्वारंटीन
         Security Settings: सुरक्षा सेटिंग
         Registry and Persistence: रेजिस्ट्री और पर्सिस्टेंस
@@ -1083,6 +1093,7 @@ plugins:
         External Devices: Perangkat eksternal
         USB Devices: Perangkat USB
         Security Products: Produk keamanan
+        Defender Detection History: Riwayat Deteksi Defender
         Defender Quarantine: Karantina Defender
         Security Settings: Pengaturan keamanan
         Registry and Persistence: Registry dan persistensi
@@ -1176,6 +1187,7 @@ plugins:
         External Devices: ပြင်ပစက်ပစ္စည်းများ
         USB Devices: USB စက်ပစ္စည်းများ
         Security Products: လုံခြုံရေးထုတ်ကုန်များ
+        Defender Detection History: Defender ရှာဖွေတွေ့ရှိမှု မှတ်တမ်း
         Defender Quarantine: Defender သီးခြားခွဲထားသော ဒေတာ
         Security Settings: လုံခြုံရေးဆက်တင်များ
         Registry and Persistence: Registry နှင့် အမြဲတမ်းဝင်ရောက်နိုင်မှု
@@ -1269,6 +1281,7 @@ plugins:
         External Devices: อุปกรณ์ภายนอก
         USB Devices: อุปกรณ์ USB
         Security Products: ผลิตภัณฑ์ความปลอดภัย
+        Defender Detection History: ประวัติการตรวจจับของ Defender
         Defender Quarantine: ข้อมูลที่ Defender กักกัน
         Security Settings: การตั้งค่าความปลอดภัย
         Registry and Persistence: รีจิสทรีและการคงอยู่
@@ -1362,6 +1375,7 @@ plugins:
         External Devices: الأجهزة الخارجية
         USB Devices: أجهزة USB
         Security Products: منتجات الأمان
+        Defender Detection History: سجل اكتشافات Defender
         Defender Quarantine: حجر Defender
         Security Settings: إعدادات الأمان
         Registry and Persistence: سجل Windows والاستمرارية
@@ -1477,6 +1491,7 @@ nav:
       - External Devices:
           - USB Devices: artifacts/usb.md
       - Security Products:
+          - Defender Detection History: artifacts/defender-history.md
           - Defender Quarantine: artifacts/defender-quarantine.md
           - Security Settings: artifacts/security-settings.md
       - Registry and Persistence:

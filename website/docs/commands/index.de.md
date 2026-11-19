@@ -33,6 +33,7 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 
 | Befehl | Eingabeartefakt | Ausführlicher Leitfaden |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender-Erkennungsverlauf](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender-Quarantäneverzeichnis oder -eintrag | [Defender-Quarantäne](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK-Verknüpfungen](../artifacts/lnk.md) |

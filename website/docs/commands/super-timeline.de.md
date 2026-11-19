@@ -104,6 +104,7 @@ Ein Zeitstempel beschreibt ein gespeichertes Objekt und beweist allein weder Aus
 | RDP-Bitmap-Cache | Keine Ereignisse: Zwischengespeicherte Kacheln haben keine Zeitangaben. Ihre Datensätze bleiben in den geparsten Eingabedaten erhalten. |
 | PowerShell-Verlauf | Keine Ereignisse: Verlaufszeilen haben keine Zeitangaben, und `FileLastWriteTime` ist die Zeit der Datei, nicht die eines Befehls. Ihre Datensätze bleiben in den geparsten Eingabedaten erhalten. |
 | Papierkorb | Zeitpunkt, zu dem jedes Element in den Papierkorb verschoben wurde, mit dem Benutzer des Papierkorbs, dem ursprünglichen Pfad und der Angabe, ob der gelöschte Inhalt gesichert wurde. Nicht der Zeitpunkt, zu dem der Papierkorb geleert wurde, und nicht die eigenen Dateizeiten des Elements. |
+| Defender-Erkennungsverlauf | Zeiten der ersten Erkennung, der letzten Statusänderung und der Bereinigung, jeweils im Datensatz jeder Ressource. Die Tracking-Startzeit ist eine als FILETIME gelesene Ganzzahl und wird nur mit `--include-interpreted-times` verwendet. |
 | Defender-Quarantäne | Eintragszeit und gespeicherte Ressourcen-Erstellungs-/Zugriffs-/Schreibzeiten. Extraktionszeiten beweisen keine Aktivität am Endpunkt. |
 | BAM, UserAssist, FeatureUsage | Gespeicherte Aktivität mit getrenntem Schlüssel-Schreibkontext. Zähler ohne Zeit erzeugen kein Ereignis. |
 | RecentDocs, MRU, Öffnen/Speichern-MRU, ShellBags, Office | Gespeicherte Nutzungs-/Vertrauens-/Shell-Item-Zeiten und Schlüsselkontext. Die Schlüsselzeit einer Liste ist nicht die letzte Nutzung jedes einzelnen Elements. |

@@ -1,6 +1,6 @@
 # Dateibefehle { #file-commands }
 
-`parse-file` verarbeitet artefaktspezifische Dateien: Prefetch, Verknüpfungen, Jump Lists, die Defender-Quarantäne,
+`parse-file` verarbeitet artefaktspezifische Dateien: Prefetch, Verknüpfungen, Jump Lists, den Defender-Erkennungsverlauf und die Defender-Quarantäne,
 den PowerShell-Verlauf,
 die PST-, OST-, MSG- und OFT-Dateien von Outlook sowie die Indexdateien des Papierkorbs. Automatische Jump Lists verwenden einen Compound-File-Container; benutzerdefinierte Jump Lists verwenden ein anderes
 binäres Layout. Beide gehören zum selben Artefaktbefehl.
@@ -13,6 +13,7 @@ Usage:
   juntei parse-file <COMMAND> [OPTIONS]
 
 Commands:
+  defender-history     Parse Defender detection history
   defender-quarantine  Parse Defender quarantine
   help                 Print this message or the help of the given subcommand(s)
   jump-lists           Parse Jump Lists
@@ -26,6 +27,40 @@ Commands:
 Options:
   -h, --help  Print help
 ```
+
+## `parse-file defender-history` { #parse-file-defender-history }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file defender-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for detection history files (Scans\History\Service\DetectionHistory\<nn>\<GUID>)
+  -f, --file <FILE>      File path to one detection history file (DetectionHistory\<nn>\<GUID>)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file defender-history -d evidence/ -o defender-history.csv
+juntei parse-file defender-history -f DetectionHistory/02/6AFE33A0-19BA-4FFF-892F-B700539D7D63 -t jsonl
+```
+
+Ein Datensatz je Ressource jeder Erkennung, einschließlich Bedrohungen, die Defender nie unter Quarantäne gestellt hat. Siehe
+[Defender-Erkennungsverlauf](../artifacts/defender-history.md).
 
 ## `parse-file defender-quarantine` { #parse-file-defender-quarantine }
 

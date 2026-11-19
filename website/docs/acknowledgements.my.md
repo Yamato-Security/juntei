@@ -59,6 +59,9 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   တန်ဖိုးမြင့် Prefetch/Amcache/ShimCache ရှုမြင်ချက်များအတွက် အထောက်အကူ ဖြစ်ခဲ့ပါသည်။
 - **defender-dump** နှင့် dissect.target တို့သည် Defender quarantine ဖွဲ့စည်းပုံများနှင့် ဘေးကင်းသော
   ထုတ်ယူမှု အပြုအမူကို နားလည်ရန် သီးခြား implementation များကို ပေးပါသည်။
+- Orange Cyberdefense ၏ **wddh-parser** သည် Defender detection history format ကို ရှင်းလင်းဖော်ပြခဲ့ပြီး ၎င်း၏
+  နမူနာများတွင် WMI က ၎င်းတို့အတွက် ဖော်ပြခဲ့သော value များ ပါဝင်ပါသည်။ Plaso ၏ `windefender_history` parser နှင့်
+  Velociraptor ၏ `Windows.Applications.DefenderHistory` artifact တို့သည် သီးခြားလွတ်လပ်သော ကိုးကားချက်များ ဖြစ်ခဲ့ပါသည်။
 - **Plaso**၊ **Chainsaw** နှင့် **Velociraptor** တို့သည် artifact အများအပြားတွင် parser နှိုင်းယှဉ်ချက်များ၊
   စမ်းသပ်အထောက်အထားများ သို့မဟုတ် စုဆောင်းမှုအခြေပြု ကိုးကားရန် အပြုအမူကို ပေးခဲ့ပါသည်။
 - Obsidian Forensics ၏ **Hindsight** နှင့် Velocidex ၏ **SQLiteHunter** definition များသည် ဘရောက်ဇာ history၊
@@ -81,7 +84,7 @@ registry နှင့် NTFS forensic သုတေသန စာရေးသူ�
 
 Andrew Rathbun ၏
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)၊ NIST CFReDS၊ Plaso၊
-rifiuti2၊ Regipy၊ Artemis၊ parser စမ်းသပ် repository များနှင့် license မှန်ကန်စွာ ပါရှိသော အခြား collection များမှ
+rifiuti2၊ Regipy၊ Artemis၊ Orange Cyberdefense ၏ wddh-parser၊ parser စမ်းသပ် repository များနှင့် license မှန်ကန်စွာ ပါရှိသော အခြား collection များမှ
 အများသုံး အထောက်အထားများကြောင့် တကယ့် Windows ဒေတာဖြင့် regression စမ်းသပ်ခြင်း ပြုလုပ်နိုင်ပါသည်။
 Juntei သည် ထည့်သွင်းထားသော စမ်းသပ်ဖိုင်များ၏ ဘေးတွင် attribution/license မှတ်စုများကို ထားရှိပါသည်။
 

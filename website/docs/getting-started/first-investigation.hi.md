@@ -20,6 +20,7 @@
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ juntei parse-file prefetch -d evidence/ -t jsonl \
 3. ऐतिहासिक उपस्थिति और metadata के लिए Amcache और ShimCache।
 4. User/application context के लिए LNK, Jump Lists, RecentDocs और SRUM।
 5. Persistence के लिए registry services और TaskCache।
-6. Detection, removal, origin और hashes के लिए Defender क्वारंटीन।
+6. Detection, removal, origin और hashes के लिए Defender पहचान इतिहास और क्वारंटीन।
 
 ## 7. Reproducibility का दस्तावेज़ीकरण करें { #7-document-reproducibility }
 

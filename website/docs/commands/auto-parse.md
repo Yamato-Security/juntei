@@ -37,7 +37,7 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
 reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
 hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
-lists, Outlook files, PSReadLine history files, Recycle Bin index files, RDP bitmap caches and Defender quarantine folders. Every other file is an empty placeholder
+lists, Outlook files, PSReadLine history files, Recycle Bin index files, RDP bitmap caches, Defender detection history files and Defender quarantine folders. Every other file is an empty placeholder
 with its original modification time, so directories and paths look as they do on the disk.
 persistence-hunter reads a placeholder's content from the image only when it needs it, such as
 an executable that a persistence entry refers to.
@@ -194,6 +194,8 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
   file
 - ShimCache
 - Persistence Hunter (131 cross-source persistence checks with allow/block profiles)
+- Defender detection history: every detection with its status, user, process and resources,
+  including threats that were never quarantined
 - Defender quarantine metadata
 - Open and Save As dialog history
 - all registry keys and values, including recoverable deleted data
@@ -360,6 +362,8 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
@@ -394,7 +398,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU activity, UserAssist |
 | `Registry` | General hive keys and values, including recovered records |
-| `SecurityProducts` | Defender quarantine metadata and optional extracted content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
+| `SecurityProducts` | Defender detection history; Defender quarantine metadata and optional extracted content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
 | `ShellHistory` | PowerShell PSReadLine command history; file modification time is metadata, with no command execution times |
 | `SystemInformation` | Names, Windows version, time zone, last shutdown, profiles, SIDs and audit policy; SRUM energy/capacity, identity maps and unknown providers |
 
@@ -413,7 +417,7 @@ Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpC
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, and
-`DefenderQuarantine.csv`. Registry-derived tables use the `Registry-` prefix, including
+`DefenderHistory.csv`, `DefenderQuarantine.csv`. Registry-derived tables use the `Registry-` prefix, including
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` and `Registry-SystemInfo.csv`.
 General hive keys and values are in `Registry-Dump.csv`. Amcache tables are
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

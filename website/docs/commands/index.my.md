@@ -37,6 +37,7 @@ record များကို ဆက်လက် ထိန်းသိမ်း�
 
 | ညွှန်ကြားချက် | Input အထောက်အထား | အသေးစိတ် လမ်းညွှန် |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender ရှာဖွေတွေ့ရှိမှု မှတ်တမ်း](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender quarantine tree သို့မဟုတ် entry | [Defender သီးခြားခွဲထားသော ဒေတာ](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK ဖြတ်လမ်းများ](../artifacts/lnk.md) |

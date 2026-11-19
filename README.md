@@ -23,7 +23,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
-Juntei currently supports 45 of the most popular Windows forensic artifacts and we continue to add more.
+Juntei currently supports 46 of the most popular Windows forensic artifacts and we continue to add more.
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
@@ -182,6 +182,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 
 | Artifact | Type |
 | --- | --- |
+| **Microsoft Defender detection history** (`Scans\History\Service\DetectionHistory`) — Every detection, including threats that were never quarantined: threat, status and result, user, process, resources, hashes, and detection and remediation times. | File |
 | **Microsoft Defender quarantine** (`Quarantine\Entries`, `ResourceData`, `Resources`) — Threat records, original paths, hashes, download origins, and recoverable quarantined content. | File |
 | **Security settings** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`) — Defender and its exclusions, UAC, WDigest and LSA protection, RDP, the firewall, SMBv1, PowerShell logging and AMSI, and event log settings, flagged where they weaken the default. | Registry |
 

@@ -23,6 +23,7 @@ but the investigator must still interpret what each source means.
 | Which clients and accounts used this server, and on which days? | [User Access Logging (UAL)](ual.md) | Security event logs, SMB and RDP logs, firewall logs |
 | What did a user see on the computers they reached with Remote Desktop? | [RDP Bitmap Cache](rdp-cache.md) | [Remote Access (User Side)](remote-access.md), [Jump Lists](jump-lists.md), the remote computers' logon events and [UAL](ual.md) |
 | Was persistence configured? | [Services](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Event logs, Prefetch, `$MFT` |
+| What did Defender detect, and what did it do about it? | [Defender Detection History](defender-history.md) | [Defender Quarantine](defender-quarantine.md), event logs |
 | What did Defender remove? | [Defender Quarantine](defender-quarantine.md) | Event logs, `$MFT`, USN Journal |
 | Were local accounts added or changed? | [SAM](sam.md) | Security event logs and registry transaction history |
 

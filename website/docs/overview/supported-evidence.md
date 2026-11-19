@@ -23,6 +23,7 @@
 | RDP bitmap cache (`Cache????.bin`, `bcache*.bmc`) | `parse-file rdp-cache` | Tiles of the remote screens a user saw with the Remote Desktop client, saved as images and as a collage of each cache file | No times or computer names; a cache mixes many sessions; tiles are pieces of screens, not whole screens |
 | Recycle Bin (`$I` files, INFO2) | `parse-file recycle-bin` | Items users deleted to the bin: original path, size, deletion time, user, and whether the deleted content is still there | Shift+Delete and most programs bypass the bin; emptying it deletes `$I` files (INFO2 keeps marked records) |
 | ShimCache | `parse-registry shimcache` | Historical executable paths and compatibility checks | Cache may not be flushed until shutdown; entry alone is not execution |
+| Defender detection history | `parse-file defender-history` | Every detection, also those never quarantined: threat, status, user, process, resources, hashes | A detection is a product verdict, not proof that a threat ran or was removed |
 | Defender quarantine | `parse-file defender-quarantine` | Detection, original path, hashes, download origin, recovered bytes | Detection name is a product verdict; extraction is hazardous |
 | Registry hives | `parse-registry read` | Configuration, persistence, deleted/replayed values | Key time is not a value time; live hives need transaction logs |
 | Services | `parse-registry services` | Service/driver persistence and failure actions | Configuration does not prove the service started |

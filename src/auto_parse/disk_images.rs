@@ -590,6 +590,8 @@ fn plan(image: &Arc<Image>, volume: usize, entry: &Entry, copy_all: bool, parent
             && crate::recycle_bin::is_legacy_info_path(&parent.join(&entry.name)))
         // `*_history.txt` is PowerShell's only in a PSReadLine folder.
         || crate::powershell_history::is_history_path(&parent.join(&entry.name))
+        // Defender's detection history files are small, and recognized by their content.
+        || crate::defender_history::is_history_path(&parent.join(&entry.name))
     {
         return Plan::Copy;
     }
@@ -1033,6 +1035,47 @@ mod tests {
         entry.name = "notes.txt".into();
         assert!(matches!(
             plan(&image, 0, &entry, false, Path::new(history)),
+            Plan::Placeholder(_)
+        ));
+    }
+
+    #[test]
+    fn defender_history_is_staged_only_from_detection_history_folders() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root = tempfile::tempdir().unwrap();
+        let image_path = root.path().join("sample.vhdx");
+        let gz = File::open(repo.join("test_files/vhdx/sample.vhdx.gz")).unwrap();
+        io::copy(
+            &mut flate2::read::GzDecoder::new(gz),
+            &mut File::create(&image_path).unwrap(),
+        )
+        .unwrap();
+        let image = Arc::new(Image::open(&image_path).unwrap());
+        let mut record = ROOT_RECORD;
+        let mut entry = None;
+        for name in ["C", "Users", "sample", "Data", "small.txt"] {
+            let next = image.volumes[0].lookup(record, name).unwrap().unwrap();
+            record = next.record;
+            entry = Some(next);
+        }
+        let mut entry = entry.unwrap();
+        entry.name = "6AFE33A0-19BA-4FFF-892F-B700539D7D63".into();
+        assert!(!named_input(&entry.name));
+        let history =
+            "C/ProgramData/Microsoft/Windows Defender/Scans/History/Service/DetectionHistory/02";
+        assert!(matches!(
+            plan(&image, 0, &entry, false, Path::new(history)),
+            Plan::Copy
+        ));
+        // The same name elsewhere is not read: the parser reads DetectionHistory folders only.
+        assert!(matches!(
+            plan(
+                &image,
+                0,
+                &entry,
+                false,
+                Path::new("C/ProgramData/Microsoft/Windows Defender/Scans/History/Service")
+            ),
             Plan::Placeholder(_)
         ));
     }

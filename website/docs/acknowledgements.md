@@ -56,6 +56,9 @@ embedded in Juntei; consult each project for its license.
   high-value Prefetch/Amcache/ShimCache observations.
 - **defender-dump** and dissect.target provide separate implementations for understanding Defender
   quarantine structures and safe extraction behavior.
+- Orange Cyberdefense's **wddh-parser** laid out the Defender detection history format, and its
+  samples come with the values WMI reported for them. Plaso's `windefender_history` parser and
+  Velociraptor's `Windows.Applications.DefenderHistory` artifact were independent references.
 - **Plaso**, **Chainsaw**, and **Velociraptor** supplied parser comparisons, test evidence, or
   collection-oriented reference behavior across several artifacts.
 - Obsidian Forensics' **Hindsight** and Velocidex's **SQLiteHunter** definitions were references
@@ -78,7 +81,7 @@ these artifacts understandable to practitioners.
 
 Public evidence from Andrew Rathbun's
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS, Plaso,
-rifiuti2, Regipy, Artemis, parser test repositories, and other properly licensed collections makes regression
+rifiuti2, Regipy, Artemis, Orange Cyberdefense's wddh-parser, parser test repositories, and other properly licensed collections makes regression
 testing against real Windows data possible. Juntei keeps attribution/license notes beside included
 test files.
 

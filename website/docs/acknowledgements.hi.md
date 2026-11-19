@@ -56,6 +56,9 @@ Juntei इसलिए अस्तित्व में है क्यों
   उच्च-मूल्य वाले Prefetch/Amcache/ShimCache observations को दिशा दी।
 - **defender-dump** और dissect.target, Defender quarantine संरचनाओं और सुरक्षित extraction व्यवहार को
   समझने के लिए अलग implementations प्रदान करते हैं।
+- Orange Cyberdefense के **wddh-parser** ने Defender detection history format को स्पष्ट किया, और उसके
+  samples के साथ वे values भी मिलती हैं जो WMI ने उनके लिए report कीं। Plaso का `windefender_history` parser और
+  Velociraptor का `Windows.Applications.DefenderHistory` artifact स्वतंत्र संदर्भ रहे।
 - **Plaso**, **Chainsaw** और **Velociraptor** ने कई आर्टिफ़ैक्ट में parser तुलना, परीक्षण साक्ष्य या
   संग्रह-केंद्रित संदर्भ व्यवहार प्रदान किया।
 - Obsidian Forensics का **Hindsight** और Velocidex की **SQLiteHunter** definitions browser history,
@@ -77,7 +80,7 @@ AppCompatCache, Amcache, SRUM, Prefetch, registry और NTFS forensic शोध
 
 Andrew Rathbun के
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS, Plaso,
-rifiuti2, Regipy, Artemis, parser test repositories और अन्य उचित रूप से licensed संग्रहों के सार्वजनिक साक्ष्य
+rifiuti2, Regipy, Artemis, Orange Cyberdefense के wddh-parser, parser test repositories और अन्य उचित रूप से licensed संग्रहों के सार्वजनिक साक्ष्य
 वास्तविक Windows डेटा के विरुद्ध regression testing को संभव बनाते हैं। Juntei शामिल की गई test files के
 साथ attribution/license notes रखता है।
 

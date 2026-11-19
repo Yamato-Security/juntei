@@ -20,6 +20,7 @@ Birçok komut, çıktı dosyası istenmediğinde kısa bir özet yazdırır:
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -68,7 +69,7 @@ juntei parse-file prefetch -d evidence/ -t jsonl \
 3. Geçmişteki varlık ve meta veriler için Amcache ve ShimCache.
 4. Kullanıcı/uygulama bağlamı için LNK, Jump Lists, RecentDocs ve SRUM.
 5. Kalıcılık için kayıt defteri hizmetleri ve TaskCache.
-6. Tespit, kaldırma, köken ve karmalar için Defender karantinası.
+6. Tespit, kaldırma, köken ve karmalar için Defender tespit geçmişi ve karantinası.
 
 ## 7. Yeniden üretilebilirliği belgeleyin { #7-document-reproducibility }
 

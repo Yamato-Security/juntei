@@ -20,6 +20,7 @@ mod boot;
 mod browser;
 mod cli;
 mod color;
+mod defender_history;
 mod defender_quarantine;
 mod disk_image;
 mod hive;
@@ -295,6 +296,17 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = recycle_bin::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::DefenderHistory(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = defender_history::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }

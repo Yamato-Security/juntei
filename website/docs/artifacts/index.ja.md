@@ -21,6 +21,7 @@ Windows は、ファイル システム、レジストリ、互換性データ�
 | このサーバーを利用したのはどのクライアントとアカウントで、それはどの日ですか? | [ユーザーアクセスログ (UAL)](ual.md) | セキュリティ イベント ログ、SMB と RDP のログ、ファイアウォール ログ |
 | ユーザーはリモート デスクトップで接続したコンピューター上で何を見ましたか? | [RDP ビットマップキャッシュ](rdp-cache.md) | [リモートアクセス (ユーザー側)](remote-access.md)、[Jump Lists](jump-lists.md)、接続先コンピューターのログオン イベントと [UAL](ual.md) |
 | 永続性が設定されましたか? | [サービス](services.md)、[TaskCache](taskcache.md)、[レジストリ](registry.md) | イベントログ、Prefetch、`$MFT` |
+| Defender は何を検出し、どう対処しましたか? | [Defender の検出履歴](defender-history.md) | [Defender 隔離](defender-quarantine.md)、イベント ログ |
 | Defender は何を削除しましたか? | [Defender 隔離](defender-quarantine.md) | イベント ログ、`$MFT`、USN ジャーナル |
 | ローカルアカウントは追加または変更されましたか? | [SAM](sam.md) | セキュリティ イベント ログとレジストリ トランザクション履歴 |
 

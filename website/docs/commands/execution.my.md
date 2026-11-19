@@ -1,7 +1,7 @@
 # ဖိုင် ညွှန်ကြားချက်များ { #file-commands }
 
 `parse-file` သည် အထောက်အထားအမျိုးအစား သီးသန့်ဖိုင်များကို ကိုင်တွယ်သည်- Prefetch၊ ဖြတ်လမ်းများ၊ Jump Lists၊ Defender
-quarantine၊ PowerShell မှတ်တမ်း၊ Outlook ၏ PST၊ OST၊ MSG နှင့် OFT ဖိုင်များနှင့် Recycle Bin ၏ index ဖိုင်များ။ Automatic Jump Lists သည် compound-file container ကို
+detection history နှင့် quarantine၊ PowerShell မှတ်တမ်း၊ Outlook ၏ PST၊ OST၊ MSG နှင့် OFT ဖိုင်များနှင့် Recycle Bin ၏ index ဖိုင်များ။ Automatic Jump Lists သည် compound-file container ကို
 အသုံးပြုပြီး custom Jump Lists သည် မတူညီသော binary layout ကို အသုံးပြုသည်။ နှစ်မျိုးစလုံးသည် တူညီသော အထောက်အထား
 ညွှန်ကြားချက်တစ်ခုတည်းတွင် ပါဝင်သည်။
 
@@ -13,6 +13,7 @@ Usage:
   juntei parse-file <COMMAND> [OPTIONS]
 
 Commands:
+  defender-history     Parse Defender detection history
   defender-quarantine  Parse Defender quarantine
   help                 Print this message or the help of the given subcommand(s)
   jump-lists           Parse Jump Lists
@@ -26,6 +27,40 @@ Commands:
 Options:
   -h, --help  Print help
 ```
+
+## `parse-file defender-history` { #parse-file-defender-history }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file defender-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for detection history files (Scans\History\Service\DetectionHistory\<nn>\<GUID>)
+  -f, --file <FILE>      File path to one detection history file (DetectionHistory\<nn>\<GUID>)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file defender-history -d evidence/ -o defender-history.csv
+juntei parse-file defender-history -f DetectionHistory/02/6AFE33A0-19BA-4FFF-892F-B700539D7D63 -t jsonl
+```
+
+Detection တစ်ခုစီ၏ resource တစ်ခုလျှင် record တစ်ခု ထုတ်ပေးပြီး Defender က quarantine ဘယ်တော့မှ မလုပ်ခဲ့သော ခြိမ်းခြောက်မှုများလည်း ပါဝင်သည်။
+[Defender ရှာဖွေတွေ့ရှိမှု မှတ်တမ်း](../artifacts/defender-history.md) ကို ကြည့်ပါ။
 
 ## `parse-file defender-quarantine` { #parse-file-defender-quarantine }
 

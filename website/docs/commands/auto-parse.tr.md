@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları, PSReadLine geçmiş dosyaları, Geri Dönüşüm Kutusu indeks dosyaları, RDP bitmap önbellekleri ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
+Ayrıştırıcılar dosya yolu gerektirir; Juntei ayrıştırıcıların okuduğu dosyaları sınırlı tamponlarla özel bir geçici dizine kopyalar: kayıt defteri hive'ları ve işlem günlükleri, NTFS meta veri dosyaları, veritabanları, Prefetch dosyaları, kısayollar, Jump List'ler, Outlook dosyaları, PSReadLine geçmiş dosyaları, Geri Dönüşüm Kutusu indeks dosyaları, RDP bitmap önbellekleri, Defender tespit geçmişi dosyaları ve Defender karantina klasörleri. Diğer her dosya özgün değiştirme zamanını koruyan boş bir yer tutucu olur; böylece dizinler ve yollar diskteki gibi görünür. persistence-hunter bir yer tutucunun içeriğini imajdan yalnızca gerektiğinde okur, örneğin bir kalıcılık kaydının gösterdiği yürütülebilir dosya. **Sonuçlara ek olarak kopyalanan dosyalar için alan gerekir.** Destekleniyorsa sıfır alanlar seyrek yazılır. Adlar, dizin yapısı, sabit bağlantılar ve değiştirme zamanları korunur. LNK ve Jump List kaynak zamanları geçici dosyalardan değil özgün NTFS metadata anlık görüntüsünden alınır. Ayrıştırıcı hatalarıyla da normal bitiş kopyaları siler; zorla sonlandırma dosya bırakabilir. Kaynak salt okunurdur; bekleyen VHDX günlükleri yalnızca bellekte uygulanır.
 
 Bilgisayar keşfi, CSV/JSON/JSONL ve `-j` normal işlem hattını kullanır. `manifest.json` içindeki `Image` özgün imajı, `EvidenceRoot` iç göreli yolu tanımlar. Okuma hataları ve güvensiz adlar `ImageErrors` ve `manifest.csv` içindeki başarısız satırlara yazılır. Okunabilir sonuçlar korunur; eksik girdiler 1 döndürür. Güvensiz veya belirsiz adlar yeniden adlandırılmaz. Adlandırılmış NTFS akışları ek dosya olarak çıkarılmaz; normal dosya olarak toplanmış eserler kullanılabilir.
 
@@ -174,6 +174,8 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
   görüntüsü
 - ShimCache
 - Persistence Hunter (izin/engelleme profilleriyle 131 kaynaklar arası kalıcılık denetimi)
+- Defender tespit geçmişi: hiç karantinaya alınmamış tehditler dahil, durumu, kullanıcısı, süreci ve
+  kaynaklarıyla birlikte her tespit
 - Defender karantina meta verileri
 - Aç ve Farklı Kaydet iletişim kutusu geçmişi
 - kurtarılabilir silinmiş veriler dahil tüm kayıt defteri anahtarları ve değerleri
@@ -339,6 +341,8 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
@@ -373,7 +377,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `Persistence` | Önyükleme yapılandırması (BCD), kayıt defteri otomatik başlatmaları, hizmetler, TaskCache |
 | `ProcessExecution` | Uygulama uyumluluğu, BAM ve DAM, FeatureUsage ve sabitlenmiş öğeler, MuiCache, Prefetch, Prefetch zaman çizelgesi, SRUM uygulama/CPU etkinliği, UserAssist |
 | `Registry` | Kurtarılmış kayıtlar dahil genel kovan anahtarları ve değerleri |
-| `SecurityProducts` | Defender karantina meta verileri ve isteğe bağlı çıkarılmış içerik; güvenlik ayarları (Defender, UAC, kimlik bilgisi koruması, RDP, güvenlik duvarı, günlük kaydı) |
+| `SecurityProducts` | Defender tespit geçmişi; Defender karantina meta verileri ve isteğe bağlı çıkarılmış içerik; güvenlik ayarları (Defender, UAC, kimlik bilgisi koruması, RDP, güvenlik duvarı, günlük kaydı) |
 | `ShellHistory` | PowerShell PSReadLine komut geçmişi; dosya değiştirme zamanı meta veridir, komut yürütme zamanları yoktur |
 | `SystemInformation` | Adlar, Windows sürümü, saat dilimi, son kapatma, profiller, SID'ler ve denetim ilkesi; SRUM enerji/kapasite, kimlik eşlemeleri ve bilinmeyen sağlayıcılar |
 
@@ -392,8 +396,8 @@ dizini oluşturulmaz.
 Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` ve
-`DefenderQuarantine.csv`. Kayıt defterinden türetilen tablolar `Registry-` önekini kullanır; buna
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`,
+`DefenderHistory.csv` ve `DefenderQuarantine.csv`. Kayıt defterinden türetilen tablolar `Registry-` önekini kullanır; buna
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` ve `Registry-SystemInfo.csv`
 dahildir. Genel kovan anahtarları ve değerleri `Registry-Dump.csv` içindedir. Amcache tabloları
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

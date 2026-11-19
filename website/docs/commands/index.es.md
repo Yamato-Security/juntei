@@ -37,6 +37,7 @@ registros nativos.
 
 | Comando | Artefacto de entrada | Guía detallada |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Historial de detecciones de Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Árbol o entrada de la cuarentena de Defender | [Cuarentena de Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Accesos directos LNK](../artifacts/lnk.md) |

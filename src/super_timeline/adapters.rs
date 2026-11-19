@@ -83,6 +83,7 @@ pub const ARTIFACTS: &[&str] = &[
     "browser",
     "bcd",
     "boot",
+    "defender-history",
     "defender-quarantine",
     "featureusage",
     "hayabusa",
@@ -1632,6 +1633,75 @@ fn build(
                 "registry_key_last_write",
                 true,
             );
+        }
+        "defender-history" => {
+            // A detection's times, as Defender wrote them, on each of its resources' records.
+            // What Defender says it did stays beside each time: a detection, a remediation
+            // attempt and a removal are separate states.
+            for key in [
+                "ThreatStatus",
+                "ThreatStatusID",
+                "ThreatStatusErrorCode",
+                "ExecutionStatus",
+                "DetectionSource",
+                "ResourceType",
+                "Process",
+                "QuarantineID",
+                "Problems",
+            ] {
+                if let Some((actual, value)) = field(value, key).filter(|(_, value)| {
+                    !value.is_null()
+                        && value.as_str() != Some("")
+                        && value.as_array().is_none_or(|items| !items.is_empty())
+                }) {
+                    b.extra.insert(actual.into(), compact(value, 0));
+                }
+            }
+            b.path = text(value, &["Path"]);
+            b.id = format!(
+                "Detection:{}:Resource:{}:{}",
+                text(value, &["DetectionID"]),
+                text(value, &["ResourceIndex"]),
+                b.source
+            );
+            b.named(
+                &["InitialDetectionTime"],
+                "Defender initial detection",
+                "security_detection",
+                true,
+            );
+            b.named(
+                &["LastThreatStatusChangeTime"],
+                "Defender threat status change",
+                "security_remediation",
+                true,
+            );
+            b.named(
+                &["RemediationTime"],
+                "Defender remediation",
+                "security_remediation",
+                true,
+            );
+            // Tracking data keeps its start time as an integer: a FILETIME only by
+            // interpretation (plaso's), so it is projected only when asked for.
+            if let Some((key, time)) =
+                field(value, "TrackingStartTime").filter(|(_, v)| !empty_time(&string(v)))
+            {
+                if b.policy.interpreted {
+                    let (path, id) = (b.path.clone(), b.id.clone());
+                    b.emit(
+                        time,
+                        key,
+                        "Defender resource tracking start, integer interpreted as FILETIME",
+                        "interpreted_value",
+                        &path,
+                        &id,
+                        true,
+                    );
+                } else {
+                    b.projection.counts.interpreted_times_omitted += 1;
+                }
+            }
         }
         "defender-quarantine" => {
             b.id = format!(

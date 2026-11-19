@@ -33,6 +33,7 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 
 | Komut | Girdi artefaktı | Ayrıntılı kılavuz |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender Tespit Geçmişi](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender karantina ağacı veya girdisi | [Defender Karantinası](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK Kısayolları](../artifacts/lnk.md) |

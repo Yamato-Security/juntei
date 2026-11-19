@@ -23,6 +23,7 @@ Windows는 파일 시스템, 레지스트리, 호환성 데이터베이스, 사�
 | 어떤 클라이언트와 계정이 어느 날에 이 서버를 사용했는가? | [사용자 액세스 로깅 (UAL)](ual.md) | Security 이벤트 로그, SMB 및 RDP 로그, 방화벽 로그 |
 | 사용자가 원격 데스크톱으로 접속한 컴퓨터에서 무엇을 보았는가? | [RDP 비트맵 캐시](rdp-cache.md) | [원격 액세스 (사용자 측)](remote-access.md), [Jump Lists](jump-lists.md), 원격 컴퓨터의 로그온 이벤트 및 [UAL](ual.md) |
 | 지속성이 구성되었는가? | [서비스](services.md), [TaskCache](taskcache.md), [레지스트리](registry.md) | 이벤트 로그, Prefetch, `$MFT` |
+| Defender가 무엇을 탐지했고, 그에 대해 어떤 조치를 했는가? | [Defender 탐지 기록](defender-history.md) | [Defender 격리 데이터](defender-quarantine.md), 이벤트 로그 |
 | Defender가 무엇을 제거했는가? | [Defender 격리 데이터](defender-quarantine.md) | 이벤트 로그, `$MFT`, USN 저널 |
 | 로컬 계정이 추가되거나 변경되었는가? | [SAM](sam.md) | Security 이벤트 로그 및 레지스트리 트랜잭션 기록 |
 

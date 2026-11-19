@@ -23,6 +23,7 @@ pero el investigador sigue teniendo que interpretar lo que significa cada una.
 | ¿Qué clientes y cuentas usaron este servidor, y en qué días? | [Registro de acceso de usuarios (UAL)](ual.md) | Registros de eventos Security, registros de SMB y RDP, registros del cortafuegos |
 | ¿Qué vio un usuario en los equipos a los que accedió con Escritorio remoto? | [Caché de mapas de bits de RDP](rdp-cache.md) | [Acceso remoto (lado del usuario)](remote-access.md), [Jump Lists](jump-lists.md), los eventos de inicio de sesión de los equipos remotos y [UAL](ual.md) |
 | ¿Se configuró persistencia? | [Servicios](services.md), [TaskCache](taskcache.md), [Registro](registry.md) | Registros de eventos, Prefetch, `$MFT` |
+| ¿Qué detectó Defender y qué hizo al respecto? | [Historial de detecciones de Defender](defender-history.md) | [Cuarentena de Defender](defender-quarantine.md), registros de eventos |
 | ¿Qué eliminó Defender? | [Cuarentena de Defender](defender-quarantine.md) | Registros de eventos, `$MFT`, Diario USN |
 | ¿Se añadieron o modificaron cuentas locales? | [SAM](sam.md) | Registros de eventos Security e historial de transacciones del Registro |
 

@@ -56,6 +56,9 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   Prefetch/Amcache/ShimCache bernilai tinggi di Juntei.
 - **defender-dump** dan dissect.target menyediakan implementasi terpisah untuk memahami struktur karantina
   Defender dan perilaku ekstraksi yang aman.
+- **wddh-parser** dari Orange Cyberdefense menguraikan format riwayat deteksi Defender, dan sampelnya
+  disertai nilai yang dilaporkan WMI untuk sampel tersebut. Parser `windefender_history` milik Plaso dan
+  artefak `Windows.Applications.DefenderHistory` milik Velociraptor menjadi referensi independen.
 - **Plaso**, **Chainsaw**, dan **Velociraptor** menyediakan perbandingan parser, bukti uji, atau
   perilaku referensi yang berorientasi pengumpulan untuk berbagai artefak.
 - **Hindsight** dari Obsidian Forensics dan definisi **SQLiteHunter** dari Velocidex menjadi referensi untuk
@@ -78,7 +81,7 @@ artefak-artefak ini dapat dipahami oleh para praktisi.
 
 Bukti publik dari
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) karya Andrew Rathbun, NIST CFReDS, Plaso,
-rifiuti2, Regipy, Artemis, repositori uji parser, dan koleksi lain dengan lisensi yang sesuai memungkinkan pengujian regresi
+rifiuti2, Regipy, Artemis, wddh-parser dari Orange Cyberdefense, repositori uji parser, dan koleksi lain dengan lisensi yang sesuai memungkinkan pengujian regresi
 terhadap data Windows nyata. Juntei menyimpan catatan atribusi/lisensi di samping berkas uji
 yang disertakan.
 

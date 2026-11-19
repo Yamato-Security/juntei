@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-พาร์เซอร์ต้องใช้พาธ Juntei จึงคัดลอกไฟล์ที่พาร์เซอร์อ่านไปยังพื้นที่ชั่วคราวส่วนตัวด้วยบัฟเฟอร์จำกัด ได้แก่ ไฮฟ์รีจิสทรีและล็อกธุรกรรม ไฟล์เมทาดาทา NTFS ฐานข้อมูล ไฟล์ Prefetch ช็อตคัต Jump List ไฟล์ Outlook ไฟล์ประวัติ PSReadLine ไฟล์ดัชนีของถังรีไซเคิล แคชบิตแมปของ RDP และโฟลเดอร์กักกันของ Defender ไฟล์อื่นทั้งหมดจะเป็นไฟล์แทนที่ว่างที่คงเวลาแก้ไขเดิมไว้ ไดเรกทอรีและพาธจึงดูเหมือนบนดิสก์ persistence-hunter จะอ่านเนื้อหาของไฟล์แทนที่จากอิมเมจเฉพาะเมื่อจำเป็น เช่น ไฟล์ปฏิบัติการที่รายการ persistence อ้างถึง **ต้องมีพื้นที่สำหรับไฟล์ที่คัดลอก** นอกเหนือจากผลลัพธ์ หากรองรับจะเขียนพื้นที่ศูนย์เป็นพื้นที่ sparse โดยรักษาชื่อ โครงสร้าง ฮาร์ดลิงก์ และเวลาแก้ไข เวลาแหล่งข้อมูล LNK และ Jump List มาจากสแนปช็อตเมทาดาทา NTFS เดิม ไม่ใช่สำเนาชั่วคราว เมื่อจบตามปกติรวมถึงกรณีพาร์เซอร์ผิดพลาดจะลบสำเนา แต่การบังคับหยุดอาจทิ้งไฟล์ไว้ ต้นฉบับอ่านอย่างเดียวและใช้ล็อก VHDX ที่ค้างในหน่วยความจำเท่านั้น
+พาร์เซอร์ต้องใช้พาธ Juntei จึงคัดลอกไฟล์ที่พาร์เซอร์อ่านไปยังพื้นที่ชั่วคราวส่วนตัวด้วยบัฟเฟอร์จำกัด ได้แก่ ไฮฟ์รีจิสทรีและล็อกธุรกรรม ไฟล์เมทาดาทา NTFS ฐานข้อมูล ไฟล์ Prefetch ช็อตคัต Jump List ไฟล์ Outlook ไฟล์ประวัติ PSReadLine ไฟล์ดัชนีของถังรีไซเคิล แคชบิตแมปของ RDP ไฟล์ประวัติการตรวจจับของ Defender และโฟลเดอร์กักกันของ Defender ไฟล์อื่นทั้งหมดจะเป็นไฟล์แทนที่ว่างที่คงเวลาแก้ไขเดิมไว้ ไดเรกทอรีและพาธจึงดูเหมือนบนดิสก์ persistence-hunter จะอ่านเนื้อหาของไฟล์แทนที่จากอิมเมจเฉพาะเมื่อจำเป็น เช่น ไฟล์ปฏิบัติการที่รายการ persistence อ้างถึง **ต้องมีพื้นที่สำหรับไฟล์ที่คัดลอก** นอกเหนือจากผลลัพธ์ หากรองรับจะเขียนพื้นที่ศูนย์เป็นพื้นที่ sparse โดยรักษาชื่อ โครงสร้าง ฮาร์ดลิงก์ และเวลาแก้ไข เวลาแหล่งข้อมูล LNK และ Jump List มาจากสแนปช็อตเมทาดาทา NTFS เดิม ไม่ใช่สำเนาชั่วคราว เมื่อจบตามปกติรวมถึงกรณีพาร์เซอร์ผิดพลาดจะลบสำเนา แต่การบังคับหยุดอาจทิ้งไฟล์ไว้ ต้นฉบับอ่านอย่างเดียวและใช้ล็อก VHDX ที่ค้างในหน่วยความจำเท่านั้น
 
 การค้นหาโฮสต์ CSV/JSON/JSONL และ `-j` ใช้ขั้นตอนปกติ `Image` ใน `manifest.json` ระบุอิมเมจต้นฉบับ ส่วน `EvidenceRoot` ระบุพาธสัมพัทธ์ภายใน ข้อผิดพลาดการอ่านและชื่อไม่ปลอดภัยอยู่ใน `ImageErrors` และแถวล้มเหลวของ `manifest.csv` จะเก็บผลที่อ่านได้และคืนรหัส 1 หากอินพุตไม่สมบูรณ์ ไม่เปลี่ยนชื่ออันตรายหรือกำกวม และไม่แยกสตรีม NTFS ที่มีชื่อเป็นไฟล์เพิ่มเติม อาร์ติแฟกต์ที่รวบรวมเป็นไฟล์ปกติยังใช้ได้
 
@@ -171,6 +171,8 @@ manifest จะเก็บชื่อโฮสต์ตามที่ค้�
 - แคชบิตแมปของ RDP: ไทล์ของหน้าจอระยะไกลที่ผู้ใช้เห็น พร้อมภาพคอลลาจของแคชแต่ละไฟล์
 - ShimCache
 - Persistence Hunter (การตรวจสอบการคงอยู่ข้ามแหล่งข้อมูล 131 รายการพร้อมโปรไฟล์ allow/block)
+- ประวัติการตรวจจับของ Defender: การตรวจจับทุกครั้งพร้อมสถานะ ผู้ใช้ โปรเซส และทรัพยากร
+  รวมถึงภัยคุกคามที่ไม่เคยถูกกักกัน
 - เมทาดาทาการกักกันของ Defender
 - ประวัติของกล่องโต้ตอบ Open และ Save As
 - คีย์และค่ารีจิสทรีทั้งหมด รวมถึงข้อมูลที่ถูกลบซึ่งกู้คืนได้
@@ -334,6 +336,8 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
@@ -369,7 +373,7 @@ CSV แยกตารางออกจากกันเพราะแต่�
 | `Persistence` | การกำหนดค่าบูต (BCD), การเริ่มอัตโนมัติผ่านรีจิสทรี, บริการ, TaskCache |
 | `ProcessExecution` | ความเข้ากันได้ของแอปพลิเคชัน, BAM และ DAM, FeatureUsage และรายการที่ปักหมุด, MuiCache, Prefetch, ไทม์ไลน์ Prefetch, กิจกรรมแอปพลิเคชัน/CPU ของ SRUM, UserAssist |
 | `Registry` | คีย์และค่าของไฮฟ์ทั่วไป รวมถึงเรคคอร์ดที่กู้คืน |
-| `SecurityProducts` | เมทาดาทาการกักกันของ Defender และเนื้อหาที่แยกออกมา (ไม่บังคับ); การตั้งค่าความปลอดภัย (Defender, UAC, การป้องกันข้อมูลรับรอง, RDP, ไฟร์วอลล์, การบันทึก) |
+| `SecurityProducts` | ประวัติการตรวจจับของ Defender; เมทาดาทาการกักกันของ Defender และเนื้อหาที่แยกออกมา (ไม่บังคับ); การตั้งค่าความปลอดภัย (Defender, UAC, การป้องกันข้อมูลรับรอง, RDP, ไฟร์วอลล์, การบันทึก) |
 | `ShellHistory` | ประวัติคำสั่ง PowerShell PSReadLine เวลาแก้ไขไฟล์เป็นเมทาดาทา ไม่มีเวลาที่คำสั่งทำงาน |
 | `SystemInformation` | ชื่อ เวอร์ชัน Windows เขตเวลา การปิดเครื่องครั้งล่าสุด โปรไฟล์ SID และนโยบายการตรวจสอบ; พลังงาน/ความจุ, identity map และ provider ที่ไม่รู้จักของ SRUM |
 
@@ -387,7 +391,7 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 ชื่อไฟล์ CSV เริ่มต้นได้แก่ `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` และ
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, `DefenderHistory.csv` และ
 `DefenderQuarantine.csv` ตารางที่ได้จากรีจิสทรีใช้คำนำหน้า `Registry-` รวมถึง
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` และ `Registry-SystemInfo.csv`
 คีย์และค่าของไฮฟ์ทั่วไปอยู่ใน `Registry-Dump.csv` ตาราง Amcache ได้แก่

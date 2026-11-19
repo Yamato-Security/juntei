@@ -23,6 +23,7 @@
 | ما العملاء والحسابات التي استخدمت هذا الخادم، وفي أي أيام؟ | [تسجيل وصول المستخدمين (UAL)](ual.md) | سجلات أحداث Security، وسجلات SMB وRDP، وسجلات الجدار الناري |
 | ماذا رأى المستخدم على أجهزة الكمبيوتر التي وصل إليها عبر سطح المكتب البعيد؟ | [ذاكرة التخزين المؤقت لصور RDP النقطية](rdp-cache.md) | [الوصول عن بُعد (جهة المستخدم)](remote-access.md)، و[Jump Lists](jump-lists.md)، وأحداث تسجيل الدخول على أجهزة الكمبيوتر البعيدة، و[UAL](ual.md) |
 | هل جرى تكوين آلية استمرارية؟ | [الخدمات](services.md)، [TaskCache](taskcache.md)، [سجل Windows](registry.md) | سجلات الأحداث، Prefetch، `$MFT` |
+| ما الذي اكتشفه Defender، وماذا فعل حياله؟ | [سجل اكتشافات Defender](defender-history.md) | [حجر Defender](defender-quarantine.md)، سجلات الأحداث |
 | ما الذي أزاله Defender؟ | [حجر Defender](defender-quarantine.md) | سجلات الأحداث، `$MFT`، دفتر يومية USN |
 | هل أُضيفت حسابات محلية أو غُيّرت؟ | [SAM](sam.md) | سجلات أحداث Security وسجل معاملات سجل Windows |
 

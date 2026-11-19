@@ -36,6 +36,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | คำสั่ง | อาร์ติแฟกต์อินพุต | คู่มือโดยละเอียด |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [ประวัติการตรวจจับของ Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | ทรีหรือรายการกักกันของ Defender | [ข้อมูลที่ Defender กักกัน](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [ทางลัด LNK](../artifacts/lnk.md) |

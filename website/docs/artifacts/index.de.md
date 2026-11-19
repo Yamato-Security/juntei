@@ -23,6 +23,7 @@ doch die Ermittlerin oder der Ermittler muss weiterhin interpretieren, was jede 
 | Welche Clients und Konten haben diesen Server genutzt, und an welchen Tagen? | [Benutzerzugriffsprotokollierung (UAL)](ual.md) | Security-Ereignisprotokolle, SMB- und RDP-Protokolle, Firewall-Protokolle |
 | Was hat ein Benutzer auf den Computern gesehen, die er per Remotedesktop erreicht hat? | [RDP-Bitmap-Cache](rdp-cache.md) | [Fernzugriff (Benutzerseite)](remote-access.md), [Jump Lists](jump-lists.md), die Anmeldeereignisse der entfernten Computer und [UAL](ual.md) |
 | Wurde Persistenz eingerichtet? | [Dienste](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Ereignisprotokolle, Prefetch, `$MFT` |
+| Was hat Defender erkannt, und was hat es dagegen unternommen? | [Defender-Erkennungsverlauf](defender-history.md) | [Defender-Quarantäne](defender-quarantine.md), Ereignisprotokolle |
 | Was hat Defender entfernt? | [Defender-Quarantäne](defender-quarantine.md) | Ereignisprotokolle, `$MFT`, USN-Journal |
 | Wurden lokale Konten hinzugefügt oder geändert? | [SAM](sam.md) | Security-Ereignisprotokolle und Transaktionsverlauf der Registry |
 

@@ -104,6 +104,7 @@ Une date renseigne sur un objet enregistré ; elle ne prouve seule ni exécution
 | Cache bitmap RDP | Aucun événement : les tuiles mises en cache n'ont pas de dates. Leurs enregistrements restent dans les entrées analysées. |
 | Historique PowerShell | Aucun événement : les lignes de l'historique n'ont pas de dates, et `FileLastWriteTime` est la date du fichier, pas celle d'une commande. Leurs enregistrements restent dans les entrées analysées. |
 | Corbeille | Date à laquelle chaque élément a été déplacé dans la Corbeille, avec l'utilisateur de la corbeille, le chemin d'origine et la présence ou non du contenu supprimé dans la collecte. Ce n'est ni la date à laquelle la Corbeille a été vidée, ni les dates de fichier propres à l'élément. |
+| Historique des détections Defender | Dates de première détection, de dernier changement de statut et de correction, sur l'enregistrement de chaque ressource. La date de début du suivi est un entier lu comme un FILETIME, utilisé uniquement avec `--include-interpreted-times`. |
 | Quarantaine Defender | Date de l'entrée et création/accès/écriture de la ressource. L'extraction n'est pas une activité du poste d'origine. |
 | BAM, UserAssist, FeatureUsage | Activité enregistrée et écriture de clé distinguées. Un compteur sans date ne produit aucun événement. |
 | RecentDocs, MRU, ouverture/enregistrement MRU, ShellBags, Office | Utilisation, confiance, éléments shell et contexte de clé. La date de la clé d'une liste n'est pas la dernière utilisation de chaque élément. |
