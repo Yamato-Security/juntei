@@ -147,6 +147,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: ごみ箱
+        Windows Search Index: Windows Search のインデックス
         File and Folder Opening: ファイルとフォルダのオープン
         LNK Shortcuts: LNK のショートカット
         Microsoft Office: Microsoft Office
@@ -280,6 +281,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: 資源回收筒
+        Windows Search Index: Windows Search 索引
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -374,6 +376,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: 휴지통
+        Windows Search Index: Windows Search 색인
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -468,6 +471,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: Papierkorb
+        Windows Search Index: Windows-Search-Index
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -562,6 +566,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: Geri Dönüşüm Kutusu
+        Windows Search Index: Windows Search Dizini
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -656,6 +661,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: Corbeille
+        Windows Search Index: Index de Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -750,6 +756,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: Papelera de reciclaje
+        Windows Search Index: Índice de Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -844,6 +851,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: Lixeira
+        Windows Search Index: Índice do Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -938,6 +946,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: Кошик
+        Windows Search Index: Індекс Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1032,6 +1041,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: रीसायकल बिन
+        Windows Search Index: Windows Search इंडेक्स
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1126,6 +1136,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: Keranjang Sampah (Recycle Bin)
+        Windows Search Index: Indeks Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1220,6 +1231,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: အမှိုက်ပုံး (Recycle Bin)
+        Windows Search Index: Windows Search အညွှန်း
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1314,6 +1326,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: ถังรีไซเคิล
+        Windows Search Index: ดัชนี Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1408,6 +1421,7 @@ plugins:
         Amcache: Amcache
         ShimCache: ShimCache
         Recycle Bin: سلة المحذوفات
+        Windows Search Index: فهرس Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1467,6 +1481,7 @@ nav:
           - Amcache: artifacts/amcache.md
           - ShimCache: artifacts/shimcache.md
           - Recycle Bin: artifacts/recycle-bin.md
+          - Windows Search Index: artifacts/windows-search.md
       - File and Folder Opening:
           - LNK Shortcuts: artifacts/lnk.md
           - Microsoft Office: artifacts/office.md

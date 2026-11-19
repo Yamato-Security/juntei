@@ -155,6 +155,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - 사용자 액세스 로깅 (UAL)
 - 웹 브라우저 방문 기록, 다운로드, 쿠키 및 양식 기록(Chromium 및 Firefox 기반 브라우저)
 - Internet Explorer와 레거시 Edge의 WebCache: 방문 기록, 다운로드, 쿠키 및 캐시 항목
+- Windows Search 색인: 색인된 모든 파일, 폴더, 이메일, 웹 페이지와 그 메타데이터 및 텍스트 발췌
 - Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업
 - LNK 바로 가기
 - Jump Lists
@@ -263,7 +264,9 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -354,7 +357,7 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 | `Communication` | Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업 |
 | `ExternalDevices` | USB 장치와 볼륨 |
 | `FileAndFolderOpening` | Jump Lists, LNK 바로 가기, Microsoft Office, MRU 목록, 열기 및 다른 이름으로 저장 대화 상자, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, 휴지통, ShimCache |
+| `FileExistence` | Amcache, 휴지통, ShimCache, Windows Search 색인 |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN 저널 |
 | `NetworkActivity` | 네트워크 프로필, 인터페이스, 공유, 포트 프록시 및 경로. SRUM 연결, 트래픽 및 푸시 알림 |
 | `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유. RDP 비트맵 캐시(원격 화면의 타일). 사용자 액세스 로깅(서버 역할의 클라이언트) |
@@ -380,7 +383,7 @@ Jump Lists는 각각 접두사가 붙은 테이블 옆에 하나의 공유 로�
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`,
-`DefenderHistory.csv`, `DefenderQuarantine.csv`입니다. 레지스트리에서 파생된 테이블은 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`,
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv`입니다. 레지스트리에서 파생된 테이블은 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`,
 `Registry-BAM.csv`, `Registry-SystemInfo.csv`를 포함하여 `Registry-` 접두사를 사용합니다. 일반 하이브 키와 값은
 `Registry-Dump.csv`에 있습니다. Amcache 테이블은 `FileExistence/Registry-Amcache-Devices.csv`,
 `Registry-Amcache-Files.csv`, `Registry-Amcache-Summary.csv`입니다. Jump Lists는

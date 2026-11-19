@@ -163,6 +163,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - журналювання доступу користувачів (UAL)
 - історія, завантаження, файли cookie та історія форм веб-браузерів (браузери на основі Chromium і Firefox)
 - WebCache Internet Explorer і застарілого Edge: історія, завантаження, файли cookie та записи кешу
+- індекс Windows Search: кожен проіндексований файл, папка, лист електронної пошти та веб-сторінка з метаданими та витягом тексту
 - файли Outlook PST, OST, MSG і OFT: папки, елементи, одержувачі, вкладення, контакти, елементи календаря та завдання
 - ярлики LNK
 - Jump Lists
@@ -274,7 +275,9 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -365,7 +368,7 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `Communication` | Файли Outlook PST, OST, MSG і OFT: папки, елементи, одержувачі, вкладення, контакти, елементи календаря та завдання |
 | `ExternalDevices` | Пристрої та томи USB |
 | `FileAndFolderOpening` | Jump Lists, ярлики LNK, Microsoft Office, списки MRU, діалоги відкриття та збереження файлів, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, кошик, ShimCache |
+| `FileExistence` | Amcache, кошик, ShimCache, індекс Windows Search |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, журнал USN |
 | `NetworkActivity` | Мережеві профілі, інтерфейси, спільні ресурси, проксі портів і маршрути; підключення, трафік і push-сповіщення SRUM |
 | `LateralMovement` | Вихідні підключення користувачів через віддалений робочий стіл, PuTTY і WinSCP, підключені диски та спільні ресурси; кеші растрових зображень RDP (плитки віддалених екранів); журналювання доступу користувачів (клієнти ролей сервера) |
@@ -391,7 +394,7 @@ Amcache і Jump Lists мають по одному спільному журна
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`,
-`DefenderHistory.csv` і `DefenderQuarantine.csv`. Таблиці, отримані з реєстру, мають префікс `Registry-`, зокрема
+`DefenderHistory.csv`, `DefenderQuarantine.csv` і `WindowsSearch.csv`. Таблиці, отримані з реєстру, мають префікс `Registry-`, зокрема
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` і `Registry-SystemInfo.csv`.
 Загальні ключі та значення кущів містяться в `Registry-Dump.csv`. Таблиці Amcache:
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

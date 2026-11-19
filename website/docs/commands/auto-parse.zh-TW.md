@@ -161,6 +161,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - 使用者存取記錄 (UAL)
 - 網頁瀏覽器的瀏覽歷程、下載、Cookie 與表單歷程（Chromium 與 Firefox 系列瀏覽器）
 - Internet Explorer 與舊版 Edge 的 WebCache：瀏覽歷程記錄、下載、Cookie 與快取項目
+- Windows Search 索引：每一個已建立索引的檔案、資料夾、電子郵件與網頁，連同其中繼資料與文字摘錄
 - Outlook 的 PST、OST、MSG 與 OFT 檔案：資料夾、項目、收件者、附件、連絡人、行事曆項目與工作
 - LNK 捷徑
 - Jump Lists
@@ -271,7 +272,9 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -362,7 +365,7 @@ PascalCase，例如 `Accounts` 與 `FileAndFolderOpening`。Amcache 與 Jump Lis
 | `Communication` | Outlook 的 PST、OST、MSG 與 OFT 檔案：資料夾、項目、收件者、附件、連絡人、行事曆項目與工作 |
 | `ExternalDevices` | USB 裝置與磁碟區 |
 | `FileAndFolderOpening` | Jump Lists、LNK 捷徑、Microsoft Office、MRU 清單、開啟與另存新檔對話方塊、RecentDocs、ShellBags |
-| `FileExistence` | Amcache、資源回收筒、ShimCache |
+| `FileExistence` | Amcache、資源回收筒、ShimCache、Windows Search 索引 |
 | `FileSystem` | `$Boot`、`$I30`、`$LogFile`、`$MFT`、`$Secure:$SDS`、USN Journal |
 | `NetworkActivity` | 網路設定檔、介面、共用、連接埠 Proxy 與路由；SRUM 連線、流量與推播通知 |
 | `LateralMovement` | 使用者對外的遠端桌面、PuTTY 與 WinSCP 連線、對應的磁碟機與共用；RDP 點陣圖快取（遠端畫面的圖塊）；使用者存取記錄（伺服器角色的用戶端） |
@@ -387,8 +390,8 @@ Amcache 與 Jump Lists 各有一個共用的記錄檔，放在其帶前綴的資
 預設的 CSV 檔名為 `Registry-SAM.csv`、`LNK.csv`、`RecycleBin.csv`、`RdpCache.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、
 `I30.csv`、`MFT.csv`、`UsnJournal.csv`、`Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、
 `Registry-SecuritySettings.csv`、
-`PrefetchTimeline.csv`、`Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、`Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、`DefenderHistory.csv` 以及
-`DefenderQuarantine.csv`。從登錄檔衍生的資料表使用 `Registry-` 前綴，包括
+`PrefetchTimeline.csv`、`Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、`Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、`DefenderHistory.csv`、`DefenderQuarantine.csv` 以及
+`WindowsSearch.csv`。從登錄檔衍生的資料表使用 `Registry-` 前綴，包括
 `Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv` 與 `Registry-SystemInfo.csv`。
 一般的登錄區機碼與值位於 `Registry-Dump.csv`。Amcache 資料表為
 `FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、

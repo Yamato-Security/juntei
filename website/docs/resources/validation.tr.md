@@ -131,6 +131,20 @@ Internet Explorer 11'e ait, diğeri ise eski Edge'in geçmişini, indirmelerini 
 6 indirme, 170 çerez ve 3.754 diğer girdi. Karşılaştırma, indirme kayıtlarının kodunu kendi başına çözdü.
 Veritabanlarının silinmiş olarak işaretlediği kayıtlar her iki taraftan da çıkarıldı.
 
+## Windows Search dizini { #windows-search-index }
+
+`parse-ese windows-search`, `Windows.edb` dosyasını
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) kütüphanesinin ESE okuyucusuyla okur.
+Tümü kirli bırakılmış üç herkese açık dizinde libyal'ın `esedbexport` aracı ve Stroz Friedberg'in SIDR
+aracıyla karşılaştırıldı: Plaso'nun Windows 7 dizini (`SystemIndex_0A`) ile DFIR Artifact Museum'un
+Windows 10 ve Windows 11 dizinleri (`SystemIndex_PropertyStore`, ESE biçim revizyonları 110 ve 200). Her
+yol, sahip, tür, bilgisayar adı, boyut ve zaman eşleşti: Windows 11 özellik deposunun 6.691 değeri
+`esedbexport` ile, Windows 10 özellik deposunun 6.332 değeri SIDR ile ve Windows 7 dizeleri üç
+kodlamasıyla `esedbexport` ile karşılaştırıldı. Windows 10 dizininin bir bölümü yalnızca dal
+sayfalarının ulaşmadığı yaprak sayfalardadır; iki araç da bunları okur, Juntei de okur. Bir toplayıcı
+sütunu tasarım gereği farklıdır: ESE, bir öğe tarandığında `Priority` değerini NULL olarak işaretler;
+iki araç da bunu kayıtta kalan baytlardan yazdırır.
+
 ## Outlook { #outlook }
 
 `parse-file outlook`, PST, OST, `.msg` ve `.oft` dosyalarını

@@ -45,6 +45,9 @@ embedded in Juntei; consult each project for its license.
   **libesedb** provide detailed format research and independent parsing references.
 - Fox-IT's **dissect.esedb**, **dissect.ntfs** and **dissect.target** provided independent SRUM, UAL,
   `$Secure:$SDS`, SAM, and Defender interpretations used during validation.
+- Stroz Friedberg's **SIDR** and libyal's `esedbexport` were the independent readings of the
+  Windows Search index, with libyal's **esedb-kb** notes on its tables and Microsoft's published
+  **Extensible Storage Engine** source for the record format.
 - **The Sleuth Kit**'s `fsstat` was the reference for NTFS boot sectors of volumes made with
   `mkntfs`.
 - Some of Eric Zimmerman's tools established field names and examiner expectations used for comparisons.

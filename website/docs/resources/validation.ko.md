@@ -117,6 +117,17 @@ ys-browser-parser의 양식 기록 테스트 데이터베이스를 대상으로,
 방문 기록 항목 182개, 다운로드 6건, 쿠키 170개, 기타 항목 3,754개입니다. 비교 과정에서는 다운로드 레코드를
 독자적으로 디코딩했습니다. 데이터베이스가 삭제됨으로 표시한 레코드는 양쪽 모두에서 제외했습니다.
 
+## Windows Search 색인 { #windows-search-index }
+
+`parse-ese windows-search`는 [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)의 ESE 리더로
+`Windows.edb`를 읽습니다. 모두 더티 상태 그대로인 공개 색인 3개, 즉 Plaso의 Windows 7 색인(`SystemIndex_0A`)과
+DFIR Artifact Museum의 Windows 10 및 Windows 11 색인(`SystemIndex_PropertyStore`, ESE 형식 개정 110 및 200)을
+대상으로 libyal의 `esedbexport` 및 Stroz Friedberg의 SIDR과 비교되었습니다. 모든 경로, 소유자, 유형, 컴퓨터 이름,
+크기, 시간이 일치했습니다. Windows 11 속성 저장소의 값 6,691개는 `esedbexport`와, Windows 10 속성 저장소의 값
+6,332개는 SIDR과, 세 가지 인코딩으로 된 Windows 7 문자열은 `esedbexport`와 대조했습니다. Windows 10 색인의
+일부는 브랜치 페이지가 가리키지 않는 리프 페이지에만 있습니다. 두 도구 모두 이 페이지를 읽으며, Juntei도
+마찬가지입니다. 수집기 열 하나는 설계상 다릅니다. 항목이 크롤링되면 ESE가 `Priority`를 NULL로 표시하는데, 두
+도구는 레코드에 남은 바이트에서 이 값을 출력합니다.
 ## Outlook { #outlook }
 
 `parse-file outlook`은 [ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser)로 PST, OST,

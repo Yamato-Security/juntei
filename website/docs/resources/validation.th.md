@@ -123,6 +123,19 @@ browser, sqlite และ plist ของ Sootmark ซึ่งได้รั�
 คุกกี้ 170 รายการ และรายการอื่น 3,754 รายการ การเปรียบเทียบนี้ถอดรหัสเรคคอร์ดการดาวน์โหลดด้วยวิธีของตนเอง
 โดยอิสระ เรคคอร์ดที่ฐานข้อมูลทำเครื่องหมายว่าถูกลบไม่ได้ถูกนำมารวมทั้งสองฝั่ง
 
+## ดัชนี Windows Search { #windows-search-index }
+
+`parse-ese windows-search` อ่าน `Windows.edb` ด้วยตัวอ่าน ESE ของ
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) และได้รับการเปรียบเทียบกับ `esedbexport`
+ของ libyal และ SIDR ของ Stroz Friedberg บนดัชนีสาธารณะสามชุดซึ่งปล่อยไว้ในสถานะ dirty ทั้งหมด ได้แก่
+ดัชนี Windows 7 ของ Plaso (`SystemIndex_0A`) และดัชนี Windows 10 และ Windows 11 ของ DFIR Artifact Museum
+(`SystemIndex_PropertyStore` รูปแบบ ESE รุ่นแก้ไข 110 และ 200) ทุกพาธ เจ้าของ ชนิด ชื่อคอมพิวเตอร์ ขนาด
+และเวลาเปรียบเทียบแล้วตรงกัน ได้แก่ ค่า 6,691 ค่าของ property store ของ Windows 11 เทียบกับ `esedbexport`
+ค่า 6,332 ค่าของ Windows 10 เทียบกับ SIDR และสตริงของ Windows 7 ในการเข้ารหัสทั้งสามแบบเทียบกับ `esedbexport`
+ส่วนหนึ่งของดัชนี Windows 10 อยู่เฉพาะในเพจใบ (leaf page) ที่เพจกิ่ง (branch page) ไปไม่ถึง เครื่องมือทั้งสอง
+อ่านเพจเหล่านั้นได้ และ Juntei ก็อ่านได้เช่นกัน มีคอลัมน์ gatherer หนึ่งคอลัมน์ที่ต่างกันโดยเจตนา คือ ESE จะทำ
+เครื่องหมาย `Priority` เป็น NULL เมื่อรายการถูกรวบรวมแล้ว ซึ่งเครื่องมือทั้งสองพิมพ์ค่าจากไบต์ที่เหลืออยู่ในเรคคอร์ด
+
 ## Outlook { #outlook }
 
 `parse-file outlook` อ่านไฟล์ PST, OST, `.msg` และ `.oft` ด้วย

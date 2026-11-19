@@ -123,6 +123,20 @@ Explorer 11, and a dirty one of Windows 10 with legacy Edge's history, downloads
 and 3,754 other entries. The comparison decoded the download records on its own. Records the
 databases flag as deleted were left out of both.
 
+## Windows Search index
+
+`parse-ese windows-search` reads `Windows.edb` with
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)'s ESE reader. It was compared
+with libyal's `esedbexport` and Stroz Friedberg's SIDR on three public indexes, all left dirty:
+Plaso's Windows 7 index (`SystemIndex_0A`) and the DFIR Artifact Museum's Windows 10 and Windows 11
+indexes (`SystemIndex_PropertyStore`, ESE format revisions 110 and 200). Every path, owner, type,
+computer name, size and time compared equal: 6,691 values of the Windows 11 property store against
+`esedbexport`, 6,332 of the Windows 10 one against SIDR, and the Windows 7 strings in their three
+encodings against `esedbexport`. Part of the Windows 10 index is only in leaf pages that its
+branch pages do not reach; both tools read them, and so does Juntei. One gatherer column differs
+by design: ESE marks `Priority` NULL once an item is crawled, which both tools print from the
+bytes left in the record.
+
 ## Outlook
 
 `parse-file outlook` reads PST, OST, `.msg` and `.oft` files with

@@ -47,6 +47,9 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   **libesedb** တို့သည် အသေးစိတ် ဖိုင်ပုံစံ သုတေသနနှင့် လွတ်လပ်သော parsing ကိုးကားချက်များကို ပေးပါသည်။
 - Fox-IT ၏ **dissect.esedb**၊ **dissect.ntfs** နှင့် **dissect.target** တို့သည် မှန်ကန်မှု စစ်ဆေးစဉ်
   အသုံးပြုခဲ့သော SRUM၊ UAL၊ `$Secure:$SDS`၊ SAM နှင့် Defender တို့၏ လွတ်လပ်သော အဓိပ္ပာယ်ဖော်ချက်များကို ပေးခဲ့ပါသည်။
+- Stroz Friedberg ၏ **SIDR** နှင့် libyal ၏ `esedbexport` တို့သည် Windows Search အညွှန်း၏ လွတ်လပ်သော
+  ဖတ်ရှုမှုများ ဖြစ်ခဲ့ပြီး ၎င်း၏ table များအကြောင်း libyal ၏ **esedb-kb** မှတ်စုများနှင့် record format အတွက်
+  Microsoft က ထုတ်ပြန်ထားသော **Extensible Storage Engine** source တို့ကို အသုံးပြုခဲ့ပါသည်။
 - `mkntfs` ဖြင့် ပြုလုပ်ထားသော volume များ၏ NTFS boot sector များအတွက် **The Sleuth Kit** ၏ `fsstat` သည်
   ကိုးကားချက် ဖြစ်ခဲ့ပါသည်။
 - Eric Zimmerman ၏ tool အချို့သည် နှိုင်းယှဉ်ရာတွင် အသုံးပြုခဲ့သော field အမည်များနှင့် စစ်ဆေးသူများ၏ မျှော်လင့်ချက်များကို

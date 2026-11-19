@@ -10,7 +10,8 @@ Windows သည် ဖိုင်စနစ်၊ registry၊ compatibility ဒ�
 |---|---|---|
 | မည်သည့် PowerShell command စာကြောင်းများကို သိမ်းထားသနည်း။ | [PowerShell မှတ်တမ်း](powershell-history.md) | PowerShell event log၊ process telemetry၊ Prefetch |
 | ဤ executable ကို run ခဲ့သလား။ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)၊ [SRUM](srum.md)၊ event log များ |
-| ဤဖိုင် တစ်ချိန်ချိန်တွင် တည်ရှိခဲ့သလား။ | [Amcache](amcache.md)၊ [$MFT](mft.md) | [USN ဂျာနယ်](usn-journal.md)၊ [$I30](i30.md)၊ ShimCache |
+| ဤဖိုင် တစ်ချိန်ချိန်တွင် တည်ရှိခဲ့သလား။ | [Amcache](amcache.md)၊ [$MFT](mft.md) | [USN ဂျာနယ်](usn-journal.md)၊ [$I30](i30.md)၊ [Windows Search အညွှန်း](windows-search.md)၊ ShimCache |
+| ဤကွန်ပျူတာပေါ်တွင် မည်သည့် ဖိုင်များ၊ e-mail များနှင့် စာမျက်နှာများ ရှိခဲ့ပြီး စာရွက်စာတမ်းတစ်ခုတွင် မည်သည့်အရာ ပါခဲ့သနည်း။ | [Windows Search အညွှန်း](windows-search.md) | [$MFT](mft.md)၊ [USN ဂျာနယ်](usn-journal.md)၊ [Outlook](outlook.md)၊ [ဝဘ် ဘရောက်ဇာများ](browser.md) |
 | ဖိုင်တစ်ခုကို မည်သည့်အချိန်တွင် ဖန်တီး၊ အမည်ပြောင်း သို့မဟုတ် ဖျက်ခဲ့သနည်း။ | [USN ဂျာနယ်](usn-journal.md) | [$MFT](mft.md)၊ [$I30](i30.md)၊ Defender quarantine |
 | အသုံးပြုသူက မည်သည့်အရာကို Recycle Bin ထဲသို့ မည်သည့်အချိန်တွင် ဖျက်ခဲ့သနည်း။ | [အမှိုက်ပုံး (Recycle Bin)](recycle-bin.md) | [USN ဂျာနယ်](usn-journal.md)၊ [$MFT](mft.md)၊ [LNK](lnk.md)၊ [Jump Lists](jump-lists.md) |
 | Metadata ပြောင်းလဲမှုမတိုင်မီ မည်သည့်အမည် သို့မဟုတ် timestamp ရှိခဲ့သနည်း။ | [$LogFile](logfile.md) | [$MFT](mft.md)၊ [USN ဂျာနယ်](usn-journal.md)၊ [$I30](i30.md) |

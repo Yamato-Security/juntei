@@ -18,6 +18,7 @@ Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisis
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Pencatatan Akses Pengguna (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer dan Edge lama (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Indeks Windows Search | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb` (Windows 7 hingga 11 21H2; `Windows.db` dan `Windows-gather.db` sejak 22H2) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` sebelum Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, dan berkas `.msg` di mana pun berkas itu disimpan |
 | Browser web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\`, dan folder profil browser lainnya |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` dan lokasi pengguna/sistem lainnya |
@@ -47,6 +48,9 @@ Juntei mengurai berkas yang sudah dikumpulkan dari Windows. Gunakan alat akuisis
   terhapus, hanya ada di sana sampai browser melakukan checkpoint.
 - Kumpulkan seluruh folder `WebCache`: Windows terus membuka `WebCacheV01.dat` selama pengguna masuk (log on),
   dan perubahan terbarunya hanya ada di log transaksi `V01*.log`, yang tidak diputar ulang oleh Juntei.
+- Kumpulkan seluruh folder `Applications\Windows` milik Windows Search dari image, volume shadow copy,
+  atau setelah menghentikan layanan `WSearch`: `Windows.edb` terbuka selama layanan berjalan, dan
+  perubahan terbarunya hanya ada di log transaksi `MSS*.log`, yang tidak diputar ulang oleh Juntei.
 - Kumpulkan berkas OST dan PST Outlook saat Outlook ditutup, atau dari image disk atau volume shadow
   copy: Outlook terus membukanya selama berjalan. Cari juga PST di luar folder default: pengguna
   memindahkan arsip ke folder, drive, dan share berkas lain.

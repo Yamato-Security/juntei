@@ -32,6 +32,7 @@ continua mantendo os registros nativos.
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Registro de acesso do usuário (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer e Edge legado](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Índice do Windows Search](../artifacts/windows-search.md) |
 
 ## [Comandos de arquivos](execution.md) { #file-commands }
 

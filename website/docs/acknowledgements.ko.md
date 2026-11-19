@@ -44,6 +44,9 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
   상세한 형식 연구와 독립적인 파싱 참조 구현을 제공합니다.
 - Fox-IT의 **dissect.esedb**, **dissect.ntfs**, **dissect.target**은 검증 과정에서 사용된 SRUM, UAL,
   `$Secure:$SDS`, SAM 및 Defender에 대한 독립적인 해석을 제공했습니다.
+- Stroz Friedberg의 **SIDR**과 libyal의 `esedbexport`는 Windows Search 색인의 독립적인 판독 결과가 되었으며, 그 테이블에
+  대해서는 libyal의 **esedb-kb** 노트를, 레코드 형식에 대해서는 Microsoft가 공개한 **Extensible Storage Engine** 소스를
+  참고했습니다.
 - **The Sleuth Kit**의 `fsstat`는 `mkntfs`로 만든 볼륨의 NTFS 부트 섹터에 대한 참조 구현이었습니다.
 - Eric Zimmerman의 일부 도구는 비교에 사용된 필드 이름과 조사관의 기대 사항을 확립했습니다.
 - **regipy**, **python-registry**, **Notatin**, **artemis**는 레지스트리 구현, 테스트 또는 샘플 해석을

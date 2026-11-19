@@ -121,6 +121,19 @@ delete किए गए दो pages और दो visits, उनके सम�
 records को स्वतंत्र रूप से, अपने तरीके से decode किया। जिन records को databases deleted के रूप में चिह्नित करते हैं,
 उन्हें दोनों में से किसी में भी शामिल नहीं किया गया।
 
+## Windows Search इंडेक्स { #windows-search-index }
+
+`parse-ese windows-search` `Windows.edb` को
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) के ESE reader से पढ़ता है। इसकी तुलना
+libyal के `esedbexport` और Stroz Friedberg के SIDR से तीन सार्वजनिक indexes पर की गई, सभी dirty छोड़े हुए:
+Plaso का Windows 7 index (`SystemIndex_0A`) और DFIR Artifact Museum के Windows 10 और Windows 11 indexes
+(`SystemIndex_PropertyStore`, ESE format revisions 110 और 200)। हर path, owner, type, computer name, आकार
+और समय बराबर मेल खाया: Windows 11 property store की 6,691 values `esedbexport` के विरुद्ध, Windows 10 वाले
+की 6,332 values SIDR के विरुद्ध, और Windows 7 की strings अपनी तीन encodings में `esedbexport` के विरुद्ध।
+Windows 10 index का एक हिस्सा केवल ऐसे leaf pages में है जिन तक उसके branch pages नहीं पहुँचते; दोनों tools
+उन्हें पढ़ते हैं, और Juntei भी। Gatherer का एक column design के अनुसार भिन्न है: item के crawl हो जाने पर ESE
+`Priority` को NULL चिह्नित कर देता है, जिसे दोनों tools record में बचे bytes से print करते हैं।
+
 ## Outlook { #outlook }
 
 `parse-file outlook` PST, OST, `.msg` और `.oft` files को

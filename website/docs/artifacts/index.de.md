@@ -10,7 +10,8 @@ doch die Ermittlerin oder der Ermittler muss weiterhin interpretieren, was jede 
 |---|---|---|
 | Welche PowerShell-Befehlszeilen wurden gespeichert? | [PowerShell-Verlauf](powershell-history.md) | PowerShell-Ereignisprotokolle, Prozesstelemetrie, Prefetch |
 | Wurde diese ausführbare Datei ausgeführt? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), Ereignisprotokolle |
-| War diese Datei jemals vorhanden? | [Amcache](amcache.md), [$MFT](mft.md) | [USN-Journal](usn-journal.md), [$I30](i30.md), ShimCache |
+| War diese Datei jemals vorhanden? | [Amcache](amcache.md), [$MFT](mft.md) | [USN-Journal](usn-journal.md), [$I30](i30.md), [Windows-Search-Index](windows-search.md), ShimCache |
+| Welche Dateien, E-Mails und Seiten befanden sich auf diesem Computer, und was stand in einem Dokument? | [Windows-Search-Index](windows-search.md) | [$MFT](mft.md), [USN-Journal](usn-journal.md), [Outlook](outlook.md), [Webbrowser](browser.md) |
 | Wann wurde eine Datei erstellt, umbenannt oder gelöscht? | [USN-Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender-Quarantäne |
 | Was hat ein Benutzer in den Papierkorb verschoben, und wann? | [Papierkorb](recycle-bin.md) | [USN-Journal](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Welcher Name oder Zeitstempel existierte vor einer Metadatenänderung? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN-Journal](usn-journal.md), [$I30](i30.md) |

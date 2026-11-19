@@ -49,6 +49,9 @@ cada projeto para conhecer sua licença.
   **libesedb** — oferecem pesquisa detalhada sobre formatos e referências de análise independentes.
 - O **dissect.esedb**, o **dissect.ntfs** e o **dissect.target** da Fox-IT forneceram interpretações
   independentes de SRUM, UAL, `$Secure:$SDS`, SAM e Defender usadas durante a validação.
+- O **SIDR** da Stroz Friedberg e o `esedbexport` da libyal foram as leituras independentes do índice do
+  Windows Search, com as notas **esedb-kb** da libyal sobre suas tabelas e o código-fonte do **Extensible Storage
+  Engine** publicado pela Microsoft para o formato dos registros.
 - O `fsstat` do **The Sleuth Kit** foi a referência para os setores de inicialização NTFS de volumes
   criados com `mkntfs`.
 - Algumas das ferramentas de Eric Zimmerman estabeleceram nomes de campos e expectativas dos

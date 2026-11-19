@@ -19,6 +19,18 @@
   into `SecurityProducts`, and `super-timeline` makes events from Defender's own times. (#193)
   (@YamatoSecurity)
 
+- `parse-ese windows-search` parses the Windows Search index (`Windows.edb`) of Windows 7 to
+  Windows 11 21H2: every indexed file, folder, e-mail, web page and activity with its path, name,
+  type, size, attributes, owner, the created, modified and accessed times the indexer copied, the
+  time it was indexed, title, author, text extract and computer name, joined with the gatherer's
+  record of the item (its path, modification time, crawl number and flags). Windows 7's
+  `SystemIndex_0A` schema and its compressed string encoding are read, and the SQLite index of
+  Windows 11 22H2 and later is reported as unsupported. The user is attributed from the profile in
+  the item's path, with its basis in `UserSource`. A dirty database keeps the rows that only its
+  leaf pages reach. `auto-parse` reads the index from directories, VHDX and E01 images into
+  `FileExistence`, and `super-timeline` makes events from the item's file times and the time it
+  was indexed. (#188) (@YamatoSecurity)
+
 - `parse-file powershell-history` streams PSReadLine history to CSV, JSON or JSONL, retaining
   raw continuation lines with source line numbers and `EntryStartLine`, user, shell host and
   clearly named file metadata. UTF-8 and BOM-marked UTF-16 are supported; damaged text and

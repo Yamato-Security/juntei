@@ -134,6 +134,19 @@ valor: 44 contenedores, 182 entradas del historial, 6 descargas, 170 cookies y 3
 decodificó por su cuenta los registros de descarga. Los registros que las bases de datos marcan como eliminados se
 excluyeron de ambos lados.
 
+## Índice de Windows Search { #windows-search-index }
+
+`parse-ese windows-search` lee `Windows.edb` con el lector ESE de
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Se comparó con `esedbexport` de libyal y con
+SIDR de Stroz Friedberg en tres índices públicos, todos dejados sucios: el índice de Windows 7 de Plaso
+(`SystemIndex_0A`) y los índices de Windows 10 y Windows 11 del DFIR Artifact Museum (`SystemIndex_PropertyStore`,
+revisiones 110 y 200 del formato ESE). Coincidieron todas las rutas, propietarios, tipos, nombres de equipo,
+tamaños y horas: 6691 valores del almacén de propiedades de Windows 11 frente a `esedbexport`, 6332 del de
+Windows 10 frente a SIDR, y las cadenas de Windows 7 en sus tres codificaciones frente a `esedbexport`. Parte del
+índice de Windows 10 solo está en páginas hoja a las que sus páginas de rama no llegan; ambas herramientas las
+leen, y Juntei también. Una columna del recopilador difiere por diseño: ESE marca `Priority` como NULL en cuanto
+se rastrea un elemento, que ambas herramientas imprimen a partir de los bytes que quedan en el registro.
+
 ## Outlook { #outlook }
 
 `parse-file outlook` lee archivos PST, OST, `.msg` y `.oft` con

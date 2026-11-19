@@ -124,6 +124,20 @@ database တစ်ခုနှင့် legacy Edge ၏ history၊ download မ�
 သီးခြား decode လုပ်ခဲ့ပါသည်။ Database များက ဖျက်ထားသည်ဟု အမှတ်အသားပြုထားသော record များကို နှစ်ဖက်စလုံးမှ
 ချန်လှပ်ထားခဲ့ပါသည်။
 
+## Windows Search အညွှန်း { #windows-search-index }
+
+`parse-ese windows-search` သည် `Windows.edb` ကို
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) ၏ ESE reader ဖြင့် ဖတ်ပါသည်။ ၎င်းကို dirty
+အဖြစ် ထားရှိသော အများသုံး အညွှန်း သုံးခုပေါ်တွင် libyal ၏ `esedbexport` နှင့် Stroz Friedberg ၏ SIDR တို့နှင့်
+နှိုင်းယှဉ်ခဲ့ပါသည်: Plaso ၏ Windows 7 အညွှန်း (`SystemIndex_0A`) နှင့် DFIR Artifact Museum ၏ Windows 10 နှင့်
+Windows 11 အညွှန်းများ (`SystemIndex_PropertyStore`၊ ESE format revision 110 နှင့် 200) ဖြစ်ပါသည်။ Path၊ ပိုင်ရှင်၊
+အမျိုးအစား၊ ကွန်ပျူတာ အမည်၊ အရွယ်အစားနှင့် အချိန်တိုင်း နှိုင်းယှဉ်ရာတွင် တူညီခဲ့ပါသည်: Windows 11 property store ၏
+value 6,691 ခုကို `esedbexport` နှင့်၊ Windows 10 property store ၏ value 6,332 ခုကို SIDR နှင့်၊ Windows 7 string
+များကို ၎င်းတို့၏ encoding သုံးမျိုးဖြင့် `esedbexport` နှင့် နှိုင်းယှဉ်ခဲ့ပါသည်။ Windows 10 အညွှန်း၏ တစ်စိတ်တစ်ပိုင်းသည်
+၎င်း၏ branch page များက မရောက်ရှိသော leaf page များတွင်သာ ရှိပါသည်။ Tool နှစ်ခုလုံးက ၎င်းတို့ကို ဖတ်ပြီး Juntei
+ကလည်း ဖတ်ပါသည်။ Gatherer column တစ်ခုသည် ဒီဇိုင်းအရ ကွဲပြားပါသည်: item ကို crawl လုပ်ပြီးသည်နှင့် ESE က `Priority`
+ကို NULL အဖြစ် အမှတ်အသားပြုပြီး tool နှစ်ခုလုံးက ၎င်းကို record ထဲတွင် ကျန်ရှိသော byte များမှ ပုံနှိပ်ဖော်ပြပါသည်။
+
 ## Outlook { #outlook }
 
 `parse-file outlook` သည် PST၊ OST၊ `.msg` နှင့် `.oft` ဖိုင်များကို

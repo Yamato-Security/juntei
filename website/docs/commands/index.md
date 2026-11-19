@@ -31,6 +31,7 @@ chronological order and duplicate consolidation. `auto-parse -j` continues to re
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [User Access Logging (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer and Legacy Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search Index](../artifacts/windows-search.md) |
 
 ## [File commands](execution.md)
 

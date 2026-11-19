@@ -4,7 +4,7 @@
 ရွေးချယ်နိုင်သော SOFTWARE hive က အကောင့်နှင့် Wi-Fi အမည်များကို ဖြည့်စွက်ပေးသည်။ Windows Server ၏ အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း
 (User Access Logging) ဒေတာဘေ့စ်များ (`Current.mdb`၊ `{GUID}.mdb` နှင့် `SystemIdentity.mdb`) သည်လည်း ESE ဒေတာဘေ့စ်များ ဖြစ်သည်။
 Internet Explorer နှင့် legacy Edge တို့က ၎င်းတို့၏ history၊ download များ၊ cookie များနှင့် cache ကို သိမ်းဆည်းသော
-`WebCacheV01.dat` သည်လည်း ESE ဒေတာဘေ့စ် ဖြစ်သည်။
+`WebCacheV01.dat` နှင့် Windows Search အညွှန်း ဖြစ်သော `Windows.edb` တို့သည်လည်း ESE ဒေတာဘေ့စ်များ ဖြစ်သည်။
 
 ```text
 Version: 1.1.0 (CODE BLUE Release)
@@ -14,10 +14,11 @@ Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  help      Print this message or the help of the given subcommand(s)
-  srum      Parse SRUM databases
-  ual       Parse User Access Logging (UAL) databases
-  webcache  Parse Internet Explorer and legacy Edge's WebCache databases
+  help            Print this message or the help of the given subcommand(s)
+  srum            Parse SRUM databases
+  ual             Parse User Access Logging (UAL) databases
+  webcache        Parse Internet Explorer and legacy Edge's WebCache databases
+  windows-search  Parse Windows Search indexes (Windows.edb)
 
 Options:
   -h, --help  Print help
@@ -123,3 +124,34 @@ juntei parse-ese webcache -f WebCacheV01.dat -t jsonl | jq 'select(.Table == "Hi
 ```
 
 [Internet Explorer နှင့် legacy Edge](../artifacts/webcache.md) ကို ကြည့်ပါ။
+
+## `parse-ese windows-search` { #parse-ese-windows-search }
+
+```text
+Usage:
+  juntei parse-ese windows-search <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Windows Search indexes (Windows.edb; Windows.db is reported as the unsupported SQLite index)
+  -f, --file <FILE>      File path to one Windows.edb
+
+Output:
+  -o, --output <FILE>       Save every indexed item to this file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl records are written to stdout
+  -C, --clobber             Overwrite the output file when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese windows-search -f Windows.edb -o windows-search.csv
+juntei parse-ese windows-search -d evidence/ -t jsonl \
+  | jq 'select(.Store == "file") | {ItemPath, DateModified, GatherTime, FileOwner}'
+```
+
+[Windows Search အညွှန်း](../artifacts/windows-search.md) ကို ကြည့်ပါ။

@@ -23,7 +23,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
-Juntei currently supports 46 of the most popular Windows forensic artifacts and we continue to add more.
+Juntei currently supports 47 of the most popular Windows forensic artifacts and we continue to add more.
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
@@ -80,6 +80,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Amcache** (`Amcache.hve`) — Inventory of executable paths, hashes, publisher metadata, and devices; an entry alone does not prove execution. | Registry |
 | **ShimCache / AppCompatCache** (`SYSTEM` hive) — Cached application paths, timestamps, and compatibility flags; an entry alone does not prove execution. | Registry |
 | **Recycle Bin** (`$I` files, `INFO2`) — The files and folders users deleted to the Recycle Bin: original path, size, deletion time and user, whether the deleted content is still in the bin, and on Windows XP and earlier, items since restored or purged. | File |
+| **Windows Search index** (`Windows.edb`) — Every file, folder, e-mail and web page Windows Search indexed, with its path, size, owner, file times, the time it was indexed, title, author, an extract of its text and the computer name; items deleted since stay until the next crawl. Windows 7 to Windows 11 21H2 (the SQLite index of 22H2 and later is reported, not read). | ESE |
 
 ### File and Folder Opening
 

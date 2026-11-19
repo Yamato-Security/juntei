@@ -3,7 +3,8 @@
 `parse-ese`는 ESE(Extensible Storage Engine) 데이터베이스를 처리합니다. SRUM의 `SRUDB.dat`는 ESE 데이터베이스이며,
 선택적으로 지정하는 SOFTWARE 하이브를 통해 계정 이름과 Wi-Fi 이름을 보강합니다. Windows Server의 사용자 액세스 로깅
 데이터베이스(`Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb`)도 ESE 데이터베이스이며, Internet Explorer와
-레거시 Edge가 방문 기록, 다운로드, 쿠키, 캐시를 저장하는 `WebCacheV01.dat`도 마찬가지입니다.
+레거시 Edge가 방문 기록, 다운로드, 쿠키, 캐시를 저장하는 `WebCacheV01.dat`와 Windows Search 색인인 `Windows.edb`도
+마찬가지입니다.
 
 ```text
 Version: 1.1.0 (CODE BLUE Release)
@@ -13,10 +14,11 @@ Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  help      Print this message or the help of the given subcommand(s)
-  srum      Parse SRUM databases
-  ual       Parse User Access Logging (UAL) databases
-  webcache  Parse Internet Explorer and legacy Edge's WebCache databases
+  help            Print this message or the help of the given subcommand(s)
+  srum            Parse SRUM databases
+  ual             Parse User Access Logging (UAL) databases
+  webcache        Parse Internet Explorer and legacy Edge's WebCache databases
+  windows-search  Parse Windows Search indexes (Windows.edb)
 
 Options:
   -h, --help  Print help
@@ -122,3 +124,34 @@ juntei parse-ese webcache -f WebCacheV01.dat -t jsonl | jq 'select(.Table == "Hi
 ```
 
 [Internet Explorer와 레거시 Edge](../artifacts/webcache.md)를 참조하십시오.
+
+## `parse-ese windows-search` { #parse-ese-windows-search }
+
+```text
+Usage:
+  juntei parse-ese windows-search <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Windows Search indexes (Windows.edb; Windows.db is reported as the unsupported SQLite index)
+  -f, --file <FILE>      File path to one Windows.edb
+
+Output:
+  -o, --output <FILE>       Save every indexed item to this file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl records are written to stdout
+  -C, --clobber             Overwrite the output file when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese windows-search -f Windows.edb -o windows-search.csv
+juntei parse-ese windows-search -d evidence/ -t jsonl \
+  | jq 'select(.Store == "file") | {ItemPath, DateModified, GatherTime, FileOwner}'
+```
+
+[Windows Search 색인](../artifacts/windows-search.md)을 참조하십시오.

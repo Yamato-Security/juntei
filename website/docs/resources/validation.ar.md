@@ -123,6 +123,19 @@ browser وsqlite وplist الخاصة بـ Sootmark، وقد اختير بعد �
 تنزيلات، و170 ملف تعريف ارتباط، و3,754 إدخالًا آخر. وفكّت المقارنة ترميز سجلات التنزيل بنفسها. واستُبعدت
 من الجانبين السجلات التي تعلّمها قواعد البيانات على أنها محذوفة.
 
+## فهرس Windows Search { #windows-search-index }
+
+يقرأ `parse-ese windows-search` الملف `Windows.edb` باستخدام قارئ ESE في
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). وقورن بأداة `esedbexport` من libyal
+وأداة SIDR من Stroz Friedberg على ثلاثة فهارس عامة، تُركت كلها غير متسقة: فهرس Windows 7 من Plaso
+‏(`SystemIndex_0A`) وفهرسا Windows 10 وWindows 11 من DFIR Artifact Museum ‏(`SystemIndex_PropertyStore`،
+مراجعتا تنسيق ESE رقم 110 و200). وتطابق كل مسار ومالك ونوع واسم كمبيوتر وحجم ووقت: 6,691 قيمة من مخزن
+خصائص Windows 11 مقابل `esedbexport`، و6,332 قيمة من مخزن Windows 10 مقابل SIDR، وسلاسل Windows 7
+النصية بترميزاتها الثلاثة مقابل `esedbexport`. ويوجد جزء من فهرس Windows 10 في صفحات ورقية فقط لا تصل
+إليها صفحات الفروع فيه؛ وتقرأها الأداتان، وكذلك يفعل Juntei. ويختلف عمود واحد من أعمدة المجمّع عن قصد:
+فـ ESE يعلّم `Priority` بالقيمة NULL بمجرد الزحف إلى العنصر، بينما تطبعه الأداتان من البايتات المتبقية
+في السجل.
+
 ## Outlook { #outlook }
 
 يقرأ `parse-file outlook` ملفات PST وOST و`.msg` و`.oft` باستخدام

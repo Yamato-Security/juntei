@@ -10,7 +10,8 @@ mais l'enquêteur doit toujours interpréter ce que signifie chacune d'elles.
 |---|---|---|
 | Quelles lignes de commande PowerShell ont été sauvegardées ? | [Historique PowerShell](powershell-history.md) | Journaux d’événements PowerShell, télémétrie des processus, Prefetch |
 | Cet exécutable a-t-il été exécuté ? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), journaux d'événements |
-| Ce fichier a-t-il jamais été présent ? | [Amcache](amcache.md), [$MFT](mft.md) | [Journal USN](usn-journal.md), [$I30](i30.md), ShimCache |
+| Ce fichier a-t-il jamais été présent ? | [Amcache](amcache.md), [$MFT](mft.md) | [Journal USN](usn-journal.md), [$I30](i30.md), [Index de Windows Search](windows-search.md), ShimCache |
+| Quels fichiers, e-mails et pages se trouvaient sur cet ordinateur, et que disait un document ? | [Index de Windows Search](windows-search.md) | [$MFT](mft.md), [Journal USN](usn-journal.md), [Outlook](outlook.md), [Navigateurs web](browser.md) |
 | Quand un fichier a-t-il été créé, renommé ou supprimé ? | [Journal USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), quarantaine Defender |
 | Qu'est-ce qu'un utilisateur a mis à la Corbeille, et quand ? | [Corbeille](recycle-bin.md) | [Journal USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Quel nom ou quel horodatage existait avant une modification des métadonnées ? | [$LogFile](logfile.md) | [$MFT](mft.md), [Journal USN](usn-journal.md), [$I30](i30.md) |

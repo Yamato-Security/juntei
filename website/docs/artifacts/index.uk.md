@@ -10,7 +10,8 @@ Windows зберігає сліди, що перетинаються, у фай�
 |---|---|---|
 | Які командні рядки PowerShell було збережено? | [Історія PowerShell](powershell-history.md) | Журнали подій PowerShell, телеметрія процесів, Prefetch |
 | Чи запускався цей виконуваний файл? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), журнали подій |
-| Чи був цей файл колись присутній? | [Amcache](amcache.md), [$MFT](mft.md) | [Журнал USN](usn-journal.md), [$I30](i30.md), ShimCache |
+| Чи був цей файл колись присутній? | [Amcache](amcache.md), [$MFT](mft.md) | [Журнал USN](usn-journal.md), [$I30](i30.md), [Індекс Windows Search](windows-search.md), ShimCache |
+| Які файли, листи та сторінки були на цьому комп'ютері і що було сказано в документі? | [Індекс Windows Search](windows-search.md) | [$MFT](mft.md), [Журнал USN](usn-journal.md), [Outlook](outlook.md), [Веб-браузери](browser.md) |
 | Коли файл було створено, перейменовано або видалено? | [Журнал USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), карантин Defender |
 | Що користувач видалив до кошика і коли? | [Кошик](recycle-bin.md) | [Журнал USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Яке ім'я або часова позначка існували до зміни метаданих? | [$LogFile](logfile.md) | [$MFT](mft.md), [журнал USN](usn-journal.md), [$I30](i30.md) |

@@ -10,7 +10,8 @@ but the investigator must still interpret what each source means.
 |---|---|---|
 | Which PowerShell command lines were saved? | [PowerShell History](powershell-history.md) | PowerShell event logs, process telemetry, Prefetch |
 | Did this executable run? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event logs |
-| Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
+| Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), [Windows Search Index](windows-search.md), ShimCache |
+| Which files, e-mails and pages were on this computer, and what did a document say? | [Windows Search Index](windows-search.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [Outlook](outlook.md), [Web Browsers](browser.md) |
 | When was a file created, renamed, or deleted? | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender quarantine |
 | What did a user delete to the Recycle Bin, and when? | [Recycle Bin](recycle-bin.md) | [USN Journal](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | What name or timestamp existed before a metadata change? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [$I30](i30.md) |
