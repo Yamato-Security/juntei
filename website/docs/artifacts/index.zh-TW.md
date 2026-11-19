@@ -22,6 +22,7 @@ Windows 會在檔案系統、登錄、相容性資料庫、使用者介面歷程
 | 哪些用戶端與帳戶使用過這台伺服器，又是在哪幾天？ | [使用者存取記錄 (UAL)](ual.md) | Security 事件記錄、SMB 與 RDP 記錄、防火牆記錄 |
 | 使用者在透過遠端桌面連上的電腦上看到了什麼？ | [RDP 點陣圖快取](rdp-cache.md) | [遠端存取（使用者端）](remote-access.md)、[Jump Lists](jump-lists.md)、遠端電腦的登入事件與 [UAL](ual.md) |
 | 是否設定了持續存取機制？ | [服務](services.md)、[TaskCache](taskcache.md)、[登錄](registry.md) | 事件記錄、Prefetch、`$MFT` |
+| Defender 偵測到了什麼，又採取了什麼處置？ | [Defender 偵測歷程記錄](defender-history.md) | [Defender 隔離資料](defender-quarantine.md)、事件記錄 |
 | Defender 移除了什麼？ | [Defender 隔離資料](defender-quarantine.md) | 事件記錄、`$MFT`、USN Journal |
 | 是否新增或變更了本機帳戶？ | [SAM](sam.md) | Security 事件記錄與登錄交易歷程 |
 

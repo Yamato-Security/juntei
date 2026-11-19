@@ -20,6 +20,7 @@ Viele Befehle geben eine knappe Zusammenfassung aus, wenn keine Ausgabedatei ang
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ Verwenden Sie die [artefaktübergreifenden Untersuchungen](../resources/workflow
 3. Amcache und ShimCache für historisches Vorhandensein und Metadaten.
 4. LNK, Jump Lists, RecentDocs und SRUM für Benutzer-/Anwendungskontext.
 5. Registry-Dienste und TaskCache für Persistenz.
-6. Defender-Quarantäne für Erkennung, Entfernung, Herkunft und Hashes.
+6. Defender-Erkennungsverlauf und -Quarantäne für Erkennung, Entfernung, Herkunft und Hashes.
 
 ## 7. Reproduzierbarkeit dokumentieren { #7-document-reproducibility }
 

@@ -180,6 +180,7 @@ E01 も同じ読み取り専用のネイティブ処理と専用一時領域を�
 
 | アーティファクト | 種類 |
 | --- | --- |
+| **Microsoft Defender の検出履歴** (`Scans\History\Service\DetectionHistory`) — 隔離されなかった脅威を含むすべての検出。脅威、状態と結果、ユーザー、プロセス、リソース、ハッシュ、検出と修復の時刻。 | File |
 | **Microsoft Defender の隔離データ** (`Quarantine\Entries`、`ResourceData`、`Resources`) — 脅威の記録、元のパス、ハッシュ、ダウンロード元、復元可能な隔離コンテンツ。 | File |
 | **セキュリティ設定** (`SOFTWARE`、`SYSTEM`、`NTUSER.DAT`) — Defender と除外設定、UAC、WDigest・LSA の保護、RDP、ファイアウォール、SMBv1、PowerShell ログ、AMSI、イベントログ設定。既定の保護を弱める設定にフラグを付けます。 | Registry |
 

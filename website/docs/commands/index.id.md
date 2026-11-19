@@ -33,6 +33,7 @@ Gunakan [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timelin
 
 | Perintah | Artefak input | Panduan terperinci |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Riwayat Deteksi Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Pohon atau entri karantina Defender | [Karantina Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Pintasan LNK](../artifacts/lnk.md) |

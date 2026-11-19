@@ -20,6 +20,7 @@ Many commands print a concise summary when no output file is requested:
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ Use the [Cross-Artifact Workflows](../resources/workflows.md). A practical seque
 3. Amcache and ShimCache for historical presence and metadata.
 4. LNK, Jump Lists, RecentDocs, and SRUM for user/application context.
 5. Registry services and TaskCache for persistence.
-6. Defender quarantine for detection, removal, origin, and hashes.
+6. Defender detection history and quarantine for detection, removal, origin, and hashes.
 
 ## 7. Document reproducibility
 

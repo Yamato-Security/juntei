@@ -38,6 +38,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 - **LnkParse3**、AbdulRhmanAlfaifi の **lnk_parser** および **jumplist_parser**、および JLECmd は独立して提供されますLNK/ジャンプ リストの動作と公開テスト ケース。
 - Security Ronin の **prefetch-forensic** および **forensicnomicon** プロジェクトは、Juntei の高価値 Prefetch/Amcache/ShimCache を通知しました。観察。
 - **defender-dump** および dissect.target は、Defender 隔離構造と安全な抽出動作を理解するための個別の実装を提供します。
+- Orange Cyberdefense の **wddh-parser** は Defender の検出履歴の形式を明らかにし、そのサンプルには WMI が返した値が添えられています。Plaso の `windefender_history` パーサーと Velociraptor の `Windows.Applications.DefenderHistory` アーティファクトは、独立した参考実装となりました。
 - **Plaso**、**Chainsaw**、および **Velociraptor** は、複数のアーティファクトにわたるパーサー比較、テスト証拠、またはコレクション指向の参照動作を提供しました。
 - Obsidian Forensics の **Hindsight** と Velocidex の **SQLiteHunter** の定義は、ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴の参考資料となりました。
 - Abel Cheung の **rifiuti2** はごみ箱の `$I` ファイルと INFO2 の参考実装となり、libyal の **dtformats** の文書が両方の形式を説明しています。
@@ -49,7 +50,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 
 ## テスト証拠 { #test-evidence }
 
-Andrew Rathbun の [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、rifiuti2、Regipy、Artemis、パーサー テスト リポジトリ、およびその他の適切にライセンスされたコレクションからの公開証拠により、実際の Windows データに対する回帰テストが可能になります。 Juntei は、付属のテスト ファイルの横に帰属/ライセンス ノートを保持します。
+Andrew Rathbun の [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、rifiuti2、Regipy、Artemis、Orange Cyberdefense の wddh-parser、パーサー テスト リポジトリ、およびその他の適切にライセンスされたコレクションからの公開証拠により、実際の Windows データに対する回帰テストが可能になります。 Juntei は、付属のテスト ファイルの横に帰属/ライセンス ノートを保持します。
 
 ## 貢献者 { #contributors }
 

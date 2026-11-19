@@ -75,7 +75,7 @@ pub(crate) fn is_history_path(path: &Path) -> bool {
 
 /// The names in a path, without its root, `.` and `..`. A backslash separates names too: a
 /// collection copied without its folders can keep a Windows path in a single file name.
-fn parts(path: &Path) -> Vec<String> {
+pub(crate) fn parts(path: &Path) -> Vec<String> {
     path.components()
         .filter_map(|component| match component {
             Component::Normal(name) => Some(name.to_string_lossy().into_owned()),

@@ -55,6 +55,9 @@
   عالية القيمة حول Prefetch/Amcache/ShimCache.
 - توفر **defender-dump** وdissect.target تطبيقين منفصلين لفهم بنى حجر Defender
   وسلوك الاستخراج الآمن.
+- عرضت أداة **wddh-parser** من Orange Cyberdefense تنسيق سجل اكتشافات Defender، وتأتي عيّناتها مع
+  القيم التي أبلغت عنها WMI لها. وكان محلل `windefender_history` في Plaso وأثر
+  `Windows.Applications.DefenderHistory` في Velociraptor مرجعين مستقلين.
 - قدّمت **Plaso** و**Chainsaw** و**Velociraptor** مقارنات للمحللات، أو أدلة اختبار، أو سلوكًا
   مرجعيًا موجهًا نحو الجمع عبر عدة آثار رقمية.
 - كانت أداة **Hindsight** من Obsidian Forensics وتعريفات **SQLiteHunter** من Velocidex مرجعين لسجل
@@ -77,7 +80,7 @@
 
 تتيح الأدلة العامة من
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) الخاص بـ Andrew Rathbun، وNIST CFReDS، وPlaso،
-وrifiuti2، وRegipy، وArtemis، ومستودعات اختبار المحللات، وغيرها من المجموعات المرخصة على النحو الصحيح، إجراءَ اختبارات
+وrifiuti2، وRegipy، وArtemis، وwddh-parser من Orange Cyberdefense، ومستودعات اختبار المحللات، وغيرها من المجموعات المرخصة على النحو الصحيح، إجراءَ اختبارات
 الانحدار على بيانات Windows حقيقية. ويحتفظ Juntei بملاحظات الإسناد/الترخيص بجانب ملفات
 الاختبار المضمّنة.
 

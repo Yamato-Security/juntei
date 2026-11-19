@@ -59,6 +59,9 @@ kendisine başvurun.
   değerli Prefetch/Amcache/ShimCache gözlemlerine yön vermiştir.
 - **defender-dump** ve dissect.target, Defender karantina yapılarını ve güvenli çıkarma davranışını
   anlamak için ayrı uygulamalar sunar.
+- Orange Cyberdefense'in **wddh-parser** aracı Defender tespit geçmişi biçimini ortaya koymuştur; örnekleri de
+  WMI'nin onlar için raporladığı değerlerle birlikte gelir. Plaso'nun `windefender_history` ayrıştırıcısı ve
+  Velociraptor'ın `Windows.Applications.DefenderHistory` artefaktı bağımsız referanslar olmuştur.
 - **Plaso**, **Chainsaw** ve **Velociraptor**, çeşitli artefaktlar genelinde ayrıştırıcı
   karşılaştırmaları, test kanıtları veya toplama odaklı referans davranış sağlamıştır.
 - Obsidian Forensics'in **Hindsight** aracı ve Velocidex'in **SQLiteHunter** tanımları, tarayıcı
@@ -81,7 +84,7 @@ bilişim araştırmalarının yazarlarına da teşekkür ederiz.
 
 Andrew Rathbun'un
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) projesi, NIST CFReDS, Plaso,
-rifiuti2, Regipy, Artemis, ayrıştırıcı test depoları ve uygun şekilde lisanslanmış diğer koleksiyonlardaki herkese
+rifiuti2, Regipy, Artemis, Orange Cyberdefense'in wddh-parser projesi, ayrıştırıcı test depoları ve uygun şekilde lisanslanmış diğer koleksiyonlardaki herkese
 açık kanıtlar, gerçek Windows verilerine karşı regresyon testini mümkün kılar. Juntei, dahil edilen test
 dosyalarının yanında atıf/lisans notlarını tutar.
 

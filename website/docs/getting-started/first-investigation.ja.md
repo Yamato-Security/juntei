@@ -17,6 +17,7 @@
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -60,7 +61,7 @@ juntei parse-file prefetch -d evidence/ -t jsonl \
 3. 過去のプレゼンスとメタデータの場合は Amcache および ShimCache。
 4. ユーザー/アプリケーション コンテキストの LNK、Jump Lists、RecentDocs、および SRUM。
 5. 永続化のためのレジストリ サービスと TaskCache。
-6. 検出、削除、発信元、ハッシュのための Defender 隔離。
+6. 検出、削除、発信元、ハッシュのための Defender の検出履歴と隔離。
 
 ## 7。文書の再現性 { #7-document-reproducibility }
 

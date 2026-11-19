@@ -23,6 +23,7 @@ user-interface history, resource accounting और सुरक्षा उत�
 | किन clients और accounts ने इस server का उपयोग किया, और किन दिनों में? | [उपयोगकर्ता एक्सेस लॉगिंग (UAL)](ual.md) | Security event logs, SMB और RDP logs, firewall logs |
 | उपयोगकर्ता ने Remote Desktop से जिन computers तक पहुँच बनाई, उन पर उसने क्या देखा? | [RDP बिटमैप कैश](rdp-cache.md) | [रिमोट एक्सेस (उपयोगकर्ता पक्ष)](remote-access.md), [Jump Lists](jump-lists.md), remote computers के logon events और [UAL](ual.md) |
 | क्या persistence configure किया गया था? | [सेवाएँ](services.md), [TaskCache](taskcache.md), [रेजिस्ट्री](registry.md) | Event logs, Prefetch, `$MFT` |
+| Defender ने क्या detect किया, और उसके बारे में क्या किया? | [Defender पहचान इतिहास](defender-history.md) | [Defender क्वारंटीन](defender-quarantine.md), event logs |
 | Defender ने क्या हटाया? | [Defender क्वारंटीन](defender-quarantine.md) | Event logs, `$MFT`, USN Journal |
 | क्या local accounts जोड़े या बदले गए? | [SAM](sam.md) | Security event logs और registry transaction history |
 

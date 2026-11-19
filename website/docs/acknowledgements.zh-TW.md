@@ -53,6 +53,9 @@ Juntei 中；授權條款請參閱各專案。
   高價值的 Prefetch／Amcache／ShimCache 觀察結果提供了依據。
 - **defender-dump** 與 dissect.target 提供了各自獨立的實作，有助於理解 Defender
   隔離資料結構與安全的擷取行為。
+- Orange Cyberdefense 的 **wddh-parser** 闡明了 Defender 偵測歷程記錄的格式，其範例也附有 WMI
+  針對這些範例回報的值。Plaso 的 `windefender_history` 剖析器與 Velociraptor 的
+  `Windows.Applications.DefenderHistory` 跡證定義則是獨立的參考依據。
 - **Plaso**、**Chainsaw** 與 **Velociraptor** 在多種跡證上提供了剖析器比較、測試證據，
   或以收集為導向的參考行為。
 - Obsidian Forensics 的 **Hindsight** 與 Velocidex 的 **SQLiteHunter** 定義，是瀏覽歷程、下載、
@@ -73,7 +76,7 @@ Juntei 中；授權條款請參閱各專案。
 
 Andrew Rathbun 的
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、
-rifiuti2、Regipy、Artemis、各剖析器測試儲存庫以及其他授權妥當的資料集所提供的公開證據，使得以真實 Windows
+rifiuti2、Regipy、Artemis、Orange Cyberdefense 的 wddh-parser、各剖析器測試儲存庫以及其他授權妥當的資料集所提供的公開證據，使得以真實 Windows
 資料進行回歸測試成為可能。Juntei 會在所收錄的測試檔案旁保留出處與授權說明。
 
 ## 貢獻者 { #contributors }

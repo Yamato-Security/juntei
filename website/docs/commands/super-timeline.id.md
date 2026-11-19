@@ -104,6 +104,7 @@ Waktu menggambarkan objek tercatat, bukan bukti eksekusi atau serangan dengan se
 | Cache bitmap RDP | Tidak ada peristiwa: tile yang di-cache tidak memiliki waktu. Record-nya tetap ada di input yang diurai. |
 | Riwayat PowerShell | Tidak ada peristiwa: baris riwayat tidak memiliki waktu, dan `FileLastWriteTime` adalah waktu berkas, bukan waktu perintah. Record-nya tetap ada di input yang diurai. |
 | Recycle Bin | Waktu setiap item dipindahkan ke Recycle Bin, beserta pengguna Recycle Bin, path asli, dan apakah konten yang dihapus ikut dikumpulkan. Bukan waktu Recycle Bin dikosongkan, dan bukan waktu berkas milik item itu sendiri. |
+| Riwayat deteksi Defender | Waktu deteksi awal, perubahan status terakhir, dan remediasi, pada record setiap sumber daya. Waktu mulai pelacakan adalah bilangan bulat yang dibaca sebagai FILETIME, dan hanya digunakan dengan `--include-interpreted-times`. |
 | Karantina Defender | Waktu entri dan pembuatan/akses/penulisan sumber daya. Waktu ekstraksi bukan aktivitas endpoint. |
 | BAM, UserAssist, FeatureUsage | Aktivitas tercatat dipisahkan dari penulisan kunci. Penghitung tanpa waktu tidak menghasilkan peristiwa. |
 | RecentDocs, MRU, Buka/Simpan MRU, ShellBags, Office | Waktu penggunaan/kepercayaan/shell dan konteks kunci. Waktu kunci daftar bukan penggunaan terakhir setiap item. |

@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Парсерам потрібні шляхи: Juntei копіює файли, які читають парсери, у приватний тимчасовий каталог з обмеженими буферами: кущі реєстру та їхні журнали транзакцій, файли метаданих NTFS, бази даних, файли Prefetch, ярлики, Jump Lists, файли Outlook, файли історії PSReadLine, індексні файли кошика, кеші растрових зображень RDP і папки карантину Defender. Кожен інший файл стає порожнім заповнювачем з початковим часом зміни, тож каталоги й шляхи виглядають так само, як на диску. persistence-hunter читає вміст заповнювача з образу лише тоді, коли він потрібен, наприклад виконуваний файл, на який вказує запис персистентності. **Потрібне місце для скопійованих файлів**, окрім результатів. Нульові області записуються як розріджені, якщо це підтримується. Зберігаються імена, структура, жорсткі посилання та час зміни. Часи джерел LNK і Jump Lists беруться зі знімка оригінальних метаданих NTFS, ніколи з тимчасових копій. Нормальне завершення, навіть з помилками парсерів, видаляє копії; примусове завершення може залишити їх. Джерело лише для читання; незастосований журнал VHDX відтворюється тільки в пам’яті.
+Парсерам потрібні шляхи: Juntei копіює файли, які читають парсери, у приватний тимчасовий каталог з обмеженими буферами: кущі реєстру та їхні журнали транзакцій, файли метаданих NTFS, бази даних, файли Prefetch, ярлики, Jump Lists, файли Outlook, файли історії PSReadLine, індексні файли кошика, кеші растрових зображень RDP, файли історії виявлень Defender і папки карантину Defender. Кожен інший файл стає порожнім заповнювачем з початковим часом зміни, тож каталоги й шляхи виглядають так само, як на диску. persistence-hunter читає вміст заповнювача з образу лише тоді, коли він потрібен, наприклад виконуваний файл, на який вказує запис персистентності. **Потрібне місце для скопійованих файлів**, окрім результатів. Нульові області записуються як розріджені, якщо це підтримується. Зберігаються імена, структура, жорсткі посилання та час зміни. Часи джерел LNK і Jump Lists беруться зі знімка оригінальних метаданих NTFS, ніколи з тимчасових копій. Нормальне завершення, навіть з помилками парсерів, видаляє копії; примусове завершення може залишити їх. Джерело лише для читання; незастосований журнал VHDX відтворюється тільки в пам’яті.
 
 Пошук хостів, CSV/JSON/JSONL і `-j` використовують звичайний конвеєр. `Image` у `manifest.json` позначає оригінальний образ, `EvidenceRoot` — внутрішній відносний шлях. Помилки читання й небезпечні імена записуються в `ImageErrors` та рядки помилок `manifest.csv`. Читабельні результати зберігаються; неповний ввід повертає код 1. Небезпечні чи неоднозначні імена не перейменовуються. Іменовані потоки NTFS не видобуваються як окремі файли; артефакти, зібрані як звичайні файли, доступні.
 
@@ -171,6 +171,8 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
   файлу кешу
 - ShimCache
 - Persistence Hunter (131 перевірка закріплення за кількома джерелами з профілями дозволу/блокування)
+- історія виявлень Defender: кожне виявлення з його станом, користувачем, процесом і ресурсами, включно
+  із загрозами, які ніколи не потрапляли в карантин
 - метадані карантину Defender
 - історія діалогів відкриття та збереження файлів
 - усі ключі та значення реєстру, включно з придатними для відновлення видаленими даними
@@ -334,6 +336,8 @@ CSV зберігає окремі таблиці, оскільки кожен а
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
@@ -368,7 +372,7 @@ CSV зберігає окремі таблиці, оскільки кожен а
 | `Persistence` | Конфігурація завантаження (BCD), автозапуск через реєстр, служби, TaskCache |
 | `ProcessExecution` | Сумісність програм, BAM і DAM, FeatureUsage і закріплені елементи, MuiCache, Prefetch, хронологія Prefetch, активність програм/CPU у SRUM, UserAssist |
 | `Registry` | Загальні ключі та значення кущів, включно з відновленими записами |
-| `SecurityProducts` | Метадані карантину Defender і необов'язково вилучений вміст; параметри безпеки (Defender, UAC, захист облікових даних, RDP, брандмауер, журналювання) |
+| `SecurityProducts` | Історія виявлень Defender; метадані карантину Defender і необов'язково вилучений вміст; параметри безпеки (Defender, UAC, захист облікових даних, RDP, брандмауер, журналювання) |
 | `ShellHistory` | Історія команд PowerShell PSReadLine; час зміни файлу є метаданими, часів виконання команд немає |
 | `SystemInformation` | Імена, версія Windows, часовий пояс, останнє завершення роботи, профілі, SID і політика аудиту; енергоспоживання/ємність SRUM, карти ідентичностей і невідомі провайдери |
 
@@ -386,8 +390,8 @@ Amcache і Jump Lists мають по одному спільному журна
 Типові імена файлів CSV: `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` і
-`DefenderQuarantine.csv`. Таблиці, отримані з реєстру, мають префікс `Registry-`, зокрема
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`,
+`DefenderHistory.csv` і `DefenderQuarantine.csv`. Таблиці, отримані з реєстру, мають префікс `Registry-`, зокрема
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` і `Registry-SystemInfo.csv`.
 Загальні ключі та значення кущів містяться в `Registry-Dump.csv`. Таблиці Amcache:
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

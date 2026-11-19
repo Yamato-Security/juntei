@@ -33,6 +33,7 @@ Pour une chronologie des artefacts analysés, utilisez [`juntei super-timeline -
 
 | Commande | Artefact d'entrée | Guide détaillé |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Historique des détections Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Arborescence ou entrée de quarantaine Defender | [Quarantaine Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Raccourcis LNK](../artifacts/lnk.md) |

@@ -55,6 +55,9 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
   ด้าน Prefetch/Amcache/ShimCache ของ Juntei
 - **defender-dump** และ dissect.target เป็นการพัฒนาแยกต่างหากที่ช่วยให้เข้าใจโครงสร้างการกักกัน (quarantine) ของ Defender
   และพฤติกรรมการแยกไฟล์อย่างปลอดภัย
+- **wddh-parser** ของ Orange Cyberdefense อธิบายรูปแบบประวัติการตรวจจับของ Defender ไว้อย่างละเอียด และตัวอย่างของโปรเจกต์นี้
+  มาพร้อมกับค่าที่ WMI รายงานสำหรับตัวอย่างเหล่านั้น พาร์เซอร์ `windefender_history` ของ Plaso และอาร์ติแฟกต์
+  `Windows.Applications.DefenderHistory` ของ Velociraptor เป็นข้อมูลอ้างอิงที่เป็นอิสระต่อกัน
 - **Plaso**, **Chainsaw** และ **Velociraptor** ให้การเปรียบเทียบพาร์เซอร์ หลักฐานสำหรับการทดสอบ หรือพฤติกรรมอ้างอิง
   ที่เน้นการเก็บรวบรวมข้อมูลสำหรับอาร์ติแฟกต์หลายประเภท
 - **Hindsight** ของ Obsidian Forensics และนิยามของ **SQLiteHunter** ของ Velocidex เป็นข้อมูลอ้างอิงสำหรับ
@@ -76,7 +79,7 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
 
 หลักฐานสาธารณะจาก
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) ของ Andrew Rathbun, NIST CFReDS, Plaso,
-rifiuti2, Regipy, Artemis, รีโพซิทอรีชุดทดสอบของพาร์เซอร์ต่าง ๆ และคอลเลกชันอื่น ๆ ที่มีสัญญาอนุญาตอย่างถูกต้อง ทำให้สามารถทำ
+rifiuti2, Regipy, Artemis, wddh-parser ของ Orange Cyberdefense, รีโพซิทอรีชุดทดสอบของพาร์เซอร์ต่าง ๆ และคอลเลกชันอื่น ๆ ที่มีสัญญาอนุญาตอย่างถูกต้อง ทำให้สามารถทำ
 regression test กับข้อมูล Windows จริงได้ Juntei เก็บหมายเหตุด้านการระบุแหล่งที่มา/สัญญาอนุญาตไว้คู่กับ
 ไฟล์ทดสอบที่รวมไว้
 

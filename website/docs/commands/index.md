@@ -36,6 +36,7 @@ chronological order and duplicate consolidation. `auto-parse -j` continues to re
 
 | Command | Input artifact | Detailed guide |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender Detection History](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender quarantine tree or entry | [Defender Quarantine](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |

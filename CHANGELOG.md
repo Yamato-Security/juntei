@@ -8,6 +8,17 @@
 
 **New Features:**
 
+- `parse-file defender-history` parses Microsoft Defender's detection history
+  (`Scans\History\Service\DetectionHistory\<nn>\<GUID>`), which also records threats that were
+  never quarantined. One record per resource of each detection keeps the threat, severity,
+  category, status and its error code, execution status, detection source, user, process,
+  quarantine entry, Defender's detection, status-change and remediation times, and each resource's
+  tracking hashes and size. Values whose meaning is not known stay in the output by position, and
+  JSON keeps every tracking value with its type. Damaged and version-less files keep what can be
+  read and report the rest. `auto-parse` reads the files from directories, VHDX and E01 images
+  into `SecurityProducts`, and `super-timeline` makes events from Defender's own times. (#193)
+  (@YamatoSecurity)
+
 - `parse-file powershell-history` streams PSReadLine history to CSV, JSON or JSONL, retaining
   raw continuation lines with source line numbers and `EntryStartLine`, user, shell host and
   clearly named file metadata. UTF-8 and BOM-marked UTF-16 are supported; damaged text and

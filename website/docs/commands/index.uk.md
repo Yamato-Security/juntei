@@ -33,6 +33,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | Команда | Вхідний артефакт | Докладний посібник |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Історія виявлень Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Дерево або запис карантину Defender | [Карантин Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Ярлики LNK](../artifacts/lnk.md) |

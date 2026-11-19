@@ -134,6 +134,7 @@ attack. The adapters intentionally keep these distinctions:
 | RDP bitmap cache | No events: cached tiles have no times. Their records stay in the parsed input. |
 | PowerShell history | No events: history lines have no times, and `FileLastWriteTime` is the file's, not a command's. Their records stay in the parsed input. |
 | Recycle Bin | When each item was moved to the bin, with the bin's user, the original path and whether the deleted content was collected. It is not when the bin was emptied, and not the item's own file times. |
+| Defender detection history | Initial detection, last status change and remediation times, on each resource's record. The tracking start time is an integer read as a FILETIME, used only with `--include-interpreted-times`. |
 | Defender quarantine | Entry timestamp and stored resource creation/access/write times. Extraction times are not evidence of endpoint activity. |
 | BAM, UserAssist, FeatureUsage | Recorded activity fields where present, with key last-write context kept distinct. A counter without a time does not create an event. |
 | RecentDocs, MRU, Open/Save MRU, ShellBags, Office | Recorded use/trust/shell-item times and key context. A list's key time is not the individual last-use time of every item in the list. |

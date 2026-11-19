@@ -104,6 +104,7 @@ Zaman damgası kayıtlı nesneye ilişkin kanıttır; tek başına yürütme vey
 | RDP bitmap önbelleği | Olay oluşturulmaz: önbellekteki karoların zamanı yoktur. Kayıtları ayrıştırılmış girdide kalır. |
 | PowerShell geçmişi | Olay oluşturulmaz: geçmiş satırlarının zamanı yoktur ve `FileLastWriteTime` bir komutun değil, dosyanın zamanıdır. Kayıtları ayrıştırılmış girdide kalır. |
 | Geri Dönüşüm Kutusu | Her öğenin Geri Dönüşüm Kutusu'na taşındığı zaman; Geri Dönüşüm Kutusu klasörünün kullanıcısı, özgün yol ve silinen içeriğin toplanıp toplanmadığı da verilir. Kutunun boşaltıldığı zaman veya öğenin kendi dosya zamanları değildir. |
+| Defender tespit geçmişi | Her kaynağın kaydında ilk tespit, son durum değişikliği ve düzeltme zamanları. İzleme başlangıç zamanı FILETIME olarak okunan bir tamsayıdır ve yalnızca `--include-interpreted-times` ile kullanılır. |
 | Defender karantinası | Kayıt zamanı ve kaynak oluşturma/erişim/yazma zamanları. Çıkarma saati uç nokta etkinliği değildir. |
 | BAM, UserAssist, FeatureUsage | Kayıtlı etkinlik ve ayrı anahtar yazma bağlamı. Zamansız sayaç olay üretmez. |
 | RecentDocs, MRU, Aç/Kaydet MRU, ShellBags, Office | Kullanım/güven/shell zamanları ve anahtar bağlamı. Liste anahtarının zamanı her öğenin son kullanımı değildir. |

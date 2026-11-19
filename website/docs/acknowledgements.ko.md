@@ -54,6 +54,9 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
   Prefetch/Amcache/ShimCache 관찰 항목에 참고가 되었습니다.
 - **defender-dump**와 dissect.target은 Defender 격리 구조와 안전한 추출 동작을 이해하기 위한 별도의 구현을
   제공합니다.
+- Orange Cyberdefense의 **wddh-parser**는 Defender 탐지 기록 형식을 정리해 주었으며, 그 샘플에는 WMI가
+  해당 샘플에 대해 보고한 값이 함께 제공됩니다. Plaso의 `windefender_history` 파서와 Velociraptor의
+  `Windows.Applications.DefenderHistory` 아티팩트는 독립적인 참고 자료가 되었습니다.
 - **Plaso**, **Chainsaw**, **Velociraptor**는 여러 아티팩트에 걸쳐 파서 비교, 테스트 증거 또는 수집 중심의
   참조 동작을 제공했습니다.
 - Obsidian Forensics의 **Hindsight**와 Velocidex의 **SQLiteHunter** 정의는 브라우저 방문 기록, 다운로드, 쿠키 및
@@ -73,7 +76,7 @@ Shell Links, Compound Binary Files, NTFS/SAM 프로토콜, 레지스트리/서�
 ## 테스트 증거 { #test-evidence }
 
 Andrew Rathbun의 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS,
-Plaso, rifiuti2, Regipy, Artemis, 파서 테스트 저장소 및 기타 적절한 라이선스를 갖춘 컬렉션의 공개 증거 덕분에 실제
+Plaso, rifiuti2, Regipy, Artemis, Orange Cyberdefense의 wddh-parser, 파서 테스트 저장소 및 기타 적절한 라이선스를 갖춘 컬렉션의 공개 증거 덕분에 실제
 Windows 데이터를 대상으로 한 회귀 테스트가 가능합니다. Juntei는 포함된 테스트 파일 옆에 출처/라이선스 고지를
 함께 보관합니다.
 

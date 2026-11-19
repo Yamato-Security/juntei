@@ -19,6 +19,7 @@
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -63,7 +64,7 @@ juntei parse-file prefetch -d evidence/ -t jsonl \
 3. Amcache 與 ShimCache：歷史上的存在跡證與中繼資料。
 4. LNK、Jump Lists、RecentDocs 與 SRUM：使用者／應用程式脈絡。
 5. 登錄中的服務與 TaskCache：持續存取。
-6. Defender 隔離資料：偵測、移除、來源與雜湊值。
+6. Defender 偵測歷程記錄與隔離資料：偵測、移除、來源與雜湊值。
 
 ## 7. 記錄可重現性 { #7-document-reproducibility }
 

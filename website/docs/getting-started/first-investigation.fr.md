@@ -20,6 +20,7 @@ De nombreuses commandes affichent un résumé concis lorsqu'aucun fichier de sor
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ Utilisez les [Investigations croisées entre artefacts](../resources/workflows.m
 3. Amcache et ShimCache pour la présence historique et les métadonnées.
 4. LNK, Jump Lists, RecentDocs et SRUM pour le contexte utilisateur/application.
 5. Services du Registre et TaskCache pour la persistance.
-6. Quarantaine Defender pour la détection, la suppression, l'origine et les empreintes.
+6. Historique des détections et quarantaine Defender pour la détection, la suppression, l'origine et les empreintes.
 
 ## 7. Documenter la reproductibilité { #7-document-reproducibility }
 

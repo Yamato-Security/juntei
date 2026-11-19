@@ -131,6 +131,7 @@ um ataque. Os adaptadores preservam intencionalmente estas distinções:
 | Cache de bitmaps do RDP | Nenhum evento: os blocos em cache não têm horários. Seus registros permanecem na entrada analisada. |
 | Histórico do PowerShell | Nenhum evento: as linhas do histórico não têm horários, e `FileLastWriteTime` é o horário do arquivo, não o de um comando. Seus registros permanecem na entrada analisada. |
 | Lixeira | Quando cada item foi movido para a Lixeira, com o usuário da lixeira, o caminho original e se o conteúdo excluído foi coletado. Não é quando a Lixeira foi esvaziada, nem os horários de arquivo do próprio item. |
+| Histórico de detecções do Defender | Horários da detecção inicial, da última mudança de status e da remediação, no registro de cada recurso. O horário de início do rastreamento é um inteiro lido como FILETIME, usado apenas com `--include-interpreted-times`. |
 | Quarentena do Defender | Carimbo de data/hora da entrada e horários armazenados de criação/acesso/gravação do recurso. Os horários de extração não são evidência de atividade no endpoint. |
 | BAM, UserAssist, FeatureUsage | Campos de atividade registrados, quando existem, com o contexto da última gravação da chave mantido à parte. Um contador sem horário não gera evento. |
 | RecentDocs, MRU, Open/Save MRU, ShellBags, Office | Horários registrados de uso/confiança/itens de shell e o contexto da chave. O horário da chave de uma lista não é o horário de último uso de cada item da lista. |

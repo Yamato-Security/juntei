@@ -80,7 +80,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
         | "userassist" => "ProcessExecution",
         "registry" => "Registry",
-        "defender-quarantine" | "security-settings" => "SecurityProducts",
+        "defender-history" | "defender-quarantine" | "security-settings" => "SecurityProducts",
         "powershell-history" => "ShellHistory",
         "system-info" | "srum" => "SystemInformation",
         "auditpol" => "SystemInformation",
@@ -99,6 +99,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "auditpol" => "Registry-AuditPolicy",
         "app-history" => "Registry-AppHistory",
         "bam" => "Registry-BAM",
+        "defender-history" => "DefenderHistory",
         "defender-quarantine" => "DefenderQuarantine",
         "featureusage" => "Registry-FeatureUsage",
         "i30" => "I30",
@@ -1586,6 +1587,12 @@ fn build_tasks(
             &[],
         );
         add(
+            "defender-history",
+            &["parse-file", "defender-history"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "registry",
             &["parse-registry", "read"],
             OutputShape::File,
@@ -1920,6 +1927,10 @@ impl InputInventory {
                     .is_some_and(|name| name.eq_ignore_ascii_case("Quarantine"))
             }) {
                 found.add_size("defender-quarantine", size);
+            }
+            // Detection history files are read wherever a DetectionHistory folder holds them.
+            if crate::defender_history::is_history_path(&path) {
+                found.add_size("defender-history", size);
             }
             if crate::mft::is_mft_name(&name) {
                 found.mfts.push(path.clone());

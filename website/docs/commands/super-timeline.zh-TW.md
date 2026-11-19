@@ -104,6 +104,7 @@ juntei super-timeline -d parsed/ -o IncidentTimeline.jsonl -t jsonl \
 | RDP 點陣圖快取 | 不產生事件：快取的圖塊沒有時間。其記錄仍保留在剖析後的輸入中。 |
 | PowerShell 歷程記錄 | 不產生事件：歷程記錄的各行沒有時間，而 `FileLastWriteTime` 是檔案的時間，不是命令的時間。其記錄仍保留在剖析後的輸入中。 |
 | 資源回收筒 | 每個項目被移至回收筒的時間，並附上回收筒的使用者、原始路徑，以及已刪除的內容是否已被收集。這不是清空回收筒的時間，也不是項目本身的檔案時間。 |
+| Defender 偵測歷程記錄 | 首次偵測、最後一次狀態變更與修復的時間，位於每筆資源記錄上。追蹤開始時間是一個被解讀為 FILETIME 的整數，只有在使用 `--include-interpreted-times` 時才會採用。 |
 | Defender 隔離資料 | 項目時間戳記，以及所儲存的資源建立／存取／寫入時間。擷取時間並不是端點活動的證據。 |
 | BAM、UserAssist、FeatureUsage | 存在時所記錄的活動欄位，並另外保留機碼最後寫入時間的脈絡。沒有時間的計數器不會產生事件。 |
 | RecentDocs、MRU、開啟／另存新檔 MRU、ShellBags、Office | 所記錄的使用／信任／殼層項目時間及機碼脈絡。清單的機碼時間並不是清單中每個項目各自的最後使用時間。 |

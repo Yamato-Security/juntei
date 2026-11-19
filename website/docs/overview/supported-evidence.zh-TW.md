@@ -23,6 +23,7 @@
 | RDP 點陣圖快取（`Cache????.bin`、`bcache*.bmc`） | `parse-file rdp-cache` | 使用者透過遠端桌面用戶端看過的遠端畫面圖塊，會另存為影像，並為每個快取檔案產生一張拼貼圖 | 沒有時間或電腦名稱；一個快取混雜了許多工作階段；圖塊只是畫面的片段，而非完整畫面 |
 | 資源回收筒（`$I` 檔案、INFO2） | `parse-file recycle-bin` | 使用者刪除到回收筒的項目：原始路徑、大小、刪除時間、使用者，以及已刪除的內容是否仍在 | Shift+Delete 與大多數程式會略過回收筒；清空回收筒會刪除 `$I` 檔案（INFO2 會保留已標記的記錄） |
 | ShimCache | `parse-registry shimcache` | 歷史執行檔路徑與相容性檢查 | 快取可能要到關機時才寫出；單一項目不等於執行 |
+| Defender 偵測歷程記錄 | `parse-file defender-history` | 每一次偵測，包括從未被隔離的偵測：威脅、狀態、使用者、處理程序、資源、雜湊值 | 偵測是產品的判定，並不能證明威脅曾經執行或已被移除 |
 | Defender 隔離資料 | `parse-file defender-quarantine` | 偵測、原始路徑、雜湊值、下載來源、復原的位元組 | 偵測名稱是產品的判定；擷取具有危險性 |
 | 登錄區 | `parse-registry read` | 設定、持續存取、已刪除／重播的值 | 機碼時間並非值的時間；即時登錄區需要交易記錄 |
 | 服務 | `parse-registry services` | 服務／驅動程式的持續存取與失敗動作 | 設定並不能證明服務曾啟動 |

@@ -33,6 +33,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | 命令 | 輸入跡證 | 詳細指南 |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender 偵測歷程記錄](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender 隔離資料樹狀結構或項目 | [Defender 隔離資料](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`、`*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK 捷徑](../artifacts/lnk.md) |

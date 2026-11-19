@@ -36,6 +36,7 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 | الأمر | الأثر الرقمي المُدخل | الدليل التفصيلي |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [سجل اكتشافات Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | شجرة حجر Defender أو أحد إدخالاتها | [حجر Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`، `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [اختصارات LNK](../artifacts/lnk.md) |

@@ -56,6 +56,9 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
   найцінніші спостереження Juntei щодо Prefetch/Amcache/ShimCache.
 - **defender-dump** і dissect.target надають окремі реалізації для розуміння структур карантину
   Defender і безпечного вилучення даних.
+- **wddh-parser** від Orange Cyberdefense описав формат історії виявлень Defender, а до його зразків додано
+  значення, які повідомив для них WMI. Парсер `windefender_history` у Plaso та артефакт
+  `Windows.Applications.DefenderHistory` у Velociraptor слугували незалежними еталонами.
 - **Plaso**, **Chainsaw** і **Velociraptor** надали порівняння парсерів, тестові докази або
   еталонну поведінку, орієнтовану на збирання, для кількох артефактів.
 - **Hindsight** від Obsidian Forensics і визначення **SQLiteHunter** від Velocidex слугували еталоном
@@ -77,7 +80,7 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
 
 Публічні докази з
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) Ендрю Ратбана, NIST CFReDS, Plaso,
-rifiuti2, Regipy, Artemis, репозиторіїв тестів парсерів та інших колекцій із належним ліцензуванням роблять можливим
+rifiuti2, Regipy, Artemis, wddh-parser від Orange Cyberdefense, репозиторіїв тестів парсерів та інших колекцій із належним ліцензуванням роблять можливим
 регресійне тестування на реальних даних Windows. Juntei зберігає примітки щодо авторства та ліцензій поруч із
 включеними тестовими файлами.
 

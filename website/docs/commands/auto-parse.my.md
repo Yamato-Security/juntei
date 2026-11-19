@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်၊ PSReadLine မှတ်တမ်းဖိုင်၊ Recycle Bin index ဖိုင်၊ RDP bitmap cache နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
+Parser များအတွက် ဖိုင်လမ်းကြောင်း လိုအပ်သဖြင့် parser များ ဖတ်သောဖိုင်များ (registry hive နှင့် ၎င်းတို့၏ transaction log၊ NTFS metadata ဖိုင်၊ database၊ prefetch ဖိုင်၊ shortcut၊ Jump List၊ Outlook ဖိုင်၊ PSReadLine မှတ်တမ်းဖိုင်၊ Recycle Bin index ဖိုင်၊ RDP bitmap cache၊ Defender detection history ဖိုင်နှင့် Defender quarantine folder) ကို သီးသန့်ယာယီနေရာသို့ ကန့်သတ် buffer ဖြင့် ကူးယူသည်။ အခြားဖိုင်တိုင်းသည် မူရင်း modification time ပါသော ဗလာ placeholder ဖြစ်သဖြင့် directory နှင့် လမ်းကြောင်းများသည် disk ပေါ်ကအတိုင်း မြင်ရသည်။ persistence-hunter သည် persistence entry က ညွှန်းသော executable ကဲ့သို့ လိုအပ်မှသာ placeholder ၏ အကြောင်းအရာကို image မှ ဖတ်သည်။ **ရလဒ်များအပြင် ကူးယူသောဖိုင်များအတွက် disk နေရာ လိုအပ်သည်။** ပံ့ပိုးလျှင် သုညဧရိယာများကို sparse အဖြစ် ရေးသည်။ အမည်၊ ဖွဲ့စည်းပုံ၊ hard link နှင့် modification time များကို ထိန်းသိမ်းသည်။ LNK နှင့် Jump List source time များသည် ယာယီဖိုင်များမှ မဟုတ်ဘဲ မူရင်း NTFS metadata snapshot မှ လာသည်။ Parser error ရှိလည်း ပုံမှန်အဆုံးသတ်ပါက မိတ္တူများကို ဖယ်ရှားပြီး forced termination တွင် ကျန်နိုင်သည်။ မူရင်းကို read-only ထားပြီး pending VHDX log များကို memory ထဲတွင်သာ အသုံးချသည်။
 
 Host ရှာဖွေမှု၊ CSV/JSON/JSONL နှင့် `-j` သည် ပုံမှန် pipeline ကို သုံးသည်။ `manifest.json` ရှိ `Image` သည် မူရင်း image ဖြစ်ပြီး `EvidenceRoot` သည် အတွင်း relative path ဖြစ်သည်။ Read error နှင့် မလုံခြုံသောအမည်များကို `ImageErrors` နှင့် `manifest.csv` failed row များတွင် မှတ်တမ်းတင်သည်။ ဖတ်နိုင်သောရလဒ်များကို ထိန်းသိမ်းပြီး input မပြည့်စုံလျှင် exit code 1 ပြန်ပေးသည်။ မလုံခြုံသော သို့မဟုတ် မရှင်းလင်းသောအမည်များကို ပြောင်းမပေးပါ။ Named NTFS stream များကို နောက်ထပ်ဖိုင်အဖြစ် မထုတ်ပေးသော်လည်း သာမန်ဖိုင်အဖြစ် စုဆောင်းထားသော artifact များကို အသုံးပြုနိုင်သည်။
 
@@ -171,6 +171,8 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
   collage ပုံနှင့်အတူ
 - ShimCache
 - Persistence Hunter (allow/block profile များပါသော ရင်းမြစ်ဖြတ်ကျော် persistence စစ်ဆေးချက် 131 ခု)
+- Defender detection history: detection တိုင်းကို ၎င်း၏ status၊ အသုံးပြုသူ၊ process နှင့် resource များနှင့်အတူ၊
+  quarantine ဘယ်တော့မှ မလုပ်ခဲ့သော ခြိမ်းခြောက်မှုများ အပါအဝင်
 - Defender quarantine metadata
 - Open နှင့် Save As dialog မှတ်တမ်း
 - ပြန်လည်ရယူနိုင်သော ဖျက်ထားသည့် ဒေတာ အပါအဝင် registry key နှင့် value အားလုံး
@@ -334,6 +336,8 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
@@ -368,7 +372,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `Persistence` | Boot ပြင်ဆင်မှု (BCD)၊ registry autostart များ၊ service များ၊ TaskCache |
 | `ProcessExecution` | Application compatibility၊ BAM နှင့် DAM၊ FeatureUsage နှင့် pin များ၊ MuiCache၊ Prefetch၊ Prefetch timeline၊ SRUM application/CPU လှုပ်ရှားမှု၊ UserAssist |
 | `Registry` | ပြန်လည်ရယူထားသော record များ အပါအဝင် ယေဘုယျ hive key များနှင့် value များ |
-| `SecurityProducts` | Defender quarantine metadata နှင့် ရွေးချယ်နိုင်သော ထုတ်ယူထားသည့် အကြောင်းအရာ၊ လုံခြုံရေးဆက်တင်များ (Defender၊ UAC၊ credential ကာကွယ်မှု၊ RDP၊ firewall၊ logging) |
+| `SecurityProducts` | Defender detection history၊ Defender quarantine metadata နှင့် ရွေးချယ်နိုင်သော ထုတ်ယူထားသည့် အကြောင်းအရာ၊ လုံခြုံရေးဆက်တင်များ (Defender၊ UAC၊ credential ကာကွယ်မှု၊ RDP၊ firewall၊ logging) |
 | `ShellHistory` | PowerShell PSReadLine command မှတ်တမ်း။ ဖိုင်ပြင်ဆင်ချိန်သည် metadata သာဖြစ်ပြီး command လုပ်ဆောင်ချိန်များ မပါဝင်ပါ |
 | `SystemInformation` | အမည်များ၊ Windows ဗားရှင်း၊ time zone၊ နောက်ဆုံး shutdown၊ profile များ၊ SID များနှင့် audit policy၊ SRUM စွမ်းအင်/capacity၊ identity map များနှင့် မသိသော provider များ |
 
@@ -387,7 +391,7 @@ Amcache နှင့် Jump Lists တို့တွင် ၎င်းတိ�
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` နှင့်
-`DefenderQuarantine.csv` တို့ ဖြစ်ပါသည်။ Registry မှ ဆင်းသက်လာသော table များသည်
+`DefenderHistory.csv`၊ `DefenderQuarantine.csv` တို့ ဖြစ်ပါသည်။ Registry မှ ဆင်းသက်လာသော table များသည်
 `Registry-ShimCache.csv`၊ `Registry-UserAssist.csv`၊ `Registry-BAM.csv` နှင့် `Registry-SystemInfo.csv` အပါအဝင် `Registry-` prefix ကို အသုံးပြုပါသည်။
 ယေဘုယျ hive key များနှင့် value များသည် `Registry-Dump.csv` တွင် ရှိပါသည်။ Amcache table များမှာ
 `FileExistence/Registry-Amcache-Devices.csv`၊ `Registry-Amcache-Files.csv`၊

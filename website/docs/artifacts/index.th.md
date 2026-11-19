@@ -23,6 +23,7 @@ Windows เก็บรักษาร่องรอยที่ซ้อนท
 | ไคลเอนต์และบัญชีใดใช้งานเซิร์ฟเวอร์นี้ และในวันใดบ้าง | [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](ual.md) | Security event log, บันทึกของ SMB และ RDP, บันทึกของไฟร์วอลล์ |
 | ผู้ใช้เห็นอะไรบนคอมพิวเตอร์ที่เชื่อมต่อด้วย Remote Desktop | [แคชบิตแมปของ RDP](rdp-cache.md) | [การเข้าถึงระยะไกล (ฝั่งผู้ใช้)](remote-access.md), [Jump Lists](jump-lists.md), เหตุการณ์การเข้าสู่ระบบบนคอมพิวเตอร์ระยะไกล และ [UAL](ual.md) |
 | มีการกำหนดค่าการคงอยู่ (persistence) หรือไม่ | [บริการ](services.md), [TaskCache](taskcache.md), [รีจิสทรี](registry.md) | Event log, Prefetch, `$MFT` |
+| Defender ตรวจจับอะไรได้ และจัดการกับสิ่งนั้นอย่างไร | [ประวัติการตรวจจับของ Defender](defender-history.md) | [ข้อมูลที่ Defender กักกัน](defender-quarantine.md), Event log |
 | Defender ลบอะไรออกไปบ้าง | [ข้อมูลที่ Defender กักกัน](defender-quarantine.md) | Event log, `$MFT`, USN Journal |
 | มีการเพิ่มหรือเปลี่ยนแปลงบัญชีภายในเครื่องหรือไม่ | [SAM](sam.md) | Security event log และประวัติ transaction ของรีจิสทรี |
 

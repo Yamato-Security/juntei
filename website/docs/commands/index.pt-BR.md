@@ -37,6 +37,7 @@ continua mantendo os registros nativos.
 
 | Comando | Artefato de entrada | Guia detalhado |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Histórico de detecções do Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Árvore ou entrada de quarentena do Defender | [Quarentena do Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Atalhos LNK](../artifacts/lnk.md) |

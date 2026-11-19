@@ -20,6 +20,7 @@
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ juntei parse-file prefetch -d evidence/ -t jsonl \
 3. 과거의 존재와 메타데이터는 Amcache와 ShimCache로 확인합니다.
 4. 사용자/애플리케이션 컨텍스트는 LNK, Jump Lists, RecentDocs 및 SRUM으로 확인합니다.
 5. 지속성은 레지스트리 서비스와 TaskCache로 확인합니다.
-6. 탐지, 제거, 출처 및 해시는 Defender 격리 데이터로 확인합니다.
+6. 탐지, 제거, 출처 및 해시는 Defender 탐지 기록과 격리 데이터로 확인합니다.
 
 ## 7. 재현성 기록 { #7-document-reproducibility }
 

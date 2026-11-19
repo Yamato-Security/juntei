@@ -20,6 +20,7 @@ Muitos comandos imprimem um resumo conciso quando nenhum arquivo de saída é so
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ Use as [Investigações entre artefatos](../resources/workflows.md). Uma sequên
 3. Amcache e ShimCache para presença histórica e metadados.
 4. LNK, Jump Lists, RecentDocs e SRUM para o contexto do usuário/aplicativo.
 5. Serviços do Registro e TaskCache para persistência.
-6. Quarentena do Defender para detecção, remoção, origem e hashes.
+6. Histórico de detecções e quarentena do Defender para detecção, remoção, origem e hashes.
 
 ## 7. Documente a reprodutibilidade { #7-document-reproducibility }
 
