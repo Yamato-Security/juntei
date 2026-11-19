@@ -23,6 +23,8 @@ Windows 7부터 Windows 11 21H2까지, 그리고 같은 시기의 Windows Server
 
 ## 분석 시 주의 사항 { #analyst-cautions }
 
+- 변경되지 않는 증거 사본을 분석한다. Juntei는 효율적인 접근을 위해 파일을 메모리 매핑하므로 읽는 동안 데이터베이스를 수정하거나 잘라내지 않는다.
+
 - `GatherTime`은 인덱서가 항목을 읽은 시간이며, 사용자가 생성, 변경 또는 연 시간이 아닙니다. 색인 작업은 백그라운드에서 실행되어 변경 후 몇 분에서 몇 시간 뒤에 이루어지는 경우가 많고, 컴퓨터가 바쁘거나 배터리로 작동할 때는 일시 중지됩니다.
 - `DateCreated`, `DateModified`, `DateAccessed`는 인덱서가 파일에서 복사한 값입니다. 항목이 다시 색인될 때 갱신되므로 `GatherTime` 시점의 파일을 나타냅니다.
 - `ItemPath`는 표시 경로입니다. `ItemURL`과 `GatherPath`는 크롤러의 URL로, 파일은 `file:`(Windows 8 이후에서는 볼륨이 `[GUID]`로 표시됨), Internet Explorer의 방문 기록은 `iehistory://{SID}/`, Outlook 항목은 `mapi://`, 오프라인 파일은 `csc://{SID}/`, Windows 앱의 콘텐츠는 `winrt://{SID}/`입니다.

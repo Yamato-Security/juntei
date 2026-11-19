@@ -23,6 +23,8 @@ Windows 7 から Windows 11 21H2 まで、および同時期の Windows Server �
 
 ## アナリストへの注意事項 { #analyst-cautions }
 
+- 変更されない証拠コピーを解析する。効率的に読み取るためにファイルをメモリマップするので、解析中にデータベースを変更したり切り詰めたりしない。
+
 - `GatherTime` は、インデクサーが項目を読み取った日時であり、ユーザーが作成、変更、または開いた日時ではありません。インデックス作成はバックグラウンドで実行され、変更から数分～数時間後になることも多く、コンピューターがビジー状態のときやバッテリ駆動時には一時停止します。
 - `DateCreated`、`DateModified`、`DateAccessed` は、インデクサーがファイルからコピーした値です。項目が再度インデックス化されると更新されるため、`GatherTime` 時点のファイルを表します。
 - `ItemPath` は表示用のパスです。`ItemURL` と `GatherPath` はクローラーの URL で、ファイルは `file:` (Windows 8 以降ではボリュームが `[GUID]` で表されます)、Internet Explorer の履歴は `iehistory://{SID}/`、Outlook のアイテムは `mapi://`、オフライン ファイルは `csc://{SID}/`、Windows アプリのコンテンツは `winrt://{SID}/` です。

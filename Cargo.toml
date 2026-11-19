@@ -85,7 +85,7 @@ registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Se
 serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
 # (MIT OR Apache-2.0).
-# Both pinned to the branch of Yamato-Security/ys-srum-parser#13 (leaf pages past the branch pages
+# Both pinned to the branch of Yamato-Security/ys-srum-parser#13 (leaf-chain gaps beyond branch references
 # after a dirty shutdown) until it is merged; then drop `branch`, `cargo update` them and regenerate
 # THIRD_PARTY_NOTICES/crates.txt (the pin lists the ese crate twice).
 srum = { package = "ys-srum-parser", git = "https://github.com/Yamato-Security/ys-srum-parser", branch = "fix/property-store-leaf-walk" }

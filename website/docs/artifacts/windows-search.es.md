@@ -41,6 +41,8 @@ cada `Windows.edb` a cualquier profundidad; utilice `-f` para un solo archivo.
 
 ## Precauciones para el analista { #analyst-cautions }
 
+- Analiza una copia de evidencia inmutable. Juntei mapea el archivo en memoria para acceder a él eficientemente; no modifiques ni trunques la base de datos mientras se lee.
+
 - `GatherTime` es cuándo leyó el indizador el elemento, no cuándo un usuario lo creó, modificó o abrió. La
   indización se ejecuta en segundo plano, a menudo de minutos a horas después de un cambio, y se detiene mientras
   el equipo está ocupado o funciona con batería.

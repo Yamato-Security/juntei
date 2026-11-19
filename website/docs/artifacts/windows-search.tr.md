@@ -42,6 +42,8 @@ kullanın.
 
 ## Analist için uyarılar { #analyst-cautions }
 
+- Değişmez bir delil kopyasını ayrıştırın. Juntei verimli erişim için dosyayı belleğe eşler; okuma sırasında veritabanını değiştirmeyin veya kısaltmayın.
+
 - `GatherTime`, dizin oluşturucunun öğeyi okuduğu zamandır; bir kullanıcının onu oluşturduğu,
   değiştirdiği veya açtığı zaman değildir. Dizin oluşturma arka planda, çoğu zaman bir değişiklikten
   dakikalar ila saatler sonra çalışır ve bilgisayar meşgulken veya pille çalışırken duraklar.

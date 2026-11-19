@@ -41,6 +41,8 @@ input and `auto-parse` read every `Windows.edb` at any depth; use `-f` for one f
 
 ## Analyst cautions
 
+- Parse an immutable evidence copy. Do not modify or truncate the database while it is being
+  read; Juntei memory-maps the file for efficient access.
 - `GatherTime` is when the indexer read the item, not when a user created, changed or opened it.
   Indexing runs in the background, often minutes to hours after a change, and pauses while the
   computer is busy or on battery.

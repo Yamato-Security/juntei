@@ -2651,7 +2651,7 @@ source = "git+https://github.com/Yamato-Security/ys-shimcache-parser#00708687eb3
 [[package]]
 name = "ys-srum-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk#442ad061de8dd338cf4ca3515ad6796fd2d5aa48"
+source = "git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk#b5bdea1369736aaa3e5c3342e12fdca84912652c"
 dependencies = [
  "ys-srum-parser-ese 1.0.0 (git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk)",
 ]
@@ -2659,7 +2659,7 @@ dependencies = [
 [[package]]
 name = "ys-srum-parser-ese"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk#442ad061de8dd338cf4ca3515ad6796fd2d5aa48"
+source = "git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk#b5bdea1369736aaa3e5c3342e12fdca84912652c"
 
 [[package]]
 name = "ys-srum-parser-ese"

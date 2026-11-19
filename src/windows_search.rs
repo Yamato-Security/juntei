@@ -34,7 +34,7 @@ use indicatif::ProgressBar;
 use serde_json::{Map, Value as Json, json};
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::File;
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 
 /// Larger databases are refused: Windows Search indexes of many gigabytes exist, but the file is
@@ -48,12 +48,17 @@ const MAX_PRINTED_ERRORS: usize = 10;
 const ESE_SIGNATURE: [u8; 4] = [0xEF, 0xCD, 0xAB, 0x89];
 const SQLITE_SIGNATURE: &[u8] = b"SQLite format 3\0";
 
-/// The ESE index. `Windows.db` and `Windows-gather.db` are the SQLite index of Windows 11 22H2
-/// and later: they are found so that they can be reported as such.
+/// The ESE index and the SQLite databases of Windows 11 22H2 and later.
+/// SQLite files are found so that they can be reported as unsupported.
 pub fn is_database_name(name: &str) -> bool {
-    ["Windows.edb", "Windows.db", "Windows-gather.db"]
-        .iter()
-        .any(|n| n.eq_ignore_ascii_case(name))
+    [
+        "Windows.edb",
+        "Windows.db",
+        "Windows-gather.db",
+        "Windows-usn.db",
+    ]
+    .iter()
+    .any(|n| n.eq_ignore_ascii_case(name))
 }
 
 /// What disk-image staging copies for this parser: the databases and the ESE companions written
@@ -144,14 +149,31 @@ fn open(path: &Path) -> Result<Mapped, Skip> {
             util::size_display(MAX_FILE_SIZE)
         )));
     }
-    // SAFETY: the mapping is read-only, and evidence copies are not modified while they are read;
-    // a change by another writer would at worst make this parse report damaged pages.
-    match unsafe { memmap2::Mmap::map(&file) } {
+    let length = usize::try_from(size)
+        .map_err(|_| Skip::Unreadable("the file is too large for this platform".into()))?;
+    // SAFETY: this parser operates on immutable evidence copies. The backing file must not be
+    // modified or truncated while mapped; a read-only mapping does not protect against another
+    // process truncating it. Fix the mapping length to the size checked above.
+    match unsafe { memmap2::MmapOptions::new().len(length).map(&file) } {
         Ok(map) => Ok(Mapped::Map(map)),
-        Err(_) => std::fs::read(path)
-            .map(Mapped::Read)
-            .map_err(|e| Skip::Unreadable(e.to_string())),
+        // Read the same open handle and enforce the limit again: the path may have been
+        // replaced or the file may have grown since metadata was read.
+        Err(_) => read_bounded(file, MAX_FILE_SIZE).map(Mapped::Read),
     }
+}
+
+fn read_bounded(reader: impl Read, limit: u64) -> Result<Vec<u8>, Skip> {
+    let mut bytes = Vec::new();
+    reader
+        .take(limit.saturating_add(1))
+        .read_to_end(&mut bytes)
+        .map_err(|e| Skip::Unreadable(e.to_string()))?;
+    if bytes.len() as u64 > limit {
+        return Err(Skip::Unreadable(
+            "the file grew beyond the size limit while being read".into(),
+        ));
+    }
+    Ok(bytes)
 }
 
 /// Which property store the database has. The names of its date columns and the byte order of
@@ -220,6 +242,8 @@ struct Property {
 /// One indexed item: its gatherer row, its property-store row, or both.
 struct Item {
     document_id: i64,
+    /// Table membership is independent of whether any non-key property is non-NULL.
+    in_property_store: bool,
     gather: Option<Gather>,
     properties: Vec<Property>,
     problems: Vec<String>,
@@ -262,9 +286,9 @@ impl Item {
     }
 
     fn in_tables(&self) -> &'static str {
-        match (&self.gather, self.properties.is_empty()) {
-            (Some(_), false) => "Gthr+PropertyStore",
-            (Some(_), true) => "Gthr",
+        match (&self.gather, self.in_property_store) {
+            (Some(_), true) => "Gthr+PropertyStore",
+            (Some(_), false) => "Gthr",
             (None, _) => "PropertyStore",
         }
     }
@@ -383,6 +407,7 @@ fn parse(
         };
         let mut item = Item {
             document_id,
+            in_property_store: true,
             gather: gathers.remove(&document_id),
             properties: Vec::new(),
             problems: Vec::new(),
@@ -415,6 +440,7 @@ fn parse(
     for (document_id, gather) in rest {
         let item = Item {
             document_id,
+            in_property_store: false,
             gather: Some(gather),
             properties: Vec::new(),
             problems: Vec::new(),
@@ -829,7 +855,7 @@ fn windows7_text(bytes: &[u8]) -> Result<String, String> {
 }
 
 fn windows7_decoded_text(decoded: &[u8], depth: u8) -> Result<String, String> {
-    let kind = decoded[0];
+    let kind = *decoded.first().ok_or("text shorter than its header")?;
     if kind & 0x02 != 0 {
         if depth > 0 {
             return Err("compression nested more than once".into());
@@ -843,6 +869,9 @@ fn windows7_decoded_text(decoded: &[u8], depth: u8) -> Result<String, String> {
         let mut plain = Vec::with_capacity(size);
         frnsc_prefetch::decompress::xpress_huff::decompress(&decoded[3..], &mut plain, size)
             .map_err(|e| format!("LZXPRESS Huffman: {e:?}"))?;
+        if plain.len() != size {
+            return Err("LZXPRESS Huffman text shorter than its declared size".into());
+        }
         out.extend_from_slice(&plain);
         return windows7_decoded_text(&out, depth + 1);
     }
@@ -852,11 +881,17 @@ fn windows7_decoded_text(decoded: &[u8], depth: u8) -> Result<String, String> {
             // [count][high byte] then `count` low bytes
             let mut units = Vec::new();
             let mut at = 0;
-            while at + 1 < data.len() {
-                let count = usize::from(data[at]);
-                let high = data[at + 1];
+            while at < data.len() {
+                let header = data
+                    .get(at..at + 2)
+                    .ok_or("run-length text has an incomplete run header")?;
+                let count = usize::from(header[0]);
+                let high = header[1];
                 at += 2;
-                let end = (at + count).min(data.len());
+                let end = at + count;
+                if end > data.len() {
+                    return Err("run-length text is shorter than its declared run".into());
+                }
                 units.extend(
                     data[at..end]
                         .iter()
@@ -1651,6 +1686,7 @@ mod tests {
             "windows.EDB",
             "Windows.db",
             "Windows-gather.db",
+            "Windows-usn.db",
         ] {
             assert!(is_database_name(name), "{name}");
             assert!(is_staged_name(name), "{name}");
@@ -1881,9 +1917,72 @@ mod tests {
     }
 
     #[test]
+    fn null_properties_do_not_hide_property_store_membership() {
+        let mut item = Item {
+            document_id: 1,
+            in_property_store: true,
+            gather: Some(Gather::default()),
+            properties: Vec::new(),
+            problems: Vec::new(),
+        };
+        assert_eq!(item.in_tables(), "Gthr+PropertyStore");
+        item.in_property_store = false;
+        assert_eq!(item.in_tables(), "Gthr");
+        item.in_property_store = true;
+        item.gather = None;
+        assert_eq!(item.in_tables(), "PropertyStore");
+    }
+
+    #[test]
+    fn fallback_read_rejects_growth_beyond_the_limit() {
+        assert_eq!(read_bounded(&b"abc"[..], 3).ok().unwrap(), b"abc");
+        assert!(matches!(
+            read_bounded(&b"abcd"[..], 3),
+            Err(Skip::Unreadable(_))
+        ));
+    }
+
+    #[test]
+    fn damaged_windows_7_run_length_text_keeps_the_original_bytes() {
+        let column = Column {
+            id: 1,
+            name: "System_Search_AutoSummary".into(),
+            column_type: ColumnType::Binary,
+            codepage: 0,
+            flags: 0,
+            max_size: 255,
+            record_offset: 0,
+            default: None,
+            from_template: false,
+        };
+        for plain in [vec![0, 3, 0, b'a'], vec![0, 1, 0, b'a', 2]] {
+            let mask = 0x0500_0113u32 ^ plain.len() as u32;
+            let encoded: Vec<u8> = plain
+                .iter()
+                .enumerate()
+                .map(|(i, b)| b ^ ((mask >> (8 * (i & 3))) & 0xff) as u8 ^ (i & 0xff) as u8)
+                .collect();
+            let mut problems = Vec::new();
+            let value = property(
+                &column,
+                &Value::Binary(encoded.clone()),
+                Schema::Windows7,
+                &mut problems,
+            );
+            assert_eq!(value.value, json!(hex(&encoded)));
+            assert!(
+                problems
+                    .iter()
+                    .any(|p| p.contains("run-length text") && p.contains("kept as hex"))
+            );
+        }
+    }
+
+    #[test]
     fn csv_header_and_json_record_hold_the_same_fields() {
         let item = Item {
             document_id: 7,
+            in_property_store: true,
             gather: None,
             properties: Vec::new(),
             problems: Vec::new(),

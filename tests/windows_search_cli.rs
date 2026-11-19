@@ -653,6 +653,26 @@ fn newer_sqlite_indexes_damaged_and_other_files_are_reported_without_losing_the_
 }
 
 #[test]
+fn sqlite_usn_companion_is_reported_instead_of_silently_ignored() {
+    let temp = tempfile::tempdir().unwrap();
+    // Discovery and SQLite-signature handling, not a fixture for SQLite parsing.
+    std::fs::write(temp.path().join("Windows-usn.db"), b"SQLite format 3\0").unwrap();
+    let r = run(&["parse-ese", "windows-search", "-d", arg(temp.path())]);
+    assert_eq!(r.code, 1, "{}", r.all());
+    assert!(
+        r.all().contains("Windows-usn.db is the SQLite index"),
+        "{}",
+        r.all()
+    );
+    assert!(
+        r.all()
+            .contains("Unsupported newer format (SQLite, Windows 11 22H2+): 1"),
+        "{}",
+        r.all()
+    );
+}
+
+#[test]
 fn input_and_output_errors() {
     let temp = tempfile::tempdir().unwrap();
     let edb = unpack("plaso/Windows.edb", temp.path(), "Windows.edb");

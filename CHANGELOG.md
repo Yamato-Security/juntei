@@ -27,7 +27,9 @@
   `SystemIndex_0A` schema and its compressed string encoding are read, and the SQLite index of
   Windows 11 22H2 and later is reported as unsupported. The user is attributed from the profile in
   the item's path, with its basis in `UserSource`. A dirty database keeps the rows that only its
-  leaf pages reach. `auto-parse` reads the index from directories, VHDX and E01 images into
+  leaf pages reach, including gaps between branch-referenced leaves. Damaged Windows 7 text is
+  retained as hex with a diagnostic; table membership remains accurate even when properties are
+  all NULL. `auto-parse` reads the index from directories, VHDX and E01 images into
   `FileExistence`, and `super-timeline` makes events from the item's file times and the time it
   was indexed. (#188) (@YamatoSecurity)
 
