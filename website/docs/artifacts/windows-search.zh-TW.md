@@ -24,7 +24,6 @@ Windows 7 至 Windows 11 21H2，以及同時期的 Windows Server 版本，將�
 ## 分析注意事項 { #analyst-cautions }
 
 - 請解析不會變動的證據副本。Juntei 使用記憶體映射來有效存取檔案；讀取期間請勿修改或截短資料庫。
-
 - `GatherTime` 是索引子讀取項目的時間，而不是使用者建立、變更或開啟它的時間。建立索引在背景執行，通常在變更後數分鐘到數小時才進行，並會在電腦忙碌或使用電池時暫停。
 - `DateCreated`、`DateModified` 與 `DateAccessed` 是索引子從檔案複製而來的副本。項目再次建立索引時會重新整理這些值，因此它們描述的是 `GatherTime` 當時的檔案。
 - `ItemPath` 是顯示路徑。`ItemURL` 與 `GatherPath` 是編目器的 URL：檔案為 `file:`（Windows 8 及之後的版本以 `[GUID]` 表示磁碟區）、Internet Explorer 的歷程記錄為 `iehistory://{SID}/`、Outlook 項目為 `mapi://`、離線檔案為 `csc://{SID}/`，Windows 應用程式的內容則為 `winrt://{SID}/`。

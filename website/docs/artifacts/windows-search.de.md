@@ -44,7 +44,6 @@ gelesen; verwenden Sie `-f` für eine einzelne Datei.
 ## Hinweise für die Analyse { #analyst-cautions }
 
 - Eine unveränderliche Beweiskopie analysieren. Juntei verwendet eine Speicherabbildung der Datei; die Datenbank darf während des Lesens weder geändert noch gekürzt werden.
-
 - `GatherTime` ist der Zeitpunkt, zu dem der Indexer das Element gelesen hat, nicht der Zeitpunkt, zu dem ein
   Benutzer es erstellt, geändert oder geöffnet hat. Die Indizierung läuft im Hintergrund, oft Minuten bis Stunden
   nach einer Änderung, und pausiert, während der Computer ausgelastet ist oder im Akkubetrieb läuft.

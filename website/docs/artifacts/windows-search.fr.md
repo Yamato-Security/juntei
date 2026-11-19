@@ -45,7 +45,6 @@ signale et lit ce qui se trouve sur le disque. L'entrée par répertoire et `aut
 ## Précautions d'analyse { #analyst-cautions }
 
 - Analyser une copie de preuve immuable. Juntei utilise une projection du fichier en mémoire pour un accès efficace ; ne pas modifier ni tronquer la base pendant sa lecture.
-
 - `GatherTime` est le moment où l'indexeur a lu l'élément, pas celui où un utilisateur l'a créé, modifié ou ouvert.
   L'indexation s'exécute en arrière-plan, souvent de quelques minutes à quelques heures après une modification, et
   se met en pause lorsque l'ordinateur est occupé ou sur batterie.

@@ -42,7 +42,6 @@ dan `auto-parse` membaca setiap `Windows.edb` pada kedalaman berapa pun; gunakan
 ## Peringatan bagi analis { #analyst-cautions }
 
 - Parse salinan bukti yang tidak berubah. Juntei memetakan berkas ke memori untuk akses efisien; jangan mengubah atau memotong basis data selama pembacaan.
-
 - `GatherTime` adalah saat pengindeks membaca item, bukan saat pengguna membuat, mengubah, atau membukanya.
   Pengindeksan berjalan di latar belakang, sering kali beberapa menit hingga beberapa jam setelah perubahan,
   dan berhenti sementara selagi komputer sibuk atau memakai baterai.

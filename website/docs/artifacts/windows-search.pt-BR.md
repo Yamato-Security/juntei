@@ -42,7 +42,6 @@ sistema em execução fica sujo; a saída informa isso e lê o que está no disc
 ## Cuidados para o analista { #analyst-cautions }
 
 - Analise uma cópia imutável da evidência. O Juntei mapeia o arquivo em memória para acesso eficiente; não modifique nem trunque o banco durante a leitura.
-
 - `GatherTime` é quando o indexador leu o item, não quando um usuário o criou, alterou ou abriu. A indexação roda
   em segundo plano, muitas vezes de minutos a horas após uma alteração, e pausa enquanto o computador está ocupado
   ou na bateria.
