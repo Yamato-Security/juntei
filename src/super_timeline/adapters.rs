@@ -124,6 +124,7 @@ pub const ARTIFACTS: &[&str] = &[
     "userassist",
     "usn-journal",
     "webcache",
+    "windows-search",
 ];
 
 pub fn source(value: &Value, ctx: &Context) -> (String, bool) {
@@ -1568,6 +1569,7 @@ fn build(
         "powershell-history" => {}
         "ual" => activity::ual(&mut b),
         "webcache" => activity::webcache(&mut b),
+        "windows-search" => activity::windows_search(&mut b),
         "lnk" | "jump-lists" => links(&mut b),
         "logfile" => logfile(&mut b),
         "usn-journal" => {

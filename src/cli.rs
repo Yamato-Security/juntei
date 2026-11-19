@@ -570,6 +570,16 @@ pub enum EseCommands {
         disable_version_flag = true
     )]
     Webcache(WebCacheOptions),
+
+    /// Parse Windows Search indexes (Windows.edb)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ese windows-search <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    WindowsSearch(WindowsSearchOptions),
 }
 
 #[derive(Args)]
@@ -1534,6 +1544,60 @@ pub struct MountOptions {
 
     #[clap(flatten)]
     pub common: CommonOptions,
+}
+
+/// What `parse-ese windows-search` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WindowsSearchOutputType {
+    /// One CSV row per indexed item
+    Csv,
+    /// One pretty-printed JSON object per indexed item, with every property
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct WindowsSearchOptions {
+    /// Directory to search recursively for Windows Search indexes (Windows.edb; Windows.db is reported as the unsupported SQLite index)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one Windows.edb
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every indexed item to this file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<WindowsSearchOutputType>,
+
+    /// Overwrite the output file when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl WindowsSearchOptions {
+    pub fn output_type(&self) -> WindowsSearchOutputType {
+        self.output_type.unwrap_or(WindowsSearchOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(WindowsSearchOutputType::Json | WindowsSearchOutputType::Jsonl)
+            )
+    }
 }
 
 /// What `parse-ese ual` writes.

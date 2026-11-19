@@ -109,6 +109,12 @@ fn newer_parsers_csv_and_jsonl_have_the_same_timestamp_events() {
             "WebCacheV01.dat",
         ),
         (
+            "windows-search",
+            "parse-ese",
+            "test_files/windows_search/plaso/Windows.edb.gz",
+            "Windows.edb",
+        ),
+        (
             "outlook",
             "parse-file",
             "test_files/outlook/apache-poi/msgClassAppointment.msg",
@@ -207,12 +213,24 @@ fn newer_parsers_csv_and_jsonl_have_the_same_timestamp_events() {
         let a = events(&native);
         assert!(!a.is_empty(), "No timestamp events from {name}");
         let mut b = Vec::new();
-        for (index, file) in fs::read_dir(&csv).unwrap().map(Result::unwrap).enumerate() {
+        // A directory of CSV tables, or the one CSV file of a single-table parser (given its
+        // extension back, which names the format to super-timeline)
+        let tables: Vec<std::path::PathBuf> = if csv.is_dir() {
+            fs::read_dir(&csv)
+                .unwrap()
+                .map(|entry| entry.unwrap().path())
+                .collect()
+        } else {
+            let table = csv.with_extension("csv");
+            fs::rename(&csv, &table).unwrap();
+            vec![table]
+        };
+        for (index, file) in tables.iter().enumerate() {
             let output = dir.path().join(format!("table-{index}.jsonl"));
             run(&[
                 "super-timeline",
                 "-f",
-                file.path().to_str().unwrap(),
+                file.to_str().unwrap(),
                 "--input-artifact",
                 artifact,
                 "--computer",
@@ -250,6 +268,12 @@ fn current_auto_parse_manifests_and_combined_native_records_support_new_parsers(
     unpack(
         &repo("test_files/webcache/plaso/WebCacheV01.dat.gz"),
         &webcache.join("WebCacheV01.dat"),
+    );
+    let search = evidence.join("HOST/C/ProgramData/Microsoft/Search/Data/Applications/Windows");
+    fs::create_dir_all(&search).unwrap();
+    unpack(
+        &repo("test_files/windows_search/plaso/Windows.edb.gz"),
+        &search.join("Windows.edb"),
     );
     fs::create_dir_all(user.join("Documents")).unwrap();
     fs::copy(
@@ -292,7 +316,7 @@ fn current_auto_parse_manifests_and_combined_native_records_support_new_parsers(
         "-q",
     ]);
     let rows = events(&output);
-    for artifact in ["browser", "outlook", "ual", "webcache"] {
+    for artifact in ["browser", "outlook", "ual", "webcache", "windows-search"] {
         assert!(
             rows.iter().any(|row| row["Artifact"] == artifact),
             "No {artifact} events"
@@ -311,7 +335,7 @@ fn current_auto_parse_manifests_and_combined_native_records_support_new_parsers(
         "-q",
     ]);
     let rows = events(&output);
-    for artifact in ["browser", "outlook", "ual", "webcache"] {
+    for artifact in ["browser", "outlook", "ual", "webcache", "windows-search"] {
         assert!(
             rows.iter().any(|row| row["Artifact"] == artifact),
             "No {artifact} native events"

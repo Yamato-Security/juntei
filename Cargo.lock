@@ -1036,6 +1036,7 @@ dependencies = [
  "flate2",
  "goblin",
  "indicatif",
+ "memmap2",
  "quick-xml",
  "rayon",
  "regex",
@@ -1063,7 +1064,7 @@ dependencies = [
  "ys-registry-parser",
  "ys-shimcache-parser",
  "ys-srum-parser",
- "ys-srum-parser-ese",
+ "ys-srum-parser-ese 1.0.0 (git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk)",
  "ys-vhdx-mount",
 ]
 
@@ -2452,7 +2453,7 @@ dependencies = [
  "sootmark-common",
  "ys-browser-parser-plist",
  "ys-browser-parser-sqlite",
- "ys-srum-parser-ese",
+ "ys-srum-parser-ese 1.0.0 (git+https://github.com/Yamato-Security/ys-srum-parser)",
 ]
 
 [[package]]
@@ -2650,15 +2651,20 @@ source = "git+https://github.com/Yamato-Security/ys-shimcache-parser#00708687eb3
 [[package]]
 name = "ys-srum-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-srum-parser#5be24a59a619c0169b2dfe1dde6c9ee3af776fcc"
+source = "git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk#442ad061de8dd338cf4ca3515ad6796fd2d5aa48"
 dependencies = [
- "ys-srum-parser-ese",
+ "ys-srum-parser-ese 1.0.0 (git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk)",
 ]
 
 [[package]]
 name = "ys-srum-parser-ese"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-srum-parser#5be24a59a619c0169b2dfe1dde6c9ee3af776fcc"
+source = "git+https://github.com/Yamato-Security/ys-srum-parser?branch=fix%2Fproperty-store-leaf-walk#442ad061de8dd338cf4ca3515ad6796fd2d5aa48"
+
+[[package]]
+name = "ys-srum-parser-ese"
+version = "1.0.0"
+source = "git+https://github.com/Yamato-Security/ys-srum-parser#9a1e86d62ccae92a69cc2cc547e0666e7d866128"
 
 [[package]]
 name = "ys-vhdx-mount"

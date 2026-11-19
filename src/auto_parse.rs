@@ -72,7 +72,7 @@ fn artifact_category(artifact: &str) -> &'static str {
         "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
             "FileAndFolderOpening"
         }
-        "amcache" | "recycle-bin" | "shimcache" => "FileExistence",
+        "amcache" | "recycle-bin" | "shimcache" | "windows-search" => "FileExistence",
         "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
         "networks" => "NetworkActivity",
         "rdp-cache" | "remote-access" | "ual" => "LateralMovement",
@@ -139,6 +139,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "usn-journal" => "UsnJournal",
         "userassist" => "Registry-UserAssist",
         "webcache" => "WebCache",
+        "windows-search" => "WindowsSearch",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
     }
 }
@@ -1532,6 +1533,12 @@ fn build_tasks(
             &[],
         );
         add(
+            "windows-search",
+            &["parse-ese", "windows-search"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "browser",
             &["parse-sqlite", "browser"],
             OutputShape::CsvDirectory,
@@ -1801,6 +1808,7 @@ pub(super) const NAMED_INPUTS: &[(&str, NamePredicate)] = &[
     ("ual", crate::ual::is_database_name),
     ("browser", crate::browser::is_database_name),
     ("webcache", crate::webcache::is_database_name),
+    ("windows-search", crate::windows_search::is_staged_name),
     ("outlook", crate::outlook::is_outlook_name),
     ("lnk", crate::lnk::is_lnk_name),
     ("jump-lists", crate::jump_lists::is_jump_list_name),
