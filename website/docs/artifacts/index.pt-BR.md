@@ -10,7 +10,8 @@ mas o investigador ainda precisa interpretar o que cada fonte significa.
 |---|---|---|
 | Quais linhas de comando do PowerShell foram salvas? | [Histórico do PowerShell](powershell-history.md) | Logs de eventos do PowerShell, telemetria de processos, Prefetch |
 | Este executável foi executado? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), logs de eventos |
-| Este arquivo chegou a existir? | [Amcache](amcache.md), [$MFT](mft.md) | [Diário USN](usn-journal.md), [$I30](i30.md), ShimCache |
+| Este arquivo chegou a existir? | [Amcache](amcache.md), [$MFT](mft.md) | [Diário USN](usn-journal.md), [$I30](i30.md), [Índice do Windows Search](windows-search.md), ShimCache |
+| Quais arquivos, e-mails e páginas estavam neste computador, e o que um documento dizia? | [Índice do Windows Search](windows-search.md) | [$MFT](mft.md), [Diário USN](usn-journal.md), [Outlook](outlook.md), [Navegadores web](browser.md) |
 | Quando um arquivo foi criado, renomeado ou excluído? | [Diário USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), quarentena do Defender |
 | O que um usuário enviou para a Lixeira, e quando? | [Lixeira](recycle-bin.md) | [Diário USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Que nome ou carimbo de data/hora existia antes de uma alteração de metadados? | [$LogFile](logfile.md) | [$MFT](mft.md), [Diário USN](usn-journal.md), [$I30](i30.md) |

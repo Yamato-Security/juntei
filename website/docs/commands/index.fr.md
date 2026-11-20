@@ -28,6 +28,7 @@ Pour une chronologie des artefacts analysés, utilisez [`juntei super-timeline -
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Journalisation des accès utilisateur (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer et l'ancien Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Index de Windows Search](../artifacts/windows-search.md) |
 
 ## [Commandes de fichiers](execution.md) { #file-commands }
 

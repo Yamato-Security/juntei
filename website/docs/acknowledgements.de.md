@@ -45,6 +45,9 @@ in Juntei eingebettet ist; die jeweilige Lizenz entnehmen Sie bitte dem einzelne
   **libesedb** – bieten detaillierte Formatforschung und unabhängige Parsing-Referenzen.
 - Fox-ITs **dissect.esedb**, **dissect.ntfs** und **dissect.target** lieferten unabhängige Interpretationen von SRUM, UAL,
   `$Secure:$SDS`, SAM und Defender, die während der Validierung verwendet wurden.
+- **SIDR** von Stroz Friedberg und `esedbexport` von libyal waren die unabhängigen Lesarten des
+  Windows-Search-Index, zusammen mit den **esedb-kb**-Notizen von libyal zu seinen Tabellen und dem von Microsoft
+  veröffentlichten Quellcode der **Extensible Storage Engine** für das Datensatzformat.
 - `fsstat` aus **The Sleuth Kit** war die Referenz für NTFS-Bootsektoren von Volumes, die mit
   `mkntfs` erstellt wurden.
 - Einige Werkzeuge von Eric Zimmerman haben Feldnamen und Erwartungen von Untersuchenden etabliert, die für Vergleiche herangezogen wurden.

@@ -123,6 +123,20 @@ valor: 44 contêineres, 182 entradas de histórico, 6 downloads, 170 cookies e 3
 decodificou os registros de download por conta própria. Os registros que os bancos de dados marcam como excluídos
 ficaram de fora de ambos.
 
+## Índice do Windows Search { #windows-search-index }
+
+O `parse-ese windows-search` lê o `Windows.edb` com o leitor ESE do
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Ele foi comparado com o `esedbexport` da
+libyal e com o SIDR da Stroz Friedberg em três índices públicos, todos deixados sujos: o índice do Windows 7 do
+Plaso (`SystemIndex_0A`) e os índices do Windows 10 e do Windows 11 do DFIR Artifact Museum
+(`SystemIndex_PropertyStore`, revisões 110 e 200 do formato ESE). Todos os caminhos, proprietários, tipos, nomes
+de computador, tamanhos e horários coincidiram: 6.691 valores do repositório de propriedades do Windows 11 em
+relação ao `esedbexport`, 6.332 do Windows 10 em relação ao SIDR, e as strings do Windows 7 em suas três
+codificações em relação ao `esedbexport`. Parte do índice do Windows 10 está apenas em páginas folha que suas
+páginas de ramo não alcançam; as duas ferramentas as leem, e o Juntei também. Uma coluna do coletor difere por
+design: o ESE marca `Priority` como NULL assim que um item é rastreado, o que as duas ferramentas imprimem a
+partir dos bytes que restam no registro.
+
 ## Outlook { #outlook }
 
 O `parse-file outlook` lê arquivos PST, OST, `.msg` e `.oft` com o

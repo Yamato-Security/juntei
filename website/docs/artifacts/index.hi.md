@@ -10,7 +10,8 @@ user-interface history, resource accounting और सुरक्षा उत�
 |---|---|---|
 | कौन-सी PowerShell कमांड लाइनें सहेजी गई थीं? | [PowerShell इतिहास](powershell-history.md) | PowerShell इवेंट लॉग, प्रोसेस टेलीमेट्री, Prefetch |
 | क्या यह executable चला? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event logs |
-| क्या यह फ़ाइल कभी मौजूद थी? | [Amcache](amcache.md), [$MFT](mft.md) | [USN जर्नल](usn-journal.md), [$I30](i30.md), ShimCache |
+| क्या यह फ़ाइल कभी मौजूद थी? | [Amcache](amcache.md), [$MFT](mft.md) | [USN जर्नल](usn-journal.md), [$I30](i30.md), [Windows Search इंडेक्स](windows-search.md), ShimCache |
+| इस computer पर कौन सी फ़ाइलें, e-mails और pages थे, और किसी document में क्या लिखा था? | [Windows Search इंडेक्स](windows-search.md) | [$MFT](mft.md), [USN जर्नल](usn-journal.md), [Outlook](outlook.md), [वेब ब्राउज़र](browser.md) |
 | कोई फ़ाइल कब बनाई गई, rename की गई या हटाई गई? | [USN जर्नल](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender क्वारंटीन |
 | उपयोगकर्ता ने रीसायकल बिन में क्या delete किया, और कब? | [रीसायकल बिन](recycle-bin.md) | [USN जर्नल](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Metadata बदलाव से पहले कौन-सा नाम या timestamp मौजूद था? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN जर्नल](usn-journal.md), [$I30](i30.md) |

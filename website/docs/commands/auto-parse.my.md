@@ -162,6 +162,8 @@ Parser တစ်ခု မအောင်မြင်ခြင်းက အခ�
 - အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
 - ဝဘ် ဘရောက်ဇာ history၊ download များ၊ cookie များနှင့် form history (Chromium-based နှင့် Firefox-based ဘရောက်ဇာများ)
 - Internet Explorer နှင့် legacy Edge ၏ WebCache: history၊ download များ၊ cookie များနှင့် cache entry များ
+- Windows Search အညွှန်း: index လုပ်ထားသော ဖိုင်၊ ဖိုင်တွဲ၊ e-mail နှင့် ဝဘ်စာမျက်နှာတိုင်းကို ၎င်း၏ metadata နှင့်
+  စာသား ကောက်နုတ်ချက်နှင့်အတူ
 - Outlook PST၊ OST၊ MSG နှင့် OFT ဖိုင်များ: ဖိုင်တွဲများ၊ item များ၊ လက်ခံသူများ၊ ပူးတွဲဖိုင်များ၊ contact များ၊
   ပြက္ခဒိန် item များနှင့် task များ
 - LNK shortcut များ
@@ -274,7 +276,9 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -365,7 +369,7 @@ Artifact တစ်ခုစီတွင် မတူညီသော column မ�
 | `Communication` | Outlook PST၊ OST၊ MSG နှင့် OFT ဖိုင်များ: ဖိုင်တွဲများ၊ item များ၊ လက်ခံသူများ၊ ပူးတွဲဖိုင်များ၊ contact များ၊ ပြက္ခဒိန် item များနှင့် task များ |
 | `ExternalDevices` | USB device များနှင့် volume များ |
 | `FileAndFolderOpening` | Jump Lists၊ LNK shortcut များ၊ Microsoft Office၊ MRU စာရင်းများ၊ Open နှင့် Save As dialog များ၊ RecentDocs၊ ShellBags |
-| `FileExistence` | Amcache, Recycle Bin, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache, Windows Search အညွှန်း |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | ကွန်ရက် profile များ၊ interface များ၊ share များ၊ port proxy များနှင့် route များ၊ SRUM ချိတ်ဆက်မှုများ၊ traffic နှင့် push notification များ |
 | `LateralMovement` | အသုံးပြုသူများ၏ အပြင်ဘက်သို့ Remote Desktop၊ PuTTY နှင့် WinSCP ချိတ်ဆက်မှုများ၊ map လုပ်ထားသော drive များနှင့် share များ။ RDP bitmap cache များ (အဝေးရှိ မျက်နှာပြင်များ၏ tile များ)။ အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (server တစ်ခု၏ role များကို အသုံးပြုသော client များ) |
@@ -391,7 +395,7 @@ Amcache နှင့် Jump Lists တို့တွင် ၎င်းတိ�
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` နှင့်
-`DefenderHistory.csv`၊ `DefenderQuarantine.csv` တို့ ဖြစ်ပါသည်။ Registry မှ ဆင်းသက်လာသော table များသည်
+`DefenderHistory.csv`၊ `DefenderQuarantine.csv`၊ `WindowsSearch.csv` တို့ ဖြစ်ပါသည်။ Registry မှ ဆင်းသက်လာသော table များသည်
 `Registry-ShimCache.csv`၊ `Registry-UserAssist.csv`၊ `Registry-BAM.csv` နှင့် `Registry-SystemInfo.csv` အပါအဝင် `Registry-` prefix ကို အသုံးပြုပါသည်။
 ယေဘုယျ hive key များနှင့် value များသည် `Registry-Dump.csv` တွင် ရှိပါသည်။ Amcache table များမှာ
 `FileExistence/Registry-Amcache-Devices.csv`၊ `Registry-Amcache-Files.csv`၊

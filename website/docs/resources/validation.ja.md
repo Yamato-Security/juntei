@@ -56,6 +56,9 @@ Juntei は、パブリック go-ntfs テスト ボリューム (2,129 レコー�
 
 `parse-ese webcache` は、[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) を使用して `WebCacheV01.dat` を読み取ります。Plaso の 2 つの公開 WebCache データベース (Internet Explorer 11 のものと、従来の Edge の閲覧履歴、ダウンロード、Cookie を含む Windows 10 のダーティなもの) で、`dissect.database` の ESE リーダーと比較しました。4,156 行すべてが値ごとに一致しました。内訳は、44 のコンテナー、182 件の履歴エントリ、6 件のダウンロード、170 件の Cookie、3,754 件のその他のエントリです。比較側では、ダウンロード レコードを独自にデコードしました。データベースが削除済みとしてフラグを付けているレコードは、どちらからも除外しました。
 
+## Windows Search のインデックス { #windows-search-index }
+
+`parse-ese windows-search` は、[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) の ESE リーダーを使用して `Windows.edb` を読み取ります。3 つの公開インデックス (いずれもダーティなまま) で、libyal の `esedbexport` および Stroz Friedberg の SIDR と比較しました。対象は、Plaso の Windows 7 のインデックス (`SystemIndex_0A`) と、DFIR Artifact Museum の Windows 10 および Windows 11 のインデックス (`SystemIndex_PropertyStore`、ESE 形式リビジョン 110 と 200) です。すべてのパス、所有者、種類、コンピューター名、サイズ、日時が一致しました。内訳は、Windows 11 のプロパティ ストアの 6,691 個の値 (`esedbexport` と比較)、Windows 10 のプロパティ ストアの 6,332 個の値 (SIDR と比較)、および 3 種類のエンコーディングによる Windows 7 の文字列 (`esedbexport` と比較) です。Windows 10 のインデックスの一部は、ブランチ ページから到達できないリーフ ページにしか存在しません。両ツールともこれらを読み取っており、Juntei も同様です。ギャザラーの 1 つの列は設計上異なります。ESE は項目がクロールされると `Priority` を NULL にしますが、両ツールはレコードに残ったバイトからこの値を出力します。
 ## Outlook { #outlook }
 
 `parse-file outlook` は、[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser) を使用して PST、OST、`.msg`、`.oft` ファイルを読み取ります。その PST と OST のリーダーは Microsoft の [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) のフォークで、`.msg` のリーダーは Microsoft のオープン仕様に基づいて作成されています。

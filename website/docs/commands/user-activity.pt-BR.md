@@ -4,7 +4,7 @@
 o hive SOFTWARE opcional enriquece os nomes de contas e de redes Wi-Fi. Os bancos de dados do Registro de
 acesso do usuário do Windows Server (`Current.mdb`, `{GUID}.mdb` e `SystemIdentity.mdb`) também são bancos
 de dados ESE, assim como o `WebCacheV01.dat`, onde o Internet Explorer e o Edge legado guardam seu histórico,
-downloads, cookies e cache.
+downloads, cookies e cache, e o `Windows.edb`, o índice do Windows Search.
 
 ```text
 Version: 1.1.0 (CODE BLUE Release)
@@ -14,10 +14,11 @@ Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  help      Print this message or the help of the given subcommand(s)
-  srum      Parse SRUM databases
-  ual       Parse User Access Logging (UAL) databases
-  webcache  Parse Internet Explorer and legacy Edge's WebCache databases
+  help            Print this message or the help of the given subcommand(s)
+  srum            Parse SRUM databases
+  ual             Parse User Access Logging (UAL) databases
+  webcache        Parse Internet Explorer and legacy Edge's WebCache databases
+  windows-search  Parse Windows Search indexes (Windows.edb)
 
 Options:
   -h, --help  Print help
@@ -123,3 +124,34 @@ juntei parse-ese webcache -f WebCacheV01.dat -t jsonl | jq 'select(.Table == "Hi
 ```
 
 Consulte [Internet Explorer e Edge legado](../artifacts/webcache.md).
+
+## `parse-ese windows-search` { #parse-ese-windows-search }
+
+```text
+Usage:
+  juntei parse-ese windows-search <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Windows Search indexes (Windows.edb; Windows.db is reported as the unsupported SQLite index)
+  -f, --file <FILE>      File path to one Windows.edb
+
+Output:
+  -o, --output <FILE>       Save every indexed item to this file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl records are written to stdout
+  -C, --clobber             Overwrite the output file when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese windows-search -f Windows.edb -o windows-search.csv
+juntei parse-ese windows-search -d evidence/ -t jsonl \
+  | jq 'select(.Store == "file") | {ItemPath, DateModified, GatherTime, FileOwner}'
+```
+
+Consulte [Índice do Windows Search](../artifacts/windows-search.md).

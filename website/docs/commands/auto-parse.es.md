@@ -171,6 +171,7 @@ manual, como `parse-ntfs mft`, `parse-registry amcache`, `parse-ese srum` y `par
 - Registro de acceso de usuarios (UAL)
 - Historial, descargas, cookies e historial de formularios de los navegadores web (navegadores basados en Chromium y en Firefox)
 - WebCache de Internet Explorer y del Edge heredado: historial, descargas, cookies y entradas de la caché
+- Índice de Windows Search: cada archivo, carpeta, correo electrónico y página web indizados, con sus metadatos y su extracto de texto
 - Archivos PST, OST, MSG y OFT de Outlook: carpetas, elementos, destinatarios, adjuntos, contactos, elementos de calendario y tareas
 - Accesos directos LNK
 - Jump Lists
@@ -288,7 +289,9 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -379,7 +382,7 @@ CSV mantiene tablas separadas porque cada artefacto tiene columnas diferentes:
 | `Communication` | Archivos PST, OST, MSG y OFT de Outlook: carpetas, elementos, destinatarios, adjuntos, contactos, elementos de calendario y tareas |
 | `ExternalDevices` | Dispositivos y volúmenes USB |
 | `FileAndFolderOpening` | Jump Lists, accesos directos LNK, Microsoft Office, listas MRU, cuadros de diálogo Abrir y Guardar como, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, Papelera de reciclaje, ShimCache |
+| `FileExistence` | Amcache, Papelera de reciclaje, ShimCache, índice de Windows Search |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Diario USN |
 | `NetworkActivity` | Perfiles de red, interfaces, recursos compartidos, proxies de puertos y rutas; conexiones, tráfico y notificaciones push de SRUM |
 | `LateralMovement` | Conexiones salientes de Escritorio remoto, PuTTY y WinSCP de los usuarios, unidades asignadas y recursos compartidos; cachés de mapas de bits de RDP (las teselas de las pantallas remotas); registro de acceso de usuarios (los clientes de los roles de un servidor) |
@@ -406,7 +409,7 @@ Los nombres de archivo CSV predeterminados son `Registry-SAM.csv`, `LNK.csv`, `R
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` y
-`DefenderHistory.csv`, `DefenderQuarantine.csv`. Las tablas derivadas del Registro usan el prefijo `Registry-`, incluidas
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv`. Las tablas derivadas del Registro usan el prefijo `Registry-`, incluidas
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` y `Registry-SystemInfo.csv`.
 Las claves y valores generales de los hives están en `Registry-Dump.csv`. Las tablas de Amcache son
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

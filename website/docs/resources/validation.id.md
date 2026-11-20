@@ -123,6 +123,20 @@ Seluruh 4.156 baris cocok, nilai demi nilai: 44 kontainer, 182 entri riwayat, 6 
 3.754 entri lainnya. Perbandingan tersebut mendekode record unduhan secara mandiri. Record yang ditandai
 terhapus oleh database dikecualikan dari keduanya.
 
+## Indeks Windows Search { #windows-search-index }
+
+`parse-ese windows-search` membaca `Windows.edb` dengan pembaca ESE milik
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Perintah ini dibandingkan dengan
+`esedbexport` milik libyal dan SIDR milik Stroz Friedberg pada tiga indeks publik, yang semuanya dibiarkan
+dirty: indeks Windows 7 milik Plaso (`SystemIndex_0A`) serta indeks Windows 10 dan Windows 11 milik DFIR
+Artifact Museum (`SystemIndex_PropertyStore`, revisi format ESE 110 dan 200). Setiap path, pemilik, tipe,
+nama komputer, ukuran, dan waktu cocok saat dibandingkan: 6.691 nilai dari property store Windows 11
+terhadap `esedbexport`, 6.332 nilai dari property store Windows 10 terhadap SIDR, dan string Windows 7 dalam
+ketiga pengodeannya terhadap `esedbexport`. Sebagian indeks Windows 10 hanya ada di halaman daun (leaf
+page) yang tidak dijangkau oleh halaman cabangnya (branch page); kedua alat membacanya, begitu pula Juntei.
+Satu kolom gatherer berbeda memang karena rancangannya: ESE menandai `Priority` NULL setelah sebuah item
+dirayapi, yang dicetak kedua alat tersebut dari byte yang tersisa dalam record.
+
 ## Outlook { #outlook }
 
 `parse-file outlook` membaca berkas PST, OST, `.msg`, dan `.oft` dengan

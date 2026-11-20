@@ -44,6 +44,9 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
   **libesedb** ให้ข้อมูลวิจัยด้านรูปแบบไฟล์อย่างละเอียดและเป็นข้อมูลอ้างอิงการพาร์สโดยอิสระ
 - **dissect.esedb**, **dissect.ntfs** และ **dissect.target** ของ Fox-IT ให้การตีความ SRUM, UAL,
   `$Secure:$SDS`, SAM และ Defender โดยอิสระ ซึ่งใช้ระหว่างการตรวจสอบความถูกต้อง
+- **SIDR** ของ Stroz Friedberg และ `esedbexport` ของ libyal เป็นการอ่านดัชนี Windows Search โดยอิสระ
+  ร่วมกับบันทึก **esedb-kb** ของ libyal เกี่ยวกับตารางของดัชนี และซอร์สโค้ด **Extensible Storage Engine**
+  ที่ Microsoft เผยแพร่สำหรับรูปแบบของเรคคอร์ด
 - `fsstat` ของ **The Sleuth Kit** เป็นข้อมูลอ้างอิงสำหรับบูตเซกเตอร์ NTFS ของวอลุ่มที่สร้างด้วย
   `mkntfs`
 - เครื่องมือบางส่วนของ Eric Zimmerman เป็นที่มาของชื่อฟิลด์และความคาดหวังของผู้ตรวจพิสูจน์ที่ใช้ในการเปรียบเทียบ

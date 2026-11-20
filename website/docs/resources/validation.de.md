@@ -123,6 +123,20 @@ stimmten Wert für Wert überein: 44 Container, 182 Verlaufseinträge, 6 Downloa
 Einträge. Der Vergleich dekodierte die Download-Datensätze eigenständig. Datensätze, die die Datenbanken als gelöscht
 kennzeichnen, wurden bei beiden ausgelassen.
 
+## Windows-Search-Index { #windows-search-index }
+
+`parse-ese windows-search` liest `Windows.edb` mit dem ESE-Leser von
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Es wurde anhand von drei öffentlichen
+Indizes, alle im Zustand „dirty“ belassen, mit `esedbexport` von libyal und SIDR von Stroz Friedberg verglichen:
+dem Windows-7-Index von Plaso (`SystemIndex_0A`) und den Windows-10- und Windows-11-Indizes des DFIR Artifact
+Museum (`SystemIndex_PropertyStore`, ESE-Formatrevisionen 110 und 200). Alle Pfade, Besitzer, Typen,
+Computernamen, Größen und Zeiten stimmten überein: 6.691 Werte des Windows-11-Property-Store gegenüber
+`esedbexport`, 6.332 des Windows-10-Property-Store gegenüber SIDR und die Windows-7-Zeichenfolgen in ihren drei
+Kodierungen gegenüber `esedbexport`. Ein Teil des Windows-10-Index liegt nur in Blattseiten, die seine
+Branch-Seiten nicht erreichen; beide Werkzeuge lesen sie, und Juntei ebenfalls. Eine Gatherer-Spalte weicht
+beabsichtigt ab: ESE setzt `Priority` auf NULL, sobald ein Element gecrawlt wurde, was beide Werkzeuge aus den im
+Datensatz verbliebenen Bytes ausgeben.
+
 ## Outlook { #outlook }
 
 `parse-file outlook` liest PST-, OST-, `.msg`- und `.oft`-Dateien mit

@@ -163,6 +163,8 @@ yang ditemukan. Tugas-tugas ini menggunakan perintah yang dikelompokkan berdasar
 - Pencatatan Akses Pengguna (UAL)
 - Riwayat, unduhan, cookie, dan riwayat formulir browser web (browser berbasis Chromium dan Firefox)
 - WebCache milik Internet Explorer dan Edge lama: riwayat, unduhan, cookie, dan entri cache
+- Indeks Windows Search: setiap berkas, folder, e-mail, dan halaman web yang diindeks beserta metadata dan
+  cuplikan teksnya
 - Berkas PST, OST, MSG, dan OFT Outlook: folder, item, penerima, lampiran, kontak, item kalender, dan tugas
 - Pintasan LNK
 - Jump Lists
@@ -274,7 +276,9 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -365,7 +369,7 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 | `Communication` | Berkas PST, OST, MSG, dan OFT Outlook: folder, item, penerima, lampiran, kontak, item kalender, dan tugas |
 | `ExternalDevices` | Perangkat dan volume USB |
 | `FileAndFolderOpening` | Jump Lists, pintasan LNK, Microsoft Office, daftar MRU, dialog Open dan Save As, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, Recycle Bin, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache, indeks Windows Search |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Jurnal USN |
 | `NetworkActivity` | Profil jaringan, antarmuka, share, port proxy, dan route; koneksi, lalu lintas, dan push notification SRUM |
 | `LateralMovement` | Koneksi keluar Remote Desktop, PuTTY, dan WinSCP milik pengguna, mapped drive, dan share; cache bitmap RDP (tile dari layar jarak jauh); Pencatatan Akses Pengguna (klien dari role-role sebuah server) |
@@ -391,7 +395,7 @@ Nama berkas CSV default adalah `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, 
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, dan
-`DefenderHistory.csv`, `DefenderQuarantine.csv`. Tabel yang berasal dari registry menggunakan prefiks `Registry-`, termasuk
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv`. Tabel yang berasal dari registry menggunakan prefiks `Registry-`, termasuk
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv`, dan `Registry-SystemInfo.csv`.
 Key dan nilai hive umum ada di `Registry-Dump.csv`. Tabel Amcache adalah
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

@@ -10,7 +10,8 @@ tetapi investigator tetap harus menginterpretasikan makna dari setiap sumber.
 |---|---|---|
 | Baris perintah PowerShell apa yang disimpan? | [Riwayat PowerShell](powershell-history.md) | Log peristiwa PowerShell, telemetri proses, Prefetch |
 | Apakah executable ini berjalan? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), log peristiwa |
-| Apakah berkas ini pernah ada? | [Amcache](amcache.md), [$MFT](mft.md) | [Jurnal USN](usn-journal.md), [$I30](i30.md), ShimCache |
+| Apakah berkas ini pernah ada? | [Amcache](amcache.md), [$MFT](mft.md) | [Jurnal USN](usn-journal.md), [$I30](i30.md), [Indeks Windows Search](windows-search.md), ShimCache |
+| Berkas, e-mail, dan halaman apa saja yang ada di komputer ini, dan apa isi sebuah dokumen? | [Indeks Windows Search](windows-search.md) | [$MFT](mft.md), [Jurnal USN](usn-journal.md), [Outlook](outlook.md), [Browser web](browser.md) |
 | Kapan sebuah berkas dibuat, diubah namanya, atau dihapus? | [Jurnal USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), karantina Defender |
 | Apa yang dihapus pengguna ke Recycle Bin, dan kapan? | [Keranjang Sampah (Recycle Bin)](recycle-bin.md) | [Jurnal USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Nama atau timestamp apa yang ada sebelum perubahan metadata? | [$LogFile](logfile.md) | [$MFT](mft.md), [Jurnal USN](usn-journal.md), [$I30](i30.md) |

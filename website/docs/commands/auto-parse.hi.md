@@ -162,6 +162,8 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
 - User Access Logging (UAL)
 - Web browser का history, downloads, cookies और form history (Chromium- और Firefox-based browsers)
 - Internet Explorer और legacy Edge का WebCache: history, downloads, cookies और cache entries
+- Windows Search index: हर indexed फ़ाइल, folder, e-mail और web page, उसके metadata और text extract के
+  साथ
 - Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar
   items और tasks
 - LNK shortcuts
@@ -274,7 +276,9 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -365,7 +369,7 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `Communication` | Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar items और tasks |
 | `ExternalDevices` | USB devices और volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open और Save As संवाद, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, Recycle Bin, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache, Windows Search index |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies और routes; SRUM connections, traffic और push notifications |
 | `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares; RDP bitmap caches (remote screens के tiles); User Access Logging (किसी server के roles के clients) |
@@ -391,7 +395,7 @@ Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` और
-`DefenderHistory.csv`, `DefenderQuarantine.csv` हैं। Registry से प्राप्त tables `Registry-` prefix का उपयोग करती हैं, जिनमें
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv` हैं। Registry से प्राप्त tables `Registry-` prefix का उपयोग करती हैं, जिनमें
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` और `Registry-SystemInfo.csv` शामिल हैं।
 सामान्य hive keys और values `Registry-Dump.csv` में होते हैं। Amcache tables
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

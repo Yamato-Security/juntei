@@ -32,6 +32,7 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 - **dfir_ntfs**、Joakim Schicht の **LogFileParser**、および Stroz Friedberg の **ntfs-linker** が通知`$LogFile` の検証と解釈。 Velocidex の **go-ntfs** は、公開された NTFS テスト証拠を提供しました。
 - ヨアヒム・メッツ / リビア プロジェクト **libregf**、**libfsntfs**、**libscca**、 **libfwsi** および **libesedb** は、詳細な形式調査と独立した解析リファレンスを提供します。
 - Fox-IT の **dissect.esedb**、**dissect.ntfs**、**dissect.target** は、検証で使用した SRUM、UAL、`$Secure:$SDS`、SAM、Defender の独立した解釈を提供しました。
+- Stroz Friedberg の **SIDR** と libyal の `esedbexport` は、Windows Search のインデックスの独立した読み取り結果となりました。また、そのテーブルについては libyal の **esedb-kb** のノートを、レコード形式については Microsoft が公開している **Extensible Storage Engine** のソースを参考にしています。
 - **Sleuth Kit** の `fsstat` は、`mkntfs` で作成されたボリュームの NTFS ブート セクターのリファレンスでした。
 - Eric Zimmerman のツールの一部は、比較に使用されるフィールド名と検査者の期待値を確立しました。
 - **regipy**、**python-registry**、**Notatin**、および **artemis** が提供するレジストリ実装、テスト、またはサンプル解釈。

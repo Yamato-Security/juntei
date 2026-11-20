@@ -52,6 +52,9 @@ que su código esté incluido en Juntei; consulte la licencia de cada proyecto.
   independientes.
 - **dissect.esedb**, **dissect.ntfs** y **dissect.target** de Fox-IT aportaron interpretaciones
   independientes de SRUM, UAL, `$Secure:$SDS`, SAM y Defender que se utilizaron durante la validación.
+- **SIDR** de Stroz Friedberg y `esedbexport` de libyal fueron las lecturas independientes del índice de
+  Windows Search, junto con las notas **esedb-kb** de libyal sobre sus tablas y el código fuente de
+  **Extensible Storage Engine** publicado por Microsoft para el formato de los registros.
 - `fsstat` de **The Sleuth Kit** fue la referencia para los sectores de arranque NTFS de volúmenes
   creados con `mkntfs`.
 - Algunas de las herramientas de Eric Zimmerman establecieron los nombres de campo y las

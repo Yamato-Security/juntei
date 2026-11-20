@@ -10,7 +10,8 @@
 |---|---|---|
 | ما أسطر أوامر PowerShell التي حُفظت؟ | [سجل PowerShell](powershell-history.md) | سجلات أحداث PowerShell، بيانات مراقبة العمليات، Prefetch |
 | هل شُغّل هذا الملف التنفيذي؟ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)، [SRUM](srum.md)، سجلات الأحداث |
-| هل كان هذا الملف موجودًا في أي وقت؟ | [Amcache](amcache.md)، [$MFT](mft.md) | [دفتر يومية USN](usn-journal.md)، [$I30](i30.md)، ShimCache |
+| هل كان هذا الملف موجودًا في أي وقت؟ | [Amcache](amcache.md)، [$MFT](mft.md) | [دفتر يومية USN](usn-journal.md)، [$I30](i30.md)، [فهرس Windows Search](windows-search.md)، ShimCache |
+| ما الملفات ورسائل البريد الإلكتروني والصفحات التي كانت على هذا الكمبيوتر، وماذا جاء في مستند ما؟ | [فهرس Windows Search](windows-search.md) | [$MFT](mft.md)، [دفتر يومية USN](usn-journal.md)، [Outlook](outlook.md)، [متصفحات الويب](browser.md) |
 | متى أُنشئ ملف أو أُعيدت تسميته أو حُذف؟ | [دفتر يومية USN](usn-journal.md) | [$MFT](mft.md)، [$I30](i30.md)، حجر Defender |
 | ما الذي حذفه المستخدم إلى سلة المحذوفات، ومتى؟ | [سلة المحذوفات](recycle-bin.md) | [دفتر يومية USN](usn-journal.md)، [$MFT](mft.md)، [LNK](lnk.md)، [Jump Lists](jump-lists.md) |
 | ما الاسم أو الطابع الزمني الذي كان موجودًا قبل تغيير البيانات الوصفية؟ | [$LogFile](logfile.md) | [$MFT](mft.md)، [دفتر يومية USN](usn-journal.md)، [$I30](i30.md) |

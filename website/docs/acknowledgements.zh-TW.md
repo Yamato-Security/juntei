@@ -42,6 +42,8 @@ Juntei 中；授權條款請參閱各專案。
   **libesedb** 提供了詳盡的格式研究與獨立的剖析參考。
 - Fox-IT 的 **dissect.esedb**、**dissect.ntfs** 與 **dissect.target** 提供了驗證時所用的 SRUM、UAL、
   `$Secure:$SDS`、SAM 與 Defender 的獨立判讀結果。
+- Stroz Friedberg 的 **SIDR** 與 libyal 的 `esedbexport` 是 Windows Search 索引的獨立讀取依據，並輔以 libyal 的
+  **esedb-kb** 對其資料表的筆記，以及 Microsoft 公開的 **Extensible Storage Engine** 原始碼所提供的記錄格式。
 - **The Sleuth Kit** 的 `fsstat` 是以
   `mkntfs` 建立之磁碟區 NTFS 開機磁區的參考。
 - Eric Zimmerman 的部分工具確立了比較時所使用的欄位名稱與鑑識人員的預期。

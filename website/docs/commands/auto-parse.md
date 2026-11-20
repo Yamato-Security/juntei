@@ -185,6 +185,8 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - User Access Logging (UAL)
 - Web browser history, downloads, cookies and form history (Chromium- and Firefox-based browsers)
 - Internet Explorer and legacy Edge's WebCache: history, downloads, cookies and cache entries
+- Windows Search index: every indexed file, folder, e-mail and web page with its metadata and
+  text extract
 - Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar
   items and tasks
 - LNK shortcuts
@@ -300,7 +302,9 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -391,7 +395,7 @@ CSV keeps separate tables because each artifact has different columns:
 | `Communication` | Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar items and tasks |
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, Recycle Bin, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache, Windows Search index |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
 | `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; RDP bitmap caches (the remote screens' tiles); User Access Logging (the clients of a server's roles) |
@@ -417,7 +421,7 @@ Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpC
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, and
-`DefenderHistory.csv`, `DefenderQuarantine.csv`. Registry-derived tables use the `Registry-` prefix, including
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv`. Registry-derived tables use the `Registry-` prefix, including
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` and `Registry-SystemInfo.csv`.
 General hive keys and values are in `Registry-Dump.csv`. Amcache tables are
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

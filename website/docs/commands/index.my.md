@@ -32,6 +32,7 @@ record များကို ဆက်လက် ထိန်းသိမ်း�
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer နှင့် legacy Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search အညွှန်း](../artifacts/windows-search.md) |
 
 ## [ဖိုင် ညွှန်ကြားချက်များ](execution.md) { #file-commands }
 

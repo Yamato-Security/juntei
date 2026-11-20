@@ -45,6 +45,9 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   **libesedb** menyediakan riset format yang terperinci dan referensi parsing independen.
 - **dissect.esedb**, **dissect.ntfs**, dan **dissect.target** dari Fox-IT menyediakan interpretasi independen atas SRUM, UAL,
   `$Secure:$SDS`, SAM, dan Defender yang digunakan selama validasi.
+- **SIDR** dari Stroz Friedberg dan `esedbexport` dari libyal menjadi pembacaan independen atas indeks
+  Windows Search, bersama catatan **esedb-kb** dari libyal tentang tabel-tabelnya dan kode sumber
+  **Extensible Storage Engine** yang dipublikasikan Microsoft untuk format record-nya.
 - `fsstat` dari **The Sleuth Kit** menjadi referensi untuk sektor boot NTFS pada volume yang dibuat dengan
   `mkntfs`.
 - Beberapa alat karya Eric Zimmerman menetapkan nama field dan ekspektasi pemeriksa yang digunakan untuk perbandingan.

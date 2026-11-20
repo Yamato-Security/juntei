@@ -166,6 +166,7 @@ ve `parse-file prefetch` gibi, el ile ayrıştırmayla aynı kaynağa göre grup
 - Kullanıcı Erişim Günlüğü (UAL)
 - Web tarayıcısı geçmişi, indirmeleri, çerezleri ve form geçmişi (Chromium ve Firefox tabanlı tarayıcılar)
 - Internet Explorer'ın ve eski Edge'in WebCache verileri: geçmiş, indirmeler, çerezler ve önbellek girdileri
+- Windows Search dizini: dizine eklenen her dosya, klasör, e-posta ve web sayfası; meta verileri ve metin alıntısıyla birlikte
 - Outlook PST, OST, MSG ve OFT dosyaları: klasörler, öğeler, alıcılar, ekler, kişiler, takvim öğeleri ve görevler
 - LNK kısayolları
 - Jump Lists
@@ -279,7 +280,9 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -370,7 +373,7 @@ artefaktın farklı sütunları olduğundan CSV ayrı tablolar tutar:
 | `Communication` | Outlook PST, OST, MSG ve OFT dosyaları: klasörler, öğeler, alıcılar, ekler, kişiler, takvim öğeleri ve görevler |
 | `ExternalDevices` | USB aygıtları ve birimleri |
 | `FileAndFolderOpening` | Jump Lists, LNK kısayolları, Microsoft Office, MRU listeleri, Aç ve Farklı Kaydet iletişim kutuları, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, Geri Dönüşüm Kutusu, ShimCache |
+| `FileExistence` | Amcache, Geri Dönüşüm Kutusu, ShimCache, Windows Search dizini |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Ağ profilleri, arabirimler, paylaşımlar, bağlantı noktası proxy'leri ve yollar; SRUM bağlantıları, trafik ve anında iletme bildirimleri |
 | `LateralMovement` | Kullanıcıların giden Uzak Masaüstü, PuTTY ve WinSCP bağlantıları, eşlenmiş sürücüler ve paylaşımlar; RDP bitmap önbellekleri (uzak ekranların karoları); Kullanıcı Erişim Günlüğü (bir sunucunun rollerinin istemcileri) |
@@ -397,7 +400,7 @@ Varsayılan CSV dosya adları şunlardır: `Registry-SAM.csv`, `LNK.csv`, `Recyc
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`,
-`DefenderHistory.csv` ve `DefenderQuarantine.csv`. Kayıt defterinden türetilen tablolar `Registry-` önekini kullanır; buna
+`DefenderHistory.csv`, `DefenderQuarantine.csv` ve `WindowsSearch.csv`. Kayıt defterinden türetilen tablolar `Registry-` önekini kullanır; buna
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` ve `Registry-SystemInfo.csv`
 dahildir. Genel kovan anahtarları ve değerleri `Registry-Dump.csv` içindedir. Amcache tabloları
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

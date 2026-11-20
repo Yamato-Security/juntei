@@ -1036,6 +1036,7 @@ dependencies = [
  "flate2",
  "goblin",
  "indicatif",
+ "memmap2",
  "quick-xml",
  "rayon",
  "regex",
@@ -2650,7 +2651,7 @@ source = "git+https://github.com/Yamato-Security/ys-shimcache-parser#00708687eb3
 [[package]]
 name = "ys-srum-parser"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-srum-parser#5be24a59a619c0169b2dfe1dde6c9ee3af776fcc"
+source = "git+https://github.com/Yamato-Security/ys-srum-parser#91f4add08dc110cf3337dd84e37bd4db38cdff0e"
 dependencies = [
  "ys-srum-parser-ese",
 ]
@@ -2658,7 +2659,7 @@ dependencies = [
 [[package]]
 name = "ys-srum-parser-ese"
 version = "1.0.0"
-source = "git+https://github.com/Yamato-Security/ys-srum-parser#5be24a59a619c0169b2dfe1dde6c9ee3af776fcc"
+source = "git+https://github.com/Yamato-Security/ys-srum-parser#91f4add08dc110cf3337dd84e37bd4db38cdff0e"
 
 [[package]]
 name = "ys-vhdx-mount"

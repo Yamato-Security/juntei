@@ -10,7 +10,8 @@ Windows เก็บรักษาร่องรอยที่ซ้อนท
 |---|---|---|
 | บันทึกบรรทัดคำสั่ง PowerShell ใดไว้บ้าง? | [ประวัติ PowerShell](powershell-history.md) | ล็อกเหตุการณ์ PowerShell, เทเลเมทรีของโปรเซส, Prefetch |
 | ไฟล์ปฏิบัติการนี้เคยทำงานหรือไม่ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event log |
-| ไฟล์นี้เคยมีอยู่หรือไม่ | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
+| ไฟล์นี้เคยมีอยู่หรือไม่ | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), [ดัชนี Windows Search](windows-search.md), ShimCache |
+| ไฟล์ อีเมล และหน้าเว็บใดบ้างที่เคยอยู่บนคอมพิวเตอร์เครื่องนี้ และเอกสารมีเนื้อหาว่าอย่างไร | [ดัชนี Windows Search](windows-search.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [Outlook](outlook.md), [เว็บเบราว์เซอร์](browser.md) |
 | ไฟล์ถูกสร้าง เปลี่ยนชื่อ หรือลบเมื่อใด | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), ข้อมูลที่ Defender กักกัน |
 | ผู้ใช้ลบอะไรลงถังรีไซเคิล และลบเมื่อใด | [ถังรีไซเคิล](recycle-bin.md) | [USN Journal](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | ชื่อหรือ timestamp ใดมีอยู่ก่อนเมทาดาทาจะเปลี่ยนแปลง | [$LogFile](logfile.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [$I30](i30.md) |

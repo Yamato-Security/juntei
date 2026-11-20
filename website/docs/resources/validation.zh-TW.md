@@ -119,6 +119,16 @@ ys-browser-parser 的表單歷程測試資料庫。全部 293 筆造訪、21 筆
 6 筆下載、170 個 Cookie 與 3,754 筆其他項目。比較時另行獨立解碼了下載記錄。資料庫標記為已刪除的
 記錄，在兩邊皆予以排除。
 
+## Windows Search 索引 { #windows-search-index }
+
+`parse-ese windows-search` 使用 [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) 的 ESE 讀取器
+讀取 `Windows.edb`。它曾在三個公開索引（皆維持 dirty 狀態）上與 libyal 的 `esedbexport` 及 Stroz Friedberg 的
+SIDR 進行比較：Plaso 的 Windows 7 索引（`SystemIndex_0A`），以及 DFIR Artifact Museum 的 Windows 10 與
+Windows 11 索引（`SystemIndex_PropertyStore`，ESE 格式修訂版 110 與 200）。每一個路徑、擁有者、類型、電腦名稱、
+大小與時間均比對相符：Windows 11 屬性存放區的 6,691 個值與 `esedbexport` 比對，Windows 10 的 6,332 個值與
+SIDR 比對，Windows 7 三種編碼的字串則與 `esedbexport` 比對。Windows 10 索引的一部分只存在於其分支頁面未指向的
+葉頁面中；兩個工具都讀取了這些頁面，Juntei 亦然。有一個收集器資料行依設計而有所不同：項目一經編目，ESE 就會將
+`Priority` 標示為 NULL，而兩個工具都是從記錄中殘留的位元組印出此值。
 ## Outlook { #outlook }
 
 `parse-file outlook` 使用 [ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser)

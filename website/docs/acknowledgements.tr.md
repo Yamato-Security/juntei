@@ -47,6 +47,9 @@ kendisine başvurun.
   **libesedb**, ayrıntılı biçim araştırmaları ve bağımsız ayrıştırma referansları sunar.
 - Fox-IT'in **dissect.esedb**, **dissect.ntfs** ve **dissect.target** projeleri, doğrulama sırasında
   kullanılan bağımsız SRUM, UAL, `$Secure:$SDS`, SAM ve Defender yorumlarını sağlamıştır.
+- Stroz Friedberg'in **SIDR** aracı ve libyal'ın `esedbexport` aracı, Windows Search dizininin bağımsız
+  okumaları olmuştur; libyal'ın dizinin tablolarına ilişkin **esedb-kb** notları ve kayıt biçimi için
+  Microsoft'un yayımladığı **Extensible Storage Engine** kaynak kodu da bunlara eşlik etmiştir.
 - **The Sleuth Kit**'in `fsstat` aracı, `mkntfs` ile oluşturulan birimlerin NTFS önyükleme sektörleri
   için referans olmuştur.
 - Eric Zimmerman'ın bazı araçları, karşılaştırmalarda kullanılan alan adlarını ve inceleyici

@@ -1,6 +1,6 @@
 # ESE コマンド { #ese-commands }
 
-`parse-ese` は、Extensible Storage Engine データベースを処理します。 SRUM の `SRUDB.dat` は ESE データベースです。オプションの SOFTWARE ハイブにより、アカウント名と Wi-Fi 名が強化されます。Windows Server のユーザーアクセスログのデータベース (`Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb`) も ESE データベースで、Internet Explorer と従来の Edge が閲覧履歴、ダウンロード、Cookie、キャッシュを保存する `WebCacheV01.dat` も同様です。
+`parse-ese` は、Extensible Storage Engine データベースを処理します。 SRUM の `SRUDB.dat` は ESE データベースです。オプションの SOFTWARE ハイブにより、アカウント名と Wi-Fi 名が強化されます。Windows Server のユーザーアクセスログのデータベース (`Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb`) も ESE データベースで、Internet Explorer と従来の Edge が閲覧履歴、ダウンロード、Cookie、キャッシュを保存する `WebCacheV01.dat` と、Windows Search のインデックスである `Windows.edb` も同様です。
 
 ```text
 Version: 1.1.0 (CODE BLUE Release)
@@ -10,10 +10,11 @@ Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  help      Print this message or the help of the given subcommand(s)
-  srum      Parse SRUM databases
-  ual       Parse User Access Logging (UAL) databases
-  webcache  Parse Internet Explorer and legacy Edge's WebCache databases
+  help            Print this message or the help of the given subcommand(s)
+  srum            Parse SRUM databases
+  ual             Parse User Access Logging (UAL) databases
+  webcache        Parse Internet Explorer and legacy Edge's WebCache databases
+  windows-search  Parse Windows Search indexes (Windows.edb)
 
 Options:
   -h, --help  Print help
@@ -119,3 +120,34 @@ juntei parse-ese webcache -f WebCacheV01.dat -t jsonl | jq 'select(.Table == "Hi
 ```
 
 [Internet Explorer と従来の Edge](../artifacts/webcache.md)を参照してください。
+
+## `parse-ese windows-search` { #parse-ese-windows-search }
+
+```text
+Usage:
+  juntei parse-ese windows-search <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Windows Search indexes (Windows.edb; Windows.db is reported as the unsupported SQLite index)
+  -f, --file <FILE>      File path to one Windows.edb
+
+Output:
+  -o, --output <FILE>       Save every indexed item to this file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl records are written to stdout
+  -C, --clobber             Overwrite the output file when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese windows-search -f Windows.edb -o windows-search.csv
+juntei parse-ese windows-search -d evidence/ -t jsonl \
+  | jq 'select(.Store == "file") | {ItemPath, DateModified, GatherTime, FileOwner}'
+```
+
+[Windows Search のインデックス](../artifacts/windows-search.md)を参照してください。

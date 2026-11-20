@@ -9,7 +9,8 @@ Windows 會在檔案系統、登錄、相容性資料庫、使用者介面歷程
 |---|---|---|
 | 儲存了哪些 PowerShell 命令列？ | [PowerShell 歷程記錄](powershell-history.md) | PowerShell 事件記錄、程序遙測、Prefetch |
 | 這個執行檔是否曾經執行？ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)、[SRUM](srum.md)、事件記錄 |
-| 這個檔案是否曾經存在？ | [Amcache](amcache.md)、[$MFT](mft.md) | [USN Journal](usn-journal.md)、[$I30](i30.md)、ShimCache |
+| 這個檔案是否曾經存在？ | [Amcache](amcache.md)、[$MFT](mft.md) | [USN Journal](usn-journal.md)、[$I30](i30.md)、[Windows Search 索引](windows-search.md)、ShimCache |
+| 這部電腦上曾有哪些檔案、電子郵件與網頁，而文件中寫了什麼？ | [Windows Search 索引](windows-search.md) | [$MFT](mft.md)、[USN Journal](usn-journal.md)、[Outlook](outlook.md)、[網頁瀏覽器](browser.md) |
 | 檔案是何時被建立、重新命名或刪除的？ | [USN Journal](usn-journal.md) | [$MFT](mft.md)、[$I30](i30.md)、Defender 隔離資料 |
 | 使用者將哪些項目刪除到資源回收筒，又是何時刪除的？ | [資源回收筒](recycle-bin.md) | [USN Journal](usn-journal.md)、[$MFT](mft.md)、[LNK](lnk.md)、[Jump Lists](jump-lists.md) |
 | 中繼資料變更之前存在的是什麼名稱或時間戳記？ | [$LogFile](logfile.md) | [$MFT](mft.md)、[USN Journal](usn-journal.md)、[$I30](i30.md) |

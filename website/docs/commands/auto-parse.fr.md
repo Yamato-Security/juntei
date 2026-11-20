@@ -163,6 +163,7 @@ découvert. Les tâches utilisent les mêmes commandes regroupées par source qu
 - Journalisation des accès utilisateur (UAL)
 - Historique, téléchargements, cookies et historique des formulaires des navigateurs web (navigateurs basés sur Chromium et sur Firefox)
 - WebCache d'Internet Explorer et de l'ancien Edge : historique, téléchargements, cookies et entrées du cache
+- Index de Windows Search : chaque fichier, dossier, e-mail et page web indexé, avec ses métadonnées et son extrait de texte
 - Fichiers PST, OST, MSG et OFT d'Outlook : dossiers, éléments, destinataires, pièces jointes, contacts, éléments de calendrier et tâches
 - Raccourcis LNK
 - Jump Lists
@@ -274,7 +275,9 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -365,7 +368,7 @@ Le format CSV conserve des tables séparées, car chaque artefact possède des c
 | `Communication` | Fichiers PST, OST, MSG et OFT d'Outlook : dossiers, éléments, destinataires, pièces jointes, contacts, éléments de calendrier et tâches |
 | `ExternalDevices` | Périphériques et volumes USB |
 | `FileAndFolderOpening` | Jump Lists, raccourcis LNK, Microsoft Office, listes MRU, boîtes de dialogue Ouvrir et Enregistrer sous, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, Corbeille, ShimCache |
+| `FileExistence` | Amcache, Corbeille, ShimCache, index de Windows Search |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Journal USN |
 | `NetworkActivity` | Profils réseau, interfaces, partages, proxys de ports et routes ; connexions, trafic et notifications push SRUM |
 | `LateralMovement` | Connexions sortantes Bureau à distance, PuTTY et WinSCP des utilisateurs, lecteurs mappés et partages ; caches bitmap RDP (les tuiles des écrans distants) ; journalisation des accès utilisateur (les clients des rôles d'un serveur) |
@@ -391,7 +394,7 @@ Les noms de fichiers CSV par défaut sont `Registry-SAM.csv`, `LNK.csv`, `Recycl
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` et
-`DefenderHistory.csv`, `DefenderQuarantine.csv`. Les tables issues du Registre utilisent le préfixe `Registry-`, notamment
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv`. Les tables issues du Registre utilisent le préfixe `Registry-`, notamment
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` et `Registry-SystemInfo.csv`.
 Les clés et valeurs générales des ruches se trouvent dans `Registry-Dump.csv`. Les tables Amcache sont
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

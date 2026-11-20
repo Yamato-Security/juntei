@@ -8,7 +8,8 @@ Windows は、ファイル システム、レジストリ、互換性データ�
 |---|---|---|
 | どの PowerShell コマンドラインが保存されたか？ | [PowerShell 履歴](powershell-history.md) | PowerShell イベントログ、プロセステレメトリ、Prefetch |
 | この実行可能ファイルは実行されましたか? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)、[SRUM](srum.md)、イベント ログ |
-| このファイルは存在したことがありますか? | [Amcache](amcache.md), [$MFT](mft.md) | [USN ジャーナル](usn-journal.md)、[$I30](i30.md)、ShimCache |
+| このファイルは存在したことがありますか? | [Amcache](amcache.md), [$MFT](mft.md) | [USN ジャーナル](usn-journal.md)、[$I30](i30.md)、[Windows Search のインデックス](windows-search.md)、ShimCache |
+| このコンピューターにはどのファイル、電子メール、ページがあり、ドキュメントには何が書かれていましたか? | [Windows Search のインデックス](windows-search.md) | [$MFT](mft.md)、[USN ジャーナル](usn-journal.md)、[Outlook](outlook.md)、[Web ブラウザ](browser.md) |
 | ファイルが作成、名前変更、または削除されたのはいつですか? | [USN ジャーナル](usn-journal.md) | [$MFT](mft.md)、[$I30](i30.md)、Defender 隔離 |
 | ユーザーは何をいつごみ箱に削除しましたか? | [ごみ箱](recycle-bin.md) | [USN ジャーナル](usn-journal.md)、[$MFT](mft.md)、[LNK](lnk.md)、[ジャンプ リスト](jump-lists.md) |
 | メタデータが変更される前に存在していた名前またはタイムスタンプは何ですか? | [$LogFile](logfile.md) | [$MFT](mft.md)、[USN ジャーナル](usn-journal.md)、[$I30](i30.md) |

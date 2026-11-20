@@ -18,6 +18,7 @@ Juntei 剖析已從 Windows 收集的檔案。請使用可信任的擷取工具�
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | 使用者存取記錄（Windows Server） | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer 與舊版 Edge（WebCache） | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Windows Search 索引 | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb`（Windows 7 至 11 21H2；22H2 起為 `Windows.db` 與 `Windows-gather.db`） |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`、`%USERPROFILE%\Documents\Outlook Files\*.pst`（Outlook 2010 之前為 `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`）、`%APPDATA%\Microsoft\Templates\*.oft`，以及儲存在任何位置的 `.msg` 檔案 |
 | 網頁瀏覽器 | `%LOCALAPPDATA%\Google\Chrome\User Data\`、`%LOCALAPPDATA%\Microsoft\Edge\User Data\`、`%APPDATA%\Mozilla\Firefox\Profiles\` 以及其他瀏覽器的設定檔資料夾 |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 以及其他使用者／系統位置 |
@@ -47,6 +48,9 @@ Juntei 剖析已從 Windows 收集的檔案。請使用可信任的擷取工具�
   檢查點為止。
 - 請收集整個 `WebCache` 資料夾：使用者登入期間，Windows 會持續開啟 `WebCacheV01.dat`，而其最新的
   變更只存在於 `V01*.log` 交易記錄檔中，Juntei 不會重播這些記錄檔。
+- 請從映像、磁碟區陰影複製，或在停止 `WSearch` 服務之後，收集 Windows Search 的整個 `Applications\Windows`
+  資料夾：服務執行期間 `Windows.edb` 處於開啟狀態，而其最新的變更只存在於 `MSS*.log` 交易記錄檔中，
+  Juntei 不會重播這些記錄檔。
 - 請在 Outlook 關閉時收集其 OST 與 PST 檔案，或從磁碟映像或磁碟區陰影複製中收集：Outlook 執行
   期間會持續開啟這些檔案。也請在預設資料夾之外尋找 PST：使用者會將封存檔移到其他資料夾、磁碟機與
   檔案共用。

@@ -163,6 +163,7 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - تسجيل وصول المستخدمين (UAL)
 - سجل التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج في متصفحات الويب (المتصفحات المبنية على Chromium وFirefox)
 - قاعدة WebCache الخاصة بـ Internet Explorer وEdge القديم: سجل التصفح والتنزيلات وملفات تعريف الارتباط وإدخالات ذاكرة التخزين المؤقت
+- فهرس Windows Search: كل ملف ومجلد ورسالة بريد إلكتروني وصفحة ويب مفهرسة مع بياناتها الوصفية ومقتطف من نصها
 - ملفات Outlook من نوع PST وOST وMSG وOFT: المجلدات والعناصر والمستلمون والمرفقات وجهات الاتصال وعناصر التقويم والمهام
 - اختصارات LNK
 - Jump Lists
@@ -273,7 +274,9 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -364,7 +367,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 | `Communication` | ملفات Outlook من نوع PST وOST وMSG وOFT: المجلدات والعناصر والمستلمون والمرفقات وجهات الاتصال وعناصر التقويم والمهام |
 | `ExternalDevices` | أجهزة USB ووحدات التخزين |
 | `FileAndFolderOpening` | Jump Lists، واختصارات LNK، وMicrosoft Office، وقوائم MRU، ومربعات حوار الفتح والحفظ باسم، وRecentDocs، وShellBags |
-| `FileExistence` | Amcache، سلة المحذوفات، ShimCache |
+| `FileExistence` | Amcache، سلة المحذوفات، ShimCache، فهرس Windows Search |
 | `FileSystem` | `$Boot`، `$I30`، `$LogFile`، `$MFT`، `$Secure:$SDS`، دفتر يومية USN |
 | `NetworkActivity` | ملفات تعريف الشبكات، والواجهات، والمشاركات، ووكلاء المنافذ، والمسارات؛ واتصالات SRUM وحركة المرور والإشعارات الفورية |
 | `LateralMovement` | اتصالات المستخدمين الصادرة عبر سطح المكتب البعيد وPuTTY وWinSCP، ومحركات الأقراص المعيّنة والمشاركات؛ وذاكرات التخزين المؤقت لصور RDP النقطية (مربعات الشاشات البعيدة)؛ وتسجيل وصول المستخدمين (عملاء أدوار الخادم) |
@@ -390,7 +393,7 @@ PascalCase، مثل `Accounts` و`FileAndFolderOpening`. وتوجد جداول A
 `I30.csv`، `MFT.csv`، `UsnJournal.csv`، `Boot.csv`، `SecureSDS.csv`، `Registry-Networks.csv`، `Registry-Persistence.csv`، `Registry-Services.csv`، `Registry-TaskCache.csv`، `Registry-BCD.csv`،
 `Registry-SecuritySettings.csv`،
 `PrefetchTimeline.csv`، `Prefetch.csv`، `Registry-UserAssist.csv`، `Registry-AppCompat.csv`، `Registry-Office.csv`، `Registry-FeatureUsage.csv`، `Registry-AppHistory.csv`، `Registry-MRU.csv`، `Registry-SystemInfo.csv`، `Registry-RemoteAccess.csv`، `Registry-OpenSaveMRU.csv`، `Registry-InstalledPrograms.csv`، `Registry-BAM.csv`، `Registry-MuiCache.csv`، `Registry-ShellBags.csv`، `Registry-USB.csv`، `Registry-SecuritySettings.csv`، `Registry-AuditPolicy.csv`، `Registry-Dump.csv`،
-`DefenderHistory.csv`، و`DefenderQuarantine.csv`. وتستخدم الجداول المستمدة من سجل Windows البادئة `Registry-`، بما في ذلك
+`DefenderHistory.csv`، و`DefenderQuarantine.csv`، و`WindowsSearch.csv`. وتستخدم الجداول المستمدة من سجل Windows البادئة `Registry-`، بما في ذلك
 `Registry-ShimCache.csv` و`Registry-UserAssist.csv` و`Registry-BAM.csv` و`Registry-SystemInfo.csv`.
 وتوجد مفاتيح الخلايا وقيمها العامة في `Registry-Dump.csv`. وجداول Amcache هي
 `FileExistence/Registry-Amcache-Devices.csv` و`Registry-Amcache-Files.csv`

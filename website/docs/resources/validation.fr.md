@@ -124,6 +124,20 @@ base « dirty » de Windows 10 contenant l'historique, les téléchargements e
 170 cookies et 3 754 autres entrées. La comparaison a décodé elle-même les enregistrements de téléchargement. Les
 enregistrements que les bases de données marquent comme supprimés ont été exclus des deux côtés.
 
+## Index de Windows Search { #windows-search-index }
+
+`parse-ese windows-search` lit `Windows.edb` avec le lecteur ESE de
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Il a été comparé à l'`esedbexport` de libyal
+et au SIDR de Stroz Friedberg sur trois index publics, tous laissés dans un état « dirty » : l'index Windows 7 de
+Plaso (`SystemIndex_0A`) et les index Windows 10 et Windows 11 du DFIR Artifact Museum
+(`SystemIndex_PropertyStore`, révisions 110 et 200 du format ESE). Chaque chemin, propriétaire, type, nom
+d'ordinateur, taille et date correspondait : 6 691 valeurs du magasin de propriétés de Windows 11 par rapport à
+`esedbexport`, 6 332 de celui de Windows 10 par rapport à SIDR, et les chaînes de Windows 7 dans leurs trois
+encodages par rapport à `esedbexport`. Une partie de l'index Windows 10 ne se trouve que dans des pages feuilles
+que ses pages de branche n'atteignent pas ; les deux outils les lisent, et Juntei aussi. Une colonne du collecteur
+diffère à dessein : ESE marque `Priority` NULL une fois un élément analysé, ce que les deux outils affichent à
+partir des octets restés dans l'enregistrement.
+
 ## Outlook { #outlook }
 
 `parse-file outlook` lit les fichiers PST, OST, `.msg` et `.oft` avec

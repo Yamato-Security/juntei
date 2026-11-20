@@ -18,6 +18,7 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Registro de acceso de usuarios (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer y Edge heredado (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Índice de Windows Search | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb` (de Windows 7 a 11 21H2; `Windows.db` y `Windows-gather.db` a partir de 22H2) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` antes de Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, y los archivos `.msg` dondequiera que se hayan guardado |
 | Navegadores web | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` y las carpetas de perfil de los demás navegadores |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` y otras ubicaciones de usuario/sistema |
@@ -54,6 +55,9 @@ Juntei analiza archivos ya recopilados de Windows. Use una herramienta de adquis
 - Recopile toda la carpeta `WebCache`: Windows mantiene abierto `WebCacheV01.dat` mientras el usuario tiene la
   sesión iniciada, y sus cambios más recientes solo están en los registros de transacciones `V01*.log`, que Juntei
   no reproduce.
+- Recopile toda la carpeta `Applications\Windows` de Windows Search desde una imagen, una instantánea de volumen
+  o tras detener el servicio `WSearch`: `Windows.edb` está abierto mientras el servicio se ejecuta, y sus cambios
+  más recientes solo están en los registros de transacciones `MSS*.log`, que Juntei no reproduce.
 - Recopile los archivos OST y PST de Outlook con Outlook cerrado, o desde una imagen de disco o una instantánea de
   volumen: Outlook los mantiene abiertos mientras se ejecuta. Busque también archivos PST fuera de las carpetas
   predeterminadas: los usuarios mueven los PST archivados a otras carpetas, unidades y recursos compartidos de red.

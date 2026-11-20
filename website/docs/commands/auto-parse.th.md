@@ -163,6 +163,8 @@ manifest จะเก็บชื่อโฮสต์ตามที่ค้�
 - การบันทึกการเข้าถึงของผู้ใช้ (UAL)
 - ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเว็บเบราว์เซอร์ (เบราว์เซอร์ที่ใช้ Chromium และ Firefox เป็นพื้นฐาน)
 - WebCache ของ Internet Explorer และ Edge รุ่นเก่า: ประวัติ การดาวน์โหลด คุกกี้ และรายการแคช
+- ดัชนี Windows Search: ไฟล์ โฟลเดอร์ อีเมล และหน้าเว็บทุกรายการที่ทำดัชนีไว้ พร้อมเมทาดาทาและ
+  ข้อความที่คัดมาบางส่วน
 - ไฟล์ PST, OST, MSG และ OFT ของ Outlook: โฟลเดอร์ รายการ ผู้รับ สิ่งที่แนบ ผู้ติดต่อ รายการปฏิทิน
   และงาน
 - ทางลัด LNK
@@ -274,7 +276,9 @@ CSV แยกตารางออกจากกันเพราะแต่�
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -366,7 +370,7 @@ CSV แยกตารางออกจากกันเพราะแต่�
 | `Communication` | ไฟล์ PST, OST, MSG และ OFT ของ Outlook: โฟลเดอร์ รายการ ผู้รับ สิ่งที่แนบ ผู้ติดต่อ รายการปฏิทิน และงาน |
 | `ExternalDevices` | อุปกรณ์และวอลุ่ม USB |
 | `FileAndFolderOpening` | Jump Lists, ทางลัด LNK, Microsoft Office, รายการ MRU, กล่องโต้ตอบ Open และ Save As, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ถังรีไซเคิล, ShimCache |
+| `FileExistence` | Amcache, ถังรีไซเคิล, ShimCache, ดัชนี Windows Search |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | โปรไฟล์เครือข่าย อินเทอร์เฟซ แชร์ port proxy และเส้นทาง; การเชื่อมต่อ ปริมาณการรับส่งข้อมูล และ push notification ของ SRUM |
 | `LateralMovement` | การเชื่อมต่อขาออกของผู้ใช้ผ่าน Remote Desktop, PuTTY และ WinSCP, ไดรฟ์ที่แมปและแชร์; แคชบิตแมปของ RDP (ไทล์ของหน้าจอระยะไกล); รวมถึงการบันทึกการเข้าถึงของผู้ใช้ (ไคลเอนต์ของบทบาทต่าง ๆ บนเซิร์ฟเวอร์) |
@@ -391,8 +395,8 @@ Amcache และ Jump Lists แต่ละตัวมีบันทึกท
 ชื่อไฟล์ CSV เริ่มต้นได้แก่ `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
-`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, `DefenderHistory.csv` และ
-`DefenderQuarantine.csv` ตารางที่ได้จากรีจิสทรีใช้คำนำหน้า `Registry-` รวมถึง
+`PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, `DefenderHistory.csv`, `DefenderQuarantine.csv` และ
+`WindowsSearch.csv` ตารางที่ได้จากรีจิสทรีใช้คำนำหน้า `Registry-` รวมถึง
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` และ `Registry-SystemInfo.csv`
 คีย์และค่าของไฮฟ์ทั่วไปอยู่ใน `Registry-Dump.csv` ตาราง Amcache ได้แก่
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,

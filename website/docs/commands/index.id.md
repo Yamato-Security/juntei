@@ -28,6 +28,7 @@ Gunakan [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timelin
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer dan Edge lama](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Indeks Windows Search](../artifacts/windows-search.md) |
 
 ## [Perintah berkas](execution.md) { #file-commands }
 

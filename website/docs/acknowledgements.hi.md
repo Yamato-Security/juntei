@@ -45,6 +45,9 @@ Juntei इसलिए अस्तित्व में है क्यों
   **libesedb** विस्तृत फ़ॉर्मैट शोध और स्वतंत्र parsing संदर्भ प्रदान करते हैं।
 - Fox-IT के **dissect.esedb**, **dissect.ntfs** और **dissect.target** ने सत्यापन के दौरान उपयोग की गई
   SRUM, UAL, `$Secure:$SDS`, SAM और Defender की स्वतंत्र व्याख्याएँ प्रदान कीं।
+- Stroz Friedberg का **SIDR** और libyal का `esedbexport` Windows Search index की स्वतंत्र readings थे, साथ में
+  उसकी tables पर libyal के **esedb-kb** notes और record format के लिए Microsoft का प्रकाशित
+  **Extensible Storage Engine** source।
 - **The Sleuth Kit** का `fsstat` उन volumes के NTFS boot sectors के लिए संदर्भ था जो
   `mkntfs` से बनाए गए थे।
 - Eric Zimmerman के कुछ tools ने तुलना में उपयोग किए गए field नाम और परीक्षक की अपेक्षाएँ स्थापित कीं।

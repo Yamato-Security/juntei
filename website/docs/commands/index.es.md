@@ -32,6 +32,7 @@ registros nativos.
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Registro de acceso de usuarios (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer y Edge heredado](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Índice de Windows Search](../artifacts/windows-search.md) |
 
 ## [Comandos de archivos](execution.md) { #file-commands }
 

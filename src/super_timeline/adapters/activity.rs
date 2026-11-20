@@ -690,3 +690,84 @@ pub(super) fn recycle_bin(b: &mut Builder<'_, '_>) {
         true,
     );
 }
+
+/// Windows Search index items. The times are what the index stored: the item's file system
+/// times as they were when it was indexed, and when the gatherer processed it. An indexed item
+/// says nothing about a user opening it, and the index can be stale or filtered.
+pub(super) fn windows_search(b: &mut Builder<'_, '_>) {
+    context(
+        b,
+        "Items",
+        &[
+            "InTables",
+            "ItemType",
+            "ItemTypeText",
+            "Kind",
+            "Store",
+            "MIMEType",
+            "IsFolder",
+            "IsDeleted",
+            "Size",
+            "FileOwner",
+            "Title",
+            "ItemURL",
+            "GatherPath",
+            "TargetURL",
+            "ActivityApp",
+            "ActivityText",
+            "ComputerName",
+            "Problems",
+        ],
+    );
+    b.path = text(b.value, &["ItemPath", "GatherPath", "ItemURL", "Name"]);
+    identity(b, "Item", &["DocumentID", "SourceFile"]);
+    times(
+        b,
+        &[
+            (
+                "DateModified",
+                "Indexed item last modified (file system time recorded by Windows Search)",
+                "file_metadata",
+            ),
+            (
+                "DateCreated",
+                "Indexed item created (file system time recorded by Windows Search)",
+                "file_metadata",
+            ),
+            (
+                "DateAccessed",
+                "Indexed item last accessed (file system time recorded by Windows Search)",
+                "file_metadata",
+            ),
+            (
+                "GatherTime",
+                "Item indexed by Windows Search",
+                "search_index_metadata",
+            ),
+            (
+                "DateVisited",
+                "Indexed browser history visit (Windows Search)",
+                "recorded_activity",
+            ),
+            (
+                "ActivityStartTime",
+                "Indexed activity history start (Windows Search)",
+                "recorded_activity",
+            ),
+            (
+                "ActivityEndTime",
+                "Indexed activity history end (Windows Search)",
+                "recorded_activity",
+            ),
+        ],
+    );
+    // An item the gatherer crawled without a property-store row keeps only its gatherer time.
+    if text(b.value, &["DateModified"]).is_empty() {
+        b.named(
+            &["GatherLastModified"],
+            "Indexed item last modified (gatherer record)",
+            "search_index_metadata",
+            true,
+        );
+    }
+}

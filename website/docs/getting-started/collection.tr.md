@@ -18,6 +18,7 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Kullanıcı Erişim Günlüğü (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer ve eski Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Windows Search dizini | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb` (Windows 7'den 11 21H2'ye kadar; 22H2'den itibaren `Windows.db` ve `Windows-gather.db`) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (Outlook 2010'dan önce `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft` ve kaydedildikleri her yerdeki `.msg` dosyaları |
 | Web tarayıcıları | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` ve diğer tarayıcıların profil klasörleri |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ve diğer kullanıcı/sistem konumları |
@@ -51,6 +52,9 @@ Juntei, Windows'tan önceden toplanmış dosyaları ayrıştırır. Güvenilir b
 - `WebCache` klasörünün tamamını toplayın: Windows, kullanıcı oturum açtığı sürece `WebCacheV01.dat`
   dosyasını açık tutar ve en yeni değişiklikleri yalnızca `V01*.log` işlem günlüklerinde bulunur; Juntei
   bu günlükleri yeniden oynatmaz.
+- Windows Search'ün `Applications\Windows` klasörünün tamamını bir imajdan, bir birim gölge kopyasından veya
+  `WSearch` hizmetini durdurduktan sonra toplayın: hizmet çalışırken `Windows.edb` açıktır ve en yeni
+  değişiklikleri yalnızca `MSS*.log` işlem günlüklerinde bulunur; Juntei bu günlükleri yeniden oynatmaz.
 - Outlook'un OST ve PST dosyalarını Outlook kapalıyken ya da bir disk imajından veya bir birim gölge
   kopyasından toplayın: Outlook çalıştığı sürece bunları açık tutar. PST'leri varsayılan klasörlerin
   dışında da arayın: kullanıcılar arşivleri başka klasörlere, sürücülere ve dosya paylaşımlarına taşır.

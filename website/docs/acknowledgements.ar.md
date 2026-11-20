@@ -44,6 +44,9 @@
   و**libesedb** أبحاثًا تفصيلية حول التنسيقات ومراجع تحليل مستقلة.
 - قدّمت **dissect.esedb** و**dissect.ntfs** و**dissect.target** من Fox-IT تفسيرات مستقلة لـ SRUM وUAL
   و`$Secure:$SDS` وSAM وDefender استُخدمت أثناء التحقق.
+- كانت أداة **SIDR** من Stroz Friedberg وأداة `esedbexport` من libyal القراءتين المستقلتين لفهرس Windows Search،
+  مع ملاحظات **esedb-kb** من libyal عن جداوله، والشفرة المصدرية لـ **Extensible Storage Engine** التي نشرتها
+  Microsoft لتنسيق السجلات.
 - كانت أداة `fsstat` من **The Sleuth Kit** المرجعَ لقطاعات الإقلاع في NTFS لوحدات التخزين المنشأة باستخدام
   `mkntfs`.
 - حدّدت بعض أدوات Eric Zimmerman أسماء الحقول وتوقعات الفاحصين المستخدمة في المقارنات.
