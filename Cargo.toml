@@ -85,12 +85,10 @@ registry = { package = "ys-registry-parser", git = "https://github.com/Yamato-Se
 serde = { version = "1", features = ["derive"] }
 # SRUM parsing: Yamato Security's ys-srum-parser, a fork of Sootmark's ese and srum crates
 # (MIT OR Apache-2.0).
-# Both pinned to the branch of Yamato-Security/ys-srum-parser#13 (leaf-chain gaps beyond branch references
-# after a dirty shutdown) until it is merged; then drop `branch`, `cargo update` them and regenerate
-# THIRD_PARTY_NOTICES/crates.txt (the pin lists the ese crate twice).
-srum = { package = "ys-srum-parser", git = "https://github.com/Yamato-Security/ys-srum-parser", branch = "fix/property-store-leaf-walk" }
+# Its main branch includes the dirty-database leaf-chain recovery fix (ys-srum-parser#13).
+srum = { package = "ys-srum-parser", git = "https://github.com/Yamato-Security/ys-srum-parser" }
 # User Access Logging parsing: the ESE reader of ys-srum-parser (the fork of Sootmark's ese crate).
-ese = { package = "ys-srum-parser-ese", git = "https://github.com/Yamato-Security/ys-srum-parser", branch = "fix/property-store-leaf-walk" }
+ese = { package = "ys-srum-parser-ese", git = "https://github.com/Yamato-Security/ys-srum-parser" }
 # Windows Search indexes are mapped, not read into memory: real Windows.edb files are gigabytes.
 memmap2 = "0.9"
 # Browser history, downloads, cookies and form history: Yamato Security's ys-browser-parser, a
