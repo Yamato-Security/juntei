@@ -74,17 +74,20 @@ created from MFT metadata contains no recoverable malware bytes to inspect.
 | `-t, --output-type csv\|jsonl` | `csv` | Format of detections and per-file coverage. |
 | `-T, --threads <N>` | CPU count, capped at 8 | Parallel file scans; 1–256. |
 | `--timeout <SECONDS>` | 60 | Per-file YARA evaluation timeout, excluding file reading. |
-| `--max-file-mib <MIB>` | 64 | Skip files above this limit; 1–4096 MiB. |
+| `--max-file-mib <MIB>` | Unlimited | Optional positive MiB cap for all files, including MFTs. |
+| `--max-mft-mib <MIB>` | Inherit global cap | Optional positive MiB override for MFT files. |
 | `--computer <NAME>` | Nearby `client_info.json`, otherwise empty | Override the evidence computer name. |
 | `-q, --quiet` | Off | Suppress the banner/progress and routine preparation messages. |
 | `-K, --no-color` | Off | Disable terminal colors. |
 
-The compiled rules are shared between workers; each worker holds one bounded file buffer.
-For example, eight workers at the default size limit can hold approximately 512 MiB of file
-bytes, **plus** compiled rules, engine match data and application overhead. This is not a
-process-wide memory cap. Reduce `-T` and/or `--max-file-mib` for smaller machines. Files are
-hashed and scanned from the same in-memory bytes; detected size/modification-time changes
-during reading cause a read error. Prefer stable evidence copies.
+The compiled rules are shared between workers; each worker reads one complete file.
+There is **no default file-size limit** for ordinary files or MFTs. Memory use depends on
+file sizes, parallel scans, compiled rules and engine match data. Set optional caps with
+`--max-file-mib` and/or `--max-mft-mib`, or reduce `-T` when working with large files.
+These are file-size caps, not a process-wide memory cap. Files are hashed and scanned from
+the same in-memory bytes; detected size/modification-time changes during reading cause a
+read error. Prefer stable evidence copies. An allocation or I/O failure is reported as
+incomplete coverage, never as a clean scan.
 
 Ctrl+C requests cancellation between files. An in-progress evaluation can take up to its
 configured timeout before it returns. Interrupted files are recorded as cancelled.
@@ -145,8 +148,9 @@ A YARA match is a hunting lead, and absence of matches is not proof that a file 
 
 Collected MFTs are recognized by common names (`$MFT`, names ending in `$MFT`, percent-encoded
 `%24MFT`, `MFT`, `.mft`) or a plausible leading FILE record header. Their raw bytes are scanned
-with `--max-mft-mib` (default **512 MiB**, range 1–4096), independently of the ordinary
-`--max-file-mib` limit. MFTs run **one at a time after ordinary files**, sharing the compiled
+without a size cap by default. An optional `--max-file-mib` cap applies to all files;
+`--max-mft-mib` overrides it for MFTs. Both accept positive whole MiB values within the
+64-bit byte-count range. MFTs run **one at a time after ordinary files**, sharing the compiled
 rules. This avoids several large MFT buffers being held by parallel workers.
 
 When a raw rule matches, Juntei uses its pattern offsets to locate candidate FILE records.
@@ -204,6 +208,6 @@ The ordinary detections and coverage tables now include `SourceType`: `File`, `M
 not additional source files. Detection rows also include `RecoveredFile`; raw MFT offsets
 are relative to the MFT, while resident-stream offsets are relative to the recovered content.
 A raw and a resident match can represent the same evidence, so counts are not unique malware
-counts. `Summary.json` includes the MFT limits and recovery statistics.
+counts. `Summary.json` includes the effective MFT limit, explicit MFT override and recovery statistics. A null file-size limit means unlimited.
 
 A saved file is **YARA-matched evidence**, not a verdict of malware or proof of execution.

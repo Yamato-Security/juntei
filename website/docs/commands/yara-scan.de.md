@@ -21,7 +21,7 @@ Alle regulären Dateien sind geeignet, auch wiederhergestellte Quarantäneinhalt
 
 - `-T, --threads <N>`: Parallele Scans; standardmäßig CPU-Anzahl, höchstens 8.
 - `--timeout <SECONDS>`: Zeitlimit für die Auswertung jeder Datei in Sekunden; Standard: 60.
-- `--max-file-mib <MIB>`: Maximale Dateigröße in MiB; Standard: 64. Größere Dateien werden als übersprungen erfasst. Mehr Worker und größere Puffer erhöhen den Speicherbedarf.
+- `--max-file-mib <MIB>`: Optionale maximale Dateigröße in MiB; standardmäßig unbegrenzt. Gilt auch für MFTs, sofern nicht überschrieben. Dateien über einer ausdrücklich gesetzten Grenze werden als übersprungen gemeldet.
 - `--rules-release YYYYMMDD`: Forge-Veröffentlichungsdatum oder standardmäßig latest. Heruntergeladene Quellen und Hashwerte werden zur Reproduzierbarkeit gespeichert.
 
 ## Ergebnisse { #results }
@@ -36,9 +36,9 @@ Exit-Codes: 0 bedeutet vollständig, 3 unvollständige Abdeckung, 2 Einrichtungs
 
 ## MFT-Treffer und Wiederherstellung { #mft-recovery }
 
-MFTs werden einzeln als Rohbytes mit eigener Größenbegrenzung untersucht (Standard: 512 MiB). Datensätze an Trefferpositionen werden geparst und ihre residenten DATA-Streams separat geprüft. Nur eigenständig passende Streams werden wiederhergestellt. Metadaten-, datensatzübergreifende und nichtresidente Treffer werden ohne Dateiinhalte gemeldet.
+MFTs werden einzeln als Rohbytes ohne standardmäßige Größenbegrenzung untersucht. Datensätze an Trefferpositionen werden geparst und ihre residenten DATA-Streams separat geprüft. Nur eigenständig passende Streams werden wiederhergestellt. Metadaten-, datensatzübergreifende und nichtresidente Treffer werden ohne Dateiinhalte gemeldet.
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 Standardmäßig werden höchstens 1000 Streams pro Lauf wiederhergestellt. Grenzen, beschädigte Datensätze und Zeitüberschreitungen bleiben sichtbar. Gespeicherte Namen erhalten die Quarantäne-Endung; Beweisverzeichnisse werden nicht nachgebildet.
 

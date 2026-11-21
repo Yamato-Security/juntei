@@ -288,3 +288,39 @@ fn real_forge_packages_detect_an_inert_marker() {
         assert_eq!(summary(&out)["Statuses"]["Scanned"], 2);
     }
 }
+
+#[test]
+fn default_scans_ordinary_files_above_the_former_64_mib_limit() {
+    use std::io::Write;
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    let input = root.join("large.bin");
+    let mut file = fs::File::create(&input).unwrap();
+    file.write_all(b"JUNTEI_NO_DEFAULT_SIZE_LIMIT").unwrap();
+    file.set_len(65 * 1024 * 1024 + 1).unwrap();
+    drop(file);
+    let rules = root.join("local.yar");
+    fs::write(&rules,"rule unlimited { strings: $a=\"JUNTEI_NO_DEFAULT_SIZE_LIMIT\" condition: filesize > 64MB and $a }").unwrap();
+    let out = root.join("out");
+    let result = run(&[
+        "yara-scan",
+        "-f",
+        text(&input),
+        "--rules",
+        text(&rules),
+        "-o",
+        text(&out),
+        "-q",
+        "-K",
+    ]);
+    assert!(
+        result.status.success(),
+        "{} {}",
+        String::from_utf8_lossy(&result.stdout),
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let s = summary(&out);
+    assert_eq!(s["RuleMatches"], 1);
+    assert!(s["MaxFileMiB"].is_null());
+    assert!(s["MaxMFTMiB"].is_null());
+}

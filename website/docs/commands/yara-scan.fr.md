@@ -21,7 +21,7 @@ Tous les fichiers ordinaires sont admissibles, y compris les contenus restaurés
 
 - `-T, --threads <N>`: Analyses parallèles ; par défaut le nombre de processeurs, limité à 8.
 - `--timeout <SECONDS>`: Délai maximal d’évaluation par fichier, en secondes ; défaut : 60.
-- `--max-file-mib <MIB>`: Taille maximale en MiB ; défaut : 64. Les fichiers plus gros sont signalés comme ignorés. Plus de tâches et des tampons plus grands augmentent la mémoire utilisée.
+- `--max-file-mib <MIB>`: Taille maximale facultative en MiB ; aucune limite par défaut. S’applique aux MFT sauf remplacement explicite. Les fichiers dépassant une limite définie sont signalés comme ignorés.
 - `--rules-release YYYYMMDD`: Date de publication Forge ou latest par défaut. Les sources téléchargées et leurs empreintes sont conservées pour reproduire l’analyse.
 
 ## Résultats { #results }
@@ -36,9 +36,9 @@ Codes de sortie : 0 indique une analyse complète, 3 une couverture incomplète,
 
 ## Correspondances MFT et récupération { #mft-recovery }
 
-Les MFT sont analysées une par une comme des octets bruts, avec une limite distincte (512 MiB par défaut). Les enregistrements aux positions correspondantes sont interprétés, puis leurs flux DATA résidents sont analysés séparément. Seuls les flux correspondant seuls sont récupérés. Les correspondances de métadonnées, entre plusieurs enregistrements ou non résidentes sont signalées sans exporter de contenu.
+Les MFT sont analysées une par une comme des octets bruts, sans limite de taille par défaut. Les enregistrements aux positions correspondantes sont interprétés, puis leurs flux DATA résidents sont analysés séparément. Seuls les flux correspondant seuls sont récupérés. Les correspondances de métadonnées, entre enregistrements ou non résidentes sont signalées sans exporter de contenu.
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 La récupération est limitée par défaut à 1000 flux par exécution. Les limites, enregistrements endommagés et délais dépassés restent visibles. Les noms enregistrés portent une extension de quarantaine ; les répertoires des preuves ne sont pas recréés.
 

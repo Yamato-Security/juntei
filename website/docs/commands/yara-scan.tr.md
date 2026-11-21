@@ -21,7 +21,7 @@ Karantinadan kurtarılan içerikler dahil tüm normal dosyalar uygundur. Semboli
 
 - `-T, --threads <N>`: Paralel tarama sayısı; varsayılan CPU sayısıdır, en fazla 8.
 - `--timeout <SECONDS>`: Dosya başına değerlendirme zaman aşımı, saniye olarak; varsayılan 60.
-- `--max-file-mib <MIB>`: En büyük dosya boyutu, MiB olarak; varsayılan 64. Büyük dosyalar atlandı olarak kaydedilir. Daha fazla işçi ve büyük tamponlar bellek kullanımını artırır.
+- `--max-file-mib <MIB>`: MiB olarak isteğe bağlı en büyük dosya boyutu; varsayılan sınırsızdır. Ayrı ayar verilmezse MFT dosyalarına da uygulanır. Belirlenen sınırı aşan dosyalar atlandı olarak raporlanır.
 - `--rules-release YYYYMMDD`: Forge sürüm tarihi veya varsayılan latest. Tekrarlanabilirlik için indirilen kaynaklar ve özetleri saklanır.
 
 ## Sonuçlar { #results }
@@ -36,9 +36,9 @@ Karantinadan kurtarılan içerikler dahil tüm normal dosyalar uygundur. Semboli
 
 ## MFT eşleşmeleri ve kurtarma { #mft-recovery }
 
-MFT dosyaları ayrı boyut sınırıyla (varsayılan 512 MiB) tek tek ham baytlar olarak taranır. Eşleşme konumlarındaki kayıtlar ayrıştırılır ve yerleşik DATA akışları bağımsız olarak yeniden taranır. Yalnızca tek başına eşleşen akışlar kurtarılır. Meta veri, kayıtlar arası ve yerleşik olmayan eşleşmeler içerik çıkarılmadan raporlanır.
+MFT dosyaları varsayılan boyut sınırı olmadan tek tek ham baytlar olarak taranır. Eşleşme konumlarındaki kayıtlar ayrıştırılır ve yerleşik DATA akışları bağımsız taranır. Yalnızca tek başına eşleşen akışlar kurtarılır. Meta veri, kayıtlar arası ve yerleşik olmayan eşleşmeler içerik çıkarılmadan raporlanır.
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 Varsayılan kurtarma sınırı çalıştırma başına 1000 akıştır. Sınırlar, hasarlı kayıtlar ve zaman aşımları görünürdür. Kaydedilen adlar karantina uzantısıyla biter; kanıt dizinleri yeniden oluşturulmaz.
 

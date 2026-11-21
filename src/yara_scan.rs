@@ -118,12 +118,12 @@ pub struct Options {
     /// Per-file scan timeout in seconds (does not include reading)
     #[arg(long, default_value_t=60, value_parser=clap::value_parser!(u64).range(1..=86400))]
     pub timeout: u64,
-    /// Skip larger files; each worker reads at most this many MiB
-    #[arg(long, default_value_t=64, value_parser=clap::value_parser!(u64).range(1..=4096))]
-    pub max_file_mib: u64,
-    /// Maximum raw MFT size in MiB; MFT scans run one at a time
-    #[arg(long, default_value_t=512, value_parser=clap::value_parser!(u64).range(1..=4096))]
-    pub max_mft_mib: u64,
+    /// Optional maximum file size in MiB (default: unlimited; includes MFTs)
+    #[arg(long, value_name="MIB", value_parser=parse_size_limit)]
+    pub max_file_mib: Option<u64>,
+    /// Override the file-size cap for MFTs (default: inherit --max-file-mib)
+    #[arg(long, value_name="MIB", value_parser=parse_size_limit)]
+    pub max_mft_mib: Option<u64>,
     /// Maximum matched resident streams recovered per run
     #[arg(long, default_value_t=1000, value_parser=clap::value_parser!(u64).range(1..=100000))]
     pub max_mft_recoveries: u64,
@@ -135,6 +135,15 @@ pub struct Options {
 }
 fn default_threads() -> u16 {
     std::thread::available_parallelism().map_or(1, |n| n.get().min(8) as u16)
+}
+const MIB: u64 = 1024 * 1024;
+fn parse_size_limit(s: &str) -> std::result::Result<u64, String> {
+    s.parse::<u64>().ok().filter(|n| *n > 0 && n.checked_mul(MIB).is_some())
+        .ok_or_else(|| "Use a positive whole number of MiB (example: --max-file-mib 1024) that fits in a u64 byte count".into())
+}
+fn size_limit_bytes(mib: Option<u64>) -> u64 {
+    // CLI validation guarantees multiplication cannot overflow; None is an unlimited read.
+    mib.map_or(u64::MAX, |value| value * MIB)
 }
 fn parse_release(s: &str) -> std::result::Result<String, String> {
     if s == "latest"
@@ -161,7 +170,9 @@ fn relative(root: &Path, path: &Path) -> String {
 }
 fn bounded_read(reader: impl Read, limit: u64) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
-    reader.take(limit + 1).read_to_end(&mut bytes)?;
+    reader
+        .take(limit.saturating_add(1))
+        .read_to_end(&mut bytes)?;
     ensure!(
         bytes.len() as u64 <= limit,
         "Size exceeds the configured limit"
@@ -877,7 +888,7 @@ fn execute(opts: &Options) -> Result<i32> {
                 &scanner,
                 c,
                 computer_for(&c.path, &root, &opts.computer),
-                opts.max_file_mib * 1024 * 1024,
+                size_limit_bytes(opts.max_file_mib),
                 false,
             );
             let file = outcome.file;
@@ -910,7 +921,7 @@ fn execute(opts: &Options) -> Result<i32> {
             &scanner,
             c,
             computer_for(&c.path, &root, &opts.computer),
-            opts.max_mft_mib * 1024 * 1024,
+            size_limit_bytes(opts.max_mft_mib.or(opts.max_file_mib)),
             true,
         );
         files.row(&outcome.file)?;
@@ -980,7 +991,7 @@ fn execute(opts: &Options) -> Result<i32> {
         "Ruleset":if opts.rules.is_some() { "local" } else { opts.ruleset.name() }, "RequestedRelease":if opts.rules.is_some() { None } else { Some(&opts.rules_release) },
         "DownloadURL":rules.url, "ArchiveSHA256":rules.archive_sha256, "RulesSHA256":hash(rules.source.as_bytes()), "RuleSources":rules.sources,
         "CompiledRules":scanner.rules().count(), "PublicRules":scanner.rules().filter(|r| !r.is_private).count(), "CompilationWarnings":warnings.len(),
-        "Threads":opts.threads, "TimeoutSeconds":opts.timeout, "MaxFileMiB":opts.max_file_mib, "MaxMFTMiB":opts.max_mft_mib, "MaxMFTRecoveries":opts.max_mft_recoveries, "MFT":mft_stats,
+        "Threads":opts.threads, "TimeoutSeconds":opts.timeout, "MaxFileMiB":opts.max_file_mib, "MaxMFTMiB":opts.max_mft_mib.or(opts.max_file_mib), "MFTLimitOverrideMiB":opts.max_mft_mib, "MaxMFTRecoveries":opts.max_mft_recoveries, "MFT":mft_stats,
         "Statuses":statuses, "RuleMatches":matches, "MatchingFiles":matching_files, "ExitCode":exit_code,
         "MatchLocations":"First occurrence per pattern, up to 16 patterns; no matched bytes exported",
         "Interpretation":"A match is a hunting lead, not a verdict. A scanned file with no matches is not proven safe. No archive/container unpacking or live-memory scan is performed."
@@ -1043,7 +1054,9 @@ mod tests {
         };
         assert_eq!(opts.ruleset.name(), "core");
         assert!((1..=8).contains(&opts.threads));
-        assert_eq!(opts.max_file_mib, 64);
+        assert_eq!(opts.max_file_mib, None);
+        assert_eq!(opts.max_mft_mib, None);
+        assert_eq!(size_limit_bytes(opts.max_file_mib), u64::MAX);
         for set in ["core", "extended", "full"] {
             assert!(
                 Cli::try_parse_from([
@@ -1117,6 +1130,12 @@ mod tests {
         assert!(unpack_rules(&zip.finish().unwrap().into_inner(), Ruleset::Core).is_err());
         assert!(bounded_read(&b"abcd"[..], 3).is_err());
         assert_eq!(bounded_read(&b"abc"[..], 3).unwrap(), b"abc");
+        assert_eq!(bounded_read(&b"abc"[..], u64::MAX).unwrap(), b"abc");
+        assert_eq!(size_limit_bytes(Some(8192)), 8192 * MIB);
+        for bad in ["0", "-1", "1.5", "18446744073709551615", "17592186044416"] {
+            assert!(parse_size_limit(bad).is_err());
+        }
+        assert_eq!(parse_size_limit("17592186044415").unwrap(), u64::MAX / MIB);
         assert_eq!(
             hash(b"abc"),
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"

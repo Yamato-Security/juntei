@@ -395,7 +395,7 @@ fn bad_fixup_and_no_offset_rule_do_not_produce_recovered_files() {
 }
 
 #[test]
-fn mft_size_limit_is_separate_and_partial_tail_does_not_shift_records() {
+fn optional_size_caps_and_partial_tail_do_not_shift_records() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
     let input = mft(
@@ -414,13 +414,32 @@ fn mft_size_limit_is_separate_and_partial_tail_does_not_shift_records() {
         "rule sized {strings:$a=\"MFT_SIZE_MATCH\" condition:$a}",
     );
     let out = root.join("default-mft-limit");
-    let result = run(&input, &r, &out, &["--max-file-mib", "1"]);
+    let result = run(&input, &r, &out, &[]);
     assert!(
         result.status.success(),
         "{}",
         String::from_utf8_lossy(&result.stdout)
     );
     assert_eq!(rows(&out.join("YaraMFTResults.jsonl"))[0]["EntryNum"], 1);
+    let out = root.join("global-limit");
+    let result = run(&input, &r, &out, &["--max-file-mib", "1"]);
+    assert_eq!(result.status.code(), Some(3));
+    let out = root.join("override-limit");
+    let result = run(
+        &input,
+        &r,
+        &out,
+        &["--max-file-mib", "1", "--max-mft-mib", "3"],
+    );
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stdout)
+    );
+    let summary: Value =
+        serde_json::from_slice(&fs::read(out.join("Summary.json")).unwrap()).unwrap();
+    assert_eq!(summary["MaxFileMiB"], 1);
+    assert_eq!(summary["MaxMFTMiB"], 3);
     let out = root.join("small-mft-limit");
     let result = run(&input, &r, &out, &["--max-mft-mib", "1"]);
     assert_eq!(result.status.code(), Some(3));
@@ -645,5 +664,54 @@ fn verified_extension_uses_its_exact_base_generation_and_path() {
             .as_str()
             .unwrap()
             .ends_with("logical.txt")
+    );
+}
+
+#[test]
+fn default_scans_an_mft_larger_than_the_former_512_mib_limit() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path();
+    let input = mft(
+        root,
+        "$MFT",
+        &[(
+            1,
+            record(
+                1,
+                "large-source.txt",
+                &[("", b"MFT_NO_DEFAULT_LIMIT")],
+                true,
+                false,
+            ),
+        )],
+    );
+    fs::OpenOptions::new()
+        .write(true)
+        .open(&input)
+        .unwrap()
+        .set_len(513 * 1024 * 1024 + 17)
+        .unwrap();
+    let r = rules(
+        root,
+        "rule no_default_limit {strings:$a=\"MFT_NO_DEFAULT_LIMIT\" condition:$a}",
+    );
+    let out = root.join("out");
+    let result = run(&input, &r, &out, &[]);
+    assert!(
+        result.status.success(),
+        "{} {}",
+        String::from_utf8_lossy(&result.stdout),
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let summary: Value =
+        serde_json::from_slice(&fs::read(out.join("Summary.json")).unwrap()).unwrap();
+    assert!(summary["MaxFileMiB"].is_null());
+    assert!(summary["MaxMFTMiB"].is_null());
+    assert_eq!(summary["MFT"]["RecoveredFiles"], 1);
+    assert!(
+        !summary["Statuses"]
+            .as_object()
+            .unwrap()
+            .contains_key("SkippedTooLarge")
     );
 }

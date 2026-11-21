@@ -21,7 +21,7 @@ juntei yara-scan -d evidence/ --rules local-rules/ -o yara-offline/
 
 - `-T, --threads <N>`: 平行掃描數；預設為 CPU 數，上限為 8。
 - `--timeout <SECONDS>`: 每個檔案的評估逾時秒數；預設為 60。
-- `--max-file-mib <MIB>`: 最大檔案大小（MiB），預設為 64。超過限制的檔案會記錄為略過。增加工作執行緒與緩衝區會增加記憶體用量。
+- `--max-file-mib <MIB>`: 可選的檔案大小上限（MiB），預設無限制。除非另外覆寫，也適用於MFT。超過明確上限的檔案會記錄為略過。
 - `--rules-release YYYYMMDD`: Forge 發行日期，或預設的 latest。會儲存下載的原始規則及雜湊以利重現。
 
 ## 結果 { #results }
@@ -36,9 +36,9 @@ juntei yara-scan -d evidence/ --rules local-rules/ -o yara-offline/
 
 ## MFT符合與復原 { #mft-recovery }
 
-MFT以原始位元組逐一掃描，使用獨立大小限制（預設512 MiB）。剖析符合位置的記錄，並獨立重新掃描其中的常駐DATA串流。只有串流本身符合規則時才復原。僅涉及中繼資料、跨記錄或非常駐內容的符合會記錄，但不匯出檔案內容。
+MFT以原始位元組逐一掃描，預設不限制大小。剖析符合位置的記錄並獨立重新掃描常駐DATA串流。僅復原串流本身符合規則的內容。僅涉及中繼資料、跨記錄或非常駐內容的符合會記錄，但不匯出檔案內容。
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 每次執行預設最多復原1000個串流。限制、損壞記錄及逾時均會明確呈現。儲存名稱使用隔離副檔名，不會重建證據的目錄結構。
 

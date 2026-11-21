@@ -21,7 +21,7 @@ All regular files are eligible, including recovered quarantine payloads. Symboli
 
 - `-T, --threads <N>`: Parallel scans (default: CPU count, capped at 8).
 - `--timeout <SECONDS>`: Per-file evaluation timeout in seconds (default: 60).
-- `--max-file-mib <MIB>`: Maximum file size in MiB (default: 64). Larger files are reported as skipped. More workers and larger buffers increase memory use.
+- `--max-file-mib <MIB>`: Optional maximum file size in MiB; unlimited by default. Applies to MFTs unless overridden. Files above an explicit cap are reported as skipped.
 - `--rules-release YYYYMMDD`: Forge release date, or latest (default). The downloaded source and hashes are saved for reproducibility.
 
 ## Results { #results }
@@ -36,9 +36,9 @@ Exit codes: 0 means complete, 3 incomplete coverage, 2 setup/output failure, and
 
 ## MFT matches and recovery { #mft-recovery }
 
-MFTs are scanned as raw bytes, one at a time, with a separate size limit (default: 512 MiB). Records at raw match offsets are parsed, and their resident DATA streams are scanned independently. Only streams that match on their own are recovered. Metadata-only, cross-record and nonresident matches are reported without exporting file content.
+MFTs are scanned as raw bytes one at a time, with no default size cap. Records at raw match offsets are parsed and their resident DATA streams are scanned independently. Only streams that match on their own are recovered. Metadata-only, cross-record and nonresident matches are reported without exporting file content.
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 Recovery is limited to 1000 streams per run by default. Limits, damaged records and timeouts remain visible. Saved names end in the quarantine extension; evidence directories are not recreated.
 

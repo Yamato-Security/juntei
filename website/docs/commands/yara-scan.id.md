@@ -21,7 +21,7 @@ Semua berkas reguler dapat dipindai, termasuk muatan yang dipulihkan dari karant
 
 - `-T, --threads <N>`: Jumlah pemindaian paralel; bawaan mengikuti jumlah CPU, maksimal 8.
 - `--timeout <SECONDS>`: Batas waktu evaluasi per berkas dalam detik; bawaan 60.
-- `--max-file-mib <MIB>`: Ukuran berkas maksimum dalam MiB; bawaan 64. Berkas lebih besar dicatat sebagai dilewati. Lebih banyak pekerja dan buffer lebih besar meningkatkan penggunaan memori.
+- `--max-file-mib <MIB>`: Batas ukuran berkas opsional dalam MiB; tanpa batas secara bawaan. Berlaku juga untuk MFT kecuali diganti. Berkas di atas batas yang ditetapkan dilaporkan sebagai dilewati.
 - `--rules-release YYYYMMDD`: Tanggal rilis Forge atau latest sebagai bawaan. Sumber yang diunduh dan hash disimpan untuk reproduksi.
 
 ## Hasil { #results }
@@ -36,9 +36,9 @@ Kode keluar: 0 selesai, 3 cakupan tidak lengkap, 2 kegagalan penyiapan/keluaran,
 
 ## Kecocokan MFT dan pemulihan { #mft-recovery }
 
-MFT dipindai satu per satu sebagai byte mentah dengan batas ukuran tersendiri (bawaan 512 MiB). Rekaman pada posisi kecocokan diurai dan aliran DATA residennya dipindai ulang secara mandiri. Hanya aliran yang cocok sendiri yang dipulihkan. Kecocokan metadata, lintas rekaman, dan data nonresiden dilaporkan tanpa mengekspor isi berkas.
+MFT dipindai satu per satu sebagai byte mentah tanpa batas ukuran bawaan. Rekaman pada posisi kecocokan diurai dan aliran DATA residennya dipindai ulang secara mandiri. Hanya aliran yang cocok sendiri yang dipulihkan. Kecocokan metadata, lintas rekaman, dan data nonresiden dilaporkan tanpa mengekspor isi berkas.
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 Pemulihan dibatasi hingga 1000 aliran per eksekusi secara bawaan. Batas, rekaman rusak, dan batas waktu ditampilkan. Nama hasil memakai ekstensi karantina; struktur direktori bukti tidak dibuat ulang.
 

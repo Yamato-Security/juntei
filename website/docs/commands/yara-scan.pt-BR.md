@@ -21,7 +21,7 @@ Todos os arquivos regulares são elegíveis, inclusive conteúdos recuperados da
 
 - `-T, --threads <N>`: Varreduras paralelas; padrão: quantidade de CPUs, limitada a 8.
 - `--timeout <SECONDS>`: Tempo máximo de avaliação por arquivo em segundos; padrão: 60.
-- `--max-file-mib <MIB>`: Tamanho máximo em MiB; padrão: 64. Arquivos maiores são registrados como ignorados. Mais trabalhadores e buffers maiores aumentam o uso de memória.
+- `--max-file-mib <MIB>`: Tamanho máximo opcional em MiB; sem limite por padrão. Também se aplica às MFTs, salvo substituição explícita. Arquivos acima de um limite definido são registrados como ignorados.
 - `--rules-release YYYYMMDD`: Data da versão Forge ou latest por padrão. As fontes baixadas e seus hashes são salvos para reprodução.
 
 ## Resultados { #results }
@@ -36,9 +36,9 @@ Códigos de saída: 0 significa conclusão, 3 cobertura incompleta, 2 falha de c
 
 ## Correspondências MFT e recuperação { #mft-recovery }
 
-As MFTs são analisadas uma por vez como bytes brutos, com limite próprio (512 MiB por padrão). Os registros nas posições correspondentes são interpretados e seus fluxos DATA residentes são analisados separadamente. Somente fluxos que correspondem por si mesmos são recuperados. Correspondências de metadados, entre registros ou não residentes são informadas sem exportar conteúdo.
+As MFTs são analisadas uma por vez como bytes brutos, sem limite de tamanho por padrão. Os registros nas posições correspondentes são interpretados e seus fluxos DATA residentes são analisados separadamente. Somente fluxos que correspondem por si mesmos são recuperados. Correspondências de metadados, entre registros ou não residentes são informadas sem exportar conteúdo.
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 Por padrão, a recuperação é limitada a 1000 fluxos por execução. Limites, registros danificados e tempos esgotados ficam visíveis. Os nomes salvos recebem a extensão de quarentena; os diretórios das evidências não são recriados.
 

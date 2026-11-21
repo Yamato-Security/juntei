@@ -21,7 +21,7 @@ Se admiten todos los archivos normales, incluidos los recuperados de cuarentena.
 
 - `-T, --threads <N>`: Análisis paralelos; por defecto, número de CPU limitado a 8.
 - `--timeout <SECONDS>`: Tiempo máximo de evaluación por archivo en segundos; predeterminado: 60.
-- `--max-file-mib <MIB>`: Tamaño máximo en MiB; predeterminado: 64. Los archivos mayores se registran como omitidos. Más trabajadores y búferes mayores aumentan el consumo de memoria.
+- `--max-file-mib <MIB>`: Tamaño máximo opcional en MiB; sin límite por defecto. También se aplica a las MFT salvo que se anule. Los archivos que superen un límite explícito se registran como omitidos.
 - `--rules-release YYYYMMDD`: Fecha de la versión Forge o latest por defecto. Se guardan las fuentes descargadas y sus hashes para reproducir el análisis.
 
 ## Resultados { #results }
@@ -36,9 +36,9 @@ Códigos de salida: 0 indica finalización, 3 cobertura incompleta, 2 fallo de c
 
 ## Coincidencias MFT y recuperación { #mft-recovery }
 
-Las MFT se analizan una a una como bytes sin procesar, con un límite propio (512 MiB por defecto). Se interpretan los registros en las posiciones coincidentes y se vuelven a analizar sus flujos DATA residentes por separado. Solo se recuperan los flujos que coinciden por sí mismos. Las coincidencias de metadatos, entre registros o no residentes se informan sin exportar contenido.
+Las MFT se analizan una a una como bytes sin procesar, sin límite de tamaño predeterminado. Se interpretan los registros en las posiciones coincidentes y sus flujos DATA residentes se analizan por separado. Solo se recuperan los flujos que coinciden por sí mismos. Las coincidencias de metadatos, entre registros o no residentes se informan sin exportar contenido.
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 La recuperación se limita por defecto a 1000 flujos por ejecución. Se indican los límites, registros dañados y tiempos agotados. Los nombres guardados llevan una extensión de cuarentena; no se recrean los directorios de las pruebas.
 

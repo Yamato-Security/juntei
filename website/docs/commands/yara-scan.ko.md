@@ -21,7 +21,7 @@ juntei yara-scan -d evidence/ --rules local-rules/ -o yara-offline/
 
 - `-T, --threads <N>`: 병렬 검사 수. 기본값은 CPU 수이며 최대 8이다.
 - `--timeout <SECONDS>`: 파일별 평가 제한 시간(초). 기본값은 60이다.
-- `--max-file-mib <MIB>`: 최대 파일 크기(MiB). 기본값은 64이다. 초과 파일은 건너뛴 것으로 기록한다. 작업자와 버퍼를 늘리면 메모리 사용량도 증가한다.
+- `--max-file-mib <MIB>`: 선택적 파일 크기 상한(MiB). 기본값은 무제한이다. 별도 지정이 없으면 MFT에도 적용한다. 명시한 상한을 넘은 파일은 건너뛴 것으로 보고한다.
 - `--rules-release YYYYMMDD`: Forge 릴리스 날짜 또는 기본값 latest. 재현할 수 있도록 다운로드한 원본과 해시를 저장한다.
 
 ## 결과 { #results }
@@ -36,9 +36,9 @@ juntei yara-scan -d evidence/ --rules local-rules/ -o yara-offline/
 
 ## MFT 일치와 복구 { #mft-recovery }
 
-MFT는 별도 크기 제한(기본 512 MiB)으로 한 번에 하나씩 원시 바이트를 검사한다. 일치 위치의 레코드를 파싱하고 상주 DATA 스트림을 별도로 다시 검사한다. 스트림 자체가 일치할 때만 복구한다. 메타데이터만의 일치, 레코드 간 일치, 비상주 내용은 파일을 내보내지 않고 보고한다.
+MFT는 원시 바이트로 하나씩 검사하며 기본 크기 제한이 없다. 일치 위치의 레코드를 파싱하고 상주 DATA 스트림을 별도로 다시 검사한다. 스트림 자체가 일치할 때만 복구한다. 메타데이터만의 일치, 레코드 간 일치, 비상주 내용은 파일을 내보내지 않고 보고한다.
 
-`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+`--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 
 실행당 복구 한도는 기본 1000개 스트림이다. 한도 도달, 손상된 레코드, 시간 초과를 명시한다. 저장 이름에는 격리 확장자를 붙이며 증거의 디렉터리 구조를 재현하지 않는다.
 
