@@ -34,6 +34,16 @@ Tous les fichiers ordinaires sont admissibles, y compris les contenus restaurés
 
 Codes de sortie : 0 indique une analyse complète, 3 une couverture incomplète, 2 un échec de configuration/sortie et 130 une annulation. Une correspondance est une piste, pas une preuve de compromission ; son absence ne prouve pas l’innocuité. Examiner le titre de la règle et le contexte de l’artefact. Déchiffrer les contenus de quarantaine avant de les identifier.
 
+## Correspondances MFT et récupération { #mft-recovery }
+
+Les MFT sont analysées une par une comme des octets bruts, avec une limite distincte (512 MiB par défaut). Les enregistrements aux positions correspondantes sont interprétés, puis leurs flux DATA résidents sont analysés séparément. Seuls les flux correspondant seuls sont récupérés. Les correspondances de métadonnées, entre plusieurs enregistrements ou non résidentes sont signalées sans exporter de contenu.
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+La récupération est limitée par défaut à 1000 flux par exécution. Les limites, enregistrements endommagés et délais dépassés restent visibles. Les noms enregistrés portent une extension de quarantaine ; les répertoires des preuves ne sont pas recréés.
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## Pour aller plus loin { #further-details }
 
 - [Moteur: Boreal](https://github.com/vthib/boreal)

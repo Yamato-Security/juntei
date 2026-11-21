@@ -34,6 +34,16 @@ juntei yara-scan -d evidence/ --rules local-rules/ -o yara-offline/
 
 結束代碼：0 表示完成，3 表示覆蓋不完整，2 表示設定或輸出失敗，130 表示取消。符合規則只是調查線索，不代表已確認入侵；沒有符合也不能證明安全。應檢查規則標題及鑑識資料的脈絡。隔離檔案必須先解密才能辨識內容。
 
+## MFT符合與復原 { #mft-recovery }
+
+MFT以原始位元組逐一掃描，使用獨立大小限制（預設512 MiB）。剖析符合位置的記錄，並獨立重新掃描其中的常駐DATA串流。只有串流本身符合規則時才復原。僅涉及中繼資料、跨記錄或非常駐內容的符合會記錄，但不匯出檔案內容。
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+每次執行預設最多復原1000個串流。限制、損壞記錄及逾時均會明確呈現。儲存名稱使用隔離副檔名，不會重建證據的目錄結構。
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## 進一步資訊 { #further-details }
 
 - [引擎: Boreal](https://github.com/vthib/boreal)

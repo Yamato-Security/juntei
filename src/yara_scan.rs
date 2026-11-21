@@ -13,6 +13,9 @@
 
 //! Opt-in, portable YARA scanning of collected files, never executing evidence.
 
+#[path = "yara_mft.rs"]
+mod mft_scan;
+
 use crate::{cli::CommonOptions, interrupt, progress, util};
 use anyhow::{Context, Result, ensure};
 use boreal::{
@@ -47,6 +50,8 @@ const DETECTION_HEADERS: &[&str] = &[
     "Tags",
     "Metadata",
     "MatchLocations",
+    "SourceType",
+    "RecoveredFile",
 ];
 const FILE_HEADERS: &[&str] = &[
     "Computer",
@@ -57,6 +62,7 @@ const FILE_HEADERS: &[&str] = &[
     "Matches",
     "ElapsedMs",
     "Note",
+    "SourceType",
 ];
 
 #[derive(Clone, Copy, Debug, Default, ValueEnum)]
@@ -115,6 +121,12 @@ pub struct Options {
     /// Skip larger files; each worker reads at most this many MiB
     #[arg(long, default_value_t=64, value_parser=clap::value_parser!(u64).range(1..=4096))]
     pub max_file_mib: u64,
+    /// Maximum raw MFT size in MiB; MFT scans run one at a time
+    #[arg(long, default_value_t=512, value_parser=clap::value_parser!(u64).range(1..=4096))]
+    pub max_mft_mib: u64,
+    /// Maximum matched resident streams recovered per run
+    #[arg(long, default_value_t=1000, value_parser=clap::value_parser!(u64).range(1..=100000))]
+    pub max_mft_recoveries: u64,
     /// Evidence computer name (otherwise read nearby client_info.json; empty if unknown)
     #[arg(long)]
     pub computer: Option<String>,
@@ -402,6 +414,7 @@ struct FileResult {
     matches: usize,
     elapsed_ms: u128,
     note: String,
+    source_type: String,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -417,6 +430,8 @@ struct Detection {
     tags: String,
     metadata: String,
     match_locations: String,
+    source_type: String,
+    recovered_file: String,
 }
 struct Candidate {
     path: PathBuf,
@@ -492,12 +507,36 @@ fn computer_for(path: &Path, root: &Path, override_name: &Option<String>) -> Str
     }
     String::new()
 }
+#[derive(Debug)]
+struct RawLocation {
+    rule: String,
+    offset: usize,
+    length: usize,
+}
+struct ScanOutcome {
+    file: FileResult,
+    hits: Vec<Detection>,
+    snapshot: Option<Vec<u8>>,
+    locations: Vec<RawLocation>,
+    locations_limited: bool,
+}
+#[cfg(test)]
 fn scan(
     scanner: &Scanner,
     c: &Candidate,
     computer: String,
     limit: u64,
 ) -> (FileResult, Vec<Detection>) {
+    let outcome = scan_file(scanner, c, computer, limit, false);
+    (outcome.file, outcome.hits)
+}
+fn scan_file(
+    scanner: &Scanner,
+    c: &Candidate,
+    computer: String,
+    limit: u64,
+    capture_mft: bool,
+) -> ScanOutcome {
     let start = Instant::now();
     let mut row = FileResult {
         computer,
@@ -508,14 +547,27 @@ fn scan(
         matches: 0,
         elapsed_ms: 0,
         note: c.note.clone(),
+        source_type: if capture_mft { "MFTRaw" } else { "File" }.into(),
     };
     if let Some(status) = c.pre_status {
         row.status = status.into();
-        return (row, vec![]);
+        return ScanOutcome {
+            file: row,
+            hits: vec![],
+            snapshot: None,
+            locations: vec![],
+            locations_limited: false,
+        };
     }
     if interrupt::requested() {
         row.status = "Cancelled".into();
-        return (row, vec![]);
+        return ScanOutcome {
+            file: row,
+            hits: vec![],
+            snapshot: None,
+            locations: vec![],
+            locations_limited: false,
+        };
     }
     let data = (|| -> Result<Vec<u8>> {
         let meta = fs::symlink_metadata(&c.path)?;
@@ -523,7 +575,10 @@ fn scan(
             meta.is_file() && !meta.file_type().is_symlink(),
             "Input is no longer a regular file"
         );
-        ensure!(meta.len() <= limit, "File exceeds --max-file-mib");
+        ensure!(
+            meta.len() <= limit,
+            "File exceeds the configured scan size limit"
+        );
         let f = File::open(&c.path)?;
         let before = f.metadata()?;
         ensure!(before.is_file(), "Input is no longer a regular file");
@@ -548,12 +603,37 @@ fn scan(
             .into();
             row.note = format!("{e}");
             row.elapsed_ms = start.elapsed().as_millis();
-            return (row, vec![]);
+            return ScanOutcome {
+                file: row,
+                hits: vec![],
+                snapshot: None,
+                locations: vec![],
+                locations_limited: false,
+            };
         }
     };
     row.size = bytes.len() as u64;
     row.sha256 = hash(&bytes);
-    let result = match scanner.scan_mem(&bytes) {
+    let (hits, locations, locations_limited) = evaluate(scanner, &bytes, &mut row, capture_mft);
+    row.elapsed_ms = start.elapsed().as_millis();
+    let snapshot = (capture_mft && !hits.is_empty()).then_some(bytes);
+    ScanOutcome {
+        file: row,
+        hits,
+        snapshot,
+        locations,
+        locations_limited,
+    }
+}
+
+/// File and resident-stream evaluation use the same complete byte buffer and file semantics.
+fn evaluate(
+    scanner: &Scanner,
+    bytes: &[u8],
+    row: &mut FileResult,
+    capture: bool,
+) -> (Vec<Detection>, Vec<RawLocation>, bool) {
+    let result = match scanner.scan_mem(bytes) {
         Ok(r) => {
             row.status = "Scanned".into();
             r
@@ -564,17 +644,43 @@ fn scan(
             r
         }
     };
+    const MAX_LOCATIONS: usize = 100_000;
+    let mut locations = Vec::new();
+    let mut limited = false;
+    if capture {
+        for rule in result.rules.iter().filter(|r| r.matched) {
+            for pattern in &rule.matches {
+                // Boreal stores at most 1000 occurrences per pattern by default. Reaching
+                // that ceiling makes recovery coverage uncertain even if raw detection succeeded.
+                limited |= pattern.matches.len() >= 1000;
+                for matched in &pattern.matches {
+                    if locations.len() == MAX_LOCATIONS {
+                        limited = true;
+                        break;
+                    }
+                    if let Some(offset) = matched.base.checked_add(matched.offset) {
+                        locations.push(RawLocation {
+                            rule: rule.name.into(),
+                            offset,
+                            length: matched.length,
+                        });
+                    } else {
+                        limited = true;
+                    }
+                }
+            }
+        }
+    }
     let detections = result.rules.into_iter().filter(|r| r.matched).map(|r| {
         let metadata: BTreeMap<_, _> = r.metadatas.iter().map(|m| (scanner.get_string_symbol(m.name), match m.value {
             MetadataValue::Bytes(s) => serde_json::Value::String(String::from_utf8_lossy(scanner.get_bytes_symbol(s)).into_owned()),
             MetadataValue::Integer(i) => i.into(), MetadataValue::Boolean(b) => b.into(),
         })).collect();
         let samples: Vec<_> = r.matches.iter().flat_map(|s| s.matches.iter().take(1).map(move |m| serde_json::json!({"Pattern": format!("${}", s.name), "Offset": m.offset, "Length": m.length, "XorKey": m.xor_key}))).take(16).collect();
-        Detection { computer: row.computer.clone(), file_path: row.file_path.clone(), size: row.size, sha256: row.sha256.clone(), scan_status: row.status.clone(), rule: r.name.into(), namespace: r.namespace.into(), tags: r.tags.iter().map(|s| scanner.get_string_symbol(*s)).collect::<Vec<_>>().join(" "), metadata: serde_json::to_string(&metadata).expect("metadata serialization"), match_locations: serde_json::to_string(&samples).expect("location serialization") }
+        Detection { computer: row.computer.clone(), file_path: row.file_path.clone(), size: row.size, sha256: row.sha256.clone(), scan_status: row.status.clone(), rule: r.name.into(), namespace: r.namespace.into(), tags: r.tags.iter().map(|s| scanner.get_string_symbol(*s)).collect::<Vec<_>>().join(" "), metadata: serde_json::to_string(&metadata).expect("metadata serialization"), match_locations: serde_json::to_string(&samples).expect("location serialization"), source_type: row.source_type.clone(), recovered_file: String::new() }
     }).collect::<Vec<_>>();
     row.matches = detections.len();
-    row.elapsed_ms = start.elapsed().as_millis();
-    (row, detections)
+    (detections, locations, limited)
 }
 
 enum Table {
@@ -712,6 +818,18 @@ fn execute(opts: &Options) -> Result<i32> {
         warnings.join("\n").as_bytes(),
     )?;
     let candidates = discover(&root, &input, &rules.paths);
+    let (mfts, ordinary): (Vec<_>, Vec<_>) = candidates.iter().partition(|c| mft_scan::is_mft(c));
+    let mut mft_table = if mfts.is_empty() {
+        None
+    } else {
+        Some(Table::new(
+            &output,
+            "YaraMFTResults",
+            opts.output_type,
+            mft_scan::HEADERS,
+        )?)
+    };
+    let mut mft_stats = mft_scan::Stats::default();
     let mut statuses = BTreeMap::<String, usize>::new();
     let files = Table::new(&output, "YaraFiles", opts.output_type, FILE_HEADERS)?;
     let detections = Table::new(
@@ -751,16 +869,19 @@ fn execute(opts: &Options) -> Result<i32> {
     let bar = (!opts.common.quiet)
         .then(|| progress::progress_bar(candidates.len(), opts.common.no_color));
     let scan_result: Result<()> = pool.install(|| {
-        candidates.par_iter().try_for_each(|c| {
+        ordinary.par_iter().try_for_each(|c| {
             if let Some(bar) = &bar {
                 bar.set_message(progress::message(&c.path));
             }
-            let (file, hits) = scan(
+            let outcome = scan_file(
                 &scanner,
                 c,
                 computer_for(&c.path, &root, &opts.computer),
                 opts.max_file_mib * 1024 * 1024,
+                false,
             );
+            let file = outcome.file;
+            let hits = outcome.hits;
             let mut s = state
                 .lock()
                 .map_err(|_| anyhow::anyhow!("Results writer failed"))?;
@@ -777,18 +898,75 @@ fn execute(opts: &Options) -> Result<i32> {
             Ok(())
         })
     });
+    scan_result?;
+    let (mut files, mut detections, _, mut matches, mut matching_files) = state
+        .into_inner()
+        .map_err(|_| anyhow::anyhow!("Results writer failed"))?;
+    for c in mfts {
+        if let Some(bar) = &bar {
+            bar.set_message(progress::message(&c.path));
+        }
+        let outcome = scan_file(
+            &scanner,
+            c,
+            computer_for(&c.path, &root, &opts.computer),
+            opts.max_mft_mib * 1024 * 1024,
+            true,
+        );
+        files.row(&outcome.file)?;
+        for hit in &outcome.hits {
+            detections.row(hit)?;
+        }
+        *statuses.entry(outcome.file.status.clone()).or_default() += 1;
+        matches += outcome.hits.len();
+        matching_files += usize::from(!outcome.hits.is_empty());
+        mft_stats.files += 1;
+        if let Some(snapshot) = outcome.snapshot {
+            mft_scan::inspect(
+                mft_scan::Inspection {
+                    scanner: &scanner,
+                    snapshot: &snapshot,
+                    file: &outcome.file,
+                    raw_hits: &outcome.hits,
+                    locations: &outcome.locations,
+                    limited: outcome.locations_limited,
+                    output: &output,
+                    maximum: opts.max_mft_recoveries,
+                },
+                &mut mft_stats,
+                |recovery, stream| {
+                    if let Some(table) = &mut mft_table {
+                        table.row(&recovery)?;
+                    }
+                    if let Some((file, hits)) = stream {
+                        files.row(&file)?;
+                        for hit in &hits {
+                            detections.row(hit)?;
+                        }
+                        *statuses.entry(file.status.clone()).or_default() += 1;
+                        matches += hits.len();
+                        matching_files += usize::from(!hits.is_empty());
+                    }
+                    Ok(())
+                },
+            )?;
+        }
+        if let Some(bar) = &bar {
+            bar.inc(1);
+        }
+    }
     if let Some(bar) = &bar {
         bar.finish_and_clear();
     }
-    scan_result?;
-    let (mut files, mut detections, _, matches, matching_files) = state
-        .into_inner()
-        .map_err(|_| anyhow::anyhow!("Results writer failed"))?;
+    if let Some(table) = &mut mft_table {
+        table.flush()?;
+    }
     files.flush()?;
     detections.flush()?;
-    let incomplete = statuses
-        .iter()
-        .any(|(k, v)| *v > 0 && !["Scanned", "SkippedRuleSource"].contains(&k.as_str()));
+    let incomplete = mft_stats.incomplete
+        || statuses
+            .iter()
+            .any(|(k, v)| *v > 0 && !["Scanned", "SkippedRuleSource"].contains(&k.as_str()));
     let exit_code = if interrupt::requested() {
         130
     } else if incomplete {
@@ -802,7 +980,7 @@ fn execute(opts: &Options) -> Result<i32> {
         "Ruleset":if opts.rules.is_some() { "local" } else { opts.ruleset.name() }, "RequestedRelease":if opts.rules.is_some() { None } else { Some(&opts.rules_release) },
         "DownloadURL":rules.url, "ArchiveSHA256":rules.archive_sha256, "RulesSHA256":hash(rules.source.as_bytes()), "RuleSources":rules.sources,
         "CompiledRules":scanner.rules().count(), "PublicRules":scanner.rules().filter(|r| !r.is_private).count(), "CompilationWarnings":warnings.len(),
-        "Threads":opts.threads, "TimeoutSeconds":opts.timeout, "MaxFileMiB":opts.max_file_mib,
+        "Threads":opts.threads, "TimeoutSeconds":opts.timeout, "MaxFileMiB":opts.max_file_mib, "MaxMFTMiB":opts.max_mft_mib, "MaxMFTRecoveries":opts.max_mft_recoveries, "MFT":mft_stats,
         "Statuses":statuses, "RuleMatches":matches, "MatchingFiles":matching_files, "ExitCode":exit_code,
         "MatchLocations":"First occurrence per pattern, up to 16 patterns; no matched bytes exported",
         "Interpretation":"A match is a hunting lead, not a verdict. A scanned file with no matches is not proven safe. No archive/container unpacking or live-memory scan is performed."
@@ -811,6 +989,13 @@ fn execute(opts: &Options) -> Result<i32> {
         &output.join("Summary.json"),
         &serde_json::to_vec_pretty(&summary)?,
     )?;
+    if mft_stats.files > 0 {
+        util::p_label(
+            opts.common.no_color,
+            "Recovered MFT streams: ",
+            &mft_stats.recovered_files.to_string(),
+        );
+    }
     util::p_label(opts.common.no_color, "Rule matches: ", &matches.to_string());
     util::p_label(
         opts.common.no_color,

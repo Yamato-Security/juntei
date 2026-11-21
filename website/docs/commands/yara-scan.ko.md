@@ -34,6 +34,16 @@ juntei yara-scan -d evidence/ --rules local-rules/ -o yara-offline/
 
 종료 코드 0은 완료, 3은 불완전한 검사 범위, 2는 설정 또는 출력 실패, 130은 취소를 뜻한다. 일치는 조사 단서이며 침해의 증명이 아니다. 일치하지 않아도 안전하다고 할 수 없다. 규칙 제목과 아티팩트 맥락을 검토한다. 격리 페이로드는 먼저 복호화해야 식별할 수 있다.
 
+## MFT 일치와 복구 { #mft-recovery }
+
+MFT는 별도 크기 제한(기본 512 MiB)으로 한 번에 하나씩 원시 바이트를 검사한다. 일치 위치의 레코드를 파싱하고 상주 DATA 스트림을 별도로 다시 검사한다. 스트림 자체가 일치할 때만 복구한다. 메타데이터만의 일치, 레코드 간 일치, 비상주 내용은 파일을 내보내지 않고 보고한다.
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+실행당 복구 한도는 기본 1000개 스트림이다. 한도 도달, 손상된 레코드, 시간 초과를 명시한다. 저장 이름에는 격리 확장자를 붙이며 증거의 디렉터리 구조를 재현하지 않는다.
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## 추가 정보 { #further-details }
 
 - [엔진: Boreal](https://github.com/vthib/boreal)

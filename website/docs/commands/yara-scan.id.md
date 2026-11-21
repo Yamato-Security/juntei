@@ -34,6 +34,16 @@ Semua berkas reguler dapat dipindai, termasuk muatan yang dipulihkan dari karant
 
 Kode keluar: 0 selesai, 3 cakupan tidak lengkap, 2 kegagalan penyiapan/keluaran, dan 130 pembatalan. Kecocokan adalah petunjuk, bukan bukti kompromi; tidak ada kecocokan juga tidak membuktikan keamanan. Tinjau judul aturan dan konteks artefak. Dekripsi karantina sebelum mengidentifikasi muatannya.
 
+## Kecocokan MFT dan pemulihan { #mft-recovery }
+
+MFT dipindai satu per satu sebagai byte mentah dengan batas ukuran tersendiri (bawaan 512 MiB). Rekaman pada posisi kecocokan diurai dan aliran DATA residennya dipindai ulang secara mandiri. Hanya aliran yang cocok sendiri yang dipulihkan. Kecocokan metadata, lintas rekaman, dan data nonresiden dilaporkan tanpa mengekspor isi berkas.
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+Pemulihan dibatasi hingga 1000 aliran per eksekusi secara bawaan. Batas, rekaman rusak, dan batas waktu ditampilkan. Nama hasil memakai ekstensi karantina; struktur direktori bukti tidak dibuat ulang.
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## Rincian lebih lanjut { #further-details }
 
 - [Mesin: Boreal](https://github.com/vthib/boreal)

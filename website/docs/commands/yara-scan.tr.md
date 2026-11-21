@@ -34,6 +34,16 @@ Karantinadan kurtarılan içerikler dahil tüm normal dosyalar uygundur. Semboli
 
 Çıkış kodları: 0 tamamlandı, 3 eksik kapsam, 2 kurulum/çıktı hatası, 130 iptal anlamına gelir. Eşleşme bir araştırma ipucudur, ihlal kanıtı değildir; eşleşme olmaması da güvenliği kanıtlamaz. Kural başlığını ve bulgu bağlamını inceleyin. İçeriği tanımadan önce karantinayı çözün.
 
+## MFT eşleşmeleri ve kurtarma { #mft-recovery }
+
+MFT dosyaları ayrı boyut sınırıyla (varsayılan 512 MiB) tek tek ham baytlar olarak taranır. Eşleşme konumlarındaki kayıtlar ayrıştırılır ve yerleşik DATA akışları bağımsız olarak yeniden taranır. Yalnızca tek başına eşleşen akışlar kurtarılır. Meta veri, kayıtlar arası ve yerleşik olmayan eşleşmeler içerik çıkarılmadan raporlanır.
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+Varsayılan kurtarma sınırı çalıştırma başına 1000 akıştır. Sınırlar, hasarlı kayıtlar ve zaman aşımları görünürdür. Kaydedilen adlar karantina uzantısıyla biter; kanıt dizinleri yeniden oluşturulmaz.
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## Ayrıntılar { #further-details }
 
 - [Motor: Boreal](https://github.com/vthib/boreal)

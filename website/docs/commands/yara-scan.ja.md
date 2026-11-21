@@ -34,6 +34,16 @@ juntei yara-scan -d evidence/ --rules local-rules/ -o yara-offline/
 
 終了コードは、0が完了、3が対象範囲の未完了、2が準備・出力エラー、130がキャンセル。一致は調査の手がかりであり、侵害の証明ではない。一致がないことも安全の証明にはならない。ルール名とアーティファクトの文脈を確認する。隔離されたペイロードの識別には事前の復号が必要。
 
+## MFTの一致と復元 { #mft-recovery }
+
+MFTは専用のサイズ上限（既定512 MiB）で、一度に1つずつ生のバイト列をスキャンする。一致位置のレコードを解析し、レジデントDATAストリームを個別に再スキャンする。ストリーム単独で一致した内容だけを復元する。メタデータのみ、レコードをまたぐ一致、非レジデントの内容はファイルを出力せず報告する。
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+復元数の既定上限は実行ごとに1000ストリーム。制限到達、破損レコード、タイムアウトは明示する。保存名は隔離用拡張子で終わり、証拠側のディレクトリ構成は再作成しない。
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## 詳細情報 { #further-details }
 
 - [エンジン: Boreal](https://github.com/vthib/boreal)

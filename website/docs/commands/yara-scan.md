@@ -34,6 +34,16 @@ All regular files are eligible, including recovered quarantine payloads. Symboli
 
 Exit codes: 0 means complete, 3 incomplete coverage, 2 setup/output failure, and 130 cancellation. A match is a hunting lead, not proof of compromise; no matches do not prove safety. Review rule titles and artifact context. Quarantine must be decoded before its payloads can be identified.
 
+## MFT matches and recovery { #mft-recovery }
+
+MFTs are scanned as raw bytes, one at a time, with a separate size limit (default: 512 MiB). Records at raw match offsets are parsed, and their resident DATA streams are scanned independently. Only streams that match on their own are recovered. Metadata-only, cross-record and nonresident matches are reported without exporting file content.
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+Recovery is limited to 1000 streams per run by default. Limits, damaged records and timeouts remain visible. Saved names end in the quarantine extension; evidence directories are not recreated.
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## Further Details { #further-details }
 
 - [Engine: Boreal](https://github.com/vthib/boreal)

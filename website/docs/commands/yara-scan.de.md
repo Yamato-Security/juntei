@@ -34,6 +34,16 @@ Alle regulären Dateien sind geeignet, auch wiederhergestellte Quarantäneinhalt
 
 Exit-Codes: 0 bedeutet vollständig, 3 unvollständige Abdeckung, 2 Einrichtungs-/Ausgabefehler und 130 Abbruch. Ein Treffer ist ein Ermittlungsansatz, kein Kompromittierungsnachweis. Keine Treffer beweisen keine Sicherheit. Regeltitel und Artefaktkontext prüfen. Quarantäneinhalte müssen vor ihrer Identifizierung entschlüsselt werden.
 
+## MFT-Treffer und Wiederherstellung { #mft-recovery }
+
+MFTs werden einzeln als Rohbytes mit eigener Größenbegrenzung untersucht (Standard: 512 MiB). Datensätze an Trefferpositionen werden geparst und ihre residenten DATA-Streams separat geprüft. Nur eigenständig passende Streams werden wiederhergestellt. Metadaten-, datensatzübergreifende und nichtresidente Treffer werden ohne Dateiinhalte gemeldet.
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+Standardmäßig werden höchstens 1000 Streams pro Lauf wiederhergestellt. Grenzen, beschädigte Datensätze und Zeitüberschreitungen bleiben sichtbar. Gespeicherte Namen erhalten die Quarantäne-Endung; Beweisverzeichnisse werden nicht nachgebildet.
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## Weitere Informationen { #further-details }
 
 - [Engine: Boreal](https://github.com/vthib/boreal)

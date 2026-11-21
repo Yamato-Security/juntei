@@ -34,6 +34,16 @@ Se admiten todos los archivos normales, incluidos los recuperados de cuarentena.
 
 Códigos de salida: 0 indica finalización, 3 cobertura incompleta, 2 fallo de configuración/salida y 130 cancelación. Una coincidencia es una pista, no prueba de compromiso; ninguna coincidencia no garantiza seguridad. Revisa el título de la regla y el contexto del artefacto. Descifra la cuarentena antes de identificar su contenido.
 
+## Coincidencias MFT y recuperación { #mft-recovery }
+
+Las MFT se analizan una a una como bytes sin procesar, con un límite propio (512 MiB por defecto). Se interpretan los registros en las posiciones coincidentes y se vuelven a analizar sus flujos DATA residentes por separado. Solo se recuperan los flujos que coinciden por sí mismos. Las coincidencias de metadatos, entre registros o no residentes se informan sin exportar contenido.
+
+`--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
+
+La recuperación se limita por defecto a 1000 flujos por ejecución. Se indican los límites, registros dañados y tiempos agotados. Los nombres guardados llevan una extensión de cuarentena; no se recrean los directorios de las pruebas.
+
+`YaraMFTResults.csv` / `YaraMFTResults.jsonl` · `RecoveredMFT/` · `.quarantined`
+
 ## Más detalles { #further-details }
 
 - [Motor: Boreal](https://github.com/vthib/boreal)
