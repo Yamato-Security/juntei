@@ -60,9 +60,3 @@ Juntei および Yamato Security パーサーの寄稿者、レビュー担当�
 ## ライセンス { #license }
 
 Juntei は、[Reciprocal Public License 1.5](https://github.com/Yamato-Security/juntei/blob/main/LICENSE) (RPL-1.5) および著作権白船セキュリティ株式会社に基づいてリリースされています。そのソース コードは、バージョン 1.0.0 よりも前に AGPLv3 で公開されていました。クレートおよびそれを使用して構築されたその他のサードパーティ コードおよびデータのライセンスは、[`THIRD_PARTY_NOTICES`](https://github.com/Yamato-Security/juntei/tree/main/THIRD_PARTY_NOTICES) にあります。
-
-## YARAスキャン
-
-[Boreal](https://github.com/vthib/boreal) がクロスプラットフォームのRust製YARAエンジンを提供している。
-[YARA Forge](https://github.com/YARAHQ/yara-forge) は各ルール作者の成果から、Core、Extended、Fullを構成している。
-ルールは `yara-scan` で要求した場合にダウンロードする。著作権表示を保持し、各ソースのライセンスを確認する。

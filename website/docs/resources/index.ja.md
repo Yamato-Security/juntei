@@ -69,9 +69,3 @@
 
 !!! note "外部材質の変更"
     影響を受ける Windows バージョンと収集したデータに対する申し立てを確認します。有用な記事では、普遍的な規則ではなく、特定のオペレーティング システムの世代、パーサーのバージョン、または実験について説明できます。
-
-## YARAハンティング
-
-- [YARA Forge](https://github.com/YARAHQ/yara-forge) — Core、Extended、Fullパッケージ。
-- [Boreal](https://github.com/vthib/boreal) — `yara-scan` のRust製エンジン。
-- [Juntei YARAスキャンガイド](../commands/yara-scan.md) — オフラインルール、対象範囲、出力フィールド。
