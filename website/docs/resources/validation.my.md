@@ -124,6 +124,20 @@ database တစ်ခုနှင့် legacy Edge ၏ history၊ download မ�
 သီးခြား decode လုပ်ခဲ့ပါသည်။ Database များက ဖျက်ထားသည်ဟု အမှတ်အသားပြုထားသော record များကို နှစ်ဖက်စလုံးမှ
 ချန်လှပ်ထားခဲ့ပါသည်။
 
+## Windows Search အညွှန်း { #windows-search-index }
+
+`parse-ese windows-search` သည် `Windows.edb` ကို
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) ၏ ESE reader ဖြင့် ဖတ်ပါသည်။ ၎င်းကို dirty
+အဖြစ် ထားရှိသော အများသုံး အညွှန်း သုံးခုပေါ်တွင် libyal ၏ `esedbexport` နှင့် Stroz Friedberg ၏ SIDR တို့နှင့်
+နှိုင်းယှဉ်ခဲ့ပါသည်: Plaso ၏ Windows 7 အညွှန်း (`SystemIndex_0A`) နှင့် DFIR Artifact Museum ၏ Windows 10 နှင့်
+Windows 11 အညွှန်းများ (`SystemIndex_PropertyStore`၊ ESE format revision 110 နှင့် 200) ဖြစ်ပါသည်။ Path၊ ပိုင်ရှင်၊
+အမျိုးအစား၊ ကွန်ပျူတာ အမည်၊ အရွယ်အစားနှင့် အချိန်တိုင်း နှိုင်းယှဉ်ရာတွင် တူညီခဲ့ပါသည်: Windows 11 property store ၏
+value 6,691 ခုကို `esedbexport` နှင့်၊ Windows 10 property store ၏ value 6,332 ခုကို SIDR နှင့်၊ Windows 7 string
+များကို ၎င်းတို့၏ encoding သုံးမျိုးဖြင့် `esedbexport` နှင့် နှိုင်းယှဉ်ခဲ့ပါသည်။ Windows 10 အညွှန်း၏ တစ်စိတ်တစ်ပိုင်းသည်
+၎င်း၏ branch page များက မရောက်ရှိသော leaf page များတွင်သာ ရှိပါသည်။ Tool နှစ်ခုလုံးက ၎င်းတို့ကို ဖတ်ပြီး Juntei
+ကလည်း ဖတ်ပါသည်။ Gatherer column တစ်ခုသည် ဒီဇိုင်းအရ ကွဲပြားပါသည်: item ကို crawl လုပ်ပြီးသည်နှင့် ESE က `Priority`
+ကို NULL အဖြစ် အမှတ်အသားပြုပြီး tool နှစ်ခုလုံးက ၎င်းကို record ထဲတွင် ကျန်ရှိသော byte များမှ ပုံနှိပ်ဖော်ပြပါသည်။
+
 ## Outlook { #outlook }
 
 `parse-file outlook` သည် PST၊ OST၊ `.msg` နှင့် `.oft` ဖိုင်များကို
@@ -165,6 +179,40 @@ compound-file နှင့် Jump List လုပ်ငန်းကို အသ
 Jump List 77 ခုတွင် 100 ns အထိ timestamp များ အပါအဝင် မျှဝေထားသော နှိုင်းယှဉ် cell 13,057 ခုလုံးသည် ကိုးကား parser နှင့်
 ကိုက်ညီခဲ့ပါသည်။ ကိုးကား parser က ငြင်းပယ်ခဲ့သော ဖိုင်ခြောက်ခု (ဗလာ custom list များ၊ footer ပျောက်နေခြင်း သို့မဟုတ်
 Jump List မဟုတ်သော ဖိုင်) ကို Juntei က decode လုပ်ခဲ့ခြင်း သို့မဟုတ် ရှင်းလင်းစွာ အစီရင်ခံခဲ့ခြင်း ဖြစ်ပါသည်။
+
+## အမှိုက်ပုံး (Recycle Bin) { #recycle-bin }
+
+`parse-file recycle-bin` သည် Juntei ၏ ကိုယ်ပိုင် parser ဖြစ်ပါသည်။ [rifiuti2](https://github.com/abelcheung/rifiuti2) ၏
+အများသုံး sample များပေါ်တွင် rifiuti2 ဖတ်နိုင်သော record တိုင်း၏ index၊ ဖျက်ချိန် (rifiuti2 ပြသသည့်အတိုင်း စက္ကန့်အထိ)၊
+bin မှ ဖယ်ရှားမှု အခြေအနေ၊ အရွယ်အစားနှင့် path တို့သည် တူညီခဲ့ပါသည်- record 92 ခု ဖြစ်ပြီး 67 ခုသည် Windows 95 မှ
+Server 2003 အထိ INFO2 ဖိုင် ဆယ့်တစ်ခုမှ ဖြစ်ကာ 25 ခုသည် Windows Vista နှင့် Windows 10 `$I` ဖိုင်များ ပါသော ဖိုင်တွဲ
+သုံးခုမှ ဖြစ်ပါသည်။ INFO2 ၏ ANSI path များသည် rifiuti2 ၏ ကိုယ်ပိုင် test များ အသုံးပြုသော code page များတွင်
+ကိုက်ညီခဲ့ပါသည်။ Juntei သည် rifiuti2 ငြင်းပယ်သည့်အရာများကိုလည်း ဖတ်ပါသည်- `$I` ဗားရှင်း နှစ်မျိုးလုံး ရောနှောနေသော
+ဖိုင်တွဲ၊ path မပါသော `$I` header နှင့် ဖြတ်တောက်ခံထားရသော record များ ဖြစ်ပြီး တစ်ခုချင်းစီ၏ ပျက်စီးမှုကို
+အစီရင်ခံပါသည်။ Plaso ၏ test ဒေတာရှိ `$I` နှင့် INFO2 ဖိုင်များသည် Plaso ၏ test များ မျှော်လင့်ထားသော အချိန်၊
+အရွယ်အစား၊ path၊ index နှင့် drive များကို ပေးပါသည်။ Digital Corpora ၏ အများသုံး M57-Jean disk image (Windows XP) ကို
+`auto-parse --e01` ဖြင့် ဖတ်သောအခါ INFO2 record သည် rifiuti2 နှင့် ကိုက်ညီပြီး ၎င်းဘေးရှိ recycle လုပ်ထားသော ဖိုင်
+`Dc1.jpg` ၏ အမည်သည်လည်း Juntei ပေးသော အမည်နှင့် တူညီပါသည်။
+
+## RDP ဘစ်မက် ကက်ရှ် { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` သည် Juntei ၏ ကိုယ်ပိုင် parser ဖြစ်ပါသည်။ CODE BLUE 2026 CTF collection ၏ host ခြောက်ခုအနက်
+တစ်ခုဖြစ်သော kofu ပေါ်တွင် ၎င်း၏ `Cache????.bin` ဖိုင် သုံးခုမှ tile 1,911 ခုစလုံးသည်
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) ထုတ်ပေးသော ပုံနှင့် pixel တိုင်း တူညီပါသည်။ ApoorvCTF 2025 ၏
+"Phantom Connection" challenge ၏ အများသုံး `Cache0000.bin` မှ tile 1,980 ခုလည်း ထိုနည်းတူ ဖြစ်ပြီး ၎င်းတို့အနက်
+105 ခုသည် 64 × 48 pixel ဖြစ်ပါသည်။ bmc-tools သည် tile တိုင်းကို 64 pixel အကျယ်ဟု ယူဆ၍ ဖတ်သောကြောင့် မျက်နှာပြင်၏
+ညာဘက်အစွန်းရှိ ပိုကျဉ်းသော tile များသည် စောင်းနေသကဲ့သို့ ထွက်လာပါသည်။ Juntei မူ tile တစ်ခုစီကို ၎င်း၏ ကိုယ်ပိုင်
+အကျယ်ဖြင့် ဖတ်ပါသည်။
+
+tile များ ပါဝင်သော အများသုံး `.bmc` cache ကို မတွေ့ရှိခဲ့ပါ- အထက်ပါ sample များတွင် Windows 10 နှင့် နောက်ပိုင်း
+အခြား client များကဲ့သို့ ဗလာ `bcache24.bmc` တစ်ခုသာ ရှိပါသည်။ ထို့ကြောင့် `.bmc` ဖတ်ခြင်းကို format အတိုင်း
+တည်ဆောက်ထားသော ဖိုင်များဖြင့် စမ်းသပ်ခဲ့ပါသည်- color depth လေးမျိုးလုံး၏ compress မလုပ်ထားသော tile များ၊ နောက်တွင်
+ယခင် tile ၏ အဆုံးပိုင်း လိုက်ပါလာသော သေးငယ်သည့် tile များ၊ ပျက်စီးနေသော slot များနှင့် MS-RDPBCGR 3.1.9 ၏ order
+တိုင်းကို အသုံးပြုသော ကျပန်း RLE-compressed 16-bit tile 3,000 ခု ဖြစ်ပါသည်။ ထို tile များတွင် tile ၏ ပထမ row ၏
+အဆုံးကို ကျော်လွန်သွားသော order မရှိပါ။ Juntei နှင့် bmc-tools တို့သည် 3,000 ခုစလုံးကို တူညီသော pixel များအဖြစ်
+decode လုပ်ပါသည်။ order တစ်ခုသည် ပထမ row တွင် စတင်ပြီး ထို row ကို ကျော်လွန်၍ ဆက်သွားသည့်အခါ နှစ်ခု၏ ရလဒ်
+ကွဲပြားပါသည်- Juntei သည် order တစ်ခုလုံးအတွက် ပထမ row ၏ စည်းမျဉ်းများကို ဆက်ထိန်းထားသော specification နှင့်
+FreeRDP ၏ decoder ကို လိုက်နာပြီး bmc-tools မူ order ၏ အလယ်တွင် စည်းမျဉ်းကို ပြောင်းလဲပါသည်။
 
 ## ShimCache { #shimcache }
 

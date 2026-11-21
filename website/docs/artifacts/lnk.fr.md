@@ -1,5 +1,7 @@
 # Raccourcis LNK { #lnk-shortcuts }
 
+Juntei conserve les enregistrements, les métadonnées et les diagnostics d’analyse. Les règles de détection propres aux analyseurs sont évaluées dans Juntei Pro. Les vérifications et profils de politique existants de Persistence Hunter restent disponibles.
+
 ## Que sont les fichiers LNK { #what-lnk-files-are }
 
 Les fichiers Windows Shell Link (`.lnk`) décrivent une cible ainsi que les arguments de lancement, le répertoire de travail, l'icône,
@@ -99,3 +101,5 @@ Les FILETIME de la cible et les horodatages du tracker figurant dans l'en-tête 
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

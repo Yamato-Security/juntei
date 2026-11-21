@@ -27,27 +27,34 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 
 - Hexastrike による [**PyrsistenceSniper**](https://github.com/hexastrike/PyrsistenceSniper) は、永続性チェック カタログ、デフォルトのホワイトリスト、LOLBAS スナップショット、およびネイティブ Rust `persistence-hunter` コマンドの参照動作を提供しました。 MIT ライセンスと著作権表示は `THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt` に保持されます。オリジナルの [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) は、Python プロジェクトにインスピレーションを与えました。完全な系統については、[永続性確認](persistence-hunter/acknowledgements.md)を参照してください。
 
+- Vincent Thiberville による [**Boreal**](https://github.com/vthib/boreal) は、`yara-scan` コマンドに組み込まれた YARA 互換の Rust エンジンです（MIT または Apache-2.0。表示は `THIRD_PARTY_NOTICES/crates.txt` にあります）。
+- YARAHQ の Florian Roth が管理する [**YARA Forge**](https://github.com/YARAHQ/yara-forge) は、`yara-scan` が要求時にダウンロードする Core、Extended、Full のルールパッケージをまとめています。ルールはそれぞれの作者の著作物であり、各自のライセンスに従います。Juntei はダウンロードしたソースを結果と一緒に保存します。
+
 - Maxim Suhanov の **regf 仕様** および **yarp** は、レジストリ構造、トランザクション ログの再生、および削除されたレコードの回復を通知しました。彼の **dfir_ntfs** は、INDX レコードとインデックス スラック カービングの参照でした。
 - Harel Segev の **INDXRipper** は、インデックス スラックからファイル名を切り出すためのさらなる参考資料です。
 - **dfir_ntfs**、Joakim Schicht の **LogFileParser**、および Stroz Friedberg の **ntfs-linker** が通知`$LogFile` の検証と解釈。 Velocidex の **go-ntfs** は、公開された NTFS テスト証拠を提供しました。
 - ヨアヒム・メッツ / リビア プロジェクト **libregf**、**libfsntfs**、**libscca**、 **libfwsi** および **libesedb** は、詳細な形式調査と独立した解析リファレンスを提供します。
 - Fox-IT の **dissect.esedb**、**dissect.ntfs**、**dissect.target** は、検証で使用した SRUM、UAL、`$Secure:$SDS`、SAM、Defender の独立した解釈を提供しました。
+- Stroz Friedberg の **SIDR** と libyal の `esedbexport` は、Windows Search のインデックスの独立した読み取り結果となりました。また、そのテーブルについては libyal の **esedb-kb** のノートを、レコード形式については Microsoft が公開している **Extensible Storage Engine** のソースを参考にしています。
 - **Sleuth Kit** の `fsstat` は、`mkntfs` で作成されたボリュームの NTFS ブート セクターのリファレンスでした。
 - Eric Zimmerman のツールの一部は、比較に使用されるフィールド名と検査者の期待値を確立しました。
 - **regipy**、**python-registry**、**Notatin**、および **artemis** が提供するレジストリ実装、テスト、またはサンプル解釈。
 - **LnkParse3**、AbdulRhmanAlfaifi の **lnk_parser** および **jumplist_parser**、および JLECmd は独立して提供されますLNK/ジャンプ リストの動作と公開テスト ケース。
 - Security Ronin の **prefetch-forensic** および **forensicnomicon** プロジェクトは、Juntei の高価値 Prefetch/Amcache/ShimCache を通知しました。観察。
 - **defender-dump** および dissect.target は、Defender 隔離構造と安全な抽出動作を理解するための個別の実装を提供します。
+- Orange Cyberdefense の **wddh-parser** は Defender の検出履歴の形式を明らかにし、そのサンプルには WMI が返した値が添えられています。Plaso の `windefender_history` パーサーと Velociraptor の `Windows.Applications.DefenderHistory` アーティファクトは、独立した参考実装となりました。
 - **Plaso**、**Chainsaw**、および **Velociraptor** は、複数のアーティファクトにわたるパーサー比較、テスト証拠、またはコレクション指向の参照動作を提供しました。
 - Obsidian Forensics の **Hindsight** と Velocidex の **SQLiteHunter** の定義は、ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴の参考資料となりました。
+- Abel Cheung の **rifiuti2** はごみ箱の `$I` ファイルと INFO2 の参考実装となり、libyal の **dtformats** の文書が両方の形式を説明しています。
+- ANSSI の **bmc-tools** と、その形式に関する CERT-FR の文書、BSI の **RdpCacheStitcher**、**Velociraptor** の RDPCache アーティファクト、**dissect.target** の RDP キャッシュ プラグインは、RDP ビットマップキャッシュの参考となりました。**FreeRDP** の永続ビットマップキャッシュとインターリーブ RLE デコーダーも参考にしています。
 
 ## 仕様と研究 { #specifications-and-research }
 
-シェル リンク、複合バイナリ ファイル、NTFS/SAM プロトコル、レジストリ/サービス/タスク構造、および API ドキュメントのオープン仕様を公開してくださった Microsoft に感謝します。また、これらのアーティファクトを実務者に理解できるようにした AppCompatCache、Amcache、SRUM、Prefetch、レジストリ、および NTFS フォレンジック研究の作成者にも感謝します。
+シェル リンク、複合バイナリ ファイル、NTFS/SAM プロトコル、レジストリ/サービス/タスク構造、リモート デスクトップ プロトコル、および API ドキュメントのオープン仕様を公開してくださった Microsoft に感謝します。また、これらのアーティファクトを実務者に理解できるようにした AppCompatCache、Amcache、SRUM、Prefetch、レジストリ、および NTFS フォレンジック研究の作成者にも感謝します。
 
 ## テスト証拠 { #test-evidence }
 
-Andrew Rathbun の [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、Regipy、Artemis、パーサー テスト リポジトリ、およびその他の適切にライセンスされたコレクションからの公開証拠により、実際の Windows データに対する回帰テストが可能になります。 Juntei は、付属のテスト ファイルの横に帰属/ライセンス ノートを保持します。
+Andrew Rathbun の [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、rifiuti2、Regipy、Artemis、Orange Cyberdefense の wddh-parser、パーサー テスト リポジトリ、およびその他の適切にライセンスされたコレクションからの公開証拠により、実際の Windows データに対する回帰テストが可能になります。 Juntei は、付属のテスト ファイルの横に帰属/ライセンス ノートを保持します。
 
 ## 貢献者 { #contributors }
 

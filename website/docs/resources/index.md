@@ -56,6 +56,12 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
 - [defender-dump](https://github.com/knez/defender-dump) — a separate research/extraction implementation.
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — handling and analysis resources.
 
+## YARA hunting
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): the Core, Extended and Full rule packages.
+- [Boreal](https://github.com/vthib/boreal): the portable Rust engine behind `yara-scan`.
+- [Writing YARA rules](https://yara.readthedocs.io/en/stable/writingrules.html): the rule language reference.
+
 ## Juntei parser projects
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

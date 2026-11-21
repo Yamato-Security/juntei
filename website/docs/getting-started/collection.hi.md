@@ -18,10 +18,13 @@ Juntei Windows से पहले ही एकत्र की गई files �
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | User Access Logging (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer और लेगेसी Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Windows Search index | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb` (Windows 7 से 11 21H2 तक; 22H2 से `Windows.db` और `Windows-gather.db`) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (Outlook 2010 से पहले `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft`, और `.msg` files, वे जहाँ कहीं भी save की गई हों |
 | वेब ब्राउज़र | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` और अन्य browsers के profile folders |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` और अन्य उपयोगकर्ता/system स्थान |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` और `CustomDestinations` |
+| RDP बिटमैप कैश | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (Windows XP और उससे पहले `%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\`) |
+| Recycle Bin | हर volume पर `$Recycle.Bin\<SID>\$I*` और `$R*` (Windows XP और उससे पहले `RECYCLER\<SID>\INFO2` और `D*`) |
 | ShimCache | `SYSTEM` hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender quarantine | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Machine registry | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |
@@ -46,6 +49,9 @@ Juntei Windows से पहले ही एकत्र की गई files �
   तब तक वहाँ रहते हैं जब तक browser checkpoint नहीं करता।
 - पूरा `WebCache` folder संग्रहित करें: उपयोगकर्ता के logged on रहते Windows `WebCacheV01.dat` को खुला
   रखता है, और उसके सबसे नए बदलाव केवल `V01*.log` transaction logs में होते हैं, जिन्हें Juntei replay नहीं करता।
+- Windows Search का पूरा `Applications\Windows` folder किसी image, volume shadow copy से, या `WSearch`
+  service को रोकने के बाद संग्रहित करें: service के चलते रहते `Windows.edb` खुला रहता है, और उसके सबसे नए
+  बदलाव केवल `MSS*.log` transaction logs में होते हैं, जिन्हें Juntei replay नहीं करता।
 - Outlook की OST और PST files को Outlook बंद करके, या disk image या volume shadow copy से संग्रहित
   करें: Outlook चलते समय उन्हें खुला रखता है। Default folders के बाहर भी PSTs खोजें: उपयोगकर्ता archives को
   अन्य folders, drives और file shares पर ले जाते हैं।

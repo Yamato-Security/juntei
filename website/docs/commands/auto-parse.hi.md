@@ -31,7 +31,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-पार्सरों को पथ चाहिए; Juntei पार्सरों द्वारा पढ़ी जाने वाली फ़ाइलों को सीमित बफ़र से निजी अस्थायी स्थान में कॉपी करता है: रजिस्ट्री हाइव और उनके ट्रांज़ैक्शन लॉग, NTFS मेटाडेटा फ़ाइलें, डेटाबेस, Prefetch फ़ाइलें, शॉर्टकट, Jump List, Outlook फ़ाइलें और Defender क्वारंटीन फ़ोल्डर। बाकी हर फ़ाइल अपने मूल संशोधन समय वाली खाली प्लेसहोल्डर बनती है, इसलिए डायरेक्टरी और पथ डिस्क जैसे ही दिखते हैं। persistence-hunter किसी प्लेसहोल्डर की सामग्री इमेज से तभी पढ़ता है जब उसे ज़रूरत हो, जैसे किसी परसिस्टेंस प्रविष्टि द्वारा संदर्भित निष्पादन योग्य फ़ाइल। **परिणामों के अलावा कॉपी की गई फ़ाइलों के लिए पर्याप्त स्थान रखें।** समर्थित होने पर शून्य क्षेत्रों को स्पार्स रूप में लिखा जाता है। नाम, संरचना, हार्ड लिंक और संशोधन समय सुरक्षित रहते हैं। LNK और Jump List के स्रोत समय मूल NTFS मेटाडेटा स्नैपशॉट से आते हैं, अस्थायी फ़ाइलों से नहीं। पार्सर त्रुटियों सहित सामान्य समापन प्रतियाँ हटाता है; जबरन समाप्ति उन्हें छोड़ सकती है। स्रोत केवल पढ़ने योग्य रहता है; लंबित VHDX लॉग सिर्फ़ मेमोरी में लागू होते हैं।
+पार्सरों को पथ चाहिए; Juntei पार्सरों द्वारा पढ़ी जाने वाली फ़ाइलों को सीमित बफ़र से निजी अस्थायी स्थान में कॉपी करता है: रजिस्ट्री हाइव और उनके ट्रांज़ैक्शन लॉग, NTFS मेटाडेटा फ़ाइलें, डेटाबेस, Prefetch फ़ाइलें, शॉर्टकट, Jump List, Outlook फ़ाइलें, PSReadLine इतिहास फ़ाइलें, रीसायकल बिन की इंडेक्स फ़ाइलें, RDP बिटमैप कैश, Defender पहचान इतिहास फ़ाइलें और Defender क्वारंटीन फ़ोल्डर। बाकी हर फ़ाइल अपने मूल संशोधन समय वाली खाली प्लेसहोल्डर बनती है, इसलिए डायरेक्टरी और पथ डिस्क जैसे ही दिखते हैं। persistence-hunter किसी प्लेसहोल्डर की सामग्री इमेज से तभी पढ़ता है जब उसे ज़रूरत हो, जैसे किसी परसिस्टेंस प्रविष्टि द्वारा संदर्भित निष्पादन योग्य फ़ाइल। **परिणामों के अलावा कॉपी की गई फ़ाइलों के लिए पर्याप्त स्थान रखें।** समर्थित होने पर शून्य क्षेत्रों को स्पार्स रूप में लिखा जाता है। नाम, संरचना, हार्ड लिंक और संशोधन समय सुरक्षित रहते हैं। LNK और Jump List के स्रोत समय मूल NTFS मेटाडेटा स्नैपशॉट से आते हैं, अस्थायी फ़ाइलों से नहीं। पार्सर त्रुटियों सहित सामान्य समापन प्रतियाँ हटाता है; जबरन समाप्ति उन्हें छोड़ सकती है। स्रोत केवल पढ़ने योग्य रहता है; लंबित VHDX लॉग सिर्फ़ मेमोरी में लागू होते हैं।
 
 होस्ट खोज, CSV/JSON/JSONL और `-j` सामान्य पाइपलाइन इस्तेमाल करते हैं। `manifest.json` का `Image` मूल इमेज बताता है; `EvidenceRoot` अंदर का सापेक्ष पथ बताता है। पढ़ने की त्रुटियाँ और असुरक्षित नाम `ImageErrors` तथा `manifest.csv` की असफल पंक्तियों में दर्ज होते हैं। पढ़े जा सकने वाले परिणाम सुरक्षित रहते हैं; अधूरा इनपुट कोड 1 देता है। खतरनाक या अस्पष्ट नाम बदले नहीं जाते। नामित NTFS स्ट्रीम अतिरिक्त फ़ाइलों की तरह निकाली नहीं जातीं; सामान्य फ़ाइलों के रूप में एकत्र आर्टिफ़ैक्ट उपलब्ध रहते हैं।
 
@@ -162,12 +162,19 @@ computer के लिए ये jobs चलाता है। Jobs manual pars
 - User Access Logging (UAL)
 - Web browser का history, downloads, cookies और form history (Chromium- और Firefox-based browsers)
 - Internet Explorer और legacy Edge का WebCache: history, downloads, cookies और cache entries
+- Windows Search index: हर indexed फ़ाइल, folder, e-mail और web page, उसके metadata और text extract के
+  साथ
 - Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar
   items और tasks
 - LNK shortcuts
 - Jump Lists
+- Recycle Bin: deleted items के मूल paths, sizes, deletion times और users
+- RDP bitmap caches: उपयोगकर्ता द्वारा देखी गई remote screens के tiles, हर cache file की collage
+  image के साथ
 - ShimCache
 - Persistence Hunter (allow/block profiles के साथ 131 cross-source persistence checks)
+- Defender detection history: हर detection उसके status, user, process और resources के साथ,
+  उन threats सहित जिन्हें कभी quarantine नहीं किया गया
 - Defender quarantine metadata
 - Open और Save As संवाद इतिहास
 - सभी registry keys और values, recover योग्य deleted डेटा सहित
@@ -262,13 +269,16 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -289,6 +299,9 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -327,9 +340,14 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -351,14 +369,15 @@ CSV अलग-अलग tables रखता है क्योंकि प्�
 | `Communication` | Outlook PST, OST, MSG और OFT files: folders, items, recipients, attachments, contacts, calendar items और tasks |
 | `ExternalDevices` | USB devices और volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open और Save As संवाद, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache, Windows Search index |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies और routes; SRUM connections, traffic और push notifications |
-| `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares; User Access Logging (किसी server के roles के clients) |
+| `LateralMovement` | उपयोगकर्ताओं के outbound Remote Desktop, PuTTY और WinSCP connections, mapped drives और shares; RDP bitmap caches (remote screens के tiles); User Access Logging (किसी server के roles के clients) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM और DAM, FeatureUsage और pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU गतिविधि, UserAssist |
 | `Registry` | सामान्य hive keys और values, recover किए गए records सहित |
-| `SecurityProducts` | Defender quarantine metadata और वैकल्पिक रूप से extract किया गया content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
+| `SecurityProducts` | Defender detection history; Defender quarantine metadata और वैकल्पिक रूप से extract किया गया content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
+| `ShellHistory` | PowerShell PSReadLine कमांड इतिहास; फ़ाइल संशोधन समय मेटाडेटा है, कमांड निष्पादन समय नहीं होते |
 | `SystemInformation` | नाम, Windows संस्करण, time zone, अंतिम shutdown, profiles, SIDs और audit policy; SRUM energy/capacity, identity maps और अज्ञात providers |
 
 श्रेणियाँ जाँच को व्यवस्थित करने में मदद करती हैं; वे किसी विशेष गतिविधि का प्रमाण नहीं हैं। उदाहरण के लिए,
@@ -372,15 +391,15 @@ Amcache और Jump Lists प्रत्येक के लिए उनकी
 `NetworkActivity`, `ProcessExecution` और `SystemInformation` में रखी जाती हैं, एक साझा
 `SystemInformation/SRUM-logs.txt` file के साथ। कोई `logs/` subdirectories नहीं बनाई जातीं।
 
-Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Default CSV filenames `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv` और
-`DefenderQuarantine.csv` हैं। Registry से प्राप्त tables `Registry-` prefix का उपयोग करती हैं, जिनमें
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv` हैं। Registry से प्राप्त tables `Registry-` prefix का उपयोग करती हैं, जिनमें
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` और `Registry-SystemInfo.csv` शामिल हैं।
 सामान्य hive keys और values `Registry-Dump.csv` में होते हैं। Amcache tables
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` और `Registry-Amcache-Summary.csv` हैं। Jump Lists
+Registry-Amcache-Files.csv और `Registry-Amcache-Summary.csv` हैं। Jump Lists
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` और
 `JumpLists-CustomDestinations.csv` का उपयोग करती हैं। Amcache या Jump Lists की कोई subdirectories नहीं होतीं।
 SRUM tables अपनी श्रेणी के ठीक अंतर्गत `SRUM-` filenames का उपयोग करती हैं, उदाहरण के लिए
@@ -388,6 +407,9 @@ SRUM tables अपनी श्रेणी के ठीक अंतर्ग�
 User Access Logging tables `LateralMovement` में होती हैं, हर table के लिए एक file, जैसे
 `UAL-Clients.csv` और `UAL-SystemIdentity.csv`, साथ में `UAL-logs.txt`;
 [उपयोगकर्ता एक्सेस लॉगिंग (UAL)](../artifacts/ual.md#automatic-parsing) देखें।
+RDP bitmap cache records `LateralMovement/RdpCache.csv` में होते हैं, और हर cache file का collage
+`LateralMovement/RdpCache/<user>/<cache file>/` में होता है, और `--extract-rdp-tiles` दिए जाने पर उसके पास
+हर tile भी; [RDP बिटमैप कैश](../artifacts/rdp-cache.md#automatic-parsing) देखें।
 Web browser tables `BrowserActivity` में होती हैं: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` और `Browser-FormHistory.csv`, साथ में `Browser-logs.txt`;
 [वेब ब्राउज़र](../artifacts/browser.md#automatic-parsing) देखें।
@@ -507,10 +529,12 @@ output format में भेद करते हैं। सफल run के
 parser या export विफल हो तो उन्हें बनाए रखा जाता है। अतिरिक्त processing समय और अस्थायी disk space की योजना बनाएँ।
 
 **JSON mode** में, Juntei साक्ष्य को फिर से parse किए बिना मौजूदा परिणामों को compact JSONL में stream करता है।
-Amcache reports को native JSONL जैसे ही अलग-अलग summary, finding, file और device
+Amcache reports को native JSONL जैसे ही अलग-अलग summary, file और device
 records में विस्तारित किया जाता है। **JSONL mode** में, मौजूदा annotated records को सीधे संयुक्त किया जाता है।
 सभी modes समान SIEM record संरचना का उपयोग करते हैं। Dataset native timestamps और आर्टिफ़ैक्ट
 fields बनाए रखता है; यह कोई सामान्य event timestamp नहीं गढ़ता और न ही विषम आर्टिफ़ैक्ट को वैश्विक रूप से sort करता है।
+
+`Findings` तालिका केवल पुराने रिपोर्ट में मौजूद होने पर सुरक्षित रखी जाती है; नया पार्सर आउटपुट इसे नहीं बनाता।
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
@@ -557,6 +581,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -576,8 +601,9 @@ Display Settings:
 जहाँ व्यावहारिक हो, नई output directory का उपयोग करें। `-C` इस run के लिए केवल सटीक उत्पन्न
 targets को हटाता या overwrite करता है, ताकि अब अनुपस्थित कोई आर्टिफ़ैक्ट पुराना परिणाम न छोड़ सके। यह
 असंबंधित files या पूरे output tree को delete नहीं करता। यह parsing से पहले प्रत्येक computer की
-`SecurityProducts/DefenderQuarantined/` directory, और पिछले flat layout की आरक्षित `defender-quarantined/`
-directory को भी हटाता है, चाहे नया run `-x` का उपयोग करे या नहीं।
+`SecurityProducts/DefenderQuarantined/` और `LateralMovement/RdpCache/` directories, और पिछले flat layout की
+आरक्षित `defender-quarantined/` directory को भी हटाता है, चाहे नया run `-x` या `--extract-rdp-tiles` का
+उपयोग करे या नहीं।
 
 पुराने flat layout से बदलते समय नई output directory का उपयोग करें। पुरानी CSV/JSON files
 स्वचालित रूप से स्थानांतरित या delete नहीं की जातीं।
@@ -603,3 +629,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 मौजूदा `-j, --json-timeline` एक्सपोर्ट पहले की तरह नेटिव रिकॉर्ड की एक संयुक्त JSONL फ़ाइल ही है। यह पार्सरों के स्कीमा सुरक्षित रखता है; यह न तो टाइमस्टैम्प फ़ील्ड को विस्तारित करता है और न ही ईवेंट सॉर्ट करता है। साक्ष्य-स्तर की समीक्षा के लिए इसे और अलग-अलग पार्सरों के परिणामों को सुरक्षित रखें।
+
+## PowerShell इतिहास { #powershell-history }
+
+`PSReadLine` फ़ोल्डर में सीधे मौजूद `<Host>_history.txt` फ़ाइलें रिकर्सिव रूप से खोजी जाती हैं और VHDX/E01 स्टेजिंग में कॉपी होती हैं। फ़ोल्डर के बाहर इसी प्रत्यय वाली अन्य फ़ाइलें शामिल नहीं होतीं; बदले हुए नाम या स्थान वाली प्रतियाँ स्पष्ट रूप से `parse-file powershell-history -f <FILE>` से पार्स करें।
+
+परिणाम `ShellHistory/PowerShellHistory.csv` (या चुने प्रारूप के लिए `.json`/`.jsonl`) में सहेजे जाते हैं, साथ में सामान्य मैनिफ़ेस्ट और पार्सर लॉग प्रविष्टियाँ होती हैं। `FileLastWriteTime` स्रोत फ़ाइल का संशोधन समय है, जिसमें मूल इमेज मेटाडेटा शामिल है; यह कभी कमांड निष्पादन समय नहीं है। `auto-parse -Z` अन्य आउटपुट समयों के साथ इसका प्रदर्शित ऑफ़सेट बदलता है; स्वतंत्र पार्सर में `-Z` विकल्प नहीं है। संयुक्त `-j` टाइमलाइन में इतिहास की पंक्तियाँ शामिल होती हैं। उनका कोई समय नहीं होता, इसलिए `super-timeline` उनसे कोई इवेंट नहीं बनाता और उन्हें बिना समय वाले रिकॉर्ड के रूप में गिनता है। [PowerShell इतिहास](../artifacts/powershell-history.md) देखें।

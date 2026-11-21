@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei သည် artifact မှတ်တမ်းများ၊ metadata နှင့် parsing စစ်ဆေးချက်များကို ထိန်းသိမ်းထားသည်။ Parser ဆိုင်ရာ detection rules များကို Juntei Pro တွင် စစ်ဆေးသည်။ Persistence Hunter ၏ လက်ရှိ checks နှင့် policy profiles များကို ဆက်လက်အသုံးပြုနိုင်သည်။
+
 ## Jump Lists ဆိုသည်မှာ { #what-jump-lists-are }
 
 Jump Lists သည် taskbar နှင့် Start-menu ရှိ အပလီကေးရှင်း entry များမှ ပြသသော menu များ၏ နောက်ကွယ်ရှိ ဒေတာ ဖြစ်သည်။
@@ -109,3 +111,5 @@ JSON/JSONL သည် ထို့အပြင် DestList header၊ entry တစ
 - [Microsoft: Shell Link format (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [JumpList parser စမ်းသပ်/ကိုးကား project](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

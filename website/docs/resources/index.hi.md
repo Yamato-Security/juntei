@@ -56,6 +56,12 @@
 - [defender-dump](https://github.com/knez/defender-dump) — एक अलग शोध/extraction implementation।
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — प्रबंधन और विश्लेषण संसाधन।
 
+## YARA हंटिंग { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): Core, Extended और Full नियम पैकेज।
+- [Boreal](https://github.com/vthib/boreal): `yara-scan` के पीछे का पोर्टेबल Rust इंजन।
+- [YARA नियम लिखना](https://yara.readthedocs.io/en/stable/writingrules.html): नियम भाषा का संदर्भ।
+
 ## Juntei parser projects { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache)
 
+Juntei preserves artifact records, metadata, and parsing diagnostics. Parser-specific detection rules are evaluated in Juntei Pro. Persistence Hunter remains available with its existing checks and policy profiles.
+
 ## What ShimCache is
 
 Windows' Application Compatibility subsystem caches executable paths and metadata while evaluating
@@ -37,7 +39,6 @@ Collect `SYSTEM`, `SYSTEM.LOG1`, and `SYSTEM.LOG2`. Juntei reads all control set
 - Order is useful but not a universal precise timeline; duplicates occur across control sets/slack.
 - `FromSlack` entries were recovered outside the active cache and require additional caution.
 - A dirty `SYSTEM` without usable logs may omit current records. Read the recovery summary.
-- Findings indicate suspicious naming/path patterns, not malware verdicts.
 
 ## Parse with Juntei
 
@@ -57,7 +58,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## Output fields
@@ -79,19 +80,17 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | Architecture recorded by newer formats (`x64`, `x86`, `ARM64`). |
 | `FileSize`, `LastUpdateTimeUTC` | Windows XP-specific cached metadata where present. |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | Packaged-application identity in supported entries. Publisher ID is context, not signature proof. |
-| `Findings` | Juntei anomaly codes such as relocated system binary or suspicious staging path. Leads only. |
 | `RegistryPath`, `RegistryValueName` | Exact hive key/value source. Preserve for validation. |
 | `CacheValueSize` | Whole registry value size, not the individual entry's `DataSize`. |
 | `IsCurrent` | Whether this entry's control set equals `SYSTEM\Select\Current`; empty if not safely known. |
 | `SelectCurrent`, `SelectDefault`, `SelectLastKnownGood`, `SelectFailed` | Raw `SYSTEM\Select` control-set numbers for context and recovery analysis. |
 
-JSON/JSONL additionally preserves entry data, tags, packaged-app subrecords, structured findings,
-cache problems, and recovery details.
+JSON/JSONL additionally preserves entry data, tags, packaged-app subrecords, cache problems, and recovery details.
 
 ## Investigation strategy
 
 1. Prefer the current control set but retain other sets and slack as historical evidence.
-2. Search paths and findings; do not use `LastModifiedTimeUTC` as execution time.
+2. Search paths; do not use `LastModifiedTimeUTC` as execution time.
 3. Where `Executed == Yes`, corroborate with Prefetch, SRUM, event logs, or other runtime traces.
 4. Match paths against `$MFT`/USN to determine creation, deletion, and metadata history.
 5. Report whether transaction logs were replayed and whether the live cache may not have been flushed.

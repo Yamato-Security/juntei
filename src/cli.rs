@@ -20,7 +20,7 @@ use std::path::PathBuf;
 
 /// The version that the banner, every help screen and `--version` show: the version from
 /// Cargo.toml and the release name after it. Change the release name with each release.
-pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (CODE BLUE Release)");
+pub const VERSION: &str = concat!(env!("CARGO_PKG_VERSION"), " (Dev Build)");
 const AUTHOR: &str =
     "Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)";
 
@@ -131,6 +131,11 @@ pub enum Commands {
         disable_version_flag = true
     )]
     SuperTimeline(SuperTimelineOptions),
+
+    /// Scan collected files with local or YARA Forge rules
+    #[command(author = AUTHOR, version = VERSION, disable_help_flag = true,
+        disable_version_flag = true)]
+    YaraScan(crate::yara_scan::Options),
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -570,6 +575,16 @@ pub enum EseCommands {
         disable_version_flag = true
     )]
     Webcache(WebCacheOptions),
+
+    /// Parse Windows Search indexes (Windows.edb)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-ese windows-search <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    WindowsSearch(WindowsSearchOptions),
 }
 
 #[derive(Args)]
@@ -581,6 +596,16 @@ pub struct FileCommand {
 
 #[derive(Subcommand)]
 pub enum FileCommands {
+    /// Parse Defender detection history
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file defender-history <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    DefenderHistory(DefenderHistoryOptions),
+
     /// Parse Defender quarantine
     #[command(
         author = AUTHOR,
@@ -621,6 +646,17 @@ pub enum FileCommands {
     )]
     Outlook(OutlookOptions),
 
+    /// Parse PowerShell command history (PSReadLine)
+    #[command(
+        name = "powershell-history",
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file powershell-history <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    PowerShellHistory(PowerShellHistoryOptions),
+
     /// Parse Prefetch files
     #[command(
         author = AUTHOR,
@@ -630,6 +666,26 @@ pub enum FileCommands {
         disable_version_flag = true
     )]
     Prefetch(PrefetchOptions),
+
+    /// Parse RDP bitmap caches (Cache????.bin and bcache*.bmc) and save their screen tiles as images
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file rdp-cache <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    RdpCache(RdpCacheOptions),
+
+    /// Parse Recycle Bin index files ($I files and INFO2)
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei parse-file recycle-bin <INPUT> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    RecycleBin(RecycleBinOptions),
 }
 
 /// What `auto-parse` writes.
@@ -685,6 +741,10 @@ pub struct AutoParseOptions {
     #[arg(skip)]
     pub(crate) image_files: Option<PathBuf>,
 
+    /// Save RDP bitmap cache collages (off for the JSONL timeline's second run of the parsers)
+    #[arg(skip = true)]
+    pub(crate) rdp_cache_images: bool,
+
     /// Evidence directory containing one or more collected Windows systems
     #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "EVIDENCE", display_order = 100)]
     pub directory: PathBuf,
@@ -728,6 +788,10 @@ pub struct AutoParseOptions {
     #[arg(help_heading = Some("Output"), short = 'x', long, display_order = 204)]
     pub extract_defender_quarantined: bool,
 
+    /// Save each RDP bitmap cache tile as a BMP image too, not only the collages
+    #[arg(help_heading = Some("Output"), long, display_order = 205)]
+    pub extract_rdp_tiles: bool,
+
     /// Parser processes to run at once (default: logical CPU count)
     #[arg(help_heading = Some("Performance"), short = 'T', long, value_name = "N", value_parser = parse_auto_threads, display_order = 300)]
     pub threads: Option<usize>,
@@ -762,11 +826,11 @@ pub struct CommonOptions {
 /// What `parse-registry amcache` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OutputType {
-    /// One CSV table per record type (summary, findings, files, devices); needs -o <DIR>
+    /// One CSV table per record type (summary, files, devices); needs -o <DIR>
     Csv,
     /// One pretty-printed JSON document per hive
     Json,
-    /// One JSON object per line: summary, findings, files, devices
+    /// One JSON object per line: summary, files, devices
     Jsonl,
     /// The human-readable report
     Text,
@@ -822,7 +886,7 @@ impl AmcacheOptions {
     }
 
     /// Which detailed records to include: the selectors, otherwise every record except for the
-    /// text report on the terminal (summary and findings only, like ys-amcache-parser).
+    /// text report on the terminal (inventory summary).
     pub fn records(&self) -> (bool, bool) {
         if self.all || (!self.files && !self.devices && self.saves_records_by_default()) {
             (true, true)
@@ -1487,6 +1551,60 @@ pub struct MountOptions {
     pub common: CommonOptions,
 }
 
+/// What `parse-ese windows-search` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WindowsSearchOutputType {
+    /// One CSV row per indexed item
+    Csv,
+    /// One pretty-printed JSON object per indexed item, with every property
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct WindowsSearchOptions {
+    /// Directory to search recursively for Windows Search indexes (Windows.edb; Windows.db is reported as the unsupported SQLite index)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one Windows.edb
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every indexed item to this file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, json and jsonl records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<WindowsSearchOutputType>,
+
+    /// Overwrite the output file when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl WindowsSearchOptions {
+    pub fn output_type(&self) -> WindowsSearchOutputType {
+        self.output_type.unwrap_or(WindowsSearchOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t json` or `-t jsonl` without `-o`): nothing but the data may be
+    /// printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none()
+            && matches!(
+                self.output_type,
+                Some(WindowsSearchOutputType::Json | WindowsSearchOutputType::Jsonl)
+            )
+    }
+}
+
 /// What `parse-ese ual` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UalOutputType {
@@ -1773,6 +1891,184 @@ impl LnkOptions {
     }
 }
 
+/// What `parse-file powershell-history` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PowerShellHistoryOutputType {
+    /// One row per line of each history file
+    Csv,
+    /// One pretty-printed JSON object per line of each history file
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct PowerShellHistoryOptions {
+    /// Internal snapshot of original source timestamps for image parsing.
+    #[arg(long = "image-source-metadata", hide = true)]
+    pub image_source_metadata: Option<PathBuf>,
+
+    /// Directory to search recursively for PSReadLine history files (PSReadLine\*_history.txt)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one history file (ConsoleHost_history.txt)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<PowerShellHistoryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl PowerShellHistoryOptions {
+    pub fn output_type(&self) -> PowerShellHistoryOutputType {
+        self.output_type.unwrap_or(PowerShellHistoryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-file rdp-cache` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RdpCacheOutputType {
+    /// One row per tile
+    Csv,
+    /// One pretty-printed JSON object per tile
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+#[clap(group(ArgGroup::new("destination").args(["output", "extract"]).multiple(true)))]
+pub struct RdpCacheOptions {
+    /// Directory to search recursively for RDP bitmap caches (Cache????.bin, bcache*.bmc)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one RDP bitmap cache file
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every tile's record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RdpCacheOutputType>,
+
+    /// Save each cache file's tiles as BMP images (for RdpCacheStitcher) and a PNG collage, a folder per cache file
+    #[arg(help_heading = Some("Output"), short = 'x', long, value_name = "DIR", display_order = 302)]
+    pub extract: Option<PathBuf>,
+
+    /// With --extract, save only the collages
+    #[arg(help_heading = Some("Output"), long, requires = "extract", display_order = 303)]
+    pub collage_only: bool,
+
+    /// Tiles per row of the collages
+    #[arg(help_heading = Some("Output"), long, value_name = "N", requires = "extract", default_value_t = 64, value_parser = clap::value_parser!(u16).range(1..=1024), display_order = 304)]
+    pub collage_width: u16,
+
+    /// The directory as TileImage, RemnantImage and Collage show it, in place of --extract's
+    /// (auto-parse gives it from its output directory, so that its results name no absolute path)
+    #[arg(
+        long = "extract-shown-as",
+        value_name = "DIR",
+        requires = "extract",
+        hide = true
+    )]
+    pub extract_shown_as: Option<PathBuf>,
+
+    /// Overwrite files when saving or extracting
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "destination", display_order = 305)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RdpCacheOptions {
+    pub fn output_type(&self) -> RdpCacheOutputType {
+        self.output_type.unwrap_or(RdpCacheOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-file recycle-bin` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RecycleBinOutputType {
+    /// One row per deleted item
+    Csv,
+    /// One pretty-printed JSON object per deleted item
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct RecycleBinOptions {
+    /// Directory to search recursively for Recycle Bin index files ($I files, INFO2)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one $I or INFO2 file
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Code page of INFO2's ANSI paths: the system's ANSI code page (932 for Japanese)
+    #[arg(help_heading = Some("Input"), long = "code-page", value_name = "CP", default_value_t = 1252, display_order = 102)]
+    pub code_page: u16,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<RecycleBinOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl RecycleBinOptions {
+    pub fn output_type(&self) -> RecycleBinOutputType {
+        self.output_type.unwrap_or(RecycleBinOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
 /// What `parse-file jump-lists` writes.
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum JumpListOutputType {
@@ -1883,6 +2179,55 @@ impl ShimcacheOptions {
     }
 
     /// Entries on stdout (`-t` without `-o`): nothing but the data may be printed there.
+    pub fn data_on_stdout(&self) -> bool {
+        self.output.is_none() && self.output_type.is_some()
+    }
+}
+
+/// What `parse-file defender-history` writes.
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DefenderHistoryOutputType {
+    /// One row per resource of each detection (and per detection without resources)
+    Csv,
+    /// One pretty-printed JSON object per record, with every typed value
+    Json,
+    /// One JSON object per line
+    Jsonl,
+}
+
+#[derive(Args, Clone, Debug, Default)]
+#[clap(group(ArgGroup::new("input").args(["directory", "filepath"]).required(true).multiple(false)))]
+pub struct DefenderHistoryOptions {
+    /// Directory to search recursively for detection history files (Scans\History\Service\DetectionHistory\<nn>\<GUID>)
+    #[arg(help_heading = Some("Input"), short = 'd', long, value_name = "DIR", display_order = 100)]
+    pub directory: Option<PathBuf>,
+
+    /// File path to one detection history file (DetectionHistory\<nn>\<GUID>)
+    #[arg(help_heading = Some("Input"), short = 'f', long = "file", value_name = "FILE", display_order = 101)]
+    pub filepath: Option<PathBuf>,
+
+    /// Save every record to a file
+    #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]
+    pub output: Option<PathBuf>,
+
+    /// Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+    #[arg(help_heading = Some("Output"), short = 't', long = "output-type", value_name = "TYPE", value_enum, hide_possible_values = true, display_order = 301)]
+    pub output_type: Option<DefenderHistoryOutputType>,
+
+    /// Overwrite files when saving
+    #[arg(help_heading = Some("Output"), short = 'C', long, requires = "output", display_order = 302)]
+    pub clobber: bool,
+
+    #[clap(flatten)]
+    pub common: CommonOptions,
+}
+
+impl DefenderHistoryOptions {
+    pub fn output_type(&self) -> DefenderHistoryOutputType {
+        self.output_type.unwrap_or(DefenderHistoryOutputType::Csv)
+    }
+
+    /// Records on stdout (`-t` without `-o`): nothing but the data may be printed there.
     pub fn data_on_stdout(&self) -> bool {
         self.output.is_none() && self.output_type.is_some()
     }
@@ -3269,10 +3614,6 @@ pub struct RegistrySecuritySettingsOptions {
     /// Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
     #[arg(help_heading = Some("Filtering"), long, display_order = 200)]
     pub all_control_sets: bool,
-
-    /// Only settings whose value weakens what Windows does by default
-    #[arg(help_heading = Some("Filtering"), long, display_order = 201)]
-    pub weakened_only: bool,
 
     /// Save every record to a file
     #[arg(help_heading = Some("Output"), short = 'o', long, value_name = "FILE", display_order = 300)]

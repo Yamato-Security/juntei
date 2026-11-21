@@ -20,6 +20,7 @@ mod boot;
 mod browser;
 mod cli;
 mod color;
+mod defender_history;
 mod defender_quarantine;
 mod disk_image;
 mod hive;
@@ -37,8 +38,11 @@ mod mount;
 mod outlook;
 mod output_schema;
 mod persistence_hunter;
+mod powershell_history;
 mod prefetch;
 mod progress;
+mod rdp_cache;
+mod recycle_bin;
 mod registry;
 mod secure_sds;
 mod security_descriptor;
@@ -50,6 +54,8 @@ mod ual;
 mod usn_journal;
 mod util;
 mod webcache;
+mod windows_search;
+mod yara_scan;
 
 use clap::{CommandFactory, Parser};
 use cli::{
@@ -64,7 +70,7 @@ use util::p;
 const LOGO: &str = include_str!("../art/logo.txt");
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<_> = env::args_os().collect();
     if args.len() == 1 || (args.len() == 2 && (args[1] == "-h" || args[1] == "--help")) {
         display_logo(false, false, false, true);
         Cli::command().print_help().ok();
@@ -74,6 +80,12 @@ fn main() {
     let start = Instant::now();
     let cli = Cli::parse();
     let code = match &cli.cmd {
+        Commands::YaraScan(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = yara_scan::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
         Commands::SuperTimeline(opts) => {
             display_logo(opts.common.quiet, opts.common.no_color, true, false);
             let code = super_timeline::run(opts);
@@ -218,6 +230,17 @@ fn main() {
                 }
                 code
             }
+            EseCommands::WindowsSearch(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = windows_search::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
         },
         Commands::ParseFile(source) => match &source.cmd {
             FileCommands::Prefetch(opts) => {
@@ -259,6 +282,50 @@ fn main() {
                     display_logo(opts.common.quiet, opts.common.no_color, true, false);
                 }
                 let code = jump_lists::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::PowerShellHistory(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = powershell_history::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::RdpCache(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = rdp_cache::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::RecycleBin(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = recycle_bin::run(opts);
+                if !data_only {
+                    print_elapsed(start, opts.common.no_color);
+                }
+                code
+            }
+            FileCommands::DefenderHistory(opts) => {
+                let data_only = opts.data_on_stdout();
+                if !data_only {
+                    display_logo(opts.common.quiet, opts.common.no_color, true, false);
+                }
+                let code = defender_history::run(opts);
                 if !data_only {
                     print_elapsed(start, opts.common.no_color);
                 }

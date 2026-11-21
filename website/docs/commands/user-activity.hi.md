@@ -3,7 +3,8 @@
 `parse-ese` Extensible Storage Engine databases को संभालता है। SRUM का `SRUDB.dat` एक ESE database है;
 वैकल्पिक SOFTWARE hive account और Wi-Fi के नामों से जानकारी को समृद्ध करता है। Windows Server के
 User Access Logging databases (`Current.mdb`, `{GUID}.mdb` और `SystemIdentity.mdb`) भी ESE databases हैं, और
-`WebCacheV01.dat` भी, जिसमें Internet Explorer और legacy Edge अपना history, downloads, cookies और cache रखते हैं।
+`WebCacheV01.dat` भी, जिसमें Internet Explorer और legacy Edge अपना history, downloads, cookies और cache रखते हैं,
+और `Windows.edb` भी, जो Windows Search index है।
 
 ```text
 Version: 1.1.0 (CODE BLUE Release)
@@ -13,10 +14,11 @@ Usage:
   juntei parse-ese <COMMAND> [OPTIONS]
 
 Commands:
-  help      Print this message or the help of the given subcommand(s)
-  srum      Parse SRUM databases
-  ual       Parse User Access Logging (UAL) databases
-  webcache  Parse Internet Explorer and legacy Edge's WebCache databases
+  help            Print this message or the help of the given subcommand(s)
+  srum            Parse SRUM databases
+  ual             Parse User Access Logging (UAL) databases
+  webcache        Parse Internet Explorer and legacy Edge's WebCache databases
+  windows-search  Parse Windows Search indexes (Windows.edb)
 
 Options:
   -h, --help  Print help
@@ -122,3 +124,34 @@ juntei parse-ese webcache -f WebCacheV01.dat -t jsonl | jq 'select(.Table == "Hi
 ```
 
 [Internet Explorer और लेगेसी Edge](../artifacts/webcache.md) देखें।
+
+## `parse-ese windows-search` { #parse-ese-windows-search }
+
+```text
+Usage:
+  juntei parse-ese windows-search <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Windows Search indexes (Windows.edb; Windows.db is reported as the unsupported SQLite index)
+  -f, --file <FILE>      File path to one Windows.edb
+
+Output:
+  -o, --output <FILE>       Save every indexed item to this file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, json and jsonl records are written to stdout
+  -C, --clobber             Overwrite the output file when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-ese windows-search -f Windows.edb -o windows-search.csv
+juntei parse-ese windows-search -d evidence/ -t jsonl \
+  | jq 'select(.Store == "file") | {ItemPath, DateModified, GatherTime, FileOwner}'
+```
+
+[Windows Search इंडेक्स](../artifacts/windows-search.md) देखें।

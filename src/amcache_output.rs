@@ -27,7 +27,7 @@ pub struct JsonOutput<'a> {
     first: bool,
 }
 
-const GROUPS: [&str; 4] = ["Summary", "Findings", "Files", "Devices"];
+const GROUPS: [&str; 3] = ["Summary", "Files", "Devices"];
 
 impl<'a> JsonOutput<'a> {
     pub fn new(out: &'a mut dyn Write, pretty: bool) -> Self {
@@ -60,9 +60,8 @@ impl<'a> JsonOutput<'a> {
             .ok_or_else(|| io::Error::other("Amcache record has no RecordType"))?;
         let group = match kind.as_str() {
             Some("summary") => 0,
-            Some("finding") => 1,
-            Some("file") => 2,
-            Some("device") => 3,
+            Some("file") => 1,
+            Some("device") => 2,
             _ => return Err(io::Error::other("Unknown Amcache record type")),
         };
         if group == 0 {
@@ -87,7 +86,7 @@ impl<'a> JsonOutput<'a> {
             }
             self.out.write_all(b"\"Summary\": ")?;
             serde_json::to_writer_pretty(&mut self.out, fields)?;
-            self.out.write_all(b",\n\"Findings\": [\n")?;
+            self.out.write_all(b",\n\"Files\": [\n")?;
             self.group = 1;
             return Ok(());
         }
@@ -126,7 +125,7 @@ impl<'a> JsonOutput<'a> {
             if self.group == 0 {
                 return Err(io::Error::other("Missing Amcache summary"));
             }
-            self.advance(3)?;
+            self.advance(2)?;
             self.out.write_all(b"\n]\n}\n")?;
         }
         self.out.flush()
@@ -221,7 +220,7 @@ mod tests {
             if pretty {
                 let v: Value = serde_json::from_slice(&out).unwrap();
                 assert_eq!(v["Summary"]["FileCount"], 1);
-                assert_eq!(v["Findings"], json!([]));
+                assert!(v.get("Findings").is_none());
                 assert_eq!(v["Devices"], json!([]));
                 assert_eq!(v["Files"][0]["RegistryValues"][0]["Name"], "Some_Value");
             } else {

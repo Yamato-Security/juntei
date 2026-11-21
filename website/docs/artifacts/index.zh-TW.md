@@ -7,9 +7,12 @@ Windows 會在檔案系統、登錄、相容性資料庫、使用者介面歷程
 
 | 調查問題 | 從這裡開始 | 佐證來源 |
 |---|---|---|
+| 儲存了哪些 PowerShell 命令列？ | [PowerShell 歷程記錄](powershell-history.md) | PowerShell 事件記錄、程序遙測、Prefetch |
 | 這個執行檔是否曾經執行？ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)、[SRUM](srum.md)、事件記錄 |
-| 這個檔案是否曾經存在？ | [Amcache](amcache.md)、[$MFT](mft.md) | [USN Journal](usn-journal.md)、[$I30](i30.md)、ShimCache |
+| 這個檔案是否曾經存在？ | [Amcache](amcache.md)、[$MFT](mft.md) | [USN Journal](usn-journal.md)、[$I30](i30.md)、[Windows Search 索引](windows-search.md)、ShimCache |
+| 這部電腦上曾有哪些檔案、電子郵件與網頁，而文件中寫了什麼？ | [Windows Search 索引](windows-search.md) | [$MFT](mft.md)、[USN Journal](usn-journal.md)、[Outlook](outlook.md)、[網頁瀏覽器](browser.md) |
 | 檔案是何時被建立、重新命名或刪除的？ | [USN Journal](usn-journal.md) | [$MFT](mft.md)、[$I30](i30.md)、Defender 隔離資料 |
+| 使用者將哪些項目刪除到資源回收筒，又是何時刪除的？ | [資源回收筒](recycle-bin.md) | [USN Journal](usn-journal.md)、[$MFT](mft.md)、[LNK](lnk.md)、[Jump Lists](jump-lists.md) |
 | 中繼資料變更之前存在的是什麼名稱或時間戳記？ | [$LogFile](logfile.md) | [$MFT](mft.md)、[USN Journal](usn-journal.md)、[$I30](i30.md) |
 | 檔案的擁有者是誰，誰可以變更它？ | [$Secure:$SDS](secure-sds.md) 搭配 [$MFT](mft.md) | [SAM](sam.md)、Security 事件記錄 |
 | 捷徑或 Prefetch 檔案的目標位於哪個磁碟區？ | [$Boot](boot.md) | [LNK](lnk.md)、[Prefetch](prefetch.md)、[USB 裝置](usb.md) |
@@ -18,7 +21,9 @@ Windows 會在檔案系統、登錄、相容性資料庫、使用者介面歷程
 | 使用者造訪了哪些網站，又下載了什麼？ | [網頁瀏覽器](browser.md)、[Internet Explorer 與舊版 Edge](webcache.md) | Proxy 與 DNS 記錄、`$MFT` 與 USN Journal、Defender、SRUM |
 | 使用者與誰往來電子郵件，又附加了什麼？ | [Outlook](outlook.md) | 郵件伺服器與閘道記錄、`$MFT` 與 USN Journal、Defender、LNK 與 Jump Lists |
 | 哪些用戶端與帳戶使用過這台伺服器，又是在哪幾天？ | [使用者存取記錄 (UAL)](ual.md) | Security 事件記錄、SMB 與 RDP 記錄、防火牆記錄 |
+| 使用者在透過遠端桌面連上的電腦上看到了什麼？ | [RDP 點陣圖快取](rdp-cache.md) | [遠端存取（使用者端）](remote-access.md)、[Jump Lists](jump-lists.md)、遠端電腦的登入事件與 [UAL](ual.md) |
 | 是否設定了持續存取機制？ | [服務](services.md)、[TaskCache](taskcache.md)、[登錄](registry.md) | 事件記錄、Prefetch、`$MFT` |
+| Defender 偵測到了什麼，又採取了什麼處置？ | [Defender 偵測歷程記錄](defender-history.md) | [Defender 隔離資料](defender-quarantine.md)、事件記錄 |
 | Defender 移除了什麼？ | [Defender 隔離資料](defender-quarantine.md) | 事件記錄、`$MFT`、USN Journal |
 | 是否新增或變更了本機帳戶？ | [SAM](sam.md) | Security 事件記錄與登錄交易歷程 |
 
@@ -34,6 +39,5 @@ Windows 會在檔案系統、登錄、相容性資料庫、使用者介面歷程
 6. **如何將它與獨立證據進行關聯分析。**
 7. **進一步資訊**，供深入的底層研究之用。
 
-!!! danger "不要將剖析器的發現等同於惡意行為"
-    Juntei 的發現項目會指出值得檢視的模式，例如位於 `System32` 之外的系統二進位檔名稱。
-    安裝程式、系統管理員、相容性層與軟體更新都可能產生不尋常的記錄。請以脈絡與獨立證據加以驗證。
+!!! danger "不要將不尋常的記錄視為惡意行為的證明"
+    Juntei 剖析證據供分析人員解讀。Persistence Hunter 檢查仍可使用，但設定的啟動項目也可能來自合法的管理作業。在判定為惡意行為前，請結合脈絡與獨立證據進行驗證。

@@ -6,9 +6,12 @@ Windows は、ファイル システム、レジストリ、互換性データ�
 
 | 調査質問 | ここから始めましょう | と裏付ける |
 |---|---|---|
+| どの PowerShell コマンドラインが保存されたか？ | [PowerShell 履歴](powershell-history.md) | PowerShell イベントログ、プロセステレメトリ、Prefetch |
 | この実行可能ファイルは実行されましたか? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)、[SRUM](srum.md)、イベント ログ |
-| このファイルは存在したことがありますか? | [Amcache](amcache.md), [$MFT](mft.md) | [USN ジャーナル](usn-journal.md)、[$I30](i30.md)、ShimCache |
+| このファイルは存在したことがありますか? | [Amcache](amcache.md), [$MFT](mft.md) | [USN ジャーナル](usn-journal.md)、[$I30](i30.md)、[Windows Search のインデックス](windows-search.md)、ShimCache |
+| このコンピューターにはどのファイル、電子メール、ページがあり、ドキュメントには何が書かれていましたか? | [Windows Search のインデックス](windows-search.md) | [$MFT](mft.md)、[USN ジャーナル](usn-journal.md)、[Outlook](outlook.md)、[Web ブラウザ](browser.md) |
 | ファイルが作成、名前変更、または削除されたのはいつですか? | [USN ジャーナル](usn-journal.md) | [$MFT](mft.md)、[$I30](i30.md)、Defender 隔離 |
+| ユーザーは何をいつごみ箱に削除しましたか? | [ごみ箱](recycle-bin.md) | [USN ジャーナル](usn-journal.md)、[$MFT](mft.md)、[LNK](lnk.md)、[ジャンプ リスト](jump-lists.md) |
 | メタデータが変更される前に存在していた名前またはタイムスタンプは何ですか? | [$LogFile](logfile.md) | [$MFT](mft.md)、[USN ジャーナル](usn-journal.md)、[$I30](i30.md) |
 | ファイルの所有者は誰ですか?また、ファイルを変更できるのは誰ですか? | [$Secure:$SDS](secure-sds.md) と [$MFT](mft.md) | [SAM](sam.md)、セキュリティ イベント ログ |
 | ショートカットまたは Prefetch ファイルのターゲットはどのボリュームにありましたか? | [$Boot](boot.md) | [LNK](lnk.md)、[Prefetch](prefetch.md)、[USB デバイス](usb.md) |
@@ -17,7 +20,9 @@ Windows は、ファイル システム、レジストリ、互換性データ�
 | ユーザーはどの Web サイトを閲覧し、何をダウンロードしましたか? | [Web ブラウザ](browser.md)、[Internet Explorer と従来の Edge](webcache.md) | プロキシと DNS のログ、`$MFT` と USN ジャーナル、Defender、SRUM |
 | ユーザーは誰と電子メールをやり取りし、何が添付されていましたか? | [Outlook](outlook.md) | メール サーバーとゲートウェイのログ、`$MFT` と USN ジャーナル、Defender、LNK と Jump Lists |
 | このサーバーを利用したのはどのクライアントとアカウントで、それはどの日ですか? | [ユーザーアクセスログ (UAL)](ual.md) | セキュリティ イベント ログ、SMB と RDP のログ、ファイアウォール ログ |
+| ユーザーはリモート デスクトップで接続したコンピューター上で何を見ましたか? | [RDP ビットマップキャッシュ](rdp-cache.md) | [リモートアクセス (ユーザー側)](remote-access.md)、[Jump Lists](jump-lists.md)、接続先コンピューターのログオン イベントと [UAL](ual.md) |
 | 永続性が設定されましたか? | [サービス](services.md)、[TaskCache](taskcache.md)、[レジストリ](registry.md) | イベントログ、Prefetch、`$MFT` |
+| Defender は何を検出し、どう対処しましたか? | [Defender の検出履歴](defender-history.md) | [Defender 隔離](defender-quarantine.md)、イベント ログ |
 | Defender は何を削除しましたか? | [Defender 隔離](defender-quarantine.md) | イベント ログ、`$MFT`、USN ジャーナル |
 | ローカルアカウントは追加または変更されましたか? | [SAM](sam.md) | セキュリティ イベント ログとレジストリ トランザクション履歴 |
 
@@ -33,5 +38,5 @@ Windows は、ファイル システム、レジストリ、互換性データ�
 6. 独立した証拠と**関連付ける方法**。
 7. **さらに詳細な**は低レベルの研究用です。
 
-!!! danger "パーサーの検出結果を悪意のあるものと同一視しないでください"
-    Juntei の検出結果では、`System32` の外にあるシステム バイナリ名など、確認する価値のあるパターンが特定されます。インストーラー、管理者、互換性レイヤー、およびソフトウェア更新により、異常なレコードが生成される場合があります。コンテキストと独立した証拠に基づいて検証します。
+!!! danger "異常なレコードだけで悪意があると判断しないでください"
+    Juntei は解析者が解釈するための証拠を出力します。Persistence Hunter のチェックは引き続き利用できますが、スタートアップ設定は正規の管理作業による場合もあります。悪意があると判断する前に、状況と独立した証拠で裏付けてください。

@@ -36,6 +36,9 @@ kendisine başvurun.
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) Python projesine ilham vermiştir;
   soy ağacının tamamı için [kalıcılık teşekkürleri](persistence-hunter/acknowledgements.md) sayfasına bakın.
 
+- Vincent Thiberville'in [**Boreal**](https://github.com/vthib/boreal) projesi, `yara-scan` komutuna derlenen YARA uyumlu Rust motorudur (MIT veya Apache-2.0; bildirimi `THIRD_PARTY_NOTICES/crates.txt` dosyasındadır).
+- YARAHQ altında Florian Roth tarafından sürdürülen [**YARA Forge**](https://github.com/YARAHQ/yara-forge), `yara-scan` komutunun istek üzerine indirdiği Core, Extended ve Full kural paketlerini derler. Kurallar kendi lisansları altında ilgili yazarlarının eseri olarak kalır; Juntei indirilen kaynağı her sonuç kümesiyle birlikte kaydeder.
+
 - Maxim Suhanov'un **regf spesifikasyonu** ve **yarp** aracı; kayıt defteri yapılarına, işlem günlüğü
   yeniden oynatmaya ve silinmiş kayıt kurtarmaya yön vermiştir; **dfir_ntfs** aracı ise INDX kayıtları
   ve index slack oyma (carving) için referans olmuştur.
@@ -47,6 +50,9 @@ kendisine başvurun.
   **libesedb**, ayrıntılı biçim araştırmaları ve bağımsız ayrıştırma referansları sunar.
 - Fox-IT'in **dissect.esedb**, **dissect.ntfs** ve **dissect.target** projeleri, doğrulama sırasında
   kullanılan bağımsız SRUM, UAL, `$Secure:$SDS`, SAM ve Defender yorumlarını sağlamıştır.
+- Stroz Friedberg'in **SIDR** aracı ve libyal'ın `esedbexport` aracı, Windows Search dizininin bağımsız
+  okumaları olmuştur; libyal'ın dizinin tablolarına ilişkin **esedb-kb** notları ve kayıt biçimi için
+  Microsoft'un yayımladığı **Extensible Storage Engine** kaynak kodu da bunlara eşlik etmiştir.
 - **The Sleuth Kit**'in `fsstat` aracı, `mkntfs` ile oluşturulan birimlerin NTFS önyükleme sektörleri
   için referans olmuştur.
 - Eric Zimmerman'ın bazı araçları, karşılaştırmalarda kullanılan alan adlarını ve inceleyici
@@ -59,15 +65,24 @@ kendisine başvurun.
   değerli Prefetch/Amcache/ShimCache gözlemlerine yön vermiştir.
 - **defender-dump** ve dissect.target, Defender karantina yapılarını ve güvenli çıkarma davranışını
   anlamak için ayrı uygulamalar sunar.
+- Orange Cyberdefense'in **wddh-parser** aracı Defender tespit geçmişi biçimini ortaya koymuştur; örnekleri de
+  WMI'nin onlar için raporladığı değerlerle birlikte gelir. Plaso'nun `windefender_history` ayrıştırıcısı ve
+  Velociraptor'ın `Windows.Applications.DefenderHistory` artefaktı bağımsız referanslar olmuştur.
 - **Plaso**, **Chainsaw** ve **Velociraptor**, çeşitli artefaktlar genelinde ayrıştırıcı
   karşılaştırmaları, test kanıtları veya toplama odaklı referans davranış sağlamıştır.
 - Obsidian Forensics'in **Hindsight** aracı ve Velocidex'in **SQLiteHunter** tanımları, tarayıcı
   geçmişi, indirmeler, çerezler ve form geçmişi için referans olmuştur.
+- Abel Cheung'un **rifiuti2** aracı, libyal'ın her iki biçimi belgeleyen **dtformats** belgeleriyle birlikte Geri Dönüşüm
+  Kutusu `$I` dosyaları ve INFO2 için referans olmuştur.
+- ANSSI'nin **bmc-tools** aracı ve biçim hakkındaki CERT-FR bülteni, BSI'nin **RdpCacheStitcher** aracı,
+  **Velociraptor**'ın RDPCache artefaktı ve **dissect.target**'ın RDP önbelleği eklentisi, **FreeRDP**'nin kalıcı
+  bitmap önbelleği ve serpiştirmeli (interleaved) RLE kod çözücüsüyle birlikte RDP bitmap önbellekleri için referans
+  olmuştur.
 
 ## Spesifikasyonlar ve araştırmalar { #specifications-and-research }
 
-Shell Links, Compound Binary Files, NTFS/SAM protokolleri, kayıt defteri/hizmet/görev yapıları ve API
-belgeleri için Open Specifications yayımladığı için Microsoft'a teşekkür ederiz. Bu artefaktları
+Shell Links, Compound Binary Files, NTFS/SAM protokolleri, kayıt defteri/hizmet/görev yapıları, Remote Desktop
+Protocol ve API belgeleri için Open Specifications yayımladığı için Microsoft'a teşekkür ederiz. Bu artefaktları
 uygulayıcılar için anlaşılır kılan AppCompatCache, Amcache, SRUM, Prefetch, kayıt defteri ve NTFS adli
 bilişim araştırmalarının yazarlarına da teşekkür ederiz.
 
@@ -75,7 +90,7 @@ bilişim araştırmalarının yazarlarına da teşekkür ederiz.
 
 Andrew Rathbun'un
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) projesi, NIST CFReDS, Plaso,
-Regipy, Artemis, ayrıştırıcı test depoları ve uygun şekilde lisanslanmış diğer koleksiyonlardaki herkese
+rifiuti2, Regipy, Artemis, Orange Cyberdefense'in wddh-parser projesi, ayrıştırıcı test depoları ve uygun şekilde lisanslanmış diğer koleksiyonlardaki herkese
 açık kanıtlar, gerçek Windows verilerine karşı regresyon testini mümkün kılar. Juntei, dahil edilen test
 dosyalarının yanında atıf/lisans notlarını tutar.
 

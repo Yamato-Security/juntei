@@ -238,7 +238,7 @@ fn banner_and_help() {
     assert!(r.stdout.contains("by Yamato Security"));
     assert!(r.stdout.contains("parse-registry"));
     // The release name follows the version, and the usage follows them.
-    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
+    let version = format!("Version: {} (Dev Build)", env!("CARGO_PKG_VERSION"));
     assert!(
         r.stdout
             .contains(&format!("{version}\n\nUsage: juntei <COMMAND>")),
@@ -257,7 +257,7 @@ fn banner_and_help() {
     let r = run(&["--version"]);
     assert_eq!(
         r.stdout,
-        format!("juntei {} (CODE BLUE Release)\n", env!("CARGO_PKG_VERSION"))
+        format!("juntei {} (Dev Build)\n", env!("CARGO_PKG_VERSION"))
     );
 }
 
@@ -276,7 +276,7 @@ fn banner_is_logo_blank_version_and_start_time_then_blank() {
         }
         out
     };
-    let version = format!("Version: {} (CODE BLUE Release)", env!("CARGO_PKG_VERSION"));
+    let version = format!("Version: {} (Dev Build)", env!("CARGO_PKG_VERSION"));
     // The help screen: the logo, a blank line, the version, a blank line and the usage.
     let help = plain(&run(&[]).stdout);
     assert!(
@@ -402,6 +402,7 @@ fn source_help_lists_artifacts_and_leaf_help_shows_the_full_command() {
                 "prefetch",
                 "lnk",
                 "jump-lists",
+                "defender-history",
                 "defender-quarantine",
                 "outlook",
             ][..],
@@ -590,6 +591,7 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
         "ProcessExecution",
         "Registry",
         "SecurityProducts",
+        "ShellHistory",
         "SystemInformation",
     ] {
         assert!(csv.join("HOST1").join(category).is_dir());
@@ -744,17 +746,18 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "usb" => "ExternalDevices",
             "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs"
             | "shellbags" => "FileAndFolderOpening",
-            "amcache" | "shimcache" => "FileExistence",
+            "amcache" | "recycle-bin" | "shimcache" | "windows-search" => "FileExistence",
             "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
             "networks" => "NetworkActivity",
-            "remote-access" | "ual" => "LateralMovement",
+            "rdp-cache" | "remote-access" | "ual" => "LateralMovement",
             "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => {
                 "Persistence"
             }
             "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch"
             | "prefetch-timeline" | "userassist" => "ProcessExecution",
             "registry" => "Registry",
-            "defender-quarantine" | "security-settings" => "SecurityProducts",
+            "defender-history" | "defender-quarantine" | "security-settings" => "SecurityProducts",
+            "powershell-history" => "ShellHistory",
             "system-info" | "srum" => "SystemInformation",
             "auditpol" => "SystemInformation",
             _ => panic!("unexpected artifact: {artifact}"),
@@ -788,12 +791,18 @@ fn auto_parse_creates_host_csvs_and_one_siem_ready_jsonl() {
             "mft" | "usn-journal" | "logfile" | "i30" | "boot" | "secure-sds" => {
                 ("parse-ntfs", artifact)
             }
-            "srum" | "ual" | "webcache" => ("parse-ese", artifact),
+            "srum" | "ual" | "webcache" | "windows-search" => ("parse-ese", artifact),
             "browser" => ("parse-sqlite", artifact),
             "prefetch-timeline" => ("parse-file", "prefetch"),
-            "prefetch" | "lnk" | "jump-lists" | "defender-quarantine" | "outlook" => {
-                ("parse-file", artifact)
-            }
+            "prefetch"
+            | "lnk"
+            | "jump-lists"
+            | "defender-history"
+            | "defender-quarantine"
+            | "outlook"
+            | "powershell-history"
+            | "rdp-cache"
+            | "recycle-bin" => ("parse-file", artifact),
             "registry" => ("parse-registry", "read"),
             "appcompat" => ("parse-registry", "app-compat"),
             "featureusage" => ("parse-registry", "feature-usage"),
@@ -1144,7 +1153,7 @@ fn auto_parse_csv_json_and_jsonl_export_the_same_native_siem_records() {
                     .iter()
                     .filter(|task| task["Purpose"] == "json_timeline")
                     .count(),
-                44
+                49
             );
             assert!(
                 output
@@ -1290,7 +1299,7 @@ fn auto_parse_csv_manifest_includes_failed_and_skipped_tasks() {
     ]);
     assert_eq!(r.code, 1, "stdout:\n{}\nstderr:\n{}", r.stdout, r.stderr);
     let (_, tasks) = csv_rows(&output.join("manifest.csv"));
-    assert_eq!(tasks.len(), 88);
+    assert_eq!(tasks.len(), 98);
     assert!(tasks.iter().any(|task| task["Status"] == "skipped"));
     let failed = tasks
         .iter()
@@ -1807,7 +1816,7 @@ fn auto_parse_accepts_targeted_prefetch_without_system32() {
     let category = output.join("HOST3/FileExistence");
     assert!(!category.join("Registry-Amcache").exists());
     for source in [1, 2] {
-        for table in ["Devices", "Files", "Findings", "Summary"] {
+        for table in ["Devices", "Files", "Summary"] {
             assert!(
                 category
                     .join(format!("Registry-Amcache-{table}-Source{source}.csv"))
@@ -1861,7 +1870,7 @@ fn auto_parse_accepts_a_new_relative_output_directory() {
 }
 
 #[test]
-fn terminal_report_has_the_summary_and_findings() {
+fn terminal_report_preserves_inventory_without_detection_policy() {
     let r = run(&["parse-registry", "amcache", "-f", WIN10, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert!(r.stdout.contains("Start time: "));
@@ -1869,10 +1878,8 @@ fn terminal_report_has_the_summary_and_findings() {
         r.stdout
             .contains("Amcache: 123 file entries, 189 device entries")
     );
-    assert!(r.stdout.contains("Findings (4):"));
-    assert!(r.stdout.contains(
-        "[MEDIUM] AMCACHE-SUSPICIOUS-PATH  c:\\users\\testuser\\downloads\\sysmon\\sysmon64.exe"
-    ));
+    assert!(!r.stdout.contains("Findings"));
+
     // no detailed records on the terminal unless asked for
     assert!(
         !r.stdout.contains("Inventoried executables:\n"),
@@ -1882,7 +1889,7 @@ fn terminal_report_has_the_summary_and_findings() {
     assert!(r.stdout.contains("Results Summary:"));
     assert!(r.stdout.contains("Inventoried executables: 123"));
     assert!(r.stdout.contains("Inventoried devices: 189"));
-    assert!(r.stdout.contains("Findings: 4 (medium: 4)"));
+    assert!(!r.stdout.contains("Findings:"));
     assert!(r.stdout.contains("Elapsed time: "));
     let r = run(&[
         "parse-registry",
@@ -1912,7 +1919,7 @@ fn legacy_hives_are_read() {
         r.stdout
             .contains("Schemas: modern (Windows 10/11) 0, legacy (Windows 8/8.1/2012 R2) 1")
     );
-    assert!(r.stdout.contains("Findings: 2 (medium: 2)"));
+    assert!(!r.stdout.contains("Findings:"));
 }
 
 #[test]
@@ -1940,7 +1947,8 @@ fn json_and_jsonl_files_hold_every_record() {
     assert_eq!(doc["Summary"]["FileCount"], 123);
     assert_eq!(doc["Files"].as_array().unwrap().len(), 123);
     assert_eq!(doc["Devices"].as_array().unwrap().len(), 189);
-    assert_eq!(doc["Findings"].as_array().unwrap().len(), 4);
+    assert!(doc.get("Findings").is_none());
+    assert!(doc["Summary"].get("FindingCount").is_none());
     let sevenzip = doc["Files"]
         .as_array()
         .unwrap()
@@ -1963,8 +1971,8 @@ fn json_and_jsonl_files_hold_every_record() {
     ]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     let text = std::fs::read_to_string(&jsonl).unwrap();
-    // summary + 4 findings + 123 files + 189 devices
-    assert_eq!(text.lines().count(), 317);
+    // summary + 123 files + 189 devices; no detection rows
+    assert_eq!(text.lines().count(), 313);
     // --files narrows the default of every record
     let r = run(&[
         "parse-registry",
@@ -1982,7 +1990,7 @@ fn json_and_jsonl_files_hold_every_record() {
     assert_eq!(r.code, 0, "{}", r.stderr);
     assert_eq!(
         std::fs::read_to_string(&jsonl).unwrap().lines().count(),
-        128
+        124
     );
 }
 
@@ -2011,8 +2019,8 @@ fn csv_tables_go_into_one_directory_per_hive() {
             .contains("Amcache hives parsed: 2 (could not parse: 1)")
     );
     assert!(r.stdout.contains("Inventoried executables: 259"));
-    assert!(r.stdout.contains("Findings: 6 (medium: 6)"));
-    assert!(r.stdout.contains("(8 CSV files)"));
+    assert!(!r.stdout.contains("Findings:"));
+    assert!(r.stdout.contains("(6 CSV files)"));
     for (sub, rows) in [
         ("HOST1_C_Windows_AppCompat_Programs_Amcache", 123),
         ("HOST2_Amcache", 136),
@@ -2022,7 +2030,7 @@ fn csv_tables_go_into_one_directory_per_hive() {
             std::fs::read_to_string(&files).unwrap_or_else(|e| panic!("{}: {e}", files.display()));
         let mut rdr = csv::Reader::from_reader(text.as_bytes());
         assert_eq!(rdr.records().count(), rows, "{sub}");
-        for table in ["summary", "findings", "devices"] {
+        for table in ["summary", "devices"] {
             assert!(
                 out_dir
                     .join(sub)
@@ -3178,7 +3186,7 @@ fn prefetch_summary_on_the_terminal() {
     assert!(r.stdout.contains(
         "Run times recorded: 15 (2013-03-10T10:11:49.281250Z - 2024-02-05T06:17:41.144014200Z)"
     ));
-    assert!(r.stdout.contains("Findings: 1 (medium: 1)"));
+    assert!(!r.stdout.contains("Findings:"));
     assert!(r.stdout.contains("To save every record, add -o <FILE>"));
 }
 
@@ -3210,7 +3218,7 @@ fn prefetch_csv_json_and_jsonl() {
     assert_eq!(field("PreviousRun4"), "");
     assert!(field("ExecutablePath").ends_with(r"\WINDOWS\SYSWOW64\CMD.EXE"));
     assert_eq!(field("FileCount"), "25");
-    assert_eq!(field("Findings"), "");
+    assert!(!header.iter().any(|h| h == "Findings"));
 
     // one pretty JSON document per file, with every field
     let json_path = dir.path().join("prefetch.json");
@@ -3231,8 +3239,13 @@ fn prefetch_csv_json_and_jsonl() {
         .iter()
         .find(|d| d["ExecutableName"] == "RUST_OUT.EXE")
         .unwrap();
-    assert_eq!(rust_out["Findings"][0]["Code"], "SuspiciousExecutionPath");
-    assert_eq!(rust_out["Findings"][0]["Severity"], "medium");
+    assert!(rust_out.get("Findings").is_none());
+    assert!(
+        rust_out["ExecutablePath"]
+            .as_str()
+            .unwrap()
+            .ends_with("RUST_OUT.EXE")
+    );
     let consent = docs
         .iter()
         .find(|d| d["ExecutableName"] == "CONSENT.EXE")
@@ -3326,11 +3339,25 @@ fn prefetch_system_binary_outside_system32_is_a_high_finding() {
 
     let r = run(&["parse-file", "prefetch", "-f", pf.to_str().unwrap(), "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
-    assert!(r.stdout.contains("Findings: 1 (high: 1)"), "{}", r.stdout);
-    assert!(r.stdout.contains(
-        r"[HIGH] SVCHOST.EXE is a Windows system binary but was loaded from \DEVICE\HARDDISKVOLUME2\WINDOWS\TEMPDIR1\SVCHOST.EXE"
-    ), "{}", r.stdout);
-    assert!(r.stdout.contains("(T1036.005)"));
+    assert!(!r.stdout.contains("Findings:"));
+    assert!(!r.stdout.contains("T1036.005"));
+    let records = json_documents(
+        &run(&[
+            "parse-file",
+            "prefetch",
+            "-f",
+            pf.to_str().unwrap(),
+            "-t",
+            "json",
+        ])
+        .stdout,
+    );
+    assert!(
+        records[0]["ExecutablePath"]
+            .as_str()
+            .unwrap()
+            .ends_with(r"\WINDOWS\TEMPDIR1\SVCHOST.EXE")
+    );
 }
 
 #[test]
@@ -3877,6 +3904,87 @@ fn persistence_hunter_selected_check_has_csv_json_and_jsonl_parity() {
     let f: Value = serde_json::from_str(&r.stdout).unwrap();
     assert_eq!(f["CheckID"], "run_keys");
     assert!(!r.stdout.contains("JUNTEI"));
+}
+
+#[test]
+fn persistence_hunter_xml_upgrade_preserves_evidence_across_formats() {
+    let evidence = tempfile::tempdir().unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let tasks = evidence.path().join("Windows/System32/Tasks");
+    let menu = evidence
+        .path()
+        .join("Users/alice/AppData/Roaming/Microsoft/Windows/Start Menu/Programs");
+    std::fs::create_dir_all(&tasks).unwrap();
+    std::fs::create_dir_all(&menu).unwrap();
+    let task = concat!(
+        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">",
+        "<Principals><Principal id=\"Author\t\r\n&amp;\"><UserId>S-1-5-18</UserId>",
+        "</Principal><Principal id=\"Other\"><UserId>LAB\\alice</UserId></Principal>",
+        "</Principals><Actions Context=\"Author&#9;&#13;&#10;&amp;\"><Exec>",
+        "<Command>C:\\Temp\\調査.exe</Command><Arguments>--escaped &amp;lt; ",
+        "&quot;A&amp;B&quot;\r\n<![CDATA[<raw>&literal;\r\n]]>end</Arguments>",
+        "<WorkingDirectory>C:\\A &amp; B</WorkingDirectory></Exec></Actions></Task>"
+    );
+    std::fs::write(tasks.join("ExampleTask"), task).unwrap();
+    let clsid = "{00112233-4455-6677-8899-AABBCCDDEEFF}";
+    let library = format!(
+        "<libraryDescription xmlns=\"http://schemas.microsoft.com/windows/2009/library\"><searchConnectorDescription><simpleLocation><url>\r\n<![CDATA[shell:::]]>{clsid}\r\n</url></simpleLocation></searchConnectorDescription></libraryDescription>"
+    );
+    let mut utf16 = vec![0xff, 0xfe];
+    utf16.extend(library.encode_utf16().flat_map(u16::to_le_bytes));
+    std::fs::write(menu.join("Example.library-ms"), utf16).unwrap();
+    let expected = "C:\\Temp\\調査.exe --escaped &lt; \"A&B\"\r\n<raw>&literal;\r\nend";
+    for format in ["csv", "json", "jsonl"] {
+        let path = output.path().join(format!("findings.{format}"));
+        let result = run(&[
+            "persistence-hunter",
+            "-d",
+            evidence.path().to_str().unwrap(),
+            "--check",
+            "scheduled_task_files,start_menu_com",
+            "--no-timeline",
+            "--min-severity",
+            "info",
+            "-t",
+            format,
+            "-o",
+            path.to_str().unwrap(),
+            "-q",
+            "-K",
+        ]);
+        assert_eq!(result.code, 0, "{}\n{}", result.stdout, result.stderr);
+        // Compare serialized values after reading them through each output format's own parser.
+        let rows: Vec<std::collections::HashMap<String, String>> = if format == "csv" {
+            csv_rows(&path).1
+        } else {
+            json_documents(&std::fs::read_to_string(&path).unwrap())
+                .into_iter()
+                .map(|row| {
+                    row.as_object()
+                        .unwrap()
+                        .iter()
+                        .map(|(key, value)| {
+                            (key.clone(), value.as_str().unwrap_or_default().to_owned())
+                        })
+                        .collect()
+                })
+                .collect()
+        };
+        assert_eq!(rows.len(), 2, "{rows:?}");
+        let task = rows
+            .iter()
+            .find(|row| row["CheckID"] == "scheduled_task_files")
+            .unwrap();
+        assert_eq!(task["Value"], expected);
+        assert_eq!(task["AccessGained"], "SYSTEM");
+        assert!(task["Description"].contains("working directory: C:\\A & B"));
+        let library = rows
+            .iter()
+            .find(|row| row["CheckID"] == "start_menu_com")
+            .unwrap();
+        assert_eq!(library["Value"], clsid);
+        assert_eq!(library["ResolutionStatus"], "unresolved_com_class");
+    }
 }
 
 #[test]
@@ -6588,24 +6696,17 @@ const LNK_DIR: &str = "test_files/lnk";
 fn lnk_summary_on_the_terminal() {
     let r = run(&["parse-file", "lnk", "-d", LNK_DIR, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
-    // found under -d, so with the platform's separator
-    let found = |name: &str| format!("  {} -> ", Path::new(LNK_DIR).join(name).display());
     for line in [
         "Shortcuts parsed: 6".to_owned(),
         "Targets: fixed drives 2, removable drives 1, CD/DVD 0, network shares 1".to_owned(),
         "Machines that made them: 2 (pc, win-3qmdjgkf3g9)".to_owned(),
         "With problems: 1".to_owned(),
-        "Hidden command line (string data over 260 characters): 1".to_owned(),
-        found("padded_cli_arguments.lnk") + r#"This PC\C:\Windows\System32\cmd.exe /c "set PATH="#,
-        "Data after the end of the link: 1".to_owned(),
-        found("appended_data.lnk") + r"This PC\All Control Panel Items\" + "\n",
-        "Shell or script host started with arguments: 2".to_owned(),
-        found("cmd_powershell.lnk")
-            + r#"C:\Windows\System32\cmd.exe /c powershell.exe -c "Write-Host This is a test""#,
         "To save every record, add -o <FILE>".to_owned(),
     ] {
         assert!(r.stdout.contains(&line), "{line}\n{}", r.stdout);
     }
+    assert!(!r.stdout.contains("Hidden command line"));
+    assert!(!r.stdout.contains("Shell or script host started"));
 }
 
 #[test]
@@ -6633,7 +6734,7 @@ fn lnk_csv_has_the_common_columns() {
             "TargetCreated"
         ]
     );
-    assert_eq!(header.len(), 46);
+    assert_eq!(header.len(), 47);
     assert_eq!(rows.len(), 6);
     let row = |name: &str| {
         rows.iter()
@@ -6838,7 +6939,6 @@ fn jump_list_summary_on_the_terminal() {
     let r = run(&["parse-file", "jump-lists", "-d", JUMP_LIST_DIR, "-K"]);
     assert_eq!(r.code, 0, "{}", r.stderr);
     // found under -d, so with the platform's separator
-    let found = |name: &str| format!("  {} (", Path::new(JUMP_LIST_DIR).join(name).display());
     for line in [
         "Jump lists parsed: 4 (automatic 3, custom 1)".to_owned(),
         "Entries: 51 (pinned 4), custom list links 6".to_owned(),
@@ -6847,17 +6947,11 @@ fn jump_list_summary_on_the_terminal() {
         "Machines in the entries: 3 (citadel-dc01, desktop-gnccvrk, pc)".to_owned(),
         "Targets: fixed drives 58, removable drives 0, CD/DVD 1, network shares 5".to_owned(),
         "With problems: 0".to_owned(),
-        "Links left over from an earlier version of a custom list: 2".to_owned(),
-        found("5d696d521de238c3.customDestinations-ms")
-            + r"at 11472) -> C:\Program Files\Google\Chrome\Application\chrome.exe --win-jumplist-action=most-visited http://192.168.50.33:5000/",
-        "Link streams no DestList entry names (removed or damaged entries): 0".to_owned(),
-        "Items staged for a CD or DVD burn: 1".to_owned(),
-        found("5f7b5f1e01b83767.automaticDestinations-ms") + r"entry 1) -> D:\autorun.inf",
-        "Shell or script host started with arguments: 0".to_owned(),
         "To save every entry, add -o <DIR> (CSV tables)".to_owned(),
     ] {
         assert!(r.stdout.contains(&line), "{line}\n{}", r.stdout);
     }
+    assert!(!r.stdout.contains("Shell or script host started"));
 }
 
 #[test]
@@ -6889,8 +6983,16 @@ fn jump_list_csv_has_the_common_columns() {
         ]
     );
     assert_eq!(header[43], "Notes");
-    assert_eq!(header.len(), 50);
+    assert_eq!(header.len(), 51);
     assert_eq!(rows.len(), 51);
+    assert_eq!(
+        rows.iter()
+            .filter(|row| row["TargetItemTypes"]
+                .split('|')
+                .any(|kind| kind == "CdBurn"))
+            .count(),
+        1
+    );
     let row = |file: &str, mru: &str| {
         rows.iter()
             .find(|r| r["SourceFile"].ends_with(file) && r["MRU"] == mru)
@@ -6968,7 +7070,7 @@ fn jump_list_csv_has_the_common_columns() {
 
     let (header, rows) = csv_rows(&out.join("CustomDestinations.csv"));
     assert_eq!(header[6], "EntryName");
-    assert_eq!(header.len(), 33);
+    assert_eq!(header.len(), 34);
     assert_eq!(rows.len(), 8);
     let chrome: Vec<_> = rows
         .iter()
@@ -7105,12 +7207,7 @@ fn jump_list_streams_no_entry_names() {
         "-K",
     ]);
     assert_eq!(r.code, 0, "{}", r.stdout);
-    for line in [
-        "entry 7 has no stream",
-        "With problems: 1",
-        "Link streams no DestList entry names (removed or damaged entries): 1",
-        r"(stream 99) -> C:\Users\AndrewRathbun\Desktop\Targets",
-    ] {
+    for line in ["entry 7 has no stream", "With problems: 1"] {
         assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
     }
     let (_, rows) = csv_rows(&out.join("AutomaticDestinations.csv"));
@@ -7302,9 +7399,6 @@ fn shimcache_summary_on_the_terminal() {
         "Recovered from slack: 0",
         "Last-modified times: 2021-05-20T08:51:57.791182Z - 2022-02-07T07:37:13.434150800Z",
         "Damaged entries: 0",
-        "Findings: 27 (medium: 27)",
-        r"  [MEDIUM] SHIMCACHE-SUSPICIOUS-PATH C:\Users\ANDREW~1\AppData\Local\Temp\DA15D340-2806-4EF5-BB3C-C787E4CD384B\dismhost.exe",
-        "  … 17 more in the Findings column",
         "To save every entry, add -o <FILE>",
     ] {
         assert!(r.stdout.contains(line), "{line}\n{}", r.stdout);
@@ -7412,7 +7506,7 @@ fn shimcache_csv_has_the_common_columns() {
         "FromSlack",
     ];
     assert_eq!(&header[..8], common_columns);
-    assert_eq!(header.len(), 28);
+    assert_eq!(header.len(), 27);
     // every entry as the reference writes it (its times to the second)
     let (_, expected) = csv_rows(&repo(&format!("{SHIMCACHE_DIR}/SYSTEM.expected.csv")));
     assert_eq!(rows.len(), 359);
@@ -7440,7 +7534,6 @@ fn shimcache_csv_has_the_common_columns() {
         ("DataSize", "72"),
         ("Machine", "x64"),
         ("InsertFlags", ""),
-        ("Findings", ""),
         (
             "RegistryPath",
             r"ControlSet001\Control\Session Manager\AppCompatCache",
@@ -7456,11 +7549,7 @@ fn shimcache_csv_has_the_common_columns() {
     ] {
         assert_eq!(first[column], value, "{column}");
     }
-    let flagged: Vec<_> = rows
-        .iter()
-        .filter(|r| r["Findings"] == "SHIMCACHE-SUSPICIOUS-PATH")
-        .collect();
-    assert_eq!(flagged.len(), 27);
+    assert!(rows.iter().all(|row| !row.contains_key("Findings")));
 }
 
 /// regipy's 32-bit Windows 7 SYSTEM hive: two control sets, `Select\Current` 1 and
@@ -17347,7 +17436,7 @@ fn registry_featureusage_errors() {
 // --- parse-registry security-settings -----------------------------------------------------------
 
 /// `parse-registry security-settings`' CSV columns.
-const SECURITY_SETTINGS_COLUMNS: [&str; 20] = [
+const SECURITY_SETTINGS_COLUMNS: [&str; 19] = [
     "Host",
     "SourcePath",
     "HiveType",
@@ -17359,7 +17448,6 @@ const SECURITY_SETTINGS_COLUMNS: [&str; 20] = [
     "Setting",
     "Value",
     "Meaning",
-    "WeakensDefault",
     "Policy",
     "KeyPath",
     "ValueName",
@@ -17486,22 +17574,17 @@ fn security_settings_read(args: &[&str]) -> Vec<Value> {
     jsonl_records(&r.stdout)
 }
 
-/// Each record as `hive area setting value weakened`.
+/// Each record's original hive, area, setting identifier and value.
 fn security_settings_lines(records: &[Value]) -> Vec<String> {
     records
         .iter()
         .map(|r| {
             format!(
-                "{} {} {} {} {}",
+                "{} {} {} {}",
                 r["HiveType"].as_str().unwrap(),
                 r["Area"].as_str().unwrap(),
                 r["Setting"].as_str().unwrap(),
-                r["Value"].as_str().unwrap_or("-"),
-                match r["WeakensDefault"].as_bool() {
-                    Some(true) => "weakened",
-                    Some(false) => "ok",
-                    None => "-",
-                }
+                r["Value"].as_str().unwrap_or("-")
             )
         })
         .collect()
@@ -17515,16 +17598,16 @@ fn registry_security_settings_of_a_collection() {
     assert_eq!(
         security_settings_lines(&records),
         [
-            "NTUSER.DAT powershell wsh_amsi_enable 0 weakened",
-            "SOFTWARE defender defender_disable_realtime_monitoring 1 weakened",
-            "SOFTWARE uac uac_enable_lua 1 ok",
-            "SOFTWARE uac uac_local_account_token_filter_policy 1 weakened",
-            "SOFTWARE powershell powershell_execution_policy Bypass weakened",
-            r"SOFTWARE defender defender_exclusion_path C:\Users\Public\Tools weakened",
-            "SOFTWARE defender defender_exclusion_extension .ps1 weakened",
-            "SYSTEM credentials wdigest_use_logon_credential 1 weakened",
-            "SYSTEM remote_access rdp_deny_connections 0 weakened",
-            "SYSTEM network firewall_public_profile 0 weakened",
+            "NTUSER.DAT powershell wsh_amsi_enable 0",
+            "SOFTWARE defender defender_disable_realtime_monitoring 1",
+            "SOFTWARE uac uac_enable_lua 1",
+            "SOFTWARE uac uac_local_account_token_filter_policy 1",
+            "SOFTWARE powershell powershell_execution_policy Bypass",
+            r"SOFTWARE defender defender_exclusion_path C:\Users\Public\Tools",
+            "SOFTWARE defender defender_exclusion_extension .ps1",
+            "SYSTEM credentials wdigest_use_logon_credential 1",
+            "SYSTEM remote_access rdp_deny_connections 0",
+            "SYSTEM network firewall_public_profile 0",
         ]
     );
     for r in &records {
@@ -17560,15 +17643,16 @@ fn registry_security_settings_of_a_collection() {
     );
     assert_eq!(records[2]["ControlSet"], Value::Null);
 
-    // only what weakens the default; every control set
-    let weakened = security_settings_read(&[
+    // Classification belongs to Pro; all original values remain available.
+    assert!(records.iter().all(|r| r.get("WeakensDefault").is_none()));
+    let removed = run(&[
+        "parse-registry",
+        "security-settings",
         "-d",
         dir.path().to_str().unwrap(),
         "--weakened-only",
-        "--all-control-sets",
     ]);
-    assert_eq!(weakened.len(), 9);
-    assert!(weakened.iter().all(|r| r["WeakensDefault"] == true));
+    assert_ne!(removed.code, 0);
     let all = security_settings_read(&["-d", dir.path().to_str().unwrap(), "--all-control-sets"]);
     let other = all.last().unwrap();
     assert_eq!(
@@ -17606,9 +17690,6 @@ fn registry_security_settings_csv_and_summary() {
         "Users: alice",
         "SYSTEM control sets read: 1 (the one in use; --all-control-sets for every one)",
         "Settings: 10 (credentials 1, defender 3, network 1, powershell 2, remote_access 1, uac 2)",
-        "Settings that weaken the default (exclusions below; not proof of compromise): 7",
-        r"HOST1  credentials  Control\SecurityProviders\WDigest\UseLogonCredential = 1: WDigest keeps cleartext passwords in LSASS memory",
-        r"HOST1  alice  powershell  Software\Microsoft\Windows Script\Settings\AmsiEnable = 0: AMSI for Windows Script Host (VBScript and JScript) turned off",
         "Microsoft Defender exclusions: 2",
         r"HOST1  path  C:\Users\Public\Tools",
         "HOST1  extension  .ps1",
@@ -17630,9 +17711,9 @@ fn registry_security_settings_csv_and_summary() {
     assert_eq!(&rows[7][3], "ControlSet001");
     assert_eq!(&rows[7][4], "True");
     assert_eq!(&rows[7][8], "wdigest_use_logon_credential");
-    assert_eq!(&rows[7][11], "True");
-    assert_eq!(&rows[2][11], "False");
-    assert_eq!(&rows[1][12], "True");
+    assert_eq!(&rows[7][9], "1");
+    assert_eq!(&rows[2][9], "1");
+    assert_eq!(&rows[1][11], "True");
     assert_eq!(&rows[0][5], "alice");
 }
 
@@ -17641,28 +17722,30 @@ fn registry_security_settings_of_public_hives() {
     // regipy's Windows 7 SYSTEM: WDigest keeping passwords, Remote Desktop without NLA, small
     // event logs; what regipy's wdigest and disable_last_access give
     let regipy = regipy_system();
-    let records =
-        security_settings_read(&["-d", regipy.path().to_str().unwrap(), "--weakened-only"]);
+    let records = security_settings_read(&["-d", regipy.path().to_str().unwrap()]);
+    assert!(records.iter().all(|r| r.get("WeakensDefault").is_none()));
+    let wdigest = records
+        .iter()
+        .find(|r| r["Setting"] == "wdigest_use_logon_credential")
+        .unwrap();
+    assert_eq!(wdigest["Value"], "1");
+    let application = records
+        .iter()
+        .find(|r| {
+            r["Setting"] == "event_log_max_size"
+                && r["KeyPath"].as_str().unwrap().ends_with("Application")
+        })
+        .unwrap();
+    assert_eq!(application["Value"], "4194304");
     assert_eq!(
-        security_settings_lines(&records),
-        [
-            "SYSTEM credentials wdigest_use_logon_credential 1 weakened",
-            "SYSTEM remote_access rdp_deny_connections 0 weakened",
-            "SYSTEM remote_access rdp_network_level_authentication 0 weakened",
-            "SYSTEM evidence event_log_max_size 4194304 weakened",
-            "SYSTEM evidence event_log_max_size 4194304 weakened",
-            "SYSTEM evidence event_log_max_size 4194304 weakened",
-        ]
-    );
-    assert_eq!(
-        records[3]["Meaning"],
+        application["Meaning"],
         "the Application log keeps up to 4 MiB, less than the default 20 MiB"
     );
-    // the DFIR Artifact Museum's dirty Windows 11 SYSTEM with its logs: Windows' defaults
+
     let w11 = system_hive();
     let records = security_settings_read(&["-d", w11.path().to_str().unwrap()]);
     assert_eq!(records.len(), 13);
-    assert!(records.iter().all(|r| r["WeakensDefault"] != true
+    assert!(records.iter().all(|r| r.get("WeakensDefault").is_none()
         && r["Host"] == "GOLDPAPERW11"
         && r["TransactionLogStatus"] == "unchanged"
         && r["Problems"] == json!([])));
@@ -20921,8 +21004,8 @@ fn amcache_protects_primary_hives_and_logs_from_output_replacement() {
 }
 
 #[test]
-fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
-    for format in ["csv", "jsonl"] {
+fn auto_parse_uses_recovered_amcache_without_findings_in_all_output_formats() {
+    for format in ["csv", "json", "jsonl"] {
         let evidence = tempfile::tempdir().unwrap();
         let programs = evidence.path().join("HOST/C/Windows/AppCompat/Programs");
         std::fs::create_dir_all(&programs).unwrap();
@@ -20930,6 +21013,7 @@ fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
         let original = std::fs::read(&hive).unwrap();
         let dir = tempfile::tempdir().unwrap();
         let out = dir.path().join("parsed");
+        let combined = dir.path().join("combined.jsonl");
         let r = run(&[
             "auto-parse",
             "-d",
@@ -20940,6 +21024,8 @@ fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
             format,
             "-T",
             "2",
+            "-j",
+            combined.to_str().unwrap(),
             "-K",
             "-q",
         ]);
@@ -20959,6 +21045,17 @@ fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
             let (_, records) = csv_rows(&out.join("HOST/FileExistence/Registry-Amcache-Files.csv"));
             assert_eq!(records.len(), 1);
             assert_eq!(records[0]["Publisher"], "Example Publisher");
+            assert!(
+                !out.join("HOST/FileExistence/Registry-Amcache-Findings.csv")
+                    .exists()
+            );
+        } else if format == "json" {
+            let report: Value = serde_json::from_slice(
+                &std::fs::read(out.join("HOST/FileExistence/Registry-Amcache.json")).unwrap(),
+            )
+            .unwrap();
+            assert!(report.get("Findings").is_none());
+            assert_eq!(report["Files"][0]["Publisher"], "Example Publisher");
         } else {
             let data =
                 std::fs::read_to_string(out.join("HOST/FileExistence/Registry-Amcache.jsonl"))
@@ -20970,6 +21067,23 @@ fn auto_parse_uses_recovered_amcache_in_csv_and_jsonl() {
                         && row["Publisher"] == "Example Publisher")
             );
         }
+        let timeline: Vec<Value> = std::fs::read_to_string(combined)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .filter(|row: &Value| row["Artifact"] == "amcache")
+            .collect();
+        assert_eq!(
+            timeline.len(),
+            2,
+            "{format}: expected one summary and one file"
+        );
+        assert!(timeline.iter().all(|row| row["RecordType"] != "finding"));
+        assert!(
+            timeline
+                .iter()
+                .any(|row| row["RecordType"] == "file" && row["Publisher"] == "Example Publisher")
+        );
         assert_eq!(std::fs::read(hive).unwrap(), original);
     }
 }
@@ -21099,6 +21213,832 @@ fn srum_protects_software_logs_from_output_replacement() {
     }
 }
 
+// --- parse-file recycle-bin ----------------------------------------------------------------------
+
+const RECYCLE: &str = "test_files/recycle_bin";
+
+/// JSONL rows on stdout.
+fn recycle_rows(args: &[&str]) -> Vec<Value> {
+    let mut all = vec!["parse-file", "recycle-bin", "-t", "jsonl"];
+    all.extend_from_slice(args);
+    let r = run(&all);
+    assert_eq!(r.code, 0, "{args:?}: {}\n{}", r.stdout, r.stderr);
+    r.stdout
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect()
+}
+
+#[test]
+fn recycle_bin_reads_every_index_format_like_the_reference_parsers() {
+    // Plaso's test expectations: Windows Vista and 10 $I files, and a Windows XP INFO2.
+    let vista = recycle_rows(&["-f", &format!("{RECYCLE}/plaso/$II3DF3L.zip")]);
+    assert_eq!(vista.len(), 1);
+    assert_eq!(vista[0]["Format"], "$I");
+    assert_eq!(vista[0]["FormatVersion"], 1);
+    assert_eq!(vista[0]["DeletedTime"], "2012-03-12T20:49:58.633Z");
+    assert_eq!(vista[0]["FileSize"], 724_919);
+    assert_eq!(
+        vista[0]["OriginalPath"],
+        r"C:\Users\nfury\Documents\Alloy Research\StarFury.zip"
+    );
+    assert_eq!(vista[0]["RecycledFileFound"], false);
+    assert!(
+        vista[0]["RecycledFile"]
+            .as_str()
+            .unwrap()
+            .ends_with("$RI3DF3L.zip")
+    );
+    let ten = recycle_rows(&["-f", &format!("{RECYCLE}/plaso/$I103S5F.jpg")]);
+    assert_eq!(ten[0]["FormatVersion"], 2);
+    assert_eq!(ten[0]["DeletedTime"], "2016-06-29T21:37:45.618Z");
+    assert_eq!(ten[0]["FileSize"], 222_255);
+    assert_eq!(
+        ten[0]["OriginalPath"],
+        r"C:\Users\random\Downloads\bunnies.jpg"
+    );
+    let xp = recycle_rows(&["-f", &format!("{RECYCLE}/plaso/INFO2")]);
+    assert_eq!(xp.len(), 4);
+    assert_eq!(xp[0]["Format"], "INFO2");
+    assert_eq!(xp[0]["DeletedTime"], "2004-08-25T16:18:25.237Z");
+    assert_eq!(xp[0]["RecordIndex"], 1);
+    assert_eq!(xp[0]["Drive"], "C:");
+    assert_eq!(xp[0]["RecordOffset"], 20);
+    assert_eq!(
+        xp[0]["OriginalPath"],
+        r"C:\Documents and Settings\Mr. Evil\Desktop\lalsetup250.exe"
+    );
+    assert!(xp[0]["RecycledFile"].as_str().unwrap().ends_with("Dc1.exe"));
+
+    // rifiuti2's results: a Windows XP INFO2 in code page 936 with an item no longer in the bin,
+    // whose ANSI path lost its first byte.
+    let xp = recycle_rows(&[
+        "-f",
+        &format!("{RECYCLE}/rifiuti2/INFO2-sample1"),
+        "--code-page",
+        "936",
+    ]);
+    assert_eq!(xp.len(), 16);
+    assert_eq!(
+        xp[0]["OriginalPath"],
+        r"C:\Documents and Settings\All Users\Desktop\有道桌面词典.lnk"
+    );
+    assert_eq!(
+        xp[0]["ShortPath"],
+        r"C:\DOCUME~1\ALLUSE~1\Desktop\有道桌~1.LNK"
+    );
+    let removed: Vec<&Value> = xp.iter().filter(|r| r["RemovedFromBin"] == true).collect();
+    assert_eq!(removed.len(), 1);
+    assert_eq!(removed[0]["RecordIndex"], 64);
+    assert_eq!(
+        removed[0]["DeletedTime"].as_str().unwrap()[..19],
+        *"2008-11-19T05:07:35"
+    );
+    assert_eq!(removed[0]["FileSize"], 2_727_936);
+    // Windows 95: version 0, ANSI paths only, here in code page 932 on drive D:.
+    let w95 = recycle_rows(&[
+        "-f",
+        &format!("{RECYCLE}/rifiuti2/INFO-95-ja-1"),
+        "--code-page",
+        "932",
+    ]);
+    assert_eq!(w95.len(), 11);
+    assert_eq!(w95[0]["FormatVersion"], 0);
+    assert_eq!(w95[0]["Drive"], "D:");
+    assert_eq!(
+        w95[0]["OriginalPath"],
+        r"D:\WINDOWS\ﾃﾞｽｸﾄｯﾌﾟ\The Microsoft Network のｾｯﾄｱｯﾌﾟ.lnk"
+    );
+    assert_eq!(w95[0]["ShortPath"], Value::Null);
+    // Windows ME: three items left the bin; UNC paths have no drive and no file in the bin.
+    let me = recycle_rows(&["-f", &format!("{RECYCLE}/rifiuti2/INFO2-ME-en-1")]);
+    assert_eq!(me.iter().filter(|r| r["RemovedFromBin"] == true).count(), 3);
+    let unc = recycle_rows(&["-f", &format!("{RECYCLE}/rifiuti2/INFO2-me-en-uncpath")]);
+    assert!(
+        unc.iter()
+            .all(|r| r["Drive"].is_null() && r["RecycledFile"].is_null())
+    );
+    assert!(unc[0]["OriginalPath"].as_str().unwrap().starts_with(r"\\"));
+    // A truncated last record keeps what it has; an empty bin has no rows.
+    let trunc = recycle_rows(&["-f", &format!("{RECYCLE}/rifiuti2/INFO2-trunc")]);
+    assert_eq!(trunc.len(), 5);
+    assert_eq!(trunc[3]["DeletedTime"], "3000-01-01T00:00:00Z");
+    assert!(
+        trunc[4]["Problems"][0]
+            .as_str()
+            .unwrap()
+            .starts_with("truncated: 795 of 800 bytes")
+    );
+    assert!(recycle_rows(&["-f", &format!("{RECYCLE}/rifiuti2/INFO2-empty")]).is_empty());
+}
+
+#[test]
+fn recycle_bin_folders_find_recycled_content_and_keep_damaged_files() {
+    let dir = tempfile::tempdir().unwrap();
+    let out = dir.path().join("win10.csv");
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        &format!("{RECYCLE}/rifiuti2/dir-win10-01"),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout
+            .contains("Index files parsed: 7 ($I files: 7, INFO2: 0)")
+    );
+    assert!(
+        r.stdout
+            .contains("Deleted content collected ($R / D files): 3 of 7")
+    );
+    let (header, rows) = csv_rows(&out);
+    assert_eq!(
+        header[..4],
+        ["SourceFile", "DeletedTime", "OriginalPath", "FileSize"]
+    );
+    assert_eq!(rows.len(), 7);
+    let by = |name: &str| {
+        rows.iter()
+            .find(|r| r["SourceFile"].ends_with(name))
+            .unwrap()
+    };
+    assert_eq!(by("$IHO61YT")["FileSize"], "12884901888");
+    assert_eq!(by("$IQ7LAXT.png")["RecycledFileFound"], "true");
+    assert_eq!(by("$IKEGS1G")["RecycledFileFound"], "true");
+    assert_eq!(by("$IBBFODN")["RecycledFileFound"], "false");
+    assert_eq!(by("$IBBFODN")["OriginalPath"], r"C:\Temp\𨳊𨶙閪邨鰂");
+    assert_eq!(by("$IKEGS1G")["OriginalPath"].chars().count(), 246);
+
+    // Windows Vista's 543-byte $I files: the time and path are read, the size is not.
+    let vista = recycle_rows(&["-d", &format!("{RECYCLE}/rifiuti2/dir-sample1")]);
+    assert_eq!(vista.len(), 15);
+    let short: Vec<&Value> = vista.iter().filter(|r| r["FileSize"].is_null()).collect();
+    assert_eq!(short.len(), 2);
+    assert!(short.iter().all(|r| {
+        r["Problems"][0].as_str().unwrap().starts_with("543 bytes")
+            && r["DeletedTime"].is_string()
+            && r["OriginalPath"].as_str().unwrap().ends_with(".exe")
+    }));
+
+    // Damaged files are rows with problems, not failures.
+    let damaged = recycle_rows(&["-d", &format!("{RECYCLE}/rifiuti2/dir-badfiles")]);
+    assert_eq!(damaged.len(), 4);
+    let header_only = damaged
+        .iter()
+        .find(|r| r["SourceFile"].as_str().unwrap().ends_with("$IF47Q09"))
+        .unwrap();
+    assert_eq!(header_only["OriginalPath"], "");
+    assert_eq!(header_only["FileSize"], 7);
+    assert_eq!(
+        header_only["Problems"][0],
+        "truncated: 28 of 106 bytes, so the path may be incomplete"
+    );
+    let surrogates = recycle_rows(&["-d", &format!("{RECYCLE}/rifiuti2/dir-bad-uni")]);
+    assert_eq!(
+        surrogates
+            .iter()
+            .filter(|r| r["OriginalPath"].as_str().unwrap().contains('\u{fffd}'))
+            .count(),
+        2
+    );
+
+    // Not an index: an error, and with nothing parsed, a failure.
+    let junk = dir.path().join("$IJUNK01.txt");
+    std::fs::write(&junk, b"plain text, not a Recycle Bin index file").unwrap();
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        junk.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout.contains("not a Recycle Bin $I file"),
+        "{}",
+        r.stdout
+    );
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        dir.path().join("none").to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    let empty = tempfile::tempdir().unwrap();
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        empty.path().to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        r.stdout
+            .contains("No Recycle Bin index files ($I files, INFO2) were found")
+    );
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        &format!("{RECYCLE}/plaso/INFO2"),
+        "--code-page",
+        "1",
+        "-K",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(r.stdout.contains("Code page 1 is not supported"));
+}
+
+/// A collection whose C: and D: volumes have bins: Rathbun's (named by the SOFTWARE hive),
+/// and an account without a profile.
+fn recycle_collection(root: &Path) -> PathBuf {
+    let host = root.join("HOST");
+    let config = host.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    let ten = repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg"));
+    let c_bin = host.join("C/$Recycle.Bin").join(RATHBUN_SID);
+    std::fs::create_dir_all(&c_bin).unwrap();
+    std::fs::copy(&ten, c_bin.join("$IABC123.jpg")).unwrap();
+    std::fs::write(c_bin.join("$RABC123.jpg"), b"picture").unwrap();
+    std::fs::write(c_bin.join("desktop.ini"), b"[.ShellClassInfo]").unwrap();
+    let d_bin = host
+        .join("D/$RECYCLE.BIN")
+        .join(RATHBUN_SID.to_ascii_lowercase());
+    std::fs::create_dir_all(&d_bin).unwrap();
+    std::fs::copy(
+        repo(&format!("{RECYCLE}/plaso/$II3DF3L.zip")),
+        d_bin.join("$IDEF456.zip"),
+    )
+    .unwrap();
+    let other = host.join("C/$Recycle.Bin/S-1-5-21-1-2-3-1009");
+    std::fs::create_dir_all(&other).unwrap();
+    std::fs::copy(&ten, other.join("$IGHI789")).unwrap();
+    host
+}
+
+#[test]
+fn recycle_bin_names_users_from_the_profile_list_and_protects_inputs() {
+    let dir = tempfile::tempdir().unwrap();
+    let host = recycle_collection(dir.path());
+    let rows = recycle_rows(&["-d", host.to_str().unwrap()]);
+    assert_eq!(rows.len(), 3);
+    let by = |name: &str| {
+        rows.iter()
+            .find(|r| r["SourceFile"].as_str().unwrap().ends_with(name))
+            .unwrap()
+    };
+    let c = by("$IABC123.jpg");
+    assert_eq!(c["User"], "rathbun");
+    assert_eq!(c["SID"], RATHBUN_SID);
+    assert_eq!(c["RecycledFileFound"], true);
+    // A bin on a volume without Windows: the collection's only SOFTWARE hive names it.
+    let d = by("$IDEF456.zip");
+    assert_eq!(d["User"], "rathbun");
+    assert_eq!(d["SID"], RATHBUN_SID);
+    assert_eq!(d["RecycledFileFound"], false);
+    let other = by("$IGHI789");
+    assert_eq!(other["User"], Value::Null);
+    assert_eq!(other["SID"], "S-1-5-21-1-2-3-1009");
+    assert_eq!(
+        other["RecycledFile"]
+            .as_str()
+            .unwrap()
+            .rsplit(['/', '\\'])
+            .next(),
+        Some("$RGHI789")
+    );
+
+    // Only D: has a bin: the Windows installation found on C: still names its user.
+    let only_d = tempfile::tempdir().unwrap();
+    let config = only_d.path().join("HOST/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    let bin = only_d.path().join("HOST/D/$Recycle.Bin").join(RATHBUN_SID);
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::copy(
+        repo(&format!("{RECYCLE}/plaso/$II3DF3L.zip")),
+        bin.join("$IDEF456.zip"),
+    )
+    .unwrap();
+    let rows = recycle_rows(&["-d", only_d.path().to_str().unwrap()]);
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["User"], "rathbun");
+
+    // The summary counts the items per user.
+    let r = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        host.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0);
+    assert!(
+        r.stdout
+            .contains("Items by user: S-1-5-21-1-2-3-1009: 1, rathbun: 2"),
+        "{}",
+        r.stdout
+    );
+
+    // Neither an index file nor the SOFTWARE hive (or a hard link to it) can be the output.
+    let software = host.join("C/Windows/System32/config/SOFTWARE");
+    let link = dir.path().join("link.csv");
+    std::fs::hard_link(&software, &link).unwrap();
+    let index = host
+        .join("C/$Recycle.Bin")
+        .join(RATHBUN_SID)
+        .join("$IABC123.jpg");
+    for out in [&software, &link, &index] {
+        let before = std::fs::read(out).unwrap();
+        let r = run(&[
+            "parse-file",
+            "recycle-bin",
+            "-d",
+            host.to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+            "-C",
+            "-K",
+        ]);
+        assert_eq!(r.code, 1, "{}", out.display());
+        assert!(r.stdout.contains("is also an input file"), "{}", r.stdout);
+        assert_eq!(std::fs::read(out).unwrap(), before);
+    }
+}
+
+#[test]
+fn auto_parse_saves_recycle_bin_items_for_the_timelines() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let host = recycle_collection(&evidence);
+    // A Velociraptor collection: every volume belongs to the host, so D:'s bin is parsed too.
+    std::fs::write(host.join("client_info.json"), br#"{"hostname":"HOST"}"#).unwrap();
+    let out = dir.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-Z",
+        "+09:00",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["Artifact"] == "recycle-bin")
+        .unwrap();
+    assert_eq!(task["Status"], "succeeded", "{task}");
+    let rows: Vec<Value> = std::fs::read_to_string(out.join("HOST/FileExistence/RecycleBin.jsonl"))
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert_eq!(rows.len(), 3);
+    let c = rows
+        .iter()
+        .find(|r| {
+            r["OriginalPath"] == r"C:\Users\random\Downloads\bunnies.jpg" && r["User"] == "rathbun"
+        })
+        .unwrap();
+    // -Z shows the deletion time at the offset given.
+    assert_eq!(c["DeletedTime"], "2016-06-30T06:37:45.618+09:00");
+    assert_eq!(c["Comp"], "HOST");
+
+    let timeline = dir.path().join("Timeline.jsonl");
+    let r = run(&[
+        "super-timeline",
+        "-d",
+        out.to_str().unwrap(),
+        "-o",
+        timeline.to_str().unwrap(),
+        "-t",
+        "jsonl",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let events: Vec<Value> = std::fs::read_to_string(&timeline)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .filter(|e| e["Artifact"] == "recycle-bin")
+        .collect();
+    assert_eq!(events.len(), 3);
+    let event = events
+        .iter()
+        .find(|e| e["User"] == "rathbun" && e["Timestamp"].as_str().unwrap().starts_with("2016"))
+        .unwrap();
+    assert_eq!(
+        event["TimestampType"],
+        "Recycle Bin deletion (moved to the bin)"
+    );
+    assert_eq!(event["Path"], r"C:\Users\random\Downloads\bunnies.jpg");
+    assert_eq!(event["Details"]["TimeRole"], "deletion");
+    assert_eq!(event["Details"]["RecycledFileFound"], true);
+
+    // A host without a bin: the task is skipped, not failed.
+    let bare = tempfile::tempdir().unwrap();
+    let config = bare.path().join("evidence/HOST/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    let out = bare.path().join("parsed");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        bare.path().join("evidence").to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["Artifact"] == "recycle-bin")
+        .unwrap();
+    assert_eq!(task["Status"], "skipped", "{}\n{task}", r.stdout);
+}
+
+#[test]
+fn recycle_bin_review_protects_recycled_content_and_hard_links() {
+    for (fixture, index_name, content_name) in [
+        ("plaso/$I103S5F.jpg", "$IABC123.jpg", "$RABC123.jpg"),
+        ("plaso/INFO2", "INFO2", "Dc1.exe"),
+    ] {
+        for alias in [false, true] {
+            let dir = tempfile::tempdir().unwrap();
+            let bin = dir.path().join("bin");
+            std::fs::create_dir(&bin).unwrap();
+            let index = bin.join(index_name);
+            std::fs::copy(repo(&format!("{RECYCLE}/{fixture}")), &index).unwrap();
+            let content = bin.join(content_name);
+            let bytes = b"original recycled evidence; must not be replaced by CSV";
+            std::fs::write(&content, bytes).unwrap();
+            let output = if alias {
+                let alias = dir.path().join("result.csv");
+                std::fs::hard_link(&content, &alias).unwrap();
+                alias
+            } else {
+                content.clone()
+            };
+            let result = run(&[
+                "parse-file",
+                "recycle-bin",
+                "-f",
+                index.to_str().unwrap(),
+                "-o",
+                output.to_str().unwrap(),
+                "-C",
+                "-K",
+                "-q",
+            ]);
+            assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+            assert!(
+                result.stdout.contains("also an input file"),
+                "{}",
+                result.stdout
+            );
+            assert_eq!(std::fs::read(&content).unwrap(), bytes);
+        }
+    }
+}
+
+#[test]
+fn recycle_bin_review_does_not_take_user_names_from_another_host() {
+    for flat in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let known = if flat {
+            dir.path().join("KNOWN")
+        } else {
+            dir.path().join("KNOWN/C")
+        };
+        let unknown = if flat {
+            dir.path().join("UNKNOWN")
+        } else {
+            dir.path().join("UNKNOWN/D")
+        };
+        let config = known.join("Windows/System32/config");
+        std::fs::create_dir_all(&config).unwrap();
+        std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+        let bin = unknown.join("$Recycle.Bin").join(RATHBUN_SID);
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::copy(
+            repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")),
+            bin.join("$IABC123.jpg"),
+        )
+        .unwrap();
+        let rows = recycle_rows(&["-d", dir.path().to_str().unwrap()]);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["SID"], RATHBUN_SID);
+        assert_eq!(rows[0]["User"], Value::Null, "flat={flat}: {}", rows[0]);
+    }
+}
+
+#[test]
+fn recycle_bin_review_protects_recycled_folder_contents() {
+    for hard_link in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let index = dir.path().join("$IABC123");
+        std::fs::copy(repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")), &index).unwrap();
+        let folder = dir.path().join("$RABC123/nested");
+        std::fs::create_dir_all(&folder).unwrap();
+        let content = folder.join("important.txt");
+        let bytes = b"deleted folder evidence";
+        std::fs::write(&content, bytes).unwrap();
+        let output = if hard_link {
+            let path = dir.path().join("result.csv");
+            std::fs::hard_link(&content, &path).unwrap();
+            path
+        } else {
+            content.clone()
+        };
+        let result = run(&[
+            "parse-file",
+            "recycle-bin",
+            "-f",
+            index.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+        assert_eq!(std::fs::read(&content).unwrap(), bytes);
+    }
+}
+
+#[test]
+fn recycle_bin_review_preserves_payloads_when_an_index_is_damaged() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::copy(
+        repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")),
+        dir.path().join("$IABC123.jpg"),
+    )
+    .unwrap();
+    std::fs::write(dir.path().join("$IDEF456.txt"), b"damaged index").unwrap();
+    let content = dir.path().join("$RDEF456.txt");
+    std::fs::write(&content, b"original evidence").unwrap();
+    let result = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-d",
+        dir.path().to_str().unwrap(),
+        "-o",
+        content.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+    assert_eq!(std::fs::read(&content).unwrap(), b"original evidence");
+}
+
+#[test]
+fn recycle_bin_review_does_not_replace_output_when_no_index_can_be_read() {
+    let dir = tempfile::tempdir().unwrap();
+    let index = dir.path().join("$IABC123.txt");
+    let output = dir.path().join("old-results.csv");
+    std::fs::write(&index, b"damaged index").unwrap();
+    std::fs::write(&output, b"previous results").unwrap();
+    let result = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        index.to_str().unwrap(),
+        "-o",
+        output.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+    assert_eq!(std::fs::read(&output).unwrap(), b"previous results");
+}
+
+#[test]
+fn recycle_bin_review_enriches_only_related_collector_uploads() {
+    let dir = tempfile::tempdir().unwrap();
+    let host = dir.path().join("HOST");
+    let config = host.join("uploads/auto/C%3A/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    for (root, expected) in [(&host, "rathbun"), (&dir.path().join("OTHER"), "")] {
+        let bin = root
+            .join("uploads/ntfs/%5C%5C.%5CD%3A/$Recycle.Bin")
+            .join(RATHBUN_SID);
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::copy(
+            repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")),
+            bin.join("$IABC123.jpg"),
+        )
+        .unwrap();
+        let rows = recycle_rows(&["-d", dir.path().to_str().unwrap()]);
+        let row = rows
+            .iter()
+            .find(|v| {
+                v["SourceFile"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with(root.to_str().unwrap())
+            })
+            .unwrap();
+        assert_eq!(row["User"].as_str().unwrap_or(""), expected, "{row}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn recycle_bin_review_listing_errors_are_unknown_and_cannot_destroy_payloads() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let bin = dir.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    let index = bin.join("$IABC123.jpg");
+    let payload = bin.join("$RABC123.jpg");
+    std::fs::copy(repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")), &index).unwrap();
+    std::fs::write(&payload, b"original evidence").unwrap();
+    std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o111)).unwrap();
+    if std::fs::read_dir(&bin).is_ok() {
+        // A privileged test runner can bypass directory permissions.
+        std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
+        return;
+    }
+    let json = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        index.to_str().unwrap(),
+        "-t",
+        "jsonl",
+    ]);
+    let overwrite = run(&[
+        "parse-file",
+        "recycle-bin",
+        "-f",
+        index.to_str().unwrap(),
+        "-o",
+        payload.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
+    assert_eq!(json.code, 0, "{}\n{}", json.stdout, json.stderr);
+    let value: Value = serde_json::from_str(&json.stdout).unwrap();
+    assert_eq!(value["RecycledFileFound"], Value::Null);
+    assert!(
+        value["Problems"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|v| v.as_str().unwrap().contains("Could not list"))
+    );
+    assert_eq!(
+        overwrite.code, 1,
+        "{}\n{}",
+        overwrite.stdout, overwrite.stderr
+    );
+    assert_eq!(std::fs::read(&payload).unwrap(), b"original evidence");
+}
+
+#[test]
+fn recycle_bin_review_case_collisions_are_unknown_and_both_payloads_are_protected() {
+    let dir = tempfile::tempdir().unwrap();
+    let index = dir.path().join("$IABC123.jpg");
+    std::fs::copy(repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")), &index).unwrap();
+    let upper = dir.path().join("$RABC123.jpg");
+    let lower = dir.path().join("$rabc123.jpg");
+    std::fs::write(&upper, b"uppercase evidence").unwrap();
+    if lower.exists() {
+        // Case-insensitive filesystems cannot represent this collection ambiguity.
+        return;
+    }
+    std::fs::write(&lower, b"lowercase evidence").unwrap();
+    let rows = recycle_rows(&["-f", index.to_str().unwrap()]);
+    assert_eq!(rows[0]["RecycledFileFound"], Value::Null);
+    assert!(
+        rows[0]["Problems"][0]
+            .as_str()
+            .unwrap()
+            .contains("Ambiguous")
+    );
+    for output in [&upper, &lower] {
+        let result = run(&[
+            "parse-file",
+            "recycle-bin",
+            "-f",
+            index.to_str().unwrap(),
+            "-o",
+            output.to_str().unwrap(),
+            "-C",
+            "-K",
+            "-q",
+        ]);
+        assert_eq!(result.code, 1, "{}\n{}", result.stdout, result.stderr);
+    }
+    assert_eq!(std::fs::read(&upper).unwrap(), b"uppercase evidence");
+    assert_eq!(std::fs::read(&lower).unwrap(), b"lowercase evidence");
+}
+
+// Linux filesystems can retain invalid UTF-8 names; macOS APFS normally rejects them.
+#[cfg(target_os = "linux")]
+#[test]
+fn recycle_bin_review_protects_native_paths_with_non_unicode_extensions() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+    let dir = tempfile::tempdir().unwrap();
+    let index = dir
+        .path()
+        .join(OsString::from_vec(b"$IABC123.\xff".to_vec()));
+    let payload = dir
+        .path()
+        .join(OsString::from_vec(b"$RABC123.\xff".to_vec()));
+    std::fs::copy(repo(&format!("{RECYCLE}/plaso/$I103S5F.jpg")), &index).unwrap();
+    std::fs::write(&payload, b"original evidence").unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_juntei"))
+        .args(["parse-file", "recycle-bin", "-f"])
+        .arg(&index)
+        .arg("-o")
+        .arg(&payload)
+        .args(["-C", "-K", "-q"])
+        .output()
+        .unwrap();
+    assert_eq!(
+        result.status.code(),
+        Some(1),
+        "{}",
+        String::from_utf8_lossy(&result.stdout)
+    );
+    assert_eq!(std::fs::read(&payload).unwrap(), b"original evidence");
+}
+
+#[test]
+fn recycle_bin_review_auto_parse_discovers_windows95_info() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let config = evidence.join("HOST/C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    let bin = evidence.join("HOST/C/RECYCLED");
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::copy(
+        repo(&format!("{RECYCLE}/rifiuti2/INFO-95-ja-1")),
+        bin.join("INFO"),
+    )
+    .unwrap();
+    let out = dir.path().join("parsed");
+    let result = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "--code-page",
+        "932",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+    let task = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["Artifact"] == "recycle-bin")
+        .unwrap();
+    assert_eq!(task["Status"], "succeeded", "{}\n{task}", result.stdout);
+    let (_, rows) = csv_rows(&out.join("HOST/FileExistence/RecycleBin.csv"));
+    assert_eq!(rows.len(), 11);
+    assert_eq!(
+        rows[0]["OriginalPath"],
+        r"D:\WINDOWS\ﾃﾞｽｸﾄｯﾌﾟ\The Microsoft Network のｾｯﾄｱｯﾌﾟ.lnk"
+    );
+}
+
 #[test]
 fn prefetch_hash_validation_is_explicit_in_csv_json_and_execution_timelines() {
     for timeline in [false, true] {
@@ -21148,4 +22088,480 @@ fn prefetch_hash_validation_is_explicit_in_csv_json_and_execution_timelines() {
             }
         }
     }
+}
+
+// --- parse-file rdp-cache --------------------------------------------------------------------
+
+/// A `Cache????.bin` file: `RDP8bmp`, version 6, then `tiles` of (key, width, height), each a
+/// gradient (BGRA: blue x, green y, red key), top row first.
+fn rdp_bin(tiles: &[(u64, u16, u16)]) -> Vec<u8> {
+    let mut out = b"RDP8bmp\0".to_vec();
+    out.extend_from_slice(&6u32.to_le_bytes());
+    for &(key, width, height) in tiles {
+        out.extend_from_slice(&key.to_le_bytes());
+        out.extend_from_slice(&width.to_le_bytes());
+        out.extend_from_slice(&height.to_le_bytes());
+        for y in 0..height {
+            for x in 0..width {
+                out.extend_from_slice(&[x as u8 * 4, y as u8 * 4, key as u8, 0xFF]);
+            }
+        }
+    }
+    out
+}
+
+/// A 16-bit `bcache22.bmc` slot: the header, `data`, and the rest of the 64 × 64 slot `fill`.
+fn rdp_bmc22_slot(key: u64, width: u16, height: u16, flags: u32, data: &[u8], fill: u8) -> Vec<u8> {
+    let mut out = key.to_le_bytes().to_vec();
+    out.extend_from_slice(&width.to_le_bytes());
+    out.extend_from_slice(&height.to_le_bytes());
+    out.extend_from_slice(&(data.len() as u32).to_le_bytes());
+    out.extend_from_slice(&flags.to_le_bytes());
+    out.extend_from_slice(data);
+    out.resize(20 + 64 * 64 * 2, fill);
+    out
+}
+
+/// A BMP's width, height and the RGB of its top-left and bottom-right pixels.
+fn rdp_bmp(path: &Path) -> (u32, u32, [u8; 3], [u8; 3]) {
+    let b = std::fs::read(path).unwrap();
+    assert_eq!(&b[..2], b"BM", "{}", path.display());
+    let at = |i: usize| u32::from_le_bytes(b[i..i + 4].try_into().unwrap());
+    let (width, height) = (at(18), at(22));
+    assert_eq!(u16::from_le_bytes([b[28], b[29]]), 24);
+    let row = (width as usize * 3).div_ceil(4) * 4;
+    let pixel = |x: usize, stored_row: usize| {
+        let i = 54 + stored_row * row + x * 3;
+        [b[i + 2], b[i + 1], b[i]]
+    };
+    // Rows are stored bottom row first.
+    (
+        width,
+        height,
+        pixel(0, height as usize - 1),
+        pixel(width as usize - 1, 0),
+    )
+}
+
+/// One user's RDP cache folder in a collection: two `Cache????.bin` files, a 16-bit `.bmc`
+/// file of one uncompressed and one RLE-compressed tile, Windows 10's empty `bcache24.bmc`, and
+/// another program's `Cache0009.bin`.
+fn rdp_cache_collection(root: &Path) -> PathBuf {
+    let cache = root.join("C/Users/alice/AppData/Local/Microsoft/Terminal Server Client/Cache");
+    std::fs::create_dir_all(&cache).unwrap();
+    std::fs::write(
+        cache.join("Cache0000.bin"),
+        rdp_bin(&[(0x10, 64, 64), (0x20, 58, 28), (0x30, 64, 64)]),
+    )
+    .unwrap();
+    std::fs::write(cache.join("Cache0001.bin"), rdp_bin(&[(0x40, 62, 35)])).unwrap();
+    // Uncompressed 64 × 48 white over an earlier tile's gray rows; then a compressed 4 × 2 tile:
+    // a color run of red (the bottom row), then one of blue (the top row).
+    let mut bmc = rdp_bmc22_slot(0x50, 64, 48, 0x11, &[0xFF; 64 * 48 * 2], 0x84);
+    bmc.extend(rdp_bmc22_slot(
+        0x60,
+        4,
+        2,
+        0x19,
+        &[0x64, 0x00, 0xF8, 0x64, 0x1F, 0x00],
+        0,
+    ));
+    std::fs::write(cache.join("bcache22.bmc"), bmc).unwrap();
+    std::fs::write(cache.join("bcache24.bmc"), b"").unwrap();
+    std::fs::write(root.join("C/Cache0009.bin"), b"a game's shader cache").unwrap();
+    cache
+}
+
+#[test]
+fn rdp_cache_reads_bin_and_bmc_tiles_and_saves_images() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let cache = rdp_cache_collection(&evidence);
+    let out = dir.path().join("out");
+    let images = out.join("images");
+    let csv = out.join("tiles.csv");
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        csv.to_str().unwrap(),
+        "--extract",
+        images.to_str().unwrap(),
+        "-K",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(
+        r.stdout
+            .contains("Cache files parsed: 4 (Cache????.bin: 2, bcache*.bmc: 2) (empty: 1)"),
+        "{}",
+        r.stdout
+    );
+    assert!(
+        r.stdout
+            .contains("Other files with cache names (not RDP bitmap caches): 1"),
+        "{}",
+        r.stdout
+    );
+    assert!(
+        r.stdout.contains("Tiles: 6 (single-color: 1)"),
+        "{}",
+        r.stdout
+    );
+    assert!(r.stdout.contains("Tiles by user: alice: 6"), "{}", r.stdout);
+    assert!(
+        r.stdout
+            .contains("(collages: 3, tiles: 6, ends of earlier tiles: 1)"),
+        "{}",
+        r.stdout
+    );
+    let (header, rows) = csv_rows(&csv);
+    assert_eq!(
+        header,
+        [
+            "SourceFile",
+            "User",
+            "TileIndex",
+            "Width",
+            "Height",
+            "SingleColor",
+            "TileImage",
+            "Collage",
+            "RemnantImage",
+            "Key",
+            "Format",
+            "FormatVersion",
+            "BitsPerPixel",
+            "Compressed",
+            "Flags",
+            "Offset",
+            "Problems"
+        ]
+    );
+    assert_eq!(rows.len(), 6);
+    let tile = |file: &str, index: &str| {
+        rows.iter()
+            .find(|r| r["SourceFile"].ends_with(file) && r["TileIndex"] == index)
+            .unwrap()
+    };
+    let narrow = tile("Cache0000.bin", "1");
+    assert_eq!(narrow["User"], "alice");
+    assert_eq!(
+        (narrow["Width"].as_str(), narrow["Height"].as_str()),
+        ("58", "28")
+    );
+    assert_eq!(narrow["Key"], "0000000000000020");
+    assert_eq!(narrow["Format"], "bin");
+    assert_eq!(narrow["FormatVersion"], "6");
+    assert_eq!(narrow["BitsPerPixel"], "32");
+    assert_eq!(narrow["Offset"], (12 + 12 + 64 * 64 * 4).to_string());
+    assert_eq!(narrow["Compressed"], "");
+    assert_eq!(narrow["SingleColor"], "false");
+    let folder = images.join("alice").join("Cache0000.bin");
+    assert_eq!(
+        Path::new(&narrow["TileImage"]),
+        folder.join("Cache0000.bin_0001.bmp")
+    );
+    assert_eq!(
+        Path::new(&narrow["Collage"]),
+        folder.join("Cache0000.bin_collage.png")
+    );
+    // The 58-pixel tile is 58 pixels wide, top row first: blue x × 4, green y × 4, red the key.
+    assert_eq!(
+        rdp_bmp(Path::new(&narrow["TileImage"])),
+        (58, 28, [0x20, 0, 0], [0x20, 27 * 4, 57 * 4])
+    );
+    let png = std::fs::read(folder.join("Cache0000.bin_collage.png")).unwrap();
+    assert_eq!(&png[1..4], b"PNG");
+    // 3 tiles: 3 columns of 64 pixels, one row.
+    assert_eq!(u32::from_be_bytes(png[16..20].try_into().unwrap()), 192);
+    assert_eq!(u32::from_be_bytes(png[20..24].try_into().unwrap()), 64);
+
+    let white = tile("bcache22.bmc", "0");
+    assert_eq!(white["Format"], "bmc");
+    assert_eq!(white["BitsPerPixel"], "16");
+    assert_eq!(white["Compressed"], "false");
+    assert_eq!(white["Flags"], "0x00000011");
+    assert_eq!(white["SingleColor"], "true");
+    // The 16 rows after the 48-row tile keep the earlier tile's gray (0x8484 in RGB565).
+    let remnant = Path::new(&white["RemnantImage"]);
+    assert!(remnant.ends_with("bcache22.bmc_old_0000.bmp"), "{white:?}");
+    assert_eq!(rdp_bmp(remnant), (64, 16, [132, 146, 33], [132, 146, 33]));
+    let compressed = tile("bcache22.bmc", "1");
+    assert_eq!(compressed["Compressed"], "true");
+    assert_eq!(compressed["RemnantImage"], "");
+    assert_eq!(
+        rdp_bmp(Path::new(&compressed["TileImage"])),
+        (4, 2, [0, 0, 255], [255, 0, 0]),
+        "the first row decoded is the bottom one"
+    );
+    assert!(rows.iter().all(|r| r["Problems"].is_empty()));
+    // RdpCacheStitcher reads a folder of BMP tiles: the collage is a PNG beside them.
+    let mut names: Vec<String> = std::fs::read_dir(&folder)
+        .unwrap()
+        .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    assert_eq!(
+        names,
+        [
+            "Cache0000.bin_0000.bmp",
+            "Cache0000.bin_0001.bmp",
+            "Cache0000.bin_0002.bmp",
+            "Cache0000.bin_collage.png"
+        ]
+    );
+    // Nothing was written into the evidence.
+    assert_eq!(std::fs::read_dir(&cache).unwrap().count(), 4);
+
+    // JSON and JSONL: the same records, typed.
+    for format in ["json", "jsonl"] {
+        let r = run(&[
+            "parse-file",
+            "rdp-cache",
+            "-f",
+            cache.join("bcache22.bmc").to_str().unwrap(),
+            "-t",
+            format,
+        ]);
+        assert_eq!(r.code, 0, "{}", r.stderr);
+        let records = json_documents(&r.stdout);
+        assert_eq!(records.len(), 2, "{format}");
+        assert_eq!(records[1]["Compressed"], true);
+        assert_eq!(records[1]["Width"], 4);
+        assert_eq!(records[1]["TileImage"], Value::Null);
+        assert!(!r.stdout.contains("Results Summary"), "data only on stdout");
+    }
+    // --collage-only and --collage-width.
+    let collages = dir.path().join("collages");
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-f",
+        cache.join("Cache0000.bin").to_str().unwrap(),
+        "--extract",
+        collages.to_str().unwrap(),
+        "--collage-only",
+        "--collage-width",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let png =
+        std::fs::read(collages.join("alice/Cache0000.bin/Cache0000.bin_collage.png")).unwrap();
+    assert_eq!(u32::from_be_bytes(png[16..20].try_into().unwrap()), 128);
+    assert_eq!(u32::from_be_bytes(png[20..24].try_into().unwrap()), 128);
+    assert_eq!(
+        std::fs::read_dir(collages.join("alice/Cache0000.bin"))
+            .unwrap()
+            .count(),
+        1
+    );
+    // Another program's file given with -f is an error.
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-f",
+        evidence.join("C/Cache0009.bin").to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1);
+    assert!(
+        format!("{}{}", r.stdout, r.stderr).contains("does not start with RDP8bmp"),
+        "{}{}",
+        r.stdout,
+        r.stderr
+    );
+}
+
+#[test]
+fn rdp_cache_damage_is_reported_and_inputs_and_images_are_protected() {
+    let dir = tempfile::tempdir().unwrap();
+    let cache = rdp_cache_collection(dir.path());
+    let mut damaged = rdp_bin(&[(1, 64, 64), (2, 64, 64)]);
+    damaged.truncate(damaged.len() - 1000);
+    std::fs::write(cache.join("Cache0002.bin"), &damaged).unwrap();
+    let out = dir.path().join("out.csv");
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-f",
+        cache.join("Cache0002.bin").to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(r.stdout.contains("With problems: 1"), "{}", r.stdout);
+    let (_, rows) = csv_rows(&out);
+    assert_eq!(rows.len(), 2);
+    assert!(rows[0]["Problems"].is_empty());
+    assert_eq!(
+        rows[1]["Problems"],
+        "The file ends inside the tile's pixels (15384 of 16384 bytes)"
+    );
+    assert_eq!(rows[1]["SingleColor"], "");
+
+    // The records never replace a cache file, even with -C.
+    let input = cache.join("Cache0001.bin");
+    let before = std::fs::read(&input).unwrap();
+    let r = run(&[
+        "parse-file",
+        "rdp-cache",
+        "-f",
+        input.to_str().unwrap(),
+        "-o",
+        input.to_str().unwrap(),
+        "-C",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 1);
+    assert_eq!(std::fs::read(&input).unwrap(), before);
+
+    // Images already there are kept without -C, and reported.
+    let images = dir.path().join("images");
+    let args = |clobber: bool| {
+        let mut args = vec![
+            "parse-file",
+            "rdp-cache",
+            "-f",
+            input.to_str().unwrap(),
+            "--extract",
+            images.to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+            "-K",
+            "-q",
+        ];
+        if clobber {
+            args.push("-C");
+        }
+        args
+    };
+    let mut first = args(false);
+    first.push("-C");
+    assert_eq!(run(&first).code, 0);
+    let tile = images.join("alice/Cache0001.bin/Cache0001.bin_0000.bmp");
+    std::fs::write(&tile, b"kept").unwrap();
+    std::fs::remove_file(&out).unwrap();
+    let r = run(&args(false));
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert_eq!(std::fs::read(&tile).unwrap(), b"kept");
+    let (_, rows) = csv_rows(&out);
+    assert!(rows[0]["Problems"].contains("already exists"), "{rows:?}");
+    assert_eq!(rows[0]["TileImage"], "");
+    let r = run(&args(true));
+    assert_eq!(r.code, 0);
+    assert_ne!(std::fs::read(&tile).unwrap(), b"kept");
+}
+
+#[test]
+fn auto_parse_saves_rdp_cache_collages_and_tiles_on_request() {
+    let dir = tempfile::tempdir().unwrap();
+    let evidence = dir.path().join("evidence");
+    let host = evidence.join("HOST");
+    rdp_cache_collection(&host);
+    let config = host.join("C/Windows/System32/config");
+    std::fs::create_dir_all(&config).unwrap();
+    std::fs::write(config.join("SOFTWARE"), software_hive()).unwrap();
+    std::fs::write(host.join("client_info.json"), br#"{"hostname":"HOST"}"#).unwrap();
+    let out = dir.path().join("parsed");
+    let timeline = dir.path().join("all.jsonl");
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "-j",
+        timeline.to_str().unwrap(),
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    let manifest: Value =
+        serde_json::from_slice(&std::fs::read(out.join("manifest.json")).unwrap()).unwrap();
+    let tasks: Vec<&Value> = manifest["Tasks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|t| t["Artifact"] == "rdp-cache")
+        .collect();
+    assert_eq!(tasks.len(), 2, "the records, and their -j run");
+    assert!(
+        tasks.iter().all(|t| t["Status"] == "succeeded"),
+        "{tasks:?}"
+    );
+    let images = out.join("HOST/LateralMovement/RdpCache");
+    let (_, rows) = csv_rows(&out.join("HOST/LateralMovement/RdpCache.csv"));
+    assert_eq!(rows.len(), 6);
+    let row = rows
+        .iter()
+        .find(|r| r["SourceFile"].ends_with("Cache0000.bin"))
+        .unwrap();
+    // Paths from the output directory, never absolute; collages only by default.
+    assert_eq!(
+        Path::new(&row["Collage"]),
+        Path::new(".")
+            .join("HOST/LateralMovement/RdpCache/alice/Cache0000.bin/Cache0000.bin_collage.png")
+    );
+    assert_eq!(row["TileImage"], "");
+    let files = walk_files(&images);
+    assert_eq!(files.len(), 3, "{files:?}");
+    assert!(files.iter().all(|f| f.extension().unwrap() == "png"));
+    // The -j run writes no images of its own; the timeline has the tiles' records.
+    let records = std::fs::read_to_string(&timeline).unwrap();
+    assert_eq!(
+        records
+            .lines()
+            .filter(|l| l.contains(r#""Artifact":"rdp-cache""#))
+            .count(),
+        6
+    );
+    // super-timeline takes them as records without times.
+    let st = dir.path().join("st.jsonl");
+    let r = run(&[
+        "super-timeline",
+        "-f",
+        timeline.to_str().unwrap(),
+        "-o",
+        st.to_str().unwrap(),
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+
+    // --extract-rdp-tiles adds the tiles; -C first clears the earlier images.
+    std::fs::write(images.join("stale.png"), b"x").unwrap();
+    let r = run(&[
+        "auto-parse",
+        "-d",
+        evidence.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+        "--extract-rdp-tiles",
+        "-C",
+        "-T",
+        "2",
+        "-K",
+        "-q",
+    ]);
+    assert_eq!(r.code, 0, "{}\n{}", r.stdout, r.stderr);
+    assert!(!images.join("stale.png").exists());
+    let files = walk_files(&images);
+    assert_eq!(
+        files
+            .iter()
+            .filter(|f| f.extension().unwrap() == "bmp")
+            .count(),
+        7,
+        "6 tiles and the end of an earlier one: {files:?}"
+    );
 }

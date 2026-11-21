@@ -35,6 +35,13 @@ embedded in Juntei; consult each project for its license.
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) inspired the Python project;
   see the [persistence acknowledgements](persistence-hunter/acknowledgements.md) for the full lineage.
 
+- [**Boreal**](https://github.com/vthib/boreal), by Vincent Thiberville, is the YARA-compatible Rust engine compiled into the
+  `yara-scan` command (MIT or Apache-2.0; its notice is in `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), maintained by Florian Roth under YARAHQ, curates the
+  Core, Extended and Full rule packages that `yara-scan` downloads on request. The rules remain the
+  work of their individual authors under their own licenses; Juntei saves the downloaded source
+  with each result set.
+
 - Maxim Suhanov's **regf specification** and **yarp** informed registry structures, transaction-log
   replay, and deleted-record recovery; his **dfir_ntfs** was the reference for INDX records and
   index-slack carving.
@@ -45,6 +52,9 @@ embedded in Juntei; consult each project for its license.
   **libesedb** provide detailed format research and independent parsing references.
 - Fox-IT's **dissect.esedb**, **dissect.ntfs** and **dissect.target** provided independent SRUM, UAL,
   `$Secure:$SDS`, SAM, and Defender interpretations used during validation.
+- Stroz Friedberg's **SIDR** and libyal's `esedbexport` were the independent readings of the
+  Windows Search index, with libyal's **esedb-kb** notes on its tables and Microsoft's published
+  **Extensible Storage Engine** source for the record format.
 - **The Sleuth Kit**'s `fsstat` was the reference for NTFS boot sectors of volumes made with
   `mkntfs`.
 - Some of Eric Zimmerman's tools established field names and examiner expectations used for comparisons.
@@ -56,15 +66,24 @@ embedded in Juntei; consult each project for its license.
   high-value Prefetch/Amcache/ShimCache observations.
 - **defender-dump** and dissect.target provide separate implementations for understanding Defender
   quarantine structures and safe extraction behavior.
+- Orange Cyberdefense's **wddh-parser** laid out the Defender detection history format, and its
+  samples come with the values WMI reported for them. Plaso's `windefender_history` parser and
+  Velociraptor's `Windows.Applications.DefenderHistory` artifact were independent references.
 - **Plaso**, **Chainsaw**, and **Velociraptor** supplied parser comparisons, test evidence, or
   collection-oriented reference behavior across several artifacts.
 - Obsidian Forensics' **Hindsight** and Velocidex's **SQLiteHunter** definitions were references
   for browser history, downloads, cookies and form history.
+- Abel Cheung's **rifiuti2** was the reference for Recycle Bin `$I` files and INFO2, with libyal's
+  **dtformats** documentation of both formats.
+- ANSSI's **bmc-tools** and its CERT-FR bulletin on the format, BSI's **RdpCacheStitcher**,
+  **Velociraptor**'s RDPCache artifact and **dissect.target**'s RDP cache plugin were references for
+  RDP bitmap caches, with **FreeRDP**'s persistent bitmap cache and interleaved RLE decoder.
 
 ## Specifications and research
 
 We thank Microsoft for publishing Open Specifications for Shell Links, Compound Binary Files,
-NTFS/SAM protocols, registry/service/task structures, and API documentation. We also thank the
+NTFS/SAM protocols, registry/service/task structures, the Remote Desktop Protocol, and API
+documentation. We also thank the
 authors of AppCompatCache, Amcache, SRUM, Prefetch, registry, and NTFS forensic research that made
 these artifacts understandable to practitioners.
 
@@ -72,7 +91,7 @@ these artifacts understandable to practitioners.
 
 Public evidence from Andrew Rathbun's
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS, Plaso,
-Regipy, Artemis, parser test repositories, and other properly licensed collections makes regression
+rifiuti2, Regipy, Artemis, Orange Cyberdefense's wddh-parser, parser test repositories, and other properly licensed collections makes regression
 testing against real Windows data possible. Juntei keeps attribution/license notes beside included
 test files.
 

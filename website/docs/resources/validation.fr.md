@@ -124,6 +124,20 @@ base « dirty » de Windows 10 contenant l'historique, les téléchargements e
 170 cookies et 3 754 autres entrées. La comparaison a décodé elle-même les enregistrements de téléchargement. Les
 enregistrements que les bases de données marquent comme supprimés ont été exclus des deux côtés.
 
+## Index de Windows Search { #windows-search-index }
+
+`parse-ese windows-search` lit `Windows.edb` avec le lecteur ESE de
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Il a été comparé à l'`esedbexport` de libyal
+et au SIDR de Stroz Friedberg sur trois index publics, tous laissés dans un état « dirty » : l'index Windows 7 de
+Plaso (`SystemIndex_0A`) et les index Windows 10 et Windows 11 du DFIR Artifact Museum
+(`SystemIndex_PropertyStore`, révisions 110 et 200 du format ESE). Chaque chemin, propriétaire, type, nom
+d'ordinateur, taille et date correspondait : 6 691 valeurs du magasin de propriétés de Windows 11 par rapport à
+`esedbexport`, 6 332 de celui de Windows 10 par rapport à SIDR, et les chaînes de Windows 7 dans leurs trois
+encodages par rapport à `esedbexport`. Une partie de l'index Windows 10 ne se trouve que dans des pages feuilles
+que ses pages de branche n'atteignent pas ; les deux outils les lisent, et Juntei aussi. Une colonne du collecteur
+diffère à dessein : ESE marque `Priority` NULL une fois un élément analysé, ce que les deux outils affichent à
+partir des octets restés dans l'enregistrement.
+
 ## Outlook { #outlook }
 
 `parse-file outlook` lit les fichiers PST, OST, `.msg` et `.oft` avec
@@ -165,6 +179,39 @@ fichiers composés et les Jump Lists, les liens intégrés étant décodés par 
 publiques, les 13 057 cellules de comparaison partagées, y compris les horodatages à 100 ns près, correspondaient au
 parseur de référence. Six fichiers refusés par la référence (listes personnalisées vides, pied de page manquant, ou fichier
 qui n'était pas une Jump List) ont été soit décodés, soit explicitement signalés par Juntei.
+
+## Corbeille { #recycle-bin }
+
+`parse-file recycle-bin` est le parseur propre à Juntei. Sur les échantillons publics de
+[rifiuti2](https://github.com/abelcheung/rifiuti2), chaque enregistrement lu par rifiuti2 avait le même index, la même
+date de suppression (à la seconde près, telle que rifiuti2 l'affiche), le même état de retrait de la Corbeille, la même
+taille et le même chemin : 92 enregistrements, dont 67 dans onze fichiers INFO2 de Windows 95 à Server 2003 et 25
+dans trois dossiers de fichiers `$I` de Windows Vista et Windows 10. Les chemins ANSI d'INFO2 correspondaient dans les
+pages de codes qu'utilisent les propres tests de rifiuti2. Juntei lit aussi ce que rifiuti2 rejette : un dossier
+mêlant les deux versions de `$I`, un en-tête `$I` sans chemin, et des enregistrements tronqués, chacun avec ses
+dommages signalés. Les fichiers `$I` et INFO2 des données de test de Plaso donnent les dates, tailles, chemins, index
+et lecteurs qu'attendent les tests de Plaso. Sur l'image disque publique M57-Jean de Digital Corpora (Windows XP), lue
+avec `auto-parse --e01`, l'enregistrement INFO2 correspond à rifiuti2, et le fichier recyclé situé à côté, `Dc1.jpg`,
+porte le nom que Juntei lui donne.
+
+## Cache bitmap RDP { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` est le parseur propre à Juntei. Sur kofu, l'un des six hôtes de la collecte du CODE BLUE 2026 CTF,
+chacune des 1 911 tuiles de ses trois fichiers `Cache????.bin` est, pixel pour pixel, l'image que produit
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools). Il en va de même des 1 980 tuiles du fichier public
+`Cache0000.bin` du défi « Phantom Connection » d'ApoorvCTF 2025, dont 105 font 64 × 48 pixels. bmc-tools lit chaque
+tuile comme si elle faisait 64 pixels de large ; les tuiles plus étroites du bord droit d'un écran ressortent donc
+déformées. Juntei, lui, lit chaque tuile à sa propre largeur.
+
+Aucun cache `.bmc` public contenant des tuiles n'a été trouvé : les échantillons ci-dessus, comme ceux des autres clients
+Windows 10 et versions ultérieures, ne contiennent qu'un fichier `bcache24.bmc` vide. La lecture des fichiers `.bmc` a
+donc été testée avec des fichiers construits selon le format : tuiles non compressées des quatre profondeurs de couleur,
+petites tuiles suivies de la fin d'une tuile antérieure, emplacements endommagés, et 3 000 tuiles 16 bits aléatoires
+compressées en RLE qui utilisent tous les ordres de MS-RDPBCGR 3.1.9, sans qu'aucun ordre ne dépasse la fin de la
+première ligne d'une tuile. Juntei et bmc-tools décodent les 3 000 tuiles en pixels identiques. Lorsqu'un ordre
+commence sur la première ligne et la dépasse, les deux divergent : Juntei suit la spécification et le décodeur de
+FreeRDP, qui conservent les règles de la première ligne pour tout l'ordre, tandis que bmc-tools change de règles au
+milieu de celui-ci.
 
 ## ShimCache { #shimcache }
 

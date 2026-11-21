@@ -1,5 +1,7 @@
 # Prefetch { #prefetch }
 
+Juntei bewahrt Artefaktdatensätze, Metadaten und Parserdiagnosen. Parserspezifische Erkennungsregeln werden in Juntei Pro ausgewertet. Die bestehenden Prüfungen und Richtlinienprofile von Persistence Hunter bleiben verfügbar.
+
 ## Was Prefetch ist { #what-prefetch-is }
 
 Windows-Prefetch-Dateien zeichnen Informationen auf, die zur Optimierung des Anwendungsstarts dienen. Eine programmspezifische
@@ -37,7 +39,6 @@ verglichen werden können.
   und PathValidated auf false gesetzt. Hosting-Prozesse können Befehlszeilendaten in den Hash
   einbeziehen; ein nicht validierter Pfad ist daher nicht automatisch falsch.
 - Die Dateisystem-Zeitstempel einer `.pf`-Quelldatei sind unabhängig von den eingebetteten Ausführungszeiten.
-- `Findings` sind Beobachtungen für das Threat Hunting. Installationsprogramme und legitime Administration nutzen häufig Staging-Pfade.
 
 ## Mit Juntei parsen { #parse-with-juntei }
 
@@ -83,7 +84,6 @@ juntei parse-file prefetch -d Prefetch/ -t jsonl \
 | `VolumeCreated` | Aufgezeichnete Erstellungszeitpunkte der Volumes, nicht der ausführbaren Datei. |
 | `DirectoryCount` | Anzahl der aufgezeichneten Verzeichniszeichenfolgen. |
 | `FileCount` | Anzahl der aufgezeichneten Verweise auf geladene Dateien. |
-| `Findings` | Beobachtungen von Juntei, etwa verschobene System-Binärdateien oder verdächtige Ausführungspfade. Manuell prüfen. |
 | `Files` | Geladene bzw. referenzierte Dateien mit verfügbaren NTFS-Referenzen. Hervorragender Ansatzpunkt für DLLs/Pfade, aber kein Beweis für eine Absicht bezüglich der Datei. |
 | `Dir` | Mit dem Start verknüpfte Verzeichniszeichenfolgen. Nützlich, wenn einzelne Pfade geladener Dateien unvollständig sind. |
 
@@ -106,7 +106,7 @@ Arrays statt als kommagetrennte CSV-Zellen.
 
 1. Verwenden Sie `-T`, um gespeicherte Ausführungen in eine Zeitleiste aufzunehmen.
 2. Gruppieren Sie nach Name der ausführbaren Datei plus Prefetch-Hash; derselbe Name kann unterschiedliche Pfade/Hashes haben.
-3. Prüfen Sie `ExecutablePath`, Staging-Pfade, Findings zu verschobenen System-Binärdateien und geladene DLLs.
+3. Prüfen Sie `ExecutablePath`, Staging-Pfade, Pfade von System-Binärdateien und geladene DLLs.
 4. Gleichen Sie MFT-Referenzen und Dateipfade der Zieldateien mit `$MFT`-/USN-Datensätzen ab.
 5. Korrelieren Sie Ausführungszeiten mit Ereignisprotokollen, SRUM, Netzwerktelemetrie, Diensten, Aufgaben und Benutzerartefakten.
 

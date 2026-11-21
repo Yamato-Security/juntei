@@ -1,5 +1,7 @@
 # 安全性設定 { #security-settings }
 
+Juntei 保留鑑識成品記錄、中繼資料及剖析診斷資訊。各剖析器的偵測規則由 Juntei Pro 評估。Persistence Hunter 的現有檢查與原則設定檔仍可使用。
+
 ## 這些是什麼 { #what-they-are }
 
 攻擊者會變更 Windows 的安全性設定，以隱藏自身並取得認證資訊。他們會
@@ -16,9 +18,7 @@
   AMSI。
 
 `parse-registry security-settings` 會將找到的每個設定回報為一筆記錄。每筆記錄包含
-設定的值、該值的意義，以及它是否**削弱了預設值**：也就是它是否關閉了某項
-保護或證據來源，或將其降低到低於目前的 Windows（10 與 11）在沒有此值時的
-行為。
+設定的值與該值的意義。
 
 <span class="evidence-strength">最佳結論：</span>在儲存登錄區時，此設定具有此值，
 且該機碼最後一次寫入是在此時間。被削弱的設定是線索，而非遭入侵的
@@ -61,8 +61,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **儲存的設定並非實際生效的保護狀態。**會回報所收集的登錄值，以及損毀之值清單的診斷資料列。
   缺少的資料可能反映的是預設值、未收集的來源或其他管理
-  機制；它並不能證明保護已啟用或已停用。`WeakensDefault` 標示的是
-  在被遵循時可能使保護低於所述基準的設定。
+  機制；它並不能證明保護已啟用或已停用。
 - **舊式的 Defender 旗標可能被忽略。**`DisableAntiSpyware` 與 `DisableAntivirus` 並不能
   證明 Defender 已停止。是否適用取決於平台版本、上線（onboarding）狀態與竄改
   防護。[Microsoft 說明了這些舊式設定](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware)。
@@ -76,12 +75,10 @@ C:\Users\<user>\NTUSER.DAT
   - 伺服器上會刻意開放遠端桌面。
   - Windows 7 保存的事件記錄較小，且不會更新上次存取時間。
 - **預設值取決於版本。**有些值在過去是預設值：
-  - `NtfsDisableLastAccessUpdate` = 1 在 Windows 10 1803 之前是預設值。它會被回報
-    但不附判定；然而在較新版本上手動設定的 `0x80000001` 會被判定為削弱。
-  - `RunAsPPL`、`LsaCfgFlags` 與 `UseLogonCredential` 是與目前的 Windows 比較。
-- **Defender 排除項目：**每個路徑、副檔名、處理程序或位址都是一筆記錄。每個排除項目
-  都會削弱 Defender。由 Defender 自行加入的 `TemporaryPaths` 不附判定。請留意使用者可寫入的資料夾、
-  `.ps1`／`.exe` 副檔名以及 LOLBin（`rundll32.exe`、`powershell.exe`）。
+  - 請依 Windows 版本與原則脈絡解讀 `NtfsDisableLastAccessUpdate`。在 Windows 10 1803 及更新版本中，`0x80000001` 表示由使用者管理且停用上次存取時間更新的模式。單憑此值無法確定由誰設定，也無法證明是互動式操作造成的變更。
+  - `RunAsPPL`、`LsaCfgFlags` 與 `UseLogonCredential` 的預設值隨 Windows 版本而改變，請依主機的
+    版本解讀。
+- **Defender 排除項目：** 每個路徑、副檔名、處理程序或位址都是一筆記錄。排除項目可能降低保護，請檢視其範圍與來源，包括 `TemporaryPaths`。單憑機碼名稱無法判定排除項目無害，也無法證明是攻擊者活動。請留意使用者可寫入的資料夾、`.ps1`/`.exe` 副檔名與 LOLBin（`rundll32.exe`、`powershell.exe`）。
 - **原則機碼**（`Policy` = True）會由群組原則、工具，以及知道
   原則優先於本機設定的攻擊者寫入。請與網域的 GPO 交叉比對。
 - **事件記錄通道：**只會回報 25 個與資安相關的通道，並標示 Windows
@@ -105,7 +102,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +110,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +128,6 @@ Defender 排除項目。
 | `Setting` | 設定的種類：`defender_disable_realtime_monitoring`、`defender_exclusion_path`、`uac_local_account_token_filter_policy`、`wdigest_use_logon_credential`、`rdp_deny_connections`、`powershell_script_block_logging`、`event_channel_enabled`…… |
 | `Value` | 值：十進位數字、字串或排除項目本身。當值不屬於該設定的類型時為空。 |
 | `Meaning` | 該值的意義。 |
-| `WeakensDefault` | 當該值削弱了目前的 Windows 在沒有此值時的行為時為 `True`，未削弱時為 `False`；不適用（大小、連接埠、AMSI 提供者）或無法判斷時為空。 |
 | `Policy` | 該機碼是否位於 `Policies` 機碼之下。 |
 | `KeyPath`、`ValueName` | 機碼與值。排除項目的值名稱即為被排除的項目；AMSI 提供者則沒有值名稱。 |
 | `KeyLastWrittenUTC` | 機碼的最後寫入時間。 |
@@ -142,7 +137,7 @@ Defender 排除項目。
 
 ## 調查策略 { #investigation-strategy }
 
-1. 在每台主機上以 `--weakened-only` 執行，並將主機彼此比較：只有一台主機
+1. 在每台主機上以 Juntei 執行，並將主機彼此比較：只有一台主機
    具有的設定會格外醒目。
 2. 將每個 Defender 排除項目與在主機上及 Defender 記錄中找到的工具互相核對
    （事件 5007 會記錄設定變更）。
@@ -162,3 +157,5 @@ Defender 排除項目。
 - [Microsoft：about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001：Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

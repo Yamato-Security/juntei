@@ -1,7 +1,7 @@
 # Perintah berkas { #file-commands }
 
 `parse-file` menangani berkas yang khusus untuk artefak tertentu: Prefetch, pintasan, Jump Lists,
-karantina Defender, serta berkas PST, OST, MSG, dan OFT milik Outlook. Jump List otomatis
+riwayat deteksi dan karantina Defender, riwayat PowerShell, berkas PST, OST, MSG, dan OFT milik Outlook, serta berkas indeks Recycle Bin. Jump List otomatis
 menggunakan kontainer compound-file; Jump List kustom menggunakan tata letak biner yang berbeda.
 Keduanya termasuk dalam perintah artefak yang sama.
 
@@ -13,16 +13,54 @@ Usage:
   juntei parse-file <COMMAND> [OPTIONS]
 
 Commands:
+  defender-history     Parse Defender detection history
   defender-quarantine  Parse Defender quarantine
   help                 Print this message or the help of the given subcommand(s)
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
+  rdp-cache            Parse RDP bitmap caches (Cache????.bin and bcache*.bmc) and save their screen tiles as images
+  recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
 Options:
   -h, --help  Print help
 ```
+
+## `parse-file defender-history` { #parse-file-defender-history }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file defender-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for detection history files (Scans\History\Service\DetectionHistory\<nn>\<GUID>)
+  -f, --file <FILE>      File path to one detection history file (DetectionHistory\<nn>\<GUID>)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file defender-history -d evidence/ -o defender-history.csv
+juntei parse-file defender-history -f DetectionHistory/02/6AFE33A0-19BA-4FFF-892F-B700539D7D63 -t jsonl
+```
+
+Satu catatan per resource dari setiap deteksi, termasuk ancaman yang tidak pernah dikarantina Defender. Lihat
+[Riwayat Deteksi Defender](../artifacts/defender-history.md).
 
 ## `parse-file defender-quarantine` { #parse-file-defender-quarantine }
 
@@ -166,6 +204,32 @@ Tabelnya adalah berkas yang dibaca, folder-foldernya, setiap item (termasuk item
 dan item yang tertanam di lampiran), penerima, lampiran, kontak, item kalender, dan tugas, serta, dengan
 `--properties`, setiap properti sebagaimana tersimpan. Lihat [Outlook](../artifacts/outlook.md).
 
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+Tanpa `-o`, tentukan `-t` untuk menulis rekaman ke stdout; tanpa kedua opsi tersebut, perintah menampilkan ringkasan. `json` menulis objek terpisah dengan format yang mudah dibaca; `jsonl` menulis satu objek per baris. Perintah mandiri tidak memiliki opsi `-Z`. Lihat [Riwayat PowerShell](../artifacts/powershell-history.md) untuk encoding dan interpretasi.
+
 ## `parse-file prefetch` { #parse-file-prefetch }
 
 ```text
@@ -201,3 +265,73 @@ juntei parse-file prefetch -d evidence/ -T -o prefetch-timeline.csv
 ```
 
 Lihat [Prefetch](../artifacts/prefetch.md).
+
+## `parse-file rdp-cache` { #parse-file-rdp-cache }
+
+```text
+Version: 1.2.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file rdp-cache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for RDP bitmap caches (Cache????.bin, bcache*.bmc)
+  -f, --file <FILE>      File path to one RDP bitmap cache file
+
+Output:
+  -o, --output <FILE>       Save every tile's record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -x, --extract <DIR>       Save each cache file's tiles as BMP images (for RdpCacheStitcher) and a PNG collage, a folder per cache file
+      --collage-only        With --extract, save only the collages
+      --collage-width <N>   Tiles per row of the collages [default: 64]
+  -C, --clobber             Overwrite files when saving or extracting
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file rdp-cache -d evidence/ -o rdp-cache.csv --extract rdp-cache/
+juntei parse-file rdp-cache -f Cache0000.bin --extract rdp-cache/ --collage-only
+```
+
+Lihat [Cache Bitmap RDP](../artifacts/rdp-cache.md).
+
+## `parse-file recycle-bin` { #parse-file-recycle-bin }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file recycle-bin <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Recycle Bin index files ($I files, INFO2)
+  -f, --file <FILE>      File path to one $I or INFO2 file
+      --code-page <CP>   Code page of INFO2's ANSI paths: the system's ANSI code page (932 for Japanese) [default: 1252]
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file recycle-bin -d evidence/ -o recycle-bin.csv
+juntei parse-file recycle-bin -f '$IABC123.docx' -t jsonl | jq .
+```
+
+Lihat [Keranjang Sampah (Recycle Bin)](../artifacts/recycle-bin.md).

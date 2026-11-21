@@ -32,16 +32,21 @@ record များကို ဆက်လက် ထိန်းသိမ်း�
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer နှင့် legacy Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search အညွှန်း](../artifacts/windows-search.md) |
 
 ## [ဖိုင် ညွှန်ကြားချက်များ](execution.md) { #file-commands }
 
 | ညွှန်ကြားချက် | Input အထောက်အထား | အသေးစိတ် လမ်းညွှန် |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender ရှာဖွေတွေ့ရှိမှု မှတ်တမ်း](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender quarantine tree သို့မဟုတ် entry | [Defender သီးခြားခွဲထားသော ဒေတာ](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK ဖြတ်လမ်းများ](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell မှတ်တမ်း](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP ဘစ်မက် ကက်ရှ်](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [အမှိုက်ပုံး (Recycle Bin)](../artifacts/recycle-bin.md) |
 
 ## [NTFS ညွှန်ကြားချက်များ](filesystem.md) { #ntfs-commands }
 
@@ -108,6 +113,10 @@ artifact အမည်နောက်တွင် ဆက်ထားပါ။ `au
 ညွှန်ကြားချက် ဖြစ်သည်။ ၎င်းသည် `parse-registry persistence` မှ ပြင်ဆင်မှု စာရင်းအပြည့်အစုံကို စစ်ဆေးမှု 131 ခု၊
 allow/block အမျိုးအစားခွဲခြင်း၊ payload metadata၊ coverage နှင့် timestamp ချိတ်ဆက်စစ်ဆေးမှုတို့ဖြင့် ဖြည့်စွက်ပေးသည်။
 
+## [YARA စစ်ဆေးမှု](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` သည် ပြန်လည်ရယူထားသော quarantine payload များနှင့် `$MFT` ၏ resident data အပါအဝင် စုဆောင်းထားသော ဖိုင်များကို YARA rule များဖြင့် စစ်ဆေးသည်။ မူလအားဖြင့် YARA Forge Core package ကို ဒေါင်းလုဒ်လုပ်သည်။ `--ruleset extended` သို့မဟုတ် `--ruleset full` ဖြင့် ပိုကျယ်ပြန့်သော package ကို ရွေးချယ်နိုင်ပြီး `--rules <FILE_OR_DIRECTORY>` ဖြင့် local rule များကို အသုံးပြု၍ အော့ဖ်လိုင်း စစ်ဆေးနိုင်သည်။ ဤစစ်ဆေးမှုသည် ရွေးချယ်နိုင်သော လုပ်ဆောင်ချက်ဖြစ်ပြီး `auto-parse` နှင့် သီးခြားဖြစ်သည်။
+
 ## ထိပ်တန်းအဆင့် အသုံးပြုပုံ { #top-level-usage }
 
 ```text
@@ -123,6 +132,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

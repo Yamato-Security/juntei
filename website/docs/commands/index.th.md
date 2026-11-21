@@ -31,16 +31,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [การบันทึกการเข้าถึงของผู้ใช้ (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer และ Edge รุ่นเก่า](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [ดัชนี Windows Search](../artifacts/windows-search.md) |
 
 ## [คำสั่งสำหรับไฟล์](execution.md) { #file-commands }
 
 | คำสั่ง | อาร์ติแฟกต์อินพุต | คู่มือโดยละเอียด |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [ประวัติการตรวจจับของ Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | ทรีหรือรายการกักกันของ Defender | [ข้อมูลที่ Defender กักกัน](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [ทางลัด LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [ประวัติ PowerShell](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [แคชบิตแมปของ RDP](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [ถังรีไซเคิล](../artifacts/recycle-bin.md) |
 
 ## [คำสั่ง NTFS](filesystem.md) { #ntfs-commands }
 
@@ -107,6 +112,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 คำสั่งนี้เสริม inventory การกำหนดค่าแบบครบถ้วนจาก `parse-registry persistence` ด้วย
 การตรวจสอบ 131 รายการ การจำแนกแบบ allow/block เมทาดาทาของ payload ความครอบคลุม (coverage) และการเชื่อมโยง timestamp
 
+## [การสแกน YARA](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` สแกนไฟล์ที่เก็บรวบรวมมา รวมถึงเพย์โหลดกักกันที่กู้คืนแล้วและข้อมูล resident ของ `$MFT` ด้วยกฎ YARA โดยค่าเริ่มต้นจะดาวน์โหลดแพ็กเกจ YARA Forge Core ส่วน `--ruleset extended` หรือ `--ruleset full` จะเลือกแพ็กเกจที่ครอบคลุมกว้างขึ้น และ `--rules <FILE_OR_DIRECTORY>` จะสแกนแบบออฟไลน์ด้วยกฎในเครื่อง การสแกนนี้เป็นตัวเลือกเสริมและแยกจาก `auto-parse`
+
 ## การใช้งานระดับบนสุด { #top-level-usage }
 
 ```text
@@ -122,6 +131,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

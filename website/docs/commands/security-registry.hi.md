@@ -411,7 +411,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
-      --weakened-only     Only settings whose value weakens what Windows does by default
 
 Output:
   -o, --output <FILE>       Save every record to a file
@@ -426,9 +425,7 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-मिली हर setting एक record है, जिसमें उसका value, उसका अर्थ और यह होता है कि क्या वह Windows के default व्यवहार
-को कमज़ोर करती है; `--weakened-only` केवल ऐसी settings रखता है।
-[सुरक्षा सेटिंग](../artifacts/security-settings.md) देखें।
+मिली हर सेटिंग उसके संग्रहीत मान और उसके अर्थ के साथ एक रिकॉर्ड के रूप में लिखी जाती है। [सुरक्षा सेटिंग](../artifacts/security-settings.md) देखें।
 
 
 ## `parse-registry office` { #parse-registry-office }

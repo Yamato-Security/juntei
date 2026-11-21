@@ -1,5 +1,7 @@
 # Pengaturan keamanan { #security-settings }
 
+Juntei mempertahankan rekaman artefak, metadata, dan diagnostik penguraian. Aturan deteksi khusus parser dievaluasi di Juntei Pro. Pemeriksaan dan profil kebijakan Persistence Hunter yang ada tetap tersedia.
+
 ## Apa itu { #what-they-are }
 
 Penyerang mengubah pengaturan keamanan Windows agar tetap tersembunyi dan untuk menjangkau kredensial. Mereka mematikan
@@ -16,9 +18,7 @@ pengaturan-pengaturan ini:
   Windows Script Host.
 
 `parse-registry security-settings` melaporkan setiap pengaturan yang ditemukannya sebagai sebuah catatan. Setiap catatan berisi
-nilai pengaturan, makna nilai tersebut, dan apakah nilai itu **melemahkan default**: apakah nilai itu mematikan
-suatu proteksi atau sumber bukti, atau menurunkannya di bawah apa yang dilakukan Windows saat ini (10 dan 11)
-tanpa nilai tersebut.
+nilai pengaturan dan makna nilai tersebut.
 
 <span class="evidence-strength">Kesimpulan terbaik:</span> pengaturan ini memiliki nilai ini ketika hive
 disimpan, dan kunci tersebut terakhir ditulis pada waktu ini. Pengaturan yang dilemahkan adalah petunjuk, bukan bukti
@@ -61,8 +61,7 @@ mungkin hanya ada di log.
 
 - **Konfigurasi yang tersimpan bukanlah status proteksi yang efektif.** Nilai registry yang dikumpulkan dan baris diagnostik untuk daftar nilai yang rusak
   dilaporkan. Data yang tidak ada dapat mencerminkan default, sumber yang tidak dikumpulkan, atau mekanisme
-  manajemen lain; itu bukan bukti bahwa proteksi diaktifkan atau dinonaktifkan. `WeakensDefault` menandai
-  pengaturan yang dapat menurunkan baseline yang dinyatakan bila pengaturan tersebut dipatuhi.
+  manajemen lain; itu bukan bukti bahwa proteksi diaktifkan atau dinonaktifkan.
 - **Flag Defender lawas mungkin diabaikan.** `DisableAntiSpyware` dan `DisableAntivirus` tidak
   membuktikan bahwa Defender berhenti. Keberlakuannya bergantung pada versi platform, onboarding, dan tamper
   protection. [Microsoft menjelaskan pengaturan lawas ini](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -76,12 +75,10 @@ mungkin hanya ada di log.
   - Remote Desktop dibuka secara sengaja di server.
   - Windows 7 menyimpan log peristiwa yang lebih kecil dan tidak memperbarui waktu akses terakhir.
 - **Default bergantung pada versi.** Beberapa nilai dahulu merupakan default:
-  - `NtfsDisableLastAccessUpdate` = 1 adalah default sebelum Windows 10 1803. Nilai ini dilaporkan
-    tanpa putusan, tetapi `0x80000001`, yang ditetapkan secara manual pada versi yang lebih baru, dianggap melemahkan.
-  - `RunAsPPL`, `LsaCfgFlags`, dan `UseLogonCredential` dibandingkan dengan Windows saat ini.
-- **Pengecualian Defender:** setiap path, ekstensi, proses, atau alamat adalah sebuah catatan. Setiap pengecualian
-  melemahkan Defender. `TemporaryPaths`, yang ditambahkan Defender sendiri, tidak memiliki putusan. Cari folder yang dapat ditulisi pengguna,
-  ekstensi `.ps1`/`.exe`, dan LOLBin (`rundll32.exe`, `powershell.exe`).
+  - Tafsirkan `NtfsDisableLastAccessUpdate` sesuai versi Windows dan konteks kebijakan. Pada Windows 10 1803 dan sesudahnya, `0x80000001` menunjukkan mode yang dikelola pengguna dengan pembaruan waktu akses terakhir dinonaktifkan. Nilai ini saja tidak mengidentifikasi siapa yang mengaturnya atau membuktikan perubahan interaktif.
+  - Default `RunAsPPL`, `LsaCfgFlags`, dan `UseLogonCredential` berubah antarversi Windows; baca
+    nilainya sesuai versi host.
+- **Pengecualian Defender:** Setiap path, ekstensi, proses atau alamat adalah sebuah catatan. Pengecualian dapat mengurangi perlindungan; tinjau cakupan dan asalnya, termasuk `TemporaryPaths`. Nama kunci saja tidak membuktikan pengecualian yang aman maupun aktivitas penyerang. Cari folder yang dapat ditulisi pengguna, ekstensi `.ps1`/`.exe`, dan LOLBin (`rundll32.exe`, `powershell.exe`).
 - **Kunci kebijakan** (`Policy` = True) ditulis oleh Group Policy, oleh alat, dan oleh penyerang yang
   tahu bahwa kebijakan mengalahkan pengaturan lokal. Korelasikan dengan GPO domain.
 - **Channel log peristiwa:** hanya 25 channel yang relevan dengan keamanan yang dilaporkan, beserta apakah Windows
@@ -105,7 +102,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +110,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +128,6 @@ pengecualian Defender.
 | `Setting` | Pengaturan apa itu: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Nilainya: angka dalam desimal, string, atau pengecualian itu sendiri. Kosong bila nilai tidak sesuai dengan tipe pengaturan. |
 | `Meaning` | Makna nilai tersebut. |
-| `WeakensDefault` | `True` bila nilai melemahkan apa yang dilakukan Windows saat ini tanpanya, `False` bila tidak, kosong bila hal itu tidak berlaku (ukuran, port, provider AMSI) atau tidak dapat ditentukan. |
 | `Policy` | Apakah kunci berada di bawah kunci `Policies`. |
 | `KeyPath`, `ValueName` | Kunci dan nilai. Nama nilai sebuah pengecualian adalah item yang dikecualikan; provider AMSI tidak memilikinya. |
 | `KeyLastWrittenUTC` | Last write kunci. |
@@ -142,7 +137,7 @@ pengecualian Defender.
 
 ## Strategi investigasi { #investigation-strategy }
 
-1. Jalankan dengan `--weakened-only` pada setiap host, dan bandingkan host satu sama lain: pengaturan
+1. Jalankan dengan Juntei pada setiap host, dan bandingkan host satu sama lain: pengaturan
    yang hanya dimiliki satu host akan menonjol.
 2. Periksa setiap pengecualian Defender terhadap alat yang ditemukan di host dan di log Defender
    (Event 5007 mencatat perubahan konfigurasi).
@@ -162,3 +157,5 @@ pengecualian Defender.
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

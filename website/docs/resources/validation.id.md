@@ -123,6 +123,20 @@ Seluruh 4.156 baris cocok, nilai demi nilai: 44 kontainer, 182 entri riwayat, 6 
 3.754 entri lainnya. Perbandingan tersebut mendekode record unduhan secara mandiri. Record yang ditandai
 terhapus oleh database dikecualikan dari keduanya.
 
+## Indeks Windows Search { #windows-search-index }
+
+`parse-ese windows-search` membaca `Windows.edb` dengan pembaca ESE milik
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Perintah ini dibandingkan dengan
+`esedbexport` milik libyal dan SIDR milik Stroz Friedberg pada tiga indeks publik, yang semuanya dibiarkan
+dirty: indeks Windows 7 milik Plaso (`SystemIndex_0A`) serta indeks Windows 10 dan Windows 11 milik DFIR
+Artifact Museum (`SystemIndex_PropertyStore`, revisi format ESE 110 dan 200). Setiap path, pemilik, tipe,
+nama komputer, ukuran, dan waktu cocok saat dibandingkan: 6.691 nilai dari property store Windows 11
+terhadap `esedbexport`, 6.332 nilai dari property store Windows 10 terhadap SIDR, dan string Windows 7 dalam
+ketiga pengodeannya terhadap `esedbexport`. Sebagian indeks Windows 10 hanya ada di halaman daun (leaf
+page) yang tidak dijangkau oleh halaman cabangnya (branch page); kedua alat membacanya, begitu pula Juntei.
+Satu kolom gatherer berbeda memang karena rancangannya: ESE menandai `Priority` NULL setelah sebuah item
+dirayapi, yang dicetak kedua alat tersebut dari byte yang tersisa dalam record.
+
 ## Outlook { #outlook }
 
 `parse-file outlook` membaca berkas PST, OST, `.msg`, dan `.oft` dengan
@@ -166,6 +180,39 @@ dan Jump List milik Sootmark, dengan tautan tertanam yang didekode oleh `ys-lnk-
 publik, seluruh 13.057 sel perbandingan bersama—termasuk timestamp hingga 100 ns—cocok dengan
 parser referensi. Enam berkas yang ditolak parser referensi (custom list kosong, footer yang hilang, atau berkas
 yang bukan Jump List) didekode atau dilaporkan secara eksplisit oleh Juntei.
+
+## Keranjang Sampah (Recycle Bin) { #recycle-bin }
+
+`parse-file recycle-bin` adalah parser milik Juntei sendiri. Pada sampel publik
+[rifiuti2](https://github.com/abelcheung/rifiuti2), setiap record yang dibaca rifiuti2 memiliki indeks,
+waktu penghapusan (hingga detik, sebagaimana ditampilkan rifiuti2), status keluar dari Recycle Bin,
+ukuran, dan path yang sama: 92 record, 67 di sebelas berkas INFO2 dari Windows 95 hingga Server 2003 dan
+25 di tiga folder berisi berkas `$I` Windows Vista dan Windows 10. Path ANSI INFO2 cocok pada code page
+yang digunakan pengujian rifiuti2 sendiri. Juntei juga membaca apa yang ditolak rifiuti2: folder yang
+mencampur kedua versi `$I`, header `$I` tanpa path, dan record yang terpotong, masing-masing dengan
+kerusakan yang dilaporkan. Berkas `$I` dan INFO2 dari data uji Plaso menghasilkan waktu, ukuran, path,
+indeks, dan drive yang diharapkan pengujian Plaso. Pada image disk publik M57-Jean dari Digital Corpora
+(Windows XP), yang dibaca dengan `auto-parse --e01`, record INFO2 cocok dengan rifiuti2, dan berkas di
+Recycle Bin di sebelahnya, `Dc1.jpg`, memiliki nama yang diberikan Juntei.
+
+## Cache Bitmap RDP { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` adalah parser milik Juntei sendiri. Pada kofu, salah satu dari enam host dalam koleksi
+CODE BLUE 2026 CTF, setiap tile dari 1.911 tile di tiga berkas `Cache????.bin`-nya sama, piksel demi piksel,
+dengan gambar yang dibuat [bmc-tools](https://github.com/ANSSI-FR/bmc-tools). Begitu pula 1.980 tile dari
+`Cache0000.bin` publik milik tantangan "Phantom Connection" ApoorvCTF 2025, 105 di antaranya berukuran
+64 × 48 piksel. bmc-tools membaca setiap tile selebar 64 piksel, sehingga tile yang lebih sempit di tepi kanan
+layar tampak miring; Juntei membaca setiap tile sesuai lebarnya sendiri.
+
+Tidak ditemukan cache `.bmc` publik yang berisi tile: sampel di atas, seperti klien Windows 10 dan yang lebih
+baru lainnya, hanya memiliki `bcache24.bmc` yang kosong. Karena itu, pembacaan `.bmc` diuji dengan berkas yang
+dibuat sesuai format: tile tanpa kompresi dari keempat kedalaman warna, tile kecil yang diikuti bagian akhir
+tile sebelumnya, slot yang rusak, dan 3.000 tile 16-bit acak terkompresi RLE yang menggunakan setiap order
+MS-RDPBCGR 3.1.9, tanpa ada order yang berlanjut melewati akhir baris pertama tile. Juntei dan bmc-tools
+mendekode seluruh 3.000 tile tersebut menjadi piksel yang sama. Ketika sebuah order dimulai di baris pertama
+dan berlanjut melewatinya, hasil keduanya berbeda: Juntei mengikuti spesifikasi dan dekoder FreeRDP, yang
+mempertahankan aturan baris pertama untuk seluruh order, sedangkan bmc-tools mengganti aturan di tengah
+order tersebut.
 
 ## ShimCache { #shimcache }
 

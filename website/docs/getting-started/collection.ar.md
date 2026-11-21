@@ -18,10 +18,13 @@
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | تسجيل وصول المستخدمين (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer وEdge القديم (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| فهرس Windows Search | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb` ‏(من Windows 7 حتى 11 21H2؛ و`Windows.db` و`Windows-gather.db` بدءًا من 22H2) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`، `%USERPROFILE%\Documents\Outlook Files\*.pst` ‏(`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` قبل Outlook 2010)، `%APPDATA%\Microsoft\Templates\*.oft`، وملفات `.msg` أينما حُفظت |
 | متصفحات الويب | `%LOCALAPPDATA%\Google\Chrome\User Data\`، و`%LOCALAPPDATA%\Microsoft\Edge\User Data\`، و`%APPDATA%\Mozilla\Firefox\Profiles\`، ومجلدات ملفات التعريف الخاصة بالمتصفحات الأخرى |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` ومواقع أخرى للمستخدم/النظام |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` و`CustomDestinations` |
+| ذاكرة التخزين المؤقت لصور RDP النقطية | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (`%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\` في Windows XP والإصدارات الأقدم) |
+| سلة المحذوفات | `$Recycle.Bin\<SID>\$I*` و`$R*` على كل وحدة تخزين (`RECYCLER\<SID>\INFO2` و`D*` في Windows XP والإصدارات الأقدم) |
 | ShimCache | خلية `SYSTEM`: ‏`...\Session Manager\AppCompatCache\AppCompatCache` |
 | حجر Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | سجل Windows للجهاز | `C:\Windows\System32\config\SYSTEM`، `SOFTWARE`، `SAM`، `SECURITY` |
@@ -45,6 +48,9 @@
   لا توجد هناك إلا إلى أن ينفذ المتصفح نقطة تحقق (checkpoint).
 - اجمع مجلد `WebCache` بأكمله: فـ Windows يُبقي `WebCacheV01.dat` مفتوحًا ما دام المستخدم مسجلًا دخوله،
   ولا توجد أحدث تغييراته إلا في سجلات المعاملات `V01*.log`، التي لا يعيد Juntei تشغيلها.
+- اجمع مجلد `Applications\Windows` الخاص بـ Windows Search بأكمله من صورة، أو من نسخة ظل لوحدة التخزين، أو بعد
+  إيقاف خدمة `WSearch`: فالملف `Windows.edb` مفتوح ما دامت الخدمة تعمل، ولا توجد أحدث تغييراته إلا في
+  سجلات المعاملات `MSS*.log`، التي لا يعيد Juntei تشغيلها.
 - اجمع ملفات OST وPST الخاصة بـ Outlook وOutlook مغلق، أو من صورة قرص أو نسخة ظل لوحدة التخزين
   (volume shadow copy): فـ Outlook يُبقيها مفتوحة ما دام يعمل. وابحث أيضًا عن ملفات PST خارج المجلدات
   الافتراضية: فالمستخدمون ينقلون الأرشيفات إلى مجلدات ومحركات أقراص ومشاركات ملفات أخرى.

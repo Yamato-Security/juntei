@@ -37,14 +37,14 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
 reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
 hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
-lists, Outlook files and Defender quarantine folders. Every other file is an empty placeholder
+lists, Outlook files, PSReadLine history files, Recycle Bin index files, RDP bitmap caches, Defender detection history files and Defender quarantine folders. Every other file is an empty placeholder
 with its original modification time, so directories and paths look as they do on the disk.
 persistence-hunter reads a placeholder's content from the image only when it needs it, such as
 an executable that a persistence entry refers to.
 **Allow enough temporary disk space for the copied files**, in addition to the results.
 Reads use bounded buffers; zero-filled regions are written as holes where the host filesystem
 supports them. Original filenames, directory structure, hard links, and file modification times
-are preserved. LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
+are preserved. PowerShell history source modification times and LNK and Jump List source creation/modification/access times come from a snapshot of the original NTFS metadata, never the temporary files. The workspace is removed on normal completion, including reported parser errors;
 a forced termination can leave temporary files. The source image is opened read-only, and pending
 VHDX log updates are applied in memory only.
 
@@ -185,12 +185,19 @@ computer. Jobs use the same source-grouped commands as manual parsing, such as
 - User Access Logging (UAL)
 - Web browser history, downloads, cookies and form history (Chromium- and Firefox-based browsers)
 - Internet Explorer and legacy Edge's WebCache: history, downloads, cookies and cache entries
+- Windows Search index: every indexed file, folder, e-mail and web page with its metadata and
+  text extract
 - Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar
   items and tasks
 - LNK shortcuts
 - Jump Lists
+- Recycle Bin: deleted items' original paths, sizes, deletion times and users
+- RDP bitmap caches: the tiles of the remote screens a user saw, with a collage image of each cache
+  file
 - ShimCache
 - Persistence Hunter (131 cross-source persistence checks with allow/block profiles)
+- Defender detection history: every detection with its status, user, process and resources,
+  including threats that were never quarantined
 - Defender quarantine metadata
 - Open and Save As dialog history
 - all registry keys and values, including recoverable deleted data
@@ -288,13 +295,16 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -315,6 +325,9 @@ CSV keeps separate tables because each artifact has different columns:
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -353,9 +366,14 @@ CSV keeps separate tables because each artifact has different columns:
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -377,14 +395,15 @@ CSV keeps separate tables because each artifact has different columns:
 | `Communication` | Outlook PST, OST, MSG and OFT files: folders, items, recipients, attachments, contacts, calendar items and tasks |
 | `ExternalDevices` | USB devices and volumes |
 | `FileAndFolderOpening` | Jump Lists, LNK shortcuts, Microsoft Office, MRU lists, Open and Save As dialogs, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache, Windows Search index |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN Journal |
 | `NetworkActivity` | Network profiles, interfaces, shares, port proxies and routes; SRUM connections, traffic and push notifications |
-| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; User Access Logging (the clients of a server's roles) |
+| `LateralMovement` | Users' outbound Remote Desktop, PuTTY and WinSCP connections, mapped drives and shares; RDP bitmap caches (the remote screens' tiles); User Access Logging (the clients of a server's roles) |
 | `Persistence` | Boot configuration (BCD), registry autostarts, services, TaskCache |
 | `ProcessExecution` | Application compatibility, BAM and DAM, FeatureUsage and pins, MuiCache, Prefetch, Prefetch timeline, SRUM application/CPU activity, UserAssist |
 | `Registry` | General hive keys and values, including recovered records |
-| `SecurityProducts` | Defender quarantine metadata and optional extracted content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
+| `SecurityProducts` | Defender detection history; Defender quarantine metadata and optional extracted content; security settings (Defender, UAC, credential protection, RDP, firewall, logging) |
+| `ShellHistory` | PowerShell PSReadLine command history; file modification time is metadata, with no command execution times |
 | `SystemInformation` | Names, Windows version, time zone, last shutdown, profiles, SIDs and audit policy; SRUM energy/capacity, identity maps and unknown providers |
 
 Categories help organize investigations; they are not proof of a particular activity. For example,
@@ -398,15 +417,15 @@ Amcache and Jump Lists each have one shared log beside their prefixed tables. SR
 in `NetworkActivity`, `ProcessExecution` and `SystemInformation`, with a shared
 `SystemInformation/SRUM-logs.txt` file. No `logs/` subdirectories are created.
 
-Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Default CSV filenames are `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, and
-`DefenderQuarantine.csv`. Registry-derived tables use the `Registry-` prefix, including
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv`. Registry-derived tables use the `Registry-` prefix, including
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv` and `Registry-SystemInfo.csv`.
 General hive keys and values are in `Registry-Dump.csv`. Amcache tables are
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv` and `Registry-Amcache-Summary.csv`. Jump Lists use
+`Registry-Amcache-Summary.csv`. Jump Lists use
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` and
 `JumpLists-CustomDestinations.csv`. There are no Amcache or Jump Lists subdirectories.
 SRUM tables use `SRUM-` filenames directly under their category, for example
@@ -414,6 +433,9 @@ SRUM tables use `SRUM-` filenames directly under their category, for example
 User Access Logging tables are in `LateralMovement`, one file per table, such as
 `UAL-Clients.csv` and `UAL-SystemIdentity.csv`, with `UAL-logs.txt`; see
 [User Access Logging (UAL)](../artifacts/ual.md#automatic-parsing).
+RDP bitmap cache records are in `LateralMovement/RdpCache.csv`, and each cache file's collage is in
+`LateralMovement/RdpCache/<user>/<cache file>/`, with every tile beside it when
+`--extract-rdp-tiles` is given; see [RDP Bitmap Cache](../artifacts/rdp-cache.md#automatic-parsing).
 Web browser tables are in `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv` and `Browser-FormHistory.csv`, with `Browser-logs.txt`; see
 [Web Browsers](../artifacts/browser.md#automatic-parsing). Internet Explorer and legacy Edge's
@@ -533,10 +555,12 @@ output format. Temporary JSONL files are removed after a successful run; they ar
 parser or export fails. Plan for the extra processing time and temporary disk space.
 
 In **JSON mode**, Juntei streams the existing results into compact JSONL without reparsing the
-evidence. Amcache reports are expanded into the same individual summary, finding, file, and device
+evidence. Amcache reports are expanded into the same individual summary, file, and device
 records as native JSONL. In **JSONL mode**, the existing annotated records are combined directly.
 All modes use the same SIEM record structure. The dataset keeps native timestamps and artifact
 fields; it does not invent a common event timestamp or globally sort heterogeneous artifacts.
+
+A `Findings` table is preserved only when present in a historical report; new parser output does not create one.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
@@ -583,6 +607,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -602,8 +627,9 @@ Display Settings:
 Use a new output directory when practical. `-C` removes or overwrites only the exact generated
 targets for this run, so a now-missing artifact cannot leave a stale result. It does not delete
 unrelated files or the complete output tree. It also removes each computer's
-`SecurityProducts/DefenderQuarantined/` directory, and the reserved `defender-quarantined/`
-directory from the previous flat layout, before parsing, whether or not the new run uses `-x`.
+`SecurityProducts/DefenderQuarantined/` and `LateralMovement/RdpCache/` directories, and the
+reserved `defender-quarantined/` directory from the previous flat layout, before parsing, whether
+or not the new run uses `-x` or `--extract-rdp-tiles`.
 
 Use a fresh output directory when switching from an older flat layout. Earlier CSV/JSON files
 are not relocated or deleted automatically.
@@ -632,3 +658,18 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 The existing `-j, --json-timeline` export remains a combined native-record JSONL file.
 It preserves parser schemas; it does not expand timestamp fields or sort events. Keep it and
 the individual parser results for evidence-level review.
+
+## PowerShell history
+
+History files named `<Host>_history.txt` directly inside a `PSReadLine` folder are discovered
+recursively and copied during VHDX/E01 staging. Other files with the same suffix outside that
+folder are excluded; parse custom-location or renamed copies explicitly with
+`parse-file powershell-history -f <FILE>`.
+
+Results are saved as `ShellHistory/PowerShellHistory.csv` (or `.json`/`.jsonl` for the selected
+format), with the usual manifest and parser log entries. `FileLastWriteTime` is the source
+file's modification time, including original image metadata, never a command execution time.
+`auto-parse -Z` changes its display offset along with other output times; the standalone parser
+has no `-Z` option. The combined `-j` timeline includes the history rows. They have no times, so
+`super-timeline` makes no events from them and counts them as untimed records. See
+[PowerShell History](../artifacts/powershell-history.md).

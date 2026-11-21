@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+O Juntei preserva registros, metadados e diagnósticos de análise. As regras de detecção específicas dos parsers são avaliadas no Juntei Pro. As verificações e os perfis de política existentes do Persistence Hunter continuam disponíveis.
+
 ## O que são Jump Lists { #what-jump-lists-are }
 
 As Jump Lists sustentam os menus exibidos a partir das entradas de aplicativos na barra de tarefas e no menu Iniciar. As Jump
@@ -101,3 +103,5 @@ e os campos aninhados de cada LNK incorporado.
 - [Microsoft: formato Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [Projeto de teste/referência de analisador de JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

@@ -28,16 +28,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb` | [使用者存取記錄 (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer 與舊版 Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search 索引](../artifacts/windows-search.md) |
 
 ## [檔案命令](execution.md) { #file-commands }
 
 | 命令 | 輸入跡證 | 詳細指南 |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender 偵測歷程記錄](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender 隔離資料樹狀結構或項目 | [Defender 隔離資料](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`、`*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK 捷徑](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell 歷程記錄](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`、`bcache*.bmc` | [RDP 點陣圖快取](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`、`RECYCLER\<SID>\INFO2`、`RECYCLED\INFO2` | [資源回收筒](../artifacts/recycle-bin.md) |
 
 ## [NTFS 命令](filesystem.md) { #ntfs-commands }
 
@@ -103,6 +108,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 允許／封鎖分類、承載資料中繼資料、涵蓋範圍與時間戳記關聯，補足 `parse-registry persistence`
 所提供的完整設定清查。
 
+## [YARA 掃描](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` 會以 YARA 規則掃描已收集的檔案，包括還原的隔離檔案與 `$MFT` 的常駐資料。預設會下載 YARA Forge Core 套件；`--ruleset extended` 或 `--ruleset full` 可選擇範圍更廣的套件，`--rules <FILE_OR_DIRECTORY>` 則以本機規則離線掃描。此掃描需明確啟用，且獨立於 `auto-parse`。
+
 ## 頂層用法 { #top-level-usage }
 
 ```text
@@ -118,6 +127,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

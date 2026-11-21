@@ -15,11 +15,16 @@
 | SRUM | `parse-ese srum` | 各應用程式／使用者的網路與資源使用情形 | 通常為彙總資料；無法作為封包或目的地層級的證明 |
 | 使用者存取記錄 (UAL) | `parse-ese ual` | 哪些用戶端位址與帳戶在哪幾天使用了 Windows Server 的角色（檔案共用、Active Directory、DHCP、IIS） | 要求以天為單位計數，而非逐筆記錄；位址可能是 NAT 或 Proxy；dirty 的 `Current.mdb` 會缺少最新的變更 |
 | Internet Explorer 與舊版 Edge（WebCache） | `parse-ese webcache` | 造訪過的網頁與在檔案總管中開啟的本機檔案、下載的檔案及其來源、Cookie、快取的檔案及其 HTTP 標頭 | 一筆歷程記錄項目是一個 URL 及其最後一次造訪，而非每一次造訪；不會復原已刪除的項目；dirty 的資料庫會缺少最新的變更 |
+| Windows Search 索引 | `parse-ese windows-search` | 索引子讀取過的每一個檔案、資料夾、電子郵件與網頁，連同其路徑、大小、擁有者、檔案時間、建立索引的時間、標題、作者、文字摘錄與電腦名稱；自上次編目以來已刪除的項目 | 這些時間是索引子複製的副本；索引顯示的是索引子曾讀取某個項目，而非使用者曾開啟它；dirty 的資料庫會缺少最新的變更；不會讀取 Windows 11 22H2 及之後版本的 SQLite 索引 |
 | 網頁瀏覽器（Chromium 與 Firefox 系列） | `parse-sqlite browser` | 造訪過的網頁及造訪方式、下載的檔案及其來源、Cookie、在網頁表單中輸入的值；復原已刪除的造訪、下載與表單項目 | 一次造訪可能是重新導向、框架或其他程式開啟的網頁；Chromium 的 Cookie 值經過加密；瀏覽器將已刪除的項目清零或執行檢查點後，這些項目即無法復原 |
 | Outlook（PST、OST、MSG、OFT） | `parse-file outlook` | 電子郵件及其寄件者、收件者、時間與附件；連絡人、行事曆項目與工作；資料夾、隱藏的設定項目，以及依原樣儲存的每一個屬性 | 寄件者的地址可能遭偽造；已不在任何資料夾中的項目不會被復原；尚不讀取離線通訊錄、自動完成與其他 Outlook 檔案 |
 | LNK 捷徑 | `parse-file lnk` | 開啟過的目標、參數、磁碟區、共用資料夾、來源機器 | 即使目標從未執行，也可以建立捷徑 |
 | Jump Lists | `parse-file jump-lists` | 應用程式開啟過的項目、釘選、使用情形與內嵌的 LNK 資料 | 行為與保留方式因應用程式而異 |
+| PowerShell PSReadLine 歷程記錄 | `parse-file powershell-history` | 儲存的命令列、使用者、主機及來源行號 | 沒有逐一命令的時間戳記；檔案修改時間僅為中繼資料 |
+| RDP 點陣圖快取（`Cache????.bin`、`bcache*.bmc`） | `parse-file rdp-cache` | 使用者透過遠端桌面用戶端看過的遠端畫面圖塊，會另存為影像，並為每個快取檔案產生一張拼貼圖 | 沒有時間或電腦名稱；一個快取混雜了許多工作階段；圖塊只是畫面的片段，而非完整畫面 |
+| 資源回收筒（`$I` 檔案、INFO2） | `parse-file recycle-bin` | 使用者刪除到回收筒的項目：原始路徑、大小、刪除時間、使用者，以及已刪除的內容是否仍在 | Shift+Delete 與大多數程式會略過回收筒；清空回收筒會刪除 `$I` 檔案（INFO2 會保留已標記的記錄） |
 | ShimCache | `parse-registry shimcache` | 歷史執行檔路徑與相容性檢查 | 快取可能要到關機時才寫出；單一項目不等於執行 |
+| Defender 偵測歷程記錄 | `parse-file defender-history` | 每一次偵測，包括從未被隔離的偵測：威脅、狀態、使用者、處理程序、資源、雜湊值 | 偵測是產品的判定，並不能證明威脅曾經執行或已被移除 |
 | Defender 隔離資料 | `parse-file defender-quarantine` | 偵測、原始路徑、雜湊值、下載來源、復原的位元組 | 偵測名稱是產品的判定；擷取具有危險性 |
 | 登錄區 | `parse-registry read` | 設定、持續存取、已刪除／重播的值 | 機碼時間並非值的時間；即時登錄區需要交易記錄 |
 | 服務 | `parse-registry services` | 服務／驅動程式的持續存取與失敗動作 | 設定並不能證明服務曾啟動 |

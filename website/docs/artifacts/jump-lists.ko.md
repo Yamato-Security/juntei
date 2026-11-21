@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei는 아티팩트 레코드, 메타데이터 및 파싱 진단 정보를 보존합니다. 파서별 탐지 규칙은 Juntei Pro에서 평가합니다. Persistence Hunter의 기존 검사와 정책 프로필은 계속 사용할 수 있습니다.
+
 ## Jump Lists란 { #what-jump-lists-are }
 
 Jump Lists는 작업 표시줄과 시작 메뉴의 애플리케이션 항목에서 표시되는 메뉴의 기반이 됩니다. 자동(Automatic)
@@ -105,3 +107,5 @@ JSON/JSONL은 여기에 더해 DestList 헤더, 항목별 점수/체크섬/속�
 - [Microsoft: Shell Link 형식 (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [JumpList 파서 테스트/참조 프로젝트](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

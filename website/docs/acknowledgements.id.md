@@ -35,6 +35,9 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) menginspirasi proyek Python tersebut;
   lihat [ucapan terima kasih persistensi](persistence-hunter/acknowledgements.md) untuk silsilah lengkapnya.
 
+- [**Boreal**](https://github.com/vthib/boreal), karya Vincent Thiberville, adalah mesin Rust yang kompatibel dengan YARA dan dikompilasi ke dalam perintah `yara-scan` (MIT atau Apache-2.0; pemberitahuannya ada di `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), yang dikelola Florian Roth di bawah YARAHQ, mengurasi paket aturan Core, Extended, dan Full yang diunduh `yara-scan` sesuai permintaan. Aturan tetap menjadi karya penulisnya masing-masing dengan lisensi mereka sendiri; Juntei menyimpan sumber yang diunduh bersama setiap kumpulan hasil.
+
 - **Spesifikasi regf** dan **yarp** karya Maxim Suhanov menjadi acuan bagi struktur registry, pemutaran ulang
   log transaksi, dan pemulihan record yang terhapus; **dfir_ntfs** karyanya menjadi referensi untuk record INDX dan
   carving index slack.
@@ -45,6 +48,9 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   **libesedb** menyediakan riset format yang terperinci dan referensi parsing independen.
 - **dissect.esedb**, **dissect.ntfs**, dan **dissect.target** dari Fox-IT menyediakan interpretasi independen atas SRUM, UAL,
   `$Secure:$SDS`, SAM, dan Defender yang digunakan selama validasi.
+- **SIDR** dari Stroz Friedberg dan `esedbexport` dari libyal menjadi pembacaan independen atas indeks
+  Windows Search, bersama catatan **esedb-kb** dari libyal tentang tabel-tabelnya dan kode sumber
+  **Extensible Storage Engine** yang dipublikasikan Microsoft untuk format record-nya.
 - `fsstat` dari **The Sleuth Kit** menjadi referensi untuk sektor boot NTFS pada volume yang dibuat dengan
   `mkntfs`.
 - Beberapa alat karya Eric Zimmerman menetapkan nama field dan ekspektasi pemeriksa yang digunakan untuk perbandingan.
@@ -56,15 +62,24 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   Prefetch/Amcache/ShimCache bernilai tinggi di Juntei.
 - **defender-dump** dan dissect.target menyediakan implementasi terpisah untuk memahami struktur karantina
   Defender dan perilaku ekstraksi yang aman.
+- **wddh-parser** dari Orange Cyberdefense menguraikan format riwayat deteksi Defender, dan sampelnya
+  disertai nilai yang dilaporkan WMI untuk sampel tersebut. Parser `windefender_history` milik Plaso dan
+  artefak `Windows.Applications.DefenderHistory` milik Velociraptor menjadi referensi independen.
 - **Plaso**, **Chainsaw**, dan **Velociraptor** menyediakan perbandingan parser, bukti uji, atau
   perilaku referensi yang berorientasi pengumpulan untuk berbagai artefak.
 - **Hindsight** dari Obsidian Forensics dan definisi **SQLiteHunter** dari Velocidex menjadi referensi untuk
   riwayat, unduhan, cookie, dan riwayat formulir browser.
+- **rifiuti2** dari Abel Cheung menjadi referensi untuk berkas `$I` dan INFO2 Recycle Bin, bersama
+  dokumentasi kedua format tersebut dalam **dtformats** milik libyal.
+- **bmc-tools** milik ANSSI beserta buletin CERT-FR-nya tentang format tersebut, **RdpCacheStitcher**
+  milik BSI, artefak RDPCache milik **Velociraptor**, dan plugin RDP cache milik **dissect.target**
+  menjadi referensi untuk cache bitmap RDP, bersama persistent bitmap cache dan dekoder interleaved
+  RLE milik **FreeRDP**.
 
 ## Spesifikasi dan riset { #specifications-and-research }
 
 Kami berterima kasih kepada Microsoft karena telah memublikasikan Open Specifications untuk Shell Links, Compound Binary Files,
-protokol NTFS/SAM, struktur registry/layanan/tugas, dan dokumentasi API. Kami juga berterima kasih kepada para
+protokol NTFS/SAM, struktur registry/layanan/tugas, Remote Desktop Protocol, dan dokumentasi API. Kami juga berterima kasih kepada para
 penulis riset forensik AppCompatCache, Amcache, SRUM, Prefetch, registry, dan NTFS yang membuat
 artefak-artefak ini dapat dipahami oleh para praktisi.
 
@@ -72,7 +87,7 @@ artefak-artefak ini dapat dipahami oleh para praktisi.
 
 Bukti publik dari
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) karya Andrew Rathbun, NIST CFReDS, Plaso,
-Regipy, Artemis, repositori uji parser, dan koleksi lain dengan lisensi yang sesuai memungkinkan pengujian regresi
+rifiuti2, Regipy, Artemis, wddh-parser dari Orange Cyberdefense, repositori uji parser, dan koleksi lain dengan lisensi yang sesuai memungkinkan pengujian regresi
 terhadap data Windows nyata. Juntei menyimpan catatan atribusi/lisensi di samping berkas uji
 yang disertakan.
 

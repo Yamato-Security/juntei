@@ -56,6 +56,7 @@ const CATEGORIES: &[&str] = &[
     "ProcessExecution",
     "Registry",
     "SecurityProducts",
+    "ShellHistory",
     "SystemInformation",
 ];
 
@@ -71,15 +72,16 @@ fn artifact_category(artifact: &str) -> &'static str {
         "jump-lists" | "lnk" | "mru" | "office" | "opensavemru" | "recentdocs" | "shellbags" => {
             "FileAndFolderOpening"
         }
-        "amcache" | "shimcache" => "FileExistence",
+        "amcache" | "recycle-bin" | "shimcache" | "windows-search" => "FileExistence",
         "boot" | "i30" | "logfile" | "mft" | "secure-sds" | "usn-journal" => "FileSystem",
         "networks" => "NetworkActivity",
-        "remote-access" | "ual" => "LateralMovement",
+        "rdp-cache" | "remote-access" | "ual" => "LateralMovement",
         "bcd" | "persistence" | "persistence-hunter" | "services" | "taskcache" => "Persistence",
         "appcompat" | "bam" | "featureusage" | "muicache" | "prefetch" | "prefetch-timeline"
         | "userassist" => "ProcessExecution",
         "registry" => "Registry",
-        "defender-quarantine" | "security-settings" => "SecurityProducts",
+        "defender-history" | "defender-quarantine" | "security-settings" => "SecurityProducts",
+        "powershell-history" => "ShellHistory",
         "system-info" | "srum" => "SystemInformation",
         "auditpol" => "SystemInformation",
         _ => unreachable!("unclassified auto-parse artifact: {artifact}"),
@@ -97,6 +99,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "auditpol" => "Registry-AuditPolicy",
         "app-history" => "Registry-AppHistory",
         "bam" => "Registry-BAM",
+        "defender-history" => "DefenderHistory",
         "defender-quarantine" => "DefenderQuarantine",
         "featureusage" => "Registry-FeatureUsage",
         "i30" => "I30",
@@ -114,9 +117,12 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "opensavemru" => "Registry-OpenSaveMRU",
         "persistence" => "Registry-Persistence",
         "persistence-hunter" => "PersistenceHunter",
+        "powershell-history" => "PowerShellHistory",
         "prefetch" => "Prefetch",
         "prefetch-timeline" => "PrefetchTimeline",
         "recentdocs" => "Registry-RecentDocs",
+        "rdp-cache" => "RdpCache",
+        "recycle-bin" => "RecycleBin",
         "registry" => "Registry-Dump",
         "remote-access" => "Registry-RemoteAccess",
         "sam" => "Registry-SAM",
@@ -133,6 +139,7 @@ fn artifact_filename(artifact: &str) -> &'static str {
         "usn-journal" => "UsnJournal",
         "userassist" => "Registry-UserAssist",
         "webcache" => "WebCache",
+        "windows-search" => "WindowsSearch",
         _ => unreachable!("unknown auto-parse artifact: {artifact}"),
     }
 }
@@ -288,6 +295,14 @@ fn defender_extraction_directory(output: &Path, computer_folder: &str) -> PathBu
         .join(computer_folder)
         .join(artifact_category("defender-quarantine"))
         .join("DefenderQuarantined")
+}
+
+/// Where `rdp-cache` saves its collages and tiles: a folder beside its records.
+fn rdp_cache_image_directory(output: &Path, computer_folder: &str) -> PathBuf {
+    output
+        .join(computer_folder)
+        .join(artifact_category("rdp-cache"))
+        .join(artifact_filename("rdp-cache"))
 }
 
 #[derive(Clone)]
@@ -650,6 +665,7 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
             fs::create_dir_all(&path)?;
             let mut json_opts = opts.clone();
             json_opts.output_type = AutoOutputType::Jsonl;
+            json_opts.rdp_cache_images = false;
             json_opts.extract_defender_quarantined = false;
             let mut extra = build_tasks(&hosts, &inventories, &json_opts, &evidence, &path)?;
             for task in &mut extra {
@@ -697,11 +713,11 @@ fn run_evidence(opts: &AutoParseOptions, images: Option<&Images>) -> i32 {
         return 1;
     }
     if opts.clobber
-        && let Err(e) = clear_defender_extractions(&hosts, &opts.output)
+        && let Err(e) = clear_extractions(&hosts, &opts.output)
     {
         error_msg(
             no_color,
-            &format!("Could not clear earlier Defender extraction output: {e}"),
+            &format!("Could not clear earlier extracted output: {e}"),
         );
         return 1;
     }
@@ -1431,7 +1447,19 @@ fn build_tasks(
                     args.push("--extract-shown-as".into());
                     args.push(dot_relative(&parser_output, &extract).into_os_string());
                 }
-                if matches!(artifact, "lnk" | "jump-lists")
+                if artifact == "rdp-cache" && opts.rdp_cache_images {
+                    let images = rdp_cache_image_directory(&parser_output, &host.folder);
+                    args.push("--extract".into());
+                    args.push(images.clone().into_os_string());
+                    // `TileImage` and `Collage` from the output directory, as the manifests
+                    // write paths
+                    args.push("--extract-shown-as".into());
+                    args.push(dot_relative(&parser_output, &images).into_os_string());
+                    if !opts.extract_rdp_tiles {
+                        args.push("--collage-only".into());
+                    }
+                }
+                if matches!(artifact, "lnk" | "jump-lists" | "powershell-history")
                     && let Some(path) = &opts.image_source_metadata
                 {
                     args.push("--image-source-metadata".into());
@@ -1505,6 +1533,12 @@ fn build_tasks(
             &[],
         );
         add(
+            "windows-search",
+            &["parse-ese", "windows-search"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "browser",
             &["parse-sqlite", "browser"],
             OutputShape::CsvDirectory,
@@ -1530,6 +1564,24 @@ fn build_tasks(
             &["--code-page", &code_page],
         );
         add(
+            "recycle-bin",
+            &["parse-file", "recycle-bin"],
+            OutputShape::File,
+            &["--code-page", &code_page],
+        );
+        add(
+            "powershell-history",
+            &["parse-file", "powershell-history"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "rdp-cache",
+            &["parse-file", "rdp-cache"],
+            OutputShape::File,
+            &[],
+        );
+        add(
             "shimcache",
             &["parse-registry", "shimcache"],
             OutputShape::File,
@@ -1538,6 +1590,12 @@ fn build_tasks(
         add(
             "defender-quarantine",
             &["parse-file", "defender-quarantine"],
+            OutputShape::File,
+            &[],
+        );
+        add(
+            "defender-history",
+            &["parse-file", "defender-history"],
             OutputShape::File,
             &[],
         );
@@ -1750,9 +1808,12 @@ pub(super) const NAMED_INPUTS: &[(&str, NamePredicate)] = &[
     ("ual", crate::ual::is_database_name),
     ("browser", crate::browser::is_database_name),
     ("webcache", crate::webcache::is_database_name),
+    ("windows-search", crate::windows_search::is_staged_name),
     ("outlook", crate::outlook::is_outlook_name),
     ("lnk", crate::lnk::is_lnk_name),
     ("jump-lists", crate::jump_lists::is_jump_list_name),
+    ("recycle-bin", crate::recycle_bin::is_index_name),
+    ("rdp-cache", crate::rdp_cache::is_cache_name),
     ("shimcache", crate::shimcache::is_system_name),
     ("boot", crate::boot::is_boot_name),
     ("secure-sds", crate::secure_sds::is_sds_name),
@@ -1792,9 +1853,17 @@ impl InputInventory {
             found.total += size;
             found.add_size("persistence-hunter", size);
             for (artifact, matches) in NAMED_INPUTS {
-                if matches(&name) {
+                if matches(&name)
+                    && (*artifact != "outlook" || crate::outlook::is_directory_input(&path))
+                {
                     found.add_size(artifact, size);
                 }
+            }
+            if name.eq_ignore_ascii_case("INFO") && crate::recycle_bin::is_legacy_info_path(&path) {
+                found.add_size("recycle-bin", size);
+            }
+            if crate::powershell_history::is_history_path(&path) {
+                found.add_size("powershell-history", size);
             }
             if crate::i30::is_i30_file(&path) {
                 found.add_size("i30", size);
@@ -1866,6 +1935,10 @@ impl InputInventory {
                     .is_some_and(|name| name.eq_ignore_ascii_case("Quarantine"))
             }) {
                 found.add_size("defender-quarantine", size);
+            }
+            // Detection history files are read wherever a DetectionHistory folder holds them.
+            if crate::defender_history::is_history_path(&path) {
+                found.add_size("defender-history", size);
             }
             if crate::mft::is_mft_name(&name) {
                 found.mfts.push(path.clone());
@@ -1998,9 +2071,11 @@ fn clear_generated_outputs(tasks: &[Task], work: &Path) -> io::Result<()> {
 
 /// Defender extraction is an opt-in side output rather than a parser task target. Clear it on
 /// every clobber run—even when `-x` is absent—so malware from an earlier run cannot survive as an
-/// unrecorded stale result.
-fn clear_defender_extractions(hosts: &[Host], output: &Path) -> io::Result<()> {
+/// unrecorded stale result. The RDP bitmap cache images are cleared the same way, so that no
+/// collage or tile of an earlier run is left beside new records.
+fn clear_extractions(hosts: &[Host], output: &Path) -> io::Result<()> {
     for host in hosts {
+        remove_generated_path(&rdp_cache_image_directory(output, &host.folder), output)?;
         // Keep clobber protection for the previous category and flat extraction locations.
         for path in [
             defender_extraction_directory(output, &host.folder),
@@ -2243,11 +2318,16 @@ fn useful_error_line(output: &str) -> Option<&str> {
     {
         return Some(error);
     }
-    output
+    if let Some(error) = output
         .lines()
-        .rev()
         .map(str::trim)
-        .find(|line| !line.is_empty())
+        .find(|line| line.to_ascii_lowercase().starts_with("could not "))
+    {
+        return Some(error);
+    }
+    output.lines().rev().map(str::trim).find(|line| {
+        !line.is_empty() && !line.starts_with("Elapsed time:") && !line.starts_with("End time:")
+    })
 }
 
 fn json_files(output: &Path, output_type: AutoOutputType) -> Vec<PathBuf> {
@@ -2683,13 +2763,24 @@ mod tests {
         )
         .unwrap();
         assert!(tasks.len() >= 40, "{} tasks", tasks.len());
+        assert!(
+            tasks
+                .iter()
+                .any(|task| task.artifact == "powershell-history")
+        );
         for task in tasks {
             assert!(
                 crate::super_timeline::supports_artifact(task.artifact),
                 "Missing timeline adapter: {}",
                 task.artifact
             );
+            assert!(CATEGORIES.contains(&artifact_category(task.artifact)));
         }
+        assert_eq!(artifact_category("powershell-history"), "ShellHistory");
+        assert_eq!(artifact_filename("powershell-history"), "PowerShellHistory");
+        let mut sorted = CATEGORIES.to_vec();
+        sorted.sort_unstable();
+        assert_eq!(CATEGORIES, sorted);
     }
 
     #[test]
@@ -3047,6 +3138,24 @@ mod tests {
         let clap = "error: a value is required\n\nFor more information, try '--help'.\n";
         assert_eq!(useful_error_line(clap), Some("error: a value is required"));
         assert_eq!(useful_error_line("first\nlast\n"), Some("last"));
+        let damaged = "Could not parse ./broken.pst: truncated header\nNothing was saved: no file could be read.\nEnd time: 2026-11-11 00:00:00\nElapsed time: 00:00:00\n";
+        assert_eq!(
+            useful_error_line(damaged),
+            Some("Could not parse ./broken.pst: truncated header")
+        );
+        assert_eq!(
+            useful_error_line("End time: now\nElapsed time: 00:00:00\n"),
+            None
+        );
+    }
+
+    #[test]
+    fn outlook_inventory_ignores_unrelated_message_files() {
+        let root = tempfile::tempdir().unwrap();
+        fs::write(root.path().join("de.msg"), b"::msgcat::mcset de label text").unwrap();
+        fs::write(root.path().join("broken.pst"), b"!BDN").unwrap();
+        let inventory = InputInventory::scan(root.path(), None);
+        assert_eq!(inventory.sizes.get("outlook"), Some(&4));
     }
 
     #[test]

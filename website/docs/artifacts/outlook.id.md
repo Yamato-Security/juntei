@@ -122,10 +122,7 @@ juntei parse-file outlook -f mailbox.ost -t jsonl \
 juntei parse-file outlook -f suspicious.msg -o msg-csv --properties --extract-attachments isolated/
 ```
 
-`-d` mencari berkas yang berakhiran `.pst`, `.ost`, `.msg`, dan `.oft`, tanpa membedakan huruf besar
-dan kecil. Bagaimanapun sebuah berkas diberikan, byte pertamanya menentukan jenisnya: `!BDN` untuk PST
-atau OST, signature compound file untuk MSG atau OFT. Selain itu dilaporkan sebagai berkas yang tidak
-dapat diurai. Status keluar adalah 1 jika tidak ada berkas yang dapat dibaca.
+`-d` mencari nama `.pst`, `.ost`, `.msg`, dan `.oft` tanpa membedakan huruf besar/kecil, lalu memeriksa header: `!BDN` untuk PST atau OST, atau signature compound file untuk MSG atau OFT. Berkas lain yang memakai ekstensi tersebut, seperti katalog pesan Tcl, dilewati. Berkas yang tidak dapat dibaca dan container rusak dengan signature yang dikenali tetap dilaporkan sebagai kesalahan. `-f` selalu memvalidasi berkas yang diberikan, apa pun namanya, dan melaporkan input tidak valid sebagai kesalahan. Status keluar 1 jika tidak ada berkas yang dapat dibaca.
 
 `--extract-attachments` menulis data setiap lampiran satu kali, sebagai `<SHA-256>` dengan ekstensi
 lampiran tersebut jika ekstensinya terdiri dari 1 hingga 10 huruf dan angka ASCII (`0c7d…1311.jpg`);

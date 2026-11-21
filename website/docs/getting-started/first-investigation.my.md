@@ -20,6 +20,7 @@ Registry hive ပါဝင်သည်ဆိုရုံဖြင့် စု�
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -68,7 +69,7 @@ juntei parse-file prefetch -d evidence/ -t jsonl \
 3. သမိုင်းဆိုင်ရာ တည်ရှိမှုနှင့် metadata အတွက် Amcache နှင့် ShimCache။
 4. အသုံးပြုသူ/အပလီကေးရှင်း အခြေအနေအတွက် LNK၊ Jump Lists၊ RecentDocs နှင့် SRUM။
 5. Persistence အတွက် registry ဝန်ဆောင်မှုများနှင့် TaskCache။
-6. ရှာဖွေတွေ့ရှိမှု၊ ဖယ်ရှားမှု၊ မူလရင်းမြစ်နှင့် hash များအတွက် Defender quarantine။
+6. ရှာဖွေတွေ့ရှိမှု၊ ဖယ်ရှားမှု၊ မူလရင်းမြစ်နှင့် hash များအတွက် Defender detection history နှင့် quarantine။
 
 ## 7. ပြန်လည်ထုတ်လုပ်နိုင်မှုကို မှတ်တမ်းတင်ပါ { #7-document-reproducibility }
 

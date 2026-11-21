@@ -1,5 +1,7 @@
 # Параметри безпеки { #security-settings }
 
+Juntei зберігає записи артефактів, метадані та діагностику розбору. Правила виявлення для окремих парсерів виконуються в Juntei Pro. Наявні перевірки й профілі політик Persistence Hunter залишаються доступними.
+
 ## Що це таке { #what-they-are }
 
 Зловмисники змінюють параметри безпеки Windows, щоб залишатися непоміченими та отримати доступ до облікових даних. Вони
@@ -16,9 +18,7 @@
   Windows Script Host.
 
 `parse-registry security-settings` повідомляє кожен знайдений параметр як запис. Кожен запис містить
-значення параметра, що це значення означає і чи **послаблює воно стан за замовчуванням**: чи вимикає воно
-захист або джерело доказів, чи знижує його нижче рівня, який поточна Windows (10 і 11) забезпечує
-без цього значення.
+значення параметра і те, що це значення означає.
 
 <span class="evidence-strength">Найобґрунтованіший висновок:</span> цей параметр мав це значення на момент
 збереження куща, а ключ востаннє записувався в цей час. Послаблений параметр — це зачіпка, а не доказ
@@ -61,8 +61,7 @@ C:\Users\<user>\NTUSER.DAT
 
 - **Збережена конфігурація — це не фактичний стан захисту.** Повідомляються зібрані значення реєстру та діагностичні рядки для пошкоджених списків значень.
   Відсутність даних може відображати значення за замовчуванням, незібрані джерела або інший механізм
-  керування; це не доводить, що захист увімкнено чи вимкнено. `WeakensDefault` позначає
-  параметри, які можуть знизити вказаний базовий рівень, якщо вони враховуються.
+  керування; це не доводить, що захист увімкнено чи вимкнено.
 - **Застарілі прапорці Defender можуть ігноруватися.** `DisableAntiSpyware` і `DisableAntivirus` не
   доводять, що Defender зупинено. Їхня дія залежить від версії платформи, підключення (onboarding) і захисту від
   втручання (tamper protection). [Microsoft пояснює ці застарілі параметри](https://learn.microsoft.com/en-us/windows-hardware/customize/desktop/unattend/security-malware-windows-defender-disableantispyware).
@@ -76,12 +75,10 @@ C:\Users\<user>\NTUSER.DAT
   - Remote Desktop навмисно відкривають на серверах.
   - Windows 7 зберігала менші журнали подій і не оновлювала час останнього доступу.
 - **Значення за замовчуванням залежать від версії.** Деякі значення раніше були стандартними:
-  - `NtfsDisableLastAccessUpdate` = 1 було значенням за замовчуванням до Windows 10 1803. Воно повідомляється
-    без вердикту, але `0x80000001`, установлене вручну в пізнішій версії, вважається послабленням.
-  - `RunAsPPL`, `LsaCfgFlags` і `UseLogonCredential` порівнюються з поточною Windows.
-- **Виключення Defender:** кожен шлях, розширення, процес або адреса є окремим записом. Кожне виключення
-  послаблює Defender. `TemporaryPaths`, які Defender додає сам, не мають вердикту. Шукайте папки, доступні користувачу для запису,
-  розширення `.ps1`/`.exe` і LOLBins (`rundll32.exe`, `powershell.exe`).
+  - Інтерпретуйте `NtfsDisableLastAccessUpdate` з урахуванням версії Windows і політик. У Windows 10 1803 і новіших версіях `0x80000001` означає режим керування користувачем із вимкненим оновленням часу останнього доступу. Саме значення не визначає, хто його налаштував, і не доводить інтерактивну зміну.
+  - Значення за замовчуванням `RunAsPPL`, `LsaCfgFlags` і `UseLogonCredential` змінювалися між
+    версіями Windows, тож тлумачте їх відповідно до версії хоста.
+- **Виключення Defender:** Кожен шлях, розширення, процес або адреса є окремим записом. Виключення можуть знижувати захист; перевіряйте їхню область дії та походження, зокрема `TemporaryPaths`. Назва ключа сама по собі не доводить ні безпечність виключення, ні активність нападника. Шукайте доступні користувачу для запису папки, розширення `.ps1`/`.exe` і LOLBins (`rundll32.exe`, `powershell.exe`).
 - **Ключі політик** (`Policy` = True) записують групова політика, інструменти та зловмисники, які
   знають, що політики мають пріоритет над локальними параметрами. Зіставляйте їх з об'єктами групової політики (GPO) домену.
 - **Канали журналів подій:** повідомляється лише 25 каналів, важливих для безпеки, із зазначенням того, чи вмикає Windows
@@ -105,7 +102,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set, not only the one in use
-      --weakened-only     Only settings that weaken the default
 
 Output:
   -o, --output <FILE>       Save records
@@ -114,7 +110,7 @@ Output:
 
 ```bash
 juntei parse-registry security-settings -d evidence/ -o settings.csv
-juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
+juntei parse-registry security-settings -d evidence/ -t jsonl \
   | jq -r '[.Host, .Area, .KeyPath, .ValueName, .Value, .Meaning] | @tsv'
 ```
 
@@ -132,7 +128,6 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 | `Setting` | Що це за параметр: `defender_disable_realtime_monitoring`, `defender_exclusion_path`, `uac_local_account_token_filter_policy`, `wdigest_use_logon_credential`, `rdp_deny_connections`, `powershell_script_block_logging`, `event_channel_enabled`, … |
 | `Value` | Значення: десяткове число, рядок або саме виключення. Порожнє, якщо значення не відповідає типу параметра. |
 | `Meaning` | Що означає значення. |
-| `WeakensDefault` | `True`, якщо значення послаблює те, що поточна Windows робить без нього, `False`, якщо ні, порожнє, якщо це не застосовується (розмір, порт, постачальник AMSI) або визначити неможливо. |
 | `Policy` | Чи розташований ключ у ключі `Policies`. |
 | `KeyPath`, `ValueName` | Ключ і значення. Назва значення виключення — це виключений елемент; постачальник AMSI не має назви значення. |
 | `KeyLastWrittenUTC` | Останній запис ключа. |
@@ -142,7 +137,7 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 
 ## Стратегія розслідування { #investigation-strategy }
 
-1. Запустіть із `--weakened-only` на кожному хості й порівняйте хости між собою: параметр,
+1. Запустіть із Juntei на кожному хості й порівняйте хости між собою: параметр,
    який має лише один хост, привертає увагу.
 2. Перевірте кожне виключення Defender щодо інструментів, знайдених на хості та в журналах Defender
    (подія 5007 фіксує зміни конфігурації).
@@ -162,3 +157,5 @@ juntei parse-registry security-settings --weakened-only -d evidence/ -t jsonl \
 - [Microsoft: about_Logging_Windows](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows)
 - [MITRE ATT&CK T1562.001: Impair Defenses: Disable or Modify Tools](https://attack.mitre.org/techniques/T1562/001/)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
+- [Microsoft: NTFS LastAccessTime behavior](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/4e3695bd-7574-4f24-a223-b4679c065b63)
+- [Microsoft: Defender exclusion risks](https://learn.microsoft.com/en-us/defender-endpoint/defender-endpoint-exclusions-common-mistakes)

@@ -28,16 +28,21 @@ Pour une chronologie des artefacts analysés, utilisez [`juntei super-timeline -
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Journalisation des accès utilisateur (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer et l'ancien Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Index de Windows Search](../artifacts/windows-search.md) |
 
 ## [Commandes de fichiers](execution.md) { #file-commands }
 
 | Commande | Artefact d'entrée | Guide détaillé |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Historique des détections Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Arborescence ou entrée de quarantaine Defender | [Quarantaine Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Raccourcis LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [Historique PowerShell](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [Cache bitmap RDP](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Corbeille](../artifacts/recycle-bin.md) |
 
 ## [Commandes NTFS](filesystem.md) { #ntfs-commands }
 
@@ -104,6 +109,10 @@ conservent leurs noms.
 de premier niveau. Elle complète l'inventaire complet de la configuration produit par `parse-registry persistence` avec
 131 vérifications, une classification autorisé/bloqué, les métadonnées des charges utiles, la couverture et la corrélation des horodatages.
 
+## [Analyse YARA](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` analyse les fichiers collectés, y compris les charges utiles de quarantaine restaurées et les données résidentes de la `$MFT`, avec des règles YARA. Par défaut, la commande télécharge le paquet YARA Forge Core ; `--ruleset extended` ou `--ruleset full` sélectionnent un paquet plus large, et `--rules <FILE_OR_DIRECTORY>` analyse hors ligne avec des règles locales. L'analyse est facultative et distincte d'`auto-parse`.
+
 ## Utilisation de premier niveau { #top-level-usage }
 
 ```text
@@ -119,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

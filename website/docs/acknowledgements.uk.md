@@ -35,6 +35,9 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) надихнув цей Python-проєкт;
   повну історію походження див. у [подяках щодо закріплення](persistence-hunter/acknowledgements.md).
 
+- [**Boreal**](https://github.com/vthib/boreal) Вінсента Тібервіля — сумісний із YARA рушій на Rust, вбудований у команду `yara-scan` (MIT або Apache-2.0; повідомлення міститься в `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), який Флоріан Рот супроводжує в межах YARAHQ, збирає пакети правил Core, Extended і Full, що їх `yara-scan` завантажує на вимогу. Правила залишаються творами своїх авторів під їхніми ліцензіями; Juntei зберігає завантажене джерело разом із кожним набором результатів.
+
 - **Специфікація regf** та **yarp** Максима Суханова вплинули на структури реєстру, відтворення
   журналів транзакцій і відновлення видалених записів; його **dfir_ntfs** був еталоном для записів INDX
   та вирізання (carving) з index slack.
@@ -45,6 +48,9 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
   **libesedb** — містять докладні дослідження форматів і є незалежними еталонами парсингу.
 - **dissect.esedb**, **dissect.ntfs** і **dissect.target** від Fox-IT надали незалежні інтерпретації SRUM,
   UAL, `$Secure:$SDS`, SAM і Defender, використані під час перевірки.
+- **SIDR** від Stroz Friedberg і `esedbexport` від libyal були незалежними читаннями індексу Windows Search,
+  разом із нотатками **esedb-kb** від libyal про його таблиці та опублікованим Microsoft вихідним кодом
+  **Extensible Storage Engine** для формату записів.
 - `fsstat` з **The Sleuth Kit** був еталоном для завантажувальних секторів NTFS томів, створених за допомогою
   `mkntfs`.
 - Деякі інструменти Еріка Ціммермана встановили назви полів і очікування експертів, використані для порівнянь.
@@ -56,15 +62,23 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
   найцінніші спостереження Juntei щодо Prefetch/Amcache/ShimCache.
 - **defender-dump** і dissect.target надають окремі реалізації для розуміння структур карантину
   Defender і безпечного вилучення даних.
+- **wddh-parser** від Orange Cyberdefense описав формат історії виявлень Defender, а до його зразків додано
+  значення, які повідомив для них WMI. Парсер `windefender_history` у Plaso та артефакт
+  `Windows.Applications.DefenderHistory` у Velociraptor слугували незалежними еталонами.
 - **Plaso**, **Chainsaw** і **Velociraptor** надали порівняння парсерів, тестові докази або
   еталонну поведінку, орієнтовану на збирання, для кількох артефактів.
 - **Hindsight** від Obsidian Forensics і визначення **SQLiteHunter** від Velocidex слугували еталоном
   для історії, завантажень, файлів cookie та історії форм браузерів.
+- **rifiuti2** Абеля Чеунга разом з документацією обох форматів у **dtformats** від libyal слугував
+  еталоном для файлів `$I` і INFO2 кошика.
+- **bmc-tools** від ANSSI та бюлетень CERT-FR про цей формат, **RdpCacheStitcher** від BSI, артефакт RDPCache
+  у **Velociraptor** і плагін кешу RDP у **dissect.target** слугували еталонами для кешів растрових зображень RDP
+  разом із постійним кешем растрових зображень і декодером перемежованого (interleaved) RLE у **FreeRDP**.
 
 ## Специфікації та дослідження { #specifications-and-research }
 
 Дякуємо Microsoft за публікацію Open Specifications для Shell Links, Compound Binary Files,
-протоколів NTFS/SAM, структур реєстру/служб/завдань і документації API. Також дякуємо
+протоколів NTFS/SAM, структур реєстру/служб/завдань, Remote Desktop Protocol і документації API. Також дякуємо
 авторам криміналістичних досліджень AppCompatCache, Amcache, SRUM, Prefetch, реєстру та NTFS, завдяки яким
 ці артефакти стали зрозумілими для практиків.
 
@@ -72,7 +86,7 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
 
 Публічні докази з
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) Ендрю Ратбана, NIST CFReDS, Plaso,
-Regipy, Artemis, репозиторіїв тестів парсерів та інших колекцій із належним ліцензуванням роблять можливим
+rifiuti2, Regipy, Artemis, wddh-parser від Orange Cyberdefense, репозиторіїв тестів парсерів та інших колекцій із належним ліцензуванням роблять можливим
 регресійне тестування на реальних даних Windows. Juntei зберігає примітки щодо авторства та ліцензій поруч із
 включеними тестовими файлами.
 

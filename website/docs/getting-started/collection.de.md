@@ -18,10 +18,13 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Benutzerzugriffsprotokollierung (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer und Edge Legacy (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Windows-Search-Index | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb` (Windows 7 bis 11 21H2; `Windows.db` und `Windows-gather.db` ab 22H2) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` vor Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft` sowie `.msg`-Dateien, wo immer sie gespeichert wurden |
 | Webbrowser | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` und die Profilordner der anderen Browser |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` und weitere Benutzer-/Systemspeicherorte |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` und `CustomDestinations` |
+| RDP-Bitmap-Cache | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (`%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\` unter Windows XP und älter) |
+| Papierkorb | `$Recycle.Bin\<SID>\$I*` und `$R*` auf jedem Volume (`RECYCLER\<SID>\INFO2` und `D*` unter Windows XP und älter) |
 | ShimCache | `SYSTEM`-Hive: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender-Quarantäne | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Maschinen-Registry | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |
@@ -46,6 +49,9 @@ Juntei parst bereits von Windows gesicherte Dateien. Verwenden Sie ein vertrauen
 - Sichern Sie den gesamten Ordner `WebCache`: Windows hält `WebCacheV01.dat` geöffnet, solange der Benutzer
   angemeldet ist, und die neuesten Änderungen stehen nur in den Transaktionsprotokollen `V01*.log`, die Juntei nicht
   einspielt.
+- Sichern Sie den gesamten Ordner `Applications\Windows` von Windows Search aus einem Abbild, einer
+  Volumeschattenkopie oder nach dem Beenden des Dienstes `WSearch`: `Windows.edb` ist geöffnet, solange der Dienst
+  läuft, und die neuesten Änderungen stehen nur in den Transaktionsprotokollen `MSS*.log`, die Juntei nicht einspielt.
 - Sichern Sie die OST- und PST-Dateien von Outlook bei geschlossenem Outlook oder aus einem Datenträgerabbild bzw. einer
   Volumeschattenkopie: Outlook hält sie geöffnet, solange es läuft. Suchen Sie PSTs auch außerhalb der Standardordner:
   Benutzer verschieben Archive in andere Ordner, auf andere Laufwerke und auf Dateifreigaben.

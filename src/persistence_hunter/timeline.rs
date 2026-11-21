@@ -385,14 +385,14 @@ fn rename_strings(fragment: &str) -> Option<Vec<String>> {
     loop {
         match reader.read_event().ok()? {
             quick_xml::events::Event::Start(tag)
-                if tag.name().as_ref() == b"string" && tag.attributes().next().is_none() =>
+                if tag.name().as_ref() == "string" && tag.attributes().next().is_none() =>
             {
-                names.push(reader.read_text(tag.name()).ok()?.into_owned());
+                names.push(reader.read_text(tag.name()).ok()?.into_inner().into_owned());
                 if names.len() > 2 {
                     return None;
                 }
             }
-            quick_xml::events::Event::Text(text) if text.decode().ok()?.trim().is_empty() => {}
+            quick_xml::events::Event::Text(text) if text.trim().is_empty() => {}
             quick_xml::events::Event::Eof => break,
             _ => return None,
         }
@@ -1117,6 +1117,27 @@ mod tests {
         let mut native = synthetic_rename("INITIAL", "CURRENT", "CURRENT");
         native["EventData"]["Data"] = serde_json::json!({"#text": ["INITIAL", "CURRENT"]});
         assert!(rename_event(&native, now, now, "System.evtx".into(), 1).is_some());
+    }
+
+    #[test]
+    fn xml_upgrade_preserves_raw_rename_strings_and_fragment_validation() {
+        // read_text returns the original inner XML; this upgrade must not normalize or unescape it.
+        assert_eq!(
+            rename_strings(
+                "\r\n\t<string>OLD\r\nNAME</string>\r\n<string>NEW&amp;NAME</string>\r\n"
+            ),
+            Some(vec!["OLD\r\nNAME".into(), "NEW&amp;NAME".into()])
+        );
+        for fragment in [
+            "<string>OLD</string><string>CURRENT</string><string>OTHER</string>",
+            "<string id='old'>OLD</string><string>CURRENT</string>",
+            "<x:string>OLD</x:string><string>CURRENT</string>",
+            "<!DOCTYPE string><string>OLD</string><string>CURRENT</string>",
+            "<string>OLD</string>extra<string>CURRENT</string>",
+            "<string>OLD</wrong><string>CURRENT</string>",
+        ] {
+            assert!(rename_strings(fragment).is_none(), "{fragment}");
+        }
     }
 
     #[test]

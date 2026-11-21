@@ -28,16 +28,21 @@ Gunakan [`juntei super-timeline -d <PARSED> -o SuperTimeline.csv`](super-timelin
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer dan Edge lama](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Indeks Windows Search](../artifacts/windows-search.md) |
 
 ## [Perintah berkas](execution.md) { #file-commands }
 
 | Perintah | Artefak input | Panduan terperinci |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Riwayat Deteksi Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Pohon atau entri karantina Defender | [Karantina Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Pintasan LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [Riwayat PowerShell](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [Cache Bitmap RDP](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Keranjang Sampah (Recycle Bin)](../artifacts/recycle-bin.md) |
 
 ## [Perintah NTFS](filesystem.md) { #ntfs-commands }
 
@@ -104,6 +109,10 @@ tetap mempertahankan namanya.
 tingkat atas. Perintah ini melengkapi inventaris konfigurasi lengkap dari `parse-registry persistence` dengan
 131 pemeriksaan, klasifikasi allow/block, metadata payload, cakupan, dan korelasi timestamp.
 
+## [Pemindaian YARA](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` memindai berkas yang dikumpulkan, termasuk payload karantina yang dipulihkan dan data residen `$MFT`, dengan aturan YARA. Secara default perintah ini mengunduh paket YARA Forge Core; `--ruleset extended` atau `--ruleset full` memilih paket yang lebih luas, dan `--rules <FILE_OR_DIRECTORY>` memindai secara offline dengan aturan lokal. Pemindaian ini bersifat opsional dan terpisah dari `auto-parse`.
+
 ## Penggunaan tingkat atas { #top-level-usage }
 
 ```text
@@ -119,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

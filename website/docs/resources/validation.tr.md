@@ -131,6 +131,20 @@ Internet Explorer 11'e ait, diğeri ise eski Edge'in geçmişini, indirmelerini 
 6 indirme, 170 çerez ve 3.754 diğer girdi. Karşılaştırma, indirme kayıtlarının kodunu kendi başına çözdü.
 Veritabanlarının silinmiş olarak işaretlediği kayıtlar her iki taraftan da çıkarıldı.
 
+## Windows Search dizini { #windows-search-index }
+
+`parse-ese windows-search`, `Windows.edb` dosyasını
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) kütüphanesinin ESE okuyucusuyla okur.
+Tümü kirli bırakılmış üç herkese açık dizinde libyal'ın `esedbexport` aracı ve Stroz Friedberg'in SIDR
+aracıyla karşılaştırıldı: Plaso'nun Windows 7 dizini (`SystemIndex_0A`) ile DFIR Artifact Museum'un
+Windows 10 ve Windows 11 dizinleri (`SystemIndex_PropertyStore`, ESE biçim revizyonları 110 ve 200). Her
+yol, sahip, tür, bilgisayar adı, boyut ve zaman eşleşti: Windows 11 özellik deposunun 6.691 değeri
+`esedbexport` ile, Windows 10 özellik deposunun 6.332 değeri SIDR ile ve Windows 7 dizeleri üç
+kodlamasıyla `esedbexport` ile karşılaştırıldı. Windows 10 dizininin bir bölümü yalnızca dal
+sayfalarının ulaşmadığı yaprak sayfalardadır; iki araç da bunları okur, Juntei de okur. Bir toplayıcı
+sütunu tasarım gereği farklıdır: ESE, bir öğe tarandığında `Priority` değerini NULL olarak işaretler;
+iki araç da bunu kayıtta kalan baytlardan yazdırır.
+
 ## Outlook { #outlook }
 
 `parse-file outlook`, PST, OST, `.msg` ve `.oft` dosyalarını
@@ -174,6 +188,37 @@ Herkese açık 77 Jump List'te, 100 ns'ye kadar zaman damgaları dahil paylaşı
 hücresinin tümü referans ayrıştırıcıyla eşleşti. Referansın reddettiği altı dosya (boş özel listeler,
 eksik bir altbilgi veya Jump List olmayan bir dosya) Juntei tarafından ya kodu çözüldü ya da açıkça
 raporlandı.
+
+## Geri Dönüşüm Kutusu { #recycle-bin }
+
+`parse-file recycle-bin`, Juntei'nin kendi ayrıştırıcısıdır. [rifiuti2](https://github.com/abelcheung/rifiuti2)
+projesinin herkese açık örneklerinde, rifiuti2'nin okuduğu her kaydın indeksi, silinme zamanı (rifiuti2'nin gösterdiği
+gibi saniyesine kadar), Geri Dönüşüm Kutusu'ndan çıkarılma durumu, boyutu ve yolu aynıydı: 92 kayıt; bunların 67'si
+Windows 95 ile Server 2003 arasındaki on bir INFO2 dosyasında, 25'i ise Windows Vista ve Windows 10 `$I` dosyalarından
+oluşan üç klasördeydi. INFO2'nin ANSI yolları, rifiuti2'nin kendi testlerinin kullandığı kod sayfalarında eşleşti.
+Juntei, rifiuti2'nin reddettiklerini de okur: her iki `$I` sürümünü karıştıran bir klasör, yolu olmayan bir `$I`
+başlığı ve kesik kayıtlar; her birinin hasarı raporlanır. Plaso'nun test verilerindeki `$I` ve INFO2 dosyaları,
+Plaso testlerinin beklediği zamanları, boyutları, yolları, indeksleri ve sürücüleri verir. Digital Corpora'nın herkese
+açık M57-Jean disk imajında (Windows XP), `auto-parse --e01` ile okunduğunda INFO2 kaydı rifiuti2 ile eşleşir ve
+yanındaki silinmiş dosya `Dc1.jpg`, Juntei'nin ona verdiği adı taşır.
+
+## RDP Bitmap Önbelleği { #rdp-bitmap-cache }
+
+`parse-file rdp-cache`, Juntei'nin kendi ayrıştırıcısıdır. CODE BLUE 2026 CTF koleksiyonunun altı ana bilgisayarından
+biri olan kofu'da, üç `Cache????.bin` dosyasındaki 1.911 karonun her biri, piksel piksel,
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) aracının oluşturduğu görüntünün aynısıdır. ApoorvCTF 2025'in
+"Phantom Connection" görevindeki herkese açık `Cache0000.bin` dosyasının 1.980 karosu için de durum aynıdır; bunların
+105'i 64 × 48 pikseldir. bmc-tools her karoyu 64 piksel genişliğinde okur, bu yüzden ekranın sağ kenarındaki daha dar
+karolar çarpık çıkar; Juntei her karoyu kendi genişliğinde okur.
+
+Karo içeren herkese açık bir `.bmc` önbelleği bulunamadı: yukarıdaki örnekler, Windows 10 ve sonrasındaki diğer
+istemciler gibi, yalnızca boş bir `bcache24.bmc` içerir. Bu nedenle `.bmc` okuma, biçime uygun olarak oluşturulmuş
+dosyalarla test edildi: dört renk derinliğinin hepsinde sıkıştırılmamış karolar, ardından daha önceki bir karonun sonu
+gelen küçük karolar, hasarlı yuvalar ve MS-RDPBCGR 3.1.9'daki her komutu (order) kullanan, RLE ile sıkıştırılmış 3.000
+rastgele 16 bitlik karo; bu karolarda hiçbir komut karonun ilk satırının sonunu aşmaz. Juntei ve bmc-tools 3.000
+karonun hepsini aynı piksellere çözer. Bir komut ilk satırda başlayıp bu satırın ötesine geçtiğinde ikisi ayrışır:
+Juntei, komutun tamamı boyunca ilk satırın kurallarını koruyan spesifikasyonu ve FreeRDP'nin kod çözücüsünü izler;
+bmc-tools ise komutun ortasında kural değiştirir.
 
 ## ShimCache { #shimcache }
 

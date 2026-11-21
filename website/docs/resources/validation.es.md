@@ -134,6 +134,19 @@ valor: 44 contenedores, 182 entradas del historial, 6 descargas, 170 cookies y 3
 decodificó por su cuenta los registros de descarga. Los registros que las bases de datos marcan como eliminados se
 excluyeron de ambos lados.
 
+## Índice de Windows Search { #windows-search-index }
+
+`parse-ese windows-search` lee `Windows.edb` con el lector ESE de
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Se comparó con `esedbexport` de libyal y con
+SIDR de Stroz Friedberg en tres índices públicos, todos dejados sucios: el índice de Windows 7 de Plaso
+(`SystemIndex_0A`) y los índices de Windows 10 y Windows 11 del DFIR Artifact Museum (`SystemIndex_PropertyStore`,
+revisiones 110 y 200 del formato ESE). Coincidieron todas las rutas, propietarios, tipos, nombres de equipo,
+tamaños y horas: 6691 valores del almacén de propiedades de Windows 11 frente a `esedbexport`, 6332 del de
+Windows 10 frente a SIDR, y las cadenas de Windows 7 en sus tres codificaciones frente a `esedbexport`. Parte del
+índice de Windows 10 solo está en páginas hoja a las que sus páginas de rama no llegan; ambas herramientas las
+leen, y Juntei también. Una columna del recopilador difiere por diseño: ESE marca `Priority` como NULL en cuanto
+se rastrea un elemento, que ambas herramientas imprimen a partir de los bytes que quedan en el registro.
+
 ## Outlook { #outlook }
 
 `parse-file outlook` lee archivos PST, OST, `.msg` y `.oft` con
@@ -175,6 +188,37 @@ de Sootmark sobre archivos compuestos y Jump Lists, con los vínculos incrustado
 las marcas de tiempo con precisión de 100 ns, coincidieron con el analizador de referencia. Seis
 archivos que la referencia rechazó (listas personalizadas vacías, un pie ausente o un archivo que
 no era una Jump List) fueron decodificados o notificados explícitamente por Juntei.
+
+## Papelera de reciclaje { #recycle-bin }
+
+`parse-file recycle-bin` es un analizador propio de Juntei. En las muestras públicas de
+[rifiuti2](https://github.com/abelcheung/rifiuti2), cada registro que lee rifiuti2 tuvo el mismo índice, la misma hora
+de eliminación (al segundo, tal como la muestra rifiuti2), el mismo estado de retirada de la papelera, el mismo tamaño
+y la misma ruta: 92 registros, 67 en once archivos INFO2 de Windows 95 a Server 2003 y 25 en tres carpetas de archivos
+`$I` de Windows Vista y Windows 10. Las rutas ANSI de INFO2 coincidieron en las páginas de códigos que usan las propias
+pruebas de rifiuti2. Juntei también lee lo que rifiuti2 rechaza: una carpeta que mezcla ambas versiones de `$I`, un
+encabezado `$I` sin ruta y registros truncados, cada uno con sus daños notificados. Los archivos `$I` e INFO2 de los
+datos de prueba de Plaso dan las horas, tamaños, rutas, índices y unidades que esperan las pruebas de Plaso. En la
+imagen de disco pública M57-Jean de Digital Corpora (Windows XP), leída con `auto-parse --e01`, el registro de INFO2
+coincide con rifiuti2, y el archivo reciclado que está junto a él, `Dc1.jpg`, tiene el nombre que le da Juntei.
+
+## Caché de mapas de bits de RDP { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` es un analizador propio de Juntei. En kofu, uno de los seis hosts de la colección del
+CODE BLUE 2026 CTF, cada una de las 1911 teselas de sus tres archivos `Cache????.bin` es, píxel a píxel, la imagen que
+genera [bmc-tools](https://github.com/ANSSI-FR/bmc-tools). Lo mismo ocurre con las 1980 teselas del `Cache0000.bin`
+público del reto «Phantom Connection» de ApoorvCTF 2025, 105 de ellas de 64 × 48 píxeles. bmc-tools lee todas las
+teselas como si tuvieran 64 píxeles de ancho, por lo que las teselas más estrechas del borde derecho de una pantalla
+salen deformadas; Juntei lee cada tesela con su propio ancho.
+
+No se encontró ninguna caché `.bmc` pública con teselas: las muestras anteriores, como las de otros clientes de
+Windows 10 y posteriores, solo tienen un `bcache24.bmc` vacío. Por ello, la lectura de `.bmc` se probó con archivos
+creados según el formato: teselas sin comprimir de las cuatro profundidades de color, teselas pequeñas seguidas del
+final de una tesela anterior, ranuras dañadas y 3000 teselas aleatorias de 16 bits comprimidas con RLE que usan todas
+las órdenes de MS-RDPBCGR 3.1.9, sin que ninguna orden pase del final de la primera fila de una tesela. Juntei y
+bmc-tools decodifican las 3000 en píxeles idénticos. Cuando una orden empieza en la primera fila y continúa más allá
+de ella, ambos difieren: Juntei sigue la especificación y el decodificador de FreeRDP, que mantienen las reglas de la
+primera fila durante toda la orden, mientras que bmc-tools cambia de reglas a mitad de ella.
 
 ## ShimCache { #shimcache }
 

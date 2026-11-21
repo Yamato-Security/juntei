@@ -121,10 +121,7 @@ juntei parse-file outlook -f mailbox.ost -t jsonl \
 juntei parse-file outlook -f suspicious.msg -o msg-csv --properties --extract-attachments isolated/
 ```
 
-`-d` sucht Dateien, die auf `.pst`, `.ost`, `.msg` und `.oft` enden, ohne Beachtung der Groß-/Kleinschreibung. Wie
-auch immer eine Datei angegeben wird, ihre ersten Bytes bestimmen, was sie ist: `!BDN` für eine PST oder OST, die
-Compound-File-Signatur für eine MSG- oder OFT-Datei. Alles andere wird als Datei gemeldet, die nicht geparst werden
-konnte. Der Exit-Status ist 1, wenn keine Datei gelesen werden konnte.
+`-d` sucht ohne Beachtung der Groß-/Kleinschreibung nach `.pst`, `.ost`, `.msg` und `.oft` und prüft dann die Header: `!BDN` für PST oder OST, die Compound-File-Signatur für MSG oder OFT. Fremde Dateien mit diesen Erweiterungen, etwa Tcl-Nachrichtenkataloge, werden übersprungen. Nicht lesbare Dateien und beschädigte Container mit erkennbarer Signatur bleiben Fehler. `-f` validiert die angegebene Datei unabhängig vom Namen und meldet ungültige Eingaben als Fehler. Ist keine Datei lesbar, lautet der Exitstatus 1.
 
 `--extract-attachments` schreibt die Daten jedes Anhangs genau einmal, als `<SHA-256>` mit der Erweiterung des
 Anhangs, wenn diese aus 1 bis 10 ASCII-Buchstaben und -Ziffern besteht (`0c7d…1311.jpg`); kein Name aus einem Element

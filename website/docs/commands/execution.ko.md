@@ -1,7 +1,7 @@
 # 파일 명령어 { #file-commands }
 
 `parse-file`는 아티팩트별 파일을 처리합니다: Prefetch, 바로 가기, Jump Lists, Defender
-격리 데이터, 그리고 Outlook의 PST, OST, MSG 및 OFT 파일. 자동(Automatic) Jump Lists는 복합 파일(compound file) 컨테이너를 사용하고, 사용자 지정(Custom)
+탐지 기록 및 격리 데이터, PowerShell 기록, Outlook의 PST, OST, MSG 및 OFT 파일, 그리고 휴지통의 인덱스 파일. 자동(Automatic) Jump Lists는 복합 파일(compound file) 컨테이너를 사용하고, 사용자 지정(Custom)
 Jump Lists는 다른 바이너리 레이아웃을 사용합니다. 두 가지 모두 같은 아티팩트 명령어에 속합니다.
 
 ```text
@@ -12,16 +12,54 @@ Usage:
   juntei parse-file <COMMAND> [OPTIONS]
 
 Commands:
+  defender-history     Parse Defender detection history
   defender-quarantine  Parse Defender quarantine
   help                 Print this message or the help of the given subcommand(s)
   jump-lists           Parse Jump Lists
   lnk                  Parse shortcuts
   outlook              Parse Outlook PST, OST, MSG and OFT files
+  powershell-history   Parse PowerShell command history (PSReadLine)
   prefetch             Parse Prefetch files
+  rdp-cache            Parse RDP bitmap caches (Cache????.bin and bcache*.bmc) and save their screen tiles as images
+  recycle-bin          Parse Recycle Bin index files ($I files and INFO2)
 
 Options:
   -h, --help  Print help
 ```
+
+## `parse-file defender-history` { #parse-file-defender-history }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file defender-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for detection history files (Scans\History\Service\DetectionHistory\<nn>\<GUID>)
+  -f, --file <FILE>      File path to one detection history file (DetectionHistory\<nn>\<GUID>)
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file defender-history -d evidence/ -o defender-history.csv
+juntei parse-file defender-history -f DetectionHistory/02/6AFE33A0-19BA-4FFF-892F-B700539D7D63 -t jsonl
+```
+
+각 탐지의 리소스마다 레코드 하나를 출력하며, Defender가 격리하지 않은 위협도 포함합니다.
+[Defender 탐지 기록](../artifacts/defender-history.md)을 참조하십시오.
 
 ## `parse-file defender-quarantine` { #parse-file-defender-quarantine }
 
@@ -165,6 +203,32 @@ juntei parse-file outlook -f invoice.msg -o msg-csv --properties --extract-attac
 첨부 파일, 연락처, 일정 항목, 작업이며, `--properties`를 사용하면 저장된 그대로의 모든 속성도 포함됩니다.
 [Outlook](../artifacts/outlook.md)을 참조하십시오.
 
+## `parse-file powershell-history` { #parse-file-powershell-history }
+
+```text
+Usage: juntei parse-file powershell-history <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Recursively find PSReadLine history files (PSReadLine\*_history.txt)
+  -f, --file <FILE>      Parse one history file, including a renamed copy
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  csv (default), json, jsonl
+  -C, --clobber             Overwrite files when saving
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file powershell-history -d evidence/ -o powershell-history.csv
+juntei parse-file powershell-history -f copied-history.txt -t jsonl
+```
+
+`-o` 없이 레코드를 stdout으로 쓰려면 `-t`를 지정하세요. 둘 다 없으면 요약을 표시합니다. `json`은 읽기 좋게 정렬된 개별 객체를 쓰고 `jsonl`은 한 줄에 객체 하나를 씁니다. 독립 실행 명령에는 `-Z` 옵션이 없습니다. 인코딩 및 해석은 [PowerShell 기록](../artifacts/powershell-history.md)을 참조하세요.
+
 ## `parse-file prefetch` { #parse-file-prefetch }
 
 ```text
@@ -200,3 +264,73 @@ juntei parse-file prefetch -d evidence/ -T -o prefetch-timeline.csv
 ```
 
 [Prefetch](../artifacts/prefetch.md)를 참조하십시오.
+
+## `parse-file rdp-cache` { #parse-file-rdp-cache }
+
+```text
+Version: 1.2.0 (Dev Build)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file rdp-cache <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for RDP bitmap caches (Cache????.bin, bcache*.bmc)
+  -f, --file <FILE>      File path to one RDP bitmap cache file
+
+Output:
+  -o, --output <FILE>       Save every tile's record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -x, --extract <DIR>       Save each cache file's tiles as BMP images (for RdpCacheStitcher) and a PNG collage, a folder per cache file
+      --collage-only        With --extract, save only the collages
+      --collage-width <N>   Tiles per row of the collages [default: 64]
+  -C, --clobber             Overwrite files when saving or extracting
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file rdp-cache -d evidence/ -o rdp-cache.csv --extract rdp-cache/
+juntei parse-file rdp-cache -f Cache0000.bin --extract rdp-cache/ --collage-only
+```
+
+[RDP 비트맵 캐시](../artifacts/rdp-cache.md)를 참조하십시오.
+
+## `parse-file recycle-bin` { #parse-file-recycle-bin }
+
+```text
+Version: 1.1.0 (CODE BLUE Release)
+Yamato Security (https://github.com/Yamato-Security/juntei - @SecurityYamato)
+
+Usage:
+  juntei parse-file recycle-bin <INPUT> [OPTIONS]
+
+Input:
+  -d, --directory <DIR>  Directory to search recursively for Recycle Bin index files ($I files, INFO2)
+  -f, --file <FILE>      File path to one $I or INFO2 file
+      --code-page <CP>   Code page of INFO2's ANSI paths: the system's ANSI code page (932 for Japanese) [default: 1252]
+
+Output:
+  -o, --output <FILE>       Save every record to a file
+  -t, --output-type <TYPE>  Output type: csv (default), json, jsonl. Without -o, the records are written to stdout
+  -C, --clobber             Overwrite files when saving
+
+General Options:
+  -h, --help  Show the help menu
+
+Display Settings:
+  -K, --no-color  Disable color output
+  -q, --quiet     Quiet mode: do not display the launch banner
+```
+
+```bash
+juntei parse-file recycle-bin -d evidence/ -o recycle-bin.csv
+juntei parse-file recycle-bin -f '$IABC123.docx' -t jsonl | jq .
+```
+
+[휴지통](../artifacts/recycle-bin.md)을 참조하십시오.

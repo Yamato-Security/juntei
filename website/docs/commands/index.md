@@ -31,16 +31,21 @@ chronological order and duplicate consolidation. `auto-parse -j` continues to re
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [User Access Logging (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer and Legacy Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search Index](../artifacts/windows-search.md) |
 
 ## [File commands](execution.md)
 
 | Command | Input artifact | Detailed guide |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender Detection History](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender quarantine tree or entry | [Defender Quarantine](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK Shortcuts](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell History](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP Bitmap Cache](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Recycle Bin](../artifacts/recycle-bin.md) |
 
 ## [NTFS commands](filesystem.md)
 
@@ -107,6 +112,10 @@ keep their names.
 command. It complements the full configuration inventory from `parse-registry persistence` with
 131 checks, allow/block classification, payload metadata, coverage, and timestamp correlation.
 
+## [YARA Scan](yara-scan.md)
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` scans collected files, including recovered quarantine payloads and resident `$MFT` data, with YARA rules. It downloads the YARA Forge Core package by default; `--ruleset extended` or `--ruleset full` select a broader package, and `--rules <FILE_OR_DIRECTORY>` scans offline with local rules. The scan is opt-in and separate from `auto-parse`.
+
 ## Top-level usage
 
 ```text
@@ -122,6 +131,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

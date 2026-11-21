@@ -28,16 +28,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [उपयोगकर्ता एक्सेस लॉगिंग (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer और लेगेसी Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search इंडेक्स](../artifacts/windows-search.md) |
 
 ## [फ़ाइल कमांड](execution.md) { #file-commands }
 
 | Command | Input आर्टिफ़ैक्ट | विस्तृत मार्गदर्शिका |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender पहचान इतिहास](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender क्वारंटीन tree या entry | [Defender क्वारंटीन](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK शॉर्टकट](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell इतिहास](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP बिटमैप कैश](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [रीसायकल बिन](../artifacts/recycle-bin.md) |
 
 ## [NTFS कमांड](filesystem.md) { #ntfs-commands }
 
@@ -104,6 +109,10 @@ parser options को आर्टिफ़ैक्ट नाम के बा�
 command है। यह `parse-registry persistence` की पूर्ण configuration inventory को
 131 checks, allow/block वर्गीकरण, payload metadata, coverage और timestamp correlation के साथ पूरक बनाता है।
 
+## [YARA स्कैन](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` एकत्र की गई फ़ाइलों को, जिनमें पुनर्प्राप्त क्वारंटाइन पेलोड और `$MFT` का रेज़िडेंट डेटा शामिल है, YARA नियमों से स्कैन करता है। डिफ़ॉल्ट रूप से यह YARA Forge Core पैकेज डाउनलोड करता है; `--ruleset extended` या `--ruleset full` व्यापक पैकेज चुनते हैं, और `--rules <FILE_OR_DIRECTORY>` स्थानीय नियमों से ऑफ़लाइन स्कैन करता है। यह स्कैन वैकल्पिक है और `auto-parse` से अलग है।
+
 ## Top-level उपयोग { #top-level-usage }
 
 ```text
@@ -119,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

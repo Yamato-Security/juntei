@@ -1,5 +1,7 @@
 # LNK 捷徑 { #lnk-shortcuts }
 
+Juntei 保留鑑識成品記錄、中繼資料及剖析診斷資訊。各剖析器的偵測規則由 Juntei Pro 評估。Persistence Hunter 的現有檢查與原則設定檔仍可使用。
+
 ## 什麼是 LNK 檔案 { #what-lnk-files-are }
 
 Windows Shell Link（`.lnk`）檔案描述一個目標，以及啟動參數、工作目錄、圖示、
@@ -99,3 +101,5 @@ LNK 標頭中的目標 FILETIME 與追蹤器時間仍是可轉換的絕對時間
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

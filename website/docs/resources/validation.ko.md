@@ -117,6 +117,17 @@ ys-browser-parser의 양식 기록 테스트 데이터베이스를 대상으로,
 방문 기록 항목 182개, 다운로드 6건, 쿠키 170개, 기타 항목 3,754개입니다. 비교 과정에서는 다운로드 레코드를
 독자적으로 디코딩했습니다. 데이터베이스가 삭제됨으로 표시한 레코드는 양쪽 모두에서 제외했습니다.
 
+## Windows Search 색인 { #windows-search-index }
+
+`parse-ese windows-search`는 [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)의 ESE 리더로
+`Windows.edb`를 읽습니다. 모두 더티 상태 그대로인 공개 색인 3개, 즉 Plaso의 Windows 7 색인(`SystemIndex_0A`)과
+DFIR Artifact Museum의 Windows 10 및 Windows 11 색인(`SystemIndex_PropertyStore`, ESE 형식 개정 110 및 200)을
+대상으로 libyal의 `esedbexport` 및 Stroz Friedberg의 SIDR과 비교되었습니다. 모든 경로, 소유자, 유형, 컴퓨터 이름,
+크기, 시간이 일치했습니다. Windows 11 속성 저장소의 값 6,691개는 `esedbexport`와, Windows 10 속성 저장소의 값
+6,332개는 SIDR과, 세 가지 인코딩으로 된 Windows 7 문자열은 `esedbexport`와 대조했습니다. Windows 10 색인의
+일부는 브랜치 페이지가 가리키지 않는 리프 페이지에만 있습니다. 두 도구 모두 이 페이지를 읽으며, Juntei도
+마찬가지입니다. 수집기 열 하나는 설계상 다릅니다. 항목이 크롤링되면 ESE가 `Priority`를 NULL로 표시하는데, 두
+도구는 레코드에 남은 바이트에서 이 값을 출력합니다.
 ## Outlook { #outlook }
 
 `parse-file outlook`은 [ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser)로 PST, OST,
@@ -155,6 +166,36 @@ List 관련 작업을 사용하며, 포함된 링크는 `ys-lnk-parser`로 디�
 단위의 타임스탬프를 포함한 13,057개의 공유 비교 셀 모두가 참조 파서와 일치했습니다. 참조 파서가 거부한 파일
 6개(빈 사용자 지정 목록, 바닥글 누락, 또는 Jump List가 아닌 파일)는 Juntei가 디코딩하거나 명시적으로
 보고했습니다.
+
+## 휴지통 { #recycle-bin }
+
+`parse-file recycle-bin`은 Juntei의 자체 파서입니다. [rifiuti2](https://github.com/abelcheung/rifiuti2)의 공개
+샘플에서 rifiuti2가 읽는 모든 레코드는 인덱스, 삭제 시각(rifiuti2가 표시하는 대로 초 단위까지), 제거 상태,
+크기, 경로가 모두 같았습니다. 총 92개 레코드로, 67개는 Windows 95부터 Server 2003까지의 INFO2 파일 11개에서,
+25개는 Windows Vista 및 Windows 10의 `$I` 파일이 들어 있는 폴더 3개에서 나왔습니다. INFO2의 ANSI 경로는
+rifiuti2 자체 테스트가 사용하는 코드 페이지에서 일치했습니다. Juntei는 rifiuti2가 거부하는 파일도 읽습니다.
+두 가지 `$I` 버전이 섞인 폴더, 경로가 없는 `$I` 헤더, 잘린 레코드가 그것이며, 각각의 손상 내용을 보고합니다.
+Plaso 테스트 데이터의 `$I` 및 INFO2 파일에서는 Plaso 테스트가 기대하는 시각, 크기, 경로, 인덱스, 드라이브를
+얻습니다. Digital Corpora의 공개 M57-Jean 디스크 이미지(Windows XP)를 `auto-parse --e01`로 읽었을 때 INFO2
+레코드는 rifiuti2와 일치했고, 그 옆에 있는 휴지통 파일 `Dc1.jpg`의 이름도 Juntei가 부여한 이름과 같았습니다.
+
+## RDP 비트맵 캐시 { #rdp-bitmap-cache }
+
+`parse-file rdp-cache`는 Juntei의 자체 파서입니다. CODE BLUE 2026 CTF 수집 데이터의 호스트 6대 중 하나인
+kofu에서는 `Cache????.bin` 파일 3개에 들어 있는 타일 1,911개가 모두
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools)가 만드는 이미지와 픽셀 단위로 같습니다. ApoorvCTF 2025의
+"Phantom Connection" 문제에서 공개된 `Cache0000.bin`의 타일 1,980개도 마찬가지이며, 그중 105개는
+64 × 48픽셀입니다. bmc-tools는 모든 타일을 너비 64픽셀로 읽기 때문에 화면 오른쪽 가장자리의 더 좁은 타일이
+비뚤어져 나옵니다. Juntei는 각 타일을 그 타일의 너비대로 읽습니다.
+
+타일이 들어 있는 공개 `.bmc` 캐시는 찾지 못했습니다. 위 샘플들도 다른 Windows 10 이상 클라이언트와
+마찬가지로 빈 `bcache24.bmc`만 가지고 있습니다. 따라서 `.bmc` 읽기는 형식에 맞춰 만든 파일로
+테스트했습니다. 네 가지 색 깊이 모두의 비압축 타일, 작은 타일 뒤에 이전 타일의 끝부분이 이어지는 경우,
+손상된 슬롯, 그리고 MS-RDPBCGR 3.1.9의 모든 오더(order)를 사용하는 무작위 RLE 압축 16비트 타일
+3,000개이며, 이 타일들에서는 어떤 오더도 타일의 첫 행 끝을 넘어 이어지지 않습니다. Juntei와 bmc-tools는
+3,000개 모두를 같은 픽셀로 디코딩합니다. 오더가 첫 행에서 시작해 그 행을 넘어 이어지면 둘의 결과가
+달라집니다. Juntei는 사양과 FreeRDP 디코더를 따라 오더 전체에 첫 행의 규칙을 유지하지만, bmc-tools는 오더
+중간에 규칙을 바꿉니다.
 
 ## ShimCache { #shimcache }
 

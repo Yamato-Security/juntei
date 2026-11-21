@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei зберігає записи артефактів, метадані та діагностику розбору. Правила виявлення для окремих парсерів виконуються в Juntei Pro. Наявні перевірки й профілі політик Persistence Hunter залишаються доступними.
+
 ## Що таке ShimCache { #what-shimcache-is }
 
 Підсистема сумісності програм Windows (Application Compatibility) кешує шляхи до виконуваних файлів і метадані під час оцінювання
@@ -57,7 +59,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## Поля виводу { #output-fields }
@@ -79,7 +81,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | Архітектура, записана новішими форматами (`x64`, `x86`, `ARM64`). |
 | `FileSize`, `LastUpdateTimeUTC` | Кешовані метадані, специфічні для Windows XP, якщо вони наявні. |
 | `PackageName`, `PackageVersion`, `PackagePublisherID` | Ідентичність пакетної програми в записах, де це підтримується. Publisher ID є контекстом, а не доказом підпису. |
-| `Findings` | Коди аномалій Juntei, як-от переміщений системний двійковий файл або підозрілий шлях підготовки (staging). Лише зачіпки. |
 | `RegistryPath`, `RegistryValueName` | Точне джерело — ключ/значення куща. Зберігайте для перевірки. |
 | `CacheValueSize` | Розмір усього значення реєстру, а не `DataSize` окремого запису. |
 | `IsCurrent` | Чи збігається набір керування цього запису з `SYSTEM\Select\Current`; порожнє, якщо це не відомо напевно. |

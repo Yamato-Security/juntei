@@ -101,7 +101,10 @@ plugins:
       build: true
       site_name: Juntei ドキュメント
       nav_translations:
+        Shell History: "シェル履歴"
+        PowerShell History: "PowerShell 履歴"
         Super Timeline: "統合タイムライン"
+        YARA Scan: "YARAスキャン"
         Home: ホーム
         Overview: 概要
         Screenshots: スクリーンショット
@@ -144,6 +147,8 @@ plugins:
         Boot Sector ($Boot): ブート セクタ ($Boot)
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: ごみ箱
+        Windows Search Index: Windows Search のインデックス
         File and Folder Opening: ファイルとフォルダのオープン
         LNK Shortcuts: LNK のショートカット
         Microsoft Office: Microsoft Office
@@ -159,11 +164,13 @@ plugins:
         Lateral Movement: 横展開
         Remote Access (User Side): リモートアクセス (ユーザー側)
         User Access Logging (UAL): ユーザーアクセスログ (UAL)
+        RDP Bitmap Cache: RDP ビットマップキャッシュ
         Open and Save As Dialogs: ファイルを開く・名前を付けて保存
         ShellBags: ShellBags
         External Devices: 外部デバイス
         USB Devices: USB デバイス
         Security Products: セキュリティ製品
+        Defender Detection History: Defender の検出履歴
         Defender Quarantine: Defender の隔離データ
         Security Settings: セキュリティ設定
         Registry and Persistence: レジストリと永続化
@@ -190,7 +197,10 @@ plugins:
       name: 繁體中文
       build: true
       nav_translations:
+        Shell History: "Shell 歷程記錄"
+        PowerShell History: "PowerShell 歷程記錄"
         Super Timeline: "超級時間軸"
+        YARA Scan: "YARA 掃描"
         Home: 首頁
         Overview: 概觀
         Screenshots: 螢幕擷圖
@@ -235,10 +245,12 @@ plugins:
         Lateral Movement: 橫向移動
         Remote Access (User Side): 遠端存取（使用者端）
         User Access Logging (UAL): 使用者存取記錄 (UAL)
+        RDP Bitmap Cache: RDP 點陣圖快取
         Open and Save As Dialogs: 開啟與另存新檔對話方塊
         External Devices: 外部裝置
         USB Devices: USB 裝置
         Security Products: 資安產品
+        Defender Detection History: Defender 偵測歷程記錄
         Defender Quarantine: Defender 隔離資料
         Security Settings: 安全性設定
         Registry and Persistence: 登錄與持續存取
@@ -270,6 +282,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: 資源回收筒
+        Windows Search Index: Windows Search 索引
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -279,7 +293,10 @@ plugins:
       name: 한국어
       build: true
       nav_translations:
+        Shell History: "셸 기록"
+        PowerShell History: "PowerShell 기록"
         Super Timeline: "슈퍼 타임라인"
+        YARA Scan: "YARA 검사"
         Home: 홈
         Overview: 개요
         Screenshots: 스크린샷
@@ -324,10 +341,12 @@ plugins:
         Lateral Movement: 측면 이동
         Remote Access (User Side): 원격 액세스 (사용자 측)
         User Access Logging (UAL): 사용자 액세스 로깅 (UAL)
+        RDP Bitmap Cache: RDP 비트맵 캐시
         Open and Save As Dialogs: 열기 및 다른 이름으로 저장 대화 상자
         External Devices: 외부 장치
         USB Devices: USB 장치
         Security Products: 보안 제품
+        Defender Detection History: Defender 탐지 기록
         Defender Quarantine: Defender 격리 데이터
         Security Settings: 보안 설정
         Registry and Persistence: 레지스트리와 지속성
@@ -359,6 +378,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: 휴지통
+        Windows Search Index: Windows Search 색인
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -368,7 +389,10 @@ plugins:
       name: Deutsch
       build: true
       nav_translations:
+        Shell History: "Shell-Verlauf"
+        PowerShell History: "PowerShell-Verlauf"
         Super Timeline: "Gesamttimeline"
+        YARA Scan: "YARA-Scan"
         Home: Startseite
         Overview: Übersicht
         Screenshots: Screenshots
@@ -413,10 +437,12 @@ plugins:
         Lateral Movement: Laterale Bewegung
         Remote Access (User Side): Fernzugriff (Benutzerseite)
         User Access Logging (UAL): Benutzerzugriffsprotokollierung (UAL)
+        RDP Bitmap Cache: RDP-Bitmap-Cache
         Open and Save As Dialogs: Dialoge zum Öffnen und Speichern unter
         External Devices: Externe Geräte
         USB Devices: USB-Geräte
         Security Products: Sicherheitsprodukte
+        Defender Detection History: Defender-Erkennungsverlauf
         Defender Quarantine: Defender-Quarantäne
         Security Settings: Sicherheitseinstellungen
         Registry and Persistence: Registry und Persistenz
@@ -448,6 +474,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Papierkorb
+        Windows Search Index: Windows-Search-Index
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -457,7 +485,10 @@ plugins:
       name: Türkçe
       build: true
       nav_translations:
+        Shell History: "Kabuk geçmişi"
+        PowerShell History: "PowerShell geçmişi"
         Super Timeline: "Birleşik zaman çizelgesi"
+        YARA Scan: "YARA Taraması"
         Home: Ana Sayfa
         Overview: Genel Bakış
         Screenshots: Ekran Görüntüleri
@@ -502,10 +533,12 @@ plugins:
         Lateral Movement: Yanal Hareket
         Remote Access (User Side): Uzaktan Erişim (Kullanıcı Tarafı)
         User Access Logging (UAL): Kullanıcı Erişim Günlüğü (UAL)
+        RDP Bitmap Cache: RDP Bitmap Önbelleği
         Open and Save As Dialogs: Aç ve Farklı Kaydet İletişim Kutuları
         External Devices: Harici Aygıtlar
         USB Devices: USB Aygıtları
         Security Products: Güvenlik Ürünleri
+        Defender Detection History: Defender Tespit Geçmişi
         Defender Quarantine: Defender Karantinası
         Security Settings: Güvenlik Ayarları
         Registry and Persistence: Kayıt Defteri ve Kalıcılık
@@ -537,6 +570,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Geri Dönüşüm Kutusu
+        Windows Search Index: Windows Search Dizini
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -546,7 +581,10 @@ plugins:
       name: Français
       build: true
       nav_translations:
+        Shell History: "Historique du shell"
+        PowerShell History: "Historique PowerShell"
         Super Timeline: "Chronologie globale"
+        YARA Scan: "Analyse YARA"
         Home: Accueil
         Overview: Vue d'ensemble
         Screenshots: Captures d'écran
@@ -591,10 +629,12 @@ plugins:
         Lateral Movement: Déplacement latéral
         Remote Access (User Side): Accès à distance (côté utilisateur)
         User Access Logging (UAL): Journalisation des accès utilisateur (UAL)
+        RDP Bitmap Cache: Cache bitmap RDP
         Open and Save As Dialogs: Boîtes de dialogue Ouvrir et Enregistrer sous
         External Devices: Périphériques externes
         USB Devices: Périphériques USB
         Security Products: Produits de sécurité
+        Defender Detection History: Historique des détections Defender
         Defender Quarantine: Quarantaine Defender
         Security Settings: Paramètres de sécurité
         Registry and Persistence: Registre et persistance
@@ -626,6 +666,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Corbeille
+        Windows Search Index: Index de Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -635,7 +677,10 @@ plugins:
       name: Español
       build: true
       nav_translations:
+        Shell History: "Historial del shell"
+        PowerShell History: "Historial de PowerShell"
         Super Timeline: "Súper línea de tiempo"
+        YARA Scan: "Análisis YARA"
         Home: Inicio
         Overview: Visión general
         Screenshots: Capturas de pantalla
@@ -680,10 +725,12 @@ plugins:
         Lateral Movement: Movimiento lateral
         Remote Access (User Side): Acceso remoto (lado del usuario)
         User Access Logging (UAL): Registro de acceso de usuarios (UAL)
+        RDP Bitmap Cache: Caché de mapas de bits de RDP
         Open and Save As Dialogs: Cuadros de diálogo Abrir y Guardar como
         External Devices: Dispositivos externos
         USB Devices: Dispositivos USB
         Security Products: Productos de seguridad
+        Defender Detection History: Historial de detecciones de Defender
         Defender Quarantine: Cuarentena de Defender
         Security Settings: Configuración de seguridad
         Registry and Persistence: Registro y persistencia
@@ -715,6 +762,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Papelera de reciclaje
+        Windows Search Index: Índice de Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -724,7 +773,10 @@ plugins:
       name: Português (Brasil)
       build: true
       nav_translations:
+        Shell History: "Histórico do shell"
+        PowerShell History: "Histórico do PowerShell"
         Super Timeline: "Super linha do tempo"
+        YARA Scan: "Varredura YARA"
         Home: Início
         Overview: Visão geral
         Screenshots: Capturas de tela
@@ -769,10 +821,12 @@ plugins:
         Lateral Movement: Movimentação lateral
         Remote Access (User Side): Acesso remoto (lado do usuário)
         User Access Logging (UAL): Registro de acesso do usuário (UAL)
+        RDP Bitmap Cache: Cache de bitmaps do RDP
         Open and Save As Dialogs: Caixas de diálogo Abrir e Salvar como
         External Devices: Dispositivos externos
         USB Devices: Dispositivos USB
         Security Products: Produtos de segurança
+        Defender Detection History: Histórico de detecções do Defender
         Defender Quarantine: Quarentena do Defender
         Security Settings: Configurações de segurança
         Registry and Persistence: Registro e persistência
@@ -804,6 +858,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Lixeira
+        Windows Search Index: Índice do Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -813,7 +869,10 @@ plugins:
       name: Українська
       build: true
       nav_translations:
+        Shell History: "Історія оболонки"
+        PowerShell History: "Історія PowerShell"
         Super Timeline: "Суперхронологія"
+        YARA Scan: "Сканування YARA"
         Home: Головна
         Overview: Огляд
         Screenshots: Знімки екрана
@@ -858,10 +917,12 @@ plugins:
         Lateral Movement: Латеральне переміщення
         Remote Access (User Side): Віддалений доступ (з боку користувача)
         User Access Logging (UAL): Журналювання доступу користувачів (UAL)
+        RDP Bitmap Cache: Кеш растрових зображень RDP
         Open and Save As Dialogs: Діалоги відкриття та збереження файлів
         External Devices: Зовнішні пристрої
         USB Devices: Пристрої USB
         Security Products: Засоби захисту
+        Defender Detection History: Історія виявлень Defender
         Defender Quarantine: Карантин Defender
         Security Settings: Параметри безпеки
         Registry and Persistence: Реєстр і закріплення
@@ -893,6 +954,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Кошик
+        Windows Search Index: Індекс Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -902,7 +965,10 @@ plugins:
       name: हिन्दी
       build: true
       nav_translations:
+        Shell History: "शेल इतिहास"
+        PowerShell History: "PowerShell इतिहास"
         Super Timeline: "सुपर टाइमलाइन"
+        YARA Scan: "YARA स्कैन"
         Home: होम
         Overview: अवलोकन
         Screenshots: स्क्रीनशॉट
@@ -947,10 +1013,12 @@ plugins:
         Lateral Movement: लैटरल मूवमेंट
         Remote Access (User Side): रिमोट एक्सेस (उपयोगकर्ता पक्ष)
         User Access Logging (UAL): उपयोगकर्ता एक्सेस लॉगिंग (UAL)
+        RDP Bitmap Cache: RDP बिटमैप कैश
         Open and Save As Dialogs: खोलें और इस रूप में सहेजें संवाद
         External Devices: बाहरी डिवाइस
         USB Devices: USB डिवाइस
         Security Products: सुरक्षा उत्पाद
+        Defender Detection History: Defender पहचान इतिहास
         Defender Quarantine: Defender क्वारंटीन
         Security Settings: सुरक्षा सेटिंग
         Registry and Persistence: रेजिस्ट्री और पर्सिस्टेंस
@@ -982,6 +1050,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: रीसायकल बिन
+        Windows Search Index: Windows Search इंडेक्स
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -991,7 +1061,10 @@ plugins:
       name: Bahasa Indonesia
       build: true
       nav_translations:
+        Shell History: "Riwayat shell"
+        PowerShell History: "Riwayat PowerShell"
         Super Timeline: "Linimasa gabungan"
+        YARA Scan: "Pemindaian YARA"
         Home: Beranda
         Overview: Ikhtisar
         Screenshots: Tangkapan Layar
@@ -1036,10 +1109,12 @@ plugins:
         Lateral Movement: Pergerakan lateral
         Remote Access (User Side): Akses jarak jauh (sisi pengguna)
         User Access Logging (UAL): Pencatatan Akses Pengguna (UAL)
+        RDP Bitmap Cache: Cache Bitmap RDP
         Open and Save As Dialogs: Dialog Buka dan Simpan Sebagai
         External Devices: Perangkat eksternal
         USB Devices: Perangkat USB
         Security Products: Produk keamanan
+        Defender Detection History: Riwayat Deteksi Defender
         Defender Quarantine: Karantina Defender
         Security Settings: Pengaturan keamanan
         Registry and Persistence: Registry dan persistensi
@@ -1071,6 +1146,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: Keranjang Sampah (Recycle Bin)
+        Windows Search Index: Indeks Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1080,7 +1157,10 @@ plugins:
       name: မြန်မာဘာသာ
       build: true
       nav_translations:
+        Shell History: "Shell မှတ်တမ်း"
+        PowerShell History: "PowerShell မှတ်တမ်း"
         Super Timeline: "စူပါအချိန်လိုင်း"
+        YARA Scan: "YARA စစ်ဆေးမှု"
         Home: ပင်မစာမျက်နှာ
         Overview: ခြုံငုံသုံးသပ်ချက်
         Screenshots: ဖန်သားပြင်ဓာတ်ပုံများ
@@ -1125,10 +1205,12 @@ plugins:
         Lateral Movement: ကွန်ရက်အတွင်း ဘေးတိုက်ရွေ့လျားမှု
         Remote Access (User Side): အဝေးမှ ဝင်ရောက်မှု (အသုံးပြုသူဘက်)
         User Access Logging (UAL): အသုံးပြုသူ ဝင်ရောက်မှု မှတ်တမ်း (UAL)
+        RDP Bitmap Cache: RDP ဘစ်မက် ကက်ရှ်
         Open and Save As Dialogs: ဖွင့်ရန်နှင့် အမည်သစ်ဖြင့် သိမ်းရန် dialog များ
         External Devices: ပြင်ပစက်ပစ္စည်းများ
         USB Devices: USB စက်ပစ္စည်းများ
         Security Products: လုံခြုံရေးထုတ်ကုန်များ
+        Defender Detection History: Defender ရှာဖွေတွေ့ရှိမှု မှတ်တမ်း
         Defender Quarantine: Defender သီးခြားခွဲထားသော ဒေတာ
         Security Settings: လုံခြုံရေးဆက်တင်များ
         Registry and Persistence: Registry နှင့် အမြဲတမ်းဝင်ရောက်နိုင်မှု
@@ -1160,6 +1242,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: အမှိုက်ပုံး (Recycle Bin)
+        Windows Search Index: Windows Search အညွှန်း
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1169,7 +1253,10 @@ plugins:
       name: ไทย
       build: true
       nav_translations:
+        Shell History: "ประวัติเชลล์"
+        PowerShell History: "ประวัติ PowerShell"
         Super Timeline: "ซุปเปอร์ไทม์ไลน์"
+        YARA Scan: "การสแกน YARA"
         Home: หน้าแรก
         Overview: ภาพรวม
         Screenshots: ภาพหน้าจอ
@@ -1214,10 +1301,12 @@ plugins:
         Lateral Movement: การเคลื่อนย้ายภายในเครือข่าย
         Remote Access (User Side): การเข้าถึงระยะไกล (ฝั่งผู้ใช้)
         User Access Logging (UAL): การบันทึกการเข้าถึงของผู้ใช้ (UAL)
+        RDP Bitmap Cache: แคชบิตแมปของ RDP
         Open and Save As Dialogs: กล่องโต้ตอบเปิดและบันทึกเป็น
         External Devices: อุปกรณ์ภายนอก
         USB Devices: อุปกรณ์ USB
         Security Products: ผลิตภัณฑ์ความปลอดภัย
+        Defender Detection History: ประวัติการตรวจจับของ Defender
         Defender Quarantine: ข้อมูลที่ Defender กักกัน
         Security Settings: การตั้งค่าความปลอดภัย
         Registry and Persistence: รีจิสทรีและการคงอยู่
@@ -1249,6 +1338,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: ถังรีไซเคิล
+        Windows Search Index: ดัชนี Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1258,7 +1349,10 @@ plugins:
       name: العربية
       build: true
       nav_translations:
+        Shell History: "سجل الصدفة"
+        PowerShell History: "سجل PowerShell"
         Super Timeline: "الجدول الزمني الشامل"
+        YARA Scan: "فحص YARA"
         Home: الرئيسية
         Overview: نظرة عامة
         Screenshots: لقطات الشاشة
@@ -1303,10 +1397,12 @@ plugins:
         Lateral Movement: الحركة الجانبية
         Remote Access (User Side): الوصول عن بُعد (جهة المستخدم)
         User Access Logging (UAL): تسجيل وصول المستخدمين (UAL)
+        RDP Bitmap Cache: ذاكرة التخزين المؤقت لصور RDP النقطية
         Open and Save As Dialogs: مربعات حوار الفتح والحفظ باسم
         External Devices: الأجهزة الخارجية
         USB Devices: أجهزة USB
         Security Products: منتجات الأمان
+        Defender Detection History: سجل اكتشافات Defender
         Defender Quarantine: حجر Defender
         Security Settings: إعدادات الأمان
         Registry and Persistence: سجل Windows والاستمرارية
@@ -1338,6 +1434,8 @@ plugins:
         MuiCache: MuiCache
         Amcache: Amcache
         ShimCache: ShimCache
+        Recycle Bin: سلة المحذوفات
+        Windows Search Index: فهرس Windows Search
         RecentDocs: RecentDocs
         ShellBags: ShellBags
         Microsoft Office: Microsoft Office
@@ -1376,6 +1474,7 @@ nav:
       - SQLite: commands/sqlite.md
       - Persistence Hunter: commands/persistence-hunter.md
       - Super Timeline: commands/super-timeline.md
+      - YARA Scan: commands/yara-scan.md
       - Common Output Patterns: commands/output.md
   - Artifacts:
       - Artifact Guide: artifacts/index.md
@@ -1396,6 +1495,8 @@ nav:
           - Boot Sector ($Boot): artifacts/boot.md
           - Amcache: artifacts/amcache.md
           - ShimCache: artifacts/shimcache.md
+          - Recycle Bin: artifacts/recycle-bin.md
+          - Windows Search Index: artifacts/windows-search.md
       - File and Folder Opening:
           - LNK Shortcuts: artifacts/lnk.md
           - Microsoft Office: artifacts/office.md
@@ -1405,6 +1506,8 @@ nav:
       - Browser Activity:
           - Web Browsers: artifacts/browser.md
           - Internet Explorer and Legacy Edge: artifacts/webcache.md
+      - Shell History:
+          - PowerShell History: artifacts/powershell-history.md
       - Communication:
           - Outlook: artifacts/outlook.md
       - Network Activity:
@@ -1412,11 +1515,13 @@ nav:
       - Lateral Movement:
           - Remote Access (User Side): artifacts/remote-access.md
           - User Access Logging (UAL): artifacts/ual.md
+          - RDP Bitmap Cache: artifacts/rdp-cache.md
           - Open and Save As Dialogs: artifacts/opensavemru.md
           - ShellBags: artifacts/shellbags.md
       - External Devices:
           - USB Devices: artifacts/usb.md
       - Security Products:
+          - Defender Detection History: artifacts/defender-history.md
           - Defender Quarantine: artifacts/defender-quarantine.md
           - Security Settings: artifacts/security-settings.md
       - Registry and Persistence:

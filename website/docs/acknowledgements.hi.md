@@ -35,6 +35,9 @@ Juntei इसलिए अस्तित्व में है क्यों
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) ने इस Python project को प्रेरित किया;
   पूरी वंश-परंपरा के लिए [पर्सिस्टेंस आभार](persistence-hunter/acknowledgements.md) देखें।
 
+- Vincent Thiberville का [**Boreal**](https://github.com/vthib/boreal) YARA-संगत Rust इंजन है, जो `yara-scan` कमांड में कंपाइल किया गया है (MIT या Apache-2.0; इसकी सूचना `THIRD_PARTY_NOTICES/crates.txt` में है)।
+- YARAHQ के अंतर्गत Florian Roth द्वारा अनुरक्षित [**YARA Forge**](https://github.com/YARAHQ/yara-forge) उन Core, Extended और Full नियम पैकेजों को संकलित करता है जिन्हें `yara-scan` अनुरोध पर डाउनलोड करता है। नियम अपने-अपने लेखकों की कृति बने रहते हैं और उनके अपने लाइसेंस के अधीन हैं; Juntei डाउनलोड किए गए स्रोत को हर परिणाम सेट के साथ सहेजता है।
+
 - Maxim Suhanov के **regf specification** और **yarp** ने registry संरचनाओं, transaction-log
   replay और हटाए गए record की recovery को दिशा दी; उनका **dfir_ntfs** INDX records और
   index-slack carving के लिए संदर्भ था।
@@ -45,6 +48,9 @@ Juntei इसलिए अस्तित्व में है क्यों
   **libesedb** विस्तृत फ़ॉर्मैट शोध और स्वतंत्र parsing संदर्भ प्रदान करते हैं।
 - Fox-IT के **dissect.esedb**, **dissect.ntfs** और **dissect.target** ने सत्यापन के दौरान उपयोग की गई
   SRUM, UAL, `$Secure:$SDS`, SAM और Defender की स्वतंत्र व्याख्याएँ प्रदान कीं।
+- Stroz Friedberg का **SIDR** और libyal का `esedbexport` Windows Search index की स्वतंत्र readings थे, साथ में
+  उसकी tables पर libyal के **esedb-kb** notes और record format के लिए Microsoft का प्रकाशित
+  **Extensible Storage Engine** source।
 - **The Sleuth Kit** का `fsstat` उन volumes के NTFS boot sectors के लिए संदर्भ था जो
   `mkntfs` से बनाए गए थे।
 - Eric Zimmerman के कुछ tools ने तुलना में उपयोग किए गए field नाम और परीक्षक की अपेक्षाएँ स्थापित कीं।
@@ -56,15 +62,23 @@ Juntei इसलिए अस्तित्व में है क्यों
   उच्च-मूल्य वाले Prefetch/Amcache/ShimCache observations को दिशा दी।
 - **defender-dump** और dissect.target, Defender quarantine संरचनाओं और सुरक्षित extraction व्यवहार को
   समझने के लिए अलग implementations प्रदान करते हैं।
+- Orange Cyberdefense के **wddh-parser** ने Defender detection history format को स्पष्ट किया, और उसके
+  samples के साथ वे values भी मिलती हैं जो WMI ने उनके लिए report कीं। Plaso का `windefender_history` parser और
+  Velociraptor का `Windows.Applications.DefenderHistory` artifact स्वतंत्र संदर्भ रहे।
 - **Plaso**, **Chainsaw** और **Velociraptor** ने कई आर्टिफ़ैक्ट में parser तुलना, परीक्षण साक्ष्य या
   संग्रह-केंद्रित संदर्भ व्यवहार प्रदान किया।
 - Obsidian Forensics का **Hindsight** और Velocidex की **SQLiteHunter** definitions browser history,
   downloads, cookies और form history के लिए संदर्भ रहीं।
+- Abel Cheung का **rifiuti2**, libyal के **dtformats** में दोनों formats के documentation के साथ,
+  रीसायकल बिन की `$I` files और INFO2 के लिए संदर्भ रहा।
+- ANSSI का **bmc-tools** और इस format पर उसका CERT-FR bulletin, BSI का **RdpCacheStitcher**,
+  **Velociraptor** का RDPCache artifact और **dissect.target** का RDP cache plugin, **FreeRDP** के
+  persistent bitmap cache और interleaved RLE decoder के साथ, RDP bitmap caches के लिए संदर्भ रहे।
 
 ## Specification और शोध { #specifications-and-research }
 
-हम Shell Links, Compound Binary Files, NTFS/SAM protocols, registry/service/task संरचनाओं और API
-documentation के लिए Open Specifications प्रकाशित करने हेतु Microsoft का धन्यवाद करते हैं। हम
+हम Shell Links, Compound Binary Files, NTFS/SAM protocols, registry/service/task संरचनाओं, Remote Desktop
+Protocol और API documentation के लिए Open Specifications प्रकाशित करने हेतु Microsoft का धन्यवाद करते हैं। हम
 AppCompatCache, Amcache, SRUM, Prefetch, registry और NTFS forensic शोध के उन लेखकों का भी धन्यवाद करते हैं
 जिन्होंने इन आर्टिफ़ैक्ट को practitioners के लिए समझने योग्य बनाया।
 
@@ -72,7 +86,7 @@ AppCompatCache, Amcache, SRUM, Prefetch, registry और NTFS forensic शोध
 
 Andrew Rathbun के
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum), NIST CFReDS, Plaso,
-Regipy, Artemis, parser test repositories और अन्य उचित रूप से licensed संग्रहों के सार्वजनिक साक्ष्य
+rifiuti2, Regipy, Artemis, Orange Cyberdefense के wddh-parser, parser test repositories और अन्य उचित रूप से licensed संग्रहों के सार्वजनिक साक्ष्य
 वास्तविक Windows डेटा के विरुद्ध regression testing को संभव बनाते हैं। Juntei शामिल की गई test files के
 साथ attribution/license notes रखता है।
 

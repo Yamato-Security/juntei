@@ -18,10 +18,13 @@ Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 �
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | 사용자 액세스 로깅(Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer와 레거시 Edge(WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Windows Search 색인 | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb`(Windows 7부터 11 21H2까지, 22H2부터는 `Windows.db`와 `Windows-gather.db`) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst`(Outlook 2010 이전에는 `%LOCALAPPDATA%\Microsoft\Outlook\*.pst`), `%APPDATA%\Microsoft\Templates\*.oft`, 그리고 저장된 위치에 있는 `.msg` 파일 |
 | 웹 브라우저 | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` 및 기타 브라우저의 프로필 폴더 |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` 및 기타 사용자/시스템 위치 |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` 및 `CustomDestinations` |
+| RDP 비트맵 캐시 | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\`(Windows XP 이하에서는 `%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\`) |
+| 휴지통 | 모든 볼륨의 `$Recycle.Bin\<SID>\$I*` 및 `$R*`(Windows XP 이하에서는 `RECYCLER\<SID>\INFO2` 및 `D*`) |
 | ShimCache | `SYSTEM` 하이브: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Defender 격리 | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | 머신 레지스트리 | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |
@@ -45,6 +48,9 @@ Juntei는 Windows에서 이미 수집한 파일을 파싱합니다. 신뢰할 �
   버전은 브라우저가 체크포인트를 수행할 때까지만 그곳에 있습니다.
 - `WebCache` 폴더 전체를 수집하십시오. Windows는 사용자가 로그온해 있는 동안 `WebCacheV01.dat`를 열어 두며,
   최신 변경 사항은 Juntei가 재생하지 않는 `V01*.log` 트랜잭션 로그에만 있습니다.
+- Windows Search의 `Applications\Windows` 폴더 전체를 이미지나 볼륨 섀도 복사본에서 수집하거나, `WSearch` 서비스를
+  중지한 뒤 수집하십시오. 서비스가 실행되는 동안 `Windows.edb`는 열려 있으며, 최신 변경 사항은 Juntei가 재생하지 않는
+  `MSS*.log` 트랜잭션 로그에만 있습니다.
 - Outlook의 OST 및 PST 파일은 Outlook을 종료한 상태에서 수집하거나, 디스크 이미지 또는 볼륨 섀도 복사본에서
   수집하십시오. Outlook은 실행 중에 이 파일들을 열어 둡니다. 기본 폴더 밖에 있는 PST도 찾아보십시오. 사용자는
   보관 파일을 다른 폴더, 드라이브, 파일 공유로 옮깁니다.

@@ -1,5 +1,7 @@
 # ShimCache (AppCompatCache) { #shimcache-appcompatcache }
 
+Juntei 保留鑑識成品記錄、中繼資料及剖析診斷資訊。各剖析器的偵測規則由 Juntei Pro 評估。Persistence Hunter 的現有檢查與原則設定檔仍可使用。
+
 ## 什麼是 ShimCache { #what-shimcache-is }
 
 Windows 的應用程式相容性子系統在評估相容性／shim 行為時，會快取執行檔路徑與中繼資料。
@@ -57,7 +59,7 @@ Output:
 ```bash
 juntei parse-registry shimcache -f SYSTEM -o shimcache.csv
 juntei parse-registry shimcache -d evidence/ -t jsonl \
-  | jq 'select(.Executed == true or (.Findings | length > 0))'
+  | jq 'select(.Executed == true)'
 ```
 
 ## 輸出欄位 { #output-fields }
@@ -79,7 +81,6 @@ juntei parse-registry shimcache -d evidence/ -t jsonl \
 | `Machine` | 較新格式所記錄的架構（`x64`、`x86`、`ARM64`）。 |
 | `FileSize`、`LastUpdateTimeUTC` | Windows XP 特有的快取中繼資料（若存在）。 |
 | `PackageName`、`PackageVersion`、`PackagePublisherID` | 受支援項目中的封裝應用程式身分。發行者 ID 是脈絡資訊，而非簽章證明。 |
-| `Findings` | Juntei 的異常代碼，例如被搬移的系統二進位檔或可疑的暫存路徑。僅作為線索。 |
 | `RegistryPath`、`RegistryValueName` | 確切的登錄區機碼／值來源。請保留以供驗證。 |
 | `CacheValueSize` | 整個登錄值的大小，而非個別項目的 `DataSize`。 |
 | `IsCurrent` | 此項目的控制集是否等於 `SYSTEM\Select\Current`；若無法確實得知則為空。 |

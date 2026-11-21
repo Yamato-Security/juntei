@@ -31,16 +31,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [사용자 액세스 로깅 (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer와 레거시 Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search 색인](../artifacts/windows-search.md) |
 
 ## [파일 명령어](execution.md) { #file-commands }
 
 | 명령어 | 입력 아티팩트 | 상세 가이드 |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender 탐지 기록](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender 격리 트리 또는 항목 | [Defender 격리 데이터](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK 바로 가기](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell 기록](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP 비트맵 캐시](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [휴지통](../artifacts/recycle-bin.md) |
 
 ## [NTFS 명령어](filesystem.md) { #ntfs-commands }
 
@@ -106,6 +111,10 @@ SQLite Amcache 인벤토리 데이터베이스를 지원한다는 의미는 아�
 `parse-registry persistence`의 전체 구성 인벤토리를 보완하여 131개의 검사, 허용/차단 분류, 페이로드
 메타데이터, 적용 범위 및 타임스탬프 상관 분석을 제공합니다.
 
+## [YARA 검사](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>`는 복원된 격리 페이로드와 `$MFT`의 상주 데이터를 포함한 수집 파일을 YARA 규칙으로 검사합니다. 기본적으로 YARA Forge Core 패키지를 내려받습니다. `--ruleset extended` 또는 `--ruleset full`로 더 넓은 패키지를 선택하고, `--rules <FILE_OR_DIRECTORY>`로 로컬 규칙을 사용해 오프라인으로 검사할 수 있습니다. 이 검사는 선택 사항이며 `auto-parse`와 별도로 실행됩니다.
+
 ## 최상위 사용법 { #top-level-usage }
 
 ```text
@@ -121,6 +130,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

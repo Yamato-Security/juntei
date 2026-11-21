@@ -8,9 +8,12 @@ doch die Ermittlerin oder der Ermittler muss weiterhin interpretieren, was jede 
 
 | Fragestellung der Untersuchung | Hier beginnen | Untermauern mit |
 |---|---|---|
+| Welche PowerShell-Befehlszeilen wurden gespeichert? | [PowerShell-Verlauf](powershell-history.md) | PowerShell-Ereignisprotokolle, Prozesstelemetrie, Prefetch |
 | Wurde diese ausführbare Datei ausgeführt? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), Ereignisprotokolle |
-| War diese Datei jemals vorhanden? | [Amcache](amcache.md), [$MFT](mft.md) | [USN-Journal](usn-journal.md), [$I30](i30.md), ShimCache |
+| War diese Datei jemals vorhanden? | [Amcache](amcache.md), [$MFT](mft.md) | [USN-Journal](usn-journal.md), [$I30](i30.md), [Windows-Search-Index](windows-search.md), ShimCache |
+| Welche Dateien, E-Mails und Seiten befanden sich auf diesem Computer, und was stand in einem Dokument? | [Windows-Search-Index](windows-search.md) | [$MFT](mft.md), [USN-Journal](usn-journal.md), [Outlook](outlook.md), [Webbrowser](browser.md) |
 | Wann wurde eine Datei erstellt, umbenannt oder gelöscht? | [USN-Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender-Quarantäne |
+| Was hat ein Benutzer in den Papierkorb verschoben, und wann? | [Papierkorb](recycle-bin.md) | [USN-Journal](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Welcher Name oder Zeitstempel existierte vor einer Metadatenänderung? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN-Journal](usn-journal.md), [$I30](i30.md) |
 | Wem gehört eine Datei, und wer darf sie ändern? | [$Secure:$SDS](secure-sds.md) mit [$MFT](mft.md) | [SAM](sam.md), Security-Ereignisprotokolle |
 | Auf welchem Volume befand sich das Ziel einer Verknüpfung oder Prefetch-Datei? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB-Geräte](usb.md) |
@@ -19,7 +22,9 @@ doch die Ermittlerin oder der Ermittler muss weiterhin interpretieren, was jede 
 | Welche Websites hat ein Benutzer besucht, und was hat er heruntergeladen? | [Webbrowser](browser.md), [Internet Explorer und Edge Legacy](webcache.md) | Proxy- und DNS-Protokolle, `$MFT` und USN-Journal, Defender, SRUM |
 | Mit wem hat ein Benutzer E-Mails ausgetauscht, und was war angehängt? | [Outlook](outlook.md) | Protokolle von Mailservern und Gateways, `$MFT` und USN-Journal, Defender, LNK und Jump Lists |
 | Welche Clients und Konten haben diesen Server genutzt, und an welchen Tagen? | [Benutzerzugriffsprotokollierung (UAL)](ual.md) | Security-Ereignisprotokolle, SMB- und RDP-Protokolle, Firewall-Protokolle |
+| Was hat ein Benutzer auf den Computern gesehen, die er per Remotedesktop erreicht hat? | [RDP-Bitmap-Cache](rdp-cache.md) | [Fernzugriff (Benutzerseite)](remote-access.md), [Jump Lists](jump-lists.md), die Anmeldeereignisse der entfernten Computer und [UAL](ual.md) |
 | Wurde Persistenz eingerichtet? | [Dienste](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Ereignisprotokolle, Prefetch, `$MFT` |
+| Was hat Defender erkannt, und was hat es dagegen unternommen? | [Defender-Erkennungsverlauf](defender-history.md) | [Defender-Quarantäne](defender-quarantine.md), Ereignisprotokolle |
 | Was hat Defender entfernt? | [Defender-Quarantäne](defender-quarantine.md) | Ereignisprotokolle, `$MFT`, USN-Journal |
 | Wurden lokale Konten hinzugefügt oder geändert? | [SAM](sam.md) | Security-Ereignisprotokolle und Transaktionsverlauf der Registry |
 
@@ -35,7 +40,5 @@ Jede Artefaktseite folgt demselben Ablauf:
 6. **Wie es** mit unabhängigen Beweisen korreliert wird.
 7. **Weitere Informationen** für tiefergehende Recherche.
 
-!!! danger "Setzen Sie einen Parserbefund nicht mit Bösartigkeit gleich"
-    Befunde von Juntei kennzeichnen Muster, die eine Prüfung wert sind, etwa den Namen einer Systembinärdatei außerhalb von
-    `System32`. Installationsprogramme, Administratoren, Kompatibilitätsebenen und Softwareupdates können
-    ungewöhnliche Datensätze erzeugen. Validieren Sie anhand des Kontexts und unabhängiger Beweise.
+!!! danger "Ungewöhnliche Datensätze sind kein Beweis für Bösartigkeit"
+    Juntei parst Beweise, die ein Analyst interpretieren muss. Die Prüfungen von Persistence Hunter bleiben verfügbar, aber ein konfigurierter Autostarteintrag kann auch legitimer Administration dienen. Korrelieren Sie Beobachtungen mit Kontext und unabhängigen Beweisen, bevor Sie sie als bösartig bewerten.

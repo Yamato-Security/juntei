@@ -20,6 +20,7 @@
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -66,7 +67,7 @@ juntei parse-file prefetch -d evidence/ -t jsonl \
 3. Amcache وShimCache للوجود التاريخي والبيانات الوصفية.
 4. LNK وJump Lists وRecentDocs وSRUM لسياق المستخدم/التطبيق.
 5. خدمات سجل Windows وTaskCache للاستمرارية.
-6. حجر Defender للاكتشاف، والإزالة، والمصدر، والتجزئات.
+6. سجل اكتشافات Defender وحجره للاكتشاف، والإزالة، والمصدر، والتجزئات.
 
 ## 7. وثّق قابلية إعادة الإنتاج { #7-document-reproducibility }
 

@@ -1,5 +1,7 @@
 # Amcache { #amcache }
 
+Juntei はアーティファクトのレコード、メタデータ、解析時の診断情報を保持します。パーサー固有の検知ルールは Juntei Pro で評価します。Persistence Hunter の既存チェックとポリシープロファイルは引き続き利用できます。
+
 ## Amcacheとは { #what-amcache-is }
 
 Amcache は、レジストリ ハイブに保存されている Windows アプリケーション互換性インベントリです。最新のシステムでは、実行可能ファイルは `InventoryApplicationFile` に記録され、プラグ アンド プレイ デバイスは `InventoryDevicePnp` に記録されます。古い Windows バージョンは従来の `Root\File` レイアウトを使用します。
@@ -45,7 +47,7 @@ Output:
 ```
 
 ```bash
-# Inspect the summary and findings
+# Inspect the inventory summary
 juntei parse-registry amcache -f Amcache.hve
 
 # Save all record types as CSV tables
@@ -56,7 +58,11 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
   | jq 'select(.RecordType == "file" and .SHA1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
-CSV 出力には、概要、結果、ファイル、およびデバイス テーブルが含まれます。 `auto-parse` の場合、これらは各コンピュータの `FileExistence/` ディレクトリの直下にある `Registry-Amcache-Summary.csv`、`Registry-Amcache-Findings.csv`、`Registry-Amcache-Files.csv`、および `Registry-Amcache-Devices.csv` であり、`Registry-Amcache-logs.txt` はテーブルの横にあります。複数のハイブでは、拡張子の前に `-Source1`、`-Source2` などが追加されます。マニフェストの `OutputFiles` には正確なパスがリストされています。スタンドアロン CSV エクスポートでは、ネイティブ テーブル名と要求された出力場所が保持されます。 JSONL レコードは、`RecordType` 値 `summary`、`finding`、`file`、および `device` を使用します。
+`auto-parse`: `FileExistence/Registry-Amcache-Summary.csv`, `FileExistence/Registry-Amcache-Files.csv`, `FileExistence/Registry-Amcache-Devices.csv`; `Registry-Amcache-logs.txt`.
+
+JSONL `RecordType`: `summary`, `file`, `device`.
+
+`-Source1`, `-Source2`, …; `manifest.json` → `OutputFiles`.
 
 ## ファイル出力フィールド { #file-output-fields }
 

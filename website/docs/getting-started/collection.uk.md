@@ -18,10 +18,13 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | Журналювання доступу користувачів (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer і застарілий Edge (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| Індекс Windows Search | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb` (від Windows 7 до 11 21H2; `Windows.db` і `Windows-gather.db` починаючи з 22H2) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` до Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft`, а також файли `.msg`, де б їх не було збережено |
 | Веб-браузери | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` та папки профілів інших браузерів |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` та інші розташування користувача/системи |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` і `CustomDestinations` |
+| Кеш растрових зображень RDP | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (`%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\` у Windows XP і старіших) |
+| Кошик | `$Recycle.Bin\<SID>\$I*` і `$R*` на кожному томі (`RECYCLER\<SID>\INFO2` і `D*` у Windows XP і старіших) |
 | ShimCache | Кущ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | Карантин Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | Реєстр машини | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |
@@ -46,6 +49,9 @@ Juntei аналізує файли, уже зібрані з Windows. Викор
   записи, зберігаються там лише до контрольної точки браузера.
 - Збирайте всю папку `WebCache`: Windows тримає `WebCacheV01.dat` відкритим, поки користувач у системі,
   а його найновіші зміни є лише в журналах транзакцій `V01*.log`, які Juntei не відтворює.
+- Збирайте всю папку `Applications\Windows` Windows Search з образу, тіньової копії тому або після зупинки
+  служби `WSearch`: `Windows.edb` відкритий, поки служба працює, а його найновіші зміни є лише в журналах
+  транзакцій `MSS*.log`, які Juntei не відтворює.
 - Збирайте файли OST і PST Outlook із закритим Outlook або з образу диска чи тіньової копії тому:
   Outlook тримає їх відкритими, поки працює. Шукайте PST і поза типовими папками: користувачі
   переносять архіви в інші папки, на інші диски та у спільні файлові ресурси.

@@ -1,5 +1,7 @@
 # Amcache { #amcache }
 
+Juntei သည် artifact မှတ်တမ်းများ၊ metadata နှင့် parsing စစ်ဆေးချက်များကို ထိန်းသိမ်းထားသည်။ Parser ဆိုင်ရာ detection rules များကို Juntei Pro တွင် စစ်ဆေးသည်။ Persistence Hunter ၏ လက်ရှိ checks နှင့် policy profiles များကို ဆက်လက်အသုံးပြုနိုင်သည်။
+
 ## Amcache ဆိုသည်မှာ { #what-amcache-is }
 
 Amcache သည် registry hive တစ်ခုတွင် သိမ်းဆည်းထားသော Windows application-compatibility စာရင်း (inventory) ဖြစ်သည်။
@@ -53,7 +55,7 @@ Output:
 ```
 
 ```bash
-# Inspect the summary and findings
+# Inspect the inventory summary
 juntei parse-registry amcache -f Amcache.hve
 
 # Save all record types as CSV tables
@@ -64,14 +66,11 @@ juntei parse-registry amcache -f Amcache.hve -t jsonl \
   | jq 'select(.RecordType == "file" and .SHA1 == "0123456789abcdef0123456789abcdef01234567")'
 ```
 
-CSV ထုတ်ယူမှုတွင် summary၊ findings၊ files နှင့် devices ဇယားများ ပါဝင်သည်။ `auto-parse` ဖြင့်ဆိုလျှင် ၎င်းတို့မှာ
-ကွန်ပျူတာတစ်လုံးချင်းစီ၏ `FileExistence/` directory အောက်တွင် တိုက်ရိုက်ရှိသော
-`Registry-Amcache-Summary.csv`၊ `Registry-Amcache-Findings.csv`၊ `Registry-Amcache-Files.csv` နှင့်
-`Registry-Amcache-Devices.csv` ဖြစ်ပြီး ဇယားများဘေးတွင် `Registry-Amcache-logs.txt` ရှိသည်။ Hive အများအပြား
-ရှိပါက extension မတိုင်မီ `-Source1`၊ `-Source2` စသည်ဖြင့် ထည့်သည်။ Manifest များရှိ `OutputFiles` တွင်
-တိကျသော path များကို ဖော်ပြထားသည်။ သီးခြား CSV export များသည် ၎င်းတို့၏ မူလဇယားအမည်များနှင့် တောင်းဆိုထားသော
-ထုတ်ယူမှုတည်နေရာကို ထိန်းသိမ်းထားသည်။ JSONL record များသည် `RecordType` value များဖြစ်သော `summary`၊
-`finding`၊ `file` နှင့် `device` ကို အသုံးပြုသည်။
+`auto-parse`: `FileExistence/Registry-Amcache-Summary.csv`, `FileExistence/Registry-Amcache-Files.csv`, `FileExistence/Registry-Amcache-Devices.csv`; `Registry-Amcache-logs.txt`.
+
+JSONL `RecordType`: `summary`, `file`, `device`.
+
+`-Source1`, `-Source2`, …; `manifest.json` → `OutputFiles`.
 
 ## ဖိုင် ထုတ်ယူမှု field များ { #file-output-fields }
 

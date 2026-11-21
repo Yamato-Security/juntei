@@ -8,9 +8,12 @@ pero el investigador sigue teniendo que interpretar lo que significa cada una.
 
 | Pregunta de la investigación | Empiece aquí | Corrobore con |
 |---|---|---|
+| ¿Qué líneas de comandos de PowerShell se guardaron? | [Historial de PowerShell](powershell-history.md) | Registros de eventos de PowerShell, telemetría de procesos, Prefetch |
 | ¿Se ejecutó este ejecutable? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), registros de eventos |
-| ¿Estuvo presente alguna vez este archivo? | [Amcache](amcache.md), [$MFT](mft.md) | [Diario USN](usn-journal.md), [$I30](i30.md), ShimCache |
+| ¿Estuvo presente alguna vez este archivo? | [Amcache](amcache.md), [$MFT](mft.md) | [Diario USN](usn-journal.md), [$I30](i30.md), [Índice de Windows Search](windows-search.md), ShimCache |
+| ¿Qué archivos, correos electrónicos y páginas había en este equipo, y qué decía un documento? | [Índice de Windows Search](windows-search.md) | [$MFT](mft.md), [Diario USN](usn-journal.md), [Outlook](outlook.md), [Navegadores web](browser.md) |
 | ¿Cuándo se creó, renombró o eliminó un archivo? | [Diario USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), cuarentena de Defender |
+| ¿Qué envió un usuario a la Papelera de reciclaje y cuándo? | [Papelera de reciclaje](recycle-bin.md) | [Diario USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | ¿Qué nombre o marca de tiempo existía antes de un cambio de metadatos? | [$LogFile](logfile.md) | [$MFT](mft.md), [Diario USN](usn-journal.md), [$I30](i30.md) |
 | ¿Quién es el propietario de un archivo y quién puede modificarlo? | [$Secure:$SDS](secure-sds.md) con [$MFT](mft.md) | [SAM](sam.md), registros de eventos Security |
 | ¿En qué volumen estaba el destino de un acceso directo o de un archivo Prefetch? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [dispositivos USB](usb.md) |
@@ -19,7 +22,9 @@ pero el investigador sigue teniendo que interpretar lo que significa cada una.
 | ¿Qué sitios web visitó un usuario y qué descargó? | [Navegadores web](browser.md), [Internet Explorer y Edge heredado](webcache.md) | Registros de proxy y DNS, `$MFT` y Diario USN, Defender, SRUM |
 | ¿Con quién intercambió correos electrónicos un usuario y qué se adjuntó? | [Outlook](outlook.md) | Registros de servidores y pasarelas de correo, `$MFT` y Diario USN, Defender, LNK y Jump Lists |
 | ¿Qué clientes y cuentas usaron este servidor, y en qué días? | [Registro de acceso de usuarios (UAL)](ual.md) | Registros de eventos Security, registros de SMB y RDP, registros del cortafuegos |
+| ¿Qué vio un usuario en los equipos a los que accedió con Escritorio remoto? | [Caché de mapas de bits de RDP](rdp-cache.md) | [Acceso remoto (lado del usuario)](remote-access.md), [Jump Lists](jump-lists.md), los eventos de inicio de sesión de los equipos remotos y [UAL](ual.md) |
 | ¿Se configuró persistencia? | [Servicios](services.md), [TaskCache](taskcache.md), [Registro](registry.md) | Registros de eventos, Prefetch, `$MFT` |
+| ¿Qué detectó Defender y qué hizo al respecto? | [Historial de detecciones de Defender](defender-history.md) | [Cuarentena de Defender](defender-quarantine.md), registros de eventos |
 | ¿Qué eliminó Defender? | [Cuarentena de Defender](defender-quarantine.md) | Registros de eventos, `$MFT`, Diario USN |
 | ¿Se añadieron o modificaron cuentas locales? | [SAM](sam.md) | Registros de eventos Security e historial de transacciones del Registro |
 
@@ -35,7 +40,5 @@ Todas las páginas de artefactos siguen la misma secuencia:
 6. **Cómo correlacionarlo** con evidencias independientes.
 7. **Más información** para la investigación a bajo nivel.
 
-!!! danger "No equipare un hallazgo del analizador con malicia"
-    Los hallazgos de Juntei identifican patrones que merece la pena revisar, como un nombre de binario del sistema fuera de
-    `System32`. Los instaladores, los administradores, las capas de compatibilidad y las actualizaciones de software pueden generar
-    registros inusuales. Valídelos con contexto y evidencias independientes.
+!!! danger "No considere los registros inusuales como prueba de actividad maliciosa"
+    Juntei analiza evidencias que el analista debe interpretar. Las comprobaciones de Persistence Hunter siguen disponibles, pero una entrada de inicio configurada también puede corresponder a una administración legítima. Correlacione las observaciones con el contexto y evidencias independientes antes de considerarlas maliciosas.

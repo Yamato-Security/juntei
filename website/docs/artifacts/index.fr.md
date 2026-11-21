@@ -8,9 +8,12 @@ mais l'enquêteur doit toujours interpréter ce que signifie chacune d'elles.
 
 | Question d'investigation | Commencer par | Corroborer avec |
 |---|---|---|
+| Quelles lignes de commande PowerShell ont été sauvegardées ? | [Historique PowerShell](powershell-history.md) | Journaux d’événements PowerShell, télémétrie des processus, Prefetch |
 | Cet exécutable a-t-il été exécuté ? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), journaux d'événements |
-| Ce fichier a-t-il jamais été présent ? | [Amcache](amcache.md), [$MFT](mft.md) | [Journal USN](usn-journal.md), [$I30](i30.md), ShimCache |
+| Ce fichier a-t-il jamais été présent ? | [Amcache](amcache.md), [$MFT](mft.md) | [Journal USN](usn-journal.md), [$I30](i30.md), [Index de Windows Search](windows-search.md), ShimCache |
+| Quels fichiers, e-mails et pages se trouvaient sur cet ordinateur, et que disait un document ? | [Index de Windows Search](windows-search.md) | [$MFT](mft.md), [Journal USN](usn-journal.md), [Outlook](outlook.md), [Navigateurs web](browser.md) |
 | Quand un fichier a-t-il été créé, renommé ou supprimé ? | [Journal USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), quarantaine Defender |
+| Qu'est-ce qu'un utilisateur a mis à la Corbeille, et quand ? | [Corbeille](recycle-bin.md) | [Journal USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Quel nom ou quel horodatage existait avant une modification des métadonnées ? | [$LogFile](logfile.md) | [$MFT](mft.md), [Journal USN](usn-journal.md), [$I30](i30.md) |
 | Qui est propriétaire d'un fichier, et qui peut le modifier ? | [$Secure:$SDS](secure-sds.md) avec [$MFT](mft.md) | [SAM](sam.md), journaux d'événements Security |
 | Sur quel volume se trouvait la cible d'un raccourci ou d'un fichier Prefetch ? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [Périphériques USB](usb.md) |
@@ -19,7 +22,9 @@ mais l'enquêteur doit toujours interpréter ce que signifie chacune d'elles.
 | Quels sites web un utilisateur a-t-il visités, et qu'a-t-il téléchargé ? | [Navigateurs web](browser.md), [Internet Explorer et l'ancien Edge](webcache.md) | Journaux du proxy et DNS, `$MFT` et journal USN, Defender, SRUM |
 | Avec qui un utilisateur a-t-il échangé des e-mails, et qu'est-ce qui y était joint ? | [Outlook](outlook.md) | Journaux des serveurs et passerelles de messagerie, `$MFT` et journal USN, Defender, LNK et Jump Lists |
 | Quels clients et quels comptes ont utilisé ce serveur, et quels jours ? | [Journalisation des accès utilisateur (UAL)](ual.md) | Journaux d'événements Security, journaux SMB et RDP, journaux du pare-feu |
+| Qu'a vu un utilisateur sur les ordinateurs auxquels il a accédé par le Bureau à distance ? | [Cache bitmap RDP](rdp-cache.md) | [Accès à distance (côté utilisateur)](remote-access.md), [Jump Lists](jump-lists.md), les événements d'ouverture de session des ordinateurs distants et [UAL](ual.md) |
 | Une persistance a-t-elle été configurée ? | [Services](services.md), [TaskCache](taskcache.md), [Registre](registry.md) | Journaux d'événements, Prefetch, `$MFT` |
+| Qu'a détecté Defender, et qu'en a-t-il fait ? | [Historique des détections Defender](defender-history.md) | [Quarantaine Defender](defender-quarantine.md), journaux d'événements |
 | Qu'a supprimé Defender ? | [Quarantaine Defender](defender-quarantine.md) | Journaux d'événements, `$MFT`, journal USN |
 | Des comptes locaux ont-ils été ajoutés ou modifiés ? | [SAM](sam.md) | Journaux d'événements Security et historique des transactions du Registre |
 
@@ -35,7 +40,5 @@ Chaque page d'artefact suit la même séquence :
 6. **Comment le corréler** avec des preuves indépendantes.
 7. **Plus de détails** pour la recherche de bas niveau.
 
-!!! danger "N'assimilez pas une constatation du parseur à de la malveillance"
-    Les constatations de Juntei identifient des motifs qui méritent un examen, comme un nom de binaire système en dehors de
-    `System32`. Les programmes d'installation, les administrateurs, les couches de compatibilité et les mises à jour logicielles peuvent produire
-    des enregistrements inhabituels. Validez à l'aide du contexte et de preuves indépendantes.
+!!! danger "Ne considérez pas les enregistrements inhabituels comme une preuve de malveillance"
+    Juntei analyse les preuves que doit interpréter un analyste. Les contrôles de Persistence Hunter restent disponibles, mais une entrée de démarrage configurée peut aussi relever d’une administration légitime. Corrélez les observations avec le contexte et des preuves indépendantes avant de conclure à la malveillance.

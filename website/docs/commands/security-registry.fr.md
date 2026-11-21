@@ -411,7 +411,6 @@ Input:
 
 Filtering:
       --all-control-sets  Every control set of a SYSTEM hive (ControlSet001, ControlSet002, ...), not only the one Windows used last
-      --weakened-only     Only settings whose value weakens what Windows does by default
 
 Output:
   -o, --output <FILE>       Save every record to a file
@@ -426,9 +425,7 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-Chaque paramètre trouvé constitue un enregistrement avec sa valeur, sa signification et l'indication qu'il affaiblit ou non ce que Windows
-fait par défaut ; `--weakened-only` ne conserve que ceux qui l'affaiblissent. Consultez
-[Paramètres de sécurité](../artifacts/security-settings.md).
+Chaque paramètre trouvé est un enregistrement contenant sa valeur stockée et sa signification. Consultez [Paramètres de sécurité](../artifacts/security-settings.md).
 
 
 ## `parse-registry office` { #parse-registry-office }

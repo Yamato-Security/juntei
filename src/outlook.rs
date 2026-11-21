@@ -560,9 +560,18 @@ pub fn is_outlook_name(name: &str) -> bool {
         .any(|extension| name.len() > extension.len() && name.ends_with(extension))
 }
 
-/// The files under `dir` named like Outlook files, recursively, in path order.
+/// Matching names with an Outlook container signature, recursively, in path order. Preserve
+/// unreadable candidates so an I/O failure is not mistaken for missing evidence.
 pub fn find_files(dir: &Path) -> Vec<PathBuf> {
     util::find_files(dir, is_outlook_name)
+        .into_iter()
+        .filter(|path| is_directory_input(path))
+        .collect()
+}
+
+/// Signature filter for files whose names already match. A read error must reach the parser.
+pub(crate) fn is_directory_input(path: &Path) -> bool {
+    !matches!(inspect_kind(path), Ok(None))
 }
 
 /// What a file is, from its first bytes.
@@ -572,23 +581,32 @@ enum Kind {
 }
 
 fn kind_of(path: &Path) -> Result<Kind, String> {
+    inspect_kind(path)
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| {
+            "not a PST, OST, MSG or OFT file (no !BDN or compound file signature)".into()
+        })
+}
+
+/// Read at most eight bytes; PST/OST need four, whereas a compound file needs all eight.
+fn inspect_kind(path: &Path) -> io::Result<Option<Kind>> {
     let mut head = [0u8; 8];
-    let mut file = File::open(path).map_err(|e| e.to_string())?;
+    let mut file = File::open(path)?;
     let mut read = 0;
     while read < head.len() {
         match file.read(&mut head[read..]) {
             Ok(0) => break,
             Ok(n) => read += n,
             Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
-            Err(e) => return Err(e.to_string()),
+            Err(e) => return Err(e),
         }
     }
-    if head[..4] == *STORE_SIGNATURE {
-        Ok(Kind::Store)
-    } else if head == *CFB_SIGNATURE {
-        Ok(Kind::Msg)
+    if head[..read].starts_with(STORE_SIGNATURE) {
+        Ok(Some(Kind::Store))
+    } else if head[..read].starts_with(CFB_SIGNATURE) {
+        Ok(Some(Kind::Msg))
     } else {
-        Err("not a PST, OST, MSG or OFT file (no !BDN or compound file signature)".into())
+        Ok(None)
     }
 }
 
@@ -1861,6 +1879,27 @@ mod tests {
         for name in [".pst", "a.pst.bak", "a.nk2", "a.oab", "pst", "a.ps"] {
             assert!(!is_outlook_name(name), "{name}");
         }
+    }
+
+    #[test]
+    fn directory_signature_checks_keep_recognizable_damage_and_io_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, bytes, expected) in [
+            ("short.pst", STORE_SIGNATURE.as_slice(), true),
+            ("short.msg", CFB_SIGNATURE.as_slice(), true),
+            // Classification is based on content, even when an extension is misleading.
+            ("store.msg", STORE_SIGNATURE.as_slice(), true),
+            ("message.ost", CFB_SIGNATURE.as_slice(), true),
+            ("catalog.msg", b"::msgcat::mcset de text".as_slice(), false),
+            ("empty.oft", b"".as_slice(), false),
+            ("incomplete.msg", &CFB_SIGNATURE[..7], false),
+        ] {
+            let path = dir.path().join(name);
+            std::fs::write(&path, bytes).unwrap();
+            assert_eq!(is_directory_input(&path), expected, "{name}");
+        }
+        // A failed probe is not proof that the file is unrelated to Outlook.
+        assert!(is_directory_input(&dir.path().join("unavailable.msg")));
     }
 
     #[test]

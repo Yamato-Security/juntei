@@ -35,6 +35,9 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) a inspiré le projet Python ;
   consultez les [remerciements relatifs à la persistance](persistence-hunter/acknowledgements.md) pour la filiation complète.
 
+- [**Boreal**](https://github.com/vthib/boreal), de Vincent Thiberville, est le moteur Rust compatible YARA compilé dans la commande `yara-scan` (MIT ou Apache-2.0 ; sa notice figure dans `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), maintenu par Florian Roth au sein de YARAHQ, rassemble les paquets de règles Core, Extended et Full que `yara-scan` télécharge sur demande. Les règles restent l'œuvre de leurs auteurs respectifs, sous leurs propres licences ; Juntei enregistre la source téléchargée avec chaque jeu de résultats.
+
 - La **spécification regf** et **yarp** de Maxim Suhanov ont guidé les structures du Registre, la relecture
   des journaux de transactions et la récupération des enregistrements supprimés ; son **dfir_ntfs** a servi de référence pour les enregistrements INDX et
   le carving de l'index slack.
@@ -45,6 +48,9 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
   **libesedb** offrent des recherches détaillées sur les formats ainsi que des références d'analyse indépendantes.
 - **dissect.esedb**, **dissect.ntfs** et **dissect.target** de Fox-IT ont fourni des interprétations indépendantes de SRUM,
   de l'UAL, de `$Secure:$SDS`, de SAM et de Defender utilisées lors de la validation.
+- Le **SIDR** de Stroz Friedberg et l'`esedbexport` de libyal ont servi de lectures indépendantes de l'index de
+  Windows Search, avec les notes **esedb-kb** de libyal sur ses tables et le code source de l'**Extensible Storage
+  Engine** publié par Microsoft pour le format des enregistrements.
 - `fsstat` de **The Sleuth Kit** a servi de référence pour les secteurs de démarrage NTFS des volumes créés avec
   `mkntfs`.
 - Certains outils d'Eric Zimmerman ont établi les noms de champs et les attentes des examinateurs utilisés pour les comparaisons.
@@ -56,15 +62,23 @@ intégré à Juntei ; consultez chaque projet pour connaître sa licence.
   à forte valeur de Juntei sur Prefetch/Amcache/ShimCache.
 - **defender-dump** et dissect.target fournissent des implémentations distinctes pour comprendre les structures
   de quarantaine de Defender et un comportement d'extraction sûr.
+- **wddh-parser** d'Orange Cyberdefense a décrit le format de l'historique des détections de Defender, et ses échantillons
+  sont fournis avec les valeurs que WMI a renvoyées pour eux. Le parseur `windefender_history` de Plaso et l'artefact
+  `Windows.Applications.DefenderHistory` de Velociraptor ont servi de références indépendantes.
 - **Plaso**, **Chainsaw** et **Velociraptor** ont fourni des comparaisons de parseurs, des preuves de test ou
   des comportements de référence orientés collecte pour plusieurs artefacts.
 - **Hindsight** d'Obsidian Forensics et les définitions **SQLiteHunter** de Velocidex ont servi de références pour
   l'historique, les téléchargements, les cookies et l'historique des formulaires des navigateurs.
+- **rifiuti2** d'Abel Cheung a servi de référence pour les fichiers `$I` et INFO2 de la Corbeille, avec la
+  documentation **dtformats** de libyal sur ces deux formats.
+- **bmc-tools** de l'ANSSI et son bulletin du CERT-FR sur le format, **RdpCacheStitcher** du BSI, l'artefact RDPCache
+  de **Velociraptor** et le plugin de cache RDP de **dissect.target** ont servi de références pour les caches bitmap
+  RDP, avec le cache bitmap persistant et le décodeur RLE entrelacé de **FreeRDP**.
 
 ## Spécifications et recherches { #specifications-and-research }
 
 Nous remercions Microsoft d'avoir publié les Open Specifications relatives aux Shell Links, aux Compound Binary Files,
-aux protocoles NTFS/SAM, aux structures du Registre, des services et des tâches, ainsi que la documentation des API. Nous remercions également les
+aux protocoles NTFS/SAM, aux structures du Registre, des services et des tâches, au Remote Desktop Protocol, ainsi que la documentation des API. Nous remercions également les
 auteurs des recherches forensiques sur AppCompatCache, Amcache, SRUM, Prefetch, le Registre et NTFS, qui ont rendu
 ces artefacts compréhensibles pour les praticiens.
 
@@ -72,7 +86,7 @@ ces artefacts compréhensibles pour les praticiens.
 
 Les preuves publiques du
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) d'Andrew Rathbun, de NIST CFReDS, de Plaso,
-de Regipy, d'Artemis, des dépôts de test de parseurs et d'autres collections dûment licenciées permettent d'effectuer des tests
+de rifiuti2, de Regipy, d'Artemis, du wddh-parser d'Orange Cyberdefense, des dépôts de test de parseurs et d'autres collections dûment licenciées permettent d'effectuer des tests
 de non-régression sur de véritables données Windows. Juntei conserve les notes d'attribution et de licence à côté des fichiers
 de test inclus.
 

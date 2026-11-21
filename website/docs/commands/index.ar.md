@@ -31,16 +31,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-ese srum` | ملف ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ملفات ESE `Current.mdb` و`{GUID}.mdb` و`SystemIdentity.mdb` | [تسجيل وصول المستخدمين (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ملف ESE `WebCacheV01.dat` | [Internet Explorer وEdge القديم](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ملف ESE `Windows.edb` | [فهرس Windows Search](../artifacts/windows-search.md) |
 
 ## [أوامر الملفات](execution.md) { #file-commands }
 
 | الأمر | الأثر الرقمي المُدخل | الدليل التفصيلي |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [سجل اكتشافات Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | شجرة حجر Defender أو أحد إدخالاتها | [حجر Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`، `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [اختصارات LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`، `*.ost`، `*.msg`، `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [سجل PowerShell](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`، `bcache*.bmc` | [ذاكرة التخزين المؤقت لصور RDP النقطية](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`، `RECYCLER\<SID>\INFO2`، `RECYCLED\INFO2` | [سلة المحذوفات](../artifacts/recycle-bin.md) |
 
 ## [أوامر NTFS](filesystem.md) { #ntfs-commands }
 
@@ -107,6 +112,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 وهو يكمّل الجرد الكامل للتكوين الذي يوفره `parse-registry persistence` بما يلي: 131 فحصًا،
 وتصنيف السماح/الحظر، والبيانات الوصفية للحمولة، والتغطية، والربط بين الطوابع الزمنية.
 
+## [فحص YARA](yara-scan.md) { #yara-scan }
+
+يفحص `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` الملفات المجمّعة، بما فيها حمولات الحجر المستعادة والبيانات المقيمة في `$MFT`، بقواعد YARA. ويُنزّل افتراضيًا حزمة YARA Forge Core؛ ويختار `--ruleset extended` أو `--ruleset full` حزمة أوسع، بينما يفحص `--rules <FILE_OR_DIRECTORY>` دون اتصال بقواعد محلية. هذا الفحص اختياري ومنفصل عن `auto-parse`.
+
 ## الاستخدام على المستوى الأعلى { #top-level-usage }
 
 ```text
@@ -122,6 +131,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

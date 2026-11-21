@@ -34,6 +34,9 @@
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) الأصلي مشروعَ Python؛
   راجع [شكر وتقدير Persistence Hunter](persistence-hunter/acknowledgements.md) للاطلاع على سلسلة النسب الكاملة.
 
+- [**Boreal**](https://github.com/vthib/boreal)، من Vincent Thiberville، هو محرك Rust المتوافق مع YARA والمُضمَّن في الأمر `yara-scan` (ترخيص MIT أو Apache-2.0؛ وإشعاره في `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge)، الذي يصونه Florian Roth ضمن YARAHQ، ينسّق حزم القواعد Core وExtended وFull التي يُنزّلها `yara-scan` عند الطلب. وتبقى القواعد من عمل مؤلفيها وفق تراخيصهم الخاصة؛ ويحفظ Juntei المصدر المُنزَّل مع كل مجموعة نتائج.
+
 - أسهمت **مواصفة regf** وأداة **yarp** من Maxim Suhanov في بنى سجل Windows، وإعادة تشغيل سجلات
   المعاملات، واستعادة السجلات المحذوفة؛ وكانت أداته **dfir_ntfs** المرجع لسجلات INDX واستخراج
   البيانات من المساحة الراكدة (slack) في الفهارس.
@@ -44,6 +47,9 @@
   و**libesedb** أبحاثًا تفصيلية حول التنسيقات ومراجع تحليل مستقلة.
 - قدّمت **dissect.esedb** و**dissect.ntfs** و**dissect.target** من Fox-IT تفسيرات مستقلة لـ SRUM وUAL
   و`$Secure:$SDS` وSAM وDefender استُخدمت أثناء التحقق.
+- كانت أداة **SIDR** من Stroz Friedberg وأداة `esedbexport` من libyal القراءتين المستقلتين لفهرس Windows Search،
+  مع ملاحظات **esedb-kb** من libyal عن جداوله، والشفرة المصدرية لـ **Extensible Storage Engine** التي نشرتها
+  Microsoft لتنسيق السجلات.
 - كانت أداة `fsstat` من **The Sleuth Kit** المرجعَ لقطاعات الإقلاع في NTFS لوحدات التخزين المنشأة باستخدام
   `mkntfs`.
 - حدّدت بعض أدوات Eric Zimmerman أسماء الحقول وتوقعات الفاحصين المستخدمة في المقارنات.
@@ -55,15 +61,24 @@
   عالية القيمة حول Prefetch/Amcache/ShimCache.
 - توفر **defender-dump** وdissect.target تطبيقين منفصلين لفهم بنى حجر Defender
   وسلوك الاستخراج الآمن.
+- عرضت أداة **wddh-parser** من Orange Cyberdefense تنسيق سجل اكتشافات Defender، وتأتي عيّناتها مع
+  القيم التي أبلغت عنها WMI لها. وكان محلل `windefender_history` في Plaso وأثر
+  `Windows.Applications.DefenderHistory` في Velociraptor مرجعين مستقلين.
 - قدّمت **Plaso** و**Chainsaw** و**Velociraptor** مقارنات للمحللات، أو أدلة اختبار، أو سلوكًا
   مرجعيًا موجهًا نحو الجمع عبر عدة آثار رقمية.
 - كانت أداة **Hindsight** من Obsidian Forensics وتعريفات **SQLiteHunter** من Velocidex مرجعين لسجل
   التصفح والتنزيلات وملفات تعريف الارتباط وسجل النماذج.
+- كانت أداة **rifiuti2** من Abel Cheung المرجع لملفات `$I` وINFO2 في سلة المحذوفات، إلى جانب
+  توثيق libyal للتنسيقين في **dtformats**.
+- كانت أداة **bmc-tools** من ANSSI ونشرة CERT-FR عن التنسيق، وأداة **RdpCacheStitcher** من BSI، وأثر
+  RDPCache في **Velociraptor**، ومكوّن ذاكرة التخزين المؤقت لـ RDP الإضافي في **dissect.target**، مراجعَ لذاكرات
+  التخزين المؤقت لصور RDP النقطية، إلى جانب ذاكرة التخزين المؤقت الدائمة للصور النقطية ومفكك ضغط interleaved RLE
+  في **FreeRDP**.
 
 ## المواصفات والأبحاث { #specifications-and-research }
 
 نشكر Microsoft على نشر المواصفات المفتوحة (Open Specifications) الخاصة بـ Shell Links، والملفات الثنائية المركبة،
-وبروتوكولات NTFS/SAM، وبنى سجل Windows/الخدمات/المهام، ووثائق واجهات API. كما نشكر
+وبروتوكولات NTFS/SAM، وبنى سجل Windows/الخدمات/المهام، وبروتوكول سطح المكتب البعيد (Remote Desktop Protocol)، ووثائق واجهات API. كما نشكر
 مؤلفي الأبحاث الجنائية حول AppCompatCache وAmcache وSRUM وPrefetch وسجل Windows وNTFS، التي جعلت
 هذه الآثار الرقمية مفهومة للممارسين.
 
@@ -71,7 +86,7 @@
 
 تتيح الأدلة العامة من
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) الخاص بـ Andrew Rathbun، وNIST CFReDS، وPlaso،
-وRegipy، وArtemis، ومستودعات اختبار المحللات، وغيرها من المجموعات المرخصة على النحو الصحيح، إجراءَ اختبارات
+وrifiuti2، وRegipy، وArtemis، وwddh-parser من Orange Cyberdefense، ومستودعات اختبار المحللات، وغيرها من المجموعات المرخصة على النحو الصحيح، إجراءَ اختبارات
 الانحدار على بيانات Windows حقيقية. ويحتفظ Juntei بملاحظات الإسناد/الترخيص بجانب ملفات
 الاختبار المضمّنة.
 

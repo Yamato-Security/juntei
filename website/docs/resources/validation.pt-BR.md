@@ -123,6 +123,20 @@ valor: 44 contêineres, 182 entradas de histórico, 6 downloads, 170 cookies e 3
 decodificou os registros de download por conta própria. Os registros que os bancos de dados marcam como excluídos
 ficaram de fora de ambos.
 
+## Índice do Windows Search { #windows-search-index }
+
+O `parse-ese windows-search` lê o `Windows.edb` com o leitor ESE do
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Ele foi comparado com o `esedbexport` da
+libyal e com o SIDR da Stroz Friedberg em três índices públicos, todos deixados sujos: o índice do Windows 7 do
+Plaso (`SystemIndex_0A`) e os índices do Windows 10 e do Windows 11 do DFIR Artifact Museum
+(`SystemIndex_PropertyStore`, revisões 110 e 200 do formato ESE). Todos os caminhos, proprietários, tipos, nomes
+de computador, tamanhos e horários coincidiram: 6.691 valores do repositório de propriedades do Windows 11 em
+relação ao `esedbexport`, 6.332 do Windows 10 em relação ao SIDR, e as strings do Windows 7 em suas três
+codificações em relação ao `esedbexport`. Parte do índice do Windows 10 está apenas em páginas folha que suas
+páginas de ramo não alcançam; as duas ferramentas as leem, e o Juntei também. Uma coluna do coletor difere por
+design: o ESE marca `Priority` como NULL assim que um item é rastreado, o que as duas ferramentas imprimem a
+partir dos bytes que restam no registro.
+
 ## Outlook { #outlook }
 
 O `parse-file outlook` lê arquivos PST, OST, `.msg` e `.oft` com o
@@ -163,6 +177,37 @@ arquivos compostos e Jump Lists, com os links incorporados decodificados pelo `y
 públicas, todas as 13.057 células de comparação em comum — incluindo carimbos de data/hora com precisão de 100 ns — coincidiram com o
 analisador de referência. Seis arquivos que a referência recusou (listas personalizadas vazias, um rodapé ausente ou um arquivo
 que não era uma Jump List) foram decodificados ou relatados explicitamente pelo Juntei.
+
+## Lixeira { #recycle-bin }
+
+O `parse-file recycle-bin` é um analisador próprio do Juntei. Nas amostras públicas do
+[rifiuti2](https://github.com/abelcheung/rifiuti2), todo registro que o rifiuti2 lê teve o mesmo índice, horário de
+exclusão (ao segundo, como o rifiuti2 o exibe), estado de remoção da Lixeira, tamanho e caminho: 92 registros, 67 em
+onze arquivos INFO2 do Windows 95 ao Server 2003 e 25 em três pastas de arquivos `$I` do Windows Vista e do Windows 10.
+Os caminhos ANSI do INFO2 coincidiram nas páginas de código que os próprios testes do rifiuti2 usam. O Juntei também
+lê o que o rifiuti2 rejeita: uma pasta que mistura as duas versões de `$I`, um cabeçalho `$I` sem caminho e registros
+truncados, cada um com seu dano relatado. Os arquivos `$I` e INFO2 dos dados de teste do Plaso fornecem os horários,
+tamanhos, caminhos, índices e unidades que os testes do Plaso esperam. Na imagem de disco pública M57-Jean da Digital
+Corpora (Windows XP), lida com `auto-parse --e01`, o registro do INFO2 coincide com o rifiuti2, e o arquivo reciclado
+ao lado dele, `Dc1.jpg`, tem o nome que o Juntei lhe dá.
+
+## Cache de bitmaps do RDP { #rdp-bitmap-cache }
+
+O `parse-file rdp-cache` é um analisador próprio do Juntei. Em kofu, um dos seis hosts da coleta do CODE BLUE 2026
+CTF, cada um dos 1.911 blocos dos seus três arquivos `Cache????.bin` é, pixel a pixel, a imagem que o
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) gera. O mesmo vale para os 1.980 blocos do `Cache0000.bin` público
+do desafio "Phantom Connection" do ApoorvCTF 2025, 105 deles com 64 × 48 pixels. O bmc-tools lê todos os blocos como
+se tivessem 64 pixels de largura, então os blocos mais estreitos da borda direita de uma tela saem distorcidos; o
+Juntei lê cada bloco com a sua própria largura.
+
+Não foi encontrado nenhum cache `.bmc` público com blocos: as amostras acima, como outros clientes do Windows 10 e
+posteriores, têm apenas um `bcache24.bmc` vazio. Por isso, a leitura de `.bmc` foi testada com arquivos construídos
+conforme o formato: blocos não compactados das quatro profundidades de cor, blocos pequenos seguidos do final de um
+bloco anterior, slots danificados e 3.000 blocos aleatórios de 16 bits compactados com RLE que usam todas as ordens
+(orders) do MS-RDPBCGR 3.1.9, sem nenhuma ordem que continue além do final da primeira linha de um bloco. O Juntei e o
+bmc-tools decodificam todos os 3.000 para os mesmos pixels. Quando uma ordem começa na primeira linha e continua além
+dela, os dois diferem: o Juntei segue a especificação e o decodificador do FreeRDP, que mantêm as regras da primeira
+linha durante toda a ordem, enquanto o bmc-tools muda de regras no meio dela.
 
 ## ShimCache { #shimcache }
 

@@ -123,10 +123,7 @@ juntei parse-file outlook -f mailbox.ost -t jsonl \
 juntei parse-file outlook -f suspicious.msg -o msg-csv --properties --extract-attachments isolated/
 ```
 
-`-d`, büyük/küçük harf ayrımı yapmadan `.pst`, `.ost`, `.msg` ve `.oft` ile biten dosyaları arar.
-Dosya hangi yolla verilirse verilsin, ne olduğunu ilk baytları söyler: PST veya OST için `!BDN`, MSG
-veya OFT için bileşik dosya imzası. Bunların dışındaki her şey ayrıştırılamayan bir dosya olarak
-raporlanır. Hiçbir dosya okunamadığında çıkış durumu 1 olur.
+`-d`, büyük/küçük harf ayrımı yapmadan `.pst`, `.ost`, `.msg` ve `.oft` adlarını arar, ardından başlıkları denetler: PST veya OST için `!BDN`, MSG veya OFT için bileşik dosya imzası. Tcl ileti katalogları gibi aynı uzantıları kullanan ilgisiz dosyalar atlanır. Okunamayan dosyalar ve imzası tanınabilen hasarlı kapsayıcılar hata olarak kalır. `-f`, adı ne olursa olsun verilen dosyayı doğrular ve geçersiz girdiyi hata olarak bildirir. Hiçbir dosya okunamazsa çıkış durumu 1 olur.
 
 `--extract-attachments`, her ekin verisini bir kez yazar: `<SHA-256>` adıyla ve ekin uzantısı 1 ila
 10 ASCII harf ve rakamdan oluşuyorsa bu uzantıyla birlikte (`0c7d…1311.jpg`); bir öğeden gelen hiçbir

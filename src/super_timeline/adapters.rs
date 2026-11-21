@@ -83,6 +83,7 @@ pub const ARTIFACTS: &[&str] = &[
     "browser",
     "bcd",
     "boot",
+    "defender-history",
     "defender-quarantine",
     "featureusage",
     "hayabusa",
@@ -101,9 +102,12 @@ pub const ARTIFACTS: &[&str] = &[
     "outlook",
     "persistence",
     "persistence-hunter",
+    "powershell-history",
     "prefetch",
     "prefetch-timeline",
+    "rdp-cache",
     "recentdocs",
+    "recycle-bin",
     "registry",
     "remote-access",
     "sam",
@@ -120,6 +124,7 @@ pub const ARTIFACTS: &[&str] = &[
     "userassist",
     "usn-journal",
     "webcache",
+    "windows-search",
 ];
 
 pub fn source(value: &Value, ctx: &Context) -> (String, bool) {
@@ -1557,8 +1562,14 @@ fn build(
         "srum" => srum(&mut b),
         "browser" => activity::browser(&mut b),
         "outlook" => activity::outlook(&mut b),
+        "recycle-bin" => activity::recycle_bin(&mut b),
+        // Cached screen tiles have no times: their records stay in the parsed input only.
+        "rdp-cache" => {}
+        // A history line has no time either: FileLastWriteTime is the file's, not a command's.
+        "powershell-history" => {}
         "ual" => activity::ual(&mut b),
         "webcache" => activity::webcache(&mut b),
+        "windows-search" => activity::windows_search(&mut b),
         "lnk" | "jump-lists" => links(&mut b),
         "logfile" => logfile(&mut b),
         "usn-journal" => {
@@ -1624,6 +1635,75 @@ fn build(
                 "registry_key_last_write",
                 true,
             );
+        }
+        "defender-history" => {
+            // A detection's times, as Defender wrote them, on each of its resources' records.
+            // What Defender says it did stays beside each time: a detection, a remediation
+            // attempt and a removal are separate states.
+            for key in [
+                "ThreatStatus",
+                "ThreatStatusID",
+                "ThreatStatusErrorCode",
+                "ExecutionStatus",
+                "DetectionSource",
+                "ResourceType",
+                "Process",
+                "QuarantineID",
+                "Problems",
+            ] {
+                if let Some((actual, value)) = field(value, key).filter(|(_, value)| {
+                    !value.is_null()
+                        && value.as_str() != Some("")
+                        && value.as_array().is_none_or(|items| !items.is_empty())
+                }) {
+                    b.extra.insert(actual.into(), compact(value, 0));
+                }
+            }
+            b.path = text(value, &["Path"]);
+            b.id = format!(
+                "Detection:{}:Resource:{}:{}",
+                text(value, &["DetectionID"]),
+                text(value, &["ResourceIndex"]),
+                b.source
+            );
+            b.named(
+                &["InitialDetectionTime"],
+                "Defender initial detection",
+                "security_detection",
+                true,
+            );
+            b.named(
+                &["LastThreatStatusChangeTime"],
+                "Defender threat status change",
+                "security_remediation",
+                true,
+            );
+            b.named(
+                &["RemediationTime"],
+                "Defender remediation",
+                "security_remediation",
+                true,
+            );
+            // Tracking data keeps its start time as an integer: a FILETIME only by
+            // interpretation (plaso's), so it is projected only when asked for.
+            if let Some((key, time)) =
+                field(value, "TrackingStartTime").filter(|(_, v)| !empty_time(&string(v)))
+            {
+                if b.policy.interpreted {
+                    let (path, id) = (b.path.clone(), b.id.clone());
+                    b.emit(
+                        time,
+                        key,
+                        "Defender resource tracking start, integer interpreted as FILETIME",
+                        "interpreted_value",
+                        &path,
+                        &id,
+                        true,
+                    );
+                } else {
+                    b.projection.counts.interpreted_times_omitted += 1;
+                }
+            }
         }
         "defender-quarantine" => {
             b.id = format!(

@@ -33,6 +33,9 @@ Juntei 中；授權條款請參閱各專案。
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) 啟發了這個 Python 專案；
   完整的源流請參閱[持續存取相關致謝](persistence-hunter/acknowledgements.md)。
 
+- 由 Vincent Thiberville 開發的 [**Boreal**](https://github.com/vthib/boreal) 是編譯進 `yara-scan` 命令、與 YARA 相容的 Rust 引擎（MIT 或 Apache-2.0；其授權聲明位於 `THIRD_PARTY_NOTICES/crates.txt`）。
+- 由 Florian Roth 在 YARAHQ 維護的 [**YARA Forge**](https://github.com/YARAHQ/yara-forge) 彙整了 `yara-scan` 依要求下載的 Core、Extended 與 Full 規則套件。規則仍屬於各自作者的著作並依其授權條款發布；Juntei 會將下載的原始規則與每組結果一併儲存。
+
 - Maxim Suhanov 的 **regf specification** 與 **yarp** 為登錄檔結構、交易記錄重播以及已刪除記錄的復原提供了依據；
   他的 **dfir_ntfs** 則是 INDX 記錄與索引 slack 擷取（carving）的參考。
 - Harel Segev 的 **INDXRipper** 是從索引 slack 擷取檔案名稱的另一項參考。
@@ -42,6 +45,8 @@ Juntei 中；授權條款請參閱各專案。
   **libesedb** 提供了詳盡的格式研究與獨立的剖析參考。
 - Fox-IT 的 **dissect.esedb**、**dissect.ntfs** 與 **dissect.target** 提供了驗證時所用的 SRUM、UAL、
   `$Secure:$SDS`、SAM 與 Defender 的獨立判讀結果。
+- Stroz Friedberg 的 **SIDR** 與 libyal 的 `esedbexport` 是 Windows Search 索引的獨立讀取依據，並輔以 libyal 的
+  **esedb-kb** 對其資料表的筆記，以及 Microsoft 公開的 **Extensible Storage Engine** 原始碼所提供的記錄格式。
 - **The Sleuth Kit** 的 `fsstat` 是以
   `mkntfs` 建立之磁碟區 NTFS 開機磁區的參考。
 - Eric Zimmerman 的部分工具確立了比較時所使用的欄位名稱與鑑識人員的預期。
@@ -53,22 +58,30 @@ Juntei 中；授權條款請參閱各專案。
   高價值的 Prefetch／Amcache／ShimCache 觀察結果提供了依據。
 - **defender-dump** 與 dissect.target 提供了各自獨立的實作，有助於理解 Defender
   隔離資料結構與安全的擷取行為。
+- Orange Cyberdefense 的 **wddh-parser** 闡明了 Defender 偵測歷程記錄的格式，其範例也附有 WMI
+  針對這些範例回報的值。Plaso 的 `windefender_history` 剖析器與 Velociraptor 的
+  `Windows.Applications.DefenderHistory` 跡證定義則是獨立的參考依據。
 - **Plaso**、**Chainsaw** 與 **Velociraptor** 在多種跡證上提供了剖析器比較、測試證據，
   或以收集為導向的參考行為。
 - Obsidian Forensics 的 **Hindsight** 與 Velocidex 的 **SQLiteHunter** 定義，是瀏覽歷程、下載、
   Cookie 與表單歷程的參考依據。
+- Abel Cheung 的 **rifiuti2** 是資源回收筒 `$I` 檔案與 INFO2 的參考依據，libyal 的 **dtformats**
+  文件則說明了這兩種格式。
+- ANSSI 的 **bmc-tools** 及其關於此格式的 CERT-FR 公告、BSI 的 **RdpCacheStitcher**、**Velociraptor** 的
+  RDPCache 跡證定義，以及 **dissect.target** 的 RDP 快取外掛程式，是 RDP 點陣圖快取的參考依據；
+  **FreeRDP** 的持續性點陣圖快取與交錯式 RLE 解碼器亦然。
 
 ## 規格與研究 { #specifications-and-research }
 
-感謝 Microsoft 公開 Shell Links、Compound Binary Files、NTFS／SAM 協定、登錄檔／服務／工作結構的
-Open Specifications 以及 API 文件。同時也感謝 AppCompatCache、Amcache、SRUM、Prefetch、登錄檔與 NTFS
+感謝 Microsoft 公開 Shell Links、Compound Binary Files、NTFS／SAM 協定、登錄檔／服務／工作結構、
+遠端桌面通訊協定的 Open Specifications 以及 API 文件。同時也感謝 AppCompatCache、Amcache、SRUM、Prefetch、登錄檔與 NTFS
 鑑識研究的作者們，讓實務人員得以理解這些跡證。
 
 ## 測試證據 { #test-evidence }
 
 Andrew Rathbun 的
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)、NIST CFReDS、Plaso、
-Regipy、Artemis、各剖析器測試儲存庫以及其他授權妥當的資料集所提供的公開證據，使得以真實 Windows
+rifiuti2、Regipy、Artemis、Orange Cyberdefense 的 wddh-parser、各剖析器測試儲存庫以及其他授權妥當的資料集所提供的公開證據，使得以真實 Windows
 資料進行回歸測試成為可能。Juntei 會在所收錄的測試檔案旁保留出處與授權說明。
 
 ## 貢獻者 { #contributors }

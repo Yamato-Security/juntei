@@ -123,6 +123,20 @@ Explorer 11, and a dirty one of Windows 10 with legacy Edge's history, downloads
 and 3,754 other entries. The comparison decoded the download records on its own. Records the
 databases flag as deleted were left out of both.
 
+## Windows Search index
+
+`parse-ese windows-search` reads `Windows.edb` with
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser)'s ESE reader. It was compared
+with libyal's `esedbexport` and Stroz Friedberg's SIDR on three public indexes, all left dirty:
+Plaso's Windows 7 index (`SystemIndex_0A`) and the DFIR Artifact Museum's Windows 10 and Windows 11
+indexes (`SystemIndex_PropertyStore`, ESE format revisions 110 and 200). Every path, owner, type,
+computer name, size and time compared equal: 6,691 values of the Windows 11 property store against
+`esedbexport`, 6,332 of the Windows 10 one against SIDR, and the Windows 7 strings in their three
+encodings against `esedbexport`. Part of the Windows 10 index is only in leaf pages that its
+branch pages do not reach; both tools read them, and so does Juntei. One gatherer column differs
+by design: ESE marks `Priority` NULL once an item is crawled, which both tools print from the
+bytes left in the record.
+
 ## Outlook
 
 `parse-file outlook` reads PST, OST, `.msg` and `.oft` files with
@@ -164,6 +178,37 @@ compound-file and Jump List work, with embedded links decoded by `ys-lnk-parser`
 Jump Lists, all 13,057 shared comparison cells—including timestamps to 100 ns—matched the
 reference parser. Six files the reference refused (empty custom lists, a missing footer, or a file
 that was not a Jump List) were either decoded or explicitly reported by Juntei.
+
+## Recycle Bin
+
+`parse-file recycle-bin` is Juntei's own parser. On the public samples of
+[rifiuti2](https://github.com/abelcheung/rifiuti2), every record rifiuti2 reads had the same index,
+deletion time (to the second, as rifiuti2 shows it), removal state, size and path: 92 records, 67 in
+eleven INFO2 files from Windows 95 to Server 2003 and 25 in three folders of Windows Vista and
+Windows 10 `$I` files. INFO2's ANSI paths matched in the code pages rifiuti2's own tests use. Juntei
+also reads what rifiuti2 rejects: a folder mixing both `$I` versions, a `$I` header without a path,
+and truncated records, each with its damage reported. The `$I` and INFO2 files of Plaso's test
+data give the times, sizes, paths, indexes and drives Plaso's tests expect. On Digital Corpora's
+public M57-Jean disk image (Windows XP), read with `auto-parse --e01`, the INFO2 record matches
+rifiuti2, and the recycled file beside it, `Dc1.jpg`, has the name Juntei gives it.
+
+## RDP Bitmap Cache
+
+`parse-file rdp-cache` is Juntei's own parser. On kofu, one of the six hosts of the CODE BLUE 2026
+CTF collection, every one of the 1,911 tiles of its three `Cache????.bin` files is, pixel for
+pixel, the image [bmc-tools](https://github.com/ANSSI-FR/bmc-tools) makes. So are the 1,980 tiles
+of the public `Cache0000.bin` of ApoorvCTF 2025's "Phantom Connection" challenge, 105 of them
+64 × 48 pixels. bmc-tools reads every tile as 64 pixels wide, so the narrower tiles at a screen's
+right edge come out skewed; Juntei reads each tile at its own width.
+
+No public `.bmc` cache with tiles was found: the samples above, like other Windows 10 and later
+clients, have only an empty `bcache24.bmc`. `.bmc` reading was therefore tested with files built to
+the format: uncompressed tiles of all four color depths, small tiles followed by the end of an
+earlier tile, damaged slots, and 3,000 random RLE-compressed 16-bit tiles that use every order of
+MS-RDPBCGR 3.1.9, with no order running past the end of a tile's first row. Juntei and bmc-tools
+decode all 3,000 to the same pixels. When an order starts on the first row and runs past it, the two
+differ: Juntei follows the specification and FreeRDP's decoder, which keep the first row's rules for
+the whole order, while bmc-tools changes rules in the middle of it.
 
 ## ShimCache
 

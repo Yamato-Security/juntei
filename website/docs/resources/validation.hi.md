@@ -121,6 +121,19 @@ delete किए गए दो pages और दो visits, उनके सम�
 records को स्वतंत्र रूप से, अपने तरीके से decode किया। जिन records को databases deleted के रूप में चिह्नित करते हैं,
 उन्हें दोनों में से किसी में भी शामिल नहीं किया गया।
 
+## Windows Search इंडेक्स { #windows-search-index }
+
+`parse-ese windows-search` `Windows.edb` को
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) के ESE reader से पढ़ता है। इसकी तुलना
+libyal के `esedbexport` और Stroz Friedberg के SIDR से तीन सार्वजनिक indexes पर की गई, सभी dirty छोड़े हुए:
+Plaso का Windows 7 index (`SystemIndex_0A`) और DFIR Artifact Museum के Windows 10 और Windows 11 indexes
+(`SystemIndex_PropertyStore`, ESE format revisions 110 और 200)। हर path, owner, type, computer name, आकार
+और समय बराबर मेल खाया: Windows 11 property store की 6,691 values `esedbexport` के विरुद्ध, Windows 10 वाले
+की 6,332 values SIDR के विरुद्ध, और Windows 7 की strings अपनी तीन encodings में `esedbexport` के विरुद्ध।
+Windows 10 index का एक हिस्सा केवल ऐसे leaf pages में है जिन तक उसके branch pages नहीं पहुँचते; दोनों tools
+उन्हें पढ़ते हैं, और Juntei भी। Gatherer का एक column design के अनुसार भिन्न है: item के crawl हो जाने पर ESE
+`Priority` को NULL चिह्नित कर देता है, जिसे दोनों tools record में बचे bytes से print करते हैं।
+
 ## Outlook { #outlook }
 
 `parse-file outlook` PST, OST, `.msg` और `.oft` files को
@@ -161,6 +174,38 @@ compound-file और Jump List कार्य का उपयोग करत�
 Jump Lists में, सभी 13,057 साझा तुलना cells—100 ns तक के timestamps सहित—संदर्भ
 parser से मेल खाए। जिन छह files को संदर्भ ने अस्वीकार किया (खाली custom lists, अनुपस्थित footer, या ऐसी file
 जो Jump List नहीं थी), उन्हें Juntei ने या तो decode किया या स्पष्ट रूप से रिपोर्ट किया।
+
+## रीसायकल बिन { #recycle-bin }
+
+`parse-file recycle-bin` Juntei का अपना parser है। [rifiuti2](https://github.com/abelcheung/rifiuti2) के
+सार्वजनिक samples पर, rifiuti2 द्वारा पढ़े जाने वाले हर record का index, deletion time (seconds तक, जैसा
+rifiuti2 उसे दिखाता है), removal state, size और path समान थे: 92 records, जिनमें से 67 Windows 95 से
+Server 2003 तक की ग्यारह INFO2 files में और 25 Windows Vista और Windows 10 की `$I` files वाले तीन
+folders में थे। INFO2 के ANSI paths उन code pages में मेल खाए जिनका उपयोग rifiuti2 के अपने tests करते
+हैं। Juntei वह भी पढ़ता है जिसे rifiuti2 अस्वीकार करता है: दोनों `$I` versions को मिलाने वाला folder,
+बिना path वाला `$I` header, और truncated records, हर एक की क्षति की रिपोर्ट के साथ। Plaso के test data
+की `$I` और INFO2 files वही times, sizes, paths, indexes और drives देती हैं जिनकी Plaso के tests अपेक्षा
+करते हैं। Digital Corpora की सार्वजनिक M57-Jean disk image (Windows XP) पर, जिसे `auto-parse --e01` से
+पढ़ा गया, INFO2 record rifiuti2 से मेल खाता है, और उसके पास bin में रखी file, `Dc1.jpg`, का नाम वही है जो
+Juntei उसे देता है।
+
+## RDP बिटमैप कैश { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` Juntei का अपना parser है। CODE BLUE 2026 CTF collection के छह hosts में से एक, kofu
+पर, उसकी तीन `Cache????.bin` files के सभी 1,911 tiles pixel-दर-pixel वही image हैं जो
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) बनाता है। ApoorvCTF 2025 के "Phantom Connection"
+challenge की सार्वजनिक `Cache0000.bin` के 1,980 tiles भी ऐसे ही हैं, जिनमें से 105 tiles 64 × 48 pixels के
+हैं। bmc-tools हर tile को 64 pixels चौड़ा मानकर पढ़ता है, इसलिए screen के दाएँ किनारे वाले संकरे tiles तिरछे
+निकलते हैं; Juntei हर tile को उसकी अपनी चौड़ाई में पढ़ता है।
+
+tiles वाला कोई सार्वजनिक `.bmc` cache नहीं मिला: ऊपर के samples में, Windows 10 और बाद के संस्करणों के दूसरे
+clients की तरह, केवल एक खाली `bcache24.bmc` है। इसलिए `.bmc` reading का परीक्षण format के अनुसार बनाई गई
+files से किया गया: चारों color depths के uncompressed tiles, ऐसे छोटे tiles जिनके बाद किसी पहले वाले tile का
+अंतिम हिस्सा आता है, क्षतिग्रस्त slots, और 3,000 random RLE-compressed 16-bit tiles जो MS-RDPBCGR 3.1.9 के
+हर order का उपयोग करते हैं, और जिनमें कोई भी order tile की पहली row के अंत से आगे नहीं जाता। Juntei और
+bmc-tools सभी 3,000 को समान pixels में decode करते हैं। जब कोई order पहली row पर शुरू होकर उससे आगे चला
+जाता है, तब दोनों के परिणाम अलग होते हैं: Juntei specification और FreeRDP के decoder का पालन करता है, जो
+पूरे order के लिए पहली row के नियम बनाए रखते हैं, जबकि bmc-tools order के बीच में ही नियम बदल देता है।
 
 ## ShimCache { #shimcache }
 

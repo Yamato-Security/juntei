@@ -8,9 +8,12 @@
 
 | سؤال التحقيق | ابدأ من هنا | أكّد باستخدام |
 |---|---|---|
+| ما أسطر أوامر PowerShell التي حُفظت؟ | [سجل PowerShell](powershell-history.md) | سجلات أحداث PowerShell، بيانات مراقبة العمليات، Prefetch |
 | هل شُغّل هذا الملف التنفيذي؟ | [Prefetch](prefetch.md) | [ShimCache](shimcache.md)، [SRUM](srum.md)، سجلات الأحداث |
-| هل كان هذا الملف موجودًا في أي وقت؟ | [Amcache](amcache.md)، [$MFT](mft.md) | [دفتر يومية USN](usn-journal.md)، [$I30](i30.md)، ShimCache |
+| هل كان هذا الملف موجودًا في أي وقت؟ | [Amcache](amcache.md)، [$MFT](mft.md) | [دفتر يومية USN](usn-journal.md)، [$I30](i30.md)، [فهرس Windows Search](windows-search.md)، ShimCache |
+| ما الملفات ورسائل البريد الإلكتروني والصفحات التي كانت على هذا الكمبيوتر، وماذا جاء في مستند ما؟ | [فهرس Windows Search](windows-search.md) | [$MFT](mft.md)، [دفتر يومية USN](usn-journal.md)، [Outlook](outlook.md)، [متصفحات الويب](browser.md) |
 | متى أُنشئ ملف أو أُعيدت تسميته أو حُذف؟ | [دفتر يومية USN](usn-journal.md) | [$MFT](mft.md)، [$I30](i30.md)، حجر Defender |
+| ما الذي حذفه المستخدم إلى سلة المحذوفات، ومتى؟ | [سلة المحذوفات](recycle-bin.md) | [دفتر يومية USN](usn-journal.md)، [$MFT](mft.md)، [LNK](lnk.md)، [Jump Lists](jump-lists.md) |
 | ما الاسم أو الطابع الزمني الذي كان موجودًا قبل تغيير البيانات الوصفية؟ | [$LogFile](logfile.md) | [$MFT](mft.md)، [دفتر يومية USN](usn-journal.md)، [$I30](i30.md) |
 | من يملك الملف، ومن يحق له تغييره؟ | [$Secure:$SDS](secure-sds.md) مع [$MFT](mft.md) | [SAM](sam.md)، سجلات أحداث Security |
 | على أي وحدة تخزين كان هدف اختصار أو ملف Prefetch؟ | [$Boot](boot.md) | [LNK](lnk.md)، [Prefetch](prefetch.md)، [أجهزة USB](usb.md) |
@@ -19,7 +22,9 @@
 | ما مواقع الويب التي زارها المستخدم، وماذا نزّل؟ | [متصفحات الويب](browser.md)، [Internet Explorer وEdge القديم](webcache.md) | سجلات الوكيل (proxy) وDNS، و`$MFT` ودفتر يومية USN، وDefender، وSRUM |
 | مع من تبادل المستخدم رسائل البريد الإلكتروني، وماذا أُرفق بها؟ | [Outlook](outlook.md) | سجلات خادم البريد وبوابة البريد، و`$MFT` ودفتر يومية USN، وDefender، وLNK وJump Lists |
 | ما العملاء والحسابات التي استخدمت هذا الخادم، وفي أي أيام؟ | [تسجيل وصول المستخدمين (UAL)](ual.md) | سجلات أحداث Security، وسجلات SMB وRDP، وسجلات الجدار الناري |
+| ماذا رأى المستخدم على أجهزة الكمبيوتر التي وصل إليها عبر سطح المكتب البعيد؟ | [ذاكرة التخزين المؤقت لصور RDP النقطية](rdp-cache.md) | [الوصول عن بُعد (جهة المستخدم)](remote-access.md)، و[Jump Lists](jump-lists.md)، وأحداث تسجيل الدخول على أجهزة الكمبيوتر البعيدة، و[UAL](ual.md) |
 | هل جرى تكوين آلية استمرارية؟ | [الخدمات](services.md)، [TaskCache](taskcache.md)، [سجل Windows](registry.md) | سجلات الأحداث، Prefetch، `$MFT` |
+| ما الذي اكتشفه Defender، وماذا فعل حياله؟ | [سجل اكتشافات Defender](defender-history.md) | [حجر Defender](defender-quarantine.md)، سجلات الأحداث |
 | ما الذي أزاله Defender؟ | [حجر Defender](defender-quarantine.md) | سجلات الأحداث، `$MFT`، دفتر يومية USN |
 | هل أُضيفت حسابات محلية أو غُيّرت؟ | [SAM](sam.md) | سجلات أحداث Security وسجل معاملات سجل Windows |
 
@@ -35,7 +40,5 @@
 6. **كيف تربطه** بأدلة مستقلة.
 7. **مزيد من التفاصيل** للبحث على المستوى المنخفض.
 
-!!! danger "لا تساوِ نتيجة المحلل بالنية الخبيثة"
-    تحدد نتائج Juntei أنماطًا تستحق المراجعة، مثل اسم ملف ثنائي للنظام خارج
-    `System32`. فقد تُنتج برامج التثبيت والمسؤولون وطبقات التوافق وتحديثات البرامج سجلات غير
-    مألوفة. تحقق من صحتها بالسياق وبأدلة مستقلة.
+!!! danger "لا تعتبر السجلات غير المعتادة دليلًا على نشاط خبيث"
+    يحلل Juntei الأدلة كي يفسرها المحلل. تظل فحوص Persistence Hunter متاحة، لكن إدخال بدء التشغيل المُعدّ قد يكون أيضًا جزءًا من إدارة مشروعة. اربط الملاحظات بالسياق وبأدلة مستقلة قبل الحكم بأنها خبيثة.

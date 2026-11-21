@@ -35,6 +35,9 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) ต้นฉบับเป็นแรงบันดาลใจให้กับโปรเจกต์ Python ดังกล่าว
   ดูประวัติความเป็นมาทั้งหมดได้ที่[กิตติกรรมประกาศของ Persistence Hunter](persistence-hunter/acknowledgements.md)
 
+- [**Boreal**](https://github.com/vthib/boreal) โดย Vincent Thiberville คือเอนจิน Rust ที่เข้ากันได้กับ YARA ซึ่งคอมไพล์รวมอยู่ในคำสั่ง `yara-scan` (MIT หรือ Apache-2.0 ประกาศสิทธิ์อยู่ใน `THIRD_PARTY_NOTICES/crates.txt`)
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge) ซึ่ง Florian Roth ดูแลภายใต้ YARAHQ รวบรวมแพ็กเกจกฎ Core, Extended และ Full ที่ `yara-scan` ดาวน์โหลดเมื่อร้องขอ กฎยังคงเป็นผลงานของผู้เขียนแต่ละรายภายใต้สัญญาอนุญาตของตน และ Juntei จะบันทึกซอร์สที่ดาวน์โหลดไว้พร้อมกับชุดผลลัพธ์แต่ละชุด
+
 - **ข้อกำหนด regf** และ **yarp** ของ Maxim Suhanov มีส่วนช่วยในเรื่องโครงสร้างรีจิสทรี การเล่นซ้ำ (replay) บันทึกธุรกรรม
   และการกู้คืนเรคคอร์ดที่ถูกลบ ส่วน **dfir_ntfs** ของเขาเป็นข้อมูลอ้างอิงสำหรับเรคคอร์ด INDX และการกู้คืน (carving) ข้อมูลจาก index slack
 - **INDXRipper** ของ Harel Segev เป็นอีกหนึ่งข้อมูลอ้างอิงสำหรับการกู้คืนชื่อไฟล์จาก index slack
@@ -44,6 +47,9 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
   **libesedb** ให้ข้อมูลวิจัยด้านรูปแบบไฟล์อย่างละเอียดและเป็นข้อมูลอ้างอิงการพาร์สโดยอิสระ
 - **dissect.esedb**, **dissect.ntfs** และ **dissect.target** ของ Fox-IT ให้การตีความ SRUM, UAL,
   `$Secure:$SDS`, SAM และ Defender โดยอิสระ ซึ่งใช้ระหว่างการตรวจสอบความถูกต้อง
+- **SIDR** ของ Stroz Friedberg และ `esedbexport` ของ libyal เป็นการอ่านดัชนี Windows Search โดยอิสระ
+  ร่วมกับบันทึก **esedb-kb** ของ libyal เกี่ยวกับตารางของดัชนี และซอร์สโค้ด **Extensible Storage Engine**
+  ที่ Microsoft เผยแพร่สำหรับรูปแบบของเรคคอร์ด
 - `fsstat` ของ **The Sleuth Kit** เป็นข้อมูลอ้างอิงสำหรับบูตเซกเตอร์ NTFS ของวอลุ่มที่สร้างด้วย
   `mkntfs`
 - เครื่องมือบางส่วนของ Eric Zimmerman เป็นที่มาของชื่อฟิลด์และความคาดหวังของผู้ตรวจพิสูจน์ที่ใช้ในการเปรียบเทียบ
@@ -55,15 +61,23 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
   ด้าน Prefetch/Amcache/ShimCache ของ Juntei
 - **defender-dump** และ dissect.target เป็นการพัฒนาแยกต่างหากที่ช่วยให้เข้าใจโครงสร้างการกักกัน (quarantine) ของ Defender
   และพฤติกรรมการแยกไฟล์อย่างปลอดภัย
+- **wddh-parser** ของ Orange Cyberdefense อธิบายรูปแบบประวัติการตรวจจับของ Defender ไว้อย่างละเอียด และตัวอย่างของโปรเจกต์นี้
+  มาพร้อมกับค่าที่ WMI รายงานสำหรับตัวอย่างเหล่านั้น พาร์เซอร์ `windefender_history` ของ Plaso และอาร์ติแฟกต์
+  `Windows.Applications.DefenderHistory` ของ Velociraptor เป็นข้อมูลอ้างอิงที่เป็นอิสระต่อกัน
 - **Plaso**, **Chainsaw** และ **Velociraptor** ให้การเปรียบเทียบพาร์เซอร์ หลักฐานสำหรับการทดสอบ หรือพฤติกรรมอ้างอิง
   ที่เน้นการเก็บรวบรวมข้อมูลสำหรับอาร์ติแฟกต์หลายประเภท
 - **Hindsight** ของ Obsidian Forensics และนิยามของ **SQLiteHunter** ของ Velocidex เป็นข้อมูลอ้างอิงสำหรับ
   ประวัติ การดาวน์โหลด คุกกี้ และประวัติฟอร์มของเบราว์เซอร์
+- **rifiuti2** ของ Abel Cheung เป็นข้อมูลอ้างอิงสำหรับไฟล์ `$I` และ INFO2 ของถังรีไซเคิล ร่วมกับเอกสาร
+  **dtformats** ของ libyal ที่อธิบายทั้งสองรูปแบบ
+- **bmc-tools** ของ ANSSI และประกาศของ CERT-FR เกี่ยวกับรูปแบบนี้, **RdpCacheStitcher** ของ BSI,
+  อาร์ติแฟกต์ RDPCache ของ **Velociraptor** และปลั๊กอินแคช RDP ของ **dissect.target** เป็นข้อมูลอ้างอิง
+  สำหรับแคชบิตแมปของ RDP ร่วมกับแคชบิตแมปแบบถาวรและตัวถอดรหัส interleaved RLE ของ **FreeRDP**
 
 ## ข้อกำหนดและงานวิจัย { #specifications-and-research }
 
 เราขอขอบคุณ Microsoft ที่เผยแพร่ Open Specifications สำหรับ Shell Links, Compound Binary Files,
-โปรโตคอล NTFS/SAM, โครงสร้างรีจิสทรี/บริการ/งานตามกำหนดเวลา และเอกสาร API นอกจากนี้เรายังขอขอบคุณ
+โปรโตคอล NTFS/SAM, โครงสร้างรีจิสทรี/บริการ/งานตามกำหนดเวลา, Remote Desktop Protocol และเอกสาร API นอกจากนี้เรายังขอขอบคุณ
 ผู้เขียนงานวิจัยด้านนิติวิทยาศาสตร์ดิจิทัลเกี่ยวกับ AppCompatCache, Amcache, SRUM, Prefetch, รีจิสทรี และ NTFS ที่ทำให้
 ผู้ปฏิบัติงานสามารถเข้าใจอาร์ติแฟกต์เหล่านี้ได้
 
@@ -71,7 +85,7 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
 
 หลักฐานสาธารณะจาก
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum) ของ Andrew Rathbun, NIST CFReDS, Plaso,
-Regipy, Artemis, รีโพซิทอรีชุดทดสอบของพาร์เซอร์ต่าง ๆ และคอลเลกชันอื่น ๆ ที่มีสัญญาอนุญาตอย่างถูกต้อง ทำให้สามารถทำ
+rifiuti2, Regipy, Artemis, wddh-parser ของ Orange Cyberdefense, รีโพซิทอรีชุดทดสอบของพาร์เซอร์ต่าง ๆ และคอลเลกชันอื่น ๆ ที่มีสัญญาอนุญาตอย่างถูกต้อง ทำให้สามารถทำ
 regression test กับข้อมูล Windows จริงได้ Juntei เก็บหมายเหตุด้านการระบุแหล่งที่มา/สัญญาอนุญาตไว้คู่กับ
 ไฟล์ทดสอบที่รวมไว้
 

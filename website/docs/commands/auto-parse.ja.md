@@ -27,13 +27,13 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-各パーサーはファイルパスを必要とするため、リーダーが公開する NTFS ボリュームから、パーサーが読み取るファイル（レジストリハイブとそのトランザクションログ、NTFS メタデータファイル、データベース、Prefetch、ショートカット、Jump List、Outlook ファイル、Defender の検疫フォルダー）を専用の一時作業領域にコピーしてから通常の解析を行います。
+各パーサーはファイルパスを必要とするため、リーダーが公開する NTFS ボリュームから、パーサーが読み取るファイル（レジストリハイブとそのトランザクションログ、NTFS メタデータファイル、データベース、Prefetch、ショートカット、Jump List、Outlook ファイル、PSReadLine 履歴ファイル、ごみ箱のインデックス ファイル、RDP ビットマップキャッシュ、Defender の検出履歴ファイル、Defender の検疫フォルダー）を専用の一時作業領域にコピーしてから通常の解析を行います。
 それ以外のファイルは、元の更新時刻を持つ空のプレースホルダーになるため、ディレクトリとパスはディスク上と同じに見えます。
 persistence-hunter は、永続化エントリが参照する実行ファイルなど、必要になったプレースホルダーの内容だけをイメージから読み取ります。
 **出力結果に加えて、コピーするファイルを保存する一時ディスク容量が必要です。**
 読み取りバッファーは固定サイズです。ホストのファイルシステムが対応している場合、ゼロ領域はスパース領域として書き込みます。
 元のファイル名、ディレクトリ構造、ハードリンク、ファイル更新時刻を保持します。
-LNK と Jump List のソース作成・更新・アクセス時刻は、一時ファイルではなく元の NTFS メタデータのスナップショットから取得します。
+LNK と Jump List のソース作成・更新・アクセス時刻、および PowerShell 履歴のソース更新時刻は、一時ファイルではなく元の NTFS メタデータのスナップショットから取得します。
 一時ディレクトリは、パーサーエラーが報告された場合を含めて正常な終了処理で削除されますが、強制終了時には残る場合があります。
 元のイメージは読み取り専用で開き、未反映の VHDX ログもメモリ上でのみ適用します。
 
@@ -134,11 +134,15 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - ユーザーアクセスログ (UAL)
 - Web ブラウザの閲覧履歴、ダウンロード、Cookie、フォーム入力履歴 (Chromium 系および Firefox 系ブラウザ)
 - Internet Explorer と従来の Edge の WebCache: 閲覧履歴、ダウンロード、Cookie、キャッシュ エントリ
+- Windows Search のインデックス: インデックス化されたすべてのファイル、フォルダー、電子メール、Web ページと、そのメタデータおよび本文の抜粋
 - Outlook の PST、OST、MSG、OFT ファイル: フォルダー、アイテム、受信者、添付ファイル、連絡先、予定表アイテム、タスク
 - LNK のショートカット
 - Jump Lists
+- ごみ箱: 削除された項目の元のパス、サイズ、削除日時、ユーザー
+- RDP ビットマップキャッシュ: ユーザーが見たリモート画面のタイルと、キャッシュ ファイルごとのコラージュ画像
 - ShimCache
 - Persistence Hunter (許可/ブロック プロファイルを使用した 131 クロスソース永続性チェック)
+- Defender の検出履歴: 隔離されなかった脅威を含む、すべての検出とその状態、ユーザー、プロセス、リソース
 - Defender 隔離メタデータ
 - 「開いて名前を付けて保存」ダイアログの履歴
 - 回復可能な削除されたデータを含む、すべてのレジストリ キーと値
@@ -220,13 +224,16 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -247,6 +254,9 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -285,9 +295,14 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -309,21 +324,22 @@ CSV の `$MFT` 出力には、すべての時刻と短いファイル名が含�
 | `Communication` | Outlook の PST、OST、MSG、OFT ファイル: フォルダー、アイテム、受信者、添付ファイル、連絡先、予定表アイテム、タスク |
 | `ExternalDevices` | USB デバイスとボリューム |
 | `FileAndFolderOpening` | Jump Lists、LNK ショートカット、Microsoft Office、MRU リスト、開くダイアログと名前を付けて保存ダイアログ、RecentDocs、ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache、ごみ箱、ShimCache、Windows Search のインデックス |
 | `FileSystem` | `$Boot`、`$I30`、`$LogFile`、`$MFT`、`$Secure:$SDS`、USN ジャーナル |
 | `NetworkActivity` | ネットワーク プロファイル、インターフェイス、共有、ポート プロキシ、およびルート。 SRUM 接続、トラフィック、プッシュ通知 |
-| `LateralMovement` | ユーザーの送信リモート デスクトップ、PuTTY および WinSCP 接続、マップされたドライブと共有。ユーザーアクセスログ (サーバーの役割のクライアント) |
+| `LateralMovement` | ユーザーの送信リモート デスクトップ、PuTTY および WinSCP 接続、マップされたドライブと共有。RDP ビットマップキャッシュ (リモート画面のタイル)。ユーザーアクセスログ (サーバーの役割のクライアント) |
 | `Persistence` | ブート構成 (BCD)、レジストリ自動起動、サービス、TaskCache |
 | `ProcessExecution` | アプリケーションの互換性、BAM および DAM、FeatureUsage とピン、MuiCache、Prefetch、Prefetch タイムライン、SRUM アプリケーション/CPU アクティビティ、UserAssist |
 | `Registry` | 一般的なハイブキーと値 (回復されたレコードを含む) |
-| `SecurityProducts` | Defender 隔離メタデータとオプションの抽出コンテンツ。セキュリティ設定 (Defender、UAC、資格情報の保護、RDP、ファイアウォール、ログ) |
+| `SecurityProducts` | Defender の検出履歴。Defender 隔離メタデータとオプションの抽出コンテンツ。セキュリティ設定 (Defender、UAC、資格情報の保護、RDP、ファイアウォール、ログ) |
+| `ShellHistory` | PowerShell PSReadLine のコマンド履歴。ファイル更新時刻はメタデータであり、コマンド実行時刻はありません |
 | `SystemInformation` | 名前、Windows バージョン、タイムゾーン、最終シャットダウン、プロファイル、SID、監査ポリシー。 SRUM エネルギー/容量、ID マップ、および不明なプロバイダー |
 
 カテゴリは調査を整理するのに役立ちます。それらは特定の活動の証拠ではありません。たとえば、Amcache および ShimCache エントリだけでは実行は確立されません。 SRUM はリソースの使用状況を記録します。実行中のプログラムについて結論を出す前に、アーティファクト ガイドを参照してください。
 
 CSV、JSON、および JSONL は同じカテゴリを使用します。パーサー ジョブごとに 1 つの `<artifact>-logs.txt` ファイルには、その正確なコマンドとメッセージが含まれます。たとえば、`HOST1/FileSystem/MFT-logs.txt` や `HOST1/ProcessExecution/Prefetch-logs.txt` などです。 JSON と JSONL は同じログ ファイル名を使用します。 Amcache と Jump Lists にはそれぞれ、プレフィックス付きテーブルの横に 1 つの共有ログがあります。 SRUM プロバイダー テーブルは、共有 `SystemInformation/SRUM-logs.txt` ファイルを使用して、`NetworkActivity`、`ProcessExecution`、および `SystemInformation` に直接配置されます。 `logs/` サブディレクトリは作成されません。
 
-デフォルトの CSV ファイル名は、`Registry-SAM.csv`、`LNK.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、`I30.csv`、`MFT.csv`、`UsnJournal.csv`、 `Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、`Registry-SecuritySettings.csv`、`PrefetchTimeline.csv`、 `Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、 `Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、および`DefenderQuarantine.csv`。レジストリ派生テーブルでは、`Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv`、`Registry-SystemInfo.csv` など、`Registry-` プレフィックスが使用されます。一般的なハイブのキーと値は `Registry-Dump.csv` にあります。 Amcache テーブルは、`FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、`Registry-Amcache-Findings.csv`、および `Registry-Amcache-Summary.csv` です。 Jump Lists は `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` と `JumpLists-CustomDestinations.csv` を使用します。 Amcache または Jump Lists サブディレクトリはありません。 SRUM テーブルは、そのカテゴリの直下で `SRUM-` ファイル名を使用します (例: `NetworkActivity/SRUM-NetworkConnections.csv`)。ユーザーアクセスログのテーブルは `LateralMovement` にあり、`UAL-Clients.csv` や `UAL-SystemIdentity.csv` のようにテーブルごとに 1 つのファイルとなり、`UAL-logs.txt` も作成されます。[ユーザーアクセスログ (UAL)](../artifacts/ual.md#automatic-parsing) を参照してください。Web ブラウザのテーブルは `BrowserActivity` にあり、`Browser-History.csv`、`Browser-Downloads.csv`、`Browser-Cookies.csv`、`Browser-FormHistory.csv` と `Browser-logs.txt` が作成されます。[Web ブラウザ](../artifacts/browser.md#automatic-parsing) を参照してください。Internet Explorer と従来の Edge の WebCache のテーブルも同じ場所にあり、`WebCache-History.csv`、`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv`、`WebCache-Containers.csv` と `WebCache-logs.txt` が作成されます。[Internet Explorer と従来の Edge](../artifacts/webcache.md#automatic-parsing) を参照してください。 Outlook のテーブルは `Communication` にあり、`Outlook-Files.csv`、`Outlook-Folders.csv`、`Outlook-Items.csv`、`Outlook-Recipients.csv`、`Outlook-Attachments.csv`、`Outlook-Contacts.csv`、`Outlook-Calendar.csv`、`Outlook-Tasks.csv` と `Outlook-logs.txt` が作成されます。[Outlook](../artifacts/outlook.md#automatic-parsing) を参照してください。 [完全な SRUM 配置テーブル](../artifacts/srum.md#categorized-auto-parse-output) を参照してください。
+デフォルトの CSV ファイル名は、`Registry-SAM.csv`、`LNK.csv`、`RecycleBin.csv`、`RdpCache.csv`、`Registry-RecentDocs.csv`、`Registry-ShimCache.csv`、`LogFile.csv`、`I30.csv`、`MFT.csv`、`UsnJournal.csv`、 `Boot.csv`、`SecureSDS.csv`、`Registry-Networks.csv`、`Registry-Persistence.csv`、`Registry-Services.csv`、`Registry-TaskCache.csv`、`Registry-BCD.csv`、`Registry-SecuritySettings.csv`、`PrefetchTimeline.csv`、 `Prefetch.csv`、`Registry-UserAssist.csv`、`Registry-AppCompat.csv`、`Registry-Office.csv`、`Registry-FeatureUsage.csv`、`Registry-AppHistory.csv`、`Registry-MRU.csv`、`Registry-SystemInfo.csv`、`Registry-RemoteAccess.csv`、 `Registry-OpenSaveMRU.csv`、`Registry-InstalledPrograms.csv`、`Registry-BAM.csv`、`Registry-MuiCache.csv`、`Registry-ShellBags.csv`、`Registry-USB.csv`、`Registry-SecuritySettings.csv`、`Registry-AuditPolicy.csv`、`Registry-Dump.csv`、`DefenderHistory.csv`、`DefenderQuarantine.csv`、および `WindowsSearch.csv`。レジストリ派生テーブルでは、`Registry-ShimCache.csv`、`Registry-UserAssist.csv`、`Registry-BAM.csv`、`Registry-SystemInfo.csv` など、`Registry-` プレフィックスが使用されます。一般的なハイブのキーと値は `Registry-Dump.csv` にあります。 Amcache テーブルは、`FileExistence/Registry-Amcache-Devices.csv`、`Registry-Amcache-Files.csv`、および `Registry-Amcache-Summary.csv` です。 Jump Lists は `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` と `JumpLists-CustomDestinations.csv` を使用します。 Amcache または Jump Lists サブディレクトリはありません。 SRUM テーブルは、そのカテゴリの直下で `SRUM-` ファイル名を使用します (例: `NetworkActivity/SRUM-NetworkConnections.csv`)。ユーザーアクセスログのテーブルは `LateralMovement` にあり、`UAL-Clients.csv` や `UAL-SystemIdentity.csv` のようにテーブルごとに 1 つのファイルとなり、`UAL-logs.txt` も作成されます。[ユーザーアクセスログ (UAL)](../artifacts/ual.md#automatic-parsing) を参照してください。RDP ビットマップキャッシュのレコードは `LateralMovement/RdpCache.csv` にあり、各キャッシュ ファイルのコラージュは `LateralMovement/RdpCache/<user>/<cache file>/` にあります。`--extract-rdp-tiles` を指定した場合は、すべてのタイルがその横に保存されます。[RDP ビットマップキャッシュ](../artifacts/rdp-cache.md#automatic-parsing) を参照してください。Web ブラウザのテーブルは `BrowserActivity` にあり、`Browser-History.csv`、`Browser-Downloads.csv`、`Browser-Cookies.csv`、`Browser-FormHistory.csv` と `Browser-logs.txt` が作成されます。[Web ブラウザ](../artifacts/browser.md#automatic-parsing) を参照してください。Internet Explorer と従来の Edge の WebCache のテーブルも同じ場所にあり、`WebCache-History.csv`、`WebCache-Downloads.csv`、`WebCache-Cookies.csv`、`WebCache-Entries.csv`、`WebCache-Containers.csv` と `WebCache-logs.txt` が作成されます。[Internet Explorer と従来の Edge](../artifacts/webcache.md#automatic-parsing) を参照してください。 Outlook のテーブルは `Communication` にあり、`Outlook-Files.csv`、`Outlook-Folders.csv`、`Outlook-Items.csv`、`Outlook-Recipients.csv`、`Outlook-Attachments.csv`、`Outlook-Contacts.csv`、`Outlook-Calendar.csv`、`Outlook-Tasks.csv` と `Outlook-logs.txt` が作成されます。[Outlook](../artifacts/outlook.md#automatic-parsing) を参照してください。 [完全な SRUM 配置テーブル](../artifacts/srum.md#categorized-auto-parse-output) を参照してください。
 
 ログは、`Registry-SAM-logs.txt`、`PrefetchTimeline-logs.txt`、`Registry-UserAssist-logs.txt` などの大文字のアーティファクト名と一致します。 JSON/JSONL ファイルは同じステムを使用します (例: `MFT.jsonl`)。レコードの `Artifact` 識別子は、クエリの場合は `mft` です。マルチテーブル出力では、テーブルの横に `Registry-Amcache-logs.txt` または `JumpLists-logs.txt` が表示されます。共有 SRUM ログは `SystemInformation` にあります。
 
@@ -377,7 +393,9 @@ juntei auto-parse -d evidence -o parsed-jsonl -t jsonl -j parsed-jsonl/timeline.
 
 **CSV モード**、Juntei では、追加のネイティブ JSONL パスが実行されるため、SIEM ファイルは、CSV テーブルが省略できる数値型とブール型、ネストされたデータ、生のフィールド、およびメタデータを保持します。追加のジョブは同じ `-T` 同時実行制限を共有し、隔離コンテンツを再度抽出せず、別個の `*-json-timeline-logs.txt` サイドカー ログを持ちます。どちらのマニフェストも、その目的と出力形式を区別します。一時 JSONL ファイルは、実行が成功すると削除されます。パーサーまたはエクスポートが失敗した場合でも、それらは保持されます。追加の処理時間と一時ディスク容量を計画してください。
 
-**JSON モード** では、Juntei は証拠を再解析せずに、既存の結果をコンパクトな JSONL にストリーミングします。 Amcache レポートは、ネイティブ JSONL と同じ個別の概要、検出結果、ファイル、およびデバイス レコードに拡張されます。 **JSONL モード** では、既存の注釈付きレコードが直接結合されます。すべてのモードで同じ SIEM レコード構造が使用されます。データセットはネイティブのタイムスタンプとアーティファクト フィールドを保持します。共通のイベント タイムスタンプを作成したり、異種アーティファクトをグローバルに並べ替えたりすることはありません。
+**JSON モード** では、Juntei は証拠を再解析せずに、既存の結果をコンパクトな JSONL にストリーミングします。 Amcache レポートは、ネイティブ JSONL と同じ個別の概要、ファイル、およびデバイス レコードに拡張されます。 **JSONL モード** では、既存の注釈付きレコードが直接結合されます。すべてのモードで同じ SIEM レコード構造が使用されます。データセットはネイティブのタイムスタンプとアーティファクト フィールドを保持します。共通のイベント タイムスタンプを作成したり、異種アーティファクトをグローバルに並べ替えたりすることはありません。
+
+過去のレポートに `Findings` テーブルがある場合は保持しますが、新しいパーサー出力では作成しません。
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
@@ -417,6 +435,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -433,7 +452,7 @@ Display Settings:
   -q, --quiet     Quiet mode: do not display the launch banner
 ```
 
-実際には新しい出力ディレクトリを使用してください。 `-C` は、この実行に対して生成された正確なターゲットのみを削除または上書きするため、現在欠落しているアーティファクトによって古い結果が残ることはありません。無関係なファイルや完全な出力ツリーは削除されません。また、新しい実行で `-x` を使用するかどうかに関係なく、解析前に、各コンピューターの `SecurityProducts/DefenderQuarantined/` ディレクトリと予約された `defender-quarantined/` ディレクトリが以前のフラット レイアウトから削除されます。
+実際には新しい出力ディレクトリを使用してください。 `-C` は、この実行に対して生成された正確なターゲットのみを削除または上書きするため、現在欠落しているアーティファクトによって古い結果が残ることはありません。無関係なファイルや完全な出力ツリーは削除されません。また、新しい実行で `-x` や `--extract-rdp-tiles` を使用するかどうかに関係なく、解析前に、各コンピューターの `SecurityProducts/DefenderQuarantined/` ディレクトリと `LateralMovement/RdpCache/` ディレクトリ、および以前のフラット レイアウトの予約された `defender-quarantined/` ディレクトリが削除されます。
 
 古いフラット レイアウトから切り替える場合は、新しい出力ディレクトリを使用します。以前の CSV/JSON ファイルは、自動的に再配置または削除されません。
 
@@ -453,3 +472,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 既存の `-j, --json-timeline` は、各パーサーのスキーマを保ったネイティブレコードを JSONL にまとめる機能です。時刻の展開や並べ替えは行いません。詳細な証拠確認のため、このファイルと各パーサーの結果も保管してください。
+
+## PowerShell 履歴 { #powershell-history }
+
+`PSReadLine` フォルダ直下の `<Host>_history.txt` を再帰的に検出し、VHDX/E01 のステージング時にコピーします。このフォルダ外にある同じ接尾辞のファイルは対象外です。独自の保存場所や名前を変更したコピーは、`parse-file powershell-history -f <FILE>` で明示的に解析してください。
+
+結果は `ShellHistory/PowerShellHistory.csv`（選択した形式に応じて `.json`/`.jsonl`）に保存し、通常のマニフェストとパーサーログにも記録します。`FileLastWriteTime` は元のイメージメタデータを含むソースファイルの更新時刻であり、コマンド実行時刻ではありません。`auto-parse -Z` は他の出力時刻とともに表示オフセットを変更しますが、単独のパーサーには `-Z` オプションがありません。結合された `-j` タイムラインには履歴の行が含まれます。これらの行には日時がないため、`super-timeline` はそこからイベントを作成せず、時刻なしレコードとして数えます。[PowerShell 履歴](../artifacts/powershell-history.md)を参照してください。

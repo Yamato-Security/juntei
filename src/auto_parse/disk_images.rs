@@ -583,8 +583,16 @@ enum Plan {
     Placeholder(Stat),
 }
 
-fn plan(image: &Arc<Image>, volume: usize, entry: &Entry, copy_all: bool) -> Plan {
-    if copy_all || named_input(&entry.name) {
+fn plan(image: &Arc<Image>, volume: usize, entry: &Entry, copy_all: bool, parent: &Path) -> Plan {
+    if copy_all
+        || named_input(&entry.name)
+        || (entry.name.eq_ignore_ascii_case("INFO")
+            && crate::recycle_bin::is_legacy_info_path(&parent.join(&entry.name)))
+        // `*_history.txt` is PowerShell's only in a PSReadLine folder.
+        || crate::powershell_history::is_history_path(&parent.join(&entry.name))
+        // Defender's detection history files are small, and recognized by their content.
+        || crate::defender_history::is_history_path(&parent.join(&entry.name))
+    {
         return Plan::Copy;
     }
     // Copying reports a file that can't be read, as it always has.
@@ -695,7 +703,8 @@ fn stage_volume(
         let mut plans = Vec::with_capacity(accepted.len());
         for (entry, _) in &accepted {
             crate::interrupt::check()?;
-            plans.push((!entry.directory).then(|| plan(image, volume, entry, copy_all)));
+            plans
+                .push((!entry.directory).then(|| plan(image, volume, entry, copy_all, &directory)));
         }
         let copied: HashSet<String> = accepted
             .iter()
@@ -764,9 +773,12 @@ fn stage_volume(
                             .placeholders
                             .insert(canonical_root.join(within), stat.size);
                     }
+                    // The parsers that report a source file's own times read them from here,
+                    // never from the staged copy.
                     if has_content
                         && (crate::lnk::is_lnk_name(&entry.name)
-                            || crate::jump_lists::is_jump_list_name(&entry.name))
+                            || crate::jump_lists::is_jump_list_name(&entry.name)
+                            || crate::powershell_history::is_history_path(&output))
                     {
                         let result = image.volumes[volume].stat(entry.record).and_then(|stat| {
                             inputs
@@ -942,6 +954,130 @@ mod tests {
         for name in ["other.LOG1", "setupapi.log", "History", "Historywal"] {
             assert!(!is_companion(name, &copied), "{name}");
         }
+    }
+
+    #[test]
+    fn recycle_bin_review_stages_windows95_info_indexes() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root = tempfile::tempdir().unwrap();
+        let image_path = root.path().join("sample.vhdx");
+        let gz = File::open(repo.join("test_files/vhdx/sample.vhdx.gz")).unwrap();
+        io::copy(
+            &mut flate2::read::GzDecoder::new(gz),
+            &mut File::create(&image_path).unwrap(),
+        )
+        .unwrap();
+        let image = Arc::new(Image::open(&image_path).unwrap());
+        let mut record = ROOT_RECORD;
+        let mut entry = None;
+        for name in ["C", "Users", "sample", "Data", "small.txt"] {
+            let next = image.volumes[0].lookup(record, name).unwrap().unwrap();
+            record = next.record;
+            entry = Some(next);
+        }
+        let mut entry = entry.unwrap();
+        entry.name = "INFO".into();
+        let header = fs::read(repo.join("test_files/recycle_bin/rifiuti2/INFO-95-ja-1")).unwrap();
+        assert!(!content_input("INFO", &header));
+        assert!(matches!(
+            plan(&image, 0, &entry, false, Path::new("C/RECYCLED")),
+            Plan::Copy
+        ));
+        assert!(matches!(
+            plan(&image, 0, &entry, false, Path::new("C/Documents")),
+            Plan::Placeholder(_)
+        ));
+    }
+
+    #[test]
+    fn powershell_history_is_staged_only_from_psreadline_folders() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root = tempfile::tempdir().unwrap();
+        let image_path = root.path().join("sample.vhdx");
+        let gz = File::open(repo.join("test_files/vhdx/sample.vhdx.gz")).unwrap();
+        io::copy(
+            &mut flate2::read::GzDecoder::new(gz),
+            &mut File::create(&image_path).unwrap(),
+        )
+        .unwrap();
+        let image = Arc::new(Image::open(&image_path).unwrap());
+        let mut record = ROOT_RECORD;
+        let mut entry = None;
+        for name in ["C", "Users", "sample", "Data", "small.txt"] {
+            let next = image.volumes[0].lookup(record, name).unwrap().unwrap();
+            record = next.record;
+            entry = Some(next);
+        }
+        let mut entry = entry.unwrap();
+        let history = "C/Users/sample/AppData/Roaming/Microsoft/Windows/PowerShell/PSReadLine";
+        for name in [
+            "ConsoleHost_history.txt",
+            "Visual Studio Code Host_history.txt",
+        ] {
+            entry.name = name.into();
+            assert!(!named_input(name), "{name}");
+            assert!(matches!(
+                plan(&image, 0, &entry, false, Path::new(history)),
+                Plan::Copy
+            ));
+            // The same name elsewhere is some other program's file.
+            assert!(matches!(
+                plan(
+                    &image,
+                    0,
+                    &entry,
+                    false,
+                    Path::new("C/Users/sample/Documents")
+                ),
+                Plan::Placeholder(_)
+            ));
+        }
+        entry.name = "notes.txt".into();
+        assert!(matches!(
+            plan(&image, 0, &entry, false, Path::new(history)),
+            Plan::Placeholder(_)
+        ));
+    }
+
+    #[test]
+    fn defender_history_is_staged_only_from_detection_history_folders() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let root = tempfile::tempdir().unwrap();
+        let image_path = root.path().join("sample.vhdx");
+        let gz = File::open(repo.join("test_files/vhdx/sample.vhdx.gz")).unwrap();
+        io::copy(
+            &mut flate2::read::GzDecoder::new(gz),
+            &mut File::create(&image_path).unwrap(),
+        )
+        .unwrap();
+        let image = Arc::new(Image::open(&image_path).unwrap());
+        let mut record = ROOT_RECORD;
+        let mut entry = None;
+        for name in ["C", "Users", "sample", "Data", "small.txt"] {
+            let next = image.volumes[0].lookup(record, name).unwrap().unwrap();
+            record = next.record;
+            entry = Some(next);
+        }
+        let mut entry = entry.unwrap();
+        entry.name = "6AFE33A0-19BA-4FFF-892F-B700539D7D63".into();
+        assert!(!named_input(&entry.name));
+        let history =
+            "C/ProgramData/Microsoft/Windows Defender/Scans/History/Service/DetectionHistory/02";
+        assert!(matches!(
+            plan(&image, 0, &entry, false, Path::new(history)),
+            Plan::Copy
+        ));
+        // The same name elsewhere is not read: the parser reads DetectionHistory folders only.
+        assert!(matches!(
+            plan(
+                &image,
+                0,
+                &entry,
+                false,
+                Path::new("C/ProgramData/Microsoft/Windows Defender/Scans/History/Service")
+            ),
+            Plan::Placeholder(_)
+        ));
     }
 
     #[test]

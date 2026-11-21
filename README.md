@@ -23,7 +23,7 @@ supported artifact, interpret each output field, and avoid common forensic-analy
 
 ## Supported artifacts
 
-Juntei currently supports 42 of the most popular Windows forensic artifacts and we continue to add more.
+Juntei currently supports 47 of the most popular Windows forensic artifacts and we continue to add more.
 
 Use `juntei auto-parse -d <EVIDENCE> -o <OUTPUT>` to discover multiple collected Windows systems
 and parse every supported artifact in parallel. It groups results by computer and artifact category,
@@ -55,6 +55,12 @@ provides 131 checks, configurable allow/block profiles, source evidence, and CSV
 results. Candidates describe persistence configuration; they do not by themselves prove compromise
 or execution. Per-check coverage identifies evidence that was missing or only partly readable.
 
+Scan collected files with `juntei yara-scan -d <EVIDENCE> -o <RESULTS>`.
+It downloads YARA Forge **Core** rules by default; select `--ruleset extended` or
+`--ruleset full`, or supply `--rules <FILE_OR_DIRECTORY>` for an offline scan.
+[Read the YARA scanning guide](https://yamato-security.github.io/juntei/commands/yara-scan/)
+for coverage reporting, resource limits, and interpreting matches.
+
 ### Process Execution
 
 | Artifact | Type |
@@ -79,6 +85,8 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | **Boot sector** (`$Boot`) — Volume serial number (the one LNK and Prefetch files record), geometry, `$MFT` location, and a boot code hash to compare across hosts. | NTFS |
 | **Amcache** (`Amcache.hve`) — Inventory of executable paths, hashes, publisher metadata, and devices; an entry alone does not prove execution. | Registry |
 | **ShimCache / AppCompatCache** (`SYSTEM` hive) — Cached application paths, timestamps, and compatibility flags; an entry alone does not prove execution. | Registry |
+| **Recycle Bin** (`$I` files, `INFO2`) — The files and folders users deleted to the Recycle Bin: original path, size, deletion time and user, whether the deleted content is still in the bin, and on Windows XP and earlier, items since restored or purged. | File |
+| **Windows Search index** (`Windows.edb`) — Every file, folder, e-mail and web page Windows Search indexed, with its path, size, owner, file times, the time it was indexed, title, author, an extract of its text and the computer name; items deleted since stay until the next crawl. Windows 7 to Windows 11 21H2 (the SQLite index of 22H2 and later is reported, not read). | ESE |
 
 ### File and Folder Opening
 
@@ -132,6 +140,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | --- | --- |
 | **Remote access, user side** (`NTUSER.DAT`) — Computers a user reached with Remote Desktop, PuTTY and WinSCP, the accounts used, accepted SSH host keys with their fingerprints, mapped drives and shares. | Registry |
 | **User Access Logging** (`Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb`) — The client addresses and accounts that used a Windows Server's roles (file shares, Active Directory, DHCP, IIS and more), with daily request counts. | ESE |
+| **RDP bitmap cache** (`Cache????.bin`, `bcache*.bmc`) — Tiles of the remote screens a user saw with the Remote Desktop client, saved as images for RdpCacheStitcher and as a collage of each cache file, including Windows XP's compressed tiles. | File |
 
 ### System Information
 
@@ -150,6 +159,12 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 | Artifact | Type |
 | --- | --- |
 | **Audit policy** (`SECURITY` `PolAdtEv`) — Which security events the system was set to log, per subcategory, and so which missing events say nothing. | Registry |
+
+### Shell History
+
+| Artifact | Type |
+| --- | --- |
+| **PowerShell history** (`PSReadLine\*_history.txt`) — Saved command lines with user, host, source line numbers and file modification time. Commands have no execution timestamps. | File |
 
 ### Browser Activity
 
@@ -174,6 +189,7 @@ or execution. Per-check coverage identifies evidence that was missing or only pa
 
 | Artifact | Type |
 | --- | --- |
+| **Microsoft Defender detection history** (`Scans\History\Service\DetectionHistory`) — Every detection, including threats that were never quarantined: threat, status and result, user, process, resources, hashes, and detection and remediation times. | File |
 | **Microsoft Defender quarantine** (`Quarantine\Entries`, `ResourceData`, `Resources`) — Threat records, original paths, hashes, download origins, and recoverable quarantined content. | File |
 | **Security settings** (`SOFTWARE`, `SYSTEM`, `NTUSER.DAT`) — Defender and its exclusions, UAC, WDigest and LSA protection, RDP, the firewall, SMBv1, PowerShell logging and AMSI, and event log settings, flagged where they weaken the default. | Registry |
 

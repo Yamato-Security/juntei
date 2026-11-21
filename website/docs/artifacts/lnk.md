@@ -1,5 +1,7 @@
 # LNK Shortcuts
 
+Juntei preserves artifact records, metadata, and parsing diagnostics. Parser-specific detection rules are evaluated in Juntei Pro. Persistence Hunter remains available with its existing checks and policy profiles.
+
 ## What LNK files are
 
 Windows Shell Link (`.lnk`) files describe a target plus launch arguments, working directory, icon,
@@ -99,3 +101,5 @@ The LNK header's target FILETIMEs and tracker times remain convertible absolute 
 - [ys-lnk-parser](https://github.com/Yamato-Security/ys-lnk-parser)
 - [Sootmark shell](https://github.com/Sootmark/shell)
 - [LnkParse3](https://github.com/Matmaus/LnkParse3)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

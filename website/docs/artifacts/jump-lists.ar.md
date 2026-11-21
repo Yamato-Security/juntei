@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+يحتفظ Juntei بسجلات الأدلة والبيانات الوصفية وتشخيصات التحليل. تُقيَّم قواعد الكشف الخاصة بالمحللات في Juntei Pro. تظل فحوص Persistence Hunter وملفات سياسته الحالية متاحة.
+
 ## ما هي Jump Lists { #what-jump-lists-are }
 
 تقف Jump Lists وراء القوائم التي تظهر من إدخالات التطبيقات في شريط المهام وقائمة "ابدأ". فـ Jump
@@ -101,3 +103,5 @@ juntei parse-file jump-lists -f sample.automaticDestinations-ms -t jsonl | jq .
 - [Microsoft: تنسيق Shell Link ‏(MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [مشروع اختبار/مرجع لمحلل JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

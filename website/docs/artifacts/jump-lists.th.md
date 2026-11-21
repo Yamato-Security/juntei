@@ -1,5 +1,7 @@
 # Jump Lists { #jump-lists }
 
+Juntei เก็บรักษาระเบียนอาร์ติแฟกต์ เมทาดาทา และข้อมูลวินิจฉัยการแยกวิเคราะห์ กฎตรวจจับเฉพาะตัวแยกวิเคราะห์จะประเมินใน Juntei Pro ส่วนการตรวจสอบและโปรไฟล์นโยบายเดิมของ Persistence Hunter ยังคงใช้งานได้
+
 ## Jump Lists คืออะไร { #what-jump-lists-are }
 
 Jump Lists เป็นข้อมูลเบื้องหลังเมนูที่แสดงจากรายการแอปพลิเคชันบนแถบงาน (taskbar) และเมนู Start โดย
@@ -101,3 +103,5 @@ JSON/JSONL จะเก็บรักษาข้อมูลเพิ่มเ
 - [Microsoft: รูปแบบ Shell Link (MS-SHLLINK)](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-shllink/)
 - [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser)
 - [โปรเจกต์ทดสอบ/อ้างอิงพาร์เซอร์ JumpList](https://github.com/AbdulRhmanAlfaifi/jumplist_parser)
+
+`TargetItemTypes`: CSV (`|`): `RootFolder|FileEntry|CdBurn`; JSON/JSONL: `["RootFolder", "FileEntry", "CdBurn"]`.

@@ -56,6 +56,12 @@
 - [defender-dump](https://github.com/knez/defender-dump) — 별도의 연구/추출 구현입니다.
 - [FIRST 악성 코드 분석 기초](https://www.first.org/global/sigs/malware/analysis/) — 취급 및 분석 자료입니다.
 
+## YARA 헌팅 { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): Core, Extended, Full 규칙 패키지.
+- [Boreal](https://github.com/vthib/boreal): `yara-scan`이 사용하는 이식성 있는 Rust 엔진.
+- [YARA 규칙 작성](https://yara.readthedocs.io/en/stable/writingrules.html): 규칙 언어 참조.
+
 ## Juntei 파서 프로젝트 { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

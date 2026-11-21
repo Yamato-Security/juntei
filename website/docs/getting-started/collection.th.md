@@ -18,10 +18,13 @@ Juntei พาร์สไฟล์ที่รวบรวมจาก Windows �
 | SRUM | `C:\Windows\System32\sru\SRUDB.dat` |
 | การบันทึกการเข้าถึงของผู้ใช้ (Windows Server) | `C:\Windows\System32\LogFiles\Sum\` |
 | Internet Explorer และ Edge รุ่นเก่า (WebCache) | `%LOCALAPPDATA%\Microsoft\Windows\WebCache\` |
+| ดัชนี Windows Search | `C:\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb` (Windows 7 ถึง 11 21H2 ส่วน `Windows.db` และ `Windows-gather.db` ตั้งแต่ 22H2) |
 | Outlook | `%LOCALAPPDATA%\Microsoft\Outlook\*.ost`, `%USERPROFILE%\Documents\Outlook Files\*.pst` (`%LOCALAPPDATA%\Microsoft\Outlook\*.pst` ก่อน Outlook 2010), `%APPDATA%\Microsoft\Templates\*.oft` และไฟล์ `.msg` ไม่ว่าจะถูกบันทึกไว้ที่ใด |
 | เว็บเบราว์เซอร์ | `%LOCALAPPDATA%\Google\Chrome\User Data\`, `%LOCALAPPDATA%\Microsoft\Edge\User Data\`, `%APPDATA%\Mozilla\Firefox\Profiles\` และโฟลเดอร์โปรไฟล์ของเบราว์เซอร์อื่น ๆ |
 | LNK / Recent | `%APPDATA%\Microsoft\Windows\Recent\*.lnk` และตำแหน่งอื่นของผู้ใช้/ระบบ |
 | Jump Lists | `%APPDATA%\Microsoft\Windows\Recent\AutomaticDestinations` และ `CustomDestinations` |
+| แคชบิตแมปของ RDP | `%LOCALAPPDATA%\Microsoft\Terminal Server Client\Cache\` (`%USERPROFILE%\Local Settings\Application Data\Microsoft\Terminal Server Client\Cache\` บน Windows XP และรุ่นก่อนหน้า) |
+| ถังรีไซเคิล | `$Recycle.Bin\<SID>\$I*` และ `$R*` บนทุกวอลุ่ม (`RECYCLER\<SID>\INFO2` และ `D*` บน Windows XP และรุ่นก่อนหน้า) |
 | ShimCache | ไฮฟ์ `SYSTEM`: `...\Session Manager\AppCompatCache\AppCompatCache` |
 | การกักกันของ Defender | `C:\ProgramData\Microsoft\Windows Defender\Quarantine` |
 | รีจิสทรีระดับเครื่อง | `C:\Windows\System32\config\SYSTEM`, `SOFTWARE`, `SAM`, `SECURITY` |
@@ -45,6 +48,9 @@ Juntei พาร์สไฟล์ที่รวบรวมจาก Windows �
   จะอยู่ในไฟล์เหล่านั้นจนกว่าเบราว์เซอร์จะทำ checkpoint เท่านั้น
 - เก็บรวบรวมโฟลเดอร์ `WebCache` ทั้งหมด เพราะ Windows เปิด `WebCacheV01.dat` ค้างไว้ตลอดเวลาที่ผู้ใช้
   ลงชื่อเข้าใช้อยู่ และการเปลี่ยนแปลงล่าสุดจะมีอยู่เฉพาะในบันทึกธุรกรรม `V01*.log` ซึ่ง Juntei ไม่ได้เล่นซ้ำ
+- เก็บรวบรวมโฟลเดอร์ `Applications\Windows` ทั้งหมดของ Windows Search จากอิมเมจ Volume Shadow Copy
+  หรือหลังจากหยุดบริการ `WSearch` แล้ว เพราะ `Windows.edb` ถูกเปิดค้างไว้ขณะที่บริการทำงาน และการเปลี่ยนแปลง
+  ล่าสุดจะมีอยู่เฉพาะในบันทึกธุรกรรม `MSS*.log` ซึ่ง Juntei ไม่ได้เล่นซ้ำ
 - เก็บรวบรวมไฟล์ OST และ PST ของ Outlook ขณะที่ Outlook ปิดอยู่ หรือเก็บจากอิมเมจดิสก์หรือ Volume Shadow
   Copy เพราะ Outlook เปิดไฟล์เหล่านี้ค้างไว้ตลอดเวลาที่ทำงาน และให้ค้นหา PST นอกโฟลเดอร์เริ่มต้นด้วย
   เพราะผู้ใช้มักย้ายไฟล์เก็บถาวรไปไว้ในโฟลเดอร์ ไดรฟ์ และการแชร์ไฟล์อื่น

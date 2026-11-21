@@ -28,16 +28,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Журналювання доступу користувачів (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer і застарілий Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Індекс Windows Search](../artifacts/windows-search.md) |
 
 ## [Команди для файлів](execution.md) { #file-commands }
 
 | Команда | Вхідний артефакт | Докладний посібник |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Історія виявлень Defender](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Дерево або запис карантину Defender | [Карантин Defender](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [Ярлики LNK](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [Історія PowerShell](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [Кеш растрових зображень RDP](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Кошик](../artifacts/recycle-bin.md) |
 
 ## [Команди NTFS](filesystem.md) { #ntfs-commands }
 
@@ -104,6 +109,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 рівня. Вона доповнює повну інвентаризацію конфігурації з `parse-registry persistence`
 131 перевіркою, класифікацією за списками дозволу/блокування, метаданими корисного навантаження, відомостями про охоплення та зіставленням часових позначок.
 
+## [Сканування YARA](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` сканує зібрані файли, зокрема відновлені карантинні дані та резидентні дані `$MFT`, за правилами YARA. За замовчуванням завантажується пакет YARA Forge Core; `--ruleset extended` або `--ruleset full` вибирають ширший пакет, а `--rules <FILE_OR_DIRECTORY>` сканує офлайн за локальними правилами. Сканування необов'язкове й виконується окремо від `auto-parse`.
+
 ## Використання верхнього рівня { #top-level-usage }
 
 ```text
@@ -119,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

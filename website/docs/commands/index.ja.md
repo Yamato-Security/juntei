@@ -25,16 +25,21 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`、`{GUID}.mdb`、`SystemIdentity.mdb` | [ユーザーアクセスログ (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer と従来の Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search のインデックス](../artifacts/windows-search.md) |
 
 ## [ファイルコマンド](execution.md) { #file-commands }
 
 | コマンド | 入力アーティファクト | 詳細ガイド |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender の検出履歴](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender 隔離ツリーまたはエントリ | [Defender 隔離](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK ショートカット](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell 履歴](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`、`bcache*.bmc` | [RDP ビットマップキャッシュ](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`、`RECYCLER\<SID>\INFO2`、`RECYCLED\INFO2` | [ごみ箱](../artifacts/recycle-bin.md) |
 
 ## [NTFS コマンド](filesystem.md) { #ntfs-commands }
 
@@ -95,6 +100,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 `juntei persistence-hunter` は複数のソース形式をハントするため、トップレベルの分析コマンドです。これは、`parse-registry persistence` の完全な構成インベントリを 131 チェック、許可/ブロック分類、ペイロード メタデータ、カバレッジ、およびタイムスタンプ相関で補完します。
 
+## [YARAスキャン](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` は、復元した隔離ペイロードや `$MFT` のレジデントデータを含む収集済みファイルを YARA ルールでスキャンします。既定では YARA Forge の Core パッケージをダウンロードします。`--ruleset extended` または `--ruleset full` でより広いパッケージを選択でき、`--rules <FILE_OR_DIRECTORY>` を指定するとローカルルールでオフラインスキャンができます。このスキャンはオプトインで、`auto-parse` とは別に実行します。
+
 ## トップレベルの使用法 { #top-level-usage }
 
 ```text
@@ -110,6 +119,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

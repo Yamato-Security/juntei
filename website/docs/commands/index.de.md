@@ -28,16 +28,21 @@ und organisiert Ergebnisse und Protokolle nach Computer und Untersuchungskategor
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Benutzerzugriffsprotokollierung (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer und Edge Legacy](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows-Search-Index](../artifacts/windows-search.md) |
 
 ## [Dateibefehle](execution.md) { #file-commands }
 
 | Befehl | Eingabeartefakt | Ausführlicher Leitfaden |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender-Erkennungsverlauf](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender-Quarantäneverzeichnis oder -eintrag | [Defender-Quarantäne](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK-Verknüpfungen](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell-Verlauf](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP-Bitmap-Cache](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Papierkorb](../artifacts/recycle-bin.md) |
 
 ## [NTFS-Befehle](filesystem.md) { #ntfs-commands }
 
@@ -104,6 +109,10 @@ behalten ihre Namen.
 der obersten Ebene. Er ergänzt das vollständige Konfigurationsinventar aus `parse-registry persistence` um
 131 Prüfungen, Allow-/Block-Klassifizierung, Payload-Metadaten, Abdeckung und Zeitstempelkorrelation.
 
+## [YARA-Scan](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` prüft gesammelte Dateien, einschließlich wiederhergestellter Quarantäne-Nutzdaten und residenter `$MFT`-Daten, mit YARA-Regeln. Standardmäßig wird das Paket YARA Forge Core heruntergeladen; `--ruleset extended` oder `--ruleset full` wählen ein umfangreicheres Paket, und `--rules <FILE_OR_DIRECTORY>` prüft offline mit lokalen Regeln. Der Scan ist optional und von `auto-parse` getrennt.
+
 ## Verwendung auf oberster Ebene { #top-level-usage }
 
 ```text
@@ -119,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

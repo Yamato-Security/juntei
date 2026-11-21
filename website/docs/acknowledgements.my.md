@@ -36,6 +36,9 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) သည် Python project ကို စိတ်ကူးရစေခဲ့ပါသည်။
   မျိုးရိုးစဉ်ဆက် အပြည့်အစုံအတွက် [persistence ကျေးဇူးတင်လွှာ](persistence-hunter/acknowledgements.md) ကို ကြည့်ပါ။
 
+- Vincent Thiberville ၏ [**Boreal**](https://github.com/vthib/boreal) သည် `yara-scan` command တွင် ထည့်သွင်းတည်ဆောက်ထားသော YARA နှင့် ကိုက်ညီသည့် Rust engine ဖြစ်သည် (MIT သို့မဟုတ် Apache-2.0၊ ၎င်း၏ notice ကို `THIRD_PARTY_NOTICES/crates.txt` တွင် ထားရှိသည်)။
+- YARAHQ အောက်တွင် Florian Roth ထိန်းသိမ်းသော [**YARA Forge**](https://github.com/YARAHQ/yara-forge) သည် `yara-scan` က တောင်းဆိုမှုအရ ဒေါင်းလုဒ်လုပ်သည့် Core၊ Extended နှင့် Full rule package များကို စုစည်းထားသည်။ Rule များသည် ၎င်းတို့၏ မူလရေးသားသူများ၏ လက်ရာအဖြစ် ၎င်းတို့၏ လိုင်စင်များအောက်တွင် ဆက်ရှိနေပြီး Juntei သည် ဒေါင်းလုဒ်လုပ်ထားသော source ကို ရလဒ်အစုတစ်ခုစီနှင့်အတူ သိမ်းဆည်းသည်။
+
 - Maxim Suhanov ၏ **regf specification** နှင့် **yarp** တို့သည် registry ဖွဲ့စည်းပုံများ၊ transaction-log
   replay နှင့် ဖျက်ထားသော record များ ပြန်လည်ရယူခြင်းအတွက် အထောက်အကူ ဖြစ်ခဲ့ပြီး ၎င်း၏ **dfir_ntfs** သည်
   INDX record များနှင့် index-slack carving အတွက် ကိုးကားချက် ဖြစ်ခဲ့ပါသည်။
@@ -47,6 +50,9 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   **libesedb** တို့သည် အသေးစိတ် ဖိုင်ပုံစံ သုတေသနနှင့် လွတ်လပ်သော parsing ကိုးကားချက်များကို ပေးပါသည်။
 - Fox-IT ၏ **dissect.esedb**၊ **dissect.ntfs** နှင့် **dissect.target** တို့သည် မှန်ကန်မှု စစ်ဆေးစဉ်
   အသုံးပြုခဲ့သော SRUM၊ UAL၊ `$Secure:$SDS`၊ SAM နှင့် Defender တို့၏ လွတ်လပ်သော အဓိပ္ပာယ်ဖော်ချက်များကို ပေးခဲ့ပါသည်။
+- Stroz Friedberg ၏ **SIDR** နှင့် libyal ၏ `esedbexport` တို့သည် Windows Search အညွှန်း၏ လွတ်လပ်သော
+  ဖတ်ရှုမှုများ ဖြစ်ခဲ့ပြီး ၎င်း၏ table များအကြောင်း libyal ၏ **esedb-kb** မှတ်စုများနှင့် record format အတွက်
+  Microsoft က ထုတ်ပြန်ထားသော **Extensible Storage Engine** source တို့ကို အသုံးပြုခဲ့ပါသည်။
 - `mkntfs` ဖြင့် ပြုလုပ်ထားသော volume များ၏ NTFS boot sector များအတွက် **The Sleuth Kit** ၏ `fsstat` သည်
   ကိုးကားချက် ဖြစ်ခဲ့ပါသည်။
 - Eric Zimmerman ၏ tool အချို့သည် နှိုင်းယှဉ်ရာတွင် အသုံးပြုခဲ့သော field အမည်များနှင့် စစ်ဆေးသူများ၏ မျှော်လင့်ချက်များကို
@@ -59,15 +65,24 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   တန်ဖိုးမြင့် Prefetch/Amcache/ShimCache ရှုမြင်ချက်များအတွက် အထောက်အကူ ဖြစ်ခဲ့ပါသည်။
 - **defender-dump** နှင့် dissect.target တို့သည် Defender quarantine ဖွဲ့စည်းပုံများနှင့် ဘေးကင်းသော
   ထုတ်ယူမှု အပြုအမူကို နားလည်ရန် သီးခြား implementation များကို ပေးပါသည်။
+- Orange Cyberdefense ၏ **wddh-parser** သည် Defender detection history format ကို ရှင်းလင်းဖော်ပြခဲ့ပြီး ၎င်း၏
+  နမူနာများတွင် WMI က ၎င်းတို့အတွက် ဖော်ပြခဲ့သော value များ ပါဝင်ပါသည်။ Plaso ၏ `windefender_history` parser နှင့်
+  Velociraptor ၏ `Windows.Applications.DefenderHistory` artifact တို့သည် သီးခြားလွတ်လပ်သော ကိုးကားချက်များ ဖြစ်ခဲ့ပါသည်။
 - **Plaso**၊ **Chainsaw** နှင့် **Velociraptor** တို့သည် artifact အများအပြားတွင် parser နှိုင်းယှဉ်ချက်များ၊
   စမ်းသပ်အထောက်အထားများ သို့မဟုတ် စုဆောင်းမှုအခြေပြု ကိုးကားရန် အပြုအမူကို ပေးခဲ့ပါသည်။
 - Obsidian Forensics ၏ **Hindsight** နှင့် Velocidex ၏ **SQLiteHunter** definition များသည် ဘရောက်ဇာ history၊
   download များ၊ cookie များနှင့် form history အတွက် ကိုးကားချက်များ ဖြစ်ခဲ့ပါသည်။
+- Abel Cheung ၏ **rifiuti2** သည် Recycle Bin ၏ `$I` ဖိုင်များနှင့် INFO2 အတွက် ကိုးကားချက် ဖြစ်ခဲ့ပြီး libyal ၏
+  **dtformats** စာတမ်းက format နှစ်မျိုးလုံးကို ရှင်းပြထားပါသည်။
+- ANSSI ၏ **bmc-tools** နှင့် format အကြောင်း ၎င်း၏ CERT-FR bulletin၊ BSI ၏ **RdpCacheStitcher**၊
+  **Velociraptor** ၏ RDPCache artifact နှင့် **dissect.target** ၏ RDP cache plugin တို့သည် RDP bitmap cache
+  များအတွက် ကိုးကားချက်များ ဖြစ်ခဲ့ပြီး **FreeRDP** ၏ persistent bitmap cache နှင့် interleaved RLE decoder
+  တို့ကိုလည်း ကိုးကားခဲ့ပါသည်။
 
 ## Spec များနှင့် သုတေသန { #specifications-and-research }
 
-Shell Links၊ Compound Binary Files၊ NTFS/SAM protocol များ၊ registry/service/task ဖွဲ့စည်းပုံများနှင့်
-API စာတမ်းများအတွက် Open Specifications ကို ထုတ်ဝေပေးသည့် Microsoft ကို ကျေးဇူးတင်ပါသည်။ ထို့အပြင်
+Shell Links၊ Compound Binary Files၊ NTFS/SAM protocol များ၊ registry/service/task ဖွဲ့စည်းပုံများ၊
+Remote Desktop Protocol နှင့် API စာတမ်းများအတွက် Open Specifications ကို ထုတ်ဝေပေးသည့် Microsoft ကို ကျေးဇူးတင်ပါသည်။ ထို့အပြင်
 ဤ artifact များကို လက်တွေ့လုပ်ကိုင်သူများ နားလည်နိုင်စေခဲ့သော AppCompatCache၊ Amcache၊ SRUM၊ Prefetch၊
 registry နှင့် NTFS forensic သုတေသန စာရေးသူများကိုလည်း ကျေးဇူးတင်ပါသည်။
 
@@ -75,7 +90,7 @@ registry နှင့် NTFS forensic သုတေသန စာရေးသူ�
 
 Andrew Rathbun ၏
 [DFIR Artifact Museum](https://github.com/AndrewRathbun/DFIRArtifactMuseum)၊ NIST CFReDS၊ Plaso၊
-Regipy၊ Artemis၊ parser စမ်းသပ် repository များနှင့် license မှန်ကန်စွာ ပါရှိသော အခြား collection များမှ
+rifiuti2၊ Regipy၊ Artemis၊ Orange Cyberdefense ၏ wddh-parser၊ parser စမ်းသပ် repository များနှင့် license မှန်ကန်စွာ ပါရှိသော အခြား collection များမှ
 အများသုံး အထောက်အထားများကြောင့် တကယ့် Windows ဒေတာဖြင့် regression စမ်းသပ်ခြင်း ပြုလုပ်နိုင်ပါသည်။
 Juntei သည် ထည့်သွင်းထားသော စမ်းသပ်ဖိုင်များ၏ ဘေးတွင် attribution/license မှတ်စုများကို ထားရှိပါသည်။
 

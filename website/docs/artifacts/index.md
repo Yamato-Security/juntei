@@ -8,9 +8,12 @@ but the investigator must still interpret what each source means.
 
 | Investigation question | Start here | Corroborate with |
 |---|---|---|
+| Which PowerShell command lines were saved? | [PowerShell History](powershell-history.md) | PowerShell event logs, process telemetry, Prefetch |
 | Did this executable run? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), event logs |
-| Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), ShimCache |
+| Was this file ever present? | [Amcache](amcache.md), [$MFT](mft.md) | [USN Journal](usn-journal.md), [$I30](i30.md), [Windows Search Index](windows-search.md), ShimCache |
+| Which files, e-mails and pages were on this computer, and what did a document say? | [Windows Search Index](windows-search.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [Outlook](outlook.md), [Web Browsers](browser.md) |
 | When was a file created, renamed, or deleted? | [USN Journal](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), Defender quarantine |
+| What did a user delete to the Recycle Bin, and when? | [Recycle Bin](recycle-bin.md) | [USN Journal](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | What name or timestamp existed before a metadata change? | [$LogFile](logfile.md) | [$MFT](mft.md), [USN Journal](usn-journal.md), [$I30](i30.md) |
 | Who owns a file, and who may change it? | [$Secure:$SDS](secure-sds.md) with [$MFT](mft.md) | [SAM](sam.md), Security event logs |
 | Which volume was a shortcut's or Prefetch file's target on? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [USB devices](usb.md) |
@@ -19,7 +22,9 @@ but the investigator must still interpret what each source means.
 | Which websites did a user visit, and what did they download? | [Web Browsers](browser.md), [Internet Explorer and Legacy Edge](webcache.md) | Proxy and DNS logs, `$MFT` and USN Journal, Defender, SRUM |
 | Who did a user exchange e-mail with, and what was attached? | [Outlook](outlook.md) | Mail server and gateway logs, `$MFT` and USN Journal, Defender, LNK and Jump Lists |
 | Which clients and accounts used this server, and on which days? | [User Access Logging (UAL)](ual.md) | Security event logs, SMB and RDP logs, firewall logs |
+| What did a user see on the computers they reached with Remote Desktop? | [RDP Bitmap Cache](rdp-cache.md) | [Remote Access (User Side)](remote-access.md), [Jump Lists](jump-lists.md), the remote computers' logon events and [UAL](ual.md) |
 | Was persistence configured? | [Services](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Event logs, Prefetch, `$MFT` |
+| What did Defender detect, and what did it do about it? | [Defender Detection History](defender-history.md) | [Defender Quarantine](defender-quarantine.md), event logs |
 | What did Defender remove? | [Defender Quarantine](defender-quarantine.md) | Event logs, `$MFT`, USN Journal |
 | Were local accounts added or changed? | [SAM](sam.md) | Security event logs and registry transaction history |
 
@@ -35,7 +40,5 @@ Every artifact page follows the same sequence:
 6. **How to correlate it** with independent evidence.
 7. **Further Details** for low-level research.
 
-!!! danger "Do not equate a parser finding with maliciousness"
-    Juntei findings identify patterns worth review, such as a system-binary name outside
-    `System32`. Installers, administrators, compatibility layers, and software updates can produce
-    unusual records. Validate with context and independent evidence.
+!!! danger "Do not treat unusual records as proof of maliciousness"
+    Juntei parses evidence for an analyst to interpret. Persistence Hunter checks remain available, but a configured startup entry can also be legitimate administration. Correlate observations with context and independent evidence before deciding they are malicious.

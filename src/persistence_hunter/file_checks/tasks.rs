@@ -57,19 +57,16 @@ fn parse_task(bytes: &[u8]) -> Result<Vec<Action>, String> {
         let scheduler_namespace = match namespace {
             ResolveResult::Unbound => true,
             ResolveResult::Bound(ns) => {
-                ns.as_ref() == b"http://schemas.microsoft.com/windows/2004/02/mit/task"
+                ns.as_ref() == "http://schemas.microsoft.com/windows/2004/02/mit/task"
             }
             ResolveResult::Unknown(prefix) => {
-                return Err(format!(
-                    "unbound XML namespace prefix: {}",
-                    String::from_utf8_lossy(&prefix)
-                ));
+                return Err(format!("unbound XML namespace prefix: {prefix}"));
             }
         };
         match event {
             Event::Start(e) => {
                 let tag = if scheduler_namespace {
-                    String::from_utf8_lossy(e.local_name().as_ref()).to_string()
+                    e.local_name().as_ref().to_owned()
                 } else {
                     "__foreign_namespace".into()
                 };
@@ -87,8 +84,8 @@ fn parse_task(bytes: &[u8]) -> Result<Vec<Action>, String> {
                         .try_get_attribute("id")
                         .map_err(|e| e.to_string())?
                         .map(|a| {
-                            a.decode_and_unescape_value(reader.decoder())
-                                .map(|v| v.into_owned())
+                            // Preserve raw attribute whitespace when resolving the context.
+                            quick_xml::escape::unescape(&a.value).map(|v| v.into_owned())
                         })
                         .transpose()
                         .map_err(|e| e.to_string())?
@@ -102,10 +99,7 @@ fn parse_task(bytes: &[u8]) -> Result<Vec<Action>, String> {
                     actions_context = e
                         .try_get_attribute("Context")
                         .map_err(|e| e.to_string())?
-                        .map(|a| {
-                            a.decode_and_unescape_value(reader.decoder())
-                                .map(|v| v.into_owned())
-                        })
+                        .map(|a| quick_xml::escape::unescape(&a.value).map(|v| v.into_owned()))
                         .transpose()
                         .map_err(|e| e.to_string())?
                         .unwrap_or_default();
@@ -123,7 +117,7 @@ fn parse_task(bytes: &[u8]) -> Result<Vec<Action>, String> {
             }
             Event::End(e) => {
                 let tag = if scheduler_namespace {
-                    String::from_utf8_lossy(e.local_name().as_ref()).to_string()
+                    e.local_name().as_ref().to_owned()
                 } else {
                     "__foreign_namespace".into()
                 };
@@ -140,26 +134,27 @@ fn parse_task(bytes: &[u8]) -> Result<Vec<Action>, String> {
                 stack.pop();
             }
             Event::Empty(e) if stack.is_empty() => {
-                if root_seen || !scheduler_namespace || e.local_name().as_ref() != b"Task" {
+                if root_seen || !scheduler_namespace || e.local_name().as_ref() != "Task" {
                     return Err("expected a single Task XML root".into());
                 }
                 root_seen = true;
             }
             Event::Text(e) => {
-                let decoded = e.decode().map_err(|e| e.to_string())?;
+                // Keep evidence line endings unchanged; XML content helpers normalize them.
+                let decoded = e.into_inner();
                 let decoded = quick_xml::escape::unescape(&decoded).map_err(|e| e.to_string())?;
                 add_text(&stack, &mut current, &mut principal, &decoded);
             }
             Event::CData(e) => {
-                let decoded = e.decode().map_err(|e| e.to_string())?;
+                let decoded = e.into_inner();
                 add_text(&stack, &mut current, &mut principal, &decoded);
             }
             Event::DocType(_) => {
                 return Err("DTD declarations are not accepted in task evidence".into());
             }
             Event::GeneralRef(e) => {
-                let name = e.decode().map_err(|e| e.to_string())?;
-                let resolved = match name.as_ref() {
+                let name = e.as_ref();
+                let resolved = match name {
                     "amp" => Some('&'),
                     "lt" => Some('<'),
                     "gt" => Some('>'),
@@ -457,6 +452,49 @@ pub(super) fn cache(check: &mut Check<'_>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn xml_upgrade_preserves_text_cdata_entities_and_attribute_whitespace() {
+        // Literal attribute whitespace must still match character references to that whitespace.
+        // XML attribute normalization would change the selected principal and the finding's access.
+        let xml = concat!(
+            "<t:Task xmlns:t=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">",
+            "<t:Principals><t:Principal id=\"Author\t\r\n&amp; &quot;准胝&quot;\">",
+            "<t:UserId>S-1-5-18</t:UserId><t:RunLevel>HighestAvailable</t:RunLevel>",
+            "</t:Principal><t:Principal id=\"Other\"><t:UserId>LAB\\alice</t:UserId>",
+            "</t:Principal></t:Principals>",
+            "<t:Actions Context=\"Author&#x9;&#13;&#10;&amp; &quot;准胝&quot;\"><t:Exec>",
+            "<t:Command>C:\\Temp\\A &amp; B\\調査.exe</t:Command>",
+            "<t:Arguments>--text &lt;x&gt; &quot;quoted&quot; &apos;single&apos; &#65; ",
+            "&#x1F600; &amp;lt;\r\n<![CDATA[<raw>&literal;\r\n]]>end</t:Arguments>",
+            "<t:WorkingDirectory>C:\\Temp&#13;&#10;Work</t:WorkingDirectory>",
+            "</t:Exec></t:Actions></t:Task>"
+        );
+        let mut utf16 = vec![0xff, 0xfe];
+        utf16.extend(xml.encode_utf16().flat_map(u16::to_le_bytes));
+        for input in [xml.as_bytes(), utf16.as_slice()] {
+            let actions = parse_task(input).unwrap();
+            assert_eq!(actions.len(), 1);
+            let action = &actions[0];
+            assert_eq!(action.principal.id, "Author\t\r\n& \"准胝\"");
+            assert_eq!(action.context, action.principal.id);
+            assert_eq!(action.principal.user, "S-1-5-18");
+            assert_eq!(action.principal.run_level, "HighestAvailable");
+            assert_eq!(action.command, r"C:\Temp\A & B\調査.exe");
+            assert_eq!(
+                action.arguments,
+                "--text <x> \"quoted\" 'single' A 😀 &lt;\r\n<raw>&literal;\r\nend"
+            );
+            assert_eq!(action.working_directory, "C:\\Temp\r\nWork");
+        }
+        for input in [
+            b"<t:Task/>".as_slice(),
+            b"<Task><Actions><Exec><Command>&unknown;</Command></Exec></Actions></Task>",
+            b"<Task><Principals><Principal id='&unknown;'></Principal></Principals></Task>",
+        ] {
+            assert!(parse_task(input).is_err());
+        }
+    }
+
     #[test]
     fn utf16_and_multiple_action_types_are_preserved() {
         let xml = r#"<?xml version="1.0" encoding="UTF-16"?><Task xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Principals><Principal><UserId>S-1-5-18</UserId></Principal></Principals><Actions><Exec><Command>C:\A B\tool.exe</Command><Arguments>-x &amp; y</Arguments></Exec><ComHandler><ClassId>{ABC}</ClassId></ComHandler></Actions></Task>"#;

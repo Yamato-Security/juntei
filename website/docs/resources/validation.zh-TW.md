@@ -119,6 +119,16 @@ ys-browser-parser 的表單歷程測試資料庫。全部 293 筆造訪、21 筆
 6 筆下載、170 個 Cookie 與 3,754 筆其他項目。比較時另行獨立解碼了下載記錄。資料庫標記為已刪除的
 記錄，在兩邊皆予以排除。
 
+## Windows Search 索引 { #windows-search-index }
+
+`parse-ese windows-search` 使用 [ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) 的 ESE 讀取器
+讀取 `Windows.edb`。它曾在三個公開索引（皆維持 dirty 狀態）上與 libyal 的 `esedbexport` 及 Stroz Friedberg 的
+SIDR 進行比較：Plaso 的 Windows 7 索引（`SystemIndex_0A`），以及 DFIR Artifact Museum 的 Windows 10 與
+Windows 11 索引（`SystemIndex_PropertyStore`，ESE 格式修訂版 110 與 200）。每一個路徑、擁有者、類型、電腦名稱、
+大小與時間均比對相符：Windows 11 屬性存放區的 6,691 個值與 `esedbexport` 比對，Windows 10 的 6,332 個值與
+SIDR 比對，Windows 7 三種編碼的字串則與 `esedbexport` 比對。Windows 10 索引的一部分只存在於其分支頁面未指向的
+葉頁面中；兩個工具都讀取了這些頁面，Juntei 亦然。有一個收集器資料行依設計而有所不同：項目一經編目，ESE 就會將
+`Priority` 標示為 NULL，而兩個工具都是從記錄中殘留的位元組印出此值。
 ## Outlook { #outlook }
 
 `parse-file outlook` 使用 [ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser)
@@ -157,6 +167,33 @@ MFT 參照。Juntei 會回報損毀的結構，而不是默默地
 Jump Lists 中，全部 13,057 個共同比較的儲存格——包括精確到 100 ns 的時間戳記——都與
 參考剖析器一致。參考剖析器拒絕處理的六個檔案（空白的自訂清單、缺少頁尾，或
 並非 Jump List 的檔案），Juntei 則加以解碼或明確地回報。
+
+## 資源回收筒 { #recycle-bin }
+
+`parse-file recycle-bin` 是 Juntei 自有的剖析器。在 [rifiuti2](https://github.com/abelcheung/rifiuti2)
+的公開樣本上，rifiuti2 能讀取的每一筆記錄，其索引、刪除時間（精確到秒，與 rifiuti2 的顯示方式相同）、
+移除狀態、大小與路徑都一致：共 92 筆記錄，其中 67 筆來自 Windows 95 至 Server 2003 的十一個 INFO2
+檔案，25 筆來自三個存放 Windows Vista 與 Windows 10 `$I` 檔案的資料夾。INFO2 的 ANSI 路徑在 rifiuti2
+自身測試所使用的字碼頁下皆一致。Juntei 也能讀取 rifiuti2 拒絕處理的內容：混用兩種 `$I` 版本的資料夾、
+沒有路徑的 `$I` 標頭，以及遭截斷的記錄，並逐一回報其損毀情形。Plaso 測試資料中的 `$I` 與 INFO2 檔案，
+得出的時間、大小、路徑、索引與磁碟機都與 Plaso 測試的預期值相同。在 Digital Corpora 公開的 M57-Jean
+磁碟映像檔（Windows XP）上以 `auto-parse --e01` 讀取時，INFO2 記錄與 rifiuti2 一致，而位於其旁的
+回收檔案 `Dc1.jpg`，也正是 Juntei 所給出的名稱。
+
+## RDP 點陣圖快取 { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` 是 Juntei 自有的剖析器。在 CODE BLUE 2026 CTF 收集資料的六台主機之一 kofu 上，其三個
+`Cache????.bin` 檔案中的 1,911 個圖塊，每一個都與 [bmc-tools](https://github.com/ANSSI-FR/bmc-tools) 產生的
+影像逐像素相同。ApoorvCTF 2025「Phantom Connection」題目公開的 `Cache0000.bin` 中的 1,980 個圖塊也是如此，
+其中 105 個為 64 × 48 像素。bmc-tools 將每個圖塊都當成 64 像素寬來讀取，因此位於畫面右緣、較窄的圖塊
+輸出後會變形；Juntei 則依各圖塊本身的寬度讀取。
+
+目前找不到含有圖塊的公開 `.bmc` 快取：上述樣本與其他 Windows 10 及更新版本的用戶端一樣，只有一個空的
+`bcache24.bmc`。因此，`.bmc` 的讀取是以依照該格式建構的檔案來測試：四種色彩深度的未壓縮圖塊、後面接著
+較早圖塊尾端的較小圖塊、損毀的槽位，以及 3,000 個隨機產生、以 RLE 壓縮的 16 位元圖塊，涵蓋 MS-RDPBCGR 3.1.9
+的每一種指令（order），且沒有任何指令延續超過圖塊第一列的結尾。Juntei 與 bmc-tools 將這 3,000 個圖塊全部
+解碼為相同的像素。當某個指令從第一列開始並延續到該列之後時，兩者的結果就會不同：Juntei 遵循規格與
+FreeRDP 的解碼器，在整個指令中沿用第一列的規則，而 bmc-tools 則會在指令中途改變規則。
 
 ## ShimCache { #shimcache }
 

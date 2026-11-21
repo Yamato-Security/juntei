@@ -123,6 +123,20 @@ stimmten Wert für Wert überein: 44 Container, 182 Verlaufseinträge, 6 Downloa
 Einträge. Der Vergleich dekodierte die Download-Datensätze eigenständig. Datensätze, die die Datenbanken als gelöscht
 kennzeichnen, wurden bei beiden ausgelassen.
 
+## Windows-Search-Index { #windows-search-index }
+
+`parse-ese windows-search` liest `Windows.edb` mit dem ESE-Leser von
+[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser). Es wurde anhand von drei öffentlichen
+Indizes, alle im Zustand „dirty“ belassen, mit `esedbexport` von libyal und SIDR von Stroz Friedberg verglichen:
+dem Windows-7-Index von Plaso (`SystemIndex_0A`) und den Windows-10- und Windows-11-Indizes des DFIR Artifact
+Museum (`SystemIndex_PropertyStore`, ESE-Formatrevisionen 110 und 200). Alle Pfade, Besitzer, Typen,
+Computernamen, Größen und Zeiten stimmten überein: 6.691 Werte des Windows-11-Property-Store gegenüber
+`esedbexport`, 6.332 des Windows-10-Property-Store gegenüber SIDR und die Windows-7-Zeichenfolgen in ihren drei
+Kodierungen gegenüber `esedbexport`. Ein Teil des Windows-10-Index liegt nur in Blattseiten, die seine
+Branch-Seiten nicht erreichen; beide Werkzeuge lesen sie, und Juntei ebenfalls. Eine Gatherer-Spalte weicht
+beabsichtigt ab: ESE setzt `Priority` auf NULL, sobald ein Element gecrawlt wurde, was beide Werkzeuge aus den im
+Datensatz verbliebenen Bytes ausgeben.
+
 ## Outlook { #outlook }
 
 `parse-file outlook` liest PST-, OST-, `.msg`- und `.oft`-Dateien mit
@@ -164,6 +178,38 @@ Compound Files und Jump Lists, wobei eingebettete Links von `ys-lnk-parser` deko
 Jump Lists hinweg stimmten alle 13.057 gemeinsamen Vergleichszellen – einschließlich Zeitstempeln auf 100 ns genau – mit dem
 Referenzparser überein. Sechs Dateien, die die Referenz ablehnte (leere benutzerdefinierte Listen, eine fehlende Fußzeile oder eine Datei,
 die keine Jump List war), wurden von Juntei entweder dekodiert oder ausdrücklich gemeldet.
+
+## Papierkorb { #recycle-bin }
+
+`parse-file recycle-bin` ist Junteis eigener Parser. Bei den öffentlichen Beispieldateien von
+[rifiuti2](https://github.com/abelcheung/rifiuti2) hatte jeder Datensatz, den rifiuti2 liest, denselben Index, dieselbe
+Löschzeit (sekundengenau, wie rifiuti2 sie anzeigt), denselben Entfernungsstatus, dieselbe Größe und denselben Pfad:
+92 Datensätze, davon 67 in elf INFO2-Dateien von Windows 95 bis Server 2003 und 25 in drei Ordnern mit `$I`-Dateien
+von Windows Vista und Windows 10. Die ANSI-Pfade in INFO2 stimmten in den Codepages überein, die die eigenen Tests von
+rifiuti2 verwenden. Juntei liest auch, was rifiuti2 ablehnt: einen Ordner, der beide `$I`-Versionen mischt, einen
+`$I`-Header ohne Pfad und abgeschnittene Datensätze, jeweils mit gemeldeter Beschädigung. Die `$I`- und INFO2-Dateien
+der Testdaten von Plaso liefern die Zeiten, Größen, Pfade, Indizes und Laufwerke, die die Tests von Plaso erwarten. Auf
+dem öffentlichen Datenträgerabbild M57-Jean von Digital Corpora (Windows XP), gelesen mit `auto-parse --e01`, stimmt
+der INFO2-Datensatz mit rifiuti2 überein, und die daneben liegende Papierkorbdatei `Dc1.jpg` trägt den Namen, den
+Juntei ihr gibt.
+
+## RDP-Bitmap-Cache { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` ist Junteis eigener Parser. Auf kofu, einem der sechs Hosts der Sammlung des CODE BLUE 2026 CTF,
+ist jede der 1.911 Kacheln seiner drei `Cache????.bin`-Dateien Pixel für Pixel das Bild, das
+[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) erzeugt. Dasselbe gilt für die 1.980 Kacheln der öffentlichen
+`Cache0000.bin` der Challenge „Phantom Connection“ von ApoorvCTF 2025, darunter 105 mit 64 × 48 Pixeln. bmc-tools liest
+jede Kachel als 64 Pixel breit, sodass die schmaleren Kacheln am rechten Bildschirmrand verzerrt herauskommen; Juntei
+liest jede Kachel in ihrer eigenen Breite.
+
+Es wurde kein öffentlicher `.bmc`-Cache mit Kacheln gefunden: Die obigen Beispiele haben, wie die Caches anderer Clients
+ab Windows 10, nur eine leere `bcache24.bmc`. Das Lesen von `.bmc` wurde daher mit Dateien getestet, die nach dem
+Format erstellt wurden: unkomprimierte Kacheln aller vier Farbtiefen, kleine Kacheln, auf die das Ende einer früheren
+Kachel folgt, beschädigte Slots und 3.000 zufällige RLE-komprimierte 16-Bit-Kacheln, die jeden Befehl (Order) von
+MS-RDPBCGR 3.1.9 verwenden, wobei kein Befehl über das Ende der ersten Zeile einer Kachel hinausreicht. Juntei und
+bmc-tools dekodieren alle 3.000 zu denselben Pixeln. Beginnt ein Befehl in der ersten Zeile und reicht über sie hinaus,
+unterscheiden sich die beiden: Juntei folgt der Spezifikation und dem Decoder von FreeRDP, die die Regeln der ersten
+Zeile für den gesamten Befehl beibehalten, während bmc-tools die Regeln mitten im Befehl wechselt.
 
 ## ShimCache { #shimcache }
 

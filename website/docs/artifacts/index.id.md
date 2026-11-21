@@ -8,9 +8,12 @@ tetapi investigator tetap harus menginterpretasikan makna dari setiap sumber.
 
 | Pertanyaan investigasi | Mulai di sini | Dukung dengan |
 |---|---|---|
+| Baris perintah PowerShell apa yang disimpan? | [Riwayat PowerShell](powershell-history.md) | Log peristiwa PowerShell, telemetri proses, Prefetch |
 | Apakah executable ini berjalan? | [Prefetch](prefetch.md) | [ShimCache](shimcache.md), [SRUM](srum.md), log peristiwa |
-| Apakah berkas ini pernah ada? | [Amcache](amcache.md), [$MFT](mft.md) | [Jurnal USN](usn-journal.md), [$I30](i30.md), ShimCache |
+| Apakah berkas ini pernah ada? | [Amcache](amcache.md), [$MFT](mft.md) | [Jurnal USN](usn-journal.md), [$I30](i30.md), [Indeks Windows Search](windows-search.md), ShimCache |
+| Berkas, e-mail, dan halaman apa saja yang ada di komputer ini, dan apa isi sebuah dokumen? | [Indeks Windows Search](windows-search.md) | [$MFT](mft.md), [Jurnal USN](usn-journal.md), [Outlook](outlook.md), [Browser web](browser.md) |
 | Kapan sebuah berkas dibuat, diubah namanya, atau dihapus? | [Jurnal USN](usn-journal.md) | [$MFT](mft.md), [$I30](i30.md), karantina Defender |
+| Apa yang dihapus pengguna ke Recycle Bin, dan kapan? | [Keranjang Sampah (Recycle Bin)](recycle-bin.md) | [Jurnal USN](usn-journal.md), [$MFT](mft.md), [LNK](lnk.md), [Jump Lists](jump-lists.md) |
 | Nama atau timestamp apa yang ada sebelum perubahan metadata? | [$LogFile](logfile.md) | [$MFT](mft.md), [Jurnal USN](usn-journal.md), [$I30](i30.md) |
 | Siapa pemilik sebuah berkas, dan siapa yang boleh mengubahnya? | [$Secure:$SDS](secure-sds.md) dengan [$MFT](mft.md) | [SAM](sam.md), log peristiwa Security |
 | Di volume mana target sebuah pintasan atau berkas Prefetch berada? | [$Boot](boot.md) | [LNK](lnk.md), [Prefetch](prefetch.md), [perangkat USB](usb.md) |
@@ -19,7 +22,9 @@ tetapi investigator tetap harus menginterpretasikan makna dari setiap sumber.
 | Situs web mana yang dikunjungi pengguna, dan apa yang diunduhnya? | [Browser web](browser.md), [Internet Explorer dan Edge lama](webcache.md) | Log proxy dan DNS, `$MFT` dan Jurnal USN, Defender, SRUM |
 | Dengan siapa pengguna bertukar e-mail, dan apa yang dilampirkan? | [Outlook](outlook.md) | Log server dan gateway e-mail, `$MFT` dan Jurnal USN, Defender, LNK dan Jump Lists |
 | Klien dan akun mana yang menggunakan server ini, dan pada hari apa saja? | [Pencatatan Akses Pengguna (UAL)](ual.md) | Log peristiwa Security, log SMB dan RDP, log firewall |
+| Apa yang dilihat pengguna di komputer yang dijangkaunya dengan Remote Desktop? | [Cache Bitmap RDP](rdp-cache.md) | [Akses jarak jauh (sisi pengguna)](remote-access.md), [Jump Lists](jump-lists.md), peristiwa logon di komputer jarak jauh, dan [UAL](ual.md) |
 | Apakah persistensi dikonfigurasi? | [Layanan](services.md), [TaskCache](taskcache.md), [Registry](registry.md) | Log peristiwa, Prefetch, `$MFT` |
+| Apa yang dideteksi Defender, dan apa tindakannya terhadap deteksi itu? | [Riwayat Deteksi Defender](defender-history.md) | [Karantina Defender](defender-quarantine.md), log peristiwa |
 | Apa yang dihapus oleh Defender? | [Karantina Defender](defender-quarantine.md) | Log peristiwa, `$MFT`, Jurnal USN |
 | Apakah akun lokal ditambahkan atau diubah? | [SAM](sam.md) | Log peristiwa Security dan riwayat transaksi registry |
 
@@ -35,7 +40,5 @@ Setiap halaman artefak mengikuti urutan yang sama:
 6. **Cara mengorelasikannya** dengan bukti independen.
 7. **Detail lebih lanjut** untuk riset tingkat rendah.
 
-!!! danger "Jangan menyamakan temuan parser dengan keberbahayaan"
-    Temuan Juntei mengidentifikasi pola yang layak ditinjau, seperti nama binary sistem di luar
-    `System32`. Installer, administrator, lapisan kompatibilitas, dan pembaruan perangkat lunak dapat menghasilkan
-    record yang tidak biasa. Validasi dengan konteks dan bukti independen.
+!!! danger "Jangan anggap catatan yang tidak biasa sebagai bukti aktivitas berbahaya"
+    Juntei mem-parsing bukti untuk ditafsirkan analis. Pemeriksaan Persistence Hunter tetap tersedia, tetapi entri startup yang dikonfigurasi juga dapat berasal dari administrasi yang sah. Korelasikan pengamatan dengan konteks dan bukti independen sebelum menilainya sebagai aktivitas berbahaya.

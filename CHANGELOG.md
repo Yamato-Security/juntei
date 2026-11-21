@@ -1,5 +1,88 @@
 # Changes
 
+## Unreleased
+
+**Changes:**
+
+- Move parser-specific Prefetch, Amcache, ShimCache, LNK and Jump List detections and security-setting classification to Juntei Pro. Preserve source records, parser diagnostics, metadata and timestamps. Amcache exports Summary, Files and Devices without a Findings table; Prefetch/ShimCache omit Findings; security settings omit WeakensDefault and the --weakened-only filter. Expose shortcut shell-item types in CSV for downstream analysis. Persistence Hunter checks and policy profiles remain unchanged. (@YamatoSecurity)
+
+**New Features:**
+
+- `parse-file defender-history` parses Microsoft Defender's detection history
+  (`Scans\History\Service\DetectionHistory\<nn>\<GUID>`), which also records threats that were
+  never quarantined. One record per resource of each detection keeps the threat, severity,
+  category, status and its error code, execution status, detection source, user, process,
+  quarantine entry, Defender's detection, status-change and remediation times, and each resource's
+  tracking hashes and size. Values whose meaning is not known stay in the output by position, and
+  JSON keeps every tracking value with its type. Damaged and version-less files keep what can be
+  read and report the rest. `auto-parse` reads the files from directories, VHDX and E01 images
+  into `SecurityProducts`, and `super-timeline` makes events from Defender's own times. (#193)
+  (@YamatoSecurity)
+
+- `parse-ese windows-search` parses the Windows Search index (`Windows.edb`) of Windows 7 to
+  Windows 11 21H2: every indexed file, folder, e-mail, web page and activity with its path, name,
+  type, size, attributes, owner, the created, modified and accessed times the indexer copied, the
+  time it was indexed, title, author, text extract and computer name, joined with the gatherer's
+  record of the item (its path, modification time, crawl number and flags). Windows 7's
+  `SystemIndex_0A` schema and its compressed string encoding are read, and the SQLite index of
+  Windows 11 22H2 and later is reported as unsupported. The user is attributed from the profile in
+  the item's path, with its basis in `UserSource`. A dirty database keeps the rows that only its
+  leaf pages reach, including gaps between branch-referenced leaves. Damaged Windows 7 text is
+  retained as hex with a diagnostic; table membership remains accurate even when properties are
+  all NULL. `auto-parse` reads the index from directories, VHDX and E01 images into
+  `FileExistence`, and `super-timeline` makes events from the item's file times and the time it
+  was indexed. (#188) (@YamatoSecurity)
+
+- `parse-file powershell-history` streams PSReadLine history to CSV, JSON or JSONL, retaining
+  raw continuation lines with source line numbers and `EntryStartLine`, user, shell host and
+  clearly named file metadata. UTF-8 and BOM-marked UTF-16 are supported; damaged text and
+  truncated lines are reported in `Problems`. `auto-parse` discovers and stages history files
+  from directories, VHDX and E01 images into `ShellHistory`, and the combined `-j` timeline
+  includes the rows. Commands have no execution timestamps, so `super-timeline` counts them as
+  untimed records. (@tuttimann)
+
+- `parse-file recycle-bin` parses Recycle Bin deletion metadata: the `$I` files of Windows Vista
+  and later (format versions 1 and 2) and the `INFO2` files of Windows 95 to Server 2003. Each
+  deleted item has its deletion time, original path, size, the user named by the bin's SID, and
+  whether the recycled content was collected. `INFO2` records of items removed from the bin are
+  marked and their paths restored. Damaged files keep what can be read and report the damage.
+  `auto-parse` saves the results in `FileExistence` and adds them to the `-j` timeline, and
+  `super-timeline` makes one event per deleted item. (#157) (@YamatoSecurity)
+
+- `parse-file rdp-cache` parses the Remote Desktop client's persistent bitmap caches: the
+  `Cache????.bin` files of Windows 7 and later and the `bcache*.bmc` files of Windows XP and
+  earlier (8, 16, 24 and 32 bits per pixel, with RLE-compressed tiles decompressed as
+  MS-RDPBCGR specifies). One record per tile with its user, size, key and whether it is a single
+  color; `--extract` saves each tile as a BMP image at its own size, named for RdpCacheStitcher,
+  a PNG collage of each cache file, and the ends of earlier tiles left in `.bmc` slots.
+  `auto-parse` saves the records and collages in `LateralMovement`, and every tile with
+  `--extract-rdp-tiles`. (#169) (@YamatoSecurity)
+
+- Add opt-in `yara-scan` for collected files on Windows, macOS and Linux, using local rules offline
+  or downloading YARA Forge Core (default), Extended or Full. Include parallel scans, per-file
+  timeouts and opt-in file-size caps (unlimited by default), CSV/JSONL detections and coverage,
+  source hashes and rule snapshots. Scan raw MFT bytes with an optional size-limit override and
+  recover independently matched resident DATA streams as quarantined files, retaining record/stream
+  provenance and explicit recovery gaps. (@YamatoSecurity)
+
+**Improvements:**
+
+- Upgrade `quick-xml` to 0.42.0, preserving Persistence Hunter's XML evidence values,
+  line endings and principal/context attribute matching. (@YamatoSecurity)
+
+**Bug Fixes:**
+
+- Skip non-Outlook files that share Outlook extensions during directory scans, including Tcl
+  message catalogs. Keep explicit-file, unreadable-file and recognizable corrupt-container errors,
+  and report the actual parser failure in automatic-parser manifests instead of timing footers.
+  (@YamatoSecurity)
+
+- Disk-image reads (`mount`, `auto-parse --e01`/`--vhdx` and Persistence Hunter) list directories
+  whose index is in MFT extension records. Such directories, for example `Windows\System32` on
+  Windows XP, were listed with only a few entries, so the live registry hives and other files in
+  them were missed. An index that can't be read whole is reported as an image read problem.
+  (#160) (@YamatoSecurity)
+
 ## 1.1.0 [2026/11/11] - CODE BLUE Release
 
 **New Features:**

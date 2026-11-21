@@ -28,16 +28,21 @@ komutları çağırır ve sonuçları ve günlükleri bilgisayara ve inceleme ka
 | `parse-ese srum` | ESE `SRUDB.dat` | [SRUM](../artifacts/srum.md) |
 | `parse-ese ual` | ESE `Current.mdb`, `{GUID}.mdb`, `SystemIdentity.mdb` | [Kullanıcı Erişim Günlüğü (UAL)](../artifacts/ual.md) |
 | `parse-ese webcache` | ESE `WebCacheV01.dat` | [Internet Explorer ve Eski Edge](../artifacts/webcache.md) |
+| `parse-ese windows-search` | ESE `Windows.edb` | [Windows Search Dizini](../artifacts/windows-search.md) |
 
 ## [Dosya Komutları](execution.md) { #file-commands }
 
 | Komut | Girdi artefaktı | Ayrıntılı kılavuz |
 |---|---|---|
+| `parse-file defender-history` | `DetectionHistory\<nn>\<GUID>` | [Defender Tespit Geçmişi](../artifacts/defender-history.md) |
 | `parse-file defender-quarantine` | Defender karantina ağacı veya girdisi | [Defender Karantinası](../artifacts/defender-quarantine.md) |
 | `parse-file jump-lists` | `*.automaticDestinations-ms`, `*.customDestinations-ms` | [Jump Lists](../artifacts/jump-lists.md) |
 | `parse-file lnk` | `*.lnk` | [LNK Kısayolları](../artifacts/lnk.md) |
 | `parse-file outlook` | `*.pst`, `*.ost`, `*.msg`, `*.oft` | [Outlook](../artifacts/outlook.md) |
+| `parse-file powershell-history` | `PSReadLine\*_history.txt` | [PowerShell geçmişi](../artifacts/powershell-history.md) |
 | `parse-file prefetch` | `*.pf` | [Prefetch](../artifacts/prefetch.md) |
+| `parse-file rdp-cache` | `Cache????.bin`, `bcache*.bmc` | [RDP Bitmap Önbelleği](../artifacts/rdp-cache.md) |
+| `parse-file recycle-bin` | `$Recycle.Bin\<SID>\$I*`, `RECYCLER\<SID>\INFO2`, `RECYCLED\INFO2` | [Geri Dönüşüm Kutusu](../artifacts/recycle-bin.md) |
 
 ## [NTFS Komutları](filesystem.md) { #ntfs-commands }
 
@@ -105,6 +110,10 @@ adlarını korur.
 komutudur. `parse-registry persistence` komutunun sunduğu tam yapılandırma envanterini 131 kontrol, izin/engel
 sınıflandırması, yük (payload) meta verileri, kapsam ve zaman damgası ilişkilendirmesiyle tamamlar.
 
+## [YARA Taraması](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>`, kurtarılan karantina yükleri ve yerleşik `$MFT` verileri dahil toplanan dosyaları YARA kurallarıyla tarar. Varsayılan olarak YARA Forge Core paketini indirir; `--ruleset extended` veya `--ruleset full` daha geniş bir paket seçer, `--rules <FILE_OR_DIRECTORY>` ise yerel kurallarla çevrimdışı tarama yapar. Tarama isteğe bağlıdır ve `auto-parse` işleminden ayrıdır.
+
 ## Üst düzey kullanım { #top-level-usage }
 
 ```text
@@ -120,6 +129,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

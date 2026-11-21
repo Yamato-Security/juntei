@@ -32,7 +32,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-Parser memerlukan jalur: Juntei menyalin berkas yang dibaca parser ke ruang sementara privat dengan buffer terbatas: hive registri beserta log transaksinya, berkas metadata NTFS, basis data, berkas prefetch, pintasan, Jump List, berkas Outlook, dan folder karantina Defender. Berkas lain menjadi placeholder kosong dengan waktu modifikasi aslinya, sehingga direktori dan jalur terlihat sama seperti di disk. persistence-hunter membaca isi placeholder dari image hanya saat diperlukan, misalnya berkas eksekusi yang dirujuk entri persistensi. **Sediakan ruang untuk berkas yang disalin**, selain untuk hasil. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
+Parser memerlukan jalur: Juntei menyalin berkas yang dibaca parser ke ruang sementara privat dengan buffer terbatas: hive registri beserta log transaksinya, berkas metadata NTFS, basis data, berkas prefetch, pintasan, Jump List, berkas Outlook, berkas riwayat PSReadLine, berkas indeks Recycle Bin, cache bitmap RDP, berkas riwayat deteksi Defender, dan folder karantina Defender. Berkas lain menjadi placeholder kosong dengan waktu modifikasi aslinya, sehingga direktori dan jalur terlihat sama seperti di disk. persistence-hunter membaca isi placeholder dari image hanya saat diperlukan, misalnya berkas eksekusi yang dirujuk entri persistensi. **Sediakan ruang untuk berkas yang disalin**, selain untuk hasil. Wilayah nol ditulis sebagai lubang jika didukung. Nama, struktur, hard link, dan waktu modifikasi dipertahankan. Waktu sumber LNK dan Jump List berasal dari snapshot metadata NTFS asli, bukan salinan sementara. Penyelesaian normal, termasuk kesalahan parser, menghapus salinan; penghentian paksa dapat meninggalkannya. Sumber tetap hanya-baca; log VHDX tertunda diterapkan hanya di memori.
 
 Penemuan host, CSV/JSON/JSONL, dan `-j` memakai alur biasa. `Image` dalam `manifest.json` menunjukkan image asli; `EvidenceRoot` menunjukkan jalur relatif di dalamnya. Kesalahan baca dan nama tidak aman dicatat dalam `ImageErrors` dan baris gagal `manifest.csv`. Hasil yang terbaca dipertahankan; input tidak lengkap mengembalikan 1. Nama berbahaya atau ambigu tidak diganti. Stream NTFS bernama tidak diekstrak sebagai berkas tambahan; artefak yang sudah dikumpulkan sebagai berkas biasa tetap tersedia.
 
@@ -163,11 +163,18 @@ yang ditemukan. Tugas-tugas ini menggunakan perintah yang dikelompokkan berdasar
 - Pencatatan Akses Pengguna (UAL)
 - Riwayat, unduhan, cookie, dan riwayat formulir browser web (browser berbasis Chromium dan Firefox)
 - WebCache milik Internet Explorer dan Edge lama: riwayat, unduhan, cookie, dan entri cache
+- Indeks Windows Search: setiap berkas, folder, e-mail, dan halaman web yang diindeks beserta metadata dan
+  cuplikan teksnya
 - Berkas PST, OST, MSG, dan OFT Outlook: folder, item, penerima, lampiran, kontak, item kalender, dan tugas
 - Pintasan LNK
 - Jump Lists
+- Recycle Bin: path asli, ukuran, waktu penghapusan, dan pengguna dari item yang dihapus
+- Cache bitmap RDP: tile dari layar jarak jauh yang dilihat pengguna, dengan gambar kolase untuk setiap
+  berkas cache
 - ShimCache
 - Persistence Hunter (131 pemeriksaan persistensi lintas sumber dengan profil allow/block)
+- Riwayat deteksi Defender: setiap deteksi beserta status, pengguna, proses, dan resource-nya,
+  termasuk ancaman yang tidak pernah dikarantina
 - Metadata karantina Defender
 - Riwayat dialog Open dan Save As
 - semua key dan nilai registry, termasuk data terhapus yang dapat dipulihkan
@@ -262,13 +269,16 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -289,6 +299,9 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -327,9 +340,14 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -351,14 +369,15 @@ CSV menyimpan tabel terpisah karena setiap artefak memiliki kolom yang berbeda:
 | `Communication` | Berkas PST, OST, MSG, dan OFT Outlook: folder, item, penerima, lampiran, kontak, item kalender, dan tugas |
 | `ExternalDevices` | Perangkat dan volume USB |
 | `FileAndFolderOpening` | Jump Lists, pintasan LNK, Microsoft Office, daftar MRU, dialog Open dan Save As, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, Recycle Bin, ShimCache, indeks Windows Search |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, Jurnal USN |
 | `NetworkActivity` | Profil jaringan, antarmuka, share, port proxy, dan route; koneksi, lalu lintas, dan push notification SRUM |
-| `LateralMovement` | Koneksi keluar Remote Desktop, PuTTY, dan WinSCP milik pengguna, mapped drive, dan share; Pencatatan Akses Pengguna (klien dari role-role sebuah server) |
+| `LateralMovement` | Koneksi keluar Remote Desktop, PuTTY, dan WinSCP milik pengguna, mapped drive, dan share; cache bitmap RDP (tile dari layar jarak jauh); Pencatatan Akses Pengguna (klien dari role-role sebuah server) |
 | `Persistence` | Konfigurasi boot (BCD), autostart registry, layanan, TaskCache |
 | `ProcessExecution` | Kompatibilitas aplikasi, BAM dan DAM, FeatureUsage dan item yang disematkan, MuiCache, Prefetch, timeline Prefetch, aktivitas aplikasi/CPU SRUM, UserAssist |
 | `Registry` | Key dan nilai hive umum, termasuk record yang dipulihkan |
-| `SecurityProducts` | Metadata karantina Defender dan konten hasil ekstraksi opsional; pengaturan keamanan (Defender, UAC, perlindungan kredensial, RDP, firewall, logging) |
+| `SecurityProducts` | Riwayat deteksi Defender; metadata karantina Defender dan konten hasil ekstraksi opsional; pengaturan keamanan (Defender, UAC, perlindungan kredensial, RDP, firewall, logging) |
+| `ShellHistory` | Riwayat perintah PowerShell PSReadLine; waktu modifikasi berkas adalah metadata, tanpa waktu eksekusi perintah |
 | `SystemInformation` | Nama, versi Windows, zona waktu, shutdown terakhir, profil, SID, dan kebijakan audit; energi/kapasitas SRUM, identity map, dan provider yang tidak dikenal |
 
 Kategori membantu mengorganisasikan investigasi; kategori bukan bukti adanya aktivitas tertentu. Misalnya,
@@ -372,15 +391,15 @@ Amcache dan Jump Lists masing-masing memiliki satu log bersama di samping tabel-
 di `NetworkActivity`, `ProcessExecution`, dan `SystemInformation`, dengan berkas
 `SystemInformation/SRUM-logs.txt` bersama. Tidak ada subdirektori `logs/` yang dibuat.
 
-Nama berkas CSV default adalah `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+Nama berkas CSV default adalah `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`, dan
-`DefenderQuarantine.csv`. Tabel yang berasal dari registry menggunakan prefiks `Registry-`, termasuk
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv`. Tabel yang berasal dari registry menggunakan prefiks `Registry-`, termasuk
 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`, `Registry-BAM.csv`, dan `Registry-SystemInfo.csv`.
 Key dan nilai hive umum ada di `Registry-Dump.csv`. Tabel Amcache adalah
 `FileExistence/Registry-Amcache-Devices.csv`, `Registry-Amcache-Files.csv`,
-`Registry-Amcache-Findings.csv`, dan `Registry-Amcache-Summary.csv`. Jump Lists menggunakan
+dan `Registry-Amcache-Summary.csv`. Jump Lists menggunakan
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv` dan
 `JumpLists-CustomDestinations.csv`. Tidak ada subdirektori Amcache atau Jump Lists.
 Tabel SRUM menggunakan nama berkas `SRUM-` langsung di bawah kategorinya, misalnya
@@ -388,6 +407,9 @@ Tabel SRUM menggunakan nama berkas `SRUM-` langsung di bawah kategorinya, misaln
 Tabel Pencatatan Akses Pengguna berada di `LateralMovement`, satu berkas per tabel, seperti
 `UAL-Clients.csv` dan `UAL-SystemIdentity.csv`, beserta `UAL-logs.txt`; lihat
 [Pencatatan Akses Pengguna (UAL)](../artifacts/ual.md#automatic-parsing).
+Record cache bitmap RDP berada di `LateralMovement/RdpCache.csv`, dan kolase setiap berkas cache berada di
+`LateralMovement/RdpCache/<user>/<cache file>/`, dengan setiap tile di sampingnya bila
+`--extract-rdp-tiles` diberikan; lihat [Cache Bitmap RDP](../artifacts/rdp-cache.md#automatic-parsing).
 Tabel browser web berada di `BrowserActivity`: `Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv`, dan `Browser-FormHistory.csv`, beserta `Browser-logs.txt`; lihat
 [Browser web](../artifacts/browser.md#automatic-parsing). Tabel WebCache milik Internet Explorer dan Edge
@@ -507,10 +529,12 @@ format keluarannya. Berkas JSONL sementara dihapus setelah eksekusi berhasil; be
 parser atau ekspor gagal. Perhitungkan waktu pemrosesan tambahan dan ruang disk sementara.
 
 Dalam **mode JSON**, Juntei mengalirkan hasil yang ada ke JSONL ringkas tanpa mengurai ulang
-bukti. Laporan Amcache diperluas menjadi record summary, finding, file, dan device individual yang sama
+bukti. Laporan Amcache diperluas menjadi record summary, file, dan device individual yang sama
 seperti JSONL native. Dalam **mode JSONL**, record beranotasi yang ada digabungkan secara langsung.
 Semua mode menggunakan struktur record SIEM yang sama. Dataset mempertahankan timestamp dan field artefak
 native; dataset tidak menciptakan timestamp peristiwa bersama atau mengurutkan artefak yang heterogen secara global.
+
+Tabel `Findings` dipertahankan hanya jika ada dalam laporan lama; keluaran parser baru tidak membuatnya.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
@@ -557,6 +581,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -576,8 +601,9 @@ Display Settings:
 Gunakan direktori keluaran baru jika memungkinkan. `-C` hanya menghapus atau menimpa target
 yang dihasilkan secara persis untuk eksekusi ini, sehingga artefak yang kini tidak ada tidak dapat meninggalkan hasil usang. Opsi ini tidak menghapus
 berkas yang tidak terkait atau seluruh pohon keluaran. Opsi ini juga menghapus direktori
-`SecurityProducts/DefenderQuarantined/` setiap komputer, dan direktori `defender-quarantined/`
-yang dicadangkan dari tata letak datar sebelumnya, sebelum penguraian, baik eksekusi baru menggunakan `-x` maupun tidak.
+`SecurityProducts/DefenderQuarantined/` dan `LateralMovement/RdpCache/` setiap komputer, dan direktori
+`defender-quarantined/` yang dicadangkan dari tata letak datar sebelumnya, sebelum penguraian, baik eksekusi
+baru menggunakan `-x` atau `--extract-rdp-tiles` maupun tidak.
 
 Gunakan direktori keluaran baru saat beralih dari tata letak datar yang lebih lama. Berkas CSV/JSON sebelumnya
 tidak dipindahkan atau dihapus secara otomatis.
@@ -603,3 +629,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 ```
 
 Ekspor `-j, --json-timeline` tetap berupa gabungan rekaman asli JSONL, mempertahankan skema tanpa memperluas atau mengurutkan waktu. Simpan bersama hasil masing-masing parser untuk pemeriksaan bukti.
+
+## Riwayat PowerShell { #powershell-history }
+
+Berkas `<Host>_history.txt` yang berada langsung dalam folder `PSReadLine` ditemukan secara rekursif dan disalin saat staging VHDX/E01. Berkas dengan akhiran yang sama di luar folder tersebut dikecualikan; uraikan salinan dengan nama atau lokasi kustom secara eksplisit memakai `parse-file powershell-history -f <FILE>`.
+
+Hasil disimpan sebagai `ShellHistory/PowerShellHistory.csv` (atau `.json`/`.jsonl` sesuai format pilihan), dengan entri manifes dan log parser seperti biasa. `FileLastWriteTime` adalah waktu modifikasi berkas sumber, termasuk metadata image asli, bukan waktu eksekusi perintah. `auto-parse -Z` mengubah offset tampilannya bersama waktu keluaran lain; parser mandiri tidak memiliki opsi `-Z`. Timeline gabungan `-j` menyertakan baris riwayat. Baris tersebut tidak memiliki waktu, sehingga `super-timeline` tidak membuat peristiwa darinya dan menghitungnya sebagai rekaman tanpa waktu. Lihat [Riwayat PowerShell](../artifacts/powershell-history.md).

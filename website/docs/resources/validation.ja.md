@@ -56,6 +56,9 @@ Juntei は、パブリック go-ntfs テスト ボリューム (2,129 レコー�
 
 `parse-ese webcache` は、[ys-browser-parser](https://github.com/Yamato-Security/ys-browser-parser) を使用して `WebCacheV01.dat` を読み取ります。Plaso の 2 つの公開 WebCache データベース (Internet Explorer 11 のものと、従来の Edge の閲覧履歴、ダウンロード、Cookie を含む Windows 10 のダーティなもの) で、`dissect.database` の ESE リーダーと比較しました。4,156 行すべてが値ごとに一致しました。内訳は、44 のコンテナー、182 件の履歴エントリ、6 件のダウンロード、170 件の Cookie、3,754 件のその他のエントリです。比較側では、ダウンロード レコードを独自にデコードしました。データベースが削除済みとしてフラグを付けているレコードは、どちらからも除外しました。
 
+## Windows Search のインデックス { #windows-search-index }
+
+`parse-ese windows-search` は、[ys-srum-parser](https://github.com/Yamato-Security/ys-srum-parser) の ESE リーダーを使用して `Windows.edb` を読み取ります。3 つの公開インデックス (いずれもダーティなまま) で、libyal の `esedbexport` および Stroz Friedberg の SIDR と比較しました。対象は、Plaso の Windows 7 のインデックス (`SystemIndex_0A`) と、DFIR Artifact Museum の Windows 10 および Windows 11 のインデックス (`SystemIndex_PropertyStore`、ESE 形式リビジョン 110 と 200) です。すべてのパス、所有者、種類、コンピューター名、サイズ、日時が一致しました。内訳は、Windows 11 のプロパティ ストアの 6,691 個の値 (`esedbexport` と比較)、Windows 10 のプロパティ ストアの 6,332 個の値 (SIDR と比較)、および 3 種類のエンコーディングによる Windows 7 の文字列 (`esedbexport` と比較) です。Windows 10 のインデックスの一部は、ブランチ ページから到達できないリーフ ページにしか存在しません。両ツールともこれらを読み取っており、Juntei も同様です。ギャザラーの 1 つの列は設計上異なります。ESE は項目がクロールされると `Priority` を NULL にしますが、両ツールはレコードに残ったバイトからこの値を出力します。
 ## Outlook { #outlook }
 
 `parse-file outlook` は、[ys-outlook-parser](https://github.com/Yamato-Security/ys-outlook-parser) を使用して PST、OST、`.msg`、`.oft` ファイルを読み取ります。その PST と OST のリーダーは Microsoft の [outlook-pst-rs](https://github.com/microsoft/outlook-pst-rs) のフォークで、`.msg` のリーダーは Microsoft のオープン仕様に基づいて作成されています。
@@ -71,6 +74,16 @@ Juntei は、パブリック go-ntfs テスト ボリューム (2,129 レコー�
 ## Jump Lists { #jump-lists }
 
 [ys-jump-lists-parser](https://github.com/Yamato-Security/ys-jump-lists-parser) は、`ys-lnk-parser` によってデコードされた埋め込みリンクを使用して、Sootmark の複合ファイルとジャンプ リストの作業を使用します。 77 パブリック Jump Lists 全体で、100 ns までのタイムスタンプを含むすべての 13,057 共有比較セルが参照パーサーと一致しました。参照が拒否した 6 つのファイル (空のカスタム リスト、欠落しているフッター、またはジャンプ リストではないファイル) はデコードされたか、Juntei によって明示的に報告されました。
+
+## ごみ箱 { #recycle-bin }
+
+`parse-file recycle-bin` は Juntei 独自のパーサーです。[rifiuti2](https://github.com/abelcheung/rifiuti2) の公開サンプルでは、rifiuti2 が読み取るすべてのレコードで、インデックス、削除日時 (rifiuti2 の表示どおり秒単位)、削除状態、サイズ、パスが一致しました。対象は 92 レコードで、Windows 95 から Server 2003 の INFO2 ファイル 11 個の 67 レコードと、Windows Vista と Windows 10 の `$I` ファイルのフォルダー 3 つの 25 レコードです。INFO2 の ANSI パスも、rifiuti2 自身のテストが使うコード ページで一致しました。Juntei は rifiuti2 が拒否するもの、つまり両方の `$I` バージョンが混在するフォルダー、パスのない `$I` ヘッダー、切り詰められたレコードも読み取り、それぞれの破損を報告します。Plaso のテスト データにある `$I` ファイルと INFO2 では、Plaso のテストが期待する日時、サイズ、パス、インデックス、ドライブが得られます。Digital Corpora が公開している M57-Jean ディスク イメージ (Windows XP) を `auto-parse --e01` で読み取ると、INFO2 のレコードは rifiuti2 と一致し、その横にある復元対象のファイル `Dc1.jpg` は Juntei が付ける名前と同じでした。
+
+## RDP ビットマップキャッシュ { #rdp-bitmap-cache }
+
+`parse-file rdp-cache` は Juntei 独自のパーサーです。CODE BLUE 2026 CTF のコレクションに含まれる 6 台のホストの 1 つである kofu では、3 つの `Cache????.bin` ファイルにある 1,911 個のタイルのすべてが、[bmc-tools](https://github.com/ANSSI-FR/bmc-tools) が作成する画像とピクセル単位で一致します。ApoorvCTF 2025 の「Phantom Connection」チャレンジで公開されている `Cache0000.bin` の 1,980 個のタイルも同様で、そのうち 105 個は 64 × 48 ピクセルです。bmc-tools はすべてのタイルを幅 64 ピクセルとして読み取るため、画面の右端にある幅の狭いタイルは歪んで出力されます。Juntei は各タイルをそれぞれの幅で読み取ります。
+
+タイルを含む公開の `.bmc` キャッシュは見つかりませんでした。上記のサンプルは、ほかの Windows 10 以降のクライアントと同様に、空の `bcache24.bmc` しか持っていません。そのため `.bmc` の読み取りは、形式どおりに作成したファイルでテストしました。4 種類すべての色深度の非圧縮タイル、小さいタイルの後に以前のタイルの末尾が続くもの、破損したスロット、そして MS-RDPBCGR 3.1.9 のすべてのオーダーを使う、RLE 圧縮されたランダムな 16 ビット タイル 3,000 個です。この 3,000 個では、タイルの最初の行の終わりを越えて続くオーダーはありません。Juntei と bmc-tools は 3,000 個すべてを同じピクセルにデコードします。オーダーが最初の行で始まり、その行を越えて続く場合は、両者の結果が異なります。Juntei は仕様と FreeRDP のデコーダーに従ってオーダー全体で最初の行の規則を使い続けますが、bmc-tools はオーダーの途中で規則を切り替えます。
 
 ## ShimCache { #shimcache }
 

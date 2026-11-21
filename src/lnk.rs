@@ -16,9 +16,8 @@
 //! per link with what it points at (the target's times, size and attributes when the link was
 //! saved, its path, volume and network share), its arguments, the machine it was made on, and
 //! every extra data block, as CSV columns, or every field as JSON / JSONL, with
-//! Hayabusa's input options, progress bar and results summary. The summary flags links that
-//! hide their command line, carry data after their end, or start a shell or script host with
-//! arguments.
+//! Hayabusa's input options, progress bar and results summary. Original arguments, appended-byte
+//! counts, shell-item types and parsing diagnostics remain available for investigation.
 
 use crate::cli::{LnkOptions, LnkOutputType};
 use crate::color::JunteiColor;
@@ -37,31 +36,8 @@ use std::time::SystemTime;
 
 /// Parse errors printed; the rest are only counted.
 const MAX_PRINTED_ERRORS: usize = 20;
-/// Links listed per finding in the summary.
-const MAX_PRINTED_FINDINGS: usize = 10;
 /// Larger files are not shortcuts (a link's sections are limited to 64 KiB each).
 const MAX_LNK_SIZE: u64 = 16 * 1024 * 1024;
-/// Programs that run what their arguments say: a link to one with arguments is how malicious
-/// shortcuts start their payload.
-const LAUNCHERS: [&str; 16] = [
-    "cmd.exe",
-    "powershell.exe",
-    "pwsh.exe",
-    "powershell_ise.exe",
-    "mshta.exe",
-    "wscript.exe",
-    "cscript.exe",
-    "rundll32.exe",
-    "regsvr32.exe",
-    "msiexec.exe",
-    "certutil.exe",
-    "bitsadmin.exe",
-    "conhost.exe",
-    "forfiles.exe",
-    "msbuild.exe",
-    "installutil.exe",
-];
-
 /// Attribute names (`FILE_ATTRIBUTE_*`), by bit.
 const ATTRIBUTES: [(u32, &str); 17] = [
     (0x1, "READONLY"),
@@ -253,13 +229,6 @@ pub fn run(opts: &LnkOptions) -> i32 {
     i32::from(parsed.is_empty())
 }
 
-/// Whether `target` is a shell or script host and `arguments` give it something to run.
-pub(crate) fn launches(target: &str, arguments: &str) -> bool {
-    let target = target.to_ascii_lowercase();
-    let program = target.rsplit(['\\', '/']).next().unwrap_or_default();
-    !arguments.trim().is_empty() && LAUNCHERS.contains(&program)
-}
-
 /// What a link starts: its local or network path, else the path of its target items.
 pub(crate) fn link_target(link: &Link) -> String {
     if !link.local_path.is_empty() {
@@ -269,6 +238,14 @@ pub(crate) fn link_target(link: &Link) -> String {
     } else {
         link.target_path()
     }
+}
+
+/// Stored shell-item kinds, retained as evidence in CSV as well as native JSON.
+pub(crate) fn target_item_types(link: &Link) -> Vec<String> {
+    link.target
+        .iter()
+        .map(|item| format!("{:?}", item.kind))
+        .collect()
 }
 
 /// One parsed shortcut.
@@ -284,23 +261,6 @@ impl Parsed {
     /// Bytes after the link's terminal block (data appended to the shortcut).
     fn appended(&self) -> u64 {
         self.file_size.saturating_sub(self.link.length as u64)
-    }
-
-    /// What the link starts: its local or network path, else the path of its target items.
-    fn target(&self) -> String {
-        link_target(&self.link)
-    }
-
-    /// Whether the link starts a shell or script host with arguments.
-    fn launches(&self) -> bool {
-        launches(&self.target(), &self.link.arguments)
-    }
-
-    fn hides_arguments(&self) -> bool {
-        self.link
-            .problems
-            .iter()
-            .any(|p| p.starts_with("string data longer than 260"))
     }
 }
 
@@ -485,6 +445,7 @@ const CSV_HEADER: &[&str] = &[
     "NetworkProvider",
     "ConsoleCodePage",
     "AppendedBytes",
+    "TargetItemTypes",
 ];
 
 fn csv_row(r: &Parsed) -> Vec<String> {
@@ -540,6 +501,7 @@ fn csv_row(r: &Parsed) -> Vec<String> {
         l.console_code_page
             .map_or_else(String::new, |c| c.to_string()),
         r.appended().to_string(),
+        target_item_types(l).join("|"),
     ]
 }
 
@@ -593,6 +555,7 @@ pub(crate) fn link_json(l: &Link) -> serde_json::Map<String, Value> {
         "target_mft_entry": mft.map(|m| m.0),
         "target_mft_sequence": mft.map(|m| m.1),
         "target_items": l.target.iter().map(item_json).collect::<Vec<_>>(),
+        "target_item_types": target_item_types(l),
         "link_info": {
             "drive_type": l.volume.as_ref().map(|v| drive_type(v.drive_type)),
             "volume_serial_number": l.volume.as_ref().map(|v| format!("{:08X}", v.serial)),
@@ -763,28 +726,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
         .filter(|r| !r.link.problems.is_empty())
         .count();
     p_label(no_color, "With problems: ", &fmt_num(damaged));
-    let findings: [(&str, Vec<&Parsed>); 3] = [
-        (
-            "Hidden command line (string data over 260 characters): ",
-            parsed.iter().filter(|r| r.hides_arguments()).collect(),
-        ),
-        (
-            "Data after the end of the link: ",
-            parsed.iter().filter(|r| r.appended() > 0).collect(),
-        ),
-        (
-            "Shell or script host started with arguments: ",
-            parsed.iter().filter(|r| r.launches()).collect(),
-        ),
-    ];
-    for (label, found) in &findings {
-        p_label(no_color, label, &fmt_num(found.len()));
-        for r in found.iter().take(MAX_PRINTED_FINDINGS) {
-            let args: String = r.link.arguments.trim().chars().take(80).collect();
-            let line = format!("  {} -> {} {args}", r.source, r.target());
-            p(None, line.trim_end(), true);
-        }
-    }
 }
 
 /// Whether a file name is a shortcut: `*.lnk`.

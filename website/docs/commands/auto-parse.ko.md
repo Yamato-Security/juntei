@@ -31,7 +31,7 @@ juntei auto-parse -d /cases/vhdx --vhdx -o parsed
 juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 ```
 
-파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
+파서는 파일 경로가 필요하므로 NTFS 리더가 제공하는 파일 중 파서가 읽는 파일(레지스트리 하이브와 트랜잭션 로그, NTFS 메타데이터 파일, 데이터베이스, Prefetch 파일, 바로 가기, Jump List, Outlook 파일, PSReadLine 기록 파일, 휴지통 인덱스 파일, RDP 비트맵 캐시, Defender 탐지 기록 파일, Defender 격리 폴더)을 비공개 임시 디렉터리에 스트리밍 복사합니다. 그 밖의 파일은 원래 수정 시각을 가진 빈 자리 표시자가 되므로 디렉터리와 경로는 디스크에서와 같게 보입니다. persistence-hunter는 지속성 항목이 가리키는 실행 파일처럼 필요한 자리 표시자의 내용만 이미지에서 읽습니다. **결과 외에 복사되는 파일을 저장할 공간이 필요합니다.** 버퍼 크기는 제한되며 지원되는 파일시스템에서는 0 영역을 희소 영역으로 기록합니다. 이름, 디렉터리, 하드 링크, 수정 시각을 보존합니다. LNK와 Jump List의 소스 생성·수정·접근 시각은 임시 파일이 아닌 원래 NTFS 메타데이터 스냅샷에서 가져옵니다. 파서 오류를 포함한 정상 종료 시 임시 복사본을 삭제하지만 강제 종료 시 남을 수 있습니다. 원본은 읽기 전용이며 미적용 VHDX 로그는 메모리에서만 반영합니다.
 
 호스트 검색, CSV/JSON/JSONL, `-j`는 일반 증거 디렉터리와 같은 파이프라인을 사용합니다. `manifest.json`의 `Image`는 원본 이미지를, `EvidenceRoot`는 이미지 내부 상대 경로를 식별합니다. 읽기 오류와 안전하지 않은 이름은 `ImageErrors` 및 `manifest.csv`의 실패 행에 기록됩니다. 읽을 수 있는 결과는 보존하고 불완전한 입력은 종료 코드 1을 반환합니다. 위험하거나 모호한 이름을 임의로 바꾸지 않으며 명명된 NTFS 스트림을 추가 파일로 추출하지 않습니다. 트리아지 이미지에 일반 파일로 수집된 아티팩트는 사용할 수 있습니다.
 
@@ -155,11 +155,16 @@ juntei auto-parse -d evidence -o parsed --max-depth 15
 - 사용자 액세스 로깅 (UAL)
 - 웹 브라우저 방문 기록, 다운로드, 쿠키 및 양식 기록(Chromium 및 Firefox 기반 브라우저)
 - Internet Explorer와 레거시 Edge의 WebCache: 방문 기록, 다운로드, 쿠키 및 캐시 항목
+- Windows Search 색인: 색인된 모든 파일, 폴더, 이메일, 웹 페이지와 그 메타데이터 및 텍스트 발췌
 - Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업
 - LNK 바로 가기
 - Jump Lists
+- 휴지통: 삭제된 항목의 원래 경로, 크기, 삭제 시각, 사용자
+- RDP 비트맵 캐시: 사용자가 본 원격 화면의 타일과 캐시 파일마다 하나의 콜라주 이미지
 - ShimCache
 - Persistence Hunter(허용/차단 프로필을 갖춘 131개의 교차 소스 지속성 검사)
+- Defender 탐지 기록: 모든 탐지와 그 상태, 사용자, 프로세스 및 리소스(격리된 적이 없는 위협
+  포함)
 - Defender 격리 메타데이터
 - 열기 및 다른 이름으로 저장 대화 상자 기록
 - 복구 가능한 삭제된 데이터를 포함한 모든 레지스트리 키와 값
@@ -252,13 +257,16 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── Registry-ShellBags.csv
 │   │   └── Registry-ShellBags-logs.txt
 │   ├── FileExistence/
+│   │   ├── RecycleBin.csv
+│   │   ├── RecycleBin-logs.txt
 │   │   ├── Registry-Amcache-Devices.csv
 │   │   ├── Registry-Amcache-Files.csv
-│   │   ├── Registry-Amcache-Findings.csv
 │   │   ├── Registry-Amcache-Summary.csv
 │   │   ├── Registry-Amcache-logs.txt
 │   │   ├── Registry-ShimCache.csv
-│   │   └── Registry-ShimCache-logs.txt
+│   │   ├── Registry-ShimCache-logs.txt
+│   │   ├── WindowsSearch.csv
+│   │   └── WindowsSearch-logs.txt
 │   ├── FileSystem/
 │   │   ├── Boot.csv
 │   │   ├── Boot-logs.txt
@@ -279,6 +287,9 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   │   ├── SRUM-NetworkUsages.csv
 │   │   └── SRUM-PushNotifications.csv
 │   ├── LateralMovement/
+│   │   ├── RdpCache/  # collages; also every tile with --extract-rdp-tiles
+│   │   ├── RdpCache.csv
+│   │   ├── RdpCache-logs.txt
 │   │   ├── Registry-RemoteAccess.csv
 │   │   ├── Registry-RemoteAccess-logs.txt
 │   │   ├── UAL-Clients.csv
@@ -317,9 +328,14 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 │   ├── SecurityProducts/
 │   │   ├── Registry-SecuritySettings.csv
 │   │   ├── Registry-SecuritySettings-logs.txt
+│   │   ├── DefenderHistory.csv
+│   │   ├── DefenderHistory-logs.txt
 │   │   ├── DefenderQuarantine.csv
 │   │   ├── DefenderQuarantine-logs.txt
 │   │   └── DefenderQuarantined/  # only with -x
+│   ├── ShellHistory/
+│   │   ├── PowerShellHistory.csv
+│   │   └── PowerShellHistory-logs.txt
 │   └── SystemInformation/
 │       ├── Registry-AuditPolicy.csv
 │       ├── Registry-AuditPolicy-logs.txt
@@ -341,14 +357,15 @@ CSV `$MFT` 출력에는 모든 타임스탬프와 짧은 이름이 포함됩니�
 | `Communication` | Outlook PST, OST, MSG 및 OFT 파일: 폴더, 항목, 받는 사람, 첨부 파일, 연락처, 일정 항목 및 작업 |
 | `ExternalDevices` | USB 장치와 볼륨 |
 | `FileAndFolderOpening` | Jump Lists, LNK 바로 가기, Microsoft Office, MRU 목록, 열기 및 다른 이름으로 저장 대화 상자, RecentDocs, ShellBags |
-| `FileExistence` | Amcache, ShimCache |
+| `FileExistence` | Amcache, 휴지통, ShimCache, Windows Search 색인 |
 | `FileSystem` | `$Boot`, `$I30`, `$LogFile`, `$MFT`, `$Secure:$SDS`, USN 저널 |
 | `NetworkActivity` | 네트워크 프로필, 인터페이스, 공유, 포트 프록시 및 경로. SRUM 연결, 트래픽 및 푸시 알림 |
-| `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유. 사용자 액세스 로깅(서버 역할의 클라이언트) |
+| `LateralMovement` | 사용자의 아웃바운드 원격 데스크톱, PuTTY 및 WinSCP 연결, 매핑된 드라이브 및 공유. RDP 비트맵 캐시(원격 화면의 타일). 사용자 액세스 로깅(서버 역할의 클라이언트) |
 | `Persistence` | 부팅 구성(BCD), 레지스트리 자동 실행, 서비스, TaskCache |
 | `ProcessExecution` | 애플리케이션 호환성, BAM 및 DAM, FeatureUsage 및 고정 항목, MuiCache, Prefetch, Prefetch 타임라인, SRUM 애플리케이션/CPU 활동, UserAssist |
 | `Registry` | 복구된 레코드를 포함한 일반 하이브 키와 값 |
-| `SecurityProducts` | Defender 격리 메타데이터 및 선택적으로 추출된 콘텐츠. 보안 설정(Defender, UAC, 자격 증명 보호, RDP, 방화벽, 로깅) |
+| `SecurityProducts` | Defender 탐지 기록. Defender 격리 메타데이터 및 선택적으로 추출된 콘텐츠. 보안 설정(Defender, UAC, 자격 증명 보호, RDP, 방화벽, 로깅) |
+| `ShellHistory` | PowerShell PSReadLine 명령 기록. 파일 수정 시각은 메타데이터이며 명령 실행 시각은 없음 |
 | `SystemInformation` | 이름, Windows 버전, 표준 시간대, 마지막 종료, 프로필, SID 및 감사 정책. SRUM 에너지/용량, ID 맵 및 알 수 없는 공급자 |
 
 범주는 조사를 정리하는 데 도움을 주지만, 특정 활동의 증거는 아닙니다. 예를 들어 Amcache와 ShimCache 항목만으로는
@@ -362,20 +379,23 @@ Jump Lists는 각각 접두사가 붙은 테이블 옆에 하나의 공유 로�
 `NetworkActivity`, `ProcessExecution`, `SystemInformation`에 직접 배치되며, 공유 파일
 `SystemInformation/SRUM-logs.txt`가 있습니다. `logs/` 하위 디렉터리는 생성되지 않습니다.
 
-기본 CSV 파일 이름은 `Registry-SAM.csv`, `LNK.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
+기본 CSV 파일 이름은 `Registry-SAM.csv`, `LNK.csv`, `RecycleBin.csv`, `RdpCache.csv`, `Registry-RecentDocs.csv`, `Registry-ShimCache.csv`, `LogFile.csv`,
 `I30.csv`, `MFT.csv`, `UsnJournal.csv`, `Boot.csv`, `SecureSDS.csv`, `Registry-Networks.csv`, `Registry-Persistence.csv`, `Registry-Services.csv`, `Registry-TaskCache.csv`, `Registry-BCD.csv`,
 `Registry-SecuritySettings.csv`,
 `PrefetchTimeline.csv`, `Prefetch.csv`, `Registry-UserAssist.csv`, `Registry-AppCompat.csv`, `Registry-Office.csv`, `Registry-FeatureUsage.csv`, `Registry-AppHistory.csv`, `Registry-MRU.csv`, `Registry-SystemInfo.csv`, `Registry-RemoteAccess.csv`, `Registry-OpenSaveMRU.csv`, `Registry-InstalledPrograms.csv`, `Registry-BAM.csv`, `Registry-MuiCache.csv`, `Registry-ShellBags.csv`, `Registry-USB.csv`, `Registry-SecuritySettings.csv`, `Registry-AuditPolicy.csv`, `Registry-Dump.csv`,
-`DefenderQuarantine.csv`입니다. 레지스트리에서 파생된 테이블은 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`,
+`DefenderHistory.csv`, `DefenderQuarantine.csv`, `WindowsSearch.csv`입니다. 레지스트리에서 파생된 테이블은 `Registry-ShimCache.csv`, `Registry-UserAssist.csv`,
 `Registry-BAM.csv`, `Registry-SystemInfo.csv`를 포함하여 `Registry-` 접두사를 사용합니다. 일반 하이브 키와 값은
 `Registry-Dump.csv`에 있습니다. Amcache 테이블은 `FileExistence/Registry-Amcache-Devices.csv`,
-`Registry-Amcache-Files.csv`, `Registry-Amcache-Findings.csv`, `Registry-Amcache-Summary.csv`입니다. Jump Lists는
+`Registry-Amcache-Files.csv`, `Registry-Amcache-Summary.csv`입니다. Jump Lists는
 `FileAndFolderOpening/JumpLists-AutomaticDestinations.csv`와 `JumpLists-CustomDestinations.csv`를 사용합니다.
 Amcache나 Jump Lists의 하위 디렉터리는 없습니다. SRUM 테이블은 범주 바로 아래에 `SRUM-` 파일 이름을 사용합니다.
 예를 들어 `NetworkActivity/SRUM-NetworkConnections.csv`입니다.
 사용자 액세스 로깅 테이블은 `LateralMovement`에 테이블마다 하나의 파일로 있으며(예: `UAL-Clients.csv`,
 `UAL-SystemIdentity.csv`), `UAL-logs.txt`도 함께 있습니다.
 [사용자 액세스 로깅 (UAL)](../artifacts/ual.md#automatic-parsing)을 참조하십시오.
+RDP 비트맵 캐시 레코드는 `LateralMovement/RdpCache.csv`에 있고, 각 캐시 파일의 콜라주는
+`LateralMovement/RdpCache/<user>/<cache file>/`에 있으며, `--extract-rdp-tiles`를 지정하면 모든 타일이
+그 옆에 저장됩니다. [RDP 비트맵 캐시](../artifacts/rdp-cache.md#automatic-parsing)를 참조하십시오.
 웹 브라우저 테이블은 `BrowserActivity`에 있으며(`Browser-History.csv`, `Browser-Downloads.csv`,
 `Browser-Cookies.csv`, `Browser-FormHistory.csv`), `Browser-logs.txt`도 함께 있습니다.
 [웹 브라우저](../artifacts/browser.md#automatic-parsing)를 참조하십시오.
@@ -486,10 +506,12 @@ juntei auto-parse -d evidence -o parsed-jsonl -t jsonl -j parsed-jsonl/timeline.
 실패하면 유지됩니다. 추가 처리 시간과 임시 디스크 공간을 고려하십시오.
 
 **JSON 모드**에서 Juntei는 증거를 다시 파싱하지 않고 기존 결과를 간결한 JSONL로 스트리밍합니다. Amcache
-보고서는 네이티브 JSONL과 동일한 개별 요약, 발견 사항, 파일, 장치 레코드로 확장됩니다. **JSONL 모드**에서는
+보고서는 네이티브 JSONL과 동일한 개별 요약, 파일, 장치 레코드로 확장됩니다. **JSONL 모드**에서는
 기존의 주석이 추가된 레코드가 그대로 결합됩니다. 모든 모드는 같은 SIEM 레코드 구조를 사용합니다. 데이터 세트는
 네이티브 타임스탬프와 아티팩트 필드를 유지하며, 공통 이벤트 타임스탬프를 만들어 내거나 서로 다른 아티팩트를
 전역적으로 정렬하지 않습니다.
+
+과거 보고서에 `Findings` 테이블이 있으면 보존하지만, 새로운 파서 출력에서는 생성하지 않습니다.
 
 ```bash
 jq -c 'select(.Comp == "HOST1" and .Artifact == "prefetch")' parsed/timeline.jsonl
@@ -535,6 +557,7 @@ Output:
   -Z, --timezone <OFFSET>             Display parsed timestamps using a fixed UTC offset (UTC by default) [default: +00:00]
   -C, --clobber                       Overwrite outputs in an existing directory (never deletes unrelated files)
   -x, --extract-defender-quarantined  Extract Defender-quarantined files
+      --extract-rdp-tiles             Save each RDP bitmap cache tile as a BMP image too, not only the collages
 
 Performance:
   -T, --threads <N>  Parser processes to run at once (default: logical CPU count)
@@ -553,8 +576,9 @@ Display Settings:
 
 가능하면 새 출력 디렉터리를 사용하십시오. `-C`는 이번 실행에서 생성되는 정확한 대상만 제거하거나 덮어쓰므로,
 이제는 없는 아티팩트가 오래된 결과를 남기지 않습니다. 관련 없는 파일이나 출력 트리 전체를 삭제하지는 않습니다.
-또한 새 실행에서 `-x`를 사용하는지와 관계없이, 파싱 전에 각 컴퓨터의 `SecurityProducts/DefenderQuarantined/`
-디렉터리와 이전 평면 레이아웃의 예약된 `defender-quarantined/` 디렉터리를 제거합니다.
+또한 새 실행에서 `-x`나 `--extract-rdp-tiles`를 사용하는지와 관계없이, 파싱 전에 각 컴퓨터의
+`SecurityProducts/DefenderQuarantined/` 및 `LateralMovement/RdpCache/` 디렉터리와 이전 평면 레이아웃의
+예약된 `defender-quarantined/` 디렉터리를 제거합니다.
 
 이전 평면 레이아웃에서 전환할 때는 새 출력 디렉터리를 사용하십시오. 이전 CSV/JSON 파일은 자동으로 이동되거나
 삭제되지 않습니다.
@@ -585,3 +609,9 @@ juntei super-timeline -d output/ -o SuperTimeline.csv --sort
 기존 `-j, --json-timeline` 내보내기는 여전히 네이티브 레코드를 하나로 합친 JSONL 파일입니다. 파서 스키마를 그대로
 보존하며, 타임스탬프 필드를 확장하거나 이벤트를 정렬하지 않습니다. 증거 수준의 검토를 위해 이 파일과 개별 파서
 결과를 보관하십시오.
+
+## PowerShell 기록 { #powershell-history }
+
+`PSReadLine` 폴더 바로 아래의 `<Host>_history.txt` 파일을 재귀적으로 탐색하고 VHDX/E01 준비 과정에서 복사합니다. 해당 폴더 밖의 동일한 접미사 파일은 제외합니다. 사용자 지정 위치나 이름을 바꾼 사본은 `parse-file powershell-history -f <FILE>`로 명시적으로 파싱하세요.
+
+결과는 `ShellHistory/PowerShellHistory.csv` 또는 선택한 형식의 `.json`/`.jsonl`로 저장하며 일반적인 매니페스트와 파서 로그 항목도 생성합니다. `FileLastWriteTime`은 원래 이미지 메타데이터를 포함한 소스 파일 수정 시각이며 명령 실행 시각이 아닙니다. `auto-parse -Z`는 다른 출력 시각과 함께 표시 오프셋을 변경합니다. 독립 실행 파서에는 `-Z` 옵션이 없습니다. 결합된 `-j` 타임라인에는 기록 행이 포함됩니다. 이 행에는 시간이 없으므로 `super-timeline`은 이 행으로 이벤트를 만들지 않고 시간이 없는 레코드로 셉니다. [PowerShell 기록](../artifacts/powershell-history.md)을 참조하세요.

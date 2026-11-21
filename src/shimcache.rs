@@ -16,20 +16,19 @@
 //! 11): the hive's transaction logs replayed
 //! when it is dirty, every control set's cache and the entries left in the slack of its value,
 //! one record per entry as CSV columns, or every field as JSON /
-//! JSONL, with Hayabusa's input options, progress bar and results summary. The summary flags
-//! system binaries outside `System32` and executables in staging directories.
+//! JSONL, with Hayabusa's input options, progress bar and results summary. Source evidence
+//! is preserved without evaluating detection policy.
 
 use crate::cli::{ShimcacheOptions, ShimcacheOutputType};
 use crate::color::JunteiColor;
 use crate::lnk::filetime;
 use crate::progress;
 use crate::util::{self, check_output, error_msg, fmt_num, p, p_label};
-use forensicnomicon::report::Observation;
 use indicatif::ProgressBar;
 use serde_json::{Value, json};
 use shimcache_forensic::{
-    ControlSetCache, PackageRecord, Recovery, Row, Select, ShimcacheAnomaly, ShimcacheEntry,
-    SystemCaches, audit, decode, find_logs, read_system,
+    ControlSetCache, PackageRecord, Recovery, Row, Select, ShimcacheEntry, SystemCaches, decode,
+    find_logs, read_system,
 };
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -38,8 +37,8 @@ use std::path::{Path, PathBuf};
 
 /// Parse errors printed; the rest are only counted.
 const MAX_PRINTED_ERRORS: usize = 20;
-/// Findings listed in the summary.
-const MAX_PRINTED_FINDINGS: usize = 10;
+/// Diagnostic source notes shown before the complete saved metadata.
+const MAX_PRINTED_NOTES: usize = 10;
 /// The value that holds the cache, in every format.
 const CACHE_VALUE: &str = "AppCompatCache";
 /// Larger files are not registry hives (Windows limits a hive to 2 GiB).
@@ -257,7 +256,6 @@ struct Record<'a> {
     file: &'a Parsed,
     set: &'a ControlSetCache,
     row: Row<'a>,
-    findings: Vec<ShimcacheAnomaly>,
 }
 
 impl Record<'_> {
@@ -305,13 +303,7 @@ fn records(parsed: &[Parsed]) -> Vec<Record<'_>> {
             else {
                 continue;
             };
-            let findings = audit(std::slice::from_ref(row.entry));
-            out.push(Record {
-                file,
-                set,
-                row,
-                findings,
-            });
+            out.push(Record { file, set, row });
         }
     }
     out
@@ -341,14 +333,6 @@ fn hex32(v: Option<u32>) -> String {
     v.map_or_else(String::new, |v| format!("0x{v:08x}"))
 }
 
-fn finding_codes(findings: &[ShimcacheAnomaly]) -> String {
-    findings
-        .iter()
-        .map(|f| f.code())
-        .collect::<Vec<_>>()
-        .join("|")
-}
-
 /// The CSV's columns, in order: the common ShimCache columns, then the rest.
 const CSV_HEADER: &[&str] = &[
     "ControlSet",
@@ -370,7 +354,6 @@ const CSV_HEADER: &[&str] = &[
     "PackageName",
     "PackageVersion",
     "PackagePublisherID",
-    "Findings",
     "RegistryPath",
     "RegistryValueName",
     "CacheValueSize",
@@ -415,7 +398,6 @@ fn csv_row(r: &Record) -> Vec<String> {
         package
             .as_ref()
             .map_or_else(String::new, |p| p.publisher_id.to_owned()),
-        finding_codes(&r.findings),
         registry_path.to_owned(),
         registry_value.to_owned(),
         r.set.value_size.map_or_else(String::new, |n| n.to_string()),
@@ -434,17 +416,6 @@ fn json_record(r: &Record) -> Value {
         .data_tags()
         .iter()
         .map(|(tag, value)| json!({"tag": format!("0x{tag:x}"), "value": hex(value)}))
-        .collect();
-    let findings: Vec<Value> = r
-        .findings
-        .iter()
-        .map(|f| {
-            json!({
-                "code": f.code(),
-                "severity": f.severity().map_or_else(|| "INFO".to_owned(), |s| s.to_string()),
-                "note": f.note(),
-            })
-        })
         .collect();
     let package = e.package_record().map(|p| {
         json!({
@@ -488,7 +459,6 @@ fn json_record(r: &Record) -> Value {
         "data_size": e.data.len(),
         "data_tags": tags,
         "data": hex(&e.data),
-        "findings": findings,
     })
 }
 
@@ -557,7 +527,7 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
             "Dirty hives whose transaction logs were not applied (entries may be missing): ",
             &fmt_num(dirty.len()),
         );
-        for f in dirty.iter().take(MAX_PRINTED_FINDINGS) {
+        for f in dirty.iter().take(MAX_PRINTED_NOTES) {
             p(None, &format!("  {}", f.source), true);
         }
     }
@@ -571,7 +541,7 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
             "SYSTEM\\Select missing or malformed: ",
             &fmt_num(unselected.len()),
         );
-        for f in unselected.iter().take(MAX_PRINTED_FINDINGS) {
+        for f in unselected.iter().take(MAX_PRINTED_NOTES) {
             p(
                 None,
                 &format!("  {}: {}", f.source, f.caches.select.problems.join("; ")),
@@ -644,71 +614,6 @@ fn print_summary(parsed: &[Parsed], failed: usize, no_color: bool) {
         );
     }
     p_label(no_color, "Damaged entries: ", &fmt_num(problems));
-
-    // findings, once per entry (not again for its duplicates)
-    let found: Vec<(&Record, &ShimcacheAnomaly)> = records
-        .iter()
-        .filter(|r| !r.row.duplicate)
-        .flat_map(|r| r.findings.iter().map(move |f| (r, f)))
-        .collect();
-    let severity = |f: &ShimcacheAnomaly| {
-        f.severity()
-            .map_or_else(|| "INFO".to_owned(), |s| s.to_string())
-    };
-    let mut by_severity: BTreeMap<String, usize> = BTreeMap::new();
-    for (_, f) in &found {
-        *by_severity.entry(severity(f)).or_default() += 1;
-    }
-    p(JunteiColor::Green.rdg(no_color), "Findings: ", false);
-    p(None, &fmt_num(found.len()), false);
-    // most severe first, each in its color
-    let mut first = true;
-    for level in ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"] {
-        let Some(n) = by_severity.get(level) else {
-            continue;
-        };
-        p(None, if first { " (" } else { ", " }, false);
-        first = false;
-        p(
-            JunteiColor::for_severity(level).and_then(|c| c.rdg(no_color)),
-            &format!("{}: {}", level.to_ascii_lowercase(), fmt_num(*n)),
-            false,
-        );
-    }
-    p(None, if first { "" } else { ")" }, true);
-    let mut shown = found.clone();
-    // the most severe first (a stable sort keeps the cache's order within a severity)
-    shown.sort_by_key(|(_, f)| {
-        ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
-            .iter()
-            .position(|l| *l == severity(f))
-    });
-    for (r, f) in shown.iter().take(MAX_PRINTED_FINDINGS) {
-        let executed = match r.entry().executed {
-            Some(true) => " (executed)",
-            _ => "",
-        };
-        p(
-            None,
-            &format!(
-                "  [{}] {} {}{executed}",
-                severity(f),
-                f.code(),
-                r.entry().path
-            ),
-            true,
-        );
-    }
-    if found.len() > MAX_PRINTED_FINDINGS {
-        p(
-            None,
-            &format!(
-                "  … {} more in the Findings column (-o <FILE>)",
-                fmt_num(found.len() - MAX_PRINTED_FINDINGS)
-            ),
-            true,
-        );
-    }
 }
 
 /// Whether a file name is a `SYSTEM` hive's (in any case; its logs are not hives).

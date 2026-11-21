@@ -20,6 +20,7 @@ Muchos comandos muestran un resumen conciso cuando no se solicita ningún archiv
 ```bash
 juntei parse-file prefetch -d evidence/
 juntei parse-registry shimcache -d evidence/
+juntei parse-file defender-history -d evidence/
 juntei parse-file defender-quarantine -d evidence/
 ```
 
@@ -65,7 +66,7 @@ Utilice las [investigaciones entre artefactos](../resources/workflows.md). Una s
 3. Amcache y ShimCache para la presencia histórica y los metadatos.
 4. LNK, Jump Lists, RecentDocs y SRUM para el contexto del usuario y de la aplicación.
 5. Los servicios del Registro y TaskCache para la persistencia.
-6. La cuarentena de Defender para la detección, la eliminación, el origen y los hashes.
+6. El historial de detecciones y la cuarentena de Defender para la detección, la eliminación, el origen y los hashes.
 
 ## 7. Documentar la reproducibilidad { #7-document-reproducibility }
 
