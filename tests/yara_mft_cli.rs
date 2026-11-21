@@ -605,3 +605,45 @@ fn a_whole_container_regex_does_not_trigger_bulk_recovery() {
     );
     assert!(!out.join("RecoveredMFT").exists());
 }
+
+#[test]
+fn verified_extension_uses_its_exact_base_generation_and_path() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path();
+    let mut base = record(1, "logical.txt", &[], true, false);
+    let mut list = [0; 32];
+    u32_at(&mut list, 0, 0x80);
+    u16_at(&mut list, 4, 32);
+    u64_at(&mut list, 16, 2 | (3u64 << 48));
+    u16_at(&mut list, 24, 1);
+    let attr = resident(0x20, "", &list, 2);
+    let at = u32::from_le_bytes(base[24..28].try_into().unwrap()) as usize - 8;
+    base[at..at + attr.len()].copy_from_slice(&attr);
+    u32_at(&mut base, at + attr.len(), u32::MAX);
+    u32_at(&mut base, 24, (at + attr.len() + 8) as u32);
+    let mut extension = record(2, "", &[("", b"MFT_VALID_EXTENSION")], true, false);
+    u64_at(&mut extension, 32, 1 | (3u64 << 48));
+    let input = mft(root, "$MFT", &[(1, base), (2, extension)]);
+    let r = rules(
+        root,
+        "rule extension {strings:$a=\"MFT_VALID_EXTENSION\" condition:$a}",
+    );
+    let out = root.join("out");
+    let result = run(&input, &r, &out, &[]);
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stdout)
+    );
+    let rows = rows(&out.join("YaraMFTResults.jsonl"));
+    let row = rows.iter().find(|r| r["Status"] == "Recovered").unwrap();
+    assert_eq!(row["EntryNum"], 2);
+    assert_eq!(row["BaseEntryNum"], 1);
+    assert_eq!(row["BaseSN"], 3);
+    assert!(
+        row["OriginalPath"]
+            .as_str()
+            .unwrap()
+            .ends_with("logical.txt")
+    );
+}
