@@ -135,3 +135,10 @@ Options:
 
 The source pages reproduce command usage and give short examples. The artifact guides explain
 the evidence, output fields, limitations, and investigation strategy.
+
+## [YARA file scanning](yara-scan.md)
+
+Use `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` to scan collected files with
+YARA Forge Core rules. Choose `--ruleset extended` or `--ruleset full` for broader
+coverage, or `--rules <FILE_OR_DIRECTORY>` to work offline with local rules.
+This is an opt-in scan, separate from `auto-parse`.

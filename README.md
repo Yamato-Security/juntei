@@ -55,6 +55,12 @@ provides 131 checks, configurable allow/block profiles, source evidence, and CSV
 results. Candidates describe persistence configuration; they do not by themselves prove compromise
 or execution. Per-check coverage identifies evidence that was missing or only partly readable.
 
+Scan collected files with `juntei yara-scan -d <EVIDENCE> -o <RESULTS>`.
+It downloads YARA Forge **Core** rules by default; select `--ruleset extended` or
+`--ruleset full`, or supply `--rules <FILE_OR_DIRECTORY>` for an offline scan.
+[Read the YARA scanning guide](https://yamato-security.github.io/juntei/commands/yara-scan/)
+for coverage reporting, resource limits, and interpreting matches.
+
 ### Process Execution
 
 | Artifact | Type |

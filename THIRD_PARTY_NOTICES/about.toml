@@ -2,6 +2,9 @@
 # In order of preference: a crate under "MIT OR Apache-2.0" is listed under MIT.
 accepted = [
     "MIT",
+    # HTTPS rule downloads: rustls/ring and the Mozilla root-certificate distribution.
+    "ISC",
+    "CDLA-Permissive-2.0",
     "Apache-2.0",
     "Apache-2.0 WITH LLVM-exception",
     "BSD-2-Clause",

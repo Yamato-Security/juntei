@@ -72,3 +72,9 @@ guides. The per-artifact **Further Details** sections contain the most targeted 
     Verify claims against the affected Windows version and your collected data. A useful article can
     describe a specific operating-system generation, parser version, or experiment rather than a
     universal rule.
+
+## YARA hunting
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge) — Core, Extended and Full packages.
+- [Boreal](https://github.com/vthib/boreal) — the portable Rust evaluator used by `yara-scan`.
+- [Juntei YARA scan guide](../commands/yara-scan.md) — offline rules, coverage and output fields.

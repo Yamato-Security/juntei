@@ -102,3 +102,10 @@ Juntei is released under the
 AGPLv3 before version 1.0.0. The licenses of the crates and other third-party code and data it is
 built with are in
 [`THIRD_PARTY_NOTICES`](https://github.com/Yamato-Security/juntei/tree/main/THIRD_PARTY_NOTICES).
+
+## YARA scanning
+
+[Boreal](https://github.com/vthib/boreal) provides the portable Rust YARA engine.
+[YARA Forge](https://github.com/YARAHQ/yara-forge) curates the optional Core, Extended and Full
+rule packages, built from the work of their individual rule authors. Juntei downloads rules
+only when requested through `yara-scan`; retain their notices and consult their source licenses.

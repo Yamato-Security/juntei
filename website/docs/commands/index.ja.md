@@ -122,3 +122,10 @@ Options:
 ```
 
 ソース ページではコマンドの使用法を再現し、短い例を示しています。アーティファクト ガイドでは、証拠、出力フィールド、制限、および調査戦略について説明します。
+
+## [YARAファイルスキャン](yara-scan.md)
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` で収集済みファイルをYARA Forge Coreルールでスキャンできる。
+`--ruleset extended` または `--ruleset full` で対象ルールを広げ、
+`--rules <FILE_OR_DIRECTORY>` でローカルルールをオフラインで利用できる。
+`auto-parse` とは独立した、明示的に実行するコマンド。

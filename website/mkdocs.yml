@@ -104,6 +104,7 @@ plugins:
         Shell History: "シェル履歴"
         PowerShell History: "PowerShell 履歴"
         Super Timeline: "統合タイムライン"
+        YARA Scan: "YARAスキャン"
         Home: ホーム
         Overview: 概要
         Screenshots: スクリーンショット
@@ -1460,6 +1461,7 @@ nav:
       - SQLite: commands/sqlite.md
       - Persistence Hunter: commands/persistence-hunter.md
       - Super Timeline: commands/super-timeline.md
+      - YARA Scan: commands/yara-scan.md
       - Common Output Patterns: commands/output.md
   - Artifacts:
       - Artifact Guide: artifacts/index.md
