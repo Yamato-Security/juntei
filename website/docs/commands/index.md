@@ -112,6 +112,10 @@ keep their names.
 command. It complements the full configuration inventory from `parse-registry persistence` with
 131 checks, allow/block classification, payload metadata, coverage, and timestamp correlation.
 
+## [YARA Scan](yara-scan.md)
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` scans collected files, including recovered quarantine payloads and resident `$MFT` data, with YARA rules. It downloads the YARA Forge Core package by default; `--ruleset extended` or `--ruleset full` select a broader package, and `--rules <FILE_OR_DIRECTORY>` scans offline with local rules. The scan is opt-in and separate from `auto-parse`.
+
 ## Top-level usage
 
 ```text
@@ -127,6 +131,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

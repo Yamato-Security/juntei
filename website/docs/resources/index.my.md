@@ -57,6 +57,12 @@ link များ ပါဝင်သည်။
 - [defender-dump](https://github.com/knez/defender-dump) — သီးခြား သုတေသန/ထုတ်ယူမှု implementation တစ်ခု။
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — ကိုင်တွယ်မှုနှင့် ခွဲခြမ်းစိတ်ဖြာမှု အရင်းအမြစ်များ။
 
+## YARA ဖြင့် ရှာဖွေခြင်း { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): Core၊ Extended နှင့် Full rule package များ။
+- [Boreal](https://github.com/vthib/boreal): `yara-scan` နောက်ကွယ်ရှိ portable Rust engine။
+- [YARA rule များ ရေးသားခြင်း](https://yara.readthedocs.io/en/stable/writingrules.html): rule ဘာသာစကား ကိုးကားချက်။
+
 ## Juntei parser project များ { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

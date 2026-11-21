@@ -56,6 +56,12 @@
 - [defender-dump](https://github.com/knez/defender-dump) — окрема дослідницька реалізація для видобування.
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — ресурси з поводження зі шкідливим ПЗ та його аналізу.
 
+## Полювання з YARA { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): пакети правил Core, Extended і Full.
+- [Boreal](https://github.com/vthib/boreal): портативний рушій на Rust, на якому працює `yara-scan`.
+- [Написання правил YARA](https://yara.readthedocs.io/en/stable/writingrules.html): довідник з мови правил.
+
 ## Проєкти парсерів Juntei { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

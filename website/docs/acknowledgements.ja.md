@@ -27,6 +27,9 @@ Juntei が存在するのは、DFIR およびオープンソース コミュニ�
 
 - Hexastrike による [**PyrsistenceSniper**](https://github.com/hexastrike/PyrsistenceSniper) は、永続性チェック カタログ、デフォルトのホワイトリスト、LOLBAS スナップショット、およびネイティブ Rust `persistence-hunter` コマンドの参照動作を提供しました。 MIT ライセンスと著作権表示は `THIRD_PARTY_NOTICES/PyrsistenceSniper-LICENSE.txt` に保持されます。オリジナルの [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) は、Python プロジェクトにインスピレーションを与えました。完全な系統については、[永続性確認](persistence-hunter/acknowledgements.md)を参照してください。
 
+- Vincent Thiberville による [**Boreal**](https://github.com/vthib/boreal) は、`yara-scan` コマンドに組み込まれた YARA 互換の Rust エンジンです（MIT または Apache-2.0。表示は `THIRD_PARTY_NOTICES/crates.txt` にあります）。
+- YARAHQ の Florian Roth が管理する [**YARA Forge**](https://github.com/YARAHQ/yara-forge) は、`yara-scan` が要求時にダウンロードする Core、Extended、Full のルールパッケージをまとめています。ルールはそれぞれの作者の著作物であり、各自のライセンスに従います。Juntei はダウンロードしたソースを結果と一緒に保存します。
+
 - Maxim Suhanov の **regf 仕様** および **yarp** は、レジストリ構造、トランザクション ログの再生、および削除されたレコードの回復を通知しました。彼の **dfir_ntfs** は、INDX レコードとインデックス スラック カービングの参照でした。
 - Harel Segev の **INDXRipper** は、インデックス スラックからファイル名を切り出すためのさらなる参考資料です。
 - **dfir_ntfs**、Joakim Schicht の **LogFileParser**、および Stroz Friedberg の **ntfs-linker** が通知`$LogFile` の検証と解釈。 Velocidex の **go-ntfs** は、公開された NTFS テスト証拠を提供しました。

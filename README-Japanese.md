@@ -53,11 +53,11 @@ E01 も同じ読み取り専用のネイティブ処理と専用一時領域を�
 検出される候補は永続化に関する設定を示すもので、それだけで侵害や実行が証明されるわけではありません。
 各チェックのカバレッジを確認すると、未収集の証拠や、一部しか読み取れなかった証拠を把握できます。
 
-収集済みファイルのYARAスキャンには `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` を使う。
-既定ではYARA Forge **Core**ルールをダウンロードする。`--ruleset extended` または
-`--ruleset full` でルールセットを選択でき、`--rules <FILE_OR_DIRECTORY>` でローカルルールをオフラインで利用できる。
-[スキャンガイド](https://yamato-security.github.io/juntei/ja/commands/yara-scan/)
-に対象範囲、リソース制限、結果の解釈を説明している。
+収集済みファイルの YARA スキャンには `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` を使います。
+既定では YARA Forge の **Core** ルールをダウンロードします。`--ruleset extended` または
+`--ruleset full` でルールセットを選択でき、`--rules <FILE_OR_DIRECTORY>` を指定するとローカルルールでオフラインスキャンができます。
+対象範囲、リソース制限、結果の解釈は
+[YARA スキャンガイド](https://yamato-security.github.io/juntei/ja/commands/yara-scan/)を参照してください。
 
 ### プロセスの実行
 

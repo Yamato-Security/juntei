@@ -38,6 +38,9 @@ que su código esté incluido en Juntei; consulte la licencia de cada proyecto.
   en Python; consulte los [agradecimientos de persistencia](persistence-hunter/acknowledgements.md)
   para conocer el linaje completo.
 
+- [**Boreal**](https://github.com/vthib/boreal), de Vincent Thiberville, es el motor Rust compatible con YARA compilado en el comando `yara-scan` (MIT o Apache-2.0; su aviso está en `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), mantenido por Florian Roth dentro de YARAHQ, selecciona los paquetes de reglas Core, Extended y Full que `yara-scan` descarga a petición. Las reglas siguen siendo obra de sus autores bajo sus propias licencias; Juntei guarda la fuente descargada con cada conjunto de resultados.
+
 - La **especificación regf** y **yarp** de Maxim Suhanov sirvieron de base para las estructuras del
   Registro, la reproducción de los registros de transacciones y la recuperación de registros
   eliminados; su **dfir_ntfs** fue la referencia para los registros INDX y la recuperación

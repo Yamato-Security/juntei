@@ -113,6 +113,10 @@ artifact အမည်နောက်တွင် ဆက်ထားပါ။ `au
 ညွှန်ကြားချက် ဖြစ်သည်။ ၎င်းသည် `parse-registry persistence` မှ ပြင်ဆင်မှု စာရင်းအပြည့်အစုံကို စစ်ဆေးမှု 131 ခု၊
 allow/block အမျိုးအစားခွဲခြင်း၊ payload metadata၊ coverage နှင့် timestamp ချိတ်ဆက်စစ်ဆေးမှုတို့ဖြင့် ဖြည့်စွက်ပေးသည်။
 
+## [YARA စစ်ဆေးမှု](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` သည် ပြန်လည်ရယူထားသော quarantine payload များနှင့် `$MFT` ၏ resident data အပါအဝင် စုဆောင်းထားသော ဖိုင်များကို YARA rule များဖြင့် စစ်ဆေးသည်။ မူလအားဖြင့် YARA Forge Core package ကို ဒေါင်းလုဒ်လုပ်သည်။ `--ruleset extended` သို့မဟုတ် `--ruleset full` ဖြင့် ပိုကျယ်ပြန့်သော package ကို ရွေးချယ်နိုင်ပြီး `--rules <FILE_OR_DIRECTORY>` ဖြင့် local rule များကို အသုံးပြု၍ အော့ဖ်လိုင်း စစ်ဆေးနိုင်သည်။ ဤစစ်ဆေးမှုသည် ရွေးချယ်နိုင်သော လုပ်ဆောင်ချက်ဖြစ်ပြီး `auto-parse` နှင့် သီးခြားဖြစ်သည်။
+
 ## ထိပ်တန်းအဆင့် အသုံးပြုပုံ { #top-level-usage }
 
 ```text
@@ -128,6 +132,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

@@ -56,6 +56,12 @@
 - [defender-dump](https://github.com/knez/defender-dump)——另一套獨立的研究／擷取實作。
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/)——惡意程式處理與分析資源。
 
+## YARA 獵捕 { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge)：Core、Extended 與 Full 規則套件。
+- [Boreal](https://github.com/vthib/boreal)：`yara-scan` 所使用的可攜式 Rust 引擎。
+- [撰寫 YARA 規則](https://yara.readthedocs.io/en/stable/writingrules.html)：規則語言參考。
+
 ## Juntei 剖析器專案 { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

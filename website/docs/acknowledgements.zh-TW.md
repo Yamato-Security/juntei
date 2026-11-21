@@ -33,6 +33,9 @@ Juntei 中；授權條款請參閱各專案。
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) 啟發了這個 Python 專案；
   完整的源流請參閱[持續存取相關致謝](persistence-hunter/acknowledgements.md)。
 
+- 由 Vincent Thiberville 開發的 [**Boreal**](https://github.com/vthib/boreal) 是編譯進 `yara-scan` 命令、與 YARA 相容的 Rust 引擎（MIT 或 Apache-2.0；其授權聲明位於 `THIRD_PARTY_NOTICES/crates.txt`）。
+- 由 Florian Roth 在 YARAHQ 維護的 [**YARA Forge**](https://github.com/YARAHQ/yara-forge) 彙整了 `yara-scan` 依要求下載的 Core、Extended 與 Full 規則套件。規則仍屬於各自作者的著作並依其授權條款發布；Juntei 會將下載的原始規則與每組結果一併儲存。
+
 - Maxim Suhanov 的 **regf specification** 與 **yarp** 為登錄檔結構、交易記錄重播以及已刪除記錄的復原提供了依據；
   他的 **dfir_ntfs** 則是 INDX 記錄與索引 slack 擷取（carving）的參考。
 - Harel Segev 的 **INDXRipper** 是從索引 slack 擷取檔案名稱的另一項參考。

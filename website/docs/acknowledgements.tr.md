@@ -36,6 +36,9 @@ kendisine başvurun.
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) Python projesine ilham vermiştir;
   soy ağacının tamamı için [kalıcılık teşekkürleri](persistence-hunter/acknowledgements.md) sayfasına bakın.
 
+- Vincent Thiberville'in [**Boreal**](https://github.com/vthib/boreal) projesi, `yara-scan` komutuna derlenen YARA uyumlu Rust motorudur (MIT veya Apache-2.0; bildirimi `THIRD_PARTY_NOTICES/crates.txt` dosyasındadır).
+- YARAHQ altında Florian Roth tarafından sürdürülen [**YARA Forge**](https://github.com/YARAHQ/yara-forge), `yara-scan` komutunun istek üzerine indirdiği Core, Extended ve Full kural paketlerini derler. Kurallar kendi lisansları altında ilgili yazarlarının eseri olarak kalır; Juntei indirilen kaynağı her sonuç kümesiyle birlikte kaydeder.
+
 - Maxim Suhanov'un **regf spesifikasyonu** ve **yarp** aracı; kayıt defteri yapılarına, işlem günlüğü
   yeniden oynatmaya ve silinmiş kayıt kurtarmaya yön vermiştir; **dfir_ntfs** aracı ise INDX kayıtları
   ve index slack oyma (carving) için referans olmuştur.

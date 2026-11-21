@@ -36,6 +36,9 @@ Juntei ထဲတွင် ထည့်သွင်းထားသည်ဟု �
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) သည် Python project ကို စိတ်ကူးရစေခဲ့ပါသည်။
   မျိုးရိုးစဉ်ဆက် အပြည့်အစုံအတွက် [persistence ကျေးဇူးတင်လွှာ](persistence-hunter/acknowledgements.md) ကို ကြည့်ပါ။
 
+- Vincent Thiberville ၏ [**Boreal**](https://github.com/vthib/boreal) သည် `yara-scan` command တွင် ထည့်သွင်းတည်ဆောက်ထားသော YARA နှင့် ကိုက်ညီသည့် Rust engine ဖြစ်သည် (MIT သို့မဟုတ် Apache-2.0၊ ၎င်း၏ notice ကို `THIRD_PARTY_NOTICES/crates.txt` တွင် ထားရှိသည်)။
+- YARAHQ အောက်တွင် Florian Roth ထိန်းသိမ်းသော [**YARA Forge**](https://github.com/YARAHQ/yara-forge) သည် `yara-scan` က တောင်းဆိုမှုအရ ဒေါင်းလုဒ်လုပ်သည့် Core၊ Extended နှင့် Full rule package များကို စုစည်းထားသည်။ Rule များသည် ၎င်းတို့၏ မူလရေးသားသူများ၏ လက်ရာအဖြစ် ၎င်းတို့၏ လိုင်စင်များအောက်တွင် ဆက်ရှိနေပြီး Juntei သည် ဒေါင်းလုဒ်လုပ်ထားသော source ကို ရလဒ်အစုတစ်ခုစီနှင့်အတူ သိမ်းဆည်းသည်။
+
 - Maxim Suhanov ၏ **regf specification** နှင့် **yarp** တို့သည် registry ဖွဲ့စည်းပုံများ၊ transaction-log
   replay နှင့် ဖျက်ထားသော record များ ပြန်လည်ရယူခြင်းအတွက် အထောက်အကူ ဖြစ်ခဲ့ပြီး ၎င်း၏ **dfir_ntfs** သည်
   INDX record များနှင့် index-slack carving အတွက် ကိုးကားချက် ဖြစ်ခဲ့ပါသည်။

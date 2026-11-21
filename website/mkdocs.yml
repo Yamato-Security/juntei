@@ -200,6 +200,7 @@ plugins:
         Shell History: "Shell 歷程記錄"
         PowerShell History: "PowerShell 歷程記錄"
         Super Timeline: "超級時間軸"
+        YARA Scan: "YARA 掃描"
         Home: 首頁
         Overview: 概觀
         Screenshots: 螢幕擷圖
@@ -295,6 +296,7 @@ plugins:
         Shell History: "셸 기록"
         PowerShell History: "PowerShell 기록"
         Super Timeline: "슈퍼 타임라인"
+        YARA Scan: "YARA 검사"
         Home: 홈
         Overview: 개요
         Screenshots: 스크린샷
@@ -390,6 +392,7 @@ plugins:
         Shell History: "Shell-Verlauf"
         PowerShell History: "PowerShell-Verlauf"
         Super Timeline: "Gesamttimeline"
+        YARA Scan: "YARA-Scan"
         Home: Startseite
         Overview: Übersicht
         Screenshots: Screenshots
@@ -485,6 +488,7 @@ plugins:
         Shell History: "Kabuk geçmişi"
         PowerShell History: "PowerShell geçmişi"
         Super Timeline: "Birleşik zaman çizelgesi"
+        YARA Scan: "YARA Taraması"
         Home: Ana Sayfa
         Overview: Genel Bakış
         Screenshots: Ekran Görüntüleri
@@ -580,6 +584,7 @@ plugins:
         Shell History: "Historique du shell"
         PowerShell History: "Historique PowerShell"
         Super Timeline: "Chronologie globale"
+        YARA Scan: "Analyse YARA"
         Home: Accueil
         Overview: Vue d'ensemble
         Screenshots: Captures d'écran
@@ -675,6 +680,7 @@ plugins:
         Shell History: "Historial del shell"
         PowerShell History: "Historial de PowerShell"
         Super Timeline: "Súper línea de tiempo"
+        YARA Scan: "Análisis YARA"
         Home: Inicio
         Overview: Visión general
         Screenshots: Capturas de pantalla
@@ -770,6 +776,7 @@ plugins:
         Shell History: "Histórico do shell"
         PowerShell History: "Histórico do PowerShell"
         Super Timeline: "Super linha do tempo"
+        YARA Scan: "Varredura YARA"
         Home: Início
         Overview: Visão geral
         Screenshots: Capturas de tela
@@ -865,6 +872,7 @@ plugins:
         Shell History: "Історія оболонки"
         PowerShell History: "Історія PowerShell"
         Super Timeline: "Суперхронологія"
+        YARA Scan: "Сканування YARA"
         Home: Головна
         Overview: Огляд
         Screenshots: Знімки екрана
@@ -960,6 +968,7 @@ plugins:
         Shell History: "शेल इतिहास"
         PowerShell History: "PowerShell इतिहास"
         Super Timeline: "सुपर टाइमलाइन"
+        YARA Scan: "YARA स्कैन"
         Home: होम
         Overview: अवलोकन
         Screenshots: स्क्रीनशॉट
@@ -1055,6 +1064,7 @@ plugins:
         Shell History: "Riwayat shell"
         PowerShell History: "Riwayat PowerShell"
         Super Timeline: "Linimasa gabungan"
+        YARA Scan: "Pemindaian YARA"
         Home: Beranda
         Overview: Ikhtisar
         Screenshots: Tangkapan Layar
@@ -1150,6 +1160,7 @@ plugins:
         Shell History: "Shell မှတ်တမ်း"
         PowerShell History: "PowerShell မှတ်တမ်း"
         Super Timeline: "စူပါအချိန်လိုင်း"
+        YARA Scan: "YARA စစ်ဆေးမှု"
         Home: ပင်မစာမျက်နှာ
         Overview: ခြုံငုံသုံးသပ်ချက်
         Screenshots: ဖန်သားပြင်ဓာတ်ပုံများ
@@ -1245,6 +1256,7 @@ plugins:
         Shell History: "ประวัติเชลล์"
         PowerShell History: "ประวัติ PowerShell"
         Super Timeline: "ซุปเปอร์ไทม์ไลน์"
+        YARA Scan: "การสแกน YARA"
         Home: หน้าแรก
         Overview: ภาพรวม
         Screenshots: ภาพหน้าจอ
@@ -1340,6 +1352,7 @@ plugins:
         Shell History: "سجل الصدفة"
         PowerShell History: "سجل PowerShell"
         Super Timeline: "الجدول الزمني الشامل"
+        YARA Scan: "فحص YARA"
         Home: الرئيسية
         Overview: نظرة عامة
         Screenshots: لقطات الشاشة

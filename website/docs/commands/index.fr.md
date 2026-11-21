@@ -109,6 +109,10 @@ conservent leurs noms.
 de premier niveau. Elle complète l'inventaire complet de la configuration produit par `parse-registry persistence` avec
 131 vérifications, une classification autorisé/bloqué, les métadonnées des charges utiles, la couverture et la corrélation des horodatages.
 
+## [Analyse YARA](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` analyse les fichiers collectés, y compris les charges utiles de quarantaine restaurées et les données résidentes de la `$MFT`, avec des règles YARA. Par défaut, la commande télécharge le paquet YARA Forge Core ; `--ruleset extended` ou `--ruleset full` sélectionnent un paquet plus large, et `--rules <FILE_OR_DIRECTORY>` analyse hors ligne avec des règles locales. L'analyse est facultative et distincte d'`auto-parse`.
+
 ## Utilisation de premier niveau { #top-level-usage }
 
 ```text
@@ -124,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

@@ -109,6 +109,10 @@ behalten ihre Namen.
 der obersten Ebene. Er ergänzt das vollständige Konfigurationsinventar aus `parse-registry persistence` um
 131 Prüfungen, Allow-/Block-Klassifizierung, Payload-Metadaten, Abdeckung und Zeitstempelkorrelation.
 
+## [YARA-Scan](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` prüft gesammelte Dateien, einschließlich wiederhergestellter Quarantäne-Nutzdaten und residenter `$MFT`-Daten, mit YARA-Regeln. Standardmäßig wird das Paket YARA Forge Core heruntergeladen; `--ruleset extended` oder `--ruleset full` wählen ein umfangreicheres Paket, und `--rules <FILE_OR_DIRECTORY>` prüft offline mit lokalen Regeln. Der Scan ist optional und von `auto-parse` getrennt.
+
 ## Verwendung auf oberster Ebene { #top-level-usage }
 
 ```text
@@ -124,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help
