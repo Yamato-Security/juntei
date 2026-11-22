@@ -11,7 +11,8 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! Synthetic MFTs exercise real fixups, deleted entries, ADS, metadata and cross-record matches.
+//! Synthetic MFTs exercise real fixups, deleted entries, ADS, damaged records and the record-by-record
+//! resident scan that does not depend on raw matches.
 use serde_json::Value;
 use std::{
     fs,
@@ -154,6 +155,15 @@ fn rules(dir: &Path, source: &str) -> PathBuf {
     fs::write(&p, source).unwrap();
     p
 }
+fn summary(out: &Path) -> Value {
+    serde_json::from_slice(&fs::read(out.join("Summary.json")).unwrap()).unwrap()
+}
+fn statuses(rows: &[Value], status: &str) -> usize {
+    rows.iter().filter(|r| r["Status"] == status).count()
+}
+fn sources(hits: &[Value], source: &str) -> usize {
+    hits.iter().filter(|r| r["SourceType"] == source).count()
+}
 
 #[test]
 fn recovers_fixup_corrected_data_and_reports_stream_provenance() {
@@ -191,12 +201,7 @@ fn recovers_fixup_corrected_data_and_reports_stream_provenance() {
             .unwrap()
             .ends_with("payload.exe")
     );
-    assert!(
-        row["StreamRules"]
-            .as_str()
-            .unwrap()
-            .contains("correct_size")
-    );
+    assert_eq!(row["Rules"], "marker; correct_size");
     let relative = row["RecoveredFile"].as_str().unwrap();
     assert!(relative.ends_with(".quarantined"));
     assert_eq!(
@@ -207,19 +212,58 @@ fn recovers_fixup_corrected_data_and_reports_stream_provenance() {
     let hits = rows(&out.join("YaraDetections.jsonl"));
     assert_eq!(hits.len(), 3);
     assert_eq!(
-        hits.iter()
-            .filter(|r| r["SourceType"] == "MFTResident")
-            .count(),
-        2
+        sources(&hits, "MFTRaw"),
+        1,
+        "filesize == 400 cannot match the MFT"
     );
+    assert_eq!(sources(&hits, "MFTResident"), 2);
     assert!(
         hits.iter()
             .filter(|r| r["SourceType"] == "MFTResident")
             .all(|h| h["RecoveredFile"] == relative)
     );
-    let summary: Value =
-        serde_json::from_slice(&fs::read(out.join("Summary.json")).unwrap()).unwrap();
-    assert_eq!(summary["MFT"]["RecoveredFiles"], 1);
+    let s = summary(&out);
+    assert_eq!(s["MFT"]["RecoveredFiles"], 1);
+    assert_eq!(s["MFT"]["ResidentStreams"], 1);
+    assert_eq!(s["MFT"]["Records"], 6);
+    assert_eq!(s["MFT"]["UnusedRecords"], 3);
+    assert_eq!(s["MFT"]["DamagedRecords"], 0);
+}
+
+#[test]
+fn rules_that_cannot_match_the_raw_mft_still_recover_resident_files() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path();
+    let mut payload = b"MZ\0\0MFT_SMALL_PE_ONLY".to_vec();
+    payload.resize(200, 0);
+    let input = mft(
+        root,
+        "$MFT",
+        &[(7, record(7, "dropper.exe", &[("", &payload)], true, false))],
+    );
+    // Both conditions are false for the whole MFT: it is far larger than 1024 bytes and starts
+    // with FILE. They are true for the resident file, which must still be found.
+    let r = rules(
+        root,
+        "rule small_pe { strings: $a=\"MFT_SMALL_PE_ONLY\" condition: uint16(0) == 0x5a4d and filesize < 1024 and $a }",
+    );
+    let out = root.join("out");
+    let result = run(&input, &r, &out, &[]);
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stdout)
+    );
+    let hits = rows(&out.join("YaraDetections.jsonl"));
+    assert_eq!(sources(&hits, "MFTRaw"), 0);
+    assert_eq!(sources(&hits, "MFTResident"), 1);
+    let recovery = rows(&out.join("YaraMFTResults.jsonl"));
+    assert_eq!(statuses(&recovery, "Recovered"), 1);
+    assert_eq!(recovery[0]["EntryNum"], 7);
+    assert_eq!(
+        fs::read(out.join(recovery[0]["RecoveredFile"].as_str().unwrap())).unwrap(),
+        payload
+    );
 }
 
 #[test]
@@ -262,21 +306,19 @@ fn metadata_nonresident_and_cross_record_matches_are_not_exported() {
         "{}",
         String::from_utf8_lossy(&result.stdout)
     );
-    let rows = rows(&out.join("YaraMFTResults.jsonl"));
-    assert_eq!(rows.len(), 4);
-    assert_eq!(
-        rows.iter()
-            .filter(|r| r["Status"] == "NonResidentUnavailable")
-            .count(),
-        1
-    );
-    assert_eq!(
-        rows.iter()
-            .filter(|r| r["Status"] == "ResidentNotConfirmed")
-            .count(),
-        3
-    );
+    // The file names and the split pattern match the raw MFT and are reported as such, but no
+    // resident stream matches on its own, so nothing is recovered and nothing is invented for
+    // the nonresident file.
+    let hits = rows(&out.join("YaraDetections.jsonl"));
+    assert_eq!(sources(&hits, "MFTRaw"), 3);
+    assert_eq!(sources(&hits, "MFTResident"), 0);
+    assert!(rows(&out.join("YaraMFTResults.jsonl")).is_empty());
     assert!(!out.join("RecoveredMFT").exists());
+    let s = summary(&out);
+    assert_eq!(s["MFT"]["ResidentStreams"], 3);
+    assert_eq!(s["MFT"]["NonresidentStreams"], 1);
+    assert_eq!(s["MFT"]["RecoveredFiles"], 0);
+    assert_eq!(s["Status"], "Complete");
 }
 
 #[test]
@@ -320,7 +362,7 @@ fn deleted_ads_and_hostile_names_stay_inside_output() {
 }
 
 #[test]
-fn all_offsets_not_just_the_sixteen_display_samples_and_recovery_limit() {
+fn every_matching_stream_is_recovered_up_to_the_limit() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
     let recs: Vec<_> = (6..26)
@@ -342,7 +384,9 @@ fn all_offsets_not_just_the_sixteen_display_samples_and_recovery_limit() {
         root,
         "rule many {strings:$a=\"MFT_MANY_MATCH\" condition:$a}",
     );
-    for (name, limit, expected, code) in [("all", "1000", 20, 0), ("limited", "2", 2, 3)] {
+    for (name, limit, recovered, capped, code) in
+        [("all", "1000", 20, 0, 0), ("limited", "2", 2, 18, 3)]
+    {
         let out = root.join(name);
         let result = run(&input, &r, &out, &["--max-mft-recoveries", limit]);
         assert_eq!(
@@ -352,24 +396,27 @@ fn all_offsets_not_just_the_sixteen_display_samples_and_recovery_limit() {
             String::from_utf8_lossy(&result.stdout)
         );
         let rows = rows(&out.join("YaraMFTResults.jsonl"));
-        assert_eq!(
-            rows.iter().filter(|r| r["Status"] == "Recovered").count(),
-            expected
-        );
-        if code == 3 {
-            assert!(rows.iter().any(|r| r["Status"] == "RecoveryLimitReached"));
-        }
+        assert_eq!(statuses(&rows, "Recovered"), recovered);
+        assert_eq!(statuses(&rows, "RecoveryLimitReached"), capped);
+        // The limit stops the export, not the detection.
+        let hits = self::rows(&out.join("YaraDetections.jsonl"));
+        assert_eq!(sources(&hits, "MFTResident"), 20);
     }
 }
 
 #[test]
-fn bad_fixup_and_no_offset_rule_do_not_produce_recovered_files() {
+fn damaged_records_are_reported_and_make_coverage_incomplete() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
     let mut bad = record(1, "bad.exe", &[("", b"MFT_BAD_FIXUP")], true, false);
     bad[510] = 0;
-    let input = mft(root, "$MFT", &[(1, bad)]);
-    let r = rules(root, "rule bad {strings:$a=\"MFT_BAD_FIXUP\" condition:$a}");
+    let mut baad = record(2, "baad.exe", &[("", b"MFT_BAAD_SIG")], true, false);
+    baad[..4].copy_from_slice(b"BAAD");
+    let input = mft(root, "$MFT", &[(1, bad), (2, baad)]);
+    let r = rules(
+        root,
+        "rule bad {strings:$a=\"MFT_BAD_FIXUP\" condition:$a} rule baad {strings:$a=\"MFT_BAAD_SIG\" condition:$a}",
+    );
     let out = root.join("bad");
     let result = run(&input, &r, &out, &[]);
     assert_eq!(
@@ -378,20 +425,18 @@ fn bad_fixup_and_no_offset_rule_do_not_produce_recovered_files() {
         "{}",
         String::from_utf8_lossy(&result.stdout)
     );
-    assert_eq!(
-        rows(&out.join("YaraMFTResults.jsonl"))[0]["Status"],
-        "InvalidRecord"
-    );
+    let rows = rows(&out.join("YaraMFTResults.jsonl"));
+    assert_eq!(statuses(&rows, "InvalidRecord"), 2);
+    assert_eq!(rows[0]["EntryNum"], 1);
+    assert_eq!(rows[1]["EntryNum"], 2);
     assert!(!out.join("RecoveredMFT").exists());
-    let r = rules(root, "rule whole_container {condition: true}");
-    let out = root.join("no-offset");
-    let result = run(&input, &r, &out, &[]);
-    assert!(result.status.success());
-    assert_eq!(
-        rows(&out.join("YaraMFTResults.jsonl"))[0]["Status"],
-        "NoMatchOffsets"
-    );
-    assert!(!out.join("RecoveredMFT").exists());
+    // The raw bytes still carry the strings, so the raw scan reports them.
+    let hits = self::rows(&out.join("YaraDetections.jsonl"));
+    assert_eq!(sources(&hits, "MFTRaw"), 2);
+    let s = summary(&out);
+    assert_eq!(s["MFT"]["DamagedRecords"], 2);
+    assert_eq!(s["MFT"]["Incomplete"], true);
+    assert_eq!(s["Status"], "Incomplete");
 }
 
 #[test]
@@ -420,7 +465,13 @@ fn optional_size_caps_and_partial_tail_do_not_shift_records() {
         "{}",
         String::from_utf8_lossy(&result.stdout)
     );
-    assert_eq!(rows(&out.join("YaraMFTResults.jsonl"))[0]["EntryNum"], 1);
+    let rows = rows(&out.join("YaraMFTResults.jsonl"));
+    let recovered = rows.iter().find(|r| r["Status"] == "Recovered").unwrap();
+    assert_eq!(recovered["EntryNum"], 1);
+    assert_eq!(statuses(&rows, "TruncatedTail"), 1);
+    let s = summary(&out);
+    assert_eq!(s["MFT"]["Records"], 2048);
+    assert_eq!(s["MFT"]["UnusedRecords"], 2045);
     let out = root.join("global-limit");
     let result = run(&input, &r, &out, &["--max-file-mib", "1"]);
     assert_eq!(result.status.code(), Some(3));
@@ -436,17 +487,18 @@ fn optional_size_caps_and_partial_tail_do_not_shift_records() {
         "{}",
         String::from_utf8_lossy(&result.stdout)
     );
-    let summary: Value =
-        serde_json::from_slice(&fs::read(out.join("Summary.json")).unwrap()).unwrap();
-    assert_eq!(summary["MaxFileMiB"], 1);
-    assert_eq!(summary["MaxMFTMiB"], 3);
+    let s = summary(&out);
+    assert_eq!(s["MaxFileMiB"], 1);
+    assert_eq!(s["MaxMFTMiB"], 3);
     let out = root.join("small-mft-limit");
     let result = run(&input, &r, &out, &["--max-mft-mib", "1"]);
     assert_eq!(result.status.code(), Some(3));
     assert_eq!(
-        rows(&out.join("YaraFiles.jsonl"))[0]["Status"],
+        self::rows(&out.join("YaraFiles.jsonl"))[0]["Status"],
         "SkippedTooLarge"
     );
+    // A skipped MFT gets no record pass either.
+    assert_eq!(summary(&out)["MFT"]["Records"], 0);
 }
 
 #[test]
@@ -566,10 +618,11 @@ fn csv_recovery_and_jsonl_report_the_same_fields() {
         }
     }
     assert_eq!(records[0], records[1]);
+    assert_eq!(records[0]["Status"], "Recovered");
 }
 
 #[test]
-fn matches_in_a_truncated_tail_are_explicitly_incomplete() {
+fn a_truncated_tail_is_reported_and_only_raw_scanned() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
     let input = mft(root, "$MFT", &[]);
@@ -582,12 +635,17 @@ fn matches_in_a_truncated_tail_are_explicitly_incomplete() {
     );
     let out = root.join("out");
     let result = run(&input, &r, &out, &[]);
-    assert_eq!(result.status.code(), Some(3));
     assert!(
-        rows(&out.join("YaraMFTResults.jsonl"))
-            .iter()
-            .any(|r| r["Status"] == "TruncatedRecord")
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stdout)
     );
+    let hits = rows(&out.join("YaraDetections.jsonl"));
+    assert_eq!(sources(&hits, "MFTRaw"), 1);
+    let rows = rows(&out.join("YaraMFTResults.jsonl"));
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["Status"], "TruncatedTail");
+    assert!(rows[0]["Note"].as_str().unwrap().starts_with("14 bytes"));
     assert!(!out.join("RecoveredMFT").exists());
 }
 
@@ -617,11 +675,10 @@ fn a_whole_container_regex_does_not_trigger_bulk_recovery() {
         "{}",
         String::from_utf8_lossy(&result.stdout)
     );
-    assert!(
-        rows(&out.join("YaraMFTResults.jsonl"))
-            .iter()
-            .any(|r| r["Status"] == "CrossRecordSpan")
-    );
+    let hits = rows(&out.join("YaraDetections.jsonl"));
+    assert_eq!(sources(&hits, "MFTRaw"), 1);
+    assert_eq!(sources(&hits, "MFTResident"), 0);
+    assert!(rows(&out.join("YaraMFTResults.jsonl")).is_empty());
     assert!(!out.join("RecoveredMFT").exists());
 }
 
@@ -703,13 +760,13 @@ fn default_scans_an_mft_larger_than_the_former_512_mib_limit() {
         String::from_utf8_lossy(&result.stdout),
         String::from_utf8_lossy(&result.stderr)
     );
-    let summary: Value =
-        serde_json::from_slice(&fs::read(out.join("Summary.json")).unwrap()).unwrap();
-    assert!(summary["MaxFileMiB"].is_null());
-    assert!(summary["MaxMFTMiB"].is_null());
-    assert_eq!(summary["MFT"]["RecoveredFiles"], 1);
+    let s = summary(&out);
+    assert!(s["MaxFileMiB"].is_null());
+    assert!(s["MaxMFTMiB"].is_null());
+    assert_eq!(s["MFT"]["RecoveredFiles"], 1);
+    assert_eq!(s["MFT"]["Records"], 513 * 1024);
     assert!(
-        !summary["Statuses"]
+        !s["Statuses"]
             .as_object()
             .unwrap()
             .contains_key("SkippedTooLarge")

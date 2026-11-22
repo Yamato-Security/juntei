@@ -38,6 +38,7 @@ fn fixture(root: &Path) {
     )
     .unwrap();
     fs::write(root.join("evidence/HOST/C/no-match.bin"), b"ordinary file").unwrap();
+    fs::write(root.join("evidence/HOST/C/empty.bin"), b"").unwrap();
     fs::write(
         root.join("local.yar"),
         r#"rule InertFixture : validation {
@@ -88,7 +89,7 @@ fn offline_csv_and_jsonl_agree_with_relative_provenance() {
         let s = summary(&out);
         assert_eq!(s["RuleMatches"], 1);
         assert_eq!(s["MatchingFiles"], 1);
-        assert_eq!(s["Statuses"]["Scanned"], 3);
+        assert_eq!(s["Statuses"]["Scanned"], 4);
         assert_eq!(s["Ruleset"], "local");
         assert!(s["DownloadURL"].is_null());
         assert_eq!(s["PublicRules"], 1);
@@ -107,6 +108,18 @@ fn offline_csv_and_jsonl_agree_with_relative_provenance() {
             assert_eq!(&rows[0][0], "HOST");
             assert_eq!(&rows[0][1], "HOST/C/inert.exe.quarantined");
             assert_eq!(&rows[0][5], "InertFixture");
+            let mut files = csv::Reader::from_path(out.join("YaraFiles.csv")).unwrap();
+            let empty = files
+                .records()
+                .map(Result::unwrap)
+                .find(|r| &r[1] == "HOST/C/empty.bin")
+                .unwrap();
+            assert_eq!(&empty[2], "0");
+            assert_eq!(
+                &empty[3],
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            );
+            assert_eq!(&empty[4], "Scanned");
             assert_eq!(
                 serde_json::from_str::<Value>(&rows[0][8]).unwrap()["score"],
                 1

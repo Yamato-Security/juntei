@@ -11,15 +11,16 @@
 // PURPOSE, QUIET ENJOYMENT, OR NON-INFRINGEMENT. See the RPL for specific language governing rights
 // and limitations under the RPL.
 
-//! Resolve raw MFT matches without pretending metadata or nonresident data is recovered content.
-use super::{Candidate, Detection, FileResult, RawLocation, Scanner, evaluate, hash};
+//! Scan every resident `$DATA` stream of a collected MFT as a file of its own, reading one FILE
+//! record at a time, and save only the streams that match. Nonresident data is counted, never
+//! invented, and a damaged record is reported rather than skipped silently.
+use super::{Candidate, Detection, FileResult, Scanner, evaluate, hash};
 use crate::interrupt;
 use anyhow::{Context, Result};
 use serde::Serialize;
 use std::{
-    collections::{BTreeMap, BTreeSet},
-    fs,
-    io::{Cursor, Read, Write},
+    fs::{self, File},
+    io::{Read, Write},
     path::Path,
     time::Instant,
 };
@@ -37,24 +38,28 @@ pub(super) const HEADERS: &[&str] = &[
     "AttributeID",
     "AttributeOffset",
     "Deleted",
-    "RawRules",
-    "StreamRules",
+    "Rules",
     "Status",
     "Size",
     "SHA256",
     "RecoveredFile",
     "Note",
 ];
+/// Damaged records beyond this many get no row of their own; `Summary.json` keeps the count.
+const DAMAGED_ROWS: u64 = 100;
+/// How often the record loop looks for Ctrl+C.
+const INTERRUPT_EVERY: u64 = 4096;
+
 #[derive(Default, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub(super) struct Stats {
     pub files: usize,
-    pub candidate_records: usize,
-    pub resident_streams_scanned: usize,
+    pub records: u64,
+    pub unused_records: u64,
+    pub damaged_records: u64,
+    pub resident_streams: u64,
+    pub nonresident_streams: u64,
     pub recovered_files: u64,
-    pub nonresident_unavailable: usize,
-    pub unconfirmed_streams: usize,
-    pub raw_locations_limited: usize,
     pub issues: usize,
     pub elapsed_ms: u128,
     pub incomplete: bool,
@@ -77,8 +82,7 @@ pub(super) struct Recovery {
     attribute_id: Option<u16>,
     attribute_offset: Option<u64>,
     deleted: Option<bool>,
-    raw_rules: String,
-    stream_rules: String,
+    rules: String,
     status: String,
     size: Option<u64>,
     #[serde(rename = "SHA256")]
@@ -184,14 +188,41 @@ fn write_recovered(out: &Path, row: &Recovery, instance: u16, data: &[u8]) -> Re
 type StreamResult = Option<(FileResult, Vec<Detection>)>;
 pub(super) struct Inspection<'a> {
     pub scanner: &'a Scanner,
-    pub snapshot: &'a [u8],
+    pub path: &'a Path,
     pub file: &'a FileResult,
-    pub raw_hits: &'a [Detection],
-    pub locations: &'a [RawLocation],
-    pub limited: bool,
     pub output: &'a Path,
     pub maximum: u64,
 }
+fn damaged(
+    stats: &mut Stats,
+    file: &FileResult,
+    id: u64,
+    note: String,
+    emit: &mut impl FnMut(Recovery, StreamResult) -> Result<()>,
+) -> Result<()> {
+    stats.damaged_records += 1;
+    stats.issues += 1;
+    stats.incomplete = true;
+    if stats.damaged_records <= DAMAGED_ROWS {
+        let mut row = Recovery::source(file, "InvalidRecord", &note);
+        row.entry_num = Some(id);
+        emit(row, None)?;
+    } else if stats.damaged_records == DAMAGED_ROWS + 1 {
+        emit(
+            Recovery::source(
+                file,
+                "InvalidRecord",
+                "Further damaged records are only counted in Summary.json.",
+            ),
+            None,
+        )?;
+    }
+    Ok(())
+}
+/// Read the MFT one FILE record at a time from the file itself (never from a buffer of the
+/// whole MFT) and scan every resident `$DATA` stream as an independent file. This is what makes
+/// `filesize`, header checks and other compound conditions refer to the file a rule was written
+/// for, and it covers every record rather than only those under a raw match.
 pub(super) fn inspect(
     context: Inspection<'_>,
     stats: &mut Stats,
@@ -199,44 +230,33 @@ pub(super) fn inspect(
 ) -> Result<()> {
     let Inspection {
         scanner,
-        snapshot,
+        path,
         file,
-        raw_hits,
-        locations,
-        limited,
         output,
         maximum,
     } = context;
     let start = Instant::now();
-    if limited {
-        stats.raw_locations_limited += 1;
-        stats.incomplete = true;
-        emit(
-            Recovery::source(
-                file,
-                "RawLocationLimit",
-                "Raw match-location storage reached its limit; more resident files may match. Raw detections remain available.",
-            ),
-            None,
-        )?;
-    }
-    let mut parser =
-        match MftParser::from_read_seek(Cursor::new(snapshot), Some(snapshot.len() as u64)) {
-            Ok(p) => p,
-            Err(e) => {
-                stats.issues += 1;
-                stats.incomplete = true;
-                emit(
-                    Recovery::source(
-                        file,
-                        "InvalidMFT",
-                        &format!("Cannot identify MFT records: {e}"),
-                    ),
-                    None,
-                )?;
-                return Ok(());
-            }
-        };
+    let parsed = (|| -> Result<(u64, MftParser<File>)> {
+        let handle = File::open(path)?;
+        let len = handle.metadata()?.len();
+        Ok((len, MftParser::from_read_seek(handle, Some(len))?))
+    })();
+    let (len, mut parser) = match parsed {
+        Ok(v) => v,
+        Err(e) => {
+            stats.issues += 1;
+            stats.incomplete = true;
+            emit(
+                Recovery::source(
+                    file,
+                    "InvalidMFT",
+                    &format!("Cannot identify MFT records: {e:#}"),
+                ),
+                None,
+            )?;
+            return Ok(());
+        }
+    };
     let count = parser.get_entry_count();
     if count == 0 {
         stats.issues += 1;
@@ -249,100 +269,59 @@ pub(super) fn inspect(
     }
     // The parser accepts power-of-two FILE record sizes. If L = n*S+r, n>=1 and 0<=r<S,
     // then S <= L/n < 2*S. Rounding L/n down to a power of two therefore yields exactly S,
-    // including when a partial record remains at EOF. Validate each parsed header below.
-    let ratio = (snapshot.len() as u64) / count;
+    // including when a partial record remains at EOF. Each parsed header is validated below.
+    let ratio = len / count;
     let record_size = 1u64 << (63 - ratio.leading_zeros());
-    let mut records: BTreeMap<u64, BTreeSet<String>> = BTreeMap::new();
-    for location in locations {
-        let Some(end) = location.offset.checked_add(location.length) else {
-            continue;
-        };
-        if location.length == 0 || end > snapshot.len() {
-            continue;
-        }
-        let first = location.offset as u64 / record_size;
-        let last = (end as u64 - 1) / record_size;
-        if last >= count {
-            stats.issues += 1;
-            stats.incomplete = true;
-            let mut row = Recovery::source(
-                file,
-                "TruncatedRecord",
-                "Raw match touches the incomplete record at EOF; no complete file stream can be recovered from that tail.",
-            );
-            row.entry_num = Some(count);
-            row.raw_rules = location.rule.clone();
-            emit(row, None)?;
-        }
-        // A resident value cannot span FILE records. In particular, do not let a broad
-        // whole-container regex nominate hundreds of thousands of records for recovery.
-        if first != last {
-            let mut row = Recovery::source(
-                file,
-                "CrossRecordSpan",
-                "The matched pattern spans multiple FILE records and cannot belong to one resident DATA value.",
-            );
-            row.raw_rules = location.rule.clone();
-            emit(row, None)?;
-            continue;
-        }
-        for id in first..=last.min(count - 1) {
-            if id < count {
-                records.entry(id).or_default().insert(location.rule.clone());
-            }
-        }
-    }
-    if records.is_empty() {
-        let mut row = Recovery::source(
-            file,
-            "NoMatchOffsets",
-            "Raw rule matched without offsets attributable to a complete FILE record; no file content can safely be attributed to this match.",
-        );
-        row.raw_rules = raw_hits
-            .iter()
-            .map(|r| r.rule.as_str())
-            .collect::<Vec<_>>()
-            .join("; ");
-        emit(row, None)?;
-    }
-    for (id, raw_rules) in records {
-        if interrupt::requested() {
+    for id in 0..count {
+        if id % INTERRUPT_EVERY == 0 && interrupt::requested() {
             stats.incomplete = true;
             emit(
-                Recovery::source(file, "Cancelled", "Resident recovery cancelled"),
+                Recovery::source(file, "Cancelled", "Resident scan cancelled"),
                 None,
             )?;
             break;
         }
-        stats.candidate_records += 1;
-        let mut row = Recovery::source(file, "", "");
-        row.entry_num = Some(id);
-        row.raw_rules = raw_rules.into_iter().collect::<Vec<_>>().join("; ");
+        stats.records += 1;
         let entry = match parser.get_entry(id) {
-            Ok(e)
-                if e.header.is_valid()
-                    && u64::from(e.header.total_entry_size) == record_size
-                    && e.valid_fixup == Some(true) =>
-            {
-                e
-            }
-            Ok(_) => {
-                stats.issues += 1;
-                stats.incomplete = true;
-                row.status = "InvalidRecord".into();
-                row.note = "Record signature, size or update-sequence fixups are invalid; content not exported.".into();
-                emit(row, None)?;
+            Ok(e) if !e.header.is_valid() => {
+                if e.header.signature == [0; 4] {
+                    stats.unused_records += 1;
+                } else {
+                    damaged(
+                        stats,
+                        file,
+                        id,
+                        format!(
+                            "Record signature {:?} is not FILE; content not scanned.",
+                            String::from_utf8_lossy(&e.header.signature)
+                        ),
+                        &mut emit,
+                    )?;
+                }
                 continue;
             }
+            Ok(e)
+                if u64::from(e.header.total_entry_size) != record_size
+                    || e.valid_fixup != Some(true) =>
+            {
+                damaged(
+                    stats,
+                    file,
+                    id,
+                    "Record size or update-sequence fixups are invalid; content not scanned."
+                        .into(),
+                    &mut emit,
+                )?;
+                continue;
+            }
+            Ok(e) => e,
             Err(e) => {
-                stats.issues += 1;
-                stats.incomplete = true;
-                row.status = "InvalidRecord".into();
-                row.note = e.to_string();
-                emit(row, None)?;
+                damaged(stats, file, id, e.to_string(), &mut emit)?;
                 continue;
             }
         };
+        let mut row = Recovery::source(file, "", "");
+        row.entry_num = Some(id);
         row.sn = Some(entry.header.sequence);
         row.deleted = Some(!entry.is_allocated());
         // Only use an extension record's base path when its reference generation and the
@@ -378,7 +357,6 @@ pub(super) fn inspect(
         row.original_path = path
             .map(|p| p.to_string_lossy().replace('\\', "/"))
             .unwrap_or_else(|| format!("[Unresolved]/{id}-{}", entry.header.sequence));
-        let mut had_data = false;
         for attribute in entry.iter_attributes() {
             let attribute = match attribute {
                 Ok(a) => a,
@@ -387,6 +365,7 @@ pub(super) fn inspect(
                     stats.incomplete = true;
                     let mut r = Recovery::source(file, "AttributeError", &e.to_string());
                     r.entry_num = Some(id);
+                    r.sn = row.sn;
                     emit(r, None)?;
                     continue;
                 }
@@ -394,7 +373,14 @@ pub(super) fn inspect(
             if attribute.header.type_code != MftAttributeType::DATA {
                 continue;
             }
-            had_data = true;
+            // Nonresident DATA refers to volume clusters; its bytes are not in a standalone
+            // MFT, so it is counted and never replaced by a placeholder.
+            let Some(data) = attribute.data.as_data() else {
+                stats.nonresident_streams += 1;
+                continue;
+            };
+            let data = data.data();
+            stats.resident_streams += 1;
             let mut stream_row = Recovery {
                 computer: row.computer.clone(),
                 mft_path: row.mft_path.clone(),
@@ -407,21 +393,11 @@ pub(super) fn inspect(
                 attribute_id: Some(attribute.header.instance),
                 attribute_offset: Some(attribute.header.start_offset),
                 deleted: row.deleted,
-                raw_rules: row.raw_rules.clone(),
+                size: Some(data.len() as u64),
+                sha256: hash(data),
                 note: row.note.clone(),
                 ..Recovery::default()
             };
-            let Some(data) = attribute.data.as_data() else {
-                stats.nonresident_unavailable += 1;
-                stream_row.status = "NonResidentUnavailable".into();
-                stream_row.size = Some(attribute.header.value_size());
-                stream_row.note.push_str(" Nonresident DATA refers to volume clusters; bytes cannot be recovered from a standalone MFT. No placeholder is exported.");
-                emit(stream_row, None)?;
-                continue;
-            };
-            let data = data.data();
-            stream_row.size = Some(data.len() as u64);
-            stream_row.sha256 = hash(data);
             let mut result = FileResult {
                 computer: file.computer.clone(),
                 file_path: format!(
@@ -440,46 +416,55 @@ pub(super) fn inspect(
                 source_type: "MFTResident".into(),
             };
             let began = Instant::now();
-            let (mut hits, _, _) = evaluate(scanner, data, &mut result, false);
+            let mut hits = evaluate(scanner, data, &mut result);
             result.elapsed_ms = began.elapsed().as_millis();
-            stats.resident_streams_scanned += 1;
-            stream_row.stream_rules = hits
+            stream_row.rules = hits
                 .iter()
                 .map(|h| h.rule.as_str())
                 .collect::<Vec<_>>()
                 .join("; ");
             if result.status != "Scanned" {
+                stats.issues += 1;
                 stats.incomplete = true;
                 stream_row.status = "StreamScanError".into();
                 stream_row.note.push_str(&format!(" {}", result.note));
-            } else if hits.is_empty() {
-                stats.unconfirmed_streams += 1;
-                stream_row.status = "ResidentNotConfirmed".into();
-            } else if stats.recovered_files >= maximum {
+                emit(stream_row, Some((result, hits)))?;
+                continue;
+            }
+            if hits.is_empty() {
+                continue;
+            }
+            if stats.recovered_files >= maximum {
                 stats.incomplete = true;
                 stream_row.status = "RecoveryLimitReached".into();
                 stream_row.note.push_str(
                     " Maximum recovered streams per run reached; matched bytes were not exported.",
                 );
             } else {
-                let path = write_recovered(output, &stream_row, attribute.header.instance, data)
+                let saved = write_recovered(output, &stream_row, attribute.header.instance, data)
                     .context("Saving matched resident DATA")?;
                 for h in &mut hits {
-                    h.recovered_file = path.clone();
+                    h.recovered_file = saved.clone();
                 }
-                stream_row.recovered_file = path;
+                stream_row.recovered_file = saved;
                 stream_row.status = "Recovered".into();
                 stats.recovered_files += 1;
             }
             emit(stream_row, Some((result, hits)))?;
         }
-        if !had_data {
-            row.status = "MetadataOnly".into();
-            row.note.push_str(
-                " No resident DATA in the matched record; metadata is not a recovered file.",
-            );
-            emit(row, None)?;
-        }
+    }
+    let tail = len - count * record_size;
+    if tail > 0 {
+        emit(
+            Recovery::source(
+                file,
+                "TruncatedTail",
+                &format!(
+                    "{tail} bytes after the last complete FILE record were scanned only as raw MFT bytes; no record can be read from them."
+                ),
+            ),
+            None,
+        )?;
     }
     stats.elapsed_ms += start.elapsed().as_millis();
     Ok(())

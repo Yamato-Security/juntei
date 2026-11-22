@@ -36,7 +36,7 @@ Códigos de salida: 0 indica finalización, 3 cobertura incompleta, 2 fallo de c
 
 ## Coincidencias MFT y recuperación { #mft-recovery }
 
-Las MFT se analizan una a una como bytes sin procesar, sin límite de tamaño predeterminado. Se interpretan los registros en las posiciones coincidentes y sus flujos DATA residentes se analizan por separado. Solo se recuperan los flujos que coinciden por sí mismos. Las coincidencias de metadatos, entre registros o no residentes se informan sin exportar contenido.
+Las MFT se procesan una a una, sin límite de tamaño predeterminado, en dos pasadas: primero los bytes sin procesar se mapean en memoria y se analizan como cualquier archivo; después cada registro FILE se lee del archivo uno a uno y cada flujo DATA residente se analiza como un archivo independiente, sea cual sea el resultado de la primera pasada. Solo se recuperan los flujos que coinciden por sí mismos. El contenido no residente se cuenta, no se exporta, porque sus bytes no están en la MFT; los registros dañados se informan y dejan la cobertura incompleta.
 
 `--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 

@@ -36,7 +36,7 @@ Karantinadan kurtarılan içerikler dahil tüm normal dosyalar uygundur. Semboli
 
 ## MFT eşleşmeleri ve kurtarma { #mft-recovery }
 
-MFT dosyaları varsayılan boyut sınırı olmadan tek tek ham baytlar olarak taranır. Eşleşme konumlarındaki kayıtlar ayrıştırılır ve yerleşik DATA akışları bağımsız taranır. Yalnızca tek başına eşleşen akışlar kurtarılır. Meta veri, kayıtlar arası ve yerleşik olmayan eşleşmeler içerik çıkarılmadan raporlanır.
+MFT dosyaları varsayılan boyut sınırı olmadan tek tek, iki aşamada işlenir: önce ham baytlar herhangi bir dosya gibi belleğe eşlenip taranır, ardından her FILE kaydı dosyadan tek tek okunur ve her yerleşik DATA akışı, ham taramanın sonucundan bağımsız olarak ayrı bir dosya gibi taranır. Yalnızca tek başına eşleşen akışlar kurtarılır. Yerleşik olmayan içerik, baytları MFT içinde bulunmadığından dışa aktarılmaz, yalnızca sayılır; hasarlı kayıtlar raporlanır ve kapsamı eksik yapar.
 
 `--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 

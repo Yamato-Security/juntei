@@ -36,7 +36,7 @@ Exit codes: 0 means complete, 3 incomplete coverage, 2 setup/output failure, and
 
 ## MFT matches and recovery { #mft-recovery }
 
-MFTs are scanned as raw bytes one at a time, with no default size cap. Records at raw match offsets are parsed and their resident DATA streams are scanned independently. Only streams that match on their own are recovered. Metadata-only, cross-record and nonresident matches are reported without exporting file content.
+MFTs are processed one at a time, with no default size cap, in two passes: the raw bytes are mapped and scanned like any file, then every FILE record is read from the file one record at a time and each resident DATA stream is scanned as a file of its own, whatever the raw scan found. Only streams that match on their own are recovered. Nonresident content is counted, not exported, because its bytes are not in the MFT; damaged records are reported and make coverage incomplete.
 
 `--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 

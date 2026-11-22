@@ -36,7 +36,7 @@ Kode keluar: 0 selesai, 3 cakupan tidak lengkap, 2 kegagalan penyiapan/keluaran,
 
 ## Kecocokan MFT dan pemulihan { #mft-recovery }
 
-MFT dipindai satu per satu sebagai byte mentah tanpa batas ukuran bawaan. Rekaman pada posisi kecocokan diurai dan aliran DATA residennya dipindai ulang secara mandiri. Hanya aliran yang cocok sendiri yang dipulihkan. Kecocokan metadata, lintas rekaman, dan data nonresiden dilaporkan tanpa mengekspor isi berkas.
+MFT diproses satu per satu tanpa batas ukuran bawaan dalam dua tahap: byte mentah dipetakan ke memori dan dipindai seperti berkas lain, lalu setiap rekaman FILE dibaca dari berkas satu per satu dan setiap aliran DATA residen dipindai sebagai berkas tersendiri, apa pun hasil pemindaian mentahnya. Hanya aliran yang cocok sendiri yang dipulihkan. Isi nonresiden dihitung, bukan diekspor, karena byte-nya tidak ada di MFT; rekaman yang rusak dilaporkan dan membuat cakupan tidak lengkap.
 
 `--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 

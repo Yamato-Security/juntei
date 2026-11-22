@@ -80,14 +80,15 @@ created from MFT metadata contains no recoverable malware bytes to inspect.
 | `-q, --quiet` | Off | Suppress the banner/progress and routine preparation messages. |
 | `-K, --no-color` | Off | Disable terminal colors. |
 
-The compiled rules are shared between workers; each worker reads one complete file.
-There is **no default file-size limit** for ordinary files or MFTs. Memory use depends on
-file sizes, parallel scans, compiled rules and engine match data. Set optional caps with
-`--max-file-mib` and/or `--max-mft-mib`, or reduce `-T` when working with large files.
-These are file-size caps, not a process-wide memory cap. Files are hashed and scanned from
-the same in-memory bytes; detected size/modification-time changes during reading cause a
-read error. Prefer stable evidence copies. An allocation or I/O failure is reported as
-incomplete coverage, never as a clean scan.
+The compiled rules are shared between workers. Each worker maps its file read-only and hashes
+and scans the mapping, so nothing is copied into memory and memory use does not grow with file
+size or with the number of parallel scans; the operating system drops the mapped pages again as
+the scan moves on. There is **no default file-size limit** for ordinary files or MFTs. The
+optional `--max-file-mib` and `--max-mft-mib` caps bound scan time, not memory. Files are hashed
+and scanned from the same mapping; a size or modification-time change detected during the scan
+is reported as a read error, so prefer stable evidence copies, and never let another process
+truncate a file while it is being scanned. An I/O failure is reported as incomplete coverage,
+never as a clean scan.
 
 Ctrl+C requests cancellation between files. An in-progress evaluation can take up to its
 configured timeout before it returns. Interrupted files are recorded as cancelled.
@@ -97,7 +98,7 @@ configured timeout before it returns. Interrupted files are recorded as cancelle
 | File | Contents |
 |---|---|
 | `YaraDetections.csv` or `.jsonl` | One row per rule/file match, including partial matches from incomplete scans. |
-| `YaraFiles.csv` or `.jsonl` | Coverage for each discovered file, skipped link/special entry, directory discovery error and candidate MFT resident stream. |
+| `YaraFiles.csv` or `.jsonl` | Coverage for each discovered file, skipped link/special entry, directory discovery error and every MFT resident stream that matched or could not be scanned. |
 | `Summary.json` | Completion status, status counts, settings, rule counts, rules/package hashes, source manifests and engine version. |
 | `Rules.yar` | Exact downloaded rules or flattened local rules, for reproducibility. |
 | `CompilationWarnings.txt` | Engine compilation warnings; may be empty. |
@@ -144,45 +145,47 @@ A YARA match is a hunting lead, and absence of matches is not proof that a file 
 - [Boreal engine and compatibility](https://github.com/vthib/boreal)
 - [YARA rule-writing reference](https://yara.readthedocs.io/en/stable/writingrules.html)
 
-## Raw MFT scanning and matched resident-file recovery
+## MFT scanning and resident-file recovery
 
 Collected MFTs are recognized by common names (`$MFT`, names ending in `$MFT`, percent-encoded
-`%24MFT`, `MFT`, `.mft`) or a plausible leading FILE record header. Their raw bytes are scanned
-without a size cap by default. An optional `--max-file-mib` cap applies to all files;
-`--max-mft-mib` overrides it for MFTs. Both accept positive whole MiB values within the
-64-bit byte-count range. MFTs run **one at a time after ordinary files**, sharing the compiled
-rules. This avoids several large MFT buffers being held by parallel workers.
+`%24MFT`, `MFT`, `.mft`) or a plausible leading FILE record header. They are processed **one at
+a time after the ordinary files**, with the same compiled rules, in two passes:
 
-When a raw rule matches, Juntei uses its pattern offsets to locate candidate FILE records.
-It validates the records, applies NTFS update-sequence fixups, and re-evaluates each resident
-`$DATA` stream in those records as an independent file. This makes `filesize`, offsets and
-compound conditions refer to the recovered content rather than the entire MFT.
-**Only independently matched resident streams are saved**, under `RecoveredMFT/`, with a
+1. The raw bytes are mapped and scanned like any other file. Matches on file names, index
+   entries or slack appear as detections with `SourceType` `MFTRaw` and offsets relative to the
+   MFT.
+2. Every FILE record is read from the file one record at a time, never from a copy of the whole
+   MFT. For each record with valid NTFS update-sequence fixups, every resident `$DATA` stream is
+   scanned as an independent file, so `filesize`, header checks and compound conditions refer to
+   that file rather than to the MFT. This pass does not depend on the first one: a rule that can
+   never match the MFT as a whole, for example one restricted to small PE files, still finds the
+   resident files it was written for.
+
+**Only resident streams that match on their own are saved**, under `RecoveredMFT/`, with a
 `.quarantined` suffix. The flat, collision-resistant names retain the original basename plus
-record/generation/attribute identifiers; evidence directory paths are never recreated.
-Source evidence remains unchanged. Named alternate streams and deleted records are included.
+record/generation/attribute identifiers; evidence directory paths are never recreated. Source
+evidence remains unchanged. Named alternate streams and deleted records are included.
 Extension-record owners are asserted only when both sequence numbers and the base record's
-attribute list confirm that relationship.
+attribute list confirm that relationship. Nonresident contents live in the volume's data
+clusters and cannot be recovered from a standalone MFT; they are counted in `Summary.json`, and
+no empty placeholder is written for them. Unused (zeroed) record slots are counted. A record
+whose signature, size or fixups are invalid is reported as `InvalidRecord`, and because its
+content could not be checked, it makes coverage incomplete.
 
-This is **raw-hit-driven recovery**, not an exhaustive scan of every resident stream. A rule
-that cannot match the raw MFT at all (for example, one restricted to very small files) cannot
-by itself nominate a record for recovery. Separately extract and scan resident streams for
-that additional coverage. Metadata-only matches, patterns spanning FILE records, unconfirmed
-compound matches, and rules without usable pattern offsets do not export a supposed payload.
-Nonresident contents require the original volume's data clusters and cannot be recovered from
-a standalone MFT; no empty placeholder is written for them. Damaged records are reported.
-
-`--max-mft-recoveries <N>` limits actual recovered streams across the run (default **1000**,
-range 1–100000). Reaching this limit or the raw-offset storage ceiling makes recovery coverage
-incomplete and visible in the results. The display limit of 16 match-pattern samples does
-not limit recovery: it uses all retained raw occurrence offsets, up to 100,000 per MFT and the
-engine's 1000-occurrences-per-pattern ceiling. Reaching either ceiling is reported.
+An optional `--max-file-mib` cap applies to all files; `--max-mft-mib` overrides it for MFTs.
+Both accept positive whole MiB values within the 64-bit byte-count range, and a skipped MFT gets
+neither pass. `--max-mft-recoveries <N>` limits the streams actually saved across the run
+(default **1000**, range 1–100000); matching streams beyond the limit are still reported as
+detections, with the status `RecoveryLimitReached`, and the run is incomplete. The display limit
+of 16 match-pattern samples does not affect recovery.
 
 ```bash
 juntei yara-scan -d evidence/ --ruleset full -o yara-mft/
 ```
 
-MFT processing adds `YaraMFTResults.csv` or `YaraMFTResults.jsonl` when MFT inputs are found:
+MFT processing adds `YaraMFTResults.csv` or `YaraMFTResults.jsonl` when MFT inputs are found. It
+has one row per recovered stream, per matching stream that was not saved, per stream whose
+evaluation failed, and per damaged record (the first 100; the rest are counted):
 
 | Field | Meaning |
 |---|---|
@@ -192,22 +195,23 @@ MFT processing adds `YaraMFTResults.csv` or `YaraMFTResults.jsonl` when MFT inpu
 | `OriginalPath`, `Stream` | Resolved Windows file path and named stream; unresolved paths are labelled. |
 | `AttributeID`, `AttributeOffset` | Attribute instance and its byte offset within the record. |
 | `Deleted` | Whether the physical FILE record is unallocated. |
-| `RawRules`, `StreamRules` | Raw-container rule names and independently matching stream rule names. |
+| `Rules` | Rule names that matched the stream on its own. |
 | `Status`, `Note` | Recovery result and explanation. |
-| `Size`, `SHA256` | Exact fixup-restored resident content size and hash; nonresident rows have no content hash. |
+| `Size`, `SHA256` | Exact fixup-restored resident content size and hash. |
 | `RecoveredFile` | Recovered file path relative to the results directory, empty when no file was saved. |
 
-Statuses distinguish `Recovered`, `ResidentNotConfirmed`, `NonResidentUnavailable`,
-`MetadataOnly`, `NoMatchOffsets`, `CrossRecordSpan`, `InvalidMFT`, `InvalidRecord`,
-`AttributeError`, `TruncatedRecord`, `StreamScanError`, `RawLocationLimit`,
-`RecoveryLimitReached` and `Cancelled`. Recovery errors and limits make coverage incomplete;
-expected absence of recoverable nonresident bytes is explicitly reported.
+Statuses distinguish `Recovered`, `RecoveryLimitReached`, `StreamScanError`, `InvalidMFT`,
+`InvalidRecord`, `AttributeError`, `TruncatedTail` and `Cancelled`. Scan errors, damaged records
+and the recovery limit make coverage incomplete. `TruncatedTail` only notes bytes after the last
+complete record, which the raw pass has already covered.
 
-The ordinary detections and coverage tables now include `SourceType`: `File`, `MFTRaw`, or
+The ordinary detections and coverage tables include `SourceType`: `File`, `MFTRaw`, or
 `MFTResident`. Resident `FilePath` values are virtual references to a record and stream,
 not additional source files. Detection rows also include `RecoveredFile`; raw MFT offsets
 are relative to the MFT, while resident-stream offsets are relative to the recovered content.
 A raw and a resident match can represent the same evidence, so counts are not unique malware
-counts. `Summary.json` includes the effective MFT limit, explicit MFT override and recovery statistics. A null file-size limit means unlimited.
+counts. `Summary.json` includes the effective MFT limit, explicit MFT override and the record
+statistics: records read, unused and damaged records, resident and nonresident streams, and
+recovered files. A null file-size limit means unlimited.
 
 A saved file is **YARA-matched evidence**, not a verdict of malware or proof of execution.

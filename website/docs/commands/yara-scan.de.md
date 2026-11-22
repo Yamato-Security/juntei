@@ -36,7 +36,7 @@ Exit-Codes: 0 bedeutet vollständig, 3 unvollständige Abdeckung, 2 Einrichtungs
 
 ## MFT-Treffer und Wiederherstellung { #mft-recovery }
 
-MFTs werden einzeln als Rohbytes ohne standardmäßige Größenbegrenzung untersucht. Datensätze an Trefferpositionen werden geparst und ihre residenten DATA-Streams separat geprüft. Nur eigenständig passende Streams werden wiederhergestellt. Metadaten-, datensatzübergreifende und nichtresidente Treffer werden ohne Dateiinhalte gemeldet.
+MFTs werden einzeln und ohne standardmäßige Größenbegrenzung in zwei Durchgängen verarbeitet: Zuerst werden die Rohbytes wie jede andere Datei in den Speicher eingeblendet und geprüft, dann wird jeder FILE-Datensatz einzeln aus der Datei gelesen und jeder residente DATA-Stream als eigene Datei geprüft, unabhängig vom Ergebnis des Rohdurchgangs. Nur eigenständig passende Streams werden wiederhergestellt. Nichtresidente Inhalte werden gezählt, nicht exportiert, weil ihre Bytes nicht in der MFT liegen; beschädigte Datensätze werden gemeldet und machen die Abdeckung unvollständig.
 
 `--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 

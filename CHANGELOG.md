@@ -59,11 +59,13 @@
   `--extract-rdp-tiles`. (#169) (@YamatoSecurity)
 
 - Add opt-in `yara-scan` for collected files on Windows, macOS and Linux, using local rules offline
-  or downloading YARA Forge Core (default), Extended or Full. Include parallel scans, per-file
-  timeouts and opt-in file-size caps (unlimited by default), CSV/JSONL detections and coverage,
-  source hashes and rule snapshots. Scan raw MFT bytes with an optional size-limit override and
-  recover independently matched resident DATA streams as quarantined files, retaining record/stream
-  provenance and explicit recovery gaps. (@YamatoSecurity)
+  or downloading YARA Forge Core (default), Extended or Full. Files are memory-mapped rather than
+  read into memory, so memory use does not grow with file size or with parallel scans. Include
+  parallel scans, per-file timeouts and opt-in file-size caps (unlimited by default), CSV/JSONL
+  detections and coverage, source hashes and rule snapshots. Scan each MFT's raw bytes and then
+  every FILE record one at a time, scanning each resident DATA stream as a file of its own and
+  saving the matching ones as quarantined files with record and stream provenance; nonresident
+  data is counted and damaged records are reported. (@YamatoSecurity)
 
 **Improvements:**
 

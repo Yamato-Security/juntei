@@ -36,7 +36,7 @@ Códigos de saída: 0 significa conclusão, 3 cobertura incompleta, 2 falha de c
 
 ## Correspondências MFT e recuperação { #mft-recovery }
 
-As MFTs são analisadas uma por vez como bytes brutos, sem limite de tamanho por padrão. Os registros nas posições correspondentes são interpretados e seus fluxos DATA residentes são analisados separadamente. Somente fluxos que correspondem por si mesmos são recuperados. Correspondências de metadados, entre registros ou não residentes são informadas sem exportar conteúdo.
+As MFTs são processadas uma por vez, sem limite de tamanho por padrão, em duas passagens: primeiro os bytes brutos são mapeados na memória e analisados como qualquer arquivo; depois cada registro FILE é lido do arquivo um por um e cada fluxo DATA residente é analisado como um arquivo próprio, independentemente do resultado da primeira passagem. Somente fluxos que correspondem por si mesmos são recuperados. O conteúdo não residente é contado, não exportado, porque seus bytes não estão na MFT; registros danificados são informados e tornam a cobertura incompleta.
 
 `--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 

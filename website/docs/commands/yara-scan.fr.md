@@ -36,7 +36,7 @@ Codes de sortie : 0 indique une analyse complète, 3 une couverture incomplète,
 
 ## Correspondances MFT et récupération { #mft-recovery }
 
-Les MFT sont analysées une par une comme des octets bruts, sans limite de taille par défaut. Les enregistrements aux positions correspondantes sont interprétés, puis leurs flux DATA résidents sont analysés séparément. Seuls les flux correspondant seuls sont récupérés. Les correspondances de métadonnées, entre enregistrements ou non résidentes sont signalées sans exporter de contenu.
+Les MFT sont traitées une par une, sans limite de taille par défaut, en deux passes : les octets bruts sont d'abord mappés en mémoire et analysés comme n'importe quel fichier, puis chaque enregistrement FILE est lu dans le fichier un par un et chaque flux DATA résident est analysé comme un fichier à part entière, quel que soit le résultat de la première passe. Seuls les flux qui correspondent seuls sont récupérés. Le contenu non résident est compté, pas exporté, car ses octets ne sont pas dans la MFT ; les enregistrements endommagés sont signalés et rendent la couverture incomplète.
 
 `--max-file-mib <MIB>` → `--max-mft-mib <MIB>` · `--max-mft-recoveries <N>`
 

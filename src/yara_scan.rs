@@ -518,18 +518,11 @@ fn computer_for(path: &Path, root: &Path, override_name: &Option<String>) -> Str
     }
     String::new()
 }
-#[derive(Debug)]
-struct RawLocation {
-    rule: String,
-    offset: usize,
-    length: usize,
-}
 struct ScanOutcome {
     file: FileResult,
     hits: Vec<Detection>,
-    snapshot: Option<Vec<u8>>,
-    locations: Vec<RawLocation>,
-    locations_limited: bool,
+    /// The file was mapped and scanned unchanged, so an MFT can go on to its record pass.
+    opened: bool,
 }
 #[cfg(test)]
 fn scan(
@@ -541,12 +534,15 @@ fn scan(
     let outcome = scan_file(scanner, c, computer, limit, false);
     (outcome.file, outcome.hits)
 }
+/// Map the file read-only and hash and scan the mapping. Nothing is copied onto the heap, so
+/// memory use does not grow with file size or with the number of parallel scans, and the kernel
+/// can drop the pages again as soon as the scan has passed them.
 fn scan_file(
     scanner: &Scanner,
     c: &Candidate,
     computer: String,
     limit: u64,
-    capture_mft: bool,
+    mft: bool,
 ) -> ScanOutcome {
     let start = Instant::now();
     let mut row = FileResult {
@@ -558,29 +554,22 @@ fn scan_file(
         matches: 0,
         elapsed_ms: 0,
         note: c.note.clone(),
-        source_type: if capture_mft { "MFTRaw" } else { "File" }.into(),
+        source_type: if mft { "MFTRaw" } else { "File" }.into(),
+    };
+    let unscanned = |file: FileResult| ScanOutcome {
+        file,
+        hits: vec![],
+        opened: false,
     };
     if let Some(status) = c.pre_status {
         row.status = status.into();
-        return ScanOutcome {
-            file: row,
-            hits: vec![],
-            snapshot: None,
-            locations: vec![],
-            locations_limited: false,
-        };
+        return unscanned(row);
     }
     if interrupt::requested() {
         row.status = "Cancelled".into();
-        return ScanOutcome {
-            file: row,
-            hits: vec![],
-            snapshot: None,
-            locations: vec![],
-            locations_limited: false,
-        };
+        return unscanned(row);
     }
-    let data = (|| -> Result<Vec<u8>> {
+    let opened = (|| -> Result<(File, fs::Metadata, Option<memmap2::Mmap>)> {
         let meta = fs::symlink_metadata(&c.path)?;
         ensure!(
             meta.is_file() && !meta.file_type().is_symlink(),
@@ -593,18 +582,24 @@ fn scan_file(
         let f = File::open(&c.path)?;
         let before = f.metadata()?;
         ensure!(before.is_file(), "Input is no longer a regular file");
-        let bytes = bounded_read(&f, limit)?;
-        let after = f.metadata()?;
         ensure!(
-            before.len() == after.len()
-                && after.len() == bytes.len() as u64
-                && before.modified().ok() == after.modified().ok(),
-            "File changed while being read; retry from a stable copy"
+            before.len() <= limit,
+            "File exceeds the configured scan size limit"
         );
-        Ok(bytes)
+        // SAFETY: the file is evidence that this process only reads. A writer truncating it
+        // while it is mapped would end the process; evidence copies are not written during a
+        // scan, and the size and modification-time comparison after the scan turns an edit
+        // that happens anyway into a read error instead of a result. An empty file cannot be
+        // mapped and is scanned as an empty slice.
+        let map = if before.len() == 0 {
+            None
+        } else {
+            Some(unsafe { memmap2::Mmap::map(&f)? })
+        };
+        Ok((f, before, map))
     })();
-    let bytes = match data {
-        Ok(b) => b,
+    let (f, before, map) = match opened {
+        Ok(v) => v,
         Err(e) => {
             row.status = if c.size > limit {
                 "SkippedTooLarge"
@@ -614,36 +609,32 @@ fn scan_file(
             .into();
             row.note = format!("{e}");
             row.elapsed_ms = start.elapsed().as_millis();
-            return ScanOutcome {
-                file: row,
-                hits: vec![],
-                snapshot: None,
-                locations: vec![],
-                locations_limited: false,
-            };
+            return unscanned(row);
         }
     };
+    let bytes: &[u8] = map.as_deref().unwrap_or(&[]);
     row.size = bytes.len() as u64;
-    row.sha256 = hash(&bytes);
-    let (hits, locations, locations_limited) = evaluate(scanner, &bytes, &mut row, capture_mft);
+    row.sha256 = hash(bytes);
+    let mut hits = evaluate(scanner, bytes, &mut row);
+    let unchanged = f.metadata().is_ok_and(|after| {
+        after.len() == before.len() && after.modified().ok() == before.modified().ok()
+    });
+    if !unchanged {
+        row.status = "ReadError".into();
+        row.note = "File changed while being scanned; retry from a stable copy".into();
+        row.matches = 0;
+        hits.clear();
+    }
     row.elapsed_ms = start.elapsed().as_millis();
-    let snapshot = (capture_mft && !hits.is_empty()).then_some(bytes);
     ScanOutcome {
         file: row,
         hits,
-        snapshot,
-        locations,
-        locations_limited,
+        opened: unchanged,
     }
 }
 
-/// File and resident-stream evaluation use the same complete byte buffer and file semantics.
-fn evaluate(
-    scanner: &Scanner,
-    bytes: &[u8],
-    row: &mut FileResult,
-    capture: bool,
-) -> (Vec<Detection>, Vec<RawLocation>, bool) {
+/// File and resident-stream evaluation use the same complete byte slice and file semantics.
+fn evaluate(scanner: &Scanner, bytes: &[u8], row: &mut FileResult) -> Vec<Detection> {
     let result = match scanner.scan_mem(bytes) {
         Ok(r) => {
             row.status = "Scanned".into();
@@ -655,33 +646,6 @@ fn evaluate(
             r
         }
     };
-    const MAX_LOCATIONS: usize = 100_000;
-    let mut locations = Vec::new();
-    let mut limited = false;
-    if capture {
-        for rule in result.rules.iter().filter(|r| r.matched) {
-            for pattern in &rule.matches {
-                // Boreal stores at most 1000 occurrences per pattern by default. Reaching
-                // that ceiling makes recovery coverage uncertain even if raw detection succeeded.
-                limited |= pattern.matches.len() >= 1000;
-                for matched in &pattern.matches {
-                    if locations.len() == MAX_LOCATIONS {
-                        limited = true;
-                        break;
-                    }
-                    if let Some(offset) = matched.base.checked_add(matched.offset) {
-                        locations.push(RawLocation {
-                            rule: rule.name.into(),
-                            offset,
-                            length: matched.length,
-                        });
-                    } else {
-                        limited = true;
-                    }
-                }
-            }
-        }
-    }
     let detections = result.rules.into_iter().filter(|r| r.matched).map(|r| {
         let metadata: BTreeMap<_, _> = r.metadatas.iter().map(|m| (scanner.get_string_symbol(m.name), match m.value {
             MetadataValue::Bytes(s) => serde_json::Value::String(String::from_utf8_lossy(scanner.get_bytes_symbol(s)).into_owned()),
@@ -691,7 +655,7 @@ fn evaluate(
         Detection { computer: row.computer.clone(), file_path: row.file_path.clone(), size: row.size, sha256: row.sha256.clone(), scan_status: row.status.clone(), rule: r.name.into(), namespace: r.namespace.into(), tags: r.tags.iter().map(|s| scanner.get_string_symbol(*s)).collect::<Vec<_>>().join(" "), metadata: serde_json::to_string(&metadata).expect("metadata serialization"), match_locations: serde_json::to_string(&samples).expect("location serialization"), source_type: row.source_type.clone(), recovered_file: String::new() }
     }).collect::<Vec<_>>();
     row.matches = detections.len();
-    (detections, locations, limited)
+    detections
 }
 
 enum Table {
@@ -932,15 +896,14 @@ fn execute(opts: &Options) -> Result<i32> {
         matches += outcome.hits.len();
         matching_files += usize::from(!outcome.hits.is_empty());
         mft_stats.files += 1;
-        if let Some(snapshot) = outcome.snapshot {
+        // Whatever the raw scan found, every FILE record is now read from the file one at a
+        // time and each resident $DATA stream is scanned as a file of its own.
+        if outcome.opened {
             mft_scan::inspect(
                 mft_scan::Inspection {
                     scanner: &scanner,
-                    snapshot: &snapshot,
+                    path: &c.path,
                     file: &outcome.file,
-                    raw_hits: &outcome.hits,
-                    locations: &outcome.locations,
-                    limited: outcome.locations_limited,
                     output: &output,
                     maximum: opts.max_mft_recoveries,
                 },
