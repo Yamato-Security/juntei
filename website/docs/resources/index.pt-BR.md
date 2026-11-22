@@ -56,6 +56,12 @@ artefatos. As seções **Mais detalhes** de cada artefato contêm os links de ba
 - [defender-dump](https://github.com/knez/defender-dump) — uma implementação separada de pesquisa/extração.
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — recursos de tratamento e análise.
 
+## Caça com YARA { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): os pacotes de regras Core, Extended e Full.
+- [Boreal](https://github.com/vthib/boreal): o mecanismo Rust portátil por trás do `yara-scan`.
+- [Escrevendo regras YARA](https://yara.readthedocs.io/en/stable/writingrules.html): a referência da linguagem de regras.
+
 ## Projetos de analisadores do Juntei { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

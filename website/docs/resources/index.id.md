@@ -56,6 +56,12 @@ artefak. Bagian **Detail lebih lanjut** pada setiap artefak berisi tautan tingka
 - [defender-dump](https://github.com/knez/defender-dump) — implementasi riset/ekstraksi tersendiri.
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — sumber daya penanganan dan analisis.
 
+## Perburuan YARA { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): paket aturan Core, Extended, dan Full.
+- [Boreal](https://github.com/vthib/boreal): mesin Rust portabel di balik `yara-scan`.
+- [Menulis aturan YARA](https://yara.readthedocs.io/en/stable/writingrules.html): referensi bahasa aturan.
+
 ## Proyek parser Juntei { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

@@ -56,6 +56,12 @@ bir araya getirir. Her artefakta özel **Daha fazla ayrıntı** bölümleri, en 
 - [defender-dump](https://github.com/knez/defender-dump) — ayrı bir araştırma/çıkarma uygulaması.
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — ele alma ve analiz kaynakları.
 
+## YARA avı { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): Core, Extended ve Full kural paketleri.
+- [Boreal](https://github.com/vthib/boreal): `yara-scan` arkasındaki taşınabilir Rust motoru.
+- [YARA kuralı yazma](https://yara.readthedocs.io/en/stable/writingrules.html): kural dili başvurusu.
+
 ## Juntei ayrıştırıcı projeleri { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

@@ -109,6 +109,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 рівня. Вона доповнює повну інвентаризацію конфігурації з `parse-registry persistence`
 131 перевіркою, класифікацією за списками дозволу/блокування, метаданими корисного навантаження, відомостями про охоплення та зіставленням часових позначок.
 
+## [Сканування YARA](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` сканує зібрані файли, зокрема відновлені карантинні дані та резидентні дані `$MFT`, за правилами YARA. За замовчуванням завантажується пакет YARA Forge Core; `--ruleset extended` або `--ruleset full` вибирають ширший пакет, а `--rules <FILE_OR_DIRECTORY>` сканує офлайн за локальними правилами. Сканування необов'язкове й виконується окремо від `auto-parse`.
+
 ## Використання верхнього рівня { #top-level-usage }
 
 ```text
@@ -124,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

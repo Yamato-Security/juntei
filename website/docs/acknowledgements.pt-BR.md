@@ -37,6 +37,9 @@ cada projeto para conhecer sua licença.
   em Python; consulte os [agradecimentos do Persistence Hunter](persistence-hunter/acknowledgements.md)
   para conhecer a linhagem completa.
 
+- [**Boreal**](https://github.com/vthib/boreal), de Vincent Thiberville, é o mecanismo Rust compatível com YARA compilado no comando `yara-scan` (MIT ou Apache-2.0; o aviso está em `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), mantido por Florian Roth na YARAHQ, seleciona os pacotes de regras Core, Extended e Full que o `yara-scan` baixa sob demanda. As regras continuam sendo obra de seus autores sob as próprias licenças; o Juntei salva a fonte baixada junto com cada conjunto de resultados.
+
 - A **especificação regf** e o **yarp** de Maxim Suhanov orientaram as estruturas do Registro, a
   reprodução de logs de transação e a recuperação de registros excluídos; o **dfir_ntfs**, também
   dele, foi a referência para registros INDX e para a recuperação (carving) em slack de índice.

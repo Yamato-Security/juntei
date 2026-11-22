@@ -35,6 +35,9 @@ Juntei는 DFIR 및 오픈 소스 커뮤니티가 공개한 파서, 형식 연구
   프로젝트에 영감을 주었습니다. 전체 계보는 [지속성 관련 감사의 말](persistence-hunter/acknowledgements.md)을
   참조하십시오.
 
+- Vincent Thiberville의 [**Boreal**](https://github.com/vthib/boreal)은 `yara-scan` 명령에 컴파일된 YARA 호환 Rust 엔진입니다(MIT 또는 Apache-2.0, 고지는 `THIRD_PARTY_NOTICES/crates.txt`에 있습니다).
+- YARAHQ에서 Florian Roth가 관리하는 [**YARA Forge**](https://github.com/YARAHQ/yara-forge)는 `yara-scan`이 요청 시 내려받는 Core, Extended, Full 규칙 패키지를 큐레이션합니다. 규칙은 각 작성자의 저작물로서 각자의 라이선스를 따르며, Juntei는 내려받은 소스를 각 결과와 함께 저장합니다.
+
 - Maxim Suhanov의 **regf specification**과 **yarp**는 레지스트리 구조, 트랜잭션 로그 재생 및 삭제된 레코드
   복구에 참고가 되었습니다. 그의 **dfir_ntfs**는 INDX 레코드와 인덱스 슬랙 카빙의 참조 구현이었습니다.
 - Harel Segev의 **INDXRipper**는 인덱스 슬랙에서 파일 이름을 카빙하기 위한 또 다른 참조 구현입니다.

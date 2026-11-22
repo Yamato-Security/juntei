@@ -56,6 +56,12 @@ leitfäden hinausgehen möchten. Die Abschnitte **Weitere Informationen** der ei
 - [defender-dump](https://github.com/knez/defender-dump) — eine separate Forschungs-/Extraktionsimplementierung.
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — Ressourcen zu Handhabung und Analyse.
 
+## YARA-Hunting { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): die Regelpakete Core, Extended und Full.
+- [Boreal](https://github.com/vthib/boreal): die portable Rust-Engine hinter `yara-scan`.
+- [YARA-Regeln schreiben](https://yara.readthedocs.io/en/stable/writingrules.html): die Referenz der Regelsprache.
+
 ## Parser-Projekte von Juntei { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

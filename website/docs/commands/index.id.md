@@ -109,6 +109,10 @@ tetap mempertahankan namanya.
 tingkat atas. Perintah ini melengkapi inventaris konfigurasi lengkap dari `parse-registry persistence` dengan
 131 pemeriksaan, klasifikasi allow/block, metadata payload, cakupan, dan korelasi timestamp.
 
+## [Pemindaian YARA](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` memindai berkas yang dikumpulkan, termasuk payload karantina yang dipulihkan dan data residen `$MFT`, dengan aturan YARA. Secara default perintah ini mengunduh paket YARA Forge Core; `--ruleset extended` atau `--ruleset full` memilih paket yang lebih luas, dan `--rules <FILE_OR_DIRECTORY>` memindai secara offline dengan aturan lokal. Pemindaian ini bersifat opsional dan terpisah dari `auto-parse`.
+
 ## Penggunaan tingkat atas { #top-level-usage }
 
 ```text
@@ -124,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

@@ -110,6 +110,10 @@ adlarını korur.
 komutudur. `parse-registry persistence` komutunun sunduğu tam yapılandırma envanterini 131 kontrol, izin/engel
 sınıflandırması, yük (payload) meta verileri, kapsam ve zaman damgası ilişkilendirmesiyle tamamlar.
 
+## [YARA Taraması](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>`, kurtarılan karantina yükleri ve yerleşik `$MFT` verileri dahil toplanan dosyaları YARA kurallarıyla tarar. Varsayılan olarak YARA Forge Core paketini indirir; `--ruleset extended` veya `--ruleset full` daha geniş bir paket seçer, `--rules <FILE_OR_DIRECTORY>` ise yerel kurallarla çevrimdışı tarama yapar. Tarama isteğe bağlıdır ve `auto-parse` işleminden ayrıdır.
+
 ## Üst düzey kullanım { #top-level-usage }
 
 ```text
@@ -125,6 +129,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

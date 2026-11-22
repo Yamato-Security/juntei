@@ -100,6 +100,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 `juntei persistence-hunter` は複数のソース形式をハントするため、トップレベルの分析コマンドです。これは、`parse-registry persistence` の完全な構成インベントリを 131 チェック、許可/ブロック分類、ペイロード メタデータ、カバレッジ、およびタイムスタンプ相関で補完します。
 
+## [YARAスキャン](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` は、復元した隔離ペイロードや `$MFT` のレジデントデータを含む収集済みファイルを YARA ルールでスキャンします。既定では YARA Forge の Core パッケージをダウンロードします。`--ruleset extended` または `--ruleset full` でより広いパッケージを選択でき、`--rules <FILE_OR_DIRECTORY>` を指定するとローカルルールでオフラインスキャンができます。このスキャンはオプトインで、`auto-parse` とは別に実行します。
+
 ## トップレベルの使用法 { #top-level-usage }
 
 ```text
@@ -115,6 +119,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

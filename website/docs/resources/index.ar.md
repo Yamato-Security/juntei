@@ -56,6 +56,12 @@
 - [defender-dump](https://github.com/knez/defender-dump) — تطبيق بحثي/استخراجي منفصل.
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — موارد للتعامل مع البرامج الضارة وتحليلها.
 
+## الاصطياد بـ YARA { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): حزم القواعد Core وExtended وFull.
+- [Boreal](https://github.com/vthib/boreal): محرك Rust المحمول وراء `yara-scan`.
+- [كتابة قواعد YARA](https://yara.readthedocs.io/en/stable/writingrules.html): مرجع لغة القواعد.
+
 ## مشاريع محللات Juntei { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

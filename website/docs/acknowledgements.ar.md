@@ -34,6 +34,9 @@
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) الأصلي مشروعَ Python؛
   راجع [شكر وتقدير Persistence Hunter](persistence-hunter/acknowledgements.md) للاطلاع على سلسلة النسب الكاملة.
 
+- [**Boreal**](https://github.com/vthib/boreal)، من Vincent Thiberville، هو محرك Rust المتوافق مع YARA والمُضمَّن في الأمر `yara-scan` (ترخيص MIT أو Apache-2.0؛ وإشعاره في `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge)، الذي يصونه Florian Roth ضمن YARAHQ، ينسّق حزم القواعد Core وExtended وFull التي يُنزّلها `yara-scan` عند الطلب. وتبقى القواعد من عمل مؤلفيها وفق تراخيصهم الخاصة؛ ويحفظ Juntei المصدر المُنزَّل مع كل مجموعة نتائج.
+
 - أسهمت **مواصفة regf** وأداة **yarp** من Maxim Suhanov في بنى سجل Windows، وإعادة تشغيل سجلات
   المعاملات، واستعادة السجلات المحذوفة؛ وكانت أداته **dfir_ntfs** المرجع لسجلات INDX واستخراج
   البيانات من المساحة الراكدة (slack) في الفهارس.

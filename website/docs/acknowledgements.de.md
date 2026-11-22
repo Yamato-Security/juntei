@@ -35,6 +35,9 @@ in Juntei eingebettet ist; die jeweilige Lizenz entnehmen Sie bitte dem einzelne
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) inspirierte das Python-Projekt;
   die vollständige Herkunft finden Sie in den [Danksagungen zur Persistenz](persistence-hunter/acknowledgements.md).
 
+- [**Boreal**](https://github.com/vthib/boreal) von Vincent Thiberville ist die YARA-kompatible Rust-Engine, die in den Befehl `yara-scan` einkompiliert ist (MIT oder Apache-2.0; der Hinweis steht in `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), von Florian Roth unter YARAHQ gepflegt, kuratiert die Regelpakete Core, Extended und Full, die `yara-scan` auf Anforderung herunterlädt. Die Regeln bleiben das Werk ihrer jeweiligen Autoren unter deren eigenen Lizenzen; Juntei speichert die heruntergeladene Quelle bei jedem Ergebnissatz.
+
 - Maxim Suhanovs **regf-Spezifikation** und **yarp** prägten die Registry-Strukturen, das Wiedereinspielen von Transaktionsprotokollen
   und die Wiederherstellung gelöschter Datensätze; sein **dfir_ntfs** war die Referenz für INDX-Datensätze und
   das Carving aus Index-Slack.

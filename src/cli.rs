@@ -131,6 +131,11 @@ pub enum Commands {
         disable_version_flag = true
     )]
     SuperTimeline(SuperTimelineOptions),
+
+    /// Scan collected files with local or YARA Forge rules
+    #[command(author = AUTHOR, version = VERSION, disable_help_flag = true,
+        disable_version_flag = true)]
+    YaraScan(crate::yara_scan::Options),
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, Default, PartialEq, Eq)]

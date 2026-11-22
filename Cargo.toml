@@ -30,6 +30,13 @@ winresource = "0.1.34"
 # own and follow their main branches: Cargo.lock records the commits used, and `cargo update`
 # moves to the latest.
 [dependencies]
+# Portable file-based YARA scanning; keep the evaluator aligned with Kumade.
+boreal = { version = "=1.4.0", default-features = false, features = ["hash", "object", "authenticode"] }
+boreal-parser = "=1.2.0"
+anyhow = "1"
+walkdir = "2.5"
+ureq = { version = "3.5", default-features = false, features = ["rustls"] }
+zip = { version = "9.8", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 # Amcache parsing and output: Yamato Security's ys-amcache-parser (Apache-2.0).
 amcache-forensic = { package = "ys-amcache-parser", git = "https://github.com/Yamato-Security/ys-amcache-parser" }
 bytesize = "2"

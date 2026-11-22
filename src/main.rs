@@ -55,6 +55,7 @@ mod usn_journal;
 mod util;
 mod webcache;
 mod windows_search;
+mod yara_scan;
 
 use clap::{CommandFactory, Parser};
 use cli::{
@@ -79,6 +80,12 @@ fn main() {
     let start = Instant::now();
     let cli = Cli::parse();
     let code = match &cli.cmd {
+        Commands::YaraScan(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = yara_scan::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
         Commands::SuperTimeline(opts) => {
             display_logo(opts.common.quiet, opts.common.no_color, true, false);
             let code = super_timeline::run(opts);

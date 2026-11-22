@@ -35,6 +35,9 @@ disematkan di dalam Juntei; periksa lisensi masing-masing proyek.
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) menginspirasi proyek Python tersebut;
   lihat [ucapan terima kasih persistensi](persistence-hunter/acknowledgements.md) untuk silsilah lengkapnya.
 
+- [**Boreal**](https://github.com/vthib/boreal), karya Vincent Thiberville, adalah mesin Rust yang kompatibel dengan YARA dan dikompilasi ke dalam perintah `yara-scan` (MIT atau Apache-2.0; pemberitahuannya ada di `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), yang dikelola Florian Roth di bawah YARAHQ, mengurasi paket aturan Core, Extended, dan Full yang diunduh `yara-scan` sesuai permintaan. Aturan tetap menjadi karya penulisnya masing-masing dengan lisensi mereka sendiri; Juntei menyimpan sumber yang diunduh bersama setiap kumpulan hasil.
+
 - **Spesifikasi regf** dan **yarp** karya Maxim Suhanov menjadi acuan bagi struktur registry, pemutaran ulang
   log transaksi, dan pemulihan record yang terhapus; **dfir_ntfs** karyanya menjadi referensi untuk record INDX dan
   carving index slack.

@@ -56,6 +56,12 @@
 - [defender-dump](https://github.com/knez/defender-dump) — การใช้งานสำหรับการวิจัย/การแยกไฟล์ที่พัฒนาแยกต่างหาก
 - [FIRST Malware Analysis Fundamentals](https://www.first.org/global/sigs/malware/analysis/) — แหล่งข้อมูลด้านการจัดการและการวิเคราะห์
 
+## การล่าภัยคุกคามด้วย YARA { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): แพ็กเกจกฎ Core, Extended และ Full
+- [Boreal](https://github.com/vthib/boreal): เอนจิน Rust แบบพกพาที่อยู่เบื้องหลัง `yara-scan`
+- [การเขียนกฎ YARA](https://yara.readthedocs.io/en/stable/writingrules.html): เอกสารอ้างอิงภาษาของกฎ
+
 ## โปรเจกต์พาร์เซอร์ของ Juntei { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

@@ -55,6 +55,12 @@
 - [defender-dump](https://github.com/knez/defender-dump) — 個別の調査/抽出実装。
 - [FIRST マルウェア分析の基礎](https://www.first.org/global/sigs/malware/analysis/) — 処理と分析のリソース。
 
+## YARA ハンティング { #yara-hunting }
+
+- [YARA Forge](https://github.com/YARAHQ/yara-forge): Core、Extended、Full のルールパッケージです。
+- [Boreal](https://github.com/vthib/boreal): `yara-scan` が使うポータブルな Rust エンジンです。
+- [YARA ルールの書き方](https://yara.readthedocs.io/en/stable/writingrules.html): ルール言語のリファレンスです。
+
 ## Juntei パーサー プロジェクト { #juntei-parser-projects }
 
 - [ys-amcache-parser](https://github.com/Yamato-Security/ys-amcache-parser)

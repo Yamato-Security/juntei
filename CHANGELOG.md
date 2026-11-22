@@ -58,6 +58,15 @@
   `auto-parse` saves the records and collages in `LateralMovement`, and every tile with
   `--extract-rdp-tiles`. (#169) (@YamatoSecurity)
 
+- Add opt-in `yara-scan` for collected files on Windows, macOS and Linux, using local rules offline
+  or downloading YARA Forge Core (default), Extended or Full. Files are memory-mapped rather than
+  read into memory, so memory use does not grow with file size or with parallel scans. Include
+  parallel scans, per-file timeouts and opt-in file-size caps (unlimited by default), CSV/JSONL
+  detections and coverage, source hashes and rule snapshots. Scan each MFT's raw bytes and then
+  every FILE record one at a time, scanning each resident DATA stream as a file of its own and
+  saving the matching ones as quarantined files with record and stream provenance; nonresident
+  data is counted and damaged records are reported. (@YamatoSecurity)
+
 **Improvements:**
 
 - Upgrade `quick-xml` to 0.42.0, preserving Persistence Hunter's XML evidence values,

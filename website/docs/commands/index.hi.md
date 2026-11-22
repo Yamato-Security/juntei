@@ -109,6 +109,10 @@ parser options को आर्टिफ़ैक्ट नाम के बा�
 command है। यह `parse-registry persistence` की पूर्ण configuration inventory को
 131 checks, allow/block वर्गीकरण, payload metadata, coverage और timestamp correlation के साथ पूरक बनाता है।
 
+## [YARA स्कैन](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` एकत्र की गई फ़ाइलों को, जिनमें पुनर्प्राप्त क्वारंटाइन पेलोड और `$MFT` का रेज़िडेंट डेटा शामिल है, YARA नियमों से स्कैन करता है। डिफ़ॉल्ट रूप से यह YARA Forge Core पैकेज डाउनलोड करता है; `--ruleset extended` या `--ruleset full` व्यापक पैकेज चुनते हैं, और `--rules <FILE_OR_DIRECTORY>` स्थानीय नियमों से ऑफ़लाइन स्कैन करता है। यह स्कैन वैकल्पिक है और `auto-parse` से अलग है।
+
 ## Top-level उपयोग { #top-level-usage }
 
 ```text
@@ -124,6 +128,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

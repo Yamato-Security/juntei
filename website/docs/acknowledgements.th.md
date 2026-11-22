@@ -35,6 +35,9 @@ Juntei เกิดขึ้นได้เพราะชุมชน DFIR แ�
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) ต้นฉบับเป็นแรงบันดาลใจให้กับโปรเจกต์ Python ดังกล่าว
   ดูประวัติความเป็นมาทั้งหมดได้ที่[กิตติกรรมประกาศของ Persistence Hunter](persistence-hunter/acknowledgements.md)
 
+- [**Boreal**](https://github.com/vthib/boreal) โดย Vincent Thiberville คือเอนจิน Rust ที่เข้ากันได้กับ YARA ซึ่งคอมไพล์รวมอยู่ในคำสั่ง `yara-scan` (MIT หรือ Apache-2.0 ประกาศสิทธิ์อยู่ใน `THIRD_PARTY_NOTICES/crates.txt`)
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge) ซึ่ง Florian Roth ดูแลภายใต้ YARAHQ รวบรวมแพ็กเกจกฎ Core, Extended และ Full ที่ `yara-scan` ดาวน์โหลดเมื่อร้องขอ กฎยังคงเป็นผลงานของผู้เขียนแต่ละรายภายใต้สัญญาอนุญาตของตน และ Juntei จะบันทึกซอร์สที่ดาวน์โหลดไว้พร้อมกับชุดผลลัพธ์แต่ละชุด
+
 - **ข้อกำหนด regf** และ **yarp** ของ Maxim Suhanov มีส่วนช่วยในเรื่องโครงสร้างรีจิสทรี การเล่นซ้ำ (replay) บันทึกธุรกรรม
   และการกู้คืนเรคคอร์ดที่ถูกลบ ส่วน **dfir_ntfs** ของเขาเป็นข้อมูลอ้างอิงสำหรับเรคคอร์ด INDX และการกู้คืน (carving) ข้อมูลจาก index slack
 - **INDXRipper** ของ Harel Segev เป็นอีกหนึ่งข้อมูลอ้างอิงสำหรับการกู้คืนชื่อไฟล์จาก index slack

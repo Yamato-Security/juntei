@@ -112,6 +112,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 คำสั่งนี้เสริม inventory การกำหนดค่าแบบครบถ้วนจาก `parse-registry persistence` ด้วย
 การตรวจสอบ 131 รายการ การจำแนกแบบ allow/block เมทาดาทาของ payload ความครอบคลุม (coverage) และการเชื่อมโยง timestamp
 
+## [การสแกน YARA](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` สแกนไฟล์ที่เก็บรวบรวมมา รวมถึงเพย์โหลดกักกันที่กู้คืนแล้วและข้อมูล resident ของ `$MFT` ด้วยกฎ YARA โดยค่าเริ่มต้นจะดาวน์โหลดแพ็กเกจ YARA Forge Core ส่วน `--ruleset extended` หรือ `--ruleset full` จะเลือกแพ็กเกจที่ครอบคลุมกว้างขึ้น และ `--rules <FILE_OR_DIRECTORY>` จะสแกนแบบออฟไลน์ด้วยกฎในเครื่อง การสแกนนี้เป็นตัวเลือกเสริมและแยกจาก `auto-parse`
+
 ## การใช้งานระดับบนสุด { #top-level-usage }
 
 ```text
@@ -127,6 +131,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

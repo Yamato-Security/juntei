@@ -108,6 +108,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 允許／封鎖分類、承載資料中繼資料、涵蓋範圍與時間戳記關聯，補足 `parse-registry persistence`
 所提供的完整設定清查。
 
+## [YARA 掃描](yara-scan.md) { #yara-scan }
+
+`juntei yara-scan -d <EVIDENCE> -o <RESULTS>` 會以 YARA 規則掃描已收集的檔案，包括還原的隔離檔案與 `$MFT` 的常駐資料。預設會下載 YARA Forge Core 套件；`--ruleset extended` 或 `--ruleset full` 可選擇範圍更廣的套件，`--rules <FILE_OR_DIRECTORY>` 則以本機規則離線掃描。此掃描需明確啟用，且獨立於 `auto-parse`。
+
 ## 頂層用法 { #top-level-usage }
 
 ```text
@@ -123,6 +127,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

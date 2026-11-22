@@ -35,6 +35,9 @@ Juntei इसलिए अस्तित्व में है क्यों
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) ने इस Python project को प्रेरित किया;
   पूरी वंश-परंपरा के लिए [पर्सिस्टेंस आभार](persistence-hunter/acknowledgements.md) देखें।
 
+- Vincent Thiberville का [**Boreal**](https://github.com/vthib/boreal) YARA-संगत Rust इंजन है, जो `yara-scan` कमांड में कंपाइल किया गया है (MIT या Apache-2.0; इसकी सूचना `THIRD_PARTY_NOTICES/crates.txt` में है)।
+- YARAHQ के अंतर्गत Florian Roth द्वारा अनुरक्षित [**YARA Forge**](https://github.com/YARAHQ/yara-forge) उन Core, Extended और Full नियम पैकेजों को संकलित करता है जिन्हें `yara-scan` अनुरोध पर डाउनलोड करता है। नियम अपने-अपने लेखकों की कृति बने रहते हैं और उनके अपने लाइसेंस के अधीन हैं; Juntei डाउनलोड किए गए स्रोत को हर परिणाम सेट के साथ सहेजता है।
+
 - Maxim Suhanov के **regf specification** और **yarp** ने registry संरचनाओं, transaction-log
   replay और हटाए गए record की recovery को दिशा दी; उनका **dfir_ntfs** INDX records और
   index-slack carving के लिए संदर्भ था।

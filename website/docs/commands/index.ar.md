@@ -112,6 +112,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 وهو يكمّل الجرد الكامل للتكوين الذي يوفره `parse-registry persistence` بما يلي: 131 فحصًا،
 وتصنيف السماح/الحظر، والبيانات الوصفية للحمولة، والتغطية، والربط بين الطوابع الزمنية.
 
+## [فحص YARA](yara-scan.md) { #yara-scan }
+
+يفحص `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` الملفات المجمّعة، بما فيها حمولات الحجر المستعادة والبيانات المقيمة في `$MFT`، بقواعد YARA. ويُنزّل افتراضيًا حزمة YARA Forge Core؛ ويختار `--ruleset extended` أو `--ruleset full` حزمة أوسع، بينما يفحص `--rules <FILE_OR_DIRECTORY>` دون اتصال بقواعد محلية. هذا الفحص اختياري ومنفصل عن `auto-parse`.
+
 ## الاستخدام على المستوى الأعلى { #top-level-usage }
 
 ```text
@@ -127,6 +131,8 @@ Commands:
   parse-registry      Parse registry hives
   parse-sqlite        Parse SQLite databases
   persistence-hunter  Hunt offline Windows persistence
+  super-timeline      Build a forensic timeline (optionally sorted)
+  yara-scan           Scan collected files with local or YARA Forge rules
 
 Options:
   -h, --help     Print help

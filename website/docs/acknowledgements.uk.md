@@ -35,6 +35,9 @@ Juntei існує завдяки тому, що спільноти DFIR та в�
   [PersistenceSniper](https://github.com/last-byte/PersistenceSniper) надихнув цей Python-проєкт;
   повну історію походження див. у [подяках щодо закріплення](persistence-hunter/acknowledgements.md).
 
+- [**Boreal**](https://github.com/vthib/boreal) Вінсента Тібервіля — сумісний із YARA рушій на Rust, вбудований у команду `yara-scan` (MIT або Apache-2.0; повідомлення міститься в `THIRD_PARTY_NOTICES/crates.txt`).
+- [**YARA Forge**](https://github.com/YARAHQ/yara-forge), який Флоріан Рот супроводжує в межах YARAHQ, збирає пакети правил Core, Extended і Full, що їх `yara-scan` завантажує на вимогу. Правила залишаються творами своїх авторів під їхніми ліцензіями; Juntei зберігає завантажене джерело разом із кожним набором результатів.
+
 - **Специфікація regf** та **yarp** Максима Суханова вплинули на структури реєстру, відтворення
   журналів транзакцій і відновлення видалених записів; його **dfir_ntfs** був еталоном для записів INDX
   та вирізання (carving) з index slack.
