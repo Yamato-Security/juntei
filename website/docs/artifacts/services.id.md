@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## Field keluaran { #output-fields }
 
+Dalam CSV, `DependOnService`, `DependOnGroup`, dan `RequiredPrivileges` disimpan sebagai larik JSON sesuai urutan registri. Larik kosong (`[]`) berarti nilainya ada dan daftarnya memang kosong. Sel kosong berarti nilainya tidak ada atau tidak dapat dibaca. Periksa `Problems` untuk kesalahan pembacaan.
+
 | Field | Interpretasi |
 |---|---|
 | `Host`, `SourcePath` | Identitas sistem dan hive masukan. Pertahankan di seluruh koleksi. |
@@ -77,11 +79,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Tingkat penanganan error saat boot/start. Terutama sebagai konteks operasional. |
 | `ObjectName` | Akun layanan yang dikonfigurasi atau nama objek driver. Bukan identitas penginstal. |
 | `Group` | Grup urutan pemuatan, terutama penting untuk driver boot/system. |
+| `DependOnService`, `DependOnGroup` | Dependensi saat layanan dimulai. Layanan yang disebutkan namanya harus dimulai lebih dahulu. Untuk grup urutan pemuatan, Windows mencoba memulai para anggotanya dan mensyaratkan setidaknya satu anggota sedang berjalan. |
+| `RequiredPrivileges` | Hak istimewa yang dikonfigurasi untuk layanan. Jika pengaturan ini tidak ada, Service Control Manager menggunakan hak istimewa bawaan token proses. Proses bersama menggunakan gabungan hak istimewa yang dibutuhkan semua layanannya. Windows mempertahankan `SeChangeNotifyPrivilege` jika sudah ada di token, meskipun tidak tercantum dalam daftar. |
+| `ServiceSidType` | `none`, `unrestricted`, atau `restricted`: apakah token memuat SID milik layanan itu sendiri (`NT SERVICE\<name>`), yang dapat diberi akses oleh ACL. `restricted` juga membuat token dibatasi untuk penulisan. |
+| `UserServiceFlags` | Flag layanan per pengguna sebagaimana tersimpan (angka), pada templat layanan per pengguna dan instansnya. |
 | `FailureResetPeriod` | Detik sebelum hitungan kegagalan direset; `4294967295` berarti tidak pernah. |
 | `FailureCommand` | Perintah yang dikonfigurasi untuk tindakan kegagalan `run_command`. Field persistensi bernilai tinggi. |
-| `FailureActions` | Daftar tindakan lengkap yang telah didekode (`restart`, `reboot`, `run_command`, `none`) beserta jedanya. |
+| `RebootMessage` | Pesan yang disiarkan ke pengguna sebelum tindakan kegagalan `reboot`; teks atau referensi sumber daya. |
+| `FailureActionsOnNonCrashFailures` | `True`: tindakan kegagalan juga dijalankan ketika layanan berhenti dengan kode keluar bukan nol, bukan hanya ketika prosesnya berakhir tanpa melaporkan berhenti. Kosong: tidak tersimpan pada key ini (instans layanan per pengguna dapat memakai pengaturan templatnya). |
+| `FailureActions` | Semua tindakan tersimpan secara berurutan (`restart`, `reboot`, `run_command`, `own_restart`, `none`) beserta jedanya. Tindakan terakhir berlaku untuk setiap kegagalan berikutnya; tab Recovery hanya menampilkan kegagalan pertama, kedua, dan selanjutnya. |
 | `FailureActionType`, `FailureActionDelayMs` | Tindakan pertama yang diratakan untuk pemfilteran; periksa juga daftar lengkapnya. |
-| `FailureActionsRaw` | Byte asli bila dekode tidak lengkap/rusak. |
+| `FailureActionsRaw` | Byte asli bila dekode gagal atau ada byte setelah tindakan yang dideklarasikan. |
 | `KeyLastWrittenUTC` | Perubahan terakhir pada kunci layanan, belum tentu waktu instalasi/start. |
 | `TransactionLogStatus`, `LogsApplied` | Konteks replay registry. |
 | `Problems` | Ketidakcocokan tipe, struktur kegagalan yang cacat, atau field yang hilang/tidak dapat dibaca. |
@@ -99,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: Pohon registry untuk layanan perangkat dan driver](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / tipe dan status layanan](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: Tindakan kegagalan ChangeServiceConfig2](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

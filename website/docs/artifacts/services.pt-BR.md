@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## Campos de saída { #output-fields }
 
+No CSV, `DependOnService`, `DependOnGroup` e `RequiredPrivileges` são arrays JSON na ordem do Registro. Um array vazio (`[]`) indica que o valor existe e contém uma lista vazia. Uma célula em branco indica que o valor está ausente ou não pôde ser lido. Consulte `Problems` para identificar erros de leitura.
+
 | Campo | Interpretação |
 |---|---|
 | `Host`, `SourcePath` | Identidade do sistema e hive de entrada. Preserve entre coletas. |
@@ -77,11 +79,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Nível de tratamento de erros de boot/inicialização. Principalmente contexto operacional. |
 | `ObjectName` | Conta de serviço configurada ou nome do objeto do driver. Não é a identidade de quem instalou. |
 | `Group` | Grupo de ordem de carregamento, especialmente importante para drivers de boot/sistema. |
+| `DependOnService`, `DependOnGroup` | Dependências de inicialização. Um serviço indicado pelo nome precisa iniciar primeiro. Para um grupo de ordem de carregamento, o Windows tenta iniciar seus membros e exige que pelo menos um esteja em execução. |
+| `RequiredPrivileges` | Privilégios configurados para o serviço. Na ausência dessa configuração, o Gerenciador de Controle de Serviços usa os privilégios padrão do token do processo. Um processo compartilhado usa a união dos privilégios exigidos por seus serviços. O Windows mantém `SeChangeNotifyPrivilege` se o token já o tiver, mesmo que a lista o omita. |
+| `ServiceSidType` | `none`, `unrestricted` ou `restricted`: se o token inclui o SID próprio do serviço (`NT SERVICE\<name>`), ao qual ACLs podem conceder acesso. `restricted` também torna o token restrito para gravação. |
+| `UserServiceFlags` | Sinalizadores de serviço por usuário como armazenados (um número), nos modelos de serviços por usuário e em suas instâncias. |
 | `FailureResetPeriod` | Segundos até a contagem de falhas ser zerada; `4294967295` significa nunca. |
 | `FailureCommand` | Comando configurado para uma ação de falha `run_command`. Campo de persistência de alto valor. |
-| `FailureActions` | Lista completa de ações decodificada (`restart`, `reboot`, `run_command`, `none`) e atrasos. |
+| `RebootMessage` | Mensagem transmitida aos usuários antes de uma ação de falha `reboot`; texto ou referência a um recurso. |
+| `FailureActionsOnNonCrashFailures` | `True`: as ações de falha também são executadas quando o serviço para com um código de saída diferente de zero, e não apenas quando seu processo termina sem informar a parada. Vazio: não armazenado nesta chave (uma instância de serviço por usuário pode usar a configuração do seu modelo). |
+| `FailureActions` | Todas as ações armazenadas, em ordem (`restart`, `reboot`, `run_command`, `own_restart`, `none`), com seu atraso. A última se aplica a cada falha seguinte; a guia Recuperação mostra apenas a primeira falha, a segunda e as subsequentes. |
 | `FailureActionType`, `FailureActionDelayMs` | Primeira ação achatada para filtragem; inspecione também a lista completa. |
-| `FailureActionsRaw` | Bytes originais quando a decodificação está incompleta/danificada. |
+| `FailureActionsRaw` | Bytes originais quando a decodificação falha ou há bytes após as ações declaradas. |
 | `KeyLastWrittenUTC` | Última alteração da chave do serviço, não necessariamente o horário de instalação/inicialização. |
 | `TransactionLogStatus`, `LogsApplied` | Contexto da reprodução de logs do Registro. |
 | `Problems` | Incompatibilidade de tipo, estrutura de falha malformada ou campos ausentes/ilegíveis. |
@@ -99,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: árvore do Registro para serviços de dispositivos e drivers](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / tipos e estados de serviços](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ações de falha de ChangeServiceConfig2](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

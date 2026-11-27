@@ -55,6 +55,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## 出力フィールド { #output-fields }
 
+CSV では、`DependOnService`、`DependOnGroup`、`RequiredPrivileges` をレジストリに記録された順序の JSON 配列で出力します。`[]` は値が存在し、リストが明示的に空であることを示します。値が存在しない場合や読み取れない場合は空欄になります。読み取りエラーは `Problems` で確認できます。
+
 | フィールド | 解釈 |
 |---|---|
 | `Host`, `SourcePath` | システム ID と入力ハイブ。コレクション間で保存します。 |
@@ -69,11 +71,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | ブート/スタートのエラー処理レベル。主に運用コンテキスト。 |
 | `ObjectName` | 構成されたサービス アカウントまたはドライバー オブジェクト名。設置者の ID ではありません。 |
 | `Group` | ロード順序グループ。ブート/システム ドライバーにとって特に重要です。 |
+| `DependOnService`, `DependOnGroup` | 起動時に依存するサービスとロード順序グループです。指定されたサービスは先に起動する必要があります。グループの場合、Windows は各メンバーの起動を試み、少なくとも一つが実行中であれば依存条件を満たします。 |
+| `RequiredPrivileges` | サービスに設定された特権です。設定がない場合、サービス コントロール マネージャーはプロセス トークンの既定の特権を使用します。プロセスを共有する場合は、各サービスが要求する特権の和集合を使用します。トークンに `SeChangeNotifyPrivilege` が既にあれば、リストに記載がなくても保持されます。 |
+| `ServiceSidType` | `none`、`unrestricted`、`restricted` のいずれかです。トークンにサービス固有の SID (`NT SERVICE\<name>`) が含まれるかどうかを示し、ACL ではこの SID にアクセスを許可できます。`restricted` ではトークンが書き込み制限付きにもなります。 |
+| `UserServiceFlags` | ユーザーごとのサービスのフラグを、保存されている数値のまま出力します。ユーザーごとのサービスのテンプレートとそのインスタンスにあります。 |
 | `FailureResetPeriod` | 失敗カウントがリセットされるまでの秒数。 `4294967295` は決してしないことを意味します。 |
 | `FailureCommand` | `run_command` 失敗アクション用に設定されたコマンド。高価値の永続フィールド。 |
-| `FailureActions` | 完全にデコードされたアクション リスト (`restart`、`reboot`、`run_command`、`none`) と遅延。 |
+| `RebootMessage` | `reboot` 失敗アクションの前にユーザーへ送信されるメッセージです。テキストまたはリソース参照です。 |
+| `FailureActionsOnNonCrashFailures` | `True` の場合、プロセスが停止を報告せずに終了したときだけでなく、サービスが 0 以外の終了コードで停止したときにも失敗アクションを実行します。空の場合、このキーには保存されていません (ユーザーごとのサービスのインスタンスはテンプレートの設定を使うことがあります)。 |
+| `FailureActions` | 保存されているすべてのアクション (`restart`、`reboot`、`run_command`、`own_restart`、`none`) と遅延を順に出力します。最後のアクションはそれ以降のすべての失敗に適用されます。[回復] タブには 1 回目、2 回目、その後の失敗しか表示されません。 |
 | `FailureActionType`, `FailureActionDelayMs` | 最初のアクションはフィルタリングのために平坦化されています。完全なリストも調べてください。 |
-| `FailureActionsRaw` | デコードが不完全または破損している場合の元のバイト。 |
+| `FailureActionsRaw` | デコードに失敗した場合、または宣言されたアクションの後にバイトがある場合の元のバイトです。 |
 | `KeyLastWrittenUTC` | サービス キーへの最後の変更。必ずしもインストール/開始時刻ではありません。 |
 | `TransactionLogStatus`, `LogsApplied` | レジストリ再生コンテキスト。 |
 | `Problems` | 型の不一致、不正な形式の障害構造、または欠落しているか読み取り不可能なフィールド。 |
@@ -91,4 +99,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: デバイスおよびドライバー サービスのレジストリ ツリー](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / サービスの種類と状態](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2 失敗アクション](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-レジストリ-パーサー](https://github.com/Yamato-Security/ys-registry-parser)

@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## 輸出欄位 { #output-fields }
 
+CSV 中的 `DependOnService`、`DependOnGroup` 和 `RequiredPrivileges` 以 JSON 陣列儲存，順序與登錄中的記錄相同。空陣列（`[]`）表示該值存在且清單為空。若該值不存在或無法讀取，儲存格會留白。讀取錯誤可查看 `Problems`。
+
 | 欄位 | 判讀 |
 |---|---|
 | `Host`、`SourcePath` | 系統識別與輸入的登錄區。跨多次收集時請保留。 |
@@ -77,11 +79,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | 開機／啟動錯誤處理層級。主要屬於運作層面的脈絡。 |
 | `ObjectName` | 所設定的服務帳戶或驅動程式物件名稱。並非安裝者身分。 |
 | `Group` | 載入順序群組，對 boot／system 驅動程式特別重要。 |
+| `DependOnService`、`DependOnGroup` | 服務啟動時所依賴的項目。依名稱指定的服務必須先啟動。若指定載入順序群組，Windows 會嘗試啟動群組成員，其中至少一個必須處於執行中狀態。 |
+| `RequiredPrivileges` | 為服務設定的權限。若沒有這項設定，服務控制管理員會使用處理程序權杖的預設權限。共用處理程序會使用其中各服務所需權限的聯集。若權杖原本就有 `SeChangeNotifyPrivilege`，即使清單中未列出，Windows 仍會保留此權限。 |
+| `ServiceSidType` | `none`、`unrestricted` 或 `restricted`：權杖是否包含服務自己的 SID（`NT SERVICE\<name>`），ACL 可藉此授予存取權。`restricted` 還會讓權杖成為寫入受限權杖。 |
+| `UserServiceFlags` | 依原樣儲存的每位使用者服務旗標（數值），位於每位使用者服務的範本及其執行個體上。 |
 | `FailureResetPeriod` | 失敗次數重設前的秒數；`4294967295` 表示永不重設。 |
 | `FailureCommand` | 為 `run_command` 失敗動作所設定的命令。高價值的持續存取欄位。 |
-| `FailureActions` | 完整解碼後的動作清單（`restart`、`reboot`、`run_command`、`none`）與延遲時間。 |
+| `RebootMessage` | 執行 `reboot` 失敗動作前向使用者廣播的訊息；可能是文字或資源參照。 |
+| `FailureActionsOnNonCrashFailures` | `True`：服務以非零結束代碼停止時也會執行失敗動作，而不只在處理程序未回報停止就結束時執行。空白：此機碼未儲存此值（每位使用者服務的執行個體可能採用範本的設定）。 |
+| `FailureActions` | 依序列出所有已儲存的動作（`restart`、`reboot`、`run_command`、`own_restart`、`none`）與延遲時間。最後一個動作適用於之後的每次失敗；「復原」索引標籤只會顯示第一次、第二次及後續失敗。 |
 | `FailureActionType`、`FailureActionDelayMs` | 為方便篩選而攤平的第一個動作；也請檢視完整清單。 |
-| `FailureActionsRaw` | 解碼不完整／損毀時的原始位元組。 |
+| `FailureActionsRaw` | 解碼失敗，或宣告的動作之後還有位元組時的原始位元組。 |
 | `KeyLastWrittenUTC` | 服務機碼的最後變更時間，不一定是安裝／啟動時間。 |
 | `TransactionLogStatus`、`LogsApplied` | 登錄記錄重播脈絡。 |
 | `Problems` | 類型不符、失敗動作結構格式錯誤，或欄位遺失／無法讀取。 |
@@ -99,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft：裝置與驅動程式服務的登錄樹狀結構](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft：SERVICE_STATUS／服務類型與狀態](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft：ChangeServiceConfig2 失敗動作](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

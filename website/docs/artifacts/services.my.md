@@ -68,6 +68,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## ထုတ်ယူမှု field များ { #output-fields }
 
+CSV တွင် `DependOnService`၊ `DependOnGroup` နှင့် `RequiredPrivileges` တို့ကို registry ထဲရှိ အစဉ်အတိုင်း JSON array များဖြင့် သိမ်းသည်။ `[]` ဆိုသည်မှာ value ရှိပြီး စာရင်းအလွတ်ဖြစ်သည်။ Cell အလွတ်ဖြစ်နေလျှင် value မရှိခြင်း သို့မဟုတ် ဖတ်၍ မရခြင်းဖြစ်သည်။ ဖတ်ရာတွင် ဖြစ်သော အမှားများကို `Problems` တွင် ကြည့်ပါ။
+
 | Field | အဓိပ္ပာယ်ဖော်ပုံ |
 |---|---|
 | `Host`, `SourcePath` | စနစ်၏ ကိုယ်ပိုင်အမှတ်အသားနှင့် input hive။ စုဆောင်းမှုများတစ်လျှောက် ထိန်းသိမ်းထားပါ။ |
@@ -82,11 +84,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Boot/start error ကိုင်တွယ်မှု အဆင့်။ အဓိကအားဖြင့် လုပ်ငန်းဆောင်ရွက်မှုဆိုင်ရာ အခြေအနေ။ |
 | `ObjectName` | ပြင်ဆင်ထားသော ဝန်ဆောင်မှုအကောင့် သို့မဟုတ် driver object အမည်။ ထည့်သွင်းသူ၏ ကိုယ်ပိုင်အမှတ်အသား မဟုတ်ပါ။ |
 | `Group` | Load-order group၊ boot/system driver များအတွက် အထူးအရေးကြီးသည်။ |
+| `DependOnService`, `DependOnGroup` | Service စတင်ရန် လိုအပ်သော dependency များ။ အမည်ဖြင့် သတ်မှတ်ထားသော service ကို အရင် စတင်ရသည်။ Load-order group အတွက် Windows သည် အဖွဲ့ဝင်များကို စတင်ရန် ကြိုးစားပြီး အနည်းဆုံး တစ်ခု လည်ပတ်နေရမည်။ |
+| `RequiredPrivileges` | Service အတွက် သတ်မှတ်ထားသော privilege များဖြစ်သည်။ ဤ setting မရှိလျှင် Service Control Manager သည် process token ၏ မူလ privilege များကို သုံးသည်။ Process ကို မျှဝေသုံးသော service များအတွက် ၎င်းတို့လိုအပ်သော privilege များအားလုံးကို ပေါင်းသုံးသည်။ Token တွင် `SeChangeNotifyPrivilege` ရှိပြီးသားဖြစ်လျှင် စာရင်းထဲတွင် မပါသော်လည်း Windows က ဆက်လက် ထိန်းသိမ်းထားသည်။ |
+| `ServiceSidType` | `none`၊ `unrestricted` သို့မဟုတ် `restricted`: token တွင် service ၏ ကိုယ်ပိုင် SID (`NT SERVICE\<name>`) ပါမပါ၊ ACL များက ၎င်းကို access ပေးနိုင်သည်။ `restricted` သည် token ကို write-restricted လည်း ဖြစ်စေသည်။ |
+| `UserServiceFlags` | သိမ်းဆည်းထားသည့်အတိုင်း per-user service flag များ (ကိန်းဂဏန်း)၊ per-user service template များနှင့် ၎င်းတို့၏ instance များပေါ်တွင်။ |
 | `FailureResetPeriod` | Failure count ပြန်လည်သတ်မှတ်မီ စက္ကန့်များ။ `4294967295` သည် ဘယ်တော့မှ မပြန်လည်သတ်မှတ်ဟု ဆိုလိုသည်။ |
 | `FailureCommand` | `run_command` failure action အတွက် ပြင်ဆင်ထားသော ညွှန်ကြားချက်။ တန်ဖိုးမြင့်သော persistence field။ |
-| `FailureActions` | Decode လုပ်ထားသော action စာရင်း အပြည့်အစုံ (`restart`, `reboot`, `run_command`, `none`) နှင့် delay များ။ |
+| `RebootMessage` | `reboot` failure action မတိုင်မီ user များထံ broadcast လုပ်သော message၊ text သို့မဟုတ် resource reference။ |
+| `FailureActionsOnNonCrashFailures` | `True`: process က stop ကို report မလုပ်ဘဲ ပြီးဆုံးသည့်အခါသာမက service က သုညမဟုတ်သော exit code ဖြင့် ရပ်သည့်အခါတွင်လည်း failure action များ လုပ်ဆောင်သည်။ အလွတ်: ဤ key တွင် မသိမ်းထားပါ (per-user service instance သည် ၎င်း၏ template ၏ setting ကို ယူနိုင်သည်)။ |
+| `FailureActions` | သိမ်းထားသော action အားလုံး အစီအစဉ်အတိုင်း (`restart`, `reboot`, `run_command`, `own_restart`, `none`) ၎င်းတို့၏ delay နှင့်အတူ။ နောက်ဆုံး action သည် နောက်ထပ် failure တိုင်းအတွက် သက်ရောက်သည်။ Recovery tab သည် ပထမ၊ ဒုတိယနှင့် နောက်ဆက်တွဲ failure များကိုသာ ပြသည်။ |
 | `FailureActionType`, `FailureActionDelayMs` | စစ်ထုတ်ရန်အတွက် ပြားချပ်ထားသော ပထမ action။ စာရင်းအပြည့်အစုံကိုလည်း စစ်ဆေးပါ။ |
-| `FailureActionsRaw` | Decode မပြည့်စုံ/ပျက်စီးနေသည့်အခါ မူရင်း byte များ။ |
+| `FailureActionsRaw` | Decode မအောင်မြင်သည့်အခါ သို့မဟုတ် ကြေညာထားသော action များနောက်တွင် byte များရှိသည့်အခါ မူရင်း byte များ။ |
 | `KeyLastWrittenUTC` | ဝန်ဆောင်မှု key ၏ နောက်ဆုံးပြောင်းလဲမှု၊ ထည့်သွင်းချိန်/စတင်ချိန်ဟု မဆိုလိုပါ။ |
 | `TransactionLogStatus`, `LogsApplied` | Registry-replay အခြေအနေ။ |
 | `Problems` | Type မကိုက်ညီမှု၊ ပုံစံမမှန်သော failure ဖွဲ့စည်းပုံ သို့မဟုတ် ပျောက်နေသော/ဖတ်မရသော field များ။ |
@@ -104,4 +112,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: Device နှင့် driver ဝန်ဆောင်မှုများအတွက် Registry tree](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / ဝန်ဆောင်မှု type များနှင့် အခြေအနေများ](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2 failure action များ](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## ฟิลด์เอาต์พุต { #output-fields }
 
+ใน CSV ฟิลด์ `DependOnService`, `DependOnGroup` และ `RequiredPrivileges` เป็นอาร์เรย์ JSON ตามลำดับในรีจิสทรี อาร์เรย์ว่าง (`[]`) หมายถึงมีค่านี้อยู่และรายการว่าง ส่วนเซลล์ว่างหมายถึงไม่มีค่านี้หรืออ่านค่าไม่ได้ ตรวจสอบข้อผิดพลาดในการอ่านได้ที่ `Problems`
+
 | ฟิลด์ | การตีความ |
 |---|---|
 | `Host`, `SourcePath` | ตัวตนของระบบและไฮฟ์อินพุต ให้คงไว้เหมือนกันในทุกการเก็บรวบรวม |
@@ -77,11 +79,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | ระดับการจัดการข้อผิดพลาดขณะบูต/เริ่มทำงาน ส่วนใหญ่เป็นบริบทเชิงปฏิบัติการ |
 | `ObjectName` | บัญชีบริการหรือชื่อออบเจกต์ไดรเวอร์ที่กำหนดค่าไว้ ไม่ใช่ตัวตนของผู้ติดตั้ง |
 | `Group` | กลุ่มลำดับการโหลด มีความสำคัญเป็นพิเศษสำหรับไดรเวอร์ boot/system |
+| `DependOnService`, `DependOnGroup` | บริการหรือกลุ่มที่จำเป็นต่อการเริ่มบริการนี้ บริการที่ระบุชื่อจะต้องเริ่มก่อน สำหรับกลุ่มลำดับการโหลด Windows จะพยายามเริ่มสมาชิกของกลุ่มและต้องมีสมาชิกที่กำลังทำงานอย่างน้อยหนึ่งราย |
+| `RequiredPrivileges` | สิทธิ์ที่กำหนดไว้สำหรับบริการ หากไม่มีการตั้งค่านี้ Service Control Manager จะใช้สิทธิ์เริ่มต้นของโทเค็นกระบวนการ หากหลายบริการใช้กระบวนการร่วมกัน จะใช้สิทธิ์ที่ทุกบริการต้องการรวมกัน หากโทเค็นมี `SeChangeNotifyPrivilege` อยู่แล้ว Windows จะคงสิทธิ์นั้นไว้แม้ไม่ได้ระบุในรายการ |
+| `ServiceSidType` | `none`, `unrestricted` หรือ `restricted`: token มี SID ของบริการเอง (`NT SERVICE\<name>`) หรือไม่ ซึ่ง ACL สามารถให้สิทธิ์เข้าถึงได้ `restricted` ยังทำให้ token ถูกจำกัดการเขียนด้วย |
+| `UserServiceFlags` | แฟล็กของบริการต่อผู้ใช้ตามที่จัดเก็บไว้ (ตัวเลข) อยู่บนเทมเพลตบริการต่อผู้ใช้และอินสแตนซ์ของเทมเพลตนั้น |
 | `FailureResetPeriod` | จำนวนวินาทีก่อนรีเซ็ตตัวนับความล้มเหลว `4294967295` หมายถึงไม่รีเซ็ตเลย |
 | `FailureCommand` | คำสั่งที่กำหนดค่าไว้สำหรับ failure action แบบ `run_command` เป็นฟิลด์ที่มีคุณค่าสูงสำหรับการคงอยู่ |
-| `FailureActions` | รายการการดำเนินการที่ถอดรหัสแล้วทั้งหมด (`restart`, `reboot`, `run_command`, `none`) พร้อมระยะหน่วงเวลา |
+| `RebootMessage` | ข้อความที่ส่งถึงผู้ใช้ก่อน failure action แบบ `reboot` เป็นข้อความหรือการอ้างอิงทรัพยากร |
+| `FailureActionsOnNonCrashFailures` | `True`: failure action จะทำงานเมื่อบริการหยุดด้วยรหัสออกที่ไม่ใช่ศูนย์ด้วย ไม่ใช่เฉพาะเมื่อโปรเซสจบโดยไม่รายงานการหยุด ว่าง: ไม่ได้จัดเก็บไว้ในคีย์นี้ (อินสแตนซ์ของบริการต่อผู้ใช้อาจใช้การตั้งค่าของเทมเพลต) |
+| `FailureActions` | การดำเนินการทั้งหมดที่จัดเก็บไว้ตามลำดับ (`restart`, `reboot`, `run_command`, `own_restart`, `none`) พร้อมระยะหน่วงเวลา การดำเนินการสุดท้ายใช้กับทุกความล้มเหลวหลังจากนั้น แท็บ Recovery แสดงเฉพาะความล้มเหลวครั้งแรก ครั้งที่สอง และครั้งถัดไป |
 | `FailureActionType`, `FailureActionDelayMs` | การดำเนินการแรกที่แปลงเป็นค่าแบนเพื่อใช้กรอง ให้ตรวจสอบรายการทั้งหมดด้วย |
-| `FailureActionsRaw` | ไบต์ต้นฉบับเมื่อการถอดรหัสไม่สมบูรณ์/เสียหาย |
+| `FailureActionsRaw` | ไบต์ต้นฉบับเมื่อการถอดรหัสล้มเหลวหรือมีไบต์ต่อท้ายการดำเนินการที่ประกาศไว้ |
 | `KeyLastWrittenUTC` | การเปลี่ยนแปลงล่าสุดของคีย์บริการ ไม่จำเป็นต้องเป็นเวลาติดตั้ง/เริ่มทำงาน |
 | `TransactionLogStatus`, `LogsApplied` | บริบทการ replay รีจิสทรี |
 | `Problems` | ชนิดข้อมูลไม่ตรงกัน โครงสร้าง failure ผิดรูปแบบ หรือฟิลด์ที่ขาดหาย/อ่านไม่ได้ |
@@ -99,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: โครงสร้างรีจิสทรีสำหรับบริการอุปกรณ์และไดรเวอร์](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / ชนิดและสถานะของบริการ](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: failure action ของ ChangeServiceConfig2](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

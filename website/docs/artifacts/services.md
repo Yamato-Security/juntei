@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## Output fields
 
+CSV stores `DependOnService`, `DependOnGroup` and `RequiredPrivileges` as JSON arrays in registry order. An empty array (`[]`) means the value is present and explicitly empty. A blank cell means the value was absent or could not be read. Check `Problems` for unreadable values.
+
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath` | System identity and input hive. Preserve across collections. |
@@ -77,11 +79,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Boot/start error handling level. Primarily operational context. |
 | `ObjectName` | Configured service account or driver object name. Not installer identity. |
 | `Group` | Load-order group, especially important for boot/system drivers. |
+| `DependOnService`, `DependOnGroup` | Service startup dependencies. A named service must start first. For a load-order group, Windows attempts to start its members and requires at least one to be running. |
+| `RequiredPrivileges` | Privileges configured for the service. Without this setting, the Service Control Manager uses the default privileges of the process token. A shared process uses the union of its services' requirements. Windows retains `SeChangeNotifyPrivilege` if the token already has it, even when the list omits it. |
+| `ServiceSidType` | `none`, `unrestricted` or `restricted`: whether the token carries the service's own SID (`NT SERVICE\<name>`), which ACLs can grant access to. `restricted` also makes the token write-restricted. |
+| `UserServiceFlags` | Per-user service flags as stored (a number), on per-user service templates and their instances. |
 | `FailureResetPeriod` | Seconds before failure count resets; `4294967295` means never. |
 | `FailureCommand` | Command configured for a `run_command` failure action. High-value persistence field. |
-| `FailureActions` | Full decoded action list (`restart`, `reboot`, `run_command`, `none`) and delays. |
+| `RebootMessage` | Message broadcast to users before a `reboot` failure action; text or a resource reference. |
+| `FailureActionsOnNonCrashFailures` | `True`: failure actions also run when the service stops with a nonzero exit code, not only when its process ends without reporting a stop. Empty: not stored on this key (a per-user service instance can take its template's setting). |
+| `FailureActions` | Every stored action in order (`restart`, `reboot`, `run_command`, `own_restart`, `none`) with its delay. The last one applies to every later failure; the Recovery tab shows only the first, second and subsequent failures. |
 | `FailureActionType`, `FailureActionDelayMs` | First action flattened for filtering; inspect full list too. |
-| `FailureActionsRaw` | Original bytes when decoding is incomplete/damaged. |
+| `FailureActionsRaw` | Original bytes when decoding fails or bytes follow the declared actions. |
 | `KeyLastWrittenUTC` | Last change to the service key, not necessarily installation/start time. |
 | `TransactionLogStatus`, `LogsApplied` | Registry-replay context. |
 | `Problems` | Type mismatch, malformed failure structure, or missing/unreadable fields. |
@@ -99,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: Registry tree for device and driver services](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / service types and states](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2 failure actions](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)
