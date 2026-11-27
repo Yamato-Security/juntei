@@ -39,7 +39,7 @@ juntei carve-evtx -f memory.raw -o carved-memory/ -t jsonl
 
 ## 結果 { #results }
 
-- `Carved/<CHANNEL>.evtx`: 每個通道一份記錄檔，命名方式與 Windows 相同（`Microsoft-Windows-Sysmon%4Operational.evtx`）。區塊標頭中的記錄編號會重新編號，總和檢查碼也會重新計算。損壞的記錄及其後的所有內容都會成為 slack。除此之外，每個區塊都會完整保留（包括其 slack），因此仍可對其進行記錄還原，例如 Hayabusa 的 `-x`。 Hayabusa 的 `-x` 會搜尋標記為空的區塊。若要查看部分使用中的區塊在殘餘空間內留下的記錄，請查閱 Juntei 的 `records.csv`。
+- `Carved/<CHANNEL>.evtx`: 每個通道一份記錄檔，命名方式與 Windows 相同（`Microsoft-Windows-Sysmon%4Operational.evtx`）。區塊標頭中的記錄編號會重新編號，總和檢查碼也會重新計算。損壞的記錄及其後的所有內容都會成為 slack。除此之外，每個區塊都會完整保留（包括其 slack）。 Hayabusa 的 `-x` 會搜尋標記為空的區塊。若要查看部分使用中的區塊在殘餘空間內留下的記錄，請查閱 Juntei 的 `records.csv`。
 - `Recovered/Volume<N>/...`: 根據 `$MFT` 記錄重建的已刪除記錄檔。
 - `chunks.csv` / `chunks.jsonl`: 找到的每個區塊，包括所在位置、處理結果（`Status`）、通道、記錄 ID、時間與總和檢查碼狀態。
 - `records.csv` / `records.jsonl`: 已寫入區塊中的每筆記錄。`OnlyInCarvedData` 會標示使用中的記錄檔所沒有的記錄。

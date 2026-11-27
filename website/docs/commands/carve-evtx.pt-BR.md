@@ -39,7 +39,7 @@ Cada chunk é gravado uma única vez. Um chunk é omitido quando pertence a um l
 
 ## Resultados { #results }
 
-- `Carved/<CHANNEL>.evtx`: Um log por canal, com o nome que o Windows dá aos arquivos de log (`Microsoft-Windows-Sysmon%4Operational.evtx`). Os números de registro nos cabeçalhos dos chunks são renumerados e as somas de verificação, recalculadas. Um registro danificado e tudo o que vem depois dele viram slack. Fora isso, cada chunk é mantido inteiro, inclusive o slack, para que a recuperação de registros, como o `-x` do Hayabusa, continue funcionando nele. A opção `-x` do Hayabusa pesquisa os blocos marcados como vazios. Consulte o `records.csv` do Juntei para localizar registros no espaço residual de blocos parcialmente ocupados.
+- `Carved/<CHANNEL>.evtx`: Um log por canal, com o nome que o Windows dá aos arquivos de log (`Microsoft-Windows-Sysmon%4Operational.evtx`). Os números de registro nos cabeçalhos dos chunks são renumerados e as somas de verificação, recalculadas. Um registro danificado e tudo o que vem depois dele viram slack. Fora isso, cada chunk é mantido inteiro, inclusive o slack. A opção `-x` do Hayabusa pesquisa os blocos marcados como vazios. Consulte o `records.csv` do Juntei para localizar registros no espaço residual de blocos parcialmente ocupados.
 - `Recovered/Volume<N>/...`: Logs excluídos reconstruídos a partir de seus registros do `$MFT`.
 - `chunks.csv` / `chunks.jsonl`: Todos os chunks encontrados: onde estavam, o que foi feito deles (`Status`), seu canal, IDs de registro, carimbos de data/hora e estado da soma de verificação.
 - `records.csv` / `records.jsonl`: Todos os registros dos chunks gravados. `OnlyInCarvedData` marca os registros que os logs ativos não contêm.

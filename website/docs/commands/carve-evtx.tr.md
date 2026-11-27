@@ -39,7 +39,7 @@ Her chunk yalnızca bir kez yazılır. Bir chunk canlı bir günlüğe aitse, ba
 
 ## Sonuçlar { #results }
 
-- `Carved/<CHANNEL>.evtx`: Kanal başına bir günlük; Windows'un günlükleri adlandırdığı biçimde adlandırılır (`Microsoft-Windows-Sysmon%4Operational.evtx`). Chunk başlıklarındaki kayıt numaraları yeniden numaralandırılır ve sağlama toplamları yeniden hesaplanır. Hasarlı bir kayıt ve ondan sonraki her şey slack olur. Bunun dışında her chunk, slack alanı dahil bütün olarak korunur; böylece Hayabusa'nın `-x` seçeneği gibi kayıt kurtarma yöntemleri bu dosyalarda da çalışır. Hayabusa’nın `-x` seçeneği boş olarak işaretlenen blokları tarar. Kısmen dolu blokların atıl alanındaki kayıtları Juntei’nin `records.csv` dosyasında bulabilirsiniz.
+- `Carved/<CHANNEL>.evtx`: Kanal başına bir günlük; Windows'un günlükleri adlandırdığı biçimde adlandırılır (`Microsoft-Windows-Sysmon%4Operational.evtx`). Chunk başlıklarındaki kayıt numaraları yeniden numaralandırılır ve sağlama toplamları yeniden hesaplanır. Hasarlı bir kayıt ve ondan sonraki her şey slack olur. Bunun dışında her chunk, slack alanı dahil bütün olarak korunur. Hayabusa’nın `-x` seçeneği boş olarak işaretlenen blokları tarar. Kısmen dolu blokların atıl alanındaki kayıtları Juntei’nin `records.csv` dosyasında bulabilirsiniz.
 - `Recovered/Volume<N>/...`: `$MFT` kayıtlarından yeniden oluşturulan silinmiş günlükler.
 - `chunks.csv` / `chunks.jsonl`: Bulunan her chunk: nerede olduğu, nasıl işlendiği (`Status`), kanalı, kayıt kimlikleri, zamanları ve sağlama toplamı durumu.
 - `records.csv` / `records.jsonl`: Yazılan chunk'ların tüm kayıtları. `OnlyInCarvedData`, canlı günlüklerde bulunmayan kayıtları işaretler.
