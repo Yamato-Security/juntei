@@ -68,6 +68,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## ထုတ်ယူမှု field များ { #output-fields }
 
+CSV တွင် `DependOnService`၊ `DependOnGroup` နှင့် `RequiredPrivileges` တို့ကို registry ထဲရှိ အစဉ်အတိုင်း JSON array များဖြင့် သိမ်းသည်။ `[]` ဆိုသည်မှာ value ရှိပြီး စာရင်းအလွတ်ဖြစ်သည်။ Cell အလွတ်ဖြစ်နေလျှင် value မရှိခြင်း သို့မဟုတ် ဖတ်၍ မရခြင်းဖြစ်သည်။ ဖတ်ရာတွင် ဖြစ်သော အမှားများကို `Problems` တွင် ကြည့်ပါ။
+
 | Field | အဓိပ္ပာယ်ဖော်ပုံ |
 |---|---|
 | `Host`, `SourcePath` | စနစ်၏ ကိုယ်ပိုင်အမှတ်အသားနှင့် input hive။ စုဆောင်းမှုများတစ်လျှောက် ထိန်းသိမ်းထားပါ။ |
@@ -82,8 +84,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Boot/start error ကိုင်တွယ်မှု အဆင့်။ အဓိကအားဖြင့် လုပ်ငန်းဆောင်ရွက်မှုဆိုင်ရာ အခြေအနေ။ |
 | `ObjectName` | ပြင်ဆင်ထားသော ဝန်ဆောင်မှုအကောင့် သို့မဟုတ် driver object အမည်။ ထည့်သွင်းသူ၏ ကိုယ်ပိုင်အမှတ်အသား မဟုတ်ပါ။ |
 | `Group` | Load-order group၊ boot/system driver များအတွက် အထူးအရေးကြီးသည်။ |
-| `DependOnService`, `DependOnGroup` | အရင်စတင်ရမည့် service များနှင့် load-order group များ၊ registry အစီအစဉ်အတိုင်း (CSV တွင် vertical bar ဖြင့် ခွဲထားသည်)။ |
-| `RequiredPrivileges` | Service က ၎င်း၏ process token တွင် ထိန်းထားသော privilege များ။ ကျန်ရှိသည်တို့ကို Windows က ဖယ်ရှားသည် (shared process သည် ၎င်း၏ service အားလုံး၏ privilege များကို ထိန်းထားသည်)။ Value မရှိလျှင် account ၏ privilege အားလုံး။ |
+| `DependOnService`, `DependOnGroup` | Service စတင်ရန် လိုအပ်သော dependency များ။ အမည်ဖြင့် သတ်မှတ်ထားသော service ကို အရင် စတင်ရသည်။ Load-order group အတွက် Windows သည် အဖွဲ့ဝင်များကို စတင်ရန် ကြိုးစားပြီး အနည်းဆုံး တစ်ခု လည်ပတ်နေရမည်။ |
+| `RequiredPrivileges` | Service အတွက် သတ်မှတ်ထားသော privilege များဖြစ်သည်။ ဤ setting မရှိလျှင် Service Control Manager သည် process token ၏ မူလ privilege များကို သုံးသည်။ Process ကို မျှဝေသုံးသော service များအတွက် ၎င်းတို့လိုအပ်သော privilege များအားလုံးကို ပေါင်းသုံးသည်။ Token တွင် `SeChangeNotifyPrivilege` ရှိပြီးသားဖြစ်လျှင် စာရင်းထဲတွင် မပါသော်လည်း Windows က ဆက်လက် ထိန်းသိမ်းထားသည်။ |
 | `ServiceSidType` | `none`၊ `unrestricted` သို့မဟုတ် `restricted`: token တွင် service ၏ ကိုယ်ပိုင် SID (`NT SERVICE\<name>`) ပါမပါ၊ ACL များက ၎င်းကို access ပေးနိုင်သည်။ `restricted` သည် token ကို write-restricted လည်း ဖြစ်စေသည်။ |
 | `UserServiceFlags` | သိမ်းဆည်းထားသည့်အတိုင်း per-user service flag များ (ကိန်းဂဏန်း)၊ per-user service template များနှင့် ၎င်းတို့၏ instance များပေါ်တွင်။ |
 | `FailureResetPeriod` | Failure count ပြန်လည်သတ်မှတ်မီ စက္ကန့်များ။ `4294967295` သည် ဘယ်တော့မှ မပြန်လည်သတ်မှတ်ဟု ဆိုလိုသည်။ |
@@ -110,4 +112,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: Device နှင့် driver ဝန်ဆောင်မှုများအတွက် Registry tree](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / ဝန်ဆောင်မှု type များနှင့် အခြေအနေများ](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2 failure action များ](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

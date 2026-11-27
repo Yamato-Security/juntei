@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## ฟิลด์เอาต์พุต { #output-fields }
 
+ใน CSV ฟิลด์ `DependOnService`, `DependOnGroup` และ `RequiredPrivileges` เป็นอาร์เรย์ JSON ตามลำดับในรีจิสทรี อาร์เรย์ว่าง (`[]`) หมายถึงมีค่านี้อยู่และรายการว่าง ส่วนเซลล์ว่างหมายถึงไม่มีค่านี้หรืออ่านค่าไม่ได้ ตรวจสอบข้อผิดพลาดในการอ่านได้ที่ `Problems`
+
 | ฟิลด์ | การตีความ |
 |---|---|
 | `Host`, `SourcePath` | ตัวตนของระบบและไฮฟ์อินพุต ให้คงไว้เหมือนกันในทุกการเก็บรวบรวม |
@@ -77,8 +79,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | ระดับการจัดการข้อผิดพลาดขณะบูต/เริ่มทำงาน ส่วนใหญ่เป็นบริบทเชิงปฏิบัติการ |
 | `ObjectName` | บัญชีบริการหรือชื่อออบเจกต์ไดรเวอร์ที่กำหนดค่าไว้ ไม่ใช่ตัวตนของผู้ติดตั้ง |
 | `Group` | กลุ่มลำดับการโหลด มีความสำคัญเป็นพิเศษสำหรับไดรเวอร์ boot/system |
-| `DependOnService`, `DependOnGroup` | บริการและกลุ่มลำดับการโหลดที่ต้องเริ่มก่อน ตามลำดับในรีจิสทรี (คั่นด้วยเส้นตั้งใน CSV) |
-| `RequiredPrivileges` | สิทธิ์ที่บริการคงไว้ใน process token ส่วนที่เหลือ Windows จะลบออก (shared process คงสิทธิ์ของทุกบริการในโปรเซสนั้น) ถ้าไม่มีค่านี้ บริการจะมีสิทธิ์ทั้งหมดของบัญชี |
+| `DependOnService`, `DependOnGroup` | บริการหรือกลุ่มที่จำเป็นต่อการเริ่มบริการนี้ บริการที่ระบุชื่อจะต้องเริ่มก่อน สำหรับกลุ่มลำดับการโหลด Windows จะพยายามเริ่มสมาชิกของกลุ่มและต้องมีสมาชิกที่กำลังทำงานอย่างน้อยหนึ่งราย |
+| `RequiredPrivileges` | สิทธิ์ที่กำหนดไว้สำหรับบริการ หากไม่มีการตั้งค่านี้ Service Control Manager จะใช้สิทธิ์เริ่มต้นของโทเค็นกระบวนการ หากหลายบริการใช้กระบวนการร่วมกัน จะใช้สิทธิ์ที่ทุกบริการต้องการรวมกัน หากโทเค็นมี `SeChangeNotifyPrivilege` อยู่แล้ว Windows จะคงสิทธิ์นั้นไว้แม้ไม่ได้ระบุในรายการ |
 | `ServiceSidType` | `none`, `unrestricted` หรือ `restricted`: token มี SID ของบริการเอง (`NT SERVICE\<name>`) หรือไม่ ซึ่ง ACL สามารถให้สิทธิ์เข้าถึงได้ `restricted` ยังทำให้ token ถูกจำกัดการเขียนด้วย |
 | `UserServiceFlags` | แฟล็กของบริการต่อผู้ใช้ตามที่จัดเก็บไว้ (ตัวเลข) อยู่บนเทมเพลตบริการต่อผู้ใช้และอินสแตนซ์ของเทมเพลตนั้น |
 | `FailureResetPeriod` | จำนวนวินาทีก่อนรีเซ็ตตัวนับความล้มเหลว `4294967295` หมายถึงไม่รีเซ็ตเลย |
@@ -105,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: โครงสร้างรีจิสทรีสำหรับบริการอุปกรณ์และไดรเวอร์](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / ชนิดและสถานะของบริการ](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: failure action ของ ChangeServiceConfig2](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

@@ -371,7 +371,10 @@ impl<'a> Record<'a> {
         let text = |v: Option<&str>| v.unwrap_or_default().to_string();
         let num = |v: Option<u32>| v.map(|n| n.to_string()).unwrap_or_default();
         let flag = |b: bool| if b { "True" } else { "False" }.to_string();
-        let list = |v: Option<&[String]>| v.map(|items| items.join("|")).unwrap_or_default();
+        let list = |v: Option<&[String]>| {
+            v.map(|items| serde_json::to_string(items).expect("string arrays serialize to JSON"))
+                .unwrap_or_default()
+        };
         vec![
             text(self.host),
             self.source_path.to_string(),

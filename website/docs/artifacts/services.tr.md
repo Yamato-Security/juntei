@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## Çıktı alanları { #output-fields }
 
+CSV çıktısında `DependOnService`, `DependOnGroup` ve `RequiredPrivileges` kayıt defterindeki sırayı koruyan JSON dizileridir. Boş dizi (`[]`), değerin mevcut ve listenin boş olduğunu gösterir. Boş hücre, değerin bulunmadığını veya okunamadığını gösterir. Okuma hataları için `Problems` alanına bakın.
+
 | Alan | Yorumlama |
 |---|---|
 | `Host`, `SourcePath` | Sistem kimliği ve girdi kovanı. Toplamalar arasında koruyun. |
@@ -77,8 +79,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Önyükleme/başlatma hatası işleme düzeyi. Öncelikle operasyonel bağlam sağlar. |
 | `ObjectName` | Yapılandırılmış hizmet hesabı veya sürücü nesnesi adı. Yükleyicinin kimliği değildir. |
 | `Group` | Yükleme sırası grubu; özellikle boot/system sürücüleri için önemlidir. |
-| `DependOnService`, `DependOnGroup` | Önce başlaması gereken hizmetler ve yükleme sırası grupları, kayıt defterindeki sırayla (CSV'de dikey çizgiyle ayrılır). |
-| `RequiredPrivileges` | Hizmetin işlem belirtecinde tuttuğu ayrıcalıklar; Windows diğerlerini kaldırır (paylaşılan bir işlem tüm hizmetlerinin ayrıcalıklarını tutar). Değer yoksa: hesabın tüm ayrıcalıkları. |
+| `DependOnService`, `DependOnGroup` | Hizmetin başlatma bağımlılıkları. Adı belirtilen hizmetin önce başlatılması gerekir. Bir yükleme sırası grubu için Windows, grup üyelerini başlatmayı dener ve en az bir üyenin çalışıyor olmasını gerektirir. |
+| `RequiredPrivileges` | Hizmet için yapılandırılmış ayrıcalıklar. Bu ayar yoksa Hizmet Denetim Yöneticisi işlem belirtecinin varsayılan ayrıcalıklarını kullanır. Paylaşılan işlem, hizmetlerinin gerektirdiği ayrıcalıkların birleşimini kullanır. Belirteçte `SeChangeNotifyPrivilege` zaten varsa listede yer almasa bile Windows bu ayrıcalığı korur. |
 | `ServiceSidType` | `none`, `unrestricted` veya `restricted`: belirtecin hizmetin kendi SID'sini (`NT SERVICE\<name>`) içerip içermediği; ACL'ler bu SID'ye erişim verebilir. `restricted` ayrıca belirteci yazma kısıtlamalı yapar. |
 | `UserServiceFlags` | Kullanıcı başına hizmet bayrakları, saklandığı gibi (sayı); kullanıcı başına hizmet şablonlarında ve örneklerinde bulunur. |
 | `FailureResetPeriod` | Hata sayacının sıfırlanmasından önceki saniye; `4294967295` hiçbir zaman anlamına gelir. |
@@ -105,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: Registry tree for device and driver services](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / service types and states](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2 failure actions](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

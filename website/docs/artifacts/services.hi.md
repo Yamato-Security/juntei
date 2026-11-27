@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## आउटपुट fields { #output-fields }
 
+CSV में `DependOnService`, `DependOnGroup` और `RequiredPrivileges` को रजिस्ट्री के क्रम में JSON सरणियों के रूप में लिखा जाता है। खाली सरणी (`[]`) का अर्थ है कि मान मौजूद है और उसकी सूची खाली है। खाली सेल का अर्थ है कि मान मौजूद नहीं है या उसे पढ़ा नहीं जा सका। पढ़ने में आई त्रुटियों के लिए `Problems` देखें।
+
 | फ़ील्ड | व्याख्या |
 |---|---|
 | `Host`, `SourcePath` | सिस्टम की पहचान और input hive। सभी collections में सुरक्षित रखें। |
@@ -77,8 +79,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Boot/start error handling स्तर। मुख्यतः operational context। |
 | `ObjectName` | Configure किया गया service account या driver object नाम। Installer की पहचान नहीं। |
 | `Group` | Load-order group, विशेष रूप से boot/system drivers के लिए महत्वपूर्ण। |
-| `DependOnService`, `DependOnGroup` | वे services और load-order groups जिन्हें पहले शुरू होना चाहिए, registry के क्रम में (CSV में vertical bar से अलग)। |
-| `RequiredPrivileges` | वे privileges जिन्हें service अपने process token में रखती है; बाकी Windows हटा देता है (shared process अपनी सभी services के privileges रखता है)। कोई value नहीं: account के सभी privileges। |
+| `DependOnService`, `DependOnGroup` | सेवा शुरू करने की निर्भरताएँ। नाम से दी गई सेवा पहले शुरू होनी चाहिए। लोड-ऑर्डर समूह के लिए Windows उसके सदस्यों को शुरू करने की कोशिश करता है और कम से कम एक सदस्य का चलना ज़रूरी है। |
+| `RequiredPrivileges` | सेवा के लिए कॉन्फ़िगर किए गए विशेषाधिकार। सेटिंग न होने पर Service Control Manager प्रक्रिया के टोकन के डिफ़ॉल्ट विशेषाधिकार इस्तेमाल करता है। साझा प्रक्रिया अपनी सभी सेवाओं के लिए ज़रूरी विशेषाधिकारों का सम्मिलित सेट इस्तेमाल करती है। यदि टोकन में `SeChangeNotifyPrivilege` पहले से है, तो सूची में न होने पर भी Windows उसे बनाए रखता है। |
 | `ServiceSidType` | `none`, `unrestricted` या `restricted`: क्या token में service का अपना SID (`NT SERVICE\<name>`) है, जिसे ACLs access दे सकती हैं। `restricted` token को write-restricted भी बनाता है। |
 | `UserServiceFlags` | Per-user service flags जैसे stored हैं (एक संख्या), per-user service templates और उनके instances पर। |
 | `FailureResetPeriod` | Failure count reset होने से पहले के सेकंड; `4294967295` का अर्थ है कभी नहीं। |
@@ -105,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: device और driver सेवाओं के लिए Registry tree](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / service types और states](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2 failure actions](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## Output fields
 
+CSV stores `DependOnService`, `DependOnGroup` and `RequiredPrivileges` as JSON arrays in registry order. An empty array (`[]`) means the value is present and explicitly empty. A blank cell means the value was absent or could not be read. Check `Problems` for unreadable values.
+
 | Field | Interpretation |
 |---|---|
 | `Host`, `SourcePath` | System identity and input hive. Preserve across collections. |
@@ -77,8 +79,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Boot/start error handling level. Primarily operational context. |
 | `ObjectName` | Configured service account or driver object name. Not installer identity. |
 | `Group` | Load-order group, especially important for boot/system drivers. |
-| `DependOnService`, `DependOnGroup` | Services and load-order groups that must start first, in registry order (pipe-separated in CSV). |
-| `RequiredPrivileges` | Privileges the service keeps in its process token; Windows removes the rest (a shared process keeps those of all its services). No value: every privilege of the account. |
+| `DependOnService`, `DependOnGroup` | Service startup dependencies. A named service must start first. For a load-order group, Windows attempts to start its members and requires at least one to be running. |
+| `RequiredPrivileges` | Privileges configured for the service. Without this setting, the Service Control Manager uses the default privileges of the process token. A shared process uses the union of its services’ requirements. Windows retains `SeChangeNotifyPrivilege` if the token already has it, even when the list omits it. |
 | `ServiceSidType` | `none`, `unrestricted` or `restricted`: whether the token carries the service's own SID (`NT SERVICE\<name>`), which ACLs can grant access to. `restricted` also makes the token write-restricted. |
 | `UserServiceFlags` | Per-user service flags as stored (a number), on per-user service templates and their instances. |
 | `FailureResetPeriod` | Seconds before failure count resets; `4294967295` means never. |
@@ -105,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: Registry tree for device and driver services](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / service types and states](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2 failure actions](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

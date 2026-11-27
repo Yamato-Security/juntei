@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## Ausgabefelder { #output-fields }
 
+In der CSV-Datei stehen `DependOnService`, `DependOnGroup` und `RequiredPrivileges` als JSON-Arrays in der Reihenfolge der Registry. `[]` bezeichnet eine ausdrücklich leere Liste. Eine leere Zelle bedeutet, dass der Wert fehlt oder nicht gelesen werden konnte. Lesefehler stehen unter `Problems`.
+
 | Feld | Interpretation |
 |---|---|
 | `Host`, `SourcePath` | Systemidentität und Eingabe-Hive. Über Sicherungen hinweg beibehalten. |
@@ -77,8 +79,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Stufe der Fehlerbehandlung bei Boot/Start. Vorwiegend betrieblicher Kontext. |
 | `ObjectName` | Konfiguriertes Dienstkonto oder Name des Treiberobjekts. Nicht die Identität des Installierenden. |
 | `Group` | Ladereihenfolgegruppe, besonders wichtig für Boot-/Systemtreiber. |
-| `DependOnService`, `DependOnGroup` | Dienste und Ladereihenfolgegruppen, die zuerst starten müssen, in Registry-Reihenfolge (in CSV durch senkrechte Striche getrennt). |
-| `RequiredPrivileges` | Privilegien, die der Dienst in seinem Prozesstoken behält; Windows entfernt die übrigen (ein gemeinsam genutzter Prozess behält die aller seiner Dienste). Ohne Wert: alle Privilegien des Kontos. |
+| `DependOnService`, `DependOnGroup` | Abhängigkeiten beim Dienststart. Ein namentlich genannter Dienst muss zuerst starten. Bei einer Ladereihenfolgegruppe versucht Windows, die Mitglieder zu starten. Mindestens eines muss laufen. |
+| `RequiredPrivileges` | Für den Dienst konfigurierte Privilegien. Fehlt die Einstellung, verwendet der Dienststeuerungs-Manager die Standardprivilegien des Prozesstokens. Ein gemeinsamer Prozess verwendet die Vereinigungsmenge der von seinen Diensten benötigten Privilegien. Ein bereits im Token vorhandenes `SeChangeNotifyPrivilege` bleibt auch dann erhalten, wenn es in der Liste fehlt. |
 | `ServiceSidType` | `none`, `unrestricted` oder `restricted`: ob das Token die eigene SID des Dienstes (`NT SERVICE\<name>`) enthält, über die ACLs Zugriff gewähren können. `restricted` macht das Token zusätzlich schreibbeschränkt. |
 | `UserServiceFlags` | Gespeicherte Flags für benutzerspezifische Dienste (als Zahl), auf deren Vorlagen und Instanzen. |
 | `FailureResetPeriod` | Sekunden, bis der Fehlerzähler zurückgesetzt wird; `4294967295` bedeutet nie. |
@@ -105,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: Registry-Struktur für Geräte- und Treiberdienste](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / Diensttypen und -zustände](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2-Fehleraktionen](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## حقول الإخراج { #output-fields }
 
+تُحفظ الحقول `DependOnService` و`DependOnGroup` و`RequiredPrivileges` في ملف CSV على شكل مصفوفات JSON بترتيبها في السجل. تشير المصفوفة الفارغة (`[]`) إلى أن القيمة موجودة والقائمة فارغة. وتعني الخلية الفارغة أن القيمة غير موجودة أو تعذرت قراءتها. راجع `Problems` للتحقق من أخطاء القراءة.
+
 | الحقل | التفسير |
 |---|---|
 | `Host`، `SourcePath` | هوية النظام والخلية المُدخلة. احتفظ بهما عبر عمليات الجمع. |
@@ -77,8 +79,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | مستوى معالجة أخطاء الإقلاع/البدء. سياق تشغيلي في المقام الأول. |
 | `ObjectName` | حساب الخدمة المكوَّن أو اسم كائن برنامج التشغيل. وليس هوية من قام بالتثبيت. |
 | `Group` | مجموعة ترتيب التحميل، وهي مهمة خاصةً لبرامج تشغيل الإقلاع/النظام. |
-| `DependOnService`، `DependOnGroup` | الخدمات ومجموعات ترتيب التحميل التي يجب أن تبدأ أولًا، بترتيبها في السجل (مفصولة بشرطة عمودية في CSV). |
-| `RequiredPrivileges` | الامتيازات التي تحتفظ بها الخدمة في الرمز المميز لعمليتها؛ ويزيل Windows الباقي (تحتفظ العملية المشتركة بامتيازات جميع خدماتها). عند غياب القيمة: جميع امتيازات الحساب. |
+| `DependOnService`، `DependOnGroup` | تبعيات بدء تشغيل الخدمة. يجب أن تبدأ الخدمة المذكورة بالاسم أولًا. أما مجموعة ترتيب التحميل فيحاول Windows تشغيل أعضائها، ويجب أن يكون عضو واحد على الأقل قيد التشغيل. |
+| `RequiredPrivileges` | الامتيازات المضبوطة للخدمة. عند غياب هذا الإعداد يستخدم مدير التحكم بالخدمات الامتيازات الافتراضية لرمز العملية. وإذا اشتركت عدة خدمات في عملية واحدة، تُستخدم مجموعة الامتيازات التي تتطلبها تلك الخدمات مجتمعة. يحتفظ Windows بالامتياز `SeChangeNotifyPrivilege` إذا كان موجودًا أصلًا في الرمز، حتى لو لم يُذكر في القائمة. |
 | `ServiceSidType` | `none` أو `unrestricted` أو `restricted`: هل يتضمن الرمز المميز معرّف SID الخاص بالخدمة (`NT SERVICE\<name>`) الذي يمكن لقوائم ACL منحه حق الوصول. ويجعل `restricted` الرمز المميز مقيّد الكتابة أيضًا. |
 | `UserServiceFlags` | علامات الخدمة لكل مستخدم كما هي مخزنة (رقم)، على قوالب الخدمات لكل مستخدم ومثيلاتها. |
 | `FailureResetPeriod` | عدد الثواني قبل إعادة تعيين عدّاد مرات الفشل؛ وتعني `4294967295` عدم إعادة التعيين أبدًا. |
@@ -105,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: شجرة سجل Windows لخدمات الأجهزة وبرامج التشغيل](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / أنواع الخدمات وحالاتها](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: إجراءات الفشل في ChangeServiceConfig2](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

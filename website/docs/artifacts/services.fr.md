@@ -63,6 +63,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## Champs de sortie { #output-fields }
 
+Dans le CSV, `DependOnService`, `DependOnGroup` et `RequiredPrivileges` sont des tableaux JSON qui conservent l’ordre du registre. Un tableau vide (`[]`) indique que la valeur existe et contient une liste vide. Une cellule vide indique que la valeur est absente ou illisible. Les erreurs de lecture figurent dans `Problems`.
+
 | Champ | Interprétation |
 |---|---|
 | `Host`, `SourcePath` | Identité du système et ruche d'entrée. À conserver d'une collecte à l'autre. |
@@ -77,8 +79,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Niveau de gestion des erreurs au démarrage du système/du service. Principalement un contexte opérationnel. |
 | `ObjectName` | Compte de service configuré ou nom d'objet du pilote. Pas l'identité de l'installateur. |
 | `Group` | Groupe d'ordre de chargement, particulièrement important pour les pilotes boot/system. |
-| `DependOnService`, `DependOnGroup` | Services et groupes d'ordre de chargement qui doivent démarrer avant, dans l'ordre du registre (séparés par des barres verticales en CSV). |
-| `RequiredPrivileges` | Privilèges que le service conserve dans le jeton de son processus ; Windows retire les autres (un processus partagé conserve ceux de tous ses services). Sans valeur : tous les privilèges du compte. |
+| `DependOnService`, `DependOnGroup` | Dépendances au démarrage. Un service désigné par son nom doit démarrer au préalable. Pour un groupe d’ordre de chargement, Windows tente de démarrer ses membres et exige qu’au moins l’un d’eux soit en cours d’exécution. |
+| `RequiredPrivileges` | Privilèges configurés pour le service. En l’absence de ce paramètre, le gestionnaire de contrôle des services utilise les privilèges par défaut du jeton de processus. Un processus partagé utilise l’union des privilèges requis par ses services. Si le jeton possède déjà `SeChangeNotifyPrivilege`, Windows le conserve même si la liste l’omet. |
 | `ServiceSidType` | `none`, `unrestricted` ou `restricted` : indique si le jeton contient le SID propre du service (`NT SERVICE\<name>`), auquel les ACL peuvent accorder un accès. `restricted` rend en plus le jeton restreint en écriture. |
 | `UserServiceFlags` | Indicateurs de service par utilisateur tels qu'ils sont stockés (un nombre), sur les modèles de services par utilisateur et leurs instances. |
 | `FailureResetPeriod` | Nombre de secondes avant la remise à zéro du compteur d'échecs ; `4294967295` signifie jamais. |
@@ -105,4 +107,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft : arborescence du Registre pour les services de périphériques et de pilotes](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft : SERVICE_STATUS / types et états des services](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft : actions en cas d'échec de ChangeServiceConfig2](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-registry-parser](https://github.com/Yamato-Security/ys-registry-parser)

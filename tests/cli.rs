@@ -9340,6 +9340,73 @@ fn services_read(args: &[&str]) -> Vec<Value> {
 }
 
 #[test]
+fn registry_services_csv_preserves_list_boundaries_and_presence() {
+    let dir = tempfile::tempdir().unwrap();
+    let hive = dir.path().join("SYSTEM");
+    let csv = dir.path().join("services.csv");
+    let single = r"ControlSet001\Services\Single";
+    let pair = r"ControlSet001\Services\Pair";
+    let group = r#"班, "A|B""#;
+    let bytes = reg_tree(
+        "SYSTEM",
+        &[
+            ("Select", "Current", REG_DWORD, 1u32.to_le_bytes().to_vec()),
+            (single, "DependOnService", REG_SZ, utf16z("A|B")),
+            (pair, "DependOnService", REG_MULTI_SZ, multi_sz(&["A", "B"])),
+            (
+                single,
+                "DependOnGroup",
+                REG_MULTI_SZ,
+                multi_sz(&[group, "C", group]),
+            ),
+            (single, "RequiredPrivileges", REG_MULTI_SZ, multi_sz(&[])),
+        ],
+    );
+    std::fs::write(&hive, bytes).unwrap();
+    let input = hive.to_str().unwrap();
+    let result = run(&[
+        "parse-registry",
+        "services",
+        "-f",
+        input,
+        "-o",
+        csv.to_str().unwrap(),
+        "-t",
+        "csv",
+    ]);
+    assert_eq!(result.code, 0, "{}", result.stderr);
+    let (_, rows) = csv_rows(&csv);
+    let jsonl = services_read(&["-f", input]);
+    assert_eq!(rows.len(), 2);
+    assert_eq!(jsonl.len(), 2);
+    for (name, dependencies, groups, privileges) in [
+        (
+            "Single",
+            json!(["A|B"]),
+            json!([group, "C", group]),
+            json!([]),
+        ),
+        ("Pair", json!(["A", "B"]), Value::Null, Value::Null),
+    ] {
+        let csv_row = rows.iter().find(|r| r["ServiceName"] == name).unwrap();
+        let json_row = jsonl.iter().find(|r| r["ServiceName"] == name).unwrap();
+        for (field, expected) in [
+            ("DependOnService", dependencies),
+            ("DependOnGroup", groups),
+            ("RequiredPrivileges", privileges),
+        ] {
+            assert_eq!(json_row[field], expected);
+            if expected.is_null() {
+                assert_eq!(csv_row[field], "");
+            } else {
+                let decoded: Value = serde_json::from_str(&csv_row[field]).unwrap();
+                assert_eq!(decoded, expected);
+            }
+        }
+    }
+}
+
+#[test]
 fn registry_services_of_a_system_hive() {
     let hive = regipy_system();
     let system = hive.path().join("W7/C/Windows/System32/config/SYSTEM");
@@ -9395,7 +9462,7 @@ fn registry_services_of_a_system_hive() {
         ("DependOnGroup", ""),
         (
             "RequiredPrivileges",
-            "SeChangeNotifyPrivilege|SeImpersonatePrivilege",
+            r#"["SeChangeNotifyPrivilege","SeImpersonatePrivilege"]"#,
         ),
         ("ServiceSidType", "unrestricted"),
         ("UserServiceFlags", ""),

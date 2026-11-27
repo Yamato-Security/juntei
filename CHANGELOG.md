@@ -83,9 +83,11 @@
 - `parse-registry services` adds each service's dependencies (`DependOnService`,
   `DependOnGroup`), `RequiredPrivileges`, `ServiceSidType`, `UserServiceFlags`, `RebootMessage`
   and `FailureActionsOnNonCrashFailures`. A dependency stored as a single string is read as one
-  dependency. `FailureActions` names the own-restart action that the Task Scheduler service uses
-  (`own_restart` instead of `0x4`), and bytes after the declared actions are reported, with the
-  original bytes in `FailureActionsRaw`. (#229) (@YamatoSecurity)
+  dependency. CSV stores all three lists as JSON arrays in registry order, using `[]` for an
+  explicitly empty list and a blank cell for a missing value. `FailureActions` recognizes Task
+  Scheduler’s own-restart action (`own_restart`, formerly `0x4`). When bytes follow the declared
+  actions, the parser reports them and keeps the original bytes in `FailureActionsRaw`. (#229)
+  (@YamatoSecurity)
 
 - Upgrade `quick-xml` to 0.42.0, preserving Persistence Hunter's XML evidence values,
   line endings and principal/context attribute matching. (@YamatoSecurity)

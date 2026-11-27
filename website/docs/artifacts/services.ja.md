@@ -55,6 +55,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## 出力フィールド { #output-fields }
 
+CSV では、`DependOnService`、`DependOnGroup`、`RequiredPrivileges` をレジストリに記録された順序の JSON 配列で出力します。`[]` は値が存在し、リストが明示的に空であることを示します。値が存在しない場合や読み取れない場合は空欄になります。読み取りエラーは `Problems` で確認できます。
+
 | フィールド | 解釈 |
 |---|---|
 | `Host`, `SourcePath` | システム ID と入力ハイブ。コレクション間で保存します。 |
@@ -69,8 +71,8 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | ブート/スタートのエラー処理レベル。主に運用コンテキスト。 |
 | `ObjectName` | 構成されたサービス アカウントまたはドライバー オブジェクト名。設置者の ID ではありません。 |
 | `Group` | ロード順序グループ。ブート/システム ドライバーにとって特に重要です。 |
-| `DependOnService`, `DependOnGroup` | 先に開始する必要があるサービスとロード順序グループです。レジストリ上の順序で出力します (CSV ではパイプ区切り)。 |
-| `RequiredPrivileges` | サービスがプロセス トークンに保持する特権です。それ以外は Windows が削除します (共有プロセスでは、そのプロセスのすべてのサービスの特権を保持します)。値がない場合は、アカウントのすべての特権を持ちます。 |
+| `DependOnService`, `DependOnGroup` | 起動時に依存するサービスとロード順序グループです。指定されたサービスは先に起動する必要があります。グループの場合、Windows は各メンバーの起動を試み、少なくとも一つが実行中であれば依存条件を満たします。 |
+| `RequiredPrivileges` | サービスに設定された特権です。設定がない場合、サービス コントロール マネージャーはプロセス トークンの既定の特権を使用します。プロセスを共有する場合は、各サービスが要求する特権の和集合を使用します。トークンに `SeChangeNotifyPrivilege` が既にあれば、リストに記載がなくても保持されます。 |
 | `ServiceSidType` | `none`、`unrestricted`、`restricted` のいずれかです。トークンにサービス固有の SID (`NT SERVICE\<name>`) が含まれるかどうかを示し、ACL ではこの SID にアクセスを許可できます。`restricted` ではトークンが書き込み制限付きにもなります。 |
 | `UserServiceFlags` | ユーザーごとのサービスのフラグを、保存されている数値のまま出力します。ユーザーごとのサービスのテンプレートとそのインスタンスにあります。 |
 | `FailureResetPeriod` | 失敗カウントがリセットされるまでの秒数。 `4294967295` は決してしないことを意味します。 |
@@ -97,4 +99,5 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 - [Microsoft: デバイスおよびドライバー サービスのレジストリ ツリー](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/hklm-system-currentcontrolset-services-registry-tree)
 - [Microsoft: SERVICE_STATUS / サービスの種類と状態](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_status)
 - [Microsoft: ChangeServiceConfig2 失敗アクション](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w)
+- [Microsoft: SERVICE_REQUIRED_PRIVILEGES_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_required_privileges_infow#remarks)
 - [ys-レジストリ-パーサー](https://github.com/Yamato-Security/ys-registry-parser)
