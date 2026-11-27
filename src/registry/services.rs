@@ -15,8 +15,10 @@
 //! `system` module, with Hayabusa's input options, progress bar and results summary. One record
 //! per service of the control set Windows used last (`Select\Current`), or of every control set
 //! (`--all-control-sets`): its image path, service DLL, start and type (named, with their
-//! numbers), account, and what Windows does when it fails (`FailureActions` decoded, and the
-//! `FailureCommand`). The summary lists the services whose failure runs a command.
+//! numbers), account, dependencies, required privileges, service SID type, and what Windows does
+//! when it fails (every `FailureActions` entry decoded, the `FailureCommand`, the reboot message
+//! and whether non-crash failures count). The summary lists the services whose failure runs a
+//! command.
 
 use super::{
     Hosts, Opened, RecordWriter, choose_logs, files_read, filetime, find_hives_of_type,
@@ -228,10 +230,24 @@ struct Record<'a> {
     object_name: Option<&'a str>,
     #[serde(rename = "Group")]
     group: Option<&'a str>,
+    #[serde(rename = "DependOnService")]
+    depend_on_service: Option<&'a [String]>,
+    #[serde(rename = "DependOnGroup")]
+    depend_on_group: Option<&'a [String]>,
+    #[serde(rename = "RequiredPrivileges")]
+    required_privileges: Option<&'a [String]>,
+    #[serde(rename = "ServiceSidType")]
+    service_sid_type: Option<String>,
+    #[serde(rename = "UserServiceFlags")]
+    user_service_flags: Option<u32>,
     #[serde(rename = "FailureResetPeriod")]
     failure_reset_period: Option<u32>,
     #[serde(rename = "FailureCommand")]
     failure_command: Option<&'a str>,
+    #[serde(rename = "RebootMessage")]
+    reboot_message: Option<&'a str>,
+    #[serde(rename = "FailureActionsOnNonCrashFailures")]
+    failure_actions_on_non_crash_failures: Option<bool>,
     #[serde(rename = "FailureActions")]
     failure_actions: Option<Vec<ActionRecord>>,
     #[serde(rename = "FailureActionType")]
@@ -250,7 +266,7 @@ struct Record<'a> {
     problems: &'a [String],
 }
 
-const CSV_HEADER: [&str; 27] = [
+const CSV_HEADER: [&str; 34] = [
     "Host",
     "SourcePath",
     "ControlSet",
@@ -268,8 +284,15 @@ const CSV_HEADER: [&str; 27] = [
     "ErrorControl",
     "ObjectName",
     "Group",
+    "DependOnService",
+    "DependOnGroup",
+    "RequiredPrivileges",
+    "ServiceSidType",
+    "UserServiceFlags",
     "FailureResetPeriod",
     "FailureCommand",
+    "RebootMessage",
+    "FailureActionsOnNonCrashFailures",
     "FailureActions",
     "FailureActionType",
     "FailureActionDelayMs",
@@ -282,6 +305,16 @@ const CSV_HEADER: [&str; 27] = [
 
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// A `ServiceSidType` value by its `SERVICE_SID_TYPE_*` name; other values in hex.
+fn sid_type_name(sid_type: u32) -> String {
+    match sid_type {
+        0 => "none".to_string(),
+        1 => "unrestricted".to_string(),
+        3 => "restricted".to_string(),
+        other => format!("0x{other:x}"),
+    }
 }
 
 impl<'a> Record<'a> {
@@ -306,8 +339,15 @@ impl<'a> Record<'a> {
             error_control: s.error_control.map(error_control_name),
             object_name: s.object_name.as_deref(),
             group: s.group.as_deref(),
+            depend_on_service: s.depend_on_service.as_deref(),
+            depend_on_group: s.depend_on_group.as_deref(),
+            required_privileges: s.required_privileges.as_deref(),
+            service_sid_type: s.service_sid_type.map(sid_type_name),
+            user_service_flags: s.user_service_flags,
             failure_reset_period: actions.map(|f| f.reset_period),
             failure_command: s.failure_command.as_deref(),
+            reboot_message: s.reboot_message.as_deref(),
+            failure_actions_on_non_crash_failures: s.failure_actions_on_non_crash_failures,
             failure_actions: actions.map(|f| {
                 f.actions
                     .iter()
@@ -331,6 +371,7 @@ impl<'a> Record<'a> {
         let text = |v: Option<&str>| v.unwrap_or_default().to_string();
         let num = |v: Option<u32>| v.map(|n| n.to_string()).unwrap_or_default();
         let flag = |b: bool| if b { "True" } else { "False" }.to_string();
+        let list = |v: Option<&[String]>| v.map(|items| items.join("|")).unwrap_or_default();
         vec![
             text(self.host),
             self.source_path.to_string(),
@@ -349,8 +390,17 @@ impl<'a> Record<'a> {
             text(self.error_control.as_deref()),
             text(self.object_name),
             text(self.group),
+            list(self.depend_on_service),
+            list(self.depend_on_group),
+            list(self.required_privileges),
+            text(self.service_sid_type.as_deref()),
+            num(self.user_service_flags),
             num(self.failure_reset_period),
             text(self.failure_command),
+            text(self.reboot_message),
+            self.failure_actions_on_non_crash_failures
+                .map(flag)
+                .unwrap_or_default(),
             self.failure_actions
                 .as_ref()
                 .map(|a| serde_json::to_string(a).unwrap_or_default())

@@ -69,11 +69,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | ブート/スタートのエラー処理レベル。主に運用コンテキスト。 |
 | `ObjectName` | 構成されたサービス アカウントまたはドライバー オブジェクト名。設置者の ID ではありません。 |
 | `Group` | ロード順序グループ。ブート/システム ドライバーにとって特に重要です。 |
+| `DependOnService`, `DependOnGroup` | 先に開始する必要があるサービスとロード順序グループです。レジストリ上の順序で出力します (CSV ではパイプ区切り)。 |
+| `RequiredPrivileges` | サービスがプロセス トークンに保持する特権です。それ以外は Windows が削除します (共有プロセスでは、そのプロセスのすべてのサービスの特権を保持します)。値がない場合は、アカウントのすべての特権を持ちます。 |
+| `ServiceSidType` | `none`、`unrestricted`、`restricted` のいずれかです。トークンにサービス固有の SID (`NT SERVICE\<name>`) が含まれるかどうかを示し、ACL ではこの SID にアクセスを許可できます。`restricted` ではトークンが書き込み制限付きにもなります。 |
+| `UserServiceFlags` | ユーザーごとのサービスのフラグを、保存されている数値のまま出力します。ユーザーごとのサービスのテンプレートとそのインスタンスにあります。 |
 | `FailureResetPeriod` | 失敗カウントがリセットされるまでの秒数。 `4294967295` は決してしないことを意味します。 |
 | `FailureCommand` | `run_command` 失敗アクション用に設定されたコマンド。高価値の永続フィールド。 |
-| `FailureActions` | 完全にデコードされたアクション リスト (`restart`、`reboot`、`run_command`、`none`) と遅延。 |
+| `RebootMessage` | `reboot` 失敗アクションの前にユーザーへ送信されるメッセージです。テキストまたはリソース参照です。 |
+| `FailureActionsOnNonCrashFailures` | `True` の場合、プロセスが停止を報告せずに終了したときだけでなく、サービスが 0 以外の終了コードで停止したときにも失敗アクションを実行します。空の場合、このキーには保存されていません (ユーザーごとのサービスのインスタンスはテンプレートの設定を使うことがあります)。 |
+| `FailureActions` | 保存されているすべてのアクション (`restart`、`reboot`、`run_command`、`own_restart`、`none`) と遅延を順に出力します。最後のアクションはそれ以降のすべての失敗に適用されます。[回復] タブには 1 回目、2 回目、その後の失敗しか表示されません。 |
 | `FailureActionType`, `FailureActionDelayMs` | 最初のアクションはフィルタリングのために平坦化されています。完全なリストも調べてください。 |
-| `FailureActionsRaw` | デコードが不完全または破損している場合の元のバイト。 |
+| `FailureActionsRaw` | デコードに失敗した場合、または宣言されたアクションの後にバイトがある場合の元のバイトです。 |
 | `KeyLastWrittenUTC` | サービス キーへの最後の変更。必ずしもインストール/開始時刻ではありません。 |
 | `TransactionLogStatus`, `LogsApplied` | レジストリ再生コンテキスト。 |
 | `Problems` | 型の不一致、不正な形式の障害構造、または欠落しているか読み取り不可能なフィールド。 |

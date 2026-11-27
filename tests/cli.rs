@@ -9277,7 +9277,7 @@ fn registry_input_and_output_errors() {
 // --- parse-registry services --------------------------------------------------------------------
 
 /// `parse-registry services`'s CSV columns.
-const SERVICES_COLUMNS: [&str; 27] = [
+const SERVICES_COLUMNS: [&str; 34] = [
     "Host",
     "SourcePath",
     "ControlSet",
@@ -9295,8 +9295,15 @@ const SERVICES_COLUMNS: [&str; 27] = [
     "ErrorControl",
     "ObjectName",
     "Group",
+    "DependOnService",
+    "DependOnGroup",
+    "RequiredPrivileges",
+    "ServiceSidType",
+    "UserServiceFlags",
     "FailureResetPeriod",
     "FailureCommand",
+    "RebootMessage",
+    "FailureActionsOnNonCrashFailures",
     "FailureActions",
     "FailureActionType",
     "FailureActionDelayMs",
@@ -9384,8 +9391,18 @@ fn registry_services_of_a_system_hive() {
         ("ErrorControl", "normal"),
         ("ObjectName", r"NT AUTHORITY\LocalService"),
         ("Group", "Event Log"),
+        ("DependOnService", ""),
+        ("DependOnGroup", ""),
+        (
+            "RequiredPrivileges",
+            "SeChangeNotifyPrivilege|SeImpersonatePrivilege",
+        ),
+        ("ServiceSidType", "unrestricted"),
+        ("UserServiceFlags", ""),
         ("FailureResetPeriod", "86400"),
         ("FailureCommand", ""),
+        ("RebootMessage", ""),
+        ("FailureActionsOnNonCrashFailures", "True"),
         (
             "FailureActions",
             r#"[{"Type":"restart","DelayMs":60000},{"Type":"restart","DelayMs":120000},{"Type":"none","DelayMs":0}]"#,
@@ -9477,6 +9494,34 @@ fn registry_services_with_logs() {
     );
     assert_eq!(s["TransactionLogStatus"], "unchanged");
     assert_eq!(s["LogsApplied"], json!(["SYSTEM.LOG1", "SYSTEM.LOG2"]));
+    // every stored failure action, not only the three the Recovery tab shows
+    let one = |name: &str| services_read(&["-f", system, "--service", name]).remove(0);
+    let aar = one("AarSvc");
+    assert_eq!(
+        aar["FailureActions"],
+        json!([
+            {"Type": "restart", "DelayMs": 10000},
+            {"Type": "restart", "DelayMs": 10000},
+            {"Type": "restart", "DelayMs": 10000},
+            {"Type": "none", "DelayMs": 0}
+        ])
+    );
+    assert_eq!(aar["DependOnService"], json!(["Audiosrv"]));
+    assert_eq!(aar["DependOnGroup"], Value::Null);
+    assert_eq!(aar["RequiredPrivileges"], json!(["SeImpersonatePrivilege"]));
+    assert_eq!(aar["ServiceSidType"], "unrestricted");
+    assert_eq!(aar["UserServiceFlags"], 3);
+    assert_eq!(aar["FailureActionsOnNonCrashFailures"], Value::Null);
+    let search = one("WSearch");
+    assert_eq!(search["FailureActions"].as_array().unwrap().len(), 6);
+    assert_eq!(search["FailureActionsOnNonCrashFailures"], true);
+    let schedule = one("Schedule");
+    assert_eq!(
+        schedule["FailureActions"][0],
+        json!({"Type": "own_restart", "DelayMs": 0})
+    );
+    assert_eq!(schedule["FailureActionType"], "own_restart");
+    assert_eq!(one("MSiSCSI")["RebootMessage"], "See Note 3 below");
     // user services: their type's flags
     let all = services_read(&["-f", system]);
     assert!(

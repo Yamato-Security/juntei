@@ -77,11 +77,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Niveau de gestion des erreurs au démarrage du système/du service. Principalement un contexte opérationnel. |
 | `ObjectName` | Compte de service configuré ou nom d'objet du pilote. Pas l'identité de l'installateur. |
 | `Group` | Groupe d'ordre de chargement, particulièrement important pour les pilotes boot/system. |
+| `DependOnService`, `DependOnGroup` | Services et groupes d'ordre de chargement qui doivent démarrer avant, dans l'ordre du registre (séparés par des barres verticales en CSV). |
+| `RequiredPrivileges` | Privilèges que le service conserve dans le jeton de son processus ; Windows retire les autres (un processus partagé conserve ceux de tous ses services). Sans valeur : tous les privilèges du compte. |
+| `ServiceSidType` | `none`, `unrestricted` ou `restricted` : indique si le jeton contient le SID propre du service (`NT SERVICE\<name>`), auquel les ACL peuvent accorder un accès. `restricted` rend en plus le jeton restreint en écriture. |
+| `UserServiceFlags` | Indicateurs de service par utilisateur tels qu'ils sont stockés (un nombre), sur les modèles de services par utilisateur et leurs instances. |
 | `FailureResetPeriod` | Nombre de secondes avant la remise à zéro du compteur d'échecs ; `4294967295` signifie jamais. |
 | `FailureCommand` | Commande configurée pour une action d'échec `run_command`. Champ de persistance à forte valeur. |
-| `FailureActions` | Liste complète des actions décodées (`restart`, `reboot`, `run_command`, `none`) et délais. |
+| `RebootMessage` | Message diffusé aux utilisateurs avant une action d'échec `reboot` ; texte ou référence de ressource. |
+| `FailureActionsOnNonCrashFailures` | `True` : les actions d'échec s'exécutent aussi lorsque le service s'arrête avec un code de sortie non nul, et pas seulement lorsque son processus se termine sans signaler son arrêt. Vide : non stocké sur cette clé (une instance de service par utilisateur peut reprendre le paramètre de son modèle). |
+| `FailureActions` | Toutes les actions stockées, dans l'ordre (`restart`, `reboot`, `run_command`, `own_restart`, `none`), avec leur délai. La dernière s'applique à chaque échec suivant ; l'onglet Récupération n'affiche que la première défaillance, la deuxième et les suivantes. |
 | `FailureActionType`, `FailureActionDelayMs` | Première action, aplatie pour le filtrage ; examinez également la liste complète. |
-| `FailureActionsRaw` | Octets d'origine lorsque le décodage est incomplet/endommagé. |
+| `FailureActionsRaw` | Octets d'origine lorsque le décodage échoue ou que des octets suivent les actions déclarées. |
 | `KeyLastWrittenUTC` | Dernière modification de la clé du service, pas nécessairement l'heure d'installation/de démarrage. |
 | `TransactionLogStatus`, `LogsApplied` | Contexte de rejeu du Registre. |
 | `Problems` | Incohérence de type, structure d'échec malformée ou champs manquants/illisibles. |

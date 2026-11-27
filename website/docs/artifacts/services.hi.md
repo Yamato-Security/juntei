@@ -77,11 +77,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Boot/start error handling स्तर। मुख्यतः operational context। |
 | `ObjectName` | Configure किया गया service account या driver object नाम। Installer की पहचान नहीं। |
 | `Group` | Load-order group, विशेष रूप से boot/system drivers के लिए महत्वपूर्ण। |
+| `DependOnService`, `DependOnGroup` | वे services और load-order groups जिन्हें पहले शुरू होना चाहिए, registry के क्रम में (CSV में vertical bar से अलग)। |
+| `RequiredPrivileges` | वे privileges जिन्हें service अपने process token में रखती है; बाकी Windows हटा देता है (shared process अपनी सभी services के privileges रखता है)। कोई value नहीं: account के सभी privileges। |
+| `ServiceSidType` | `none`, `unrestricted` या `restricted`: क्या token में service का अपना SID (`NT SERVICE\<name>`) है, जिसे ACLs access दे सकती हैं। `restricted` token को write-restricted भी बनाता है। |
+| `UserServiceFlags` | Per-user service flags जैसे stored हैं (एक संख्या), per-user service templates और उनके instances पर। |
 | `FailureResetPeriod` | Failure count reset होने से पहले के सेकंड; `4294967295` का अर्थ है कभी नहीं। |
 | `FailureCommand` | `run_command` failure action के लिए configure किया गया command। उच्च-मूल्य वाला persistence फ़ील्ड। |
-| `FailureActions` | पूरी decode की गई action सूची (`restart`, `reboot`, `run_command`, `none`) और delays। |
+| `RebootMessage` | `reboot` failure action से पहले users को broadcast किया जाने वाला message; text या resource reference। |
+| `FailureActionsOnNonCrashFailures` | `True`: failure actions तब भी चलते हैं जब service nonzero exit code के साथ रुकती है, केवल तब नहीं जब उसका process stop report किए बिना समाप्त होता है। खाली: इस key पर stored नहीं है (per-user service instance अपने template की setting ले सकता है)। |
+| `FailureActions` | सभी stored actions क्रम से (`restart`, `reboot`, `run_command`, `own_restart`, `none`) उनके delay के साथ। आख़िरी action आगे की हर failure पर लागू होता है; Recovery tab केवल पहली, दूसरी और बाद की failures दिखाता है। |
 | `FailureActionType`, `FailureActionDelayMs` | Filtering के लिए flatten की गई पहली action; पूरी सूची भी जाँचें। |
-| `FailureActionsRaw` | जब decoding अधूरी/क्षतिग्रस्त हो तो मूल bytes। |
+| `FailureActionsRaw` | जब decoding विफल हो या declared actions के बाद bytes हों तो मूल bytes। |
 | `KeyLastWrittenUTC` | Service key में अंतिम बदलाव, ज़रूरी नहीं कि installation/start का समय। |
 | `TransactionLogStatus`, `LogsApplied` | Registry-replay context। |
 | `Problems` | Type mismatch, malformed failure structure, या लापता/अपठनीय fields। |

@@ -77,11 +77,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Stufe der Fehlerbehandlung bei Boot/Start. Vorwiegend betrieblicher Kontext. |
 | `ObjectName` | Konfiguriertes Dienstkonto oder Name des Treiberobjekts. Nicht die Identität des Installierenden. |
 | `Group` | Ladereihenfolgegruppe, besonders wichtig für Boot-/Systemtreiber. |
+| `DependOnService`, `DependOnGroup` | Dienste und Ladereihenfolgegruppen, die zuerst starten müssen, in Registry-Reihenfolge (in CSV durch senkrechte Striche getrennt). |
+| `RequiredPrivileges` | Privilegien, die der Dienst in seinem Prozesstoken behält; Windows entfernt die übrigen (ein gemeinsam genutzter Prozess behält die aller seiner Dienste). Ohne Wert: alle Privilegien des Kontos. |
+| `ServiceSidType` | `none`, `unrestricted` oder `restricted`: ob das Token die eigene SID des Dienstes (`NT SERVICE\<name>`) enthält, über die ACLs Zugriff gewähren können. `restricted` macht das Token zusätzlich schreibbeschränkt. |
+| `UserServiceFlags` | Gespeicherte Flags für benutzerspezifische Dienste (als Zahl), auf deren Vorlagen und Instanzen. |
 | `FailureResetPeriod` | Sekunden, bis der Fehlerzähler zurückgesetzt wird; `4294967295` bedeutet nie. |
 | `FailureCommand` | Für eine Fehleraktion `run_command` konfigurierter Befehl. Hochwertiges Persistenzfeld. |
-| `FailureActions` | Vollständige dekodierte Aktionsliste (`restart`, `reboot`, `run_command`, `none`) und Verzögerungen. |
+| `RebootMessage` | Nachricht, die vor einer Fehleraktion `reboot` an die Benutzer gesendet wird; Text oder Ressourcenverweis. |
+| `FailureActionsOnNonCrashFailures` | `True`: Fehleraktionen laufen auch, wenn der Dienst mit einem Exitcode ungleich null stoppt, nicht nur, wenn sein Prozess ohne Stopp-Meldung endet. Leer: auf diesem Schlüssel nicht gespeichert (eine benutzerspezifische Instanz kann die Einstellung ihrer Vorlage übernehmen). |
+| `FailureActions` | Alle gespeicherten Aktionen in Reihenfolge (`restart`, `reboot`, `run_command`, `own_restart`, `none`) mit Verzögerung. Die letzte gilt für jeden weiteren Fehler; die Registerkarte „Wiederherstellung“ zeigt nur den ersten, den zweiten und die folgenden Fehler. |
 | `FailureActionType`, `FailureActionDelayMs` | Erste Aktion, zum Filtern abgeflacht; prüfen Sie auch die vollständige Liste. |
-| `FailureActionsRaw` | Ursprüngliche Bytes, wenn die Dekodierung unvollständig/beschädigt ist. |
+| `FailureActionsRaw` | Ursprüngliche Bytes, wenn die Dekodierung fehlschlägt oder nach den angegebenen Aktionen Bytes folgen. |
 | `KeyLastWrittenUTC` | Letzte Änderung am Dienstschlüssel, nicht notwendigerweise Installations-/Startzeit. |
 | `TransactionLogStatus`, `LogsApplied` | Kontext der Registry-Wiedergabe. |
 | `Problems` | Typkonflikt, fehlerhafte Fehleraktionsstruktur oder fehlende/unlesbare Felder. |

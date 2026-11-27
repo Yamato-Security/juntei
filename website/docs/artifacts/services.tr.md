@@ -77,11 +77,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Önyükleme/başlatma hatası işleme düzeyi. Öncelikle operasyonel bağlam sağlar. |
 | `ObjectName` | Yapılandırılmış hizmet hesabı veya sürücü nesnesi adı. Yükleyicinin kimliği değildir. |
 | `Group` | Yükleme sırası grubu; özellikle boot/system sürücüleri için önemlidir. |
+| `DependOnService`, `DependOnGroup` | Önce başlaması gereken hizmetler ve yükleme sırası grupları, kayıt defterindeki sırayla (CSV'de dikey çizgiyle ayrılır). |
+| `RequiredPrivileges` | Hizmetin işlem belirtecinde tuttuğu ayrıcalıklar; Windows diğerlerini kaldırır (paylaşılan bir işlem tüm hizmetlerinin ayrıcalıklarını tutar). Değer yoksa: hesabın tüm ayrıcalıkları. |
+| `ServiceSidType` | `none`, `unrestricted` veya `restricted`: belirtecin hizmetin kendi SID'sini (`NT SERVICE\<name>`) içerip içermediği; ACL'ler bu SID'ye erişim verebilir. `restricted` ayrıca belirteci yazma kısıtlamalı yapar. |
+| `UserServiceFlags` | Kullanıcı başına hizmet bayrakları, saklandığı gibi (sayı); kullanıcı başına hizmet şablonlarında ve örneklerinde bulunur. |
 | `FailureResetPeriod` | Hata sayacının sıfırlanmasından önceki saniye; `4294967295` hiçbir zaman anlamına gelir. |
 | `FailureCommand` | Bir `run_command` hata eylemi için yapılandırılmış komut. Yüksek değerli bir kalıcılık alanı. |
-| `FailureActions` | Çözümlenmiş tam eylem listesi (`restart`, `reboot`, `run_command`, `none`) ve gecikmeler. |
+| `RebootMessage` | Bir `reboot` hata eyleminden önce kullanıcılara yayınlanan ileti; metin veya kaynak başvurusu. |
+| `FailureActionsOnNonCrashFailures` | `True`: hata eylemleri yalnızca işlem durduğunu bildirmeden sona erdiğinde değil, hizmet sıfır olmayan bir çıkış koduyla durduğunda da çalışır. Boş: bu anahtarda saklanmıyor (kullanıcı başına hizmet örneği şablonunun ayarını alabilir). |
+| `FailureActions` | Saklanan tüm eylemler sırayla (`restart`, `reboot`, `run_command`, `own_restart`, `none`) ve gecikmeleri. Sonuncusu sonraki her hatada uygulanır; Kurtarma sekmesi yalnızca ilk, ikinci ve sonraki hataları gösterir. |
 | `FailureActionType`, `FailureActionDelayMs` | Filtreleme için düzleştirilmiş ilk eylem; tam listeyi de inceleyin. |
-| `FailureActionsRaw` | Kod çözme eksik/hasarlı olduğunda özgün baytlar. |
+| `FailureActionsRaw` | Kod çözme başarısız olduğunda veya bildirilen eylemlerden sonra bayt bulunduğunda özgün baytlar. |
 | `KeyLastWrittenUTC` | Hizmet anahtarındaki son değişiklik; kurulum/başlatma zamanı olmak zorunda değildir. |
 | `TransactionLogStatus`, `LogsApplied` | Kayıt defteri yeniden oynatma bağlamı. |
 | `Problems` | Tür uyuşmazlığı, bozuk biçimli hata yapısı veya eksik/okunamayan alanlar. |

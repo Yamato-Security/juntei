@@ -77,11 +77,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | 부팅/시작 시 오류 처리 수준입니다. 주로 운영상의 컨텍스트입니다. |
 | `ObjectName` | 구성된 서비스 계정 또는 드라이버 개체 이름입니다. 설치자의 신원이 아닙니다. |
 | `Group` | 로드 순서 그룹으로, 특히 boot/system 드라이버에서 중요합니다. |
+| `DependOnService`, `DependOnGroup` | 먼저 시작되어야 하는 서비스와 로드 순서 그룹으로, 레지스트리 순서대로 출력합니다(CSV에서는 세로 막대로 구분). |
+| `RequiredPrivileges` | 서비스가 프로세스 토큰에 유지하는 권한입니다. 나머지는 Windows가 제거합니다(공유 프로세스는 모든 서비스의 권한을 유지합니다). 값이 없으면 계정의 모든 권한을 가집니다. |
+| `ServiceSidType` | `none`, `unrestricted`, `restricted` 중 하나로, 토큰에 서비스 고유 SID(`NT SERVICE\<name>`)가 포함되는지를 나타냅니다. ACL은 이 SID에 접근 권한을 부여할 수 있습니다. `restricted`이면 토큰이 쓰기 제한 토큰도 됩니다. |
+| `UserServiceFlags` | 사용자별 서비스 플래그를 저장된 숫자 그대로 출력합니다. 사용자별 서비스 템플릿과 그 인스턴스에 있습니다. |
 | `FailureResetPeriod` | 실패 횟수가 초기화되기까지의 초 단위 시간입니다. `4294967295`는 초기화되지 않음을 의미합니다. |
 | `FailureCommand` | `run_command` 실패 동작에 구성된 명령입니다. 지속성 분석에서 가치가 높은 필드입니다. |
-| `FailureActions` | 디코딩된 전체 동작 목록(`restart`, `reboot`, `run_command`, `none`)과 지연 시간입니다. |
+| `RebootMessage` | `reboot` 실패 동작 전에 사용자에게 브로드캐스트되는 메시지입니다. 텍스트 또는 리소스 참조입니다. |
+| `FailureActionsOnNonCrashFailures` | `True`이면 프로세스가 중지를 보고하지 않고 종료될 때뿐 아니라 서비스가 0이 아닌 종료 코드로 중지될 때도 실패 동작을 실행합니다. 비어 있으면 이 키에 저장되어 있지 않습니다(사용자별 서비스 인스턴스는 템플릿의 설정을 따를 수 있습니다). |
+| `FailureActions` | 저장된 모든 동작(`restart`, `reboot`, `run_command`, `own_restart`, `none`)과 지연 시간을 순서대로 출력합니다. 마지막 동작은 이후의 모든 실패에 적용됩니다. [복구] 탭에는 첫째, 둘째, 후속 실패만 표시됩니다. |
 | `FailureActionType`, `FailureActionDelayMs` | 필터링을 위해 평탄화한 첫 번째 동작입니다. 전체 목록도 확인하십시오. |
-| `FailureActionsRaw` | 디코딩이 불완전하거나 손상된 경우의 원본 바이트입니다. |
+| `FailureActionsRaw` | 디코딩에 실패했거나 선언된 동작 뒤에 바이트가 있는 경우의 원본 바이트입니다. |
 | `KeyLastWrittenUTC` | 서비스 키의 마지막 변경 시간이며, 반드시 설치/시작 시간인 것은 아닙니다. |
 | `TransactionLogStatus`, `LogsApplied` | 레지스트리 재생(replay) 컨텍스트입니다. |
 | `Problems` | 형식 불일치, 잘못된 실패 구조, 누락되었거나 읽을 수 없는 필드입니다. |

@@ -77,11 +77,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Nível de tratamento de erros de boot/inicialização. Principalmente contexto operacional. |
 | `ObjectName` | Conta de serviço configurada ou nome do objeto do driver. Não é a identidade de quem instalou. |
 | `Group` | Grupo de ordem de carregamento, especialmente importante para drivers de boot/sistema. |
+| `DependOnService`, `DependOnGroup` | Serviços e grupos de ordem de carregamento que precisam iniciar antes, na ordem do registro (separados por barras verticais no CSV). |
+| `RequiredPrivileges` | Privilégios que o serviço mantém no token do seu processo; o Windows remove os demais (um processo compartilhado mantém os de todos os seus serviços). Sem valor: todos os privilégios da conta. |
+| `ServiceSidType` | `none`, `unrestricted` ou `restricted`: se o token inclui o SID próprio do serviço (`NT SERVICE\<name>`), ao qual ACLs podem conceder acesso. `restricted` também torna o token restrito para gravação. |
+| `UserServiceFlags` | Sinalizadores de serviço por usuário como armazenados (um número), nos modelos de serviços por usuário e em suas instâncias. |
 | `FailureResetPeriod` | Segundos até a contagem de falhas ser zerada; `4294967295` significa nunca. |
 | `FailureCommand` | Comando configurado para uma ação de falha `run_command`. Campo de persistência de alto valor. |
-| `FailureActions` | Lista completa de ações decodificada (`restart`, `reboot`, `run_command`, `none`) e atrasos. |
+| `RebootMessage` | Mensagem transmitida aos usuários antes de uma ação de falha `reboot`; texto ou referência a um recurso. |
+| `FailureActionsOnNonCrashFailures` | `True`: as ações de falha também são executadas quando o serviço para com um código de saída diferente de zero, e não apenas quando seu processo termina sem informar a parada. Vazio: não armazenado nesta chave (uma instância de serviço por usuário pode usar a configuração do seu modelo). |
+| `FailureActions` | Todas as ações armazenadas, em ordem (`restart`, `reboot`, `run_command`, `own_restart`, `none`), com seu atraso. A última se aplica a cada falha seguinte; a guia Recuperação mostra apenas a primeira falha, a segunda e as subsequentes. |
 | `FailureActionType`, `FailureActionDelayMs` | Primeira ação achatada para filtragem; inspecione também a lista completa. |
-| `FailureActionsRaw` | Bytes originais quando a decodificação está incompleta/danificada. |
+| `FailureActionsRaw` | Bytes originais quando a decodificação falha ou há bytes após as ações declaradas. |
 | `KeyLastWrittenUTC` | Última alteração da chave do serviço, não necessariamente o horário de instalação/inicialização. |
 | `TransactionLogStatus`, `LogsApplied` | Contexto da reprodução de logs do Registro. |
 | `Problems` | Incompatibilidade de tipo, estrutura de falha malformada ou campos ausentes/ilegíveis. |

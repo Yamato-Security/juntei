@@ -77,11 +77,17 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 | `ErrorControl` | Boot/start error handling level. Primarily operational context. |
 | `ObjectName` | Configured service account or driver object name. Not installer identity. |
 | `Group` | Load-order group, especially important for boot/system drivers. |
+| `DependOnService`, `DependOnGroup` | Services and load-order groups that must start first, in registry order (pipe-separated in CSV). |
+| `RequiredPrivileges` | Privileges the service keeps in its process token; Windows removes the rest (a shared process keeps those of all its services). No value: every privilege of the account. |
+| `ServiceSidType` | `none`, `unrestricted` or `restricted`: whether the token carries the service's own SID (`NT SERVICE\<name>`), which ACLs can grant access to. `restricted` also makes the token write-restricted. |
+| `UserServiceFlags` | Per-user service flags as stored (a number), on per-user service templates and their instances. |
 | `FailureResetPeriod` | Seconds before failure count resets; `4294967295` means never. |
 | `FailureCommand` | Command configured for a `run_command` failure action. High-value persistence field. |
-| `FailureActions` | Full decoded action list (`restart`, `reboot`, `run_command`, `none`) and delays. |
+| `RebootMessage` | Message broadcast to users before a `reboot` failure action; text or a resource reference. |
+| `FailureActionsOnNonCrashFailures` | `True`: failure actions also run when the service stops with a nonzero exit code, not only when its process ends without reporting a stop. Empty: not stored on this key (a per-user service instance can take its template's setting). |
+| `FailureActions` | Every stored action in order (`restart`, `reboot`, `run_command`, `own_restart`, `none`) with its delay. The last one applies to every later failure; the Recovery tab shows only the first, second and subsequent failures. |
 | `FailureActionType`, `FailureActionDelayMs` | First action flattened for filtering; inspect full list too. |
-| `FailureActionsRaw` | Original bytes when decoding is incomplete/damaged. |
+| `FailureActionsRaw` | Original bytes when decoding fails or bytes follow the declared actions. |
 | `KeyLastWrittenUTC` | Last change to the service key, not necessarily installation/start time. |
 | `TransactionLogStatus`, `LogsApplied` | Registry-replay context. |
 | `Problems` | Type mismatch, malformed failure structure, or missing/unreadable fields. |
