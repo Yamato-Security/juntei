@@ -63,7 +63,7 @@ juntei parse-registry services -f SYSTEM --all-control-sets -t jsonl \
 
 ## Champs de sortie { #output-fields }
 
-Dans le CSV, `DependOnService`, `DependOnGroup` et `RequiredPrivileges` sont des tableaux JSON qui conservent l’ordre du registre. Un tableau vide (`[]`) indique que la valeur existe et contient une liste vide. Une cellule vide indique que la valeur est absente ou illisible. Les erreurs de lecture figurent dans `Problems`.
+Dans le CSV, `DependOnService`, `DependOnGroup` et `RequiredPrivileges` sont des tableaux JSON qui conservent l'ordre du registre. Un tableau vide (`[]`) indique que la valeur existe et contient une liste vide. Une cellule vide indique que la valeur est absente ou illisible. Les erreurs de lecture figurent dans `Problems`.
 
 | Champ | Interprétation |
 |---|---|
@@ -79,8 +79,8 @@ Dans le CSV, `DependOnService`, `DependOnGroup` et `RequiredPrivileges` sont des
 | `ErrorControl` | Niveau de gestion des erreurs au démarrage du système/du service. Principalement un contexte opérationnel. |
 | `ObjectName` | Compte de service configuré ou nom d'objet du pilote. Pas l'identité de l'installateur. |
 | `Group` | Groupe d'ordre de chargement, particulièrement important pour les pilotes boot/system. |
-| `DependOnService`, `DependOnGroup` | Dépendances au démarrage. Un service désigné par son nom doit démarrer au préalable. Pour un groupe d’ordre de chargement, Windows tente de démarrer ses membres et exige qu’au moins l’un d’eux soit en cours d’exécution. |
-| `RequiredPrivileges` | Privilèges configurés pour le service. En l’absence de ce paramètre, le gestionnaire de contrôle des services utilise les privilèges par défaut du jeton de processus. Un processus partagé utilise l’union des privilèges requis par ses services. Si le jeton possède déjà `SeChangeNotifyPrivilege`, Windows le conserve même si la liste l’omet. |
+| `DependOnService`, `DependOnGroup` | Dépendances au démarrage. Un service désigné par son nom doit démarrer au préalable. Pour un groupe d'ordre de chargement, Windows tente de démarrer ses membres et exige qu'au moins l'un d'eux soit en cours d'exécution. |
+| `RequiredPrivileges` | Privilèges configurés pour le service. En l'absence de ce paramètre, le gestionnaire de contrôle des services utilise les privilèges par défaut du jeton de processus. Un processus partagé utilise l'union des privilèges requis par ses services. Si le jeton possède déjà `SeChangeNotifyPrivilege`, Windows le conserve même si la liste l'omet. |
 | `ServiceSidType` | `none`, `unrestricted` ou `restricted` : indique si le jeton contient le SID propre du service (`NT SERVICE\<name>`), auquel les ACL peuvent accorder un accès. `restricted` rend en plus le jeton restreint en écriture. |
 | `UserServiceFlags` | Indicateurs de service par utilisateur tels qu'ils sont stockés (un nombre), sur les modèles de services par utilisateur et leurs instances. |
 | `FailureResetPeriod` | Nombre de secondes avant la remise à zéro du compteur d'échecs ; `4294967295` signifie jamais. |

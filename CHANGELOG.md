@@ -85,7 +85,7 @@
   and `FailureActionsOnNonCrashFailures`. A dependency stored as a single string is read as one
   dependency. CSV stores all three lists as JSON arrays in registry order, using `[]` for an
   explicitly empty list and a blank cell for a missing value. `FailureActions` recognizes Task
-  Scheduler’s own-restart action (`own_restart`, formerly `0x4`). When bytes follow the declared
+  Scheduler's own-restart action (`own_restart`, formerly `0x4`). When bytes follow the declared
   actions, the parser reports them and keeps the original bytes in `FailureActionsRaw`. (#229)
   (@YamatoSecurity)
 

@@ -80,7 +80,7 @@ CSV stores `DependOnService`, `DependOnGroup` and `RequiredPrivileges` as JSON a
 | `ObjectName` | Configured service account or driver object name. Not installer identity. |
 | `Group` | Load-order group, especially important for boot/system drivers. |
 | `DependOnService`, `DependOnGroup` | Service startup dependencies. A named service must start first. For a load-order group, Windows attempts to start its members and requires at least one to be running. |
-| `RequiredPrivileges` | Privileges configured for the service. Without this setting, the Service Control Manager uses the default privileges of the process token. A shared process uses the union of its services’ requirements. Windows retains `SeChangeNotifyPrivilege` if the token already has it, even when the list omits it. |
+| `RequiredPrivileges` | Privileges configured for the service. Without this setting, the Service Control Manager uses the default privileges of the process token. A shared process uses the union of its services' requirements. Windows retains `SeChangeNotifyPrivilege` if the token already has it, even when the list omits it. |
 | `ServiceSidType` | `none`, `unrestricted` or `restricted`: whether the token carries the service's own SID (`NT SERVICE\<name>`), which ACLs can grant access to. `restricted` also makes the token write-restricted. |
 | `UserServiceFlags` | Per-user service flags as stored (a number), on per-user service templates and their instances. |
 | `FailureResetPeriod` | Seconds before failure count resets; `4294967295` means never. |
