@@ -95,6 +95,7 @@ pub struct DeletedLog {
     /// Its data runs in VCN order: `None` for a sparse run.
     runs: Vec<(Option<u64>, u64)>,
     pub size: u64,
+    initialized: u64,
     /// Clusters per compression unit, if the stream was compressed.
     compression_unit: Option<u64>,
     /// Why it can't be rebuilt, if it can't.
@@ -147,7 +148,14 @@ impl Volume {
         let mut bitmap = Vec::new();
         image
             .file_reader(index, BITMAP_RECORD)?
+            .take(volume.len.div_ceil(cluster).div_ceil(8))
             .read_to_end(&mut bitmap)?;
+        if bitmap.is_empty() {
+            return Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "empty NTFS allocation bitmap",
+            ));
+        }
         let mft = image.file_reader(index, MFT_RECORD)?;
         let len = mft.len();
         let parser = MftParser::from_read_seek(mft, Some(len)).map_err(io::Error::other)?;
@@ -245,22 +253,25 @@ impl Volume {
                         .header
                         .data_flags
                         .contains(AttributeDataFlags::IS_COMPRESSED);
-                    let covered: u64 = runs.iter().map(|r| r.1).sum();
-                    let needed = header.allocated_length.div_ceil(self.cluster);
+                    let covered = runs.iter().fold(0u64, |n, r| n.saturating_add(r.1));
+                    let needed = header
+                        .file_size
+                        .max(header.allocated_length)
+                        .div_ceil(self.cluster);
                     deleted.push((
                         entry.header.record_number,
                         runs,
                         header.file_size,
-                        (compressed && header.unit_compression_size > 0)
-                            .then(|| 1_u64 << header.unit_compression_size.min(16)),
+                        header.valid_data_length.min(header.file_size),
+                        compressed.then_some(16),
                         covered < needed,
-                        compressed && header.unit_compression_size == 0,
+                        compressed && (header.unit_compression_size != 4 || self.cluster > 4096),
                     ));
                 }
             }
         }
         self.extents.sort_by_key(|e| e.lcn);
-        for (record, runs, size, compression_unit, incomplete, odd) in deleted {
+        for (record, runs, size, initialized, compression_unit, incomplete, odd) in deleted {
             let path = self
                 .parser
                 .get_entry(record)
@@ -271,13 +282,16 @@ impl Volume {
             let reused = runs
                 .iter()
                 .filter_map(|(lcn, len)| lcn.map(|l| (l, *len)))
-                .any(|(lcn, len)| (lcn..lcn.saturating_add(len)).any(|c| self.allocated(c)));
+                .any(|(lcn, len)| {
+                    let end = lcn.saturating_add(len);
+                    end > self.len / self.cluster || (lcn..end).any(|c| self.allocated(c))
+                });
             let problem = if incomplete {
                 Some("Its data runs continue in other $MFT records".to_string())
             } else if reused {
                 Some("Some of its clusters were reused".to_string())
             } else if odd {
-                Some("It is compressed without a compression unit size".to_string())
+                Some("Unsupported NTFS compression unit or cluster size".to_string())
             } else if size > MAX_REBUILT {
                 Some("It is larger than 4 GiB".to_string())
             } else {
@@ -306,6 +320,7 @@ impl Volume {
                 path,
                 runs,
                 size,
+                initialized,
                 compression_unit,
                 problem,
             });
@@ -325,7 +340,8 @@ impl Volume {
     fn free_parts(&self, lcn: u64, len: u64) -> Vec<(u64, u64)> {
         let mut parts = Vec::new();
         let mut start = None;
-        for c in lcn..lcn.saturating_add(len) {
+        let end = lcn.saturating_add(len).min(self.len / self.cluster);
+        for c in lcn..end {
             match (self.allocated(c), start) {
                 (false, None) => start = Some(c),
                 (true, Some(s)) => {
@@ -336,7 +352,7 @@ impl Volume {
             }
         }
         if let Some(s) = start {
-            parts.push((s, lcn + len - s));
+            parts.push((s, end - s));
         }
         parts
     }
@@ -443,18 +459,11 @@ impl Volume {
     ) -> io::Result<u64> {
         let cluster = self.cluster;
         // The VCN-ordered clusters: Some(lcn) or None (sparse).
-        let lcns = log
+        let mut lcns = log
             .runs
             .iter()
             .flat_map(|(lcn, len)| (0..*len).map(move |i| lcn.map(|l| l + i)));
         let mut written = 0_u64;
-        let mut write = |out: &mut dyn Write, data: &[u8]| -> io::Result<bool> {
-            let take =
-                usize::try_from((log.size - written).min(data.len() as u64)).unwrap_or(data.len());
-            out.write_all(&data[..take])?;
-            written += take as u64;
-            Ok(written < log.size)
-        };
         let read_cluster = |disk: &mut dyn ReadSeekDyn, lcn: u64| -> io::Result<Vec<u8>> {
             let mut buf = vec![0_u8; cluster as usize];
             disk.seek(SeekFrom::Start(self.start + lcn * cluster))?;
@@ -462,8 +471,11 @@ impl Volume {
             Ok(buf)
         };
         let unit = log.compression_unit.unwrap_or(1);
-        let lcns: Vec<Option<u64>> = lcns.collect();
-        for group in lcns.chunks(unit as usize) {
+        while written < log.initialized {
+            let group: Vec<_> = lcns.by_ref().take(unit as usize).collect();
+            if group.is_empty() {
+                break;
+            }
             let allocated: Vec<u64> = group.iter().flatten().copied().collect();
             let data = if log.compression_unit.is_some()
                 && !allocated.is_empty()
@@ -481,7 +493,7 @@ impl Volume {
                 data
             } else {
                 let mut data = Vec::with_capacity(group.len() * cluster as usize);
-                for lcn in group {
+                for lcn in &group {
                     match lcn {
                         Some(lcn) => data.extend_from_slice(&read_cluster(disk, *lcn)?),
                         None => data.resize(data.len() + cluster as usize, 0),
@@ -489,14 +501,72 @@ impl Volume {
                 }
                 data
             };
-            if !write(out, &data)? {
-                break;
-            }
+            let take = (log.initialized - written).min(data.len() as u64) as usize;
+            out.write_all(&data[..take])?;
+            written += take as u64;
         }
-        Ok(written)
+        if written != log.initialized {
+            return Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "data runs end before the logical file size",
+            ));
+        }
+        // The NTFS logical stream reads as zeros past valid data length. Bytes
+        // remaining on disk there may belong to a previous file.
+        io::copy(&mut io::repeat(0).take(log.size - written), out)?;
+        Ok(log.size)
     }
 }
 
 /// `Read + Seek` as a trait object.
 trait ReadSeekDyn: Read + Seek {}
 impl<T: Read + Seek + ?Sized> ReadSeekDyn for T {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deleted_log_uses_initialized_length_and_rejects_short_runs() {
+        let mut bytes = Vec::new();
+        flate2::read::GzDecoder::new(
+            &include_bytes!("../../test_files/carve_evtx/sample.raw.gz")[..],
+        )
+        .read_to_end(&mut bytes)
+        .unwrap();
+        let image = Arc::new(
+            Image::from_disk(
+                Box::new(io::Cursor::new(bytes.clone())),
+                bytes.len() as u64,
+                512,
+            )
+            .unwrap(),
+        );
+        let volume = Volume::open(&image, 0).unwrap();
+        let mut log = volume
+            .deleted_logs
+            .iter()
+            .find(|log| log.problem.is_none())
+            .unwrap()
+            .clone();
+        let mut disk = io::Cursor::new(bytes);
+        let mut original = Vec::new();
+        volume.rebuild(&log, &mut disk, &mut original).unwrap();
+        let limit = 4096 + 512;
+        assert!(original[limit..].iter().any(|&b| b != 0));
+        log.initialized = limit as u64;
+        let mut rebuilt = Vec::new();
+        volume.rebuild(&log, &mut disk, &mut rebuilt).unwrap();
+        assert_eq!(&rebuilt[..limit], &original[..limit]);
+        assert_eq!(rebuilt.len(), original.len());
+        assert!(rebuilt[limit..].iter().all(|&b| b == 0));
+        log.runs.clear();
+        assert_eq!(
+            volume
+                .rebuild(&log, &mut disk, &mut Vec::new())
+                .unwrap_err()
+                .kind(),
+            io::ErrorKind::UnexpectedEof
+        );
+    }
+}

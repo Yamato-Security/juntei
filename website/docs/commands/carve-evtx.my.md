@@ -39,7 +39,7 @@ Chunk တစ်ခုစီကို တစ်ကြိမ်သာ ရေးသ
 
 ## ရလဒ်များ { #results }
 
-- `Carved/<CHANNEL>.evtx`: channel တစ်ခုလျှင် log တစ်ခု၊ Windows က log များကို အမည်ပေးသည့်အတိုင်း အမည်ပေးသည် (`Microsoft-Windows-Sysmon%4Operational.evtx`)။ Chunk header ရှိ record နံပါတ်များကို နံပါတ်ပြန်တပ်ပြီး checksum များကို ပြန်တွက်သည်။ ပျက်စီးနေသော record နှင့် ၎င်းနောက်ရှိ အရာအားလုံးသည် slack ဖြစ်သွားသည်။ ထိုမှလွဲ၍ chunk တစ်ခုစီကို ၎င်း၏ slack အပါအဝင် တစ်ခုလုံး ထိန်းသိမ်းထားသောကြောင့် Hayabusa ၏ `-x` ကဲ့သို့ record ပြန်လည်ရယူမှုကို ၎င်းပေါ်တွင် ဆက်လက်အသုံးပြုနိုင်သည်။
+- `Carved/<CHANNEL>.evtx`: channel တစ်ခုလျှင် log တစ်ခု၊ Windows က log များကို အမည်ပေးသည့်အတိုင်း အမည်ပေးသည် (`Microsoft-Windows-Sysmon%4Operational.evtx`)။ Chunk header ရှိ record နံပါတ်များကို နံပါတ်ပြန်တပ်ပြီး checksum များကို ပြန်တွက်သည်။ ပျက်စီးနေသော record နှင့် ၎င်းနောက်ရှိ အရာအားလုံးသည် slack ဖြစ်သွားသည်။ ထိုမှလွဲ၍ chunk တစ်ခုစီကို ၎င်း၏ slack အပါအဝင် တစ်ခုလုံး ထိန်းသိမ်းထားသောကြောင့် Hayabusa ၏ `-x` ကဲ့သို့ record ပြန်လည်ရယူမှုကို ၎င်းပေါ်တွင် ဆက်လက်အသုံးပြုနိုင်သည်။ Hayabusa ၏ `-x` သည် အလွတ်ဟု မှတ်သားထားသော chunk များကို ရှာဖွေသည်။ တစ်စိတ်တစ်ပိုင်း အသုံးပြုထားသော chunk များ၏ slack နေရာတွင် ကျန်နေသော record များကို Juntei ၏ `records.csv` တွင် ကြည့်နိုင်သည်။
 - `Recovered/Volume<N>/...`: `$MFT` record များမှ ပြန်တည်ဆောက်ထားသော ဖျက်ထားသည့် log များ။
 - `chunks.csv` / `chunks.jsonl`: တွေ့ရှိသော chunk တိုင်း၊ ၎င်းရှိခဲ့သည့်နေရာ၊ ၎င်းကို မည်သို့ ကိုင်တွယ်ခဲ့သည် (`Status`)၊ channel၊ record ID များ၊ အချိန်များနှင့် checksum အခြေအနေ။
 - `records.csv` / `records.jsonl`: ရေးထားသော chunk များ၏ record တိုင်း။ `OnlyInCarvedData` သည် live log များတွင် မရှိသော record များကို အမှတ်အသားပြုသည်။

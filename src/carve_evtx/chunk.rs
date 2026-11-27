@@ -26,7 +26,8 @@ pub const MAGIC: &[u8; 8] = b"ElfChnk\0";
 /// The record signature.
 const RECORD_MAGIC: [u8; 4] = [0x2a, 0x2a, 0x00, 0x00];
 /// A record's header (signature, size, ID and time) plus the copy of its size at its end.
-const MIN_RECORD: usize = 28;
+pub(super) const RECORD_HEADER_SIZE: usize = 24;
+const MIN_RECORD: usize = RECORD_HEADER_SIZE + 4;
 /// More records than fit in a chunk can't be right.
 const MAX_RECORDS: u64 = ((CHUNK_SIZE - HEADER_SIZE) / MIN_RECORD) as u64;
 /// LZNT1 compresses each 4 KiB of a compression unit separately.
@@ -106,8 +107,6 @@ impl Header {
             let last_record = last_record_offset as usize;
             if first_number > last_number
                 || last_number - first_number >= MAX_RECORDS
-                || first_id > last_id
-                || last_id - first_id >= MAX_RECORDS
                 || !(HEADER_SIZE..free_space).contains(&last_record)
             {
                 return None;
@@ -147,7 +146,7 @@ fn record_at(chunk: &[u8], offset: usize, slack: bool) -> Option<Record> {
         return None;
     }
     let size = u32_at(chunk, offset + 4) as usize;
-    if size < MIN_RECORD || !size.is_multiple_of(8) || offset + size > chunk.len() {
+    if size < MIN_RECORD || !size.is_multiple_of(8) || size > chunk.len() - offset {
         return None;
     }
     if u32_at(chunk, offset + size - 4) as usize != size {
@@ -188,7 +187,7 @@ impl Records {
 /// the next valid record after a damaged one; then every valid record in the slack.
 pub fn records(chunk: &[u8], header: &Header) -> Records {
     let mut out = Records::default();
-    let free_space = (header.free_space_offset as usize).min(CHUNK_SIZE);
+    let free_space = (header.free_space_offset as usize).min(chunk.len());
     let mut offset = HEADER_SIZE;
     if !header.empty {
         let last = header.last_record_offset as usize;
@@ -211,6 +210,10 @@ pub fn records(chunk: &[u8], header: &Header) -> Records {
                 }
             }
         }
+    }
+    if !header.empty && offset <= header.last_record_offset as usize && out.first_damage.is_none() {
+        out.first_damage = Some(offset);
+        out.damaged += 1;
     }
     // Old records: in an empty page from its header on, otherwise after the free space.
     let mut offset = if header.empty {
@@ -420,8 +423,15 @@ pub fn renumber(chunk: &mut [u8], records: &Records, next_number: u64) -> (u64, 
             chunk[0x7c..0x80].copy_from_slice(&checksum.to_le_bytes());
             return (next_number + count, truncated);
         }
+        // No contiguous record survived at the start. Advertise an empty page so
+        // readers can recover the remaining bytes as slack without parsing a bad first record.
+        chunk[0x08..0x10].copy_from_slice(&1_u64.to_le_bytes());
+        chunk[0x10..0x28].fill(0xff);
+        chunk[0x2c..0x30].fill(0);
+        chunk[0x30..0x34].copy_from_slice(&(HEADER_SIZE as u32).to_le_bytes());
+        truncated = true;
     }
-    let data = data_checksum(chunk, header.free_space_offset);
+    let data = data_checksum(chunk, u32_at(chunk, 0x30));
     chunk[0x34..0x38].copy_from_slice(&data.to_le_bytes());
     let checksum = header_checksum(chunk);
     chunk[0x7c..0x80].copy_from_slice(&checksum.to_le_bytes());
@@ -546,6 +556,47 @@ mod tests {
         assert_eq!((header.first_number, header.last_number), (100, 101));
         assert_eq!((header.first_id, header.last_id), (5, 6));
         assert!(header.header_checksum_valid && header.data_checksum_valid);
+    }
+
+    #[test]
+    fn damaged_first_record_becomes_an_empty_page_preserving_later_records() {
+        let mut chunk = chunk_with(&[10, 11, 12]);
+        chunk[HEADER_SIZE] = 0;
+        let found = records(&chunk, &Header::parse(&chunk).unwrap());
+        let payload = chunk[HEADER_SIZE..].to_vec();
+        assert_eq!(renumber(&mut chunk, &found, 77), (77, true));
+        let repaired = Header::parse(&chunk).unwrap();
+        assert!(repaired.empty && repaired.header_checksum_valid && repaired.data_checksum_valid);
+        assert_eq!(&chunk[HEADER_SIZE..], payload);
+        let found = records(&chunk, &repaired);
+        assert_eq!(
+            found
+                .records
+                .iter()
+                .map(|r| (r.id, r.slack))
+                .collect::<Vec<_>>(),
+            [(11, true), (12, true)]
+        );
+    }
+
+    #[test]
+    fn padding_does_not_complete_a_missing_record_footer() {
+        let chunk = chunk_with(&[1, 2]);
+        let header = Header::parse(&chunk).unwrap();
+        let end = header.free_space_offset as usize - 1;
+        assert_eq!(chunk[end], 0);
+        let found = records(&chunk[..end], &header);
+        assert_eq!(found.allocated().map(|r| r.id).collect::<Vec<_>>(), [1]);
+        assert_eq!(found.first_damage, Some(HEADER_SIZE + 32));
+    }
+
+    #[test]
+    fn nonconsecutive_ids_do_not_invalidate_a_structurally_sound_chunk() {
+        for ids in [[1, 9000], [9000, 1]] {
+            let chunk = chunk_with(&ids);
+            let header = Header::parse(&chunk).unwrap();
+            assert_eq!(records(&chunk, &header).allocated().count(), 2);
+        }
     }
 
     #[test]

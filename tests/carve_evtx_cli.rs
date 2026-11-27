@@ -489,3 +489,70 @@ fn a_bad_input_leaves_no_results_directory() {
     assert_eq!(result.code, 1);
     assert!(!out.exists());
 }
+
+#[test]
+fn repeated_last_record_id_preserves_per_record_metadata() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut chunk = first_chunk(&sample_log("new-user-security.evtx"));
+    let input = dir.path().join("chunk.bin");
+    let run_chunk = |chunk: &[u8], name: &str| {
+        fs::write(&input, chunk).unwrap();
+        let out = dir.path().join(name);
+        let result = run(&[
+            "carve-evtx",
+            "-f",
+            input.to_str().unwrap(),
+            "-o",
+            out.to_str().unwrap(),
+        ]);
+        assert_eq!(result.code, 0, "{}", result.stderr);
+        rows(&out.join("records.csv"))
+            .into_iter()
+            .filter(|r| r["Allocation"] == "Allocated")
+            .map(|r| {
+                (
+                    r["RecordOffset"].clone(),
+                    r["EventId"].clone(),
+                    r["Channel"].clone(),
+                )
+            })
+            .collect::<Vec<_>>()
+    };
+    let expected = run_chunk(&chunk, "original");
+    assert_eq!(expected.len(), 4);
+    assert!(
+        expected
+            .iter()
+            .all(|(_, id, channel)| !id.is_empty() && channel == "Security")
+    );
+    let last_id: [u8; 8] = chunk[32..40].try_into().unwrap();
+    chunk[520..528].copy_from_slice(&last_id);
+    assert_eq!(run_chunk(&chunk, "duplicate"), expected);
+}
+
+#[test]
+fn identical_records_prefer_the_intact_chunk_over_an_earlier_damaged_copy() {
+    let dir = tempfile::tempdir().unwrap();
+    let original = first_chunk(&sample_log("new-user-security.evtx"));
+    let mut input = original.clone();
+    input[0x7c] ^= 1;
+    input.extend_from_slice(&original);
+    let file = dir.path().join("copies.bin");
+    fs::write(&file, input).unwrap();
+    let out = dir.path().join("out");
+    let result = run(&[
+        "carve-evtx",
+        "-f",
+        file.to_str().unwrap(),
+        "-o",
+        out.to_str().unwrap(),
+    ]);
+    assert_eq!(result.code, 0, "{}", result.stderr);
+    let chunks = rows(&out.join("chunks.csv"));
+    let written: Vec<_> = chunks
+        .iter()
+        .filter(|row| row["Status"] == "Written")
+        .collect();
+    assert_eq!(written.len(), 1);
+    assert_eq!(written[0]["HeaderChecksumValid"], "true");
+}

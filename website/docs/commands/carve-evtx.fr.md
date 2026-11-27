@@ -39,7 +39,7 @@ Chaque chunk n'est écrit qu'une fois. Un chunk est exclu lorsqu'il appartient �
 
 ## Résultats { #results }
 
-- `Carved/<CHANNEL>.evtx` : un journal par canal, nommé comme Windows nomme ses journaux (`Microsoft-Windows-Sysmon%4Operational.evtx`). Les numéros d'enregistrement des en-têtes de chunk sont renumérotés et les sommes de contrôle recalculées. Un enregistrement endommagé et tout ce qui le suit deviennent du slack. Pour le reste, chaque chunk est conservé en entier, slack compris, afin que la récupération d'enregistrements, comme l'option `-x` de Hayabusa, reste possible.
+- `Carved/<CHANNEL>.evtx` : un journal par canal, nommé comme Windows nomme ses journaux (`Microsoft-Windows-Sysmon%4Operational.evtx`). Les numéros d'enregistrement des en-têtes de chunk sont renumérotés et les sommes de contrôle recalculées. Un enregistrement endommagé et tout ce qui le suit deviennent du slack. Pour le reste, chaque chunk est conservé en entier, slack compris, afin que la récupération d'enregistrements, comme l'option `-x` de Hayabusa, reste possible. L’option `-x` de Hayabusa examine les blocs marqués comme vides. Consultez le fichier `records.csv` de Juntei pour retrouver les enregistrements dans l’espace résiduel des blocs partiellement occupés.
 - `Recovered/Volume<N>/...` : les journaux supprimés reconstruits à partir de leurs enregistrements `$MFT`.
 - `chunks.csv` / `chunks.jsonl` : chaque chunk trouvé, avec son emplacement, ce qu'il est devenu (`Status`), son canal, les identifiants d'enregistrement, les horodatages et l'état de la somme de contrôle.
 - `records.csv` / `records.jsonl` : chaque enregistrement des chunks écrits. `OnlyInCarvedData` signale les enregistrements absents des journaux actifs.

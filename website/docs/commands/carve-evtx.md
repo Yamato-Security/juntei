@@ -39,7 +39,7 @@ Each chunk is written once. A chunk is left out when it belongs to a live log, w
 
 ## Results { #results }
 
-- `Carved/<CHANNEL>.evtx`: one log per channel, named as Windows names logs (`Microsoft-Windows-Sysmon%4Operational.evtx`). Chunk header record numbers are renumbered and checksums recomputed. A damaged record and everything after it become slack. Each chunk is otherwise kept whole, including its slack, so record recovery such as Hayabusa's `-x` still works on it.
+- `Carved/<CHANNEL>.evtx`: one log per channel, named as Windows names logs (`Microsoft-Windows-Sysmon%4Operational.evtx`). Chunk header record numbers are renumbered and checksums recomputed. A damaged record and everything after it become slack. Each chunk is otherwise kept whole, including its slack. Hayabusa’s `-x` searches chunks marked empty. Use Juntei’s `records.csv` to find slack records in partially occupied chunks.
 - `Recovered/Volume<N>/...`: deleted logs rebuilt from their `$MFT` records.
 - `chunks.csv` / `chunks.jsonl`: every chunk found: where it was, what became of it (`Status`), its channel, record IDs, times and checksum state.
 - `records.csv` / `records.jsonl`: every record of the chunks written. `OnlyInCarvedData` marks records that the live logs do not hold.

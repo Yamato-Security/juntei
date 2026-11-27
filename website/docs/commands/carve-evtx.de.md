@@ -39,7 +39,7 @@ Jeder Chunk wird nur einmal geschrieben. Ein Chunk wird ausgelassen, wenn er zu 
 
 ## Ergebnisse { #results }
 
-- `Carved/<CHANNEL>.evtx`: Ein Protokoll pro Kanal, benannt wie die Protokolldateien von Windows (`Microsoft-Windows-Sysmon%4Operational.evtx`). Die Datensatznummern in den Chunk-Headern werden neu vergeben und die Prüfsummen neu berechnet. Ein beschädigter Datensatz und alles danach werden zu Slack. Ansonsten bleibt jeder Chunk einschließlich seines Slacks vollständig erhalten, sodass sich darin weiterhin Datensätze wiederherstellen lassen, etwa mit `-x` von Hayabusa.
+- `Carved/<CHANNEL>.evtx`: Ein Protokoll pro Kanal, benannt wie die Protokolldateien von Windows (`Microsoft-Windows-Sysmon%4Operational.evtx`). Die Datensatznummern in den Chunk-Headern werden neu vergeben und die Prüfsummen neu berechnet. Ein beschädigter Datensatz und alles danach werden zu Slack. Ansonsten bleibt jeder Chunk einschließlich seines Slacks vollständig erhalten, sodass sich darin weiterhin Datensätze wiederherstellen lassen, etwa mit `-x` von Hayabusa. Hayabusas Option `-x` durchsucht als leer markierte Chunks. Datensätze im Slack teilweise belegter Chunks finden Sie in Junteis `records.csv`.
 - `Recovered/Volume<N>/...`: Gelöschte Protokolle, die aus ihren `$MFT`-Datensätzen neu aufgebaut wurden.
 - `chunks.csv` / `chunks.jsonl`: Jeder gefundene Chunk: wo er lag, was mit ihm geschah (`Status`), sein Kanal, Datensatz-IDs, Zeiten und Prüfsummenstatus.
 - `records.csv` / `records.jsonl`: Jeder Datensatz der geschriebenen Chunks. `OnlyInCarvedData` kennzeichnet Datensätze, die in den aktiven Protokollen fehlen.

@@ -39,7 +39,7 @@ E01 또는 VHDX 이미지, 또는 NTFS가 있는 원시 디스크나 볼륨에�
 
 ## 결과 { #results }
 
-- `Carved/<CHANNEL>.evtx`: 채널별 로그 하나로, Windows의 로그 이름 규칙을 따릅니다(`Microsoft-Windows-Sysmon%4Operational.evtx`). 청크 헤더의 레코드 번호는 다시 매기고 체크섬은 다시 계산합니다. 손상된 레코드와 그 뒤의 모든 내용은 슬랙이 됩니다. 그 밖에는 각 청크를 슬랙까지 포함해 그대로 유지하므로, Hayabusa의 `-x` 같은 레코드 복구를 여전히 적용할 수 있습니다.
+- `Carved/<CHANNEL>.evtx`: 채널별 로그 하나로, Windows의 로그 이름 규칙을 따릅니다(`Microsoft-Windows-Sysmon%4Operational.evtx`). 청크 헤더의 레코드 번호는 다시 매기고 체크섬은 다시 계산합니다. 손상된 레코드와 그 뒤의 모든 내용은 슬랙이 됩니다. 그 밖에는 각 청크를 슬랙까지 포함해 그대로 유지하므로, Hayabusa의 `-x` 같은 레코드 복구를 여전히 적용할 수 있습니다. Hayabusa의 `-x`는 비어 있다고 표시된 청크를 검색합니다. 일부가 사용 중인 청크의 슬랙에 남은 레코드는 Juntei의 `records.csv`에서 확인할 수 있습니다.
 - `Recovered/Volume<N>/...`: `$MFT` 레코드로부터 재구성한 삭제된 로그입니다.
 - `chunks.csv` / `chunks.jsonl`: 발견된 모든 청크입니다. 위치, 처리 결과(`Status`), 채널, 레코드 ID, 시간, 체크섬 상태를 기록합니다.
 - `records.csv` / `records.jsonl`: 기록된 청크의 모든 레코드입니다. `OnlyInCarvedData`는 사용 중인 로그에 없는 레코드를 표시합니다.

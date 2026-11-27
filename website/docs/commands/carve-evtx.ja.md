@@ -39,7 +39,7 @@ E01 または VHDX のイメージ、あるいは NTFS を持つ RAW のディ�
 
 ## 出力 { #results }
 
-- `Carved/<CHANNEL>.evtx`: チャネルごとに一つのログで、Windows のログと同じ名前の付け方です（`Microsoft-Windows-Sysmon%4Operational.evtx`）。チャンクヘッダーのレコード番号を振り直し、チェックサムを計算し直します。壊れたレコードとその後ろのすべてのレコードはスラックになります。それ以外の部分はスラックも含めてそのまま残すため、Hayabusa の `-x` などのレコード復元もそのまま使えます。
+- `Carved/<CHANNEL>.evtx`: チャネルごとに一つのログで、Windows のログと同じ名前の付け方です（`Microsoft-Windows-Sysmon%4Operational.evtx`）。チャンクヘッダーのレコード番号を振り直し、チェックサムを計算し直します。壊れたレコードとその後ろのすべてのレコードはスラックになります。それ以外の部分はスラックも含めてそのまま残します。Hayabusa の `-x` は空とマークされたチャンクを検索します。使用中のチャンクのスラックに残るレコードは、Juntei の `records.csv` で確認できます。
 - `Recovered/Volume<N>/...`: `$MFT` レコードから復元した削除済みのログです。
 - `chunks.csv` / `chunks.jsonl`: 見つかったすべてのチャンクです。場所、扱い（`Status`）、チャネル、レコード ID、時刻、チェックサムの状態を記録します。
 - `records.csv` / `records.jsonl`: 書き出したチャンクのすべてのレコードです。`OnlyInCarvedData` は現行ログにないレコードを示します。

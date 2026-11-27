@@ -129,8 +129,8 @@ carved/
 chunk, the record numbers in the header are renumbered to continue from the previous chunk, and
 both checksums are recomputed so that Event Viewer opens the file. When an allocated record is
 damaged, it and every record after it become slack, so that readers which stop at a bad record
-still read the good ones. Each chunk is otherwise kept byte for byte, including its slack, so
-record recovery such as Hayabusa's `-x` still works on it.
+still read the good ones. Each chunk is otherwise kept byte for byte, including its slack.
+Hayabusa’s `-x` searches chunks marked empty. Use Juntei’s `records.csv` to find slack records in partially occupied chunks.
 
 ```bash
 hayabusa csv-timeline -d carved/Carved -a -o carved-timeline.csv

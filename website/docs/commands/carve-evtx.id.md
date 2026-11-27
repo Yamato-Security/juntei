@@ -39,7 +39,7 @@ Setiap chunk ditulis satu kali. Sebuah chunk tidak disertakan jika chunk itu mil
 
 ## Hasil { #results }
 
-- `Carved/<CHANNEL>.evtx`: satu log per channel, dinamai seperti cara Windows menamai log (`Microsoft-Windows-Sysmon%4Operational.evtx`). Nomor record di header chunk dinomori ulang dan checksum dihitung ulang. Record yang rusak dan semua yang ada setelahnya menjadi slack. Selain itu, setiap chunk disimpan utuh, termasuk slack-nya, sehingga pemulihan record seperti `-x` milik Hayabusa tetap berfungsi pada chunk tersebut.
+- `Carved/<CHANNEL>.evtx`: satu log per channel, dinamai seperti cara Windows menamai log (`Microsoft-Windows-Sysmon%4Operational.evtx`). Nomor record di header chunk dinomori ulang dan checksum dihitung ulang. Record yang rusak dan semua yang ada setelahnya menjadi slack. Selain itu, setiap chunk disimpan utuh, termasuk slack-nya, sehingga pemulihan record seperti `-x` milik Hayabusa tetap berfungsi pada chunk tersebut. Opsi `-x` Hayabusa memindai chunk yang ditandai kosong. Lihat `records.csv` dari Juntei untuk menemukan rekaman di ruang slack pada chunk yang terisi sebagian.
 - `Recovered/Volume<N>/...`: log terhapus yang dibangun ulang dari record `$MFT`-nya.
 - `chunks.csv` / `chunks.jsonl`: setiap chunk yang ditemukan: lokasinya, apa yang terjadi padanya (`Status`), channel, ID record, waktu, dan status checksum.
 - `records.csv` / `records.jsonl`: setiap record dari chunk yang ditulis. `OnlyInCarvedData` menandai record yang tidak ada di log aktif.

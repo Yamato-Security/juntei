@@ -248,13 +248,24 @@ impl Live {
                     n => got += n,
                 }
             }
-            if got < CHUNK_SIZE {
+            if got == 0 {
                 break;
             }
-            if let Some(header) = Header::parse(&data) {
-                self.chunks.insert(Sha256::digest(&data).into());
-                let found = chunk::records(&data, &header);
+            data[got..].fill(0);
+            if got >= chunk::HEADER_SIZE
+                && let Some(header) = Header::parse(&data)
+            {
+                if got == CHUNK_SIZE {
+                    self.chunks.insert(Sha256::digest(&data).into());
+                }
+                let found = chunk::records(&data[..got], &header);
                 self.records.extend(found.allocated().map(|r| r.hash));
+            }
+            if got < CHUNK_SIZE {
+                return Err(io::Error::new(
+                    io::ErrorKind::UnexpectedEof,
+                    "truncated final EVTX chunk",
+                ));
             }
         }
         self.logs += 1;
@@ -388,17 +399,20 @@ impl Collector {
         location: Location,
         volume: Option<usize>,
         compressed: bool,
-        truncated: bool,
+        present: usize,
         from_input: bool,
     ) -> io::Result<()> {
-        let Some(header) = Header::parse(&data) else {
+        let Some(mut header) = Header::parse(&data) else {
             return Ok(());
         };
         let source = self.strings.id(source);
         if !self.seen.insert((source, offset)) {
             return Ok(());
         }
-        let records = chunk::records(&data, &header);
+        if (header.free_space_offset as usize) > present {
+            header.data_checksum_valid = false;
+        }
+        let records = chunk::records(&data[..present], &header);
         let info = self.render(&data, &records);
         let channel = most_common(info.iter().flatten().map(|i| i.channel))
             .or_else(|| {
@@ -433,7 +447,7 @@ impl Collector {
             location,
             volume,
             compressed,
-            truncated,
+            truncated: present < CHUNK_SIZE,
             header,
             sha: Sha256::digest(&data).into(),
             records,
@@ -453,27 +467,38 @@ impl Collector {
     fn render(&mut self, data: &[u8], records: &Records) -> Vec<Option<Info>> {
         let settings = self.settings.clone();
         let rendered = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let mut out: Vec<(u64, serde_json::Value)> = Vec::new();
+            let mut out = Vec::new();
             let Ok(mut chunk_data) = EvtxChunkData::new(data.to_vec(), false) else {
                 return out;
             };
+            // evtx 0.12.3 stops at the first matching last ID. Constrain its temporary
+            // view to the structurally verified records and use an unused ID as its stop marker.
+            let Some(last) = records.allocated().last() else {
+                return out;
+            };
+            chunk_data.header.free_space_offset = (last.offset + last.size) as u32;
+            if records
+                .allocated()
+                .any(|r| r.offset < last.offset && r.id == chunk_data.header.last_event_record_id)
+            {
+                let ids: HashSet<_> = records.allocated().map(|r| r.id).collect();
+                chunk_data.header.last_event_record_id =
+                    (0..).find(|id| !ids.contains(id)).unwrap();
+            }
             let Ok(mut chunk) = chunk_data.parse(settings) else {
                 return out;
             };
-            for record in chunk.iter() {
-                let Ok(record) = record else {
-                    break;
-                };
-                let id = record.event_record_id;
+            for record in chunk.iter().flatten() {
+                let offset = record.binxml_offset as usize - chunk::RECORD_HEADER_SIZE;
                 if let Ok(json) = record.into_json_value() {
-                    out.push((id, json.data));
+                    out.push((offset, json.data));
                 }
             }
             out
         }))
         .unwrap_or_default();
-        let mut by_id: HashMap<u64, Vec<Info>> = HashMap::new();
-        for (id, json) in rendered.into_iter().rev() {
+        let mut by_offset = HashMap::new();
+        for (offset, json) in rendered {
             let system = &json["Event"]["System"];
             let text = |v: &serde_json::Value| match v {
                 serde_json::Value::String(s) => s.clone(),
@@ -498,18 +523,12 @@ impl Collector {
                     .id(&text(&system["Provider"]["#attributes"]["Name"])),
                 computer: self.strings.id(&text(&system["Computer"])),
             };
-            by_id.entry(id).or_default().push(info);
+            by_offset.insert(offset, info);
         }
         records
             .records
             .iter()
-            .map(|r| {
-                if r.slack {
-                    None
-                } else {
-                    by_id.get_mut(&r.id).and_then(Vec::pop)
-                }
-            })
+            .map(|r| by_offset.remove(&r.offset))
             .collect()
     }
 
@@ -560,7 +579,17 @@ struct Stats {
 /// records go first, so an older, shorter copy of a chunk adds nothing.
 fn choose(chunks: &mut [Found], live: &Live, keep_live: bool) {
     let mut order: Vec<usize> = (0..chunks.len()).collect();
-    order.sort_by_key(|&i| (std::cmp::Reverse(chunks[i].records.records.len()), i));
+    order.sort_by_key(|&i| {
+        let found = &chunks[i];
+        (
+            std::cmp::Reverse(found.records.records.len()),
+            found.truncated,
+            found.records.damaged,
+            !found.header.data_checksum_valid,
+            !found.header.header_checksum_valid,
+            i,
+        )
+    });
     let mut seen_chunks: HashSet<[u8; 32]> = HashSet::new();
     let mut carved: HashSet<[u8; 16]> = HashSet::new();
     for i in order {
@@ -619,15 +648,34 @@ fn log_file_name(channel: &str) -> String {
     if safe.is_empty() {
         safe = "Unknown".into();
     }
-    let upper = safe.to_ascii_uppercase();
-    if matches!(upper.as_str(), "CON" | "PRN" | "AUX" | "NUL")
-        || ((upper.starts_with("COM") || upper.starts_with("LPT"))
-            && upper.len() == 4
-            && upper.as_bytes()[3].is_ascii_digit())
-    {
+    if windows_device_name(&safe) {
         safe.insert(0, '_');
     }
-    safe.chars().take(200).collect()
+    // Leave room for a collision suffix and extension on byte-limited file systems.
+    safe.truncate(safe.floor_char_boundary(200));
+    safe
+}
+
+/// Windows reserves these names even with a file extension.
+fn windows_device_name(name: &str) -> bool {
+    let stem = name
+        .split('.')
+        .next()
+        .unwrap_or_default()
+        .trim_end_matches(' ')
+        .to_ascii_uppercase();
+    matches!(
+        stem.as_str(),
+        "CON" | "PRN" | "AUX" | "NUL" | "CONIN$" | "CONOUT$"
+    ) || stem
+        .strip_prefix("COM")
+        .or_else(|| stem.strip_prefix("LPT"))
+        .is_some_and(|n| {
+            matches!(
+                n,
+                "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³"
+            )
+        })
 }
 
 /// A path from an NTFS volume as a relative path under the output directory.
@@ -645,6 +693,10 @@ fn safe_relative(path: &str) -> PathBuf {
             })
             .collect();
         let safe = safe.trim_end_matches(['.', ' ']);
+        if windows_device_name(safe) {
+            out.push(format!("_{safe}"));
+            continue;
+        }
         out.push(match safe {
             "" | "." | ".." => "_",
             s => s,
@@ -902,14 +954,14 @@ fn scan(
     len: u64,
     bar: Option<&ProgressBar>,
     stats: &mut Stats,
-    found: &mut dyn FnMut(&mut dyn Disk, u64) -> io::Result<()>,
+    found: &mut impl FnMut(&mut dyn Disk, u64, std::ops::Range<u64>) -> io::Result<()>,
 ) -> io::Result<()> {
     let end = start.saturating_add(len).min(size);
     let mut offset = start;
     let overlap = MAGIC.len() - 1;
     while offset < end {
         let want = usize::try_from((end - offset).min(BLOCK as u64)).unwrap_or(BLOCK);
-        let (block, got) = read_at(disk, size, offset, want + overlap)?;
+        let (block, got) = read_at(disk, end, offset, want + overlap)?;
         if got == 0 {
             break;
         }
@@ -920,7 +972,7 @@ fn scan(
             .collect();
         for hit in hits {
             stats.signatures += 1;
-            found(disk, hit)?;
+            found(disk, hit, start..end)?;
         }
         let step = want.min(got) as u64;
         offset += step;
@@ -938,26 +990,28 @@ fn scan(
 /// The chunk at a signature: as it is, or decompressed from NTFS compression around it.
 fn extract(
     disk: &mut dyn Disk,
-    size: u64,
+    range: std::ops::Range<u64>,
     offset: u64,
     cluster: u64,
     grid: u64,
-) -> io::Result<Option<(Vec<u8>, bool, bool)>> {
-    let (data, got) = read_at(disk, size, offset, CHUNK_SIZE)?;
-    if Header::parse(&data).is_some() {
-        return Ok(Some((data, false, got < CHUNK_SIZE)));
+) -> io::Result<Option<(Vec<u8>, bool, usize)>> {
+    let (data, got) = read_at(disk, range.end, offset, CHUNK_SIZE)?;
+    if got >= chunk::HEADER_SIZE && Header::parse(&data).is_some() {
+        return Ok(Some((data, false, got)));
     }
-    if offset < LZNT1_PREFIX {
+    if offset.saturating_sub(range.start.max(grid)) < LZNT1_PREFIX {
         return Ok(None);
     }
     let start = offset - LZNT1_PREFIX;
     let window = CHUNK_SIZE + 2 * cluster as usize + 0x2000;
-    let (raw, got) = read_at(disk, size, start, window)?;
-    let grid_offset = usize::try_from(start.saturating_sub(grid)).unwrap_or(0);
+    let (raw, got) = read_at(disk, range.end, start, window)?;
+    let grid_offset = (start.saturating_sub(grid) % cluster) as usize;
     Ok(
         chunk::decompress_chunk(&raw[..got], cluster as usize, grid_offset)
-            .filter(|(data, _)| Header::parse(data).is_some())
-            .map(|(data, present)| (data, true, present < CHUNK_SIZE)),
+            .filter(|(data, present)| {
+                *present >= chunk::HEADER_SIZE && Header::parse(data).is_some()
+            })
+            .map(|(data, present)| (data, true, present)),
     )
 }
 
@@ -994,10 +1048,6 @@ fn carve(opts: &Options, report: &dyn Fn(Option<&ProgressBar>, &str)) -> Result<
     if opts.free_space_only && input.image.is_none() {
         return Err("--free-space-only needs an input with an NTFS volume".into());
     }
-    // Only now that the input opened, so that a bad input leaves no results directory behind.
-    if let Some(out) = &opts.output {
-        fs::create_dir_all(out).map_err(|e| format!("Could not create {}: {e}", out.display()))?;
-    }
     let source_name = opts
         .file
         .file_name()
@@ -1023,6 +1073,9 @@ fn carve(opts: &Options, report: &dyn Fn(Option<&ProgressBar>, &str)) -> Result<
                 Ok(v) => volumes.push(v),
                 Err(e) => report(None, &format!("NTFS volume {}: {e}", index + 1)),
             }
+        }
+        if opts.free_space_only && volumes.is_empty() {
+            return Err("--free-space-only needs a readable NTFS allocation bitmap".into());
         }
         for volume in &mut volumes {
             for (record, path) in volume.live_log_paths() {
@@ -1053,6 +1106,10 @@ fn carve(opts: &Options, report: &dyn Fn(Option<&ProgressBar>, &str)) -> Result<
     }
     p(None, "", true);
 
+    // Create output after validating the input and allocation maps, so that a bad input leaves no results directory behind.
+    if let Some(out) = &opts.output {
+        fs::create_dir_all(out).map_err(|e| format!("Could not create {}: {e}", out.display()))?;
+    }
     let spool = opts.output.as_ref().map(|o| o.join(".carve-evtx-spool"));
     let mut collector = Collector::new(spool.clone())
         .map_err(|e| format!("Could not create the spool file: {e}"))?;
@@ -1123,17 +1180,24 @@ fn carve(opts: &Options, report: &dyn Fn(Option<&ProgressBar>, &str)) -> Result<
                                 location.clone(),
                                 Some(volume.number),
                                 false,
-                                false,
+                                CHUNK_SIZE,
                                 false,
                             )
                             .map_err(|e| format!("Could not write the spool file: {e}"))?;
                         offset += CHUNK_SIZE as u64;
                     }
                 }
-                Err(e) => stats.problems.push(format!(
-                    "Volume {} {} ($MFT record {}): could not be rebuilt: {e}",
-                    volume.number, log.path, log.record
-                )),
+                Err(e) => {
+                    drop(file);
+                    if let Some(out) = &opts.output {
+                        fs::remove_file(out.join(&label))
+                            .map_err(|e| format!("Could not remove incomplete {label}: {e}"))?;
+                    }
+                    stats.problems.push(format!(
+                        "Volume {} {} ($MFT record {}): could not be rebuilt: {e}",
+                        volume.number, log.path, log.record
+                    ));
+                }
             }
         }
     }
@@ -1159,41 +1223,43 @@ fn carve(opts: &Options, report: &dyn Fn(Option<&ProgressBar>, &str)) -> Result<
         let volumes = &mut volumes;
         let collector = &mut collector;
         let add_error = &mut add_error;
-        let mut on_hit = |disk: &mut dyn Disk, offset: u64| -> io::Result<()> {
-            let volume = volumes.iter_mut().find(|v| v.contains(offset));
-            let (cluster, grid) = volume
-                .as_ref()
-                .map_or((default_cluster, 0), |v| (v.cluster, v.start));
-            let Some((data, compressed, truncated)) = extract(disk, size, offset, cluster, grid)?
-            else {
-                return Ok(());
+        let mut on_hit =
+            |disk: &mut dyn Disk, offset: u64, range: std::ops::Range<u64>| -> io::Result<()> {
+                let volume = volumes.iter_mut().find(|v| v.contains(offset));
+                let (cluster, grid) = volume
+                    .as_ref()
+                    .map_or((default_cluster, 0), |v| (v.cluster, v.start));
+                let Some((data, compressed, present)) =
+                    extract(disk, range, offset, cluster, grid)?
+                else {
+                    return Ok(());
+                };
+                // A compressed chunk starts at its LZNT1 block header.
+                let at = if compressed {
+                    offset - LZNT1_PREFIX
+                } else {
+                    offset
+                };
+                let (location, number) = match volume {
+                    Some(v) => (v.classify(at), Some(v.number)),
+                    None if input.image.is_some() => (Location::OutsideVolumes, None),
+                    None => (Location::Unclassified, None),
+                };
+                if let Err(e) = collector.add(
+                    data,
+                    &source_name,
+                    at,
+                    location,
+                    number,
+                    compressed,
+                    present,
+                    true,
+                ) {
+                    *add_error = Some(e.to_string());
+                    return Err(e);
+                }
+                Ok(())
             };
-            // A compressed chunk starts at its LZNT1 block header.
-            let at = if compressed {
-                offset - LZNT1_PREFIX
-            } else {
-                offset
-            };
-            let (location, number) = match volume {
-                Some(v) => (v.classify(at), Some(v.number)),
-                None if input.image.is_some() => (Location::OutsideVolumes, None),
-                None => (Location::Unclassified, None),
-            };
-            if let Err(e) = collector.add(
-                data,
-                &source_name,
-                at,
-                location,
-                number,
-                compressed,
-                truncated,
-                true,
-            ) {
-                *add_error = Some(e.to_string());
-                return Err(e);
-            }
-            Ok(())
-        };
         for (start, len) in &ranges {
             if let Err(e) = scan(
                 &mut *input.disk,
@@ -1392,6 +1458,54 @@ mod tests {
     use super::*;
 
     #[test]
+    fn truncated_live_log_still_accounts_for_complete_records() {
+        let file = include_bytes!("../../test_files/carve_evtx/evtx/new-user-security.evtx");
+        let chunk = &file[4096..];
+        let found = chunk::records(chunk, &Header::parse(chunk).unwrap());
+        let allocated = found.allocated().collect::<Vec<_>>();
+        let mut live = Live::default();
+        let end = allocated[2].offset + 32;
+        assert_eq!(
+            live.add(&file[..4096 + end]).unwrap_err().kind(),
+            io::ErrorKind::UnexpectedEof
+        );
+        assert_eq!(live.records.len(), 2);
+        assert!(
+            allocated[..2]
+                .iter()
+                .all(|r| live.records.contains(&r.hash))
+        );
+        assert!(live.chunks.is_empty());
+    }
+
+    #[test]
+    fn searching_a_free_extent_does_not_read_an_allocated_neighbour() {
+        let file = include_bytes!("../../test_files/carve_evtx/evtx/new-user-security.evtx");
+        let data = &file[0x1000..];
+        let mut disk = io::Cursor::new(data.to_vec());
+        let mut stats = Stats::default();
+        let mut calls = 0;
+        scan(
+            &mut disk,
+            data.len() as u64,
+            0,
+            4,
+            None,
+            &mut stats,
+            &mut |_, _, _| {
+                calls += 1;
+                Ok(())
+            },
+        )
+        .unwrap();
+        assert_eq!(calls, 0, "the signature straddles two extents");
+        let (chunk, _, present) = extract(&mut disk, 0..4096, 0, 4096, 0).unwrap().unwrap();
+        assert_eq!(present, 4096);
+        assert_eq!(&chunk[..4096], &data[..4096]);
+        assert!(chunk[4096..].iter().all(|&b| b == 0));
+    }
+
+    #[test]
     fn log_file_names() {
         assert_eq!(log_file_name("Security"), "Security");
         assert_eq!(
@@ -1402,6 +1516,8 @@ mod tests {
         assert_eq!(log_file_name("../x:y"), "%4x_y");
         assert_eq!(log_file_name(""), "Unknown");
         assert_eq!(log_file_name("CON"), "_CON");
+        assert_eq!(log_file_name("nul.test"), "_nul.test");
+        assert!(log_file_name(&"記録".repeat(100)).len() <= 200);
     }
 
     #[test]
@@ -1415,6 +1531,10 @@ mod tests {
             PathBuf::from("_/_/etc/passwd")
         );
         assert_eq!(safe_relative("a:b/c."), PathBuf::from("a_b/c"));
+        assert_eq!(
+            safe_relative("COM¹/nul.evtx"),
+            PathBuf::from("_COM¹/_nul.evtx")
+        );
         assert_eq!(safe_relative(""), PathBuf::from("_"));
     }
 }
