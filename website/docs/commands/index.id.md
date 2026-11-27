@@ -109,6 +109,10 @@ tetap mempertahankan namanya.
 tingkat atas. Perintah ini melengkapi inventaris konfigurasi lengkap dari `parse-registry persistence` dengan
 131 pemeriksaan, klasifikasi allow/block, metadata payload, cakupan, dan korelasi timestamp.
 
+## [Carving Log Peristiwa](carve-evtx.md) { #event-log-carving }
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>` memulihkan chunk log peristiwa yang tersisa setelah sebuah log dikosongkan atau dihapus, dari image disk, ruang kosong, pagefile, atau image memori, lalu menulis satu log `.evtx` per channel untuk Hayabusa. Pada image disk NTFS, perintah ini tidak menyertakan chunk dari log aktif dan membangun ulang log yang terhapus dari `$MFT`.
+
 ## [Pemindaian YARA](yara-scan.md) { #yara-scan }
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` memindai berkas yang dikumpulkan, termasuk payload karantina yang dipulihkan dan data residen `$MFT`, dengan aturan YARA. Secara default perintah ini mengunduh paket YARA Forge Core; `--ruleset extended` atau `--ruleset full` memilih paket yang lebih luas, dan `--rules <FILE_OR_DIRECTORY>` memindai secara offline dengan aturan lokal. Pemindaian ini bersifat opsional dan terpisah dari `auto-parse`.
@@ -120,6 +124,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases

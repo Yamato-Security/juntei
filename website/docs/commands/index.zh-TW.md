@@ -108,6 +108,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 允許／封鎖分類、承載資料中繼資料、涵蓋範圍與時間戳記關聯，補足 `parse-registry persistence`
 所提供的完整設定清查。
 
+## [事件記錄擷取](carve-evtx.md) { #event-log-carving }
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>` 會從磁碟映像檔、未配置空間、分頁檔或記憶體映像檔中，還原記錄檔遭清除或刪除後仍殘留的事件記錄區塊，並為每個通道寫出一份 `.evtx` 記錄檔供 Hayabusa 使用。在 NTFS 磁碟映像檔上，它會排除使用中記錄檔的區塊，並從 `$MFT` 重建已刪除的記錄檔。
+
 ## [YARA 掃描](yara-scan.md) { #yara-scan }
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` 會以 YARA 規則掃描已收集的檔案，包括還原的隔離檔案與 `$MFT` 的常駐資料。預設會下載 YARA Forge Core 套件；`--ruleset extended` 或 `--ruleset full` 可選擇範圍更廣的套件，`--rules <FILE_OR_DIRECTORY>` 則以本機規則離線掃描。此掃描需明確啟用，且獨立於 `auto-parse`。
@@ -119,6 +123,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases

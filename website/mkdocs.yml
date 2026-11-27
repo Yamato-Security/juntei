@@ -105,6 +105,7 @@ plugins:
         PowerShell History: "PowerShell 履歴"
         Super Timeline: "統合タイムライン"
         YARA Scan: "YARAスキャン"
+        Event Log Carving: "イベントログのカービング"
         Home: ホーム
         Overview: 概要
         Screenshots: スクリーンショット
@@ -201,6 +202,7 @@ plugins:
         PowerShell History: "PowerShell 歷程記錄"
         Super Timeline: "超級時間軸"
         YARA Scan: "YARA 掃描"
+        Event Log Carving: "事件記錄擷取"
         Home: 首頁
         Overview: 概觀
         Screenshots: 螢幕擷圖
@@ -297,6 +299,7 @@ plugins:
         PowerShell History: "PowerShell 기록"
         Super Timeline: "슈퍼 타임라인"
         YARA Scan: "YARA 검사"
+        Event Log Carving: "이벤트 로그 카빙"
         Home: 홈
         Overview: 개요
         Screenshots: 스크린샷
@@ -393,6 +396,7 @@ plugins:
         PowerShell History: "PowerShell-Verlauf"
         Super Timeline: "Gesamttimeline"
         YARA Scan: "YARA-Scan"
+        Event Log Carving: "Ereignisprotokoll-Carving"
         Home: Startseite
         Overview: Übersicht
         Screenshots: Screenshots
@@ -489,6 +493,7 @@ plugins:
         PowerShell History: "PowerShell geçmişi"
         Super Timeline: "Birleşik zaman çizelgesi"
         YARA Scan: "YARA Taraması"
+        Event Log Carving: "Olay Günlüğü Oyma"
         Home: Ana Sayfa
         Overview: Genel Bakış
         Screenshots: Ekran Görüntüleri
@@ -585,6 +590,7 @@ plugins:
         PowerShell History: "Historique PowerShell"
         Super Timeline: "Chronologie globale"
         YARA Scan: "Analyse YARA"
+        Event Log Carving: "Carving des journaux d'événements"
         Home: Accueil
         Overview: Vue d'ensemble
         Screenshots: Captures d'écran
@@ -681,6 +687,7 @@ plugins:
         PowerShell History: "Historial de PowerShell"
         Super Timeline: "Súper línea de tiempo"
         YARA Scan: "Análisis YARA"
+        Event Log Carving: "Carving de registros de eventos"
         Home: Inicio
         Overview: Visión general
         Screenshots: Capturas de pantalla
@@ -777,6 +784,7 @@ plugins:
         PowerShell History: "Histórico do PowerShell"
         Super Timeline: "Super linha do tempo"
         YARA Scan: "Varredura YARA"
+        Event Log Carving: "Carving de logs de eventos"
         Home: Início
         Overview: Visão geral
         Screenshots: Capturas de tela
@@ -873,6 +881,7 @@ plugins:
         PowerShell History: "Історія PowerShell"
         Super Timeline: "Суперхронологія"
         YARA Scan: "Сканування YARA"
+        Event Log Carving: "Вирізання журналів подій"
         Home: Головна
         Overview: Огляд
         Screenshots: Знімки екрана
@@ -969,6 +978,7 @@ plugins:
         PowerShell History: "PowerShell इतिहास"
         Super Timeline: "सुपर टाइमलाइन"
         YARA Scan: "YARA स्कैन"
+        Event Log Carving: "इवेंट लॉग कार्विंग"
         Home: होम
         Overview: अवलोकन
         Screenshots: स्क्रीनशॉट
@@ -1065,6 +1075,7 @@ plugins:
         PowerShell History: "Riwayat PowerShell"
         Super Timeline: "Linimasa gabungan"
         YARA Scan: "Pemindaian YARA"
+        Event Log Carving: "Carving Log Peristiwa"
         Home: Beranda
         Overview: Ikhtisar
         Screenshots: Tangkapan Layar
@@ -1161,6 +1172,7 @@ plugins:
         PowerShell History: "PowerShell မှတ်တမ်း"
         Super Timeline: "စူပါအချိန်လိုင်း"
         YARA Scan: "YARA စစ်ဆေးမှု"
+        Event Log Carving: "Event log များကို carve လုပ်ခြင်း"
         Home: ပင်မစာမျက်နှာ
         Overview: ခြုံငုံသုံးသပ်ချက်
         Screenshots: ဖန်သားပြင်ဓာတ်ပုံများ
@@ -1257,6 +1269,7 @@ plugins:
         PowerShell History: "ประวัติ PowerShell"
         Super Timeline: "ซุปเปอร์ไทม์ไลน์"
         YARA Scan: "การสแกน YARA"
+        Event Log Carving: "การกู้คืนล็อกเหตุการณ์แบบ carving"
         Home: หน้าแรก
         Overview: ภาพรวม
         Screenshots: ภาพหน้าจอ
@@ -1353,6 +1366,7 @@ plugins:
         PowerShell History: "سجل PowerShell"
         Super Timeline: "الجدول الزمني الشامل"
         YARA Scan: "فحص YARA"
+        Event Log Carving: "استخلاص سجلات الأحداث"
         Home: الرئيسية
         Overview: نظرة عامة
         Screenshots: لقطات الشاشة

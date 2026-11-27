@@ -109,6 +109,10 @@ behalten ihre Namen.
 der obersten Ebene. Er ergänzt das vollständige Konfigurationsinventar aus `parse-registry persistence` um
 131 Prüfungen, Allow-/Block-Klassifizierung, Payload-Metadaten, Abdeckung und Zeitstempelkorrelation.
 
+## [Ereignisprotokoll-Carving](carve-evtx.md) { #event-log-carving }
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>` stellt Ereignisprotokoll-Chunks wieder her, die nach dem Leeren oder Löschen eines Protokolls in einem Disk-Image, im freien Speicherplatz, in einer Auslagerungsdatei oder in einem Arbeitsspeicherabbild zurückbleiben, und schreibt für Hayabusa ein `.evtx`-Protokoll pro Kanal. Bei NTFS-Disk-Images lässt der Befehl die Chunks der aktiven Protokolle aus und baut gelöschte Protokolle anhand von `$MFT` neu auf.
+
 ## [YARA-Scan](yara-scan.md) { #yara-scan }
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` prüft gesammelte Dateien, einschließlich wiederhergestellter Quarantäne-Nutzdaten und residenter `$MFT`-Daten, mit YARA-Regeln. Standardmäßig wird das Paket YARA Forge Core heruntergeladen; `--ruleset extended` oder `--ruleset full` wählen ein umfangreicheres Paket, und `--rules <FILE_OR_DIRECTORY>` prüft offline mit lokalen Regeln. Der Scan ist optional und von `auto-parse` getrennt.
@@ -120,6 +124,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases

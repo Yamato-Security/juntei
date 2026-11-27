@@ -113,6 +113,10 @@ artifact အမည်နောက်တွင် ဆက်ထားပါ။ `au
 ညွှန်ကြားချက် ဖြစ်သည်။ ၎င်းသည် `parse-registry persistence` မှ ပြင်ဆင်မှု စာရင်းအပြည့်အစုံကို စစ်ဆေးမှု 131 ခု၊
 allow/block အမျိုးအစားခွဲခြင်း၊ payload metadata၊ coverage နှင့် timestamp ချိတ်ဆက်စစ်ဆေးမှုတို့ဖြင့် ဖြည့်စွက်ပေးသည်။
 
+## [Event log များကို carve လုပ်ခြင်း](carve-evtx.md) { #event-log-carving }
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>` သည် log ကို clear လုပ်ပြီးနောက် သို့မဟုတ် ဖျက်ပြီးနောက် ကျန်ရှိနေသော event log chunk များကို disk image၊ free space၊ pagefile သို့မဟုတ် memory image မှ ပြန်လည်ရယူပြီး Hayabusa အတွက် channel တစ်ခုလျှင် `.evtx` log တစ်ခုစီ ရေးပေးသည်။ NTFS disk image များတွင် live log များ၏ chunk များကို ချန်လှပ်ပြီး ဖျက်ထားသော log များကို `$MFT` မှ ပြန်တည်ဆောက်သည်။
+
 ## [YARA စစ်ဆေးမှု](yara-scan.md) { #yara-scan }
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` သည် ပြန်လည်ရယူထားသော quarantine payload များနှင့် `$MFT` ၏ resident data အပါအဝင် စုဆောင်းထားသော ဖိုင်များကို YARA rule များဖြင့် စစ်ဆေးသည်။ မူလအားဖြင့် YARA Forge Core package ကို ဒေါင်းလုဒ်လုပ်သည်။ `--ruleset extended` သို့မဟုတ် `--ruleset full` ဖြင့် ပိုကျယ်ပြန့်သော package ကို ရွေးချယ်နိုင်ပြီး `--rules <FILE_OR_DIRECTORY>` ဖြင့် local rule များကို အသုံးပြု၍ အော့ဖ်လိုင်း စစ်ဆေးနိုင်သည်။ ဤစစ်ဆေးမှုသည် ရွေးချယ်နိုင်သော လုပ်ဆောင်ချက်ဖြစ်ပြီး `auto-parse` နှင့် သီးခြားဖြစ်သည်။
@@ -124,6 +128,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases
