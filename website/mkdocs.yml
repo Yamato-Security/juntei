@@ -1474,6 +1474,7 @@ nav:
       - SQLite: commands/sqlite.md
       - Persistence Hunter: commands/persistence-hunter.md
       - Super Timeline: commands/super-timeline.md
+      - Event Log Carving: commands/carve-evtx.md
       - YARA Scan: commands/yara-scan.md
       - Common Output Patterns: commands/output.md
   - Artifacts:

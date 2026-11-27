@@ -18,6 +18,7 @@ mod amcache_output;
 mod auto_parse;
 mod boot;
 mod browser;
+mod carve_evtx;
 mod cli;
 mod color;
 mod defender_history;
@@ -80,6 +81,12 @@ fn main() {
     let start = Instant::now();
     let cli = Cli::parse();
     let code = match &cli.cmd {
+        Commands::CarveEvtx(opts) => {
+            display_logo(opts.common.quiet, opts.common.no_color, true, false);
+            let code = carve_evtx::run(opts);
+            print_elapsed(start, opts.common.no_color);
+            code
+        }
         Commands::YaraScan(opts) => {
             display_logo(opts.common.quiet, opts.common.no_color, true, false);
             let code = yara_scan::run(opts);

@@ -1180,6 +1180,8 @@ dependencies = [
  "flate2",
  "goblin",
  "indicatif",
+ "lznt1",
+ "memchr",
  "memmap2",
  "quick-xml",
  "rayon",
@@ -1212,6 +1214,7 @@ dependencies = [
  "ys-srum-parser",
  "ys-srum-parser-ese",
  "ys-vhdx-mount",
+ "ys-vhdx-parser",
  "zip",
 ]
 

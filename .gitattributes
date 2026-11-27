@@ -3,6 +3,7 @@
 *.gz binary
 *.bin binary
 *.raw binary
+*.evtx binary
 # Defender quarantine parts: encrypted bytes, whatever their name
 test_files/defender_quarantine/Quarantine/** binary
 # Defender detection history files: typed binary values, whatever their name
