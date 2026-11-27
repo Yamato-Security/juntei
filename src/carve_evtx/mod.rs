@@ -528,7 +528,8 @@ impl Collector {
 impl Drop for Collector {
     /// The spool is scratch space: remove it even when the run stops on an error.
     fn drop(&mut self) {
-        if let Some((_, path)) = self.spool.take() {
+        if let Some((file, path)) = self.spool.take() {
+            drop(file);
             let _ = fs::remove_file(path);
         }
     }
@@ -1220,7 +1221,8 @@ fn carve(opts: &Options, report: &dyn Fn(Option<&ProgressBar>, &str)) -> Result<
         Some(out) => {
             let logs = write_outputs(out, &mut collector, &live, opts.output_type)
                 .map_err(|e| format!("Could not write the results: {e}"))?;
-            if let Some((_, path)) = collector.spool.take() {
+            if let Some((file, path)) = collector.spool.take() {
+                drop(file); // closed before it is removed, as Windows requires
                 fs::remove_file(&path)
                     .map_err(|e| format!("Could not remove {}: {e}", path.display()))?;
             }
