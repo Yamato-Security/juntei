@@ -112,6 +112,10 @@ keep their names.
 command. It complements the full configuration inventory from `parse-registry persistence` with
 131 checks, allow/block classification, payload metadata, coverage, and timestamp correlation.
 
+## [Event Log Carving](carve-evtx.md)
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>` recovers event-log chunks that remain after a log was cleared or deleted, from a disk image, free space, a pagefile or a memory image, and writes one `.evtx` log per channel for Hayabusa. On NTFS disk images it leaves out the chunks of the live logs and rebuilds deleted logs from `$MFT`.
+
 ## [YARA Scan](yara-scan.md)
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` scans collected files, including recovered quarantine payloads and resident `$MFT` data, with YARA rules. It downloads the YARA Forge Core package by default; `--ruleset extended` or `--ruleset full` select a broader package, and `--rules <FILE_OR_DIRECTORY>` scans offline with local rules. The scan is opt-in and separate from `auto-parse`.
@@ -123,6 +127,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases

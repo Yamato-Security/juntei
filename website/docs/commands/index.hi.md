@@ -109,6 +109,10 @@ parser options को आर्टिफ़ैक्ट नाम के बा�
 command है। यह `parse-registry persistence` की पूर्ण configuration inventory को
 131 checks, allow/block वर्गीकरण, payload metadata, coverage और timestamp correlation के साथ पूरक बनाता है।
 
+## [इवेंट लॉग कार्विंग](carve-evtx.md) { #event-log-carving }
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>` किसी लॉग को क्लियर या डिलीट किए जाने के बाद बचे इवेंट लॉग चंक को डिस्क इमेज, खाली स्थान, पेजफ़ाइल या मेमोरी इमेज से पुनर्प्राप्त करता है, और Hayabusa के लिए हर चैनल का एक `.evtx` लॉग लिखता है। NTFS डिस्क इमेज पर यह लाइव लॉग के चंक छोड़ देता है और डिलीट किए गए लॉग को `$MFT` से दोबारा बनाता है।
+
 ## [YARA स्कैन](yara-scan.md) { #yara-scan }
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` एकत्र की गई फ़ाइलों को, जिनमें पुनर्प्राप्त क्वारंटाइन पेलोड और `$MFT` का रेज़िडेंट डेटा शामिल है, YARA नियमों से स्कैन करता है। डिफ़ॉल्ट रूप से यह YARA Forge Core पैकेज डाउनलोड करता है; `--ruleset extended` या `--ruleset full` व्यापक पैकेज चुनते हैं, और `--rules <FILE_OR_DIRECTORY>` स्थानीय नियमों से ऑफ़लाइन स्कैन करता है। यह स्कैन वैकल्पिक है और `auto-parse` से अलग है।
@@ -120,6 +124,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases

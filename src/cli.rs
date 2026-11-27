@@ -47,6 +47,16 @@ pub enum Commands {
     )]
     AutoParse(AutoParseOptions),
 
+    /// Carve event-log chunks from disk images and memory
+    #[command(
+        author = AUTHOR,
+        version = VERSION,
+        help_template = "\nVersion: {version}\n{author-with-newline}\n{usage-heading}\n  juntei carve-evtx -f <FILE> [OPTIONS]\n\n{all-args}",
+        disable_help_flag = true,
+        disable_version_flag = true
+    )]
+    CarveEvtx(crate::carve_evtx::Options),
+
     /// Mount a VHDX or E01 disk image read-only (FUSE)
     #[command(
         author = AUTHOR,

@@ -55,6 +55,13 @@ provides 131 checks, configurable allow/block profiles, source evidence, and CSV
 results. Candidates describe persistence configuration; they do not by themselves prove compromise
 or execution. Per-check coverage identifies evidence that was missing or only partly readable.
 
+Recover event logs that were cleared or deleted with `juntei carve-evtx -f <IMAGE> -o <RESULTS>`.
+It searches an E01 or VHDX image, a raw disk, a pagefile or a memory image for event-log chunks,
+rebuilds deleted logs from `$MFT`, leaves out what the live logs still hold, and writes one `.evtx`
+per channel for Hayabusa.
+[Read the event log carving guide](https://yamato-security.github.io/juntei/commands/carve-evtx/)
+for where the chunks were found and how they are deduplicated.
+
 Scan collected files with `juntei yara-scan -d <EVIDENCE> -o <RESULTS>`.
 It downloads YARA Forge **Core** rules by default; select `--ruleset extended` or
 `--ruleset full`, or supply `--rules <FILE_OR_DIRECTORY>` for an offline scan.

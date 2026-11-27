@@ -8,6 +8,17 @@
 
 **New Features:**
 
+- `carve-evtx` recovers event-log chunks that remain after a log was cleared or deleted, from E01
+  and VHDX images, raw disks and volumes, pagefiles, memory images and any other file. Chunks are
+  found at any byte offset, NTFS-compressed ones included, and are kept when their checksums fail.
+  Records are walked by offset, so a repeated record ID or a damaged record does not hide the rest
+  of a chunk. On NTFS, each chunk is placed in free space, a deleted log, a live log or another file
+  (such as the pagefile), deleted logs whose clusters were not reused are rebuilt whole from
+  `$MFT`, and the live logs are read for comparison. A chunk is written only when it adds a record
+  that the live logs and the other chunks do not hold, into one rebuilt `.evtx` per channel that
+  Hayabusa and Event Viewer open, with chunk and record reports in CSV or JSONL. (#223)
+  (@YamatoSecurity)
+
 - `parse-file defender-history` parses Microsoft Defender's detection history
   (`Scans\History\Service\DetectionHistory\<nn>\<GUID>`), which also records threats that were
   never quarantined. One record per resource of each detection keeps the threat, severity,

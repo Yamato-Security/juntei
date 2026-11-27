@@ -112,6 +112,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 คำสั่งนี้เสริม inventory การกำหนดค่าแบบครบถ้วนจาก `parse-registry persistence` ด้วย
 การตรวจสอบ 131 รายการ การจำแนกแบบ allow/block เมทาดาทาของ payload ความครอบคลุม (coverage) และการเชื่อมโยง timestamp
 
+## [การกู้คืนล็อกเหตุการณ์แบบ carving](carve-evtx.md) { #event-log-carving }
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>` กู้คืนชังก์ของล็อกเหตุการณ์ที่ยังหลงเหลืออยู่หลังจากล็อกถูกล้างหรือถูกลบ จากอิมเมจดิสก์ พื้นที่ว่าง ไฟล์เพจ หรืออิมเมจหน่วยความจำ แล้วเขียนล็อก `.evtx` หนึ่งไฟล์ต่อหนึ่งแชนเนลสำหรับ Hayabusa บนอิมเมจดิสก์ NTFS คำสั่งนี้จะตัดชังก์ของล็อกที่ใช้งานอยู่ออก และสร้างล็อกที่ถูกลบขึ้นใหม่จาก `$MFT`
+
 ## [การสแกน YARA](yara-scan.md) { #yara-scan }
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` สแกนไฟล์ที่เก็บรวบรวมมา รวมถึงเพย์โหลดกักกันที่กู้คืนแล้วและข้อมูล resident ของ `$MFT` ด้วยกฎ YARA โดยค่าเริ่มต้นจะดาวน์โหลดแพ็กเกจ YARA Forge Core ส่วน `--ruleset extended` หรือ `--ruleset full` จะเลือกแพ็กเกจที่ครอบคลุมกว้างขึ้น และ `--rules <FILE_OR_DIRECTORY>` จะสแกนแบบออฟไลน์ด้วยกฎในเครื่อง การสแกนนี้เป็นตัวเลือกเสริมและแยกจาก `auto-parse`
@@ -123,6 +127,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases

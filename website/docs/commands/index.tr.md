@@ -110,6 +110,10 @@ adlarını korur.
 komutudur. `parse-registry persistence` komutunun sunduğu tam yapılandırma envanterini 131 kontrol, izin/engel
 sınıflandırması, yük (payload) meta verileri, kapsam ve zaman damgası ilişkilendirmesiyle tamamlar.
 
+## [Olay Günlüğü Oyma](carve-evtx.md) { #event-log-carving }
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>`, temizlenen veya silinen bir günlükten geriye kalan olay günlüğü chunk'larını bir disk imajından, boş alandan, sayfa dosyasından veya bellek imajından kurtarır ve Hayabusa için kanal başına bir `.evtx` günlüğü yazar. NTFS disk imajlarında canlı günlüklerin chunk'larını dışarıda bırakır ve silinmiş günlükleri `$MFT` üzerinden yeniden oluşturur.
+
 ## [YARA Taraması](yara-scan.md) { #yara-scan }
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>`, kurtarılan karantina yükleri ve yerleşik `$MFT` verileri dahil toplanan dosyaları YARA kurallarıyla tarar. Varsayılan olarak YARA Forge Core paketini indirir; `--ruleset extended` veya `--ruleset full` daha geniş bir paket seçer, `--rules <FILE_OR_DIRECTORY>` ise yerel kurallarla çevrimdışı tarama yapar. Tarama isteğe bağlıdır ve `auto-parse` işleminden ayrıdır.
@@ -121,6 +125,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases

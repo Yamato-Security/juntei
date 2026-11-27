@@ -100,6 +100,10 @@ juntei parse-file prefetch -d evidence/ -o prefetch.csv
 
 `juntei persistence-hunter` は複数のソース形式をハントするため、トップレベルの分析コマンドです。これは、`parse-registry persistence` の完全な構成インベントリを 131 チェック、許可/ブロック分類、ペイロード メタデータ、カバレッジ、およびタイムスタンプ相関で補完します。
 
+## [イベントログのカービング](carve-evtx.md) { #event-log-carving }
+
+`juntei carve-evtx -f <FILE> -o <RESULTS>` は、ログの消去や削除のあとに残ったイベントログのチャンクを、ディスクイメージ、空き領域、ページファイル、メモリイメージから復元し、Hayabusa 向けにチャネルごとに一つの `.evtx` ログを書き出します。NTFS のディスクイメージでは、現行ログのチャンクを除外し、削除されたログを `$MFT` から復元します。
+
 ## [YARAスキャン](yara-scan.md) { #yara-scan }
 
 `juntei yara-scan -d <EVIDENCE> -o <RESULTS>` は、復元した隔離ペイロードや `$MFT` のレジデントデータを含む収集済みファイルを YARA ルールでスキャンします。既定では YARA Forge の Core パッケージをダウンロードします。`--ruleset extended` または `--ruleset full` でより広いパッケージを選択でき、`--rules <FILE_OR_DIRECTORY>` を指定するとローカルルールでオフラインスキャンができます。このスキャンはオプトインで、`auto-parse` とは別に実行します。
@@ -111,6 +115,7 @@ Usage: juntei <COMMAND>
 
 Commands:
   auto-parse          Discover and parse Windows evidence
+  carve-evtx          Carve event-log chunks from disk images and memory
   help                Print this message or the help of the given subcommand(s)
   mount               Mount a VHDX or E01 disk image read-only (FUSE)
   parse-ese           Parse ESE databases
