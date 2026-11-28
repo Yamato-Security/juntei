@@ -17,12 +17,12 @@
 //! before using it.
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs::{self, File, FileTimes, OpenOptions};
 use std::io::{self, BufReader, Read, Seek, SeekFrom, Write};
 use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock, PoisonError};
-use vhdx_mount::image::{Image, ROOT_RECORD, Stat};
+use vhdx_mount::image::{FileReader, Image, ROOT_RECORD, Stat, Stream};
 
 /// Where each staged volume came from. Written by image staging; read by persistence-hunter.
 #[derive(Default, Serialize, Deserialize)]
@@ -32,6 +32,10 @@ pub(crate) struct Sources {
     pub(crate) workspace: PathBuf,
     #[serde(rename = "Volumes")]
     pub(crate) volumes: Vec<VolumeSource>,
+    /// The NTFS streams staged as files (canonical): directory indexes. They are no file of the
+    /// image, so persistence-hunter skips them.
+    #[serde(rename = "Streams", default)]
+    pub(crate) streams: Vec<PathBuf>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -62,13 +66,105 @@ pub(crate) fn copy_record(
     scratch: &Path,
 ) -> io::Result<(tempfile::NamedTempFile, Option<String>)> {
     let mut reader = image.file_reader(volume, record)?;
+    copy_reader(&mut reader, stat.size, stat, scratch)
+}
+
+/// Copy a named stream of a record (a directory's index allocation) like [`copy_record`], with
+/// the record's timestamps. `None` when the record has no such stream, or it is empty or entirely
+/// zeros: an index allocation whose blocks are all unused holds nothing to parse.
+pub(crate) fn copy_stream(
+    image: &Arc<Image>,
+    volume: usize,
+    record: u64,
+    stream: &Stream,
+    scratch: &Path,
+) -> io::Result<Option<(tempfile::NamedTempFile, Option<String>)>> {
+    let Some(mut reader) = image.stream_reader(volume, record, stream)? else {
+        return Ok(None);
+    };
+    if reader.is_empty() {
+        return Ok(None);
+    }
+    let size = reader.len();
+    let Some(mut temporary) = copy_unless_zeros(&mut reader, size, scratch)? else {
+        return Ok(None);
+    };
+    // The copy is kept without the record's times, as when they could not be set.
+    let stat = image.volumes[volume].stat(record);
+    let time_error = timestamps(temporary.as_file_mut(), stat);
+    Ok(Some((temporary, time_error)))
+}
+
+/// Whether [`copy_stream`] would stage the stream: whether the record has it and it holds a byte
+/// that is not zero. Reads it without writing anything.
+pub(crate) fn stream_has_data(
+    image: &Arc<Image>,
+    volume: usize,
+    record: u64,
+    stream: &Stream,
+) -> io::Result<bool> {
+    let Some(mut reader) = image.stream_reader(volume, record, stream)? else {
+        return Ok(false);
+    };
+    let size = reader.len();
+    has_data(&mut reader, size)
+}
+
+/// Whether `size` bytes of `reader` hold one that is not zero; an error, as [`copy_sparse`]
+/// gives, when it ends before them.
+fn has_data(reader: &mut impl Read, size: u64) -> io::Result<bool> {
+    let mut buffer = vec![0; 256 * 1024];
+    let mut read = 0u64;
+    loop {
+        crate::interrupt::check()?;
+        let count = reader.read(&mut buffer)?;
+        if count == 0 {
+            break;
+        }
+        if buffer[..count].iter().any(|b| *b != 0) {
+            return Ok(true);
+        }
+        read += count as u64;
+    }
+    if read != size {
+        return Err(io::Error::new(
+            io::ErrorKind::UnexpectedEof,
+            "NTFS stream ended before its declared length",
+        ));
+    }
+    Ok(false)
+}
+
+/// Copy `size` bytes of `reader` into a new temporary file in `scratch`; `None`, and no file
+/// left behind, when every byte is zero.
+fn copy_unless_zeros(
+    reader: &mut impl Read,
+    size: u64,
+    scratch: &Path,
+) -> io::Result<Option<tempfile::NamedTempFile>> {
+    let mut temporary = tempfile::NamedTempFile::new_in(scratch)?;
+    let data = copy_sparse(reader, temporary.as_file_mut(), size)?;
+    Ok(data.then_some(temporary))
+}
+
+fn copy_reader(
+    reader: &mut FileReader,
+    size: u64,
+    stat: &Stat,
+    scratch: &Path,
+) -> io::Result<(tempfile::NamedTempFile, Option<String>)> {
     let mut temporary = tempfile::NamedTempFile::new_in(scratch)?;
     let file = temporary.as_file_mut();
-    copy_sparse(&mut reader, file, stat.size)?;
-    let time_error = set_times(file, stat).err().map(|error| {
-        format!("File content was retained, but its filesystem timestamps could not be preserved: {error}")
-    });
+    copy_sparse(reader, file, size)?;
+    let time_error = timestamps(file, Ok(*stat));
     Ok((temporary, time_error))
+}
+
+/// [`set_times`] of a staged file, and why it failed or its record's `stat` could not be read.
+fn timestamps(file: &File, stat: io::Result<Stat>) -> Option<String> {
+    stat.and_then(|stat| set_times(file, &stat)).err().map(|error| {
+        format!("File content was retained, but its filesystem timestamps could not be preserved: {error}")
+    })
 }
 
 /// Preserve the filesystem mtime used by persistence-hunter; parsed artifact timestamps still
@@ -84,13 +180,16 @@ pub(crate) fn set_times(file: &File, stat: &Stat) -> io::Result<()> {
     file.set_times(times)
 }
 
+/// Copy `expected` bytes of `reader` to `output`, leaving runs of zeros as holes. Returns whether
+/// any byte was not zero.
 pub(crate) fn copy_sparse(
     reader: &mut impl Read,
     output: &mut File,
     expected: u64,
-) -> io::Result<()> {
+) -> io::Result<bool> {
     let mut buffer = vec![0; 256 * 1024];
     let mut copied = 0u64;
+    let mut data = false;
     loop {
         crate::interrupt::check()?;
         let count = reader.read(&mut buffer)?;
@@ -107,6 +206,7 @@ pub(crate) fn copy_sparse(
             output.seek(SeekFrom::Current(count as i64))?;
         } else {
             output.write_all(&buffer[..count])?;
+            data = true;
         }
     }
     if copied != expected {
@@ -115,7 +215,8 @@ pub(crate) fn copy_sparse(
             "NTFS stream ended before its declared length",
         ));
     }
-    output.set_len(expected)
+    output.set_len(expected)?;
+    Ok(data)
 }
 
 /// Fill the existing inode so all hard links retain their identity and content. Callers must
@@ -154,6 +255,8 @@ struct OpenedImage {
 
 struct State {
     sources: Sources,
+    /// `sources.streams`, for lookups.
+    streams: HashSet<PathBuf>,
     images: Mutex<HashMap<PathBuf, Arc<OpenedImage>>>,
     /// One copy at a time: concurrent readers of the same placeholder wait for it.
     copying: Mutex<()>,
@@ -170,6 +273,7 @@ pub(crate) fn install(path: &Path) -> Result<(), String> {
         .map_err(|e| format!("Could not read the image file sources: {e}"))?;
     // A second installation in the same process (tests) keeps the first.
     let _ = STATE.set(State {
+        streams: sources.streams.iter().cloned().collect(),
         sources,
         images: Mutex::new(HashMap::new()),
         copying: Mutex::new(()),
@@ -363,6 +467,19 @@ pub(crate) fn len(path: &Path, on_disk: u64) -> u64 {
     result
 }
 
+/// Whether `path` is an NTFS stream that image staging wrote as a file (see [`Sources::streams`]).
+pub(crate) fn is_staged_stream(path: &Path) -> bool {
+    let Some(state) = STATE.get() else {
+        return false;
+    };
+    // Every staged stream's name starts with `$`; skip the lookup for other files.
+    !state.streams.is_empty()
+        && path
+            .file_name()
+            .is_some_and(|name| name.to_string_lossy().starts_with('$'))
+        && fs::canonicalize(path).is_ok_and(|path| state.streams.contains(&path))
+}
+
 /// Fill a placeholder with its content from the image, retaining all hard links. Files that
 /// already have content, and paths outside the staged volumes, are left as they are.
 pub(crate) fn materialize(path: &Path) -> io::Result<()> {
@@ -375,6 +492,29 @@ pub(crate) fn materialize(path: &Path) -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_stream_has_data_only_with_a_byte_that_is_not_zero() {
+        let has = |bytes: &[u8], size| has_data(&mut io::Cursor::new(bytes), size);
+        assert!(!has(&[], 0).unwrap());
+        assert!(!has(&[0; 8192], 8192).unwrap());
+        assert!(has(&[[0; 4096], [1; 4096]].concat(), 8192).unwrap());
+        // as copy_sparse, an index that ends early is an error, not one of zeros
+        let error = has(&[0; 4096], 8192).unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::UnexpectedEof);
+    }
+
+    #[test]
+    fn a_staged_copy_without_its_record_s_times_is_kept_and_says_why() {
+        let file = tempfile::tempfile().unwrap();
+        let error = io::Error::new(io::ErrorKind::NotFound, "record not in use");
+        assert_eq!(
+            timestamps(&file, Err(error)).as_deref(),
+            Some(
+                "File content was retained, but its filesystem timestamps could not be preserved: record not in use"
+            )
+        );
+    }
 
     #[test]
     fn failed_lazy_reads_are_reported_once_and_leave_the_placeholder_empty() {
@@ -392,7 +532,9 @@ mod tests {
                     path_prefix: "Volume2".into(),
                     volume: 0,
                 }],
+                streams: Vec::new(),
             },
+            streams: HashSet::new(),
             images: Mutex::new(HashMap::new()),
             copying: Mutex::new(()),
             problems: Mutex::new(Vec::new()),
@@ -414,12 +556,39 @@ mod tests {
         bytes[42] = 1;
         bytes[599_999] = 2;
         let mut file = tempfile::tempfile().unwrap();
-        copy_sparse(&mut bytes.as_slice(), &mut file, bytes.len() as u64).unwrap();
+        assert!(copy_sparse(&mut bytes.as_slice(), &mut file, bytes.len() as u64).unwrap());
         file.rewind().unwrap();
         let mut actual = Vec::new();
         file.read_to_end(&mut actual).unwrap();
         assert_eq!(actual, bytes);
         assert!(copy_sparse(&mut b"x".as_slice(), &mut file, 2).is_err());
         assert!(copy_sparse(&mut b"xx".as_slice(), &mut file, 1).is_err());
+        // only zeros: copied as a hole, and reported as no data
+        let zeros = vec![0; 600_001];
+        let mut file = tempfile::tempfile().unwrap();
+        assert!(!copy_sparse(&mut zeros.as_slice(), &mut file, zeros.len() as u64).unwrap());
+        assert_eq!(file.metadata().unwrap().len(), zeros.len() as u64);
+    }
+
+    #[test]
+    fn a_stream_of_only_zeros_is_not_staged() {
+        let scratch = tempfile::tempdir().unwrap();
+        let zeros = vec![0; 600_001];
+        assert!(
+            copy_unless_zeros(&mut zeros.as_slice(), zeros.len() as u64, scratch.path())
+                .unwrap()
+                .is_none()
+        );
+        assert_eq!(
+            fs::read_dir(scratch.path()).unwrap().count(),
+            0,
+            "no file left"
+        );
+        let mut bytes = zeros.clone();
+        bytes[599_999] = 1;
+        let staged = copy_unless_zeros(&mut bytes.as_slice(), bytes.len() as u64, scratch.path())
+            .unwrap()
+            .unwrap();
+        assert_eq!(fs::read(staged.path()).unwrap(), bytes);
     }
 }

@@ -66,7 +66,8 @@ juntei auto-parse -d host1.vhdx --vhdx -o parsed -j timeline.jsonl
 The artifact parsers need filesystem paths. Juntei therefore copies the files they read from the
 reader's NTFS volumes into a private staging workspace, then runs the usual parsers: registry
 hives and their transaction logs, NTFS metadata files, databases, prefetch files, shortcuts, jump
-lists, Outlook files, Recycle Bin index files, RDP bitmap caches and Defender quarantine folders. Every other file is an empty placeholder
+lists, Outlook files, Recycle Bin index files, RDP bitmap caches and Defender quarantine folders. Each directory's index is staged as `$I30` in
+that directory. Every other file is an empty placeholder
 with its original modification time, so directories and paths look as they do on the disk.
 persistence-hunter reads a placeholder's content from the image only when it needs it, such as
 an executable that a persistence entry refers to.
@@ -83,7 +84,8 @@ ordinary evidence directories. `Image` in `manifest.json` identifies the origina
 volumes, files, and filenames that cannot be represented safely are reported in `ImageErrors`
 and failed rows of `manifest.csv`. Readable evidence is still parsed, and the process exits with
 status 1 if any image input was incomplete. Unsafe or ambiguous names are rejected rather than
-silently renamed. Named NTFS streams are not synthesized as extra files; already-collected
+silently renamed. Apart from the directory indexes staged as described above, named NTFS
+streams such as the alternate data stream `Zone.Identifier` are not extracted; already-collected
 artifacts stored as ordinary files inside a triage image remain available.
 
 The separate [`mount` command](mount.md) exposes a filesystem to other programs and still needs

@@ -93,9 +93,10 @@ impl Source {
 
 /// The candidate files under `dir`, in path order. The `DetectionHistory` folder is looked for in
 /// the absolute path, so that `-d` given that folder or one of its numbered subfolders finds its
-/// files too.
+/// files too. A directory index that image staging writes as `$I30` into a folder is no
+/// detection history file (Defender names them by ID) and is left out.
 fn find_histories(dir: &Path) -> Vec<Source> {
-    util::find_files(dir, |_| true)
+    util::find_files(dir, |name| !name.eq_ignore_ascii_case("$I30"))
         .into_iter()
         .filter(|path| is_history_path(&std::path::absolute(path).unwrap_or(path.clone())))
         .map(|path| Source::under(dir, path))
@@ -775,6 +776,26 @@ mod tests {
         ] {
             assert!(!is_history_path(Path::new(path)), "{path}");
         }
+    }
+
+    #[test]
+    fn staged_directory_indexes_are_not_detection_history_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let history = dir.path().join("DetectionHistory");
+        let numbered = history.join("02");
+        std::fs::create_dir_all(&numbered).unwrap();
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("test_files/defender_history/museum/DetectionHistory/02/0F3D5CDF-677A-4AF9-BDE9-54E0ACD9900D");
+        let id = numbered.join("0F3D5CDF-677A-4AF9-BDE9-54E0ACD9900D");
+        std::fs::copy(fixture, &id).unwrap();
+        // image staging writes a directory's index as `$I30` into it
+        std::fs::write(history.join("$I30"), b"INDX").unwrap();
+        std::fs::write(numbered.join("$i30"), b"INDX").unwrap();
+        let found: Vec<PathBuf> = find_histories(dir.path())
+            .into_iter()
+            .map(|s| s.path)
+            .collect();
+        assert_eq!(found, [id]);
     }
 
     #[test]

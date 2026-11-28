@@ -24,7 +24,7 @@ use std::fs::{self, File};
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use vhdx_mount::image::{Entry, Image, ROOT_RECORD, Stat};
+use vhdx_mount::image::{Entry, Image, ROOT_RECORD, Stat, Stream};
 
 fn kinds(opts: &AutoParseOptions) -> Vec<Kind> {
     let mut selected = Vec::new();
@@ -273,6 +273,7 @@ fn run_inner(opts: &AutoParseOptions) -> i32 {
         sources: crate::image_files::Sources {
             workspace,
             volumes: Vec::new(),
+            streams: Vec::new(),
         },
     };
     p_label(
@@ -615,7 +616,8 @@ fn plan(image: &Arc<Image>, volume: usize, entry: &Entry, copy_all: bool, parent
 /// Stage one NTFS volume. Copy the files the parsers can read, and make every other file an
 /// empty placeholder with the original's timestamps: host discovery, paths and existence checks
 /// still see the whole filesystem, without the disk space of programs, documents and caches.
-/// persistence-hunter reads a placeholder's content from the image when it needs it.
+/// persistence-hunter reads a placeholder's content from the image when it needs it. Each
+/// directory's index, which is no file's content, is staged as a file too: as `$I30` in it.
 #[allow(clippy::too_many_arguments)]
 fn stage_volume(
     image: &Arc<Image>,
@@ -675,11 +677,13 @@ fn stage_volume(
             );
             continue;
         }
+        // A directory that can't be listed still has its index staged: a damaged index is what
+        // `parse-ntfs i30` reads its INDX records for.
         let entries = match image.volumes[volume].list(record) {
             Ok(entries) => entries,
             Err(e) => {
                 problem(inputs, source, &display, e.to_string());
-                continue;
+                Arc::default()
             }
         };
         let mut names = HashSet::new();
@@ -809,8 +813,82 @@ fn stage_volume(
                 }
             }
         }
+        crate::interrupt::check()?;
+        let index = Stream::IndexAllocation(I30.into());
+        let relative = format!("{display}/{I30}")
+            .trim_start_matches('/')
+            .to_string();
+        // Never replace a file of the image, nor stage the index under its name.
+        if entries.iter().any(|e| e.name.eq_ignore_ascii_case(I30)) {
+            let staged = match crate::image_files::stream_has_data(image, volume, record, &index) {
+                Err(e) if e.kind() == io::ErrorKind::Interrupted => return Err(e),
+                staged => staged,
+            };
+            if let Some(error) = unstaged_stream_problem(&index, staged) {
+                problem(inputs, source, &relative, error);
+            }
+            continue;
+        }
+        let output = directory.join(I30);
+        match stage_stream(image, volume, record, &index, &output, scratch) {
+            Ok(None) => {}
+            Ok(Some(time_error)) => {
+                if let Some(error) = time_error {
+                    problem(inputs, source, &relative, error);
+                }
+                if let Ok(within) = output.strip_prefix(root) {
+                    inputs.sources.streams.push(canonical_root.join(within));
+                }
+            }
+            Err(e) => {
+                if e.kind() == io::ErrorKind::Interrupted {
+                    return Err(e);
+                }
+                problem(inputs, source, &relative, e.to_string());
+                if e.kind() == io::ErrorKind::StorageFull {
+                    return Err(e);
+                }
+            }
+        }
     }
     Ok(())
+}
+
+/// What to report of `stream`, not staged because a file of the image has its staged name, from
+/// whether it would have been staged ([`crate::image_files::stream_has_data`]) or why it could
+/// not be read. Nothing when there is no stream or it is empty or entirely zeros, as
+/// [`crate::image_files::copy_stream`] stages nothing then.
+fn unstaged_stream_problem(stream: &Stream, staged: io::Result<bool>) -> Option<String> {
+    match staged {
+        Ok(false) => None,
+        Ok(true) => Some(format!(
+            "A file of the image has this name, so {stream} was not staged under it"
+        )),
+        Err(e) => Some(e.to_string()),
+    }
+}
+
+/// A directory's file-name index allocation, staged in it under this name as forensic collectors
+/// give it. A directory whose index fits in its record has none.
+const I30: &str = "$I30";
+
+/// Stage a named stream of `record` as `output`. `None` when the record has no such stream or it
+/// is empty; otherwise why its timestamps could not be preserved, if they could not.
+fn stage_stream(
+    image: &Arc<Image>,
+    volume: usize,
+    record: u64,
+    stream: &Stream,
+    output: &Path,
+    scratch: &Path,
+) -> io::Result<Option<Option<String>>> {
+    let Some((temporary, time_error)) =
+        crate::image_files::copy_stream(image, volume, record, stream, scratch)?
+    else {
+        return Ok(None);
+    };
+    temporary.persist_noclobber(output).map_err(|e| e.error)?;
+    Ok(Some(time_error))
 }
 
 fn stage_file(
@@ -1106,6 +1184,7 @@ mod tests {
             sources: crate::image_files::Sources {
                 workspace: base.canonicalize().unwrap(),
                 volumes: Vec::new(),
+                streams: Vec::new(),
             },
         };
         stage_volume(
@@ -1148,6 +1227,22 @@ mod tests {
         }
         assert!(len(&point.join("$MFT")) > 0);
         assert!(len(&point.join("$LogFile")) > 0);
+
+        // Each directory index allocation is staged as `$I30` in its directory, INDX records as
+        // on disk; a directory whose index fits in its record has none. These are not
+        // placeholders. No other named stream is staged: not `$Secure:$SDS`, nor a USN journal
+        // (the sample volume has none).
+        for directory in [point.clone(), c.join("Users/sample/Data")] {
+            let index = directory.join("$I30");
+            let bytes = fs::read(&index).unwrap();
+            assert!(crate::i30::is_i30_head(&bytes), "{}", index.display());
+            assert_eq!(bytes.len() % 4096, 0);
+            assert_eq!(original(&index), None);
+        }
+        assert!(!c.join("$I30").exists());
+        assert!(!point.join("$Extend/$I30").exists());
+        assert!(!point.join("$Secure_$SDS").exists());
+        assert!(!point.join("$Extend/$UsnJrnl_$J").exists());
 
         // A selected name can appear after another name of the same record was left empty.
         // Promoting it must populate the earlier name without changing its file identity.
@@ -1196,6 +1291,13 @@ mod tests {
             crate::image_files::len(&fragmented, 0),
             8 * (16 * 1024 + 123)
         );
+        // The staged streams are no file of the image: persistence-hunter skips them.
+        assert_eq!(inputs.sources.streams.len(), 2);
+        for stream in ["$I30", "C/Users/sample/Data/$I30"] {
+            assert!(crate::image_files::is_staged_stream(&point.join(stream)));
+        }
+        assert!(!crate::image_files::is_staged_stream(&point.join("$MFT")));
+        assert!(!crate::image_files::is_staged_stream(&fragmented));
         let sha256 = |path: &Path| crate::util::hex_lower(&Sha256::digest(fs::read(path).unwrap()));
         // Hydration must not detach other names of the same NTFS file. Consumers deduplicate
         // hives and payloads by identity, not just by their bytes.
@@ -1263,5 +1365,194 @@ mod tests {
             .filter(|name| name != "host1")
             .collect();
         assert!(leftovers.is_empty(), "{leftovers:?}");
+    }
+
+    #[test]
+    fn directory_indexes_are_staged_under_the_name_i30_reads() {
+        assert!(crate::i30::is_i30_name(I30));
+    }
+
+    #[test]
+    fn a_stream_kept_out_by_a_file_of_its_name_is_reported_only_when_there_is_one() {
+        let i30 = Stream::IndexAllocation("$I30".into());
+        // no index, or one that is empty or entirely zeros, which would not have been staged
+        assert_eq!(unstaged_stream_problem(&i30, Ok(false)), None);
+        assert_eq!(
+            unstaged_stream_problem(&i30, Ok(true)).as_deref(),
+            Some(
+                "A file of the image has this name, so $INDEX_ALLOCATION:$I30 was not staged under it"
+            )
+        );
+        // the stream's own error, not the name collision
+        let error = io::Error::other("the $INDEX_ALLOCATION:$I30 of record 5 is incomplete");
+        assert_eq!(
+            unstaged_stream_problem(&i30, Err(error)).as_deref(),
+            Some("the $INDEX_ALLOCATION:$I30 of record 5 is incomplete")
+        );
+    }
+
+    #[test]
+    fn a_file_named_like_a_staged_stream_is_kept_and_reported() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let dir = tempfile::tempdir().unwrap();
+        let mut image = Vec::new();
+        flate2::read::GzDecoder::new(
+            File::open(repo.join("test_files/vhdx/sample.vhdx.gz")).unwrap(),
+        )
+        .read_to_end(&mut image)
+        .unwrap();
+        // Rename `$MFT` in the root directory, which has an index allocation, to `$I30`: in its
+        // records' `$FILE_NAME` (name length 4, Win32 and DOS namespace) and the root's index.
+        let utf16 =
+            |name: &str| -> Vec<u8> { name.encode_utf16().flat_map(u16::to_le_bytes).collect() };
+        let (from, to) = (
+            [&[4u8, 3][..], &utf16("$MFT")].concat(),
+            [&[4u8, 3][..], &utf16("$I30")].concat(),
+        );
+        let mut renamed = 0;
+        for at in 0..image.len() - from.len() {
+            if image[at..at + from.len()] == from[..] {
+                image[at..at + to.len()].copy_from_slice(&to);
+                renamed += 1;
+            }
+        }
+        assert!(renamed >= 2, "{renamed}");
+        let image_path = dir.path().join("sample.vhdx");
+        fs::write(&image_path, image).unwrap();
+        let image_path = image_path.canonicalize().unwrap();
+        let image = Arc::new(Image::open(&image_path).unwrap());
+        let base = dir.path().join("work");
+        fs::create_dir(&base).unwrap();
+        let point = base.join("host1");
+        let mut inputs = Images {
+            directory_name: ".".into(),
+            mounts: Vec::new(),
+            problems: Vec::new(),
+            metadata: crate::image_metadata::Snapshot::default(),
+            placeholders: HashMap::new(),
+            sources: crate::image_files::Sources {
+                workspace: base.canonicalize().unwrap(),
+                volumes: Vec::new(),
+                streams: Vec::new(),
+            },
+        };
+        stage_volume(
+            &image,
+            0,
+            &image_path,
+            &point,
+            &base,
+            "./sample.vhdx",
+            &point,
+            &mut inputs,
+        )
+        .unwrap();
+        // The image's file keeps its name and content; the index is reported, not staged.
+        let staged = fs::read(point.join("$I30")).unwrap();
+        assert!(staged.starts_with(b"FILE"));
+        let problems: Vec<_> = inputs
+            .problems
+            .iter()
+            .map(|p| (p.path.as_str(), p.error.as_str()))
+            .collect();
+        assert_eq!(
+            problems,
+            [(
+                "$I30",
+                "A file of the image has this name, so $INDEX_ALLOCATION:$I30 was not staged under it"
+            )]
+        );
+        // Other directories' indexes are staged as before.
+        assert!(crate::i30::is_i30_head(
+            &fs::read(point.join("C/Users/sample/Data/$I30")).unwrap()
+        ));
+    }
+
+    #[test]
+    fn a_directory_that_cannot_be_listed_still_has_its_index_staged() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let dir = tempfile::tempdir().unwrap();
+        let mut bytes = Vec::new();
+        flate2::read::GzDecoder::new(
+            File::open(repo.join("test_files/vhdx/sample.vhdx.gz")).unwrap(),
+        )
+        .read_to_end(&mut bytes)
+        .unwrap();
+        let image_path = dir.path().join("sample.vhdx");
+        fs::write(&image_path, &bytes).unwrap();
+        let index = Stream::IndexAllocation(I30.into());
+        let (record, block) = {
+            let image = Arc::new(Image::open(&image_path).unwrap());
+            let mut record = ROOT_RECORD;
+            for name in ["C", "Users", "sample", "Data"] {
+                record = image.volumes[0]
+                    .lookup(record, name)
+                    .unwrap()
+                    .unwrap()
+                    .record;
+            }
+            let mut stream = Vec::new();
+            image
+                .stream_reader(0, record, &index)
+                .unwrap()
+                .unwrap()
+                .read_to_end(&mut stream)
+                .unwrap();
+            (record, stream[..4096].to_vec())
+        };
+        // Damage the directory's first INDX record: an update sequence count of zero.
+        let at: Vec<_> = (0..bytes.len() - block.len())
+            .filter(|&at| bytes[at..at + block.len()] == block[..])
+            .collect();
+        assert_eq!(at.len(), 1);
+        bytes[at[0] + 6..at[0] + 8].copy_from_slice(&[0, 0]);
+        fs::write(&image_path, &bytes).unwrap();
+        let image_path = image_path.canonicalize().unwrap();
+        let image = Arc::new(Image::open(&image_path).unwrap());
+        assert!(image.volumes[0].list(record).is_err());
+        let mut damaged = Vec::new();
+        image
+            .stream_reader(0, record, &index)
+            .unwrap()
+            .unwrap()
+            .read_to_end(&mut damaged)
+            .unwrap();
+        let base = dir.path().join("work");
+        fs::create_dir(&base).unwrap();
+        let point = base.join("host1");
+        let mut inputs = Images {
+            directory_name: ".".into(),
+            mounts: Vec::new(),
+            problems: Vec::new(),
+            metadata: crate::image_metadata::Snapshot::default(),
+            placeholders: HashMap::new(),
+            sources: crate::image_files::Sources {
+                workspace: base.canonicalize().unwrap(),
+                volumes: Vec::new(),
+                streams: Vec::new(),
+            },
+        };
+        stage_volume(
+            &image,
+            0,
+            &image_path,
+            &point,
+            &base,
+            "./sample.vhdx",
+            &point,
+            &mut inputs,
+        )
+        .unwrap();
+        // The listing is reported; the index, damaged as on disk, is staged all the same.
+        let problems: Vec<_> = inputs.problems.iter().map(|p| p.path.as_str()).collect();
+        assert_eq!(problems, ["C/Users/sample/Data"]);
+        let staged = point.join("C/Users/sample/Data/$I30");
+        assert_eq!(fs::read(&staged).unwrap(), damaged);
+        assert!(
+            inputs
+                .sources
+                .streams
+                .contains(&staged.canonicalize().unwrap())
+        );
     }
 }

@@ -132,7 +132,7 @@ fn inventory_directory(directory: &Path, depth: usize) -> Inventory {
                     .issues
                     .push(format!("Directory depth limit reached: {}", path.display()));
             }
-        } else if kind.is_file() {
+        } else if kind.is_file() && !crate::image_files::is_staged_stream(&path) {
             inventory.paths.push(path);
         }
     }

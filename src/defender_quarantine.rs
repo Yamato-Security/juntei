@@ -270,12 +270,18 @@ fn is_dir_named(path: &Path, name: &str) -> bool {
         && path.is_dir()
 }
 
+/// Whether a file of a quarantine folder can be Defender's: not a directory index that image
+/// staging writes as `$I30` into every directory that has one. Defender names its files by ID.
+fn not_staged_index(name: &str) -> bool {
+    !name.eq_ignore_ascii_case("$I30")
+}
+
 /// The files of `<root>\<sub>\<xx>\<ID>`, by ID.
 fn by_name(root: &Path, sub: &str) -> BTreeMap<String, PathBuf> {
     let Some(dir) = child(root, sub) else {
         return BTreeMap::new();
     };
-    util::find_files(&dir, |_| true)
+    util::find_files(&dir, not_staged_index)
         .into_iter()
         .filter_map(|p| Some((p.file_name()?.to_string_lossy().to_ascii_uppercase(), p)))
         .collect()
@@ -323,7 +329,7 @@ fn find_folders(dir: &Path) -> Vec<Folder> {
             }
         }
         if let Some(entries) = child(&d, "Entries").filter(|p| p.is_dir()) {
-            let files: Vec<PathBuf> = util::find_files(&entries, |_| true);
+            let files: Vec<PathBuf> = util::find_files(&entries, not_staged_index);
             if files.iter().any(|f| starts_like_entry(f)) {
                 found.push(folder(&d, files));
             }
@@ -1271,6 +1277,50 @@ mod tests {
         assert_eq!(stream_name(":../../evil:$DATA"), "_.._evil");
         assert_eq!(stream_name("::$DATA"), "stream");
         assert_eq!(stream_name(":a b/c\\d:$DATA"), "a_b_c_d");
+    }
+
+    #[test]
+    fn staged_directory_indexes_are_not_quarantine_files() {
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("test_files/defender_quarantine");
+        let dir = tempfile::tempdir().unwrap();
+        let mut stack = vec![fixture.clone()];
+        while let Some(d) = stack.pop() {
+            for e in std::fs::read_dir(&d).unwrap().flatten() {
+                let to = dir.path().join(e.path().strip_prefix(&fixture).unwrap());
+                if e.file_type().unwrap().is_dir() {
+                    std::fs::create_dir_all(&to).unwrap();
+                    stack.push(e.path());
+                } else {
+                    std::fs::copy(e.path(), to).unwrap();
+                }
+            }
+        }
+        let names = |folders: &[Folder]| -> Vec<Vec<String>> {
+            let name = |p: &PathBuf| p.file_name().unwrap().to_string_lossy().into_owned();
+            folders
+                .iter()
+                .flat_map(|f| {
+                    [
+                        f.entries.iter().map(name).collect(),
+                        f.contents.values().map(name).collect(),
+                        f.records.values().map(name).collect(),
+                    ]
+                })
+                .collect()
+        };
+        let want = names(&find_folders(dir.path()));
+        assert_eq!(want.len(), 3, "one quarantine folder");
+        // image staging writes a directory's index as `$I30` into it
+        let quarantine = dir.path().join("Quarantine");
+        for (at, name) in [
+            ("Entries", "$I30"),
+            ("ResourceData/AA", "$I30"),
+            ("ResourceData", "$i30"),
+            ("Resources/AA", "$I30"),
+        ] {
+            std::fs::write(quarantine.join(at).join(name), b"INDX\x28\x00\x09\x00").unwrap();
+        }
+        assert_eq!(names(&find_folders(dir.path())), want);
     }
 
     fn file_fixture() -> ResourceData {
