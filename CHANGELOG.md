@@ -105,6 +105,14 @@
   them were missed. An index that can't be read whole is reported as an image read problem.
   (#160) (@YamatoSecurity)
 
+- `auto-parse --e01`/`--vhdx` stage each directory's index allocation as `$I30` in that directory,
+  so `parse-ntfs i30` reads directory indexes from images as it does from collections. Only each
+  file's unnamed data stream was copied, so `i30` found nothing in an image. An index allocation
+  that is empty or only zeros, such as one whose blocks are all unused, is not staged. A directory
+  that can't be listed, as with a damaged INDX record, is reported and still has its index staged.
+  A file of the image named `$I30` is kept, and an index it keeps out is reported as an image read
+  problem. `defender-quarantine` and `defender-history` skip files named `$I30`. (@tuttimann)
+
 ## 1.1.0 [2026/11/11] - CODE BLUE Release
 
 **New Features:**
